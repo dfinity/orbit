@@ -1,0 +1,40 @@
+// The canister id of a vault.
+type VaultId = principal;
+
+// Generic error type added to responses that can fail.
+type Error = record {
+  // Error code, added as a string to allow for custom error codes.
+  code: text;
+  // Error message to be displayed to the user.
+  message: opt text;
+}
+
+// Items that are returned when listing vaults.
+type VaultListItem = record {
+  // The vault id.
+  id: VaultId;
+  // A friendly name for the vault.
+  name: text;
+}
+
+type ListVaultsResult = variant {
+  // The list of vaults.
+  data: record {
+    // The list of vaults.
+    vaults: vec VaultListItem;
+  };
+  // A list of errors that occurred during the operation, if any.
+  errors: vec Error;
+}
+
+// The init configuration for the control panel.
+type ControlPanelInit = record {
+  // Wether or not to init a share vault canister.
+  init_shared_vault: bool;
+}
+
+// The control panel service definition.
+service : (opt ControlPanelInit) -> {
+  // List all the vaults associated with the caller.
+  list_vaults() -> (ListVaultsResult) query;
+}
