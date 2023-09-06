@@ -10,6 +10,8 @@ type NetworkId = text;
 type OperationId = text;
 // The timestamp type used in the canister.
 type Timestamp = nat64;
+// A UUID used to identify items.
+type UUID = text;
 
 // Generic error type added to responses that can fail.
 type Error = record {
@@ -44,7 +46,7 @@ type Wallet = record {
   // A friendly name for the wallet.
   name: text;
   // The asset symbol, e.g. "ICP" or "BTC".
-  symbol: AssetSymbol;
+  asset_symbol: AssetSymbol;
   // The default network to use for transactions.
   network: Network;
   // If the list is empty, the vault owners are the only owners.
@@ -59,7 +61,7 @@ type Wallet = record {
 // Input type for creating a wallet.
 type CreateWalletInput = record {
   // The asset symbol, e.g. "ICP" or "BTC".
-  symbol: AssetSymbol;
+  asset_symbol: AssetSymbol;
   // The default network to use for transactions.
   network: Network;
   // The list of owners of the wallet. 
@@ -184,7 +186,7 @@ type WalletListItem = record {
   // The wallet name.
   name: text;
   // The asset symbol, e.g. "ICP" or "BTC".
-  symbol: AssetSymbol;
+  asset_symbol: AssetSymbol;
 }
 
 // Result type for listing all wallets.
@@ -227,8 +229,10 @@ type VaultAccountRole = variant {
 
 // A record type that can be used to represent an account in the vault.
 type VaultAccount = record {
-  // The principal id of the account.
-  identity: principal;
+  // The UUID of the account (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id: UUID;
+  // The principals associated with the account.
+  identities: vec principal;
   // The role of the account.
   roles: vec VaultAccountRole;
 }

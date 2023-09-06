@@ -1,12 +1,24 @@
 // The canister id of a vault.
 type VaultId = principal;
 
+// A UUID used to identify items.
+type UUID = text;
+
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
   code: text;
   // Error message to be displayed to the user.
   message: opt text;
+}
+
+type Account = record {
+  // The UUID associated with the account.
+  id: UUID;
+  // The name of the account.
+  name: opt text;
+  // Default vault used to show in the UI for this account.
+  default_vault: opt VaultId;
 }
 
 // Items that are returned when listing vaults.

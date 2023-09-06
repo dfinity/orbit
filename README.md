@@ -1,1 +1,3 @@
-# programmable-wallet
+# orbit-wallet
+
+This wallet is under development.
