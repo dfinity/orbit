@@ -31,6 +31,11 @@ ehthumbs_vista.db
 .Trash-*
 *~
 
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+
 # Nodejs
 ## Logs
 *.log
@@ -55,10 +60,7 @@ node_modules/
 
 ## dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
 
 ## generate output
 out
