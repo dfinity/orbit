@@ -1,0 +1,20 @@
+name: 'Setup Rust'
+description: 'Adds rust to the system'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Setup Cargo Cache'
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: 'Setup Rust'
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
