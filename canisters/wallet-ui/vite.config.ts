@@ -50,7 +50,7 @@ export default defineConfig(({ mode }): UserConfig => {
     },
     resolve: {
       alias: {
-        '~src': resolve('src'),
+        '~': resolve('src'),
       },
     },
   };

@@ -1,0 +1,25 @@
+{
+  "app": {
+    "title": "{app} {'{'}Carteira{'}'}"
+  },
+  "login": {
+    "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto"
+  },
+  "slogans": {
+    "institutions_multi_custody": "Onde as instituições e as carteiras multi custódia se alinham"
+  },
+  "home": {
+    "welcome_back": "Bem-vindo, {name}!"
+  },
+  "footer": {
+    "copyright": "© 2023-{year} - DFINITY Foundation",
+    "github": {
+      "desktop": {
+        "description": "Código-fonte no GitHub"
+      },
+      "mobile": {
+        "description": "Código"
+      }
+    }
+  }
+}

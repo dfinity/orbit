@@ -1,7 +1,3 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import './style.scss';
+import { initializeApp } from '~/ui/app';
 
-createApp(App).mount('#app');
-
-console.log(import.meta.env);
+initializeApp();

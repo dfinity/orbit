@@ -12,12 +12,17 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest",
     "lint": "concurrently -n prettier,eslint \"prettier --ignore-path ../../.prettierignore --check .\" \"eslint --ext .js,.vue,.ts,.cjs .\"",
     "format": "concurrently -n prettier,eslint \"prettier --ignore-path ../../.prettierignore --write .\" \"eslint --ext .js,.vue,.ts,.cjs --fix .\""
   },
   "dependencies": {
     "buffer": "6.0.3",
-    "vue": "3.3.4"
+    "pinia": "2.1.6",
+    "vue": "3.3.4",
+    "vue-i18n": "9.3.0",
+    "vue-router": "4.2.4",
+    "vuetify": "3.3.15"
   },
   "devDependencies": {
     "@rollup/plugin-inject": "5.0.3",
