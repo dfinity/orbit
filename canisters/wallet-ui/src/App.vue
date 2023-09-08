@@ -1,7 +1,3 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
   <div>
     <a href="https://vuejs.org/" target="_blank">
@@ -9,7 +5,13 @@ import HelloWorld from './components/HelloWorld.vue'
     </a>
   </div>
   <HelloWorld msg="Vue" />
+
+  <div a="1" b="2" c="3" d="4" e="5"></div>
 </template>
+
+<script setup lang="ts">
+import HelloWorld from './components/HelloWorld.vue';
+</script>
 
 <style scoped>
 .logo {

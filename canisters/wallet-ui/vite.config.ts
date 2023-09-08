@@ -12,7 +12,7 @@ export default defineConfig(({ mode }): UserConfig => {
     root: '.',
     publicDir: './public',
     appType: 'spa',
-    // Vite automatically loads .env files from the root of the project 
+    // Vite automatically loads .env files from the root of the project
     // if they are prefixed with the envPrefix.
     envPrefix: 'APP_',
     plugins: [vue()],
@@ -30,12 +30,12 @@ export default defineConfig(({ mode }): UserConfig => {
         plugins: [
           inject({
             modules: {
-              // Polyfill Buffer for production build 
-              Buffer: ['buffer', 'Buffer']
-            }
-          })
-        ]
-      }
+              // Polyfill Buffer for production build
+              Buffer: ['buffer', 'Buffer'],
+            },
+          }),
+        ],
+      },
     },
     css: {
       devSourcemap: !isProduction,
@@ -46,12 +46,14 @@ export default defineConfig(({ mode }): UserConfig => {
       // Make sure to use import.meta.env as the prefix since
       // vite uses that during runtime to access the variables.
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
-      'import.meta.env.APP_VERSION': JSON.stringify(`v${process.env.npm_package_version}`),
+      'import.meta.env.APP_VERSION': JSON.stringify(
+        `v${process.env.npm_package_version}`,
+      ),
     },
     resolve: {
       alias: {
         '~src': resolve('src'),
       },
     },
-  }
+  };
 });

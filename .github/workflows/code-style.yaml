@@ -1,8 +1,8 @@
 name: 'Code style'
 
-on: 
+on:
   pull_request:
-    types: 
+    types:
       - opened
       - edited
       - reopened
