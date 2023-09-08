@@ -20,8 +20,8 @@ env:
   CURL_HOME: .
 
 jobs:
-  rust-styles:
-    name: 'rust-consistent-style:required'
+  cargo-styles:
+    name: 'cargo-consistent-style:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
@@ -29,10 +29,26 @@ jobs:
       - name: 'Setup Rust'
         uses: ./.github/actions/setup-rust
       - name: 'Format code'
-        run: cargo fmt --all -- --check
+        run: |
+          cargo fmt --all -- --check
         env:
           RUST_BACKTRACE: 1
-      - name: 'Lint code'
-        run: cargo clippy --verbose --tests --benches --workspace -- -D clippy::all
+      - name: 'Check code'
+        run: | 
+          cargo clippy --verbose --tests --benches --workspace -- -D clippy::all
         env:
           RUST_BACKTRACE: 1
+  node-styles:
+    name: 'node-consistent-style:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install Dependencies'
+        run: |
+          pnpm install --frozen-lockfile
+      - name: 'Check code'
+        run: |
+          pnpm lint
