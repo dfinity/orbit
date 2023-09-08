@@ -4,9 +4,8 @@
       <img src="/images/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
   </div>
-  <HelloWorld msg="Vue" />
 
-  <div a="1" b="2" c="3" d="4" e="5"></div>
+  <HelloWorld msg="Vue" />
 </template>
 
 <script setup lang="ts">

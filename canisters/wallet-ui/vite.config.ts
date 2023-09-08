@@ -46,9 +46,7 @@ export default defineConfig(({ mode }): UserConfig => {
       // Make sure to use import.meta.env as the prefix since
       // vite uses that during runtime to access the variables.
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
-      'import.meta.env.APP_VERSION': JSON.stringify(
-        `v${process.env.npm_package_version}`,
-      ),
+      'import.meta.env.APP_VERSION': JSON.stringify(`v${process.env.npm_package_version}`),
     },
     resolve: {
       alias: {
