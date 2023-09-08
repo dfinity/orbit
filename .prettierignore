@@ -1,0 +1,13 @@
+# Mac OSX temporary files
+**/.DS_Store
+
+# dfx temporary files
+**/.dfx
+
+# frontend code
+**/node_modules
+**/dist
+**/.env
+
+# Cargo build output
+**/target

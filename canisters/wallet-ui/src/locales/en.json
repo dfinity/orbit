@@ -1,0 +1,25 @@
+{
+  "app": {
+    "title": "{app} {'{'}Wallet{'}'}"
+  },
+  "login": {
+    "signin_slogan": "Securily connect to manage your crypto assets"
+  },
+  "slogans": {
+    "institutions_multi_custody": "Where Institutions and Multi-Custody Align"
+  },
+  "home": {
+    "welcome_back": "Welcome back, {name}!"
+  },
+  "footer": {
+    "copyright": "© 2023-{year} - DFINITY Foundation",
+    "github": {
+      "desktop": {
+        "description": "Source code on GitHub"
+      },
+      "mobile": {
+        "description": "Code"
+      }
+    }
+  }
+}
