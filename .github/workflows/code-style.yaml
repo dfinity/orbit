@@ -20,21 +20,17 @@ env:
   CURL_HOME: .
 
 jobs:
-  cargo-styles:
-    name: 'cargo-consistent-style:required'
+  rust-styles:
+    name: 'rust-consistent-style:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
       - name: 'Setup Rust'
         uses: ./.github/actions/setup-rust
-      - name: 'Format code'
+      - name: 'Check code'
         run: |
           cargo fmt --all -- --check
-        env:
-          RUST_BACKTRACE: 1
-      - name: 'Check code'
-        run: | 
           cargo clippy --verbose --tests --benches --workspace -- -D clippy::all
         env:
           RUST_BACKTRACE: 1
