@@ -61,7 +61,7 @@ importers:
         specifier: 4.3.4
         version: 4.3.4(vite@4.4.9)(vue@3.3.4)
       '@vitest/coverage-v8':
-        specifier: ^0.34.4
+        specifier: 0.34.4
         version: 0.34.4(vitest@0.34.3)
       eslint-plugin-vue:
         specifier: 9.17.0
