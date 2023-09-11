@@ -31,7 +31,8 @@ export default defineConfig(({ mode }) => {
           manualChunks: id => {
             const folder = dirname(id);
             if (folder.includes('/src/locales')) {
-              return basename(id);
+              const [localeName] = basename(id).split('.');
+              return localeName;
             }
 
             if (
