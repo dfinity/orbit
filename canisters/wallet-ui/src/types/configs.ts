@@ -1,3 +1,5 @@
+import en from '~/locales/en.json';
+
 export interface AppInitConfig {
   baseUrl: string;
   locale: {
@@ -5,3 +7,5 @@ export interface AppInitConfig {
     supportedLocales: string[];
   };
 }
+
+export type AppTranslations = typeof en;

@@ -1,4 +1,5 @@
-import { Locale, supportedLocales, appInitConfig } from '~/configs';
+import { Locale, appInitConfig, supportedLocales } from '~/configs';
+import { AppTranslations } from '~/types';
 
 export class LocalesService {
   get supportedLocales(): Locale[] {
@@ -13,9 +14,8 @@ export class LocalesService {
     document.querySelector('html')?.setAttribute('lang', locale);
   }
 
-  async fetchLocaleMessages(locale: string): Promise<unknown> {
+  async fetchLocaleMessages(locale: Locale): Promise<AppTranslations> {
     const messages = await import(`~/locales/${locale}.json`);
-
     return messages.default;
   }
 

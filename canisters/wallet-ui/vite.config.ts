@@ -1,7 +1,7 @@
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
+import { basename, dirname, resolve } from 'path';
 import { defineConfig, UserConfig } from 'vite';
-import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }): UserConfig => {
@@ -26,6 +26,30 @@ export default defineConfig(({ mode }): UserConfig => {
       rollupOptions: {
         input: {
           main: './index.html',
+        },
+        output: {
+          manualChunks: id => {
+            const folder = dirname(id);
+            if (folder.includes('/src/locales')) {
+              return basename(id);
+            }
+
+            if (
+              folder.includes('node_modules') &&
+              [
+                '/@vue/',
+                '/vue/',
+                '/vue-router/',
+                '/vue-demi/',
+                '/pinia/',
+                '/vuetify/',
+                '/vue-i18n/',
+                '/@intlify/',
+              ].some(vendor => folder.includes(vendor))
+            ) {
+              return 'vendor';
+            }
+          },
         },
         plugins: [
           inject({
