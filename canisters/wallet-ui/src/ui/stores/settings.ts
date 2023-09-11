@@ -1,15 +1,14 @@
 import { defineStore } from 'pinia';
-import { services } from '~/ui/services';
-import { Locale } from '~/configs/i18n';
-import { i18n } from '~/ui/i18n';
+import { Locale } from '~/configs/I18n';
+import { i18n, services } from '~/ui/modules';
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    locale: services.locales.resolveUserLocale(),
+    locale: services().locales.resolveUserLocale(),
   }),
   getters: {
     baseUrl: (state): string => {
-      return services.routes.baseUrl + state.locale;
+      return services().routes.baseUrl + state.locale;
     },
   },
   actions: {
@@ -17,7 +16,7 @@ export const useSettingsStore = defineStore('settings', {
       this.locale = locale;
 
       i18n.global.locale.value = locale;
-      services.locales.updatePageLocale(locale);
+      services().locales.updatePageLocale(locale);
     },
   },
 });

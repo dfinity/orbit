@@ -1,5 +1,5 @@
-import { defaultLocale, supportedLocales } from '~/configs/i18n';
-import { AppInitConfig } from '~/types/configs';
+import { defaultLocale, supportedLocales } from '~/configs/I18n';
+import { AppInitConfig } from '~/types';
 
 const appInitConfig: AppInitConfig = {
   baseUrl: import.meta.env.APP_BASE_URL || '/',

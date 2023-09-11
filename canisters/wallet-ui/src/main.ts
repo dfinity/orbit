@@ -1,3 +1,3 @@
-import { initializeApp } from '~/ui/app';
+import { initializeApp } from '~/ui/App';
 
 initializeApp();
