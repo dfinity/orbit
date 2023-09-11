@@ -8,10 +8,10 @@ const envEnabledLocales = (import.meta.env.APP_SUPPORTED_LOCALES || Locale.EN.to
   ',',
 );
 const supportedLocales: Locale[] = allLocales.filter(locale => envEnabledLocales.includes(locale));
-
-let defaultLocale = Locale.EN;
-if (supportedLocales.includes(import.meta.env.APP_DEFAULT_LOCALE as Locale)) {
-  defaultLocale = import.meta.env.APP_DEFAULT_LOCALE as Locale;
+if (!supportedLocales.includes(Locale.EN)) {
+  supportedLocales.push(Locale.EN);
 }
+
+const defaultLocale = Locale.EN;
 
 export { defaultLocale, supportedLocales };

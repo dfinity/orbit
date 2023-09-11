@@ -1,10 +1,10 @@
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
-import { defineConfig, UserConfig } from 'vite';
-import { resolve } from 'path';
+import { basename, dirname, resolve } from 'path';
+import { defineConfig } from 'vitest/config';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }): UserConfig => {
+export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
 
   return {
@@ -27,6 +27,31 @@ export default defineConfig(({ mode }): UserConfig => {
         input: {
           main: './index.html',
         },
+        output: {
+          manualChunks: id => {
+            const folder = dirname(id);
+            if (folder.includes('/src/locales')) {
+              const [localeName] = basename(id).split('.');
+              return localeName;
+            }
+
+            if (
+              folder.includes('node_modules') &&
+              [
+                '/@vue/',
+                '/vue/',
+                '/vue-router/',
+                '/vue-demi/',
+                '/pinia/',
+                '/vuetify/',
+                '/vue-i18n/',
+                '/@intlify/',
+              ].some(vendor => folder.includes(vendor))
+            ) {
+              return 'vendor';
+            }
+          },
+        },
         plugins: [
           inject({
             modules: {
@@ -39,6 +64,11 @@ export default defineConfig(({ mode }): UserConfig => {
     },
     css: {
       devSourcemap: !isProduction,
+    },
+    test: {
+      globals: true,
+      environment: 'happy-dom',
+      setupFiles: ['./setupFiles/GlobalsConfiguration.ts'],
     },
     define: {
       // Vite env variable replacements for the runtime.

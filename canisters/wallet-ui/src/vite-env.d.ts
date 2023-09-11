@@ -7,7 +7,7 @@ interface ImportMetaEnv {
   readonly APP_BASE_URL: string;
   readonly APP_TITLE: string;
   readonly APP_VERSION: string;
-  readonly APP_DEFAULT_LOCALE: string;
+  readonly APP_SUPPORTED_LOCALES: string;
 }
 
 interface ImportMeta {
