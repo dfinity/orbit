@@ -22,7 +22,7 @@ export class LocalesService {
   maybeResolveLocationLocale(): Locale | undefined {
     const locale = window.location.pathname.replace(/^\/([^/]+).*/i, '$1');
 
-    if (this.isSupportedLocale(locale)) {
+    if (!this.isSupportedLocale(locale)) {
       return;
     }
 

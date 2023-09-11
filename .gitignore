@@ -65,3 +65,5 @@ node_modules/
 ## generate output
 out
 dist
+coverage
+generated

@@ -1,10 +1,10 @@
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
 import { basename, dirname, resolve } from 'path';
-import { defineConfig, UserConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }): UserConfig => {
+export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
 
   return {
@@ -63,6 +63,11 @@ export default defineConfig(({ mode }): UserConfig => {
     },
     css: {
       devSourcemap: !isProduction,
+    },
+    test: {
+      globals: true,
+      environment: 'happy-dom',
+      setupFiles: ['./setupFiles/GlobalsConfiguration.ts'],
     },
     define: {
       // Vite env variable replacements for the runtime.
