@@ -17,6 +17,7 @@ on:
       - main
 
 env:
+  CARGO_TERM_COLOR: always
   # When getting Rust dependencies, retry on network error:
   CARGO_NET_RETRY: 10
   # Use the local .curlrc
@@ -58,8 +59,6 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: 'Setup Rust'
-        uses: ./.github/actions/setup-rust
       - name: 'Check code'
         run: |
           cargo fmt --all -- --check
