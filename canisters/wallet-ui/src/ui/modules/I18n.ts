@@ -29,7 +29,9 @@ const routeGuard: NavigationGuard = async (to, _from, next) => {
     return next(`/${settings.locale}${to.path === '/' ? '' : to.path}`);
   }
 
-  await settings.useLocale(paramLocale as Locale);
+  if (services().locales.isSupportedLocale(paramLocale)) {
+    await settings.useLocale(paramLocale);
+  }
 
   if (!services().locales.isSupportedLocale(paramLocale)) {
     return next(`/${settings.locale}`);
