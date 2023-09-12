@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly APP_TITLE: string;
   readonly APP_VERSION: string;
   readonly APP_SUPPORTED_LOCALES: string;
+  readonly APP_LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
 }
 
 interface ImportMeta {

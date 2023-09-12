@@ -1,11 +1,15 @@
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
+import { readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
+import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vitest/config';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
+  const localesPath = resolve(__dirname, 'src/locales');
+  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.json'));
 
   return {
     base: '/',
@@ -15,7 +19,7 @@ export default defineConfig(({ mode }) => {
     // Vite automatically loads .env files from the root of the project
     // if they are prefixed with the envPrefix.
     envPrefix: 'APP_',
-    plugins: [vue()],
+    plugins: [vue(), vuetify({ autoImport: true })],
     build: {
       target: 'es2020',
       sourcemap: !isProduction,
@@ -30,13 +34,18 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: id => {
             const folder = dirname(id);
-            if (folder.includes('/src/locales')) {
+            const isNodeModule = folder.includes('node_modules');
+
+            if (
+              folder.includes('/src/locales') &&
+              supportedLocales.some(locale => resolve(folder, `${locale}.json`) === id)
+            ) {
               const [localeName] = basename(id).split('.');
-              return localeName;
+              return `locale-${localeName}`;
             }
 
             if (
-              folder.includes('node_modules') &&
+              isNodeModule &&
               [
                 '/@vue/',
                 '/vue/',

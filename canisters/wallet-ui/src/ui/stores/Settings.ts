@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { Locale } from '~/configs/I18n';
-import { i18n, services } from '~/ui/modules';
+import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
+import { en as designSystemFallbackMessages } from 'vuetify/locale';
+import { logger } from '~/core';
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({}),
@@ -14,14 +16,23 @@ export const useSettingsStore = defineStore('settings', {
   },
   actions: {
     async useLocale(locale: Locale, _persist = false): Promise<void> {
-      if (i18n.global.locale.value === locale) {
+      const isLoadedLocale = i18n.global.availableLocales.includes(locale);
+      if (isLoadedLocale && i18n.global.locale.value === locale) {
         // do nothing if the locale is the same
         return;
       }
 
-      if (!i18n.global.availableLocales.includes(locale)) {
+      if (!isLoadedLocale) {
         const messages = await services().locales.fetchLocaleMessages(locale);
-        i18n.global.setLocaleMessage(locale, messages);
+        const designSystemMessages = await fetchDesignSystemLocale(locale).catch(e => {
+          logger.error(`Failed to load design system locale for ${locale}`, e);
+
+          return designSystemFallbackMessages;
+        });
+        i18n.global.setLocaleMessage(locale, {
+          ...messages,
+          $vuetify: designSystemMessages,
+        });
       }
 
       i18n.global.locale.value = locale;

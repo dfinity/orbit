@@ -29,7 +29,7 @@ export class LocalesService {
     return locale as Locale;
   }
 
-  isSupportedLocale(locale: string): boolean {
+  isSupportedLocale(locale: string): locale is Locale {
     return this.supportedLocales.includes(locale as Locale);
   }
 
