@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { Locale } from '~/configs/I18n';
 import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
 import { en as designSystemFallbackMessages } from 'vuetify/locale';
+import { logger } from '~/core';
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({}),
@@ -24,7 +25,7 @@ export const useSettingsStore = defineStore('settings', {
       if (!isLoadedLocale) {
         const messages = await services().locales.fetchLocaleMessages(locale);
         const designSystemMessages = await fetchDesignSystemLocale(locale).catch(e => {
-          console.error(`Failed to load design system locale for ${locale}`, e);
+          logger.error(`Failed to load design system locale for ${locale}`, e);
 
           return designSystemFallbackMessages;
         });
