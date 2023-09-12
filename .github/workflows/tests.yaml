@@ -20,8 +20,8 @@ env:
   CURL_HOME: .
 
 jobs:
-  rust-tests:
-    name: 'rust-tests:required'
+  test-rust:
+    name: 'test-rust:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
@@ -30,8 +30,8 @@ jobs:
         uses: ./.github/actions/setup-rust
       - name: 'Test cargo crates'
         run: cargo test
-  node-tests:
-    name: 'node-tests:required'
+  test-node:
+    name: 'test-node:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'

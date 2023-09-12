@@ -1,0 +1,79 @@
+name: 'Code validation'
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - labeled
+  merge_group:
+    types: [checks_requested]
+    branches:
+      - main
+
+env:
+  # When getting Rust dependencies, retry on network error:
+  CARGO_NET_RETRY: 10
+  # Use the local .curlrc
+  CURL_HOME: .
+
+jobs:
+  validate-commits:
+    name: 'validate-commits:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      # Conditional steps for commit message check
+      - if: ${{ github.event_name != 'pull_request' }}
+        name: 'Setup Python'
+        uses: ./.github/actions/setup-python
+      - if: ${{ github.event_name != 'pull_request' }}
+        name: 'Install Commitzen'
+        run: pip install -U commitizen
+      - if: ${{ github.event_name != 'pull_request' }}
+        name: 'Check Commit Messages'
+        run: cz check
+      # Conditional step for pull request title check
+      - if: ${{ github.event_name == 'pull_request' }}
+        name: 'Check PR Title'
+        run: |
+          if [[ "${{ github.event.pull_request.title }}" =~ ^(feat|fix|chore|build|ci|docs|style|refactor|perf|test)(\([-a-zA-Z0-9,]+\))?\!?\: ]]; then
+              echo "PR Title passes"
+          else
+              echo "PR Title does not match conventions"
+              echo "PR Title: ${{ github.event.pull_request.title }}"
+              exit 1
+          fi
+  validate-rust:
+    name: 'validate-rust:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup Rust'
+        uses: ./.github/actions/setup-rust
+      - name: 'Check code'
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --verbose --tests --benches --workspace -- -D clippy::all
+        env:
+          RUST_BACKTRACE: 1
+  validate-node:
+    name: 'validate-node:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install Dependencies'
+        run: |
+          pnpm install --frozen-lockfile
+      - name: 'Check code'
+        run: |
+          pnpm lint
