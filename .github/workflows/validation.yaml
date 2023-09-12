@@ -40,7 +40,7 @@ jobs:
         run: pip install -U commitizen
       - if: ${{ github.event_name != 'pull_request' }}
         name: 'Check Commit Messages'
-        run: cz check
+        run: cz check --rev-range HEAD
       # Conditional step for pull request title check
       - if: ${{ github.event_name == 'pull_request' }}
         name: 'Check PR Title'
