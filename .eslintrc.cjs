@@ -29,7 +29,7 @@ const config = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
   },
   plugins: ['@typescript-eslint'],
-  ignorePatterns: ['**/dist', '**/.eslintrc.cjs'],
+  ignorePatterns: ['**/dist', '**/generated', '**/.eslintrc.cjs'],
   globals: {
     window: true,
     module: true,

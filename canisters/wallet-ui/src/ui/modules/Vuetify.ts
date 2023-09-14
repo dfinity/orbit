@@ -1,15 +1,59 @@
 import { useI18n } from 'vue-i18n';
-import { createVuetify } from 'vuetify';
-import { aliases, mdi } from 'vuetify/iconsets/mdi';
+import { ThemeDefinition, createVuetify } from 'vuetify';
+import { aliases, mdi } from 'vuetify/iconsets/mdi-svg';
 import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n';
-import 'vuetify/styles';
 import { Locale } from '~/configs';
 import { i18n } from './I18n';
+import { services } from '~/ui/modules';
+
+const light: ThemeDefinition = {
+  dark: false,
+  colors: {
+    background: '#f1eef5',
+    surface: '#f1eef5',
+    primary: '#004D40',
+    'primary-variant': '#33877c',
+    secondary: '#932020',
+    'secondary-variant': '#d32f2f',
+    error: '#B00020',
+    info: '#2196F3',
+    success: '#4CAF50',
+    warning: '#FB8C00',
+  },
+};
+
+const dark: ThemeDefinition = {
+  dark: true,
+  colors: {
+    background: '#212121',
+    surface: '#212121',
+    primary: '#004D40',
+    'primary-variant': '#33877c',
+    secondary: '#932020',
+    'secondary-variant': '#d32f2f',
+    error: '#f44336',
+    info: '#2196F3',
+    success: '#4caf50',
+    warning: '#fb8c00',
+  },
+};
 
 // Vuetify is the default UI framework used within this application,
 // please refer to the documentation for more information at https://vuetifyjs.com/
 const vuetify = createVuetify({
   ssr: false,
+  theme: {
+    defaultTheme: services().theme.resolveTheme(),
+    variations: {
+      colors: ['primary', 'primary-variant', 'secondary', 'secondary-variant'],
+      darken: 2,
+      lighten: 2,
+    },
+    themes: {
+      light,
+      dark,
+    },
+  },
   icons: {
     defaultSet: 'mdi',
     aliases,
@@ -19,6 +63,17 @@ const vuetify = createVuetify({
   },
   locale: {
     adapter: createVueI18nAdapter({ i18n, useI18n }),
+  },
+  display: {
+    mobileBreakpoint: 'md',
+    thresholds: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
+      xxl: 2560,
+    },
   },
 });
 

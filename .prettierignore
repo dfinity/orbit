@@ -8,6 +8,7 @@
 **/node_modules
 **/dist
 **/.env
+**/generated
 
 # Cargo build output
 **/target

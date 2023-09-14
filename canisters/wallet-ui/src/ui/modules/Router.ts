@@ -1,9 +1,9 @@
 import { RouterView, createRouter, createWebHistory } from 'vue-router';
-import AboutPage from '~/ui/components/AboutPage.vue';
-import HomePage from '~/ui/components/HomePage.vue';
-import NotFoundPage from '~/ui/components/NotFoundPage.vue';
-import { services } from './ServiceManager';
+import HomePage from '~/ui/pages/HomePage.vue';
+import LoginPage from '~/ui/pages/LoginPage.vue';
+import NotFoundPage from '~/ui/pages/NotFoundPage.vue';
 import { i18nRouteGuard } from './I18n';
+import { services } from './ServiceManager';
 
 const router = createRouter({
   history: createWebHistory(services().routes.baseUrl),
@@ -12,8 +12,9 @@ const router = createRouter({
       path: `/:locale(${services().locales.supportedLocales.join('|')})?`,
       component: RouterView,
       children: [
-        { path: '', component: HomePage },
-        { path: 'about', component: AboutPage },
+        { path: '', name: 'home', component: HomePage },
+        { path: 'login', name: 'login', component: LoginPage },
+        { path: 'about', name: 'about', component: async () => import('~/ui/pages/AboutPage.vue') },
         { path: ':pathMatch(.*)*', name: 'NotFound', component: NotFoundPage },
       ],
     },
