@@ -52,6 +52,7 @@
   --ds-on-background: var(--v-theme-on-background);
   --ds-surface: var(--v-theme-surface);
   --ds-on-surface: var(--v-theme-on-surface);
+  --ds-background-border: var(--v-theme-background-border);
 
   // content sizing
   --ds-bdu: #{variables.$bdu};
@@ -98,23 +99,5 @@ body,
 }
 
 a {
-  color: rgb(var(--ds-primary-variant-darkest));
-}
-
-a:hover,
-a:focus,
-a:active {
-  color: rgb(var(--ds-primary-variant));
-}
-
-.theme--dark {
-  a {
-    color: rgb(var(--ds-primary-variant));
-  }
-
-  a:hover,
-  a:focus,
-  a:active {
-    color: rgb(var(--ds-primary-variant-lightest));
-  }
+  color: inherit;
 }

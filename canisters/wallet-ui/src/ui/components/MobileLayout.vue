@@ -1,33 +1,50 @@
 <template>
-  <slot name="sidebar">
-    <VNavigationDrawer class="sidebar" width="340" color="primary">
+  <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
+    <VNavigationDrawer
+      v-model="settings.showSidebar"
+      class="sidebar"
+      width="260"
+      color="primary"
+      temporary
+    >
       <div class="sidebar__header">
-        <slot name="sidebar-header"></slot>
+        <slot name="sidebar-header">
+          <SidenavHeader />
+        </slot>
       </div>
       <div class="sidebar__nav">
-        <slot name="sidebar-nav"></slot>
+        <slot name="sidebar-nav">
+          <SidenavMenu />
+        </slot>
       </div>
       <div class="sidebar__footer">
         <slot name="sidebar-footer">
           <a href="https://internetcomputer.org" target="_blank">
-            <img src="/images/internet-computer-horizontal-dark.png" height="20" />
+            <img src="/images/internet-computer-horizontal-light.png" height="20" />
           </a>
         </slot>
       </div>
     </VNavigationDrawer>
   </slot>
-  <slot name="body">
+  <slot v-if="!isSetAndNotFalse(props.hideBody)" name="body">
     <VMain class="body" full-height>
       <slot name="toolbar">
         <VToolbar density="compact" class="toolbar">
           <div class="toolbar__context">
-            <slot name="toolbar-context"></slot>
+            <slot name="toolbar-context">
+              <BrandLogo v-if="auth.isAuthenticated" />
+            </slot>
           </div>
           <VSpacer />
           <div class="toolbar__actions">
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="settings.toogleTheme" />
               <LanguageSelector />
+              <VBtn
+                v-if="auth.isAuthenticated"
+                :icon="mdiMenuOpen"
+                @click.prevent="settings.toogleSidebar"
+              />
             </slot>
           </div>
         </VToolbar>
@@ -35,9 +52,9 @@
       <nav class="topnav">
         <slot name="topnav"> </slot>
       </nav>
-      <div class="main">
+      <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
         <slot name="main">
-          <header class="main__header">
+          <header v-if="!isSetAndNotFalse(props.hideMainHeader)" class="main__header">
             <slot name="main-header"></slot>
           </header>
           <div class="main__body">
@@ -45,7 +62,7 @@
           </div>
         </slot>
       </div>
-      <VFooter class="footer">
+      <VFooter v-if="!isSetAndNotFalse(props.hideFooter)" class="footer">
         <slot name="footer">
           <VContainer fluid>
             <VRow>
@@ -73,12 +90,25 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
-import { computed } from 'vue';
-import { useSettingsStore } from '~/ui/stores';
+import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
+import { computed, inject } from 'vue';
+import { isSetAndNotFalse } from '~/core';
+import SidenavHeader from '~/ui/components/SidenavHeader.vue';
+import SidenavMenu from '~/ui/components/SidenavMenu.vue';
+import { useAuthStore, useSettingsStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
+import BrandLogo from '~/ui/components/BrandLogo.vue';
 
 const settings = useSettingsStore();
+const auth = useAuthStore();
+
+const props = inject('pageLayoutProps', {
+  hideSidebar: false,
+  hideBody: false,
+  hideMain: false,
+  hideMainHeader: false,
+  hideFooter: false,
+});
 
 const icLogoVertical = computed(() => {
   return settings.isDarkTheme
@@ -133,12 +163,14 @@ const themeSwitcherIcon = computed(() => {
   .toolbar {
     display: flex;
     flex-direction: row;
-    background: transparent;
+    background-color: rgb(var(--ds-surface));
+    color: rgb(var(--ds-on-surface));
 
     &__actions {
       display: flex;
       flex-direction: row;
-      align-items: end;
+      align-items: center;
+      justify-content: end;
     }
   }
 
@@ -166,6 +198,8 @@ const themeSwitcherIcon = computed(() => {
 
     &__header {
       width: 100%;
+      background-color: rgb(var(--ds-surface));
+      color: rgb(var(--ds-on-surface));
     }
 
     &__body {
@@ -187,7 +221,7 @@ const themeSwitcherIcon = computed(() => {
     .v-container {
       padding: 0;
       margin: 0;
-      border-top: var(--ds-border-primary-variant);
+      border-top: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-background-border));
 
       > .v-row {
         margin: 0;

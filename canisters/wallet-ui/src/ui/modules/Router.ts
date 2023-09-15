@@ -12,9 +12,8 @@ const router = createRouter({
       path: `/:locale(${services().locales.supportedLocales.join('|')})?`,
       component: RouterView,
       children: [
-        { path: '', name: 'home', component: HomePage },
+        { path: '', name: 'home', alias: ['home'], component: HomePage },
         { path: 'login', name: 'login', component: LoginPage },
-        { path: 'about', name: 'about', component: async () => import('~/ui/pages/AboutPage.vue') },
         { path: ':pathMatch(.*)*', name: 'NotFound', component: NotFoundPage },
       ],
     },

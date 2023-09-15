@@ -5,6 +5,11 @@
   "login": {
     "signin_slogan": "Securily connect to manage your crypto assets"
   },
+  "not_found": {
+    "title": "Whoops, 404",
+    "description": "The page you were looking for does not exist.",
+    "btn_back": "Go back to home"
+  },
   "slogans": {
     "elevate_to_orbit": {
       "main": "Elevate to {term1}, {term2}",
@@ -18,7 +23,10 @@
     }
   },
   "home": {
-    "welcome_back": "Welcome back, {name}!"
+    "welcome_back": "Welcome back",
+    "notifications": {
+      "none": "You don't have new notifications."
+    }
   },
   "footer": {
     "copyright": "© 2023 - DFINITY Foundation",
@@ -28,6 +36,36 @@
   },
   "terms": {
     "signin": "Sign In",
-    "signout": "Sign Out"
+    "signout": "Sign Out",
+    "anonymous": "Anonymous",
+    "wallets": "Wallets",
+    "transactions": "Transactions",
+    "address_book": "Address Book",
+    "completed": "completed",
+    "pending": "pending",
+    "new_transfer": "New transfer",
+    "settings": "Settings"
+  },
+  "navigation": {
+    "main": {
+      "name": "Menu",
+      "items": {
+        "home": "Home",
+        "wallets": "Wallets",
+        "transactions": "Transactions",
+        "address_book": "Address Book"
+      }
+    },
+    "configuration": {
+      "name": "Configuration",
+      "items": {
+        "settings": "Settings",
+        "logout": "Logout"
+      }
+    },
+    "profile": {
+      "profile": "Profile",
+      "logout": "Logout"
+    }
   }
 }

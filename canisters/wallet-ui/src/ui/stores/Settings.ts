@@ -10,6 +10,7 @@ import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
 export interface SettingsStoreState {
   appName: string;
   theme: SupportedTheme;
+  showSidebar: boolean;
 }
 
 export const useSettingsStore = defineStore('settings', {
@@ -17,6 +18,7 @@ export const useSettingsStore = defineStore('settings', {
     return {
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),
+      showSidebar: true,
     };
   },
   getters: {
@@ -70,6 +72,9 @@ export const useSettingsStore = defineStore('settings', {
       this.theme = theme;
 
       services().theme.updateUserTheme(theme);
+    },
+    toogleSidebar(): void {
+      this.showSidebar = !this.showSidebar;
     },
   },
 });

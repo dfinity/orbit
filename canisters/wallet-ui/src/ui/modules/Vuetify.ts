@@ -9,8 +9,9 @@ import { services } from '~/ui/modules';
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#f1eef5',
-    surface: '#f1eef5',
+    background: '#ededed',
+    'background-border': '#9f9f9f',
+    surface: '#fefefe',
     primary: '#004D40',
     'primary-variant': '#33877c',
     secondary: '#932020',
@@ -26,7 +27,8 @@ const dark: ThemeDefinition = {
   dark: true,
   colors: {
     background: '#212121',
-    surface: '#212121',
+    'background-border': '#9f9f9f',
+    surface: '#313131',
     primary: '#004D40',
     'primary-variant': '#33877c',
     secondary: '#932020',

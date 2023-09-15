@@ -1,11 +1,15 @@
 <template>
-  <slot name="sidebar">
-    <VNavigationDrawer class="sidebar" width="340" color="primary">
+  <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
+    <VNavigationDrawer v-model="settings.showSidebar" class="sidebar" width="260" color="primary">
       <div class="sidebar__header">
-        <slot name="sidebar-header"></slot>
+        <slot name="sidebar-header">
+          <SidenavHeader />
+        </slot>
       </div>
       <div class="sidebar__nav">
-        <slot name="sidebar-nav"></slot>
+        <slot name="sidebar-nav">
+          <SidenavMenu />
+        </slot>
       </div>
       <div class="sidebar__footer">
         <slot name="sidebar-footer">
@@ -16,12 +20,18 @@
       </div>
     </VNavigationDrawer>
   </slot>
-  <slot name="body">
+  <slot v-if="!isSetAndNotFalse(props.hideBody)" name="body">
     <VMain class="body" full-height>
       <slot name="toolbar">
         <VToolbar density="compact" class="toolbar">
           <div class="toolbar__context">
-            <slot name="toolbar-context"></slot>
+            <slot name="toolbar-context">
+              <VBtn
+                v-if="auth.isAuthenticated"
+                :icon="mdiMenuOpen"
+                @click.prevent="settings.toogleSidebar"
+              />
+            </slot>
           </div>
           <VSpacer />
           <div class="toolbar__actions">
@@ -35,9 +45,9 @@
       <nav class="topnav">
         <slot name="topnav"></slot>
       </nav>
-      <div class="main">
+      <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
         <slot name="main">
-          <header class="main__header">
+          <header v-if="!isSetAndNotFalse(props.hideMainHeader)" class="main__header">
             <slot name="main-header"></slot>
           </header>
           <div class="main__body">
@@ -45,7 +55,7 @@
           </div>
         </slot>
       </div>
-      <VFooter class="footer">
+      <VFooter v-if="!isSetAndNotFalse(props.hideFooter)" class="footer">
         <slot name="footer">
           <VContainer fluid>
             <VRow>
@@ -70,12 +80,24 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
-import { computed } from 'vue';
-import { useSettingsStore } from '~/ui/stores';
+import { mdiWeatherNight, mdiWeatherSunny, mdiMenuOpen } from '@mdi/js';
+import { computed, inject } from 'vue';
+import { isSetAndNotFalse } from '~/core';
+import SidenavHeader from '~/ui/components/SidenavHeader.vue';
+import SidenavMenu from '~/ui/components/SidenavMenu.vue';
+import { useSettingsStore, useAuthStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
 
 const settings = useSettingsStore();
+const auth = useAuthStore();
+
+const props = inject('pageLayoutProps', {
+  hideSidebar: false,
+  hideBody: false,
+  hideMain: false,
+  hideMainHeader: false,
+  hideFooter: false,
+});
 
 const icLogoHorizontal = computed(() => {
   return settings.isDarkTheme
@@ -130,12 +152,15 @@ const themeSwitcherIcon = computed(() => {
   .toolbar {
     display: flex;
     flex-direction: row;
-    background: transparent;
+    background-color: rgb(var(--ds-surface));
+    color: rgb(var(--ds-on-surface));
+    border-bottom: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-background-border));
 
     &__actions {
       display: flex;
       flex-direction: row;
-      align-items: end;
+      align-items: center;
+      justify-content: end;
     }
   }
 
@@ -163,6 +188,8 @@ const themeSwitcherIcon = computed(() => {
 
     &__header {
       width: 100%;
+      background-color: rgb(var(--ds-surface));
+      color: rgb(var(--ds-on-surface));
     }
 
     &__body {
@@ -182,7 +209,7 @@ const themeSwitcherIcon = computed(() => {
 
     .v-container {
       padding: 0;
-      border-top: var(--ds-border-primary-variant);
+      border-top: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-background-border));
 
       > .v-row {
         margin: 0;

@@ -18,6 +18,9 @@ import { useSettingsStore } from '~/ui/stores';
 import DesktopLayout from './DesktopLayout.vue';
 import MobileLayout from './MobileLayout.vue';
 import { computed } from 'vue';
+import { provide } from 'vue';
+import { useDisplay } from 'vuetify';
+import { watch } from 'vue';
 
 const settings = useSettingsStore();
 const slotNames = [
@@ -34,6 +37,35 @@ const slotNames = [
   'main-header',
   'main-body',
 ];
+
+const props = withDefaults(
+  defineProps<{
+    hideSidebar?: string | boolean;
+    hideBody?: string | boolean;
+    hideMain?: string | boolean;
+    hideMainHeader?: string | boolean;
+    hideFooter?: string | boolean;
+  }>(),
+  {
+    hideSidebar: false,
+    hideBody: false,
+    hideMain: false,
+    hideMainHeader: false,
+    hideFooter: false,
+  },
+);
+
+provide('pageLayoutProps', props);
+
+const { mobile } = useDisplay();
+
+watch(
+  () => mobile.value,
+  isMobile => {
+    settings.showSidebar = !isMobile;
+  },
+  { immediate: true },
+);
 
 const layoutDeviceClass = computed(() => {
   return settings.isMobile ? 'page-layout--mobile' : 'page-layout--desktop';

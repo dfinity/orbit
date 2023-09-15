@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import { Identity } from '@dfinity/agent';
-import { services } from '~/ui/modules';
+import { router, services } from '~/ui/modules';
+
 
 export interface AuthStoreState {
   identity: Identity | null;
+  username: string | null;
   identityProvider: {
     domain: string;
   }
@@ -12,6 +14,7 @@ export interface AuthStoreState {
 export const useAuthStore = defineStore('auth', {
   state: (): AuthStoreState => ({
     identity: null,
+    username: null,
     identityProvider: {
       domain: 'https://identity.ic0.app',
     },
@@ -20,6 +23,9 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated(): boolean {
       return this.identity !== null;
     },
+    principal(): string | undefined {
+      return this.identity?.getPrincipal().toText()
+    }
   },
   actions: {
     async signIn(): Promise<void> {
@@ -31,6 +37,12 @@ export const useAuthStore = defineStore('auth', {
       const authService = services().auth;
 
       await authService.logout();
+      this.resetIdentity();
+      router.push({ name: 'login' });
     },
+    resetIdentity(): void {
+      this.identity = null;
+      this.username = null;
+    }
   },
 });
