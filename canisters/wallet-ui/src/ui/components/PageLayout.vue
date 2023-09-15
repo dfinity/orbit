@@ -40,6 +40,7 @@ const slotNames = [
 
 const props = withDefaults(
   defineProps<{
+    backgroundColor?: string;
     hideSidebar?: string | boolean;
     hideBody?: string | boolean;
     hideMain?: string | boolean;
@@ -47,6 +48,7 @@ const props = withDefaults(
     hideFooter?: string | boolean;
   }>(),
   {
+    backgroundColor: undefined,
     hideSidebar: false,
     hideBody: false,
     hideMain: false,

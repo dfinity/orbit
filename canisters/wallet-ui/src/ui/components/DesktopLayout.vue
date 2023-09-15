@@ -42,7 +42,14 @@
           </div>
         </VToolbar>
       </slot>
-      <nav class="topnav">
+      <nav
+        class="topnav"
+        :style="
+          props.backgroundColor
+            ? `background-color: rgb(var(--ds-${props.backgroundColor}));`
+            : undefined
+        "
+      >
         <slot name="topnav"></slot>
       </nav>
       <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
@@ -50,12 +57,23 @@
           <header v-if="!isSetAndNotFalse(props.hideMainHeader)" class="main__header">
             <slot name="main-header"></slot>
           </header>
-          <div class="main__body">
+          <div
+            class="main__body"
+            :style="
+              props.backgroundColor
+                ? `background-color: rgb(var(--ds-${props.backgroundColor}));`
+                : undefined
+            "
+          >
             <slot name="main-body"></slot>
           </div>
         </slot>
       </div>
-      <VFooter v-if="!isSetAndNotFalse(props.hideFooter)" class="footer">
+      <VFooter
+        v-if="!isSetAndNotFalse(props.hideFooter)"
+        class="footer"
+        :color="props.backgroundColor ? props.backgroundColor : `background`"
+      >
         <slot name="footer">
           <VContainer fluid>
             <VRow>
@@ -92,6 +110,7 @@ const settings = useSettingsStore();
 const auth = useAuthStore();
 
 const props = inject('pageLayoutProps', {
+  backgroundColor: undefined,
   hideSidebar: false,
   hideBody: false,
   hideMain: false,

@@ -1,5 +1,5 @@
 <template>
-  <PageLayout>
+  <PageLayout :background-color="pageBackgroundColor">
     <template v-if="!settings.isMobile" #sidebar-header>
       <h1 class="signin__header__title">{{ $t('app.title', { app: settings.appName }) }}</h1>
     </template>
@@ -81,6 +81,10 @@ const settings = useSettingsStore();
 
 const appLogoImg = computed(() => {
   return settings.isDarkTheme ? '/images/app-logo-dark.png' : '/images/app-logo-light.png';
+});
+
+const pageBackgroundColor = computed(() => {
+  return settings.isDarkTheme ? undefined : 'surface';
 });
 </script>
 
