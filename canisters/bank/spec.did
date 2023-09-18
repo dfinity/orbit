@@ -220,11 +220,11 @@ type GetWalletResult = variant {
 // The role of an account in the vault.
 type VaultAccountRole = variant { 
   // The account is an admin of the vault.
-  admin; 
-  // The account is a user of the vault, the public role is also 
+  admin;
+  // The account is a user of the vault, the guest role is also 
   // used to allow operations when the vault does not have the 
   // account defined.
-  public;
+  guest;
 }
 
 // A record type that can be used to represent an account in the vault.
