@@ -3,23 +3,72 @@
     "title": "{app} {'{'}Carteira{'}'}"
   },
   "login": {
-    "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto"
+    "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto",
+    "auth_failed": "Login falhou, tente novamente"
+  },
+  "not_found": {
+    "title": "Ups, 404",
+    "description": "A página que está a tentar aceder não existe.",
+    "btn_back": "Voltar ao início"
   },
   "slogans": {
-    "institutions_multi_custody": "Onde as instituições e as carteiras multi custódia se alinham"
+    "elevate_to_orbit": {
+      "main": "Se eleve à {term1}, {term2}",
+      "term1": "Órbita",
+      "term2": "onde a segurança e a conveniência se alinham"
+    },
+    "institutions_multi_custody": {
+      "main": "Onde as {term1} e as carteiras {term2} se alinham",
+      "term1": "Instituições",
+      "term2": "Multi-custódia"
+    }
   },
   "home": {
-    "welcome_back": "Bem-vindo, {name}!"
+    "welcome_back": "Boas-vindas de novo",
+    "notifications": {
+      "none": "Não tem notificaçōes por ler"
+    }
   },
   "footer": {
     "copyright": "© 2023-{year} - DFINITY Foundation",
     "github": {
-      "desktop": {
-        "description": "Código-fonte no GitHub"
-      },
-      "mobile": {
-        "description": "Código"
+      "description": "Código-fonte"
+    }
+  },
+  "terms": {
+    "signin": "Entrar",
+    "signout": "Sair",
+    "anonymous": "Anónimo",
+    "wallets": "Carteiras",
+    "policies": "Regras",
+    "transactions": "Transaçōes",
+    "address_book": "Endereços",
+    "completed": "Realizado",
+    "pending": "Pendente",
+    "new_transfer": "Nova transferência",
+    "settings": "Configuraçōes",
+    "close": "Fechar"
+  },
+  "navigation": {
+    "main": {
+      "name": "Menu",
+      "items": {
+        "home": "Início",
+        "wallets": "Carteiras",
+        "transactions": "Transaçōes",
+        "address_book": "Endereços"
       }
+    },
+    "configuration": {
+      "name": "Configuração",
+      "items": {
+        "settings": "Sistema",
+        "logout": "Sair"
+      }
+    },
+    "profile": {
+      "profile": "Perfil",
+      "logout": "Sair"
     }
   }
 }

@@ -2,6 +2,8 @@ import { Locale, appInitConfig, supportedLocales } from '~/configs';
 import { AppTranslations } from '~/types';
 
 export class LocalesService {
+  static readonly localeStorageKey = 'locale';
+
   get supportedLocales(): Locale[] {
     return supportedLocales;
   }
@@ -12,6 +14,10 @@ export class LocalesService {
 
   async updatePageLocale(locale: Locale): Promise<void> {
     document.querySelector('html')?.setAttribute('lang', locale);
+  }
+
+  async saveLocale(locale: Locale): Promise<void> {
+    localStorage.setItem(LocalesService.localeStorageKey, locale);
   }
 
   async fetchLocaleMessages(locale: Locale): Promise<AppTranslations> {
@@ -35,7 +41,10 @@ export class LocalesService {
 
   resolveUserLocale(): Locale {
     const locale =
-      this.maybeResolveLocationLocale() || window.navigator.language || this.defaultLocale;
+      localStorage.getItem(LocalesService.localeStorageKey) ||
+      this.maybeResolveLocationLocale() ||
+      window.navigator.language ||
+      this.defaultLocale;
     const localeNoRegion = locale.split('-')?.[0] ?? this.defaultLocale;
 
     if (!this.supportedLocales.includes(localeNoRegion as Locale)) {

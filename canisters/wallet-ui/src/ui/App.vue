@@ -1,11 +1,22 @@
 <template>
-  <div id="app">
-    <h1>Hello App!</h1>
-    <p>
-      <router-link to="/">Go to Home</router-link> |
-      <router-link to="/about">Go to About</router-link>
-    </p>
-
-    <router-view></router-view>
-  </div>
+  <RouterView />
 </template>
+
+<script lang="ts" setup>
+import { watch } from 'vue';
+import { useTheme } from 'vuetify';
+import { useSettingsStore } from '~/ui/stores';
+
+const settings = useSettingsStore();
+const vuetifyTheme = useTheme();
+
+watch(
+  () => settings.theme,
+  theme => {
+    vuetifyTheme.global.name.value = theme;
+  },
+  {
+    immediate: true,
+  },
+);
+</script>

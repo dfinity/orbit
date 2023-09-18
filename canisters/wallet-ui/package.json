@@ -8,6 +8,12 @@
     "url": "https://github.com/dfinity/orbit-wallet.git",
     "directory": "canisters/wallet-ui"
   },
+  "engines": {
+    "node": "^18",
+    "pnpm": "^8",
+    "npm": "please use pnpm",
+    "yarn": "please use pnpm"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -17,6 +23,10 @@
     "format": "concurrently -n prettier,eslint \"prettier --ignore-path ../../.prettierignore --write .\" \"eslint --ext .js,.vue,.ts,.cjs --fix .\""
   },
   "dependencies": {
+    "@dfinity/agent": "0.19.2",
+    "@dfinity/auth-client": "0.19.2",
+    "@dfinity/principal": "0.19.2",
+    "@mdi/js": "7.2.96",
     "buffer": "6.0.3",
     "pinia": "2.1.6",
     "pino": "8.15.1",

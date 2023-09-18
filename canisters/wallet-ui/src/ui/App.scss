@@ -1,0 +1,103 @@
+@use './styles/Variables' as variables;
+
+@use 'vuetify' with (
+  $color-pack: true
+);
+
+// :root variables are available in the global scope and should be prefixed
+// with `--ds-` which stands for design system
+:root {
+  // colors
+  --ds-primary: var(--v-theme-primary);
+  --ds-primary-darker: var(--v-theme-primary-darken-1);
+  --ds-primary-darkest: var(--v-theme-primary-darken-2);
+  --ds-primary-lighter: var(--v-theme-primary-lighten-1);
+  --ds-primary-lightest: var(--v-theme-primary-lighten-2);
+  --ds-on-primary: var(--v-theme-on-primary);
+  --ds-on-primary-darker: var(--v-theme-on-primary-darken-1);
+  --ds-on-primary-darkest: var(--v-theme-on-primary-darken-2);
+  --ds-on-primary-lighter: var(--v-theme-on-primary-lighten-1);
+  --ds-on-primary-lightest: var(--v-theme-on-primary-lighten-2);
+  --ds-primary-variant: var(--v-theme-primary-variant);
+  --ds-primary-variant-darker: var(--v-theme-primary-variant-darken-1);
+  --ds-primary-variant-darkest: var(--v-theme-primary-variant-darken-2);
+  --ds-primary-variant-lighter: var(--v-theme-primary-variant-lighten-1);
+  --ds-primary-variant-lightest: var(--v-theme-primary-variant-lighten-2);
+  --ds-on-primary-variant: var(--v-theme-on-primary-variant);
+  --ds-on-primary-variant-darker: var(--v-theme-on-primary-variant-darken-1);
+  --ds-on-primary-variant-darkest: var(--v-theme-on-primary-variant-darken-2);
+  --ds-on-primary-variant-lighter: var(--v-theme-on-primary-variant-lighten-1);
+  --ds-on-primary-variant-lightest: var(--v-theme-on-primary-variant-lighten-2);
+  --ds-secondary: var(--v-theme-secondary);
+  --ds-secondary-darker: var(--v-theme-secondary-darken-1);
+  --ds-secondary-darkest: var(--v-theme-secondary-darken-2);
+  --ds-secondary-lighter: var(--v-theme-secondary-lighten-1);
+  --ds-secondary-lightest: var(--v-theme-secondary-lighten-2);
+  --ds-on-secondary: var(--v-theme-on-secondary);
+  --ds-on-secondary-darker: var(--v-theme-on-secondary-darken-1);
+  --ds-on-secondary-darkest: var(--v-theme-on-secondary-darken-2);
+  --ds-on-secondary-lighter: var(--v-theme-on-secondary-lighten-1);
+  --ds-on-secondary-lightest: var(--v-theme-on-secondary-lighten-2);
+  --ds-secondary-variant-variant: var(--v-theme-secondary-variant);
+  --ds-secondary-variant-darker: var(--v-theme-secondary-variant-darken-1);
+  --ds-secondary-variant-darkest: var(--v-theme-secondary-variant-darken-2);
+  --ds-secondary-variant-lighter: var(--v-theme-secondary-variant-lighten-1);
+  --ds-secondary-variant-lightest: var(--v-theme-secondary-variant-lighten-2);
+  --ds-on-secondary-variant: var(--v-theme-on-secondary-variant);
+  --ds-on-secondary-variant-darker: var(--v-theme-on-secondary-variant-darken-1);
+  --ds-on-secondary-variant-darkest: var(--v-theme-on-secondary-variant-darken-2);
+  --ds-on-secondary-variant-lighter: var(--v-theme-on-secondary-variant-lighten-1);
+  --ds-on-secondary-variant-lightest: var(--v-theme-on-secondary-variant-lighten-2);
+  --ds-background: var(--v-theme-background);
+  --ds-on-background: var(--v-theme-on-background);
+  --ds-surface: var(--v-theme-surface);
+  --ds-on-surface: var(--v-theme-on-surface);
+  --ds-background-border: var(--v-theme-background-border);
+
+  // content sizing
+  --ds-bdu: #{variables.$bdu};
+  --ds-toolbar-height: #{variables.$toolbar-height};
+  --ds-device-xs: #{variables.$device-xs};
+  --ds-device-sm: #{variables.$device-sm};
+  --ds-device-md: #{variables.$device-md};
+  --ds-device-lg: #{variables.$device-lg};
+  --ds-device-xl: #{variables.$device-xl};
+  --ds-device-xxl: #{variables.$device-xxl};
+  --ds-device-breakpoint: var(--ds-device-md);
+
+  // fonts
+  --ds-base-font-size: #{variables.$base-font-size};
+  --ds-font-size-xxs: calc(var(--ds-base-font-size) - 4px);
+  --ds-font-size-xs: calc(var(--ds-base-font-size) - 2px);
+  --ds-font-size-md: var(--ds-base-font-size);
+  --ds-font-size-lg: calc(var(--ds-base-font-size) + 2px);
+  --ds-font-size-xl: calc(var(--ds-base-font-size) + 4px);
+  --ds-font-size-xxl: calc(var(--ds-base-font-size) + 6px);
+
+  // borders
+  --ds-border-style: solid;
+  --ds-border-width: 1px;
+  --ds-border-primary: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-primary-darkest));
+  --ds-border-primary-variant: var(--ds-border-width) var(--ds-border-style)
+    rgb(var(--ds-primary-variant));
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+  background: rgb(var(--ds-background));
+  color: rgb(var(--ds-on-background));
+  font-size: var(--ds-font-size-md);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+a {
+  color: inherit;
+}

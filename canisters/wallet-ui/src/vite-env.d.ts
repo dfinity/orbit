@@ -9,6 +9,9 @@ interface ImportMetaEnv {
   readonly APP_VERSION: string;
   readonly APP_SUPPORTED_LOCALES: string;
   readonly APP_LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
+  readonly APP_WALLET_UI_CANISTER_ID: string;
+  readonly APP_INTERNET_IDENTITY_CANISTER_ID: string;
+  readonly APP_INTERNET_IDENTITY_PROVIDER_URL: string;
 }
 
 interface ImportMeta {
