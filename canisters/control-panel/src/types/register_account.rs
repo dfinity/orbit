@@ -11,6 +11,7 @@ pub enum RegisterAccountMainBankInput {
 pub struct RegisterAccountInput {
     pub name: Option<String>,
     pub main_bank: RegisterAccountMainBankInput,
+    pub use_shared_bank: bool,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

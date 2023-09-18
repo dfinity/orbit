@@ -1,6 +1,6 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = "orbit-control-panel"
+name = "control_panel"
 version = "0.1.0"
 edition = "2021"
 authors = ["DFINITY Stiftung"]
@@ -9,8 +9,12 @@ include = ["src", "Cargo.toml"]
 homepage = "https://github.com/dfinity/orbit-wallet#readme"
 repository = "https://github.com/dfinity/orbit-wallet"
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 candid = "0.9.6"
+getrandom = { version = "0.2", features = ["custom"] }
 ic-cdk = "0.10.0"
 ic-cdk-macros = "0.7.1"
 ic-cdk-timers = "0.4"

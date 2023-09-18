@@ -4,7 +4,7 @@ import { existsSync, readFileSync, readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
 import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vitest/config';
-import dfxConfig from './dfx.json';
+import dfxConfig from '../../dfx.json';
 
 const network = process.env.DFX_NETWORK ?? 'local';
 
@@ -13,8 +13,8 @@ const resolveCanisterIds = (): Map<string, string> => {
   const canisters = Object.entries(dfxConfig.canisters);
   const canisterIdsFilePath =
     network === 'local'
-      ? resolve(__dirname, '.dfx/local/canister_ids.json')
-      : resolve(__dirname, 'canister_ids.json');
+      ? resolve(__dirname, '../..', '.dfx/local/canister_ids.json')
+      : resolve(__dirname, '../..', 'canister_ids.json');
 
   if (!existsSync(canisterIdsFilePath)) {
     console.warn(`Canister ids file not found at ${canisterIdsFilePath}`);

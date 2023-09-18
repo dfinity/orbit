@@ -12,19 +12,28 @@
         }
       },
       "declarations": {
-        "output": "src/generated/internet-identity",
+        "output": "canisters/wallet-ui/src/generated/internet-identity",
         "node_compatibility": true
       }
     },
+    "control_panel": {
+      "type": "rust",
+      "package": "control_panel",
+      "candid": "canisters/control-panel/spec.did",
+      "declarations": {
+        "node_compatibility": true
+      },
+      "optimize": "cycles"
+    },
     "wallet_ui": {
       "type": "assets",
-      "source": ["dist/"],
+      "source": ["canisters/wallet-ui/dist/"],
       "frontend": {
-        "entrypoint": "dist/index.html"
+        "entrypoint": "canisters/wallet-ui/dist/index.html"
       },
-      "build": "pnpm build",
+      "build": "pnpm --filter '@dfinity/orbit-wallet-ui' build",
       "declarations": {
-        "output": "src/generated/wallet-ui",
+        "output": "canisters/wallet-ui/src/generated/wallet-ui",
         "node_compatibility": true
       }
     }
@@ -35,6 +44,6 @@
       "packtool": ""
     }
   },
-  "dfx": "0.14.3",
+  "dfx": "0.14.4",
   "version": 1
 }
