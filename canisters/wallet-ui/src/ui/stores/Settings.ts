@@ -6,12 +6,20 @@ import { Locale } from '~/configs/I18n';
 import { logger } from '~/core';
 import { SupportedTheme } from '~/types';
 import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
+import { GlobalNotification } from '~/ui/types';
 
 export interface SettingsStoreState {
   appName: string;
   theme: SupportedTheme;
   showSidebar: boolean;
+  notification: GlobalNotification;
 }
+
+export const defaultNotification: GlobalNotification = {
+  show: false,
+  message: '',
+  type: 'info',
+};
 
 export const useSettingsStore = defineStore('settings', {
   state: (): SettingsStoreState => {
@@ -19,6 +27,11 @@ export const useSettingsStore = defineStore('settings', {
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),
       showSidebar: true,
+      notification: {
+        show: false,
+        message: defaultNotification.message,
+        type: defaultNotification.type,
+      },
     };
   },
   getters: {
@@ -76,6 +89,13 @@ export const useSettingsStore = defineStore('settings', {
     },
     toogleSidebar(): void {
       this.showSidebar = !this.showSidebar;
+    },
+    setNotification(notification: GlobalNotification): void {
+      this.notification = {
+        show: notification.show,
+        message: notification.message,
+        type: notification.type,
+      };
     },
   },
 });

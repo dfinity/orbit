@@ -92,6 +92,7 @@ import { mdiAccountGroupOutline, mdiShieldLockOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { logger } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import { i18n } from '~/ui/modules';
 import { useAuthStore, useSettingsStore } from '~/ui/stores';
 
 const settings = useSettingsStore();
@@ -104,8 +105,14 @@ const performLogin = async (): Promise<void> => {
   await auth
     .signIn()
     .then(() => auth.afterLoginRedirect())
-    .catch(e => {
-      logger.error(`Authentication failed: ${e}`);
+    .catch((e: Error) => {
+      logger.error(`Authentication failed`, e);
+
+      settings.setNotification({
+        message: i18n.global.t('login.auth_failed'),
+        type: 'error',
+        show: true,
+      });
     })
     .finally(() => {
       isAuthenticating.value = false;

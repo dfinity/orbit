@@ -1,6 +1,6 @@
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
-import { readdirSync, readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
 import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vitest/config';
@@ -17,7 +17,8 @@ const resolveCanisterIds = (): Map<string, string> => {
       : resolve(__dirname, 'canister_ids.json');
 
   if (!existsSync(canisterIdsFilePath)) {
-    throw new Error(`Canister ids file not found at ${canisterIdsFilePath}`);
+    console.warn(`Canister ids file not found at ${canisterIdsFilePath}`);
+    return availableCanisters;
   }
 
   const config: Record<string, Record<string, string>> = JSON.parse(

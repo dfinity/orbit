@@ -3,7 +3,8 @@
     "title": "{app} {'{'}Carteira{'}'}"
   },
   "login": {
-    "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto"
+    "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto",
+    "auth_failed": "Login falhou, tente novamente"
   },
   "not_found": {
     "title": "Ups, 404",
@@ -45,7 +46,8 @@
     "completed": "Realizado",
     "pending": "Pendente",
     "new_transfer": "Nova transferência",
-    "settings": "Configuraçōes"
+    "settings": "Configuraçōes",
+    "close": "Fechar"
   },
   "navigation": {
     "main": {

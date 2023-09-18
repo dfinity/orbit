@@ -3,7 +3,8 @@
     "title": "{app} {'{'}Wallet{'}'}"
   },
   "login": {
-    "signin_slogan": "Securily connect to manage your crypto assets"
+    "signin_slogan": "Securily connect to manage your crypto assets",
+    "auth_failed": "Authentication failed, please try again."
   },
   "not_found": {
     "title": "Whoops, 404",
@@ -45,7 +46,8 @@
     "completed": "completed",
     "pending": "pending",
     "new_transfer": "New transfer",
-    "settings": "Settings"
+    "settings": "Settings",
+    "close": "Close"
   },
   "navigation": {
     "main": {

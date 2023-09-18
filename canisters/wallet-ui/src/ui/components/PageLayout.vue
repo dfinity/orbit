@@ -10,17 +10,33 @@
         <slot :name="slotName"></slot>
       </template>
     </MobileLayout>
+    <VSnackbar
+      v-model="settings.notification.show"
+      :absolute="true"
+      :close-on-content-click="true"
+      :color="settings.notification.type"
+      style="opacity: 0.9"
+      variant="elevated"
+      :location="notificationPosition"
+      timeout="4000"
+      transition="slide-x-reverse-transition"
+    >
+      {{ settings.notification.message }}
+      <template #actions>
+        <v-btn variant="text" @click="settings.notification.show = false">
+          {{ $t('terms.close') }}
+        </v-btn>
+      </template>
+    </VSnackbar>
   </VLayout>
 </template>
 
 <script lang="ts" setup>
+import { computed, provide, watch } from 'vue';
+import { useDisplay } from 'vuetify';
 import { useSettingsStore } from '~/ui/stores';
 import DesktopLayout from './DesktopLayout.vue';
 import MobileLayout from './MobileLayout.vue';
-import { computed } from 'vue';
-import { provide } from 'vue';
-import { useDisplay } from 'vuetify';
-import { watch } from 'vue';
 
 const settings = useSettingsStore();
 const slotNames = [
@@ -75,5 +91,9 @@ const layoutDeviceClass = computed(() => {
 
 const themeClass = computed(() => {
   return settings.isDarkTheme ? 'theme--dark' : 'theme--light';
+});
+
+const notificationPosition = computed(() => {
+  return settings.isMobile ? 'bottom center' : 'top right';
 });
 </script>
