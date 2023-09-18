@@ -9,6 +9,9 @@ export interface AppInitConfig {
     default: string;
     supportedLocales: string[];
   };
+  providers: {
+    internetIdentity: string;
+  }
 }
 
 export enum SupportedTheme {

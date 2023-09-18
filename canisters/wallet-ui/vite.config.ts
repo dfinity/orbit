@@ -105,7 +105,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     css: {
-      devSourcemap: !isProduction
+      devSourcemap: !isProduction,
     },
     test: {
       globals: true,
@@ -122,6 +122,9 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.APP_WALLET_UI_CANISTER_ID': JSON.stringify(canisters.get('wallet_ui')),
       'import.meta.env.APP_INTERNET_IDENTITY_CANISTER_ID': JSON.stringify(
         canisters.get('internet_identity'),
+      ),
+      'import.meta.env.APP_INTERNET_IDENTITY_PROVIDER_URL': JSON.stringify(
+        `http://${canisters.get('internet_identity')}.localhost:4943`,
       ),
     },
     resolve: {

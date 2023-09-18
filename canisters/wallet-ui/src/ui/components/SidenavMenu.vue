@@ -10,6 +10,7 @@
               <VListItem
                 v-for="item in section.items"
                 :key="item.name"
+                :exact="true"
                 :title="$t(item.localeKey)"
                 :value="item.name"
                 :to="isTo(item.action) ? item.action.handle($route) : undefined"

@@ -7,8 +7,10 @@ import {
   mdiWalletBifold,
 } from '@mdi/js';
 import { App } from 'vue';
+import { NavigationGuard } from 'vue-router';
+import { defaultHomeRoute, defaultLoginRoute, redirectToKey } from '~/ui/modules';
 import { useAuthStore } from '~/ui/stores';
-import { NavigationActionType, NavigationSection } from '~/ui/types';
+import { AuthState, NavigationActionType, NavigationSection } from '~/ui/types';
 
 const mainNavigation: NavigationSection[] = [
   {
@@ -96,6 +98,21 @@ class Navigation {
     app.config.globalProperties.$navigation = this.navigation;
   }
 }
+
+export const navigationGuard: NavigationGuard = async (to, _from, next) => {
+  const auth = useAuthStore();
+
+  if (to.meta.auth.requireState === AuthState.Authenticated && !auth.isAuthenticated) {
+    window?.sessionStorage.setItem(redirectToKey, to.fullPath);
+    return next({ name: defaultLoginRoute });
+  }
+
+  if (to.meta.auth.requireState === AuthState.Guest && auth.isAuthenticated) {
+    return next({ name: defaultHomeRoute });
+  }
+
+  return next();
+};
 
 declare module 'vue' {
   interface ComponentCustomProperties {

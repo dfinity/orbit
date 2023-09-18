@@ -8,7 +8,15 @@
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}
         </section>
-        <VBtn color="primary-variant" rounded width="300">{{ $t('terms.signin') }}</VBtn>
+        <VBtn
+          color="primary-variant"
+          rounded
+          width="300"
+          :loading="isAuthenticating"
+          @click.prevent="performLogin"
+        >
+          {{ $t('terms.signin') }}
+        </VBtn>
       </div>
     </template>
     <template v-else #topnav>
@@ -17,7 +25,15 @@
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}
         </section>
-        <VBtn color="primary-variant" rounded width="300">{{ $t('terms.signin') }}</VBtn>
+        <VBtn
+          color="primary-variant"
+          rounded
+          width="300"
+          :loading="isAuthenticating"
+          @click.prevent="performLogin"
+        >
+          {{ $t('terms.signin') }}
+        </VBtn>
       </div>
     </template>
 
@@ -72,12 +88,29 @@
 </template>
 
 <script lang="ts" setup>
+import { mdiAccountGroupOutline, mdiShieldLockOutline } from '@mdi/js';
+import { computed, ref } from 'vue';
+import { logger } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { mdiShieldLockOutline, mdiAccountGroupOutline } from '@mdi/js';
-import { useSettingsStore } from '~/ui/stores';
-import { computed } from 'vue';
+import { useAuthStore, useSettingsStore } from '~/ui/stores';
 
 const settings = useSettingsStore();
+const auth = useAuthStore();
+
+const isAuthenticating = ref(false);
+
+const performLogin = async (): Promise<void> => {
+  isAuthenticating.value = true;
+  await auth
+    .signIn()
+    .then(() => auth.afterLoginRedirect())
+    .catch(e => {
+      logger.error(`Authentication failed: ${e}`);
+    })
+    .finally(() => {
+      isAuthenticating.value = false;
+    });
+};
 
 const appLogoImg = computed(() => {
   return settings.isDarkTheme ? '/images/app-logo-dark.png' : '/images/app-logo-light.png';

@@ -51,6 +51,10 @@ const auth = useAuthStore();
 
   &__principal {
     font-size: var(--ds-font-size-xxs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 80%;
+    overflow: hidden;
   }
 }
 </style>

@@ -10,6 +10,9 @@ const appInitConfig: AppInitConfig = {
     default: defaultLocale,
     supportedLocales,
   },
+  providers: {
+    internetIdentity: import.meta.env.APP_INTERNET_IDENTITY_PROVIDER_URL,
+  },
 };
 
 export { appInitConfig };
