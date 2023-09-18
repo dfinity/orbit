@@ -1,6 +1,7 @@
 <template>
   <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
     <VNavigationDrawer
+      v-if="auth.isAuthenticated"
       v-model="settings.showSidebar"
       class="sidebar"
       width="260"
@@ -30,9 +31,9 @@
     <VMain class="body" full-height>
       <slot name="toolbar">
         <VToolbar density="compact" class="toolbar">
-          <div class="toolbar__context">
+          <div v-if="!isSetAndNotFalse(props.hideToolbarContext)" class="toolbar__context">
             <slot name="toolbar-context">
-              <BrandLogo v-if="auth.isAuthenticated" />
+              <BrandLogo />
             </slot>
           </div>
           <VSpacer />
@@ -127,6 +128,7 @@ const props = inject('pageLayoutProps', {
   hideMain: false,
   hideMainHeader: false,
   hideFooter: false,
+  hideToolbarContext: false,
 });
 
 const icLogoVertical = computed(() => {

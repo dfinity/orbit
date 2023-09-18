@@ -1,5 +1,5 @@
 <template>
-  <PageLayout :background-color="pageBackgroundColor">
+  <PageLayout :background-color="pageBackgroundColor" hide-toolbar-context>
     <template v-if="!settings.isMobile" #sidebar-header>
       <h1 class="signin__header__title">{{ $t('app.title', { app: settings.appName }) }}</h1>
     </template>
@@ -197,7 +197,7 @@ const pageBackgroundColor = computed(() => {
         max-width: 100%;
         min-height: 0;
         height: auto;
-        margin-top: calc(var(--ds-bdu) * 4);
+        margin-top: calc(var(--ds-bdu) * 1);
         padding: calc(var(--ds-bdu) * 2) calc(var(--ds-bdu) * 2);
         min-height: 0;
 

@@ -6,6 +6,10 @@ import './App.scss';
 export const initializeApp = () => {
   const app = createApp(App);
 
+  app.config.errorHandler = (err, instance, info) => {
+    console.error(err, instance, info);
+  };
+
   app.use(pinia);
   app.use(vuetify);
   app.use(i18n);

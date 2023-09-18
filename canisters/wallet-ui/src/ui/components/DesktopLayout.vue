@@ -3,12 +3,12 @@
     <VNavigationDrawer v-model="settings.showSidebar" class="sidebar" width="260" color="primary">
       <div class="sidebar__header">
         <slot name="sidebar-header">
-          <SidenavHeader />
+          <SidenavHeader v-if="auth.isAuthenticated" />
         </slot>
       </div>
       <div class="sidebar__nav">
         <slot name="sidebar-nav">
-          <SidenavMenu />
+          <SidenavMenu v-if="auth.isAuthenticated" />
         </slot>
       </div>
       <div class="sidebar__footer">
@@ -24,8 +24,9 @@
     <VMain class="body" full-height>
       <slot name="toolbar">
         <VToolbar density="compact" class="toolbar">
-          <div class="toolbar__context">
+          <div v-if="!isSetAndNotFalse(props.hideToolbarContext)" class="toolbar__context">
             <slot name="toolbar-context">
+              <BrandLogo v-if="!auth.isAuthenticated" />
               <VBtn
                 v-if="auth.isAuthenticated"
                 :icon="mdiMenuOpen"
@@ -98,12 +99,13 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiWeatherNight, mdiWeatherSunny, mdiMenuOpen } from '@mdi/js';
+import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
+import BrandLogo from '~/ui/components/BrandLogo.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
-import { useSettingsStore, useAuthStore } from '~/ui/stores';
+import { useAuthStore, useSettingsStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
 
 const settings = useSettingsStore();
@@ -116,6 +118,7 @@ const props = inject('pageLayoutProps', {
   hideMain: false,
   hideMainHeader: false,
   hideFooter: false,
+  hideToolbarContext: false,
 });
 
 const icLogoHorizontal = computed(() => {

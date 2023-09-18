@@ -62,6 +62,7 @@ const props = withDefaults(
     hideMain?: string | boolean;
     hideMainHeader?: string | boolean;
     hideFooter?: string | boolean;
+    hideToolbarContext?: string | boolean;
   }>(),
   {
     backgroundColor: undefined,
@@ -70,6 +71,7 @@ const props = withDefaults(
     hideMain: false,
     hideMainHeader: false,
     hideFooter: false,
+    hideToolbarContext: false,
   },
 );
 
