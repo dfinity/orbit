@@ -12,11 +12,11 @@ const vuetifyTheme = useTheme();
 
 watch(
   () => settings.theme,
-  (theme) => {
+  theme => {
     vuetifyTheme.global.name.value = theme;
   },
   {
     immediate: true,
-  }
+  },
 );
 </script>

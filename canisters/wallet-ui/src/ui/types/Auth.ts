@@ -11,6 +11,6 @@ export interface AuthRouteMeta {
 declare module 'vue-router' {
   interface RouteMeta {
     // must be declared by every route
-    auth: AuthRouteMeta
+    auth: AuthRouteMeta;
   }
 }

@@ -31,7 +31,6 @@ const auth = useAuthStore();
 </script>
 
 <style scoped lang="scss">
-
 .side-actions {
   height: var(--ds-toolbar-height);
   display: flex;

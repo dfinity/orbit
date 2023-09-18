@@ -26,7 +26,6 @@ import PageLayout from '~/ui/components/PageLayout.vue';
 </script>
 
 <style scoped lang="scss">
-
 .header-actions {
   display: flex;
   justify-content: end;

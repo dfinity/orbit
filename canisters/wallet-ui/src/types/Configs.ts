@@ -11,7 +11,7 @@ export interface AppInitConfig {
   };
   providers: {
     internetIdentity: string;
-  }
+  };
 }
 
 export enum SupportedTheme {

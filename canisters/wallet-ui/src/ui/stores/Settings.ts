@@ -41,9 +41,7 @@ export const useSettingsStore = defineStore('settings', {
     },
   },
   actions: {
-    async init(): Promise<void> {
-
-    },
+    async init(): Promise<void> {},
     async useLocale(locale: Locale, persist = false): Promise<void> {
       const isLoadedLocale = i18n.global.availableLocales.includes(locale);
       if (isLoadedLocale && i18n.global.locale.value === locale) {
