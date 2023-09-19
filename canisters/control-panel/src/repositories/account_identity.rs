@@ -70,7 +70,7 @@ mod tests {
             id: Principal::anonymous(),
         };
         let identity = AccountIdentity {
-            id: key.id.clone(),
+            id: key.id,
             name: None,
             status: AccountIdentityStatus::PendingActivation,
             last_update_timestamp: Default::default(),
@@ -91,7 +91,7 @@ mod tests {
             id: Principal::anonymous(),
         };
         let previous_identity = AccountIdentity {
-            id: key.id.clone(),
+            id: key.id,
             name: None,
             status: AccountIdentityStatus::PendingActivation,
             last_update_timestamp: Default::default(),
@@ -100,7 +100,7 @@ mod tests {
         repository.insert(key.clone(), previous_identity.clone());
 
         let new_identity = AccountIdentity {
-            id: key.id.clone(),
+            id: key.id,
             name: Some(String::from("test")),
             status: AccountIdentityStatus::PendingActivation,
             last_update_timestamp: Default::default(),
@@ -119,7 +119,7 @@ mod tests {
             id: Principal::anonymous(),
         };
         let identity = AccountIdentity {
-            id: key.id.clone(),
+            id: key.id,
             name: None,
             status: AccountIdentityStatus::PendingActivation,
             last_update_timestamp: Default::default(),

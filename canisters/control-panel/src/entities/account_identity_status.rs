@@ -1,5 +1,5 @@
 use candid::{CandidType, Decode, Deserialize, Encode};
-use ic_stable_structures::{Storable, BoundedStorable};
+use ic_stable_structures::{BoundedStorable, Storable};
 use std::{borrow::Cow, fmt::Display};
 
 /// Represents the possible states of an account identity.
