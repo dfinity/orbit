@@ -1,8 +1,7 @@
-use std::borrow::Cow;
-use candid::{CandidType, Deserialize, Decode, Encode, Principal};
+use crate::core::MAX_BYTE_SIZE_PRINCIPAL;
+use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_stable_structures::{BoundedStorable, Storable};
-
-use crate::core::MAX_PRINCIPAL_BYTE_SIZE;
+use std::borrow::Cow;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Bank {
@@ -19,7 +18,7 @@ impl Bank {
 
 impl Bank {
     /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_PRINCIPAL_BYTE_SIZE;
+    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_PRINCIPAL;
     pub const MAX_BYTE_SIZE_NAME: u32 = 150;
     pub const MAX_BYTE_SIZE_IS_MAIN: u32 = 1;
 

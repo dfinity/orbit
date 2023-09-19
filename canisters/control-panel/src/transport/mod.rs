@@ -20,3 +20,7 @@ pub use manage_bank::*;
 /// Account Identity DTOs.
 mod account_identity;
 pub use account_identity::*;
+
+/// Canister hooks DTOs.
+mod canister;
+pub use canister::*;

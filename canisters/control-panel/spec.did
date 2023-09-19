@@ -7,9 +7,9 @@ type UUID = text;
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
-  code: text;
+  code : text;
   // Error message to be displayed to the user.
-  message: opt text;
+  message : opt text;
 };
 
 // The status of an account identity.
@@ -23,60 +23,60 @@ type AccountIdentityStatus = variant {
 // The identity of an account.
 type AccountIdentity = record {
   // The identity of the account.
-  id: principal;
+  id : principal;
   // A friendly name for the account identity.
-  name: opt text;
+  name : opt text;
   // The status of the identity.
-  status: AccountIdentityStatus;
+  status : AccountIdentityStatus;
 };
 
 // The user account information.
 type Account = record {
   // The UUID associated with the account.
-  id: UUID;
+  id : UUID;
   // The name of the account.
-  name: opt text;
+  name : opt text;
   // The identities associated with the account.
   // One identity can only be associated with one account.
-  identities: vec AccountIdentity;
+  identities : vec AccountIdentity;
   // Main bank used to show in the UI for this account.
-  main_bank: opt BankID;
+  main_bank : opt BankID;
 };
 
 // The result of managing an account.
 type ManageAccountInput = record {
   // The name of the account.
-  name: opt text;
-  // The main bank to use for this account. 
-  // 
+  name : opt text;
+  // The main bank to use for this account.
+  //
   // If not set, and the shared bank is enabled, then it will be used as the main bank.
-  main_bank: opt BankID;
+  main_bank : opt BankID;
   // Wether or not to use a shared bank for this account.
-  use_shared_bank: opt bool;
-  // The identities to associate with the account, this should add all the identities as 
+  use_shared_bank : opt bool;
+  // The identities to associate with the account, this should add all the identities as
   // they are overriden on each call if specified.
-  identities: opt vec AccountIdentity;
+  identities : opt vec AccountIdentity;
 };
 
 // The result of managing an account.
 type ManageAccountResult = variant {
   // Successfull operation result.
-  Ok: record {
+  Ok : record {
     // The updated account information.
-    account: Account;
+    account : Account;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The bank information.
 type Bank = record {
   // The id associated with the bank.
-  id: BankID;
+  id : BankID;
   // The name of the bank.
-  name: text;
+  name : text;
   // Wether or not this bank is the main bank for the account.
-  main: bool;
+  main : bool;
 };
 
 // Items that are returned when listing banks.
@@ -85,77 +85,85 @@ type BankListItem = Bank;
 // The result of listing banks.
 type ListBanksResult = variant {
   // The list of banks.
-  Ok: record {
+  Ok : record {
     // The list of banks.
-    banks: vec BankListItem;
+    banks : vec BankListItem;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The result of getting the main bank.
 type GetMainBankResult = variant {
   // The main bank for the given account.
-  Ok: record {
+  Ok : record {
     // The main bank for the given account.
-    bank: opt Bank;
+    bank : opt Bank;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
+};
+
+// The init configuration for the default bank canister.
+type DefaultBankInit = variant {
+  // Create a new shared bank canister that the control panel can manage.
+  InitSharedBankCanister;
+  // Use a specified bank canister.
+  SpecifiedBankCanister : BankID;
 };
 
 // The init configuration for the control panel.
-type ControlPanelInit = record {
-  // Wether or not to init a share bank canister.
-  init_shared_bank: bool;
+type CanisterInit = record {
+  // How to initialize the default bank canister.
+  default_bank : DefaultBankInit;
 };
 
 // The input for creating/updating a bank.
 type BankInput = record {
   // The bank id.
-  id: BankID;
+  id : BankID;
   // A friendly name for the bank.
-  name: opt text;
+  name : opt text;
   // Wether or not this bank should be the main bank for the account.
-  main: opt bool;
+  main : opt bool;
 };
 
 // The input for managing banks information.
 type ManageBanksInput = variant {
   // Appends the given banks to the account, if the bank already exists it will be updated.
-  Append: vec BankInput;
+  Append : vec BankInput;
   // Overrides the existing banks associated with the account.
-  Override: vec BankInput;
+  Override : vec BankInput;
   // Removes the given banks from the account.
-  Remove: vec BankID;
+  Remove : vec BankID;
 };
 
 // The result of managing banks.
 type ManageBanksResult = variant {
   // Sucessfull operation result.
-  Ok: record {
+  Ok : record {
     // The list of banks associated with the account.
-    bank: vec Bank;
+    bank : vec Bank;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The result of getting the account information.
 type AccountInfoResult = variant {
   // Successfull operation result.
-  Ok: record {
+  Ok : record {
     // The caller account information.
-    account: Account;
+    account : Account;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The input for the main bank when registering an account.
 type RegisterAccountBankInput = variant {
   // Use a private bank canister.
-  PrivateBank: BankID;
+  PrivateBank : BankID;
   // Use a shared bank canister.
   SharedBank;
 };
@@ -163,75 +171,75 @@ type RegisterAccountBankInput = variant {
 // The input for registering an account.
 type RegisterAccountInput = record {
   // The name of the account.
-  name: opt text;
+  name : opt text;
   // A bank canister to use for this account.
-  main_bank: RegisterAccountBankInput;
+  main_bank : RegisterAccountBankInput;
   // Wether or not to also use a shared bank for this account.
-  use_shared_bank: bool;
+  use_shared_bank : bool;
 };
 
 // The result of registering an account.
 type RegisterAccountResult = variant {
   // Successfull operation result.
-  Ok: record {
+  Ok : record {
     // The caller newly created account information.
-    account: Account;
+    account : Account;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The input for associating an identity with an existing account.
 type AssociateIdentityWithAccountInput = record {
   // The account to associate the identity with.
-  account_id: UUID;
+  account_id : UUID;
 };
 
 // The result of associating an account with an identity.
 type AssociateIdentityWithAccountResult = variant {
   // Successfull operation result.
-  Ok: record {
-    // The account information if the identity was already added to 
+  Ok : record {
+    // The account information if the identity was already added to
     // the account and this operation just activated it.
-    account: opt Account;
+    account : opt Account;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The result of removing the account associated with the caller.
 type RemoveAccountResult = variant {
   // Successfull operation result.
-  Ok: record {
+  Ok : record {
     // The caller account that was removed.
-    account: Account;
+    account : Account;
   };
   // A list of errors that occurred during the operation, if any.
-  Errors: vec Error;
+  Errors : vec Error;
 };
 
 // The control panel service definition.
-service : (opt ControlPanelInit) -> {
+service : (opt CanisterInit) -> {
   // Get the account information for the caller.
-  account_info: () -> (AccountInfoResult) query;
+  account_info : () -> (AccountInfoResult) query;
   // Manage the account associated with the caller.
-  manage_account: (input: ManageAccountInput) -> (ManageAccountResult);
+  manage_account : (input : ManageAccountInput) -> (ManageAccountResult);
   // Create a new account for the caller.
-  register_account: (input: RegisterAccountInput) -> (RegisterAccountResult);
+  register_account : (input : RegisterAccountInput) -> (RegisterAccountResult);
   // Add account identity to the caller account, one identity can only be associated with one account.
   //
   // This operation should be called with the identity that is being associated with the account
   // after one identity that is already associated with the account has already approved the association.
-  // 
-  // If the identity being associated is already attached with another account, this operation will fail, 
+  //
+  // If the identity being associated is already attached with another account, this operation will fail,
   // and the identity will need to be removed from the other account before it can be associated with this account.
-  associate_identity_with_account: (input: AssociateIdentityWithAccountInput) -> (AssociateIdentityWithAccountResult);
+  associate_identity_with_account : (input : AssociateIdentityWithAccountInput) -> (AssociateIdentityWithAccountResult);
   // Delete account associated with the caller.
-  delete_account: () -> (RemoveAccountResult);
+  delete_account : () -> (RemoveAccountResult);
   // List all the banks associated with the caller.
-  list_banks: () -> (ListBanksResult) query;
+  list_banks : () -> (ListBanksResult) query;
   // Get main bank for the caller account.
-  get_main_bank: () -> (GetMainBankResult) query;
+  get_main_bank : () -> (GetMainBankResult) query;
   // Manage banks associated with the user account.
-  manage_banks: (input: ManageBanksInput) -> (ManageBanksResult);
-}
+  manage_banks : (input : ManageBanksInput) -> (ManageBanksResult);
+};

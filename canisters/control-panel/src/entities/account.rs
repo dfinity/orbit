@@ -1,4 +1,4 @@
-use crate::core::{MAX_PRINCIPAL_BYTE_SIZE, MAX_UUID_BYTE_SIZE, UUID};
+use crate::core::{MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
@@ -34,11 +34,11 @@ impl Account {
     pub const MAX_ACCOUNT_IDENTITIES: u32 = 10;
 
     /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_UUID_BYTE_SIZE;
+    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_UUID;
     pub const MAX_BYTE_SIZE_NAME: u32 = 150;
-    pub const MAX_BYTE_SIZE_MAIN_BANK: u32 = MAX_PRINCIPAL_BYTE_SIZE;
+    pub const MAX_BYTE_SIZE_MAIN_BANK: u32 = MAX_BYTE_SIZE_PRINCIPAL;
     pub const MAX_BYTE_SIZE_MAIN_IDENTITIES: u32 =
-        MAX_PRINCIPAL_BYTE_SIZE * Self::MAX_ACCOUNT_IDENTITIES;
+        MAX_BYTE_SIZE_PRINCIPAL * Self::MAX_ACCOUNT_IDENTITIES;
 
     /// The maximum size of an AccountIdentity in stable memory.
     pub const MAX_BYTE_SIZE: u32 = 4096;

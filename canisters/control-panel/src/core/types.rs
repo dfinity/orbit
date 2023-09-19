@@ -30,3 +30,6 @@ pub type UUID = Vec<u8>;
 
 /// A principal id that identifies objects within the system.
 pub type PrincipalID = Vec<u8>;
+
+/// A timestamp in nano seconds since epoch.
+pub type Timestamp = u64;
