@@ -1,4 +1,7 @@
-use crate::entities::{Account, AccountIdentity, BankID};
+use crate::{
+    core::PrincipalID,
+    entities::{Account, AccountIdentity},
+};
 use candid::{CandidType, Deserialize};
 
 /// The input to manage an account.
@@ -7,7 +10,7 @@ pub struct ManageAccountInput {
     /// The name to give the account.
     pub name: Option<String>,
     /// The main bank to use for the account.
-    pub bank: Option<BankID>,
+    pub bank: Option<PrincipalID>,
     /// Whether to use a shared bank for the account.
     pub use_shared_bank: Option<bool>,
     /// The identities to associate with the account.
@@ -26,7 +29,7 @@ pub struct DeleteAccountResponse {
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum RegisterAccountMainBankInput {
-    PrivateBank(BankID),
+    PrivateBank(PrincipalID),
     SharedBank,
 }
 

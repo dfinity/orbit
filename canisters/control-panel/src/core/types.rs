@@ -24,3 +24,9 @@ pub enum ServiceResult<Data = ()> {
     /// The errors that occurred if unsuccessful.
     Errors(Vec<ServiceError>),
 }
+
+/// A UUID that identifies objects within the system.
+pub type UUID = Vec<u8>;
+
+/// A principal id that identifies objects within the system.
+pub type PrincipalID = Vec<u8>;

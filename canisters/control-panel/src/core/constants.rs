@@ -1,0 +1,2 @@
+pub const MAX_PRINCIPAL_BYTE_SIZE: u32 = 29;
+pub const MAX_UUID_BYTE_SIZE: u32 = 16;
