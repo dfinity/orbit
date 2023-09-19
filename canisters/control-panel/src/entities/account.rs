@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize};
 use uuid::Uuid;
 
 /// A UUID that identifies an account within the system.
-pub type AccountID = Vec<u8>;
+pub type AccountID = String;
 
 /// The identity of an account.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -21,7 +21,7 @@ pub struct Account {
 impl Default for Account {
     fn default() -> Self {
         Self {
-            id: Uuid::new_v4().as_bytes().to_vec(),
+            id: Uuid::new_v4().to_string(),
             name: None,
             main_bank: None,
             identities: Vec::new(),

@@ -80,12 +80,7 @@ type Bank = record {
 };
 
 // Items that are returned when listing banks.
-type BankListItem = record {
-  // The bank id.
-  id: BankID;
-  // A friendly name for the bank.
-  name: text;
-};
+type BankListItem = Bank;
 
 // The result of listing banks.
 type ListBanksResult = variant {
@@ -189,7 +184,7 @@ type RegisterAccountResult = variant {
 // The input for associating an identity with an existing account.
 type AssociateIdentityWithAccountInput = record {
   // The account to associate the identity with.
-  accountId: UUID;
+  account_id: UUID;
 };
 
 // The result of associating an account with an identity.
@@ -223,12 +218,6 @@ service : (opt ControlPanelInit) -> {
   manage_account: (input: ManageAccountInput) -> (ManageAccountResult);
   // Create a new account for the caller.
   register_account: (input: RegisterAccountInput) -> (RegisterAccountResult);
-  // List all the banks associated with the caller.
-  list_banks: () -> (ListBanksResult) query;
-  // Get main bank for the given account.
-  get_main_bank: () -> (GetMainBankResult) query;
-  // Manage banks associated with the user account.
-  manage_banks: (input: ManageBanksInput) -> (ManageBanksResult);
   // Add account identity to the caller account, one identity can only be associated with one account.
   //
   // This operation should be called with the identity that is being associated with the account
@@ -239,4 +228,10 @@ service : (opt ControlPanelInit) -> {
   associate_identity_with_account: (input: AssociateIdentityWithAccountInput) -> (AssociateIdentityWithAccountResult);
   // Delete account associated with the caller.
   delete_account: () -> (RemoveAccountResult);
+  // List all the banks associated with the caller.
+  list_banks: () -> (ListBanksResult) query;
+  // Get main bank for the caller account.
+  get_main_bank: () -> (GetMainBankResult) query;
+  // Manage banks associated with the user account.
+  manage_banks: (input: ManageBanksInput) -> (ManageBanksResult);
 }
