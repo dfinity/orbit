@@ -1,6 +1,7 @@
 use super::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, WASM_PAGE_SIZE};
+use crate::core::ic::api::time;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_cdk::{api::time, trap};
+use ic_cdk::trap;
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
 

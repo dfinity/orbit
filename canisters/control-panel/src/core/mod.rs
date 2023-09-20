@@ -19,3 +19,10 @@ pub use types::*;
 /// Common repository utils.
 mod repository;
 pub use repository::*;
+
+/// Internet Computer utils.
+pub mod ic;
+
+/// Common utils.
+mod utils;
+pub use utils::*;

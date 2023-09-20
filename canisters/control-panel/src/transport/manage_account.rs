@@ -1,8 +1,5 @@
-use crate::{
-    core::PrincipalID,
-    entities::{Account, AccountIdentity},
-};
-use candid::{CandidType, Deserialize};
+use super::{AccountDTO, AccountIdentityDTO};
+use candid::{CandidType, Deserialize, Principal};
 
 /// The input to manage an account.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -10,37 +7,44 @@ pub struct ManageAccountInput {
     /// The name to give the account.
     pub name: Option<String>,
     /// The main bank to use for the account.
-    pub bank: Option<PrincipalID>,
+    pub bank: Option<Principal>,
     /// Whether to use a shared bank for the account.
     pub use_shared_bank: Option<bool>,
     /// The identities to associate with the account.
-    pub identities: Option<Vec<AccountIdentity>>,
+    pub identities: Option<Vec<AccountIdentityDTO>>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ManageAccountResponse {
-    pub account: Account,
+    pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct DeleteAccountResponse {
-    pub account: Account,
+    pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum RegisterAccountMainBankInput {
-    PrivateBank(PrincipalID),
+pub struct RegisterAccountBankSharedInput {
+    pub is_main: bool,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum RegisterAccountBankInput {
+    PrivateBank {
+        id: Principal,
+        use_shared_bank: Option<RegisterAccountBankSharedInput>,
+    },
     SharedBank,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegisterAccountInput {
     pub name: Option<String>,
-    pub main_bank: RegisterAccountMainBankInput,
-    pub use_shared_bank: bool,
+    pub bank: RegisterAccountBankInput,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegisterAccountResponse {
-    pub account: Account,
+    pub account: AccountDTO,
 }

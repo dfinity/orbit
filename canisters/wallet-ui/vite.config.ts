@@ -26,10 +26,9 @@ const resolveCanisterIds = (): Map<string, string> => {
   );
   for (const [canisterName] of canisters) {
     const details = config[canisterName];
-    if (!details[network]) {
-      throw new Error(
-        `Canister ${canisterName} does not have a defined canister id for ${network}`,
-      );
+    if (!details?.[network]) {
+      console.warn(`Canister ${canisterName} does not have a defined canister id for ${network}`);
+      continue;
     }
 
     availableCanisters.set(canisterName, details[network]);

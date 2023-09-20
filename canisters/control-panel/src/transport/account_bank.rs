@@ -1,20 +1,20 @@
-use super::AccountDTO;
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AccountIdentityDTO {
-    pub identity: Principal,
+pub struct AccountBankDTO {
+    pub canister_id: Principal,
     pub account_id: String,
     pub name: Option<String>,
-    pub status: String,
+}
+
+pub type BankListItem = AccountBankDTO;
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct ListBanksResponse {
+    pub banks: Vec<BankListItem>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AssociateIdentityWithAccountInput {
-    pub account_id: String,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AssociateIdentityWithAccountResponse {
-    pub account: Option<AccountDTO>,
+pub struct GetMainBankResponse {
+    pub bank: AccountBankDTO,
 }

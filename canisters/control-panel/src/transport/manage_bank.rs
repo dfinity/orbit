@@ -1,9 +1,9 @@
-use crate::{core::PrincipalID, entities::Bank};
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
+use super::AccountBankDTO;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct BankInput {
-    pub id: PrincipalID,
+    pub id: Principal,
     pub name: Option<String>,
     pub main: Option<bool>,
 }
@@ -12,10 +12,10 @@ pub struct BankInput {
 pub enum ManageBanksInput {
     Append(Vec<BankInput>),
     Override(Vec<BankInput>),
-    Remove(Vec<PrincipalID>),
+    Remove(Vec<Principal>),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ManageBanksResponse {
-    pub banks: Vec<Bank>,
+    pub banks: Vec<AccountBankDTO>,
 }

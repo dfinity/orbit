@@ -6,8 +6,8 @@ mod account;
 pub use account::*;
 
 /// Bank DTOs.
-mod bank;
-pub use bank::*;
+mod account_bank;
+pub use account_bank::*;
 
 /// Manage account DTOs.
 mod manage_account;

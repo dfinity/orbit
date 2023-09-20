@@ -1,13 +1,5 @@
-//! Canister services entrypoints.
+//! Canister services used to handle the necessary business logic for the control panel.
 
 /// Account services.
 mod account;
 pub use account::*;
-
-/// Canister lifecycle hooks.
-mod canister;
-pub use canister::*;
-
-/// Bank services.
-mod bank;
-pub use bank::*;

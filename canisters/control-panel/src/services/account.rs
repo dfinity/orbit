@@ -1,55 +1,106 @@
-//! Account services.
 use crate::{
-    core::ServiceResult,
-    transport::{
-        AccountInfoResponse, AssociateIdentityWithAccountInput,
-        AssociateIdentityWithAccountResponse, DeleteAccountResponse, ManageAccountInput,
-        ManageAccountResponse, RegisterAccountInput, RegisterAccountResponse,
-    },
+    core::{generate_uuid_v4, ApiError, CallContext, Repository, ServiceResult},
+    entities::{Account, AccountIdentity, AccountIdentityStatus},
+    errors::AccountRegistrationError,
+    mappers::{AccountIdentityMapper, AccountMapper},
+    repositories::{AccountIdentityRepository, AccountRepository},
+    transport::RegisterAccountInput,
 };
-use candid::candid_method;
-use ic_cdk_macros::{query, update};
+use uuid::Uuid;
 
-#[candid_method(query)]
-#[query(name = "account_info")]
-async fn account_info() -> ServiceResult<AccountInfoResponse> {
-    println!("account info called");
-    unimplemented!()
+pub struct AccountService {
+    context: CallContext,
+    account_repository: AccountRepository,
+    account_identity_repository: AccountIdentityRepository,
+    account_mapper: AccountMapper,
+    account_identity_mapper: AccountIdentityMapper,
 }
 
-#[candid_method(update)]
-#[update(name = "register_account")]
-async fn register_account(input: RegisterAccountInput) -> ServiceResult<RegisterAccountResponse> {
-    println!("input name = {:?}", input.name);
-    println!("input main_bank = {:?}", input.main_bank);
-    unimplemented!()
+impl Default for AccountService {
+    fn default() -> Self {
+        Self {
+            context: CallContext::active(),
+            account_repository: AccountRepository::default(),
+            account_identity_repository: AccountIdentityRepository::default(),
+            account_mapper: AccountMapper::default(),
+            account_identity_mapper: AccountIdentityMapper::default(),
+        }
+    }
 }
 
-#[candid_method(update)]
-#[update(name = "manage_account")]
-async fn manage_account(input: ManageAccountInput) -> ServiceResult<ManageAccountResponse> {
-    println!("input name = {:?}", input.name);
-    println!("input identities = {:?}", input.identities);
-    println!("input use_shared_bank = {:?}", input.use_shared_bank);
-    println!("input bank = {:?}", input.bank);
-    unimplemented!()
-}
+impl AccountService {
+    pub fn new(
+        context: CallContext,
+        account_repository: AccountRepository,
+        account_identity_repository: AccountIdentityRepository,
+        account_mapper: AccountMapper,
+        account_identity_mapper: AccountIdentityMapper,
+    ) -> Self {
+        Self {
+            context,
+            account_repository,
+            account_identity_repository,
+            account_mapper,
+            account_identity_mapper,
+        }
+    }
 
-#[candid_method(update)]
-#[update(name = "associate_identity_with_account")]
-async fn associate_identity_with_account(
-    input: AssociateIdentityWithAccountInput,
-) -> ServiceResult<AssociateIdentityWithAccountResponse> {
-    println!(
-        "associate_identity_with_account called, {:?}",
-        input.account_id
-    );
-    unimplemented!()
-}
+    /// Registers a new account for the caller.
+    pub async fn register_account(
+        &self,
+        input: &RegisterAccountInput,
+    ) -> ServiceResult<Account, ApiError> {
+        let account_identity = self
+            .account_identity_repository
+            .find_by_identity_id(&self.context.caller)?;
 
-#[candid_method(update)]
-#[update(name = "delete_account")]
-async fn delete_account() -> ServiceResult<DeleteAccountResponse> {
-    println!("delete_Account was called");
-    unimplemented!()
+        match account_identity {
+            Some(entry) => {
+                if entry.status == AccountIdentityStatus::Active {
+                    let formatted_account_id = Uuid::from_bytes(entry.account_id)
+                        .as_hyphenated()
+                        .to_string();
+                    return Err(
+                        AccountRegistrationError::IdentityAssociatedWithAnotherAccount {
+                            account_id: formatted_account_id,
+                        }
+                        .into(),
+                    );
+                }
+
+                // If the associated account is not active, remove the association to allow the
+                // user to continue with the registration.
+                self.account_identity_repository
+                    .remove(&AccountIdentity::key(&entry.identity, &entry.account_id));
+            }
+            _ => {}
+        }
+
+        let account_id = generate_uuid_v4().await.as_bytes().to_owned();
+        if self.account_repository.find_by_id(&account_id)?.is_some() {
+            return Err(AccountRegistrationError::AccountIdAlreadyExists.into());
+        }
+
+        self.account_repository.find_by_id(&account_id)?;
+
+        let account = self.account_mapper.map_register_account_input_to_account(
+            input.clone(),
+            account_id,
+            self.context.caller.clone(),
+        );
+        let account_identity = self
+            .account_identity_mapper
+            .map_account_identity_for_registration(account_id, self.context.caller);
+
+        self.account_repository.insert(
+            self.account_mapper.map_account_to_account_key(&account),
+            account.clone(),
+        );
+        self.account_identity_repository.insert(
+            AccountIdentity::key(&account_identity.identity, &account_identity.account_id),
+            account_identity,
+        );
+
+        Ok(account)
+    }
 }

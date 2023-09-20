@@ -1,22 +1,27 @@
 use super::AccountIdentityStatus;
-use crate::core::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL};
+use crate::core::ic::api::time;
+use crate::core::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_cdk::api::time;
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
 
 /// The key used to store an account identity in stable memory.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct AccountIdentityKey {
-    /// The principal ID of the identity.
-    pub id: Principal,
+pub struct AccountIdentityKey(Vec<u8>);
+
+impl Default for AccountIdentityKey {
+    fn default() -> Self {
+        AccountIdentity::key(&Principal::anonymous(), &UUID::default())
+    }
 }
 
 /// The identity of an account.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AccountIdentity {
     /// The principal ID of the identity.
-    pub id: Principal,
+    pub identity: Principal,
+    /// The account_id of the identity.
+    pub account_id: UUID,
     /// The name of the identity (if any).
     pub name: Option<String>,
     /// The status of the identity.
@@ -28,7 +33,8 @@ pub struct AccountIdentity {
 impl Default for AccountIdentity {
     fn default() -> Self {
         Self {
-            id: Principal::anonymous(),
+            identity: Principal::anonymous(),
+            account_id: UUID::default(),
             name: None,
             status: AccountIdentityStatus::PendingActivation,
             last_update_timestamp: time(),
@@ -38,9 +44,10 @@ impl Default for AccountIdentity {
 
 impl AccountIdentity {
     /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_PRINCIPAL;
+    pub const MAX_BYTE_SIZE_IDENTITY: u32 = MAX_BYTE_SIZE_PRINCIPAL;
     pub const MAX_BYTE_SIZE_NAME: u32 = 100;
     pub const MAX_BYTE_SIZE_STATUS: u32 = AccountIdentityStatus::MAX_BYTE_SIZE;
+    pub const MAX_BYTE_SIZE_ACCOUNT_ID: u32 = MAX_BYTE_SIZE_UUID;
     pub const MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
 
     /// The maximum size of an AccountIdentity in stable memory.
@@ -49,21 +56,31 @@ impl AccountIdentity {
     /// The number of bytes that are not used by the account and could be used to add more fields to the account
     /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
-        - Self::MAX_BYTE_SIZE_ID
+        - Self::MAX_BYTE_SIZE_IDENTITY
         - Self::MAX_BYTE_SIZE_NAME
-        - Self::MAX_BYTE_SIZE_STATUS;
+        - Self::MAX_BYTE_SIZE_STATUS
+        - Self::MAX_BYTE_SIZE_ACCOUNT_ID;
+
+    pub fn key(identity: &Principal, account_id: &UUID) -> AccountIdentityKey {
+        let mut key = identity.as_slice().to_vec();
+        key.extend(account_id);
+
+        AccountIdentityKey(key)
+    }
 }
 
 impl AccountIdentityKey {
     /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = AccountIdentity::MAX_BYTE_SIZE_ID;
+    pub const MAX_BYTE_SIZE_IDENTITY: u32 = AccountIdentity::MAX_BYTE_SIZE_IDENTITY;
+    pub const MAX_BYTE_SIZE_ACCOUNT_ID: u32 = AccountIdentity::MAX_BYTE_SIZE_ACCOUNT_ID;
 
     /// The maximum size of an AccountIdentityKey in stable memory.
     pub const MAX_BYTE_SIZE: u32 = 256;
 
     /// The number of bytes that are not used by the account and could be used to add more fields to the account
     /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_ID;
+    pub const SPARE_BYTES: u32 =
+        Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_IDENTITY - Self::MAX_BYTE_SIZE_ACCOUNT_ID;
 }
 
 /// Adds serialization and deserialization support to AccountIdentity to stable memory.

@@ -10,6 +10,8 @@ type Error = record {
   code : text;
   // Error message to be displayed to the user.
   message : opt text;
+
+  details : opt vec record { text; text };
 };
 
 // The status of an account identity.
@@ -41,6 +43,8 @@ type Account = record {
   identities : vec AccountIdentity;
   // Main bank used to show in the UI for this account.
   main_bank : opt BankID;
+  // List of banks associated with the account.
+  banks : vec principal;
 };
 
 // The result of managing an account.
@@ -65,8 +69,8 @@ type ManageAccountResult = variant {
     // The updated account information.
     account : Account;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The bank information.
@@ -89,8 +93,8 @@ type ListBanksResult = variant {
     // The list of banks.
     banks : vec BankListItem;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The result of getting the main bank.
@@ -100,8 +104,8 @@ type GetMainBankResult = variant {
     // The main bank for the given account.
     bank : opt Bank;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The init configuration for the default bank canister.
@@ -145,8 +149,8 @@ type ManageBanksResult = variant {
     // The list of banks associated with the account.
     bank : vec Bank;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The result of getting the account information.
@@ -156,14 +160,21 @@ type AccountInfoResult = variant {
     // The caller account information.
     account : Account;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The input for the main bank when registering an account.
 type RegisterAccountBankInput = variant {
   // Use a private bank canister.
-  PrivateBank : BankID;
+  PrivateBank : record {
+    // The id of the bank canister to use.
+    id : BankID;
+    // Whether or not it should also use a shared bank for the account.
+    use_shared_bank : opt record {
+      is_main : bool;
+    };
+  };
   // Use a shared bank canister.
   SharedBank;
 };
@@ -173,9 +184,7 @@ type RegisterAccountInput = record {
   // The name of the account.
   name : opt text;
   // A bank canister to use for this account.
-  main_bank : RegisterAccountBankInput;
-  // Wether or not to also use a shared bank for this account.
-  use_shared_bank : bool;
+  bank : RegisterAccountBankInput;
 };
 
 // The result of registering an account.
@@ -185,8 +194,8 @@ type RegisterAccountResult = variant {
     // The caller newly created account information.
     account : Account;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The input for associating an identity with an existing account.
@@ -203,8 +212,8 @@ type AssociateIdentityWithAccountResult = variant {
     // the account and this operation just activated it.
     account : opt Account;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The result of removing the account associated with the caller.
@@ -214,8 +223,8 @@ type RemoveAccountResult = variant {
     // The caller account that was removed.
     account : Account;
   };
-  // A list of errors that occurred during the operation, if any.
-  Errors : vec Error;
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // The control panel service definition.

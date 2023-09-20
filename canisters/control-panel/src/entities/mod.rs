@@ -8,10 +8,10 @@ pub use account_identity_status::*;
 mod account_identity;
 pub use account_identity::*;
 
+/// Types used to represent the association of an account with a bank.
+mod account_bank;
+pub use account_bank::*;
+
 /// Types to represent the account.
 mod account;
 pub use account::*;
-
-/// Types used to manage the bank information.
-mod bank;
-pub use bank::*;
