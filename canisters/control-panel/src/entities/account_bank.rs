@@ -1,11 +1,14 @@
-use crate::core::{MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
+use crate::core::{ic::api::time, Timestamp, MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
 
 /// The key used to store an account identity in stable memory.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct AccountBankKey(Vec<u8>);
+pub struct AccountBankKey {
+    pub account_id: UUID,
+    pub canister_id: Principal,
+}
 
 impl Default for AccountBankKey {
     fn default() -> Self {
@@ -18,6 +21,7 @@ pub struct AccountBank {
     pub account_id: UUID,
     pub canister_id: Principal,
     pub name: Option<String>,
+    pub last_update_timestamp: Timestamp,
 }
 
 impl Default for AccountBank {
@@ -26,6 +30,7 @@ impl Default for AccountBank {
             account_id: UUID::default(),
             name: None,
             canister_id: Principal::anonymous(),
+            last_update_timestamp: time(),
         }
     }
 }
@@ -65,15 +70,15 @@ impl AccountBank {
             account_id,
             canister_id,
             name,
+            last_update_timestamp: time(),
         }
     }
 
     pub fn key(canister_id: &Principal, account_id: &UUID) -> AccountBankKey {
-        let mut key = Vec::with_capacity(AccountBankKey::MAX_BYTE_SIZE as usize);
-        key.extend(canister_id.as_slice());
-        key.extend(account_id);
-
-        AccountBankKey(key)
+        AccountBankKey {
+            canister_id: *canister_id,
+            account_id: *account_id,
+        }
     }
 }
 

@@ -1,9 +1,9 @@
 use crate::{
     core::{generate_uuid_v4, ApiError, CallContext, Repository, ServiceResult},
-    entities::{Account, AccountIdentity, AccountIdentityStatus},
+    entities::{Account, AccountBank, AccountIdentity, AccountIdentityStatus},
     errors::AccountRegistrationError,
-    mappers::{AccountIdentityMapper, AccountMapper},
-    repositories::{AccountIdentityRepository, AccountRepository},
+    mappers::{AccountBankMapper, AccountIdentityMapper, AccountMapper},
+    repositories::{AccountBankRepository, AccountIdentityRepository, AccountRepository},
     transport::RegisterAccountInput,
 };
 use uuid::Uuid;
@@ -14,6 +14,8 @@ pub struct AccountService {
     account_identity_repository: AccountIdentityRepository,
     account_mapper: AccountMapper,
     account_identity_mapper: AccountIdentityMapper,
+    account_bank_repository: AccountBankRepository,
+    account_bank_mapper: AccountBankMapper,
 }
 
 impl Default for AccountService {
@@ -24,6 +26,8 @@ impl Default for AccountService {
             account_identity_repository: AccountIdentityRepository::default(),
             account_mapper: AccountMapper::default(),
             account_identity_mapper: AccountIdentityMapper::default(),
+            account_bank_repository: AccountBankRepository::default(),
+            account_bank_mapper: AccountBankMapper::default(),
         }
     }
 }
@@ -35,6 +39,8 @@ impl AccountService {
         account_identity_repository: AccountIdentityRepository,
         account_mapper: AccountMapper,
         account_identity_mapper: AccountIdentityMapper,
+        account_bank_repository: AccountBankRepository,
+        account_bank_mapper: AccountBankMapper,
     ) -> Self {
         Self {
             context,
@@ -42,6 +48,8 @@ impl AccountService {
             account_identity_repository,
             account_mapper,
             account_identity_mapper,
+            account_bank_repository,
+            account_bank_mapper,
         }
     }
 
@@ -89,14 +97,22 @@ impl AccountService {
             .account_identity_mapper
             .map_account_identity_for_registration(account_id, self.context.caller());
 
-        self.account_repository.insert(
-            self.account_mapper.map_account_to_account_key(&account),
-            account.clone(),
-        );
+        self.account_repository
+            .insert(Account::key(&account_id), account.clone());
         self.account_identity_repository.insert(
             AccountIdentity::key(&account_identity.identity, &account_identity.account_id),
             account_identity,
         );
+        let bank_entries = self
+            .account_bank_mapper
+            .map_account_to_account_bank_entries(&account);
+
+        bank_entries.iter().for_each(|entry| {
+            self.account_bank_repository.insert(
+                AccountBank::key(&entry.canister_id, &entry.account_id),
+                entry.clone(),
+            );
+        });
 
         Ok(account)
     }

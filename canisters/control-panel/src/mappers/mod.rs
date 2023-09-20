@@ -7,3 +7,7 @@ pub use account::*;
 /// Account identity mappers.
 mod account_identity;
 pub use account_identity::*;
+
+/// Account bank mappers.
+mod account_bank;
+pub use account_bank::*;

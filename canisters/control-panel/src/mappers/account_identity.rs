@@ -4,19 +4,10 @@ use crate::{
 };
 use candid::Principal;
 
+#[derive(Default)]
 pub struct AccountIdentityMapper {}
 
-impl Default for AccountIdentityMapper {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl AccountIdentityMapper {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     /// Maps the account id and given principal to enable the association of an
     /// identity with an account for a new registration.
     pub fn map_account_identity_for_registration(

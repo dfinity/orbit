@@ -1,5 +1,6 @@
 // The canister id of a bank.
 type BankID = principal;
+type AccountIdentityID = principal;
 
 // A UUID used to identify items.
 type UUID = text;
@@ -25,7 +26,7 @@ type AccountIdentityStatus = variant {
 // The identity of an account.
 type AccountIdentity = record {
   // The identity of the account.
-  id : principal;
+  id : AccountIdentityID;
   // A friendly name for the account identity.
   name : opt text;
   // The status of the identity.
@@ -40,11 +41,11 @@ type Account = record {
   name : opt text;
   // The identities associated with the account.
   // One identity can only be associated with one account.
-  identities : vec AccountIdentity;
+  identities : vec AccountIdentityID;
   // Main bank used to show in the UI for this account.
   main_bank : opt BankID;
   // List of banks associated with the account.
-  banks : vec principal;
+  banks : vec BankID;
 };
 
 // The result of managing an account.

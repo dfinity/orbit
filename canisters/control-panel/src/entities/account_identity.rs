@@ -7,7 +7,10 @@ use std::borrow::Cow;
 
 /// The key used to store an account identity in stable memory.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct AccountIdentityKey(Vec<u8>);
+pub struct AccountIdentityKey {
+    pub identity: Principal,
+    pub account_id: UUID,
+}
 
 impl Default for AccountIdentityKey {
     fn default() -> Self {
@@ -62,10 +65,10 @@ impl AccountIdentity {
         - Self::MAX_BYTE_SIZE_ACCOUNT_ID;
 
     pub fn key(identity: &Principal, account_id: &UUID) -> AccountIdentityKey {
-        let mut key = identity.as_slice().to_vec();
-        key.extend(account_id);
-
-        AccountIdentityKey(key)
+        AccountIdentityKey {
+            identity: *identity,
+            account_id: *account_id,
+        }
     }
 }
 

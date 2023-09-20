@@ -80,6 +80,10 @@ impl Account {
         - Self::MAX_BYTE_SIZE_BANKS
         - Self::MAX_BYTE_SIZE_MAIN_IDENTITIES
         - Self::MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP;
+
+    pub fn key(account_id: &UUID) -> AccountKey {
+        AccountKey { id: *account_id }
+    }
 }
 
 impl AccountKey {

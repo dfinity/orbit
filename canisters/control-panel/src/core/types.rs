@@ -1,8 +1,7 @@
-use std::{collections::HashMap, sync::Mutex};
-
 use super::{canister_config, extract_error_enum_variant_name, CanisterConfig};
 use crate::core::ic::caller;
 use candid::{CandidType, Deserialize, Principal};
+use std::collections::HashMap;
 
 /// Generic service error type used for service calls.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -59,8 +58,8 @@ pub struct CallContext {
     canister_config: CanisterConfig,
 }
 
-lazy_static! {
-    static ref ACTIVE_CALL_CONTEXT: Mutex<CallContext> = Mutex::new(CallContext::create());
+thread_local! {
+    static ACTIVE_CALL_CONTEXT: CallContext = CallContext::create();
 }
 
 impl CallContext {
@@ -80,7 +79,7 @@ impl CallContext {
     }
 
     pub fn get() -> Self {
-        ACTIVE_CALL_CONTEXT.lock().unwrap().clone()
+        ACTIVE_CALL_CONTEXT.with(|context| context.clone())
     }
 }
 

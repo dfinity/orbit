@@ -1,11 +1,10 @@
-use candid::Principal;
-use uuid::Uuid;
-
 use crate::{
     core::{ic::api::time, CallContext, UUID},
-    entities::{Account, AccountKey},
+    entities::Account,
     transport::{AccountDTO, RegisterAccountBankInput, RegisterAccountInput},
 };
+use candid::Principal;
+use uuid::Uuid;
 
 pub struct AccountMapper {
     context: CallContext,
@@ -59,10 +58,6 @@ impl AccountMapper {
             last_update_timestamp: time(),
             main_bank: Some(main_bank),
         }
-    }
-
-    pub fn map_account_to_account_key(&self, account: &Account) -> AccountKey {
-        AccountKey { id: account.id }
     }
 
     pub fn map_account_to_account_dto(&self, account: Account) -> AccountDTO {
