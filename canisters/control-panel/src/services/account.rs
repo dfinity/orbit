@@ -19,7 +19,7 @@ pub struct AccountService {
 impl Default for AccountService {
     fn default() -> Self {
         Self {
-            context: CallContext::active(),
+            context: CallContext::get(),
             account_repository: AccountRepository::default(),
             account_identity_repository: AccountIdentityRepository::default(),
             account_mapper: AccountMapper::default(),
@@ -52,28 +52,25 @@ impl AccountService {
     ) -> ServiceResult<Account, ApiError> {
         let account_identity = self
             .account_identity_repository
-            .find_by_identity_id(&self.context.caller)?;
+            .find_by_identity_id(&self.context.caller())?;
 
-        match account_identity {
-            Some(entry) => {
-                if entry.status == AccountIdentityStatus::Active {
-                    let formatted_account_id = Uuid::from_bytes(entry.account_id)
-                        .as_hyphenated()
-                        .to_string();
-                    return Err(
-                        AccountRegistrationError::IdentityAssociatedWithAnotherAccount {
-                            account_id: formatted_account_id,
-                        }
-                        .into(),
-                    );
-                }
-
-                // If the associated account is not active, remove the association to allow the
-                // user to continue with the registration.
-                self.account_identity_repository
-                    .remove(&AccountIdentity::key(&entry.identity, &entry.account_id));
+        if let Some(entry) = account_identity {
+            if entry.status == AccountIdentityStatus::Active {
+                let formatted_account_id = Uuid::from_bytes(entry.account_id)
+                    .as_hyphenated()
+                    .to_string();
+                return Err(
+                    AccountRegistrationError::IdentityAssociatedWithAnotherAccount {
+                        account_id: formatted_account_id,
+                    }
+                    .into(),
+                );
             }
-            _ => {}
+
+            // If the associated account is not active, remove the association to allow the
+            // user to continue with the registration.
+            self.account_identity_repository
+                .remove(&AccountIdentity::key(&entry.identity, &entry.account_id));
         }
 
         let account_id = generate_uuid_v4().await.as_bytes().to_owned();
@@ -86,11 +83,11 @@ impl AccountService {
         let account = self.account_mapper.map_register_account_input_to_account(
             input.clone(),
             account_id,
-            self.context.caller.clone(),
+            self.context.caller(),
         );
         let account_identity = self
             .account_identity_mapper
-            .map_account_identity_for_registration(account_id, self.context.caller);
+            .map_account_identity_for_registration(account_id, self.context.caller());
 
         self.account_repository.insert(
             self.account_mapper.map_account_to_account_key(&account),

@@ -21,13 +21,11 @@ impl DetailableError for AccountRegistrationError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
 
-        match self {
-            AccountRegistrationError::IdentityAssociatedWithAnotherAccount { account_id } => {
-                details.insert("account_id".to_string(), account_id.to_string());
+        if let AccountRegistrationError::IdentityAssociatedWithAnotherAccount { account_id } = self
+        {
+            details.insert("account_id".to_string(), account_id.to_string());
 
-                return Some(details);
-            }
-            _ => {}
+            return Some(details);
         }
 
         None

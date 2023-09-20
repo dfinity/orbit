@@ -13,7 +13,7 @@ pub struct AccountMapper {
 
 impl Default for AccountMapper {
     fn default() -> Self {
-        Self::new(CallContext::active())
+        Self::new(CallContext::get())
     }
 }
 
@@ -36,35 +36,33 @@ impl AccountMapper {
             } => match use_shared_bank {
                 Some(shared_bank) => {
                     if shared_bank.is_main {
-                        vec![self.context.canister_config.shared_bank_canister, id]
+                        vec![self.context.canister_config().shared_bank_canister, id]
                     } else {
-                        vec![id, self.context.canister_config.shared_bank_canister]
+                        vec![id, self.context.canister_config().shared_bank_canister]
                     }
                 }
                 None => vec![id],
             },
             RegisterAccountBankInput::SharedBank => {
-                vec![self.context.canister_config.shared_bank_canister]
+                vec![self.context.canister_config().shared_bank_canister]
             }
         };
         // The order of the banks is important, the first bank is the main bank for the account at this stage
         // so that it can be used to the `main_bank` field of the account entity.
-        let main_bank = banks.first().unwrap().clone();
+        let main_bank = *banks.first().unwrap();
 
         Account {
             id: account_id,
             name: input.name,
-            banks: banks,
-            identities: Vec::from(vec![identity]),
+            banks,
+            identities: vec![identity],
             last_update_timestamp: time(),
             main_bank: Some(main_bank),
         }
     }
 
     pub fn map_account_to_account_key(&self, account: &Account) -> AccountKey {
-        AccountKey {
-            id: account.id.clone(),
-        }
+        AccountKey { id: account.id }
     }
 
     pub fn map_account_to_account_dto(&self, account: Account) -> AccountDTO {

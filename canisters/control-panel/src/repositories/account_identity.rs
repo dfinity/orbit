@@ -21,13 +21,8 @@ thread_local! {
 }
 
 /// A repository that enables managing account identities in stable memory.
+#[derive(Default)]
 pub struct AccountIdentityRepository {}
-
-impl Default for AccountIdentityRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl Repository<AccountIdentityKey, AccountIdentity> for AccountIdentityRepository {
     fn get(&self, key: &AccountIdentityKey) -> Option<AccountIdentity> {
@@ -45,10 +40,6 @@ impl Repository<AccountIdentityKey, AccountIdentity> for AccountIdentityReposito
 
 /// Enables the initialization of the AccountIdentityRepository repository.
 impl AccountIdentityRepository {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     pub fn find_by_identity_id(
         &self,
         identity: &Principal,
@@ -105,8 +96,10 @@ mod tests {
 
         repository.insert(key.clone(), previous_identity.clone());
 
-        let mut new_identity = AccountIdentity::default();
-        new_identity.name = Some(String::from("test"));
+        let new_identity = AccountIdentity {
+            name: Some(String::from("test")),
+            ..Default::default()
+        };
         let result = repository.insert(key.clone(), new_identity.clone());
 
         assert!(result.is_some());
@@ -140,12 +133,12 @@ mod tests {
         let second_key = AccountIdentity::key(&identity, &second_account_id);
         let mut record = AccountIdentity::default();
         let mut second_record = AccountIdentity::default();
-        record.identity = identity.clone();
-        second_record.identity = identity.clone();
-        second_record.account_id = second_account_id.clone();
+        record.identity = identity;
+        second_record.identity = identity;
+        second_record.account_id = second_account_id;
 
-        repository.insert(key.clone(), record.clone());
-        repository.insert(second_key.clone(), second_record.clone());
+        repository.insert(key.clone(), record);
+        repository.insert(second_key.clone(), second_record);
 
         let account_identity = repository.find_by_identity_id(&identity);
 
@@ -167,9 +160,9 @@ mod tests {
         let second_key = AccountIdentity::key(&second_identity, &second_account_id);
         let mut record = AccountIdentity::default();
         let mut second_record = AccountIdentity::default();
-        record.identity = identity.clone();
-        second_record.identity = second_identity.clone();
-        second_record.account_id = second_account_id.clone();
+        record.identity = identity;
+        second_record.identity = second_identity;
+        second_record.account_id = second_account_id;
 
         repository.insert(key.clone(), record.clone());
         repository.insert(second_key.clone(), second_record.clone());

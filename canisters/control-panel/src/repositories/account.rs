@@ -19,44 +19,28 @@ thread_local! {
 }
 
 /// A repository that enables managing accounts in stable memory.
+#[derive(Default)]
 pub struct AccountRepository {}
 
 /// Enables the initialization of the AccountRepository repository.
 impl AccountRepository {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     pub fn find_by_id(&self, account_id: &UUID) -> Result<Option<Account>, AccountRepositoryError> {
         DB.with(|m| {
-            let start_key = AccountKey {
-                id: account_id.clone(),
-            };
-            let end_key = AccountKey {
-                id: account_id.clone(),
-            };
+            let start_key = AccountKey { id: *account_id };
+            let end_key = AccountKey { id: *account_id };
 
-            let found_keys = m
+            let results = m
                 .borrow()
                 .range(start_key..=end_key)
-                .map(|(k, _)| k)
-                .collect::<Vec<AccountKey>>();
+                .map(|(_, account)| account)
+                .collect::<Vec<Account>>();
 
-            match found_keys.len() {
+            match results.len() {
                 0 => Ok(None),
-                1 => {
-                    let identity_key = found_keys.first().unwrap();
-                    Ok(self.get(&identity_key))
-                }
+                1 => Ok(Some(results.first().unwrap().clone())),
                 _ => Err(AccountRepositoryError::NotAllowedMultipleAccountsWithSameId),
             }
         })
-    }
-}
-
-impl Default for AccountRepository {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -109,8 +93,10 @@ mod tests {
 
         repository.insert(key.clone(), previous_record.clone());
 
-        let mut new_record = Account::default();
-        new_record.name = Some(String::from("new name"));
+        let new_record = Account {
+            name: Some(String::from("new name")),
+            ..Default::default()
+        };
         let result = repository.insert(key.clone(), new_record.clone());
 
         assert!(result.is_some());

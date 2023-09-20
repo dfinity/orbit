@@ -23,13 +23,8 @@ thread_local! {
 }
 
 /// A repository that enables managing account banks in stable memory.
+#[derive(Default)]
 pub struct AccountBankRepository {}
-
-impl Default for AccountBankRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl Repository<AccountBankKey, AccountBank> for AccountBankRepository {
     fn get(&self, key: &AccountBankKey) -> Option<AccountBank> {
@@ -47,17 +42,13 @@ impl Repository<AccountBankKey, AccountBank> for AccountBankRepository {
 
 /// Enables the initialization of the AccountBankRepository repository.
 impl AccountBankRepository {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     pub fn find_by_account_id(
         &self,
         account_id: &UUID,
     ) -> Result<Vec<AccountBank>, AccountBankRepositoryError> {
         DB.with(|m| {
             let start_key = AccountBank::key(&min_principal_id(), account_id);
-            let end_key = AccountBank::key(&&max_principal_id(), account_id);
+            let end_key = AccountBank::key(&max_principal_id(), account_id);
 
             let banks = m
                 .borrow()
@@ -104,8 +95,10 @@ mod tests {
 
         repository.insert(key.clone(), previous_record.clone());
 
-        let mut new_record = AccountBank::default();
-        new_record.name = Some(String::from("test"));
+        let new_record = AccountBank {
+            name: Some(String::from("test")),
+            ..Default::default()
+        };
         let result = repository.insert(key.clone(), new_record.clone());
 
         assert!(result.is_some());
@@ -142,13 +135,13 @@ mod tests {
         let mut second_record = AccountBank::default();
         let mut different_record = AccountBank::default();
 
-        record.account_id = account_id.clone();
-        second_record.account_id = account_id.clone();
-        different_record.account_id = different_account_id.clone();
+        record.account_id = account_id;
+        second_record.account_id = account_id;
+        different_record.account_id = different_account_id;
 
-        repository.insert(key.clone(), record.clone());
-        repository.insert(second_key.clone(), second_record.clone());
-        repository.insert(different_key.clone(), different_record.clone());
+        repository.insert(key.clone(), record);
+        repository.insert(second_key.clone(), second_record);
+        repository.insert(different_key.clone(), different_record);
 
         let banks = repository.find_by_account_id(&account_id);
 

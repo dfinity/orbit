@@ -55,23 +55,31 @@ pub type Timestamp = u64;
 
 #[derive(Clone)]
 pub struct CallContext {
-    pub caller: Principal,
-    pub canister_config: CanisterConfig,
+    caller: Principal,
+    canister_config: CanisterConfig,
 }
 
 lazy_static! {
-    static ref ACTIVE_CALL_CONTEXT: Mutex<CallContext> = Mutex::new(CallContext::init());
+    static ref ACTIVE_CALL_CONTEXT: Mutex<CallContext> = Mutex::new(CallContext::create());
 }
 
 impl CallContext {
-    fn init() -> Self {
+    fn create() -> Self {
         Self {
             caller: caller(),
             canister_config: canister_config(),
         }
     }
 
-    pub fn active() -> Self {
+    pub fn caller(&self) -> Principal {
+        self.caller
+    }
+
+    pub fn canister_config(&self) -> CanisterConfig {
+        self.canister_config.clone()
+    }
+
+    pub fn get() -> Self {
         ACTIVE_CALL_CONTEXT.lock().unwrap().clone()
     }
 }

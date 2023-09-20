@@ -5,8 +5,8 @@
 #[macro_use]
 extern crate lazy_static;
 
-pub mod core;
 pub mod controllers;
+pub mod core;
 pub mod entities;
 pub mod errors;
 pub mod mappers;

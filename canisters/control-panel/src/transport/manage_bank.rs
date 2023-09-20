@@ -1,5 +1,5 @@
-use candid::{CandidType, Deserialize, Principal};
 use super::AccountBankDTO;
+use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct BankInput {

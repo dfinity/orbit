@@ -25,9 +25,9 @@ impl AccountIdentityMapper {
         identity: Principal,
     ) -> AccountIdentity {
         AccountIdentity {
-            identity: identity,
+            identity,
             name: None,
-            account_id: account_id,
+            account_id,
             status: AccountIdentityStatus::Active,
             last_update_timestamp: time(),
         }
