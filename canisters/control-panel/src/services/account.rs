@@ -9,7 +9,6 @@ use crate::{
 use uuid::Uuid;
 
 pub struct AccountService {
-    context: CallContext,
     account_repository: AccountRepository,
     account_identity_repository: AccountIdentityRepository,
     account_mapper: AccountMapper,
@@ -21,7 +20,6 @@ pub struct AccountService {
 impl Default for AccountService {
     fn default() -> Self {
         Self {
-            context: CallContext::get(),
             account_repository: AccountRepository::default(),
             account_identity_repository: AccountIdentityRepository::default(),
             account_mapper: AccountMapper::default(),
@@ -34,7 +32,6 @@ impl Default for AccountService {
 
 impl AccountService {
     pub fn new(
-        context: CallContext,
         account_repository: AccountRepository,
         account_identity_repository: AccountIdentityRepository,
         account_mapper: AccountMapper,
@@ -43,7 +40,6 @@ impl AccountService {
         account_bank_mapper: AccountBankMapper,
     ) -> Self {
         Self {
-            context,
             account_repository,
             account_identity_repository,
             account_mapper,
@@ -60,7 +56,7 @@ impl AccountService {
     ) -> ServiceResult<Account, ApiError> {
         let account_identity = self
             .account_identity_repository
-            .find_by_identity_id(&self.context.caller())?;
+            .find_by_identity_id(&CallContext::get().caller())?;
 
         if let Some(entry) = account_identity {
             if entry.status == AccountIdentityStatus::Active {
@@ -91,11 +87,11 @@ impl AccountService {
         let account = self.account_mapper.map_register_account_input_to_account(
             input.clone(),
             account_id,
-            self.context.caller(),
+            CallContext::get().caller(),
         );
         let account_identity = self
             .account_identity_mapper
-            .map_account_identity_for_registration(account_id, self.context.caller());
+            .map_account_identity_for_registration(account_id, CallContext::get().caller());
 
         self.account_repository
             .insert(Account::key(&account_id), account.clone());

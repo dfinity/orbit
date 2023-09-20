@@ -6,21 +6,10 @@ use crate::{
 use candid::Principal;
 use uuid::Uuid;
 
-pub struct AccountMapper {
-    context: CallContext,
-}
-
-impl Default for AccountMapper {
-    fn default() -> Self {
-        Self::new(CallContext::get())
-    }
-}
+#[derive(Default)]
+pub struct AccountMapper {}
 
 impl AccountMapper {
-    pub fn new(context: CallContext) -> Self {
-        Self { context }
-    }
-
     /// Maps the registration input to an account entity.
     pub fn map_register_account_input_to_account(
         &self,
@@ -35,15 +24,21 @@ impl AccountMapper {
             } => match use_shared_bank {
                 Some(shared_bank) => {
                     if shared_bank.is_main {
-                        vec![self.context.canister_config().shared_bank_canister, id]
+                        vec![
+                            CallContext::get().canister_config().shared_bank_canister,
+                            id,
+                        ]
                     } else {
-                        vec![id, self.context.canister_config().shared_bank_canister]
+                        vec![
+                            id,
+                            CallContext::get().canister_config().shared_bank_canister,
+                        ]
                     }
                 }
                 None => vec![id],
             },
             RegisterAccountBankInput::SharedBank => {
-                vec![self.context.canister_config().shared_bank_canister]
+                vec![CallContext::get().canister_config().shared_bank_canister]
             }
         };
         // The order of the banks is important, the first bank is the main bank for the account at this stage
