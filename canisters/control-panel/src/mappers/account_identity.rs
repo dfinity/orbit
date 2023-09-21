@@ -30,4 +30,17 @@ impl AccountIdentityMapper {
             name: account_identity.name.clone(),
         }
     }
+
+    pub fn map_from_dto(
+        &self,
+        account_id: UUID,
+        account_identity: AccountIdentityDTO,
+    ) -> AccountIdentity {
+        AccountIdentity {
+            identity: account_identity.identity,
+            name: account_identity.name,
+            account_id,
+            last_update_timestamp: time(),
+        }
+    }
 }

@@ -1,4 +1,5 @@
 use crate::{
+    core::UUID,
     entities::{Account, AccountBank},
     transport::AccountBankDTO,
 };
@@ -23,6 +24,15 @@ impl AccountBankMapper {
         AccountBankDTO {
             canister_id: account_bank.canister_id,
             name: account_bank.name.clone(),
+        }
+    }
+
+    pub fn from_dto(&self, dto: AccountBankDTO, account_id: UUID) -> AccountBank {
+        AccountBank {
+            canister_id: dto.canister_id,
+            name: dto.name,
+            account_id,
+            ..Default::default()
         }
     }
 }

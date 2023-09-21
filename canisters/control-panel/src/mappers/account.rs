@@ -2,7 +2,10 @@ use super::{AccountBankMapper, AccountIdentityMapper};
 use crate::{
     core::{ic::api::time, CallContext, UUID},
     entities::{Account, AccountBank, AccountIdentity},
-    transport::{AccountDTO, AccountDetailsDTO, RegisterAccountBankInput, RegisterAccountInput},
+    transport::{
+        AccountDTO, AccountDetailsDTO, ManageAccountInput, RegisterAccountBankInput,
+        RegisterAccountInput,
+    },
 };
 use candid::Principal;
 use uuid::Uuid;
@@ -91,5 +94,40 @@ impl AccountMapper {
                 .map(|identity| self.account_identity_mapper.map_to_dto(identity))
                 .collect(),
         }
+    }
+
+    pub fn update_account_with_input(
+        &self,
+        input: &ManageAccountInput,
+        account: &Account,
+        account_identities: &[AccountIdentity],
+        account_banks: &[AccountBank],
+    ) -> Account {
+        let mut account = account.clone();
+        account.last_update_timestamp = time();
+
+        if let Some(name) = &input.name {
+            account.name = Some(name.clone());
+        }
+
+        if let Some(unconfirmed_identities) = &input.unconfirmed_identities {
+            account.unconfirmed_identities = unconfirmed_identities.clone();
+        }
+
+        if let Some(main_bank) = &input.main_bank {
+            account.main_bank = Some(*main_bank);
+        }
+
+        account.identities = account_identities
+            .iter()
+            .map(|account_identity| account_identity.identity)
+            .collect();
+
+        account.banks = account_banks
+            .iter()
+            .map(|account_bank| account_bank.canister_id)
+            .collect();
+
+        account
     }
 }

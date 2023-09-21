@@ -13,10 +13,6 @@ pub use account_bank::*;
 mod manage_account;
 pub use manage_account::*;
 
-/// Manage bank DTOs.
-mod manage_bank;
-pub use manage_bank::*;
-
 /// Account Identity DTOs.
 mod account_identity;
 pub use account_identity::*;

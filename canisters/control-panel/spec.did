@@ -31,28 +31,11 @@ type Account = record {
   name : opt text;
   // The identities associated with the account.
   // One identity can only be associated with one account.
-  identities : vec AccountIdentityID;
-  // The identities that are not yet confirmed.
-  unconfirmed_identities : vec AccountIdentityID;
-  // Main bank used to show in the UI for this account.
-  main_bank : opt BankID;
-  // List of banks associated with the account.
-  banks : vec BankID;
-};
-
-// The user account information.
-type AccountDetails = record {
-  // The UUID associated with the account.
-  id : UUID;
-  // The name of the account.
-  name : opt text;
-  // Main bank used to show in the UI for this account.
-  main_bank : opt BankID;
-  // The identities associated with the account.
-  // One identity can only be associated with one account.
   identities : vec AccountIdentity;
   // The identities that are not yet confirmed.
   unconfirmed_identities : vec AccountIdentityID;
+  // Main bank used to show in the UI for this account.
+  main_bank : opt BankID;
   // List of banks associated with the account.
   banks : vec AccountBank;
 };
@@ -63,13 +46,16 @@ type ManageAccountInput = record {
   name : opt text;
   // The main bank to use for this account.
   //
-  // If not set, and the shared bank is enabled, then it will be used as the main bank.
+  // If specified and the bank is not already associated with the account it will be added.
   main_bank : opt BankID;
-  // Wether or not to use a shared bank for this account.
-  use_shared_bank : opt bool;
   // The identities to associate with the account, this should add all the identities as
   // they are overriden on each call if specified.
   identities : opt vec AccountIdentity;
+  // The unconfrimed identities to associate with the account,
+  // this should add all the identities as they are overriden on each call if specified.
+  unconfirmed_identities : opt vec AccountIdentityID;
+  // Manage the banks associated with the account.
+  banks : opt vec ManageBanksInput;
 };
 
 // The result of managing an account.
@@ -150,23 +136,12 @@ type ManageBanksInput = variant {
   Remove : vec BankID;
 };
 
-// The result of managing banks.
-type ManageBanksResult = variant {
-  // Sucessfull operation result.
-  Ok : record {
-    // The list of banks associated with the account.
-    bank : vec AccountBank;
-  };
-  // The error that occurred during the operation.
-  Err : Error;
-};
-
 // The result of getting the account information.
 type AccountDetailsResult = variant {
   // Successfull operation result.
   Ok : record {
     // The caller account information.
-    account_details : AccountDetails;
+    account : Account;
   };
   // The error that occurred during the operation.
   Err : Error;
@@ -257,6 +232,4 @@ service : (opt CanisterInit) -> {
   list_banks : () -> (ListBanksResult) query;
   // Get main bank for the caller account.
   get_main_bank : () -> (GetMainBankResult) query;
-  // Manage banks associated with the user account.
-  manage_banks : (input : ManageBanksInput) -> (ManageBanksResult);
 };

@@ -1,10 +1,14 @@
+use super::{AccountBankService, AccountIdentityService};
 use crate::{
     core::{generate_uuid_v4, ApiError, Repository, ServiceResult},
     entities::{Account, AccountBank, AccountIdentity},
     errors::AccountManagementError,
     mappers::{AccountBankMapper, AccountIdentityMapper, AccountMapper},
     repositories::{AccountBankRepository, AccountIdentityRepository, AccountRepository},
-    transport::{AccountDetailsDTO, AssociateIdentityWithAccountInput, RegisterAccountInput},
+    transport::{
+        AccountDetailsDTO, AssociateIdentityWithAccountInput, ManageAccountInput,
+        RegisterAccountInput,
+    },
 };
 use candid::Principal;
 use std::str::FromStr;
@@ -18,6 +22,8 @@ pub struct AccountService {
     account_identity_mapper: AccountIdentityMapper,
     account_bank_repository: AccountBankRepository,
     account_bank_mapper: AccountBankMapper,
+    account_identity_service: AccountIdentityService,
+    account_bank_service: AccountBankService,
 }
 
 impl AccountService {
@@ -86,10 +92,7 @@ impl AccountService {
         Ok(account)
     }
 
-    pub async fn get_account_details(
-        &self,
-        identity: &Principal,
-    ) -> ServiceResult<AccountDetailsDTO, ApiError> {
+    fn get_identity_account(&self, identity: &Principal) -> ServiceResult<Account, ApiError> {
         let maybe_account_identity = self
             .account_identity_repository
             .find_by_identity_id(identity)?;
@@ -99,22 +102,29 @@ impl AccountService {
         }
 
         let account_identity = maybe_account_identity.unwrap();
-        let formatted_account_id = Uuid::from_bytes(account_identity.account_id)
-            .as_hyphenated()
-            .to_string();
-
         let maybe_account = self
             .account_repository
             .find_by_id(&account_identity.account_id)?;
 
         if maybe_account.is_none() {
+            let formatted_account_id = Uuid::from_bytes(account_identity.account_id)
+                .as_hyphenated()
+                .to_string();
+
             return Err(AccountManagementError::MissingAccountDetails {
                 account_id: formatted_account_id,
             }
             .into());
         }
 
-        let account = maybe_account.unwrap();
+        Ok(maybe_account.unwrap())
+    }
+
+    pub async fn get_account_details(
+        &self,
+        identity: &Principal,
+    ) -> ServiceResult<AccountDetailsDTO, ApiError> {
+        let account = self.get_identity_account(identity)?;
         let identities = account
             .identities
             .iter()
@@ -189,7 +199,7 @@ impl AccountService {
             .find_by_identity_id(identity)?;
 
         if maybe_account_identity.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity.into());
+            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
         }
 
         let account_identity = maybe_account_identity.unwrap();
@@ -198,7 +208,7 @@ impl AccountService {
             .remove(&Account::key(&account_identity.account_id));
 
         if maybe_removed_account.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity.into());
+            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
         }
 
         let removed_account = maybe_removed_account.unwrap();
@@ -212,5 +222,61 @@ impl AccountService {
         });
 
         Ok(removed_account)
+    }
+
+    pub async fn manage_account(
+        &self,
+        identity: &Principal,
+        input: &ManageAccountInput,
+    ) -> ServiceResult<AccountDetailsDTO, ApiError> {
+        let current_account = self.get_identity_account(identity)?;
+        let account_identities = match &input.identities {
+            Some(identities) => {
+                self.account_identity_service
+                    .update_account_identities(&current_account, identities)
+                    .await?
+            }
+            None => self
+                .account_identity_service
+                .get_account_identities(&current_account)?,
+        };
+        let account_banks = match (input.banks.to_owned(), input.main_bank) {
+            (Some(banks), Some(main_bank)) => {
+                self.account_bank_service
+                    .update_account_banks(&current_account.id, &Some(main_bank), &banks)
+                    .await?
+            }
+            (None, Some(main_bank)) => {
+                let current_bank_dtos = self
+                    .account_bank_service
+                    .get_account_banks_dtos(&current_account.id)?;
+                self.account_bank_service
+                    .update_account_banks(&current_account.id, &Some(main_bank), &current_bank_dtos)
+                    .await?
+            }
+            (Some(banks), None) => {
+                self.account_bank_service
+                    .update_account_banks(&current_account.id, &current_account.main_bank, &banks)
+                    .await?
+            }
+            (_, _) => self
+                .account_bank_service
+                .get_account_banks(&current_account.id)?,
+        };
+
+        let updated_account = self.account_mapper.update_account_with_input(
+            input,
+            &current_account,
+            &account_identities,
+            &account_banks,
+        );
+
+        let account_details = self.account_mapper.map_to_account_details_dto(
+            &updated_account,
+            &account_banks,
+            &account_identities,
+        );
+
+        Ok(account_details)
     }
 }

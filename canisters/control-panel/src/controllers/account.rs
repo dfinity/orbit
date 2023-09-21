@@ -38,11 +38,11 @@ async fn register_account(input: RegisterAccountInput) -> ApiResult<RegisterAcco
 #[candid_method(update)]
 #[update(name = "manage_account")]
 async fn manage_account(input: ManageAccountInput) -> ApiResult<ManageAccountResponse> {
-    println!("input name = {:?}", input.name);
-    println!("input identities = {:?}", input.identities);
-    println!("input use_shared_bank = {:?}", input.use_shared_bank);
-    println!("input bank = {:?}", input.bank);
-    unimplemented!()
+    let account_details = AccountService::default()
+        .manage_account(&CallContext::get().caller(), &input)
+        .await?;
+
+    Ok(ManageAccountResponse { account_details })
 }
 
 #[candid_method(update)]

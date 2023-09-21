@@ -1,4 +1,4 @@
-use super::{AccountDTO, AccountIdentityDTO};
+use super::{AccountBankDTO, AccountDTO, AccountDetailsDTO, AccountIdentityDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 /// The input to manage an account.
@@ -7,16 +7,18 @@ pub struct ManageAccountInput {
     /// The name to give the account.
     pub name: Option<String>,
     /// The main bank to use for the account.
-    pub bank: Option<Principal>,
-    /// Whether to use a shared bank for the account.
-    pub use_shared_bank: Option<bool>,
+    pub main_bank: Option<Principal>,
+    /// The operation to perform on the banks.
+    pub banks: Option<Vec<AccountBankDTO>>,
     /// The identities to associate with the account.
     pub identities: Option<Vec<AccountIdentityDTO>>,
+    /// The unconfirmed identities to associate with the account.
+    pub unconfirmed_identities: Option<Vec<Principal>>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ManageAccountResponse {
-    pub account: AccountDTO,
+    pub account_details: AccountDetailsDTO,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

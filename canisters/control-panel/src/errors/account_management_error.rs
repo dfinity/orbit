@@ -41,6 +41,15 @@ pub enum AccountManagementError {
         /// The account_id that was provided.
         account_id: String,
     },
+    /// Some identities were not associated with the account.
+    #[error(r#"Some identities were not associated with the account."#)]
+    IdentityNotAssociatedWithAccount,
+    /// There are too many banks associated with the account.
+    #[error(r#"There are too many banks associated with the account."#)]
+    TooManyBanksForAccount { max_banks: u32 },
+    /// The account needs to have at least one associated identity.
+    #[error(r#"The account needs to have at least one associated identity."#)]
+    TooLittleAccountIdentities,
 }
 
 impl DetailableError for AccountManagementError {
@@ -70,6 +79,11 @@ impl DetailableError for AccountManagementError {
             }
             AccountManagementError::MissingAccountDetails { account_id } => {
                 details.insert("account_id".to_string(), account_id.to_string());
+
+                return Some(details);
+            }
+            AccountManagementError::TooManyBanksForAccount { max_banks } => {
+                details.insert("max_banks".to_string(), max_banks.to_string());
 
                 return Some(details);
             }
