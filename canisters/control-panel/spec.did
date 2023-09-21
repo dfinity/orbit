@@ -55,7 +55,7 @@ type ManageAccountInput = record {
   // this should add all the identities as they are overriden on each call if specified.
   unconfirmed_identities : opt vec AccountIdentityID;
   // Manage the banks associated with the account.
-  banks : opt vec ManageBanksInput;
+  banks : opt vec AccountBank;
 };
 
 // The result of managing an account.
@@ -114,26 +114,6 @@ type DefaultBankInit = variant {
 type CanisterInit = record {
   // How to initialize the default bank canister.
   default_bank : DefaultBankInit;
-};
-
-// The input for creating/updating a bank.
-type BankInput = record {
-  // The bank id.
-  id : BankID;
-  // A friendly name for the bank.
-  name : opt text;
-  // Wether or not this bank should be the main bank for the account.
-  main : opt bool;
-};
-
-// The input for managing banks information.
-type ManageBanksInput = variant {
-  // Appends the given banks to the account, if the bank already exists it will be updated.
-  Append : vec BankInput;
-  // Overrides the existing banks associated with the account.
-  Override : vec BankInput;
-  // Removes the given banks from the account.
-  Remove : vec BankID;
 };
 
 // The result of getting the account information.
