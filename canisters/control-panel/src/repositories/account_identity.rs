@@ -44,11 +44,11 @@ impl AccountIdentityRepository {
         &self,
         identity: &Principal,
     ) -> Result<Option<AccountIdentity>, AccountIdentityRepositoryError> {
-        DB.with(|m| {
+        DB.with(|db| {
             let start_key = AccountIdentity::key(identity, &[std::u8::MIN; 16]);
             let end_key = AccountIdentity::key(identity, &[std::u8::MAX; 16]);
 
-            let results = m
+            let results = db
                 .borrow()
                 .range(start_key..=end_key)
                 .map(|(_, account_identity)| account_identity)

@@ -1,13 +1,17 @@
+use super::{AccountBankMapper, AccountIdentityMapper};
 use crate::{
     core::{ic::api::time, CallContext, UUID},
-    entities::Account,
-    transport::{AccountDTO, RegisterAccountBankInput, RegisterAccountInput},
+    entities::{Account, AccountBank, AccountIdentity},
+    transport::{AccountDTO, AccountDetailsDTO, RegisterAccountBankInput, RegisterAccountInput},
 };
 use candid::Principal;
 use uuid::Uuid;
 
 #[derive(Default)]
-pub struct AccountMapper {}
+pub struct AccountMapper {
+    account_identity_mapper: AccountIdentityMapper,
+    account_bank_mapper: AccountBankMapper,
+}
 
 impl AccountMapper {
     /// Maps the registration input to an account entity.
@@ -49,6 +53,7 @@ impl AccountMapper {
             id: account_id,
             name: input.name,
             banks,
+            unconfirmed_identities: vec![],
             identities: vec![identity],
             last_update_timestamp: time(),
             main_bank: Some(main_bank),
@@ -62,6 +67,29 @@ impl AccountMapper {
             main_bank: account.main_bank,
             banks: account.banks,
             identities: account.identities,
+            unconfirmed_identities: account.unconfirmed_identities,
+        }
+    }
+
+    pub fn map_to_account_details_dto(
+        &self,
+        account: &Account,
+        banks: &[AccountBank],
+        identities: &[AccountIdentity],
+    ) -> AccountDetailsDTO {
+        AccountDetailsDTO {
+            id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+            name: account.name.clone(),
+            main_bank: account.main_bank,
+            unconfirmed_identities: account.unconfirmed_identities.clone(),
+            banks: banks
+                .iter()
+                .map(|bank| self.account_bank_mapper.map_to_dto(bank))
+                .collect(),
+            identities: identities
+                .iter()
+                .map(|identity| self.account_identity_mapper.map_to_dto(identity))
+                .collect(),
         }
     }
 }

@@ -12,7 +12,7 @@ pub struct AccountBankKey {
 
 impl Default for AccountBankKey {
     fn default() -> Self {
-        AccountBank::key(&Principal::anonymous(), &UUID::default())
+        AccountBank::key(&UUID::default(), &Principal::anonymous())
     }
 }
 
@@ -74,10 +74,10 @@ impl AccountBank {
         }
     }
 
-    pub fn key(canister_id: &Principal, account_id: &UUID) -> AccountBankKey {
+    pub fn key(account_id: &UUID, canister_id: &Principal) -> AccountBankKey {
         AccountBankKey {
-            canister_id: *canister_id,
             account_id: *account_id,
+            canister_id: *canister_id,
         }
     }
 }

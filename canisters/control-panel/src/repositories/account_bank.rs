@@ -4,7 +4,6 @@ use crate::{
         ACCOUNT_BANK_MEMORY_ID, UUID,
     },
     entities::{AccountBank, AccountBankKey},
-    errors::AccountBankRepositoryError,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
@@ -42,21 +41,18 @@ impl Repository<AccountBankKey, AccountBank> for AccountBankRepository {
 
 /// Enables the initialization of the AccountBankRepository repository.
 impl AccountBankRepository {
-    pub fn find_by_account_id(
-        &self,
-        account_id: &UUID,
-    ) -> Result<Vec<AccountBank>, AccountBankRepositoryError> {
-        DB.with(|m| {
-            let start_key = AccountBank::key(&min_principal_id(), account_id);
-            let end_key = AccountBank::key(&max_principal_id(), account_id);
+    pub fn find_by_account_id(&self, account_id: &UUID) -> Vec<AccountBank> {
+        DB.with(|db| {
+            let start_key = AccountBank::key(account_id, &min_principal_id());
+            let end_key = AccountBank::key(account_id, &max_principal_id());
 
-            let banks = m
+            let banks = db
                 .borrow()
-                .range(start_key..=end_key)
+                .range(start_key.clone()..=end_key.clone())
                 .map(|(_, account_bank)| account_bank)
                 .collect::<Vec<AccountBank>>();
 
-            Ok(banks)
+            banks
         })
     }
 }
@@ -127,10 +123,10 @@ mod tests {
         let repository = AccountBankRepository::default();
         let account_id: UUID = [2u8; 16];
         let different_account_id: UUID = [3u8; 16];
-        let key = AccountBank::key(&Principal::from_slice(&[0u8; 29]), &account_id);
-        let second_key = AccountBank::key(&Principal::from_slice(&[1u8; 29]), &account_id);
+        let key = AccountBank::key(&account_id, &Principal::from_slice(&[0u8; 29]));
+        let second_key = AccountBank::key(&account_id, &Principal::from_slice(&[1u8; 29]));
         let different_key =
-            AccountBank::key(&Principal::from_slice(&[2u8; 29]), &different_account_id);
+            AccountBank::key(&different_account_id, &Principal::from_slice(&[2u8; 29]));
         let mut record = AccountBank::default();
         let mut second_record = AccountBank::default();
         let mut different_record = AccountBank::default();
@@ -145,7 +141,6 @@ mod tests {
 
         let banks = repository.find_by_account_id(&account_id);
 
-        assert!(banks.is_ok());
-        assert_eq!(banks.unwrap().len(), 2);
+        assert_eq!(banks.len(), 2);
     }
 }

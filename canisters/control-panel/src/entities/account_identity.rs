@@ -1,4 +1,3 @@
-use super::AccountIdentityStatus;
 use crate::core::ic::api::time;
 use crate::core::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
@@ -27,8 +26,6 @@ pub struct AccountIdentity {
     pub account_id: UUID,
     /// The name of the identity (if any).
     pub name: Option<String>,
-    /// The status of the identity.
-    pub status: AccountIdentityStatus,
     /// Last time the identity was updated.
     pub last_update_timestamp: Timestamp,
 }
@@ -39,7 +36,6 @@ impl Default for AccountIdentity {
             identity: Principal::anonymous(),
             account_id: UUID::default(),
             name: None,
-            status: AccountIdentityStatus::PendingActivation,
             last_update_timestamp: time(),
         }
     }
@@ -49,7 +45,6 @@ impl AccountIdentity {
     /// The maximum size of each field in stable memory.
     pub const MAX_BYTE_SIZE_IDENTITY: u32 = MAX_BYTE_SIZE_PRINCIPAL;
     pub const MAX_BYTE_SIZE_NAME: u32 = 100;
-    pub const MAX_BYTE_SIZE_STATUS: u32 = AccountIdentityStatus::MAX_BYTE_SIZE;
     pub const MAX_BYTE_SIZE_ACCOUNT_ID: u32 = MAX_BYTE_SIZE_UUID;
     pub const MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
 
@@ -61,7 +56,6 @@ impl AccountIdentity {
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
         - Self::MAX_BYTE_SIZE_IDENTITY
         - Self::MAX_BYTE_SIZE_NAME
-        - Self::MAX_BYTE_SIZE_STATUS
         - Self::MAX_BYTE_SIZE_ACCOUNT_ID;
 
     pub fn key(identity: &Principal, account_id: &UUID) -> AccountIdentityKey {

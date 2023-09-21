@@ -33,6 +33,8 @@ pub struct Account {
     pub banks: Vec<Principal>,
     /// The identifies associated with the account.
     pub identities: Vec<Principal>,
+    /// The unconfirmed identifies associated with the account.
+    pub unconfirmed_identities: Vec<Principal>,
     /// Last time the identity was updated.
     pub last_update_timestamp: Timestamp,
 }
@@ -45,6 +47,7 @@ impl Default for Account {
             main_bank: None,
             banks: Vec::new(),
             identities: Vec::new(),
+            unconfirmed_identities: Vec::new(),
             last_update_timestamp: time(),
         }
     }
@@ -55,6 +58,9 @@ impl Account {
     /// this is limited to have a fixed size for the account in stable memory.
     pub const MAX_ACCOUNT_IDENTITIES: u32 = 10;
 
+    /// The maximum number of unconfirmed identities at any given time with an account.
+    pub const MAX_ACCOUNT_UNCONFIRMED_IDENTITIES: u32 = 5;
+
     /// The maximum number of banks that can be associated with an account,
     /// this is limited to have a fixed size for the account in stable memory.
     pub const MAX_ACCOUNT_BANKS: u32 = 10;
@@ -64,8 +70,10 @@ impl Account {
     pub const MAX_BYTE_SIZE_NAME: u32 = 150;
     pub const MAX_BYTE_SIZE_MAIN_BANK: u32 = MAX_BYTE_SIZE_PRINCIPAL;
     pub const MAX_BYTE_SIZE_BANKS: u32 = MAX_BYTE_SIZE_PRINCIPAL * Self::MAX_ACCOUNT_BANKS;
-    pub const MAX_BYTE_SIZE_MAIN_IDENTITIES: u32 =
+    pub const MAX_BYTE_SIZE_IDENTITIES: u32 =
         MAX_BYTE_SIZE_PRINCIPAL * Self::MAX_ACCOUNT_IDENTITIES;
+    pub const MAX_BYTE_SIZE_UNCONFIRMED_IDENTITIES: u32 =
+        MAX_BYTE_SIZE_PRINCIPAL * Self::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES;
     pub const MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
 
     /// The maximum size of an AccountIdentity in stable memory.
@@ -78,7 +86,8 @@ impl Account {
         - Self::MAX_BYTE_SIZE_NAME
         - Self::MAX_BYTE_SIZE_MAIN_BANK
         - Self::MAX_BYTE_SIZE_BANKS
-        - Self::MAX_BYTE_SIZE_MAIN_IDENTITIES
+        - Self::MAX_BYTE_SIZE_IDENTITIES
+        - Self::MAX_BYTE_SIZE_UNCONFIRMED_IDENTITIES
         - Self::MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP;
 
     pub fn key(account_id: &UUID) -> AccountKey {

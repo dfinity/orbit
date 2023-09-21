@@ -15,22 +15,12 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
-// The status of an account identity.
-type AccountIdentityStatus = variant {
-  // The identity is active.
-  Active;
-  // The identity is pending activation, this means that the identity is not yet associated with an account.
-  PendingActivation;
-};
-
 // The identity of an account.
 type AccountIdentity = record {
   // The identity of the account.
-  id : AccountIdentityID;
+  identity : AccountIdentityID;
   // A friendly name for the account identity.
   name : opt text;
-  // The status of the identity.
-  status : AccountIdentityStatus;
 };
 
 // The user account information.
@@ -42,10 +32,29 @@ type Account = record {
   // The identities associated with the account.
   // One identity can only be associated with one account.
   identities : vec AccountIdentityID;
+  // The identities that are not yet confirmed.
+  unconfirmed_identities : vec AccountIdentityID;
   // Main bank used to show in the UI for this account.
   main_bank : opt BankID;
   // List of banks associated with the account.
   banks : vec BankID;
+};
+
+// The user account information.
+type AccountDetails = record {
+  // The UUID associated with the account.
+  id : UUID;
+  // The name of the account.
+  name : opt text;
+  // Main bank used to show in the UI for this account.
+  main_bank : opt BankID;
+  // The identities associated with the account.
+  // One identity can only be associated with one account.
+  identities : vec AccountIdentity;
+  // The identities that are not yet confirmed.
+  unconfirmed_identities : vec AccountIdentityID;
+  // List of banks associated with the account.
+  banks : vec AccountBank;
 };
 
 // The result of managing an account.
@@ -75,17 +84,15 @@ type ManageAccountResult = variant {
 };
 
 // The bank information.
-type Bank = record {
+type AccountBank = record {
   // The id associated with the bank.
-  id : BankID;
+  canister_id : BankID;
   // The name of the bank.
-  name : text;
-  // Wether or not this bank is the main bank for the account.
-  main : bool;
+  name : opt text;
 };
 
 // Items that are returned when listing banks.
-type BankListItem = Bank;
+type BankListItem = AccountBank;
 
 // The result of listing banks.
 type ListBanksResult = variant {
@@ -103,7 +110,7 @@ type GetMainBankResult = variant {
   // The main bank for the given account.
   Ok : record {
     // The main bank for the given account.
-    bank : opt Bank;
+    bank : opt AccountBank;
   };
   // The error that occurred during the operation.
   Err : Error;
@@ -148,18 +155,18 @@ type ManageBanksResult = variant {
   // Sucessfull operation result.
   Ok : record {
     // The list of banks associated with the account.
-    bank : vec Bank;
+    bank : vec AccountBank;
   };
   // The error that occurred during the operation.
   Err : Error;
 };
 
 // The result of getting the account information.
-type AccountInfoResult = variant {
+type AccountDetailsResult = variant {
   // Successfull operation result.
   Ok : record {
     // The caller account information.
-    account : Account;
+    account_details : AccountDetails;
   };
   // The error that occurred during the operation.
   Err : Error;
@@ -211,7 +218,7 @@ type AssociateIdentityWithAccountResult = variant {
   Ok : record {
     // The account information if the identity was already added to
     // the account and this operation just activated it.
-    account : opt Account;
+    account : Account;
   };
   // The error that occurred during the operation.
   Err : Error;
@@ -231,7 +238,7 @@ type RemoveAccountResult = variant {
 // The control panel service definition.
 service : (opt CanisterInit) -> {
   // Get the account information for the caller.
-  account_info : () -> (AccountInfoResult) query;
+  account_details : () -> (AccountDetailsResult) query;
   // Manage the account associated with the caller.
   manage_account : (input : ManageAccountInput) -> (ManageAccountResult);
   // Create a new account for the caller.

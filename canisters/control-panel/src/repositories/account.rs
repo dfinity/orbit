@@ -30,7 +30,7 @@ impl AccountRepository {
             let end_key = AccountKey { id: *account_id };
 
             let results = m
-                .borrow()
+                .borrow_mut()
                 .range(start_key..=end_key)
                 .map(|(_, account)| account)
                 .collect::<Vec<Account>>();

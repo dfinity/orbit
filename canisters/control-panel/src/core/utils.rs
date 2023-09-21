@@ -36,9 +36,9 @@ pub fn extract_error_enum_variant_name<E: std::error::Error>(err: &E) -> String 
 }
 
 pub fn min_principal_id() -> Principal {
-    Principal::from_slice(&[0u8; 29])
+    Principal::from_slice(&[u8::MIN; 1])
 }
 
 pub fn max_principal_id() -> Principal {
-    Principal::from_slice(&[9u8; 29])
+    Principal::from_slice(&[u8::MAX; 29])
 }

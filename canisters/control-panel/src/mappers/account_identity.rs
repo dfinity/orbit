@@ -1,6 +1,7 @@
 use crate::{
     core::{ic::api::time, UUID},
-    entities::{AccountIdentity, AccountIdentityStatus},
+    entities::AccountIdentity,
+    transport::AccountIdentityDTO,
 };
 use candid::Principal;
 
@@ -19,8 +20,14 @@ impl AccountIdentityMapper {
             identity,
             name: None,
             account_id,
-            status: AccountIdentityStatus::Active,
             last_update_timestamp: time(),
+        }
+    }
+
+    pub fn map_to_dto(&self, account_identity: &AccountIdentity) -> AccountIdentityDTO {
+        AccountIdentityDTO {
+            identity: account_identity.identity,
+            name: account_identity.name.clone(),
         }
     }
 }

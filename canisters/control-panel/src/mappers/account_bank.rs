@@ -1,4 +1,7 @@
-use crate::entities::{Account, AccountBank};
+use crate::{
+    entities::{Account, AccountBank},
+    transport::AccountBankDTO,
+};
 
 #[derive(Default)]
 pub struct AccountBankMapper {}
@@ -14,5 +17,12 @@ impl AccountBankMapper {
                 ..Default::default()
             })
             .collect()
+    }
+
+    pub fn map_to_dto(&self, account_bank: &AccountBank) -> AccountBankDTO {
+        AccountBankDTO {
+            canister_id: account_bank.canister_id,
+            name: account_bank.name.clone(),
+        }
     }
 }

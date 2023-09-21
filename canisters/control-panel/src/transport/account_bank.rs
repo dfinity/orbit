@@ -3,7 +3,6 @@ use candid::{CandidType, Deserialize, Principal};
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct AccountBankDTO {
     pub canister_id: Principal,
-    pub account_id: String,
     pub name: Option<String>,
 }
 
