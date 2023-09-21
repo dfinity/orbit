@@ -271,6 +271,28 @@ impl AccountService {
             &account_banks,
         );
 
+        if updated_account.unconfirmed_identities.len()
+            > Account::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES as usize
+        {
+            return Err(
+                AccountManagementError::TooManyUnconfirmedIdentitiesForAccount {
+                    max_identities: Account::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES,
+                },
+            )?;
+        }
+
+        let total_identities =
+            updated_account.unconfirmed_identities.len() + account_identities.len();
+
+        if total_identities > Account::MAX_ACCOUNT_IDENTITIES as usize {
+            return Err(AccountManagementError::TooManyIdentitiesForAccount {
+                max_identities: Account::MAX_ACCOUNT_IDENTITIES,
+            })?;
+        }
+
+        self.account_repository
+            .insert(Account::key(&updated_account.id), updated_account.clone());
+
         let account_details = self.account_mapper.map_to_account_details_dto(
             &updated_account,
             &account_banks,

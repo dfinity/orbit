@@ -50,6 +50,12 @@ pub enum AccountManagementError {
     /// The account needs to have at least one associated identity.
     #[error(r#"The account needs to have at least one associated identity."#)]
     TooLittleAccountIdentities,
+    /// The account has too many identities.
+    #[error(r#"The account had too many identities."#)]
+    TooManyIdentitiesForAccount { max_identities: u32 },
+    /// The account has too many unconfirmed identities.
+    #[error(r#"The account had too many unconfirmed identities."#)]
+    TooManyUnconfirmedIdentitiesForAccount { max_identities: u32 },
 }
 
 impl DetailableError for AccountManagementError {
@@ -84,6 +90,16 @@ impl DetailableError for AccountManagementError {
             }
             AccountManagementError::TooManyBanksForAccount { max_banks } => {
                 details.insert("max_banks".to_string(), max_banks.to_string());
+
+                return Some(details);
+            }
+            AccountManagementError::TooManyIdentitiesForAccount { max_identities } => {
+                details.insert("max_identities".to_string(), max_identities.to_string());
+
+                return Some(details);
+            }
+            AccountManagementError::TooManyUnconfirmedIdentitiesForAccount { max_identities } => {
+                details.insert("max_identities".to_string(), max_identities.to_string());
 
                 return Some(details);
             }
