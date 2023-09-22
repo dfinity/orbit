@@ -40,9 +40,8 @@ impl AccountService {
             return Err(
                 AccountManagementError::IdentityAssociatedWithAnotherAccount {
                     account_id: formatted_account_id,
-                }
-                .into(),
-            );
+                },
+            )?;
         }
 
         Ok(())
@@ -58,7 +57,7 @@ impl AccountService {
 
         let account_id = generate_uuid_v4().await.as_bytes().to_owned();
         if self.account_repository.find_by_id(&account_id)?.is_some() {
-            return Err(AccountManagementError::DuplicatedAccountId.into());
+            return Err(AccountManagementError::DuplicatedAccountId)?;
         }
 
         self.account_repository.find_by_id(&account_id)?;
@@ -99,7 +98,7 @@ impl AccountService {
             .find_by_identity_id(identity)?;
 
         if maybe_account_identity.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity.into());
+            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
         }
 
         let account_identity = maybe_account_identity.unwrap();
@@ -114,8 +113,7 @@ impl AccountService {
 
             return Err(AccountManagementError::MissingAccountDetails {
                 account_id: formatted_account_id,
-            }
-            .into());
+            })?;
         }
 
         Ok(maybe_account.unwrap())
