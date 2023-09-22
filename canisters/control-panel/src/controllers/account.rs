@@ -25,8 +25,9 @@ async fn account_details() -> ApiResult<AccountDetailsResponse> {
 #[candid_method(update)]
 #[update(name = "register_account")]
 async fn register_account(input: RegisterAccountInput) -> ApiResult<RegisterAccountResponse> {
+    let ctx = CallContext::get();
     let account = AccountService::default()
-        .register_account(&CallContext::get().caller(), &input)
+        .register_account(&ctx.caller(), &input)
         .await?;
     let account_mapper = AccountMapper::default();
 

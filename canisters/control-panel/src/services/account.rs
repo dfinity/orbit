@@ -1,12 +1,12 @@
 use super::{AccountBankService, AccountIdentityService};
 use crate::{
-    core::{generate_uuid_v4, ApiError, Repository, ServiceResult},
+    core::{canister_config, generate_uuid_v4, ApiError, Repository, ServiceResult},
     entities::{Account, AccountBank, AccountIdentity},
     errors::AccountManagementError,
     mappers::{AccountBankMapper, AccountIdentityMapper, AccountMapper},
     repositories::{AccountBankRepository, AccountIdentityRepository, AccountRepository},
     transport::{
-        AccountDetailsDTO, AssociateIdentityWithAccountInput, ManageAccountInput,
+        AccountBankDTO, AccountDetailsDTO, AssociateIdentityWithAccountInput, ManageAccountInput,
         RegisterAccountInput,
     },
 };
@@ -67,6 +67,7 @@ impl AccountService {
             input.clone(),
             account_id,
             *caller,
+            canister_config().shared_bank_canister,
         );
         let account_identity = self
             .account_identity_mapper
@@ -233,7 +234,7 @@ impl AccountService {
         let account_identities = match &input.identities {
             Some(identities) => {
                 self.account_identity_service
-                    .update_account_identities(&current_account, identities)
+                    .update_account_identities(&current_account, identities, Some(identity))
                     .await?
             }
             None => self
@@ -300,5 +301,26 @@ impl AccountService {
         );
 
         Ok(account_details)
+    }
+
+    pub async fn get_account_main_bank(
+        &self,
+        identity: &Principal,
+    ) -> ServiceResult<Option<AccountBankDTO>> {
+        let account = self.get_identity_account(identity)?;
+
+        match account.main_bank {
+            Some(main_bank) => {
+                let account_banks = self.account_bank_repository.find_by_account_id(&account.id);
+                let account_bank = account_banks
+                    .iter()
+                    .find(|bank| bank.canister_id == main_bank)
+                    .ok_or(AccountManagementError::AccountMissingMainBankDetails)?;
+                let dto = self.account_bank_mapper.map_to_dto(account_bank);
+
+                Ok(Some(dto))
+            }
+            None => Ok(None),
+        }
     }
 }

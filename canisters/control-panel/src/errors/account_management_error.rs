@@ -56,6 +56,12 @@ pub enum AccountManagementError {
     /// The account has too many unconfirmed identities.
     #[error(r#"The account had too many unconfirmed identities."#)]
     TooManyUnconfirmedIdentitiesForAccount { max_identities: u32 },
+    /// The required identity can't be removed from the account.
+    #[error(r#"The required identity can't be removed from the account."#)]
+    NotAllowedRemovalOfRequiredIdentity,
+    /// The account is missing main bank details.
+    #[error(r#"Account is missing main bank details."#)]
+    AccountMissingMainBankDetails,
 }
 
 impl DetailableError for AccountManagementError {

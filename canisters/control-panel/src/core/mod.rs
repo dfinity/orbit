@@ -8,6 +8,10 @@ pub use constants::*;
 mod memory;
 pub use memory::*;
 
+/// Canister call context abstraction.
+mod call_context;
+pub use call_context::*;
+
 /// Canister configs.
 mod config;
 pub use config::*;

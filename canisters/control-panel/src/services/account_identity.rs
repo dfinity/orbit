@@ -38,11 +38,22 @@ impl AccountIdentityService {
         &self,
         account: &Account,
         new_identities: &Vec<AccountIdentityDTO>,
+        required_identity: Option<&Principal>,
     ) -> ServiceResult<Vec<AccountIdentity>, ApiError> {
         let current_identities = self.get_account_identities(account)?;
 
         if new_identities.is_empty() {
             return Err(AccountManagementError::TooLittleAccountIdentities)?;
+        }
+
+        if let Some(required_identity) = required_identity {
+            let account_has_required_identity = new_identities
+                .iter()
+                .any(|new_identity| new_identity.identity == *required_identity);
+
+            if !account_has_required_identity {
+                return Err(AccountManagementError::NotAllowedRemovalOfRequiredIdentity)?;
+            }
         }
 
         let account_owns_all_new_identities = new_identities.iter().all(|new_identity| {

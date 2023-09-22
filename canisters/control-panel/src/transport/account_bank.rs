@@ -15,5 +15,5 @@ pub struct ListBanksResponse {
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct GetMainBankResponse {
-    pub bank: AccountBankDTO,
+    pub bank: Option<AccountBankDTO>,
 }

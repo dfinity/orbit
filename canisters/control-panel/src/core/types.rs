@@ -1,6 +1,5 @@
-use super::{canister_config, extract_error_enum_variant_name, CanisterConfig};
-use crate::core::ic::caller;
-use candid::{CandidType, Deserialize, Principal};
+use super::extract_error_enum_variant_name;
+use candid::{CandidType, Deserialize};
 use std::collections::HashMap;
 
 /// Generic service error type used for service calls.
@@ -52,35 +51,4 @@ pub type UUID = [u8; 16];
 /// A timestamp in nano seconds since epoch.
 pub type Timestamp = u64;
 
-#[derive(Clone)]
-pub struct CallContext {
-    caller: Principal,
-    canister_config: CanisterConfig,
-}
-
-thread_local! {
-    static ACTIVE_CALL_CONTEXT: CallContext = CallContext::create();
-}
-
-impl CallContext {
-    fn create() -> Self {
-        Self {
-            caller: caller(),
-            canister_config: canister_config(),
-        }
-    }
-
-    pub fn caller(&self) -> Principal {
-        self.caller
-    }
-
-    pub fn canister_config(&self) -> CanisterConfig {
-        self.canister_config.clone()
-    }
-
-    pub fn get() -> Self {
-        ACTIVE_CALL_CONTEXT.with(|context| context.clone())
-    }
-}
-
-pub type ServiceResult<T = (), E = Vec<String>> = Result<T, E>;
+pub type ServiceResult<T = (), E = ApiError> = Result<T, E>;

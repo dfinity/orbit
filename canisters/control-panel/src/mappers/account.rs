@@ -1,6 +1,6 @@
 use super::{AccountBankMapper, AccountIdentityMapper};
 use crate::{
-    core::{ic::api::time, CallContext, UUID},
+    core::{ic::api::time, UUID},
     entities::{Account, AccountBank, AccountIdentity},
     transport::{
         AccountDTO, AccountDetailsDTO, ManageAccountInput, RegisterAccountBankInput,
@@ -23,6 +23,7 @@ impl AccountMapper {
         input: RegisterAccountInput,
         account_id: UUID,
         identity: Principal,
+        global_shared_bank_canister_id: Principal,
     ) -> Account {
         let banks = match input.bank {
             RegisterAccountBankInput::PrivateBank {
@@ -31,21 +32,15 @@ impl AccountMapper {
             } => match use_shared_bank {
                 Some(shared_bank) => {
                     if shared_bank.is_main {
-                        vec![
-                            CallContext::get().canister_config().shared_bank_canister,
-                            id,
-                        ]
+                        vec![global_shared_bank_canister_id, id]
                     } else {
-                        vec![
-                            id,
-                            CallContext::get().canister_config().shared_bank_canister,
-                        ]
+                        vec![id, global_shared_bank_canister_id]
                     }
                 }
                 None => vec![id],
             },
             RegisterAccountBankInput::SharedBank => {
-                vec![CallContext::get().canister_config().shared_bank_canister]
+                vec![global_shared_bank_canister_id]
             }
         };
         // The order of the banks is important, the first bank is the main bank for the account at this stage

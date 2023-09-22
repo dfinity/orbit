@@ -31,6 +31,23 @@ type Account = record {
   name : opt text;
   // The identities associated with the account.
   // One identity can only be associated with one account.
+  identities : vec AccountIdentityID;
+  // The identities that are not yet confirmed.
+  unconfirmed_identities : vec AccountIdentityID;
+  // Main bank used to show in the UI for this account.
+  main_bank : opt BankID;
+  // List of banks associated with the account.
+  banks : vec BankID;
+};
+
+// The user account information.
+type AccountDetails = record {
+  // The UUID associated with the account.
+  id : UUID;
+  // The name of the account.
+  name : opt text;
+  // The identities associated with the account.
+  // One identity can only be associated with one account.
   identities : vec AccountIdentity;
   // The identities that are not yet confirmed.
   unconfirmed_identities : vec AccountIdentityID;
@@ -39,7 +56,6 @@ type Account = record {
   // List of banks associated with the account.
   banks : vec AccountBank;
 };
-
 // The result of managing an account.
 type ManageAccountInput = record {
   // The name of the account.
@@ -63,7 +79,7 @@ type ManageAccountResult = variant {
   // Successfull operation result.
   Ok : record {
     // The updated account information.
-    account : Account;
+    account_details : AccountDetails;
   };
   // The error that occurred during the operation.
   Err : Error;
