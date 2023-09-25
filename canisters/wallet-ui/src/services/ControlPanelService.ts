@@ -6,7 +6,6 @@ import {
   Account,
   AccountDetails,
   ManageAccountInput,
-  ManageAccountResult,
   RegisterAccountInput,
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
