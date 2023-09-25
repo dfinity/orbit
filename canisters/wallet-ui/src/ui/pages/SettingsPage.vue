@@ -13,7 +13,7 @@
     <template #main-body>
       <VRow>
         <VCol cols="12">
-          <VCard color="background" :loading="settings.isLoading">
+          <VCard color="background" :loading="settings.isLoading" variant="flat">
             <VTabs v-model="tab" center-active class="px-8">
               <VTab
                 value="settingsForm"
