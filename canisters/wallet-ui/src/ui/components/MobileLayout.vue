@@ -58,7 +58,9 @@
             : undefined
         "
       >
-        <slot name="topnav"> </slot>
+        <slot name="topnav">
+          <BankSelector v-if="auth.isAuthenticated" />
+        </slot>
       </nav>
       <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
         <slot name="main">
@@ -117,6 +119,7 @@ import SidenavMenu from '~/ui/components/SidenavMenu.vue';
 import { useAuthStore, useSettingsStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
+import BankSelector from '~/ui/components/BankSelector.vue';
 
 const settings = useSettingsStore();
 const auth = useAuthStore();

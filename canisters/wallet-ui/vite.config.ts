@@ -1,10 +1,11 @@
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
 import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vitest/config';
-import dfxConfig from './dfx.json';
+import dfxConfig from '../../dfx.json';
 
 const network = process.env.DFX_NETWORK ?? 'local';
 
@@ -13,8 +14,8 @@ const resolveCanisterIds = (): Map<string, string> => {
   const canisters = Object.entries(dfxConfig.canisters);
   const canisterIdsFilePath =
     network === 'local'
-      ? resolve(__dirname, '.dfx/local/canister_ids.json')
-      : resolve(__dirname, 'canister_ids.json');
+      ? resolve(__dirname, '../..', '.dfx/local/canister_ids.json')
+      : resolve(__dirname, '../..', 'canister_ids.json');
 
   if (!existsSync(canisterIdsFilePath)) {
     console.warn(`Canister ids file not found at ${canisterIdsFilePath}`);
@@ -26,10 +27,9 @@ const resolveCanisterIds = (): Map<string, string> => {
   );
   for (const [canisterName] of canisters) {
     const details = config[canisterName];
-    if (!details[network]) {
-      throw new Error(
-        `Canister ${canisterName} does not have a defined canister id for ${network}`,
-      );
+    if (!details?.[network]) {
+      console.warn(`Canister ${canisterName} does not have a defined canister id for ${network}`);
+      continue;
     }
 
     availableCanisters.set(canisterName, details[network]);
@@ -105,6 +105,24 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
+        plugins: [
+          NodeModulesPolyfillPlugin(),
+          {
+            name: 'fix-node-globals-polyfill',
+            setup(build) {
+              build.onResolve({ filter: /_virtual-process-polyfill_\.js/ }, ({ path }) => ({
+                path,
+              }));
+            },
+          },
+        ],
+      },
+    },
     css: {
       devSourcemap: !isProduction,
     },
@@ -121,12 +139,16 @@ export default defineConfig(({ mode }) => {
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
       'import.meta.env.APP_VERSION': JSON.stringify(`v${process.env.npm_package_version}`),
       'import.meta.env.APP_WALLET_UI_CANISTER_ID': JSON.stringify(canisters.get('wallet_ui')),
+      'import.meta.env.APP_CONTROL_PANEL_CANISTER_ID': JSON.stringify(
+        canisters.get('control_panel'),
+      ),
       'import.meta.env.APP_INTERNET_IDENTITY_CANISTER_ID': JSON.stringify(
         canisters.get('internet_identity'),
       ),
       'import.meta.env.APP_INTERNET_IDENTITY_PROVIDER_URL': JSON.stringify(
         `http://${canisters.get('internet_identity')}.localhost:4943`,
       ),
+      'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.get('control_panel')),
     },
     resolve: {
       alias: {

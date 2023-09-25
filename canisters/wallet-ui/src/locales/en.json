@@ -35,6 +35,16 @@
       "description": "Source Code"
     }
   },
+  "settings": {
+    "subtitle": "Configure preferences and manage the associated identities of your account.",
+    "edit_success": "Your account information has been successfully updated.",
+    "load_failed": "Your account information failed to load, please try again."
+  },
+  "banks": {
+    "load_error": "Failed to load banks information, please try again.",
+    "bank_nr_title": "#{nr} Bank",
+    "no_banks": "No banks avalable."
+  },
   "terms": {
     "signin": "Sign In",
     "signout": "Sign Out",
@@ -47,7 +57,30 @@
     "pending": "pending",
     "new_transfer": "New transfer",
     "settings": "Settings",
-    "close": "Close"
+    "close": "Close",
+    "general": "General",
+    "add": "Add",
+    "remove": "Remove",
+    "account_name": "Account Name",
+    "bank_name": "Bank Name",
+    "identity_name": "Identity Name",
+    "canister_id": "Canister ID",
+    "principal": "Principal",
+    "control_panel": "Control panel",
+    "confirmed": "Confirmed",
+    "unconfirmed": "Unconfirmed",
+    "main": "Main"
+  },
+  "forms": {
+    "banks": "Banks ({min}/{max})",
+    "identities": "Identities ({min}/{max})",
+    "save_changes": "Save Changes",
+    "rules": {
+      "required": "This field is required.",
+      "maxLength": "The maximum length of the {field} is {max} characters.",
+      "validPrincipal": "This field must be a valid principal.",
+      "duplicate": "This field must be unique."
+    }
   },
   "navigation": {
     "main": {

@@ -5,11 +5,18 @@ export interface AppInitConfig {
   version: string;
   logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
   baseUrl: string;
+  isProduction: boolean;
+  apiGatewayUrl: URL;
   locale: {
     default: string;
     supportedLocales: string[];
   };
   providers: {
+    internetIdentity: string;
+  };
+  canisters: {
+    walletUI: string;
+    controlPanel: string;
     internetIdentity: string;
   };
 }

@@ -35,6 +35,16 @@
       "description": "Código-fonte"
     }
   },
+  "settings": {
+    "subtitle": "Configure as preferências e gerencie as identidades associadas à sua conta.",
+    "edit_success": "As informaçōes da sua conta foram alteradas com sucesso.",
+    "load_failed": "Falha ao procurar as informaçōes da sua conta, por favor, tente novament."
+  },
+  "banks": {
+    "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
+    "bank_nr_title": "#{nr} Banco",
+    "no_banks": "Nenhum banco disponível."
+  },
   "terms": {
     "signin": "Entrar",
     "signout": "Sair",
@@ -47,7 +57,30 @@
     "pending": "Pendente",
     "new_transfer": "Nova transferência",
     "settings": "Configuraçōes",
-    "close": "Fechar"
+    "close": "Fechar",
+    "general": "Geral",
+    "add": "Adicionar",
+    "remove": "Remover",
+    "account_name": "Nome da conta",
+    "bank_name": "Nome do banco",
+    "identity_name": "Nome da identidade",
+    "canister_id": "Canister ID",
+    "principal": "Principal",
+    "control_panel": "Painel de controle",
+    "confirmed": "Confirmado",
+    "unconfirmed": "Não confirmado",
+    "main": "Principal"
+  },
+  "forms": {
+    "banks": "Bancos ({min}/{max})",
+    "identities": "Identidades ({min}/{max})",
+    "save_changes": "Gravar alteraçōes",
+    "rules": {
+      "required": "Este campo é obrigatório.",
+      "maxLength": "O tamanho máximo do {field} são {max} caractéres.",
+      "validPrincipal": "Este campo deve conter um principal válido.",
+      "duplicate": "Este campo deve ser único."
+    }
   },
   "navigation": {
     "main": {

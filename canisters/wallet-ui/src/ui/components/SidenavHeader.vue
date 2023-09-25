@@ -12,10 +12,20 @@
       <VCol cols="12">
         <div class="profile">
           <VAvatar color="primary-variant" size="64" image="/images/avatar.svg" />
-          <VBtn class="profile__username" variant="text" :append-icon="mdiChevronDown" size="small">
-            {{ auth.username ? auth.username : $t('terms.anonymous') }}
+          <VBtn class="profile__name" variant="text" :append-icon="mdiChevronDown" size="small">
+            <span>{{ auth.accountName ? auth.accountName : $t('terms.anonymous') }}</span>
+            <VMenu activator="parent">
+              <VList density="compact">
+                <VListItem :exact="true" :to="`/${$route.params.locale}/settings`">
+                  <VListItemTitle>{{ $t('terms.settings') }}</VListItemTitle>
+                </VListItem>
+                <VListItem @click="auth.signOut">
+                  <VListItemTitle>{{ $t('navigation.configuration.items.logout') }}</VListItemTitle>
+                </VListItem>
+              </VList>
+            </VMenu>
           </VBtn>
-          <span class="profile__principal">{{ auth.principal }}</span>
+          <span class="profile__principal">{{ auth.accountId }}</span>
         </div>
       </VCol>
     </VRow>
@@ -44,7 +54,7 @@ const auth = useAuthStore();
   align-items: center;
   justify-content: center;
 
-  &__username {
+  &__name {
     margin-top: var(--ds-bdu);
   }
 
