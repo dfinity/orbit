@@ -12,7 +12,7 @@
         }
       },
       "declarations": {
-        "output": "canisters/wallet-ui/src/generated/internet-identity",
+        "output": "./canisters/wallet-ui/src/generated/internet-identity",
         "node_compatibility": true
       }
     },
@@ -21,6 +21,7 @@
       "package": "control_panel",
       "candid": "canisters/control-panel/spec.did",
       "declarations": {
+        "output": "canisters/wallet-ui/src/generated/control-panel",
         "node_compatibility": true
       },
       "optimize": "cycles"

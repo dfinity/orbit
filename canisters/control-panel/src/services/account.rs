@@ -92,13 +92,16 @@ impl AccountService {
         Ok(account)
     }
 
-    fn get_identity_account(&self, identity: &Principal) -> ServiceResult<Account, ApiError> {
+    fn get_identity_account(
+        &self,
+        identity: &Principal,
+    ) -> ServiceResult<Option<Account>, ApiError> {
         let maybe_account_identity = self
             .account_identity_repository
             .find_by_identity_id(identity)?;
 
         if maybe_account_identity.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
+            return Ok(None);
         }
 
         let account_identity = maybe_account_identity.unwrap();
@@ -116,14 +119,18 @@ impl AccountService {
             })?;
         }
 
-        Ok(maybe_account.unwrap())
+        Ok(Some(maybe_account.unwrap()))
     }
 
     pub async fn get_account_details(
         &self,
         identity: &Principal,
-    ) -> ServiceResult<AccountDetailsDTO, ApiError> {
+    ) -> ServiceResult<Option<AccountDetailsDTO>, ApiError> {
         let account = self.get_identity_account(identity)?;
+        if account.is_none() {
+            return Ok(None);
+        }
+        let account = account.unwrap();
         let identities = account
             .identities
             .iter()
@@ -141,7 +148,7 @@ impl AccountService {
             self.account_mapper
                 .map_to_account_details_dto(&account, &banks, &identities);
 
-        Ok(account_details)
+        Ok(Some(account_details))
     }
 
     pub async fn associate_identity_with_account(
@@ -229,6 +236,11 @@ impl AccountService {
         input: &ManageAccountInput,
     ) -> ServiceResult<AccountDetailsDTO, ApiError> {
         let current_account = self.get_identity_account(identity)?;
+        if current_account.is_none() {
+            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
+        }
+
+        let current_account = current_account.unwrap();
         let account_identities = match &input.identities {
             Some(identities) => {
                 self.account_identity_service
@@ -306,7 +318,11 @@ impl AccountService {
         identity: &Principal,
     ) -> ServiceResult<Option<AccountBankDTO>> {
         let account = self.get_identity_account(identity)?;
+        if account.is_none() {
+            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
+        }
 
+        let account = account.unwrap();
         match account.main_bank {
             Some(main_bank) => {
                 let account_banks = self.account_bank_repository.find_by_account_id(&account.id);

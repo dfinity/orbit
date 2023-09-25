@@ -15,7 +15,10 @@ async fn list_banks() -> ApiResult<ListBanksResponse> {
     let account_details = account_service.get_account_details(&ctx.caller()).await?;
 
     Ok(ListBanksResponse {
-        banks: account_details.banks,
+        banks: match account_details {
+            Some(account) => account.banks,
+            None => vec![],
+        },
     })
 }
 

@@ -23,5 +23,5 @@ pub struct AccountDetailsDTO {
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct AccountDetailsResponse {
-    pub account_details: AccountDetailsDTO,
+    pub account_details: Option<AccountDetailsDTO>,
 }

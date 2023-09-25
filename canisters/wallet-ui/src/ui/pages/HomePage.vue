@@ -14,7 +14,12 @@
             <VBtn rounded color="primary-variant" :prepend-icon="mdiSend">
               {{ $t('terms.new_transfer') }}
             </VBtn>
-            <VBtn rounded color="primary-variant" :prepend-icon="mdiCogs">
+            <VBtn
+              rounded
+              color="primary-variant"
+              :prepend-icon="mdiCogs"
+              :to="`/${$route.params.locale}/settings`"
+            >
               {{ $t('terms.settings') }}
             </VBtn>
           </VCol>

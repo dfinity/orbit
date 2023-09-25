@@ -1,3 +1,4 @@
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
 import { existsSync, readFileSync, readdirSync } from 'fs';
@@ -104,6 +105,24 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
+        plugins: [
+          NodeModulesPolyfillPlugin(),
+          {
+            name: 'fix-node-globals-polyfill',
+            setup(build) {
+              build.onResolve({ filter: /_virtual-process-polyfill_\.js/ }, ({ path }) => ({
+                path,
+              }));
+            },
+          },
+        ],
+      },
+    },
     css: {
       devSourcemap: !isProduction,
     },
@@ -120,12 +139,16 @@ export default defineConfig(({ mode }) => {
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
       'import.meta.env.APP_VERSION': JSON.stringify(`v${process.env.npm_package_version}`),
       'import.meta.env.APP_WALLET_UI_CANISTER_ID': JSON.stringify(canisters.get('wallet_ui')),
+      'import.meta.env.APP_CONTROL_PANEL_CANISTER_ID': JSON.stringify(
+        canisters.get('control_panel'),
+      ),
       'import.meta.env.APP_INTERNET_IDENTITY_CANISTER_ID': JSON.stringify(
         canisters.get('internet_identity'),
       ),
       'import.meta.env.APP_INTERNET_IDENTITY_PROVIDER_URL': JSON.stringify(
         `http://${canisters.get('internet_identity')}.localhost:4943`,
       ),
+      'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.get('control_panel')),
     },
     resolve: {
       alias: {

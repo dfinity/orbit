@@ -136,8 +136,8 @@ type CanisterInit = record {
 type AccountDetailsResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The caller account information.
-    account : Account;
+    // The caller account information, if available.
+    account_details : opt AccountDetails;
   };
   // The error that occurred during the operation.
   Err : Error;

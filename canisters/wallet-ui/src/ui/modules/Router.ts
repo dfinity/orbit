@@ -50,6 +50,16 @@ const router = createRouter({
           },
         },
         {
+          path: 'settings',
+          name: 'Settings',
+          component: () => import('~/ui/pages/SettingsPage.vue'),
+          meta: {
+            auth: {
+              requireState: AuthState.Authenticated,
+            },
+          },
+        },
+        {
           path: ':pathMatch(.*)*',
           name: 'NotFound',
           component: NotFoundPage,
