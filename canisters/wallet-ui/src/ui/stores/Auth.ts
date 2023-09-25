@@ -1,13 +1,15 @@
-import { Identity, AnonymousIdentity } from '@dfinity/agent';
+import { AnonymousIdentity, Identity } from '@dfinity/agent';
 import { defineStore } from 'pinia';
 import { icAgent } from '~/core/IcAgent';
+import { Maybe } from '~/types';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey, router, services } from '~/ui/modules';
+import { useBankStore } from '~/ui/stores';
 
 export interface AuthStoreState {
   initialized: boolean;
   identity: Identity | null;
   accountId: string | null;
-  username: string | null;
+  accountName: string | null;
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -15,7 +17,7 @@ export const useAuthStore = defineStore('auth', {
     initialized: false,
     identity: null,
     accountId: null,
-    username: null,
+    accountName: null,
   }),
   getters: {
     isAuthenticated(): boolean {
@@ -48,10 +50,14 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Account not found');
         }
 
+        // loads information about the main bank and the list of banks for the account
+        await useBankStore().init();
+
         this.identity = cachedIdentity;
-        this.username = account_details.name.length ? account_details.name[0] : null;
+        this.accountName = account_details.name.length ? account_details.name[0] : null;
         this.accountId = account_details.id;
       } catch (error) {
+        useBankStore().reset();
         this.resetIdentity();
         throw error;
       } finally {
@@ -69,15 +75,23 @@ export const useAuthStore = defineStore('auth', {
         const accountDetails = await controlPanelService.get_account_details();
 
         if (accountDetails) {
-          this.username = accountDetails.name.length ? accountDetails.name[0] : null;
+          // loads information about the main bank and the list of banks for the account
+          await useBankStore().init();
+
+          this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
           this.accountId = accountDetails.id;
           return;
         }
 
         const account = await controlPanelService.register_with_shared_bank();
-        this.username = account.name.length ? account.name[0] : null;
+
+        // loads information about the main bank and the list of banks for the account
+        await useBankStore().init();
+
+        this.accountName = account.name.length ? account.name[0] : null;
         this.accountId = account.id;
       } catch (error) {
+        useBankStore().reset();
         this.resetIdentity();
         throw error;
       }
@@ -87,11 +101,17 @@ export const useAuthStore = defineStore('auth', {
 
       await authService.logout();
       this.resetIdentity();
+      useBankStore().reset();
       this.redirectToLogin();
+    },
+    editAccount(account: { name?: Maybe<string> }): void {
+      if (account.name !== undefined) {
+        this.accountName = account.name;
+      }
     },
     resetIdentity(): void {
       this.identity = null;
-      this.username = null;
+      this.accountName = null;
       this.accountId = null;
 
       icAgent.get().invalidateIdentity();

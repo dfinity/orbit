@@ -40,6 +40,11 @@
     "edit_success": "As informaçōes da sua conta foram alteradas com sucesso.",
     "load_failed": "Falha ao procurar as informaçōes da sua conta, por favor, tente novament."
   },
+  "banks": {
+    "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
+    "bank_nr_title": "#{nr} Banco",
+    "no_banks": "Nenhum banco disponível."
+  },
   "terms": {
     "signin": "Entrar",
     "signout": "Sair",

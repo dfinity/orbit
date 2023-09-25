@@ -40,6 +40,11 @@
     "edit_success": "Your account information has been successfully updated.",
     "load_failed": "Your account information failed to load, please try again."
   },
+  "banks": {
+    "load_error": "Failed to load banks information, please try again.",
+    "bank_nr_title": "#{nr} Bank",
+    "no_banks": "No banks avalable."
+  },
   "terms": {
     "signin": "Sign In",
     "signout": "Sign Out",

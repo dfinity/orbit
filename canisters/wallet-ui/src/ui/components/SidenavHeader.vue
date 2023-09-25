@@ -12,8 +12,8 @@
       <VCol cols="12">
         <div class="profile">
           <VAvatar color="primary-variant" size="64" image="/images/avatar.svg" />
-          <VBtn class="profile__username" variant="text" :append-icon="mdiChevronDown" size="small">
-            <span>{{ auth.username ? auth.username : $t('terms.anonymous') }}</span>
+          <VBtn class="profile__name" variant="text" :append-icon="mdiChevronDown" size="small">
+            <span>{{ auth.accountName ? auth.accountName : $t('terms.anonymous') }}</span>
             <VMenu activator="parent">
               <VList density="compact">
                 <VListItem :exact="true" :to="`/${$route.params.locale}/settings`">
@@ -54,7 +54,7 @@ const auth = useAuthStore();
   align-items: center;
   justify-content: center;
 
-  &__username {
+  &__name {
     margin-top: var(--ds-bdu);
   }
 

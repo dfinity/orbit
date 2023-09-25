@@ -39,6 +39,7 @@
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="settings.toogleTheme" />
               <LanguageSelector />
+              <BankSelector v-if="auth.isAuthenticated" />
             </slot>
           </div>
         </VToolbar>
@@ -102,6 +103,7 @@
 import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
+import BankSelector from '~/ui/components/BankSelector.vue';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';

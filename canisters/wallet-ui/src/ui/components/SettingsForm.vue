@@ -33,6 +33,7 @@
             :label="$t('terms.account_name')"
             variant="solo"
             density="compact"
+            clearable
             :rules="settings.validationRules.accountName"
           />
         </VCol>
@@ -57,6 +58,7 @@
                     :label="$t('terms.bank_name')"
                     variant="filled"
                     density="compact"
+                    clearable
                     :rules="settings.validationRules.bankName"
                   />
                   <VTextField
@@ -135,6 +137,7 @@
                     :label="$t('terms.identity_name')"
                     variant="filled"
                     density="compact"
+                    clearable
                     :disabled="!identity.confirmed"
                     :rules="settings.validationRules.identityName"
                   />

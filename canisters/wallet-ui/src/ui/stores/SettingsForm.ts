@@ -1,7 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { i18n, services } from '~/ui/modules';
-import { useAuthStore } from '~/ui/stores';
+import { useAuthStore, useBankStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { maxLengthRule, requiredRule, validPrincipalRule } from '~/ui/utils';
 
@@ -175,7 +175,7 @@ export const useSettingsFormStore = defineStore('settingsForm', {
       this.isLoading = true;
 
       const controlPanelService = services().controlPanel;
-      controlPanelService
+      await controlPanelService
         .editAccount({
           name: this.form.name ? [this.form.name] : [],
           main_bank: this.form.mainBank ? [Principal.fromText(this.form.mainBank)] : [],
@@ -207,7 +207,14 @@ export const useSettingsFormStore = defineStore('settingsForm', {
           };
 
           const auth = useAuthStore();
-          auth.username = accountDetails.name?.[0] ?? null;
+          const bank = useBankStore();
+          auth.editAccount({ name: accountDetails.name?.[0] ?? null });
+          bank.useBanks(
+            accountDetails.banks.map(bank => ({
+              canisterId: bank.canister_id,
+              name: bank.name?.[0] ?? null,
+            })),
+          );
           this.unchangedVersion = JSON.stringify(this.form);
         })
         .catch(err => {

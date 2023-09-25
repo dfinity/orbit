@@ -4,11 +4,13 @@ import { icAgent } from '~/core/IcAgent';
 import { idlFactory } from '~/generated/control-panel';
 import {
   Account,
+  AccountBank,
   AccountDetails,
   ManageAccountInput,
   RegisterAccountInput,
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
+import { Maybe } from '~/types';
 
 export class ControlPanelService {
   private actor: ActorSubclass<_SERVICE>;
@@ -21,12 +23,12 @@ export class ControlPanelService {
   }
 
   async get_account_details(): Promise<AccountDetails | null> {
-    const account_details = await this.actor.account_details();
-    if ('Err' in account_details) {
-      throw account_details.Err;
+    const result = await this.actor.account_details();
+    if ('Err' in result) {
+      throw result.Err;
     }
 
-    return account_details.Ok.account_details.length ? account_details.Ok.account_details[0] : null;
+    return result.Ok.account_details?.[0] ?? null;
   }
 
   async register_with_shared_bank(): Promise<Account> {
@@ -39,22 +41,42 @@ export class ControlPanelService {
   }
 
   async register(input: RegisterAccountInput): Promise<Account> {
-    const account_details = await this.actor.register_account(input);
+    const result = await this.actor.register_account(input);
 
-    if ('Err' in account_details) {
-      throw account_details.Err;
+    if ('Err' in result) {
+      throw result.Err;
     }
 
-    return account_details.Ok.account;
+    return result.Ok.account;
   }
 
   async editAccount(input: ManageAccountInput): Promise<AccountDetails> {
-    const account_details = await this.actor.manage_account(input);
+    const result = await this.actor.manage_account(input);
 
-    if ('Err' in account_details) {
-      throw account_details.Err;
+    if ('Err' in result) {
+      throw result.Err;
     }
 
-    return account_details.Ok.account_details;
+    return result.Ok.account_details;
+  }
+
+  async getMainBank(): Promise<Maybe<AccountBank>> {
+    const result = await this.actor.get_main_bank();
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.bank?.[0] ?? null;
+  }
+
+  async listBanks(): Promise<AccountBank[]> {
+    const result = await this.actor.list_banks();
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.banks;
   }
 }
