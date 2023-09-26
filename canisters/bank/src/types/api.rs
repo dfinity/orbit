@@ -1,4 +1,3 @@
-use crate::transport::ApiErrorDTO;
 use candid::{CandidType, Deserialize};
 use std::collections::HashMap;
 
@@ -24,16 +23,6 @@ impl ApiError {
             code,
             message,
             details,
-        }
-    }
-}
-
-impl Into<ApiErrorDTO> for ApiError {
-    fn into(self) -> ApiErrorDTO {
-        ApiErrorDTO {
-            code: self.code,
-            message: self.message,
-            details: self.details,
         }
     }
 }

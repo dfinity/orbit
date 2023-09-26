@@ -9,10 +9,8 @@ use crate::{
         ManageAccountResponse, RegisterAccountInput, RegisterAccountResponse,
     },
 };
-use candid::candid_method;
 use ic_cdk_macros::{query, update};
 
-#[candid_method(query)]
 #[query(name = "account_details")]
 async fn account_details() -> ApiResult<AccountDetailsResponse> {
     let account_details = AccountService::default()
@@ -22,7 +20,6 @@ async fn account_details() -> ApiResult<AccountDetailsResponse> {
     Ok(AccountDetailsResponse { account_details })
 }
 
-#[candid_method(update)]
 #[update(name = "register_account")]
 async fn register_account(input: RegisterAccountInput) -> ApiResult<RegisterAccountResponse> {
     let ctx = CallContext::get();
@@ -36,7 +33,6 @@ async fn register_account(input: RegisterAccountInput) -> ApiResult<RegisterAcco
     })
 }
 
-#[candid_method(update)]
 #[update(name = "manage_account")]
 async fn manage_account(input: ManageAccountInput) -> ApiResult<ManageAccountResponse> {
     let account_details = AccountService::default()
@@ -46,7 +42,6 @@ async fn manage_account(input: ManageAccountInput) -> ApiResult<ManageAccountRes
     Ok(ManageAccountResponse { account_details })
 }
 
-#[candid_method(update)]
 #[update(name = "associate_identity_with_account")]
 async fn associate_identity_with_account(
     input: AssociateIdentityWithAccountInput,
@@ -62,7 +57,6 @@ async fn associate_identity_with_account(
     })
 }
 
-#[candid_method(update)]
 #[update(name = "delete_account")]
 async fn delete_account() -> ApiResult<DeleteAccountResponse> {
     let deleted_account = AccountService::default()

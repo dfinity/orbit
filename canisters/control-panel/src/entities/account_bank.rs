@@ -1,9 +1,10 @@
 use crate::core::{ic::api::time, Timestamp, MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use ic_canister_macros::stable_object;
 use ic_stable_structures::{BoundedStorable, Storable};
-use std::borrow::Cow;
 
 /// The key used to store an account identity in stable memory.
+#[stable_object(size = AccountBankKey::MAX_BYTE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AccountBankKey {
     pub account_id: UUID,
@@ -16,6 +17,7 @@ impl Default for AccountBankKey {
     }
 }
 
+#[stable_object(size = AccountBank::MAX_BYTE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AccountBank {
     pub account_id: UUID,
@@ -80,40 +82,4 @@ impl AccountBank {
             canister_id: *canister_id,
         }
     }
-}
-
-/// Adds serialization and deserialization support to AccountIdentity to stable memory.
-impl Storable for AccountBank {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-/// Represents the memory required to store a AccountIdentity in stable memory.
-impl BoundedStorable for AccountBank {
-    const MAX_SIZE: u32 = AccountBank::MAX_BYTE_SIZE;
-
-    const IS_FIXED_SIZE: bool = false;
-}
-
-/// Adds serialization and deserialization support to AccountBankKey to stable memory.
-impl Storable for AccountBankKey {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-/// Represents the memory required to store a AccountBankKey in stable memory.
-impl BoundedStorable for AccountBankKey {
-    const MAX_SIZE: u32 = AccountBankKey::MAX_BYTE_SIZE;
-
-    const IS_FIXED_SIZE: bool = false;
 }

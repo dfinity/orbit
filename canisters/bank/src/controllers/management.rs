@@ -6,7 +6,7 @@ use crate::{
     transport::{BankCanisterInit, BankDetailsResponse},
     types::ApiResult,
 };
-use ic_canister_utils::cdk::api::time;
+use ic_canister_core::cdk::api::time;
 use ic_cdk_macros::{init, post_upgrade, query};
 
 #[query(name = "get_bank_details")]

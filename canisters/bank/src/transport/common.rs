@@ -11,4 +11,3 @@ pub struct ApiErrorDTO {
     /// The error details if any.
     pub details: Option<HashMap<String, String>>,
 }
-

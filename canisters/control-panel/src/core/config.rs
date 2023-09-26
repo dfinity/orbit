@@ -1,10 +1,12 @@
 use super::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, WASM_PAGE_SIZE};
 use crate::core::ic::api::time;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use ic_canister_macros::stable_object;
 use ic_cdk::trap;
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
 
+#[stable_object(size = WASM_PAGE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
     /// This is the shared bank canister that is user by default for all
@@ -46,24 +48,6 @@ impl CanisterConfig {
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
         - Self::MAX_BYTE_SIZE_SHARED_BANK_CANISTER
         - Self::MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP;
-}
-
-/// Adds serialization and deserialization support of CanisterConfig to stable memory.
-impl Storable for CanisterConfig {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-/// Represents the memory required to store a CanisterConfig in stable memory.
-impl BoundedStorable for CanisterConfig {
-    const MAX_SIZE: u32 = CanisterConfig::MAX_BYTE_SIZE;
-
-    const IS_FIXED_SIZE: bool = false;
 }
 
 /// Configuration state of the canister.

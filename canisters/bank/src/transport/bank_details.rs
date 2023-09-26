@@ -7,9 +7,9 @@ pub struct BankAssetDTO {
     pub blockchain: String,
     /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
     pub symbol: String,
-    // The asset standard that is supported (e.g. `erc20`, etc.), canonically 
-    // represented as a lowercase string with spaces replaced with underscores. 
-    // 
+    // The asset standard that is supported (e.g. `erc20`, etc.), canonically
+    // represented as a lowercase string with spaces replaced with underscores.
+    //
     // If empty, then only the native blockchain asset is supported.
     pub standards: Vec<String>,
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
