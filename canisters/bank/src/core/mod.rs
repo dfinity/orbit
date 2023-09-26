@@ -8,9 +8,6 @@ pub use config::*;
 mod constants;
 pub use constants::*;
 
-/// Internet Computer utils.
-pub mod ic;
-
 /// Stable memory.
 mod memory;
 pub use memory::*;

@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "canisters/bank",
   "canisters/control-panel",
+  "packages/ic-canister-utils",
 ]
 
 [profile.release]

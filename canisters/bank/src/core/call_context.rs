@@ -1,5 +1,6 @@
-use super::{canister_config, ic::caller, CanisterConfig};
+use super::{canister_config, CanisterConfig};
 use candid::Principal;
+use ic_canister_utils::cdk::caller;
 
 #[derive(Clone, Debug)]
 pub struct CallContext {

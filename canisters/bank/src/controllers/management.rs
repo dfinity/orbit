@@ -1,16 +1,14 @@
 use crate::{
     core::{
-        canister_config_mut, ic::api::time, write_canister_config, CallContext, CanisterConfig,
-        WithCallContext,
+        canister_config_mut, write_canister_config, CallContext, CanisterConfig, WithCallContext,
     },
     services::ManagementService,
     transport::{BankCanisterInit, BankDetailsResponse},
     types::ApiResult,
 };
-use candid::candid_method;
+use ic_canister_utils::cdk::api::time;
 use ic_cdk_macros::{init, post_upgrade, query};
 
-#[candid_method(query)]
 #[query(name = "get_bank_details")]
 async fn get_bank_details() -> ApiResult<BankDetailsResponse> {
     let bank_details = ManagementService::new()

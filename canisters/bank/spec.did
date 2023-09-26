@@ -3,6 +3,9 @@ type AssetSymbol = text;
 // The internal wallet id used to identify a wallet in the
 // canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type WalletId = text;
+// The internal account id used to identify a user in the
+// canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type BankAccountId = text;
 // The network id, unique to the canister and associated (e.g. "icp:mainnet").
 type NetworkId = text;
 // An operation id used to have bank operations uniquely
@@ -13,76 +16,12 @@ type Timestamp = nat64;
 // A UUID used to identify items.
 type UUID = text;
 
-// Generic error type added to responses that can fail.
-type Error = record {
-  // Error code, added as a string to allow for custom error codes.
-  code : text;
-  // Error message to be displayed to the user.
-  message : opt text;
-  // Error details to be displayed to the user.
-  details : opt vec record { text; text };
-};
-
 // The blockchain network to used in a transaction.
 type Network = record {
   // The network id, unique to the canister and associated (e.g. "icp:mainnet").
   id : NetworkId;
   // The name of the network (e.g. "Mainnet").
   name : text;
-};
-
-type ApprovalThresholdPolicy = record {
-  // The percentage of approvals required for a transaction to be executed.
-  //
-  // The value must be between 0 and 100.
-  threshold : nat8;
-};
-
-// The policies that can be used to control the wallet.
-type WalletPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
-
-// A record type that can be used to represent a wallet in the canister.
-type Wallet = record {
-  // The internal wallet id.
-  id : WalletId;
-  // A friendly name for the wallet.
-  name : text;
-  // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol : AssetSymbol;
-  // The default network to use for transactions.
-  network : Network;
-  // If the list is empty, the bank owners are the only owners.
-  owners : vec principal;
-  // The policies that can be used to control the wallet.
-  //
-  // If the list is empty but there are policies globally defined for the bank,
-  // the global policies will be used.
-  policies : vec WalletPolicy;
-};
-
-// Input type for creating a wallet.
-type CreateWalletInput = record {
-  // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol : AssetSymbol;
-  // The default network to use for transactions.
-  network : Network;
-  // The list of owners of the wallet.
-  //
-  // If the list is empty, the caller will be the only owner.
-  owners : vec principal;
-  // The policies that can be used to control the wallet.
-  policies : vec WalletPolicy;
-};
-
-// Result type for creating a wallet.
-type CreateWalletResult = variant {
-  // The result data, if the operation was successful.
-  Ok : record {
-    // The wallet that was created.
-    wallet : Wallet;
-  };
-  // The error that occurred during the operation, if any.
-  Err : Error;
 };
 
 // Transactions can have additional information attached to them,
@@ -197,23 +136,6 @@ type ListWalletResult = variant {
   Ok : record {
     // The list of wallets.
     wallets : vec WalletListItem;
-  };
-  // The error that occurred during the operation, if any.
-  Err : Error;
-};
-
-// Input type for getting a wallet.
-type GetWalletInput = record {
-  // The wallet id to retrieve.
-  wallet_id : WalletId;
-};
-
-// Result type for getting a wallet.
-type GetWalletResult = variant {
-  // The result data, if the operation was successful.
-  Ok : record {
-    // The wallet that was retrieved.
-    wallet : Wallet;
   };
   // The error that occurred during the operation, if any.
   Err : Error;
@@ -369,6 +291,122 @@ type GetOperationResult = variant {
   Err : Error;
 };
 
+// todo: make sure everything above this point is correct
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+// Generic error type added to responses that can fail.
+type Error = record {
+  // Error code, added as a string to allow for custom error codes.
+  code : text;
+  // Error message to be displayed to the user.
+  message : opt text;
+  // Error details to be displayed to the user.
+  details : opt vec record { text; text };
+};
+
+// A record type that can be used to represent a wallet in the canister.
+type Wallet = record {
+  // The internal wallet id.
+  id : WalletId;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : AssetSymbol;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  //
+  // If empty, then it will be assumed that the wallet is for the native blockchain asset.
+  standard : opt text;
+  // A friendly name for the wallet.
+  name : opt text;
+  // If the list is empty, the bank owners are the only owners.
+  owners : vec UUID;
+  // The policies that can be used to control the wallet.
+  //
+  // If the list is empty but there are policies globally defined for the bank,
+  // the global policies will be used.
+  policies : vec WalletPolicy;
+};
+
+type ApprovalThresholdPolicy = variant {
+  // The percentage of approvals required for a transaction to be executed.
+  //
+  // The value must be between 0 and 100.
+  VariableThreshold : nat8;
+
+  // The number of approvals required for a transaction to be executed.
+  //
+  // If there are less owners than the threshold, the number of owners will be used.
+  FixedThreshold : nat8;
+};
+
+// The policies that can be used to control the wallet.
+type WalletPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
+
+// Input type for creating a wallet.
+type CreateWalletInput = record {
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : AssetSymbol;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  //
+  // If empty, then it will be assumed that the wallet is for the native blockchain asset.
+  standard : opt text;
+  // The list of owners of the wallet, if the variant selected is of the Principal type, the bank canister will
+  // create an account for the principal and add it to the list of owners if it does not already exist.
+  //
+  // If the list is empty, the caller will be the only owner.
+  owners : vec variant {
+    // The account id of the owner within the bank canister.
+    AccountID : BankAccountId;
+    // The principal that owns the wallet.
+    Principal : principal;
+  };
+  // The policies that can be used to control the wallet.
+  policies : vec WalletPolicy;
+  // A friendly name for the wallet (e.g. "My Wallet").
+  name : opt text;
+};
+
+// Result type for creating a wallet.
+type CreateWalletResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The wallet that was created.
+    wallet : Wallet;
+  };
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
+
+// Input type for getting a wallet.
+type GetWalletInput = record {
+  // The wallet id to retrieve.
+  wallet_id : WalletId;
+};
+
+// Result type for getting a wallet.
+type GetWalletResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The wallet that was retrieved.
+    wallet : Wallet;
+  };
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
+
 // A record type that can be used to represent an asset in the bank.
 type BankAsset = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
@@ -430,7 +468,16 @@ service : (opt BankInit) -> {
   //
   // Available to all users with the "read:bank-details" permission.
   get_bank_details : () -> (GetBankDetailsResult) query;
+  // Create a new wallet.
+  create_wallet : (input : CreateWalletInput) -> (CreateWalletResult);
+  // Get a wallet by id.
+  //
+  // If the caller does not have access to the wallet, an error will be returned.
+  get_wallet : (input : GetWalletInput) -> (GetWalletResult) query;
 
+  //
+  //
+  //
   // Get the bank settings, only available to admins.
   get_bank_settings : () -> (BankSettingsResult) query;
   // List all wallets that the caller has access to.
@@ -438,12 +485,6 @@ service : (opt BankInit) -> {
   // If the caller is not the owner of any wallet, and is not an
   // owner of the bank, an error will be returned.
   list_wallets : () -> (ListWalletResult) query;
-  // Get a wallet by id.
-  //
-  // If the caller does not have access to the wallet, an error will be returned.
-  get_wallet : (input : GetWalletInput) -> (GetWalletResult) query;
-  // Create a new wallet.
-  create_wallet : (input : CreateWalletInput) -> (CreateWalletResult);
   // Transfer funds from a wallet.
   transfer : (input : TransferInput) -> (TransferResult);
   // Get the list of operations.

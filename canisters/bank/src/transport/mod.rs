@@ -12,3 +12,7 @@ pub use common::*;
 /// Management data transfer objects (DTOs) (e.g. canister init, upgrade, etc.)
 mod management;
 pub use management::*;
+
+/// Wallet data transfer objects (DTOs)
+mod wallet;
+pub use wallet::*;

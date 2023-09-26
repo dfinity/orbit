@@ -1,7 +1,7 @@
 use super::WASM_PAGE_SIZE;
-use crate::{core::ic::api::time, types::Timestamp};
+use crate::types::Timestamp;
 use candid::{CandidType, Decode, Deserialize, Encode};
-use ic_cdk::trap;
+use ic_canister_utils::cdk::api::{time, trap};
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
 
