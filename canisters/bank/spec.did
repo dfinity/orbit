@@ -1,11 +1,11 @@
 // The asset symbol, e.g. "ICP" or "BTC".
 type AssetSymbol = text;
-// The internal wallet id used to identify a wallet in the 
+// The internal wallet id used to identify a wallet in the
 // canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type WalletId = text;
 // The network id, unique to the canister and associated (e.g. "icp:mainnet").
 type NetworkId = text;
-// An operation id used to have vault operations uniquely 
+// An operation id used to have bank operations uniquely
 // identifiable (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type OperationId = text;
 // The timestamp type used in the canister.
@@ -16,80 +16,82 @@ type UUID = text;
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
-  code: text;
+  code : text;
   // Error message to be displayed to the user.
-  message: opt text;
-}
+  message : opt text;
+  // Error details to be displayed to the user.
+  details : opt vec record { text; text };
+};
 
 // The blockchain network to used in a transaction.
 type Network = record {
   // The network id, unique to the canister and associated (e.g. "icp:mainnet").
-  id: NetworkId;
+  id : NetworkId;
   // The name of the network (e.g. "Mainnet").
-  name: text;
-}
+  name : text;
+};
 
 type ApprovalThresholdPolicy = record {
   // The percentage of approvals required for a transaction to be executed.
-  // 
+  //
   // The value must be between 0 and 100.
-  threshold: nat8;
-}
+  threshold : nat8;
+};
 
 // The policies that can be used to control the wallet.
-type WalletPolicy = variant { approval_threshold: ApprovalThresholdPolicy; }
+type WalletPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
 
 // A record type that can be used to represent a wallet in the canister.
 type Wallet = record {
   // The internal wallet id.
-  id: WalletId;
+  id : WalletId;
   // A friendly name for the wallet.
-  name: text;
+  name : text;
   // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol: AssetSymbol;
+  asset_symbol : AssetSymbol;
   // The default network to use for transactions.
-  network: Network;
-  // If the list is empty, the vault owners are the only owners.
-  owners: vec principal;
+  network : Network;
+  // If the list is empty, the bank owners are the only owners.
+  owners : vec principal;
   // The policies that can be used to control the wallet.
   //
-  // If the list is empty but there are policies globally defined for the vault, 
+  // If the list is empty but there are policies globally defined for the bank,
   // the global policies will be used.
-  policies: vec WalletPolicy;
-}
+  policies : vec WalletPolicy;
+};
 
 // Input type for creating a wallet.
 type CreateWalletInput = record {
   // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol: AssetSymbol;
+  asset_symbol : AssetSymbol;
   // The default network to use for transactions.
-  network: Network;
-  // The list of owners of the wallet. 
-  // 
+  network : Network;
+  // The list of owners of the wallet.
+  //
   // If the list is empty, the caller will be the only owner.
-  owners: vec principal;
+  owners : vec principal;
   // The policies that can be used to control the wallet.
-  policies: vec WalletPolicy;
-}
+  policies : vec WalletPolicy;
+};
 
 // Result type for creating a wallet.
 type CreateWalletResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The wallet that was created.
-    wallet: Wallet;
+    wallet : Wallet;
   };
-  // A list of errors that occurred during the operation, if any.
-  errors: vec Error;
-}
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
 
-// Transactions can have additional information attached to them, 
+// Transactions can have additional information attached to them,
 type TransactionAdditionalInfo = record {
   // The key of the additional info (e.g. "nonce" or "tag")
-  key: text;
+  key : text;
   // The value of the additional info (e.g. "0x1234" or "my-tag")
-  value: text;
-}
+  value : text;
+};
 
 // The status of a transaction.
 type TransactionStatus = variant {
@@ -98,313 +100,356 @@ type TransactionStatus = variant {
   // The transaction has been approved.
   approved;
   // The transaction has been rejected.
-  rejected: record {
+  rejected : record {
     // The reason for the rejection.
-    reason: text;
+    reason : text;
   };
   // The transaction has been cancelled by the initiator.
-  // 
+  //
   // This can happen if the initiator cancels the transaction before it is approved.
-  cancelled: record {
+  cancelled : record {
     // The reason for the cancellation.
-    reason: opt text;
+    reason : opt text;
   };
   // The transaction has been submitted for execution.
   submitted;
-  // The transaction has been completed. 
+  // The transaction has been completed.
   //
-  // For natively supported tokens this means that the transaction has 
-  // submitted to the blockchain. For non natively supported tokens this means 
+  // For natively supported tokens this means that the transaction has
+  // submitted to the blockchain. For non natively supported tokens this means
   // that the transaction has been signed and can be submitted by the client.
-  completed: record {
+  completed : record {
     // Time at which the transaction was completed.
-    completed_at: Timestamp;
+    completed_at : Timestamp;
     // The transaction hash, if available.
-    hash: opt text;
+    hash : opt text;
     // The base64 encoded value of the signed transaction, if available.
-    signature: opt text;
+    signature : opt text;
   };
-}
+};
 
 // A record type that can be used to represent a transaction in a given wallet.
 type Transaction = record {
   // The internal operation id, this a unique identifier for the transaction.
-  id: OperationId;
+  id : OperationId;
   // The wallet id to use for the transaction.
-  wallet_id: WalletId;
+  wallet_id : WalletId;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
-  to: text;
+  to : text;
   // The amount to transfer.
-  amount: nat;
+  amount : nat;
   // The status of the transaction.
-  status: TransactionStatus;
+  status : TransactionStatus;
   // The fee to pay for the transaction, if applicable.
-  fee: opt nat;
-  // The network to use for the transaction, if not the default 
+  fee : opt nat;
+  // The network to use for the transaction, if not the default
   // network of the wallet will be used.
-  network: opt Network;
-  // Trasanctions can be tagged with an optional additional 
+  network : opt Network;
+  // Trasanctions can be tagged with an optional additional
   // info (e.g. a nonce in the case of an Ethereum transaction)
-  // 
+  //
   // If set there must be at most 10 additional info items.
-  additionals: opt vec TransactionAdditionalInfo;
-}
+  additionals : opt vec TransactionAdditionalInfo;
+};
 
 // Input type for transferring funds.
 type TransferInput = record {
   // The wallet id to use for the transaction.
-  wallet_id: WalletId;
+  wallet_id : WalletId;
   // The amount to transfer.
-  amount: nat;
+  amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").
-  to: text;
+  to : text;
   // The fee to pay for the transaction, if applicable.
-  fee: opt nat;
-  // The network to use for the transaction, if not the 
+  fee : opt nat;
+  // The network to use for the transaction, if not the
   // default network of the wallet will be used.
-  network: opt Network;
-  // Trasanctions can be tagged with an optional additional info 
+  network : opt Network;
+  // Trasanctions can be tagged with an optional additional info
   // (e.g. a nonce in the case of an Ethereum transaction)
-  additionals: opt vec TransactionAdditionalInfo;
-}
+  additionals : opt vec TransactionAdditionalInfo;
+};
 
 // Result type for transferring funds.
 type TransferResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The transaction that was created.
-    transaction: Transaction;
+    transaction : Transaction;
   };
-  // A list of errors that occurred during the operation, if any.
-  errors: vec Error;
-}
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
 
 // A record type that can be used to represent a wallet in the list of wallets.
 type WalletListItem = record {
   // The wallet id.
-  id: WalletId;
+  id : WalletId;
   // The wallet name.
-  name: text;
+  name : text;
   // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol: AssetSymbol;
-}
+  asset_symbol : AssetSymbol;
+};
 
 // Result type for listing all wallets.
 type ListWalletResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The list of wallets.
-    wallets: vec WalletListItem;
+    wallets : vec WalletListItem;
   };
-  // A list of errors that occurred during the operation, if any.
-  errors: vec Error;
-}
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
 
 // Input type for getting a wallet.
 type GetWalletInput = record {
   // The wallet id to retrieve.
-  wallet_id: WalletId;
-}
+  wallet_id : WalletId;
+};
 
 // Result type for getting a wallet.
 type GetWalletResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The wallet that was retrieved.
-    wallet: Wallet;
+    wallet : Wallet;
   };
-  // A list of errors that occurred during the operation, if any.
-  errors: vec Error;
-}
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
 
-// The role of an account in the vault.
-type VaultAccountRole = variant { 
-  // The account is an admin of the vault.
+// The role of an account in the Bank.
+type BankAccountRole = variant {
+  // The account is an admin of the bank.
   admin;
-  // The account is a user of the vault, the guest role is also 
-  // used to allow operations when the vault does not have the 
+  // The account is a user of the bank, the guest role is also
+  // used to allow operations when the bank does not have the
   // account defined.
   guest;
-}
+};
 
-// A record type that can be used to represent an account in the vault.
-type VaultAccount = record {
+// A record type that can be used to represent an account in the bank.
+type BankAccount = record {
   // The UUID of the account (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-  id: UUID;
+  id : UUID;
   // The principals associated with the account.
-  identities: vec principal;
+  identities : vec principal;
   // The role of the account.
-  roles: vec VaultAccountRole;
-}
+  roles : vec BankAccountRole;
+};
 
-// A record type that can be used to represent the vault permissions.
-type VaultPermission = record {
+// A record type that can be used to represent the bank permissions.
+type BankPermission = record {
   // The permission identified (e.g. "create-wallet").
-  permission: text;
+  permission : text;
   // The list of roles that have the permission.
-  roles: vec VaultAccountRole;
-}
+  roles : vec BankAccountRole;
+};
 
-// The settings of the vault.
-type VaultSettings = record {
+// The settings of the bank.
+type BankSettings = record {
   // The default wallet policies that are applied to all wallets.
-  wallet_policies: vec WalletPolicy;
-  // The list of accounts associated with the vault. 
-  accounts: vec VaultAccount;
-  // The percentage of approvals required for a vault operation to be 
+  wallet_policies : vec WalletPolicy;
+  // The list of accounts associated with the bank.
+  accounts : vec BankAccount;
+  // The percentage of approvals required for a bank operation to be
   // executed (e.g. upgrade the canister).
-  // 
+  //
   // Only admin accounts are considered for the approval threshold.
   //
   // The value must be between 0 and 100.
-  approval_threshold: nat8;
-  // The list of permissions that are applied to the vault.
-  permissions: vec VaultPermission;
-}
+  approval_threshold : nat8;
+  // The list of permissions that are applied to the bank.
+  permissions : vec BankPermission;
+};
 
-// Result type for getting the vault settings.
-type VaultSettingsResult = record {
+// Result type for getting the bank settings.
+type BankSettingsResult = record {
   // The result data, if the operation was successful.
-  data: record {
-    // The vault settings.
-    settings: VaultSettings;
+  Ok : record {
+    // The bank settings.
+    settings : BankSettings;
   };
-  // A list of errors that occurred during the operation, if any 
+  // The error that occurred during the operation, if any
   // (e.g. the caller is not an admin).
-  errors: vec Error;
-}
+  Err : Error;
+};
 
 // The status of an operation.
-type OperationStatus = variant { pending; approved; rejected; }
+type OperationStatus = variant { pending; approved; rejected };
 
-// A record type that can be used to represent an operation in the vault.
+// A record type that can be used to represent an operation in the bank.
 type Operation = record {
   // The operation is a transaction.
-  id: OperationId;
+  id : OperationId;
   // The code of the operation (e.g. "transaction").
-  code: text;
+  code : text;
   // The principal that needs to approve the operation.
-  account: principal;
+  account : principal;
   // The time at which the operation was created.
-  created_at: Timestamp;
+  created_at : Timestamp;
   // The operation approval status.
-  status: OperationStatus;
+  status : OperationStatus;
   // The time at which the operation was approved or rejected.
-  feedback_time_at: opt Timestamp;
+  feedback_time_at : opt Timestamp;
   // The reason for the approval or rejection.
-  feedback_reason: opt text;
-}
+  feedback_reason : opt text;
+};
 
 // A record type that can be used to represent an operation in the list of operations.
 type OperationListItem = record {
   // The operation id.
-  id: OperationId;
+  id : OperationId;
   // The code of the operation (e.g. "transaction").
-  code: text;
+  code : text;
   // The time at which the operation was created.
-  created_at: Timestamp;
+  created_at : Timestamp;
   // The operation approval status.
-  status: OperationStatus;
-}
+  status : OperationStatus;
+};
 
 // Input type for approving or rejecting an operation.
 type OperationApprovalInput = record {
   // The operation id to approve or reject.
-  operation_id: OperationId;
+  operation_id : OperationId;
   // If true the operation is approved, otherwise it is rejected.
-  approved: bool;
+  approved : bool;
   // The reason for the approval or rejection.
-  reason: opt text;
-}
+  reason : opt text;
+};
 
 // Result type for approving or rejecting an operation.
 type OperationApprovalResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The operation that was approved or rejected.
-    operation: Operation;
+    operation : Operation;
   };
-  // A list of errors that occurred during the operation, if any 
+  // The error that occurred during the operation, if any
   // (e.g. the user does not have access to the operation).
-  errors: vec Error;
-}
+  Err : Error;
+};
 
 // The input type for getting the list of operations.
 type ListOperationsInput = record {
   // The list of operation ids to retrieve.
-  status: opt vec OperationStatus;
+  status : opt vec OperationStatus;
   // The code of the operation (e.g. "transaction").
-  code: opt text;
-}
+  code : opt text;
+};
 
 // The result type for getting the list of operations.
 type ListOperationsResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The list of operations.
-    operations: vec OperationListItem;
+    operations : vec OperationListItem;
   };
-  // A list of errors that occurred during the operation, if any 
+  // The error that occurred during the operation, if any
   // (e.g. the user does not have access to the operation).
-  errors: vec Error;
-}
+  Err : Error;
+};
 
 // Input type for getting an operation.
 type GetOperationInput = record {
   // The operation id to retrieve.
-  operation_id: OperationId;
-}
+  operation_id : OperationId;
+};
 
 // Result type for getting an operation.
 type GetOperationResult = variant {
   // The result data, if the operation was successful.
-  data: record {
+  Ok : record {
     // The operation that was retrieved.
-    operation: Operation;
+    operation : Operation;
   };
-  // A list of errors that occurred during the operation, if any 
+  // The error that occurred during the operation, if any
   // (e.g. the user does not have access to the operation).
-  errors: vec Error;
-}
+  Err : Error;
+};
 
-// The init configuration for the vault.
-type VaultInit = record {
+// A record type that can be used to represent an asset in the bank.
+type BankAsset = record {
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : AssetSymbol;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  //
+  // If empty, then only the native blockchain asset is supported.
+  standards : vec text;
+  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+  name : text;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat8;
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
+  // also, in the case of non-native assets, it can contain other required
+  // information (e.g. `{"address": "0x1234"}`).
+  metadata : vec record { text; text };
+};
+
+// A record type that can be used to represent the bank details.
+type BankDetails = record {
+  // The list of supported assets.
+  supported_assets : vec BankAsset;
+};
+
+// Result type for getting the bank details.
+type GetBankDetailsResult = variant {
+  // The result data for a successful operation.
+  Ok : record {
+    // The bank details.
+    details : BankDetails;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
+};
+
+// The init configuration for the bank.
+type BankInit = record {
   // The default wallet policies that are applied to all wallets.
-  wallet_policies: vec WalletPolicy;
-  // The list of accounts associated with the vault. 
-  accounts: vec VaultAccount;
-  // The percentage of approvals required for a vault operation to be 
+  // wallet_policies: vec WalletPolicy;
+  // The list of accounts associated with the bank.
+  // accounts: vec BankAccount;
+  // The percentage of approvals required for a bank operation to be
   // executed (e.g. upgrade the canister).
   //
   // Only admin accounts are considered for the approval threshold.
   //
   // The value must be between 0 and 100.
-  approval_threshold: nat8;
-  // The list of permissions that are applied to the vault.
-  permissions: vec VaultPermission;
-}
+  approval_threshold : nat8;
+  // The list of permissions that are applied to the bank.
+  // permissions: vec BankPermission;
+};
 
-// The Vault service definition.
-service : (opt VaultInit) -> {
-  // Get the vault settings.
-  get_vault_settings() -> (VaultSettingsResult) query;
+// The Bank service definition.
+service : (opt BankInit) -> {
+  // Get the bank details (e.g. supported assets).
+  //
+  // Available to all users with the "read:bank-details" permission.
+  get_bank_details : () -> (GetBankDetailsResult) query;
+
+  // Get the bank settings, only available to admins.
+  get_bank_settings : () -> (BankSettingsResult) query;
   // List all wallets that the caller has access to.
   //
-  // If the caller is not the owner of any wallet, and is not an 
-  // owner of the vault, an error will be returned.
-  list_wallets() -> (ListWalletResult) query;
-  // Get a wallet by id. 
+  // If the caller is not the owner of any wallet, and is not an
+  // owner of the bank, an error will be returned.
+  list_wallets : () -> (ListWalletResult) query;
+  // Get a wallet by id.
   //
   // If the caller does not have access to the wallet, an error will be returned.
-  get_wallet(input: GetWalletInput) -> (GetWalletResult) query;
+  get_wallet : (input : GetWalletInput) -> (GetWalletResult) query;
   // Create a new wallet.
-  create_wallet(input: CreateWalletInput) -> (CreateWalletResult);
+  create_wallet : (input : CreateWalletInput) -> (CreateWalletResult);
   // Transfer funds from a wallet.
-  transfer(input: TransferInput) -> (TransferResult);
+  transfer : (input : TransferInput) -> (TransferResult);
   // Get the list of operations.
-  list_operations(input: ListOperationsInput) -> (ListOperationsResult) query;
+  list_operations : (input : ListOperationsInput) -> (ListOperationsResult) query;
   // Get the operation by id.
-  get_operation(input: GetOperationInput) -> (GetOperationResult) query;
+  get_operation : (input : GetOperationInput) -> (GetOperationResult) query;
   // Approve or reject an operation.
-  operation_approval(input: OperationApprovalInput) -> (OperationApprovalResult);
-}
+  operation_approval : (input : OperationApprovalInput) -> (OperationApprovalResult);
+};

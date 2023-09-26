@@ -11,7 +11,7 @@ type Error = record {
   code : text;
   // Error message to be displayed to the user.
   message : opt text;
-
+  // Error details to be displayed to the user.
   details : opt vec record { text; text };
 };
 

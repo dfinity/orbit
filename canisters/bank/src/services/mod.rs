@@ -1,0 +1,5 @@
+//! Canister services used to handle the necessary business logic for the bank canister.
+
+/// Management service.
+mod management;
+pub use management::*;

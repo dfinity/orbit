@@ -26,6 +26,16 @@
       },
       "optimize": "cycles"
     },
+    "bank": {
+      "type": "rust",
+      "package": "bank",
+      "candid": "canisters/bank/spec.did",
+      "declarations": {
+        "output": "canisters/wallet-ui/src/generated/bank",
+        "node_compatibility": true
+      },
+      "optimize": "cycles"
+    },
     "wallet_ui": {
       "type": "assets",
       "source": ["canisters/wallet-ui/dist/"],
