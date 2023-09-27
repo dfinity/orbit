@@ -3,7 +3,3 @@
 /// Assets supported.
 mod assets;
 pub use assets::*;
-
-/// API types.
-mod api;
-pub use api::*;

@@ -2,8 +2,8 @@ use crate::{
     core::{CallContext, WithCallContext},
     services::WalletService,
     transport::{CreateWalletInput, CreateWalletResponse, GetWalletInput, GetWalletResponse},
-    types::ApiResult,
 };
+use ic_canister_core::api::ApiResult;
 use ic_cdk_macros::{query, update};
 
 #[update(name = "create_wallet")]

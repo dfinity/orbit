@@ -2,8 +2,8 @@ use crate::{
     core::{get_bank_assets, CallContext, WithCallContext},
     mappers::BankDetailsMapper,
     transport::BankDetailsDTO,
-    types::ServiceResult,
 };
+use ic_canister_core::api::ServiceResult;
 
 #[derive(Default, Debug)]
 pub struct ManagementService {

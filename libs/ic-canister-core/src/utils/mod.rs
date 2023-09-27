@@ -7,3 +7,7 @@ pub use random::*;
 /// Utilities to interact with time safely within the canister.
 mod time;
 pub use time::*;
+
+/// String utils.
+mod string;
+pub use string::*;

@@ -21,6 +21,8 @@ serde = "1.0.188"
 uuid = { version = "1.4.1", features = ["serde", "v4"] }
 rand_chacha = "0.3.1"
 chrono = "0.4"
+thiserror = "1.0"
+convert_case = "0.6"
 
 [dev-dependencies]
 tokio = { version = "1.32.0", features = ["full"] }

@@ -1,3 +1,4 @@
+use crate::utils::to_snake_case;
 use candid::{CandidType, Deserialize};
 use std::collections::HashMap;
 
@@ -25,6 +26,30 @@ impl ApiError {
             details,
         }
     }
+}
+
+pub trait DetailableError {
+    fn details(&self) -> Option<HashMap<String, String>>;
+}
+
+impl<E: std::error::Error + DetailableError> From<E> for ApiError {
+    fn from(err: E) -> Self {
+        let code = extract_error_enum_variant_name(&err);
+        let message = Some(err.to_string());
+
+        ApiError::new(code, message, err.details())
+    }
+}
+
+pub fn extract_error_enum_variant_name<E: std::error::Error>(err: &E) -> String {
+    let full_code = to_snake_case(format!("{:?}", err)).to_uppercase();
+    full_code
+        .split(|c| c == '{' || c == '(')
+        .next()
+        .unwrap_or(&full_code)
+        .to_string()
+        .trim_matches('_')
+        .to_string()
 }
 
 /// Common result type for service calls, which can either be successful or contain errors.
