@@ -14,6 +14,7 @@ pub struct WalletDTO {
     pub standard: Option<String>,
     pub symbol: AssetSymbolDTO,
     pub policies: Vec<WalletPolicyDTO>,
+    pub last_modification_timestamp: String,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

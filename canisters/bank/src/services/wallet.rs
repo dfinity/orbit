@@ -1,5 +1,6 @@
 use crate::{
     core::{CallContext, WithCallContext},
+    mappers::WalletMapper,
     transport::{CreateWalletInput, GetWalletInput, WalletDTO},
     types::ApiResult,
 };
@@ -8,6 +9,7 @@ use crate::{
 pub struct WalletService {
     // todo: removed if not used by the service
     _call_context: CallContext,
+    wallet_mapper: WalletMapper,
 }
 
 impl WithCallContext for WalletService {
