@@ -6,6 +6,7 @@ pub mod controllers;
 pub mod core;
 pub mod mappers;
 pub mod models;
+pub mod repositories;
 pub mod services;
 pub mod transport;
 pub mod types;

@@ -12,7 +12,7 @@ type NetworkId = text;
 // identifiable (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type OperationId = text;
 // The timestamp type used in the canister.
-type Timestamp = nat64;
+type TimestampRFC3339 = text;
 // A UUID used to identify items.
 type UUID = text;
 
@@ -59,7 +59,7 @@ type TransactionStatus = variant {
   // that the transaction has been signed and can be submitted by the client.
   completed : record {
     // Time at which the transaction was completed.
-    completed_at : Timestamp;
+    completed_at : TimestampRFC3339;
     // The transaction hash, if available.
     hash : opt text;
     // The base64 encoded value of the signed transaction, if available.
@@ -210,11 +210,11 @@ type Operation = record {
   // The principal that needs to approve the operation.
   account : principal;
   // The time at which the operation was created.
-  created_at : Timestamp;
+  created_at : TimestampRFC3339;
   // The operation approval status.
   status : OperationStatus;
   // The time at which the operation was approved or rejected.
-  feedback_time_at : opt Timestamp;
+  feedback_time_at : opt TimestampRFC3339;
   // The reason for the approval or rejection.
   feedback_reason : opt text;
 };
@@ -226,7 +226,7 @@ type OperationListItem = record {
   // The code of the operation (e.g. "transaction").
   code : text;
   // The time at which the operation was created.
-  created_at : Timestamp;
+  created_at : TimestampRFC3339;
   // The operation approval status.
   status : OperationStatus;
 };
@@ -335,6 +335,8 @@ type Wallet = record {
   // If the list is empty but there are policies globally defined for the bank,
   // the global policies will be used.
   policies : vec WalletPolicy;
+  // The time at which the wallet was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  last_modification_timestamp : TimestampRFC3339;
 };
 
 type ApprovalThresholdPolicy = variant {

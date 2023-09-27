@@ -35,3 +35,17 @@ pub struct Wallet {
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
+
+#[stable_object(size = 64)]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct WalletKey {
+    /// The wallet id, which is a UUID.
+    pub id: WalletId,
+}
+
+impl Wallet {
+    /// Creates a new wallet key from the given key components.
+    pub fn key(id: WalletId) -> WalletKey {
+        WalletKey { id }
+    }
+}

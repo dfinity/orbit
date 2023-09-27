@@ -5,7 +5,7 @@ use crate::{
     types::ServiceResult,
 };
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Debug)]
 pub struct ManagementService {
     // todo: removed if not used by the service
     _call_context: CallContext,
@@ -13,10 +13,10 @@ pub struct ManagementService {
 }
 
 impl WithCallContext for ManagementService {
-    fn with_call_context(&self, call_context: CallContext) -> Self {
+    fn with_call_context(self, call_context: CallContext) -> Self {
         Self {
             _call_context: call_context,
-            ..self.clone()
+            ..self
         }
     }
 }

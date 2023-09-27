@@ -1,11 +1,14 @@
 use super::{CanisterConfig, CanisterState, MAX_WASM_PAGES};
 use ic_stable_structures::{
-    memory_manager::MemoryManager, Cell, DefaultMemoryImpl, RestrictedMemory,
+    memory_manager::{MemoryManager, MemoryId}, Cell, DefaultMemoryImpl, RestrictedMemory,
 };
 use std::cell::RefCell;
 
 pub type Memory = RestrictedMemory<DefaultMemoryImpl>;
 pub type ConfigCell = Cell<CanisterState, Memory>;
+
+pub const ACCOUNT_MEMORY_ID: MemoryId = MemoryId::new(1);
+pub const WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
 
 thread_local! {
   /// Static configuration of the canister.
