@@ -3,3 +3,7 @@
 /// Management service.
 mod management;
 pub use management::*;
+
+/// Wallet service.
+mod wallet;
+pub use wallet::*;

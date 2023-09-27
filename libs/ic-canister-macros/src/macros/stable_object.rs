@@ -41,17 +41,21 @@ fn stable_object_impl(
             let expanded = quote! {
                 #object_input
 
-                impl Storable for #object_name {
+                impl ic_stable_structures::Storable for #object_name {
                     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+                        use candid::Encode;
+
                         std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
                     }
 
                     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+                        use candid::Decode;
+
                         candid::Decode!(bytes.as_ref(), Self).unwrap()
                     }
                 }
 
-                impl BoundedStorable for #object_name {
+                impl ic_stable_structures::BoundedStorable for #object_name {
                     const MAX_SIZE: u32 = #size_value;
 
                     const IS_FIXED_SIZE: bool = false;

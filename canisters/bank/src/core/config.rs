@@ -1,9 +1,11 @@
 use super::WASM_PAGE_SIZE;
-use crate::types::Timestamp;
 use candid::{CandidType, Decode, Deserialize, Encode};
-use ic_canister_core::cdk::api::{time, trap};
+use ic_canister_core::{
+    cdk::api::{time, trap},
+    types::Timestamp,
+};
 use ic_canister_macros::stable_object;
-use ic_stable_structures::{BoundedStorable, Storable};
+use ic_stable_structures::Storable;
 use std::borrow::Cow;
 
 #[stable_object(size = WASM_PAGE_SIZE)]

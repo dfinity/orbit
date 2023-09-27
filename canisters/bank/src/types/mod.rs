@@ -7,7 +7,3 @@ pub use assets::*;
 /// API types.
 mod api;
 pub use api::*;
-
-/// Core types.
-mod core;
-pub use core::*;

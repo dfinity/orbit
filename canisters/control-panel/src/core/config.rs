@@ -3,7 +3,7 @@ use crate::core::ic::api::time;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_macros::stable_object;
 use ic_cdk::trap;
-use ic_stable_structures::{BoundedStorable, Storable};
+use ic_stable_structures::Storable;
 use std::borrow::Cow;
 
 #[stable_object(size = WASM_PAGE_SIZE)]

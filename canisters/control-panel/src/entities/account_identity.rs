@@ -2,7 +2,6 @@ use crate::core::ic::api::time;
 use crate::core::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_macros::stable_object;
-use ic_stable_structures::{BoundedStorable, Storable};
 
 /// The key used to store an account identity in stable memory.
 #[stable_object(size = AccountIdentityKey::MAX_BYTE_SIZE)]

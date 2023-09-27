@@ -8,4 +8,5 @@
 //! - UUID generation.
 
 pub mod cdk;
+pub mod types;
 pub mod utils;

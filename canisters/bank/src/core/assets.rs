@@ -1,4 +1,4 @@
-use crate::types::{BankAsset, Blockchain};
+use crate::{models::Blockchain, types::BankAsset};
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
