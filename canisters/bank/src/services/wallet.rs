@@ -1,6 +1,6 @@
 use crate::{
     core::{CallContext, WithCallContext},
-    transport::{CreateWalletInput, WalletDTO, GetWalletInput},
+    transport::{CreateWalletInput, GetWalletInput, WalletDTO},
     types::ApiResult,
 };
 
@@ -29,6 +29,6 @@ impl WalletService {
     }
 
     pub async fn get_wallet(&self, input: GetWalletInput) -> ApiResult<WalletDTO> {
-      unimplemented!()
-  }
+        unimplemented!()
+    }
 }
