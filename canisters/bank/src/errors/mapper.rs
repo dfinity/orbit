@@ -23,6 +23,12 @@ pub enum MapperError {
     /// Wallets for non native assets are required to have a defined token symbol.
     #[error(r#"Wallets for non native assets are required to have a defined token symbol."#)]
     NonNativeWalletSymbolRequired,
+    /// The provided format is not compatible with a UUID.
+    #[error(r#"The provided format is not compatible with a UUID."#)]
+    MalformedUuid {
+        /// The malformed UUID.
+        malformed_uuid: String,
+    },
 }
 
 impl DetailableError for MapperError {
@@ -55,6 +61,11 @@ impl DetailableError for MapperError {
                 "supported_standards".to_string(),
                 supported_standards.join(",").to_string(),
             );
+            return Some(details);
+        }
+
+        if let MapperError::MalformedUuid { malformed_uuid } = self {
+            details.insert("malformed_uuid".to_string(), malformed_uuid.to_string());
             return Some(details);
         }
 

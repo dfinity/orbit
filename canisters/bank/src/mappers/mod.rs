@@ -15,3 +15,7 @@ pub use blockchain::*;
 /// Wallet policy mappers.
 mod wallet_policy;
 pub use wallet_policy::*;
+
+/// Helper mappers.
+mod helper;
+pub use helper::*;
