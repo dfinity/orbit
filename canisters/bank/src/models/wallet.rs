@@ -1,7 +1,12 @@
+use std::hash::Hash;
+
 use super::{AccountId, Blockchain, BlockchainStandard, WalletPolicy};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
+
+/// The wallet metadata key for the asset symbol;
+pub const WALLET_METADATA_SYMBOL_KEY: &str = "symbol";
 
 /// The wallet id, which is a UUID.
 pub type WalletId = UUID;
@@ -17,21 +22,23 @@ pub struct Wallet {
     pub id: WalletId,
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
     pub blockchain: Blockchain,
-    /// The blockchain standard (e.g. `icrc1`, `erc20`, etc.)
-    ///
-    /// If not set, it means that the wallet holds a native token.
-    pub standard: Option<BlockchainStandard>,
-    /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
+    /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
+    pub standard: BlockchainStandard,
+    /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)
     pub symbol: String,
+    /// The wallet name (e.g. `My Main Wallet`)
+    pub name: Option<String>,
     /// The wallet owners, which are a list of account ids.
     ///
     /// If the wallet has no owners, it means that it is a system wallet and
     /// only admins of the system can operate on it.
     pub owners: Vec<AccountId>,
-    /// The wallet name (e.g. `My Main Wallet`)
-    pub name: Option<String>,
     /// The wallet policies, which define the rules for the wallet.
     pub policies: Vec<WalletPolicy>,
+    /// The wallet metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<(String, String)>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }

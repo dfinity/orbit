@@ -19,6 +19,6 @@ impl DetailableError for CoreError {
         let CoreError::MalformedUuid { malformed_uuid } = self;
         details.insert("malformed_uuid".to_string(), malformed_uuid.to_string());
 
-        return Some(details);
+        Some(details)
     }
 }

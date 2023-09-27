@@ -323,9 +323,7 @@ type Wallet = record {
   symbol : AssetSymbol;
   // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
-  //
-  // If empty, then it will be assumed that the wallet is for the native blockchain asset.
-  standard : opt text;
+  standard : text;
   // A friendly name for the wallet.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
@@ -335,6 +333,8 @@ type Wallet = record {
   // If the list is empty but there are policies globally defined for the bank,
   // the global policies will be used.
   policies : vec WalletPolicy;
+  // Metadata associated with the wallet (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec record { text; text };
   // The time at which the wallet was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
@@ -358,13 +358,9 @@ type WalletPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
 type CreateWalletInput = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The asset symbol, e.g. "ICP" or "BTC".
-  symbol : AssetSymbol;
-  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // The asset standard that is supported (e.g. `native`, `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
-  //
-  // If empty, then it will be assumed that the wallet is for the native blockchain asset.
-  standard : opt text;
+  standard : text;
   // The list of owners of the wallet, if the variant selected is of the Principal type, the bank canister will
   // create an account for the principal and add it to the list of owners if it does not already exist.
   //
@@ -379,6 +375,8 @@ type CreateWalletInput = record {
   policies : vec WalletPolicy;
   // A friendly name for the wallet (e.g. "My Wallet").
   name : opt text;
+  // Metadata associated with the wallet (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : opt vec record { text; text };
 };
 
 // Result type for creating a wallet.

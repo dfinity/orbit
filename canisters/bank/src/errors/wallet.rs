@@ -7,18 +7,40 @@ use thiserror::Error;
 pub enum WalletError {
     /// The requested wallet was not found.
     #[error(r#"The requested wallet was not found."#)]
-    WalletNotFound {
-        /// The wallet id.
-        id: String,
-    },
+    WalletNotFound { id: String },
+    /// The given blockchain is unknown to the system.
+    #[error(r#"The given blockchain is unknown to the system."#)]
+    UnknownBlockchain { blockchain: String },
+    /// The given blockchain standard is unknown to the system.
+    #[error(r#"The given blockchain standard is unknown to the system."#)]
+    UnknownBlockchainStandard { blockchain_standard: String },
 }
 
 impl DetailableError for WalletError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
-        let WalletError::WalletNotFound { id } = self;
-        details.insert("id".to_string(), id.to_string());
 
-        return Some(details);
+        if let WalletError::WalletNotFound { id } = self {
+            details.insert("id".to_string(), id.to_string());
+            return Some(details);
+        }
+
+        if let WalletError::UnknownBlockchain { blockchain } = self {
+            details.insert("blockchain".to_string(), blockchain.to_string());
+            return Some(details);
+        }
+
+        if let WalletError::UnknownBlockchainStandard {
+            blockchain_standard,
+        } = self
+        {
+            details.insert(
+                "blockchain_standard".to_string(),
+                blockchain_standard.to_string(),
+            );
+            return Some(details);
+        }
+
+        None
     }
 }

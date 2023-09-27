@@ -8,7 +8,7 @@ use ic_cdk_macros::{query, update};
 
 #[update(name = "create_wallet")]
 async fn create_wallet(input: CreateWalletInput) -> ApiResult<CreateWalletResponse> {
-    let created_wallet = WalletService::new()
+    let created_wallet = WalletService::create()
         .with_call_context(CallContext::get())
         .create_wallet(input)
         .await?;
@@ -20,7 +20,7 @@ async fn create_wallet(input: CreateWalletInput) -> ApiResult<CreateWalletRespon
 
 #[query(name = "get_wallet")]
 async fn get_wallet(input: GetWalletInput) -> ApiResult<GetWalletResponse> {
-    let wallet = WalletService::new()
+    let wallet = WalletService::create()
         .with_call_context(CallContext::get())
         .get_wallet(input)
         .await?;

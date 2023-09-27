@@ -7,3 +7,7 @@ pub use wallet::*;
 /// Error types to use across different modules.
 mod core;
 pub use core::*;
+
+/// Error types to use across different mappers.
+mod mapper;
+pub use mapper::*;

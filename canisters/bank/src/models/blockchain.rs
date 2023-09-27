@@ -1,3 +1,4 @@
+use super::BlockchainStandard;
 use candid::{CandidType, Deserialize};
 use ic_stable_structures::{BoundedStorable, Storable};
 use std::borrow::Cow;
@@ -9,6 +10,28 @@ pub enum Blockchain {
     InternetComputer,
     Ethereum,
     Bitcoin,
+}
+
+impl Blockchain {
+    /// The native symbol of the blockchain.
+    pub fn native_symbol(&self) -> &'static str {
+        match self {
+            Blockchain::InternetComputer => "ICP",
+            Blockchain::Ethereum => "ETH",
+            Blockchain::Bitcoin => "BTC",
+        }
+    }
+
+    /// The list of standards that the blockchain supports.
+    pub fn supported_standards(&self) -> Vec<BlockchainStandard> {
+        match self {
+            Blockchain::InternetComputer => {
+                vec![BlockchainStandard::Native, BlockchainStandard::ICRC1]
+            }
+            Blockchain::Ethereum => vec![BlockchainStandard::Native, BlockchainStandard::ERC20],
+            Blockchain::Bitcoin => vec![BlockchainStandard::Native],
+        }
+    }
 }
 
 impl FromStr for Blockchain {
@@ -66,5 +89,31 @@ mod tests {
         assert_eq!(Blockchain::from_str("eth").unwrap(), Blockchain::Ethereum);
         assert_eq!(Blockchain::Bitcoin.to_string(), "btc");
         assert_eq!(Blockchain::from_str("btc").unwrap(), Blockchain::Bitcoin);
+    }
+
+    #[test]
+    fn match_native_symbols_successfully() {
+        assert_eq!(Blockchain::InternetComputer.native_symbol(), "ICP");
+        assert_eq!(Blockchain::Ethereum.native_symbol(), "ETH");
+        assert_eq!(Blockchain::Bitcoin.native_symbol(), "BTC");
+    }
+
+    #[test]
+    fn match_supported_standards() {
+        assert!(Blockchain::InternetComputer
+            .supported_standards()
+            .contains(&BlockchainStandard::Native));
+        assert!(Blockchain::InternetComputer
+            .supported_standards()
+            .contains(&BlockchainStandard::ICRC1));
+        assert!(Blockchain::Ethereum
+            .supported_standards()
+            .contains(&BlockchainStandard::Native));
+        assert!(Blockchain::Ethereum
+            .supported_standards()
+            .contains(&BlockchainStandard::ERC20));
+        assert!(Blockchain::Bitcoin
+            .supported_standards()
+            .contains(&BlockchainStandard::Native));
     }
 }

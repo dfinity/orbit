@@ -1,14 +1,12 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
-
 use crate::types::Timestamp;
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
-pub fn timestamp_to_rfc3339(nanoseconds_since_epoch: Timestamp) -> String {
-    let seconds = (nanoseconds_since_epoch / 1_000_000_000) as i64;
-    let nanoseconds = (nanoseconds_since_epoch % 1_000_000_000) as u32;
+pub fn timestamp_to_rfc3339(nanoseconds_since_epoch: &Timestamp) -> String {
+    let nanoseconds = *nanoseconds_since_epoch as i128;
+    let datetime =
+        OffsetDateTime::from_unix_timestamp_nanos(nanoseconds).expect("Invalid timestamp");
 
-    let naive_datetime =
-        NaiveDateTime::from_timestamp_opt(seconds, nanoseconds).expect("Invalid timestamp");
-    let datetime: DateTime<Utc> = DateTime::from_naive_utc_and_offset(naive_datetime, Utc);
-
-    datetime.to_rfc3339().to_string()
+    datetime
+        .format(&Rfc3339)
+        .expect("Invalid datetime Rfc3339 format")
 }

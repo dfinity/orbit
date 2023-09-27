@@ -1,6 +1,7 @@
 use super::{CanisterConfig, CanisterState, MAX_WASM_PAGES};
 use ic_stable_structures::{
-    memory_manager::{MemoryManager, MemoryId}, Cell, DefaultMemoryImpl, RestrictedMemory,
+    memory_manager::{MemoryId, MemoryManager},
+    Cell, DefaultMemoryImpl, RestrictedMemory,
 };
 use std::cell::RefCell;
 

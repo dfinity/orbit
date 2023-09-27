@@ -5,7 +5,7 @@ use std::{
 };
 
 thread_local! {
-  // The list of assets that are supported by the bank canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
+  /// The list of assets that are supported by the bank canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
   static BANK_ASSETS: RefCell<HashSet<BankAsset>> =
       RefCell::new(vec![
         BankAsset {

@@ -3,7 +3,6 @@ use candid::{CandidType, Deserialize, Principal};
 pub type BankAccountIdDTO = String;
 pub type WalletIdDTO = String;
 pub type UuidDTO = String;
-pub type AssetSymbolDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct WalletDTO {
@@ -11,9 +10,10 @@ pub struct WalletDTO {
     pub owners: Vec<UuidDTO>,
     pub name: Option<String>,
     pub blockchain: String,
-    pub standard: Option<String>,
-    pub symbol: AssetSymbolDTO,
+    pub standard: String,
+    pub symbol: String,
     pub policies: Vec<WalletPolicyDTO>,
+    pub metadata: Vec<(String, String)>,
     pub last_modification_timestamp: String,
 }
 
@@ -42,9 +42,9 @@ pub struct CreateWalletInput {
     pub owners: Vec<CreateWalletInputOwnersItemDTO>,
     pub name: Option<String>,
     pub blockchain: String,
-    pub standard: Option<String>,
-    pub symbol: AssetSymbolDTO,
+    pub standard: String,
     pub policies: Vec<WalletPolicyDTO>,
+    pub metadata: Option<Vec<(String, String)>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

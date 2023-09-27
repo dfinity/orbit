@@ -8,6 +8,10 @@ pub use bank_details::*;
 mod wallet;
 pub use wallet::*;
 
+/// Blockchain mappers.
+mod blockchain;
+pub use blockchain::*;
+
 /// Wallet policy mappers.
 mod wallet_policy;
 pub use wallet_policy::*;
