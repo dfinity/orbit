@@ -22,6 +22,7 @@ impl WalletMapper {
                 .to_string(),
             name: wallet.name,
             symbol: wallet.symbol,
+            address: wallet.address,
             owners: wallet
                 .owners
                 .iter()
@@ -96,12 +97,16 @@ impl WalletMapper {
             blockchain,
             standard: standard.to_owned(),
             name: input.name,
+            address: None,
             owners: owner_accounts
                 .iter()
                 .map(|account_id| *account_id.as_bytes())
                 .collect(),
-            // todo: set mapping for wallet policies
-            policies: Vec::new(),
+            policies: input
+                .policies
+                .iter()
+                .map(|policy_dto| self.wallet_policy_mapper.from_dto(policy_dto.to_owned()))
+                .collect(),
             symbol,
             metadata,
             last_modification_timestamp: time(),

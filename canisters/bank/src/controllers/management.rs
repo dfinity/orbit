@@ -1,11 +1,9 @@
 use crate::{
-    core::{
-        canister_config_mut, write_canister_config, CallContext, CanisterConfig, WithCallContext,
-    },
+    core::{CallContext, WithCallContext},
     services::ManagementService,
     transport::{BankCanisterInit, BankDetailsResponse},
 };
-use ic_canister_core::{api::ApiResult, cdk::api::time};
+use ic_canister_core::api::ApiResult;
 use ic_cdk_macros::{init, post_upgrade, query};
 
 #[query(name = "get_bank_details")]
@@ -22,21 +20,10 @@ async fn get_bank_details() -> ApiResult<BankDetailsResponse> {
 
 #[init]
 async fn initialize(input: Option<BankCanisterInit>) {
-    let init = input.unwrap_or_default();
-    let config = CanisterConfig {
-        // By default, the bank canister requires 100% of the votes to approve operations.
-        approval_threshold: init.approval_threshold.unwrap_or(100u8),
-        // The last time the canister was upgraded or initialized.
-        last_upgrade_timestamp: time(),
-    };
-
-    write_canister_config(config);
+    ManagementService::new().canister_init(input).await;
 }
 
 #[post_upgrade]
 async fn post_upgrade() {
-    let mut updated_config = canister_config_mut();
-    updated_config.last_upgrade_timestamp = time();
-
-    write_canister_config(updated_config);
+    ManagementService::new().canister_post_upgrade().await;
 }

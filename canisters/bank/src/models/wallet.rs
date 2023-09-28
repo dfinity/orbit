@@ -22,6 +22,8 @@ pub struct Wallet {
     pub id: WalletId,
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
     pub blockchain: Blockchain,
+    /// The wallet address (e.g. `0x1234`, etc.)
+    pub address: Option<String>,
     /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
     pub standard: BlockchainStandard,
     /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)

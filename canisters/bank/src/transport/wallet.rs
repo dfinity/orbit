@@ -9,6 +9,7 @@ pub struct WalletDTO {
     pub id: WalletIdDTO,
     pub owners: Vec<UuidDTO>,
     pub name: Option<String>,
+    pub address: Option<String>,
     pub blockchain: String,
     pub standard: String,
     pub symbol: String,

@@ -21,4 +21,19 @@ impl WalletPolicyMapper {
             }
         }
     }
+
+    pub fn from_dto(&self, dto: WalletPolicyDTO) -> WalletPolicy {
+        match dto {
+            WalletPolicyDTO::ApprovalThreshold(threshold) => {
+                WalletPolicy::ApprovalThreshold(match threshold {
+                    ApprovalThresholdPolicyDTO::VariableThreshold(threshold) => {
+                        ApprovalThresholdPolicy::VariableThreshold(threshold)
+                    }
+                    ApprovalThresholdPolicyDTO::FixedThreshold(threshold) => {
+                        ApprovalThresholdPolicy::FixedThreshold(threshold)
+                    }
+                })
+            }
+        }
+    }
 }
