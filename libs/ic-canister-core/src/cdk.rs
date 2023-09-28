@@ -14,6 +14,8 @@ mod test {
     }
 
     pub mod api {
+        use candid::Principal;
+
         pub fn time() -> u64 {
             use std::time::SystemTime;
 
@@ -21,6 +23,10 @@ mod test {
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_secs()
+        }
+
+        pub fn id() -> Principal {
+            Principal::anonymous()
         }
 
         pub fn trap(message: &str) -> ! {

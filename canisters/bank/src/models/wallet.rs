@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use super::{AccountId, Blockchain, BlockchainStandard, WalletPolicy};
+use super::{AccountId, Blockchain, BlockchainStandard, WalletBalance, WalletPolicy};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
@@ -23,11 +23,13 @@ pub struct Wallet {
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
     pub blockchain: Blockchain,
     /// The wallet address (e.g. `0x1234`, etc.)
-    pub address: Option<String>,
+    pub address: String,
     /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
     pub standard: BlockchainStandard,
     /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)
     pub symbol: String,
+    /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
     /// The wallet name (e.g. `My Main Wallet`)
     pub name: Option<String>,
     /// The wallet owners, which are a list of account ids.
@@ -35,6 +37,8 @@ pub struct Wallet {
     /// If the wallet has no owners, it means that it is a system wallet and
     /// only admins of the system can operate on it.
     pub owners: Vec<AccountId>,
+    /// The wallet balance, which is the amount of the asset that the wallet holds.
+    pub balance: Option<WalletBalance>,
     /// The wallet policies, which define the rules for the wallet.
     pub policies: Vec<WalletPolicy>,
     /// The wallet metadata, which is a list of key-value pairs,

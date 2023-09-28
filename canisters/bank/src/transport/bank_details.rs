@@ -15,7 +15,7 @@ pub struct BankAssetDTO {
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
     pub name: String,
     /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
-    pub decimals: u8,
+    pub decimals: u32,
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
     /// also, in the case of non-native assets, it can contain other required
     /// information (e.g. `{"address": "0x1234"}`).

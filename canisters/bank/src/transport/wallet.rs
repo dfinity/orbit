@@ -9,7 +9,7 @@ pub struct WalletDTO {
     pub id: WalletIdDTO,
     pub owners: Vec<UuidDTO>,
     pub name: Option<String>,
-    pub address: Option<String>,
+    pub address: String,
     pub blockchain: String,
     pub standard: String,
     pub symbol: String,
@@ -61,4 +61,22 @@ pub struct GetWalletInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetWalletResponse {
     pub wallet: WalletDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetWalletBalanceInput {
+    pub wallet_id: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct WalletBalanceDTO {
+    pub wallet_id: String,
+    pub balance: candid::Nat,
+    pub decimals: u32,
+    pub last_update_timestamp: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetWalletBalanceResponse {
+    pub balance: WalletBalanceDTO,
 }

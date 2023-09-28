@@ -324,6 +324,8 @@ type Wallet = record {
   // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
   standard : text;
+  // The address of the wallet (e.g. "0x1234").
+  address : text;
   // A friendly name for the wallet.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
@@ -407,6 +409,34 @@ type GetWalletResult = variant {
   Err : Error;
 };
 
+type WalletBalance = record {
+  // The wallet id.
+  wallet_id : WalletId;
+  // The balance of the wallet.
+  balance : nat;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat32;
+  // The time at which the balance was last updated.
+  last_update_timestamp : TimestampRFC3339;
+};
+
+// Input type for getting a wallet balance.
+type GetWalletBalanceInput = record {
+  // The wallet id to retrieve.
+  wallet_id : WalletId;
+};
+
+// Result type for getting a wallet.
+type GetWalletBalanceResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The wallet balance that was retrieved.
+    balance : WalletBalance;
+  };
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
+
 // A record type that can be used to represent an asset in the bank.
 type BankAsset = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
@@ -421,7 +451,7 @@ type BankAsset = record {
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   name : text;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
-  decimals : nat8;
+  decimals : nat32;
   // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
   // also, in the case of non-native assets, it can contain other required
   // information (e.g. `{"address": "0x1234"}`).
@@ -474,6 +504,10 @@ service : (opt BankInit) -> {
   //
   // If the caller does not have access to the wallet, an error will be returned.
   get_wallet : (input : GetWalletInput) -> (GetWalletResult) query;
+  // Get the wallet balance.
+  //
+  // If the caller does not have access to the wallet, an error will be returned.
+  get_wallet_balance : (input : GetWalletBalanceInput) -> (GetWalletBalanceResult);
 
   //
   //

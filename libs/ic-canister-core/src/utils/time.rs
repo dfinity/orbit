@@ -10,3 +10,11 @@ pub fn timestamp_to_rfc3339(nanoseconds_since_epoch: &Timestamp) -> String {
         .format(&Rfc3339)
         .expect("Invalid datetime Rfc3339 format")
 }
+
+pub fn rfc3339_to_timestamp(rfc3339: &str) -> Timestamp {
+    let datetime = OffsetDateTime::parse(rfc3339, &Rfc3339)
+        .expect("Invalid datetime Rfc3339 format")
+        .unix_timestamp_nanos();
+
+    datetime as Timestamp
+}

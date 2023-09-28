@@ -15,7 +15,7 @@ pub struct BankAsset {
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
     pub name: String,
     /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
-    pub decimals: u8,
+    pub decimals: u32,
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
     pub metadata: HashMap<String, String>,
 }

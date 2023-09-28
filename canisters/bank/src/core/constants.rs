@@ -16,3 +16,6 @@ pub const WASM_PAGE_SIZE: u32 = 65536;
 
 /// The maximum number of Wasm pages that we allow to use for the stable storage.
 pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
+
+/// The number of seconds that the wallet balance is considered fresh.
+pub const WALLET_BALANCE_FRESHNESS_IN_MS: u64 = 10000;

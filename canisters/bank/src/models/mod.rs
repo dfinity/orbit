@@ -21,3 +21,7 @@ pub use account::*;
 /// The wallet policy related models, which is used to represent wallet rules.
 mod wallet_policy;
 pub use wallet_policy::*;
+
+/// The wallet balance information.
+mod wallet_balance;
+pub use wallet_balance::*;

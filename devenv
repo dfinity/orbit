@@ -30,6 +30,7 @@ Options:
   --init configures all the dependencies for the development environment
   --init-bank fresh installs the bank canister
   --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
+  --candid-generate generates the code for the candid specifications that the wallet uses
 EOF
 }
 
@@ -135,6 +136,16 @@ function setup_bank() {
   install_bank
 }
 
+function candid_generate() {
+  # ICP LEDGER CANDID CODE GENERATION
+  ICP_LEDGER_CANDID=$(dfx canister metadata icp_ledger candid:service)
+  echo "$ICP_LEDGER_CANDID" > /tmp/icp_ledger.did
+
+  didc bind --target rs /tmp/icp_ledger.did > canisters/bank/src/generated/icp_ledger.rs
+
+  rm /tmp/icp_ledger.did
+}
+
 #############################################
 # SCRIPT OPTIONS                            #
 #############################################
@@ -169,6 +180,11 @@ while [[ $# -gt 0 ]]; do
   --init-bank)
     shift
     exec_function setup_bank
+    echo
+    ;;
+  --candid-generate)
+    shift
+    exec_function candid_generate
     echo
     ;;
   *)

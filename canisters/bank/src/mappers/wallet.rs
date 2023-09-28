@@ -1,10 +1,11 @@
 use super::{BlockchainMapper, WalletPolicyMapper};
 use crate::{
     errors::MapperError,
-    models::{BlockchainStandard, Wallet, WALLET_METADATA_SYMBOL_KEY},
-    transport::{CreateWalletInput, WalletDTO},
+    models::{BlockchainStandard, Wallet, WalletBalance, WalletId, WALLET_METADATA_SYMBOL_KEY},
+    transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO},
 };
 use ic_canister_core::{cdk::api::time, utils::timestamp_to_rfc3339};
+use num_bigint::ToBigUint;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -49,6 +50,7 @@ impl WalletMapper {
         &self,
         input: CreateWalletInput,
         wallet_id: Uuid,
+        address: Option<String>,
         owner_accounts: Vec<Uuid>,
     ) -> Result<Wallet, MapperError> {
         let blockchain = self.blockchain_mapper.str_to_blockchain(input.blockchain)?;
@@ -97,7 +99,7 @@ impl WalletMapper {
             blockchain,
             standard: standard.to_owned(),
             name: input.name,
-            address: None,
+            address: address.unwrap_or("".to_string()),
             owners: owner_accounts
                 .iter()
                 .map(|account_id| *account_id.as_bytes())
@@ -107,11 +109,30 @@ impl WalletMapper {
                 .iter()
                 .map(|policy_dto| self.wallet_policy_mapper.from_dto(policy_dto.to_owned()))
                 .collect(),
+            decimals: 0, // TODO: decimals should be set based on
             symbol,
+            balance: None,
             metadata,
             last_modification_timestamp: time(),
         };
 
         Ok(new_wallet)
+    }
+
+    pub fn balance_to_dto(
+        &self,
+        balance: WalletBalance,
+        decimals: u32,
+        wallet_id: WalletId,
+    ) -> WalletBalanceDTO {
+        WalletBalanceDTO {
+            wallet_id: Uuid::from_slice(&wallet_id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
+            balance: candid::Nat(balance.balance.to_biguint().unwrap()),
+            decimals,
+            last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
+        }
     }
 }
