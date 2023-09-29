@@ -73,7 +73,7 @@ type Transfer = record {
   // The internal operation id, this a unique identifier for the transfer.
   id : OperationId;
   // The wallet id to use for the transfer.
-  wallet_id : WalletId;
+  from_wallet_id : WalletId;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
   to : text;
   // The amount to transfer.
@@ -105,7 +105,7 @@ type TransferExecutionSchedule = variant {
 // Input type for transferring funds.
 type TransferInput = record {
   // The wallet id to use for the transaction.
-  wallet_id : WalletId;
+  from_wallet_id : WalletId;
   // The amount to transfer.
   amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").

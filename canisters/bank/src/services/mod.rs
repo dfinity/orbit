@@ -8,6 +8,10 @@ pub use management::*;
 mod wallet;
 pub use wallet::*;
 
+/// Transfer service.
+mod transfer;
+pub use transfer::*;
+
 /// Account service.
 mod account;
 pub use account::*;

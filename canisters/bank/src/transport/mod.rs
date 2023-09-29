@@ -16,3 +16,11 @@ pub use management::*;
 /// Wallet data transfer objects (DTOs)
 mod wallet;
 pub use wallet::*;
+
+/// Transfer related DTOs
+mod transfer;
+pub use transfer::*;
+
+/// Operation related DTOs
+mod operation;
+pub use operation::*;
