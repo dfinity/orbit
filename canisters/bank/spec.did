@@ -124,10 +124,14 @@ type TransferResult = variant {
 type WalletListItem = record {
   // The wallet id.
   id : WalletId;
+  // The wallet address.
+  address: text;
   // The wallet name.
-  name : text;
+  name : opt text;
   // The asset symbol, e.g. "ICP" or "BTC".
   asset_symbol : AssetSymbol;
+  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+  asset_name : opt text;
 };
 
 // Result type for listing all wallets.

@@ -5,7 +5,7 @@ use crate::{
         AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
         WALLET_METADATA_SYMBOL_KEY,
     },
-    transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO},
+    transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO, WalletListItemDTO},
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
 use num_bigint::ToBigUint;
@@ -145,6 +145,19 @@ impl WalletMapper {
             wallet_id: wallet.id,
             account_id: *account_id,
             last_modification_timestamp: time(),
+        }
+    }
+
+    pub fn wallet_list_item(&self, wallet: &Wallet) -> WalletListItemDTO {
+        WalletListItemDTO {
+            id: Uuid::from_slice(&wallet.id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
+            address: wallet.address.clone(),
+            asset_symbol: wallet.symbol.clone(),
+            name: wallet.name.clone(),
+            asset_name: None,
         }
     }
 }

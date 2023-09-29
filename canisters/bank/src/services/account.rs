@@ -99,8 +99,11 @@ impl AccountService {
         }
     }
 
-    /// Returns the account associated with the given user identity.
-    pub async fn resolve_account(&self, identity: &Principal) -> ServiceResult<Option<Account>> {
+    /// Returns the account associated with the given user identity if it exists.
+    pub async fn maybe_resolve_account(
+        &self,
+        identity: &Principal,
+    ) -> ServiceResult<Option<Account>> {
         let account_identity = match self
             .account_identity_repository
             .find_by_identity_id(identity)?
@@ -118,6 +121,18 @@ impl AccountService {
         };
 
         Ok(Some(account))
+    }
+
+    // Returns the account associated with the given user identity, if none is found, an error is returned.
+    pub async fn resolve_account(&self, identity: &Principal) -> ServiceResult<Account> {
+        let account =
+            self.maybe_resolve_account(identity)
+                .await?
+                .ok_or(AccountError::NotFoundAccount {
+                    account: identity.to_string(),
+                })?;
+
+        Ok(account)
     }
 
     pub async fn assert_account_exists(&self, account_id: &UUID) -> ServiceResult<()> {

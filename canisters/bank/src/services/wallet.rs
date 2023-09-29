@@ -4,18 +4,20 @@ use crate::{
     core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
     errors::WalletError,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
-    models::{Wallet, WalletAccount, WalletBalance},
+    models::{Wallet, WalletAccount, WalletBalance, WalletValidator},
     repositories::{WalletAccountRepository, WalletRepository},
     transport::{
         CreateWalletInput, CreateWalletInputOwnersItemDTO, GetWalletBalanceInput, GetWalletInput,
-        WalletBalanceDTO, WalletDTO,
+        WalletBalanceDTO, WalletDTO, WalletListItemDTO,
     },
 };
+use candid::Principal;
 use ic_canister_core::{
     api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
     utils::generate_uuid_v4,
 };
 use std::collections::HashSet;
+use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct WalletService {
@@ -53,6 +55,16 @@ impl WalletService {
             .await?;
 
         let mut owners_accounts: HashSet<UUID> = HashSet::from_iter(vec![caller_account.id]);
+        // this validation repeated here to avoid unnecessary calls to create accounts that will not be used,
+        // the validation is also done in the wallet model itself.
+        let nr_owners = input.owners.len();
+        if nr_owners > WalletValidator::OWNERS_RANGE.1 as usize {
+            Err(WalletError::InvalidOwnersRange {
+                min_owners: WalletValidator::OWNERS_RANGE.0,
+                max_owners: WalletValidator::OWNERS_RANGE.1,
+            })?
+        }
+
         for owner in input.owners.iter() {
             match owner {
                 CreateWalletInputOwnersItemDTO::AccountId(account_id) => {
@@ -132,7 +144,7 @@ impl WalletService {
     pub async fn get_wallet(&self, input: GetWalletInput) -> ServiceResult<WalletDTO> {
         let caller_account = match self
             .account_service
-            .resolve_account(&self.call_context.caller())
+            .maybe_resolve_account(&self.call_context.caller())
             .await?
         {
             Some(account) => account,
@@ -167,7 +179,7 @@ impl WalletService {
     ) -> ServiceResult<WalletBalanceDTO> {
         let caller_account = match self
             .account_service
-            .resolve_account(&self.call_context.caller())
+            .maybe_resolve_account(&self.call_context.caller())
             .await?
         {
             Some(account) => account,
@@ -225,5 +237,38 @@ impl WalletService {
                 .balance_to_dto(updated_balance, wallet.decimals, wallet.id);
 
         Ok(updated_balance_dto)
+    }
+
+    /// Returns a list of all the wallets of the requested owner, if no owner is provided then it returns
+    /// the list of all the wallets of the caller.
+    pub async fn list_wallets(
+        &self,
+        owner: Option<Principal>,
+    ) -> ServiceResult<Vec<WalletListItemDTO>> {
+        let owner = owner.unwrap_or(self.call_context.caller());
+        let account = self.account_service.resolve_account(&owner).await?;
+        let wallet_accounts = self
+            .wallet_account_repository
+            .find_by_account_id(&account.id);
+        let mut wallets: Vec<Wallet> = vec![];
+        for wallet_account in wallet_accounts {
+            let wallet = self
+                .wallet_repository
+                .get(&Wallet::key(wallet_account.wallet_id))
+                .ok_or(WalletError::WalletNotFound {
+                    id: Uuid::from_bytes(wallet_account.wallet_id)
+                        .hyphenated()
+                        .to_string(),
+                })?;
+
+            wallets.push(wallet);
+        }
+
+        let dtos = wallets
+            .iter()
+            .map(|wallet| self.wallet_mapper.wallet_list_item(wallet))
+            .collect::<Vec<WalletListItemDTO>>();
+
+        Ok(dtos)
     }
 }

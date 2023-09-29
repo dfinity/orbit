@@ -3,7 +3,7 @@ use crate::{
     services::WalletService,
     transport::{
         CreateWalletInput, CreateWalletResponse, GetWalletBalanceInput, GetWalletBalanceResponse,
-        GetWalletInput, GetWalletResponse,
+        GetWalletInput, GetWalletResponse, ListWalletResponse,
     },
 };
 use ic_canister_core::api::ApiResult;
@@ -29,6 +29,16 @@ async fn get_wallet(input: GetWalletInput) -> ApiResult<GetWalletResponse> {
         .await?;
 
     Ok(GetWalletResponse { wallet })
+}
+
+#[query(name = "list_wallets")]
+async fn list_wallets() -> ApiResult<ListWalletResponse> {
+    let wallets = WalletService::create()
+        .with_call_context(CallContext::get())
+        .list_wallets(None)
+        .await?;
+
+    Ok(ListWalletResponse { wallets })
 }
 
 #[update(name = "get_wallet_balance")]

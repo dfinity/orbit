@@ -80,3 +80,17 @@ pub struct WalletBalanceDTO {
 pub struct GetWalletBalanceResponse {
     pub balance: WalletBalanceDTO,
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct WalletListItemDTO {
+    pub id: WalletIdDTO,
+    pub address: String,
+    pub asset_symbol: String,
+    pub asset_name: Option<String>,
+    pub name: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListWalletResponse {
+    pub wallets: Vec<WalletListItemDTO>,
+}
