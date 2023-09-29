@@ -4,15 +4,15 @@ use crate::{
     core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
     errors::WalletError,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
-    models::{Wallet, WalletBalance},
-    repositories::WalletRepository,
+    models::{Wallet, WalletAccount, WalletBalance},
+    repositories::{WalletAccountRepository, WalletRepository},
     transport::{
         CreateWalletInput, CreateWalletInputOwnersItemDTO, GetWalletBalanceInput, GetWalletInput,
         WalletBalanceDTO, WalletDTO,
     },
 };
 use ic_canister_core::{
-    api::ServiceResult, cdk::api::time, repository::Repository, types::UUID,
+    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
     utils::generate_uuid_v4,
 };
 use std::collections::HashSet;
@@ -22,6 +22,7 @@ pub struct WalletService {
     call_context: CallContext,
     account_service: AccountService,
     wallet_repository: WalletRepository,
+    wallet_account_repository: WalletAccountRepository,
     blockchain_mapper: BlockchainMapper,
     wallet_mapper: WalletMapper,
     helper_mapper: HelperMapper,
@@ -90,6 +91,15 @@ impl WalletService {
             owners_accounts.iter().copied().collect(),
         )?;
 
+        let wallet_accounts_association = new_wallet
+            .owners
+            .iter()
+            .map(|owner_account_id| {
+                self.wallet_mapper
+                    .account_to_wallet_association(&new_wallet, owner_account_id)
+            })
+            .collect::<Vec<WalletAccount>>();
+
         // The wallet address is generated after the wallet is created from the user input and
         // all the validations are successfully completed.
         if new_wallet.address.is_empty() {
@@ -102,12 +112,18 @@ impl WalletService {
         new_wallet.decimals = blockchain_api.decimals(&new_wallet).await?;
 
         // Validations happen after all the fields are set in the wallet to avoid partial data in the repository.
-        // new_wallet.validate()?;
+        new_wallet.validate()?;
 
-        // Inserting the wallet into the repository is the last step of the wallet creation process
-        // to avoid potential consistency issues due to the fact that some of the calls to create the wallet
+        // Inserting the wallet into the repository and its associations is the last step of the wallet creation
+        // process to avoid potential consistency issues due to the fact that some of the calls to create the wallet
         // happen in an asynchronous way.
         self.wallet_repository.insert(key, new_wallet.clone());
+        wallet_accounts_association
+            .iter()
+            .for_each(|wallet_account| {
+                self.wallet_account_repository
+                    .insert(wallet_account.as_key(), wallet_account.clone());
+            });
 
         Ok(self.wallet_mapper.wallet_to_dto(new_wallet))
     }

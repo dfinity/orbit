@@ -6,6 +6,10 @@
 mod wallet;
 pub use wallet::*;
 
+/// The wallet account related models.
+mod wallet_account;
+pub use wallet_account::*;
+
 /// The blockchain related models, which is used to store represent a blockchain within the system.
 mod blockchain;
 pub use blockchain::*;

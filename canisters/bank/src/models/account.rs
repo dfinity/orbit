@@ -1,7 +1,10 @@
 use super::AccessRole;
 use crate::errors::AccountError;
 use candid::{CandidType, Deserialize, Principal};
-use ic_canister_core::types::{Timestamp, UUID};
+use ic_canister_core::{
+    model::{ModelValidator, ModelValidatorResult},
+    types::{Timestamp, UUID},
+};
 use ic_canister_macros::stable_object;
 
 /// The account id, which is a UUID.
@@ -45,7 +48,7 @@ impl<'account> AccountValidator<'account> {
         AccountValidator { account }
     }
 
-    pub fn validate_identities(&self) -> Result<(), AccountError> {
+    pub fn validate_identities(&self) -> ModelValidatorResult<AccountError> {
         if self.account.identities.len() < Self::IDENTITIES_RANGE.0 as usize {
             return Err(AccountError::TooLittleIdentities);
         }
@@ -59,7 +62,7 @@ impl<'account> AccountValidator<'account> {
         Ok(())
     }
 
-    pub fn validate_access_roles(&self) -> Result<(), AccountError> {
+    pub fn validate_access_roles(&self) -> ModelValidatorResult<AccountError> {
         if self.account.identities.len() < Self::ACCESS_ROLES_RANGE.0 as usize {
             return Err(AccountError::TooLittleAccessRoles);
         }
@@ -73,7 +76,7 @@ impl<'account> AccountValidator<'account> {
         Ok(())
     }
 
-    pub fn validate_unconfirmed_identities(&self) -> Result<(), AccountError> {
+    pub fn validate_unconfirmed_identities(&self) -> ModelValidatorResult<AccountError> {
         if self.account.identities.len() > Self::MAX_UNCONFIRMED_IDENTITIES as usize {
             return Err(AccountError::TooManyUnconfirmedIdentities {
                 max_identities: Self::MAX_UNCONFIRMED_IDENTITIES,
@@ -83,12 +86,18 @@ impl<'account> AccountValidator<'account> {
         Ok(())
     }
 
-    pub fn validate(&self) -> Result<(), AccountError> {
+    pub fn validate(&self) -> ModelValidatorResult<AccountError> {
         self.validate_identities()?;
         self.validate_unconfirmed_identities()?;
         self.validate_access_roles()?;
 
         Ok(())
+    }
+}
+
+impl ModelValidator<AccountError> for Account {
+    fn validate(&self) -> ModelValidatorResult<AccountError> {
+        AccountValidator::new(self).validate()
     }
 }
 
@@ -100,11 +109,5 @@ impl Account {
 
     pub fn as_key(&self) -> AccountKey {
         Account::key(self.id)
-    }
-
-    pub fn validate(&self) -> Result<(), AccountError> {
-        AccountValidator::new(self).validate()?;
-
-        Ok(())
     }
 }

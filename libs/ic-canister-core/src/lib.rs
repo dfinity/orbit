@@ -9,6 +9,7 @@
 
 pub mod api;
 pub mod cdk;
+pub mod model;
 pub mod repository;
 pub mod types;
 pub mod utils;

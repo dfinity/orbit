@@ -1,9 +1,12 @@
-use std::hash::Hash;
-
 use super::{AccountId, Blockchain, BlockchainStandard, WalletBalance, WalletPolicy};
+use crate::errors::WalletError;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::{Timestamp, UUID};
+use ic_canister_core::{
+    model::{ModelValidator, ModelValidatorResult},
+    types::{Timestamp, UUID},
+};
 use ic_canister_macros::stable_object;
+use std::hash::Hash;
 
 /// The wallet metadata key for the asset symbol;
 pub const WALLET_METADATA_SYMBOL_KEY: &str = "symbol";
@@ -56,9 +59,65 @@ pub struct WalletKey {
     pub id: WalletId,
 }
 
+pub struct WalletValidator<'wallet> {
+    wallet: &'wallet Wallet,
+}
+
+impl<'wallet> WalletValidator<'wallet> {
+    pub const OWNERS_RANGE: (u8, u8) = (1, 10);
+    pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
+
+    pub fn new(wallet: &'wallet Wallet) -> WalletValidator {
+        WalletValidator { wallet }
+    }
+
+    pub fn validate_owners(&self) -> ModelValidatorResult<WalletError> {
+        if (self.wallet.owners.len() < Self::OWNERS_RANGE.0 as usize)
+            || (self.wallet.owners.len() > Self::OWNERS_RANGE.1 as usize)
+        {
+            return Err(WalletError::InvalidOwnersRange {
+                min_owners: Self::ADDRESS_RANGE.0,
+                max_owners: Self::ADDRESS_RANGE.1,
+            });
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_address(&self) -> ModelValidatorResult<WalletError> {
+        if (self.wallet.address.len() < Self::ADDRESS_RANGE.0 as usize)
+            || (self.wallet.address.len() > Self::ADDRESS_RANGE.1 as usize)
+        {
+            return Err(WalletError::InvalidAddressLength {
+                min_length: Self::ADDRESS_RANGE.0,
+                max_length: Self::ADDRESS_RANGE.1,
+            });
+        }
+
+        Ok(())
+    }
+
+    pub fn validate(&self) -> ModelValidatorResult<WalletError> {
+        self.validate_address()?;
+        self.validate_owners()?;
+
+        Ok(())
+    }
+}
+
+impl ModelValidator<WalletError> for Wallet {
+    fn validate(&self) -> ModelValidatorResult<WalletError> {
+        WalletValidator::new(self).validate()
+    }
+}
+
 impl Wallet {
     /// Creates a new wallet key from the given key components.
     pub fn key(id: WalletId) -> WalletKey {
         WalletKey { id }
+    }
+
+    pub fn as_key(&self) -> WalletKey {
+        Self::key(self.id)
     }
 }

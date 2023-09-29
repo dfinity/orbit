@@ -1,7 +1,10 @@
 use super::{BlockchainMapper, WalletPolicyMapper};
 use crate::{
     errors::MapperError,
-    models::{BlockchainStandard, Wallet, WalletBalance, WalletId, WALLET_METADATA_SYMBOL_KEY},
+    models::{
+        AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
+        WALLET_METADATA_SYMBOL_KEY,
+    },
     transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO},
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
@@ -130,6 +133,18 @@ impl WalletMapper {
             balance: candid::Nat(balance.balance.to_biguint().unwrap()),
             decimals,
             last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
+        }
+    }
+
+    pub fn account_to_wallet_association(
+        &self,
+        wallet: &Wallet,
+        account_id: &AccountId,
+    ) -> WalletAccount {
+        WalletAccount {
+            wallet_id: wallet.id,
+            account_id: *account_id,
+            last_modification_timestamp: time(),
         }
     }
 }

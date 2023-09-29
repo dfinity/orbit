@@ -11,3 +11,7 @@ pub use account_identity::*;
 /// Repository for wallets.
 mod wallet;
 pub use wallet::*;
+
+/// Repository for wallet accounts.
+mod wallet_account;
+pub use wallet_account::*;

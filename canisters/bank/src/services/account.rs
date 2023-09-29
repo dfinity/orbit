@@ -6,6 +6,7 @@ use crate::{
     repositories::{AccountIdentityRepository, AccountRepository},
 };
 use candid::Principal;
+use ic_canister_core::model::ModelValidator;
 use ic_canister_core::{api::ServiceResult, utils::generate_uuid_v4};
 use ic_canister_core::{repository::Repository, types::UUID};
 use uuid::Uuid;

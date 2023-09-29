@@ -14,8 +14,17 @@ pub enum WalletError {
     /// The given blockchain standard is unknown to the system.
     #[error(r#"The given blockchain standard is unknown to the system."#)]
     UnknownBlockchainStandard { blockchain_standard: String },
+    /// You don't have the necessary privileges to access the requested wallet.
     #[error(r#"You don't have the necessary privileges to access the requested wallet."#)]
     Forbidden { wallet: String },
+    /// The wallet address is out of range.
+    #[error(
+        r#"The wallet address is out of range, it must be between {min_length} and {max_length}."#
+    )]
+    InvalidAddressLength { min_length: u8, max_length: u8 },
+    /// The wallet owners selection is out of range.
+    #[error(r#"The wallet owners selection is out of range, it must be between {min_owners} and {max_owners}."#)]
+    InvalidOwnersRange { min_owners: u8, max_owners: u8 },
 }
 
 impl DetailableError for WalletError {
@@ -41,6 +50,22 @@ impl DetailableError for WalletError {
                     "blockchain_standard".to_string(),
                     blockchain_standard.to_string(),
                 );
+                Some(details)
+            }
+            WalletError::InvalidAddressLength {
+                min_length,
+                max_length,
+            } => {
+                details.insert("min_length".to_string(), min_length.to_string());
+                details.insert("max_length".to_string(), max_length.to_string());
+                Some(details)
+            }
+            WalletError::InvalidOwnersRange {
+                min_owners,
+                max_owners,
+            } => {
+                details.insert("min_owners".to_string(), min_owners.to_string());
+                details.insert("max_owners".to_string(), max_owners.to_string());
                 Some(details)
             }
         }
