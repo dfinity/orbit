@@ -22,14 +22,14 @@ pub struct BankAssetDTO {
     pub metadata: HashMap<String, String>,
 }
 
-/// Bank details data transfer object (DTO).
+/// Bank features data transfer object (DTO).
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct BankDetailsDTO {
+pub struct BankFeaturesDTO {
     /// The list of assets that are supported by the bank canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
     pub supported_assets: Vec<BankAssetDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct BankDetailsResponse {
-    pub details: BankDetailsDTO,
+pub struct BankFeaturesResponse {
+    pub features: BankFeaturesDTO,
 }

@@ -125,12 +125,11 @@ impl AccountService {
 
     // Returns the account associated with the given user identity, if none is found, an error is returned.
     pub async fn resolve_account(&self, identity: &Principal) -> ServiceResult<Account> {
-        let account =
-            self.maybe_resolve_account(identity)
-                .await?
-                .ok_or(AccountError::NotFoundAccountIdentity {
-                    identity: identity.to_text(),
-                })?;
+        let account = self.maybe_resolve_account(identity).await?.ok_or(
+            AccountError::NotFoundAccountIdentity {
+                identity: identity.to_text(),
+            },
+        )?;
 
         Ok(account)
     }

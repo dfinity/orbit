@@ -1,15 +1,15 @@
 use crate::{
-    transport::{BankAssetDTO, BankDetailsDTO},
+    transport::{BankAssetDTO, BankFeaturesDTO},
     types::BankAsset,
 };
 use std::collections::HashSet;
 
 #[derive(Default, Clone, Debug)]
-pub struct BankDetailsMapper {}
+pub struct ManagementMapper {}
 
-impl BankDetailsMapper {
-    pub fn to_dto(&self, supported_assets: HashSet<BankAsset>) -> BankDetailsDTO {
-        BankDetailsDTO {
+impl ManagementMapper {
+    pub fn bank_features(&self, supported_assets: HashSet<BankAsset>) -> BankFeaturesDTO {
+        BankFeaturesDTO {
             supported_assets: supported_assets
                 .into_iter()
                 .map(|asset| BankAssetDTO {

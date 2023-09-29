@@ -24,35 +24,36 @@ type Network = record {
   name : text;
 };
 
-// Transactions can have additional information attached to them,
-type TransactionAdditionalInfo = record {
-  // The key of the additional info (e.g. "nonce" or "tag")
+// Tranders can have additional information attached to them,
+// this type can be used to represent the additional info.
+type TransferMetadata = record {
+  // The key of the additional info (e.g. "nonce",  "tag", "memo", etc...)
   key : text;
   // The value of the additional info (e.g. "0x1234" or "my-tag")
   value : text;
 };
 
-// The status of a transaction.
-type TransactionStatus = variant {
-  // The transaction is pending approval.
+// The status of a transfer.
+type TransferStatus = variant {
+  // The transfer is pending approval.
   pending;
-  // The transaction has been approved.
+  // The transfer has been approved.
   approved;
-  // The transaction has been rejected.
+  // The transfer has been rejected.
   rejected : record {
     // The reason for the rejection.
     reason : text;
   };
-  // The transaction has been cancelled by the initiator.
+  // The transfer has been cancelled by the initiator.
   //
-  // This can happen if the initiator cancels the transaction before it is approved.
+  // This can happen if the initiator cancels the transfer before it is approved.
   cancelled : record {
     // The reason for the cancellation.
     reason : opt text;
   };
-  // The transaction has been submitted for execution.
+  // The transfer has been submitted for execution.
   submitted;
-  // The transaction has been completed.
+  // The transfer has been completed.
   //
   // For natively supported tokens this means that the transaction has
   // submitted to the blockchain. For non natively supported tokens this means
@@ -67,28 +68,38 @@ type TransactionStatus = variant {
   };
 };
 
-// A record type that can be used to represent a transaction in a given wallet.
-type Transaction = record {
-  // The internal operation id, this a unique identifier for the transaction.
+// A record type that can be used to represent a transfer in a given wallet.
+type Transfer = record {
+  // The internal operation id, this a unique identifier for the transfer.
   id : OperationId;
-  // The wallet id to use for the transaction.
+  // The wallet id to use for the transfer.
   wallet_id : WalletId;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
   to : text;
   // The amount to transfer.
   amount : nat;
-  // The status of the transaction.
-  status : TransactionStatus;
+  // The status of the transfer.
+  status : TransferStatus;
   // The fee to pay for the transaction, if applicable.
-  fee : opt nat;
-  // The network to use for the transaction, if not the default
-  // network of the wallet will be used.
-  network : opt Network;
-  // Trasanctions can be tagged with an optional additional
-  // info (e.g. a nonce in the case of an Ethereum transaction)
-  //
-  // If set there must be at most 10 additional info items.
-  additionals : opt vec TransactionAdditionalInfo;
+  fee : nat;
+  // The transfer is only executed if all the policies are fulfilled before the `expiration_dt`.
+  expiration_dt : TimestampRFC3339;
+  // The network used when submitting the transaction to the blockchain.
+  network : Network;
+  // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
+  metadata : vec TransferMetadata;
+};
+
+// The schedule for executing a transaction of a given transfer operation.
+type TransferExecutionSchedule = variant {
+  // The transaction will be executed immediately.
+  Immediate;
+  // The transaction will be executed at a given time.
+  Scheduled : record {
+    // The time at which the transaction will be executed, 
+    // it must be in the future.
+    execution_time : TimestampRFC3339;
+  };
 };
 
 // Input type for transferring funds.
@@ -99,22 +110,33 @@ type TransferInput = record {
   amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").
   to : text;
+  // The transaction will not be created if the transfer 
+  // was not approved until the `expiration_dt`.
+  //
+  // If not set, the system will use the default expiration time.
+  expiration_dt : opt TimestampRFC3339;
+  // When the transaction should be executed. 
+  // 
+  // If not set, the default option used by the system is `Immediate`.
+  execute_at : opt TransferExecutionSchedule;
   // The fee to pay for the transaction, if applicable.
+  //
+  // If not set, the default fee will be used.
   fee : opt nat;
   // The network to use for the transaction, if not the
   // default network of the wallet will be used.
   network : opt Network;
   // Trasanctions can be tagged with an optional additional info
   // (e.g. a nonce in the case of an Ethereum transaction)
-  additionals : opt vec TransactionAdditionalInfo;
+  metadata : opt vec TransferMetadata;
 };
 
 // Result type for transferring funds.
 type TransferResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
-    // The transaction that was created.
-    transaction : Transaction;
+    // The transfer that was created.
+    transfer : Transfer;
   };
   // The error that occurred during the operation, if any.
   Err : Error;
@@ -125,7 +147,7 @@ type WalletListItem = record {
   // The wallet id.
   id : WalletId;
   // The wallet address.
-  address: text;
+  address : text;
   // The wallet name.
   name : opt text;
   // The asset symbol, e.g. "ICP" or "BTC".
@@ -462,18 +484,18 @@ type BankAsset = record {
   metadata : vec record { text; text };
 };
 
-// A record type that can be used to represent the bank details.
-type BankDetails = record {
+// A record type that can be used to represent the bank features.
+type BankFeatures = record {
   // The list of supported assets.
   supported_assets : vec BankAsset;
 };
 
-// Result type for getting the bank details.
-type GetBankDetailsResult = variant {
+// Result type for getting the bank feature details.
+type GetFeaturesResult = variant {
   // The result data for a successful operation.
   Ok : record {
-    // The bank details.
-    details : BankDetails;
+    // The bank features.
+    features : BankFeatures;
   };
   // The error that occurred during the operation.
   Err : Error;
@@ -498,33 +520,44 @@ type BankInit = record {
 
 // The Bank service definition.
 service : (opt BankInit) -> {
-  // Get the bank details (e.g. supported assets).
+  // Get the bank features (e.g. supported assets).
   //
-  // Available to all users with the "read:bank-details" permission.
-  get_bank_details : () -> (GetBankDetailsResult) query;
+  // Required permission: "read:features"
+  features : () -> (GetFeaturesResult) query;
   // Create a new wallet.
+  //
+  // Required permission: "write:create-wallet"
   create_wallet : (input : CreateWalletInput) -> (CreateWalletResult);
   // Get a wallet by id.
   //
   // If the caller does not have access to the wallet, an error will be returned.
+  //
+  // Required permission: "read:wallet"
   get_wallet : (input : GetWalletInput) -> (GetWalletResult) query;
   // Get the wallet balance.
   //
   // If the caller does not have access to the wallet, an error will be returned.
+  //
+  // Required permission: "read:wallet"
   get_wallet_balance : (input : GetWalletBalanceInput) -> (GetWalletBalanceResult);
-
-  //
-  //
-  //
-  // Get the bank settings, only available to admins.
-  get_bank_settings : () -> (BankSettingsResult) query;
   // List all wallets that the caller has access to.
   //
-  // If the caller is not the owner of any wallet, and is not an
-  // owner of the bank, an error will be returned.
+  // If the caller is not the owner of any wallet, an error will be returned.
+  //
+  // Required permission: "read:wallet"
   list_wallets : () -> (ListWalletResult) query;
-  // Transfer funds from a wallet.
+  // Transfer funds from a wallet, this operation will only create a new transaction
+  // if the wallet policies have been sucessfully fulfilled.
+  //
+  // If the caller does not have access to the wallet, an error will be returned.
+  //
+  // Required permission: "write:transfer"
   transfer : (input : TransferInput) -> (TransferResult);
+
+  // Get the bank settings, only available to admins.
+  //
+  // Required permission: "admin"
+  admin_settings : () -> (BankSettingsResult) query;
   // Get the list of operations.
   list_operations : (input : ListOperationsInput) -> (ListOperationsResult) query;
   // Get the operation by id.

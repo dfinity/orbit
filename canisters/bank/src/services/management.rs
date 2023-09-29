@@ -3,8 +3,8 @@ use crate::{
         canister_config_mut, get_bank_assets, write_canister_config, CallContext, CanisterConfig,
         WithCallContext,
     },
-    mappers::BankDetailsMapper,
-    transport::{BankCanisterInit, BankDetailsDTO},
+    mappers::ManagementMapper,
+    transport::{BankCanisterInit, BankFeaturesDTO},
 };
 use ic_canister_core::{api::ServiceResult, cdk::api::time};
 
@@ -12,7 +12,7 @@ use ic_canister_core::{api::ServiceResult, cdk::api::time};
 pub struct ManagementService {
     // todo: removed if not used by the service
     _call_context: CallContext,
-    bank_details_mapper: BankDetailsMapper,
+    management_mapper: ManagementMapper,
 }
 
 impl WithCallContext for ManagementService {
@@ -47,9 +47,9 @@ impl ManagementService {
         write_canister_config(updated_config);
     }
 
-    pub async fn get_bank_details(&self) -> ServiceResult<BankDetailsDTO> {
+    pub async fn get_bank_features(&self) -> ServiceResult<BankFeaturesDTO> {
         let supported_assets = get_bank_assets();
 
-        Ok(self.bank_details_mapper.to_dto(supported_assets))
+        Ok(self.management_mapper.bank_features(supported_assets))
     }
 }
