@@ -9,8 +9,8 @@ MINTER_IDENTITY_NAME="minter"
 WHOAMI=$(dfx identity whoami)
 CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
-CANISTER_ID_CONTROL_PANEL=""
-CANISTER_ID_BANK=""
+CANISTER_ID_CONTROL_PANEL="bw4dl-smaaa-aaaaa-qaacq-cai"
+CANISTER_ID_BANK="avqkn-guaaa-aaaaa-qaaea-cai"
 
 #############################################
 # USAGE                                     #
@@ -115,7 +115,7 @@ function uninstall_control_panel() {
 }
 
 function install_control_panel() {
-  dfx deploy control_panel
+  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
 }
 
 function setup_control_panel() {
@@ -128,7 +128,7 @@ function uninstall_bank() {
 }
 
 function install_bank() {
-  dfx deploy bank
+  dfx deploy --specified-id $CANISTER_ID_BANK bank
 }
 
 function setup_bank() {

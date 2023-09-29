@@ -128,8 +128,8 @@ impl AccountService {
         let account =
             self.maybe_resolve_account(identity)
                 .await?
-                .ok_or(AccountError::NotFoundAccount {
-                    account: identity.to_string(),
+                .ok_or(AccountError::NotFoundAccountIdentity {
+                    identity: identity.to_text(),
                 })?;
 
         Ok(account)
