@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use candid::Principal;
 use ic_canister_core::cdk::{self};
 use ic_ledger_types::{account_balance, AccountBalanceArgs, AccountIdentifier, Subaccount};
+use num_bigint::BigUint;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -88,8 +89,10 @@ impl BlockchainApi for InternetComputer {
         Ok(self.wallet_address(&wallet.id))
     }
 
-    async fn balance(&self, wallet: &Wallet) -> BlockchainApiResult<u128> {
-        Ok(self.balance(wallet).await? as u128)
+    async fn balance(&self, wallet: &Wallet) -> BlockchainApiResult<BigUint> {
+        let balance = self.balance(wallet).await?;
+
+        Ok(BigUint::from(balance))
     }
 
     async fn decimals(&self, _wallet: &Wallet) -> BlockchainApiResult<u32> {

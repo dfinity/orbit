@@ -218,7 +218,7 @@ impl WalletService {
                     BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
                 let fetched_balance = blockchain_api.balance(&wallet).await?;
                 let new_balance = WalletBalance {
-                    balance: fetched_balance,
+                    balance: candid::Nat(fetched_balance),
                     last_modification_timestamp: time(),
                 };
 

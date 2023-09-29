@@ -8,7 +8,6 @@ use crate::{
     transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO, WalletListItemDTO},
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
-use num_bigint::ToBigUint;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -130,7 +129,7 @@ impl WalletMapper {
                 .unwrap()
                 .hyphenated()
                 .to_string(),
-            balance: candid::Nat(balance.balance.to_biguint().unwrap()),
+            balance: balance.balance,
             decimals,
             last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
         }

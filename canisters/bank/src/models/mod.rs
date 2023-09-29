@@ -37,3 +37,7 @@ pub use wallet_policy::*;
 /// The wallet balance information.
 mod wallet_balance;
 pub use wallet_balance::*;
+
+/// The transfer related models, which is used to store the wallet information.
+mod transfer;
+pub use transfer::*;

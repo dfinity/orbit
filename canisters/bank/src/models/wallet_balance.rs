@@ -8,7 +8,7 @@ use std::hash::Hash;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WalletBalance {
     /// The wallet id, which is a UUID.
-    pub balance: u128,
+    pub balance: candid::Nat,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }

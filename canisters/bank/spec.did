@@ -84,6 +84,8 @@ type Transfer = record {
   fee : nat;
   // The transfer is only executed if all the policies are fulfilled before the `expiration_dt`.
   expiration_dt : TimestampRFC3339;
+  // When the transaction should be executed.
+  execution_plan : TransferExecutionSchedule;
   // The network used when submitting the transaction to the blockchain.
   network : Network;
   // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
@@ -118,7 +120,7 @@ type TransferInput = record {
   // When the transaction should be executed.
   //
   // If not set, the default option used by the system is `Immediate`.
-  execute_at : opt TransferExecutionSchedule;
+  execution_plan : opt TransferExecutionSchedule;
   // The fee to pay for the transaction, if applicable.
   //
   // If not set, the default fee will be used.
