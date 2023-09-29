@@ -4,7 +4,7 @@ use crate::{
     models::{BlockchainStandard, Wallet, WalletBalance, WalletId, WALLET_METADATA_SYMBOL_KEY},
     transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO},
 };
-use ic_canister_core::{cdk::api::time, utils::timestamp_to_rfc3339};
+use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
 use num_bigint::ToBigUint;
 use uuid::Uuid;
 
@@ -49,9 +49,9 @@ impl WalletMapper {
     pub fn new_wallet_from_create_input(
         &self,
         input: CreateWalletInput,
-        wallet_id: Uuid,
+        wallet_id: UUID,
         address: Option<String>,
-        owner_accounts: Vec<Uuid>,
+        owner_accounts: Vec<UUID>,
     ) -> Result<Wallet, MapperError> {
         let blockchain = self.blockchain_mapper.str_to_blockchain(input.blockchain)?;
         let standard = self
@@ -95,15 +95,12 @@ impl WalletMapper {
         };
 
         let new_wallet = Wallet {
-            id: *wallet_id.as_bytes(),
+            id: wallet_id,
             blockchain,
             standard: standard.to_owned(),
             name: input.name,
             address: address.unwrap_or("".to_string()),
-            owners: owner_accounts
-                .iter()
-                .map(|account_id| *account_id.as_bytes())
-                .collect(),
+            owners: owner_accounts.to_vec(),
             policies: input
                 .policies
                 .iter()

@@ -7,3 +7,7 @@ pub use management::*;
 /// Wallet service.
 mod wallet;
 pub use wallet::*;
+
+/// Account service.
+mod account;
+pub use account::*;

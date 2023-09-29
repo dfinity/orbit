@@ -10,6 +10,10 @@ pub use wallet::*;
 mod blockchain;
 pub use blockchain::*;
 
+/// The access roles used within the system.
+mod access_role;
+pub use access_role::*;
+
 /// The blockchain standards related models, which is used to store represent a blockchain within the system.
 mod blockchain_standard;
 pub use blockchain_standard::*;
@@ -17,6 +21,10 @@ pub use blockchain_standard::*;
 /// The account related models, which is used to represent a user account within the system.
 mod account;
 pub use account::*;
+
+/// The account identity models.
+mod account_identity;
+pub use account_identity::*;
 
 /// The wallet policy related models, which is used to represent wallet rules.
 mod wallet_policy;

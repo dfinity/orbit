@@ -29,7 +29,9 @@ impl ApiError {
 }
 
 pub trait DetailableError {
-    fn details(&self) -> Option<HashMap<String, String>>;
+    fn details(&self) -> Option<HashMap<String, String>> {
+        None
+    }
 }
 
 impl<E: std::error::Error + DetailableError> From<E> for ApiError {

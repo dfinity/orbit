@@ -16,11 +16,10 @@ pub struct ManagementService {
 }
 
 impl WithCallContext for ManagementService {
-    fn with_call_context(self, call_context: CallContext) -> Self {
-        Self {
-            _call_context: call_context,
-            ..self
-        }
+    fn with_call_context(&mut self, call_context: CallContext) -> &Self {
+        self._call_context = call_context;
+
+        self
     }
 }
 

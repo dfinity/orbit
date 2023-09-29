@@ -14,33 +14,35 @@ pub enum WalletError {
     /// The given blockchain standard is unknown to the system.
     #[error(r#"The given blockchain standard is unknown to the system."#)]
     UnknownBlockchainStandard { blockchain_standard: String },
+    #[error(r#"You don't have the necessary privileges to access the requested wallet."#)]
+    Forbidden { wallet: String },
 }
 
 impl DetailableError for WalletError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
-
-        if let WalletError::WalletNotFound { id } = self {
-            details.insert("id".to_string(), id.to_string());
-            return Some(details);
+        match self {
+            WalletError::Forbidden { wallet } => {
+                details.insert("wallet".to_string(), wallet.to_string());
+                Some(details)
+            }
+            WalletError::WalletNotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            WalletError::UnknownBlockchain { blockchain } => {
+                details.insert("blockchain".to_string(), blockchain.to_string());
+                Some(details)
+            }
+            WalletError::UnknownBlockchainStandard {
+                blockchain_standard,
+            } => {
+                details.insert(
+                    "blockchain_standard".to_string(),
+                    blockchain_standard.to_string(),
+                );
+                Some(details)
+            }
         }
-
-        if let WalletError::UnknownBlockchain { blockchain } = self {
-            details.insert("blockchain".to_string(), blockchain.to_string());
-            return Some(details);
-        }
-
-        if let WalletError::UnknownBlockchainStandard {
-            blockchain_standard,
-        } = self
-        {
-            details.insert(
-                "blockchain_standard".to_string(),
-                blockchain_standard.to_string(),
-            );
-            return Some(details);
-        }
-
-        None
     }
 }

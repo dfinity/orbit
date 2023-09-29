@@ -16,7 +16,7 @@ thread_local! {
 }
 
 /// A repository that enables managing accounts in stable memory.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct AccountRepository {}
 
 impl Repository<AccountKey, Account> for AccountRepository {
