@@ -23,6 +23,6 @@ impl DetailableError for FactoryError {
         details.insert("blockchain".to_string(), blockchain.to_string());
         details.insert("standard".to_string(), standard.to_string());
 
-        return Some(details);
+        Some(details)
     }
 }

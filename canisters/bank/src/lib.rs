@@ -6,7 +6,6 @@ pub mod blockchains;
 pub mod controllers;
 pub mod core;
 pub mod errors;
-pub mod generated;
 pub mod mappers;
 pub mod models;
 pub mod repositories;

@@ -16,6 +16,6 @@ impl DetailableError for BlockchainApiError {
         let BlockchainApiError::FetchBalanceFailed { wallet_id } = self;
         details.insert("wallet_id".to_string(), wallet_id.to_string());
 
-        return Some(details);
+        Some(details)
     }
 }
