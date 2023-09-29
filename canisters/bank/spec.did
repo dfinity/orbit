@@ -96,7 +96,7 @@ type TransferExecutionSchedule = variant {
   Immediate;
   // The transaction will be executed at a given time.
   Scheduled : record {
-    // The time at which the transaction will be executed, 
+    // The time at which the transaction will be executed,
     // it must be in the future.
     execution_time : TimestampRFC3339;
   };
@@ -110,13 +110,13 @@ type TransferInput = record {
   amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").
   to : text;
-  // The transaction will not be created if the transfer 
+  // The transaction will not be created if the transfer
   // was not approved until the `expiration_dt`.
   //
   // If not set, the system will use the default expiration time.
   expiration_dt : opt TimestampRFC3339;
-  // When the transaction should be executed. 
-  // 
+  // When the transaction should be executed.
+  //
   // If not set, the default option used by the system is `Immediate`.
   execute_at : opt TransferExecutionSchedule;
   // The fee to pay for the transaction, if applicable.

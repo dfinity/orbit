@@ -25,7 +25,6 @@ impl TransferService {
     pub async fn create_transfer(&self, _input: TransferInput) -> ServiceResult<TransferDTO> {
         let _transfer_id = generate_uuid_v4().await;
 
-        
         todo!()
     }
 }
