@@ -57,27 +57,31 @@ impl ProcessTransfersJob {
                             let result =
                                 blockchain_api.submit_transaction(&wallet, &transfer).await;
 
-                            match result {
-                                Ok(_) => {
-                                    transfer.status = TransferStatus::Completed {
-                                        completed_at: time(),
-                                        hash: None,
-                                        signature: None,
-                                    };
-                                    transfer.last_modification_timestamp = time();
-
-                                    self.transfer_repository
-                                        .insert(transfer.as_key(), transfer.to_owned());
-                                }
-                                _ => {}
+                            if result.is_ok() {
+                                transfer.status = TransferStatus::Completed {
+                                    completed_at: time(),
+                                    hash: None,
+                                    signature: None,
+                                };
+                                transfer.last_modification_timestamp = time();
+                            } else {
+                                transfer.status = TransferStatus::Rejected {
+                                    reason: "Failed to submit transaction".to_string(),
+                                };
+                                transfer.last_modification_timestamp = time();
                             }
 
+                            self.transfer_repository
+                                .insert(transfer.as_key(), transfer.to_owned());
                             self.transfer_queue.remove(&queue_item.as_key());
                         }
                         None => {
                             self.transfer_queue.remove(&queue_item.as_key());
                         }
                     }
+                }
+                "submitted" => {
+                    todo!()
                 }
                 _ => {}
             }

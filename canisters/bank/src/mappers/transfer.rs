@@ -100,7 +100,7 @@ impl TransferMapper {
             },
             status: match transfer.status {
                 TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
-                    reason: reason.map_or(None, |r| Some(r.to_owned())),
+                    reason: reason.map(|r| r.to_owned()),
                 },
                 TransferStatus::Submitted => TransferStatusDTO::Submitted,
                 TransferStatus::Pending => TransferStatusDTO::Pending,
@@ -109,8 +109,8 @@ impl TransferMapper {
                     hash,
                     completed_at,
                 } => TransferStatusDTO::Completed {
-                    signature: signature.map_or(None, |s| Some(s.to_owned())),
-                    hash: hash.map_or(None, |h| Some(h.to_owned())),
+                    signature: signature.map(|s| s.to_owned()),
+                    hash: hash.map(|h| h.to_owned()),
                     completed_at: timestamp_to_rfc3339(&completed_at),
                 },
                 TransferStatus::Approved => TransferStatusDTO::Approved,
