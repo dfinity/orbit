@@ -39,3 +39,7 @@ pub use operation_account_index::*;
 /// Repository to hold an index to operations and its associated wallets.
 mod operation_wallet_index;
 pub use operation_wallet_index::*;
+
+/// Repository to hold an index to operations and its associated transfers.
+mod operation_transfer_index;
+pub use operation_transfer_index::*;

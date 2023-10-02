@@ -1,4 +1,4 @@
-use super::{AccountId, OperationCode, OperationId, OperationStatus};
+use super::{AccountId, Operation, OperationCode, OperationId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
@@ -8,10 +8,6 @@ use ic_canister_macros::stable_object;
 pub struct OperationAccountIndex {
     /// The account thgat is associated with this operation.
     pub account_id: AccountId,
-    /// If the operation is marked as read by the account that it is associated with.
-    pub read: bool,
-    /// The status of the operation.
-    pub status: OperationStatus,
     /// An operation code that represents the operation type, e.g. "transfer".
     pub code: OperationCode,
     /// The operation id, which is a UUID.
@@ -20,4 +16,14 @@ pub struct OperationAccountIndex {
 
 impl OperationAccountIndex {
     pub fn value(&self) {}
+}
+
+impl Operation {
+    pub fn as_index_for_account(&self) -> OperationAccountIndex {
+        OperationAccountIndex {
+            id: self.id.to_owned(),
+            code: self.code.to_owned(),
+            account_id: self.account_id.to_owned(),
+        }
+    }
 }

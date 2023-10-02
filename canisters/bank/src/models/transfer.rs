@@ -1,4 +1,4 @@
-use super::{AccountId, WalletId};
+use super::{AccountId, ApprovalThresholdPolicy, Wallet, WalletId, WalletPolicy};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::ModelValidator,
@@ -56,8 +56,15 @@ impl Display for TransferStatus {
     }
 }
 
+#[stable_object(size = 256)]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PolicySnapshot {
+    /// The minimum number of approvals required for the transfer to be approved.
+    pub min_approvals: u8,
+}
+
 /// Represents a transfer in the system.
-#[stable_object(size = 1024)]
+#[stable_object(size = 2048)]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Transfer {
     /// The transfer id, which is a UUID.
@@ -82,6 +89,10 @@ pub struct Transfer {
     pub blockchain_network: String,
     /// The transfer metadata (e.g. `memo`, `description`, etc.)
     pub metadata: Vec<(String, String)>,
+    /// The transfer policies, which define the rules for the transfer.
+    ///
+    /// It holds a snapshot of the wallet policies at the time of the transfer creation.
+    pub policy_snapshot: PolicySnapshot,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
     /// The creation timestamp of the transfer.
@@ -116,6 +127,28 @@ impl Transfer {
         let five_days_in_ns: u64 = 5 * 24 * 60 * 60 * 1_000_000_000;
 
         time() + five_days_in_ns
+    }
+
+    pub fn make_policy_snapshot(&mut self, wallet: &Wallet) {
+        let mut policy_snapshot = PolicySnapshot { min_approvals: 1 };
+
+        for policy in wallet.policies.iter() {
+            match policy {
+                WalletPolicy::ApprovalThreshold(threshold) => match threshold {
+                    ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
+                        policy_snapshot.min_approvals = *min_approvals;
+                    }
+                    ApprovalThresholdPolicy::VariableThreshold(percentage) => {
+                        policy_snapshot.min_approvals = ((wallet.owners.len() as f64
+                            * (*percentage as f64 / 100.0))
+                            .ceil() as u8)
+                            .max(1);
+                    }
+                },
+            }
+        }
+
+        self.policy_snapshot = policy_snapshot;
     }
 }
 

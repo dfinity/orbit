@@ -39,7 +39,7 @@ impl ProcessTransfersJob {
 
         for queue_item in queue_items {
             match queue_item.transfer_status.as_str() {
-                "pending" => {
+                "approved" => {
                     let transfer = self
                         .transfer_repository
                         .get(&Transfer::key(queue_item.transfer_id));

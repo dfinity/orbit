@@ -1,7 +1,9 @@
 use super::HelperMapper;
 use crate::{
     errors::MapperError,
-    models::{AccountId, Transfer, TransferExecutionPlan, TransferId, TransferStatus},
+    models::{
+        AccountId, PolicySnapshot, Transfer, TransferExecutionPlan, TransferId, TransferStatus,
+    },
     transport::{
         NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferListItemDTO,
         TransferMetadataDTO, TransferStatusDTO,
@@ -60,6 +62,7 @@ impl TransferMapper {
                 },
                 None => TransferExecutionPlan::Immediate,
             },
+            policy_snapshot: PolicySnapshot { min_approvals: 1 },
             last_modification_timestamp: time(),
             created_timestamp: time(),
         })

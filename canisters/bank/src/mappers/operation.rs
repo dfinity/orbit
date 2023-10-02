@@ -21,8 +21,9 @@ impl OperationMapper {
             read: operation.read,
             status: match operation.status {
                 OperationStatus::Pending => OperationStatusDTO::Pending,
-                OperationStatus::Completed => OperationStatusDTO::Completed,
+                OperationStatus::Adopted => OperationStatusDTO::Adopted,
                 OperationStatus::Rejected => OperationStatusDTO::Rejected,
+                OperationStatus::Abstained => OperationStatusDTO::Abstained,
             },
             code: operation.code.to_string(),
             created_at: timestamp_to_rfc3339(&operation.created_timestamp),
@@ -45,8 +46,9 @@ impl OperationMapper {
                 .to_string(),
             status: match operation.status {
                 OperationStatus::Pending => OperationStatusDTO::Pending,
-                OperationStatus::Completed => OperationStatusDTO::Completed,
+                OperationStatus::Adopted => OperationStatusDTO::Adopted,
                 OperationStatus::Rejected => OperationStatusDTO::Rejected,
+                OperationStatus::Abstained => OperationStatusDTO::Abstained,
             },
             code: operation.code.to_string(),
             created_at: timestamp_to_rfc3339(&operation.created_timestamp),
@@ -56,8 +58,9 @@ impl OperationMapper {
     pub fn to_status(&self, status: OperationStatusDTO) -> OperationStatus {
         match status {
             OperationStatusDTO::Pending => OperationStatus::Pending,
-            OperationStatusDTO::Completed => OperationStatus::Completed,
+            OperationStatusDTO::Adopted => OperationStatus::Adopted,
             OperationStatusDTO::Rejected => OperationStatus::Rejected,
+            OperationStatusDTO::Abstained => OperationStatus::Abstained,
         }
     }
 

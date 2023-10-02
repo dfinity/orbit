@@ -2,6 +2,10 @@ use super::{AccountId, OperationCode, OperationStatus};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
+use std::collections::HashMap;
+
+pub const OPERATION_METADATA_KEY_TRANSFER_ID: &str = "transfer_id";
+pub const OPERATION_METADATA_KEY_WALLET_ID: &str = "wallet_id";
 
 /// The operation id, which is a UUID.
 pub type OperationId = UUID;
@@ -29,6 +33,10 @@ pub struct Operation {
     pub read: bool,
     /// The timestamp of the operation creation.
     pub feedback: Option<OperationFeedback>,
+    /// The operation metadata key-value pairs, where the key is unique and the first entry in the tuple.
+    ///
+    /// E.g. "transfer_id" => "1234".
+    pub metadata: Vec<(String, String)>,
     /// The timestamp of the operation creation.
     pub created_timestamp: Timestamp,
     /// The last time the record was updated or created.
@@ -52,11 +60,10 @@ impl Operation {
         Operation::key(self.id.to_owned())
     }
 
-    pub fn min_code() -> String {
-        "".to_string()
-    }
-
-    pub fn max_code() -> String {
-        "zzzzzzzzzzzzzzzzzzz".to_string()
+    pub fn metadata_map(&self) -> HashMap<String, String> {
+        self.metadata
+            .iter()
+            .map(|(key, value)| (key.to_owned(), value.to_owned()))
+            .collect()
     }
 }

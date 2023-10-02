@@ -58,7 +58,7 @@ type OperationId = text;
 type TimestampRFC3339 = text;
 
 // The status of an operation.
-type OperationStatus = variant { Pending; Completed; Rejected };
+type OperationStatus = variant { Pending; Adopted; Rejected; Abstained };
 
 // A record type that can be used to represent an operation in the bank.
 type Operation = record {

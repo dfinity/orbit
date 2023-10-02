@@ -6,8 +6,9 @@ pub type OperationIdDTO = String;
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum OperationStatusDTO {
     Rejected,
-    Completed,
+    Adopted,
     Pending,
+    Abstained,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

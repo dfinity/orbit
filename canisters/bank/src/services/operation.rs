@@ -105,7 +105,7 @@ impl OperationService {
 
         if let Some(approve) = input.approve {
             operation.status = match approve {
-                true => OperationStatus::Completed,
+                true => OperationStatus::Adopted,
                 false => OperationStatus::Rejected,
             };
             operation.feedback = Some(OperationFeedback {
@@ -143,19 +143,14 @@ impl OperationService {
             .operation_account_index_repository
             .find_all_within_criteria(
                 account.id,
+                filter_by_code,
                 input
                     .status
                     .map(|status| self.operation_mapper.to_status(status)),
-                filter_by_code,
                 input.read,
             )
             .iter()
-            .map(|index| {
-                self.operation_repository
-                    .get(&Operation::key(index.id))
-                    .unwrap()
-            })
-            .map(|operation| self.operation_mapper.to_list_item_dto(operation))
+            .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
             .collect::<Vec<OperationListItemDTO>>();
 
         Ok(dtos)
@@ -180,19 +175,14 @@ impl OperationService {
             .operation_wallet_index_repository
             .find_all_within_criteria(
                 wallet.id,
+                filter_by_code,
                 input
                     .status
                     .map(|status| self.operation_mapper.to_status(status)),
-                filter_by_code,
                 input.read,
             )
             .iter()
-            .map(|index| {
-                self.operation_repository
-                    .get(&Operation::key(index.id))
-                    .unwrap()
-            })
-            .map(|operation| self.operation_mapper.to_list_item_dto(operation))
+            .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
             .collect::<Vec<OperationListItemDTO>>();
 
         Ok(dtos)

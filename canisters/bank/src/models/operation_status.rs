@@ -10,8 +10,9 @@ use std::{
 #[repr(u8)]
 pub enum OperationStatus {
     Pending = 0,
-    Completed = 1,
+    Adopted = 1,
     Rejected = 2,
+    Abstained = 3,
 }
 
 impl From<OperationStatus> for u8 {
@@ -26,8 +27,9 @@ impl TryFrom<u8> for OperationStatus {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(OperationStatus::Pending),
-            1 => Ok(OperationStatus::Completed),
+            1 => Ok(OperationStatus::Adopted),
             2 => Ok(OperationStatus::Rejected),
+            3 => Ok(OperationStatus::Abstained),
             _ => Err(()),
         }
     }
@@ -39,8 +41,9 @@ impl FromStr for OperationStatus {
     fn from_str(variant: &str) -> Result<OperationStatus, Self::Err> {
         match variant {
             "pending" => Ok(OperationStatus::Pending),
-            "completed" => Ok(OperationStatus::Completed),
+            "adopted" => Ok(OperationStatus::Adopted),
             "rejected" => Ok(OperationStatus::Rejected),
+            "abstained" => Ok(OperationStatus::Abstained),
             _ => Err(()),
         }
     }
@@ -50,8 +53,9 @@ impl Display for OperationStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             OperationStatus::Pending => write!(f, "pending"),
-            OperationStatus::Completed => write!(f, "completed"),
+            OperationStatus::Adopted => write!(f, "adopted"),
             OperationStatus::Rejected => write!(f, "rejected"),
+            OperationStatus::Abstained => write!(f, "abstained"),
         }
     }
 }

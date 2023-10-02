@@ -3,10 +3,16 @@ use crate::{
     blockchains::BlockchainApiFactory,
     core::{CallContext, WithCallContext},
     errors::{AccountError, TransferError, WalletError},
+    factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
-    models::{Transfer, Wallet},
+    models::{
+        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, Wallet,
+        WalletPolicy, OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
+    },
     repositories::{
-        TransferListIndexRepository, TransferQueueRepository, TransferRepository, WalletRepository,
+        OperationAccountIndexRepository, OperationRepository, OperationTransferIndexRepository,
+        OperationWalletIndexRepository, TransferListIndexRepository, TransferQueueRepository,
+        TransferRepository, WalletRepository,
     },
     transport::{
         GetTransferInput, GetWalletInput, ListWalletTransfersInput, TransferDTO, TransferInput,
@@ -18,7 +24,7 @@ use ic_canister_core::{
     api::ServiceResult,
     utils::{generate_uuid_v4, rfc3339_to_timestamp},
 };
-use ic_canister_core::{model::ModelValidator, repository::Repository};
+use ic_canister_core::{cdk::api::time, model::ModelValidator, repository::Repository};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -32,6 +38,10 @@ pub struct TransferService {
     transfer_repository: TransferRepository,
     transfer_queue_repository: TransferQueueRepository,
     transfer_list_index_repository: TransferListIndexRepository,
+    operation_repository: OperationRepository,
+    operation_wallet_index_repository: OperationWalletIndexRepository,
+    operation_account_index_repository: OperationAccountIndexRepository,
+    operation_transfer_index_repository: OperationTransferIndexRepository,
 }
 
 impl WithCallContext for TransferService {
@@ -134,7 +144,7 @@ impl TransferService {
         let default_fee = blockchain_api.transaction_fee(&wallet).await?;
         let transfer_id = generate_uuid_v4().await;
 
-        let transfer = self.transfer_mapper.new_transfer_from_input(
+        let mut transfer = self.transfer_mapper.new_transfer_from_input(
             input,
             *transfer_id.as_bytes(),
             caller_account.id,
@@ -142,7 +152,14 @@ impl TransferService {
             blockchain_api.default_network(),
             Transfer::default_expiration_dt(),
         )?;
+        transfer.make_policy_snapshot(&wallet);
+
         transfer.validate()?;
+
+        // build operations
+        let operations = self
+            .build_operations_from_wallet_policies(&wallet, &transfer)
+            .await;
 
         // save transfer to stable memory
         let index_entry = transfer.as_list_index();
@@ -155,9 +172,79 @@ impl TransferService {
         self.transfer_list_index_repository
             .insert(index_entry.as_key(), index_entry.to_owned());
 
+        operations.iter().for_each(|operation| {
+            self.operation_repository
+                .insert(operation.as_key(), operation.to_owned());
+            self.operation_account_index_repository
+                .insert(operation.as_index_for_account(), ());
+            self.operation_wallet_index_repository
+                .insert(operation.as_index_for_wallet(), ());
+            self.operation_transfer_index_repository
+                .insert(operation.as_index_for_transfer(), ());
+        });
+
+        let processor = OperationProcessorFactory::build(&OperationCode::ApproveTransfer);
+        for operation in operations.iter() {
+            processor
+                .post_process(operation)
+                .await
+                .expect("Operation post processing failed");
+        }
+
         let dto = self.transfer_mapper.transfer_to_dto(transfer);
 
         Ok(dto)
+    }
+
+    async fn build_operations_from_wallet_policies(
+        &self,
+        wallet: &Wallet,
+        transfer: &Transfer,
+    ) -> Vec<Operation> {
+        let mut required_operations: Vec<Operation> = Vec::new();
+        let wallet_id = Uuid::from_bytes(wallet.id).hyphenated().to_string();
+        let transfer_id = Uuid::from_bytes(transfer.id).hyphenated().to_string();
+        for policy in wallet.policies.iter() {
+            match policy {
+                WalletPolicy::ApprovalThreshold(_) => {
+                    for owner in wallet.owners.iter() {
+                        let operation_id = generate_uuid_v4().await;
+                        let operation = Operation {
+                            id: *operation_id.as_bytes(),
+                            code: OperationCode::ApproveTransfer,
+                            status: match transfer.initiator_account == *owner {
+                                true => OperationStatus::Adopted,
+                                false => OperationStatus::Pending,
+                            },
+                            created_timestamp: time(),
+                            account_id: owner.to_owned(),
+                            feedback: match transfer.initiator_account == *owner {
+                                true => Some(OperationFeedback {
+                                    created_at: time(),
+                                    reason: None,
+                                }),
+                                false => None,
+                            },
+                            metadata: vec![
+                                (
+                                    OPERATION_METADATA_KEY_TRANSFER_ID.to_owned(),
+                                    transfer_id.to_owned(),
+                                ),
+                                (
+                                    OPERATION_METADATA_KEY_WALLET_ID.to_owned(),
+                                    wallet_id.to_owned(),
+                                ),
+                            ],
+                            last_modification_timestamp: time(),
+                            read: false,
+                        };
+                        required_operations.push(operation.to_owned());
+                    }
+                }
+            }
+        }
+
+        required_operations
     }
 
     pub async fn list_wallet_transfers(
