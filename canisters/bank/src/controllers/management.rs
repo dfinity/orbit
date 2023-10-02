@@ -1,5 +1,6 @@
 use crate::{
     core::{CallContext, WithCallContext},
+    jobs::register_jobs,
     services::ManagementService,
     transport::{BankCanisterInit, BankFeaturesResponse},
 };
@@ -19,9 +20,11 @@ async fn get_bank_features() -> ApiResult<BankFeaturesResponse> {
 #[init]
 async fn initialize(input: Option<BankCanisterInit>) {
     ManagementService::new().canister_init(input).await;
+    register_jobs().await;
 }
 
 #[post_upgrade]
 async fn post_upgrade() {
     ManagementService::new().canister_post_upgrade().await;
+    register_jobs().await;
 }

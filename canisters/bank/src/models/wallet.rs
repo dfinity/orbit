@@ -6,7 +6,7 @@ use ic_canister_core::{
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::stable_object;
-use std::hash::Hash;
+use std::{collections::HashMap, hash::Hash};
 
 /// The wallet metadata key for the asset symbol;
 pub const WALLET_METADATA_SYMBOL_KEY: &str = "symbol";
@@ -119,5 +119,12 @@ impl Wallet {
 
     pub fn as_key(&self) -> WalletKey {
         Self::key(self.id)
+    }
+
+    pub fn metadata_map(&self) -> HashMap<String, String> {
+        self.metadata
+            .iter()
+            .map(|(key, value)| (key.to_owned(), value.to_owned()))
+            .collect()
     }
 }

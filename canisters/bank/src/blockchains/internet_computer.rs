@@ -1,14 +1,29 @@
-use super::{BlockchainApi, BlockchainApiResult};
+use super::{
+    BlockchainApi, BlockchainApiResult, BlockchainTransactioSubmitted, BlockchainTransactionFee,
+};
 use crate::{
     errors::BlockchainApiError,
-    models::{Blockchain, BlockchainStandard, Wallet, WalletId},
+    mappers::HelperMapper,
+    models::{Blockchain, BlockchainStandard, Transfer, Wallet, WalletId, METADATA_MEMO_KEY},
 };
 use async_trait::async_trait;
 use candid::Principal;
-use ic_canister_core::cdk::{self};
-use ic_ledger_types::{account_balance, AccountBalanceArgs, AccountIdentifier, Subaccount};
+use ic_canister_core::{
+    api::ApiError,
+    cdk::{self},
+};
+use ic_ledger_types::{
+    account_balance, transfer, AccountBalanceArgs, AccountIdentifier, Memo, Subaccount, Tokens,
+    TransferArgs, DEFAULT_FEE,
+};
 use num_bigint::BigUint;
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 use uuid::Uuid;
+
+pub const ICP_TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY: &str = "block_height";
 
 #[derive(Debug)]
 pub struct InternetComputer {
@@ -16,11 +31,35 @@ pub struct InternetComputer {
     bank_canister_id: Principal,
 }
 
+pub enum InternetComputerNetwork {
+    Mainnet,
+}
+
+impl FromStr for InternetComputerNetwork {
+    type Err = ();
+
+    fn from_str(variant: &str) -> Result<InternetComputerNetwork, Self::Err> {
+        match variant {
+            "mainnet" => Ok(InternetComputerNetwork::Mainnet),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Display for InternetComputerNetwork {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InternetComputerNetwork::Mainnet => write!(f, "mainnet"),
+        }
+    }
+}
+
 impl InternetComputer {
     pub const BLOCKCHAIN: Blockchain = Blockchain::InternetComputer;
     pub const STANDARD: BlockchainStandard = BlockchainStandard::Native;
     pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     pub const DECIMALS: u32 = 8;
+    pub const MAIN_NETWORK: InternetComputerNetwork = InternetComputerNetwork::Mainnet;
 
     pub fn create() -> Self {
         Self {
@@ -78,8 +117,49 @@ impl InternetComputer {
         Ok(balance.e8s())
     }
 
+    pub fn transaction_fee(&self) -> u64 {
+        DEFAULT_FEE.e8s()
+    }
+
     pub fn decimals(&self) -> u32 {
         Self::DECIMALS
+    }
+
+    pub async fn submit_transaction(
+        &self,
+        wallet: Wallet,
+        bank_transfer: Transfer,
+    ) -> Result<u64, ApiError> {
+        let mapper = HelperMapper::default();
+        let amount: u64 = mapper.biguint_to_u64(&bank_transfer.amount.0)?;
+        let transaction_fee: u64 = mapper.biguint_to_u64(&bank_transfer.fee.0)?;
+        let memo: u64 = mapper.str_to_u64(
+            bank_transfer
+                .metadata_map()
+                .get(METADATA_MEMO_KEY)
+                .unwrap_or(&"0".to_string()),
+        )?;
+
+        let block_height = transfer(
+            Self::ledger_canister_id(),
+            TransferArgs {
+                amount: Tokens::from_e8s(amount),
+                fee: Tokens::from_e8s(transaction_fee),
+                created_at_time: None,
+                from_subaccount: Some(Subaccount(self.subaccount_from_wallet_id(&wallet.id))),
+                memo: Memo(memo),
+                to: AccountIdentifier::from_hex(&bank_transfer.to_address).unwrap(),
+            },
+        )
+        .await
+        .map_err(|err| BlockchainApiError::BlockchainNetworkError {
+            info: format!("{:?}", err),
+        })?
+        .map_err(|err| BlockchainApiError::TransactionSubmitFailed {
+            info: format!("{:?}", err),
+        })?;
+
+        Ok(block_height)
     }
 }
 
@@ -97,5 +177,36 @@ impl BlockchainApi for InternetComputer {
 
     async fn decimals(&self, _wallet: &Wallet) -> BlockchainApiResult<u32> {
         Ok(self.decimals())
+    }
+
+    async fn transaction_fee(
+        &self,
+        _wallet: &Wallet,
+    ) -> BlockchainApiResult<BlockchainTransactionFee> {
+        Ok(BlockchainTransactionFee {
+            fee: BigUint::from(self.transaction_fee()),
+            metadata: vec![],
+        })
+    }
+
+    fn default_network(&self) -> String {
+        Self::MAIN_NETWORK.to_string()
+    }
+
+    async fn submit_transaction(
+        &self,
+        wallet: &Wallet,
+        transfer: &Transfer,
+    ) -> BlockchainApiResult<BlockchainTransactioSubmitted> {
+        let block_height = self
+            .submit_transaction(wallet.clone(), transfer.clone())
+            .await?;
+
+        Ok(BlockchainTransactioSubmitted {
+            details: vec![(
+                ICP_TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY.to_string(),
+                block_height.to_string(),
+            )],
+        })
     }
 }

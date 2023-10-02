@@ -29,46 +29,61 @@ pub enum MapperError {
         /// The malformed UUID.
         malformed_uuid: String,
     },
+    /// The provided biguint cannot be converted to u64.
+    #[error(r#"The provided biguint cannot be converted to u64."#)]
+    BigUintConversionError {
+        /// The biguint that failed to be converted.
+        biguint: String,
+    },
+    /// The provided string cannot be converted to u64.
+    #[error(r#"The provided string cannot be converted to u64."#)]
+    StringToNumberConversionError {
+        /// The string provided.
+        input: String,
+    },
 }
 
 impl DetailableError for MapperError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
-
-        if let MapperError::UnknownBlockchain { blockchain } = self {
-            details.insert("blockchain".to_string(), blockchain.to_string());
-            return Some(details);
+        match self {
+            MapperError::UnknownBlockchain { blockchain } => {
+                details.insert("blockchain".to_string(), blockchain.to_string());
+                Some(details)
+            }
+            MapperError::UnknownBlockchainStandard {
+                blockchain_standard,
+            } => {
+                details.insert(
+                    "blockchain_standard".to_string(),
+                    blockchain_standard.to_string(),
+                );
+                Some(details)
+            }
+            MapperError::UnsupportedBlockchainStandard {
+                blockchain,
+                supported_standards,
+            } => {
+                details.insert("blockchain".to_string(), blockchain.to_string());
+                details.insert(
+                    "supported_standards".to_string(),
+                    supported_standards.join(",").to_string(),
+                );
+                Some(details)
+            }
+            MapperError::MalformedUuid { malformed_uuid } => {
+                details.insert("malformed_uuid".to_string(), malformed_uuid.to_string());
+                Some(details)
+            }
+            MapperError::BigUintConversionError { biguint } => {
+                details.insert("biguint".to_string(), biguint.to_string());
+                Some(details)
+            }
+            MapperError::StringToNumberConversionError { input } => {
+                details.insert("input".to_string(), input.to_string());
+                Some(details)
+            }
+            _ => None,
         }
-
-        if let MapperError::UnknownBlockchainStandard {
-            blockchain_standard,
-        } = self
-        {
-            details.insert(
-                "blockchain_standard".to_string(),
-                blockchain_standard.to_string(),
-            );
-            return Some(details);
-        }
-
-        if let MapperError::UnsupportedBlockchainStandard {
-            blockchain,
-            supported_standards,
-        } = self
-        {
-            details.insert("blockchain".to_string(), blockchain.to_string());
-            details.insert(
-                "supported_standards".to_string(),
-                supported_standards.join(",").to_string(),
-            );
-            return Some(details);
-        }
-
-        if let MapperError::MalformedUuid { malformed_uuid } = self {
-            details.insert("malformed_uuid".to_string(), malformed_uuid.to_string());
-            return Some(details);
-        }
-
-        None
     }
 }

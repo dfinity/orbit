@@ -41,3 +41,7 @@ pub use wallet_balance::*;
 /// The transfer related models, which is used to store the wallet information.
 mod transfer;
 pub use transfer::*;
+
+/// The transfer queue information.
+mod transfer_queue;
+pub use transfer_queue::*;

@@ -15,3 +15,11 @@ pub use wallet::*;
 /// Repository for wallet accounts.
 mod wallet_account;
 pub use wallet_account::*;
+
+/// Repository for transfer.
+mod transfer;
+pub use transfer::*;
+
+/// Repository for transfers in the queue.
+mod transfer_queue;
+pub use transfer_queue::*;

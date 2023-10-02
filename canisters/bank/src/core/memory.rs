@@ -12,6 +12,8 @@ pub const ACCOUNT_MEMORY_ID: MemoryId = MemoryId::new(1);
 pub const WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
 pub const ACCOUNT_IDENTITY_MEMORY_ID: MemoryId = MemoryId::new(3);
 pub const WALLET_ACCOUNT_MEMORY_ID: MemoryId = MemoryId::new(4);
+pub const TRANSFER_MEMORY_ID: MemoryId = MemoryId::new(5);
+pub const TRANSFER_QUEUE_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 thread_local! {
   /// Static configuration of the canister.

@@ -13,6 +13,10 @@ mod test {
         Principal::anonymous()
     }
 
+    pub fn spawn<F: 'static + Send + std::future::Future<Output = ()>>(future: F) {
+        tokio::task::spawn(future);
+    }
+
     pub mod api {
         use candid::Principal;
 
