@@ -2,7 +2,7 @@ use super::AccountService;
 use crate::{
     blockchains::BlockchainApiFactory,
     core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
-    errors::WalletError,
+    errors::{AccountError, WalletError},
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
     models::{Wallet, WalletAccount, WalletBalance, WalletValidator},
     repositories::{WalletAccountRepository, WalletRepository},
@@ -141,15 +141,15 @@ impl WalletService {
     }
 
     /// Returns the wallet associated with the given wallet id.
-    pub async fn get_wallet(&self, input: GetWalletInput) -> ServiceResult<WalletDTO> {
+    pub async fn get_wallet_core(&self, input: GetWalletInput) -> ServiceResult<Wallet> {
         let caller_account = match self
             .account_service
             .maybe_resolve_account(&self.call_context.caller())
             .await?
         {
             Some(account) => account,
-            None => Err(WalletError::Forbidden {
-                wallet: input.wallet_id.clone(),
+            None => Err(AccountError::NotFoundAccountIdentity {
+                identity: self.call_context.caller().to_text(),
             })?,
         };
 
@@ -168,6 +168,13 @@ impl WalletService {
                 wallet: input.wallet_id.clone(),
             })?
         }
+
+        Ok(wallet)
+    }
+
+    /// Returns the wallet associated with the given wallet id.
+    pub async fn get_wallet(&self, input: GetWalletInput) -> ServiceResult<WalletDTO> {
+        let wallet = self.get_wallet_core(input).await?;
 
         Ok(self.wallet_mapper.wallet_to_dto(wallet))
     }

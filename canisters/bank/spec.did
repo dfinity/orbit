@@ -1,202 +1,3 @@
-// The asset symbol, e.g. "ICP" or "BTC".
-type AssetSymbol = text;
-// The internal wallet id used to identify a wallet in the
-// canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type WalletId = text;
-// The internal account id used to identify a user in the
-// canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type BankAccountId = text;
-// The network id, unique to the canister and associated (e.g. "icp:mainnet").
-type NetworkId = text;
-// An operation id used to have bank operations uniquely
-// identifiable (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type OperationId = text;
-// The timestamp type used in the canister.
-type TimestampRFC3339 = text;
-// A UUID used to identify items.
-type UUID = text;
-
-// The blockchain network to used in a transaction.
-type Network = record {
-  // The network id, unique to the canister and associated (e.g. "icp:mainnet").
-  id : NetworkId;
-  // The name of the network (e.g. "Mainnet").
-  name : text;
-};
-
-// Tranders can have additional information attached to them,
-// this type can be used to represent the additional info.
-type TransferMetadata = record {
-  // The key of the additional info (e.g. "nonce",  "tag", "memo", etc...)
-  key : text;
-  // The value of the additional info (e.g. "0x1234" or "my-tag")
-  value : text;
-};
-
-// The status of a transfer.
-type TransferStatus = variant {
-  // The transfer is pending approval.
-  pending;
-  // The transfer has been approved.
-  approved;
-  // The transfer has been rejected.
-  rejected : record {
-    // The reason for the rejection.
-    reason : text;
-  };
-  // The transfer has been cancelled by the initiator.
-  //
-  // This can happen if the initiator cancels the transfer before it is approved.
-  cancelled : record {
-    // The reason for the cancellation.
-    reason : opt text;
-  };
-  // The transfer has been submitted for execution.
-  submitted;
-  // The transfer has been completed.
-  //
-  // For natively supported tokens this means that the transaction has
-  // submitted to the blockchain. For non natively supported tokens this means
-  // that the transaction has been signed and can be submitted by the client.
-  completed : record {
-    // Time at which the transaction was completed.
-    completed_at : TimestampRFC3339;
-    // The transaction hash, if available.
-    hash : opt text;
-    // The base64 encoded value of the signed transaction, if available.
-    signature : opt text;
-  };
-};
-
-// A record type that can be used to represent a transfer in a given wallet.
-type Transfer = record {
-  // The internal operation id, this a unique identifier for the transfer.
-  id : OperationId;
-  // The wallet id to use for the transfer.
-  from_wallet_id : WalletId;
-  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
-  to : text;
-  // The amount to transfer.
-  amount : nat;
-  // The status of the transfer.
-  status : TransferStatus;
-  // The fee to pay for the transaction, if applicable.
-  fee : nat;
-  // The transfer is only executed if all the policies are fulfilled before the `expiration_dt`.
-  expiration_dt : TimestampRFC3339;
-  // When the transaction should be executed.
-  execution_plan : TransferExecutionSchedule;
-  // The network used when submitting the transaction to the blockchain.
-  network : Network;
-  // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
-  metadata : vec TransferMetadata;
-};
-
-// The schedule for executing a transaction of a given transfer operation.
-type TransferExecutionSchedule = variant {
-  // The transaction will be executed immediately.
-  Immediate;
-  // The transaction will be executed at a given time.
-  Scheduled : record {
-    // The time at which the transaction will be executed,
-    // it must be in the future.
-    execution_time : TimestampRFC3339;
-  };
-};
-
-// Input type for transferring funds.
-type TransferInput = record {
-  // The wallet id to use for the transaction.
-  from_wallet_id : WalletId;
-  // The amount to transfer.
-  amount : nat;
-  // The destination address of the transaction (e.g. "1BvBMSE...").
-  to : text;
-  // The transaction will not be created if the transfer
-  // was not approved until the `expiration_dt`.
-  //
-  // If not set, the system will use the default expiration time.
-  expiration_dt : opt TimestampRFC3339;
-  // When the transaction should be executed.
-  //
-  // If not set, the default option used by the system is `Immediate`.
-  execution_plan : opt TransferExecutionSchedule;
-  // The fee to pay for the transaction, if applicable.
-  //
-  // If not set, the default fee will be used.
-  fee : opt nat;
-  // The network to use for the transaction, if not the
-  // default network of the wallet will be used.
-  network : opt Network;
-  // Trasanctions can be tagged with an optional additional info
-  // (e.g. a nonce in the case of an Ethereum transaction)
-  metadata : opt vec TransferMetadata;
-};
-
-// Result type for transferring funds.
-type TransferResult = variant {
-  // The result data, if the operation was successful.
-  Ok : record {
-    // The transfer that was created.
-    transfer : Transfer;
-  };
-  // The error that occurred during the operation, if any.
-  Err : Error;
-};
-
-// A record type that can be used to represent a wallet in the list of wallets.
-type WalletListItem = record {
-  // The wallet id.
-  id : WalletId;
-  // The wallet address.
-  address : text;
-  // The wallet name.
-  name : opt text;
-  // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol : AssetSymbol;
-  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
-  asset_name : opt text;
-};
-
-// Result type for listing all wallets.
-type ListWalletResult = variant {
-  // The result data, if the operation was successful.
-  Ok : record {
-    // The list of wallets.
-    wallets : vec WalletListItem;
-  };
-  // The error that occurred during the operation, if any.
-  Err : Error;
-};
-
-// The role of an account in the Bank.
-type BankAccountRole = variant {
-  // The account is an admin of the bank.
-  admin;
-  // The account is a user of the bank, the guest role is also
-  // used to allow operations when the bank does not have the
-  // account defined.
-  guest;
-};
-
-// A record type that can be used to represent an account in the bank.
-type BankAccount = record {
-  // The UUID of the account (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-  id : UUID;
-  // The principals associated with the account.
-  identities : vec principal;
-  // The role of the account.
-  roles : vec BankAccountRole;
-};
-
-// A record type that can be used to represent the bank permissions.
-type BankPermission = record {
-  // The permission identified (e.g. "create-wallet").
-  permission : text;
-  // The list of roles that have the permission.
-  roles : vec BankAccountRole;
-};
-
 // The settings of the bank.
 type BankSettings = record {
   // The default wallet policies that are applied to all wallets.
@@ -227,7 +28,7 @@ type BankSettingsResult = record {
 };
 
 // The status of an operation.
-type OperationStatus = variant { pending; approved; rejected };
+type OperationStatus = variant { Pending; Approved; Rejected };
 
 // A record type that can be used to represent an operation in the bank.
 type Operation = record {
@@ -331,6 +132,258 @@ type GetOperationResult = variant {
 //
 //
 
+// The asset symbol, e.g. "ICP" or "BTC".
+type AssetSymbol = text;
+// The internal wallet id used to identify a wallet in the
+// canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type WalletId = text;
+// The internal account id used to identify a user in the
+// canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type BankAccountId = text;
+// The network id, unique to the canister and associated (e.g. "icp:mainnet").
+type NetworkId = text;
+// The transfer id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type TransferId = text;
+// An operation id used to have bank operations uniquely
+// identifiable (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type OperationId = text;
+// The timestamp type used in the canister.
+type TimestampRFC3339 = text;
+
+// A record type that can be used to represent a wallet in the list of wallets.
+type WalletListItem = record {
+  // The wallet id.
+  id : WalletId;
+  // The wallet address.
+  address : text;
+  // The wallet name.
+  name : opt text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  asset_symbol : AssetSymbol;
+  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+  asset_name : opt text;
+};
+
+// Result type for listing all wallets.
+type ListWalletResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The list of wallets.
+    wallets : vec WalletListItem;
+  };
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
+
+type ListWalletTransfersInput = record {
+  // The wallet id to retrieve.
+  wallet_id : WalletId;
+  // The transfer status in text format (e.g. "pending", "approved", etc.).
+  status : opt text;
+  // From which date to retrieve the transfers.
+  from_dt : opt TimestampRFC3339;
+  // Until which date to retrieve the transfers.
+  to_dt : opt TimestampRFC3339;
+};
+
+type TransferListItem = record {
+  // The transfer id.
+  transfer_id : TransferId;
+  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
+  to : text;
+  // The amount to transfer.
+  amount : nat;
+  // The status of the transfer.
+  status : TransferStatus;
+  // The time at which the transfer was created.
+  created_at : TimestampRFC3339;
+};
+
+type ListWalletTransfersResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The list of transfers.
+    transfers : vec TransferListItem;
+  };
+  // The error that occurred during the operation, if any.
+  Err : Error;
+};
+
+// The role of an account in the Bank.
+type BankAccountRole = variant {
+  // The account is an admin of the bank.
+  Admin;
+  // The account is a user of the bank, the guest role is also
+  // used to allow operations when the bank does not have the
+  // account defined.
+  Guest;
+};
+
+// A record type that can be used to represent an account in the bank.
+type BankAccount = record {
+  // The UUID of the account (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : BankAccountId;
+  // The principals associated with the account.
+  identities : vec principal;
+  // The unconfirmed principals associated with the account.
+  unconfirmed_identities : vec principal;
+  // The role of the account.
+  access_roles : vec BankAccountRole;
+  // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  last_modification_timestamp : TimestampRFC3339;
+};
+
+// A record type that can be used to represent the bank permissions.
+type BankPermission = record {
+  // The permission identified (e.g. "create-wallet").
+  permission_id : text;
+  // The list of roles that have the permission.
+  access_roles : vec BankAccountRole;
+};
+
+// The blockchain network to used in a transaction.
+type Network = record {
+  // The network id, unique to the canister and associated (e.g. "icp:mainnet").
+  id : NetworkId;
+  // The name of the network (e.g. "Mainnet").
+  name : text;
+};
+
+// Tranders can have additional information attached to them,
+// this type can be used to represent the additional info.
+type TransferMetadata = record {
+  // The key of the additional info (e.g. "nonce",  "tag", "memo", etc...)
+  key : text;
+  // The value of the additional info (e.g. "0x1234" or "my-tag")
+  value : text;
+};
+
+// The status of a transfer.
+type TransferStatus = variant {
+  // The transfer is pending approval.
+  Pending;
+  // The transfer has been approved.
+  Approved;
+  // The transfer has been rejected.
+  Rejected : record {
+    // The reason for the rejection.
+    reason : text;
+  };
+  // The transfer has been cancelled by the initiator.
+  //
+  // This can happen if the initiator cancels the transfer before it is approved.
+  Cancelled : record {
+    // The reason for the cancellation.
+    reason : opt text;
+  };
+  // The transfer has been submitted for execution.
+  Submitted;
+  // The transfer has been completed.
+  //
+  // For natively supported tokens this means that the transaction has
+  // submitted to the blockchain. For non natively supported tokens this means
+  // that the transaction has been signed and can be submitted by the client.
+  Completed : record {
+    // Time at which the transaction was completed.
+    completed_at : TimestampRFC3339;
+    // The transaction hash, if available.
+    hash : opt text;
+    // The base64 encoded value of the signed transaction, if available.
+    signature : opt text;
+  };
+};
+
+// A record type that can be used to represent a transfer in a given wallet.
+type Transfer = record {
+  // The internal operation id, this a unique identifier for the transfer.
+  id : TransferId;
+  // The wallet id to use for the transfer.
+  from_wallet_id : WalletId;
+  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
+  to : text;
+  // The fee to pay for the transaction, if applicable.
+  fee : nat;
+  // The amount to transfer.
+  amount : nat;
+  // The status of the transfer.
+  status : TransferStatus;
+  // The transfer is only executed if all the policies are fulfilled before the `expiration_dt`.
+  expiration_dt : TimestampRFC3339;
+  // When the transaction should be executed.
+  execution_plan : TransferExecutionSchedule;
+  // The network used when submitting the transaction to the blockchain.
+  network : Network;
+  // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
+  metadata : vec TransferMetadata;
+};
+
+// The schedule for executing a transaction of a given transfer operation.
+type TransferExecutionSchedule = variant {
+  // The transaction will be executed immediately.
+  Immediate;
+  // The transaction will be executed at a given time.
+  Scheduled : record {
+    // The time at which the transaction will be executed,
+    // it must be in the future.
+    execution_time : TimestampRFC3339;
+  };
+};
+
+// Input type for transferring funds.
+type TransferInput = record {
+  // The wallet id to use for the transaction.
+  from_wallet_id : WalletId;
+  // The amount to transfer.
+  amount : nat;
+  // The destination address of the transaction (e.g. "1BvBMSE...").
+  to : text;
+  // The transaction will not be created if the transfer
+  // was not approved until the `expiration_dt`.
+  //
+  // If not set, the system will use the default expiration time.
+  expiration_dt : opt TimestampRFC3339;
+  // When the transaction should be executed.
+  //
+  // If not set, the default option used by the system is `Immediate`.
+  execution_plan : opt TransferExecutionSchedule;
+  // The fee to pay for the transaction, if applicable.
+  //
+  // If not set, the default fee will be used.
+  fee : opt nat;
+  // The network to use for the transaction, if not the
+  // default network of the wallet will be used.
+  network : opt Network;
+  // Trasanctions can be tagged with an optional additional info
+  // (e.g. a nonce in the case of an Ethereum transaction)
+  metadata : opt vec TransferMetadata;
+};
+
+// Result type for transferring funds.
+type TransferResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The transfer that was created.
+    transfer : Transfer;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
+};
+
+type GetTransferInput = record {
+  // The transfer id to retrieve.
+  transfer_id : TransferId;
+};
+
+type GetTransferResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The transfer that was retrieved.
+    transfer : Transfer;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
+};
+
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
@@ -357,7 +410,7 @@ type Wallet = record {
   // A friendly name for the wallet.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
-  owners : vec UUID;
+  owners : vec BankAccountId;
   // The policies that can be used to control the wallet.
   //
   // If the list is empty but there are policies globally defined for the bank,
@@ -548,6 +601,8 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:wallet"
   list_wallets : () -> (ListWalletResult) query;
+  // List all transfers from the requested wallet.
+  list_wallet_transfers : (input : ListWalletTransfersInput) -> (ListWalletTransfersResult) query;
   // Transfer funds from a wallet, this operation will only create a new transaction
   // if the wallet policies have been sucessfully fulfilled.
   //
@@ -555,6 +610,10 @@ service : (opt BankInit) -> {
   //
   // Required permission: "write:transfer"
   transfer : (input : TransferInput) -> (TransferResult);
+  // Get a transfer by id.
+  //
+  // If the caller does not have access to the transfer, an error will be returned.
+  get_transfer : (input : GetTransferInput) -> (GetTransferResult) query;
 
   // Get the bank settings, only available to admins.
   //

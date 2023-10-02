@@ -11,6 +11,9 @@ pub enum RepositoryError {
     /// The requested entity has too many associations.
     #[error(r#"The requested entity has too many associations."#)]
     NotAllowedMultipleAssociation { entity: String, entity_id: String },
+    /// The given criteria is out of range.
+    #[error(r#"The given criteria is out of range."#)]
+    CriteriaOutOfRange,
 }
 
 impl DetailableError for RepositoryError {
@@ -28,6 +31,7 @@ impl DetailableError for RepositoryError {
                 details.insert("entity_id".to_string(), entity_id.to_string());
                 Some(details)
             }
+            _ => None,
         }
     }
 }

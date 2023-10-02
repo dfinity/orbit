@@ -23,3 +23,7 @@ pub use transfer::*;
 /// Repository for transfers in the queue.
 mod transfer_queue;
 pub use transfer_queue::*;
+
+/// Repository for listing transfers within a wallet.
+mod transfer_list_index;
+pub use transfer_list_index::*;

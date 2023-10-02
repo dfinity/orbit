@@ -23,3 +23,7 @@ pub use blockchain_api::*;
 /// Error types to use across different repositories.
 mod repository;
 pub use repository::*;
+
+/// Error types for transfers.
+mod transfer;
+pub use transfer::*;

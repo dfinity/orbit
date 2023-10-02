@@ -25,6 +25,9 @@ pub enum WalletError {
     /// The wallet owners selection is out of range.
     #[error(r#"The wallet owners selection is out of range, it must be between {min_owners} and {max_owners}."#)]
     InvalidOwnersRange { min_owners: u8, max_owners: u8 },
+    /// The requested transfer was not found.
+    #[error(r#"The requested transfer was not found."#)]
+    TransferNotFound { transfer_id: String },
 }
 
 impl DetailableError for WalletError {
@@ -66,6 +69,10 @@ impl DetailableError for WalletError {
             } => {
                 details.insert("min_owners".to_string(), min_owners.to_string());
                 details.insert("max_owners".to_string(), max_owners.to_string());
+                Some(details)
+            }
+            WalletError::TransferNotFound { transfer_id } => {
+                details.insert("transfer_id".to_string(), transfer_id.to_string());
                 Some(details)
             }
         }

@@ -3,8 +3,8 @@ use crate::{
     errors::MapperError,
     models::{AccountId, Transfer, TransferExecutionPlan, TransferId, TransferStatus},
     transport::{
-        NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferMetadataDTO,
-        TransferStatusDTO,
+        NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferListItemDTO,
+        TransferMetadataDTO, TransferStatusDTO,
     },
 };
 use candid::Nat;
@@ -61,6 +61,7 @@ impl TransferMapper {
                 None => TransferExecutionPlan::Immediate,
             },
             last_modification_timestamp: time(),
+            created_timestamp: time(),
         })
     }
 
@@ -98,6 +99,38 @@ impl TransferMapper {
                     }
                 }
             },
+            status: match transfer.status {
+                TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
+                    reason: reason.map(|r| r.to_owned()),
+                },
+                TransferStatus::Submitted => TransferStatusDTO::Submitted,
+                TransferStatus::Pending => TransferStatusDTO::Pending,
+                TransferStatus::Completed {
+                    signature,
+                    hash,
+                    completed_at,
+                } => TransferStatusDTO::Completed {
+                    signature: signature.map(|s| s.to_owned()),
+                    hash: hash.map(|h| h.to_owned()),
+                    completed_at: timestamp_to_rfc3339(&completed_at),
+                },
+                TransferStatus::Approved => TransferStatusDTO::Approved,
+                TransferStatus::Rejected { reason } => TransferStatusDTO::Rejected {
+                    reason: reason.to_owned(),
+                },
+            },
+        }
+    }
+
+    pub fn transfer_to_list_item_dto(&self, transfer: Transfer) -> TransferListItemDTO {
+        TransferListItemDTO {
+            transfer_id: Uuid::from_slice(&transfer.id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
+            amount: transfer.amount,
+            to: transfer.to_address,
+            created_at: timestamp_to_rfc3339(&transfer.created_timestamp),
             status: match transfer.status {
                 TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
                     reason: reason.map(|r| r.to_owned()),

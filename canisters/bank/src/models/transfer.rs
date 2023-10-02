@@ -84,6 +84,8 @@ pub struct Transfer {
     pub metadata: Vec<(String, String)>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
+    /// The creation timestamp of the transfer.
+    pub created_timestamp: Timestamp,
 }
 
 #[stable_object(size = 64)]
