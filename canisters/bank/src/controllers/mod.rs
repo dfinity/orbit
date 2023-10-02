@@ -11,3 +11,11 @@ pub use wallet::*;
 /// Transfer entrypoints, enabling the clients to transfer assets.
 mod transfer;
 pub use transfer::*;
+
+/// Operation entrypoints, enabling the clients to take action upon bank operations.
+/// 
+/// This includes approving, rejecting, and cancelling operations.
+/// 
+/// Operations are mostly related to transfers, but can also be used for other actions.
+mod operation;
+pub use operation::*;

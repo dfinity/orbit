@@ -1,4 +1,11 @@
-use crate::core::{CallContext, WithCallContext};
+use crate::{
+    core::{CallContext, WithCallContext},
+    transport::{
+        EditOperationInput, GetOperationInput, ListOperationsInput, OperationDTO,
+        OperationListItemDTO,
+    },
+};
+use ic_canister_core::api::ServiceResult;
 
 #[derive(Default, Debug)]
 pub struct OperationService {
@@ -16,5 +23,20 @@ impl WithCallContext for OperationService {
 impl OperationService {
     pub fn create() -> Self {
         Default::default()
+    }
+
+    pub async fn get_operation(&self, _input: GetOperationInput) -> ServiceResult<OperationDTO> {
+        todo!()
+    }
+
+    pub async fn list_operations(
+        &self,
+        _input: ListOperationsInput,
+    ) -> ServiceResult<Vec<OperationListItemDTO>> {
+        todo!()
+    }
+
+    pub async fn edit_operation(&self, _input: EditOperationInput) -> ServiceResult<OperationDTO> {
+        todo!()
     }
 }

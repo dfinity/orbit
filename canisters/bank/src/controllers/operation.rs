@@ -1,20 +1,40 @@
 use crate::{
     core::{CallContext, WithCallContext},
-    services::TransferService,
+    services::OperationService,
     transport::{
-        GetTransferInput, GetTransferResponse, ListWalletTransfersInput,
-        ListWalletTransfersResponse, TransferInput, TransferResponse,
+        EditOperationInput, EditOperationResponse, GetOperationInput, GetOperationResponse,
+        ListOperationsInput, ListOperationsResponse,
     },
 };
 use ic_canister_core::api::ApiResult;
-use ic_cdk_macros::update;
+use ic_cdk_macros::{query, update};
 
-#[update(name = "transfer")]
-async fn transfer(input: TransferInput) -> ApiResult<TransferResponse> {
-    let transfer = TransferService::create()
+#[query(name = "list_operations")]
+async fn list_operations(input: ListOperationsInput) -> ApiResult<ListOperationsResponse> {
+    let operations = OperationService::create()
         .with_call_context(CallContext::get())
-        .create_transfer(input)
+        .list_operations(input)
         .await?;
 
-    Ok(TransferResponse { transfer })
+    Ok(ListOperationsResponse { operations })
+}
+
+#[query(name = "get_operation")]
+async fn get_operation(input: GetOperationInput) -> ApiResult<GetOperationResponse> {
+    let operation = OperationService::create()
+        .with_call_context(CallContext::get())
+        .get_operation(input)
+        .await?;
+
+    Ok(GetOperationResponse { operation })
+}
+
+#[update(name = "edit_operation")]
+async fn edit_operation(input: EditOperationInput) -> ApiResult<EditOperationResponse> {
+    let operation = OperationService::create()
+        .with_call_context(CallContext::get())
+        .edit_operation(input)
+        .await?;
+
+    Ok(EditOperationResponse { operation })
 }

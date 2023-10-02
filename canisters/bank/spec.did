@@ -132,7 +132,7 @@ type GetOperationResult = variant {
 };
 
 // Input type for editing an operation.
-type OperationEditInput = record {
+type EditOperationInput = record {
   // The operation id to updated.
   operation_id : OperationId;
   // If true the operation is approved, otherwise it is rejected.
@@ -144,7 +144,7 @@ type OperationEditInput = record {
 };
 
 // Result type for editing an operation.
-type OperationEditResult = variant {
+type EditOperationResult = variant {
   Ok : record {
     operation : Operation;
   };
@@ -620,7 +620,7 @@ service : (opt BankInit) -> {
   // Get the operation by id.
   get_operation : (input : GetOperationInput) -> (GetOperationResult) query;
   // Approve or reject an operation.
-  edit_operation : (input : OperationEditInput) -> (OperationEditResult);
+  edit_operation : (input : EditOperationInput) -> (EditOperationResult);
 
   // Get the bank settings, only available to admins.
   //

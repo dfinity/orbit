@@ -32,7 +32,7 @@ pub struct OperationListItemDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct OperationEditInput {
+pub struct EditOperationInput {
     pub read: Option<bool>,
     pub approve: Option<bool>,
     pub operation_id: OperationIdDTO,
@@ -40,7 +40,7 @@ pub struct OperationEditInput {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct OperationEditResponse {
+pub struct EditOperationResponse {
     pub operation: OperationDTO,
 }
 
