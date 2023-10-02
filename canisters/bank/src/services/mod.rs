@@ -15,3 +15,7 @@ pub use transfer::*;
 /// Account service.
 mod account;
 pub use account::*;
+
+/// Operation service.
+mod operation;
+pub use operation::*;
