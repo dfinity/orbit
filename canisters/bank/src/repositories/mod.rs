@@ -27,3 +27,15 @@ pub use transfer_queue::*;
 /// Repository for listing transfers within a wallet.
 mod transfer_list_index;
 pub use transfer_list_index::*;
+
+/// Repository for holding system operations.
+mod operation;
+pub use operation::*;
+
+/// Repository to hold an index to operations and its associated accounts.
+mod operation_account_index;
+pub use operation_account_index::*;
+
+/// Repository to hold an index to operations and its associated wallets.
+mod operation_wallet_index;
+pub use operation_wallet_index::*;

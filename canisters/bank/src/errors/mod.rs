@@ -27,3 +27,7 @@ pub use repository::*;
 /// Error types for transfers.
 mod transfer;
 pub use transfer::*;
+
+/// Error types for system operations.
+mod operation;
+pub use operation::*;

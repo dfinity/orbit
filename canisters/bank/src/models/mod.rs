@@ -49,3 +49,23 @@ pub use transfer_queue::*;
 /// The transfer list index.
 mod transfer_list_index;
 pub use transfer_list_index::*;
+
+/// Models related to operations.
+mod operation_status;
+pub use operation_status::*;
+
+/// Models related to operations.
+mod operation_code;
+pub use operation_code::*;
+
+/// Models related to operations.
+mod operation;
+pub use operation::*;
+
+/// Index related to operations and its associated accounts.
+mod operation_account_index;
+pub use operation_account_index::*;
+
+/// Index related to operations and its associated wallets.
+mod operation_wallet_index;
+pub use operation_wallet_index::*;

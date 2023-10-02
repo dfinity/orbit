@@ -27,3 +27,7 @@ pub use account::*;
 /// Account mappers.
 mod transfer;
 pub use transfer::*;
+
+/// System operation mappers.
+mod operation;
+pub use operation::*;
