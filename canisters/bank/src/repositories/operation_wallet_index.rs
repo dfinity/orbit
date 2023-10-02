@@ -1,6 +1,5 @@
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_ACCOUNT_INDEX_MEMORY_ID},
-    errors::RepositoryError,
     models::{AccountId, OperationCode, OperationStatus, OperationWalletIndex},
 };
 use ic_canister_core::repository::Repository;
@@ -40,7 +39,7 @@ impl OperationWalletIndexRepository {
         status: Option<OperationStatus>,
         code: Option<OperationCode>,
         read: Option<bool>,
-    ) -> Result<Vec<OperationWalletIndex>, RepositoryError> {
+    ) -> Vec<OperationWalletIndex> {
         DB.with(|db| {
             let start_key = OperationWalletIndex {
                 wallet_id: wallet_id.to_owned(),
@@ -57,8 +56,7 @@ impl OperationWalletIndexRepository {
                 id: [u8::MAX; 16],
             };
 
-            let results = db
-                .borrow()
+            db.borrow()
                 .range(start_key..=end_key)
                 .take_while(|(index, _)| {
                     let mut code_matches_criteria = true;
@@ -77,9 +75,7 @@ impl OperationWalletIndexRepository {
                     code_matches_criteria && status_matches_criteria && read_matches_criteria
                 })
                 .map(|(index, _)| index)
-                .collect::<Vec<OperationWalletIndex>>();
-
-            Ok(results)
+                .collect::<Vec<OperationWalletIndex>>()
         })
     }
 }

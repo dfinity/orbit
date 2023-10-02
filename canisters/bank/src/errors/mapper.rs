@@ -41,6 +41,12 @@ pub enum MapperError {
         /// The string provided.
         input: String,
     },
+    /// The requested operation code is unknown to the system.
+    #[error(r#"The requested operation code is unknown to the system."#)]
+    UnknownOperationCode {
+        /// The string provided.
+        code: String,
+    },
 }
 
 impl DetailableError for MapperError {
@@ -81,6 +87,10 @@ impl DetailableError for MapperError {
             }
             MapperError::StringToNumberConversionError { input } => {
                 details.insert("input".to_string(), input.to_string());
+                Some(details)
+            }
+            MapperError::UnknownOperationCode { code } => {
+                details.insert("code".to_string(), code.to_string());
                 Some(details)
             }
             _ => None,

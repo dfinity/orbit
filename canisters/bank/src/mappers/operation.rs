@@ -1,9 +1,11 @@
 use ic_canister_core::utils::timestamp_to_rfc3339;
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::{
-    models::{Operation, OperationStatus},
-    transport::{OperationDTO, OperationStatusDTO},
+    errors::MapperError,
+    models::{Operation, OperationCode, OperationStatus},
+    transport::{OperationDTO, OperationListItemDTO, OperationStatusDTO},
 };
 
 #[derive(Default, Clone, Debug)]
@@ -33,5 +35,35 @@ impl OperationMapper {
                 None => None,
             },
         }
+    }
+
+    pub fn to_list_item_dto(&self, operation: Operation) -> OperationListItemDTO {
+        OperationListItemDTO {
+            id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
+            account: Uuid::from_bytes(operation.account_id)
+                .hyphenated()
+                .to_string(),
+            status: match operation.status {
+                OperationStatus::Pending => OperationStatusDTO::Pending,
+                OperationStatus::Completed => OperationStatusDTO::Completed,
+                OperationStatus::Rejected => OperationStatusDTO::Rejected,
+            },
+            code: operation.code.to_string(),
+            created_at: timestamp_to_rfc3339(&operation.created_timestamp),
+        }
+    }
+
+    pub fn to_status(&self, status: OperationStatusDTO) -> OperationStatus {
+        match status {
+            OperationStatusDTO::Pending => OperationStatus::Pending,
+            OperationStatusDTO::Completed => OperationStatus::Completed,
+            OperationStatusDTO::Rejected => OperationStatus::Rejected,
+        }
+    }
+
+    pub fn to_code(&self, code: String) -> Result<OperationCode, MapperError> {
+        OperationCode::from_str(code.as_str()).map_err(|_| MapperError::UnknownOperationCode {
+            code: code.to_owned(),
+        })
     }
 }

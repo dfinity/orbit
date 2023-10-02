@@ -4,7 +4,7 @@ use crate::{
     errors::OperationError,
     mappers::{HelperMapper, OperationMapper},
     models::{Account, Operation, OperationFeedback, OperationId, OperationStatus},
-    repositories::OperationRepository,
+    repositories::{OperationAccountIndexRepository, OperationRepository},
     transport::{
         EditOperationInput, GetOperationInput, ListOperationsInput, OperationDTO,
         OperationListItemDTO,
@@ -20,6 +20,7 @@ pub struct OperationService {
     call_context: CallContext,
     account_service: AccountService,
     operation_repository: OperationRepository,
+    operation_account_index_repository: OperationAccountIndexRepository,
     operation_mapper: OperationMapper,
     helper_mapper: HelperMapper,
 }
@@ -121,8 +122,36 @@ impl OperationService {
 
     pub async fn list_operations(
         &self,
-        _input: ListOperationsInput,
+        input: ListOperationsInput,
     ) -> ServiceResult<Vec<OperationListItemDTO>> {
-        todo!()
+        let account = self
+            .account_service
+            .resolve_account(&self.call_context.caller())
+            .await?;
+
+        let filter_by_code = match input.code {
+            Some(code) => Some(self.operation_mapper.to_code(code)?),
+            None => None,
+        };
+        let dtos = self
+            .operation_account_index_repository
+            .find_all_within_criteria(
+                account.id,
+                input
+                    .status
+                    .map(|status| self.operation_mapper.to_status(status)),
+                filter_by_code,
+                input.read,
+            )
+            .iter()
+            .map(|index| {
+                self.operation_repository
+                    .get(&Operation::key(index.id))
+                    .unwrap()
+            })
+            .map(|operation| self.operation_mapper.to_list_item_dto(operation))
+            .collect::<Vec<OperationListItemDTO>>();
+
+        Ok(dtos)
     }
 }

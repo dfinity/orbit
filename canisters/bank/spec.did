@@ -97,9 +97,11 @@ type OperationListItem = record {
 // The input type for getting the list of operations associated with the caller.
 type ListOperationsInput = record {
   // The list of operation ids to retrieve.
-  status : opt vec OperationStatus;
+  status : opt OperationStatus;
   // The code of the operation (e.g. "transaction").
   code : opt text;
+  // Wether the operation has been read or not.
+  read: opt bool;
 };
 
 // The result type for getting the list of operations.

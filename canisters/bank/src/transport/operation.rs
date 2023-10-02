@@ -56,8 +56,9 @@ pub struct GetOperationResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListOperationsInput {
-    pub status: Option<Vec<OperationStatusDTO>>,
+    pub status: Option<OperationStatusDTO>,
     pub code: Option<String>,
+    pub read: Option<bool>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
