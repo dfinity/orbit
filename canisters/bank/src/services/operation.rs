@@ -1,13 +1,15 @@
-use super::AccountService;
+use super::{AccountService, WalletService};
 use crate::{
     core::{CallContext, WithCallContext},
     errors::OperationError,
     mappers::{HelperMapper, OperationMapper},
     models::{Account, Operation, OperationFeedback, OperationId, OperationStatus},
-    repositories::{OperationAccountIndexRepository, OperationRepository},
+    repositories::{
+        OperationAccountIndexRepository, OperationRepository, OperationWalletIndexRepository,
+    },
     transport::{
-        EditOperationInput, GetOperationInput, ListOperationsInput, OperationDTO,
-        OperationListItemDTO,
+        EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
+        ListWalletOperationsInput, OperationDTO, OperationListItemDTO,
     },
 };
 use ic_canister_core::api::ServiceResult;
@@ -19,8 +21,10 @@ use uuid::Uuid;
 pub struct OperationService {
     call_context: CallContext,
     account_service: AccountService,
+    wallet_service: WalletService,
     operation_repository: OperationRepository,
     operation_account_index_repository: OperationAccountIndexRepository,
+    operation_wallet_index_repository: OperationWalletIndexRepository,
     operation_mapper: OperationMapper,
     helper_mapper: HelperMapper,
 }
@@ -29,6 +33,8 @@ impl WithCallContext for OperationService {
     fn with_call_context(&mut self, call_context: CallContext) -> &Self {
         self.call_context = call_context.to_owned();
         self.account_service
+            .with_call_context(call_context.to_owned());
+        self.wallet_service
             .with_call_context(call_context.to_owned());
 
         self
@@ -137,6 +143,43 @@ impl OperationService {
             .operation_account_index_repository
             .find_all_within_criteria(
                 account.id,
+                input
+                    .status
+                    .map(|status| self.operation_mapper.to_status(status)),
+                filter_by_code,
+                input.read,
+            )
+            .iter()
+            .map(|index| {
+                self.operation_repository
+                    .get(&Operation::key(index.id))
+                    .unwrap()
+            })
+            .map(|operation| self.operation_mapper.to_list_item_dto(operation))
+            .collect::<Vec<OperationListItemDTO>>();
+
+        Ok(dtos)
+    }
+
+    pub async fn list_wallet_operations(
+        &self,
+        input: ListWalletOperationsInput,
+    ) -> ServiceResult<Vec<OperationListItemDTO>> {
+        let wallet = self
+            .wallet_service
+            .get_wallet_core(GetWalletInput {
+                wallet_id: input.wallet_id,
+            })
+            .await?;
+
+        let filter_by_code = match input.code {
+            Some(code) => Some(self.operation_mapper.to_code(code)?),
+            None => None,
+        };
+        let dtos = self
+            .operation_wallet_index_repository
+            .find_all_within_criteria(
+                wallet.id,
                 input
                     .status
                     .map(|status| self.operation_mapper.to_status(status)),

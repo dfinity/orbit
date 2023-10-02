@@ -101,11 +101,35 @@ type ListOperationsInput = record {
   // The code of the operation (e.g. "transaction").
   code : opt text;
   // Wether the operation has been read or not.
-  read: opt bool;
+  read : opt bool;
 };
 
 // The result type for getting the list of operations.
 type ListOperationsResult = variant {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The list of operations.
+    operations : vec OperationListItem;
+  };
+  // The error that occurred during the operation, if any
+  // (e.g. the user does not have access to the operation).
+  Err : Error;
+};
+
+// The input type for getting the list of operations associated with the caller.
+type ListWalletOperationsInput = record {
+  // The wallet id to retrieve the operations from.
+  wallet_id : WalletId;
+  // The list of operation ids to retrieve.
+  status : opt OperationStatus;
+  // The code of the operation (e.g. "transaction").
+  code : opt text;
+  // Wether the operation has been read or not.
+  read : opt bool;
+};
+
+// The result type for getting the list of operations for a wallet.
+type ListWalletOperationsResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The list of operations.
@@ -619,6 +643,8 @@ service : (opt BankInit) -> {
   get_transfer : (input : GetTransferInput) -> (GetTransferResult) query;
   // Get the list of operations.
   list_operations : (input : ListOperationsInput) -> (ListOperationsResult) query;
+  // Get the list of operations for a given wallet.
+  list_wallet_operations : (input : ListWalletOperationsInput) -> (ListWalletOperationsResult) query;
   // Get the operation by id.
   get_operation : (input : GetOperationInput) -> (GetOperationResult) query;
   // Approve or reject an operation.

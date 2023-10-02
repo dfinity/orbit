@@ -3,7 +3,8 @@ use crate::{
     services::OperationService,
     transport::{
         EditOperationInput, EditOperationResponse, GetOperationInput, GetOperationResponse,
-        ListOperationsInput, ListOperationsResponse,
+        ListOperationsInput, ListOperationsResponse, ListWalletOperationsInput,
+        ListWalletOperationsResponse,
     },
 };
 use ic_canister_core::api::ApiResult;
@@ -17,6 +18,18 @@ async fn list_operations(input: ListOperationsInput) -> ApiResult<ListOperations
         .await?;
 
     Ok(ListOperationsResponse { operations })
+}
+
+#[query(name = "list_wallet_operations")]
+async fn list_wallet_operations(
+    input: ListWalletOperationsInput,
+) -> ApiResult<ListWalletOperationsResponse> {
+    let operations = OperationService::create()
+        .with_call_context(CallContext::get())
+        .list_wallet_operations(input)
+        .await?;
+
+    Ok(ListWalletOperationsResponse { operations })
 }
 
 #[query(name = "get_operation")]

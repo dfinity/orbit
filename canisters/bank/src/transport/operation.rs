@@ -1,4 +1,4 @@
-use super::{BankAccountIdDTO, TimestampRfc3339};
+use super::{BankAccountIdDTO, TimestampRfc3339, WalletIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type OperationIdDTO = String;
@@ -63,5 +63,18 @@ pub struct ListOperationsInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListOperationsResponse {
+    pub operations: Vec<OperationListItemDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListWalletOperationsInput {
+    pub wallet_id: WalletIdDTO,
+    pub status: Option<OperationStatusDTO>,
+    pub code: Option<String>,
+    pub read: Option<bool>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListWalletOperationsResponse {
     pub operations: Vec<OperationListItemDTO>,
 }
