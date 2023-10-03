@@ -2,7 +2,7 @@ use super::AccountService;
 use crate::{
     core::{
         canister_config, canister_config_mut, get_bank_assets, write_canister_config, CallContext,
-        CanisterConfig, WithCallContext,
+        CanisterConfig, WithCallContext, default_bank_permissions,
     },
     mappers::ManagementMapper,
     models::{AccessRole, Account},
@@ -12,7 +12,6 @@ use ic_canister_core::{api::ServiceResult, cdk::api::time};
 
 #[derive(Default, Debug)]
 pub struct ManagementService {
-    // todo: removed if not used by the service
     call_context: CallContext,
     management_mapper: ManagementMapper,
     account_service: AccountService,
@@ -58,6 +57,7 @@ impl ManagementService {
                 .expect("Failed to unregister admin account");
         }
 
+        config.permissions = default_bank_permissions();
         config.update_from_init(init.to_owned());
 
         write_canister_config(config.to_owned());
