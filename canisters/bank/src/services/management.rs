@@ -1,8 +1,8 @@
 use super::AccountService;
 use crate::{
     core::{
-        canister_config, canister_config_mut, get_bank_assets, write_canister_config, CallContext,
-        CanisterConfig, WithCallContext, default_bank_permissions,
+        canister_config, canister_config_mut, default_bank_permissions, get_bank_assets,
+        write_canister_config, CallContext, CanisterConfig, WithCallContext,
     },
     mappers::ManagementMapper,
     models::{AccessRole, Account},
