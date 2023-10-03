@@ -37,3 +37,9 @@ impl WalletPolicyMapper {
         }
     }
 }
+
+impl WalletPolicyDTO {
+    pub fn to_wallet_policy(&self) -> WalletPolicy {
+        WalletPolicyMapper::default().from_dto(self.to_owned())
+    }
+}

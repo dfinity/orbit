@@ -1,6 +1,10 @@
-use crate::models::{AccessRole, Account, AccountIdentity};
+use crate::{
+    models::{AccessRole, Account, AccountIdentity},
+    transport::AccountDTO,
+};
 use candid::Principal;
-use ic_canister_core::{cdk::api::time, types::UUID};
+use ic_canister_core::{cdk::api::time, types::UUID, utils::rfc3339_to_timestamp};
+use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
 pub struct AccountMapper {}
@@ -16,6 +20,21 @@ impl AccountMapper {
         }
     }
 
+    pub fn from_identity(
+        &self,
+        identity: Principal,
+        account_id: UUID,
+        roles: Vec<AccessRole>,
+    ) -> Account {
+        Account {
+            id: account_id,
+            identities: vec![identity],
+            unconfirmed_identities: vec![],
+            access_roles: roles,
+            last_modification_timestamp: time(),
+        }
+    }
+
     pub fn new_account_to_identity_association(
         &self,
         identity: Principal,
@@ -25,6 +44,24 @@ impl AccountMapper {
             account_id: account.id,
             identity_id: identity,
             last_modification_timestamp: time(),
+        }
+    }
+}
+
+impl AccountDTO {
+    pub fn to_account(&self) -> Account {
+        Account {
+            id: *Uuid::parse_str(&self.id).expect("Invalid UUID").as_bytes(),
+            identities: self.identities.clone(),
+            unconfirmed_identities: self.unconfirmed_identities.clone(),
+            access_roles: self
+                .access_roles
+                .iter()
+                .map(|role| role.to_access_role())
+                .collect(),
+            last_modification_timestamp: rfc3339_to_timestamp(
+                self.last_modification_timestamp.as_str(),
+            ),
         }
     }
 }

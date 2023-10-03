@@ -18,7 +18,7 @@ pub struct OperationFeedback {
 }
 
 /// Represents an operation within the system.
-#[stable_object(size = 256)]
+#[stable_object(size = 1024)]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Operation {
     /// The operation id, which is a UUID.

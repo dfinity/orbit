@@ -1,6 +1,6 @@
+use super::AccountIdDTO;
 use candid::{CandidType, Deserialize, Principal};
 
-pub type BankAccountIdDTO = String;
 pub type WalletIdDTO = String;
 pub type UuidDTO = String;
 
@@ -35,7 +35,7 @@ pub enum CreateWalletInputOwnersItemDTO {
     #[serde(rename = "Principal")]
     Principal_(Principal),
     #[serde(rename = "AccountID")]
-    AccountId(BankAccountIdDTO),
+    AccountId(AccountIdDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

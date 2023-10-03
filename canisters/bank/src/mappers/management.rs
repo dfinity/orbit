@@ -1,7 +1,9 @@
 use crate::{
-    transport::{BankAssetDTO, BankFeaturesDTO},
+    core::{CanisterConfig, Permission},
+    transport::{BankAssetDTO, BankCanisterInit, BankFeaturesDTO},
     types::BankAsset,
 };
+use ic_canister_core::cdk::api::time;
 use std::collections::HashSet;
 
 #[derive(Default, Clone, Debug)]
@@ -26,5 +28,53 @@ impl ManagementMapper {
                 })
                 .collect(),
         }
+    }
+}
+
+impl CanisterConfig {
+    pub fn update_from_init(&mut self, init: BankCanisterInit) {
+        self.approval_threshold = init.approval_threshold.unwrap_or(self.approval_threshold);
+        self.last_upgrade_timestamp = time();
+
+        // tthe canister always has the default permissions, but the controller can change
+        // the access roles of the default permissions
+        if let Some(permissions) = init.permissions {
+            self.permissions = self
+                .permissions
+                .iter()
+                .map(|current_permission| {
+                    let new_permission_roles = permissions
+                        .iter()
+                        .find(|input_permission| {
+                            input_permission.permission_id == current_permission.permission_id
+                        })
+                        .map(|input_permission| {
+                            input_permission
+                                .access_roles
+                                .iter()
+                                .map(|role| role.to_access_role())
+                                .collect()
+                        })
+                        .unwrap_or(current_permission.access_roles.to_owned());
+
+                    Permission {
+                        permission_id: current_permission.permission_id.to_owned(),
+                        access_roles: new_permission_roles,
+                    }
+                })
+                .collect::<Vec<Permission>>();
+        }
+
+        if let Some(wallet_policies) = init.wallet_policies {
+            self.wallet_policies = wallet_policies
+                .iter()
+                .map(|policy| policy.to_wallet_policy())
+                .collect();
+        }
+
+        self.owners = init
+            .owners
+            .map(|owner| owner)
+            .unwrap_or(self.owners.to_owned());
     }
 }

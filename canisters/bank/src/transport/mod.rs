@@ -24,3 +24,7 @@ pub use transfer::*;
 /// Operation related DTOs
 mod operation;
 pub use operation::*;
+
+/// Account related DTOs
+mod account;
+pub use account::*;

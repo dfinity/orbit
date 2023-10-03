@@ -1,3 +1,4 @@
+use super::AccountService;
 use crate::{
     core::{
         canister_config_mut, get_bank_assets, write_canister_config, CallContext, CanisterConfig,
@@ -6,18 +7,21 @@ use crate::{
     mappers::ManagementMapper,
     transport::{BankCanisterInit, BankFeaturesDTO},
 };
-use ic_canister_core::{api::ServiceResult, cdk::api::time};
+use ic_canister_core::api::ServiceResult;
 
 #[derive(Default, Debug)]
 pub struct ManagementService {
     // todo: removed if not used by the service
-    _call_context: CallContext,
+    call_context: CallContext,
     management_mapper: ManagementMapper,
+    account_service: AccountService,
 }
 
 impl WithCallContext for ManagementService {
     fn with_call_context(&mut self, call_context: CallContext) -> &Self {
-        self._call_context = call_context;
+        self.call_context = call_context.to_owned();
+        self.account_service
+            .with_call_context(call_context.to_owned());
 
         self
     }
@@ -28,23 +32,41 @@ impl ManagementService {
         Default::default()
     }
 
-    pub async fn canister_init(&self, input: Option<BankCanisterInit>) {
-        let init = input.unwrap_or_default();
-        let config = CanisterConfig {
-            // By default, the bank canister requires 100% of the votes to approve operations.
-            approval_threshold: init.approval_threshold.unwrap_or(100u8),
-            // The last time the canister was upgraded or initialized.
-            last_upgrade_timestamp: time(),
-        };
+    /// Registers the canister config establishing the permissions, approval threshold and owners of the bank.
+    async fn register_canister_config(&self, mut config: CanisterConfig, init: BankCanisterInit) {
+        let mut removed_owners = vec![];
+        if let Some(new_owners) = &init.owners {
+            removed_owners = config
+                .owners
+                .iter()
+                .filter(|owner| !new_owners.contains(owner))
+                .collect::<Vec<_>>();
+        }
 
-        write_canister_config(config);
+        for unassigned_admin in removed_owners {
+            self.account_service
+                .remove_admin(unassigned_admin)
+                .await
+                .expect("Failed to unregister admin account");
+        }
+
+        config.update_from_init(init.to_owned());
+
+        write_canister_config(config.to_owned());
     }
 
-    pub async fn canister_post_upgrade(&self) {
-        let mut updated_config = canister_config_mut();
-        updated_config.last_upgrade_timestamp = time();
+    pub async fn canister_init(&self, input: Option<BankCanisterInit>) {
+        let init = input.unwrap_or_default();
+        let config = CanisterConfig::default();
 
-        write_canister_config(updated_config);
+        self.register_canister_config(config, init).await;
+    }
+
+    pub async fn canister_post_upgrade(&self, input: Option<BankCanisterInit>) {
+        let init = input.unwrap_or_default();
+        let config = canister_config_mut();
+
+        self.register_canister_config(config, init).await;
     }
 
     pub async fn get_bank_features(&self) -> ServiceResult<BankFeaturesDTO> {

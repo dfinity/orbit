@@ -9,8 +9,9 @@ use std::{
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum AccessRole {
-    Admin = 1,
-    User = 2,
+    Admin = 0,
+    User = 1,
+    Guest = 2,
 }
 
 impl From<AccessRole> for u8 {
@@ -24,8 +25,9 @@ impl TryFrom<u8> for AccessRole {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            1 => Ok(AccessRole::Admin),
-            2 => Ok(AccessRole::User),
+            0 => Ok(AccessRole::Admin),
+            1 => Ok(AccessRole::User),
+            2 => Ok(AccessRole::Guest),
             _ => Err(()),
         }
     }
@@ -38,6 +40,7 @@ impl FromStr for AccessRole {
         match variant {
             "admin" => Ok(AccessRole::Admin),
             "user" => Ok(AccessRole::User),
+            "guest" => Ok(AccessRole::Guest),
             _ => Err(()),
         }
     }
@@ -48,6 +51,7 @@ impl Display for AccessRole {
         match self {
             AccessRole::Admin => write!(f, "admin"),
             AccessRole::User => write!(f, "user"),
+            AccessRole::Guest => write!(f, "guest"),
         }
     }
 }

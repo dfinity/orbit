@@ -1,4 +1,4 @@
-use super::{BankAccountIdDTO, TimestampRfc3339, WalletIdDTO};
+use super::{AccountIdDTO, TimestampRfc3339, WalletIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type OperationIdDTO = String;
@@ -19,7 +19,7 @@ pub struct OperationDTO {
     pub read: bool,
     pub created_at: TimestampRfc3339,
     pub feedback_reason: Option<String>,
-    pub account: BankAccountIdDTO,
+    pub account: AccountIdDTO,
     pub feedback_time_at: Option<TimestampRfc3339>,
 }
 
@@ -29,7 +29,7 @@ pub struct OperationListItemDTO {
     pub status: OperationStatusDTO,
     pub code: String,
     pub created_at: TimestampRfc3339,
-    pub account: BankAccountIdDTO,
+    pub account: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

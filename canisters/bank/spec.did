@@ -1,44 +1,3 @@
-// The settings of the bank.
-type BankSettings = record {
-  // The default wallet policies that are applied to all wallets.
-  wallet_policies : vec WalletPolicy;
-  // The list of accounts associated with the bank.
-  accounts : vec BankAccount;
-  // The percentage of approvals required for a bank operation to be
-  // executed (e.g. upgrade the canister).
-  //
-  // Only admin accounts are considered for the approval threshold.
-  //
-  // The value must be between 0 and 100.
-  approval_threshold : nat8;
-  // The list of permissions that are applied to the bank.
-  permissions : vec BankPermission;
-};
-
-// Result type for getting the bank settings.
-type BankSettingsResult = record {
-  // The result data, if the operation was successful.
-  Ok : record {
-    // The bank settings.
-    settings : BankSettings;
-  };
-  // The error that occurred during the operation, if any
-  // (e.g. the caller is not an admin).
-  Err : Error;
-};
-
-// todo: make sure everything above this point is correct
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
 // The asset symbol, e.g. "ICP" or "BTC".
 type AssetSymbol = text;
 // The internal wallet id used to identify a wallet in the
@@ -46,7 +5,7 @@ type AssetSymbol = text;
 type WalletId = text;
 // The internal account id used to identify a user in the
 // canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type BankAccountId = text;
+type AccountId = text;
 // The network id, unique to the canister and associated (e.g. "icp:mainnet").
 type NetworkId = text;
 // The transfer id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -67,7 +26,7 @@ type Operation = record {
   // The code of the operation (e.g. "approve-transfer").
   code : text;
   // The account that needs to act on the operation.
-  account : BankAccountId;
+  account : AccountId;
   // Wether the operation has been read or not.
   read : bool;
   // The time at which the operation was created.
@@ -87,7 +46,7 @@ type OperationListItem = record {
   // The code of the operation (e.g. "transaction").
   code : text;
   // The account that needs to approve the operation.
-  account : BankAccountId;
+  account : AccountId;
   // The operation approval status.
   status : OperationStatus;
   // The time at which the operation was created.
@@ -237,25 +196,25 @@ type ListWalletTransfersResult = variant {
 };
 
 // The role of an account in the Bank.
-type BankAccountRole = variant {
+type AccountRole = variant {
   // The account is an admin of the bank.
   Admin;
-  // The account is a user of the bank, the guest role is also
-  // used to allow operations when the bank does not have the
-  // account defined.
+  // Any authenticated account has this role.
+  User;
+  // The guest role is also used to allow operations when the user does not have the account defined.
   Guest;
 };
 
 // A record type that can be used to represent an account in the bank.
-type BankAccount = record {
+type Account = record {
   // The UUID of the account (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-  id : BankAccountId;
+  id : AccountId;
   // The principals associated with the account.
   identities : vec principal;
   // The unconfirmed principals associated with the account.
   unconfirmed_identities : vec principal;
   // The role of the account.
-  access_roles : vec BankAccountRole;
+  access_roles : vec AccountRole;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
@@ -265,7 +224,7 @@ type BankPermission = record {
   // The permission identified (e.g. "create-wallet").
   permission_id : text;
   // The list of roles that have the permission.
-  access_roles : vec BankAccountRole;
+  access_roles : vec AccountRole;
 };
 
 // The blockchain network to used in a transaction.
@@ -442,7 +401,7 @@ type Wallet = record {
   // A friendly name for the wallet.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
-  owners : vec BankAccountId;
+  owners : vec AccountId;
   // The policies that can be used to control the wallet.
   //
   // If the list is empty but there are policies globally defined for the bank,
@@ -482,7 +441,7 @@ type CreateWalletInput = record {
   // If the list is empty, the caller will be the only owner.
   owners : vec variant {
     // The account id of the owner within the bank canister.
-    AccountID : BankAccountId;
+    AccountID : AccountId;
     // The principal that owns the wallet.
     Principal : principal;
   };
@@ -588,12 +547,12 @@ type GetFeaturesResult = variant {
   Err : Error;
 };
 
-// The init configuration for the bank.
-type BankInit = record {
+// The settings of the bank.
+type BankSettings = record {
   // The default wallet policies that are applied to all wallets.
-  // wallet_policies: vec WalletPolicy;
+  wallet_policies : vec WalletPolicy;
   // The list of accounts associated with the bank.
-  // accounts: vec BankAccount;
+  accounts : vec Account;
   // The percentage of approvals required for a bank operation to be
   // executed (e.g. upgrade the canister).
   //
@@ -602,7 +561,36 @@ type BankInit = record {
   // The value must be between 0 and 100.
   approval_threshold : nat8;
   // The list of permissions that are applied to the bank.
-  // permissions: vec BankPermission;
+  permissions : vec BankPermission;
+};
+
+// Result type for getting the bank settings.
+type BankSettingsResult = record {
+  // The result data, if the operation was successful.
+  Ok : record {
+    // The bank settings.
+    settings : BankSettings;
+  };
+  // The error that occurred during the operation, if any
+  // (e.g. the caller is not an admin).
+  Err : Error;
+};
+
+// The init configuration for the bank.
+type BankInit = record {
+  // The default wallet policies that are applied to all wallets.
+  wallet_policies : opt vec WalletPolicy;
+  // The list of admin principals to be associated with the bank.
+  owners : opt vec principal;
+  // The percentage of approvals required for a bank operation to be
+  // executed (e.g. upgrade the canister).
+  //
+  // Only admin accounts are considered for the approval threshold.
+  //
+  // The value must be between 0 and 100.
+  approval_threshold : opt nat8;
+  // The list of permissions that are applied to the bank.
+  permissions : opt vec BankPermission;
 };
 
 // The Bank service definition.
@@ -613,7 +601,7 @@ service : (opt BankInit) -> {
   features : () -> (GetFeaturesResult) query;
   // Create a new wallet.
   //
-  // Required permission: "write:create-wallet"
+  // Required permission: "write:wallet"
   create_wallet : (input : CreateWalletInput) -> (CreateWalletResult);
   // Get a wallet by id.
   //
@@ -634,6 +622,8 @@ service : (opt BankInit) -> {
   // Required permission: "read:wallet"
   list_wallets : () -> (ListWalletResult) query;
   // List all transfers from the requested wallet.
+  //
+  // Required permission: "read:transfer"
   list_wallet_transfers : (input : ListWalletTransfersInput) -> (ListWalletTransfersResult) query;
   // Transfer funds from a wallet, this operation will only create a new transaction
   // if the wallet policies have been sucessfully fulfilled.
@@ -645,17 +635,26 @@ service : (opt BankInit) -> {
   // Get a transfer by id.
   //
   // If the caller does not have access to the transfer, an error will be returned.
+  //
+  // Required permission: "read:transfer"
   get_transfer : (input : GetTransferInput) -> (GetTransferResult) query;
   // Get the list of operations.
+  //
+  // Required permission: "read:operation"
   list_operations : (input : ListOperationsInput) -> (ListOperationsResult) query;
   // Get the list of operations for a given wallet.
+  //
+  // Required permission: "read:operation"
   list_wallet_operations : (input : ListWalletOperationsInput) -> (ListWalletOperationsResult) query;
   // Get the operation by id.
+  //
+  // Required permission: "read:operation"
   get_operation : (input : GetOperationInput) -> (GetOperationResult) query;
   // Approve or reject an operation.
+  //
+  // Required permission: "write:operation"
   edit_operation : (input : EditOperationInput) -> (EditOperationResult);
-
-  // Get the bank settings, only available to admins.
+  // Get the bank settings.
   //
   // Required permission: "admin"
   admin_settings : () -> (BankSettingsResult) query;

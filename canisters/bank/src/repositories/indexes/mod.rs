@@ -1,3 +1,4 @@
+pub mod account_identity_index;
 pub mod operation_account_index;
 pub mod operation_transfer_index;
 pub mod operation_wallet_index;

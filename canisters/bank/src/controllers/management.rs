@@ -24,7 +24,7 @@ async fn initialize(input: Option<BankCanisterInit>) {
 }
 
 #[post_upgrade]
-async fn post_upgrade() {
-    ManagementService::new().canister_post_upgrade().await;
+async fn post_upgrade(input: Option<BankCanisterInit>) {
+    ManagementService::new().canister_post_upgrade(input).await;
     register_jobs().await;
 }

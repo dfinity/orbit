@@ -2,12 +2,14 @@ use crate::{
     core::{CallContext, WithCallContext},
     errors::AccountError,
     mappers::AccountMapper,
-    models::Account,
-    repositories::{AccountIdentityRepository, AccountRepository},
+    models::{indexes::account_identity_index::AccountIdentityIndexCriteria, AccessRole, Account},
+    repositories::{
+        indexes::account_identity_index::AccountIdentityIndexRepository, AccountRepository,
+    },
 };
 use candid::Principal;
-use ic_canister_core::model::ModelValidator;
 use ic_canister_core::{api::ServiceResult, utils::generate_uuid_v4};
+use ic_canister_core::{model::ModelValidator, repository::IndexRepository};
 use ic_canister_core::{repository::Repository, types::UUID};
 use uuid::Uuid;
 
@@ -16,7 +18,7 @@ pub struct AccountService {
     // todo: removed if not used by the service
     _call_context: CallContext,
     account_repository: AccountRepository,
-    account_identity_repository: AccountIdentityRepository,
+    account_identity_index: AccountIdentityIndexRepository,
     account_mapper: AccountMapper,
 }
 
@@ -34,19 +36,76 @@ impl AccountService {
     }
 
     fn assert_identity_has_no_associated_account(&self, identity: &Principal) -> ServiceResult<()> {
-        let account_identity = self
-            .account_identity_repository
-            .find_by_identity_id(identity)?;
+        let results = self
+            .account_identity_index
+            .find_by_criteria(AccountIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+                role: None,
+            });
+        let account = results.first();
 
-        if account_identity.is_some() {
+        if let Some(account) = account {
             Err(AccountError::IdentityAlreadyHasAccount {
-                account: Uuid::from_bytes(account_identity.unwrap().account_id)
-                    .hyphenated()
-                    .to_string(),
+                account: Uuid::from_bytes(account.id).hyphenated().to_string(),
             })?
         }
 
         Ok(())
+    }
+
+    /// Returns the account associated with the given identity if it exists.
+    pub fn find_account_by_identity(&self, identity: &Principal) -> Option<Account> {
+        let results = self
+            .account_identity_index
+            .find_by_criteria(AccountIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+                role: None,
+            });
+
+        match results.first() {
+            Some(account) => Some(account.to_owned()),
+            None => None,
+        }
+    }
+
+    /// Removes the admin role from the given identity if it has an associated account.
+    pub async fn remove_admin(&self, identity: &Principal) -> ServiceResult<()> {
+        let account = self.find_account_by_identity(identity);
+        if let Some(mut account) = account {
+            account
+                .access_roles
+                .retain(|role| *role != AccessRole::Admin);
+            self.account_repository
+                .insert(account.as_key(), account.to_owned());
+        }
+
+        Ok(())
+    }
+
+    /// Creates a new account for the given identity.
+    ///
+    /// If the identity already has an associated account, it will be returned instead.
+    pub async fn register_account(
+        &self,
+        identity: &Principal,
+        roles: Option<Vec<AccessRole>>,
+    ) -> ServiceResult<Account> {
+        let identity_account = self.find_account_by_identity(identity);
+        if let Some(account) = identity_account {
+            return Ok(account);
+        }
+        let mut roles = roles.unwrap_or(vec![AccessRole::User]);
+        if !roles.contains(&AccessRole::User) {
+            roles.push(AccessRole::User);
+        }
+        let account_id = generate_uuid_v4().await;
+        let account = self
+            .account_mapper
+            .from_identity(*identity, *account_id.as_bytes(), roles);
+        self.account_repository
+            .insert(account.as_key(), account.to_owned());
+
+        Ok(account)
     }
 
     /// Creates a new account for the given user identity and associates it with the identity.
@@ -58,9 +117,6 @@ impl AccountService {
         let account = self
             .account_mapper
             .identity_to_base_user_account(*identity, *account_id.as_bytes());
-        let account_identity = self
-            .account_mapper
-            .new_account_to_identity_association(*identity, &account);
 
         // model validations
         account.validate()?;
@@ -68,8 +124,6 @@ impl AccountService {
         // inserts must happen in the end to avoid partial data in the repository
         self.account_repository
             .insert(account.as_key(), account.clone());
-        self.account_identity_repository
-            .insert(account_identity.as_key(), account_identity);
 
         Ok(account)
     }
@@ -78,23 +132,16 @@ impl AccountService {
     ///
     /// If the identity does not have an associated account, a new account is created and returned.
     pub async fn get_user_account_or_create(&self, identity: &Principal) -> ServiceResult<Account> {
-        let account_identity = self
-            .account_identity_repository
-            .find_by_identity_id(identity)?;
+        let results = self
+            .account_identity_index
+            .find_by_criteria(AccountIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+                role: None,
+            });
+        let account = results.first();
 
-        match account_identity {
-            Some(account_identity) => {
-                let account = self
-                    .account_repository
-                    .get(&Account::key(account_identity.account_id))
-                    .ok_or(AccountError::NotFoundAccount {
-                        account: Uuid::from_bytes(account_identity.account_id)
-                            .hyphenated()
-                            .to_string(),
-                    })?;
-
-                Ok(account)
-            }
+        match account {
+            Some(account) => Ok(account.to_owned()),
             None => Ok(self.create_user_account(identity).await?),
         }
     }
@@ -104,23 +151,17 @@ impl AccountService {
         &self,
         identity: &Principal,
     ) -> ServiceResult<Option<Account>> {
-        let account_identity = match self
-            .account_identity_repository
-            .find_by_identity_id(identity)?
-        {
-            Some(account_identity) => account_identity,
-            None => return Ok(None),
-        };
+        let results = self
+            .account_identity_index
+            .find_by_criteria(AccountIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+                role: None,
+            });
 
-        let account = match self
-            .account_repository
-            .get(&Account::key(account_identity.account_id))
-        {
-            Some(account) => account,
-            None => return Ok(None),
-        };
-
-        Ok(Some(account))
+        match results.first() {
+            Some(account) => Ok(Some(account.to_owned())),
+            None => Ok(None),
+        }
     }
 
     // Returns the account associated with the given user identity, if none is found, an error is returned.

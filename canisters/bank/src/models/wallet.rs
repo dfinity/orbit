@@ -18,7 +18,7 @@ pub type WalletId = UUID;
 ///
 /// A wallet can be owned by one or more accounts and can only hold one type of asset,
 /// which is defined by the blockchain, standard and symbol.
-#[stable_object(size = 1024)]
+#[stable_object(size = 2048)]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Wallet {
     /// The wallet id, which is a UUID.

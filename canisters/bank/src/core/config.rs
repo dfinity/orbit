@@ -1,5 +1,9 @@
 use super::WASM_PAGE_SIZE;
-use candid::{CandidType, Decode, Deserialize, Encode};
+use crate::{
+    models::{AccessRole, WalletPolicy},
+    transport::{AccountRoleDTO, BankPermissionDTO},
+};
+use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::{
     cdk::api::{time, trap},
     types::Timestamp,
@@ -8,6 +12,61 @@ use ic_canister_macros::stable_object;
 use ic_stable_structures::Storable;
 use std::borrow::Cow;
 
+/// The list of permissions that can be granted to roles, admin role has all permissions.
+pub const PERMISSION_ADMIN: &str = "admin";
+pub const PERMISSION_READ_FEATURES: &str = "read:features";
+pub const PERMISSION_WRITE_WALLET: &str = "write:wallet";
+pub const PERMISSION_READ_WALLET: &str = "read:wallet";
+pub const PERMISSION_READ_TRANSFER: &str = "read:transfer";
+pub const PERMISSION_WRITE_TRANSFER: &str = "write:transfer";
+pub const PERMISSION_READ_OPERATION: &str = "read:operation";
+pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
+
+pub fn default_bank_permissions() -> Vec<Permission> {
+    let mut permissions: Vec<Permission> = vec![];
+    permissions.push(Permission {
+        permission_id: PERMISSION_ADMIN.to_string(),
+        access_roles: vec![AccessRole::Admin],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_READ_FEATURES.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_WRITE_WALLET.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_READ_WALLET.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_READ_TRANSFER.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_WRITE_TRANSFER.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_READ_OPERATION.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User],
+    });
+    permissions.push(Permission {
+        permission_id: PERMISSION_WRITE_OPERATION.to_string(),
+        access_roles: vec![AccessRole::Admin, AccessRole::User],
+    });
+
+    permissions
+}
+
+#[stable_object(size = 96)]
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct Permission {
+    pub permission_id: String,
+    pub access_roles: Vec<AccessRole>,
+}
+
 #[stable_object(size = WASM_PAGE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
@@ -15,23 +74,46 @@ pub struct CanisterConfig {
     pub last_upgrade_timestamp: Timestamp,
     /// The threshold of approvals required for operations to be executed.
     pub approval_threshold: u8,
+    /// The permissions of the canister.
+    pub permissions: Vec<Permission>,
+    /// The default accounts of the canister.
+    pub owners: Vec<Principal>,
+    /// The default wallet policies of the canister,
+    /// automatically applied to all wallets if they do not have their own policies.
+    pub wallet_policies: Vec<WalletPolicy>,
 }
 
 impl Default for CanisterConfig {
     fn default() -> Self {
         Self {
             last_upgrade_timestamp: time(),
-            /// By default, the bank canister requires 100% of the votes to approve operations.
             approval_threshold: 100u8,
+            permissions: default_bank_permissions(),
+            owners: vec![],
+            wallet_policies: vec![],
         }
     }
 }
 
-impl CanisterConfig {
-    pub fn new(approval_threshold: u8, last_upgrade_timestamp: Timestamp) -> Self {
-        Self {
-            last_upgrade_timestamp,
-            approval_threshold,
+impl BankPermissionDTO {
+    pub fn to_permission(&self) -> Permission {
+        Permission {
+            permission_id: self.permission_id.clone(),
+            access_roles: self
+                .access_roles
+                .iter()
+                .map(|role| role.to_access_role())
+                .collect(),
+        }
+    }
+}
+
+impl AccountRoleDTO {
+    pub fn to_access_role(&self) -> AccessRole {
+        match self {
+            AccountRoleDTO::Admin => AccessRole::Admin,
+            AccountRoleDTO::User => AccessRole::User,
+            AccountRoleDTO::Guest => AccessRole::Guest,
         }
     }
 }
