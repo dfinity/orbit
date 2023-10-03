@@ -23,41 +23,40 @@ pub const PERMISSION_READ_OPERATION: &str = "read:operation";
 pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
 
 pub fn default_bank_permissions() -> Vec<Permission> {
-    let mut permissions: Vec<Permission> = vec![];
-    permissions.push(Permission {
-        permission_id: PERMISSION_ADMIN.to_string(),
-        access_roles: vec![AccessRole::Admin],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_READ_FEATURES.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_WRITE_WALLET.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_READ_WALLET.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_READ_TRANSFER.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_WRITE_TRANSFER.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_READ_OPERATION.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User],
-    });
-    permissions.push(Permission {
-        permission_id: PERMISSION_WRITE_OPERATION.to_string(),
-        access_roles: vec![AccessRole::Admin, AccessRole::User],
-    });
-
-    permissions
+    vec![
+        Permission {
+            permission_id: PERMISSION_ADMIN.to_string(),
+            access_roles: vec![AccessRole::Admin],
+        },
+        Permission {
+            permission_id: PERMISSION_READ_FEATURES.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
+        },
+        Permission {
+            permission_id: PERMISSION_WRITE_WALLET.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_READ_WALLET.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_READ_TRANSFER.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_WRITE_TRANSFER.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_READ_OPERATION.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_WRITE_OPERATION.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+    ]
 }
 
 #[stable_object(size = 96)]

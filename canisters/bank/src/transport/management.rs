@@ -7,21 +7,10 @@ pub struct BankPermissionDTO {
     pub access_roles: Vec<AccountRoleDTO>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, Clone, Debug, Default)]
 pub struct BankCanisterInit {
     pub owners: Option<Vec<Principal>>,
     pub approval_threshold: Option<u8>,
     pub permissions: Option<Vec<BankPermissionDTO>>,
     pub wallet_policies: Option<Vec<WalletPolicyDTO>>,
-}
-
-impl Default for BankCanisterInit {
-    fn default() -> Self {
-        Self {
-            approval_threshold: None,
-            permissions: None,
-            owners: None,
-            wallet_policies: None,
-        }
-    }
 }

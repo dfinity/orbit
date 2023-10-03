@@ -62,10 +62,7 @@ impl AccountService {
                 role: None,
             });
 
-        match results.first() {
-            Some(account) => Some(account.to_owned()),
-            None => None,
-        }
+        results.first().map(|account| account.to_owned())
     }
 
     /// Removes the admin role from the given identity if it has an associated account.

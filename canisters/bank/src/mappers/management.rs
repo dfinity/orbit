@@ -1,7 +1,6 @@
 use crate::{
-    core::{CanisterConfig, Permission},
+    core::{BankAsset, CanisterConfig, Permission},
     transport::{BankAssetDTO, BankCanisterInit, BankFeaturesDTO},
-    types::BankAsset,
 };
 use ic_canister_core::cdk::api::time;
 use std::collections::HashSet;
@@ -72,9 +71,6 @@ impl CanisterConfig {
                 .collect();
         }
 
-        self.owners = init
-            .owners
-            .map(|owner| owner)
-            .unwrap_or(self.owners.to_owned());
+        self.owners = init.owners.unwrap_or(self.owners.to_owned());
     }
 }
