@@ -1,5 +1,9 @@
-use super::{AccountId, Operation, OperationCode, OperationId, OperationStatus};
+use crate::{
+    models::{AccountId, Operation, OperationCode, OperationId, OperationStatus},
+    repositories::OperationRepository,
+};
 use candid::{CandidType, Deserialize};
+use ic_canister_core::repository::Repository;
 use ic_canister_macros::stable_object;
 
 /// Index of operations by the account id.
@@ -29,5 +33,13 @@ impl Operation {
             code: self.code.to_owned(),
             account_id: self.account_id.to_owned(),
         }
+    }
+}
+
+impl OperationAccountIndex {
+    pub fn to_operation(&self) -> Operation {
+        OperationRepository::default()
+            .get(&Operation::key(self.id))
+            .expect("Operation not found")
     }
 }

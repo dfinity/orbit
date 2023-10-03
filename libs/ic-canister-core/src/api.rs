@@ -1,16 +1,30 @@
 use crate::utils::to_snake_case;
 use candid::{CandidType, Deserialize};
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+};
 
 /// Generic service error type used for service calls.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ApiError {
     /// The error code uppercased and underscored (e.g. `INVALID_ARGUMENT`).
-    code: String,
+    pub code: String,
     /// The error message that describes the error.
-    message: Option<String>,
+    pub message: Option<String>,
     /// The error details if any.
-    details: Option<HashMap<String, String>>,
+    pub details: Option<HashMap<String, String>>,
+}
+
+impl Display for ApiError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}: {}",
+            self.code,
+            self.message.as_ref().unwrap_or(&"no message".to_string())
+        )
+    }
 }
 
 impl ApiError {

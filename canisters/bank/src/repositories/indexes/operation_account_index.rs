@@ -1,9 +1,11 @@
-use super::OperationRepository;
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_ACCOUNT_INDEX_MEMORY_ID},
-    models::{Operation, OperationAccountIndex, OperationAccountIndexCriteria, OperationCode},
+    models::{
+        indexes::operation_account_index::{OperationAccountIndex, OperationAccountIndexCriteria},
+        Operation, OperationCode,
+    },
 };
-use ic_canister_core::repository::{IndexRepository, Repository};
+use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
@@ -53,14 +55,10 @@ impl IndexRepository<OperationAccountIndex, Operation> for OperationAccountIndex
                 id: [u8::MAX; 16],
             };
 
-            let operation_repository = OperationRepository::default();
             db.borrow()
                 .range(start_key..=end_key)
                 .take_while(|(index, _)| {
-                    let operation = operation_repository
-                        .get(&Operation::key(index.id))
-                        .expect("Operation not found");
-
+                    let operation = index.to_operation();
                     let mut code_matches_criteria = true;
                     let mut status_matches_criteria = true;
                     let mut read_matches_criteria = true;
@@ -76,11 +74,7 @@ impl IndexRepository<OperationAccountIndex, Operation> for OperationAccountIndex
 
                     code_matches_criteria && status_matches_criteria && read_matches_criteria
                 })
-                .map(|(index, _)| {
-                    operation_repository
-                        .get(&Operation::key(index.id))
-                        .expect("Operation not found")
-                })
+                .map(|(index, _)| index.to_operation())
                 .collect::<Vec<Operation>>()
         })
     }

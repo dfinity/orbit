@@ -39,6 +39,9 @@ pub enum TransferStatusDTO {
     Cancelled {
         reason: Option<String>,
     },
+    Processing {
+        started_at: TimestampRfc3339,
+    },
     Submitted,
     Pending,
     Completed {

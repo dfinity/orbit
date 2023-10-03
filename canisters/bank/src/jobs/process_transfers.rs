@@ -1,21 +1,32 @@
 use crate::{
     factories::blockchains::BlockchainApiFactory,
-    models::{Transfer, TransferStatus, Wallet},
-    repositories::{TransferQueueRepository, TransferRepository, WalletRepository},
+    models::{
+        indexes::transfer_execution_time_index::TransferExecutionTimeIndexCriteria, TransferStatus,
+        Wallet,
+    },
+    repositories::{
+        indexes::transfer_execution_time_index::TransferExecutionTimeIndexRepository,
+        TransferRepository, WalletRepository,
+    },
 };
-use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
+use ic_canister_core::{
+    api::ApiError,
+    cdk::spawn,
+    repository::{IndexRepository, Repository},
+};
 use ic_cdk::api::time;
 use std::time::Duration;
 
 #[derive(Debug, Default)]
 pub struct ProcessTransfersJob {
-    transfer_queue: TransferQueueRepository,
+    transfer_execution_time_index: TransferExecutionTimeIndexRepository,
     transfer_repository: TransferRepository,
     wallet_repository: WalletRepository,
 }
 
 impl ProcessTransfersJob {
     pub const INTERVAL_SECS: u64 = 5;
+    pub const MAX_BATCH_SIZE: usize = 20;
 
     pub fn register() {
         let interval = Duration::from_secs(Self::INTERVAL_SECS);
@@ -26,65 +37,55 @@ impl ProcessTransfersJob {
 
     pub async fn run() {
         ProcessTransfersJob::default()
-            .process_transfers()
+            .process_approved_transfers()
             .await
             .expect("Failed to process transfers");
     }
 
-    pub async fn process_transfers(&self) -> Result<(), ApiError> {
+    pub async fn process_approved_transfers(&self) -> Result<(), ApiError> {
         let current_time = time();
-        let queue_items = self
-            .transfer_queue
-            .find_all_until_execution_dt(&current_time);
+        let mut transfers = self.transfer_execution_time_index.find_by_criteria(
+            TransferExecutionTimeIndexCriteria {
+                to_dt: current_time,
+                status: Some(TransferStatus::Approved.to_string()),
+            },
+        );
+        // truncate the list to avoid processing too many transfers at once
+        transfers.truncate(Self::MAX_BATCH_SIZE);
+        // update the status of the transfers to avoid processing them again
+        for transfer in transfers.iter_mut() {
+            transfer.status = TransferStatus::Processing { started_at: time() };
+            transfer.last_modification_timestamp = time();
+            self.transfer_repository
+                .insert(transfer.as_key(), transfer.to_owned());
+        }
+        // process the transfers
+        for transfer in transfers.iter_mut() {
+            let wallet = self
+                .wallet_repository
+                .get(&Wallet::key(transfer.from_wallet))
+                .expect("Wallet not found");
 
-        for queue_item in queue_items {
-            match queue_item.transfer_status.as_str() {
-                "approved" => {
-                    let transfer = self
-                        .transfer_repository
-                        .get(&Transfer::key(queue_item.transfer_id));
+            let blockchain_api = BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
 
-                    match transfer {
-                        Some(mut transfer) => {
-                            let wallet = self
-                                .wallet_repository
-                                .get(&Wallet::key(transfer.from_wallet))
-                                .expect("Wallet not found");
-
-                            let blockchain_api =
-                                BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
-
-                            let result =
-                                blockchain_api.submit_transaction(&wallet, &transfer).await;
-
-                            if result.is_ok() {
-                                transfer.status = TransferStatus::Completed {
-                                    completed_at: time(),
-                                    hash: None,
-                                    signature: None,
-                                };
-                                transfer.last_modification_timestamp = time();
-                            } else {
-                                transfer.status = TransferStatus::Rejected {
-                                    reason: "Failed to submit transaction".to_string(),
-                                };
-                                transfer.last_modification_timestamp = time();
-                            }
-
-                            self.transfer_repository
-                                .insert(transfer.as_key(), transfer.to_owned());
-                            self.transfer_queue.remove(&queue_item.as_key());
-                        }
-                        None => {
-                            self.transfer_queue.remove(&queue_item.as_key());
-                        }
-                    }
+            match blockchain_api.submit_transaction(&wallet, transfer).await {
+                Ok(_) => {
+                    transfer.status = TransferStatus::Completed {
+                        completed_at: time(),
+                        hash: None,
+                        signature: None,
+                    };
                 }
-                "submitted" => {
-                    todo!()
+                Err(error) => {
+                    transfer.status = TransferStatus::Rejected {
+                        reason: format!("Failed to submit transaction, due to: {}", error),
+                    };
                 }
-                _ => {}
-            }
+            };
+
+            transfer.last_modification_timestamp = time();
+            self.transfer_repository
+                .insert(transfer.as_key(), transfer.to_owned());
         }
 
         Ok(())

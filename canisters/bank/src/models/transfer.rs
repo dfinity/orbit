@@ -30,6 +30,9 @@ pub enum TransferStatus {
     Cancelled {
         reason: Option<String>,
     },
+    Processing {
+        started_at: Timestamp,
+    },
     Submitted,
     Pending,
     Completed {
@@ -49,6 +52,7 @@ impl Display for TransferStatus {
             TransferStatus::Cancelled { .. } => write!(f, "cancelled"),
             TransferStatus::Submitted => write!(f, "submitted"),
             TransferStatus::Pending => write!(f, "pending"),
+            TransferStatus::Processing { .. } => write!(f, "processing"),
             TransferStatus::Completed { .. } => write!(f, "completed"),
             TransferStatus::Approved => write!(f, "approved"),
             TransferStatus::Rejected { .. } => write!(f, "rejected"),

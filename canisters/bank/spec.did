@@ -305,6 +305,11 @@ type TransferStatus = variant {
   };
   // The transfer has been submitted for execution.
   Submitted;
+  // The transfer is being processed.
+  Processing : record {
+    // The time at which the transfer started being processed.
+    started_at : TimestampRFC3339;
+  },
   // The transfer has been completed.
   //
   // For natively supported tokens this means that the transaction has

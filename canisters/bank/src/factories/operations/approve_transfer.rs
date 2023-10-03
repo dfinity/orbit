@@ -2,11 +2,14 @@ use super::OperationProcessor;
 use crate::{
     mappers::HelperMapper,
     models::{
-        Operation, OperationCode, OperationFeedback, OperationStatus,
-        OperationTransferIndexCriteria, Transfer, TransferStatus,
+        indexes::operation_transfer_index::OperationTransferIndexCriteria, Operation,
+        OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
         OPERATION_METADATA_KEY_TRANSFER_ID,
     },
-    repositories::{OperationRepository, OperationTransferIndexRepository, TransferRepository},
+    repositories::{
+        indexes::operation_transfer_index::OperationTransferIndexRepository, OperationRepository,
+        TransferRepository,
+    },
 };
 use async_trait::async_trait;
 use ic_canister_core::cdk::api::time;

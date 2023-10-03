@@ -102,25 +102,32 @@ impl TransferMapper {
                     }
                 }
             },
-            status: match transfer.status {
-                TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
-                    reason: reason.map(|r| r.to_owned()),
-                },
-                TransferStatus::Submitted => TransferStatusDTO::Submitted,
-                TransferStatus::Pending => TransferStatusDTO::Pending,
-                TransferStatus::Completed {
-                    signature,
-                    hash,
-                    completed_at,
-                } => TransferStatusDTO::Completed {
-                    signature: signature.map(|s| s.to_owned()),
-                    hash: hash.map(|h| h.to_owned()),
-                    completed_at: timestamp_to_rfc3339(&completed_at),
-                },
-                TransferStatus::Approved => TransferStatusDTO::Approved,
-                TransferStatus::Rejected { reason } => TransferStatusDTO::Rejected {
-                    reason: reason.to_owned(),
-                },
+            status: self.to_transfer_status_dto(transfer.status),
+        }
+    }
+
+    pub fn to_transfer_status_dto(&self, status: TransferStatus) -> TransferStatusDTO {
+        match status {
+            TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
+                reason: reason.map(|r| r.to_owned()),
+            },
+            TransferStatus::Processing { started_at } => TransferStatusDTO::Processing {
+                started_at: timestamp_to_rfc3339(&started_at),
+            },
+            TransferStatus::Submitted => TransferStatusDTO::Submitted,
+            TransferStatus::Pending => TransferStatusDTO::Pending,
+            TransferStatus::Completed {
+                signature,
+                hash,
+                completed_at,
+            } => TransferStatusDTO::Completed {
+                signature: signature.map(|s| s.to_owned()),
+                hash: hash.map(|h| h.to_owned()),
+                completed_at: timestamp_to_rfc3339(&completed_at),
+            },
+            TransferStatus::Approved => TransferStatusDTO::Approved,
+            TransferStatus::Rejected { reason } => TransferStatusDTO::Rejected {
+                reason: reason.to_owned(),
             },
         }
     }
@@ -134,26 +141,7 @@ impl TransferMapper {
             amount: transfer.amount,
             to: transfer.to_address,
             created_at: timestamp_to_rfc3339(&transfer.created_timestamp),
-            status: match transfer.status {
-                TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
-                    reason: reason.map(|r| r.to_owned()),
-                },
-                TransferStatus::Submitted => TransferStatusDTO::Submitted,
-                TransferStatus::Pending => TransferStatusDTO::Pending,
-                TransferStatus::Completed {
-                    signature,
-                    hash,
-                    completed_at,
-                } => TransferStatusDTO::Completed {
-                    signature: signature.map(|s| s.to_owned()),
-                    hash: hash.map(|h| h.to_owned()),
-                    completed_at: timestamp_to_rfc3339(&completed_at),
-                },
-                TransferStatus::Approved => TransferStatusDTO::Approved,
-                TransferStatus::Rejected { reason } => TransferStatusDTO::Rejected {
-                    reason: reason.to_owned(),
-                },
-            },
+            status: self.to_transfer_status_dto(transfer.status),
         }
     }
 }

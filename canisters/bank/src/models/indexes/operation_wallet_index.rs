@@ -1,9 +1,11 @@
-use super::{
+use crate::mappers::HelperMapper;
+use crate::models::{
     Operation, OperationCode, OperationId, OperationStatus, WalletId,
     OPERATION_METADATA_KEY_WALLET_ID,
 };
-use crate::mappers::HelperMapper;
+use crate::repositories::OperationRepository;
 use candid::{CandidType, Deserialize};
+use ic_canister_core::repository::Repository;
 use ic_canister_macros::stable_object;
 
 /// Index of operations by wallet id.
@@ -41,5 +43,13 @@ impl Operation {
             code: self.code.to_owned(),
             wallet_id: *wallet_id.as_bytes(),
         }
+    }
+}
+
+impl OperationWalletIndex {
+    pub fn to_operation(&self) -> Operation {
+        OperationRepository::default()
+            .get(&Operation::key(self.id))
+            .expect("Operation not found")
     }
 }

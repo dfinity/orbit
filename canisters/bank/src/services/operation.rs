@@ -4,11 +4,18 @@ use crate::{
     errors::OperationError,
     mappers::{HelperMapper, OperationMapper},
     models::{
-        Account, Operation, OperationAccountIndexCriteria, OperationFeedback, OperationId,
-        OperationStatus, OperationWalletIndexCriteria,
+        indexes::{
+            operation_account_index::OperationAccountIndexCriteria,
+            operation_wallet_index::OperationWalletIndexCriteria,
+        },
+        Account, Operation, OperationFeedback, OperationId, OperationStatus,
     },
     repositories::{
-        OperationAccountIndexRepository, OperationRepository, OperationWalletIndexRepository,
+        indexes::{
+            operation_account_index::OperationAccountIndexRepository,
+            operation_wallet_index::OperationWalletIndexRepository,
+        },
+        OperationRepository,
     },
     transport::{
         EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
@@ -26,8 +33,8 @@ pub struct OperationService {
     account_service: AccountService,
     wallet_service: WalletService,
     operation_repository: OperationRepository,
-    operation_account_index_repository: OperationAccountIndexRepository,
-    operation_wallet_index_repository: OperationWalletIndexRepository,
+    operation_account_index: OperationAccountIndexRepository,
+    operation_wallet_index: OperationWalletIndexRepository,
     operation_mapper: OperationMapper,
     helper_mapper: HelperMapper,
 }
@@ -143,7 +150,7 @@ impl OperationService {
             None => None,
         };
         let dtos = self
-            .operation_account_index_repository
+            .operation_account_index
             .find_by_criteria(OperationAccountIndexCriteria {
                 account_id: account.id,
                 code: filter_by_code,
@@ -175,7 +182,7 @@ impl OperationService {
             None => None,
         };
         let dtos = self
-            .operation_wallet_index_repository
+            .operation_wallet_index
             .find_by_criteria(OperationWalletIndexCriteria {
                 wallet_id: wallet.id,
                 code: filter_by_code,

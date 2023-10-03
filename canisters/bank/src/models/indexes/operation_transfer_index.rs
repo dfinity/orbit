@@ -1,9 +1,13 @@
-use super::{
-    Operation, OperationCode, OperationId, OperationStatus, TransferId,
-    OPERATION_METADATA_KEY_TRANSFER_ID,
+use crate::{
+    mappers::HelperMapper,
+    models::{
+        Operation, OperationCode, OperationId, OperationStatus, TransferId,
+        OPERATION_METADATA_KEY_TRANSFER_ID,
+    },
+    repositories::OperationRepository,
 };
-use crate::mappers::HelperMapper;
 use candid::{CandidType, Deserialize};
+use ic_canister_core::repository::Repository;
 use ic_canister_macros::stable_object;
 
 /// Index of operations by transfer id.
@@ -41,5 +45,13 @@ impl Operation {
             code: self.code.to_owned(),
             transfer_id: *transfer_id.as_bytes(),
         }
+    }
+}
+
+impl OperationTransferIndex {
+    pub fn to_operation(&self) -> Operation {
+        OperationRepository::default()
+            .get(&Operation::key(self.id))
+            .expect("Operation not found")
     }
 }

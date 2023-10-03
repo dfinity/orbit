@@ -1,13 +1,13 @@
-use super::{
-    OperationAccountIndexRepository, OperationTransferIndexRepository,
-    OperationWalletIndexRepository,
+use super::indexes::{
+    operation_account_index::OperationAccountIndexRepository,
+    operation_transfer_index::OperationTransferIndexRepository,
+    operation_wallet_index::OperationWalletIndexRepository,
 };
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_MEMORY_ID},
     models::{Operation, OperationKey},
 };
-use ic_canister_core::repository::IndexRepository;
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{IndexRepository, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
