@@ -1,5 +1,5 @@
 use crate::{
-    core::{with_memory_manager, Memory, TRANSFER_LIST_INDEX_MEMORY_ID},
+    core::{with_memory_manager, Memory, TRANSFER_WALLET_INDEX_MEMORY_ID},
     errors::RepositoryError,
     models::{
         indexes::transfer_wallet_index::{TransferWalletIndex, TransferWalletIndexCriteria},
@@ -17,7 +17,7 @@ thread_local! {
   /// The memory reference to the Transfer repository.
   static DB: RefCell<StableBTreeMap<TransferWalletIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(TRANSFER_LIST_INDEX_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(TRANSFER_WALLET_INDEX_MEMORY_ID))
     )
   })
 }

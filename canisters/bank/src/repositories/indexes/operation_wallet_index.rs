@@ -1,5 +1,5 @@
 use crate::{
-    core::{with_memory_manager, Memory, OPERATION_ACCOUNT_INDEX_MEMORY_ID},
+    core::{with_memory_manager, Memory, OPERATION_WALLET_INDEX_MEMORY_ID},
     models::{
         indexes::operation_wallet_index::{OperationWalletIndex, OperationWalletIndexCriteria},
         Operation, OperationCode,
@@ -12,7 +12,7 @@ use std::cell::RefCell;
 thread_local! {
   static DB: RefCell<StableBTreeMap<OperationWalletIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(OPERATION_ACCOUNT_INDEX_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(OPERATION_WALLET_INDEX_MEMORY_ID))
     )
   })
 }
