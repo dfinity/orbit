@@ -107,12 +107,31 @@ impl BankPermissionDTO {
     }
 }
 
+impl Permission {
+    pub fn to_dto(&self) -> BankPermissionDTO {
+        BankPermissionDTO {
+            permission_id: self.permission_id.clone(),
+            access_roles: self.access_roles.iter().map(|role| role.to_dto()).collect(),
+        }
+    }
+}
+
 impl AccountRoleDTO {
     pub fn to_access_role(&self) -> AccessRole {
         match self {
             AccountRoleDTO::Admin => AccessRole::Admin,
             AccountRoleDTO::User => AccessRole::User,
             AccountRoleDTO::Guest => AccessRole::Guest,
+        }
+    }
+}
+
+impl AccessRole {
+    pub fn to_dto(&self) -> AccountRoleDTO {
+        match self {
+            AccessRole::Admin => AccountRoleDTO::Admin,
+            AccessRole::User => AccountRoleDTO::User,
+            AccessRole::Guest => AccountRoleDTO::Guest,
         }
     }
 }

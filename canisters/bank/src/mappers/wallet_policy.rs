@@ -7,8 +7,8 @@ use crate::{
 pub struct WalletPolicyMapper {}
 
 impl WalletPolicyMapper {
-    pub fn to_dto(&self, wallet: WalletPolicy) -> WalletPolicyDTO {
-        match wallet {
+    pub fn to_dto(&self, policy: WalletPolicy) -> WalletPolicyDTO {
+        match policy {
             WalletPolicy::ApprovalThreshold(threshold) => {
                 WalletPolicyDTO::ApprovalThreshold(match threshold {
                     ApprovalThresholdPolicy::VariableThreshold(threshold) => {

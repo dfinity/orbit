@@ -3,7 +3,11 @@ use crate::{
     transport::AccountDTO,
 };
 use candid::Principal;
-use ic_canister_core::{cdk::api::time, types::UUID, utils::rfc3339_to_timestamp};
+use ic_canister_core::{
+    cdk::api::time,
+    types::UUID,
+    utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
+};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -62,6 +66,18 @@ impl AccountDTO {
             last_modification_timestamp: rfc3339_to_timestamp(
                 self.last_modification_timestamp.as_str(),
             ),
+        }
+    }
+}
+
+impl Account {
+    pub fn to_dto(&self) -> AccountDTO {
+        AccountDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            identities: self.identities.to_owned(),
+            unconfirmed_identities: self.unconfirmed_identities.to_owned(),
+            access_roles: self.access_roles.iter().map(|role| role.to_dto()).collect(),
+            last_modification_timestamp: timestamp_to_rfc3339(&self.last_modification_timestamp),
         }
     }
 }

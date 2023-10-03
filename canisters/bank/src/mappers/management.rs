@@ -1,12 +1,18 @@
+use super::WalletPolicyMapper;
 use crate::{
     core::{BankAsset, CanisterConfig, Permission},
-    transport::{BankAssetDTO, BankCanisterInit, BankFeaturesDTO},
+    models::Account,
+    transport::{
+        BankAssetDTO, BankCanisterInit, BankFeaturesDTO, BankPermissionDTO, BankSettingsDTO,
+    },
 };
-use ic_canister_core::cdk::api::time;
+use ic_canister_core::{cdk::api::time, utils::timestamp_to_rfc3339};
 use std::collections::HashSet;
 
 #[derive(Default, Clone, Debug)]
-pub struct ManagementMapper {}
+pub struct ManagementMapper {
+    wallet_policy_mapper: WalletPolicyMapper,
+}
 
 impl ManagementMapper {
     pub fn bank_features(&self, supported_assets: HashSet<BankAsset>) -> BankFeaturesDTO {
@@ -26,6 +32,35 @@ impl ManagementMapper {
                     metadata: asset.metadata,
                 })
                 .collect(),
+        }
+    }
+
+    pub fn bank_settings(&self, config: CanisterConfig, owners: Vec<Account>) -> BankSettingsDTO {
+        BankSettingsDTO {
+            approval_threshold: config.approval_threshold,
+            owners: owners.iter().map(|owner| owner.to_dto()).collect(),
+            permissions: config
+                .permissions
+                .iter()
+                .map(|permission| {
+                    let access_roles = permission
+                        .access_roles
+                        .iter()
+                        .map(|role| role.to_dto())
+                        .collect();
+
+                    BankPermissionDTO {
+                        permission_id: permission.permission_id.to_owned(),
+                        access_roles,
+                    }
+                })
+                .collect(),
+            wallet_policies: config
+                .wallet_policies
+                .iter()
+                .map(|policy| self.wallet_policy_mapper.to_dto(policy.to_owned()))
+                .collect(),
+            last_upgrade_timestamp: timestamp_to_rfc3339(&config.last_upgrade_timestamp),
         }
     }
 }

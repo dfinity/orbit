@@ -1,13 +1,14 @@
 use super::AccountService;
 use crate::{
     core::{
-        canister_config_mut, get_bank_assets, write_canister_config, CallContext, CanisterConfig,
-        WithCallContext,
+        canister_config, canister_config_mut, get_bank_assets, write_canister_config, CallContext,
+        CanisterConfig, WithCallContext,
     },
     mappers::ManagementMapper,
-    transport::{BankCanisterInit, BankFeaturesDTO},
+    models::Account,
+    transport::{BankCanisterInit, BankFeaturesDTO, BankSettingsDTO},
 };
-use ic_canister_core::api::ServiceResult;
+use ic_canister_core::{api::ServiceResult, cdk::api::time};
 
 #[derive(Default, Debug)]
 pub struct ManagementService {
@@ -57,14 +58,18 @@ impl ManagementService {
 
     pub async fn canister_init(&self, input: Option<BankCanisterInit>) {
         let init = input.unwrap_or_default();
-        let config = CanisterConfig::default();
+        let config = CanisterConfig {
+            last_upgrade_timestamp: time(),
+            ..Default::default()
+        };
 
         self.register_canister_config(config, init).await;
     }
 
     pub async fn canister_post_upgrade(&self, input: Option<BankCanisterInit>) {
         let init = input.unwrap_or_default();
-        let config = canister_config_mut();
+        let mut config = canister_config_mut();
+        config.last_upgrade_timestamp = time();
 
         self.register_canister_config(config, init).await;
     }
@@ -73,5 +78,23 @@ impl ManagementService {
         let supported_assets = get_bank_assets();
 
         Ok(self.management_mapper.bank_features(supported_assets))
+    }
+
+    pub async fn get_bank_settings(&self) -> ServiceResult<BankSettingsDTO> {
+        let canister_config = canister_config();
+        let mut owners: Vec<Account> = vec![];
+        for owner_principal in canister_config.owners.iter() {
+            let owner_account = self
+                .account_service
+                .find_account_by_identity(owner_principal)
+                .expect("Owner account not found");
+
+            owners.push(owner_account);
+        }
+        let settings = self
+            .management_mapper
+            .bank_settings(canister_config, owners);
+
+        Ok(settings)
     }
 }

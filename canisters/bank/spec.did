@@ -551,8 +551,8 @@ type GetFeaturesResult = variant {
 type BankSettings = record {
   // The default wallet policies that are applied to all wallets.
   wallet_policies : vec WalletPolicy;
-  // The list of accounts associated with the bank.
-  accounts : vec Account;
+  // The list of admin accounts associated with the bank.
+  owners : vec Account;
   // The percentage of approvals required for a bank operation to be
   // executed (e.g. upgrade the canister).
   //
@@ -562,6 +562,8 @@ type BankSettings = record {
   approval_threshold : nat8;
   // The list of permissions that are applied to the bank.
   permissions : vec BankPermission;
+  // The time at which the bank was last upgraded.
+  last_upgrade_timestamp: TimestampRFC3339;
 };
 
 // Result type for getting the bank settings.

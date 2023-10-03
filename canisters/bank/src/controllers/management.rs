@@ -2,7 +2,7 @@ use crate::{
     core::{CallContext, WithCallContext},
     jobs::register_jobs,
     services::ManagementService,
-    transport::{BankCanisterInit, BankFeaturesResponse},
+    transport::{BankCanisterInit, BankFeaturesResponse, BankSettingsResponse},
 };
 use ic_canister_core::api::ApiResult;
 use ic_cdk_macros::{init, post_upgrade, query};
@@ -15,6 +15,16 @@ async fn get_bank_features() -> ApiResult<BankFeaturesResponse> {
         .await?;
 
     Ok(BankFeaturesResponse { features })
+}
+
+#[query(name = "bank_settings")]
+async fn bank_settings() -> ApiResult<BankSettingsResponse> {
+    let settings = ManagementService::new()
+        .with_call_context(CallContext::get())
+        .get_bank_settings()
+        .await?;
+
+    Ok(BankSettingsResponse { settings })
 }
 
 #[init]
