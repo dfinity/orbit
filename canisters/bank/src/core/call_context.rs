@@ -49,7 +49,7 @@ pub fn check_access(permission: &str, caller: Principal) {
     let permission = permissions
         .iter()
         .find(|p| p.permission_id == permission)
-        .expect(format!("Permission {} not found", permission).as_str());
+        .unwrap_or_else(|| trap(format!("Permission {} not found", permission).as_str()));
 
     if permission.access_roles.contains(&AccessRole::Guest) {
         return;
@@ -57,13 +57,15 @@ pub fn check_access(permission: &str, caller: Principal) {
 
     let account = AccountService::default()
         .find_account_by_identity(&caller)
-        .expect(
-            format!(
-                "Access denied for user with principal `{}`",
-                caller.to_text()
+        .unwrap_or_else(|| {
+            trap(
+                format!(
+                    "Access denied for user with principal `{}`",
+                    caller.to_text()
+                )
+                .as_str(),
             )
-            .as_str(),
-        );
+        });
 
     if account.access_roles.contains(&AccessRole::Admin) {
         // Admins have access to everything

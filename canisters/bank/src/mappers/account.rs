@@ -99,7 +99,7 @@ impl Account {
         caller_identity: &Principal,
     ) -> Result<(), AccountError> {
         if let Some(new_identities) = identities {
-            if !new_identities.contains(&caller_identity) {
+            if !new_identities.contains(caller_identity) {
                 Err(AccountError::SelfLocked)?
             }
 

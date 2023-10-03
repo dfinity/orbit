@@ -21,7 +21,7 @@ mod operation;
 pub use operation::*;
 
 /// Account entrypoints, enabling the clients to manage their accounts.
-/// 
+///
 /// This includes creating, updating, removing and confirming accounts.
 mod account;
 pub use account::*;
