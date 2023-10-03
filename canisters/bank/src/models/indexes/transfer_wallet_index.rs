@@ -9,7 +9,7 @@ use ic_canister_macros::stable_object;
 use std::hash::Hash;
 
 /// Represents a transfer list index in the system.
-#[stable_object(size = 64)]
+#[stable_object(size = 128)]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferWalletIndex {
     /// The wallet associated with the transfer.
@@ -29,8 +29,8 @@ pub struct TransferWalletIndexCriteria {
 }
 
 impl TransferWalletIndex {
-    /// The default criteria interval in nanoseconds (30 days).
-    pub const DEFAULT_CRITERIA_INTERVAL_NS: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
+    /// The default criteria interval in nanoseconds (7 days).
+    pub const DEFAULT_CRITERIA_INTERVAL_NS: u64 = 7 * 24 * 60 * 60 * 1_000_000_000;
 
     pub fn to_transfer(&self) -> Transfer {
         TransferRepository::default()
