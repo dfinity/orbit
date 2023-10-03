@@ -1,4 +1,4 @@
-use super::{AccountId, Operation, OperationCode, OperationId};
+use super::{AccountId, Operation, OperationCode, OperationId, OperationStatus};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
@@ -14,8 +14,12 @@ pub struct OperationAccountIndex {
     pub id: OperationId,
 }
 
-impl OperationAccountIndex {
-    pub fn value(&self) {}
+#[derive(Clone, Debug)]
+pub struct OperationAccountIndexCriteria {
+    pub account_id: AccountId,
+    pub code: Option<OperationCode>,
+    pub status: Option<OperationStatus>,
+    pub read: Option<bool>,
 }
 
 impl Operation {

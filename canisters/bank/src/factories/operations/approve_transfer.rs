@@ -2,15 +2,16 @@ use super::OperationProcessor;
 use crate::{
     mappers::HelperMapper,
     models::{
-        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
+        Operation, OperationCode, OperationFeedback, OperationStatus,
+        OperationTransferIndexCriteria, Transfer, TransferStatus,
         OPERATION_METADATA_KEY_TRANSFER_ID,
     },
     repositories::{OperationRepository, OperationTransferIndexRepository, TransferRepository},
 };
 use async_trait::async_trait;
-use ic_canister_core::api::ApiError;
 use ic_canister_core::cdk::api::time;
 use ic_canister_core::repository::Repository;
+use ic_canister_core::{api::ApiError, repository::IndexRepository};
 
 #[derive(Default, Debug)]
 pub struct ApproveTransferOperationProcessor {
@@ -44,7 +45,12 @@ impl ApproveTransferOperationProcessor {
 
         let operations =
             self.operation_transfer_index
-                .find_all_within_criteria(transfer.id, None, None, None);
+                .find_by_criteria(OperationTransferIndexCriteria {
+                    transfer_id: transfer.id,
+                    code: None,
+                    read: None,
+                    status: None,
+                });
 
         let approvals = operations
             .iter()

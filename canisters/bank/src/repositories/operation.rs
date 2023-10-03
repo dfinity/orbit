@@ -1,7 +1,12 @@
+use super::{
+    OperationAccountIndexRepository, OperationTransferIndexRepository,
+    OperationWalletIndexRepository,
+};
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_MEMORY_ID},
     models::{Operation, OperationKey},
 };
+use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
@@ -24,7 +29,13 @@ impl Repository<OperationKey, Operation> for OperationRepository {
     }
 
     fn insert(&self, key: OperationKey, value: Operation) -> Option<Operation> {
-        DB.with(|m| m.borrow_mut().insert(key, value))
+        DB.with(|m| {
+            OperationAccountIndexRepository::default().insert(value.as_index_for_account());
+            OperationWalletIndexRepository::default().insert(value.as_index_for_wallet());
+            OperationTransferIndexRepository::default().insert(value.as_index_for_transfer());
+
+            m.borrow_mut().insert(key, value)
+        })
     }
 
     fn remove(&self, key: &OperationKey) -> Option<Operation> {

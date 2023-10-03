@@ -3,7 +3,10 @@ use crate::{
     core::{CallContext, WithCallContext},
     errors::OperationError,
     mappers::{HelperMapper, OperationMapper},
-    models::{Account, Operation, OperationFeedback, OperationId, OperationStatus},
+    models::{
+        Account, Operation, OperationAccountIndexCriteria, OperationFeedback, OperationId,
+        OperationStatus, OperationWalletIndexCriteria,
+    },
     repositories::{
         OperationAccountIndexRepository, OperationRepository, OperationWalletIndexRepository,
     },
@@ -12,9 +15,9 @@ use crate::{
         ListWalletOperationsInput, OperationDTO, OperationListItemDTO,
     },
 };
-use ic_canister_core::api::ServiceResult;
 use ic_canister_core::cdk::api::time;
 use ic_canister_core::repository::Repository;
+use ic_canister_core::{api::ServiceResult, repository::IndexRepository};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -141,14 +144,14 @@ impl OperationService {
         };
         let dtos = self
             .operation_account_index_repository
-            .find_all_within_criteria(
-                account.id,
-                filter_by_code,
-                input
+            .find_by_criteria(OperationAccountIndexCriteria {
+                account_id: account.id,
+                code: filter_by_code,
+                status: input
                     .status
                     .map(|status| self.operation_mapper.to_status(status)),
-                input.read,
-            )
+                read: input.read,
+            })
             .iter()
             .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
             .collect::<Vec<OperationListItemDTO>>();
@@ -173,14 +176,14 @@ impl OperationService {
         };
         let dtos = self
             .operation_wallet_index_repository
-            .find_all_within_criteria(
-                wallet.id,
-                filter_by_code,
-                input
+            .find_by_criteria(OperationWalletIndexCriteria {
+                wallet_id: wallet.id,
+                code: filter_by_code,
+                status: input
                     .status
                     .map(|status| self.operation_mapper.to_status(status)),
-                input.read,
-            )
+                read: input.read,
+            })
             .iter()
             .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
             .collect::<Vec<OperationListItemDTO>>();

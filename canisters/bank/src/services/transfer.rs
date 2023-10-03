@@ -1,8 +1,8 @@
 use super::{AccountService, WalletService};
 use crate::{
-    blockchains::BlockchainApiFactory,
     core::{CallContext, WithCallContext},
     errors::{AccountError, TransferError, WalletError},
+    factories::blockchains::BlockchainApiFactory,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
@@ -10,8 +10,7 @@ use crate::{
         WalletPolicy, OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
     },
     repositories::{
-        OperationAccountIndexRepository, OperationRepository, OperationTransferIndexRepository,
-        OperationWalletIndexRepository, TransferListIndexRepository, TransferQueueRepository,
+        OperationRepository, TransferListIndexRepository, TransferQueueRepository,
         TransferRepository, WalletRepository,
     },
     transport::{
@@ -39,9 +38,6 @@ pub struct TransferService {
     transfer_queue_repository: TransferQueueRepository,
     transfer_list_index_repository: TransferListIndexRepository,
     operation_repository: OperationRepository,
-    operation_wallet_index_repository: OperationWalletIndexRepository,
-    operation_account_index_repository: OperationAccountIndexRepository,
-    operation_transfer_index_repository: OperationTransferIndexRepository,
 }
 
 impl WithCallContext for TransferService {
@@ -175,12 +171,6 @@ impl TransferService {
         operations.iter().for_each(|operation| {
             self.operation_repository
                 .insert(operation.as_key(), operation.to_owned());
-            self.operation_account_index_repository
-                .insert(operation.as_index_for_account(), ());
-            self.operation_wallet_index_repository
-                .insert(operation.as_index_for_wallet(), ());
-            self.operation_transfer_index_repository
-                .insert(operation.as_index_for_transfer(), ());
         });
 
         let processor = OperationProcessorFactory::build(&OperationCode::ApproveTransfer);

@@ -1,4 +1,7 @@
-use super::{Operation, OperationCode, OperationId, WalletId, OPERATION_METADATA_KEY_WALLET_ID};
+use super::{
+    Operation, OperationCode, OperationId, OperationStatus, WalletId,
+    OPERATION_METADATA_KEY_WALLET_ID,
+};
 use crate::mappers::HelperMapper;
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
@@ -15,8 +18,12 @@ pub struct OperationWalletIndex {
     pub id: OperationId,
 }
 
-impl OperationWalletIndex {
-    pub fn value(&self) {}
+#[derive(Clone, Debug)]
+pub struct OperationWalletIndexCriteria {
+    pub wallet_id: WalletId,
+    pub code: Option<OperationCode>,
+    pub status: Option<OperationStatus>,
+    pub read: Option<bool>,
 }
 
 impl Operation {

@@ -1,9 +1,9 @@
 use super::OperationRepository;
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_ACCOUNT_INDEX_MEMORY_ID},
-    models::{AccountId, Operation, OperationCode, OperationStatus, OperationWalletIndex},
+    models::{Operation, OperationCode, OperationWalletIndex, OperationWalletIndexCriteria},
 };
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{IndexRepository, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
@@ -19,41 +19,41 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct OperationWalletIndexRepository {}
 
-impl Repository<OperationWalletIndex, ()> for OperationWalletIndexRepository {
-    fn get(&self, key: &OperationWalletIndex) -> Option<()> {
-        DB.with(|m| m.borrow().get(key))
+impl IndexRepository<OperationWalletIndex, Operation> for OperationWalletIndexRepository {
+    type FindByCriteria = OperationWalletIndexCriteria;
+
+    fn exists(&self, key: &OperationWalletIndex) -> bool {
+        DB.with(|m| m.borrow().get(key).is_some())
     }
 
-    fn insert(&self, key: OperationWalletIndex, value: ()) -> Option<()> {
-        DB.with(|m| m.borrow_mut().insert(key, value))
+    fn insert(&self, key: OperationWalletIndex) {
+        DB.with(|m| m.borrow_mut().insert(key, ()));
     }
 
-    fn remove(&self, key: &OperationWalletIndex) -> Option<()> {
-        DB.with(|m| m.borrow_mut().remove(key))
+    fn remove(&self, key: &OperationWalletIndex) -> bool {
+        DB.with(|m| m.borrow_mut().remove(key).is_some())
     }
-}
 
-impl OperationWalletIndexRepository {
-    pub fn find_all_within_criteria(
-        &self,
-        wallet_id: AccountId,
-        code: Option<OperationCode>,
-        status: Option<OperationStatus>,
-        read: Option<bool>,
-    ) -> Vec<Operation> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Operation> {
         DB.with(|db| {
             let start_key = OperationWalletIndex {
-                wallet_id: wallet_id.to_owned(),
-                code: code.to_owned().unwrap_or(OperationCode::ApproveTransfer),
+                wallet_id: criteria.wallet_id.to_owned(),
+                code: criteria
+                    .code
+                    .to_owned()
+                    .unwrap_or(OperationCode::ApproveTransfer),
                 id: [u8::MIN; 16],
             };
             let end_key = OperationWalletIndex {
-                wallet_id: wallet_id.to_owned(),
-                code: code.to_owned().unwrap_or(OperationCode::ApproveTransfer),
+                wallet_id: criteria.wallet_id.to_owned(),
+                code: criteria
+                    .code
+                    .to_owned()
+                    .unwrap_or(OperationCode::ApproveTransfer),
                 id: [u8::MAX; 16],
             };
-            let operation_repository = OperationRepository::default();
 
+            let operation_repository = OperationRepository::default();
             db.borrow()
                 .range(start_key..=end_key)
                 .take_while(|(index, _)| {
@@ -64,13 +64,13 @@ impl OperationWalletIndexRepository {
                     let mut code_matches_criteria = true;
                     let mut status_matches_criteria = true;
                     let mut read_matches_criteria = true;
-                    if let Some(code) = &code {
+                    if let Some(code) = &criteria.code {
                         code_matches_criteria = index.code == *code;
                     }
-                    if let Some(status) = status.as_ref() {
+                    if let Some(status) = criteria.status.as_ref() {
                         status_matches_criteria = *status == operation.status;
                     }
-                    if let Some(read) = read {
+                    if let Some(read) = criteria.read {
                         read_matches_criteria = read == operation.read;
                     }
 

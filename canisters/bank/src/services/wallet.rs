@@ -1,8 +1,8 @@
 use super::AccountService;
 use crate::{
-    blockchains::BlockchainApiFactory,
     core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
     errors::{AccountError, WalletError},
+    factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
     models::{Wallet, WalletAccount, WalletBalance, WalletValidator},
     repositories::{WalletAccountRepository, WalletRepository},

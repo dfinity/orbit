@@ -1,5 +1,5 @@
 use crate::{
-    blockchains::BlockchainApiFactory,
+    factories::blockchains::BlockchainApiFactory,
     models::{Transfer, TransferStatus, Wallet},
     repositories::{TransferQueueRepository, TransferRepository, WalletRepository},
 };

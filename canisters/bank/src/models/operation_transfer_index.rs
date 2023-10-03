@@ -1,5 +1,6 @@
 use super::{
-    Operation, OperationCode, OperationId, TransferId, OPERATION_METADATA_KEY_TRANSFER_ID,
+    Operation, OperationCode, OperationId, OperationStatus, TransferId,
+    OPERATION_METADATA_KEY_TRANSFER_ID,
 };
 use crate::mappers::HelperMapper;
 use candid::{CandidType, Deserialize};
@@ -17,8 +18,12 @@ pub struct OperationTransferIndex {
     pub id: OperationId,
 }
 
-impl OperationTransferIndex {
-    pub fn value(&self) {}
+#[derive(Clone, Debug)]
+pub struct OperationTransferIndexCriteria {
+    pub transfer_id: TransferId,
+    pub code: Option<OperationCode>,
+    pub status: Option<OperationStatus>,
+    pub read: Option<bool>,
 }
 
 impl Operation {
