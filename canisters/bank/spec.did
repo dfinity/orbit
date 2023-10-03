@@ -567,7 +567,7 @@ type BankSettings = record {
 };
 
 // Result type for getting the bank settings.
-type BankSettingsResult = record {
+type BankSettingsResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The bank settings.
@@ -659,5 +659,5 @@ service : (opt BankInit) -> {
   // Get the bank settings.
   //
   // Required permission: "admin"
-  admin_settings : () -> (BankSettingsResult) query;
+  bank_settings : () -> (BankSettingsResult) query;
 };

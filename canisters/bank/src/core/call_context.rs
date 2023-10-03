@@ -1,18 +1,19 @@
-use super::{canister_config, CanisterConfig};
 use candid::Principal;
-use ic_canister_core::cdk::caller;
+use ic_canister_core::cdk::{api::trap, caller};
+
+use crate::{models::AccessRole, services::AccountService};
+
+use super::canister_config;
 
 #[derive(Clone, Debug)]
 pub struct CallContext {
     caller: Principal,
-    canister_config: CanisterConfig,
 }
 
 impl Default for CallContext {
     fn default() -> Self {
         Self {
             caller: Principal::anonymous(),
-            canister_config: CanisterConfig::default(),
         }
     }
 }
@@ -21,17 +22,53 @@ impl CallContext {
     /// This method can only be used before any await has been called in the current call context,
     /// otherwise it will panic.
     pub fn get() -> Self {
-        Self {
-            caller: caller(),
-            canister_config: canister_config(),
-        }
+        Self { caller: caller() }
     }
 
     pub fn caller(&self) -> Principal {
         self.caller
     }
 
-    pub fn canister_config(&self) -> CanisterConfig {
-        self.canister_config.clone()
+    /// Checks if the caller has the required access role to perform the given action.
+    pub fn check_access(&self, permission: &str) {
+        check_access(permission, self.caller.to_owned())
+    }
+}
+
+/// This function checks if the user has the required access role to perform the given action.
+pub fn check_access(permission: &str, caller: Principal) {
+    let permissions = canister_config().permissions;
+    let permission = permissions
+        .iter()
+        .find(|p| p.permission_id == permission)
+        .expect(format!("Permission {} not found", permission).as_str());
+
+    if permission.access_roles.contains(&AccessRole::Guest) {
+        return;
+    }
+
+    let account = AccountService::default()
+        .find_account_by_identity(&caller)
+        .expect(
+            format!(
+                "Access denied for user with principal `{}`",
+                caller.to_text()
+            )
+            .as_str(),
+        );
+
+    let user_has_access = permission
+        .access_roles
+        .iter()
+        .any(|required_role| account.access_roles.contains(required_role));
+
+    if !user_has_access {
+        trap(
+            format!(
+                "Access denied for user with principal `{}`",
+                caller.to_text()
+            )
+            .as_str(),
+        );
     }
 }
