@@ -1,0 +1,19 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "ic-canister-macros"
+version = "0.1.0"
+edition = "2021"
+authors = ["DFINITY Stiftung"]
+license = "Apache-2.0"
+include = ["src", "Cargo.toml"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+candid = "0.9.6"
+ic-stable-structures = "0.5.6"
+serde = "1.0.188"
+syn = { version = "2.0", features = ["extra-traits", "full"] }
+quote = "1.0"
+proc-macro2 = "1.0"

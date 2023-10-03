@@ -1,0 +1,264 @@
+use super::{AccountService, WalletService};
+use crate::{
+    core::{CallContext, WithCallContext},
+    errors::{AccountError, TransferError, WalletError},
+    factories::blockchains::BlockchainApiFactory,
+    factories::operations::OperationProcessorFactory,
+    mappers::{HelperMapper, TransferMapper},
+    models::{
+        indexes::transfer_wallet_index::TransferWalletIndexCriteria, Operation, OperationCode,
+        OperationFeedback, OperationStatus, Transfer, Wallet, WalletPolicy,
+        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
+    },
+    repositories::{
+        indexes::transfer_wallet_index::TransferWalletIndexRepository, OperationRepository,
+        TransferRepository, WalletRepository,
+    },
+    transport::{
+        GetTransferInput, GetWalletInput, ListWalletTransfersInput, TransferDTO, TransferInput,
+        TransferListItemDTO,
+    },
+};
+use candid::Nat;
+use ic_canister_core::{
+    api::ServiceResult,
+    repository::IndexRepository,
+    utils::{generate_uuid_v4, rfc3339_to_timestamp},
+};
+use ic_canister_core::{cdk::api::time, model::ModelValidator, repository::Repository};
+use uuid::Uuid;
+
+#[derive(Default, Debug)]
+pub struct TransferService {
+    call_context: CallContext,
+    account_service: AccountService,
+    helper_mapper: HelperMapper,
+    transfer_mapper: TransferMapper,
+    wallet_repository: WalletRepository,
+    wallet_service: WalletService,
+    transfer_repository: TransferRepository,
+    transfer_wallet_index: TransferWalletIndexRepository,
+    operation_repository: OperationRepository,
+}
+
+impl WithCallContext for TransferService {
+    fn with_call_context(&mut self, call_context: CallContext) -> &Self {
+        self.call_context = call_context.to_owned();
+        self.account_service
+            .with_call_context(call_context.to_owned());
+        self.wallet_service
+            .with_call_context(call_context.to_owned());
+
+        self
+    }
+}
+
+impl TransferService {
+    pub fn create() -> Self {
+        Default::default()
+    }
+
+    pub async fn get_transfer_core(&self, input: GetTransferInput) -> ServiceResult<Transfer> {
+        let transfer_key = Transfer::key(
+            *self
+                .helper_mapper
+                .uuid_from_str(input.transfer_id.to_owned())?
+                .as_bytes(),
+        );
+        let transfer = self.transfer_repository.get(&transfer_key).ok_or({
+            TransferError::TransferNotFound {
+                transfer_id: input.transfer_id.to_owned(),
+            }
+        })?;
+
+        Ok(transfer)
+    }
+
+    pub async fn check_transfer_access(&self, transfer: &Transfer) -> ServiceResult<()> {
+        let caller_account = self
+            .account_service
+            .resolve_account(&self.call_context.caller())
+            .await?;
+        let wallet_key = Wallet::key(transfer.from_wallet);
+        let wallet = self.wallet_repository.get(&wallet_key).ok_or({
+            WalletError::WalletNotFound {
+                id: Uuid::from_bytes(transfer.from_wallet)
+                    .hyphenated()
+                    .to_string(),
+            }
+        })?;
+        let is_transfer_creator = caller_account.id == transfer.initiator_account;
+        let is_wallet_owner = wallet.owners.contains(&caller_account.id);
+        if !is_transfer_creator && !is_wallet_owner {
+            Err(WalletError::Forbidden {
+                wallet: Uuid::from_bytes(transfer.from_wallet)
+                    .hyphenated()
+                    .to_string(),
+            })?
+        }
+
+        Ok(())
+    }
+
+    pub async fn get_transfer(&self, input: GetTransferInput) -> ServiceResult<TransferDTO> {
+        let transfer = self.get_transfer_core(input).await?;
+        self.check_transfer_access(&transfer).await?;
+        let dto = self.transfer_mapper.transfer_to_dto(transfer);
+        Ok(dto)
+    }
+
+    pub async fn create_transfer(&self, input: TransferInput) -> ServiceResult<TransferDTO> {
+        // validate account is owner of wallet
+        let caller_account = match self
+            .account_service
+            .maybe_resolve_account(&self.call_context.caller())
+            .await?
+        {
+            Some(account) => account,
+            None => Err(AccountError::NotFoundAccountIdentity {
+                identity: self.call_context.caller().to_text(),
+            })?,
+        };
+        let wallet_id = self
+            .helper_mapper
+            .uuid_from_str(input.from_wallet_id.clone())?;
+        let wallet_key = Wallet::key(*wallet_id.as_bytes());
+        let wallet =
+            self.wallet_repository
+                .get(&wallet_key)
+                .ok_or(WalletError::WalletNotFound {
+                    id: wallet_id.hyphenated().to_string(),
+                })?;
+        let is_wallet_owner = wallet.owners.contains(&caller_account.id);
+        if !is_wallet_owner {
+            Err(WalletError::Forbidden {
+                wallet: input.from_wallet_id.clone(),
+            })?
+        }
+
+        // create transfer
+        let blockchain_api = BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
+        let default_fee = blockchain_api.transaction_fee(&wallet).await?;
+        let transfer_id = generate_uuid_v4().await;
+
+        let mut transfer = self.transfer_mapper.new_transfer_from_input(
+            input,
+            *transfer_id.as_bytes(),
+            caller_account.id,
+            Nat(default_fee.fee),
+            blockchain_api.default_network(),
+            Transfer::default_expiration_dt(),
+        )?;
+        transfer.make_policy_snapshot(&wallet);
+
+        transfer.validate()?;
+
+        // build operations
+        let operations = self
+            .build_operations_from_wallet_policies(&wallet, &transfer)
+            .await;
+
+        // save transfer to stable memory
+        self.transfer_repository
+            .insert(transfer.as_key(), transfer.to_owned());
+
+        operations.iter().for_each(|operation| {
+            self.operation_repository
+                .insert(operation.as_key(), operation.to_owned());
+        });
+
+        let processor = OperationProcessorFactory::build(&OperationCode::ApproveTransfer);
+        for operation in operations.iter() {
+            processor
+                .post_process(operation)
+                .await
+                .expect("Operation post processing failed");
+        }
+
+        let dto = self.transfer_mapper.transfer_to_dto(transfer);
+
+        Ok(dto)
+    }
+
+    async fn build_operations_from_wallet_policies(
+        &self,
+        wallet: &Wallet,
+        transfer: &Transfer,
+    ) -> Vec<Operation> {
+        let mut required_operations: Vec<Operation> = Vec::new();
+        let wallet_id = Uuid::from_bytes(wallet.id).hyphenated().to_string();
+        let transfer_id = Uuid::from_bytes(transfer.id).hyphenated().to_string();
+        for policy in wallet.policies.iter() {
+            match policy {
+                WalletPolicy::ApprovalThreshold(_) => {
+                    for owner in wallet.owners.iter() {
+                        let operation_id = generate_uuid_v4().await;
+                        let operation = Operation {
+                            id: *operation_id.as_bytes(),
+                            code: OperationCode::ApproveTransfer,
+                            status: match transfer.initiator_account == *owner {
+                                true => OperationStatus::Adopted,
+                                false => OperationStatus::Pending,
+                            },
+                            created_timestamp: time(),
+                            account_id: owner.to_owned(),
+                            feedback: match transfer.initiator_account == *owner {
+                                true => Some(OperationFeedback {
+                                    created_at: time(),
+                                    reason: None,
+                                }),
+                                false => None,
+                            },
+                            metadata: vec![
+                                (
+                                    OPERATION_METADATA_KEY_TRANSFER_ID.to_owned(),
+                                    transfer_id.to_owned(),
+                                ),
+                                (
+                                    OPERATION_METADATA_KEY_WALLET_ID.to_owned(),
+                                    wallet_id.to_owned(),
+                                ),
+                            ],
+                            last_modification_timestamp: time(),
+                            read: false,
+                        };
+                        required_operations.push(operation.to_owned());
+                    }
+                }
+            }
+        }
+
+        required_operations
+    }
+
+    pub async fn list_wallet_transfers(
+        &self,
+        input: ListWalletTransfersInput,
+    ) -> ServiceResult<Vec<TransferListItemDTO>> {
+        let wallet = self
+            .wallet_service
+            .get_wallet_core(GetWalletInput {
+                wallet_id: input.wallet_id,
+            })
+            .await?;
+
+        let transfers = self
+            .transfer_wallet_index
+            .find_by_criteria(TransferWalletIndexCriteria {
+                wallet_id: wallet.id,
+                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                status: input.status,
+            });
+
+        let dtos: Vec<TransferListItemDTO> = transfers
+            .iter()
+            .map(|transfer| {
+                self.transfer_mapper
+                    .transfer_to_list_item_dto(transfer.to_owned())
+            })
+            .collect();
+
+        Ok(dtos)
+    }
+}

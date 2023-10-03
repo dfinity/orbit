@@ -1,12 +1,21 @@
 {
   "__ref_dfx": "dfx.json reference: https://internetcomputer.org/docs/current/references/dfx-json-reference/",
   "canisters": {
+    "icp_ledger": {
+      "type": "custom",
+      "candid": "https://raw.githubusercontent.com/dfinity/ic/d87954601e4b22972899e9957e800406a0a6b929/rs/rosetta-api/icp_ledger/ledger.did",
+      "wasm": "https://download.dfinity.systems/ic/d87954601e4b22972899e9957e800406a0a6b929/canisters/ledger-canister.wasm.gz",
+      "remote": {
+        "id": {
+          "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
+        }
+      }
+    },
     "internet_identity": {
       "type": "custom",
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
       "remote": {
-        "candid": "internet_identity.did",
         "id": {
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
@@ -22,6 +31,16 @@
       "candid": "canisters/control-panel/spec.did",
       "declarations": {
         "output": "canisters/wallet-ui/src/generated/control-panel",
+        "node_compatibility": true
+      },
+      "optimize": "cycles"
+    },
+    "bank": {
+      "type": "rust",
+      "package": "bank",
+      "candid": "canisters/bank/spec.did",
+      "declarations": {
+        "output": "canisters/wallet-ui/src/generated/bank",
         "node_compatibility": true
       },
       "optimize": "cycles"

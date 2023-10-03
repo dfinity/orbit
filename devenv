@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+set -eEuo pipefail
+
+#############################################
+# GLOBAL VARS                               #
+#############################################
+
+MINTER_IDENTITY_NAME="minter"
+WHOAMI=$(dfx identity whoami)
+CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
+CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
+CANISTER_ID_CONTROL_PANEL="bw4dl-smaaa-aaaaa-qaacq-cai"
+CANISTER_ID_BANK="avqkn-guaaa-aaaaa-qaaea-cai"
+
+#############################################
+# USAGE                                     #
+#############################################
+
+function title() {
+  echo "Orbit wallet development environment utils"
+}
+
+function usage() {
+  cat <<EOF
+
+Usage:
+  $0
+
+Options:
+  --init configures all the dependencies for the development environment
+  --init-bank fresh installs the bank canister
+  --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
+  --candid-generate generates the code for the candid specifications that the wallet uses
+EOF
+}
+
+function help() {
+  cat <<EOF
+
+Helper script to setup the development environment for the Orbit wallet.
+
+NOTE: This requires a working rust toolchain, dfx and nodejs to operate correctly.
+EOF
+}
+
+function exec_function() {
+  local function_name=$1
+  echo "------------------------------------------------------"
+  echo -e "\e[1m$ START:\e[0m $function_name"
+  $function_name
+  echo -e "\e[1m$ COMPLETED:\e[0m $function_name"
+}
+
+#############################################
+# SETUP                                     #
+#############################################
+
+function uninstall_icp_ledger() {
+  dfx canister delete icp_ledger -y > /dev/null 2>&1  || true
+}
+
+function install_icp_ledger() {
+  if [ "$MINTER_IDENTITY_NAME" == "$WHOAMI" ]; then
+    echo "You can't run this script as the minter identity. Please run it as a different identity."
+    exit 1
+  fi
+
+  if ! dfx identity list | grep -q $MINTER_IDENTITY_NAME; then
+    dfx identity new $MINTER_IDENTITY_NAME
+  fi
+
+  dfx deploy --specified-id $CANISTER_ID_ICP_LEDGER icp_ledger --argument "
+  (variant {
+    Init = record {
+      minting_account = \"$(dfx ledger account-id --identity $MINTER_IDENTITY_NAME)\";
+      initial_values = vec {
+        record {
+          \"$(dfx ledger account-id)\";
+          record {
+            e8s = 1_000_000_000_000 : nat64;
+          };
+        };
+      };
+      send_whitelist = vec {};
+      transfer_fee = opt record {
+        e8s = 10_000 : nat64;
+      };
+      token_symbol = opt \"ICP\";
+      token_name = opt \"Internet Computer\";
+    }
+  })
+"
+}
+
+function setup_icp_ledger() {
+  uninstall_icp_ledger
+  install_icp_ledger
+}
+
+function uninstall_internet_identity() {
+  dfx canister delete internet_identity -y > /dev/null 2>&1  || true
+}
+
+function install_internet_identity() {
+  dfx deploy --specified-id $CANISTER_ID_INTERNET_IDENTITY internet_identity
+}
+
+function setup_internet_identity() {
+  uninstall_internet_identity
+  install_internet_identity
+}
+
+function uninstall_control_panel() {
+  dfx canister delete control_panel -y > /dev/null 2>&1  || true
+}
+
+function install_control_panel() {
+  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
+}
+
+function setup_control_panel() {
+  uninstall_control_panel
+  install_control_panel
+}
+
+function uninstall_bank() {
+  dfx canister delete bank -y > /dev/null 2>&1  || true
+}
+
+function install_bank() {
+  dfx deploy --specified-id $CANISTER_ID_BANK bank
+}
+
+function setup_bank() {
+  uninstall_bank
+  install_bank
+}
+
+function candid_generate() {
+  # ICP LEDGER CANDID CODE GENERATION
+  ICP_LEDGER_CANDID=$(dfx canister metadata icp_ledger candid:service)
+  echo "$ICP_LEDGER_CANDID" > /tmp/icp_ledger.did
+
+  didc bind --target rs /tmp/icp_ledger.did > canisters/bank/src/generated/icp_ledger.rs
+
+  rm /tmp/icp_ledger.did
+}
+
+#############################################
+# SCRIPT OPTIONS                            #
+#############################################
+
+if [[ $# -eq 0 ]]; then
+  title
+  usage
+  exit 0
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -h | --help)
+    title
+    usage
+    help
+    exit 0
+    ;;
+  --init)
+    shift
+    exec_function setup_icp_ledger
+    exec_function setup_internet_identity
+    exec_function setup_bank
+    exec_function setup_control_panel
+    echo
+    ;;
+  --init-icp-ledger)
+    shift
+    exec_function setup_icp_ledger
+    echo
+    ;;
+  --init-bank)
+    shift
+    exec_function setup_bank
+    echo
+    ;;
+  --candid-generate)
+    shift
+    exec_function candid_generate
+    echo
+    ;;
+  *)
+    echo "ERROR: unknown argument $1"
+    usage
+    echo
+    echo "Use 'dev --help' for more information"
+    exit 1
+    ;;
+  esac
+done

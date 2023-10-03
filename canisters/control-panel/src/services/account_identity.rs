@@ -1,5 +1,5 @@
 use crate::{
-    core::{ApiError, Repository, ServiceResult},
+    core::{Repository, ServiceResult},
     entities::{Account, AccountIdentity},
     errors::{AccountIdentityRepositoryError, AccountManagementError},
     mappers::AccountIdentityMapper,
@@ -15,10 +15,7 @@ pub struct AccountIdentityService {
 }
 
 impl AccountIdentityService {
-    pub fn get_account_identities(
-        &self,
-        account: &Account,
-    ) -> ServiceResult<Vec<AccountIdentity>, ApiError> {
+    pub fn get_account_identities(&self, account: &Account) -> ServiceResult<Vec<AccountIdentity>> {
         let current_identities = account
             .identities
             .iter()
@@ -39,7 +36,7 @@ impl AccountIdentityService {
         account: &Account,
         new_identities: &Vec<AccountIdentityDTO>,
         required_identity: Option<&Principal>,
-    ) -> ServiceResult<Vec<AccountIdentity>, ApiError> {
+    ) -> ServiceResult<Vec<AccountIdentity>> {
         let current_identities = self.get_account_identities(account)?;
 
         if new_identities.is_empty() {

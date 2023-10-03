@@ -14,14 +14,23 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.9.6"
-getrandom = { version = "0.2", features = ["custom"] }
-ic-cdk = "0.10.0"
-ic-cdk-macros = "0.7.1"
-ic-cdk-timers = "0.4"
+ic-cdk = "0.11"
+ic-cdk-macros = "0.8"
+ic-ledger-types = "0.8"
 ic-stable-structures = "0.5.6"
+ic-cdk-timers = "0.5"
 serde = "1.0.188"
 thiserror = "1.0.48"
 uuid = { version = "1.4.1", features = ["serde", "v4"] }
+ic-canister-core = { path = "../../libs/ic-canister-core", version = "0.1.0" }
+ic-canister-macros = { path = "../../libs/ic-canister-macros", version = "0.1.0" }
+serde_bytes = "0.11"
+sha2 = "0.10"
+hex = "0.4"
+async-trait = "0.1"
+num-bigint = "0.4"
+num-traits = "0.2"
 
 [dev-dependencies]
 rstest = "0.18.2"
+tokio = { version = "1.32.0", features = ["full"] }

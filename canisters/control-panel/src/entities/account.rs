@@ -1,11 +1,11 @@
 use crate::core::ic::api::time;
 use crate::core::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID, UUID};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_stable_structures::{BoundedStorable, Storable};
-use std::borrow::Cow;
+use ic_canister_macros::stable_object;
 use uuid::Uuid;
 
 /// The key used to store an account identity in stable memory.
+#[stable_object(size = AccountKey::MAX_BYTE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AccountKey {
     /// The UUID that identifies the account.
@@ -21,6 +21,7 @@ impl Default for AccountKey {
 }
 
 /// The identity of an account.
+#[stable_object(size = Account::MAX_BYTE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Account {
     /// The UUID that identifies the account.
@@ -105,40 +106,4 @@ impl AccountKey {
     /// The number of bytes that are not used by the account and could be used to add more fields to the account
     /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_ID;
-}
-
-/// Adds serialization and deserialization support to AccountIdentity to stable memory.
-impl Storable for Account {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-/// Represents the memory required to store a AccountIdentity in stable memory.
-impl BoundedStorable for Account {
-    const MAX_SIZE: u32 = Account::MAX_BYTE_SIZE;
-
-    const IS_FIXED_SIZE: bool = false;
-}
-
-/// Adds serialization and deserialization support to AccountIdentity to stable memory.
-impl Storable for AccountKey {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-/// Represents the memory required to store a AccountIdentity in stable memory.
-impl BoundedStorable for AccountKey {
-    const MAX_SIZE: u32 = AccountKey::MAX_BYTE_SIZE;
-
-    const IS_FIXED_SIZE: bool = false;
 }

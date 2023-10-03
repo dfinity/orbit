@@ -4,10 +4,8 @@ use crate::{
     services::AccountService,
     transport::{GetMainBankResponse, ListBanksResponse},
 };
-use candid::candid_method;
 use ic_cdk_macros::query;
 
-#[candid_method(query)]
 #[query(name = "list_banks")]
 async fn list_banks() -> ApiResult<ListBanksResponse> {
     let ctx = CallContext::get();
@@ -22,7 +20,6 @@ async fn list_banks() -> ApiResult<ListBanksResponse> {
     })
 }
 
-#[candid_method(query)]
 #[query(name = "get_main_bank")]
 async fn get_main_bank() -> ApiResult<GetMainBankResponse> {
     let ctx = CallContext::get();
