@@ -1,7 +1,8 @@
 use crate::{
     core::{with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
-    models::{Account, AccountKey},
+    models::{indexes::account_identity_index::AccountIdentityIndexCriteria, Account, AccountKey},
 };
+use candid::Principal;
 use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -20,7 +21,9 @@ thread_local! {
 
 /// A repository that enables managing accounts in stable memory.
 #[derive(Default, Debug)]
-pub struct AccountRepository {}
+pub struct AccountRepository {
+    account_identity_index: AccountIdentityIndexRepository,
+}
 
 impl Repository<AccountKey, Account> for AccountRepository {
     fn get(&self, key: &AccountKey) -> Option<Account> {
@@ -40,5 +43,19 @@ impl Repository<AccountKey, Account> for AccountRepository {
 
     fn remove(&self, key: &AccountKey) -> Option<Account> {
         DB.with(|m| m.borrow_mut().remove(key))
+    }
+}
+
+impl AccountRepository {
+    /// Returns the account associated with the given identity if it exists.
+    pub fn find_account_by_identity(&self, identity: &Principal) -> Option<Account> {
+        let results = self
+            .account_identity_index
+            .find_by_criteria(AccountIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+                role: None,
+            });
+
+        results.first().map(|account| account.to_owned())
     }
 }

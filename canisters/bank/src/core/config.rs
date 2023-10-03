@@ -21,6 +21,9 @@ pub const PERMISSION_READ_TRANSFER: &str = "read:transfer";
 pub const PERMISSION_WRITE_TRANSFER: &str = "write:transfer";
 pub const PERMISSION_READ_OPERATION: &str = "read:operation";
 pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
+pub const PERMISSION_REGISTER_ACCOUNT: &str = "read:register-account";
+pub const PERMISSION_READ_ACCOUNT: &str = "read:account";
+pub const PERMISSION_WRITE_ACCOUNT: &str = "write:account";
 
 pub fn default_bank_permissions() -> Vec<Permission> {
     vec![
@@ -55,6 +58,18 @@ pub fn default_bank_permissions() -> Vec<Permission> {
         Permission {
             permission_id: PERMISSION_WRITE_OPERATION.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_REGISTER_ACCOUNT.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
+        },
+        Permission {
+            permission_id: PERMISSION_WRITE_ACCOUNT.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_READ_ACCOUNT.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
         },
     ]
 }

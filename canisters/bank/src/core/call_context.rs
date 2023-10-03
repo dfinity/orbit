@@ -1,9 +1,7 @@
+use super::canister_config;
+use crate::{models::AccessRole, services::AccountService};
 use candid::Principal;
 use ic_canister_core::cdk::{api::trap, caller};
-
-use crate::{models::AccessRole, services::AccountService};
-
-use super::canister_config;
 
 #[derive(Clone, Debug)]
 pub struct CallContext {
@@ -27,6 +25,16 @@ impl CallContext {
 
     pub fn caller(&self) -> Principal {
         self.caller
+    }
+
+    /// Checks if the caller is an admin.
+    pub fn is_admin(&self) -> bool {
+        let account = AccountService::default().find_account_by_identity(&self.caller);
+
+        match account {
+            Some(account) => account.access_roles.contains(&AccessRole::Admin),
+            None => false,
+        }
     }
 
     /// Checks if the caller has the required access role to perform the given action.
@@ -56,6 +64,11 @@ pub fn check_access(permission: &str, caller: Principal) {
             )
             .as_str(),
         );
+
+    if account.access_roles.contains(&AccessRole::Admin) {
+        // Admins have access to everything
+        return;
+    }
 
     let user_has_access = permission
         .access_roles

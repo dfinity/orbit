@@ -5,7 +5,7 @@ use crate::{
         CanisterConfig, WithCallContext,
     },
     mappers::ManagementMapper,
-    models::Account,
+    models::{AccessRole, Account},
     transport::{BankCanisterInit, BankFeaturesDTO, BankSettingsDTO},
 };
 use ic_canister_core::{api::ServiceResult, cdk::api::time};
@@ -42,6 +42,13 @@ impl ManagementService {
                 .iter()
                 .filter(|owner| !new_owners.contains(owner))
                 .collect::<Vec<_>>();
+
+            for admin in new_owners {
+                self.account_service
+                    .register_account_core(admin, Some(vec![AccessRole::Admin]))
+                    .await
+                    .expect("Failed to register admin account");
+            }
         }
 
         for unassigned_admin in removed_owners {

@@ -563,7 +563,77 @@ type BankSettings = record {
   // The list of permissions that are applied to the bank.
   permissions : vec BankPermission;
   // The time at which the bank was last upgraded.
-  last_upgrade_timestamp: TimestampRFC3339;
+  last_upgrade_timestamp : TimestampRFC3339;
+};
+
+// Input type for retrieving an account.
+type GetAccountInput = record {
+  // The account id to retrieve, if not set the caller account will be used if available.
+  account_id : opt AccountId;
+};
+
+// Result type for retrieving an account.
+type GetAccountResult = variant {
+  // The result data for a successful operation.
+  Ok : record {
+    // The account that was retrieved.
+    account : Account;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
+};
+
+// Input type for registering an account.
+type RegisterAccountInput = record {
+  // The principals associated with the account.
+  identities : vec principal;
+};
+
+// Result type for registering an account.
+type RegisterAccountResult = variant {
+  // The result data for a successful operation.
+  Ok : record {
+    // The account that was registered.
+    account : Account;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
+};
+
+// Input type for editing an account.
+type EditAccountInput = record {
+  // The account id to update.
+  account_id : AccountId;
+  // The principals associated with the account.
+  identities : opt vec principal;
+};
+
+// Result type for editing an account.
+type EditAccountResult = variant {
+  // The result data for a successful operation.
+  Ok : record {
+    // The account that was updated.
+    account : Account;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
+};
+
+// Input type for confirming an account and its associated identity.
+type ConfirmAccountInput = record {
+  // The account id to confirm.
+  account_id : AccountId;
+};
+
+// Result type for confirming an account and its associated identity.
+type ConfirmAccountResult = variant {
+  // The result data for a successful operation.
+  Ok : record {
+    // The account that was confirmed.
+    account : Account;
+  };
+  // The error that occurred during the operation.
+  Err : Error;
 };
 
 // Result type for getting the bank settings.
@@ -656,6 +726,22 @@ service : (opt BankInit) -> {
   //
   // Required permission: "write:operation"
   edit_operation : (input : EditOperationInput) -> (EditOperationResult);
+  // Register an account in the bank.
+  //
+  // Required permission: "write:register-account"
+  register_account : (input : RegisterAccountInput) -> (RegisterAccountResult);
+  // Confirm that the caller owns the account.
+  //
+  // Required permission: "write:register-account"
+  confirm_account : (input : ConfirmAccountInput) -> (ConfirmAccountResult);
+  // Edit the provided bank account.
+  //
+  // Required permission: "write:account"
+  edit_account : (input : EditAccountInput) -> (EditAccountResult);
+  // Get the account associated with the caller or the account id provided.
+  //
+  // Required permission: "read:account"
+  get_account : (input : GetAccountInput) -> (GetAccountResult) query;
   // Get the bank settings.
   //
   // Required permission: "admin"

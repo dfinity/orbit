@@ -48,6 +48,15 @@ pub enum AccountError {
         /// The requested account.
         account: String,
     },
+    /// You don't have permission to access the requested account.
+    #[error(r#"You don't have permission to access the requested account."#)]
+    Forbidden {
+        /// The requested account.
+        account: String,
+    },
+    /// Removing the caller identity would lock the account.
+    #[error(r#"Removing the caller identity would lock the account."#)]
+    SelfLocked,
 }
 
 impl DetailableError for AccountError {
@@ -75,6 +84,10 @@ impl DetailableError for AccountError {
                 Some(details)
             }
             AccountError::NotFoundAccount { account } => {
+                details.insert("account".to_string(), account.to_string());
+                Some(details)
+            }
+            AccountError::Forbidden { account } => {
                 details.insert("account".to_string(), account.to_string());
                 Some(details)
             }
