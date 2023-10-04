@@ -1,6 +1,7 @@
 import { App } from 'vue';
 import {
   AuthService,
+  BankService,
   ControlPanelService,
   LocalesService,
   RoutesService,
@@ -15,6 +16,7 @@ class ServiceManager {
       auth: AuthService;
       theme: ThemeService;
       controlPanel: ControlPanelService;
+      bank: BankService;
     },
   ) {}
 
@@ -29,6 +31,7 @@ const serviceManager = new ServiceManager({
   auth: new AuthService(),
   theme: new ThemeService(),
   controlPanel: new ControlPanelService(),
+  bank: new BankService(),
 });
 
 const services = (): ServiceManager['services'] => serviceManager.services;
