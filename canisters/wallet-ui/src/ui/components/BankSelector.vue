@@ -1,6 +1,7 @@
 <template>
   <VSelect
-    v-model="bankStore.main"
+    v-model="selectedBank"
+    :loading="activeBankStore.loading"
     class="bank-selector"
     variant="filled"
     hide-details
@@ -11,15 +12,15 @@
     <template #item="{ props, item }">
       <VListItem
         v-bind="props"
-        :title="bankStore.computedBankName(item.raw.canisterId as Principal)"
-        :subtitle="item.raw.canisterId?.toText()"
+        :title="bankStore.computedBankName(Principal.fromText(item.raw.canisterId))"
+        :subtitle="item.raw.canisterId"
       />
     </template>
     <template #selection="{ item }">
       <VListItem
         v-if="bankStore.hasBanks"
-        :title="bankStore.computedBankName(item.raw.canisterId as Principal)"
-        :subtitle="item.raw.canisterId?.toText()"
+        :title="bankStore.computedBankName(Principal.fromText(item.raw.canisterId))"
+        :subtitle="item.raw.canisterId"
         :prepend-icon="mdiBank"
       />
       <VListItem v-else :title="$t('banks.no_banks')" :prepend-icon="mdiBank" />
@@ -27,11 +28,30 @@
   </VSelect>
 </template>
 <script lang="ts" setup>
+import { computed } from 'vue';
 import { Principal } from '@dfinity/principal';
 import { mdiBank } from '@mdi/js';
-import { useBankStore } from '~/ui/stores';
+import { useActiveBankStore, useBankStore } from '~/ui/stores';
 
 const bankStore = useBankStore();
+const activeBankStore = useActiveBankStore();
+
+const selectedBank = computed({
+  get(): string | null {
+    return activeBankStore.hasAccount ? activeBankStore.bankId.toString() : null;
+  },
+  set(newBankId: string | null) {
+    if (!newBankId) {
+      bankStore._main = null;
+      activeBankStore.reset();
+      return;
+    }
+
+    activeBankStore.load(Principal.fromText(newBankId)).then(() => {
+      bankStore._main = activeBankStore.bankId.toString();
+    });
+  },
+});
 </script>
 
 <style lang="scss">

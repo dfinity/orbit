@@ -211,7 +211,7 @@ export const useSettingsFormStore = defineStore('settingsForm', {
           auth.editAccount({ name: accountDetails.name?.[0] ?? null });
           bank.useBanks(
             accountDetails.banks.map(bank => ({
-              canisterId: bank.canister_id,
+              canisterId: bank.canister_id.toText(),
               name: bank.name?.[0] ?? null,
             })),
           );

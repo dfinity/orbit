@@ -36,25 +36,25 @@ const mainNavigation: NavigationSection[] = [
         icon: mdiWalletBifold,
       },
       {
-        name: 'transactions',
-        localeKey: 'navigation.main.items.transactions',
+        name: 'transfers',
+        localeKey: 'navigation.main.items.transfers',
         action: {
           type: NavigationActionType.To,
           handle: route =>
-            route.params.locale ? `/${route.params.locale}/transactions` : '/transactions',
+            route.params.locale ? `/${route.params.locale}/transfers` : '/transfers',
         },
         icon: mdiBankTransfer,
       },
-      {
-        name: 'address-book',
-        localeKey: 'navigation.main.items.address_book',
-        action: {
-          type: NavigationActionType.To,
-          handle: route =>
-            route.params.locale ? `/${route.params.locale}/address-book` : '/address-book',
-        },
-        icon: mdiBookOpenVariant,
-      },
+      // {
+      //   name: 'address-book',
+      //   localeKey: 'navigation.main.items.address_book',
+      //   action: {
+      //     type: NavigationActionType.To,
+      //     handle: route =>
+      //       route.params.locale ? `/${route.params.locale}/address-book` : '/address-book',
+      //   },
+      //   icon: mdiBookOpenVariant,
+      // },
     ],
   },
   {

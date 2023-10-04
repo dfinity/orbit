@@ -1,6 +1,7 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/IcAgent';
+import { idlFactory } from '~/generated/bank';
 import {
   Account,
   Error as ApiError,
@@ -26,13 +27,12 @@ import {
   WalletListItem,
   _SERVICE,
 } from '~/generated/bank/bank.did';
-import { idlFactory } from '~/generated/control-panel';
 import { Maybe } from '~/types';
 
 export class BankService {
   private actor: ActorSubclass<_SERVICE>;
 
-  public static ACCOUNT_NOT_FOUND_ERROR = 'ACCOUNT_NOT_FOUND';
+  public static ERR_ACCOUNT_IDENTITY_NOT_FOUND = 'NOT_FOUND_ACCOUNT_IDENTITY';
 
   constructor(
     private agent: HttpAgent = icAgent.get(),
@@ -64,7 +64,7 @@ export class BankService {
 
   async myAccount(): Promise<Maybe<Account>> {
     return this.getAccount({ account_id: [] }).catch((err: ApiError) => {
-      if (err.code === BankService.ACCOUNT_NOT_FOUND_ERROR) {
+      if (err.code === BankService.ERR_ACCOUNT_IDENTITY_NOT_FOUND) {
         return null;
       }
 

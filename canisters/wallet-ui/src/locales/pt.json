@@ -41,26 +41,50 @@
     "load_failed": "Falha ao procurar as informaçōes da sua conta, por favor, tente novament."
   },
   "banks": {
+    "no_wallets": "Nenhuma carteira disponível.",
+    "wallet_address_copied_to_clipboard": "Endereço da carteira copiado.",
     "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
     "bank_nr_title": "#{nr} Banco",
-    "no_banks": "Nenhum banco disponível."
+    "no_banks": "Nenhum banco disponível.",
+    "account_load_error": "Erro ao carregar a sua conta bancária.",
+    "no_bank_account": "Nenhum conta bancária",
+    "please_register_to_continue": "Por favor registe-se para continuar.",
+    "private_wallet": "Carteira privada",
+    "joint_wallet": "Carteira conjunta",
+    "policy": "Regra",
+    "policy_misconfigured": "As regras da sua carteira estão mal configuradas.",
+    "policy_config_unavailable": "Configuração da regra indisponível.",
+    "policy_fixed_approval_threshold_desc": "Número fixo de aprovações para operaraçōes",
+    "policy_variable_approval_threshold_desc": "Percentual de aprovações para operaraçōes",
+    "policies": {
+      "VariableApprovalThreshold": "Aprovação por porcentagem",
+      "FixedApprovalThreshold": "Aprovação por votos fixos"
+    }
   },
   "terms": {
+    "open": "abrir",
+    "asset": "Ativo",
+    "account": "Conta",
+    "account_id": "Identificador da conta",
     "signin": "Entrar",
     "signout": "Sair",
     "anonymous": "Anónimo",
     "wallets": "Carteiras",
+    "new_wallet": "Nova carteira",
     "policies": "Regras",
+    "transfers": "Transferências",
     "transactions": "Transaçōes",
     "address_book": "Endereços",
     "completed": "Realizado",
     "pending": "Pendente",
+    "name": "Nome",
     "new_transfer": "Nova transferência",
     "settings": "Configuraçōes",
     "close": "Fechar",
     "general": "Geral",
     "add": "Adicionar",
     "remove": "Remover",
+    "owners": "Proprietários",
     "account_name": "Nome da conta",
     "bank_name": "Nome do banco",
     "identity_name": "Nome da identidade",
@@ -72,6 +96,7 @@
     "main": "Principal"
   },
   "forms": {
+    "create": "Criar",
     "banks": "Bancos ({min}/{max})",
     "identities": "Identidades ({min}/{max})",
     "save_changes": "Gravar alteraçōes",
@@ -79,6 +104,7 @@
       "required": "Este campo é obrigatório.",
       "maxLength": "O tamanho máximo do {field} são {max} caractéres.",
       "validPrincipal": "Este campo deve conter um principal válido.",
+      "validUuidV4": "Este campo deve conter um UUID v4 válido.",
       "duplicate": "Este campo deve ser único."
     }
   },
@@ -88,7 +114,7 @@
       "items": {
         "home": "Início",
         "wallets": "Carteiras",
-        "transactions": "Transaçōes",
+        "transfers": "Transferências",
         "address_book": "Endereços"
       }
     },

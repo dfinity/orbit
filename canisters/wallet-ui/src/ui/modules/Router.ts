@@ -50,6 +50,16 @@ const router = createRouter({
           },
         },
         {
+          path: 'transfers',
+          name: 'Transfers',
+          component: () => import('~/ui/pages/TransfersPage.vue'),
+          meta: {
+            auth: {
+              requireState: AuthState.Authenticated,
+            },
+          },
+        },
+        {
           path: 'settings',
           name: 'Settings',
           component: () => import('~/ui/pages/SettingsPage.vue'),
