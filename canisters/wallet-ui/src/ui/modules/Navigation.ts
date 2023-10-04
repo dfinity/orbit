@@ -1,11 +1,4 @@
-import {
-  mdiBankTransfer,
-  mdiBookOpenVariant,
-  mdiCogs,
-  mdiHome,
-  mdiLogoutVariant,
-  mdiWalletBifold,
-} from '@mdi/js';
+import { mdiBankTransfer, mdiCogs, mdiHome, mdiLogoutVariant, mdiWalletBifold } from '@mdi/js';
 import { App } from 'vue';
 import { NavigationGuard } from 'vue-router';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey } from '~/ui/modules';
@@ -45,16 +38,6 @@ const mainNavigation: NavigationSection[] = [
         },
         icon: mdiBankTransfer,
       },
-      // {
-      //   name: 'address-book',
-      //   localeKey: 'navigation.main.items.address_book',
-      //   action: {
-      //     type: NavigationActionType.To,
-      //     handle: route =>
-      //       route.params.locale ? `/${route.params.locale}/address-book` : '/address-book',
-      //   },
-      //   icon: mdiBookOpenVariant,
-      // },
     ],
   },
   {
