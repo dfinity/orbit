@@ -1,7 +1,13 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { Account, BankAsset, BankFeatures, WalletListItem } from '~/generated/bank/bank.did';
+import {
+  Account,
+  BankAsset,
+  BankFeatures,
+  WalletBalance,
+  WalletListItem,
+} from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
 import { useAuthStore, useSettingsStore } from '~/ui/stores';
@@ -18,6 +24,7 @@ export interface ActiveBankStoreState {
   _bankId: string;
   loading: boolean;
   _account: Account | null;
+  balanceUpdaterRegistered: boolean;
   features: {
     loading: boolean;
     details: BankFeatures | null;
@@ -33,6 +40,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     return {
       _bankId: Principal.anonymous().toString(),
       loading: false,
+      balanceUpdaterRegistered: false,
       _account: null,
       features: {
         loading: false,
@@ -82,6 +90,39 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       this._bankId = bankId.toText();
     },
+    async registerWalletBalanceUpdater(): Promise<void> {
+      if (this.balanceUpdaterRegistered) {
+        return;
+      }
+      this.balanceUpdaterRegistered = true;
+
+      do {
+        await this.resolveWalletsBalance();
+        await new Promise(resolve => setTimeout(resolve, 15000));
+      } while (this.balanceUpdaterRegistered);
+    },
+    unregisterWalletBalanceUpdater(): void {
+      this.balanceUpdaterRegistered = false;
+    },
+    async resolveWalletsBalance(): Promise<void> {
+      const walletIds = this.wallets.items.map(wallet => wallet.id);
+
+      for (const walletId of walletIds) {
+        const balance = await this.service.walletBalance({ wallet_id: walletId });
+
+        this.wallets.items.forEach(wallet => {
+          if (wallet.id === walletId) {
+            wallet.balance = [
+              {
+                balance: balance.balance,
+                decimals: balance.decimals,
+                last_update_timestamp: balance.last_update_timestamp,
+              },
+            ];
+          }
+        });
+      }
+    },
     reset(): void {
       this._bankId = Principal.anonymous().toText();
       this._account = null;
@@ -128,6 +169,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     },
     // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
     async loadDetailsAsync(): Promise<void> {
+      this.registerWalletBalanceUpdater();
       this.loadWalletList();
       this.loadBankFeatures();
     },
@@ -135,7 +177,7 @@ export const useActiveBankStore = defineStore('activeBank', {
       if (this.loading) {
         return;
       }
-
+      this.unregisterWalletBalanceUpdater();
       this.loading = true;
       this.setBankId(bankId);
       const bankService = services().bank.withBankId(this.bankId);

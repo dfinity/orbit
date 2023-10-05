@@ -41,13 +41,35 @@ const router = createRouter({
         },
         {
           path: 'wallets',
-          name: 'Wallets',
-          component: () => import('~/ui/pages/WalletsPage.vue'),
+          name: 'WalletsRouter',
+          component: RouterView,
           meta: {
             auth: {
               requireState: AuthState.Authenticated,
             },
           },
+          children: [
+            {
+              path: '',
+              name: 'Wallets',
+              component: () => import('~/ui/pages/WalletsPage.vue'),
+              meta: {
+                auth: {
+                  requireState: AuthState.Authenticated,
+                },
+              },
+            },
+            {
+              path: ':id',
+              name: 'WalletDetails',
+              component: () => import('~/ui/pages/WalletDetailsPage.vue'),
+              meta: {
+                auth: {
+                  requireState: AuthState.Authenticated,
+                },
+              },
+            },
+          ],
         },
         {
           path: 'transfers',

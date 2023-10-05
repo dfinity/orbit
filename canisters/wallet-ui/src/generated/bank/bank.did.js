@@ -62,9 +62,15 @@ export const idlFactory = ({ IDL }) => {
     'policies' : IDL.Vec(WalletPolicy),
   });
   const WalletId = IDL.Text;
+  const WalletBalanceInfo = IDL.Record({
+    'decimals' : IDL.Nat32,
+    'balance' : IDL.Nat,
+    'last_update_timestamp' : TimestampRFC3339,
+  });
   const AssetSymbol = IDL.Text;
   const Wallet = IDL.Record({
     'id' : WalletId,
+    'balance' : IDL.Opt(WalletBalanceInfo),
     'owners' : IDL.Vec(AccountId),
     'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'name' : IDL.Opt(IDL.Text),
@@ -237,9 +243,11 @@ export const idlFactory = ({ IDL }) => {
   const WalletListItem = IDL.Record({
     'id' : WalletId,
     'asset_name' : IDL.Opt(IDL.Text),
+    'balance' : IDL.Opt(WalletBalanceInfo),
     'name' : IDL.Opt(IDL.Text),
     'address' : IDL.Text,
     'asset_symbol' : AssetSymbol,
+    'nr_owners' : IDL.Nat8,
   });
   const ListWalletResult = IDL.Variant({
     'Ok' : IDL.Record({ 'wallets' : IDL.Vec(WalletListItem) }),

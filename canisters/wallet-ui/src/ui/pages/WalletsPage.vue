@@ -43,19 +43,34 @@
                 </template>
               </VCardSubtitle>
               <VCardText class="pb-0">
-                <p>0 {{ wallet.asset_symbol }}</p>
+                <p>
+                  <span
+                    v-if="wallet.balance?.[0]"
+                    class="wallet-card__amount--available"
+                    :title="wallet.balance?.[0]?.last_update_timestamp"
+                  >
+                    {{ formatBalance(wallet.balance[0].balance, wallet.balance[0].decimals) }}
+                  </span>
+                  <span v-else class="wallet-card__amount wallet-card__amount--unavailable">-</span>
+                  {{ wallet.asset_symbol }}
+                </p>
               </VCardText>
               <VCardActions>
                 <VChip
                   size="x-small"
                   color="primary-variant"
                   variant="tonal"
-                  :prepend-icon="mdiAccount"
+                  :prepend-icon="wallet.nr_owners > 1 ? mdiAccountGroup : mdiAccount"
                 >
-                  {{ $t('banks.private_wallet') }}
+                  {{ wallet.nr_owners > 1 ? $t('banks.joint_wallet') : $t('banks.private_wallet') }}
                 </VChip>
                 <VSpacer />
-                <VBtn color="primary" size="small" variant="tonal" :append-icon="mdiOpenInApp">
+                <VBtn
+                  size="small"
+                  variant="tonal"
+                  :append-icon="mdiOpenInApp"
+                  :to="{ name: 'WalletDetails', params: { id: wallet.id } }"
+                >
                   {{ $t('terms.open') }}
                 </VBtn>
               </VCardActions>
@@ -85,7 +100,15 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiSend, mdiAccount, mdiOpenInApp, mdiWallet, mdiContentCopy } from '@mdi/js';
+import {
+  mdiAccount,
+  mdiAccountGroup,
+  mdiContentCopy,
+  mdiOpenInApp,
+  mdiSend,
+  mdiWallet,
+} from '@mdi/js';
+import { formatBalance } from '~/core';
 import NewWalletBtn from '~/ui/components/NewWalletBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';

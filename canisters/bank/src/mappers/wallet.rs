@@ -5,7 +5,9 @@ use crate::{
         AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
         WALLET_METADATA_SYMBOL_KEY,
     },
-    transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO, WalletListItemDTO},
+    transport::{
+        CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO, WalletListItemDTO,
+    },
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
@@ -24,6 +26,16 @@ impl WalletMapper {
                 .hyphenated()
                 .to_string(),
             name: wallet.name,
+            balance: match wallet.balance {
+                Some(balance) => Some(WalletBalanceInfoDTO {
+                    balance: balance.balance,
+                    decimals: wallet.decimals,
+                    last_update_timestamp: timestamp_to_rfc3339(
+                        &balance.last_modification_timestamp,
+                    ),
+                }),
+                None => None,
+            },
             symbol: wallet.symbol,
             address: wallet.address,
             owners: wallet
@@ -157,6 +169,17 @@ impl WalletMapper {
             asset_symbol: wallet.symbol.clone(),
             name: wallet.name.clone(),
             asset_name: None,
+            balance: match &wallet.balance {
+                Some(balance) => Some(WalletBalanceInfoDTO {
+                    balance: balance.balance.clone(),
+                    decimals: wallet.decimals,
+                    last_update_timestamp: timestamp_to_rfc3339(
+                        &balance.last_modification_timestamp,
+                    ),
+                }),
+                None => None,
+            },
+            nr_owners: wallet.owners.len() as u8,
         }
     }
 }

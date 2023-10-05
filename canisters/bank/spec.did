@@ -136,6 +136,16 @@ type EditOperationResult = variant {
   Err : Error;
 };
 
+// A record type that can be used to represent a wallet balance.
+type WalletBalanceInfo = record {
+  // Balance of the wallet.
+  balance : nat;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals : nat32;
+  // The time at which the balance was last updated.
+  last_update_timestamp : TimestampRFC3339;
+};
+
 // A record type that can be used to represent a wallet in the list of wallets.
 type WalletListItem = record {
   // The wallet id.
@@ -148,6 +158,10 @@ type WalletListItem = record {
   asset_symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   asset_name : opt text;
+  // Balance of the wallet.
+  balance : opt WalletBalanceInfo;
+  // Number of owners of the wallet.
+  nr_owners : nat8;
 };
 
 // Result type for listing all wallets.
@@ -402,6 +416,8 @@ type Wallet = record {
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
   owners : vec AccountId;
+  // Wallet balance when available.
+  balance : opt WalletBalanceInfo;
   // The policies that can be used to control the wallet.
   //
   // If the list is empty but there are policies globally defined for the bank,

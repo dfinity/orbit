@@ -203,6 +203,7 @@ export type TransferStatus = { 'Approved' : null } |
   { 'Pending' : null };
 export interface Wallet {
   'id' : WalletId,
+  'balance' : [] | [WalletBalanceInfo],
   'owners' : Array<AccountId>,
   'metadata' : Array<[string, string]>,
   'name' : [] | [string],
@@ -219,13 +220,20 @@ export interface WalletBalance {
   'last_update_timestamp' : TimestampRFC3339,
   'wallet_id' : WalletId,
 }
+export interface WalletBalanceInfo {
+  'decimals' : number,
+  'balance' : bigint,
+  'last_update_timestamp' : TimestampRFC3339,
+}
 export type WalletId = string;
 export interface WalletListItem {
   'id' : WalletId,
   'asset_name' : [] | [string],
+  'balance' : [] | [WalletBalanceInfo],
   'name' : [] | [string],
   'address' : string,
   'asset_symbol' : AssetSymbol,
+  'nr_owners' : number,
 }
 export type WalletPolicy = { 'approval_threshold' : ApprovalThresholdPolicy };
 export interface _SERVICE {

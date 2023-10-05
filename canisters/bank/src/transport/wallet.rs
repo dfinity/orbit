@@ -13,6 +13,7 @@ pub struct WalletDTO {
     pub blockchain: String,
     pub standard: String,
     pub symbol: String,
+    pub balance: Option<WalletBalanceInfoDTO>,
     pub policies: Vec<WalletPolicyDTO>,
     pub metadata: Vec<(String, String)>,
     pub last_modification_timestamp: String,
@@ -76,6 +77,14 @@ pub struct WalletBalanceDTO {
     pub last_update_timestamp: String,
 }
 
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct WalletBalanceInfoDTO {
+    pub balance: candid::Nat,
+    pub decimals: u32,
+    pub last_update_timestamp: String,
+}
+
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetWalletBalanceResponse {
     pub balance: WalletBalanceDTO,
@@ -88,6 +97,8 @@ pub struct WalletListItemDTO {
     pub asset_symbol: String,
     pub asset_name: Option<String>,
     pub name: Option<String>,
+    pub balance: Option<WalletBalanceInfoDTO>,
+    pub nr_owners: u8,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
