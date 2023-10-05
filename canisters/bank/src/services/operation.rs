@@ -2,6 +2,7 @@ use super::{AccountService, WalletService};
 use crate::{
     core::{CallContext, WithCallContext},
     errors::OperationError,
+    factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
     models::{
         indexes::{
@@ -130,6 +131,13 @@ impl OperationService {
 
         self.operation_repository
             .insert(operation.as_key(), operation.to_owned());
+
+        let processor = OperationProcessorFactory::build(&operation.code);
+
+        processor
+            .post_process(&operation)
+            .await
+            .expect("Operation post processing failed");
 
         let operation_dto = self.operation_mapper.to_operation_dto(operation);
 

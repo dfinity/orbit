@@ -98,16 +98,10 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  mdiAccount,
-  mdiAccountGroup,
-  mdiContentCopy,
-  mdiOpenInApp,
-  mdiWallet,
-} from '@mdi/js';
+import { mdiAccount, mdiAccountGroup, mdiContentCopy, mdiOpenInApp, mdiWallet } from '@mdi/js';
 import { formatBalance } from '~/core';
-import NewWalletBtn from '~/ui/components/NewWalletBtn.vue';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
+import NewWalletBtn from '~/ui/components/NewWalletBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore } from '~/ui/stores';

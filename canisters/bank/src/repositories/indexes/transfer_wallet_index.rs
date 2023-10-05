@@ -69,7 +69,7 @@ impl IndexRepository<TransferWalletIndex, Transfer> for TransferWalletIndexRepos
 
             db.borrow()
                 .range(start_key..=end_key)
-                .take_while(|(index, _)| {
+                .filter(|(index, _)| {
                     let transfer = index.to_transfer();
                     let mut criteria_matches_status = true;
 

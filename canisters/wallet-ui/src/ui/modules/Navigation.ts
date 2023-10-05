@@ -1,4 +1,4 @@
-import { mdiBankTransfer, mdiCogs, mdiHome, mdiLogoutVariant, mdiWalletBifold } from '@mdi/js';
+import { mdiCogs, mdiHome, mdiLogoutVariant, mdiWalletBifold } from '@mdi/js';
 import { App } from 'vue';
 import { NavigationGuard } from 'vue-router';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey } from '~/ui/modules';
@@ -27,16 +27,6 @@ const mainNavigation: NavigationSection[] = [
           handle: route => (route.params.locale ? `/${route.params.locale}/wallets` : '/wallets'),
         },
         icon: mdiWalletBifold,
-      },
-      {
-        name: 'transfers',
-        localeKey: 'navigation.main.items.transfers',
-        action: {
-          type: NavigationActionType.To,
-          handle: route =>
-            route.params.locale ? `/${route.params.locale}/transfers` : '/transfers',
-        },
-        icon: mdiBankTransfer,
       },
     ],
   },

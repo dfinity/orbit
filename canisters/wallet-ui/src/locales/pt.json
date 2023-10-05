@@ -26,7 +26,8 @@
   "home": {
     "welcome_back": "Boas-vindas de novo",
     "notifications": {
-      "none": "Não tem notificaçōes por ler"
+      "none": "Não tem notificaçōes por ler",
+      "some": "Tem {count} notificaçōes por ler"
     }
   },
   "footer": {
@@ -42,6 +43,7 @@
   },
   "banks": {
     "no_wallets": "Nenhuma carteira disponível.",
+    "pending_operations": "Operaraçōes pendentes",
     "wallet_address_copied_to_clipboard": "Endereço da carteira copiado.",
     "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
     "bank_nr_title": "#{nr} Banco",
@@ -59,12 +61,16 @@
     "policies": {
       "VariableApprovalThreshold": "Aprovação por porcentagem",
       "FixedApprovalThreshold": "Aprovação por votos fixos"
-    }
+    },
+    "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa."
   },
   "terms": {
     "destination_address": "Endereço de destino",
+    "search": "Procurar",
+    "until": "Até",
     "from": "Desde",
     "amount": "Valor",
+    "wallet": "Carteira",
     "send": "Enviar",
     "open": "abrir",
     "asset": "Ativo",
@@ -98,6 +104,11 @@
     "confirmed": "Confirmado",
     "unconfirmed": "Não confirmado",
     "main": "Principal"
+  },
+  "wallet_page": {
+    "not_found_title": "Carteira não encontrada",
+    "not_found_description": "Não foi possível aceder a carteira requisitada.",
+    "not_found_btn": "Voltar as carteiras"
   },
   "forms": {
     "create": "Criar",

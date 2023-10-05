@@ -59,7 +59,7 @@ impl IndexRepository<OperationTransferIndex, Operation> for OperationTransferInd
 
             db.borrow()
                 .range(start_key..=end_key)
-                .take_while(|(index, _)| {
+                .filter(|(index, _)| {
                     let operation = index.to_operation();
                     let mut code_matches_criteria = true;
                     let mut status_matches_criteria = true;

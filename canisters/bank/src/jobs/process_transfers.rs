@@ -50,8 +50,10 @@ impl ProcessTransfersJob {
                 status: Some(TransferStatus::Approved.to_string()),
             },
         );
+        // trap(format!("Processing {} transfers", transfers.len()).as_str());
         // truncate the list to avoid processing too many transfers at once
         transfers.truncate(Self::MAX_BATCH_SIZE);
+
         // update the status of the transfers to avoid processing them again
         for transfer in transfers.iter_mut() {
             transfer.status = TransferStatus::Processing { started_at: time() };

@@ -7,7 +7,14 @@
             <h1 class="text-h4">{{ $t('home.welcome_back') }}</h1>
             <p v-if="activeBank.hasAccount" class="info-box">
               <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
-              <span>{{ $t('home.notifications.none') }}</span>
+              <span v-if="!activeBank.pendingOperations.loading">{{
+                activeBank.metrics.pendingOperations > 0
+                  ? $t('home.notifications.some', { count: activeBank.metrics.pendingOperations })
+                  : $t('home.notifications.none')
+              }}</span>
+              <span v-else class="info-box__loading"
+                ><VProgressLinear indeterminate color="primary"
+              /></span>
             </p>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
@@ -53,19 +60,10 @@
             </VCard>
           </VCol>
           <VCol v-if="activeBank.hasAccount" cols="12" md="4">
-            <VCard color="surface" height="100%">
-              <VCardTitle>{{ $t('terms.transfers') }}</VCardTitle>
+            <VCard color="surface" height="100%" :loading="activeBank.pendingOperations.loading">
+              <VCardTitle>{{ $t('banks.pending_operations') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
-                <VRow>
-                  <VCol cols="6" class="transfers__card">
-                    <span>{{ activeBank.metrics.transfers.completed }}</span>
-                    <span class="text-subtitle-1">{{ $t('terms.completed') }}</span>
-                  </VCol>
-                  <VCol cols="6" class="transfers__card">
-                    <span>{{ activeBank.metrics.transfers.pending }}</span>
-                    <span class="text-subtitle-2">{{ $t('terms.pending') }}</span>
-                  </VCol>
-                </VRow>
+                {{ activeBank.metrics.pendingOperations }}
               </VCardText>
             </VCard>
           </VCol>
@@ -88,6 +86,10 @@ const activeBank = useActiveBankStore();
   display: flex;
   justify-content: start;
   align-items: center;
+
+  &__loading {
+    width: 200px;
+  }
 }
 
 .transfers {

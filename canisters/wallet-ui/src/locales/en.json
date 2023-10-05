@@ -26,7 +26,8 @@
   "home": {
     "welcome_back": "Welcome back",
     "notifications": {
-      "none": "You don't have new notifications."
+      "none": "You don't have new notifications.",
+      "some": "You have {count} new notification(s)."
     }
   },
   "footer": {
@@ -42,6 +43,7 @@
   },
   "banks": {
     "no_wallets": "No wallets available.",
+    "pending_operations": "Pending operations",
     "wallet_address_copied_to_clipboard": "Wallet address copied.",
     "load_error": "Failed to load banks information, please try again.",
     "bank_nr_title": "#{nr} Bank",
@@ -59,11 +61,15 @@
     "policies": {
       "VariableApprovalThreshold": "Percentage based approval",
       "FixedApprovalThreshold": "Exact number of approvals"
-    }
+    },
+    "no_transfers_found_search": "No transfers found for the search criteria."
   },
   "terms": {
     "destination_address": "Destination address",
+    "search": "Search",
+    "until": "To",
     "from": "From",
+    "wallet": "Wallet",
     "amount": "Amount",
     "send": "Send",
     "open": "Open",
@@ -112,6 +118,11 @@
       "duplicate": "This field must be unique.",
       "validTokenAmount": "This field must contain a valid amount for the selected asset."
     }
+  },
+  "wallet_page": {
+    "not_found_title": "Wallet not found",
+    "not_found_description": "The wallet you are looking for could not be loaded.",
+    "not_found_btn": "Go back to wallets"
   },
   "navigation": {
     "main": {

@@ -5,7 +5,7 @@ import {
   Account,
   BankAsset,
   BankFeatures,
-  WalletBalance,
+  OperationListItem,
   WalletListItem,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
@@ -18,6 +18,7 @@ export interface BankMetrics {
     completed: number;
     pending: number;
   };
+  pendingOperations: number;
 }
 
 export interface ActiveBankStoreState {
@@ -25,6 +26,7 @@ export interface ActiveBankStoreState {
   loading: boolean;
   _account: Account | null;
   balanceUpdaterRegistered: boolean;
+  pendingOperationsUpdaterRegistered: boolean;
   features: {
     loading: boolean;
     details: BankFeatures | null;
@@ -32,6 +34,10 @@ export interface ActiveBankStoreState {
   wallets: {
     loading: boolean;
     items: WalletListItem[];
+  };
+  pendingOperations: {
+    loading: boolean;
+    items: OperationListItem[];
   };
 }
 
@@ -41,12 +47,17 @@ export const useActiveBankStore = defineStore('activeBank', {
       _bankId: Principal.anonymous().toString(),
       loading: false,
       balanceUpdaterRegistered: false,
+      pendingOperationsUpdaterRegistered: false,
       _account: null,
       features: {
         loading: false,
         details: null,
       },
       wallets: {
+        loading: false,
+        items: [],
+      },
+      pendingOperations: {
         loading: false,
         items: [],
       },
@@ -73,6 +84,7 @@ export const useActiveBankStore = defineStore('activeBank', {
           completed: 0,
           pending: 0,
         },
+        pendingOperations: this.pendingOperations.items.length,
       };
     },
     supportedAssets(): BankAsset[] {
@@ -123,11 +135,39 @@ export const useActiveBankStore = defineStore('activeBank', {
         });
       }
     },
+    async registerPendingOperationsUpdater(): Promise<void> {
+      if (this.pendingOperationsUpdaterRegistered) {
+        return;
+      }
+      this.pendingOperationsUpdaterRegistered = true;
+
+      do {
+        await this.resolvePendingOperations();
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      } while (this.pendingOperationsUpdaterRegistered);
+    },
+    unregisterPendingOperationsUpdater(): void {
+      this.pendingOperationsUpdaterRegistered = false;
+    },
+    async resolvePendingOperations(): Promise<void> {
+      if (this.pendingOperations.loading) {
+        return;
+      }
+      try {
+        this.pendingOperations.loading = true;
+        this.pendingOperations.items = await this.service.listPendingOperations();
+      } catch (err) {
+        logger.error('Failed to resolve unread operations', { err });
+      } finally {
+        this.pendingOperations.loading = false;
+      }
+    },
     reset(): void {
       this._bankId = Principal.anonymous().toText();
       this._account = null;
       this.wallets.items = [];
       this.features.details = null;
+      this.pendingOperations.items = [];
     },
     async registerAccount(): Promise<Account | null> {
       const auth = useAuthStore();
@@ -170,6 +210,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
     async loadDetailsAsync(): Promise<void> {
       this.registerWalletBalanceUpdater();
+      this.registerPendingOperationsUpdater();
       this.loadWalletList();
       this.loadBankFeatures();
     },
@@ -178,6 +219,7 @@ export const useActiveBankStore = defineStore('activeBank', {
         return;
       }
       this.unregisterWalletBalanceUpdater();
+      this.unregisterPendingOperationsUpdater();
       this.loading = true;
       this.setBankId(bankId);
       const bankService = services().bank.withBankId(this.bankId);

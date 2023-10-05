@@ -8,7 +8,7 @@ use crate::{
     models::{
         indexes::transfer_wallet_index::TransferWalletIndexCriteria, Operation, OperationCode,
         OperationFeedback, OperationStatus, Transfer, Wallet, WalletPolicy,
-        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
+        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID, TransferStatus,
     },
     repositories::{
         indexes::transfer_wallet_index::TransferWalletIndexRepository, OperationRepository,
@@ -157,6 +157,14 @@ impl TransferService {
         let operations = self
             .build_operations_from_wallet_policies(&wallet, &transfer)
             .await;
+
+        let has_approve_transfer_operation = operations
+            .iter()
+            .any(|operation| matches!(operation.code, OperationCode::ApproveTransfer));
+
+        if !has_approve_transfer_operation {
+            transfer.status = TransferStatus::Approved;
+        }
 
         // save transfer to stable memory
         self.transfer_repository

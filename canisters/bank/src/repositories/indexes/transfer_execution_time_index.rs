@@ -54,7 +54,7 @@ impl IndexRepository<TransferExecutionTimeIndex, Transfer>
 
             db.borrow()
                 .range(start_key..=end_key)
-                .take_while(|(index, _)| {
+                .filter(|(index, _)| {
                     let transfer = index.to_transfer();
                     let mut matches_criteria_status = true;
                     if let Some(status) = criteria.status.as_ref() {

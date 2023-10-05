@@ -50,7 +50,7 @@ impl IndexRepository<AccountIdentityIndex, Account> for AccountIdentityIndexRepo
 
             db.borrow()
                 .range(start_key..=end_key)
-                .take_while(|(index, _)| {
+                .filter(|(index, _)| {
                     let account = index.to_account();
                     let mut criteria_matches_role = true;
 
