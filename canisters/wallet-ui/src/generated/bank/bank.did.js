@@ -70,6 +70,7 @@ export const idlFactory = ({ IDL }) => {
   const AssetSymbol = IDL.Text;
   const Wallet = IDL.Record({
     'id' : WalletId,
+    'decimals' : IDL.Nat32,
     'balance' : IDL.Opt(WalletBalanceInfo),
     'owners' : IDL.Vec(AccountId),
     'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
@@ -242,6 +243,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const WalletListItem = IDL.Record({
     'id' : WalletId,
+    'decimals' : IDL.Nat32,
     'asset_name' : IDL.Opt(IDL.Text),
     'balance' : IDL.Opt(WalletBalanceInfo),
     'name' : IDL.Opt(IDL.Text),

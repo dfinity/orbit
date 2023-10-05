@@ -203,6 +203,7 @@ export type TransferStatus = { 'Approved' : null } |
   { 'Pending' : null };
 export interface Wallet {
   'id' : WalletId,
+  'decimals' : number,
   'balance' : [] | [WalletBalanceInfo],
   'owners' : Array<AccountId>,
   'metadata' : Array<[string, string]>,
@@ -228,6 +229,7 @@ export interface WalletBalanceInfo {
 export type WalletId = string;
 export interface WalletListItem {
   'id' : WalletId,
+  'decimals' : number,
   'asset_name' : [] | [string],
   'balance' : [] | [WalletBalanceInfo],
   'name' : [] | [string],

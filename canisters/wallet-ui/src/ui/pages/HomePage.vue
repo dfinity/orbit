@@ -54,14 +54,14 @@
           </VCol>
           <VCol v-if="activeBank.hasAccount" cols="12" md="4">
             <VCard color="surface" height="100%">
-              <VCardTitle>{{ $t('terms.transactions') }}</VCardTitle>
+              <VCardTitle>{{ $t('terms.transfers') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
                 <VRow>
-                  <VCol cols="6" class="transactions__card">
+                  <VCol cols="6" class="transfers__card">
                     <span>{{ activeBank.metrics.transfers.completed }}</span>
                     <span class="text-subtitle-1">{{ $t('terms.completed') }}</span>
                   </VCol>
-                  <VCol cols="6" class="transactions__card">
+                  <VCol cols="6" class="transfers__card">
                     <span>{{ activeBank.metrics.transfers.pending }}</span>
                     <span class="text-subtitle-2">{{ $t('terms.pending') }}</span>
                   </VCol>
@@ -90,7 +90,7 @@ const activeBank = useActiveBankStore();
   align-items: center;
 }
 
-.transactions {
+.transfers {
   &__card {
     display: flex;
     justify-content: center;

@@ -13,6 +13,7 @@ pub struct WalletDTO {
     pub blockchain: String,
     pub standard: String,
     pub symbol: String,
+    pub decimals: u32,
     pub balance: Option<WalletBalanceInfoDTO>,
     pub policies: Vec<WalletPolicyDTO>,
     pub metadata: Vec<(String, String)>,
@@ -97,6 +98,7 @@ pub struct WalletListItemDTO {
     pub asset_symbol: String,
     pub asset_name: Option<String>,
     pub name: Option<String>,
+    pub decimals: u32,
     pub balance: Option<WalletBalanceInfoDTO>,
     pub nr_owners: u8,
 }

@@ -154,6 +154,8 @@ type WalletListItem = record {
   address : text;
   // The wallet name.
   name : opt text;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals: nat32;
   // The asset symbol, e.g. "ICP" or "BTC".
   asset_symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
@@ -412,6 +414,8 @@ type Wallet = record {
   standard : text;
   // The address of the wallet (e.g. "0x1234").
   address : text;
+  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
+  decimals: nat32;
   // A friendly name for the wallet.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.

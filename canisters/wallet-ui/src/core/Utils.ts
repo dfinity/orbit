@@ -19,3 +19,15 @@ export const formatBalance = (balance: bigint, decimals: number): string => {
 
   return `${balanceInteger}.${balanceDecimal}`;
 };
+
+export const amountToBigInt = (amount: string, decimals: number): bigint => {
+  const [integer, decimal] = amount.split('.');
+
+  if (decimal?.length > decimals) {
+    throw new Error(`Invalid format, amounts can only have ${decimals} decimals`);
+  }
+
+  const paddedDecimal = `${decimal ?? ''}`.padEnd(decimals, '0');
+
+  return BigInt(`${integer}${paddedDecimal}`);
+};

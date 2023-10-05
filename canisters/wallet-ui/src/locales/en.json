@@ -62,7 +62,11 @@
     }
   },
   "terms": {
-    "open": "open",
+    "destination_address": "Destination address",
+    "from": "From",
+    "amount": "Amount",
+    "send": "Send",
+    "open": "Open",
     "asset": "Asset",
     "account": "Account",
     "account_id": "Account Id",
@@ -105,7 +109,8 @@
       "maxLength": "The maximum length of the {field} is {max} characters.",
       "validPrincipal": "This field must be a valid principal.",
       "validUuidV4": "This field must be a valid UUID v4.",
-      "duplicate": "This field must be unique."
+      "duplicate": "This field must be unique.",
+      "validTokenAmount": "This field must contain a valid amount for the selected asset."
     }
   },
   "navigation": {

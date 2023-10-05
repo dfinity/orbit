@@ -62,6 +62,10 @@
     }
   },
   "terms": {
+    "destination_address": "Endereço de destino",
+    "from": "Desde",
+    "amount": "Valor",
+    "send": "Enviar",
     "open": "abrir",
     "asset": "Ativo",
     "account": "Conta",
@@ -105,7 +109,8 @@
       "maxLength": "O tamanho máximo do {field} são {max} caractéres.",
       "validPrincipal": "Este campo deve conter um principal válido.",
       "validUuidV4": "Este campo deve conter um UUID v4 válido.",
-      "duplicate": "Este campo deve ser único."
+      "duplicate": "Este campo deve ser único.",
+      "validTokenAmount": "Este campo deve conter um valor de token válido."
     }
   },
   "navigation": {

@@ -8,9 +8,7 @@
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
             <NewWalletBtn />
-            <VBtn rounded color="primary-variant" :prepend-icon="mdiSend">
-              {{ $t('terms.new_transfer') }}
-            </VBtn>
+            <NewTransferBtn />
           </VCol>
         </VRow>
       </VContainer>
@@ -105,11 +103,11 @@ import {
   mdiAccountGroup,
   mdiContentCopy,
   mdiOpenInApp,
-  mdiSend,
   mdiWallet,
 } from '@mdi/js';
 import { formatBalance } from '~/core';
 import NewWalletBtn from '~/ui/components/NewWalletBtn.vue';
+import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore } from '~/ui/stores';

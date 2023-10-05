@@ -26,6 +26,7 @@ impl WalletMapper {
                 .hyphenated()
                 .to_string(),
             name: wallet.name,
+            decimals: wallet.decimals,
             balance: match wallet.balance {
                 Some(balance) => Some(WalletBalanceInfoDTO {
                     balance: balance.balance,
@@ -120,7 +121,7 @@ impl WalletMapper {
                 .iter()
                 .map(|policy_dto| self.wallet_policy_mapper.from_dto(policy_dto.to_owned()))
                 .collect(),
-            decimals: 0, // TODO: decimals should be set based on
+            decimals: 0,
             symbol,
             balance: None,
             metadata,
@@ -169,6 +170,7 @@ impl WalletMapper {
             asset_symbol: wallet.symbol.clone(),
             name: wallet.name.clone(),
             asset_name: None,
+            decimals: wallet.decimals,
             balance: match &wallet.balance {
                 Some(balance) => Some(WalletBalanceInfoDTO {
                     balance: balance.balance.clone(),
