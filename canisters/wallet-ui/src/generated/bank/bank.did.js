@@ -212,8 +212,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListWalletOperationsInput = IDL.Record({
     'status' : IDL.Opt(OperationStatus),
+    'to_dt' : IDL.Opt(TimestampRFC3339),
     'code' : IDL.Opt(IDL.Text),
     'read' : IDL.Opt(IDL.Bool),
+    'from_dt' : IDL.Opt(TimestampRFC3339),
     'wallet_id' : WalletId,
   });
   const ListWalletOperationsResult = IDL.Variant({

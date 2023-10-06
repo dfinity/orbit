@@ -19,6 +19,20 @@ export const formatBalance = (amount: bigint, decimals: number): string => {
   return `${integerPartStr}.${remainderStr}`;
 };
 
+export const startOfDay = (date: Date): Date => {
+  const dt = new Date(date.getTime());
+  dt.setUTCHours(0, 0, 0, 0);
+
+  return dt;
+};
+
+export const endOfDay = (date: Date): Date => {
+  const dt = new Date(date.getTime());
+  dt.setUTCHours(23, 59, 59, 999);
+
+  return dt;
+};
+
 export const amountToBigInt = (amount: string, decimals: number): bigint => {
   const [integer, decimal] = amount.split('.');
 

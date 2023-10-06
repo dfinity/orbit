@@ -7,7 +7,7 @@
   </div>
   <div class="operation-item__code__time">
     <VBtn
-      v-if="wallet"
+      v-if="injectedProps.outer && wallet"
       :prepend-icon="mdiWallet"
       :to="{ name: 'WalletDetails', params: { id: wallet.id } }"
       size="x-small"
@@ -20,11 +20,14 @@
       <VIcon :icon="mdiClockOutline" size="x-small" />&nbsp;
       {{ new Date(operation.created_at).toLocaleDateString() }}
     </VChip>
+    <VChip v-for="(detail, idx) in detailChips" :key="idx" size="x-small">
+      {{ detail.title }}: {{ detail.description }}
+    </VChip>
   </div>
 </template>
 <script lang="ts" setup>
 import { mdiClockOutline, mdiWallet, mdiOpenInApp } from '@mdi/js';
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { Operation } from '~/generated/bank/bank.did';
 import { useActiveBankStore } from '~/ui/stores';
 
@@ -36,6 +39,20 @@ const emit = defineEmits<{
   (event: 'update:modelValue', payload: Operation): void;
   (event: 'read', payload: boolean): void;
 }>();
+
+const injectedProps = inject('bankOperationProps', {
+  outer: true,
+  details: undefined,
+});
+
+const detailChips = computed(() => {
+  return Object.entries(injectedProps.details ?? {}).map(([k, v]) => {
+    return {
+      title: k,
+      description: v,
+    };
+  });
+});
 
 const operation = computed({
   get: () => props.modelValue,

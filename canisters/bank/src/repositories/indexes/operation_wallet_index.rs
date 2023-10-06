@@ -53,6 +53,7 @@ impl IndexRepository<OperationWalletIndex, Operation> for OperationWalletIndexRe
                 .range(start_key..=end_key)
                 .filter(|(index, _)| {
                     let operation = index.to_operation();
+                    let account_matches_criteria = operation.account_id == criteria.account_id;
                     let mut code_matches_criteria = true;
                     let mut status_matches_criteria = true;
                     let mut read_matches_criteria = true;
@@ -66,7 +67,10 @@ impl IndexRepository<OperationWalletIndex, Operation> for OperationWalletIndexRe
                         read_matches_criteria = read == operation.read;
                     }
 
-                    code_matches_criteria && status_matches_criteria && read_matches_criteria
+                    code_matches_criteria
+                        && status_matches_criteria
+                        && read_matches_criteria
+                        && account_matches_criteria
                 })
                 .map(|(index, _)| index.to_operation())
                 .collect::<Vec<Operation>>()

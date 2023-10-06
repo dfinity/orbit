@@ -70,7 +70,7 @@ import {
   mdiCogs,
   mdiHelp,
 } from '@mdi/js';
-import { computed } from 'vue';
+import { computed, provide } from 'vue';
 import { Operation } from '~/generated/bank/bank.did';
 import { i18n } from '~/ui/modules';
 import UnknownOperation from './UnknownOperation.vue';
@@ -79,7 +79,11 @@ import ApproveTransferOperation from './ApproveTransferOperation.vue';
 
 const props = defineProps<{
   modelValue: Operation;
+  outer?: boolean;
+  details?: Record<string, string>;
 }>();
+
+provide('bankOperationProps', { outer: props.outer, details: props.details });
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: Operation): void;

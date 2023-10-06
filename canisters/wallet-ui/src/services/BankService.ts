@@ -16,6 +16,7 @@ import {
   GetWalletBalanceInput,
   GetWalletInput,
   ListOperationsInput,
+  ListWalletOperationsInput,
   ListWalletTransfersInput,
   Operation,
   OperationId,
@@ -105,6 +106,16 @@ export class BankService {
 
   async listOperations(input: ListOperationsInput): Promise<Operation[]> {
     const result = await this.actor.list_operations(input);
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.operations;
+  }
+
+  async listWalletOperations(input: ListWalletOperationsInput): Promise<Operation[]> {
+    const result = await this.actor.list_wallet_operations(input);
 
     if ('Err' in result) {
       throw result.Err;

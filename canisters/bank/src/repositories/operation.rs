@@ -79,10 +79,15 @@ impl OperationRepository {
             })
     }
 
-    pub fn find_by_wallet_id(&self, wallet_id: WalletId) -> Vec<Operation> {
+    pub fn find_by_wallet_and_account_id(
+        &self,
+        wallet_id: WalletId,
+        account_id: AccountId,
+    ) -> Vec<Operation> {
         self.wallet_index
             .find_by_criteria(OperationWalletIndexCriteria {
                 wallet_id: wallet_id.to_owned(),
+                account_id: account_id.to_owned(),
                 code: None,
                 status: None,
                 read: None,

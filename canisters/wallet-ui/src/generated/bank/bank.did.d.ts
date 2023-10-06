@@ -105,8 +105,10 @@ export type ListOperationsResult = {
   { 'Err' : Error };
 export interface ListWalletOperationsInput {
   'status' : [] | [OperationStatus],
+  'to_dt' : [] | [TimestampRFC3339],
   'code' : [] | [string],
   'read' : [] | [boolean],
+  'from_dt' : [] | [TimestampRFC3339],
   'wallet_id' : WalletId,
 }
 export type ListWalletOperationsResult = {

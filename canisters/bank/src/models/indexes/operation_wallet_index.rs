@@ -1,6 +1,6 @@
 use crate::mappers::HelperMapper;
 use crate::models::{
-    Operation, OperationCode, OperationId, OperationStatus, WalletId,
+    AccountId, Operation, OperationCode, OperationId, OperationStatus, WalletId,
     OPERATION_METADATA_KEY_WALLET_ID,
 };
 use crate::repositories::OperationRepository;
@@ -24,6 +24,7 @@ pub struct OperationWalletIndex {
 #[derive(Clone, Debug)]
 pub struct OperationWalletIndexCriteria {
     pub wallet_id: WalletId,
+    pub account_id: AccountId,
     pub code: Option<OperationCode>,
     pub status: Option<OperationStatus>,
     pub read: Option<bool>,

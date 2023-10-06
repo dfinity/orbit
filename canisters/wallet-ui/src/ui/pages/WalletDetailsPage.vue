@@ -82,6 +82,13 @@
               >
                 {{ $t(`terms.transfers`) }}
               </VTab>
+              <VTab
+                :loading="pageStore.transfers.loading"
+                value="operations"
+                class="wallet__tab__item"
+              >
+                {{ $t(`terms.operations`) }}
+              </VTab>
             </VTabs>
             <VCardText>
               <VWindow v-model="tab">
@@ -90,28 +97,28 @@
                     <VRow>
                       <VCol cols="12" md="4" class="py-0">
                         <VTextField
+                          v-model="pageStore.transfers.fromDt"
                           :prepend-inner-icon="mdiCalendar"
                           density="compact"
-                          readonly
+                          type="date"
                           :label="$t(`terms.from`)"
                           variant="solo"
                           :disabled="pageStore.transfers.loading"
                           class="mb-2"
                           hide-details
-                          :model-value="pageStore.transfers.fromDt"
                         />
                       </VCol>
                       <VCol cols="12" md="4" class="py-0">
                         <VTextField
+                          v-model="pageStore.transfers.toDt"
                           :prepend-inner-icon="mdiCalendar"
                           density="compact"
-                          readonly
+                          type="date"
                           :label="$t(`terms.until`)"
                           :disabled="pageStore.transfers.loading"
                           variant="solo"
                           class="mb-2"
                           hide-details
-                          :model-value="pageStore.transfers.toDt"
                         />
                       </VCol>
                       <VCol cols="12" md="4">
@@ -123,8 +130,12 @@
                           :loading="pageStore.transfers.loading"
                           @click="
                             pageStore.loadSentTransfers(
-                              pageStore.transfers.fromDt ?? undefined,
-                              pageStore.transfers.toDt ?? undefined,
+                              pageStore.transfers.fromDt
+                                ? new Date(pageStore.transfers.fromDt)
+                                : undefined,
+                              pageStore.transfers.toDt
+                                ? new Date(pageStore.transfers.toDt)
+                                : undefined,
                             )
                           "
                         >
@@ -134,7 +145,7 @@
                       <VCol cols="12">
                         <VTable v-if="pageStore.transfers.items.length" hover class="transfers">
                           <tbody>
-                            <tr v-for="(transfer, _idx) in pageStore.transfers.items" :key="_idx">
+                            <tr v-for="(transfer, _idx) in pageStore.sortedTransfers" :key="_idx">
                               <td class="transfers__item__icon"><VIcon :icon="mdiTransfer" /></td>
                               <td class="transfers__item__details">
                                 <div class="transfers__item__details--amount">
@@ -157,6 +168,76 @@
                           </tbody>
                         </VTable>
                         <p v-else class="text-h6">{{ $t(`banks.no_transfers_found_search`) }}</p>
+                      </VCol>
+                    </VRow>
+                  </VContainer>
+                </VWindowItem>
+                <VWindowItem value="operations">
+                  <VContainer>
+                    <VRow>
+                      <VCol cols="12" md="4" class="py-0">
+                        <VTextField
+                          v-model="pageStore.operations.fromDt"
+                          :prepend-inner-icon="mdiCalendar"
+                          density="compact"
+                          type="date"
+                          :label="$t(`terms.from`)"
+                          variant="solo"
+                          :disabled="pageStore.operations.loading"
+                          class="mb-2"
+                          hide-details
+                        />
+                      </VCol>
+                      <VCol cols="12" md="4" class="py-0">
+                        <VTextField
+                          v-model="pageStore.operations.toDt"
+                          :prepend-inner-icon="mdiCalendar"
+                          density="compact"
+                          type="date"
+                          :label="$t(`terms.until`)"
+                          :disabled="pageStore.operations.loading"
+                          variant="solo"
+                          class="mb-2"
+                          hide-details
+                        />
+                      </VCol>
+                      <VCol cols="12" md="4">
+                        <VBtn
+                          block
+                          variant="tonal"
+                          color="primary-variant"
+                          :prepend-icon="mdiRefresh"
+                          :loading="pageStore.operations.loading"
+                          @click="
+                            pageStore.loadOperations(
+                              pageStore.operations.fromDt
+                                ? new Date(pageStore.operations.fromDt)
+                                : undefined,
+                              pageStore.operations.toDt
+                                ? new Date(pageStore.operations.toDt)
+                                : undefined,
+                            )
+                          "
+                        >
+                          {{ $t(`terms.search`) }}
+                        </VBtn>
+                      </VCol>
+                      <VCol cols="12">
+                        <VTable v-if="pageStore.operations.items.length" hover class="operations">
+                          <tbody>
+                            <tr v-for="(operation, _idx) in pageStore.sortedOperations" :key="_idx">
+                              <td class="py-4">
+                                <BankOperation
+                                  v-model="pageStore.sortedOperations[_idx]"
+                                  :outer="false"
+                                  :details="getOperationDetails(operation)"
+                                  @updated="() => saveOperation(operation)"
+                                />
+                              </td>
+                            </tr>
+                          </tbody>
+                        </VTable>
+                        <p v-else class="text-h6">{{ $t(`banks.no_operations_found_search`) }}</p>
                       </VCol>
                     </VRow>
                   </VContainer>
@@ -199,13 +280,46 @@ import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore, useWalletDetailsStore } from '~/ui/stores';
-// import { VDatePicker } from 'vuetify/labs/VDatePicker';
+import BankOperation from '~/ui/components/operations/BankOperation.vue';
+import { BankOperationType } from '~/types';
+import { Operation } from '~/generated/bank/bank.did';
 
 const activeBank = useActiveBankStore();
 const settings = useSettingsStore();
 const pageStore = useWalletDetailsStore();
 
-const tab = ref<'transfers'>('transfers');
+const tab = ref<'transfers' | 'operations'>('transfers');
+
+const saveOperation = async (operation: Operation) => {
+  await activeBank.saveOperation(operation);
+
+  pageStore.loadSentTransfers(
+    pageStore.transfers.fromDt ? new Date(pageStore.transfers.fromDt) : undefined,
+    pageStore.transfers.toDt ? new Date(pageStore.transfers.toDt) : undefined,
+  );
+};
+
+const getOperationDetails = (operation: Operation): Record<string, string> => {
+  const details: Record<string, string> = {};
+
+  if (operation.code === BankOperationType.ApproveTransfer) {
+    const found = operation.metadata.find(([k]) => k === 'transfer_id');
+    if (found) {
+      const [_, transferId] = found;
+      const transfer = pageStore.transfers.items.find(t => t.transfer_id === transferId);
+
+      if (transfer) {
+        details[i18n.global.t(`terms.amount`).toLowerCase()] = formatBalance(
+          transfer.amount,
+          pageStore.wallet.decimals,
+        );
+        details[i18n.global.t(`terms.to`).toLowerCase()] = transfer.to;
+      }
+    }
+  }
+
+  return details;
+};
 
 onMounted(() => {
   pageStore.load(`${router.currentRoute.value.params.id}`);
@@ -294,8 +408,7 @@ const copyAddressToClipboard = (address: string) => {
     padding: calc(var(--ds-bdu) * 2) calc(var(--ds-bdu) * 2);
     height: calc(var(--ds-bdu) * 6);
     right: calc(var(--ds-bdu) * 4);
-    bottom: calc(var(--ds-bdu) * -5);
-    box-shadow: 1px 10px 5px -11px rgba(0, 0, 0, 0.75);
+    bottom: 0;
   }
 
   .transfers {

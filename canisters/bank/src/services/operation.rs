@@ -180,6 +180,10 @@ impl OperationService {
         &self,
         input: ListWalletOperationsInput,
     ) -> ServiceResult<Vec<OperationDTO>> {
+        let account = self
+            .account_service
+            .resolve_account(&self.call_context.caller())
+            .await?;
         let wallet = self
             .wallet_service
             .get_wallet_core(GetWalletInput {
@@ -197,6 +201,7 @@ impl OperationService {
                 from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 wallet_id: wallet.id,
+                account_id: account.id,
                 code: filter_by_code,
                 status: input
                     .status

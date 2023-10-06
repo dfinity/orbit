@@ -47,6 +47,7 @@
     "pending_operations": "Pending operations",
     "wallet_address_copied_to_clipboard": "Wallet address copied.",
     "load_error": "Failed to load banks information, please try again.",
+    "load_error_transfers": "Failed to load transfers.",
     "bank_nr_title": "#{nr} Bank",
     "no_banks": "No banks avalable.",
     "account_load_error": "Failed to load your bank account.",
@@ -68,11 +69,13 @@
         "title": "Approve transfer"
       }
     },
-    "no_transfers_found_search": "No transfers found for the search criteria."
+    "no_transfers_found_search": "No transfers found for the search criteria.",
+    "no_operations_found_search": "No operations found for the search criteria."
   },
   "terms": {
     "all_done": "All done",
     "approve": "Approve",
+    "operations": "Operations",
     "approved": "Approved",
     "abstained": "Abstained",
     "reject": "Reject",
@@ -81,6 +84,7 @@
     "destination_address": "Destination address",
     "search": "Search",
     "until": "To",
+    "to": "To",
     "from": "From",
     "wallet": "Wallet",
     "amount": "Amount",

@@ -48,6 +48,7 @@
     "wallet_address_copied_to_clipboard": "Endereço da carteira copiado.",
     "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
     "bank_nr_title": "#{nr} Banco",
+    "load_error_transfers": "Erro ao carregar as transferências.",
     "no_banks": "Nenhum banco disponível.",
     "account_load_error": "Erro ao carregar a sua conta bancária.",
     "no_bank_account": "Nenhum conta bancária",
@@ -68,17 +69,20 @@
         "title": "Approvar transferência"
       }
     },
-    "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa."
+    "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa.",
+    "no_operations_found_search": "Nenhuma operaração encontrada para a pesquisa."
   },
   "terms": {
     "all_done": "Tudo pronto",
     "destination_address": "Endereço de destino",
     "search": "Procurar",
+    "operations": "Operaraçōes",
     "approve": "Aprovar",
     "abstained": "Abstido",
     "approved": "Aprovado",
     "reject": "Rejeitar",
     "rejected": "Rejeitado",
+    "to": "Para",
     "edit": "Editar",
     "until": "Até",
     "from": "Desde",
