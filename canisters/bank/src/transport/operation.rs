@@ -52,6 +52,8 @@ pub struct ListOperationsInput {
     pub status: Option<OperationStatusDTO>,
     pub code: Option<String>,
     pub read: Option<bool>,
+    pub from_dt: Option<TimestampRfc3339>,
+    pub to_dt: Option<TimestampRfc3339>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -65,6 +67,8 @@ pub struct ListWalletOperationsInput {
     pub status: Option<OperationStatusDTO>,
     pub code: Option<String>,
     pub read: Option<bool>,
+    pub from_dt: Option<TimestampRfc3339>,
+    pub to_dt: Option<TimestampRfc3339>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

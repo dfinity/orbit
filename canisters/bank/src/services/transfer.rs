@@ -1,14 +1,14 @@
 use super::{AccountService, WalletService};
 use crate::{
     core::{CallContext, WithCallContext},
-    errors::{AccountError, TransferError, WalletError},
+    errors::{TransferError, WalletError},
     factories::blockchains::BlockchainApiFactory,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
         indexes::transfer_wallet_index::TransferWalletIndexCriteria, Operation, OperationCode,
-        OperationFeedback, OperationStatus, Transfer, Wallet, WalletPolicy,
-        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID, TransferStatus,
+        OperationFeedback, OperationStatus, Transfer, TransferStatus, Wallet, WalletPolicy,
+        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
     },
     repositories::{
         indexes::transfer_wallet_index::TransferWalletIndexRepository, OperationRepository,
@@ -109,16 +109,10 @@ impl TransferService {
 
     pub async fn create_transfer(&self, input: TransferInput) -> ServiceResult<TransferDTO> {
         // validate account is owner of wallet
-        let caller_account = match self
+        let caller_account = self
             .account_service
-            .maybe_resolve_account(&self.call_context.caller())
-            .await?
-        {
-            Some(account) => account,
-            None => Err(AccountError::NotFoundAccountIdentity {
-                identity: self.call_context.caller().to_text(),
-            })?,
-        };
+            .resolve_account(&self.call_context.caller())
+            .await?;
         let wallet_id = self
             .helper_mapper
             .uuid_from_str(input.from_wallet_id.clone())?;

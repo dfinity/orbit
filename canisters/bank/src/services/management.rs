@@ -6,6 +6,7 @@ use crate::{
     },
     mappers::ManagementMapper,
     models::{AccessRole, Account},
+    repositories::AccountRepository,
     transport::{BankCanisterInit, BankFeaturesDTO, BankSettingsDTO},
 };
 use ic_canister_core::{api::ServiceResult, cdk::api::time};
@@ -15,6 +16,7 @@ pub struct ManagementService {
     call_context: CallContext,
     management_mapper: ManagementMapper,
     account_service: AccountService,
+    account_repository: AccountRepository,
 }
 
 impl WithCallContext for ManagementService {
@@ -92,7 +94,7 @@ impl ManagementService {
         let mut owners: Vec<Account> = vec![];
         for owner_principal in canister_config.owners.iter() {
             let owner_account = self
-                .account_service
+                .account_repository
                 .find_account_by_identity(owner_principal)
                 .expect("Owner account not found");
 

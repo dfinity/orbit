@@ -52,6 +52,10 @@ type ListOperationsInput = record {
   code : opt text;
   // Wether the operation has been read or not.
   read : opt bool;
+  // From which created time to retrieve the operations.
+  from_dt: opt TimestampRFC3339;
+  // Until which created time to retrieve the operations.
+  to_dt: opt TimestampRFC3339;
 };
 
 // The result type for getting the list of operations.

@@ -94,7 +94,7 @@ const operation = computed({
 const onRead = () => {
   operation.value.read = !operation.value.read;
   emit('updated');
-}
+};
 
 const onApprove = () => {
   operation.value.status = { Adopted: null };

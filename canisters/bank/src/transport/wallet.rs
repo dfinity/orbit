@@ -78,7 +78,6 @@ pub struct WalletBalanceDTO {
     pub last_update_timestamp: String,
 }
 
-
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct WalletBalanceInfoDTO {
     pub balance: candid::Nat,

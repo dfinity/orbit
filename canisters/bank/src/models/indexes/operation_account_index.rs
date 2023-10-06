@@ -3,7 +3,7 @@ use crate::{
     repositories::OperationRepository,
 };
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
+use ic_canister_core::{repository::Repository, types::Timestamp};
 use ic_canister_macros::stable_object;
 
 /// Index of operations by the account id.
@@ -12,8 +12,8 @@ use ic_canister_macros::stable_object;
 pub struct OperationAccountIndex {
     /// The account thgat is associated with this operation.
     pub account_id: AccountId,
-    /// An operation code that represents the operation type, e.g. "transfer".
-    pub code: OperationCode,
+    /// The time when the operation was created.
+    pub created_at: Timestamp,
     /// The operation id, which is a UUID.
     pub id: OperationId,
 }
@@ -24,13 +24,15 @@ pub struct OperationAccountIndexCriteria {
     pub code: Option<OperationCode>,
     pub status: Option<OperationStatus>,
     pub read: Option<bool>,
+    pub from_dt: Option<Timestamp>,
+    pub to_dt: Option<Timestamp>,
 }
 
 impl Operation {
     pub fn as_index_for_account(&self) -> OperationAccountIndex {
         OperationAccountIndex {
             id: self.id.to_owned(),
-            code: self.code.to_owned(),
+            created_at: self.created_timestamp.to_owned(),
             account_id: self.account_id.to_owned(),
         }
     }

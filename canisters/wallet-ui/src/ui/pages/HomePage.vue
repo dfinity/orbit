@@ -65,7 +65,7 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiBank, mdiBellRing, mdiCogs, mdiSend } from '@mdi/js';
+import { mdiBank, mdiBellRing, mdiCogs } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { useActiveBankStore } from '~/ui/stores';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';

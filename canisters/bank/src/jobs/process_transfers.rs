@@ -46,11 +46,11 @@ impl ProcessTransfersJob {
         let current_time = time();
         let mut transfers = self.transfer_execution_time_index.find_by_criteria(
             TransferExecutionTimeIndexCriteria {
+                from_dt: None,
                 to_dt: current_time,
                 status: Some(TransferStatus::Approved.to_string()),
             },
         );
-        // trap(format!("Processing {} transfers", transfers.len()).as_str());
         // truncate the list to avoid processing too many transfers at once
         transfers.truncate(Self::MAX_BATCH_SIZE);
 

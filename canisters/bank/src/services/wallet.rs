@@ -1,7 +1,7 @@
 use super::AccountService;
 use crate::{
     core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
-    errors::{AccountError, WalletError},
+    errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
     models::{Wallet, WalletAccount, WalletBalance, WalletValidator},
@@ -142,16 +142,10 @@ impl WalletService {
 
     /// Returns the wallet associated with the given wallet id.
     pub async fn get_wallet_core(&self, input: GetWalletInput) -> ServiceResult<Wallet> {
-        let caller_account = match self
+        let caller_account = self
             .account_service
-            .maybe_resolve_account(&self.call_context.caller())
-            .await?
-        {
-            Some(account) => account,
-            None => Err(AccountError::NotFoundAccountIdentity {
-                identity: self.call_context.caller().to_text(),
-            })?,
-        };
+            .resolve_account(&self.call_context.caller())
+            .await?;
 
         let wallet_id = self.helper_mapper.uuid_from_str(input.wallet_id.clone())?;
         let wallet_key = Wallet::key(*wallet_id.as_bytes());
@@ -184,16 +178,10 @@ impl WalletService {
         &self,
         input: GetWalletBalanceInput,
     ) -> ServiceResult<WalletBalanceDTO> {
-        let caller_account = match self
+        let caller_account = self
             .account_service
-            .maybe_resolve_account(&self.call_context.caller())
-            .await?
-        {
-            Some(account) => account,
-            None => Err(WalletError::Forbidden {
-                wallet: input.wallet_id.clone(),
-            })?,
-        };
+            .resolve_account(&self.call_context.caller())
+            .await?;
         let wallet_id = self.helper_mapper.uuid_from_str(input.wallet_id.clone())?;
         let wallet_key = Wallet::key(*wallet_id.as_bytes());
         let mut wallet =

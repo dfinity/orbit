@@ -1,7 +1,9 @@
 <template>
   <div class="operation-item__code__title">
     {{ $t(`banks.operations.approve_transfer.title`) }}
-    <span v-if="wallet"><small>| {{ wallet.asset_symbol }}</small></span>
+    <span v-if="wallet"
+      ><small>| {{ wallet.asset_symbol }}</small></span
+    >
   </div>
   <div class="operation-item__code__time">
     <VBtn

@@ -4,7 +4,7 @@ use crate::{
         indexes::operation_transfer_index::{
             OperationTransferIndex, OperationTransferIndexCriteria,
         },
-        Operation, OperationCode,
+        Operation,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -42,18 +42,12 @@ impl IndexRepository<OperationTransferIndex, Operation> for OperationTransferInd
         DB.with(|db| {
             let start_key = OperationTransferIndex {
                 transfer_id: criteria.transfer_id.to_owned(),
-                code: criteria
-                    .code
-                    .to_owned()
-                    .unwrap_or(OperationCode::ApproveTransfer),
+                created_at: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
                 id: [u8::MIN; 16],
             };
             let end_key = OperationTransferIndex {
                 transfer_id: criteria.transfer_id.to_owned(),
-                code: criteria
-                    .code
-                    .to_owned()
-                    .unwrap_or(OperationCode::ApproveTransfer),
+                created_at: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
                 id: [u8::MAX; 16],
             };
 
@@ -65,7 +59,7 @@ impl IndexRepository<OperationTransferIndex, Operation> for OperationTransferInd
                     let mut status_matches_criteria = true;
                     let mut read_matches_criteria = true;
                     if let Some(code) = &criteria.code {
-                        code_matches_criteria = index.code == *code;
+                        code_matches_criteria = operation.code == *code;
                     }
                     if let Some(status) = criteria.status.as_ref() {
                         status_matches_criteria = *status == operation.status;

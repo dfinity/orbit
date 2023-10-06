@@ -171,16 +171,11 @@ impl WalletMapper {
             name: wallet.name.clone(),
             asset_name: None,
             decimals: wallet.decimals,
-            balance: match &wallet.balance {
-                Some(balance) => Some(WalletBalanceInfoDTO {
-                    balance: balance.balance.clone(),
-                    decimals: wallet.decimals,
-                    last_update_timestamp: timestamp_to_rfc3339(
-                        &balance.last_modification_timestamp,
-                    ),
-                }),
-                None => None,
-            },
+            balance: wallet.balance.as_ref().map(|balance| WalletBalanceInfoDTO {
+                balance: balance.balance.clone(),
+                decimals: wallet.decimals,
+                last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
+            }),
             nr_owners: wallet.owners.len() as u8,
         }
     }

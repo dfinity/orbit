@@ -2,7 +2,7 @@ use crate::{
     core::{with_memory_manager, Memory, OPERATION_ACCOUNT_INDEX_MEMORY_ID},
     models::{
         indexes::operation_account_index::{OperationAccountIndex, OperationAccountIndexCriteria},
-        Operation, OperationCode,
+        Operation,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -40,18 +40,12 @@ impl IndexRepository<OperationAccountIndex, Operation> for OperationAccountIndex
         DB.with(|db| {
             let start_key = OperationAccountIndex {
                 account_id: criteria.account_id.to_owned(),
-                code: criteria
-                    .code
-                    .to_owned()
-                    .unwrap_or(OperationCode::ApproveTransfer),
+                created_at: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
                 id: [u8::MIN; 16],
             };
             let end_key = OperationAccountIndex {
                 account_id: criteria.account_id.to_owned(),
-                code: criteria
-                    .code
-                    .to_owned()
-                    .unwrap_or(OperationCode::ApproveTransfer),
+                created_at: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
                 id: [u8::MAX; 16],
             };
 
@@ -63,7 +57,7 @@ impl IndexRepository<OperationAccountIndex, Operation> for OperationAccountIndex
                     let mut status_matches_criteria = true;
                     let mut read_matches_criteria = true;
                     if let Some(code) = &criteria.code {
-                        code_matches_criteria = index.code == *code;
+                        code_matches_criteria = operation.code == *code;
                     }
                     if let Some(status) = criteria.status.as_ref() {
                         status_matches_criteria = *status == operation.status;

@@ -90,7 +90,7 @@ export const validTokenAmount = (value: unknown, decimals: number): string | boo
       if (BigInt(`${value}`) < 0) {
         throw new Error('Invalid format, amount must be greater than 0');
       }
-  
+
       return true;
     }
 

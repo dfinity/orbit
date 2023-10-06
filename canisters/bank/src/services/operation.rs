@@ -23,9 +23,9 @@ use crate::{
         ListWalletOperationsInput, OperationDTO,
     },
 };
-use ic_canister_core::cdk::api::time;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, repository::IndexRepository};
+use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -160,6 +160,8 @@ impl OperationService {
         let dtos = self
             .operation_account_index
             .find_by_criteria(OperationAccountIndexCriteria {
+                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 account_id: account.id,
                 code: filter_by_code,
                 status: input
@@ -192,6 +194,8 @@ impl OperationService {
         let dtos = self
             .operation_wallet_index
             .find_by_criteria(OperationWalletIndexCriteria {
+                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 wallet_id: wallet.id,
                 code: filter_by_code,
                 status: input

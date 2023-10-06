@@ -44,7 +44,7 @@ impl IndexRepository<TransferExecutionTimeIndex, Transfer>
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Transfer> {
         DB.with(|db| {
             let start_key = TransferExecutionTimeIndex {
-                execution_dt: u64::MIN,
+                execution_dt: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
                 transfer_id: [std::u8::MIN; 16],
             };
             let end_key = TransferExecutionTimeIndex {

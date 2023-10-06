@@ -7,7 +7,7 @@ use crate::{
     repositories::OperationRepository,
 };
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
+use ic_canister_core::{repository::Repository, types::Timestamp};
 use ic_canister_macros::stable_object;
 
 /// Index of operations by transfer id.
@@ -16,8 +16,8 @@ use ic_canister_macros::stable_object;
 pub struct OperationTransferIndex {
     /// The transfer id that is associated with this operation.
     pub transfer_id: TransferId,
-    /// An operation code that represents the operation type, e.g. "transfer".
-    pub code: OperationCode,
+    /// The time when the operation was created.
+    pub created_at: Timestamp,
     /// The operation id, which is a UUID.
     pub id: OperationId,
 }
@@ -28,6 +28,8 @@ pub struct OperationTransferIndexCriteria {
     pub code: Option<OperationCode>,
     pub status: Option<OperationStatus>,
     pub read: Option<bool>,
+    pub from_dt: Option<Timestamp>,
+    pub to_dt: Option<Timestamp>,
 }
 
 impl Operation {
@@ -42,7 +44,7 @@ impl Operation {
 
         OperationTransferIndex {
             id: self.id.to_owned(),
-            code: self.code.to_owned(),
+            created_at: self.created_timestamp.to_owned(),
             transfer_id: *transfer_id.as_bytes(),
         }
     }

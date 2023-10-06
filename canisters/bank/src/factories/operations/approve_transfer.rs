@@ -2,26 +2,21 @@ use super::OperationProcessor;
 use crate::{
     mappers::HelperMapper,
     models::{
-        indexes::operation_transfer_index::OperationTransferIndexCriteria, Operation,
-        OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
+        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
         OPERATION_METADATA_KEY_TRANSFER_ID,
     },
-    repositories::{
-        indexes::operation_transfer_index::OperationTransferIndexRepository, OperationRepository,
-        TransferRepository,
-    },
+    repositories::{OperationRepository, TransferRepository},
 };
 use async_trait::async_trait;
+use ic_canister_core::api::ApiError;
 use ic_canister_core::cdk::api::time;
 use ic_canister_core::repository::Repository;
-use ic_canister_core::{api::ApiError, repository::IndexRepository};
 
 #[derive(Default, Debug)]
 pub struct ApproveTransferOperationProcessor {
     helper_mapper: HelperMapper,
     transfer_repository: TransferRepository,
     operation_repository: OperationRepository,
-    operation_transfer_index: OperationTransferIndexRepository,
 }
 
 impl ApproveTransferOperationProcessor {
@@ -46,15 +41,7 @@ impl ApproveTransferOperationProcessor {
             .get(&Transfer::key(*transfer_id.as_bytes()))
             .ok_or(ApiError::new("ERR".to_string(), None, None))?;
 
-        let operations =
-            self.operation_transfer_index
-                .find_by_criteria(OperationTransferIndexCriteria {
-                    transfer_id: transfer.id,
-                    code: None,
-                    read: None,
-                    status: None,
-                });
-
+        let operations = self.operation_repository.find_by_transfer_id(transfer.id);
         let approvals = operations
             .iter()
             .filter(|operations| operations.status == OperationStatus::Adopted)
