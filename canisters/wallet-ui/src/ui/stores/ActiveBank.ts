@@ -6,6 +6,7 @@ import {
   BankAsset,
   BankFeatures,
   Operation,
+  OperationId,
   WalletListItem,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
@@ -25,8 +26,10 @@ export interface ActiveBankStoreState {
   _bankId: string;
   loading: boolean;
   _account: Account | null;
-  balanceUpdaterRegistered: boolean;
-  pendingOperationsUpdaterRegistered: boolean;
+  pollingJobs: {
+    walletBalance?: number;
+    pendingOperations?: number;
+  };
   features: {
     loading: boolean;
     details: BankFeatures | null;
@@ -46,8 +49,10 @@ export const useActiveBankStore = defineStore('activeBank', {
     return {
       _bankId: Principal.anonymous().toString(),
       loading: false,
-      balanceUpdaterRegistered: false,
-      pendingOperationsUpdaterRegistered: false,
+      pollingJobs: {
+        walletBalance: undefined,
+        pendingOperations: undefined,
+      },
       _account: null,
       features: {
         loading: false,
@@ -73,6 +78,28 @@ export const useActiveBankStore = defineStore('activeBank', {
       }
 
       return this._account as Account;
+    },
+    lastPendingOperationDate(): Date | null {
+      if (!this.pendingOperations.items.length) {
+        return null;
+      }
+
+      return new Date(this.pendingOperations.items[0].created_at);
+    },
+    lastPendingOperationId(): OperationId | null {
+      if (!this.pendingOperations.items.length) {
+        return null;
+      }
+
+      return this.pendingOperations.items[0].id;
+    },
+    sortedPendingOperations(): Operation[] {
+      return this.pendingOperations.items.sort((a, b) => {
+        const firstDt = new Date(a.created_at);
+        const secondDt = new Date(b.created_at);
+
+        return secondDt.getTime() - firstDt.getTime();
+      });
     },
     hasPendingOperations(): boolean {
       return this.pendingOperations.items.length > 0;
@@ -105,21 +132,33 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       this._bankId = bankId.toText();
     },
-    async registerWalletBalanceUpdater(): Promise<void> {
-      if (this.balanceUpdaterRegistered) {
-        return;
+    registerJobs(): void {
+      if (!this.pollingJobs.walletBalance) {
+        this.fetchWalletsBalance().catch(err => {
+          logger.error('Failed to fetch wallets balance', { err });
+        });
+        this.pollingJobs.walletBalance = setInterval(async () => {
+          await this.fetchWalletsBalance().catch(err => {
+            logger.error('Failed to fetch wallets balance', { err });
+          });
+        }, 15000) as unknown as number;
       }
-      this.balanceUpdaterRegistered = true;
-
-      do {
-        await this.resolveWalletsBalance();
-        await new Promise(resolve => setTimeout(resolve, 15000));
-      } while (this.balanceUpdaterRegistered);
+      if (!this.pollingJobs.pendingOperations) {
+        this.fetchPendingOperations().catch(err => {
+          logger.error('Failed to fetch pending operations', { err });
+        });
+        this.pollingJobs.pendingOperations = setInterval(async () => {
+          await this.fetchPendingOperations().catch(err => {
+            logger.error('Failed to fetch pending operations', { err });
+          });
+        }, 10000) as unknown as number;
+      }
     },
-    unregisterWalletBalanceUpdater(): void {
-      this.balanceUpdaterRegistered = false;
+    unregisterJobs(): void {
+      clearInterval(this.pollingJobs.walletBalance);
+      clearInterval(this.pollingJobs.pendingOperations);
     },
-    async resolveWalletsBalance(): Promise<void> {
+    async fetchWalletsBalance(): Promise<void> {
       const walletIds = this.wallets.items.map(wallet => wallet.id);
 
       for (const walletId of walletIds) {
@@ -138,31 +177,16 @@ export const useActiveBankStore = defineStore('activeBank', {
         });
       }
     },
-    async registerPendingOperationsUpdater(): Promise<void> {
-      if (this.pendingOperationsUpdaterRegistered) {
-        return;
-      }
-      this.pendingOperationsUpdaterRegistered = true;
+    async fetchPendingOperations(): Promise<void> {
+      const newOperations = await this.service.listUnreadPendingOperations(
+        this.lastPendingOperationDate ?? undefined,
+        this.lastPendingOperationId ?? undefined,
+      );
 
-      do {
-        await this.resolvePendingOperations();
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      } while (this.pendingOperationsUpdaterRegistered);
-    },
-    unregisterPendingOperationsUpdater(): void {
-      this.pendingOperationsUpdaterRegistered = false;
-    },
-    async resolvePendingOperations(): Promise<void> {
-      if (this.pendingOperations.loading) {
-        return;
-      }
-      try {
-        this.pendingOperations.loading = true;
-        this.pendingOperations.items = await this.service.listPendingOperations();
-      } catch (err) {
-        logger.error('Failed to resolve unread operations', { err });
-      } finally {
-        this.pendingOperations.loading = false;
+      for (const newOperation of newOperations) {
+        if (!this.pendingOperations.items.find(current => current.id === newOperation.id)) {
+          this.pendingOperations.items.push(newOperation);
+        }
       }
     },
     reset(): void {
@@ -206,12 +230,26 @@ export const useActiveBankStore = defineStore('activeBank', {
           feedback_reason = [operation.feedback_reason?.[0]];
         }
 
-        await this.service.editOperation({
-          operation_id: operation.id,
-          approve: approve,
-          read: [operation.read],
-          reason: feedback_reason,
-        });
+        await this.service
+          .editOperation({
+            operation_id: operation.id,
+            approve: approve,
+            read: [operation.read],
+            reason: feedback_reason,
+          })
+          .then(operation => {
+            this.pendingOperations.items = this.pendingOperations.items.filter(item => {
+              if (item.id !== operation.id) {
+                return true;
+              }
+              const isPending = 'Pending' in operation.status;
+              const isRead = operation.read;
+
+              console.log(isPending, !isRead);
+
+              return isPending && !isRead;
+            });
+          });
       } catch (err) {
         logger.error(`Failed to save operation`, { err });
 
@@ -245,8 +283,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     },
     // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
     async loadDetailsAsync(): Promise<void> {
-      this.registerWalletBalanceUpdater();
-      this.registerPendingOperationsUpdater();
+      this.registerJobs();
       this.loadWalletList();
       this.loadBankFeatures();
     },
@@ -254,8 +291,8 @@ export const useActiveBankStore = defineStore('activeBank', {
       if (this.loading) {
         return;
       }
-      this.unregisterWalletBalanceUpdater();
-      this.unregisterPendingOperationsUpdater();
+      this.unregisterJobs();
+      this.reset();
       this.loading = true;
       this.setBankId(bankId);
       const bankService = services().bank.withBankId(this.bankId);

@@ -195,7 +195,8 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
           throw new Error(i18n.global.t('banks.policy_misconfigured'));
         }
 
-        const bankService = useActiveBankStore().service;
+        const activeBank = useActiveBankStore();
+        const bankService = activeBank.service;
 
         await bankService
           .createWallet({
@@ -213,6 +214,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
             policies,
           })
           .then(result => {
+            activeBank.loadWalletList();
             this.close();
 
             router.push({ name: 'WalletDetails', params: { id: result.id } });

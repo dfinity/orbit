@@ -201,8 +201,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListOperationsInput = IDL.Record({
     'status' : IDL.Opt(OperationStatus),
+    'to_dt' : IDL.Opt(TimestampRFC3339),
     'code' : IDL.Opt(IDL.Text),
     'read' : IDL.Opt(IDL.Bool),
+    'from_dt' : IDL.Opt(TimestampRFC3339),
   });
   const ListOperationsResult = IDL.Variant({
     'Ok' : IDL.Record({ 'operations' : IDL.Vec(Operation) }),

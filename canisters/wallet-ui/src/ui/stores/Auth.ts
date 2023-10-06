@@ -1,6 +1,7 @@
 import { AnonymousIdentity, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
+import { logger } from '~/core';
 import { icAgent } from '~/core/IcAgent';
 import { Maybe } from '~/types';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey, router, services } from '~/ui/modules';
@@ -56,15 +57,8 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('Account not found');
         }
 
-        const bankStore = useBankStore();
         // loads information about the main bank and the list of banks for the account
-        await bankStore.init();
-        if (bankStore.main !== null) {
-          // this does not need to be awaited, it will be loaded in the background making the initial load faster
-          await useActiveBankStore().load(bankStore.main);
-        }
-
-        // useActiveBankStore()
+        await this.initBanks();
 
         this.identity = cachedIdentity;
         this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
@@ -73,9 +67,19 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
-        throw error;
+        
+        logger.error(`Application failed to initialize the state`, { error });
       } finally {
         this.initialized = true;
+      }
+    },
+    async initBanks(): Promise<void> {
+      const bankStore = useBankStore();
+      // loads information about the main bank and the list of banks for the account
+      await bankStore.init();
+      if (bankStore.main !== null && !bankStore.main.isAnonymous()) {
+        // this does not need to be awaited, it will be loaded in the background making the initial load faster
+        await useActiveBankStore().load(bankStore.main);
       }
     },
     async signIn(): Promise<void> {
@@ -90,7 +94,7 @@ export const useAuthStore = defineStore('auth', {
 
         if (accountDetails) {
           // loads information about the main bank and the list of banks for the account
-          await useBankStore().init();
+          await this.initBanks();
 
           this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
           this.accountId = accountDetails.id;
@@ -101,7 +105,7 @@ export const useAuthStore = defineStore('auth', {
         const account = await controlPanelService.register_with_shared_bank();
 
         // loads information about the main bank and the list of banks for the account
-        await useBankStore().init();
+        await this.initBanks();
 
         this.accountName = account.name.length ? account.name[0] : null;
         this.accountId = account.id;

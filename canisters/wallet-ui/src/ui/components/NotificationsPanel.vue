@@ -8,9 +8,9 @@
       <VListItem v-if="!activeBank.hasPendingOperations" class="text-center">
         {{ $t('terms.all_done') }}
       </VListItem>
-      <VListItem v-for="(operation, idx) in activeBank.pendingOperations.items" :key="idx">
+      <VListItem v-for="(operation, idx) in activeBank.sortedPendingOperations" :key="idx">
         <BankOperation
-          v-model="activeBank.pendingOperations.items[idx]"
+          v-model="activeBank.sortedPendingOperations[idx]"
           @updated="() => save(operation)"
         />
         <VDivider v-if="activeBank.pendingOperations.items.length - 1 !== idx" class="mt-4" />

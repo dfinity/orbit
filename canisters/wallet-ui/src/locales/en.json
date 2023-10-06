@@ -42,6 +42,7 @@
     "load_failed": "Your account information failed to load, please try again."
   },
   "banks": {
+    "operation_failed_to_save": "Operation failed to save.",
     "no_wallets": "No wallets available.",
     "pending_operations": "Pending operations",
     "wallet_address_copied_to_clipboard": "Wallet address copied.",

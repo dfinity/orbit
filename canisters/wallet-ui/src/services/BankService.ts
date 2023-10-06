@@ -18,6 +18,7 @@ import {
   ListOperationsInput,
   ListWalletTransfersInput,
   Operation,
+  OperationId,
   RegisterAccountInput,
   Transfer,
   TransferInput,
@@ -112,11 +113,23 @@ export class BankService {
     return result.Ok.operations;
   }
 
-  async listPendingOperations(): Promise<Operation[]> {
-    return this.listOperations({ read: [false], code: [], status: [{ Pending: null }] });
+  async listUnreadPendingOperations(from_dt?: Date, last_id?: OperationId): Promise<Operation[]> {
+    const operations = await this.listOperations({
+      read: [false],
+      code: [],
+      status: [{ Pending: null }],
+      from_dt: from_dt ? [from_dt.toISOString()] : [],
+      to_dt: [],
+    });
+
+    return operations.filter(operation => operation.id !== last_id);
   }
 
   async editOperation(input: EditOperationInput): Promise<Operation> {
+    if (input.approve?.[0] !== undefined && input.read?.[0] === undefined) {
+      input.read = [true];
+    }
+
     const result = await this.actor.edit_operation(input);
 
     if ('Err' in result) {

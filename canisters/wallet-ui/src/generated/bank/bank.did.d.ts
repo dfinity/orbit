@@ -94,8 +94,10 @@ export type GetWalletResult = { 'Ok' : { 'wallet' : Wallet } } |
   { 'Err' : Error };
 export interface ListOperationsInput {
   'status' : [] | [OperationStatus],
+  'to_dt' : [] | [TimestampRFC3339],
   'code' : [] | [string],
   'read' : [] | [boolean],
+  'from_dt' : [] | [TimestampRFC3339],
 }
 export type ListOperationsResult = {
     'Ok' : { 'operations' : Array<Operation> }
