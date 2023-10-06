@@ -7,26 +7,17 @@
             <h1 class="text-h4">{{ $t('home.welcome_back') }}</h1>
             <p v-if="activeBank.hasAccount" class="info-box">
               <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
-              <span v-if="!activeBank.pendingOperations.loading">{{
-                activeBank.metrics.pendingOperations > 0
-                  ? $t('home.notifications.some', { count: activeBank.metrics.pendingOperations })
-                  : $t('home.notifications.none')
-              }}</span>
-              <span v-else class="info-box__loading"
-                ><VProgressLinear indeterminate color="primary"
-              /></span>
+              <span>
+                {{
+                  activeBank.metrics.pendingOperations > 0
+                    ? $t('home.notifications.some', { count: activeBank.metrics.pendingOperations })
+                    : $t('home.notifications.none')
+                }}
+              </span>
             </p>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
-            <VBtn
-              v-if="activeBank.hasAccount || activeBank.loading"
-              :loading="activeBank.loading"
-              rounded
-              color="primary-variant"
-              :prepend-icon="mdiSend"
-            >
-              {{ $t('terms.new_transfer') }}
-            </VBtn>
+            <NewTransferBtn />
             <VBtn
               rounded
               color="primary-variant"
@@ -77,6 +68,7 @@
 import { mdiBank, mdiBellRing, mdiCogs, mdiSend } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { useActiveBankStore } from '~/ui/stores';
+import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 
 const activeBank = useActiveBankStore();
 </script>

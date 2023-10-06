@@ -18,7 +18,6 @@ import {
   ListOperationsInput,
   ListWalletTransfersInput,
   Operation,
-  OperationListItem,
   RegisterAccountInput,
   Transfer,
   TransferInput,
@@ -26,7 +25,6 @@ import {
   Wallet,
   WalletBalance,
   WalletListItem,
-  OperationStatus,
   _SERVICE,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
@@ -104,7 +102,7 @@ export class BankService {
     return result.Ok.features;
   }
 
-  async listOperations(input: ListOperationsInput): Promise<OperationListItem[]> {
+  async listOperations(input: ListOperationsInput): Promise<Operation[]> {
     const result = await this.actor.list_operations(input);
 
     if ('Err' in result) {
@@ -114,7 +112,7 @@ export class BankService {
     return result.Ok.operations;
   }
 
-  async listPendingOperations(): Promise<OperationListItem[]> {
+  async listPendingOperations(): Promise<Operation[]> {
     return this.listOperations({ read: [false], code: [], status: [{ Pending: null }] });
   }
 

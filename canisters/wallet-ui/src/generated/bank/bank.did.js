@@ -110,6 +110,7 @@ export const idlFactory = ({ IDL }) => {
   const Operation = IDL.Record({
     'id' : OperationId,
     'status' : OperationStatus,
+    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'code' : IDL.Text,
     'read' : IDL.Bool,
     'created_at' : TimestampRFC3339,
@@ -203,15 +204,8 @@ export const idlFactory = ({ IDL }) => {
     'code' : IDL.Opt(IDL.Text),
     'read' : IDL.Opt(IDL.Bool),
   });
-  const OperationListItem = IDL.Record({
-    'id' : OperationId,
-    'status' : OperationStatus,
-    'code' : IDL.Text,
-    'created_at' : TimestampRFC3339,
-    'account' : AccountId,
-  });
   const ListOperationsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'operations' : IDL.Vec(OperationListItem) }),
+    'Ok' : IDL.Record({ 'operations' : IDL.Vec(Operation) }),
     'Err' : Error,
   });
   const ListWalletOperationsInput = IDL.Record({
@@ -221,7 +215,7 @@ export const idlFactory = ({ IDL }) => {
     'wallet_id' : WalletId,
   });
   const ListWalletOperationsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'operations' : IDL.Vec(OperationListItem) }),
+    'Ok' : IDL.Record({ 'operations' : IDL.Vec(Operation) }),
     'Err' : Error,
   });
   const ListWalletTransfersInput = IDL.Record({

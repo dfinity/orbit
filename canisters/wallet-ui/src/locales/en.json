@@ -62,9 +62,21 @@
       "VariableApprovalThreshold": "Percentage based approval",
       "FixedApprovalThreshold": "Exact number of approvals"
     },
+    "operations": {
+      "approve_transfer": {
+        "title": "Approve transfer"
+      }
+    },
     "no_transfers_found_search": "No transfers found for the search criteria."
   },
   "terms": {
+    "all_done": "All done",
+    "approve": "Approve",
+    "approved": "Approved",
+    "abstained": "Abstained",
+    "reject": "Reject",
+    "rejected": "Rejected",
+    "edit": "Edit",
     "destination_address": "Destination address",
     "search": "Search",
     "until": "To",

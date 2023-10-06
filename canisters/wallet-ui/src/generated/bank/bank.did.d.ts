@@ -98,7 +98,7 @@ export interface ListOperationsInput {
   'read' : [] | [boolean],
 }
 export type ListOperationsResult = {
-    'Ok' : { 'operations' : Array<OperationListItem> }
+    'Ok' : { 'operations' : Array<Operation> }
   } |
   { 'Err' : Error };
 export interface ListWalletOperationsInput {
@@ -108,7 +108,7 @@ export interface ListWalletOperationsInput {
   'wallet_id' : WalletId,
 }
 export type ListWalletOperationsResult = {
-    'Ok' : { 'operations' : Array<OperationListItem> }
+    'Ok' : { 'operations' : Array<Operation> }
   } |
   { 'Err' : Error };
 export type ListWalletResult = {
@@ -130,6 +130,7 @@ export type NetworkId = string;
 export interface Operation {
   'id' : OperationId,
   'status' : OperationStatus,
+  'metadata' : Array<[string, string]>,
   'code' : string,
   'read' : boolean,
   'created_at' : TimestampRFC3339,
@@ -138,13 +139,6 @@ export interface Operation {
   'feedback_time_at' : [] | [TimestampRFC3339],
 }
 export type OperationId = string;
-export interface OperationListItem {
-  'id' : OperationId,
-  'status' : OperationStatus,
-  'code' : string,
-  'created_at' : TimestampRFC3339,
-  'account' : AccountId,
-}
 export type OperationStatus = { 'Rejected' : null } |
   { 'Abstained' : null } |
   { 'Adopted' : null } |

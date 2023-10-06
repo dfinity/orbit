@@ -13,3 +13,8 @@ export enum WalletTransferStatus {
   Completed = 'completed',
   Unknown = 'unknown',
 }
+
+export enum BankOperationType {
+  ApproveTransfer = 'approve-transfer',
+  Unknown = 'unknown',
+}

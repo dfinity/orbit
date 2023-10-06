@@ -62,11 +62,23 @@
       "VariableApprovalThreshold": "Aprovação por porcentagem",
       "FixedApprovalThreshold": "Aprovação por votos fixos"
     },
+    "operations": {
+      "approve_transfer": {
+        "title": "Approvar transferência"
+      }
+    },
     "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa."
   },
   "terms": {
+    "all_done": "Tudo pronto",
     "destination_address": "Endereço de destino",
     "search": "Procurar",
+    "approve": "Aprovar",
+    "abstained": "Abstido",
+    "approved": "Aprovado",
+    "reject": "Rejeitar",
+    "rejected": "Rejeitado",
+    "edit": "Editar",
     "until": "Até",
     "from": "Desde",
     "amount": "Valor",

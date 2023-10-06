@@ -5,7 +5,7 @@ import {
   Account,
   BankAsset,
   BankFeatures,
-  OperationListItem,
+  Operation,
   WalletListItem,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
@@ -37,7 +37,7 @@ export interface ActiveBankStoreState {
   };
   pendingOperations: {
     loading: boolean;
-    items: OperationListItem[];
+    items: Operation[];
   };
 }
 
@@ -73,6 +73,9 @@ export const useActiveBankStore = defineStore('activeBank', {
       }
 
       return this._account as Account;
+    },
+    hasPendingOperations(): boolean {
+      return this.pendingOperations.items.length > 0;
     },
     bankId(): Principal {
       return Principal.fromText(this._bankId);
@@ -185,6 +188,39 @@ export const useActiveBankStore = defineStore('activeBank', {
       // todo: add logic for multiple identities
 
       return null;
+    },
+    async saveOperation(operation: Operation): Promise<void> {
+      const settings = useSettingsStore();
+
+      try {
+        const currentOperation = await this.service.getOperation({ operation_id: operation.id });
+        let approve: [] | [boolean] = [];
+        if ('Pending' in currentOperation.status && 'Adopted' in operation.status) {
+          approve = [true];
+        } else if ('Pending' in currentOperation.status && 'Rejected' in operation.status) {
+          approve = [false];
+        }
+
+        let feedback_reason: [] | [string] = [];
+        if ('Pending' in currentOperation.status && operation.feedback_reason?.[0]) {
+          feedback_reason = [operation.feedback_reason?.[0]];
+        }
+
+        await this.service.editOperation({
+          operation_id: operation.id,
+          approve: approve,
+          read: [operation.read],
+          reason: feedback_reason,
+        });
+      } catch (err) {
+        logger.error(`Failed to save operation`, { err });
+
+        settings.setNotification({
+          show: true,
+          type: 'error',
+          message: i18n.global.t('banks.operation_failed_to_save'),
+        });
+      }
     },
     async loadWalletList(): Promise<void> {
       if (this.wallets.loading) {
