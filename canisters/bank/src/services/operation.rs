@@ -20,7 +20,7 @@ use crate::{
     },
     transport::{
         EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
-        ListWalletOperationsInput, OperationDTO, OperationListItemDTO,
+        ListWalletOperationsInput, OperationDTO,
     },
 };
 use ic_canister_core::cdk::api::time;
@@ -147,7 +147,7 @@ impl OperationService {
     pub async fn list_operations(
         &self,
         input: ListOperationsInput,
-    ) -> ServiceResult<Vec<OperationListItemDTO>> {
+    ) -> ServiceResult<Vec<OperationDTO>> {
         let account = self
             .account_service
             .resolve_account(&self.call_context.caller())
@@ -168,8 +168,8 @@ impl OperationService {
                 read: input.read,
             })
             .iter()
-            .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
-            .collect::<Vec<OperationListItemDTO>>();
+            .map(|operation| self.operation_mapper.to_operation_dto(operation.to_owned()))
+            .collect::<Vec<OperationDTO>>();
 
         Ok(dtos)
     }
@@ -177,7 +177,7 @@ impl OperationService {
     pub async fn list_wallet_operations(
         &self,
         input: ListWalletOperationsInput,
-    ) -> ServiceResult<Vec<OperationListItemDTO>> {
+    ) -> ServiceResult<Vec<OperationDTO>> {
         let wallet = self
             .wallet_service
             .get_wallet_core(GetWalletInput {
@@ -200,8 +200,8 @@ impl OperationService {
                 read: input.read,
             })
             .iter()
-            .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
-            .collect::<Vec<OperationListItemDTO>>();
+            .map(|operation| self.operation_mapper.to_operation_dto(operation.to_owned()))
+            .collect::<Vec<OperationDTO>>();
 
         Ok(dtos)
     }

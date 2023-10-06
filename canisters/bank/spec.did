@@ -31,26 +31,17 @@ type Operation = record {
   read : bool;
   // The time at which the operation was created.
   created_at : TimestampRFC3339;
+  // The metadata associated with the operation.
+  // 
+  // The metadata is a list of key-value pairs that can be used to store
+  // additional information about the operation (e.g. `{"transfer_id": "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0"}`).
+  metadata : vec record { text; text };
   // The operation approval status.
   status : OperationStatus;
   // The time at which the operation was approved or rejected.
   feedback_time_at : opt TimestampRFC3339;
   // The reason for the approval or rejection.
   feedback_reason : opt text;
-};
-
-// A record type that can be used to represent an operation in the list of operations.
-type OperationListItem = record {
-  // The operation id.
-  id : OperationId;
-  // The code of the operation (e.g. "transaction").
-  code : text;
-  // The account that needs to approve the operation.
-  account : AccountId;
-  // The operation approval status.
-  status : OperationStatus;
-  // The time at which the operation was created.
-  created_at : TimestampRFC3339;
 };
 
 // The input type for getting the list of operations associated with the caller.
@@ -68,7 +59,7 @@ type ListOperationsResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The list of operations.
-    operations : vec OperationListItem;
+    operations : vec Operation;
   };
   // The error that occurred during the operation, if any
   // (e.g. the user does not have access to the operation).
@@ -92,7 +83,7 @@ type ListWalletOperationsResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The list of operations.
-    operations : vec OperationListItem;
+    operations : vec Operation;
   };
   // The error that occurred during the operation, if any
   // (e.g. the user does not have access to the operation).

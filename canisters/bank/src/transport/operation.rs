@@ -18,18 +18,10 @@ pub struct OperationDTO {
     pub code: String,
     pub read: bool,
     pub created_at: TimestampRfc3339,
+    pub metadata: Vec<(String, String)>,
     pub feedback_reason: Option<String>,
     pub account: AccountIdDTO,
     pub feedback_time_at: Option<TimestampRfc3339>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct OperationListItemDTO {
-    pub id: OperationIdDTO,
-    pub status: OperationStatusDTO,
-    pub code: String,
-    pub created_at: TimestampRfc3339,
-    pub account: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -64,7 +56,7 @@ pub struct ListOperationsInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListOperationsResponse {
-    pub operations: Vec<OperationListItemDTO>,
+    pub operations: Vec<OperationDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -77,5 +69,5 @@ pub struct ListWalletOperationsInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListWalletOperationsResponse {
-    pub operations: Vec<OperationListItemDTO>,
+    pub operations: Vec<OperationDTO>,
 }
