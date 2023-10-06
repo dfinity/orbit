@@ -32,7 +32,7 @@ pub struct OperationWalletIndexCriteria {
 }
 
 impl Operation {
-    pub fn as_index_for_wallet(&self) -> OperationWalletIndex {
+    pub fn to_index_for_wallet(&self) -> OperationWalletIndex {
         let metadata = self.metadata_map();
         let unparsed_wallet_id = metadata
             .get(OPERATION_METADATA_KEY_WALLET_ID)

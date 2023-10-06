@@ -41,9 +41,9 @@ impl Repository<OperationKey, Operation> for OperationRepository {
 
     fn insert(&self, key: OperationKey, value: Operation) -> Option<Operation> {
         DB.with(|m| {
-            OperationAccountIndexRepository::default().insert(value.as_index_for_account());
-            OperationWalletIndexRepository::default().insert(value.as_index_for_wallet());
-            OperationTransferIndexRepository::default().insert(value.as_index_for_transfer());
+            OperationAccountIndexRepository::default().insert(value.to_index_for_account());
+            OperationWalletIndexRepository::default().insert(value.to_index_for_wallet());
+            OperationTransferIndexRepository::default().insert(value.to_index_for_transfer());
 
             m.borrow_mut().insert(key, value)
         })

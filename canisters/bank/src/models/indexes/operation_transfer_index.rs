@@ -33,7 +33,7 @@ pub struct OperationTransferIndexCriteria {
 }
 
 impl Operation {
-    pub fn as_index_for_transfer(&self) -> OperationTransferIndex {
+    pub fn to_index_for_transfer(&self) -> OperationTransferIndex {
         let metadata = self.metadata_map();
         let unparsed_transfer_id = metadata
             .get(OPERATION_METADATA_KEY_TRANSFER_ID)

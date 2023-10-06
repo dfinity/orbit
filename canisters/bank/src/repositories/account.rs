@@ -33,7 +33,7 @@ impl Repository<AccountKey, Account> for AccountRepository {
     fn insert(&self, key: AccountKey, value: Account) -> Option<Account> {
         DB.with(|m| {
             let identity_index = AccountIdentityIndexRepository::default();
-            value.as_index_for_identities().iter().for_each(|index| {
+            value.to_index_for_identities().iter().for_each(|index| {
                 identity_index.insert(index.to_owned());
             });
 

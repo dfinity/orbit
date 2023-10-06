@@ -29,7 +29,7 @@ pub struct OperationAccountIndexCriteria {
 }
 
 impl Operation {
-    pub fn as_index_for_account(&self) -> OperationAccountIndex {
+    pub fn to_index_for_account(&self) -> OperationAccountIndex {
         OperationAccountIndex {
             id: self.id.to_owned(),
             created_at: self.created_timestamp.to_owned(),

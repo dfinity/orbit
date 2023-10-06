@@ -4,8 +4,8 @@ use crate::{
     errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
-    models::{Wallet, WalletAccount, WalletBalance, WalletValidator},
-    repositories::{WalletAccountRepository, WalletRepository},
+    models::{Wallet, WalletBalance, WalletValidator},
+    repositories::WalletRepository,
     transport::{
         CreateWalletInput, CreateWalletInputOwnersItemDTO, GetWalletBalanceInput, GetWalletInput,
         WalletBalanceDTO, WalletDTO, WalletListItemDTO,
@@ -17,14 +17,12 @@ use ic_canister_core::{
     utils::generate_uuid_v4,
 };
 use std::collections::HashSet;
-use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct WalletService {
     call_context: CallContext,
     account_service: AccountService,
     wallet_repository: WalletRepository,
-    wallet_account_repository: WalletAccountRepository,
     blockchain_mapper: BlockchainMapper,
     wallet_mapper: WalletMapper,
     helper_mapper: HelperMapper,
@@ -103,15 +101,6 @@ impl WalletService {
             owners_accounts.iter().copied().collect(),
         )?;
 
-        let wallet_accounts_association = new_wallet
-            .owners
-            .iter()
-            .map(|owner_account_id| {
-                self.wallet_mapper
-                    .account_to_wallet_association(&new_wallet, owner_account_id)
-            })
-            .collect::<Vec<WalletAccount>>();
-
         // The wallet address is generated after the wallet is created from the user input and
         // all the validations are successfully completed.
         if new_wallet.address.is_empty() {
@@ -130,12 +119,6 @@ impl WalletService {
         // process to avoid potential consistency issues due to the fact that some of the calls to create the wallet
         // happen in an asynchronous way.
         self.wallet_repository.insert(key, new_wallet.clone());
-        wallet_accounts_association
-            .iter()
-            .for_each(|wallet_account| {
-                self.wallet_account_repository
-                    .insert(wallet_account.as_key(), wallet_account.clone());
-            });
 
         Ok(self.wallet_mapper.wallet_to_dto(new_wallet))
     }
@@ -242,24 +225,9 @@ impl WalletService {
     ) -> ServiceResult<Vec<WalletListItemDTO>> {
         let owner = owner.unwrap_or(self.call_context.caller());
         let account = self.account_service.resolve_account(&owner).await?;
-        let wallet_accounts = self
-            .wallet_account_repository
-            .find_by_account_id(&account.id);
-        let mut wallets: Vec<Wallet> = vec![];
-        for wallet_account in wallet_accounts {
-            let wallet = self
-                .wallet_repository
-                .get(&Wallet::key(wallet_account.wallet_id))
-                .ok_or(WalletError::WalletNotFound {
-                    id: Uuid::from_bytes(wallet_account.wallet_id)
-                        .hyphenated()
-                        .to_string(),
-                })?;
-
-            wallets.push(wallet);
-        }
-
-        let dtos = wallets
+        let dtos = self
+            .wallet_repository
+            .find_by_account_id(account.id)
             .iter()
             .map(|wallet| self.wallet_mapper.wallet_list_item(wallet))
             .collect::<Vec<WalletListItemDTO>>();

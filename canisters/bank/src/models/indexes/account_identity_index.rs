@@ -23,7 +23,7 @@ pub struct AccountIdentityIndexCriteria {
 }
 
 impl Account {
-    pub fn as_index_for_identities(&self) -> Vec<AccountIdentityIndex> {
+    pub fn to_index_for_identities(&self) -> Vec<AccountIdentityIndex> {
         self.identities
             .iter()
             .map(|identity| AccountIdentityIndex {
