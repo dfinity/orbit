@@ -67,7 +67,7 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
-        
+
         logger.error(`Application failed to initialize the state`, { error });
       } finally {
         this.initialized = true;
