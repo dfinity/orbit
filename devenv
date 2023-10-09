@@ -157,13 +157,13 @@ function setup_bank() {
 }
 
 function candid_generate() {
-  # ICP LEDGER CANDID CODE GENERATION
-  ICP_LEDGER_CANDID=$(dfx canister metadata icp_ledger candid:service)
-  echo "$ICP_LEDGER_CANDID" >/tmp/icp_ledger.did
+  # ICP INDEX CANDID CODE GENERATION
+  ICP_INDEX_CANDID=$(dfx canister metadata icp_index candid:service)
+  echo "$ICP_INDEX_CANDID" > /tmp/icp_index.did
 
-  didc bind --target rs /tmp/icp_ledger.did >canisters/bank/src/generated/icp_ledger.rs
+  didc bind --target rs /tmp/icp_index.did > canisters/bank/src/generated/icp_index.rs
 
-  rm /tmp/icp_ledger.did
+  rm /tmp/icp_index.did
 }
 
 #############################################
