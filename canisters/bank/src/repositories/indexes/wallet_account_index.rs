@@ -49,8 +49,8 @@ impl IndexRepository<WalletAccountIndex, WalletId> for WalletAccountIndexReposit
 
             db.borrow()
                 .range(start_key..=end_key)
-                .map(|(index, _)| index.account_id)
-                .collect::<HashSet<WalletId>>()
+                .map(|(index, _)| index.wallet_id)
+                .collect::<HashSet<_>>()
         })
     }
 }

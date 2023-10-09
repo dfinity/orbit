@@ -83,12 +83,12 @@ impl WalletRepository {
         wallet_ids
             .iter()
             .filter_map(|id| self.get(&Wallet::key(*id)))
-            .collect::<Vec<Wallet>>()
+            .collect::<Vec<_>>()
     }
 
     pub fn find_by_ids(&self, ids: Vec<WalletId>) -> Vec<Wallet> {
         ids.iter()
             .filter_map(|id| self.get(&Wallet::key(*id)))
-            .collect::<Vec<Wallet>>()
+            .collect::<Vec<_>>()
     }
 }

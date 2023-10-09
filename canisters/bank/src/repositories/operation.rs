@@ -19,7 +19,7 @@ use ic_canister_core::{
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<OperationKey, Operation, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -118,14 +118,30 @@ impl OperationRepository {
         &self,
         wallet_id: WalletId,
         account_id: AccountId,
+        created_from_dt: Option<Timestamp>,
+        created_to_dt: Option<Timestamp>,
     ) -> Vec<Operation> {
-        self.wallet_index
-            .find_by_criteria(OperationWalletIndexCriteria {
-                wallet_id: wallet_id.to_owned(),
-                account_id: account_id.to_owned(),
-                from_dt: None,
-                to_dt: None,
-            })
+        let filtered_by_wallets =
+            self.wallet_index
+                .find_by_criteria(OperationWalletIndexCriteria {
+                    wallet_id: wallet_id.to_owned(),
+                    from_dt: created_from_dt.to_owned(),
+                    to_dt: created_to_dt.to_owned(),
+                });
+        let filtered_by_accounts =
+            self.account_index
+                .find_by_criteria(OperationAccountIndexCriteria {
+                    account_id: account_id.to_owned(),
+                    from_dt: created_from_dt,
+                    to_dt: created_to_dt,
+                });
+
+        let results = filtered_by_wallets
+            .intersection(&filtered_by_accounts)
+            .copied()
+            .collect::<HashSet<_>>();
+
+        results
             .iter()
             .filter_map(|id| self.get(&Operation::key(*id)))
             .collect()
@@ -137,40 +153,36 @@ impl OperationRepository {
         condition: OperationWhereClause,
     ) -> Vec<Operation> {
         let (account_id, wallet_id) = key;
-        self.wallet_index
-            .find_by_criteria(OperationWalletIndexCriteria {
-                wallet_id: wallet_id.to_owned(),
-                account_id: account_id.to_owned(),
-                from_dt: condition.created_dt_from,
-                to_dt: condition.created_dt_to,
-            })
+        let operations = self.find_by_wallet_and_account_id(
+            wallet_id,
+            account_id,
+            condition.created_dt_from,
+            condition.created_dt_to,
+        );
+
+        operations
             .iter()
-            .filter_map(|id| match self.get(&Operation::key(*id)) {
-                Some(operation) => {
-                    let mut match_code = true;
-                    let mut match_read = true;
-                    let mut match_status = true;
+            .filter(|operation| {
+                let mut match_code = true;
+                let mut match_read = true;
+                let mut match_status = true;
 
-                    if let Some(code) = condition.code.clone() {
-                        match_code = operation.code == code;
-                    }
-
-                    if let Some(read) = condition.read {
-                        match_read = operation.read == read;
-                    }
-
-                    if let Some(status) = condition.status.clone() {
-                        match_status = operation.status == status;
-                    }
-
-                    match match_code && match_read && match_status {
-                        true => Some(operation),
-                        false => None,
-                    }
+                if let Some(code) = condition.code.clone() {
+                    match_code = operation.code == code;
                 }
-                None => None,
+
+                if let Some(read) = condition.read {
+                    match_read = operation.read == read;
+                }
+
+                if let Some(status) = condition.status.clone() {
+                    match_status = operation.status == status;
+                }
+
+                match_code && match_read && match_status
             })
-            .collect()
+            .map(|o| o.to_owned())
+            .collect::<Vec<_>>()
     }
 
     pub fn find_by_account_where(

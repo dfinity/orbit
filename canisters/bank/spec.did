@@ -799,6 +799,4 @@ service : (opt BankInit) -> {
   //
   // Required permission: "admin"
   bank_settings : () -> (BankSettingsResult) query;
-
-  test : () -> ();
 };

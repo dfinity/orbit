@@ -1,7 +1,5 @@
 use crate::mappers::HelperMapper;
-use crate::models::{
-    AccountId, Operation, OperationId, WalletId, OPERATION_METADATA_KEY_WALLET_ID,
-};
+use crate::models::{Operation, OperationId, WalletId, OPERATION_METADATA_KEY_WALLET_ID};
 use crate::repositories::OperationRepository;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::repository::Repository;
@@ -23,7 +21,6 @@ pub struct OperationWalletIndex {
 #[derive(Clone, Debug)]
 pub struct OperationWalletIndexCriteria {
     pub wallet_id: WalletId,
-    pub account_id: AccountId,
     pub from_dt: Option<Timestamp>,
     pub to_dt: Option<Timestamp>,
 }

@@ -1,11 +1,11 @@
 use crate::{
     core::{CallContext, WithCallContext, PERMISSION_ADMIN, PERMISSION_READ_FEATURES},
-    jobs::{register_jobs, ProcessTransfersJob},
+    jobs::register_jobs,
     services::ManagementService,
     transport::{BankCanisterInit, BankFeaturesResponse, BankSettingsResponse},
 };
 use ic_canister_core::api::ApiResult;
-use ic_cdk_macros::{init, post_upgrade, query, update};
+use ic_cdk_macros::{init, post_upgrade, query};
 
 #[query(name = "features")]
 async fn get_bank_features() -> ApiResult<BankFeaturesResponse> {
@@ -29,13 +29,6 @@ async fn bank_settings() -> ApiResult<BankSettingsResponse> {
         .await?;
 
     Ok(BankSettingsResponse { settings })
-}
-
-#[update(name = "test")]
-async fn test() -> ApiResult<()> {
-    ProcessTransfersJob::run().await;
-
-    Ok(())
 }
 
 #[init]
