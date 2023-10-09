@@ -53,6 +53,9 @@ pub enum TransferStatusDTO {
     Rejected {
         reason: String,
     },
+    Failed {
+        reason: String,
+    },
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

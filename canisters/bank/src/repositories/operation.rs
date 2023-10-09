@@ -40,17 +40,49 @@ impl Repository<OperationKey, Operation> for OperationRepository {
     }
 
     fn insert(&self, key: OperationKey, value: Operation) -> Option<Operation> {
-        DB.with(|m| {
-            OperationAccountIndexRepository::default().insert(value.to_index_for_account());
-            OperationWalletIndexRepository::default().insert(value.to_index_for_wallet());
-            OperationTransferIndexRepository::default().insert(value.to_index_for_transfer());
+        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
+            Some(prev) => {
+                let prev_account_index = prev.to_index_for_account();
+                if prev_account_index != value.to_index_for_account() {
+                    self.account_index.remove(&prev_account_index);
+                    self.account_index.insert(value.to_index_for_account());
+                }
 
-            m.borrow_mut().insert(key, value)
+                let prev_wallet_index = prev.to_index_for_wallet();
+                if prev_wallet_index != value.to_index_for_wallet() {
+                    self.wallet_index.remove(&prev_wallet_index);
+                    self.wallet_index.insert(value.to_index_for_wallet());
+                }
+
+                let prev_transfer_index = prev.to_index_for_transfer();
+                if prev_transfer_index != value.to_index_for_transfer() {
+                    self.transfer_index.remove(&prev_transfer_index);
+                    self.transfer_index.insert(value.to_index_for_transfer());
+                }
+
+                Some(prev)
+            }
+            None => {
+                self.account_index.insert(value.to_index_for_account());
+                self.wallet_index.insert(value.to_index_for_wallet());
+                self.transfer_index.insert(value.to_index_for_transfer());
+
+                None
+            }
         })
     }
 
     fn remove(&self, key: &OperationKey) -> Option<Operation> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| match m.borrow_mut().remove(key) {
+            Some(prev) => {
+                self.account_index.remove(&prev.to_index_for_account());
+                self.wallet_index.remove(&prev.to_index_for_wallet());
+                self.transfer_index.remove(&prev.to_index_for_transfer());
+
+                Some(prev)
+            }
+            None => None,
+        })
     }
 }
 

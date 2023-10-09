@@ -2,7 +2,8 @@ use super::indexes::wallet_account_index::WalletAccountIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, WALLET_MEMORY_ID},
     models::{
-        indexes::wallet_account_index::WalletAccountIndexCriteria, AccountId, Wallet, WalletKey, WalletId,
+        indexes::wallet_account_index::WalletAccountIndexCriteria, AccountId, Wallet, WalletId,
+        WalletKey,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -31,18 +32,43 @@ impl Repository<WalletKey, Wallet> for WalletRepository {
     }
 
     fn insert(&self, key: WalletKey, value: Wallet) -> Option<Wallet> {
-        DB.with(|m| {
-            let account_index = WalletAccountIndexRepository::default();
-            value.to_index_by_accounts().iter().for_each(|index| {
-                account_index.insert(index.to_owned());
-            });
+        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
+            Some(prev) => {
+                let prev_accounts = prev.to_index_by_accounts();
+                let curr_accounts = value.to_index_by_accounts();
 
-            m.borrow_mut().insert(key, value)
+                if prev_accounts != curr_accounts {
+                    prev_accounts.iter().for_each(|index| {
+                        self.account_index.remove(index);
+                    });
+                    curr_accounts.iter().for_each(|index| {
+                        self.account_index.insert(index.to_owned());
+                    });
+                }
+
+                Some(prev)
+            }
+            None => {
+                value.to_index_by_accounts().iter().for_each(|index| {
+                    self.account_index.insert(index.to_owned());
+                });
+
+                None
+            }
         })
     }
 
     fn remove(&self, key: &WalletKey) -> Option<Wallet> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| match m.borrow_mut().remove(key) {
+            Some(wallet) => {
+                wallet.to_index_by_accounts().iter().for_each(|index| {
+                    self.account_index.remove(index);
+                });
+
+                Some(wallet)
+            }
+            None => None,
+        })
     }
 }
 

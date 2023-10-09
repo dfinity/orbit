@@ -21,8 +21,10 @@ type OperationStatus = variant { Pending; Adopted; Rejected; Abstained };
 
 // The context of which the operation was created.
 type OperationContext = record {
-  // The transfer that was the reason for the operation.
+  // The transfer associated with the operation.
   transfer : opt Transfer;
+  // The wallet associated with the operation.
+  wallet : opt Wallet;
 };
 
 // A record type that can be used to represent an operation in the bank.
@@ -276,6 +278,11 @@ type TransferStatus = variant {
   // The transfer has been rejected.
   Rejected : record {
     // The reason for the rejection.
+    reason : text;
+  };
+  // The transfer has been failed.
+  Failed : record {
+    // The failure reason.
     reason : text;
   };
   // The transfer has been cancelled by the initiator.
@@ -792,4 +799,6 @@ service : (opt BankInit) -> {
   //
   // Required permission: "admin"
   bank_settings : () -> (BankSettingsResult) query;
+
+  test : () -> ();
 };

@@ -1,5 +1,8 @@
 use self::approve_transfer::ApproveTransferOperationProcessor;
-use crate::{models::{Operation, OperationCode}, transport::OperationContextDTO};
+use crate::{
+    models::{Operation, OperationCode},
+    transport::OperationContextDTO,
+};
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
 

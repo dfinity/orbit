@@ -107,9 +107,48 @@ export const idlFactory = ({ IDL }) => {
     'Adopted' : IDL.Null,
     'Pending' : IDL.Null,
   });
+  const TransferId = IDL.Text;
+  const TransferStatus = IDL.Variant({
+    'Failed' : IDL.Record({ 'reason' : IDL.Text }),
+    'Approved' : IDL.Null,
+    'Rejected' : IDL.Record({ 'reason' : IDL.Text }),
+    'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
+    'Submitted' : IDL.Null,
+    'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
+    'Completed' : IDL.Record({
+      'signature' : IDL.Opt(IDL.Text),
+      'hash' : IDL.Opt(IDL.Text),
+      'completed_at' : TimestampRFC3339,
+    }),
+    'Pending' : IDL.Null,
+  });
+  const TransferExecutionSchedule = IDL.Variant({
+    'Immediate' : IDL.Null,
+    'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
+  });
+  const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const NetworkId = IDL.Text;
+  const Network = IDL.Record({ 'id' : NetworkId, 'name' : IDL.Text });
+  const Transfer = IDL.Record({
+    'id' : TransferId,
+    'to' : IDL.Text,
+    'fee' : IDL.Nat,
+    'status' : TransferStatus,
+    'execution_plan' : TransferExecutionSchedule,
+    'expiration_dt' : TimestampRFC3339,
+    'metadata' : IDL.Vec(TransferMetadata),
+    'from_wallet_id' : WalletId,
+    'network' : Network,
+    'amount' : IDL.Nat,
+  });
+  const OperationContext = IDL.Record({
+    'wallet' : IDL.Opt(Wallet),
+    'transfer' : IDL.Opt(Transfer),
+  });
   const Operation = IDL.Record({
     'id' : OperationId,
     'status' : OperationStatus,
+    'context' : OperationContext,
     'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'code' : IDL.Text,
     'read' : IDL.Bool,
@@ -158,40 +197,7 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'operation' : Operation }),
     'Err' : Error,
   });
-  const TransferId = IDL.Text;
   const GetTransferInput = IDL.Record({ 'transfer_id' : TransferId });
-  const TransferStatus = IDL.Variant({
-    'Approved' : IDL.Null,
-    'Rejected' : IDL.Record({ 'reason' : IDL.Text }),
-    'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
-    'Submitted' : IDL.Null,
-    'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
-    'Completed' : IDL.Record({
-      'signature' : IDL.Opt(IDL.Text),
-      'hash' : IDL.Opt(IDL.Text),
-      'completed_at' : TimestampRFC3339,
-    }),
-    'Pending' : IDL.Null,
-  });
-  const TransferExecutionSchedule = IDL.Variant({
-    'Immediate' : IDL.Null,
-    'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
-  });
-  const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
-  const NetworkId = IDL.Text;
-  const Network = IDL.Record({ 'id' : NetworkId, 'name' : IDL.Text });
-  const Transfer = IDL.Record({
-    'id' : TransferId,
-    'to' : IDL.Text,
-    'fee' : IDL.Nat,
-    'status' : TransferStatus,
-    'execution_plan' : TransferExecutionSchedule,
-    'expiration_dt' : TimestampRFC3339,
-    'metadata' : IDL.Vec(TransferMetadata),
-    'from_wallet_id' : WalletId,
-    'network' : Network,
-    'amount' : IDL.Nat,
-  });
   const GetTransferResult = IDL.Variant({
     'Ok' : IDL.Record({ 'transfer' : Transfer }),
     'Err' : Error,

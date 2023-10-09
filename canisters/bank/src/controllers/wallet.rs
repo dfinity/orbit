@@ -48,7 +48,9 @@ async fn list_wallets() -> ApiResult<ListWalletResponse> {
 }
 
 #[update(name = "fetch_wallet_balances")]
-async fn fetch_wallet_balances(input: FetchWalletBalancesInput) -> ApiResult<FetchWalletBalancesResponse> {
+async fn fetch_wallet_balances(
+    input: FetchWalletBalancesInput,
+) -> ApiResult<FetchWalletBalancesResponse> {
     CallContext::get().check_access(PERMISSION_READ_WALLET);
 
     let balances = WalletService::create()

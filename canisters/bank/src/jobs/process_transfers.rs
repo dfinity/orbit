@@ -61,6 +61,7 @@ impl ProcessTransfersJob {
             self.transfer_repository
                 .insert(transfer.as_key(), transfer.to_owned());
         }
+
         // process the transfers
         for transfer in transfers.iter_mut() {
             let wallet = self
@@ -79,9 +80,9 @@ impl ProcessTransfersJob {
                     };
                 }
                 Err(error) => {
-                    transfer.status = TransferStatus::Rejected {
-                        reason: format!("Failed to submit transaction, due to: {}", error),
-                    };
+                    transfer.status = TransferStatus::Failed {
+                        reason: error.to_json_string(),
+                    }
                 }
             };
 

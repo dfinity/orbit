@@ -1,9 +1,9 @@
 <template>
   <div class="operation-item__code__title">
     {{ $t(`banks.operations.approve_transfer.title`) }}
-    <span v-if="wallet"
-      ><small>| {{ wallet.asset_symbol }}</small></span
-    >
+    <span v-if="wallet && transfer">
+      <small>| {{ wallet.symbol }}: {{ formatBalance(transfer.amount, wallet.decimals) }}</small>
+    </span>
   </div>
   <div class="operation-item__code__time">
     <VBtn
@@ -20,16 +20,16 @@
       <VIcon :icon="mdiClockOutline" size="x-small" />&nbsp;
       {{ new Date(operation.created_at).toLocaleDateString() }}
     </VChip>
-    <VChip v-for="(detail, idx) in detailChips" :key="idx" size="x-small">
-      {{ detail.title }}: {{ detail.description }}
+    <VChip v-if="transfer && wallet && !injectedProps.outer" size="x-small">
+      {{ $t(`terms.to`) }}: {{ transfer.to }}
     </VChip>
   </div>
 </template>
 <script lang="ts" setup>
 import { mdiClockOutline, mdiWallet, mdiOpenInApp } from '@mdi/js';
 import { computed, inject } from 'vue';
+import { formatBalance } from '~/core';
 import { Operation } from '~/generated/bank/bank.did';
-import { useActiveBankStore } from '~/ui/stores';
 
 const props = defineProps<{
   modelValue: Operation;
@@ -42,16 +42,6 @@ const emit = defineEmits<{
 
 const injectedProps = inject('bankOperationProps', {
   outer: true,
-  details: undefined,
-});
-
-const detailChips = computed(() => {
-  return Object.entries(injectedProps.details ?? {}).map(([k, v]) => {
-    return {
-      title: k,
-      description: v,
-    };
-  });
 });
 
 const operation = computed({
@@ -59,15 +49,6 @@ const operation = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const activeBank = useActiveBankStore();
-
-const wallet = computed(() => {
-  const walletId = operation.value.metadata.find(([k, _]) => k === 'wallet_id');
-
-  if (!walletId) {
-    return null;
-  }
-
-  return activeBank.wallets.items.find(({ id }) => id === walletId[1]) ?? null;
-});
+const wallet = computed(() => operation.value.context.wallet?.[0] ?? null);
+const transfer = computed(() => operation.value.context.transfer?.[0] ?? null);
 </script>

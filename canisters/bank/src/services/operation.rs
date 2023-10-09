@@ -120,6 +120,7 @@ impl OperationService {
                 true => OperationStatus::Adopted,
                 false => OperationStatus::Rejected,
             };
+            operation.read = true;
             operation.feedback = Some(OperationFeedback {
                 created_at: time(),
                 reason: input.reason,
@@ -141,7 +142,6 @@ impl OperationService {
             .expect("Operation post processing failed");
 
         let context = processor.get_context(&operation)?;
-
         let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
         Ok(operation_dto)

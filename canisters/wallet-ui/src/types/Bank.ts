@@ -6,6 +6,7 @@ export enum WalletPolicyType {
 export enum WalletTransferStatus {
   Pending = 'pending',
   Rejected = 'rejected',
+  Failed = 'failed',
   Approved = 'approved',
   Cancelled = 'cancelled',
   Submitted = 'submitted',

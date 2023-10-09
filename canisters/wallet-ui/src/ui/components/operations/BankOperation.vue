@@ -81,15 +81,13 @@ const props = withDefaults(
   defineProps<{
     modelValue: Operation;
     outer?: boolean;
-    details?: Record<string, string>;
   }>(),
   {
-    details: undefined,
     outer: true,
   },
 );
 
-provide('bankOperationProps', { outer: props.outer, details: props.details });
+provide('bankOperationProps', { outer: props.outer });
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: Operation): void;

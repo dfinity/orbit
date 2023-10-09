@@ -21,7 +21,10 @@ thread_local! {
 
 /// A repository that enables managing transfer in stable memory.
 #[derive(Default, Debug)]
-pub struct TransferRepository {}
+pub struct TransferRepository {
+    wallet_index: TransferWalletIndexRepository,
+    execution_dt_index: TransferExecutionTimeIndexRepository,
+}
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
     fn get(&self, key: &TransferKey) -> Option<Transfer> {
@@ -29,16 +32,44 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     }
 
     fn insert(&self, key: TransferKey, value: Transfer) -> Option<Transfer> {
-        DB.with(|m| {
-            TransferWalletIndexRepository::default().insert(value.to_index_by_wallet());
-            TransferExecutionTimeIndexRepository::default()
-                .insert(value.to_index_by_execution_dt());
+        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
+            Some(prev) => {
+                let prev_wallet_index = prev.to_index_by_wallet();
+                if prev_wallet_index != value.to_index_by_wallet() {
+                    self.wallet_index.remove(&prev_wallet_index);
+                    self.wallet_index.insert(value.to_index_by_wallet());
+                }
+                let prev_execution_dt_index = prev.to_index_by_execution_dt();
+                if prev_execution_dt_index != value.to_index_by_execution_dt() {
+                    self.execution_dt_index.remove(&prev_execution_dt_index);
+                    self.execution_dt_index
+                        .insert(value.to_index_by_execution_dt());
+                }
 
-            m.borrow_mut().insert(key, value)
+                Some(prev)
+            }
+            None => {
+                self.wallet_index.insert(value.to_index_by_wallet());
+                self.execution_dt_index
+                    .insert(value.to_index_by_execution_dt());
+
+                None
+            }
         })
     }
 
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| match m.borrow_mut().remove(key) {
+            Some(prev) => {
+                let wallet_index = TransferWalletIndexRepository::default();
+                let execution_dt_index = TransferExecutionTimeIndexRepository::default();
+
+                wallet_index.remove(&prev.to_index_by_wallet());
+                execution_dt_index.remove(&prev.to_index_by_execution_dt());
+
+                Some(prev)
+            }
+            None => None,
+        })
     }
 }

@@ -58,6 +58,10 @@ export const extractTransferStatus = (status: TransferStatus): WalletTransferSta
     return WalletTransferStatus.Rejected;
   }
 
+  if ('Failed' in status) {
+    return WalletTransferStatus.Failed;
+  }
+
   if ('Cancelled' in status) {
     return WalletTransferStatus.Cancelled;
   }

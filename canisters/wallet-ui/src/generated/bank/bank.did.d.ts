@@ -139,6 +139,7 @@ export type NetworkId = string;
 export interface Operation {
   'id' : OperationId,
   'status' : OperationStatus,
+  'context' : OperationContext,
   'metadata' : Array<[string, string]>,
   'code' : string,
   'read' : boolean,
@@ -146,6 +147,10 @@ export interface Operation {
   'feedback_reason' : [] | [string],
   'account' : AccountId,
   'feedback_time_at' : [] | [TimestampRFC3339],
+}
+export interface OperationContext {
+  'wallet' : [] | [Wallet],
+  'transfer' : [] | [Transfer],
 }
 export type OperationId = string;
 export type OperationStatus = { 'Rejected' : null } |
@@ -191,7 +196,8 @@ export interface TransferListItem {
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export type TransferResult = { 'Ok' : { 'transfer' : Transfer } } |
   { 'Err' : Error };
-export type TransferStatus = { 'Approved' : null } |
+export type TransferStatus = { 'Failed' : { 'reason' : string } } |
+  { 'Approved' : null } |
   { 'Rejected' : { 'reason' : string } } |
   { 'Cancelled' : { 'reason' : [] | [string] } } |
   { 'Submitted' : null } |
