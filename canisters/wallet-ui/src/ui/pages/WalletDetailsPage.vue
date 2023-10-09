@@ -128,7 +128,10 @@
                               <div class="transfers__item__details--to">
                                 <small>{{ $t(`terms.from`) }}: {{ transfer.from }}</small>
                               </div>
-                              <div v-if="transfer.created_at" class="transfers__item__details--created_at">
+                              <div
+                                v-if="transfer.created_at"
+                                class="transfers__item__details--created_at"
+                              >
                                 <small>{{ transfer.created_at.toISOString() }}</small>
                               </div>
                             </td>

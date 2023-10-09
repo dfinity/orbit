@@ -113,7 +113,6 @@ export const arrayBatchMaker = <T>(array: T[], batchSize: number = 5): T[][] => 
   return batches;
 };
 
-
 export function nanoToJsDate(nanoTimestamp: bigint): Date {
   // Convert BigInt to milliseconds by dividing by 1 million
   const milliTimestamp = nanoTimestamp / BigInt(1000000);
