@@ -12,6 +12,7 @@ CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_CONTROL_PANEL="bw4dl-smaaa-aaaaa-qaacq-cai"
 CANISTER_ID_BANK="avqkn-guaaa-aaaaa-qaaea-cai"
 CANISTER_ID_ICP_INDEX="qhbym-qaaaa-aaaaa-aaafq-cai"
+CANISTER_ID_WALLET_UI="asrmz-lmaaa-aaaaa-qaaeq-cai"
 
 #############################################
 # USAGE                                     #
@@ -156,12 +157,25 @@ function setup_bank() {
   install_bank
 }
 
+function uninstall_wallet_ui() {
+  dfx canister delete wallet_ui -y >/dev/null 2>&1 || true
+}
+
+function install_wallet_ui() {
+  dfx deploy --specified-id $CANISTER_ID_WALLET_UI wallet_ui
+}
+
+function setup_wallet_ui() {
+  uninstall_wallet_ui
+  install_wallet_ui
+}
+
 function candid_generate() {
   # ICP INDEX CANDID CODE GENERATION
   ICP_INDEX_CANDID=$(dfx canister metadata icp_index candid:service)
-  echo "$ICP_INDEX_CANDID" > /tmp/icp_index.did
+  echo "$ICP_INDEX_CANDID" >/tmp/icp_index.did
 
-  didc bind --target rs /tmp/icp_index.did > canisters/bank/src/generated/icp_index.rs
+  didc bind --target rs /tmp/icp_index.did >canisters/bank/src/generated/icp_index.rs
 
   rm /tmp/icp_index.did
 }
@@ -191,6 +205,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_internet_identity
     exec_function setup_bank
     exec_function setup_control_panel
+    exec_function setup_wallet_ui
     echo
     ;;
   --init-icp-ledger)
@@ -211,6 +226,11 @@ while [[ $# -gt 0 ]]; do
   --init-control-panel)
     shift
     exec_function setup_control_panel
+    echo
+    ;;
+  --init-wallet-ui)
+    shift
+    exec_function setup_wallet_ui
     echo
     ;;
   --candid-generate)
