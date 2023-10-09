@@ -70,6 +70,7 @@
         "title": "Approvar transferência"
       }
     },
+    "no_receivables_found_search": "Nenhuma transferência recebida encontrada para a pesquisa.",
     "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa.",
     "no_operations_found_search": "Nenhuma operaração encontrada para a pesquisa."
   },

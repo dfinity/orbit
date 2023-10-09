@@ -138,7 +138,7 @@
                           </tr>
                         </tbody>
                       </VTable>
-                      <p v-else class="text-h6">{{ $t(`banks.no_transfers_found_search`) }}</p>
+                      <p v-else class="text-h6">{{ $t(`banks.no_receivables_found_search`) }}</p>
                     </VCol>
                   </VContainer>
                 </VWindowItem>

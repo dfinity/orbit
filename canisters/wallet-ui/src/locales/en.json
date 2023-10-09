@@ -70,6 +70,7 @@
         "title": "Approve transfer"
       }
     },
+    "no_receivables_found_search": "No receivables found for the search criteria.",
     "no_transfers_found_search": "No transfers found for the search criteria.",
     "no_operations_found_search": "No operations found for the search criteria."
   },
