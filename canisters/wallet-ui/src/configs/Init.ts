@@ -19,6 +19,7 @@ const appInitConfig: AppInitConfig = {
     controlPanel: import.meta.env.APP_CONTROL_PANEL_CANISTER_ID,
     internetIdentity: import.meta.env.APP_INTERNET_IDENTITY_CANISTER_ID,
     walletUI: import.meta.env.APP_WALLET_UI_CANISTER_ID,
+    icpIndex: import.meta.env.APP_CANISTER_ID_ICP_INDEX,
   },
 };
 

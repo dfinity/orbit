@@ -8,7 +8,8 @@ import {
   Wallet,
   WalletId,
 } from '~/generated/bank/bank.did';
-import { BankService } from '~/services';
+import { BankService, WalletApiFactory } from '~/services';
+import { WalletApi, WalletIncomingTransfer } from '~/types/Wallet';
 import { i18n } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore } from '~/ui/stores';
 
@@ -32,6 +33,10 @@ export interface WalletDetailsStoreState {
     fromDt: string | null;
     toDt: string | null;
   };
+  receivables: {
+    loading: boolean;
+    items: WalletIncomingTransfer[];
+  };
 }
 
 const initialState: WalletDetailsStoreState = {
@@ -53,6 +58,10 @@ const initialState: WalletDetailsStoreState = {
     items: [],
     fromDt: null,
     toDt: null,
+  },
+  receivables: {
+    loading: false,
+    items: [],
   },
 };
 
@@ -78,6 +87,24 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
       return this.transfers.items.sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
+    },
+    sortedReceivables(): WalletIncomingTransfer[] {
+      return this.receivables.items.sort((a, b) => {
+        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+      });
+    },
+    walletApi(): WalletApi | null {
+      try {
+        if (!this._wallet) {
+          return null;
+        }
+
+        return WalletApiFactory.create(this._wallet);
+      } catch (err) {
+        logger.warn('Wallet api not supported', { err });
+        // the wallet is loaded but with limited real data since the blockchain is not supported by the UI
+        return null;
+      }
     },
     sortedOperations(): Operation[] {
       return this.operations.items.sort((a, b) => {
@@ -106,6 +133,7 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
       this.operations = reset.operations;
       this.operations.fromDt = new Date(this.defaultStartDt).toISOString().split('T')[0];
       this.operations.toDt = new Date(this.defaultEndDt).toISOString().split('T')[0];
+      this.receivables = reset.receivables;
     },
     showPageNotification(type: 'error' | 'success' | 'warning' | 'info', message: string): void {
       this.notification = {
@@ -116,6 +144,17 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
     },
     clearPageNotification(): void {
       this.notification.show = false;
+    },
+    async loadReceivables(): Promise<void> {
+      if (!this.walletApi) {
+        return;
+      }
+
+      const transfers = await this.walletApi.fetchTransfers({
+        from_dt: new Date(),
+      });
+
+      this.receivables.items = transfers;
     },
     async loadOperations(fromDt?: Date, toDt?: Date, status?: OperationStatus): Promise<void> {
       try {
@@ -176,6 +215,7 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
 
         this.loadSentTransfers(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
         this.loadOperations(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
+        this.loadReceivables();
       } catch (e) {
         logger.error('Failed to load wallet', { e });
 

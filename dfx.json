@@ -19,6 +19,10 @@
         "id": {
           "ic": "qhbym-qaaaa-aaaaa-aaafq-cai"
         }
+      },
+      "declarations": {
+        "output": "canisters/wallet-ui/src/generated/icp_index",
+        "node_compatibility": true
       }
     },
     "internet_identity": {

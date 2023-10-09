@@ -74,6 +74,7 @@
     "no_operations_found_search": "No operations found for the search criteria."
   },
   "terms": {
+    "receivables": "Receivables",
     "bank": "Bank",
     "all_done": "All done",
     "approve": "Approve",

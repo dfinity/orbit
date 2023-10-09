@@ -19,3 +19,4 @@ export enum BankOperationType {
   ApproveTransfer = 'approve-transfer',
   Unknown = 'unknown',
 }
+

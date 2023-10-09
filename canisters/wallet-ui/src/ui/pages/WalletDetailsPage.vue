@@ -83,6 +83,14 @@
                 {{ $t(`terms.transfers`) }}
               </VTab>
               <VTab
+                v-if="pageStore.walletApi"
+                :loading="pageStore.receivables.loading"
+                value="receivables"
+                class="wallet__tab__item"
+              >
+                {{ $t(`terms.receivables`) }}
+              </VTab>
+              <VTab
                 :loading="pageStore.transfers.loading"
                 value="operations"
                 class="wallet__tab__item"
@@ -92,6 +100,45 @@
             </VTabs>
             <VCardText>
               <VWindow v-model="tab">
+                <VWindowItem v-if="pageStore.walletApi" value="receivables">
+                  <VContainer class="py-0">
+                    <VCol cols="12" class="px-0 pb-0">
+                      <VBtn
+                        block
+                        variant="tonal"
+                        color="primary-variant"
+                        :prepend-icon="mdiRefresh"
+                        :loading="pageStore.receivables.loading"
+                        @click="pageStore.loadReceivables"
+                      >
+                        {{ $t(`terms.search`) }}
+                      </VBtn>
+                    </VCol>
+                    <VCol cols="12" class="px-0 pt-1">
+                      <VTable v-if="pageStore.receivables.items.length" hover class="receivables">
+                        <tbody>
+                          <tr v-for="(transfer, _idx) in pageStore.sortedReceivables" :key="_idx">
+                            <td class="transfers__item__icon"><VIcon :icon="mdiTransfer" /></td>
+                            <td class="transfers__item__details">
+                              <div class="transfers__item__details--amount">
+                                {{
+                                  `${formatBalance(transfer.amount, 8)} ${pageStore.wallet.symbol}`
+                                }}
+                              </div>
+                              <div class="transfers__item__details--to">
+                                <small>{{ $t(`terms.from`) }}: {{ transfer.from }}</small>
+                              </div>
+                              <div v-if="transfer.created_at" class="transfers__item__details--created_at">
+                                <small>{{ transfer.created_at.toISOString() }}</small>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </VTable>
+                      <p v-else class="text-h6">{{ $t(`banks.no_transfers_found_search`) }}</p>
+                    </VCol>
+                  </VContainer>
+                </VWindowItem>
                 <VWindowItem value="transfers">
                   <VContainer>
                     <VRow>
@@ -291,7 +338,7 @@ const activeBank = useActiveBankStore();
 const settings = useSettingsStore();
 const pageStore = useWalletDetailsStore();
 
-const tab = ref<'transfers' | 'operations'>('transfers');
+const tab = ref<'transfers' | 'operations' | 'receivables'>('transfers');
 
 const saveOperation = async (operation: Operation) => {
   await activeBank.saveOperation(operation);

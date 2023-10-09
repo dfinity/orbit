@@ -152,6 +152,7 @@ export default defineConfig(({ mode }) => {
         `http://${canisters.get('internet_identity')}.localhost:4943`,
       ),
       'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.get('control_panel')),
+      'process.env.CANISTER_ID_ICP_INDEX': JSON.stringify(canisters.get('icp_index')),
     },
     resolve: {
       alias: {
