@@ -144,7 +144,10 @@ export const useActiveBankStore = defineStore('activeBank', {
         return account;
       }
 
-      // todo: add logic for multiple identities
+      return this.registerWithMultiIdentityFlow();
+    },
+    async registerWithMultiIdentityFlow(): Promise<Account | null> {
+      // TODO: implement multi identity register flow
 
       return null;
     },

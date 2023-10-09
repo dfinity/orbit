@@ -81,6 +81,15 @@ export const useSettingsStore = defineStore('settings', {
         await services().locales.saveLocale(locale);
       }
     },
+    copyToClipboard(text: string, notificationTitle: string): void {
+      navigator.clipboard.writeText(text);
+
+      this.setNotification({
+        show: true,
+        type: 'success',
+        message: notificationTitle,
+      });
+    },
     async toogleTheme(): Promise<void> {
       const theme = this.isDarkTheme ? SupportedTheme.Light : SupportedTheme.Dark;
       this.theme = theme;

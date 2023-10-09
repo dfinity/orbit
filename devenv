@@ -56,7 +56,7 @@ function exec_function() {
 #############################################
 
 function uninstall_icp_ledger() {
-  dfx canister delete icp_ledger -y > /dev/null 2>&1  || true
+  dfx canister delete icp_ledger -y >/dev/null 2>&1 || true
 }
 
 function install_icp_ledger() {
@@ -98,7 +98,7 @@ function setup_icp_ledger() {
 }
 
 function uninstall_internet_identity() {
-  dfx canister delete internet_identity -y > /dev/null 2>&1  || true
+  dfx canister delete internet_identity -y >/dev/null 2>&1 || true
 }
 
 function install_internet_identity() {
@@ -111,11 +111,17 @@ function setup_internet_identity() {
 }
 
 function uninstall_control_panel() {
-  dfx canister delete control_panel -y > /dev/null 2>&1  || true
+  dfx canister delete control_panel -y >/dev/null 2>&1 || true
 }
 
 function install_control_panel() {
-  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
+  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel --argument "(
+  opt record {
+    default_bank = variant {
+      SpecifiedBankCanister = principal \"$CANISTER_ID_BANK\"
+    };
+  })
+"
 }
 
 function setup_control_panel() {
@@ -124,7 +130,7 @@ function setup_control_panel() {
 }
 
 function uninstall_bank() {
-  dfx canister delete bank -y > /dev/null 2>&1  || true
+  dfx canister delete bank -y >/dev/null 2>&1 || true
 }
 
 function install_bank() {
@@ -139,9 +145,9 @@ function setup_bank() {
 function candid_generate() {
   # ICP LEDGER CANDID CODE GENERATION
   ICP_LEDGER_CANDID=$(dfx canister metadata icp_ledger candid:service)
-  echo "$ICP_LEDGER_CANDID" > /tmp/icp_ledger.did
+  echo "$ICP_LEDGER_CANDID" >/tmp/icp_ledger.did
 
-  didc bind --target rs /tmp/icp_ledger.did > canisters/bank/src/generated/icp_ledger.rs
+  didc bind --target rs /tmp/icp_ledger.did >canisters/bank/src/generated/icp_ledger.rs
 
   rm /tmp/icp_ledger.did
 }
@@ -180,6 +186,11 @@ while [[ $# -gt 0 ]]; do
   --init-bank)
     shift
     exec_function setup_bank
+    echo
+    ;;
+  --init-control-panel)
+    shift
+    exec_function setup_control_panel
     echo
     ;;
   --candid-generate)

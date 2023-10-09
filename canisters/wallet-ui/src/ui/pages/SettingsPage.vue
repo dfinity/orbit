@@ -23,11 +23,22 @@
               >
                 {{ $t('terms.control_panel') }}
               </VTab>
+              <VTab
+                v-if="activeBank.hasAccount"
+                value="activeBank"
+                class="settings_tab__item"
+                size="small"
+              >
+                {{ $t('terms.bank') }}
+              </VTab>
             </VTabs>
             <VCardText>
               <VWindow v-model="tab">
                 <VWindowItem value="settingsForm">
                   <SettingsForm />
+                </VWindowItem>
+                <VWindowItem v-if="activeBank.hasAccount" value="activeBank">
+                  <ActiveBankSettings />
                 </VWindowItem>
               </VWindow>
             </VCardText>
@@ -42,10 +53,12 @@
 import { ref } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import SettingsForm from '~/ui/components/SettingsForm.vue';
-import { useSettingsFormStore } from '~/ui/stores';
+import ActiveBankSettings from '~/ui/components/ActiveBankSettings.vue';
+import { useActiveBankStore, useSettingsFormStore } from '~/ui/stores';
 
-const tab = ref<'settingsForm'>('settingsForm');
+const tab = ref<'settingsForm' | 'activeBank'>('settingsForm');
 const settings = useSettingsFormStore();
+const activeBank = useActiveBankStore();
 </script>
 
 <style scoped lang="scss">

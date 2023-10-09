@@ -25,7 +25,21 @@
               </VList>
             </VMenu>
           </VBtn>
-          <span class="profile__principal">{{ auth.accountId }}</span>
+          <p v-if="activeBank.hasAccount" class="profile__principal">
+            <span>{{ activeBank.account.id }}</span>
+            <VBtn
+              class="wallet-card__subtitle__copy"
+              size="x-small"
+              variant="text"
+              :icon="mdiContentCopy"
+              @click="
+                settings.copyToClipboard(
+                  activeBank.account.id,
+                  $t('banks.account_copied_to_clipboard'),
+                )
+              "
+            />
+          </p>
         </div>
       </VCol>
     </VRow>
@@ -33,12 +47,14 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiChevronDown } from '@mdi/js';
+import { mdiChevronDown, mdiContentCopy } from '@mdi/js';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
-import { useAuthStore } from '~/ui/stores';
+import { useActiveBankStore, useAuthStore, useSettingsStore } from '~/ui/stores';
 
 const auth = useAuthStore();
+const settings = useSettingsStore();
+const activeBank = useActiveBankStore();
 </script>
 
 <style scoped lang="scss">
@@ -61,10 +77,17 @@ const auth = useAuthStore();
 
   &__principal {
     font-size: var(--ds-font-size-xxs);
-    text-overflow: ellipsis;
     white-space: nowrap;
-    width: 80%;
+    width: 90%;
     overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    & > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }
 </style>

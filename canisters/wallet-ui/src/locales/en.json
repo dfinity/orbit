@@ -45,6 +45,7 @@
     "operation_failed_to_save": "Operation failed to save.",
     "no_wallets": "No wallets available.",
     "pending_operations": "Pending operations",
+    "account_copied_to_clipboard": "Bank account copied.",
     "wallet_address_copied_to_clipboard": "Wallet address copied.",
     "load_error": "Failed to load banks information, please try again.",
     "load_error_transfers": "Failed to load transfers.",
@@ -73,6 +74,7 @@
     "no_operations_found_search": "No operations found for the search criteria."
   },
   "terms": {
+    "bank": "Bank",
     "all_done": "All done",
     "approve": "Approve",
     "operations": "Operations",
