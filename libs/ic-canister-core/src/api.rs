@@ -1,5 +1,6 @@
 use crate::utils::to_snake_case;
 use candid::{CandidType, Deserialize};
+use serde_json::json;
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter},
@@ -39,6 +40,21 @@ impl ApiError {
             message,
             details,
         }
+    }
+
+    pub fn to_json_string(&self) -> String {
+        let mut map = HashMap::new();
+        map.insert("code".to_string(), self.code.clone());
+        map.insert(
+            "message".to_string(),
+            self.message.clone().unwrap_or("".to_string()),
+        );
+        map.insert(
+            "details".to_string(),
+            json!(&self.details.clone().unwrap_or(HashMap::new())).to_string(),
+        );
+
+        json!(map).to_string()
     }
 }
 
