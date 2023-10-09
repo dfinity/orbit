@@ -135,6 +135,19 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'features' : BankFeatures }),
     'Err' : Error,
   });
+  const FetchWalletBalancesInput = IDL.Record({
+    'wallet_ids' : IDL.Vec(WalletId),
+  });
+  const WalletBalance = IDL.Record({
+    'decimals' : IDL.Nat32,
+    'balance' : IDL.Nat,
+    'last_update_timestamp' : TimestampRFC3339,
+    'wallet_id' : WalletId,
+  });
+  const FetchWalletBalancesResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'balances' : IDL.Vec(WalletBalance) }),
+    'Err' : Error,
+  });
   const GetAccountInput = IDL.Record({ 'account_id' : IDL.Opt(AccountId) });
   const GetAccountResult = IDL.Variant({
     'Ok' : IDL.Record({ 'account' : Account }),
@@ -183,20 +196,16 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'transfer' : Transfer }),
     'Err' : Error,
   });
+  const GetTransfersInput = IDL.Record({
+    'transfer_ids' : IDL.Vec(TransferId),
+  });
+  const GetTransfersResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'transfers' : IDL.Vec(Transfer) }),
+    'Err' : Error,
+  });
   const GetWalletInput = IDL.Record({ 'wallet_id' : WalletId });
   const GetWalletResult = IDL.Variant({
     'Ok' : IDL.Record({ 'wallet' : Wallet }),
-    'Err' : Error,
-  });
-  const GetWalletBalanceInput = IDL.Record({ 'wallet_id' : WalletId });
-  const WalletBalance = IDL.Record({
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Nat,
-    'last_update_timestamp' : TimestampRFC3339,
-    'wallet_id' : WalletId,
-  });
-  const GetWalletBalanceResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'balance' : WalletBalance }),
     'Err' : Error,
   });
   const ListOperationsInput = IDL.Record({
@@ -289,6 +298,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'features' : IDL.Func([], [GetFeaturesResult], ['query']),
+    'fetch_wallet_balances' : IDL.Func(
+        [FetchWalletBalancesInput],
+        [FetchWalletBalancesResult],
+        [],
+      ),
     'get_account' : IDL.Func([GetAccountInput], [GetAccountResult], ['query']),
     'get_operation' : IDL.Func(
         [GetOperationInput],
@@ -300,12 +314,12 @@ export const idlFactory = ({ IDL }) => {
         [GetTransferResult],
         ['query'],
       ),
-    'get_wallet' : IDL.Func([GetWalletInput], [GetWalletResult], ['query']),
-    'get_wallet_balance' : IDL.Func(
-        [GetWalletBalanceInput],
-        [GetWalletBalanceResult],
-        [],
+    'get_transfers' : IDL.Func(
+        [GetTransfersInput],
+        [GetTransfersResult],
+        ['query'],
       ),
+    'get_wallet' : IDL.Func([GetWalletInput], [GetWalletResult], ['query']),
     'list_operations' : IDL.Func(
         [ListOperationsInput],
         [ListOperationsResult],

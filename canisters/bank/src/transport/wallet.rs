@@ -66,8 +66,8 @@ pub struct GetWalletResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetWalletBalanceInput {
-    pub wallet_id: String,
+pub struct FetchWalletBalancesInput {
+    pub wallet_ids: Vec<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -86,8 +86,8 @@ pub struct WalletBalanceInfoDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetWalletBalanceResponse {
-    pub balance: WalletBalanceDTO,
+pub struct FetchWalletBalancesResponse {
+    pub balances: Vec<WalletBalanceDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

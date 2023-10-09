@@ -230,7 +230,6 @@
                                 <BankOperation
                                   v-model="pageStore.sortedOperations[_idx]"
                                   :outer="false"
-                                  :details="getOperationDetails(operation)"
                                   @updated="() => saveOperation(operation)"
                                 />
                               </td>
@@ -281,7 +280,6 @@ import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore, useWalletDetailsStore } from '~/ui/stores';
 import BankOperation from '~/ui/components/operations/BankOperation.vue';
-import { BankOperationType } from '~/types';
 import { Operation } from '~/generated/bank/bank.did';
 
 const activeBank = useActiveBankStore();
@@ -297,28 +295,6 @@ const saveOperation = async (operation: Operation) => {
     pageStore.transfers.fromDt ? new Date(pageStore.transfers.fromDt) : undefined,
     pageStore.transfers.toDt ? new Date(pageStore.transfers.toDt) : undefined,
   );
-};
-
-const getOperationDetails = (operation: Operation): Record<string, string> => {
-  const details: Record<string, string> = {};
-
-  if (operation.code === BankOperationType.ApproveTransfer) {
-    const found = operation.metadata.find(([k]) => k === 'transfer_id');
-    if (found) {
-      const [_, transferId] = found;
-      const transfer = pageStore.transfers.items.find(t => t.transfer_id === transferId);
-
-      if (transfer) {
-        details[i18n.global.t(`terms.amount`).toLowerCase()] = formatBalance(
-          transfer.amount,
-          pageStore.wallet.decimals,
-        );
-        details[i18n.global.t(`terms.to`).toLowerCase()] = transfer.to;
-      }
-    }
-  }
-
-  return details;
 };
 
 onMounted(() => {

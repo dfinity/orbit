@@ -2,7 +2,7 @@ use super::indexes::wallet_account_index::WalletAccountIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, WALLET_MEMORY_ID},
     models::{
-        indexes::wallet_account_index::WalletAccountIndexCriteria, AccountId, Wallet, WalletKey,
+        indexes::wallet_account_index::WalletAccountIndexCriteria, AccountId, Wallet, WalletKey, WalletId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -52,5 +52,18 @@ impl WalletRepository {
             .find_by_criteria(WalletAccountIndexCriteria {
                 account_id: account_id.to_owned(),
             })
+    }
+
+    pub fn find_by_ids(&self, ids: Vec<WalletId>) -> Vec<Wallet> {
+        let mut wallets = vec![];
+
+        ids.iter().for_each(|id| {
+            let wallet = self.get(&Wallet::key(*id));
+            if let Some(wallet) = wallet {
+                wallets.push(wallet);
+            }
+        });
+
+        wallets
     }
 }

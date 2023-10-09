@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, TimestampRfc3339, WalletIdDTO};
+use super::{AccountIdDTO, TimestampRfc3339, TransferDTO, WalletIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type OperationIdDTO = String;
@@ -12,6 +12,11 @@ pub enum OperationStatusDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct OperationContextDTO {
+    pub transfer: Option<TransferDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct OperationDTO {
     pub id: OperationIdDTO,
     pub status: OperationStatusDTO,
@@ -22,6 +27,7 @@ pub struct OperationDTO {
     pub feedback_reason: Option<String>,
     pub account: AccountIdDTO,
     pub feedback_time_at: Option<TimestampRfc3339>,
+    pub context: OperationContextDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

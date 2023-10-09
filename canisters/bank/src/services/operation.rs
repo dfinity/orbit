@@ -23,7 +23,7 @@ use crate::{
         ListWalletOperationsInput, OperationDTO,
     },
 };
-use ic_canister_core::repository::Repository;
+use ic_canister_core::{api::ApiError, repository::Repository};
 use ic_canister_core::{api::ServiceResult, repository::IndexRepository};
 use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
@@ -65,8 +65,7 @@ impl OperationService {
         )?;
         let caller_account = self
             .account_service
-            .resolve_account(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
 
         self.check_access_to_operation(&operation, &caller_account)?;
 
@@ -95,7 +94,9 @@ impl OperationService {
             .get_operation_core(operation_id.as_bytes().to_owned())
             .await?;
 
-        let operation_dto = self.operation_mapper.to_operation_dto(operation);
+        let processor = OperationProcessorFactory::build(&operation.code);
+        let context = processor.get_context(&operation)?;
+        let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
         Ok(operation_dto)
     }
@@ -139,7 +140,9 @@ impl OperationService {
             .await
             .expect("Operation post processing failed");
 
-        let operation_dto = self.operation_mapper.to_operation_dto(operation);
+        let context = processor.get_context(&operation)?;
+
+        let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
         Ok(operation_dto)
     }
@@ -150,8 +153,7 @@ impl OperationService {
     ) -> ServiceResult<Vec<OperationDTO>> {
         let account = self
             .account_service
-            .resolve_account(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
 
         let filter_by_code = match input.code {
             Some(code) => Some(self.operation_mapper.to_code(code)?),
@@ -170,8 +172,15 @@ impl OperationService {
                 read: input.read,
             })
             .iter()
-            .map(|operation| self.operation_mapper.to_operation_dto(operation.to_owned()))
-            .collect::<Vec<OperationDTO>>();
+            .map(|operation| {
+                let processor = OperationProcessorFactory::build(&operation.code);
+                let context = processor.get_context(operation)?;
+
+                Ok(self
+                    .operation_mapper
+                    .to_operation_dto(operation.to_owned(), context))
+            })
+            .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
 
         Ok(dtos)
     }
@@ -182,8 +191,7 @@ impl OperationService {
     ) -> ServiceResult<Vec<OperationDTO>> {
         let account = self
             .account_service
-            .resolve_account(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
         let wallet = self
             .wallet_service
             .get_wallet_core(GetWalletInput {
@@ -209,8 +217,15 @@ impl OperationService {
                 read: input.read,
             })
             .iter()
-            .map(|operation| self.operation_mapper.to_operation_dto(operation.to_owned()))
-            .collect::<Vec<OperationDTO>>();
+            .map(|operation| {
+                let processor = OperationProcessorFactory::build(&operation.code);
+                let context = processor.get_context(operation)?;
+
+                Ok(self
+                    .operation_mapper
+                    .to_operation_dto(operation.to_owned(), context))
+            })
+            .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
 
         Ok(dtos)
     }

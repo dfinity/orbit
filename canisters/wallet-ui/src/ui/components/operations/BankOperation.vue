@@ -77,11 +77,17 @@ import UnknownOperation from './UnknownOperation.vue';
 import { BankOperationType } from '~/types';
 import ApproveTransferOperation from './ApproveTransferOperation.vue';
 
-const props = defineProps<{
-  modelValue: Operation;
-  outer?: boolean;
-  details?: Record<string, string>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: Operation;
+    outer?: boolean;
+    details?: Record<string, string>;
+  }>(),
+  {
+    details: undefined,
+    outer: true,
+  },
+);
 
 provide('bankOperationProps', { outer: props.outer, details: props.details });
 

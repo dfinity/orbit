@@ -11,7 +11,7 @@ import {
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
-import { useAuthStore, useSettingsStore } from '~/ui/stores';
+import { useAuthStore, useSettingsStore, useWorkerStore } from '~/ui/stores';
 
 export interface BankMetrics {
   wallets: number;
@@ -26,10 +26,6 @@ export interface ActiveBankStoreState {
   _bankId: string;
   loading: boolean;
   _account: Account | null;
-  pollingJobs: {
-    walletBalance?: number;
-    pendingOperations?: number;
-  };
   features: {
     loading: boolean;
     details: BankFeatures | null;
@@ -49,10 +45,6 @@ export const useActiveBankStore = defineStore('activeBank', {
     return {
       _bankId: Principal.anonymous().toString(),
       loading: false,
-      pollingJobs: {
-        walletBalance: undefined,
-        pendingOperations: undefined,
-      },
       _account: null,
       features: {
         loading: false,
@@ -132,63 +124,6 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       this._bankId = bankId.toText();
     },
-    registerJobs(): void {
-      if (!this.pollingJobs.walletBalance) {
-        this.fetchWalletsBalance().catch(err => {
-          logger.error('Failed to fetch wallets balance', { err });
-        });
-        this.pollingJobs.walletBalance = setInterval(async () => {
-          await this.fetchWalletsBalance().catch(err => {
-            logger.error('Failed to fetch wallets balance', { err });
-          });
-        }, 15000) as unknown as number;
-      }
-      if (!this.pollingJobs.pendingOperations) {
-        this.fetchPendingOperations().catch(err => {
-          logger.error('Failed to fetch pending operations', { err });
-        });
-        this.pollingJobs.pendingOperations = setInterval(async () => {
-          await this.fetchPendingOperations().catch(err => {
-            logger.error('Failed to fetch pending operations', { err });
-          });
-        }, 10000) as unknown as number;
-      }
-    },
-    unregisterJobs(): void {
-      clearInterval(this.pollingJobs.walletBalance);
-      clearInterval(this.pollingJobs.pendingOperations);
-    },
-    async fetchWalletsBalance(): Promise<void> {
-      const walletIds = this.wallets.items.map(wallet => wallet.id);
-
-      for (const walletId of walletIds) {
-        const balance = await this.service.walletBalance({ wallet_id: walletId });
-
-        this.wallets.items.forEach(wallet => {
-          if (wallet.id === walletId) {
-            wallet.balance = [
-              {
-                balance: balance.balance,
-                decimals: balance.decimals,
-                last_update_timestamp: balance.last_update_timestamp,
-              },
-            ];
-          }
-        });
-      }
-    },
-    async fetchPendingOperations(): Promise<void> {
-      const newOperations = await this.service.listUnreadPendingOperations(
-        this.lastPendingOperationDate ?? undefined,
-        this.lastPendingOperationId ?? undefined,
-      );
-
-      for (const newOperation of newOperations) {
-        if (!this.pendingOperations.items.find(current => current.id === newOperation.id)) {
-          this.pendingOperations.items.push(newOperation);
-        }
-      }
-    },
     reset(): void {
       this._bankId = Principal.anonymous().toText();
       this._account = null;
@@ -245,8 +180,6 @@ export const useActiveBankStore = defineStore('activeBank', {
               const isPending = 'Pending' in operation.status;
               const isRead = operation.read;
 
-              console.log(isPending, !isRead);
-
               return isPending && !isRead;
             });
           });
@@ -283,7 +216,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     },
     // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
     async loadDetailsAsync(): Promise<void> {
-      this.registerJobs();
+      useWorkerStore().start();
       this.loadWalletList();
       this.loadBankFeatures();
     },
@@ -291,7 +224,7 @@ export const useActiveBankStore = defineStore('activeBank', {
       if (this.loading) {
         return;
       }
-      this.unregisterJobs();
+      useWorkerStore().stop();
       this.reset();
       this.loading = true;
       this.setBankId(bankId);

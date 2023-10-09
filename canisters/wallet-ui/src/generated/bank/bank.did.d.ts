@@ -75,6 +75,11 @@ export interface Error {
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
+export interface FetchWalletBalancesInput { 'wallet_ids' : Array<WalletId> }
+export type FetchWalletBalancesResult = {
+    'Ok' : { 'balances' : Array<WalletBalance> }
+  } |
+  { 'Err' : Error };
 export interface GetAccountInput { 'account_id' : [] | [AccountId] }
 export type GetAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
@@ -86,8 +91,8 @@ export type GetOperationResult = { 'Ok' : { 'operation' : Operation } } |
 export interface GetTransferInput { 'transfer_id' : TransferId }
 export type GetTransferResult = { 'Ok' : { 'transfer' : Transfer } } |
   { 'Err' : Error };
-export interface GetWalletBalanceInput { 'wallet_id' : WalletId }
-export type GetWalletBalanceResult = { 'Ok' : { 'balance' : WalletBalance } } |
+export interface GetTransfersInput { 'transfer_ids' : Array<TransferId> }
+export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
   { 'Err' : Error };
 export interface GetWalletInput { 'wallet_id' : WalletId }
 export type GetWalletResult = { 'Ok' : { 'wallet' : Wallet } } |
@@ -243,14 +248,15 @@ export interface _SERVICE {
   'edit_account' : ActorMethod<[EditAccountInput], EditAccountResult>,
   'edit_operation' : ActorMethod<[EditOperationInput], EditOperationResult>,
   'features' : ActorMethod<[], GetFeaturesResult>,
+  'fetch_wallet_balances' : ActorMethod<
+    [FetchWalletBalancesInput],
+    FetchWalletBalancesResult
+  >,
   'get_account' : ActorMethod<[GetAccountInput], GetAccountResult>,
   'get_operation' : ActorMethod<[GetOperationInput], GetOperationResult>,
   'get_transfer' : ActorMethod<[GetTransferInput], GetTransferResult>,
+  'get_transfers' : ActorMethod<[GetTransfersInput], GetTransfersResult>,
   'get_wallet' : ActorMethod<[GetWalletInput], GetWalletResult>,
-  'get_wallet_balance' : ActorMethod<
-    [GetWalletBalanceInput],
-    GetWalletBalanceResult
-  >,
   'list_operations' : ActorMethod<[ListOperationsInput], ListOperationsResult>,
   'list_wallet_operations' : ActorMethod<
     [ListWalletOperationsInput],

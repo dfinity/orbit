@@ -10,10 +10,11 @@ import {
   CreateWalletInput,
   EditAccountInput,
   EditOperationInput,
+  FetchWalletBalancesInput,
   GetAccountInput,
   GetOperationInput,
   GetTransferInput,
-  GetWalletBalanceInput,
+  GetTransfersInput,
   GetWalletInput,
   ListOperationsInput,
   ListWalletOperationsInput,
@@ -180,14 +181,14 @@ export class BankService {
     return result.Ok.wallet;
   }
 
-  async walletBalance(input: GetWalletBalanceInput): Promise<WalletBalance> {
-    const result = await this.actor.get_wallet_balance(input);
+  async fetchWalletBalances(input: FetchWalletBalancesInput): Promise<WalletBalance[]> {
+    const result = await this.actor.fetch_wallet_balances(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.balance;
+    return result.Ok.balances;
   }
 
   async createWallet(input: CreateWalletInput): Promise<Wallet> {
@@ -218,6 +219,16 @@ export class BankService {
     }
 
     return result.Ok.transfer;
+  }
+
+  async getTransfers(input: GetTransfersInput): Promise<Transfer[]> {
+    const result = await this.actor.get_transfers(input);
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.transfers;
   }
 
   async createTransfer(input: TransferInput): Promise<Transfer> {

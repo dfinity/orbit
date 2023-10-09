@@ -7,6 +7,9 @@ use thiserror::Error;
 pub enum TransferError {
     #[error(r#"The requested transfer was not found."#)]
     TransferNotFound { transfer_id: String },
+    /// Fetching transders can only be done for a maximum of 50 transfers at a time.
+    #[error(r#"Fetching transfers can only be done for a maximum of {max} transfers at a time."#)]
+    GetTransfersBatchNotAllowed { max: u8 },
 }
 
 impl DetailableError for TransferError {
@@ -15,6 +18,11 @@ impl DetailableError for TransferError {
         match self {
             TransferError::TransferNotFound { transfer_id } => {
                 details.insert("transfer_id".to_string(), transfer_id.to_string());
+                Some(details)
+            }
+
+            TransferError::GetTransfersBatchNotAllowed { max } => {
+                details.insert("max".to_string(), max.to_string());
                 Some(details)
             }
         }

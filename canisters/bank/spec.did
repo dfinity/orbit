@@ -19,6 +19,12 @@ type TimestampRFC3339 = text;
 // The status of an operation.
 type OperationStatus = variant { Pending; Adopted; Rejected; Abstained };
 
+// The context of which the operation was created.
+type OperationContext = record {
+  // The transfer that was the reason for the operation.
+  transfer : opt Transfer;
+};
+
 // A record type that can be used to represent an operation in the bank.
 type Operation = record {
   // The operation id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -32,7 +38,7 @@ type Operation = record {
   // The time at which the operation was created.
   created_at : TimestampRFC3339;
   // The metadata associated with the operation.
-  // 
+  //
   // The metadata is a list of key-value pairs that can be used to store
   // additional information about the operation (e.g. `{"transfer_id": "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0"}`).
   metadata : vec record { text; text };
@@ -42,6 +48,8 @@ type Operation = record {
   feedback_time_at : opt TimestampRFC3339;
   // The reason for the approval or rejection.
   feedback_reason : opt text;
+  // The context of the operation.
+  context : OperationContext;
 };
 
 // The input type for getting the list of operations associated with the caller.
@@ -53,9 +61,9 @@ type ListOperationsInput = record {
   // Wether the operation has been read or not.
   read : opt bool;
   // From which created time to retrieve the operations.
-  from_dt: opt TimestampRFC3339;
+  from_dt : opt TimestampRFC3339;
   // Until which created time to retrieve the operations.
-  to_dt: opt TimestampRFC3339;
+  to_dt : opt TimestampRFC3339;
 };
 
 // The result type for getting the list of operations.
@@ -81,9 +89,9 @@ type ListWalletOperationsInput = record {
   // Wether the operation has been read or not.
   read : opt bool;
   // From which created time to retrieve the operations.
-  from_dt: opt TimestampRFC3339;
+  from_dt : opt TimestampRFC3339;
   // Until which created time to retrieve the operations.
-  to_dt: opt TimestampRFC3339;
+  to_dt : opt TimestampRFC3339;
 };
 
 // The result type for getting the list of operations for a wallet.
@@ -154,7 +162,7 @@ type WalletListItem = record {
   // The wallet name.
   name : opt text;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
-  decimals: nat32;
+  decimals : nat32;
   // The asset symbol, e.g. "ICP" or "BTC".
   asset_symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
@@ -390,6 +398,21 @@ type GetTransferResult = variant {
   Err : Error;
 };
 
+type GetTransfersInput = record {
+  // The list of transfer ids to retrieve.
+  transfer_ids : vec TransferId;
+};
+
+type GetTransfersResult = variant {
+  // The result data for a successful operation.
+  Ok : record {
+    // The transfer that was retrieved.
+    transfers : vec Transfer;
+  };
+  // The error for a failed operation.
+  Err : Error;
+};
+
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
@@ -414,7 +437,7 @@ type Wallet = record {
   // The address of the wallet (e.g. "0x1234").
   address : text;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
-  decimals: nat32;
+  decimals : nat32;
   // A friendly name for the wallet.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
@@ -512,19 +535,19 @@ type WalletBalance = record {
 };
 
 // Input type for getting a wallet balance.
-type GetWalletBalanceInput = record {
-  // The wallet id to retrieve.
-  wallet_id : WalletId;
+type FetchWalletBalancesInput = record {
+  // The wallet ids to retrieve.
+  wallet_ids : vec WalletId;
 };
 
 // Result type for getting a wallet.
-type GetWalletBalanceResult = variant {
-  // The result data, if the operation was successful.
+type FetchWalletBalancesResult = variant {
+  // The result data for a successful operation.
   Ok : record {
     // The wallet balance that was retrieved.
-    balance : WalletBalance;
+    balances : vec WalletBalance;
   };
-  // The error that occurred during the operation, if any.
+  // The error for a failed operation.
   Err : Error;
 };
 
@@ -705,7 +728,7 @@ service : (opt BankInit) -> {
   // If the caller does not have access to the wallet, an error will be returned.
   //
   // Required permission: "read:wallet"
-  get_wallet_balance : (input : GetWalletBalanceInput) -> (GetWalletBalanceResult);
+  fetch_wallet_balances : (input : FetchWalletBalancesInput) -> (FetchWalletBalancesResult);
   // List all wallets that the caller has access to.
   //
   // If the caller is not the owner of any wallet, an error will be returned.
@@ -729,6 +752,10 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:transfer"
   get_transfer : (input : GetTransferInput) -> (GetTransferResult) query;
+  // Get transfers by their ids.
+  //
+  // Required permission: "read:transfer"
+  get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
   // Get the list of operations.
   //
   // Required permission: "read:operation"

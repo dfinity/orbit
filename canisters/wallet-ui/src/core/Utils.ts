@@ -76,3 +76,35 @@ export const extractTransferStatus = (status: TransferStatus): WalletTransferSta
 
   return WalletTransferStatus.Unknown;
 };
+
+export const timer = (
+  cb: () => void,
+  intervalMs = 1000,
+  {
+    immediate = true,
+  }: {
+    immediate?: boolean;
+  } = {},
+): NodeJS.Timeout => {
+  if (immediate) {
+    cb();
+  }
+
+  return setInterval(cb, intervalMs);
+};
+
+export const arrayBatchMaker = <T>(array: T[], batchSize: number = 5): T[][] => {
+  const batches: T[][] = [];
+
+  array.reduce((acc, item, index) => {
+    const groupIndex = Math.floor(index / batchSize);
+    if (!acc[groupIndex]) {
+      acc[groupIndex] = [];
+    }
+    acc[groupIndex].push(item);
+
+    return acc;
+  }, batches);
+
+  return batches;
+}

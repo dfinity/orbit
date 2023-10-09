@@ -6,3 +6,4 @@ export * from './Settings';
 export * from './SettingsForm';
 export * from './TransferForm';
 export * from './WalletDetails';
+export * from './WorkerStore';

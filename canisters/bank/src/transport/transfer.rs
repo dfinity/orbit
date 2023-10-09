@@ -85,6 +85,16 @@ pub struct GetTransferResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetTransfersInput {
+    pub transfer_ids: Vec<TransferIdDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetTransfersResponse {
+    pub transfers: Vec<TransferDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListWalletTransfersInput {
     pub status: Option<String>,
     pub to_dt: Option<TimestampRfc3339>,

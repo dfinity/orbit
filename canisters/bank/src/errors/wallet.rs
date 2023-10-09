@@ -16,7 +16,7 @@ pub enum WalletError {
     UnknownBlockchainStandard { blockchain_standard: String },
     /// You don't have the necessary privileges to access the requested wallet.
     #[error(r#"You don't have the necessary privileges to access the requested wallet."#)]
-    Forbidden { wallet: String },
+    Forbidden,
     /// The wallet address is out of range.
     #[error(
         r#"The wallet address is out of range, it must be between {min_length} and {max_length}."#
@@ -28,16 +28,17 @@ pub enum WalletError {
     /// The requested transfer was not found.
     #[error(r#"The requested transfer was not found."#)]
     TransferNotFound { transfer_id: String },
+    /// Fetching wallet balances can only be done for a maximum of 10 wallets at a time.
+    #[error(
+        r#"Fetching wallet balances can only be done for a maximum of {max} wallets at a time."#
+    )]
+    WalletBalancesBatchRange { min: u8, max: u8 },
 }
 
 impl DetailableError for WalletError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
-            WalletError::Forbidden { wallet } => {
-                details.insert("wallet".to_string(), wallet.to_string());
-                Some(details)
-            }
             WalletError::WalletNotFound { id } => {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
@@ -75,6 +76,12 @@ impl DetailableError for WalletError {
                 details.insert("transfer_id".to_string(), transfer_id.to_string());
                 Some(details)
             }
+            WalletError::WalletBalancesBatchRange { min, max } => {
+                details.insert("min".to_string(), min.to_string());
+                details.insert("max".to_string(), max.to_string());
+                Some(details)
+            }
+            _ => None,
         }
     }
 }

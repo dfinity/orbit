@@ -1,7 +1,7 @@
 use crate::{
     errors::MapperError,
     models::{Operation, OperationCode, OperationStatus},
-    transport::{OperationDTO, OperationStatusDTO},
+    transport::{OperationContextDTO, OperationDTO, OperationStatusDTO},
 };
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use std::str::FromStr;
@@ -11,7 +11,11 @@ use uuid::Uuid;
 pub struct OperationMapper {}
 
 impl OperationMapper {
-    pub fn to_operation_dto(&self, operation: Operation) -> OperationDTO {
+    pub fn to_operation_dto(
+        &self,
+        operation: Operation,
+        context: OperationContextDTO,
+    ) -> OperationDTO {
         OperationDTO {
             id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
             account: Uuid::from_bytes(operation.account_id)
@@ -35,6 +39,7 @@ impl OperationMapper {
                 Some(feedback) => feedback.reason,
                 None => None,
             },
+            context,
         }
     }
 

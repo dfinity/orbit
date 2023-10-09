@@ -119,7 +119,7 @@ impl AccountService {
     }
 
     // Returns the account associated with the given user identity, if none is found, an error is returned.
-    pub async fn resolve_account(&self, identity: &Principal) -> ServiceResult<Account> {
+    pub fn resolve_account(&self, identity: &Principal) -> ServiceResult<Account> {
         let account = self
             .account_repository
             .find_account_by_identity(identity)

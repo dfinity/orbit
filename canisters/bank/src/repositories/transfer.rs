@@ -6,8 +6,7 @@ use crate::{
     core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
     models::{Transfer, TransferKey},
 };
-use ic_canister_core::repository::IndexRepository;
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{IndexRepository, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
