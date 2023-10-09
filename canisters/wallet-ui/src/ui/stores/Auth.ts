@@ -1,13 +1,16 @@
 import { AnonymousIdentity, Identity } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
+import { logger } from '~/core';
 import { icAgent } from '~/core/IcAgent';
 import { Maybe } from '~/types';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey, router, services } from '~/ui/modules';
-import { useBankStore } from '~/ui/stores';
+import { useActiveBankStore, useBankStore } from '~/ui/stores';
 
 export interface AuthStoreState {
   initialized: boolean;
   identity: Identity | null;
+  _identities: string[];
   accountId: string | null;
   accountName: string | null;
 }
@@ -16,6 +19,7 @@ export const useAuthStore = defineStore('auth', {
   state: (): AuthStoreState => ({
     initialized: false,
     identity: null,
+    _identities: [],
     accountId: null,
     accountName: null,
   }),
@@ -25,6 +29,9 @@ export const useAuthStore = defineStore('auth', {
     },
     principal(): string | undefined {
       return this.identity?.getPrincipal().toText();
+    },
+    identities(): Principal[] {
+      return this._identities.map(identity => Principal.fromText(identity));
     },
   },
   actions: {
@@ -44,24 +51,35 @@ export const useAuthStore = defineStore('auth', {
         }
 
         icAgent.get().replaceIdentity(cachedIdentity);
-        const account_details = await controlPanelService.get_account_details();
+        const accountDetails = await controlPanelService.get_account_details();
 
-        if (!account_details) {
+        if (!accountDetails) {
           throw new Error('Account not found');
         }
 
         // loads information about the main bank and the list of banks for the account
-        await useBankStore().init();
+        await this.initBanks();
 
         this.identity = cachedIdentity;
-        this.accountName = account_details.name.length ? account_details.name[0] : null;
-        this.accountId = account_details.id;
+        this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
+        this.accountId = accountDetails.id;
+        this._identities = accountDetails.identities.map(identity => identity.identity.toText());
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
-        throw error;
+
+        logger.error(`Application failed to initialize the state`, { error });
       } finally {
         this.initialized = true;
+      }
+    },
+    async initBanks(): Promise<void> {
+      const bankStore = useBankStore();
+      // loads information about the main bank and the list of banks for the account
+      await bankStore.init();
+      if (bankStore.main !== null && !bankStore.main.isAnonymous()) {
+        // this does not need to be awaited, it will be loaded in the background making the initial load faster
+        await useActiveBankStore().load(bankStore.main);
       }
     },
     async signIn(): Promise<void> {
@@ -76,20 +94,22 @@ export const useAuthStore = defineStore('auth', {
 
         if (accountDetails) {
           // loads information about the main bank and the list of banks for the account
-          await useBankStore().init();
+          await this.initBanks();
 
           this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
           this.accountId = accountDetails.id;
+          this._identities = accountDetails.identities.map(identity => identity.identity.toText());
           return;
         }
 
         const account = await controlPanelService.register_with_shared_bank();
 
         // loads information about the main bank and the list of banks for the account
-        await useBankStore().init();
+        await this.initBanks();
 
         this.accountName = account.name.length ? account.name[0] : null;
         this.accountId = account.id;
+        this._identities = account.identities.map(identity => identity.toText());
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
@@ -113,6 +133,7 @@ export const useAuthStore = defineStore('auth', {
       this.identity = null;
       this.accountName = null;
       this.accountId = null;
+      this._identities = [];
 
       icAgent.get().invalidateIdentity();
     },

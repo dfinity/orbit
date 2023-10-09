@@ -22,7 +22,7 @@ thread_local! {
 /// A repository that enables managing accounts in stable memory.
 #[derive(Default, Debug)]
 pub struct AccountRepository {
-    account_identity_index: AccountIdentityIndexRepository,
+    identity_index: AccountIdentityIndexRepository,
 }
 
 impl Repository<AccountKey, Account> for AccountRepository {
@@ -31,31 +31,53 @@ impl Repository<AccountKey, Account> for AccountRepository {
     }
 
     fn insert(&self, key: AccountKey, value: Account) -> Option<Account> {
-        DB.with(|m| {
-            let identity_index = AccountIdentityIndexRepository::default();
-            value.as_index_for_identities().iter().for_each(|index| {
-                identity_index.insert(index.to_owned());
-            });
+        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
+            Some(prev) => {
+                let prev_identities = prev.to_index_for_identities();
+                let curr_identities = value.to_index_for_identities();
+                if prev_identities != curr_identities {
+                    prev_identities.iter().for_each(|index| {
+                        self.identity_index.remove(index);
+                    });
+                    curr_identities.iter().for_each(|index| {
+                        self.identity_index.insert(index.to_owned());
+                    });
+                }
 
-            m.borrow_mut().insert(key, value)
+                Some(prev)
+            }
+            None => {
+                value.to_index_for_identities().iter().for_each(|index| {
+                    self.identity_index.insert(index.to_owned());
+                });
+
+                None
+            }
         })
     }
 
     fn remove(&self, key: &AccountKey) -> Option<Account> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| match m.borrow_mut().remove(key) {
+            Some(prev) => {
+                prev.to_index_for_identities().iter().for_each(|index| {
+                    self.identity_index.remove(index);
+                });
+
+                Some(prev)
+            }
+            None => None,
+        })
     }
 }
 
 impl AccountRepository {
     /// Returns the account associated with the given identity if it exists.
     pub fn find_account_by_identity(&self, identity: &Principal) -> Option<Account> {
-        let results = self
-            .account_identity_index
+        self.identity_index
             .find_by_criteria(AccountIdentityIndexCriteria {
                 identity_id: identity.to_owned(),
-                role: None,
-            });
-
-        results.first().map(|account| account.to_owned())
+            })
+            .iter()
+            .find_map(|id| self.get(&Account::key(*id)))
     }
 }

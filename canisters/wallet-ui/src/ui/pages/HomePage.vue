@@ -5,15 +5,19 @@
         <VRow>
           <VCol md="6" sm="12">
             <h1 class="text-h4">{{ $t('home.welcome_back') }}</h1>
-            <p class="info-box">
+            <p v-if="activeBank.hasAccount" class="info-box">
               <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
-              <span>{{ $t('home.notifications.none') }}</span>
+              <span>
+                {{
+                  activeBank.metrics.pendingOperations > 0
+                    ? $t('home.notifications.some', { count: activeBank.metrics.pendingOperations })
+                    : $t('home.notifications.none')
+                }}
+              </span>
             </p>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
-            <VBtn rounded color="primary-variant" :prepend-icon="mdiSend">
-              {{ $t('terms.new_transfer') }}
-            </VBtn>
+            <NewTransferBtn />
             <VBtn
               rounded
               color="primary-variant"
@@ -29,33 +33,29 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
-          <VCol cols="12" md="4">
+          <VCol v-if="!activeBank.hasAccount" cols="12" md="4">
             <VCard color="surface" height="100%">
-              <VCardTitle>{{ $t('terms.wallets') }}</VCardTitle>
-              <VCardText class="text-center text-h3 pt-8 pb-16">0</VCardText>
-            </VCard>
-          </VCol>
-          <VCol cols="12" md="4">
-            <VCard color="surface" height="100%">
-              <VCardTitle>{{ $t('terms.transactions') }}</VCardTitle>
-              <VCardText class="text-center text-h3 pt-8 pb-16">
-                <VRow>
-                  <VCol cols="6" class="transactions__card">
-                    <span>0</span>
-                    <span class="text-subtitle-1">{{ $t('terms.completed') }}</span>
-                  </VCol>
-                  <VCol cols="6" class="transactions__card">
-                    <span>0</span>
-                    <span class="text-subtitle-2">{{ $t('terms.pending') }}</span>
-                  </VCol>
-                </VRow>
+              <VCardTitle>{{ $t('banks.no_bank_account') }}</VCardTitle>
+              <VCardSubtitle>{{ $t('banks.please_register_to_continue') }}</VCardSubtitle>
+              <VCardText class="text-center mt-6 mb-6">
+                <VIcon :icon="mdiBank" size="64" />
               </VCardText>
             </VCard>
           </VCol>
-          <VCol cols="12" md="4">
-            <VCard color="surface" height="100%">
-              <VCardTitle>{{ $t('terms.address_book') }}</VCardTitle>
-              <VCardText class="text-center text-h3 pt-8 pb-16">0</VCardText>
+          <VCol v-if="activeBank.hasAccount" cols="12" md="4">
+            <VCard color="surface" height="100%" :loading="activeBank.wallets.loading">
+              <VCardTitle>{{ $t('terms.wallets') }}</VCardTitle>
+              <VCardText class="text-center text-h3 pt-8 pb-16">
+                {{ activeBank.metrics.wallets }}
+              </VCardText>
+            </VCard>
+          </VCol>
+          <VCol v-if="activeBank.hasAccount" cols="12" md="4">
+            <VCard color="surface" height="100%" :loading="activeBank.pendingOperations.loading">
+              <VCardTitle>{{ $t('banks.pending_operations') }}</VCardTitle>
+              <VCardText class="text-center text-h3 pt-8 pb-16">
+                {{ activeBank.metrics.pendingOperations }}
+              </VCardText>
             </VCard>
           </VCol>
         </VRow>
@@ -65,8 +65,12 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiBellRing, mdiSend, mdiCogs } from '@mdi/js';
+import { mdiBank, mdiBellRing, mdiCogs } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import { useActiveBankStore } from '~/ui/stores';
+import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
+
+const activeBank = useActiveBankStore();
 </script>
 
 <style scoped lang="scss">
@@ -74,9 +78,13 @@ import PageLayout from '~/ui/components/PageLayout.vue';
   display: flex;
   justify-content: start;
   align-items: center;
+
+  &__loading {
+    width: 200px;
+  }
 }
 
-.transactions {
+.transfers {
   &__card {
     display: flex;
     justify-content: center;
@@ -94,6 +102,10 @@ import PageLayout from '~/ui/components/PageLayout.vue';
   justify-content: end;
   align-items: center;
   gap: calc(var(--ds-bdu) * 2);
+
+  :deep(.v-btn) {
+    flex-grow: 1;
+  }
 }
 
 .page-layout--mobile {

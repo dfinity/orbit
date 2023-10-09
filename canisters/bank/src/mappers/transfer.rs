@@ -129,6 +129,9 @@ impl TransferMapper {
             TransferStatus::Rejected { reason } => TransferStatusDTO::Rejected {
                 reason: reason.to_owned(),
             },
+            TransferStatus::Failed { reason } => TransferStatusDTO::Failed {
+                reason: reason.to_owned(),
+            },
         }
     }
 

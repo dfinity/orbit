@@ -4,10 +4,18 @@ use super::indexes::{
 };
 use crate::{
     core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
-    models::{Transfer, TransferKey},
+    models::{
+        indexes::{
+            transfer_execution_time_index::TransferExecutionTimeIndexCriteria,
+            transfer_wallet_index::TransferWalletIndexCriteria,
+        },
+        Transfer, TransferKey, WalletId,
+    },
 };
-use ic_canister_core::repository::IndexRepository;
-use ic_canister_core::repository::Repository;
+use ic_canister_core::{
+    repository::{IndexRepository, Repository},
+    types::Timestamp,
+};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
@@ -22,7 +30,10 @@ thread_local! {
 
 /// A repository that enables managing transfer in stable memory.
 #[derive(Default, Debug)]
-pub struct TransferRepository {}
+pub struct TransferRepository {
+    wallet_index: TransferWalletIndexRepository,
+    execution_dt_index: TransferExecutionTimeIndexRepository,
+}
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
     fn get(&self, key: &TransferKey) -> Option<Transfer> {
@@ -30,16 +41,105 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     }
 
     fn insert(&self, key: TransferKey, value: Transfer) -> Option<Transfer> {
-        DB.with(|m| {
-            TransferWalletIndexRepository::default().insert(value.to_index_by_wallet());
-            TransferExecutionTimeIndexRepository::default()
-                .insert(value.to_index_by_execution_dt());
+        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
+            Some(prev) => {
+                let prev_wallet_index = prev.to_index_by_wallet();
+                if prev_wallet_index != value.to_index_by_wallet() {
+                    self.wallet_index.remove(&prev_wallet_index);
+                    self.wallet_index.insert(value.to_index_by_wallet());
+                }
+                let prev_execution_dt_index = prev.to_index_by_execution_dt();
+                if prev_execution_dt_index != value.to_index_by_execution_dt() {
+                    self.execution_dt_index.remove(&prev_execution_dt_index);
+                    self.execution_dt_index
+                        .insert(value.to_index_by_execution_dt());
+                }
 
-            m.borrow_mut().insert(key, value)
+                Some(prev)
+            }
+            None => {
+                self.wallet_index.insert(value.to_index_by_wallet());
+                self.execution_dt_index
+                    .insert(value.to_index_by_execution_dt());
+
+                None
+            }
         })
     }
 
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| match m.borrow_mut().remove(key) {
+            Some(prev) => {
+                let wallet_index = TransferWalletIndexRepository::default();
+                let execution_dt_index = TransferExecutionTimeIndexRepository::default();
+
+                wallet_index.remove(&prev.to_index_by_wallet());
+                execution_dt_index.remove(&prev.to_index_by_execution_dt());
+
+                Some(prev)
+            }
+            None => None,
+        })
+    }
+}
+
+impl TransferRepository {
+    pub fn find_by_execution_dt_and_status(
+        &self,
+        execution_dt_from: Option<Timestamp>,
+        execution_dt_to: Option<Timestamp>,
+        status: String,
+    ) -> Vec<Transfer> {
+        let transfers =
+            self.execution_dt_index
+                .find_by_criteria(TransferExecutionTimeIndexCriteria {
+                    from_dt: execution_dt_from,
+                    to_dt: execution_dt_to,
+                });
+
+        transfers
+            .iter()
+            .filter_map(|id| match self.get(&Transfer::key(*id)) {
+                Some(transfer) => {
+                    if transfer.status.to_string() == status {
+                        Some(transfer)
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            })
+            .collect::<Vec<Transfer>>()
+    }
+
+    pub fn find_by_wallet(
+        &self,
+        wallet_id: WalletId,
+        created_dt_from: Option<Timestamp>,
+        created_dt_to: Option<Timestamp>,
+        status: Option<String>,
+    ) -> Vec<Transfer> {
+        let transfers = self
+            .wallet_index
+            .find_by_criteria(TransferWalletIndexCriteria {
+                wallet_id,
+                from_dt: created_dt_from,
+                to_dt: created_dt_to,
+            });
+
+        transfers
+            .iter()
+            .filter_map(|id| match (self.get(&Transfer::key(*id)), status.clone()) {
+                (Some(transfer), Some(status)) => {
+                    if transfer.status.to_string() == status {
+                        Some(transfer)
+                    } else {
+                        None
+                    }
+                }
+                (Some(transfer), None) => Some(transfer),
+                _ => None,
+            })
+            .collect::<Vec<Transfer>>()
     }
 }

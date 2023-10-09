@@ -4,12 +4,12 @@ use crate::{
         indexes::transfer_execution_time_index::{
             TransferExecutionTimeIndex, TransferExecutionTimeIndexCriteria,
         },
-        Transfer,
+        TransferId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
   /// The memory reference to the Transfer repository.
@@ -24,7 +24,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct TransferExecutionTimeIndexRepository {}
 
-impl IndexRepository<TransferExecutionTimeIndex, Transfer>
+impl IndexRepository<TransferExecutionTimeIndex, TransferId>
     for TransferExecutionTimeIndexRepository
 {
     type FindByCriteria = TransferExecutionTimeIndexCriteria;
@@ -41,30 +41,21 @@ impl IndexRepository<TransferExecutionTimeIndex, Transfer>
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Transfer> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<TransferId> {
         DB.with(|db| {
             let start_key = TransferExecutionTimeIndex {
-                execution_dt: u64::MIN,
+                execution_dt: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
                 transfer_id: [std::u8::MIN; 16],
             };
             let end_key = TransferExecutionTimeIndex {
-                execution_dt: criteria.to_dt,
+                execution_dt: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
                 transfer_id: [std::u8::MAX; 16],
             };
 
             db.borrow()
                 .range(start_key..=end_key)
-                .take_while(|(index, _)| {
-                    let transfer = index.to_transfer();
-                    let mut matches_criteria_status = true;
-                    if let Some(status) = criteria.status.as_ref() {
-                        matches_criteria_status = transfer.status.to_string() == *status;
-                    }
-
-                    matches_criteria_status
-                })
-                .map(|(index, _)| index.to_transfer())
-                .collect::<Vec<Transfer>>()
+                .map(|(index, _)| index.transfer_id)
+                .collect::<HashSet<TransferId>>()
         })
     }
 }

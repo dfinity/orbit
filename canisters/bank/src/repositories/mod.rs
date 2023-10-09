@@ -8,10 +8,6 @@ pub use account::*;
 mod wallet;
 pub use wallet::*;
 
-/// Repository for wallet accounts.
-mod wallet_account;
-pub use wallet_account::*;
-
 /// Repository for transfer.
 mod transfer;
 pub use transfer::*;

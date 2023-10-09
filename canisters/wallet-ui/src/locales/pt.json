@@ -26,7 +26,8 @@
   "home": {
     "welcome_back": "Boas-vindas de novo",
     "notifications": {
-      "none": "Não tem notificaçōes por ler"
+      "none": "Não tem notificaçōes por ler",
+      "some": "Tem {count} notificaçōes por ler"
     }
   },
   "footer": {
@@ -41,26 +42,79 @@
     "load_failed": "Falha ao procurar as informaçōes da sua conta, por favor, tente novament."
   },
   "banks": {
+    "operation_failed_to_save": "Erro ao gravar a operaração.",
+    "no_wallets": "Nenhuma carteira disponível.",
+    "pending_operations": "Operaraçōes pendentes",
+    "account_copied_to_clipboard": "Conta de banco copiada.",
+    "wallet_address_copied_to_clipboard": "Endereço da carteira copiado.",
     "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
     "bank_nr_title": "#{nr} Banco",
-    "no_banks": "Nenhum banco disponível."
+    "load_error_transfers": "Erro ao carregar as transferências.",
+    "no_banks": "Nenhum banco disponível.",
+    "account_load_error": "Erro ao carregar a sua conta bancária.",
+    "no_bank_account": "Nenhum conta bancária",
+    "please_register_to_continue": "Por favor registe-se para continuar.",
+    "private_wallet": "Carteira privada",
+    "joint_wallet": "Carteira conjunta",
+    "policy": "Regra",
+    "policy_misconfigured": "As regras da sua carteira estão mal configuradas.",
+    "policy_config_unavailable": "Configuração da regra indisponível.",
+    "policy_fixed_approval_threshold_desc": "Número fixo de aprovações para operaraçōes",
+    "policy_variable_approval_threshold_desc": "Percentual de aprovações para operaraçōes",
+    "policies": {
+      "VariableApprovalThreshold": "Aprovação por porcentagem",
+      "FixedApprovalThreshold": "Aprovação por votos fixos"
+    },
+    "operations": {
+      "approve_transfer": {
+        "title": "Approvar transferência"
+      }
+    },
+    "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa.",
+    "no_operations_found_search": "Nenhuma operaração encontrada para a pesquisa."
   },
   "terms": {
+    "receivables": "Recebimentos",
+    "bank": "Banco",
+    "all_done": "Tudo pronto",
+    "destination_address": "Endereço de destino",
+    "search": "Procurar",
+    "operations": "Operaraçōes",
+    "approve": "Aprovar",
+    "abstained": "Abstido",
+    "approved": "Aprovado",
+    "reject": "Rejeitar",
+    "rejected": "Rejeitado",
+    "to": "Para",
+    "edit": "Editar",
+    "until": "Até",
+    "from": "Desde",
+    "amount": "Valor",
+    "wallet": "Carteira",
+    "send": "Enviar",
+    "open": "abrir",
+    "asset": "Ativo",
+    "account": "Conta",
+    "account_id": "Identificador da conta",
     "signin": "Entrar",
     "signout": "Sair",
     "anonymous": "Anónimo",
     "wallets": "Carteiras",
+    "new_wallet": "Nova carteira",
     "policies": "Regras",
+    "transfers": "Transferências",
     "transactions": "Transaçōes",
     "address_book": "Endereços",
     "completed": "Realizado",
     "pending": "Pendente",
+    "name": "Nome",
     "new_transfer": "Nova transferência",
     "settings": "Configuraçōes",
     "close": "Fechar",
     "general": "Geral",
     "add": "Adicionar",
     "remove": "Remover",
+    "owners": "Proprietários",
     "account_name": "Nome da conta",
     "bank_name": "Nome do banco",
     "identity_name": "Nome da identidade",
@@ -71,7 +125,13 @@
     "unconfirmed": "Não confirmado",
     "main": "Principal"
   },
+  "wallet_page": {
+    "not_found_title": "Carteira não encontrada",
+    "not_found_description": "Não foi possível aceder a carteira requisitada.",
+    "not_found_btn": "Voltar as carteiras"
+  },
   "forms": {
+    "create": "Criar",
     "banks": "Bancos ({min}/{max})",
     "identities": "Identidades ({min}/{max})",
     "save_changes": "Gravar alteraçōes",
@@ -79,7 +139,9 @@
       "required": "Este campo é obrigatório.",
       "maxLength": "O tamanho máximo do {field} são {max} caractéres.",
       "validPrincipal": "Este campo deve conter um principal válido.",
-      "duplicate": "Este campo deve ser único."
+      "validUuidV4": "Este campo deve conter um UUID v4 válido.",
+      "duplicate": "Este campo deve ser único.",
+      "validTokenAmount": "Este campo deve conter um valor de token válido."
     }
   },
   "navigation": {
@@ -88,7 +150,7 @@
       "items": {
         "home": "Início",
         "wallets": "Carteiras",
-        "transactions": "Transaçōes",
+        "transfers": "Transferências",
         "address_book": "Endereços"
       }
     },

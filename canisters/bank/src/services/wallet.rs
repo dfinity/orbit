@@ -1,14 +1,14 @@
 use super::AccountService;
 use crate::{
     core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
-    errors::{AccountError, WalletError},
+    errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
-    models::{Wallet, WalletAccount, WalletBalance, WalletValidator},
-    repositories::{WalletAccountRepository, WalletRepository},
+    models::{Wallet, WalletBalance, WalletValidator},
+    repositories::WalletRepository,
     transport::{
-        CreateWalletInput, CreateWalletInputOwnersItemDTO, GetWalletBalanceInput, GetWalletInput,
-        WalletBalanceDTO, WalletDTO, WalletListItemDTO,
+        CreateWalletInput, CreateWalletInputOwnersItemDTO, FetchWalletBalancesInput,
+        GetWalletInput, WalletBalanceDTO, WalletDTO, WalletListItemDTO,
     },
 };
 use candid::Principal;
@@ -24,7 +24,6 @@ pub struct WalletService {
     call_context: CallContext,
     account_service: AccountService,
     wallet_repository: WalletRepository,
-    wallet_account_repository: WalletAccountRepository,
     blockchain_mapper: BlockchainMapper,
     wallet_mapper: WalletMapper,
     helper_mapper: HelperMapper,
@@ -103,15 +102,6 @@ impl WalletService {
             owners_accounts.iter().copied().collect(),
         )?;
 
-        let wallet_accounts_association = new_wallet
-            .owners
-            .iter()
-            .map(|owner_account_id| {
-                self.wallet_mapper
-                    .account_to_wallet_association(&new_wallet, owner_account_id)
-            })
-            .collect::<Vec<WalletAccount>>();
-
         // The wallet address is generated after the wallet is created from the user input and
         // all the validations are successfully completed.
         if new_wallet.address.is_empty() {
@@ -130,28 +120,15 @@ impl WalletService {
         // process to avoid potential consistency issues due to the fact that some of the calls to create the wallet
         // happen in an asynchronous way.
         self.wallet_repository.insert(key, new_wallet.clone());
-        wallet_accounts_association
-            .iter()
-            .for_each(|wallet_account| {
-                self.wallet_account_repository
-                    .insert(wallet_account.as_key(), wallet_account.clone());
-            });
 
         Ok(self.wallet_mapper.wallet_to_dto(new_wallet))
     }
 
     /// Returns the wallet associated with the given wallet id.
     pub async fn get_wallet_core(&self, input: GetWalletInput) -> ServiceResult<Wallet> {
-        let caller_account = match self
+        let caller_account = self
             .account_service
-            .maybe_resolve_account(&self.call_context.caller())
-            .await?
-        {
-            Some(account) => account,
-            None => Err(AccountError::NotFoundAccountIdentity {
-                identity: self.call_context.caller().to_text(),
-            })?,
-        };
+            .resolve_account(&self.call_context.caller())?;
 
         let wallet_id = self.helper_mapper.uuid_from_str(input.wallet_id.clone())?;
         let wallet_key = Wallet::key(*wallet_id.as_bytes());
@@ -164,9 +141,7 @@ impl WalletService {
 
         let is_wallet_owner = wallet.owners.contains(&caller_account.id);
         if !is_wallet_owner {
-            Err(WalletError::Forbidden {
-                wallet: input.wallet_id.clone(),
-            })?
+            Err(WalletError::Forbidden)?
         }
 
         Ok(wallet)
@@ -179,71 +154,75 @@ impl WalletService {
         Ok(self.wallet_mapper.wallet_to_dto(wallet))
     }
 
-    /// Returns the balance of the given wallet id, fetching it from the blockchain ledger if necessary.
-    pub async fn fetch_wallet_balance(
+    /// Returns the balances of the requested wallets.
+    ///
+    /// If the balance is considered fresh it will be returned, otherwise it will be fetched from the blockchain.
+    pub async fn fetch_wallet_balances(
         &self,
-        input: GetWalletBalanceInput,
-    ) -> ServiceResult<WalletBalanceDTO> {
-        let caller_account = match self
+        input: FetchWalletBalancesInput,
+    ) -> ServiceResult<Vec<WalletBalanceDTO>> {
+        let account = self
             .account_service
-            .maybe_resolve_account(&self.call_context.caller())
-            .await?
-        {
-            Some(account) => account,
-            None => Err(WalletError::Forbidden {
-                wallet: input.wallet_id.clone(),
-            })?,
-        };
-        let wallet_id = self.helper_mapper.uuid_from_str(input.wallet_id.clone())?;
-        let wallet_key = Wallet::key(*wallet_id.as_bytes());
-        let mut wallet =
-            self.wallet_repository
-                .get(&wallet_key)
-                .ok_or(WalletError::WalletNotFound {
-                    id: wallet_id.hyphenated().to_string(),
-                })?;
+            .resolve_account(&self.call_context.caller())?;
 
-        let is_wallet_owner = wallet.owners.contains(&caller_account.id);
-        if !is_wallet_owner {
-            Err(WalletError::Forbidden {
-                wallet: input.wallet_id.clone(),
-            })?
+        if input.wallet_ids.is_empty() || input.wallet_ids.len() > 5 {
+            Err(WalletError::WalletBalancesBatchRange { min: 1, max: 5 })?
         }
 
-        let updated_balance: WalletBalance;
-        let balance_considered_fresh = match &wallet.balance {
-            Some(balance) => {
-                let balance_age_ns = time() - balance.last_modification_timestamp;
-                (balance_age_ns / 1_000_000) < WALLET_BALANCE_FRESHNESS_IN_MS
-            }
-            None => false,
-        };
+        let wallet_ids = input
+            .wallet_ids
+            .iter()
+            .map(|id| self.helper_mapper.uuid_from_str(id.clone()))
+            .collect::<Result<Vec<Uuid>, _>>()?;
 
-        match (&wallet.balance, balance_considered_fresh) {
-            (None, _) | (_, false) => {
-                let blockchain_api =
-                    BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
-                let fetched_balance = blockchain_api.balance(&wallet).await?;
-                let new_balance = WalletBalance {
-                    balance: candid::Nat(fetched_balance),
-                    last_modification_timestamp: time(),
-                };
+        let wallets = self
+            .wallet_repository
+            .find_by_ids(wallet_ids.iter().map(|id| *id.as_bytes()).collect());
 
-                updated_balance = new_balance;
-                wallet.balance = Some(updated_balance.clone());
+        let can_access_wallets = wallets
+            .iter()
+            .all(|wallet| wallet.owners.contains(&account.id));
 
-                self.wallet_repository.insert(wallet_key, wallet.clone());
-            }
-            (_, _) => {
-                updated_balance = wallet.balance.unwrap();
-            }
+        if !can_access_wallets {
+            Err(WalletError::Forbidden)?
         }
 
-        let updated_balance_dto =
-            self.wallet_mapper
-                .balance_to_dto(updated_balance, wallet.decimals, wallet.id);
+        let mut balances = Vec::new();
+        for mut wallet in wallets {
+            let balance_considered_fresh = match &wallet.balance {
+                Some(balance) => {
+                    let balance_age_ns = time() - balance.last_modification_timestamp;
+                    (balance_age_ns / 1_000_000) < WALLET_BALANCE_FRESHNESS_IN_MS
+                }
+                None => false,
+            };
+            let balance: WalletBalance = match (&wallet.balance, balance_considered_fresh) {
+                (None, _) | (_, false) => {
+                    let blockchain_api =
+                        BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
+                    let fetched_balance = blockchain_api.balance(&wallet).await?;
+                    let new_balance = WalletBalance {
+                        balance: candid::Nat(fetched_balance),
+                        last_modification_timestamp: time(),
+                    };
 
-        Ok(updated_balance_dto)
+                    wallet.balance = Some(new_balance.clone());
+
+                    self.wallet_repository
+                        .insert(wallet.as_key(), wallet.clone());
+
+                    new_balance
+                }
+                (_, _) => wallet.balance.unwrap(),
+            };
+
+            balances.push(
+                self.wallet_mapper
+                    .balance_to_dto(balance, wallet.decimals, wallet.id),
+            );
+        }
+
+        Ok(balances)
     }
 
     /// Returns a list of all the wallets of the requested owner, if no owner is provided then it returns
@@ -253,25 +232,10 @@ impl WalletService {
         owner: Option<Principal>,
     ) -> ServiceResult<Vec<WalletListItemDTO>> {
         let owner = owner.unwrap_or(self.call_context.caller());
-        let account = self.account_service.resolve_account(&owner).await?;
-        let wallet_accounts = self
-            .wallet_account_repository
-            .find_by_account_id(&account.id);
-        let mut wallets: Vec<Wallet> = vec![];
-        for wallet_account in wallet_accounts {
-            let wallet = self
-                .wallet_repository
-                .get(&Wallet::key(wallet_account.wallet_id))
-                .ok_or(WalletError::WalletNotFound {
-                    id: Uuid::from_bytes(wallet_account.wallet_id)
-                        .hyphenated()
-                        .to_string(),
-                })?;
-
-            wallets.push(wallet);
-        }
-
-        let dtos = wallets
+        let account = self.account_service.resolve_account(&owner)?;
+        let dtos = self
+            .wallet_repository
+            .find_by_account_id(account.id)
             .iter()
             .map(|wallet| self.wallet_mapper.wallet_list_item(wallet))
             .collect::<Vec<WalletListItemDTO>>();

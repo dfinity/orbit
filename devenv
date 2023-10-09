@@ -11,6 +11,7 @@ CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_CONTROL_PANEL="bw4dl-smaaa-aaaaa-qaacq-cai"
 CANISTER_ID_BANK="avqkn-guaaa-aaaaa-qaaea-cai"
+CANISTER_ID_ICP_INDEX="qhbym-qaaaa-aaaaa-aaafq-cai"
 
 #############################################
 # USAGE                                     #
@@ -56,7 +57,7 @@ function exec_function() {
 #############################################
 
 function uninstall_icp_ledger() {
-  dfx canister delete icp_ledger -y > /dev/null 2>&1  || true
+  dfx canister delete icp_ledger -y >/dev/null 2>&1 || true
 }
 
 function install_icp_ledger() {
@@ -97,8 +98,21 @@ function setup_icp_ledger() {
   install_icp_ledger
 }
 
+function uninstall_icp_index() {
+  dfx canister delete icp_index -y >/dev/null 2>&1 || true
+}
+
+function install_icp_index() {
+  dfx deploy icp_index --specified-id $CANISTER_ID_ICP_INDEX --argument "(record {ledger_id = principal \"$CANISTER_ID_ICP_LEDGER\"})"
+}
+
+function setup_icp_index() {
+  uninstall_icp_index
+  install_icp_index
+}
+
 function uninstall_internet_identity() {
-  dfx canister delete internet_identity -y > /dev/null 2>&1  || true
+  dfx canister delete internet_identity -y >/dev/null 2>&1 || true
 }
 
 function install_internet_identity() {
@@ -111,11 +125,17 @@ function setup_internet_identity() {
 }
 
 function uninstall_control_panel() {
-  dfx canister delete control_panel -y > /dev/null 2>&1  || true
+  dfx canister delete control_panel -y >/dev/null 2>&1 || true
 }
 
 function install_control_panel() {
-  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
+  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel --argument "(
+  opt record {
+    default_bank = variant {
+      SpecifiedBankCanister = principal \"$CANISTER_ID_BANK\"
+    };
+  })
+"
 }
 
 function setup_control_panel() {
@@ -124,7 +144,7 @@ function setup_control_panel() {
 }
 
 function uninstall_bank() {
-  dfx canister delete bank -y > /dev/null 2>&1  || true
+  dfx canister delete bank -y >/dev/null 2>&1 || true
 }
 
 function install_bank() {
@@ -137,13 +157,13 @@ function setup_bank() {
 }
 
 function candid_generate() {
-  # ICP LEDGER CANDID CODE GENERATION
-  ICP_LEDGER_CANDID=$(dfx canister metadata icp_ledger candid:service)
-  echo "$ICP_LEDGER_CANDID" > /tmp/icp_ledger.did
+  # ICP INDEX CANDID CODE GENERATION
+  ICP_INDEX_CANDID=$(dfx canister metadata icp_index candid:service)
+  echo "$ICP_INDEX_CANDID" > /tmp/icp_index.did
 
-  didc bind --target rs /tmp/icp_ledger.did > canisters/bank/src/generated/icp_ledger.rs
+  didc bind --target rs /tmp/icp_index.did > canisters/bank/src/generated/icp_index.rs
 
-  rm /tmp/icp_ledger.did
+  rm /tmp/icp_index.did
 }
 
 #############################################
@@ -167,6 +187,7 @@ while [[ $# -gt 0 ]]; do
   --init)
     shift
     exec_function setup_icp_ledger
+    exec_function setup_icp_index
     exec_function setup_internet_identity
     exec_function setup_bank
     exec_function setup_control_panel
@@ -177,9 +198,19 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_icp_ledger
     echo
     ;;
+  --init-icp-index)
+    shift
+    exec_function setup_icp_index
+    echo
+    ;;
   --init-bank)
     shift
     exec_function setup_bank
+    echo
+    ;;
+  --init-control-panel)
+    shift
+    exec_function setup_control_panel
     echo
     ;;
   --candid-generate)

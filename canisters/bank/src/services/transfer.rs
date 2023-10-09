@@ -1,28 +1,23 @@
 use super::{AccountService, WalletService};
 use crate::{
     core::{CallContext, WithCallContext},
-    errors::{AccountError, TransferError, WalletError},
+    errors::{TransferError, WalletError},
     factories::blockchains::BlockchainApiFactory,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
-        indexes::transfer_wallet_index::TransferWalletIndexCriteria, Operation, OperationCode,
-        OperationFeedback, OperationStatus, Transfer, Wallet, WalletPolicy,
-        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
+        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
+        Wallet, WalletPolicy, OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
     },
-    repositories::{
-        indexes::transfer_wallet_index::TransferWalletIndexRepository, OperationRepository,
-        TransferRepository, WalletRepository,
-    },
+    repositories::{OperationRepository, TransferRepository, WalletRepository},
     transport::{
-        GetTransferInput, GetWalletInput, ListWalletTransfersInput, TransferDTO, TransferInput,
-        TransferListItemDTO,
+        GetTransferInput, GetTransfersInput, GetWalletInput, ListWalletTransfersInput, TransferDTO,
+        TransferInput, TransferListItemDTO,
     },
 };
 use candid::Nat;
 use ic_canister_core::{
     api::ServiceResult,
-    repository::IndexRepository,
     utils::{generate_uuid_v4, rfc3339_to_timestamp},
 };
 use ic_canister_core::{cdk::api::time, model::ModelValidator, repository::Repository};
@@ -37,7 +32,6 @@ pub struct TransferService {
     wallet_repository: WalletRepository,
     wallet_service: WalletService,
     transfer_repository: TransferRepository,
-    transfer_wallet_index: TransferWalletIndexRepository,
     operation_repository: OperationRepository,
 }
 
@@ -58,7 +52,7 @@ impl TransferService {
         Default::default()
     }
 
-    pub async fn get_transfer_core(&self, input: GetTransferInput) -> ServiceResult<Transfer> {
+    pub fn get_transfer_core(&self, input: GetTransferInput) -> ServiceResult<Transfer> {
         let transfer_key = Transfer::key(
             *self
                 .helper_mapper
@@ -74,11 +68,10 @@ impl TransferService {
         Ok(transfer)
     }
 
-    pub async fn check_transfer_access(&self, transfer: &Transfer) -> ServiceResult<()> {
+    pub fn check_transfer_access(&self, transfer: &Transfer) -> ServiceResult<()> {
         let caller_account = self
             .account_service
-            .resolve_account(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
         let wallet_key = Wallet::key(transfer.from_wallet);
         let wallet = self.wallet_repository.get(&wallet_key).ok_or({
             WalletError::WalletNotFound {
@@ -90,35 +83,41 @@ impl TransferService {
         let is_transfer_creator = caller_account.id == transfer.initiator_account;
         let is_wallet_owner = wallet.owners.contains(&caller_account.id);
         if !is_transfer_creator && !is_wallet_owner {
-            Err(WalletError::Forbidden {
-                wallet: Uuid::from_bytes(transfer.from_wallet)
-                    .hyphenated()
-                    .to_string(),
-            })?
+            Err(WalletError::Forbidden)?
         }
 
         Ok(())
     }
 
     pub async fn get_transfer(&self, input: GetTransferInput) -> ServiceResult<TransferDTO> {
-        let transfer = self.get_transfer_core(input).await?;
-        self.check_transfer_access(&transfer).await?;
+        let transfer = self.get_transfer_core(input)?;
+        self.check_transfer_access(&transfer)?;
         let dto = self.transfer_mapper.transfer_to_dto(transfer);
         Ok(dto)
     }
 
+    pub async fn get_transfers(&self, input: GetTransfersInput) -> ServiceResult<Vec<TransferDTO>> {
+        if input.transfer_ids.len() > 50 {
+            Err(TransferError::GetTransfersBatchNotAllowed { max: 50 })?
+        }
+
+        let mut transfers = Vec::new();
+        for transfer_id in input.transfer_ids.iter() {
+            let transfer = self.get_transfer_core(GetTransferInput {
+                transfer_id: transfer_id.to_owned(),
+            })?;
+            self.check_transfer_access(&transfer)?;
+            transfers.push(self.transfer_mapper.transfer_to_dto(transfer));
+        }
+
+        Ok(transfers)
+    }
+
     pub async fn create_transfer(&self, input: TransferInput) -> ServiceResult<TransferDTO> {
         // validate account is owner of wallet
-        let caller_account = match self
+        let caller_account = self
             .account_service
-            .maybe_resolve_account(&self.call_context.caller())
-            .await?
-        {
-            Some(account) => account,
-            None => Err(AccountError::NotFoundAccountIdentity {
-                identity: self.call_context.caller().to_text(),
-            })?,
-        };
+            .resolve_account(&self.call_context.caller())?;
         let wallet_id = self
             .helper_mapper
             .uuid_from_str(input.from_wallet_id.clone())?;
@@ -131,9 +130,7 @@ impl TransferService {
                 })?;
         let is_wallet_owner = wallet.owners.contains(&caller_account.id);
         if !is_wallet_owner {
-            Err(WalletError::Forbidden {
-                wallet: input.from_wallet_id.clone(),
-            })?
+            Err(WalletError::Forbidden)?
         }
 
         // create transfer
@@ -157,6 +154,14 @@ impl TransferService {
         let operations = self
             .build_operations_from_wallet_policies(&wallet, &transfer)
             .await;
+
+        let has_approve_transfer_operation = operations
+            .iter()
+            .any(|operation| matches!(operation.code, OperationCode::ApproveTransfer));
+
+        if !has_approve_transfer_operation {
+            transfer.status = TransferStatus::Approved;
+        }
 
         // save transfer to stable memory
         self.transfer_repository
@@ -242,14 +247,12 @@ impl TransferService {
             })
             .await?;
 
-        let transfers = self
-            .transfer_wallet_index
-            .find_by_criteria(TransferWalletIndexCriteria {
-                wallet_id: wallet.id,
-                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                status: input.status,
-            });
+        let transfers = self.transfer_repository.find_by_wallet(
+            wallet.id,
+            input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+            input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+            input.status,
+        );
 
         let dtos: Vec<TransferListItemDTO> = transfers
             .iter()

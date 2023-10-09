@@ -1,11 +1,9 @@
 use crate::mappers::HelperMapper;
-use crate::models::{
-    Operation, OperationCode, OperationId, OperationStatus, WalletId,
-    OPERATION_METADATA_KEY_WALLET_ID,
-};
+use crate::models::{Operation, OperationId, WalletId, OPERATION_METADATA_KEY_WALLET_ID};
 use crate::repositories::OperationRepository;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::repository::Repository;
+use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 
 /// Index of operations by wallet id.
@@ -14,8 +12,8 @@ use ic_canister_macros::stable_object;
 pub struct OperationWalletIndex {
     /// The wallet id that is associated with this operation.
     pub wallet_id: WalletId,
-    /// An operation code that represents the operation type, e.g. "transfer".
-    pub code: OperationCode,
+    /// The time when the operation was created.
+    pub created_at: Timestamp,
     /// The operation id, which is a UUID.
     pub id: OperationId,
 }
@@ -23,13 +21,12 @@ pub struct OperationWalletIndex {
 #[derive(Clone, Debug)]
 pub struct OperationWalletIndexCriteria {
     pub wallet_id: WalletId,
-    pub code: Option<OperationCode>,
-    pub status: Option<OperationStatus>,
-    pub read: Option<bool>,
+    pub from_dt: Option<Timestamp>,
+    pub to_dt: Option<Timestamp>,
 }
 
 impl Operation {
-    pub fn as_index_for_wallet(&self) -> OperationWalletIndex {
+    pub fn to_index_for_wallet(&self) -> OperationWalletIndex {
         let metadata = self.metadata_map();
         let unparsed_wallet_id = metadata
             .get(OPERATION_METADATA_KEY_WALLET_ID)
@@ -40,7 +37,7 @@ impl Operation {
 
         OperationWalletIndex {
             id: self.id.to_owned(),
-            code: self.code.to_owned(),
+            created_at: self.created_timestamp.to_owned(),
             wallet_id: *wallet_id.as_bytes(),
         }
     }

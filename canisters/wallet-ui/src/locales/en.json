@@ -26,7 +26,8 @@
   "home": {
     "welcome_back": "Welcome back",
     "notifications": {
-      "none": "You don't have new notifications."
+      "none": "You don't have new notifications.",
+      "some": "You have {count} new notification(s)."
     }
   },
   "footer": {
@@ -41,16 +42,67 @@
     "load_failed": "Your account information failed to load, please try again."
   },
   "banks": {
+    "operation_failed_to_save": "Operation failed to save.",
+    "no_wallets": "No wallets available.",
+    "pending_operations": "Pending operations",
+    "account_copied_to_clipboard": "Bank account copied.",
+    "wallet_address_copied_to_clipboard": "Wallet address copied.",
     "load_error": "Failed to load banks information, please try again.",
+    "load_error_transfers": "Failed to load transfers.",
     "bank_nr_title": "#{nr} Bank",
-    "no_banks": "No banks avalable."
+    "no_banks": "No banks avalable.",
+    "account_load_error": "Failed to load your bank account.",
+    "no_bank_account": "No bank account",
+    "please_register_to_continue": "Please register with a bank to continue",
+    "private_wallet": "Private Wallet",
+    "joint_wallet": "Joint Wallet",
+    "policy": "Policy",
+    "policy_misconfigured": "The wallet policies are misconfigured.",
+    "policy_config_unavailable": "Policy configuration is unavailable.",
+    "policy_fixed_approval_threshold_desc": "Exact number approvals required to operate the wallet",
+    "policy_variable_approval_threshold_desc": "Percentage of approvals required to operate the wallet",
+    "policies": {
+      "VariableApprovalThreshold": "Percentage based approval",
+      "FixedApprovalThreshold": "Exact number of approvals"
+    },
+    "operations": {
+      "approve_transfer": {
+        "title": "Approve transfer"
+      }
+    },
+    "no_transfers_found_search": "No transfers found for the search criteria.",
+    "no_operations_found_search": "No operations found for the search criteria."
   },
   "terms": {
+    "receivables": "Receivables",
+    "bank": "Bank",
+    "all_done": "All done",
+    "approve": "Approve",
+    "operations": "Operations",
+    "approved": "Approved",
+    "abstained": "Abstained",
+    "reject": "Reject",
+    "rejected": "Rejected",
+    "edit": "Edit",
+    "destination_address": "Destination address",
+    "search": "Search",
+    "until": "To",
+    "to": "To",
+    "from": "From",
+    "wallet": "Wallet",
+    "amount": "Amount",
+    "send": "Send",
+    "open": "Open",
+    "asset": "Asset",
+    "account": "Account",
+    "account_id": "Account Id",
     "signin": "Sign In",
     "signout": "Sign Out",
     "anonymous": "Anonymous",
+    "new_wallet": "New Wallet",
     "wallets": "Wallets",
     "policies": "Policies",
+    "transfers": "Transfers",
     "transactions": "Transactions",
     "address_book": "Address Book",
     "completed": "completed",
@@ -61,6 +113,8 @@
     "general": "General",
     "add": "Add",
     "remove": "Remove",
+    "owners": "Owners",
+    "name": "Name",
     "account_name": "Account Name",
     "bank_name": "Bank Name",
     "identity_name": "Identity Name",
@@ -72,6 +126,7 @@
     "main": "Main"
   },
   "forms": {
+    "create": "Create",
     "banks": "Banks ({min}/{max})",
     "identities": "Identities ({min}/{max})",
     "save_changes": "Save Changes",
@@ -79,8 +134,15 @@
       "required": "This field is required.",
       "maxLength": "The maximum length of the {field} is {max} characters.",
       "validPrincipal": "This field must be a valid principal.",
-      "duplicate": "This field must be unique."
+      "validUuidV4": "This field must be a valid UUID v4.",
+      "duplicate": "This field must be unique.",
+      "validTokenAmount": "This field must contain a valid amount for the selected asset."
     }
+  },
+  "wallet_page": {
+    "not_found_title": "Wallet not found",
+    "not_found_description": "The wallet you are looking for could not be loaded.",
+    "not_found_btn": "Go back to wallets"
   },
   "navigation": {
     "main": {
@@ -88,7 +150,7 @@
       "items": {
         "home": "Home",
         "wallets": "Wallets",
-        "transactions": "Transactions",
+        "transfers": "Transfers",
         "address_book": "Address Book"
       }
     },

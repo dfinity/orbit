@@ -5,7 +5,9 @@ use crate::{
         AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
         WALLET_METADATA_SYMBOL_KEY,
     },
-    transport::{CreateWalletInput, WalletBalanceDTO, WalletDTO, WalletListItemDTO},
+    transport::{
+        CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO, WalletListItemDTO,
+    },
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
@@ -24,6 +26,17 @@ impl WalletMapper {
                 .hyphenated()
                 .to_string(),
             name: wallet.name,
+            decimals: wallet.decimals,
+            balance: match wallet.balance {
+                Some(balance) => Some(WalletBalanceInfoDTO {
+                    balance: balance.balance,
+                    decimals: wallet.decimals,
+                    last_update_timestamp: timestamp_to_rfc3339(
+                        &balance.last_modification_timestamp,
+                    ),
+                }),
+                None => None,
+            },
             symbol: wallet.symbol,
             address: wallet.address,
             owners: wallet
@@ -108,7 +121,7 @@ impl WalletMapper {
                 .iter()
                 .map(|policy_dto| self.wallet_policy_mapper.from_dto(policy_dto.to_owned()))
                 .collect(),
-            decimals: 0, // TODO: decimals should be set based on
+            decimals: 0,
             symbol,
             balance: None,
             metadata,
@@ -157,6 +170,13 @@ impl WalletMapper {
             asset_symbol: wallet.symbol.clone(),
             name: wallet.name.clone(),
             asset_name: None,
+            decimals: wallet.decimals,
+            balance: wallet.balance.as_ref().map(|balance| WalletBalanceInfoDTO {
+                balance: balance.balance.clone(),
+                decimals: wallet.decimals,
+                last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
+            }),
+            nr_owners: wallet.owners.len() as u8,
         }
     }
 }

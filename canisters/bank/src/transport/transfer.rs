@@ -53,6 +53,9 @@ pub enum TransferStatusDTO {
     Rejected {
         reason: String,
     },
+    Failed {
+        reason: String,
+    },
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -82,6 +85,16 @@ pub struct GetTransferInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetTransferResponse {
     pub transfer: TransferDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetTransfersInput {
+    pub transfer_ids: Vec<TransferIdDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetTransfersResponse {
+    pub transfers: Vec<TransferDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

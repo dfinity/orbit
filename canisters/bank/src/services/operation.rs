@@ -2,29 +2,18 @@ use super::{AccountService, WalletService};
 use crate::{
     core::{CallContext, WithCallContext},
     errors::OperationError,
+    factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
-    models::{
-        indexes::{
-            operation_account_index::OperationAccountIndexCriteria,
-            operation_wallet_index::OperationWalletIndexCriteria,
-        },
-        Account, Operation, OperationFeedback, OperationId, OperationStatus,
-    },
-    repositories::{
-        indexes::{
-            operation_account_index::OperationAccountIndexRepository,
-            operation_wallet_index::OperationWalletIndexRepository,
-        },
-        OperationRepository,
-    },
+    models::{Account, Operation, OperationFeedback, OperationId, OperationStatus},
+    repositories::{OperationRepository, OperationWhereClause},
     transport::{
         EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
-        ListWalletOperationsInput, OperationDTO, OperationListItemDTO,
+        ListWalletOperationsInput, OperationDTO,
     },
 };
-use ic_canister_core::cdk::api::time;
-use ic_canister_core::repository::Repository;
-use ic_canister_core::{api::ServiceResult, repository::IndexRepository};
+use ic_canister_core::api::ServiceResult;
+use ic_canister_core::{api::ApiError, repository::Repository};
+use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -33,8 +22,6 @@ pub struct OperationService {
     account_service: AccountService,
     wallet_service: WalletService,
     operation_repository: OperationRepository,
-    operation_account_index: OperationAccountIndexRepository,
-    operation_wallet_index: OperationWalletIndexRepository,
     operation_mapper: OperationMapper,
     helper_mapper: HelperMapper,
 }
@@ -64,8 +51,7 @@ impl OperationService {
         )?;
         let caller_account = self
             .account_service
-            .resolve_account(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
 
         self.check_access_to_operation(&operation, &caller_account)?;
 
@@ -94,7 +80,9 @@ impl OperationService {
             .get_operation_core(operation_id.as_bytes().to_owned())
             .await?;
 
-        let operation_dto = self.operation_mapper.to_operation_dto(operation);
+        let processor = OperationProcessorFactory::build(&operation.code);
+        let context = processor.get_context(&operation)?;
+        let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
         Ok(operation_dto)
     }
@@ -118,6 +106,7 @@ impl OperationService {
                 true => OperationStatus::Adopted,
                 false => OperationStatus::Rejected,
             };
+            operation.read = true;
             operation.feedback = Some(OperationFeedback {
                 created_at: time(),
                 reason: input.reason,
@@ -131,7 +120,15 @@ impl OperationService {
         self.operation_repository
             .insert(operation.as_key(), operation.to_owned());
 
-        let operation_dto = self.operation_mapper.to_operation_dto(operation);
+        let processor = OperationProcessorFactory::build(&operation.code);
+
+        processor
+            .post_process(&operation)
+            .await
+            .expect("Operation post processing failed");
+
+        let context = processor.get_context(&operation)?;
+        let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
         Ok(operation_dto)
     }
@@ -139,29 +136,39 @@ impl OperationService {
     pub async fn list_operations(
         &self,
         input: ListOperationsInput,
-    ) -> ServiceResult<Vec<OperationListItemDTO>> {
+    ) -> ServiceResult<Vec<OperationDTO>> {
         let account = self
             .account_service
-            .resolve_account(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
 
         let filter_by_code = match input.code {
             Some(code) => Some(self.operation_mapper.to_code(code)?),
             None => None,
         };
         let dtos = self
-            .operation_account_index
-            .find_by_criteria(OperationAccountIndexCriteria {
-                account_id: account.id,
-                code: filter_by_code,
-                status: input
-                    .status
-                    .map(|status| self.operation_mapper.to_status(status)),
-                read: input.read,
-            })
+            .operation_repository
+            .find_by_account_where(
+                account.id,
+                OperationWhereClause {
+                    created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    code: filter_by_code,
+                    status: input
+                        .status
+                        .map(|status| self.operation_mapper.to_status(status)),
+                    read: input.read,
+                },
+            )
             .iter()
-            .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
-            .collect::<Vec<OperationListItemDTO>>();
+            .map(|operation| {
+                let processor = OperationProcessorFactory::build(&operation.code);
+                let context = processor.get_context(operation)?;
+
+                Ok(self
+                    .operation_mapper
+                    .to_operation_dto(operation.to_owned(), context))
+            })
+            .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
 
         Ok(dtos)
     }
@@ -169,7 +176,10 @@ impl OperationService {
     pub async fn list_wallet_operations(
         &self,
         input: ListWalletOperationsInput,
-    ) -> ServiceResult<Vec<OperationListItemDTO>> {
+    ) -> ServiceResult<Vec<OperationDTO>> {
+        let account = self
+            .account_service
+            .resolve_account(&self.call_context.caller())?;
         let wallet = self
             .wallet_service
             .get_wallet_core(GetWalletInput {
@@ -182,18 +192,29 @@ impl OperationService {
             None => None,
         };
         let dtos = self
-            .operation_wallet_index
-            .find_by_criteria(OperationWalletIndexCriteria {
-                wallet_id: wallet.id,
-                code: filter_by_code,
-                status: input
-                    .status
-                    .map(|status| self.operation_mapper.to_status(status)),
-                read: input.read,
-            })
+            .operation_repository
+            .find_by_wallet_where(
+                (account.id, wallet.id),
+                OperationWhereClause {
+                    created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    code: filter_by_code,
+                    status: input
+                        .status
+                        .map(|status| self.operation_mapper.to_status(status)),
+                    read: input.read,
+                },
+            )
             .iter()
-            .map(|operation| self.operation_mapper.to_list_item_dto(operation.to_owned()))
-            .collect::<Vec<OperationListItemDTO>>();
+            .map(|operation| {
+                let processor = OperationProcessorFactory::build(&operation.code);
+                let context = processor.get_context(operation)?;
+
+                Ok(self
+                    .operation_mapper
+                    .to_operation_dto(operation.to_owned(), context))
+            })
+            .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
 
         Ok(dtos)
     }

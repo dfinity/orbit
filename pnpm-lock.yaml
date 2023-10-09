@@ -56,6 +56,9 @@ importers:
       pino:
         specifier: 8.15.1
         version: 8.15.1
+      validator:
+        specifier: 13.11.0
+        version: 13.11.0
       vue:
         specifier: 3.3.4
         version: 3.3.4
@@ -75,6 +78,9 @@ importers:
       '@rollup/plugin-inject':
         specifier: 5.0.3
         version: 5.0.3
+      '@types/validator':
+        specifier: 13.11.2
+        version: 13.11.2
       '@vitejs/plugin-vue':
         specifier: 4.3.4
         version: 4.3.4(vite@4.4.9)(vue@3.3.4)
@@ -631,6 +637,10 @@ packages:
 
   /@types/semver@7.5.1:
     resolution: {integrity: sha512-cJRQXpObxfNKkFAZbJl2yjWtJCqELQIdShsogr1d2MilP8dKD9TE/nEKHkJgUNHdGKCQaf9HbIynuV2csLGVLg==}
+    dev: true
+
+  /@types/validator@13.11.2:
+    resolution: {integrity: sha512-nIKVVQKT6kGKysnNt+xLobr+pFJNssJRi2s034wgWeFBUx01fI8BeHTW2TcRp7VcFu9QCYG8IlChTuovcm0oKQ==}
     dev: true
 
   /@typescript-eslint/eslint-plugin@6.6.0(@typescript-eslint/parser@6.6.0)(eslint@8.48.0)(typescript@5.2.2):
@@ -2478,6 +2488,11 @@ packages:
       '@types/istanbul-lib-coverage': 2.0.4
       convert-source-map: 1.9.0
     dev: true
+
+  /validator@13.11.0:
+    resolution: {integrity: sha512-Ii+sehpSfZy+At5nPdnyMhx78fEoPDkR2XW/zimHEL3MyGJQOCQ7WeP20jPYRz7ZCpcKLB21NxuXHF3bxjStBQ==}
+    engines: {node: '>= 0.10'}
+    dev: false
 
   /vite-node@0.34.3(@types/node@20.5.9)(sass@1.66.1):
     resolution: {integrity: sha512-+0TzJf1g0tYXj6tR2vEyiA42OPq68QkRZCu/ERSo2PtsDJfBpDyEfuKbRvLmZqi/CgC7SCBtyC+WjTGNMRIaig==}

@@ -1,18 +1,21 @@
-use ic_canister_core::utils::timestamp_to_rfc3339;
-use std::str::FromStr;
-use uuid::Uuid;
-
 use crate::{
     errors::MapperError,
     models::{Operation, OperationCode, OperationStatus},
-    transport::{OperationDTO, OperationListItemDTO, OperationStatusDTO},
+    transport::{OperationContextDTO, OperationDTO, OperationStatusDTO},
 };
+use ic_canister_core::utils::timestamp_to_rfc3339;
+use std::str::FromStr;
+use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
 pub struct OperationMapper {}
 
 impl OperationMapper {
-    pub fn to_operation_dto(&self, operation: Operation) -> OperationDTO {
+    pub fn to_operation_dto(
+        &self,
+        operation: Operation,
+        context: OperationContextDTO,
+    ) -> OperationDTO {
         OperationDTO {
             id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
             account: Uuid::from_bytes(operation.account_id)
@@ -25,6 +28,7 @@ impl OperationMapper {
                 OperationStatus::Rejected => OperationStatusDTO::Rejected,
                 OperationStatus::Abstained => OperationStatusDTO::Abstained,
             },
+            metadata: operation.metadata,
             code: operation.code.to_string(),
             created_at: timestamp_to_rfc3339(&operation.created_timestamp),
             feedback_time_at: operation
@@ -35,23 +39,7 @@ impl OperationMapper {
                 Some(feedback) => feedback.reason,
                 None => None,
             },
-        }
-    }
-
-    pub fn to_list_item_dto(&self, operation: Operation) -> OperationListItemDTO {
-        OperationListItemDTO {
-            id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
-            account: Uuid::from_bytes(operation.account_id)
-                .hyphenated()
-                .to_string(),
-            status: match operation.status {
-                OperationStatus::Pending => OperationStatusDTO::Pending,
-                OperationStatus::Adopted => OperationStatusDTO::Adopted,
-                OperationStatus::Rejected => OperationStatusDTO::Rejected,
-                OperationStatus::Abstained => OperationStatusDTO::Abstained,
-            },
-            code: operation.code.to_string(),
-            created_at: timestamp_to_rfc3339(&operation.created_timestamp),
+            context,
         }
     }
 

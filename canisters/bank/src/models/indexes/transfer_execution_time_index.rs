@@ -21,8 +21,8 @@ pub struct TransferExecutionTimeIndex {
 
 #[derive(Clone, Debug)]
 pub struct TransferExecutionTimeIndexCriteria {
-    pub to_dt: Timestamp,
-    pub status: Option<String>,
+    pub from_dt: Option<Timestamp>,
+    pub to_dt: Option<Timestamp>,
 }
 
 impl Transfer {

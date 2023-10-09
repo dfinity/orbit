@@ -1,19 +1,19 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { Maybe } from '~/types';
+import { WalletPolicyType } from '~/types';
 import { i18n, services } from '~/ui/modules';
 import { useSettingsStore } from '~/ui/stores';
 
 export interface BankItem {
-  name: Maybe<string>;
-  canisterId: Principal;
+  name: string | null;
+  canisterId: string;
 }
 
 export interface BankStoreState {
   loading: boolean;
   initialized: boolean;
-  main: Maybe<Principal>;
+  _main: string | null;
   banks: BankItem[];
 }
 
@@ -22,13 +22,19 @@ export const useBankStore = defineStore('bank', {
     return {
       loading: false,
       initialized: false,
-      main: null,
+      _main: null,
       banks: [],
     };
   },
   getters: {
     hasBanks(): boolean {
       return !!this.banks.length;
+    },
+    main(): Principal | null {
+      return this._main ? Principal.fromText(this._main) : null;
+    },
+    walletPolicyTypes(): string[] {
+      return Object.values(WalletPolicyType);
     },
   },
   actions: {
@@ -42,7 +48,7 @@ export const useBankStore = defineStore('bank', {
       });
     },
     computedBankName(canisterId: Principal, notFoundName = '-'): string {
-      const bankIdx = this.banks.findIndex(bank => bank.canisterId === canisterId);
+      const bankIdx = this.banks.findIndex(bank => bank.canisterId === canisterId.toText());
 
       if (bankIdx === -1) {
         return notFoundName;
@@ -52,17 +58,13 @@ export const useBankStore = defineStore('bank', {
     },
     reset(): void {
       this.initialized = false;
-      this.main = null;
+      this._main = null;
       this.banks = [];
     },
     useBanks(banks: BankItem[]): void {
       this.banks = banks;
-      if (
-        this.main &&
-        !banks.some(({ canisterId }) => canisterId.compareTo(this.main as Principal)) &&
-        banks.length
-      ) {
-        this.main = banks[0].canisterId;
+      if (this.main && !banks.some(({ canisterId }) => canisterId == this._main) && banks.length) {
+        this._main = banks[0].canisterId;
       }
     },
     async load(): Promise<void> {
@@ -77,10 +79,10 @@ export const useBankStore = defineStore('bank', {
             mainCanisterId &&
             banks.some(({ canister_id }) => canister_id.compareTo(mainCanisterId))
           ) {
-            this.main = mainCanisterId;
+            this._main = mainCanisterId.toText();
           }
           this.banks = banks.map(bank => ({
-            canisterId: bank.canister_id,
+            canisterId: bank.canister_id.toString(),
             name: bank.name?.[0] ?? null,
           }));
         })

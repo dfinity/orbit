@@ -44,6 +44,9 @@ pub enum TransferStatus {
     Rejected {
         reason: String,
     },
+    Failed {
+        reason: String,
+    },
 }
 
 impl Display for TransferStatus {
@@ -56,6 +59,7 @@ impl Display for TransferStatus {
             TransferStatus::Completed { .. } => write!(f, "completed"),
             TransferStatus::Approved => write!(f, "approved"),
             TransferStatus::Rejected { .. } => write!(f, "rejected"),
+            TransferStatus::Failed { .. } => write!(f, "failed"),
         }
     }
 }

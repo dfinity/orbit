@@ -1,5 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import { i18n } from '~/ui/modules';
+import isUUID from 'validator//es/lib/isUUID';
 
 export const requiredRule = (value: unknown): string | boolean => {
   if (value === null || value === undefined || value === '') {
@@ -50,5 +51,65 @@ export const validPrincipalRule = (value: unknown): string | boolean => {
     return true;
   } catch (e) {
     return i18n.global.t('forms.rules.validPrincipal');
+  }
+};
+
+export const validUuidV4Rule = (value: unknown): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  try {
+    // parsing the principal will throw if it is invalid
+    if (isUUID(value as string, 4)) {
+      return true;
+    } else {
+      return i18n.global.t('forms.rules.validUuidV4');
+    }
+  } catch (e) {
+    return i18n.global.t('forms.rules.validUuidV4');
+  }
+};
+
+export const validTokenAmount = (value: unknown, decimals: number): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  try {
+    if (typeof value !== 'string') {
+      throw new Error('validTokenAmount only applies to strings');
+    }
+
+    if (!value.includes('.')) {
+      // if there is no decimal point, we assume the number is an integer
+      if (BigInt(`${value}`) < 0) {
+        throw new Error('Invalid format, amount must be greater than 0');
+      }
+
+      return true;
+    }
+
+    if (value.split('.').length !== 2) {
+      throw new Error('Invalid format, amounts can only have one decimal point');
+    }
+
+    const [integer, decimal] = value.split('.');
+
+    if (decimal.trim().length > decimals) {
+      throw new Error(`Invalid format, amounts can only have ${decimals} decimals`);
+    }
+
+    if (BigInt(`${integer}${decimal}`) < 0) {
+      throw new Error('Invalid format, amount must be greater than 0');
+    }
+
+    return true;
+  } catch (e) {
+    return i18n.global.t('forms.rules.validTokenAmount');
   }
 };

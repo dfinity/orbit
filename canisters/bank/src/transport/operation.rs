@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, TimestampRfc3339, WalletIdDTO};
+use super::{AccountIdDTO, TimestampRfc3339, TransferDTO, WalletDTO, WalletIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type OperationIdDTO = String;
@@ -12,24 +12,23 @@ pub enum OperationStatusDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct OperationContextDTO {
+    pub transfer: Option<TransferDTO>,
+    pub wallet: Option<WalletDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct OperationDTO {
     pub id: OperationIdDTO,
     pub status: OperationStatusDTO,
     pub code: String,
     pub read: bool,
     pub created_at: TimestampRfc3339,
+    pub metadata: Vec<(String, String)>,
     pub feedback_reason: Option<String>,
     pub account: AccountIdDTO,
     pub feedback_time_at: Option<TimestampRfc3339>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct OperationListItemDTO {
-    pub id: OperationIdDTO,
-    pub status: OperationStatusDTO,
-    pub code: String,
-    pub created_at: TimestampRfc3339,
-    pub account: AccountIdDTO,
+    pub context: OperationContextDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -60,11 +59,13 @@ pub struct ListOperationsInput {
     pub status: Option<OperationStatusDTO>,
     pub code: Option<String>,
     pub read: Option<bool>,
+    pub from_dt: Option<TimestampRfc3339>,
+    pub to_dt: Option<TimestampRfc3339>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListOperationsResponse {
-    pub operations: Vec<OperationListItemDTO>,
+    pub operations: Vec<OperationDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -73,9 +74,11 @@ pub struct ListWalletOperationsInput {
     pub status: Option<OperationStatusDTO>,
     pub code: Option<String>,
     pub read: Option<bool>,
+    pub from_dt: Option<TimestampRfc3339>,
+    pub to_dt: Option<TimestampRfc3339>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListWalletOperationsResponse {
-    pub operations: Vec<OperationListItemDTO>,
+    pub operations: Vec<OperationDTO>,
 }

@@ -2,8 +2,8 @@ use crate::{
     core::{CallContext, WithCallContext, PERMISSION_READ_TRANSFER, PERMISSION_WRITE_TRANSFER},
     services::TransferService,
     transport::{
-        GetTransferInput, GetTransferResponse, ListWalletTransfersInput,
-        ListWalletTransfersResponse, TransferInput, TransferResponse,
+        GetTransferInput, GetTransferResponse, GetTransfersInput, GetTransfersResponse,
+        ListWalletTransfersInput, ListWalletTransfersResponse, TransferInput, TransferResponse,
     },
 };
 use ic_canister_core::api::ApiResult;
@@ -33,6 +33,18 @@ async fn get_transfer(input: GetTransferInput) -> ApiResult<GetTransferResponse>
     Ok(GetTransferResponse {
         transfer: transfer_dto,
     })
+}
+
+#[query(name = "get_transfers")]
+async fn get_transfers(input: GetTransfersInput) -> ApiResult<GetTransfersResponse> {
+    CallContext::get().check_access(PERMISSION_READ_TRANSFER);
+
+    let dtos = TransferService::create()
+        .with_call_context(CallContext::get())
+        .get_transfers(input)
+        .await?;
+
+    Ok(GetTransfersResponse { transfers: dtos })
 }
 
 #[query(name = "list_wallet_transfers")]

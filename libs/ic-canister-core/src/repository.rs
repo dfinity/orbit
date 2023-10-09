@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 /// A repository is a generic interface for storing and retrieving data.
 pub trait Repository<Key, Value> {
     /// Returns the record from the repository if it exists.
@@ -11,7 +13,7 @@ pub trait Repository<Key, Value> {
 }
 
 /// An index repository is a generic interface for storing and retrieving data based on an index.
-pub trait IndexRepository<Index, Record> {
+pub trait IndexRepository<Index, RecordId> {
     type FindByCriteria;
 
     /// Checks if an index exists.
@@ -24,5 +26,5 @@ pub trait IndexRepository<Index, Record> {
     fn remove(&self, index: &Index) -> bool;
 
     /// Returns all records from the repository that match a set criteria.
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Record>;
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<RecordId>;
 }

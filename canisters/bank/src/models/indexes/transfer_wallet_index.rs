@@ -25,7 +25,6 @@ pub struct TransferWalletIndexCriteria {
     pub wallet_id: WalletId,
     pub from_dt: Option<Timestamp>,
     pub to_dt: Option<Timestamp>,
-    pub status: Option<String>,
 }
 
 impl TransferWalletIndex {

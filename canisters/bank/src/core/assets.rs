@@ -17,22 +17,22 @@ thread_local! {
           decimals: 8,
           metadata: HashMap::new(),
         },
-        BankAsset {
-          blockchain: Blockchain::Bitcoin,
-          standards: Vec::new(),
-          symbol: "BTC".to_string(),
-          name: "Bitcoin".to_string(),
-          decimals: 8,
-          metadata: HashMap::new(),
-        },
-        BankAsset {
-          blockchain: Blockchain::Ethereum,
-          standards: Vec::new(),
-          symbol: "ETH".to_string(),
-          name: "Ethereum".to_string(),
-          decimals: 18,
-          metadata: HashMap::new(),
-        },
+        // BankAsset {
+        //   blockchain: Blockchain::Bitcoin,
+        //   standards: Vec::new(),
+        //   symbol: "BTC".to_string(),
+        //   name: "Bitcoin".to_string(),
+        //   decimals: 8,
+        //   metadata: HashMap::new(),
+        // },
+        // BankAsset {
+        //   blockchain: Blockchain::Ethereum,
+        //   standards: Vec::new(),
+        //   symbol: "ETH".to_string(),
+        //   name: "Ethereum".to_string(),
+        //   decimals: 18,
+        //   metadata: HashMap::new(),
+        // },
       ].into_iter().collect());
 }
 

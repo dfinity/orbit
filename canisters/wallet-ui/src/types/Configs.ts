@@ -18,6 +18,7 @@ export interface AppInitConfig {
     walletUI: string;
     controlPanel: string;
     internetIdentity: string;
+    icpIndex: string;
   };
 }
 

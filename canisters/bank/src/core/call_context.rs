@@ -1,5 +1,5 @@
 use super::canister_config;
-use crate::{models::AccessRole, services::AccountService};
+use crate::{models::AccessRole, repositories::AccountRepository};
 use candid::Principal;
 use ic_canister_core::cdk::{api::trap, caller};
 
@@ -29,7 +29,7 @@ impl CallContext {
 
     /// Checks if the caller is an admin.
     pub fn is_admin(&self) -> bool {
-        let account = AccountService::default().find_account_by_identity(&self.caller);
+        let account = AccountRepository::default().find_account_by_identity(&self.caller);
 
         match account {
             Some(account) => account.access_roles.contains(&AccessRole::Admin),
@@ -55,7 +55,7 @@ pub fn check_access(permission: &str, caller: Principal) {
         return;
     }
 
-    let account = AccountService::default()
+    let account = AccountRepository::default()
         .find_account_by_identity(&caller)
         .unwrap_or_else(|| {
             trap(
