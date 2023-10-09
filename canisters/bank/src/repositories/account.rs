@@ -73,13 +73,11 @@ impl Repository<AccountKey, Account> for AccountRepository {
 impl AccountRepository {
     /// Returns the account associated with the given identity if it exists.
     pub fn find_account_by_identity(&self, identity: &Principal) -> Option<Account> {
-        let results = self
-            .identity_index
+        self.identity_index
             .find_by_criteria(AccountIdentityIndexCriteria {
                 identity_id: identity.to_owned(),
-                role: None,
-            });
-
-        results.first().map(|account| account.to_owned())
+            })
+            .iter()
+            .find_map(|id| self.get(&Account::key(*id)))
     }
 }

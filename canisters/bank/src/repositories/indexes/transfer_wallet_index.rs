@@ -3,7 +3,7 @@ use crate::{
     errors::RepositoryError,
     models::{
         indexes::transfer_wallet_index::{TransferWalletIndex, TransferWalletIndexCriteria},
-        Transfer,
+        TransferId,
     },
 };
 use ic_canister_core::{
@@ -11,7 +11,7 @@ use ic_canister_core::{
     repository::IndexRepository,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
   /// The memory reference to the Transfer repository.
@@ -26,7 +26,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct TransferWalletIndexRepository {}
 
-impl IndexRepository<TransferWalletIndex, Transfer> for TransferWalletIndexRepository {
+impl IndexRepository<TransferWalletIndex, TransferId> for TransferWalletIndexRepository {
     type FindByCriteria = TransferWalletIndexCriteria;
 
     fn exists(&self, index: &TransferWalletIndex) -> bool {
@@ -41,7 +41,7 @@ impl IndexRepository<TransferWalletIndex, Transfer> for TransferWalletIndexRepos
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Transfer> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<TransferId> {
         DB.with(|db| {
             let (from_dt, to_dt) = match (criteria.from_dt, criteria.to_dt) {
                 (Some(start), Some(end)) => (start, end),
@@ -69,18 +69,8 @@ impl IndexRepository<TransferWalletIndex, Transfer> for TransferWalletIndexRepos
 
             db.borrow()
                 .range(start_key..=end_key)
-                .filter(|(index, _)| {
-                    let transfer = index.to_transfer();
-                    let mut criteria_matches_status = true;
-
-                    if let Some(status) = &criteria.status {
-                        criteria_matches_status = transfer.status.to_string() == *status
-                    }
-
-                    criteria_matches_status
-                })
-                .map(|(index, _)| index.to_transfer())
-                .collect::<Vec<Transfer>>()
+                .map(|(index, _)| index.transfer_id)
+                .collect::<HashSet<TransferId>>()
         })
     }
 }

@@ -6,14 +6,10 @@ use crate::{
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
-        indexes::transfer_wallet_index::TransferWalletIndexCriteria, Operation, OperationCode,
-        OperationFeedback, OperationStatus, Transfer, TransferStatus, Wallet, WalletPolicy,
-        OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
+        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
+        Wallet, WalletPolicy, OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
     },
-    repositories::{
-        indexes::transfer_wallet_index::TransferWalletIndexRepository, OperationRepository,
-        TransferRepository, WalletRepository,
-    },
+    repositories::{OperationRepository, TransferRepository, WalletRepository},
     transport::{
         GetTransferInput, GetTransfersInput, GetWalletInput, ListWalletTransfersInput, TransferDTO,
         TransferInput, TransferListItemDTO,
@@ -22,7 +18,6 @@ use crate::{
 use candid::Nat;
 use ic_canister_core::{
     api::ServiceResult,
-    repository::IndexRepository,
     utils::{generate_uuid_v4, rfc3339_to_timestamp},
 };
 use ic_canister_core::{cdk::api::time, model::ModelValidator, repository::Repository};
@@ -37,7 +32,6 @@ pub struct TransferService {
     wallet_repository: WalletRepository,
     wallet_service: WalletService,
     transfer_repository: TransferRepository,
-    transfer_wallet_index: TransferWalletIndexRepository,
     operation_repository: OperationRepository,
 }
 
@@ -253,14 +247,12 @@ impl TransferService {
             })
             .await?;
 
-        let transfers = self
-            .transfer_wallet_index
-            .find_by_criteria(TransferWalletIndexCriteria {
-                wallet_id: wallet.id,
-                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                status: input.status,
-            });
+        let transfers = self.transfer_repository.find_by_wallet(
+            wallet.id,
+            input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+            input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+            input.status,
+        );
 
         let dtos: Vec<TransferListItemDTO> = transfers
             .iter()

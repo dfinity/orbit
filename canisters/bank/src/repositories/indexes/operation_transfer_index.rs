@@ -4,12 +4,12 @@ use crate::{
         indexes::operation_transfer_index::{
             OperationTransferIndex, OperationTransferIndexCriteria,
         },
-        Operation,
+        OperationId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<OperationTransferIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -23,7 +23,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct OperationTransferIndexRepository {}
 
-impl IndexRepository<OperationTransferIndex, Operation> for OperationTransferIndexRepository {
+impl IndexRepository<OperationTransferIndex, OperationId> for OperationTransferIndexRepository {
     type FindByCriteria = OperationTransferIndexCriteria;
 
     fn exists(&self, key: &OperationTransferIndex) -> bool {
@@ -38,7 +38,7 @@ impl IndexRepository<OperationTransferIndex, Operation> for OperationTransferInd
         DB.with(|m| m.borrow_mut().remove(key).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Operation> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<OperationId> {
         DB.with(|db| {
             let start_key = OperationTransferIndex {
                 transfer_id: criteria.transfer_id.to_owned(),
@@ -53,25 +53,8 @@ impl IndexRepository<OperationTransferIndex, Operation> for OperationTransferInd
 
             db.borrow()
                 .range(start_key..=end_key)
-                .filter(|(index, _)| {
-                    let operation = index.to_operation();
-                    let mut code_matches_criteria = true;
-                    let mut status_matches_criteria = true;
-                    let mut read_matches_criteria = true;
-                    if let Some(code) = &criteria.code {
-                        code_matches_criteria = operation.code == *code;
-                    }
-                    if let Some(status) = criteria.status.as_ref() {
-                        status_matches_criteria = *status == operation.status;
-                    }
-                    if let Some(read) = criteria.read {
-                        read_matches_criteria = read == operation.read;
-                    }
-
-                    code_matches_criteria && status_matches_criteria && read_matches_criteria
-                })
-                .map(|(index, _)| index.to_operation())
-                .collect::<Vec<Operation>>()
+                .map(|(index, _)| index.id)
+                .collect::<HashSet<OperationId>>()
         })
     }
 }

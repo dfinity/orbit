@@ -4,27 +4,15 @@ use crate::{
     errors::OperationError,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
-    models::{
-        indexes::{
-            operation_account_index::OperationAccountIndexCriteria,
-            operation_wallet_index::OperationWalletIndexCriteria,
-        },
-        Account, Operation, OperationFeedback, OperationId, OperationStatus,
-    },
-    repositories::{
-        indexes::{
-            operation_account_index::OperationAccountIndexRepository,
-            operation_wallet_index::OperationWalletIndexRepository,
-        },
-        OperationRepository,
-    },
+    models::{Account, Operation, OperationFeedback, OperationId, OperationStatus},
+    repositories::{OperationRepository, OperationWhereClause},
     transport::{
         EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
         ListWalletOperationsInput, OperationDTO,
     },
 };
+use ic_canister_core::api::ServiceResult;
 use ic_canister_core::{api::ApiError, repository::Repository};
-use ic_canister_core::{api::ServiceResult, repository::IndexRepository};
 use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
 
@@ -34,8 +22,6 @@ pub struct OperationService {
     account_service: AccountService,
     wallet_service: WalletService,
     operation_repository: OperationRepository,
-    operation_account_index: OperationAccountIndexRepository,
-    operation_wallet_index: OperationWalletIndexRepository,
     operation_mapper: OperationMapper,
     helper_mapper: HelperMapper,
 }
@@ -160,17 +146,19 @@ impl OperationService {
             None => None,
         };
         let dtos = self
-            .operation_account_index
-            .find_by_criteria(OperationAccountIndexCriteria {
-                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                account_id: account.id,
-                code: filter_by_code,
-                status: input
-                    .status
-                    .map(|status| self.operation_mapper.to_status(status)),
-                read: input.read,
-            })
+            .operation_repository
+            .find_by_account_where(
+                account.id,
+                OperationWhereClause {
+                    created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    code: filter_by_code,
+                    status: input
+                        .status
+                        .map(|status| self.operation_mapper.to_status(status)),
+                    read: input.read,
+                },
+            )
             .iter()
             .map(|operation| {
                 let processor = OperationProcessorFactory::build(&operation.code);
@@ -204,18 +192,19 @@ impl OperationService {
             None => None,
         };
         let dtos = self
-            .operation_wallet_index
-            .find_by_criteria(OperationWalletIndexCriteria {
-                from_dt: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                to_dt: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                wallet_id: wallet.id,
-                account_id: account.id,
-                code: filter_by_code,
-                status: input
-                    .status
-                    .map(|status| self.operation_mapper.to_status(status)),
-                read: input.read,
-            })
+            .operation_repository
+            .find_by_wallet_where(
+                (account.id, wallet.id),
+                OperationWhereClause {
+                    created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                    code: filter_by_code,
+                    status: input
+                        .status
+                        .map(|status| self.operation_mapper.to_status(status)),
+                    read: input.read,
+                },
+            )
             .iter()
             .map(|operation| {
                 let processor = OperationProcessorFactory::build(&operation.code);

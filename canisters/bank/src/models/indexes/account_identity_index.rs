@@ -1,5 +1,5 @@
 use crate::{
-    models::{AccessRole, Account, AccountId},
+    models::{Account, AccountId},
     repositories::AccountRepository,
 };
 use candid::{CandidType, Deserialize, Principal};
@@ -19,7 +19,6 @@ pub struct AccountIdentityIndex {
 #[derive(Clone, Debug)]
 pub struct AccountIdentityIndexCriteria {
     pub identity_id: Principal,
-    pub role: Option<AccessRole>,
 }
 
 impl Account {

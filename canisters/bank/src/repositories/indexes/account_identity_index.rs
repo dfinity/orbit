@@ -2,12 +2,12 @@ use crate::{
     core::{with_memory_manager, Memory, ACCOUNT_IDENTITY_INDEX_MEMORY_ID},
     models::{
         indexes::account_identity_index::{AccountIdentityIndex, AccountIdentityIndexCriteria},
-        Account,
+        AccountId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
   /// The memory reference to the Transfer repository.
@@ -22,7 +22,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct AccountIdentityIndexRepository {}
 
-impl IndexRepository<AccountIdentityIndex, Account> for AccountIdentityIndexRepository {
+impl IndexRepository<AccountIdentityIndex, AccountId> for AccountIdentityIndexRepository {
     type FindByCriteria = AccountIdentityIndexCriteria;
 
     fn exists(&self, index: &AccountIdentityIndex) -> bool {
@@ -37,7 +37,7 @@ impl IndexRepository<AccountIdentityIndex, Account> for AccountIdentityIndexRepo
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Account> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<AccountId> {
         DB.with(|db| {
             let start_key = AccountIdentityIndex {
                 identity_id: criteria.identity_id,
@@ -50,18 +50,8 @@ impl IndexRepository<AccountIdentityIndex, Account> for AccountIdentityIndexRepo
 
             db.borrow()
                 .range(start_key..=end_key)
-                .filter(|(index, _)| {
-                    let account = index.to_account();
-                    let mut criteria_matches_role = true;
-
-                    if let Some(role) = &criteria.role {
-                        criteria_matches_role = account.access_roles.contains(role);
-                    }
-
-                    criteria_matches_role
-                })
-                .map(|(index, _)| index.to_account())
-                .collect::<Vec<Account>>()
+                .map(|(index, _)| index.account_id)
+                .collect::<HashSet<AccountId>>()
         })
     }
 }

@@ -4,9 +4,18 @@ use super::indexes::{
 };
 use crate::{
     core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
-    models::{Transfer, TransferKey},
+    models::{
+        indexes::{
+            transfer_execution_time_index::TransferExecutionTimeIndexCriteria,
+            transfer_wallet_index::TransferWalletIndexCriteria,
+        },
+        Transfer, TransferKey, WalletId,
+    },
 };
-use ic_canister_core::repository::{IndexRepository, Repository};
+use ic_canister_core::{
+    repository::{IndexRepository, Repository},
+    types::Timestamp,
+};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
@@ -71,5 +80,66 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
             }
             None => None,
         })
+    }
+}
+
+impl TransferRepository {
+    pub fn find_by_execution_dt_and_status(
+        &self,
+        execution_dt_from: Option<Timestamp>,
+        execution_dt_to: Option<Timestamp>,
+        status: String,
+    ) -> Vec<Transfer> {
+        let transfers =
+            self.execution_dt_index
+                .find_by_criteria(TransferExecutionTimeIndexCriteria {
+                    from_dt: execution_dt_from,
+                    to_dt: execution_dt_to,
+                });
+
+        transfers
+            .iter()
+            .filter_map(|id| match self.get(&Transfer::key(*id)) {
+                Some(transfer) => {
+                    if transfer.status.to_string() == status {
+                        Some(transfer)
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            })
+            .collect::<Vec<Transfer>>()
+    }
+
+    pub fn find_by_wallet(
+        &self,
+        wallet_id: WalletId,
+        created_dt_from: Option<Timestamp>,
+        created_dt_to: Option<Timestamp>,
+        status: Option<String>,
+    ) -> Vec<Transfer> {
+        let transfers = self
+            .wallet_index
+            .find_by_criteria(TransferWalletIndexCriteria {
+                wallet_id,
+                from_dt: created_dt_from,
+                to_dt: created_dt_to,
+            });
+
+        transfers
+            .iter()
+            .filter_map(|id| match (self.get(&Transfer::key(*id)), status.clone()) {
+                (Some(transfer), Some(status)) => {
+                    if transfer.status.to_string() == status {
+                        Some(transfer)
+                    } else {
+                        None
+                    }
+                }
+                (Some(transfer), None) => Some(transfer),
+                _ => None,
+            })
+            .collect::<Vec<Transfer>>()
     }
 }

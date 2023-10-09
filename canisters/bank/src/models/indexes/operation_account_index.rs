@@ -1,5 +1,5 @@
 use crate::{
-    models::{AccountId, Operation, OperationCode, OperationId, OperationStatus},
+    models::{AccountId, Operation, OperationId},
     repositories::OperationRepository,
 };
 use candid::{CandidType, Deserialize};
@@ -21,9 +21,6 @@ pub struct OperationAccountIndex {
 #[derive(Clone, Debug)]
 pub struct OperationAccountIndexCriteria {
     pub account_id: AccountId,
-    pub code: Option<OperationCode>,
-    pub status: Option<OperationStatus>,
-    pub read: Option<bool>,
     pub from_dt: Option<Timestamp>,
     pub to_dt: Option<Timestamp>,
 }

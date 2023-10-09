@@ -2,12 +2,12 @@ use crate::{
     core::{with_memory_manager, Memory, OPERATION_WALLET_INDEX_MEMORY_ID},
     models::{
         indexes::operation_wallet_index::{OperationWalletIndex, OperationWalletIndexCriteria},
-        Operation,
+        OperationId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<OperationWalletIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -21,7 +21,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct OperationWalletIndexRepository {}
 
-impl IndexRepository<OperationWalletIndex, Operation> for OperationWalletIndexRepository {
+impl IndexRepository<OperationWalletIndex, OperationId> for OperationWalletIndexRepository {
     type FindByCriteria = OperationWalletIndexCriteria;
 
     fn exists(&self, key: &OperationWalletIndex) -> bool {
@@ -36,7 +36,7 @@ impl IndexRepository<OperationWalletIndex, Operation> for OperationWalletIndexRe
         DB.with(|m| m.borrow_mut().remove(key).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> Vec<Operation> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<OperationId> {
         DB.with(|db| {
             let start_key = OperationWalletIndex {
                 wallet_id: criteria.wallet_id.to_owned(),
@@ -51,29 +51,8 @@ impl IndexRepository<OperationWalletIndex, Operation> for OperationWalletIndexRe
 
             db.borrow()
                 .range(start_key..=end_key)
-                .filter(|(index, _)| {
-                    let operation = index.to_operation();
-                    let account_matches_criteria = operation.account_id == criteria.account_id;
-                    let mut code_matches_criteria = true;
-                    let mut status_matches_criteria = true;
-                    let mut read_matches_criteria = true;
-                    if let Some(code) = &criteria.code {
-                        code_matches_criteria = operation.code == *code;
-                    }
-                    if let Some(status) = criteria.status.as_ref() {
-                        status_matches_criteria = *status == operation.status;
-                    }
-                    if let Some(read) = criteria.read {
-                        read_matches_criteria = read == operation.read;
-                    }
-
-                    code_matches_criteria
-                        && status_matches_criteria
-                        && read_matches_criteria
-                        && account_matches_criteria
-                })
-                .map(|(index, _)| index.to_operation())
-                .collect::<Vec<Operation>>()
+                .map(|(index, _)| index.id)
+                .collect::<HashSet<OperationId>>()
         })
     }
 }

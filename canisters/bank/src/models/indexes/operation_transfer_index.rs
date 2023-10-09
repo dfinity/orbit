@@ -1,9 +1,6 @@
 use crate::{
     mappers::HelperMapper,
-    models::{
-        Operation, OperationCode, OperationId, OperationStatus, TransferId,
-        OPERATION_METADATA_KEY_TRANSFER_ID,
-    },
+    models::{Operation, OperationId, TransferId, OPERATION_METADATA_KEY_TRANSFER_ID},
     repositories::OperationRepository,
 };
 use candid::{CandidType, Deserialize};
@@ -25,9 +22,6 @@ pub struct OperationTransferIndex {
 #[derive(Clone, Debug)]
 pub struct OperationTransferIndexCriteria {
     pub transfer_id: TransferId,
-    pub code: Option<OperationCode>,
-    pub status: Option<OperationStatus>,
-    pub read: Option<bool>,
     pub from_dt: Option<Timestamp>,
     pub to_dt: Option<Timestamp>,
 }

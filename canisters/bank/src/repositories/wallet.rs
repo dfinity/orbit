@@ -74,22 +74,21 @@ impl Repository<WalletKey, Wallet> for WalletRepository {
 
 impl WalletRepository {
     pub fn find_by_account_id(&self, account_id: AccountId) -> Vec<Wallet> {
-        self.account_index
+        let wallet_ids = self
+            .account_index
             .find_by_criteria(WalletAccountIndexCriteria {
                 account_id: account_id.to_owned(),
-            })
+            });
+
+        wallet_ids
+            .iter()
+            .filter_map(|id| self.get(&Wallet::key(*id)))
+            .collect::<Vec<Wallet>>()
     }
 
     pub fn find_by_ids(&self, ids: Vec<WalletId>) -> Vec<Wallet> {
-        let mut wallets = vec![];
-
-        ids.iter().for_each(|id| {
-            let wallet = self.get(&Wallet::key(*id));
-            if let Some(wallet) = wallet {
-                wallets.push(wallet);
-            }
-        });
-
-        wallets
+        ids.iter()
+            .filter_map(|id| self.get(&Wallet::key(*id)))
+            .collect::<Vec<Wallet>>()
     }
 }

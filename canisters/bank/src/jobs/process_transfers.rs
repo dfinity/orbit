@@ -1,25 +1,14 @@
 use crate::{
     factories::blockchains::BlockchainApiFactory,
-    models::{
-        indexes::transfer_execution_time_index::TransferExecutionTimeIndexCriteria, TransferStatus,
-        Wallet,
-    },
-    repositories::{
-        indexes::transfer_execution_time_index::TransferExecutionTimeIndexRepository,
-        TransferRepository, WalletRepository,
-    },
+    models::{TransferStatus, Wallet},
+    repositories::{TransferRepository, WalletRepository},
 };
-use ic_canister_core::{
-    api::ApiError,
-    cdk::spawn,
-    repository::{IndexRepository, Repository},
-};
+use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
 use ic_cdk::api::time;
 use std::time::Duration;
 
 #[derive(Debug, Default)]
 pub struct ProcessTransfersJob {
-    transfer_execution_time_index: TransferExecutionTimeIndexRepository,
     transfer_repository: TransferRepository,
     wallet_repository: WalletRepository,
 }
@@ -44,13 +33,12 @@ impl ProcessTransfersJob {
 
     pub async fn process_approved_transfers(&self) -> Result<(), ApiError> {
         let current_time = time();
-        let mut transfers = self.transfer_execution_time_index.find_by_criteria(
-            TransferExecutionTimeIndexCriteria {
-                from_dt: None,
-                to_dt: current_time,
-                status: Some(TransferStatus::Approved.to_string()),
-            },
+        let mut transfers = self.transfer_repository.find_by_execution_dt_and_status(
+            None,
+            Some(current_time),
+            TransferStatus::Approved.to_string(),
         );
+
         // truncate the list to avoid processing too many transfers at once
         transfers.truncate(Self::MAX_BATCH_SIZE);
 

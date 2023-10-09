@@ -11,10 +11,13 @@ use crate::{
             operation_transfer_index::OperationTransferIndexCriteria,
             operation_wallet_index::OperationWalletIndexCriteria,
         },
-        AccountId, Operation, OperationKey, TransferId, WalletId,
+        AccountId, Operation, OperationCode, OperationKey, OperationStatus, TransferId, WalletId,
     },
 };
-use ic_canister_core::repository::{IndexRepository, Repository};
+use ic_canister_core::{
+    repository::{IndexRepository, Repository},
+    types::Timestamp,
+};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
@@ -91,24 +94,24 @@ impl OperationRepository {
         self.transfer_index
             .find_by_criteria(OperationTransferIndexCriteria {
                 transfer_id: transfer_id.to_owned(),
-                code: None,
-                status: None,
-                read: None,
                 from_dt: None,
                 to_dt: None,
             })
+            .iter()
+            .filter_map(|id| self.get(&Operation::key(*id)))
+            .collect()
     }
 
     pub fn find_by_account_id(&self, account_id: AccountId) -> Vec<Operation> {
         self.account_index
             .find_by_criteria(OperationAccountIndexCriteria {
                 account_id: account_id.to_owned(),
-                code: None,
-                status: None,
-                read: None,
                 from_dt: None,
                 to_dt: None,
             })
+            .iter()
+            .filter_map(|id| self.get(&Operation::key(*id)))
+            .collect()
     }
 
     pub fn find_by_wallet_and_account_id(
@@ -120,11 +123,102 @@ impl OperationRepository {
             .find_by_criteria(OperationWalletIndexCriteria {
                 wallet_id: wallet_id.to_owned(),
                 account_id: account_id.to_owned(),
-                code: None,
-                status: None,
-                read: None,
                 from_dt: None,
                 to_dt: None,
             })
+            .iter()
+            .filter_map(|id| self.get(&Operation::key(*id)))
+            .collect()
     }
+
+    pub fn find_by_wallet_where(
+        &self,
+        key: (AccountId, WalletId),
+        condition: OperationWhereClause,
+    ) -> Vec<Operation> {
+        let (account_id, wallet_id) = key;
+        self.wallet_index
+            .find_by_criteria(OperationWalletIndexCriteria {
+                wallet_id: wallet_id.to_owned(),
+                account_id: account_id.to_owned(),
+                from_dt: condition.created_dt_from,
+                to_dt: condition.created_dt_to,
+            })
+            .iter()
+            .filter_map(|id| match self.get(&Operation::key(*id)) {
+                Some(operation) => {
+                    let mut match_code = true;
+                    let mut match_read = true;
+                    let mut match_status = true;
+
+                    if let Some(code) = condition.code.clone() {
+                        match_code = operation.code == code;
+                    }
+
+                    if let Some(read) = condition.read {
+                        match_read = operation.read == read;
+                    }
+
+                    if let Some(status) = condition.status.clone() {
+                        match_status = operation.status == status;
+                    }
+
+                    match match_code && match_read && match_status {
+                        true => Some(operation),
+                        false => None,
+                    }
+                }
+                None => None,
+            })
+            .collect()
+    }
+
+    pub fn find_by_account_where(
+        &self,
+        account_id: AccountId,
+        condition: OperationWhereClause,
+    ) -> Vec<Operation> {
+        self.account_index
+            .find_by_criteria(OperationAccountIndexCriteria {
+                account_id: account_id.to_owned(),
+                from_dt: condition.created_dt_from,
+                to_dt: condition.created_dt_to,
+            })
+            .iter()
+            .filter_map(|id| match self.get(&Operation::key(*id)) {
+                Some(operation) => {
+                    let mut match_code = true;
+                    let mut match_read = true;
+                    let mut match_status = true;
+
+                    if let Some(code) = condition.code.clone() {
+                        match_code = operation.code == code;
+                    }
+
+                    if let Some(read) = condition.read {
+                        match_read = operation.read == read;
+                    }
+
+                    if let Some(status) = condition.status.clone() {
+                        match_status = operation.status == status;
+                    }
+
+                    match match_code && match_read && match_status {
+                        true => Some(operation),
+                        false => None,
+                    }
+                }
+                None => None,
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug)]
+pub struct OperationWhereClause {
+    pub created_dt_from: Option<Timestamp>,
+    pub created_dt_to: Option<Timestamp>,
+    pub code: Option<OperationCode>,
+    pub read: Option<bool>,
+    pub status: Option<OperationStatus>,
 }
