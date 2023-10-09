@@ -111,4 +111,4 @@ export const arrayBatchMaker = <T>(array: T[], batchSize: number = 5): T[][] => 
   }, batches);
 
   return batches;
-}
+};

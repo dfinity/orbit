@@ -45,7 +45,9 @@ const props = withDefaults(
   },
 );
 
-const toggleIcon = computed(() => (props.variant === 'outlined' ? mdiBellRingOutline : mdiBellRing ));
+const toggleIcon = computed(() =>
+  props.variant === 'outlined' ? mdiBellRingOutline : mdiBellRing,
+);
 
 const { mobile } = useDisplay();
 const notificationsPopup = ref(false);
