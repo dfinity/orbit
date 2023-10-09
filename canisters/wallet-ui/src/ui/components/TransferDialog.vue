@@ -25,7 +25,7 @@
           :disabled="!hasChanges"
           :loading="loading"
           color="primary"
-          variant="tonal"
+          variant="flat"
           @click="submit"
         >
           {{ $t('terms.send') }}

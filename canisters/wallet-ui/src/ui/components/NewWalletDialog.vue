@@ -189,7 +189,7 @@
             :disabled="!walletForm.hasChanges"
             :loading="walletForm.loading"
             color="primary"
-            variant="tonal"
+            variant="flat"
             type="submit"
           >
             {{ $t('forms.create') }}

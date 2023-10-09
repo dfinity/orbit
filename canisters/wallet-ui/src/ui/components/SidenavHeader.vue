@@ -6,16 +6,7 @@
       </VCol>
       <VCol cols="6">
         <div class="side-actions">
-          <VMenu v-model="notificationsPopup" location="end" :close-on-content-click="false">
-            <template #activator="{ props }">
-              <VBtn v-bind="props" variant="text" icon>
-                <VBadge dot :color="activeBank.hasPendingOperations ? 'warning' : 'transparent'">
-                  <VIcon :icon="mdiBellRing" size="small" />
-                </VBadge>
-              </VBtn>
-            </template>
-            <NotificationsPanel />
-          </VMenu>
+          <NotificationsPanelToggle />
         </div>
       </VCol>
       <VCol cols="12">
@@ -42,15 +33,12 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiBellRing, mdiChevronDown } from '@mdi/js';
-import { ref } from 'vue';
+import { mdiChevronDown } from '@mdi/js';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
-import { useActiveBankStore, useAuthStore } from '~/ui/stores';
-import NotificationsPanel from './NotificationsPanel.vue';
+import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
+import { useAuthStore } from '~/ui/stores';
 
 const auth = useAuthStore();
-const notificationsPopup = ref(false);
-const activeBank = useActiveBankStore();
 </script>
 
 <style scoped lang="scss">

@@ -126,6 +126,10 @@ const copyAddressToClipboard = (address: string) => {
   justify-content: end;
   align-items: center;
   gap: calc(var(--ds-bdu) * 2);
+
+  :deep(.v-btn) {
+    flex-grow: 1;
+  }
 }
 
 .page-layout--mobile {

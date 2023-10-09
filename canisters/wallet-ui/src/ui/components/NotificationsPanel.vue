@@ -1,7 +1,11 @@
 <template>
-  <VCard width="400">
+  <VCard :width="mobile ? '100%' : '400px'">
     <VList density="compact">
-      <VListItem density="compact" :title="$t('banks.pending_operations')" />
+      <VListItem density="compact" class="notifications-panel__title">
+        {{ $t('banks.pending_operations') }}
+        <VSpacer />
+        <VBtn :icon="mdiClose" variant="flat" @click="emit('close')" />
+      </VListItem>
     </VList>
     <VDivider />
     <VList density="compact">
@@ -20,13 +24,30 @@
 </template>
 
 <script lang="ts" setup>
+import { mdiClose } from '@mdi/js';
 import { useActiveBankStore } from '~/ui/stores';
 import BankOperation from './operations/BankOperation.vue';
 import { Operation } from '~/generated/bank/bank.did';
+import { useDisplay } from 'vuetify';
 
+const { mobile } = useDisplay();
 const activeBank = useActiveBankStore();
+
+const emit = defineEmits<{
+  (event: 'close'): void;
+}>();
 
 const save = (operation: Operation) => activeBank.saveOperation(operation);
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.notifications-panel {
+  &__title {
+    .v-list-item__content {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+}
+</style>

@@ -47,8 +47,8 @@
               </VChip>
             </div>
           </VCol>
-          <VCol cols="12" sm="4" class="d-flex">
-            <VSpacer />
+          <VCol cols="12" sm="4" class="header-actions">
+            <VSpacer v-if="!mobile" />
             <NewTransferBtn :wallet-id="pageStore.wallet.id" />
           </VCol>
         </VRow>
@@ -155,14 +155,15 @@
                                     }`
                                   }}
                                 </div>
+                                <div class="transfers__item__details--to">
+                                  <small>{{ $t(`terms.to`) }}: {{ transfer.to }}</small>
+                                </div>
                                 <div class="transfers__item__details--created_at">
                                   <small>{{ transfer.created_at }}</small>
                                 </div>
                               </td>
                               <td class="transfers__item__status text-right">
-                                <VChip size="small">{{
-                                  extractTransferStatus(transfer.status)
-                                }}</VChip>
+                                <TransferStatusChip :status="transfer.status" />
                               </td>
                             </tr>
                           </tbody>
@@ -264,23 +265,27 @@
 
 <script lang="ts" setup>
 import {
-  mdiContentCopy,
-  mdiWallet,
-  mdiAccountGroup,
   mdiAccount,
-  mdiLink as _mdiLink,
-  mdiTransfer,
-  mdiRefresh,
+  mdiAccountGroup,
   mdiCalendar,
+  mdiContentCopy,
+  mdiLink as _mdiLink,
+  mdiRefresh,
+  mdiTransfer,
+  mdiWallet,
 } from '@mdi/js';
-import { onMounted, ref } from 'vue';
-import { formatBalance, extractTransferStatus } from '~/core';
+import { onMounted, ref, watch } from 'vue';
+import { useDisplay } from 'vuetify';
+import { formatBalance } from '~/core';
+import { Operation } from '~/generated/bank/bank.did';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import BankOperation from '~/ui/components/operations/BankOperation.vue';
+import TransferStatusChip from '~/ui/components/transfers/TransferStatusChip.vue';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore, useWalletDetailsStore } from '~/ui/stores';
-import BankOperation from '~/ui/components/operations/BankOperation.vue';
-import { Operation } from '~/generated/bank/bank.did';
+
+const { mobile } = useDisplay();
 
 const activeBank = useActiveBankStore();
 const settings = useSettingsStore();
@@ -301,6 +306,23 @@ onMounted(() => {
   pageStore.load(`${router.currentRoute.value.params.id}`);
 });
 
+watch(
+  activeBank.wallets,
+  wallets => {
+    if (!pageStore.hasLoaded) {
+      return;
+    }
+
+    const updatedWallet = wallets.items.find(w => w.id === pageStore.wallet.id);
+    if (updatedWallet && pageStore._wallet) {
+      pageStore._wallet.balance = updatedWallet.balance;
+    }
+  },
+  {
+    deep: true,
+  },
+);
+
 const copyAddressToClipboard = (address: string) => {
   navigator.clipboard.writeText(address);
 
@@ -318,6 +340,10 @@ const copyAddressToClipboard = (address: string) => {
   justify-content: end;
   align-items: center;
   gap: calc(var(--ds-bdu) * 2);
+
+  :deep(.v-btn) {
+    flex-grow: 1;
+  }
 }
 
 .page-layout--mobile {

@@ -40,6 +40,7 @@
           <div class="toolbar__actions">
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="settings.toogleTheme" />
+              <NotificationsPanelToggle v-if="auth.isAuthenticated" variant="outlined" />
               <LanguageSelector />
               <VBtn
                 v-if="auth.isAuthenticated"
@@ -120,6 +121,7 @@ import { useAuthStore, useSettingsStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import BankSelector from '~/ui/components/BankSelector.vue';
+import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 
 const settings = useSettingsStore();
 const auth = useAuthStore();
