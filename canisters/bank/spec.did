@@ -17,7 +17,7 @@ type OperationId = text;
 type TimestampRFC3339 = text;
 
 // The status of an operation.
-type OperationStatus = variant { Pending; Adopted; Rejected; Abstained };
+type OperationStatus = variant { Pending; Adopted; Rejected; NotRequired };
 
 // The context of which the operation was created.
 type OperationContext = record {
@@ -27,6 +27,22 @@ type OperationContext = record {
   wallet : opt Wallet;
 };
 
+// A record type that can be used to represent an operation decision.
+type OperationDecision = record {
+  // The account that has taken the decision.
+  account_id : AccountId;
+  // The final decision status that the account has taken,
+  // once provided it cannot be changed.
+  status : OperationStatus;
+  // Optional reason for the operation status.
+  status_reason : opt text;
+  // The use can mark the operation as read or not to keep track
+  // of the decisions in a simpler manner.
+  read : bool;
+  // The time at which the operation was decided.
+  decided_at : opt TimestampRFC3339;
+};
+
 // A record type that can be used to represent an operation in the bank.
 type Operation = record {
   // The operation id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -34,9 +50,9 @@ type Operation = record {
   // The code of the operation (e.g. "approve-transfer").
   code : text;
   // The account that needs to act on the operation.
-  account : AccountId;
-  // Wether the operation has been read or not.
-  read : bool;
+  originator_account_id : opt AccountId;
+  // The list of accounts that need to decide on the operation.
+  decisions : vec OperationDecision;
   // The time at which the operation was created.
   created_at : TimestampRFC3339;
   // The metadata associated with the operation.
@@ -46,10 +62,6 @@ type Operation = record {
   metadata : vec record { text; text };
   // The operation approval status.
   status : OperationStatus;
-  // The time at which the operation was approved or rejected.
-  feedback_time_at : opt TimestampRFC3339;
-  // The reason for the approval or rejection.
-  feedback_reason : opt text;
   // The context of the operation.
   context : OperationContext;
 };

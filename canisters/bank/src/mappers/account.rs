@@ -1,6 +1,6 @@
 use crate::{
     errors::AccountError,
-    models::{AccessRole, Account, AccountIdentity},
+    models::{AccessRole, Account},
     transport::AccountDTO,
 };
 use candid::Principal;
@@ -47,18 +47,6 @@ impl AccountMapper {
             identities: vec![],
             unconfirmed_identities: vec![],
             access_roles: roles,
-            last_modification_timestamp: time(),
-        }
-    }
-
-    pub fn new_account_to_identity_association(
-        &self,
-        identity: Principal,
-        account: &Account,
-    ) -> AccountIdentity {
-        AccountIdentity {
-            account_id: account.id,
-            identity_id: identity,
             last_modification_timestamp: time(),
         }
     }

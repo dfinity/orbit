@@ -1,10 +1,8 @@
-use crate::{
-    models::{AccountId, Operation, OperationId},
-    repositories::OperationRepository,
-};
+use crate::models::{AccountId, Operation, OperationId};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::{repository::Repository, types::Timestamp};
+use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
+use std::collections::HashSet;
 
 /// Index of operations by the account id.
 #[stable_object(size = 128)]
@@ -26,19 +24,22 @@ pub struct OperationAccountIndexCriteria {
 }
 
 impl Operation {
-    pub fn to_index_for_account(&self) -> OperationAccountIndex {
-        OperationAccountIndex {
-            id: self.id.to_owned(),
-            created_at: self.created_timestamp.to_owned(),
-            account_id: self.account_id.to_owned(),
+    pub fn to_index_for_accounts(&self) -> Vec<OperationAccountIndex> {
+        let mut accounts = HashSet::<AccountId>::new();
+        if let Some(originator_account_id) = &self.originator_account_id {
+            accounts.insert(originator_account_id.to_owned());
         }
-    }
-}
+        self.decisions.iter().for_each(|d| {
+            accounts.insert(d.account_id);
+        });
 
-impl OperationAccountIndex {
-    pub fn to_operation(&self) -> Operation {
-        OperationRepository::default()
-            .get(&Operation::key(self.id))
-            .expect("Operation not found")
+        accounts
+            .iter()
+            .map(|account_id| OperationAccountIndex {
+                id: self.id.to_owned(),
+                created_at: self.created_timestamp.to_owned(),
+                account_id: account_id.to_owned(),
+            })
+            .collect()
     }
 }

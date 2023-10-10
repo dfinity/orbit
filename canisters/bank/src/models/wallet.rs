@@ -59,16 +59,83 @@ pub struct WalletKey {
     pub id: WalletId,
 }
 
-pub struct WalletValidator<'wallet> {
-    wallet: &'wallet Wallet,
+pub struct WalletValidator<'model> {
+    wallet: &'model Wallet,
 }
 
-impl<'wallet> WalletValidator<'wallet> {
+impl<'model> WalletValidator<'model> {
     pub const OWNERS_RANGE: (u8, u8) = (1, 10);
     pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
+    pub const SYMBOL_RANGE: (u8, u8) = (1, 8);
+    pub const MAX_POLICIES: u8 = 10;
+    pub const MAX_METADATA: u8 = 10;
+    pub const MAX_METADATA_KEY_LEN: u8 = 24;
+    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
 
-    pub fn new(wallet: &'wallet Wallet) -> WalletValidator {
+    pub fn new(wallet: &'model Wallet) -> WalletValidator {
         WalletValidator { wallet }
+    }
+
+    pub fn validate_policies(&self) -> ModelValidatorResult<WalletError> {
+        if self.wallet.policies.len() > Self::MAX_POLICIES as usize {
+            return Err(WalletError::ValidationError {
+                info: format!(
+                    "Wallet policies count exceeds the maximum allowed: {}",
+                    Self::MAX_POLICIES
+                ),
+            });
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_metadata(&self) -> ModelValidatorResult<WalletError> {
+        if self.wallet.metadata.len() > Self::MAX_METADATA as usize {
+            return Err(WalletError::ValidationError {
+                info: format!(
+                    "Wallet metadata count exceeds the maximum allowed: {}",
+                    Self::MAX_METADATA
+                ),
+            });
+        }
+
+        for (key, value) in self.wallet.metadata.iter() {
+            if key.len() > Self::MAX_METADATA_KEY_LEN as usize {
+                return Err(WalletError::ValidationError {
+                    info: format!(
+                        "Wallet metadata key length exceeds the maximum allowed: {}",
+                        Self::MAX_METADATA_KEY_LEN
+                    ),
+                });
+            }
+
+            if value.len() > Self::MAX_METADATA_VALUE_LEN as usize {
+                return Err(WalletError::ValidationError {
+                    info: format!(
+                        "Wallet metadata value length exceeds the maximum allowed: {}",
+                        Self::MAX_METADATA_VALUE_LEN
+                    ),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_symbol(&self) -> ModelValidatorResult<WalletError> {
+        if (self.wallet.symbol.len() < Self::SYMBOL_RANGE.0 as usize)
+            || (self.wallet.symbol.len() > Self::SYMBOL_RANGE.1 as usize)
+        {
+            return Err(WalletError::ValidationError {
+                info: format!(
+                    "Wallet symbol length must be between {} and {}",
+                    Self::SYMBOL_RANGE.0,
+                    Self::SYMBOL_RANGE.1
+                ),
+            });
+        }
+
+        Ok(())
     }
 
     pub fn validate_owners(&self) -> ModelValidatorResult<WalletError> {
@@ -98,6 +165,9 @@ impl<'wallet> WalletValidator<'wallet> {
     }
 
     pub fn validate(&self) -> ModelValidatorResult<WalletError> {
+        self.validate_policies()?;
+        self.validate_metadata()?;
+        self.validate_symbol()?;
         self.validate_address()?;
         self.validate_owners()?;
 

@@ -45,10 +45,14 @@ impl Repository<OperationKey, Operation> for OperationRepository {
     fn insert(&self, key: OperationKey, value: Operation) -> Option<Operation> {
         DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
             Some(prev) => {
-                let prev_account_index = prev.to_index_for_account();
-                if prev_account_index != value.to_index_for_account() {
-                    self.account_index.remove(&prev_account_index);
-                    self.account_index.insert(value.to_index_for_account());
+                let prev_accounts_index = prev.to_index_for_accounts();
+                if prev_accounts_index != value.to_index_for_accounts() {
+                    prev_accounts_index.iter().for_each(|index| {
+                        self.account_index.remove(index);
+                    });
+                    value.to_index_for_accounts().iter().for_each(|index| {
+                        self.account_index.insert(index.to_owned());
+                    });
                 }
 
                 let prev_wallet_index = prev.to_index_for_wallet();
@@ -66,7 +70,9 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 Some(prev)
             }
             None => {
-                self.account_index.insert(value.to_index_for_account());
+                value.to_index_for_accounts().iter().for_each(|index| {
+                    self.account_index.insert(index.to_owned());
+                });
                 self.wallet_index.insert(value.to_index_for_wallet());
                 self.transfer_index.insert(value.to_index_for_transfer());
 
@@ -78,7 +84,9 @@ impl Repository<OperationKey, Operation> for OperationRepository {
     fn remove(&self, key: &OperationKey) -> Option<Operation> {
         DB.with(|m| match m.borrow_mut().remove(key) {
             Some(prev) => {
-                self.account_index.remove(&prev.to_index_for_account());
+                prev.to_index_for_accounts().iter().for_each(|index| {
+                    self.account_index.remove(index);
+                });
                 self.wallet_index.remove(&prev.to_index_for_wallet());
                 self.transfer_index.remove(&prev.to_index_for_transfer());
 
@@ -164,22 +172,17 @@ impl OperationRepository {
             .iter()
             .filter(|operation| {
                 let mut match_code = true;
-                let mut match_read = true;
                 let mut match_status = true;
 
                 if let Some(code) = condition.code.clone() {
                     match_code = operation.code == code;
                 }
 
-                if let Some(read) = condition.read {
-                    match_read = operation.read == read;
-                }
-
                 if let Some(status) = condition.status.clone() {
                     match_status = operation.status == status;
                 }
 
-                match_code && match_read && match_status
+                match_code && match_status
             })
             .map(|o| o.to_owned())
             .collect::<Vec<_>>()
@@ -188,7 +191,7 @@ impl OperationRepository {
     pub fn find_by_account_where(
         &self,
         account_id: AccountId,
-        condition: OperationWhereClause,
+        condition: OperationFindByAccountWhereClause,
     ) -> Vec<Operation> {
         self.account_index
             .find_by_criteria(OperationAccountIndexCriteria {
@@ -208,7 +211,9 @@ impl OperationRepository {
                     }
 
                     if let Some(read) = condition.read {
-                        match_read = operation.read == read;
+                        match_read = operation.decisions.iter().any(|operation| {
+                            operation.account_id == account_id && operation.read == read
+                        });
                     }
 
                     if let Some(status) = condition.status.clone() {
@@ -231,6 +236,14 @@ pub struct OperationWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
     pub code: Option<OperationCode>,
-    pub read: Option<bool>,
     pub status: Option<OperationStatus>,
+}
+
+#[derive(Debug)]
+pub struct OperationFindByAccountWhereClause {
+    pub created_dt_from: Option<Timestamp>,
+    pub created_dt_to: Option<Timestamp>,
+    pub code: Option<OperationCode>,
+    pub status: Option<OperationStatus>,
+    pub read: Option<bool>,
 }

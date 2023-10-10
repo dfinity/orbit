@@ -6,7 +6,7 @@ use crate::{
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
-        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
+        Operation, OperationCode, OperationDecision, OperationStatus, Transfer, TransferStatus,
         Wallet, WalletPolicy, OPERATION_METADATA_KEY_TRANSFER_ID, OPERATION_METADATA_KEY_WALLET_ID,
     },
     repositories::{OperationRepository, TransferRepository, WalletRepository},
@@ -196,39 +196,45 @@ impl TransferService {
         for policy in wallet.policies.iter() {
             match policy {
                 WalletPolicy::ApprovalThreshold(_) => {
+                    let operation_id = generate_uuid_v4().await;
+                    let mut operation = Operation {
+                        id: *operation_id.as_bytes(),
+                        code: OperationCode::ApproveTransfer,
+                        status: OperationStatus::Pending,
+                        created_timestamp: time(),
+                        originator_account_id: Some(transfer.initiator_account),
+                        metadata: vec![
+                            (
+                                OPERATION_METADATA_KEY_TRANSFER_ID.to_owned(),
+                                transfer_id.to_owned(),
+                            ),
+                            (
+                                OPERATION_METADATA_KEY_WALLET_ID.to_owned(),
+                                wallet_id.to_owned(),
+                            ),
+                        ],
+                        last_modification_timestamp: time(),
+                        decisions: Vec::new(),
+                    };
+
                     for owner in wallet.owners.iter() {
-                        let operation_id = generate_uuid_v4().await;
-                        let operation = Operation {
-                            id: *operation_id.as_bytes(),
-                            code: OperationCode::ApproveTransfer,
+                        operation.decisions.push(OperationDecision {
+                            account_id: *owner,
                             status: match transfer.initiator_account == *owner {
                                 true => OperationStatus::Adopted,
                                 false => OperationStatus::Pending,
                             },
-                            created_timestamp: time(),
-                            account_id: owner.to_owned(),
-                            feedback: match transfer.initiator_account == *owner {
-                                true => Some(OperationFeedback {
-                                    created_at: time(),
-                                    reason: None,
-                                }),
+                            decided_dt: match transfer.initiator_account == *owner {
+                                true => Some(time()),
                                 false => None,
                             },
-                            metadata: vec![
-                                (
-                                    OPERATION_METADATA_KEY_TRANSFER_ID.to_owned(),
-                                    transfer_id.to_owned(),
-                                ),
-                                (
-                                    OPERATION_METADATA_KEY_WALLET_ID.to_owned(),
-                                    wallet_id.to_owned(),
-                                ),
-                            ],
                             last_modification_timestamp: time(),
-                            read: false,
-                        };
-                        required_operations.push(operation.to_owned());
+                            read: transfer.initiator_account == *owner,
+                            status_reason: None,
+                        });
                     }
+
+                    required_operations.push(operation.to_owned());
                 }
             }
         }

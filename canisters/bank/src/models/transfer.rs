@@ -1,7 +1,8 @@
 use super::{AccountId, ApprovalThresholdPolicy, Wallet, WalletId, WalletPolicy};
+use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
-    model::ModelValidator,
+    model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::stable_object;
@@ -160,6 +161,112 @@ impl Transfer {
     }
 }
 
-// TODO: add validation logic.
+pub struct TransferValidator<'model> {
+    transfer: &'model Transfer,
+}
 
-impl ModelValidator for Transfer {}
+impl<'model> TransferValidator<'model> {
+    pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
+    pub const NETWORK_RANGE: (u8, u8) = (1, 50);
+    pub const MAX_METADATA: u8 = 10;
+    pub const MAX_METADATA_KEY_LEN: u8 = 24;
+    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
+
+    pub fn new(transfer: &'model Transfer) -> Self {
+        Self { transfer }
+    }
+
+    pub fn validate_metadata(&self) -> ModelValidatorResult<TransferError> {
+        if self.transfer.metadata.len() > Self::MAX_METADATA as usize {
+            return Err(TransferError::ValidationError {
+                info: format!(
+                    "Transfer metadata count exceeds the maximum allowed: {}",
+                    Self::MAX_METADATA
+                ),
+            });
+        }
+
+        for (key, value) in self.transfer.metadata.iter() {
+            if key.len() > Self::MAX_METADATA_KEY_LEN as usize {
+                return Err(TransferError::ValidationError {
+                    info: format!(
+                        "Transfer metadata key length exceeds the maximum allowed: {}",
+                        Self::MAX_METADATA_KEY_LEN
+                    ),
+                });
+            }
+
+            if value.len() > Self::MAX_METADATA_VALUE_LEN as usize {
+                return Err(TransferError::ValidationError {
+                    info: format!(
+                        "Transfer metadata value length exceeds the maximum allowed: {}",
+                        Self::MAX_METADATA_VALUE_LEN
+                    ),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_to_address(&self) -> ModelValidatorResult<TransferError> {
+        if (self.transfer.to_address.len() < Self::ADDRESS_RANGE.0 as usize)
+            || (self.transfer.to_address.len() > Self::ADDRESS_RANGE.1 as usize)
+        {
+            return Err(TransferError::ValidationError {
+                info: format!(
+                    "Transfer destination address length exceeds the allowed range: {} to {}",
+                    Self::ADDRESS_RANGE.0,
+                    Self::ADDRESS_RANGE.1
+                ),
+            });
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_network(&self) -> ModelValidatorResult<TransferError> {
+        if (self.transfer.blockchain_network.len() < Self::NETWORK_RANGE.0 as usize)
+            || (self.transfer.blockchain_network.len() > Self::NETWORK_RANGE.1 as usize)
+        {
+            return Err(TransferError::ValidationError {
+                info: format!(
+                    "Transfer network length exceeds the allowed range: {} to {}",
+                    Self::NETWORK_RANGE.0,
+                    Self::NETWORK_RANGE.1
+                ),
+            });
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_expiration_dt(&self) -> ModelValidatorResult<TransferError> {
+        if let TransferExecutionPlan::Scheduled { execution_time } = &self.transfer.execution_plan {
+            if self.transfer.expiration_dt < *execution_time {
+                return Err(TransferError::ValidationError {
+                    info:
+                        "Transfer expiration date must be greater then the planned execution_time"
+                            .to_string(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn validate(&self) -> ModelValidatorResult<TransferError> {
+        self.validate_metadata()?;
+        self.validate_to_address()?;
+        self.validate_network()?;
+        self.validate_expiration_dt()?;
+
+        Ok(())
+    }
+}
+
+impl ModelValidator<TransferError> for Transfer {
+    fn validate(&self) -> ModelValidatorResult<TransferError> {
+        TransferValidator::new(self).validate()
+    }
+}

@@ -3,8 +3,8 @@ use crate::{
     errors::WalletError,
     mappers::{HelperMapper, TransferMapper, WalletMapper},
     models::{
-        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
-        Wallet, OPERATION_METADATA_KEY_TRANSFER_ID,
+        Operation, OperationCode, OperationStatus, Transfer, TransferStatus, Wallet,
+        OPERATION_METADATA_KEY_TRANSFER_ID,
     },
     repositories::{OperationRepository, TransferRepository, WalletRepository},
     transport::OperationContextDTO,
@@ -70,12 +70,13 @@ impl ApproveTransferOperationProcessor {
     fn reevaluate_transfer(&self, operation: &Operation) -> Result<(), ApiError> {
         let mut transfer = self.get_transfer(operation)?;
 
-        let operations = self.operation_repository.find_by_transfer_id(transfer.id);
-        let total_approvals = operations
+        let total_approvals = operation
+            .decisions
             .iter()
             .filter(|operations| operations.status == OperationStatus::Adopted)
             .count();
-        let missing_feedback = operations
+        let missing_feedback = operation
+            .decisions
             .iter()
             .filter(|operations| operations.status == OperationStatus::Pending)
             .count();
@@ -96,19 +97,16 @@ impl ApproveTransferOperationProcessor {
             self.transfer_repository
                 .insert(transfer.as_key(), transfer.to_owned());
 
-            operations.iter().for_each(|operation| {
-                let mut updated_operation = operation.to_owned();
-                if operation.status == OperationStatus::Pending {
-                    updated_operation.status = OperationStatus::Abstained;
-                    updated_operation.last_modification_timestamp = time();
-                    updated_operation.feedback = Some(OperationFeedback {
-                        created_at: time(),
-                        reason: None,
-                    });
-                    self.operation_repository
-                        .insert(updated_operation.as_key(), updated_operation.to_owned());
+            let mut updated_operation = operation.to_owned();
+            updated_operation.decisions.iter_mut().for_each(|decision| {
+                if decision.status == OperationStatus::Pending {
+                    decision.status = OperationStatus::NotRequired;
+                    decision.last_modification_timestamp = time();
+                    decision.decided_dt = Some(time());
                 }
             });
+            self.operation_repository
+                .insert(updated_operation.as_key(), updated_operation.to_owned());
         }
 
         Ok(())

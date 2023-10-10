@@ -26,10 +26,6 @@ pub use blockchain_standard::*;
 mod account;
 pub use account::*;
 
-/// The account identity models.
-mod account_identity;
-pub use account_identity::*;
-
 /// The wallet policy related models, which is used to represent wallet rules.
 mod wallet_policy;
 pub use wallet_policy::*;
@@ -53,6 +49,11 @@ pub use operation_code::*;
 /// Models related to operations.
 mod operation;
 pub use operation::*;
+
+/// Models related to operations.
+mod operation_decision;
+pub use operation_decision::*;
+
 
 /// Index related models to facilitate access to models.
 pub mod indexes;

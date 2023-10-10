@@ -31,3 +31,7 @@ pub use transfer::*;
 /// System operation mappers.
 mod operation;
 pub use operation::*;
+mod operation_status;
+pub use operation_status::*;
+mod operation_decision;
+pub use operation_decision::*;

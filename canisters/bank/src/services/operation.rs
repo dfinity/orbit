@@ -4,15 +4,15 @@ use crate::{
     errors::OperationError,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
-    models::{Account, Operation, OperationFeedback, OperationId, OperationStatus},
-    repositories::{OperationRepository, OperationWhereClause},
+    models::{Account, Operation, OperationId, OperationStatus},
+    repositories::{OperationFindByAccountWhereClause, OperationRepository, OperationWhereClause},
     transport::{
         EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
         ListWalletOperationsInput, OperationDTO,
     },
 };
-use ic_canister_core::api::ServiceResult;
 use ic_canister_core::{api::ApiError, repository::Repository};
+use ic_canister_core::{api::ServiceResult, model::ModelValidator};
 use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
 
@@ -63,7 +63,7 @@ impl OperationService {
         operation: &Operation,
         caller_account: &Account,
     ) -> ServiceResult<()> {
-        if operation.account_id != caller_account.id {
+        if operation.accounts().contains(&caller_account.id) {
             Err(OperationError::Forbidden {
                 operation_id: Uuid::from_bytes(operation.id.to_owned())
                     .hyphenated()
@@ -88,12 +88,29 @@ impl OperationService {
     }
 
     pub async fn edit_operation(&self, input: EditOperationInput) -> ServiceResult<OperationDTO> {
+        let caller_account = self
+            .account_service
+            .resolve_account(&self.call_context.caller())?;
         let operation_id = self.helper_mapper.uuid_from_str(input.operation_id)?;
         let mut operation = self
             .get_operation_core(operation_id.as_bytes().to_owned())
             .await?;
+        let decision = operation
+            .decisions
+            .iter_mut()
+            .find(|decision| decision.account_id == caller_account.id);
 
-        if let (Some(_), Some(_)) = (input.approve.as_ref(), operation.feedback.as_ref()) {
+        if let None = decision {
+            Err(OperationError::Forbidden {
+                operation_id: Uuid::from_bytes(operation.id.to_owned())
+                    .hyphenated()
+                    .to_string(),
+            })?
+        }
+
+        let decision = decision.unwrap();
+
+        if let (Some(_), Some(_)) = (input.approve.as_ref(), decision.decided_dt.as_ref()) {
             Err(OperationError::NotAllowedModification {
                 operation_id: Uuid::from_bytes(operation.id.to_owned())
                     .hyphenated()
@@ -102,20 +119,20 @@ impl OperationService {
         }
 
         if let Some(approve) = input.approve {
-            operation.status = match approve {
+            decision.status = match approve {
                 true => OperationStatus::Adopted,
                 false => OperationStatus::Rejected,
             };
-            operation.read = true;
-            operation.feedback = Some(OperationFeedback {
-                created_at: time(),
-                reason: input.reason,
-            });
+            decision.read = true;
+            decision.decided_dt = Some(time());
+            decision.status_reason = input.reason;
         }
 
         if let Some(read) = input.read {
-            operation.read = read;
+            decision.read = read;
         }
+
+        operation.validate()?;
 
         self.operation_repository
             .insert(operation.as_key(), operation.to_owned());
@@ -149,13 +166,11 @@ impl OperationService {
             .operation_repository
             .find_by_account_where(
                 account.id,
-                OperationWhereClause {
+                OperationFindByAccountWhereClause {
                     created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                     created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                     code: filter_by_code,
-                    status: input
-                        .status
-                        .map(|status| self.operation_mapper.to_status(status)),
+                    status: input.status.map(|status| status.into()),
                     read: input.read,
                 },
             )
@@ -199,10 +214,7 @@ impl OperationService {
                     created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                     created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                     code: filter_by_code,
-                    status: input
-                        .status
-                        .map(|status| self.operation_mapper.to_status(status)),
-                    read: input.read,
+                    status: input.status.map(|status| status.into()),
                 },
             )
             .iter()
