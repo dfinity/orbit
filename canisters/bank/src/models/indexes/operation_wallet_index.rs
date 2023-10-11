@@ -31,8 +31,7 @@ impl Operation {
         let unparsed_wallet_id = metadata
             .get(OPERATION_METADATA_KEY_WALLET_ID)
             .expect("Operation metadata does not contain a transfer id");
-        let wallet_id = HelperMapper::default()
-            .uuid_from_str(unparsed_wallet_id.to_owned())
+        let wallet_id = HelperMapper::to_uuid(unparsed_wallet_id.to_owned())
             .expect("Failed to parse transfer id");
 
         OperationWalletIndex {

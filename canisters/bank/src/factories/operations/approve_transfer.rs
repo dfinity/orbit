@@ -1,7 +1,7 @@
 use super::OperationProcessor;
 use crate::{
     errors::WalletError,
-    mappers::{HelperMapper, TransferMapper, WalletMapper},
+    mappers::HelperMapper,
     models::{
         Operation, OperationCode, OperationStatus, Transfer, TransferStatus, Wallet,
         OPERATION_METADATA_KEY_TRANSFER_ID,
@@ -17,12 +17,9 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct ApproveTransferOperationProcessor {
-    helper_mapper: HelperMapper,
     transfer_repository: TransferRepository,
     operation_repository: OperationRepository,
-    transfer_mapper: TransferMapper,
     wallet_repository: WalletRepository,
-    wallet_mapper: WalletMapper,
 }
 
 impl ApproveTransferOperationProcessor {
@@ -39,9 +36,7 @@ impl ApproveTransferOperationProcessor {
         let unparsed_transfer_id = metadata
             .get(OPERATION_METADATA_KEY_TRANSFER_ID)
             .ok_or(ApiError::new("ERR".to_string(), None, None))?;
-        let transfer_id = self
-            .helper_mapper
-            .uuid_from_str(unparsed_transfer_id.to_owned())?;
+        let transfer_id = HelperMapper::to_uuid(unparsed_transfer_id.to_owned())?;
         let transfer = self
             .transfer_repository
             .get(&Transfer::key(*transfer_id.as_bytes()))
@@ -135,8 +130,8 @@ impl OperationProcessor for ApproveTransferOperationProcessor {
         let wallet = self.get_wallet(operation)?;
 
         Ok(OperationContextDTO {
-            transfer: Some(self.transfer_mapper.transfer_to_dto(transfer)),
-            wallet: Some(self.wallet_mapper.wallet_to_dto(wallet)),
+            transfer: Some(transfer.to_dto()),
+            wallet: Some(wallet.to_dto()),
         })
     }
 }

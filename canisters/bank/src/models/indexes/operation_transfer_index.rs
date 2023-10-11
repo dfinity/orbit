@@ -32,8 +32,7 @@ impl Operation {
         let unparsed_transfer_id = metadata
             .get(OPERATION_METADATA_KEY_TRANSFER_ID)
             .expect("Operation metadata does not contain a transfer id");
-        let transfer_id = HelperMapper::default()
-            .uuid_from_str(unparsed_transfer_id.to_owned())
+        let transfer_id = HelperMapper::to_uuid(unparsed_transfer_id.to_owned())
             .expect("Failed to parse transfer id");
 
         OperationTransferIndex {

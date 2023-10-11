@@ -54,6 +54,5 @@ pub use operation::*;
 mod operation_decision;
 pub use operation_decision::*;
 
-
 /// Index related models to facilitate access to models.
 pub mod indexes;

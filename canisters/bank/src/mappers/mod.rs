@@ -27,6 +27,8 @@ pub use account::*;
 /// Account mappers.
 mod transfer;
 pub use transfer::*;
+mod transfer_status;
+pub use transfer_status::*;
 
 /// System operation mappers.
 mod operation;

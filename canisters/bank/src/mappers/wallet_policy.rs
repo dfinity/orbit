@@ -3,11 +3,8 @@ use crate::{
     transport::{ApprovalThresholdPolicyDTO, WalletPolicyDTO},
 };
 
-#[derive(Default, Clone, Debug)]
-pub struct WalletPolicyMapper {}
-
-impl WalletPolicyMapper {
-    pub fn to_dto(&self, policy: WalletPolicy) -> WalletPolicyDTO {
+impl From<WalletPolicy> for WalletPolicyDTO {
+    fn from(policy: WalletPolicy) -> Self {
         match policy {
             WalletPolicy::ApprovalThreshold(threshold) => {
                 WalletPolicyDTO::ApprovalThreshold(match threshold {
@@ -21,8 +18,10 @@ impl WalletPolicyMapper {
             }
         }
     }
+}
 
-    pub fn from_dto(&self, dto: WalletPolicyDTO) -> WalletPolicy {
+impl From<WalletPolicyDTO> for WalletPolicy {
+    fn from(dto: WalletPolicyDTO) -> Self {
         match dto {
             WalletPolicyDTO::ApprovalThreshold(threshold) => {
                 WalletPolicy::ApprovalThreshold(match threshold {
@@ -35,11 +34,5 @@ impl WalletPolicyMapper {
                 })
             }
         }
-    }
-}
-
-impl WalletPolicyDTO {
-    pub fn to_wallet_policy(&self) -> WalletPolicy {
-        WalletPolicyMapper::default().from_dto(self.to_owned())
     }
 }

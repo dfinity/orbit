@@ -132,11 +132,10 @@ impl InternetComputer {
         bank_transfer: Transfer,
     ) -> Result<u64, ApiError> {
         let current_time = cdk::api::time();
-        let mapper = HelperMapper::default();
-        let amount: u64 = mapper.biguint_to_u64(&bank_transfer.amount.0)?;
-        let transaction_fee: u64 = mapper.biguint_to_u64(&bank_transfer.fee.0)?;
+        let amount: u64 = HelperMapper::biguint_to_u64(&bank_transfer.amount.0)?;
+        let transaction_fee: u64 = HelperMapper::biguint_to_u64(&bank_transfer.fee.0)?;
         let memo = match bank_transfer.metadata_map().get(METADATA_MEMO_KEY) {
-            Some(memo) => mapper.str_to_u64(memo)?,
+            Some(memo) => HelperMapper::to_u64(memo)?,
             None => BigEndian::read_u64(&bank_transfer.id[0..8]),
         };
 

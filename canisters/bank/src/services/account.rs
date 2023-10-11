@@ -18,8 +18,6 @@ use uuid::Uuid;
 pub struct AccountService {
     call_context: CallContext,
     account_repository: AccountRepository,
-    account_mapper: AccountMapper,
-    helper_mapper: HelperMapper,
 }
 
 impl WithCallContext for AccountService {
@@ -79,9 +77,7 @@ impl AccountService {
             roles.push(AccessRole::User);
         }
         let account_id = generate_uuid_v4().await;
-        let account = self
-            .account_mapper
-            .from_identity(*identity, *account_id.as_bytes(), roles);
+        let account = AccountMapper::from_identity(*identity, *account_id.as_bytes(), roles);
         self.account_repository
             .insert(account.as_key(), account.to_owned());
 
@@ -94,9 +90,7 @@ impl AccountService {
     pub async fn create_user_account(&self, identity: &Principal) -> ServiceResult<Account> {
         self.assert_identity_has_no_associated_account(identity)?;
         let account_id = generate_uuid_v4().await;
-        let account = self
-            .account_mapper
-            .identity_to_base_user_account(*identity, *account_id.as_bytes());
+        let account = AccountMapper::to_base_user_account(*identity, *account_id.as_bytes());
 
         // model validations
         account.validate()?;
@@ -157,11 +151,10 @@ impl AccountService {
             self.assert_identity_has_no_associated_account(new_identity)?;
         }
 
-        let mut account = self
-            .account_mapper
-            .from_roles(*account_id.as_bytes(), vec![AccessRole::User]);
+        let mut account = AccountMapper::from_roles(*account_id.as_bytes(), vec![AccessRole::User]);
 
         account.update_with(Some(identities), &caller_identity)?;
+        account.validate()?;
 
         self.account_repository
             .insert(account.as_key(), account.to_owned());
@@ -174,7 +167,7 @@ impl AccountService {
         let caller_identity = self.call_context.caller();
         self.assert_identity_has_no_associated_account(&caller_identity)?;
 
-        let account_id = self.helper_mapper.uuid_from_str(input.account_id)?;
+        let account_id = HelperMapper::to_uuid(input.account_id)?;
         let mut account = self.get_account_core(*account_id.as_bytes()).await?;
 
         if !account.unconfirmed_identities.contains(&caller_identity) {
@@ -187,6 +180,7 @@ impl AccountService {
             .unconfirmed_identities
             .retain(|i| *i != caller_identity);
         account.identities.push(caller_identity);
+        account.validate()?;
 
         self.account_repository
             .insert(account.as_key(), account.to_owned());
@@ -197,12 +191,13 @@ impl AccountService {
     /// Edits the account associated with the given account id and returns the updated account.
     pub async fn edit_account(&self, input: EditAccountInput) -> ServiceResult<AccountDTO> {
         let caller_identity = self.call_context.caller();
-        let account_id = self.helper_mapper.uuid_from_str(input.account_id)?;
+        let account_id = HelperMapper::to_uuid(input.account_id)?;
         let mut account = self.get_account_core(*account_id.as_bytes()).await?;
 
         self.assert_access_to_account(&account)?;
 
         account.update_with(input.identities, &caller_identity)?;
+        account.validate()?;
 
         self.account_repository
             .insert(account.as_key(), account.to_owned());
@@ -231,7 +226,7 @@ impl AccountService {
         let caller_identity = self.call_context.caller();
         let account = match input.account_id {
             Some(account_id) => {
-                let account_id = self.helper_mapper.uuid_from_str(account_id)?;
+                let account_id = HelperMapper::to_uuid(account_id)?;
                 self.get_account_core(*account_id.as_bytes()).await?
             }
             None => self

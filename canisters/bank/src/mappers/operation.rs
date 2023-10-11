@@ -11,11 +11,7 @@ use uuid::Uuid;
 pub struct OperationMapper {}
 
 impl OperationMapper {
-    pub fn to_operation_dto(
-        &self,
-        operation: Operation,
-        context: OperationContextDTO,
-    ) -> OperationDTO {
+    pub fn to_dto(operation: Operation, context: OperationContextDTO) -> OperationDTO {
         OperationDTO {
             id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
             originator_account_id: operation
@@ -34,9 +30,15 @@ impl OperationMapper {
         }
     }
 
-    pub fn to_code(&self, code: String) -> Result<OperationCode, MapperError> {
+    pub fn to_code(code: String) -> Result<OperationCode, MapperError> {
         OperationCode::from_str(code.as_str()).map_err(|_| MapperError::UnknownOperationCode {
             code: code.to_owned(),
         })
+    }
+}
+
+impl Operation {
+    pub fn to_dto(&self, context: OperationContextDTO) -> OperationDTO {
+        OperationMapper::to_dto(self.clone(), context)
     }
 }

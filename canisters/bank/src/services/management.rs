@@ -14,7 +14,6 @@ use ic_canister_core::{api::ServiceResult, cdk::api::time};
 #[derive(Default, Debug)]
 pub struct ManagementService {
     call_context: CallContext,
-    management_mapper: ManagementMapper,
     account_service: AccountService,
     account_repository: AccountRepository,
 }
@@ -86,7 +85,7 @@ impl ManagementService {
     pub async fn get_bank_features(&self) -> ServiceResult<BankFeaturesDTO> {
         let supported_assets = get_bank_assets();
 
-        Ok(self.management_mapper.bank_features(supported_assets))
+        Ok(ManagementMapper::bank_features(supported_assets))
     }
 
     pub async fn get_bank_settings(&self) -> ServiceResult<BankSettingsDTO> {
@@ -100,9 +99,7 @@ impl ManagementService {
 
             owners.push(owner_account);
         }
-        let settings = self
-            .management_mapper
-            .bank_settings(canister_config, owners);
+        let settings = ManagementMapper::bank_settings(canister_config, owners);
 
         Ok(settings)
     }

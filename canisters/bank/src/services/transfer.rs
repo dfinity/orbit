@@ -27,10 +27,8 @@ use uuid::Uuid;
 pub struct TransferService {
     call_context: CallContext,
     account_service: AccountService,
-    helper_mapper: HelperMapper,
-    transfer_mapper: TransferMapper,
-    wallet_repository: WalletRepository,
     wallet_service: WalletService,
+    wallet_repository: WalletRepository,
     transfer_repository: TransferRepository,
     operation_repository: OperationRepository,
 }
@@ -53,12 +51,8 @@ impl TransferService {
     }
 
     pub fn get_transfer_core(&self, input: GetTransferInput) -> ServiceResult<Transfer> {
-        let transfer_key = Transfer::key(
-            *self
-                .helper_mapper
-                .uuid_from_str(input.transfer_id.to_owned())?
-                .as_bytes(),
-        );
+        let transfer_key =
+            Transfer::key(*HelperMapper::to_uuid(input.transfer_id.to_owned())?.as_bytes());
         let transfer = self.transfer_repository.get(&transfer_key).ok_or({
             TransferError::TransferNotFound {
                 transfer_id: input.transfer_id.to_owned(),
@@ -92,8 +86,7 @@ impl TransferService {
     pub async fn get_transfer(&self, input: GetTransferInput) -> ServiceResult<TransferDTO> {
         let transfer = self.get_transfer_core(input)?;
         self.check_transfer_access(&transfer)?;
-        let dto = self.transfer_mapper.transfer_to_dto(transfer);
-        Ok(dto)
+        Ok(transfer.to_dto())
     }
 
     pub async fn get_transfers(&self, input: GetTransfersInput) -> ServiceResult<Vec<TransferDTO>> {
@@ -107,7 +100,7 @@ impl TransferService {
                 transfer_id: transfer_id.to_owned(),
             })?;
             self.check_transfer_access(&transfer)?;
-            transfers.push(self.transfer_mapper.transfer_to_dto(transfer));
+            transfers.push(transfer.to_dto());
         }
 
         Ok(transfers)
@@ -118,9 +111,7 @@ impl TransferService {
         let caller_account = self
             .account_service
             .resolve_account(&self.call_context.caller())?;
-        let wallet_id = self
-            .helper_mapper
-            .uuid_from_str(input.from_wallet_id.clone())?;
+        let wallet_id = HelperMapper::to_uuid(input.from_wallet_id.clone())?;
         let wallet_key = Wallet::key(*wallet_id.as_bytes());
         let wallet =
             self.wallet_repository
@@ -138,7 +129,7 @@ impl TransferService {
         let default_fee = blockchain_api.transaction_fee(&wallet).await?;
         let transfer_id = generate_uuid_v4().await;
 
-        let mut transfer = self.transfer_mapper.new_transfer_from_input(
+        let mut transfer = TransferMapper::from_create_input(
             input,
             *transfer_id.as_bytes(),
             caller_account.id,
@@ -180,9 +171,7 @@ impl TransferService {
                 .expect("Operation post processing failed");
         }
 
-        let dto = self.transfer_mapper.transfer_to_dto(transfer);
-
-        Ok(dto)
+        Ok(transfer.to_dto())
     }
 
     async fn build_operations_from_wallet_policies(
@@ -262,10 +251,7 @@ impl TransferService {
 
         let dtos: Vec<TransferListItemDTO> = transfers
             .iter()
-            .map(|transfer| {
-                self.transfer_mapper
-                    .transfer_to_list_item_dto(transfer.to_owned())
-            })
+            .map(|transfer| transfer.to_list_item_dto())
             .collect();
 
         Ok(dtos)

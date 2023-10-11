@@ -22,8 +22,6 @@ pub struct OperationService {
     account_service: AccountService,
     wallet_service: WalletService,
     operation_repository: OperationRepository,
-    operation_mapper: OperationMapper,
-    helper_mapper: HelperMapper,
 }
 
 impl WithCallContext for OperationService {
@@ -75,23 +73,22 @@ impl OperationService {
     }
 
     pub async fn get_operation(&self, input: GetOperationInput) -> ServiceResult<OperationDTO> {
-        let operation_id = self.helper_mapper.uuid_from_str(input.operation_id)?;
+        let operation_id = HelperMapper::to_uuid(input.operation_id)?;
         let operation = self
             .get_operation_core(operation_id.as_bytes().to_owned())
             .await?;
 
         let processor = OperationProcessorFactory::build(&operation.code);
         let context = processor.get_context(&operation)?;
-        let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
-        Ok(operation_dto)
+        Ok(operation.to_dto(context))
     }
 
     pub async fn edit_operation(&self, input: EditOperationInput) -> ServiceResult<OperationDTO> {
         let caller_account = self
             .account_service
             .resolve_account(&self.call_context.caller())?;
-        let operation_id = self.helper_mapper.uuid_from_str(input.operation_id)?;
+        let operation_id = HelperMapper::to_uuid(input.operation_id)?;
         let mut operation = self
             .get_operation_core(operation_id.as_bytes().to_owned())
             .await?;
@@ -100,7 +97,7 @@ impl OperationService {
             .iter_mut()
             .find(|decision| decision.account_id == caller_account.id);
 
-        if let None = decision {
+        if decision.is_none() {
             Err(OperationError::Forbidden {
                 operation_id: Uuid::from_bytes(operation.id.to_owned())
                     .hyphenated()
@@ -143,9 +140,8 @@ impl OperationService {
             .expect("Operation post processing failed");
 
         let context = processor.get_context(&operation)?;
-        let operation_dto = self.operation_mapper.to_operation_dto(operation, context);
 
-        Ok(operation_dto)
+        Ok(operation.to_dto(context))
     }
 
     pub async fn list_operations(
@@ -157,7 +153,7 @@ impl OperationService {
             .resolve_account(&self.call_context.caller())?;
 
         let filter_by_code = match input.code {
-            Some(code) => Some(self.operation_mapper.to_code(code)?),
+            Some(code) => Some(OperationMapper::to_code(code)?),
             None => None,
         };
         let dtos = self
@@ -177,9 +173,7 @@ impl OperationService {
                 let processor = OperationProcessorFactory::build(&operation.code);
                 let context = processor.get_context(operation)?;
 
-                Ok(self
-                    .operation_mapper
-                    .to_operation_dto(operation.to_owned(), context))
+                Ok(operation.to_dto(context))
             })
             .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
 
@@ -201,7 +195,7 @@ impl OperationService {
             .await?;
 
         let filter_by_code = match input.code {
-            Some(code) => Some(self.operation_mapper.to_code(code)?),
+            Some(code) => Some(OperationMapper::to_code(code)?),
             None => None,
         };
         let dtos = self
@@ -220,9 +214,7 @@ impl OperationService {
                 let processor = OperationProcessorFactory::build(&operation.code);
                 let context = processor.get_context(operation)?;
 
-                Ok(self
-                    .operation_mapper
-                    .to_operation_dto(operation.to_owned(), context))
+                Ok(operation.to_dto(context))
             })
             .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
 

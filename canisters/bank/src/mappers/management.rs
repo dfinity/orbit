@@ -1,4 +1,3 @@
-use super::WalletPolicyMapper;
 use crate::{
     core::{BankAsset, CanisterConfig, Permission},
     models::Account,
@@ -10,12 +9,10 @@ use ic_canister_core::{cdk::api::time, utils::timestamp_to_rfc3339};
 use std::collections::HashSet;
 
 #[derive(Default, Clone, Debug)]
-pub struct ManagementMapper {
-    wallet_policy_mapper: WalletPolicyMapper,
-}
+pub struct ManagementMapper {}
 
 impl ManagementMapper {
-    pub fn bank_features(&self, supported_assets: HashSet<BankAsset>) -> BankFeaturesDTO {
+    pub fn bank_features(supported_assets: HashSet<BankAsset>) -> BankFeaturesDTO {
         BankFeaturesDTO {
             supported_assets: supported_assets
                 .into_iter()
@@ -35,7 +32,7 @@ impl ManagementMapper {
         }
     }
 
-    pub fn bank_settings(&self, config: CanisterConfig, owners: Vec<Account>) -> BankSettingsDTO {
+    pub fn bank_settings(config: CanisterConfig, owners: Vec<Account>) -> BankSettingsDTO {
         BankSettingsDTO {
             approval_threshold: config.approval_threshold,
             owners: owners.iter().map(|owner| owner.to_dto()).collect(),
@@ -58,7 +55,7 @@ impl ManagementMapper {
             wallet_policies: config
                 .wallet_policies
                 .iter()
-                .map(|policy| self.wallet_policy_mapper.to_dto(policy.to_owned()))
+                .map(|policy| policy.clone().into())
                 .collect(),
             last_upgrade_timestamp: timestamp_to_rfc3339(&config.last_upgrade_timestamp),
         }
@@ -102,7 +99,7 @@ impl CanisterConfig {
         if let Some(wallet_policies) = init.wallet_policies {
             self.wallet_policies = wallet_policies
                 .iter()
-                .map(|policy| policy.to_wallet_policy())
+                .map(|policy| policy.clone().into())
                 .collect();
         }
 

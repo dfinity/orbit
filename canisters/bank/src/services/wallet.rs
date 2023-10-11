@@ -24,9 +24,6 @@ pub struct WalletService {
     call_context: CallContext,
     account_service: AccountService,
     wallet_repository: WalletRepository,
-    blockchain_mapper: BlockchainMapper,
-    wallet_mapper: WalletMapper,
-    helper_mapper: HelperMapper,
 }
 
 impl WithCallContext for WalletService {
@@ -67,7 +64,7 @@ impl WalletService {
         for owner in input.owners.iter() {
             match owner {
                 CreateWalletInputOwnersItemDTO::AccountId(account_id) => {
-                    let account_id = self.helper_mapper.uuid_from_str(account_id.clone())?;
+                    let account_id = HelperMapper::to_uuid(account_id.clone())?;
                     self.account_service
                         .assert_account_exists(account_id.as_bytes())
                         .await?;
@@ -88,14 +85,10 @@ impl WalletService {
         let uuid = generate_uuid_v4().await;
         let key = Wallet::key(*uuid.as_bytes());
         let blockchain_api = BlockchainApiFactory::build(
-            &self
-                .blockchain_mapper
-                .str_to_blockchain(input.blockchain.clone())?,
-            &self
-                .blockchain_mapper
-                .str_to_blockchain_standard(input.standard.clone())?,
+            &BlockchainMapper::to_blockchain(input.blockchain.clone())?,
+            &BlockchainMapper::to_blockchain_standard(input.standard.clone())?,
         )?;
-        let mut new_wallet = self.wallet_mapper.new_wallet_from_create_input(
+        let mut new_wallet = WalletMapper::from_create_input(
             input,
             *uuid.as_bytes(),
             None,
@@ -121,7 +114,7 @@ impl WalletService {
         // happen in an asynchronous way.
         self.wallet_repository.insert(key, new_wallet.clone());
 
-        Ok(self.wallet_mapper.wallet_to_dto(new_wallet))
+        Ok(new_wallet.to_dto())
     }
 
     /// Returns the wallet associated with the given wallet id.
@@ -130,7 +123,7 @@ impl WalletService {
             .account_service
             .resolve_account(&self.call_context.caller())?;
 
-        let wallet_id = self.helper_mapper.uuid_from_str(input.wallet_id.clone())?;
+        let wallet_id = HelperMapper::to_uuid(input.wallet_id.clone())?;
         let wallet_key = Wallet::key(*wallet_id.as_bytes());
         let wallet =
             self.wallet_repository
@@ -151,7 +144,7 @@ impl WalletService {
     pub async fn get_wallet(&self, input: GetWalletInput) -> ServiceResult<WalletDTO> {
         let wallet = self.get_wallet_core(input).await?;
 
-        Ok(self.wallet_mapper.wallet_to_dto(wallet))
+        Ok(wallet.to_dto())
     }
 
     /// Returns the balances of the requested wallets.
@@ -172,7 +165,7 @@ impl WalletService {
         let wallet_ids = input
             .wallet_ids
             .iter()
-            .map(|id| self.helper_mapper.uuid_from_str(id.clone()))
+            .map(|id| HelperMapper::to_uuid(id.clone()))
             .collect::<Result<Vec<Uuid>, _>>()?;
 
         let wallets = self
@@ -216,10 +209,11 @@ impl WalletService {
                 (_, _) => wallet.balance.unwrap(),
             };
 
-            balances.push(
-                self.wallet_mapper
-                    .balance_to_dto(balance, wallet.decimals, wallet.id),
-            );
+            balances.push(WalletMapper::to_balance_dto(
+                balance,
+                wallet.decimals,
+                wallet.id,
+            ));
         }
 
         Ok(balances)
@@ -237,7 +231,7 @@ impl WalletService {
             .wallet_repository
             .find_by_account_id(account.id)
             .iter()
-            .map(|wallet| self.wallet_mapper.wallet_list_item(wallet))
+            .map(|wallet| wallet.to_list_item_dto())
             .collect::<Vec<WalletListItemDTO>>();
 
         Ok(dtos)
