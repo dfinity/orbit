@@ -167,32 +167,12 @@ type WalletBalanceInfo = record {
   last_update_timestamp : TimestampRFC3339;
 };
 
-// A record type that can be used to represent a wallet in the list of wallets.
-type WalletListItem = record {
-  // The wallet id.
-  id : WalletId;
-  // The wallet address.
-  address : text;
-  // The wallet name.
-  name : opt text;
-  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
-  decimals : nat32;
-  // The asset symbol, e.g. "ICP" or "BTC".
-  asset_symbol : AssetSymbol;
-  // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
-  asset_name : opt text;
-  // Balance of the wallet.
-  balance : opt WalletBalanceInfo;
-  // Number of owners of the wallet.
-  nr_owners : nat8;
-};
-
 // Result type for listing all wallets.
 type ListWalletResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The list of wallets.
-    wallets : vec WalletListItem;
+    wallets : vec Wallet;
   };
   // The error that occurred during the operation, if any.
   Err : Error;

@@ -7,7 +7,7 @@ import {
   BankFeatures,
   Operation,
   OperationId,
-  WalletListItem,
+  Wallet,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
@@ -33,7 +33,7 @@ export interface ActiveBankStoreState {
   };
   wallets: {
     loading: boolean;
-    items: WalletListItem[];
+    items: Wallet[];
   };
   pendingOperations: {
     loading: boolean;

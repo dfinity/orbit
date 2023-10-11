@@ -84,14 +84,14 @@ export const extractTransferStatus = (status: TransferStatus): WalletTransferSta
 export const timer = (
   cb: () => void,
   intervalMs = 1000,
-  {
-    immediate = true,
-  }: {
+  opts: {
     immediate?: boolean;
-  } = {},
+  } = {
+    immediate: true,
+  },
 ): NodeJS.Timeout => {
-  if (immediate) {
-    cb();
+  if (opts.immediate) {
+    setTimeout(() => cb(), 100);
   }
 
   return setInterval(cb, intervalMs);

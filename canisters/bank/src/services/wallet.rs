@@ -8,7 +8,6 @@ use crate::{
     repositories::WalletRepository,
     transport::{
         CreateWalletInput, FetchWalletBalancesInput, GetWalletInput, WalletBalanceDTO, WalletDTO,
-        WalletListItemDTO,
     },
 };
 use candid::Principal;
@@ -197,18 +196,15 @@ impl WalletService {
 
     /// Returns a list of all the wallets of the requested owner, if no owner is provided then it returns
     /// the list of all the wallets of the caller.
-    pub async fn list_wallets(
-        &self,
-        owner: Option<Principal>,
-    ) -> ServiceResult<Vec<WalletListItemDTO>> {
+    pub async fn list_wallets(&self, owner: Option<Principal>) -> ServiceResult<Vec<WalletDTO>> {
         let owner = owner.unwrap_or(self.call_context.caller());
         let account = self.account_service.resolve_account(&owner)?;
         let dtos = self
             .wallet_repository
             .find_by_account_id(account.id)
             .iter()
-            .map(|wallet| wallet.to_list_item_dto())
-            .collect::<Vec<WalletListItemDTO>>();
+            .map(|wallet| wallet.to_dto())
+            .collect::<Vec<WalletDTO>>();
 
         Ok(dtos)
     }

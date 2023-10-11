@@ -120,9 +120,7 @@ export type ListWalletOperationsResult = {
     'Ok' : { 'operations' : Array<Operation> }
   } |
   { 'Err' : Error };
-export type ListWalletResult = {
-    'Ok' : { 'wallets' : Array<WalletListItem> }
-  } |
+export type ListWalletResult = { 'Ok' : { 'wallets' : Array<Wallet> } } |
   { 'Err' : Error };
 export interface ListWalletTransfersInput {
   'status' : [] | [string],
@@ -241,16 +239,6 @@ export interface WalletBalanceInfo {
   'last_update_timestamp' : TimestampRFC3339,
 }
 export type WalletId = string;
-export interface WalletListItem {
-  'id' : WalletId,
-  'decimals' : number,
-  'asset_name' : [] | [string],
-  'balance' : [] | [WalletBalanceInfo],
-  'name' : [] | [string],
-  'address' : string,
-  'asset_symbol' : AssetSymbol,
-  'nr_owners' : number,
-}
 export type WalletPolicy = { 'approval_threshold' : ApprovalThresholdPolicy };
 export interface _SERVICE {
   'bank_settings' : ActorMethod<[], BankSettingsResult>,

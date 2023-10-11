@@ -257,18 +257,8 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'transfers' : IDL.Vec(TransferListItem) }),
     'Err' : Error,
   });
-  const WalletListItem = IDL.Record({
-    'id' : WalletId,
-    'decimals' : IDL.Nat32,
-    'asset_name' : IDL.Opt(IDL.Text),
-    'balance' : IDL.Opt(WalletBalanceInfo),
-    'name' : IDL.Opt(IDL.Text),
-    'address' : IDL.Text,
-    'asset_symbol' : AssetSymbol,
-    'nr_owners' : IDL.Nat8,
-  });
   const ListWalletResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'wallets' : IDL.Vec(WalletListItem) }),
+    'Ok' : IDL.Record({ 'wallets' : IDL.Vec(Wallet) }),
     'Err' : Error,
   });
   const RegisterAccountInput = IDL.Record({

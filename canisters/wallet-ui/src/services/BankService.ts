@@ -27,7 +27,6 @@ import {
   TransferListItem,
   Wallet,
   WalletBalance,
-  WalletListItem,
   _SERVICE,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
@@ -157,7 +156,7 @@ export class BankService {
     return result.Ok.operation;
   }
 
-  async listWallets(): Promise<WalletListItem[]> {
+  async listWallets(): Promise<Wallet[]> {
     const result = await this.actor.list_wallets();
 
     if ('Err' in result) {

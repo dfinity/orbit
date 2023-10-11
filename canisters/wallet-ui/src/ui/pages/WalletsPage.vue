@@ -25,7 +25,7 @@
                 </template>
               </VCardTitle>
               <VCardSubtitle class="wallet-card__subtitle">
-                <span>{{ wallet.asset_symbol }}</span>
+                <span>{{ wallet.symbol }}</span>
                 <template v-if="wallet.address">
                   <span>:&nbsp;</span>
                   <span class="wallet-card__subtitle__address" :title="wallet.address">
@@ -50,7 +50,7 @@
                     {{ formatBalance(wallet.balance[0].balance, wallet.balance[0].decimals) }}
                   </span>
                   <span v-else class="wallet-card__amount wallet-card__amount--unavailable">-</span>
-                  {{ wallet.asset_symbol }}
+                  {{ wallet.symbol }}
                 </p>
               </VCardText>
               <VCardActions>
@@ -58,9 +58,11 @@
                   size="x-small"
                   color="primary-variant"
                   variant="tonal"
-                  :prepend-icon="wallet.nr_owners > 1 ? mdiAccountGroup : mdiAccount"
+                  :prepend-icon="wallet.owners.length > 1 ? mdiAccountGroup : mdiAccount"
                 >
-                  {{ wallet.nr_owners > 1 ? $t('banks.joint_wallet') : $t('banks.private_wallet') }}
+                  {{
+                    wallet.owners.length > 1 ? $t('banks.joint_wallet') : $t('banks.private_wallet')
+                  }}
                 </VChip>
                 <VSpacer />
                 <VBtn

@@ -5,9 +5,7 @@ use crate::{
         AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
         WALLET_METADATA_SYMBOL_KEY,
     },
-    transport::{
-        CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO, WalletListItemDTO,
-    },
+    transport::{CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO},
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
@@ -148,34 +146,10 @@ impl WalletMapper {
             last_modification_timestamp: time(),
         }
     }
-
-    pub fn to_list_item_dto(wallet: &Wallet) -> WalletListItemDTO {
-        WalletListItemDTO {
-            id: Uuid::from_slice(&wallet.id)
-                .unwrap()
-                .hyphenated()
-                .to_string(),
-            address: wallet.address.clone(),
-            asset_symbol: wallet.symbol.clone(),
-            name: wallet.name.clone(),
-            asset_name: None,
-            decimals: wallet.decimals,
-            balance: wallet.balance.as_ref().map(|balance| WalletBalanceInfoDTO {
-                balance: balance.balance.clone(),
-                decimals: wallet.decimals,
-                last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
-            }),
-            nr_owners: wallet.owners.len() as u8,
-        }
-    }
 }
 
 impl Wallet {
     pub fn to_dto(&self) -> WalletDTO {
         WalletMapper::to_dto(self.clone())
-    }
-
-    pub fn to_list_item_dto(&self) -> WalletListItemDTO {
-        WalletMapper::to_list_item_dto(self)
     }
 }

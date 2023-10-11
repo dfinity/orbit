@@ -83,18 +83,6 @@ pub struct FetchWalletBalancesResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct WalletListItemDTO {
-    pub id: WalletIdDTO,
-    pub address: String,
-    pub asset_symbol: String,
-    pub asset_name: Option<String>,
-    pub name: Option<String>,
-    pub decimals: u32,
-    pub balance: Option<WalletBalanceInfoDTO>,
-    pub nr_owners: u8,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListWalletResponse {
-    pub wallets: Vec<WalletListItemDTO>,
+    pub wallets: Vec<WalletDTO>,
 }

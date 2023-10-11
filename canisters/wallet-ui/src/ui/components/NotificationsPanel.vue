@@ -12,10 +12,7 @@
       <VListItem v-if="!activeBank.hasPendingOperations" class="text-center">
         {{ $t('terms.all_done') }}
       </VListItem>
-      <VListItem
-        v-for="({ loading, data }, idx) in activeBank.sortedPendingOperations"
-        :key="idx"
-      >
+      <VListItem v-for="({ loading, data }, idx) in activeBank.sortedPendingOperations" :key="idx">
         <BankOperation
           :loading="loading"
           :operation="activeBank.sortedPendingOperations[idx].data"
