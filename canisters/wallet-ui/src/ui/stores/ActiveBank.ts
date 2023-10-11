@@ -12,6 +12,7 @@ import {
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
 import { useAuthStore, useSettingsStore, useWorkerStore } from '~/ui/stores';
+import { LoadableItem } from '~/ui/types';
 
 export interface BankMetrics {
   wallets: number;
@@ -36,7 +37,7 @@ export interface ActiveBankStoreState {
   };
   pendingOperations: {
     loading: boolean;
-    items: Operation[];
+    items: LoadableItem<Operation>[];
   };
 }
 
@@ -76,19 +77,19 @@ export const useActiveBankStore = defineStore('activeBank', {
         return null;
       }
 
-      return new Date(this.pendingOperations.items[0].created_at);
+      return new Date(this.pendingOperations.items[0].data.created_at);
     },
     lastPendingOperationId(): OperationId | null {
       if (!this.pendingOperations.items.length) {
         return null;
       }
 
-      return this.pendingOperations.items[0].id;
+      return this.pendingOperations.items[0].data.id;
     },
-    sortedPendingOperations(): Operation[] {
+    sortedPendingOperations(): LoadableItem<Operation>[] {
       return this.pendingOperations.items.sort((a, b) => {
-        const firstDt = new Date(a.created_at);
-        const secondDt = new Date(b.created_at);
+        const firstDt = new Date(a.data.created_at);
+        const secondDt = new Date(b.data.created_at);
 
         return secondDt.getTime() - firstDt.getTime();
       });
@@ -151,40 +152,40 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return null;
     },
-    async saveOperation(operation: Operation): Promise<void> {
+    async saveDecision(
+      operationId: OperationId,
+      decision: { approve?: boolean; reason?: string; read?: boolean },
+    ): Promise<Operation | null> {
       const settings = useSettingsStore();
+      const pendingOperation = this.pendingOperations.items.find(
+        item => item.data.id === operationId,
+      );
+      if (pendingOperation) {
+        pendingOperation.loading = true;
+      }
 
       try {
-        const currentOperation = await this.service.getOperation({ operation_id: operation.id });
-        let approve: [] | [boolean] = [];
-        if ('Pending' in currentOperation.status && 'Adopted' in operation.status) {
-          approve = [true];
-        } else if ('Pending' in currentOperation.status && 'Rejected' in operation.status) {
-          approve = [false];
-        }
-
-        let feedback_reason: [] | [string] = [];
-        if ('Pending' in currentOperation.status && operation.feedback_reason?.[0]) {
-          feedback_reason = [operation.feedback_reason?.[0]];
-        }
-
-        await this.service
-          .editOperation({
-            operation_id: operation.id,
-            approve: approve,
-            read: [operation.read],
-            reason: feedback_reason,
+        return await this.service
+          .submitOperationDecision({
+            operation_id: operationId,
+            approve: decision.approve !== undefined ? [decision.approve] : [],
+            read: decision.read !== undefined ? [decision.read] : [],
+            reason: decision.reason !== undefined ? [decision.reason] : [],
           })
           .then(operation => {
             this.pendingOperations.items = this.pendingOperations.items.filter(item => {
-              if (item.id !== operation.id) {
+              if (item.data.id !== operation.id) {
                 return true;
               }
               const isPending = 'Pending' in operation.status;
-              const isRead = operation.read;
+              const isRead = operation.decisions.some(
+                decision => decision.account_id === this.account.id && decision.read,
+              );
 
               return isPending && !isRead;
             });
+
+            return operation;
           });
       } catch (err) {
         logger.error(`Failed to save operation`, { err });
@@ -194,7 +195,13 @@ export const useActiveBankStore = defineStore('activeBank', {
           type: 'error',
           message: i18n.global.t('banks.operation_failed_to_save'),
         });
+      } finally {
+        if (pendingOperation) {
+          pendingOperation.loading = false;
+        }
       }
+
+      return null;
     },
     async loadWalletList(): Promise<void> {
       if (this.wallets.loading) {

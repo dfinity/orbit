@@ -11,7 +11,7 @@ pub mod approve_transfer;
 #[async_trait]
 pub trait OperationProcessor {
     fn get_context(&self, operation: &Operation) -> Result<OperationContextDTO, ApiError>;
-    async fn post_process(&self, operation: &Operation) -> Result<(), ApiError>;
+    async fn post_process(&self, operation: &Operation) -> Result<Operation, ApiError>;
 }
 
 #[derive(Default, Debug)]

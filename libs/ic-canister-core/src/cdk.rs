@@ -37,6 +37,10 @@ mod test {
             panic!("{}", message);
         }
 
+        pub fn print<S: AsRef<str>>(s: S) {
+            println!("{}", s.as_ref());
+        }
+
         pub mod management_canister {
             pub mod main {
                 use ic_cdk::api::call::CallResult;

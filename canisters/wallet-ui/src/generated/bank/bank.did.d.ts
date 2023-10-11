@@ -142,20 +142,25 @@ export interface Operation {
   'context' : OperationContext,
   'metadata' : Array<[string, string]>,
   'code' : string,
-  'read' : boolean,
   'created_at' : TimestampRFC3339,
-  'feedback_reason' : [] | [string],
-  'account' : AccountId,
-  'feedback_time_at' : [] | [TimestampRFC3339],
+  'decisions' : Array<OperationDecision>,
+  'originator_account_id' : [] | [AccountId],
 }
 export interface OperationContext {
   'wallet' : [] | [Wallet],
   'transfer' : [] | [Transfer],
 }
+export interface OperationDecision {
+  'account_id' : AccountId,
+  'status' : OperationStatus,
+  'read' : boolean,
+  'status_reason' : [] | [string],
+  'decided_at' : [] | [TimestampRFC3339],
+}
 export type OperationId = string;
 export type OperationStatus = { 'Rejected' : null } |
-  { 'Abstained' : null } |
   { 'Adopted' : null } |
+  { 'NotRequired' : null } |
   { 'Pending' : null };
 export interface RegisterAccountInput { 'identities' : Array<Principal> }
 export type RegisterAccountResult = { 'Ok' : { 'account' : Account } } |

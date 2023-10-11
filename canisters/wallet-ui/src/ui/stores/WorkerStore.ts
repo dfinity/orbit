@@ -86,8 +86,11 @@ export const useWorkerStore = defineStore('cache', {
         );
 
         for (const newOperation of newOperations) {
-          if (!activeBank.pendingOperations.items.find(current => current.id === newOperation.id)) {
-            activeBank.pendingOperations.items.push(newOperation);
+          if (!activeBank.pendingOperations.items.find(current => current.data.id === newOperation.id)) {
+            activeBank.pendingOperations.items.push({
+              loading: false,
+              data: newOperation,
+            });
           }
         }
       } catch (error) {

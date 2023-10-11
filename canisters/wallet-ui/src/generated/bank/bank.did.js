@@ -103,8 +103,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const OperationStatus = IDL.Variant({
     'Rejected' : IDL.Null,
-    'Abstained' : IDL.Null,
     'Adopted' : IDL.Null,
+    'NotRequired' : IDL.Null,
     'Pending' : IDL.Null,
   });
   const TransferId = IDL.Text;
@@ -145,17 +145,22 @@ export const idlFactory = ({ IDL }) => {
     'wallet' : IDL.Opt(Wallet),
     'transfer' : IDL.Opt(Transfer),
   });
+  const OperationDecision = IDL.Record({
+    'account_id' : AccountId,
+    'status' : OperationStatus,
+    'read' : IDL.Bool,
+    'status_reason' : IDL.Opt(IDL.Text),
+    'decided_at' : IDL.Opt(TimestampRFC3339),
+  });
   const Operation = IDL.Record({
     'id' : OperationId,
     'status' : OperationStatus,
     'context' : OperationContext,
     'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'code' : IDL.Text,
-    'read' : IDL.Bool,
     'created_at' : TimestampRFC3339,
-    'feedback_reason' : IDL.Opt(IDL.Text),
-    'account' : AccountId,
-    'feedback_time_at' : IDL.Opt(TimestampRFC3339),
+    'decisions' : IDL.Vec(OperationDecision),
+    'originator_account_id' : IDL.Opt(AccountId),
   });
   const EditOperationResult = IDL.Variant({
     'Ok' : IDL.Record({ 'operation' : Operation }),

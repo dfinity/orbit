@@ -787,7 +787,7 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:operation"
   get_operation : (input : GetOperationInput) -> (GetOperationResult) query;
-  // Approve or reject an operation.
+  // Record the decision of the caller on the operation.
   //
   // Required permission: "write:operation"
   edit_operation : (input : EditOperationInput) -> (EditOperationResult);

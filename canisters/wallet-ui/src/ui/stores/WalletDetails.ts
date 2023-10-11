@@ -7,11 +7,13 @@ import {
   TransferListItem,
   Wallet,
   WalletId,
+  OperationId,
 } from '~/generated/bank/bank.did';
 import { BankService, WalletApiFactory } from '~/services';
 import { WalletApi, WalletIncomingTransfer } from '~/types/Wallet';
 import { i18n } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore } from '~/ui/stores';
+import { LoadableItem } from '~/ui/types';
 
 export interface WalletDetailsStoreState {
   notification: {
@@ -29,7 +31,7 @@ export interface WalletDetailsStoreState {
   };
   operations: {
     loading: boolean;
-    items: Operation[];
+    items: LoadableItem<Operation>[];
     fromDt: string | null;
     toDt: string | null;
   };
@@ -106,9 +108,9 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
         return null;
       }
     },
-    sortedOperations(): Operation[] {
+    sortedOperations(): LoadableItem<Operation>[] {
       return this.operations.items.sort((a, b) => {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        return new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime();
       });
     },
     defaultEndDt(): string {
@@ -156,17 +158,52 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
 
       this.receivables.items = transfers;
     },
+    async saveDecision(
+      operationId: OperationId,
+      decision: { approve?: boolean; reason?: string; read?: boolean },
+    ): Promise<void> {
+      const activeBank = useActiveBankStore();
+      const item = this.operations.items.find(item => item.data.id === operationId);
+      if (!item) {
+        logger.warn('Decision not saved, operation not found', { operationId });
+        return;
+      }
+
+      item.loading = true;
+      const operation = await activeBank
+        .saveDecision(operationId, decision)
+        .finally(() => (item.loading = false));
+
+      if (!operation) {
+        return;
+      }
+
+      this.operations.items.forEach(item => {
+        if (item.data.id === operation.id) {
+          item.data = operation;
+        }
+      });
+    },
     async loadOperations(fromDt?: Date, toDt?: Date, status?: OperationStatus): Promise<void> {
       try {
         this.operations.loading = true;
-        this.operations.items = await this.bankService.listWalletOperations({
-          wallet_id: this.wallet.id,
-          status: status ? [status] : [],
-          from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
-          to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-          code: [],
-          read: [],
-        });
+        this.operations.items = await this.bankService
+          .listWalletOperations({
+            wallet_id: this.wallet.id,
+            status: status ? [status] : [],
+            from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
+            to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
+            code: [],
+            read: [],
+          })
+          .then(operations => {
+            return operations.map(operation => {
+              return {
+                loading: false,
+                data: operation,
+              };
+            });
+          });
       } catch (e) {
         logger.error('Failed to load operations', { e });
         const settings = useSettingsStore();

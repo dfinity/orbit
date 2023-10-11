@@ -98,6 +98,11 @@ impl ApproveTransferOperationProcessor {
                 .insert(transfer.as_key(), transfer.to_owned());
 
             let mut updated_operation = operation.to_owned();
+            updated_operation.status = match is_approved {
+                true => OperationStatus::Adopted,
+                _ => OperationStatus::Rejected,
+            };
+
             updated_operation.decisions.iter_mut().for_each(|decision| {
                 if decision.status == OperationStatus::Pending {
                     decision.status = OperationStatus::NotRequired;
@@ -115,11 +120,14 @@ impl ApproveTransferOperationProcessor {
 
 #[async_trait]
 impl OperationProcessor for ApproveTransferOperationProcessor {
-    async fn post_process(&self, operation: &Operation) -> Result<(), ApiError> {
+    async fn post_process(&self, operation: &Operation) -> Result<Operation, ApiError> {
         self.validate_type(operation)?;
         self.reevaluate_transfer(operation)?;
 
-        Ok(())
+        Ok(self
+            .operation_repository
+            .get(&Operation::key(operation.id))
+            .unwrap_or(operation.clone()))
     }
 
     fn get_context(&self, operation: &Operation) -> Result<OperationContextDTO, ApiError> {

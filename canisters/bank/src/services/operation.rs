@@ -63,7 +63,7 @@ impl OperationService {
         operation: &Operation,
         caller_account: &Account,
     ) -> ServiceResult<()> {
-        if operation.accounts().contains(&caller_account.id) {
+        if !operation.accounts().contains(&caller_account.id) {
             Err(OperationError::Forbidden {
                 operation_id: Uuid::from_bytes(operation.id.to_owned())
                     .hyphenated()
@@ -126,9 +126,7 @@ impl OperationService {
             decision.read = true;
             decision.decided_dt = Some(time());
             decision.status_reason = input.reason;
-        }
-
-        if let Some(read) = input.read {
+        } else if let Some(read) = input.read {
             decision.read = read;
         }
 
@@ -139,7 +137,7 @@ impl OperationService {
 
         let processor = OperationProcessorFactory::build(&operation.code);
 
-        processor
+        let operation = processor
             .post_process(&operation)
             .await
             .expect("Operation post processing failed");

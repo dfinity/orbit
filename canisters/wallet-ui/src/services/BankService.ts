@@ -137,11 +137,7 @@ export class BankService {
     return operations.filter(operation => operation.id !== last_id);
   }
 
-  async editOperation(input: EditOperationInput): Promise<Operation> {
-    if (input.approve?.[0] !== undefined && input.read?.[0] === undefined) {
-      input.read = [true];
-    }
-
+  async submitOperationDecision(input: EditOperationInput): Promise<Operation> {
     const result = await this.actor.edit_operation(input);
 
     if ('Err' in result) {
