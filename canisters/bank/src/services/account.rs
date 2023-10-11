@@ -84,34 +84,6 @@ impl AccountService {
         Ok(account)
     }
 
-    /// Creates a new account for the given user identity and associates it with the identity.
-    ///
-    /// This operation will fail if the identity already has an associated account.
-    pub async fn create_user_account(&self, identity: &Principal) -> ServiceResult<Account> {
-        self.assert_identity_has_no_associated_account(identity)?;
-        let account_id = generate_uuid_v4().await;
-        let account = AccountMapper::to_base_user_account(*identity, *account_id.as_bytes());
-
-        // model validations
-        account.validate()?;
-
-        // inserts must happen in the end to avoid partial data in the repository
-        self.account_repository
-            .insert(account.as_key(), account.clone());
-
-        Ok(account)
-    }
-
-    /// Returns the account associated with the given user identity.
-    ///
-    /// If the identity does not have an associated account, a new account is created and returned.
-    pub async fn get_user_account_or_create(&self, identity: &Principal) -> ServiceResult<Account> {
-        match self.account_repository.find_account_by_identity(identity) {
-            Some(account) => Ok(account.to_owned()),
-            None => Ok(self.create_user_account(identity).await?),
-        }
-    }
-
     // Returns the account associated with the given user identity, if none is found, an error is returned.
     pub fn resolve_account(&self, identity: &Principal) -> ServiceResult<Account> {
         let account = self
@@ -124,7 +96,7 @@ impl AccountService {
         Ok(account)
     }
 
-    pub async fn assert_account_exists(&self, account_id: &UUID) -> ServiceResult<()> {
+    pub fn assert_account_exists(&self, account_id: &UUID) -> ServiceResult<()> {
         self.account_repository
             .get(&Account::key(*account_id))
             .ok_or(AccountError::NotFoundAccount {

@@ -496,16 +496,10 @@ type CreateWalletInput = record {
   // The asset standard that is supported (e.g. `native`, `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
   standard : text;
-  // The list of owners of the wallet, if the variant selected is of the Principal type, the bank canister will
-  // create an account for the principal and add it to the list of owners if it does not already exist.
+  // The list of owners of the wallet.
   //
   // If the list is empty, the caller will be the only owner.
-  owners : vec variant {
-    // The account id of the owner within the bank canister.
-    AccountID : AccountId;
-    // The principal that owns the wallet.
-    Principal : principal;
-  };
+  owners : vec AccountId;
   // The policies that can be used to control the wallet.
   policies : vec WalletPolicy;
   // A friendly name for the wallet (e.g. "My Wallet").

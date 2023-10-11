@@ -4,11 +4,11 @@ use crate::{
     errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
-    models::{Wallet, WalletBalance, WalletValidator},
+    models::{Wallet, WalletBalance},
     repositories::WalletRepository,
     transport::{
-        CreateWalletInput, CreateWalletInputOwnersItemDTO, FetchWalletBalancesInput,
-        GetWalletInput, WalletBalanceDTO, WalletDTO, WalletListItemDTO,
+        CreateWalletInput, FetchWalletBalancesInput, GetWalletInput, WalletBalanceDTO, WalletDTO,
+        WalletListItemDTO,
     },
 };
 use candid::Principal;
@@ -47,39 +47,15 @@ impl WalletService {
     pub async fn create_wallet(&self, input: CreateWalletInput) -> ServiceResult<WalletDTO> {
         let caller_account = self
             .account_service
-            .get_user_account_or_create(&self.call_context.caller())
-            .await?;
+            .resolve_account(&self.call_context.caller())?;
 
         let mut owners_accounts: HashSet<UUID> = HashSet::from_iter(vec![caller_account.id]);
-        // this validation repeated here to avoid unnecessary calls to create accounts that will not be used,
-        // the validation is also done in the wallet model itself.
-        let nr_owners = input.owners.len();
-        if nr_owners > WalletValidator::OWNERS_RANGE.1 as usize {
-            Err(WalletError::InvalidOwnersRange {
-                min_owners: WalletValidator::OWNERS_RANGE.0,
-                max_owners: WalletValidator::OWNERS_RANGE.1,
-            })?
-        }
+        for account_id in input.owners.iter() {
+            let account_id = HelperMapper::to_uuid(account_id.clone())?;
+            self.account_service
+                .assert_account_exists(account_id.as_bytes())?;
 
-        for owner in input.owners.iter() {
-            match owner {
-                CreateWalletInputOwnersItemDTO::AccountId(account_id) => {
-                    let account_id = HelperMapper::to_uuid(account_id.clone())?;
-                    self.account_service
-                        .assert_account_exists(account_id.as_bytes())
-                        .await?;
-
-                    owners_accounts.insert(*account_id.as_bytes());
-                }
-                CreateWalletInputOwnersItemDTO::Principal_(principal) => {
-                    let new_account = self
-                        .account_service
-                        .get_user_account_or_create(principal)
-                        .await?;
-
-                    owners_accounts.insert(new_account.id);
-                }
-            }
+            owners_accounts.insert(*account_id.as_bytes());
         }
 
         let uuid = generate_uuid_v4().await;
