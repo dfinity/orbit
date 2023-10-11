@@ -66,62 +66,21 @@
               </VCol>
               <template v-if="walletForm.multiCustody">
                 <VCol cols="12" class="wallet-form__title">{{ $t('terms.owners') }}</VCol>
-                <VCol v-for="(entry, idx) in walletForm.form.owners" :key="idx" cols="12" sm="4">
+                <VCol v-for="(ownerId, idx) in walletForm.form.owners" :key="idx" cols="12" sm="4">
                   <VCard density="compact" variant="elevated">
                     <VCardText class="pb-0">
-                      <div class="mb-3">
-                        <VBtn
-                          :disabled="walletForm.isSelfOwnerEntry(entry)"
-                          size="x-small"
-                          color="primary-variant"
-                          :variant="entry.type === 'account' ? 'tonal' : 'outlined'"
-                          class="mr-2"
-                          @click="changeOwnerEntryType(entry, 'account')"
-                        >
-                          {{ $t('terms.account') }}
-                        </VBtn>
-                        <VBtn
-                          :disabled="walletForm.isSelfOwnerEntry(entry)"
-                          size="x-small"
-                          color="primary-variant"
-                          :variant="entry.type === 'principal' ? 'tonal' : 'outlined'"
-                          class="mr-2"
-                          @click="changeOwnerEntryType(entry, 'principal')"
-                        >
-                          {{ $t('terms.principal') }}
-                        </VBtn>
-                      </div>
                       <VTextField
-                        v-model="entry.id"
+                        v-model="walletForm.form.owners[idx]"
                         :prepend-icon="mdiAccount"
-                        :label="
-                          entry.type === 'account' ? $t('terms.account_id') : $t('terms.principal')
-                        "
+                        :label="$t('terms.account_id')"
                         variant="filled"
                         density="compact"
-                        :rules="
-                          entry.type === 'account'
-                            ? [
-                                ...walletForm.validationRules.ownerAccount,
-                                uniqueRule(
-                                  walletForm.form.owners
-                                    .filter(item => item.type === 'account')
-                                    .map(item => item.id)
-                                    .filter((_, self) => self !== idx),
-                                ),
-                              ]
-                            : [
-                                ...walletForm.validationRules.ownerIdentity,
-                                uniqueRule(
-                                  walletForm.form.owners
-                                    .filter(item => item.type === 'principal')
-                                    .map(item => item.id)
-                                    .filter((_, self) => self !== idx),
-                                ),
-                              ]
-                        "
-                        :clearable="!walletForm.isSelfOwnerEntry(entry)"
-                        :disabled="walletForm.isSelfOwnerEntry(entry)"
+                        :rules="[
+                          ...walletForm.validationRules.ownerAccount,
+                          uniqueRule(walletForm.form.owners.filter((_, self) => self !== idx)),
+                        ]"
+                        :clearable="!walletForm.isSelfOwnerEntry(ownerId)"
+                        :disabled="walletForm.isSelfOwnerEntry(ownerId)"
                       />
                     </VCardText>
                     <VCardActions>
@@ -129,7 +88,7 @@
                       <VBtn
                         color="error"
                         variant="text"
-                        :disabled="walletForm.isSelfOwnerEntry(entry)"
+                        :disabled="walletForm.isSelfOwnerEntry(ownerId)"
                         @click="walletForm.removeOwnerByIndex(idx)"
                       >
                         {{ $t('terms.remove') }}
@@ -144,12 +103,7 @@
                     </VCardText>
                     <VCardActions>
                       <VSpacer />
-                      <VBtn
-                        color="success"
-                        variant="flat"
-                        block
-                        @click="walletForm.addOwner({ type: 'account', id: null })"
-                      >
+                      <VBtn color="success" variant="flat" block @click="walletForm.addOwner(null)">
                         {{ $t('terms.add') }}
                       </VBtn>
                       <VSpacer />
@@ -210,26 +164,19 @@ import {
   mdiCogs,
 } from '@mdi/js';
 import { ref } from 'vue';
-import { WalletOwnerEntry, useCreateWalletFormStore } from '~/ui/stores';
+import { useCreateWalletFormStore } from '~/ui/stores';
 import { uniqueRule } from '~/ui/utils';
 import WalletPolicyCard from './WalletPolicyCard.vue';
-import { WalletPolicy } from '~/generated/bank/bank.did';
+import { AccountId, WalletPolicy } from '~/generated/bank/bank.did';
 
 const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null);
 const walletForm = useCreateWalletFormStore();
 
-const changeOwnerEntryType = (entry: WalletOwnerEntry, type: 'account' | 'principal'): void => {
-  if (entry.type !== type) {
-    entry.id = null;
-  }
-  entry.type = type;
-};
-
 walletForm.$subscribe((_, state) => {
-  const uniqOwners: WalletOwnerEntry[] = [];
-  state.form.owners.forEach(entry => {
-    if (!uniqOwners.find(item => item.id === entry.id && item.type === entry.type)) {
-      uniqOwners.push(Object.assign({}, entry));
+  const uniqOwners: Array<AccountId | null> = [];
+  state.form.owners.forEach(ownerId => {
+    if (!uniqOwners.find(id => id === ownerId)) {
+      uniqOwners.push(ownerId);
     }
   });
 

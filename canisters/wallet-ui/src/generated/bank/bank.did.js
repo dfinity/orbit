@@ -52,9 +52,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const CreateWalletInput = IDL.Record({
-    'owners' : IDL.Vec(
-      IDL.Variant({ 'Principal' : IDL.Principal, 'AccountID' : AccountId })
-    ),
+    'owners' : IDL.Vec(AccountId),
     'metadata' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
     'name' : IDL.Opt(IDL.Text),
     'blockchain' : IDL.Text,

@@ -47,7 +47,7 @@ export interface ConfirmAccountInput { 'account_id' : AccountId }
 export type ConfirmAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
 export interface CreateWalletInput {
-  'owners' : Array<{ 'Principal' : Principal } | { 'AccountID' : AccountId }>,
+  'owners' : Array<AccountId>,
   'metadata' : [] | [Array<[string, string]>],
   'name' : [] | [string],
   'blockchain' : string,

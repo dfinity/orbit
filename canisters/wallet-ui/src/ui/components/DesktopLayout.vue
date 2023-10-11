@@ -157,6 +157,7 @@ const themeSwitcherIcon = computed(() => {
 
     &__header {
       width: 100%;
+      flex-shrink: 0;
       min-height: var(--ds-toolbar-height);
     }
 
