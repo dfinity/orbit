@@ -112,7 +112,11 @@ impl TransferRepository {
             .iter()
             .filter_map(|id| match self.get(&Transfer::key(*id)) {
                 Some(transfer) => {
-                    if transfer.status.to_string() == status {
+                    if transfer
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
                         Some(transfer)
                     } else {
                         None
@@ -140,7 +144,11 @@ impl TransferRepository {
             .iter()
             .filter_map(|id| match self.get(&Transfer::key(*id)) {
                 Some(transfer) => {
-                    if transfer.status.to_string() == status {
+                    if transfer
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
                         Some(transfer)
                     } else {
                         None
@@ -170,7 +178,11 @@ impl TransferRepository {
             .iter()
             .filter_map(|id| match (self.get(&Transfer::key(*id)), status.clone()) {
                 (Some(transfer), Some(status)) => {
-                    if transfer.status.to_string() == status {
+                    if transfer
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
                         Some(transfer)
                     } else {
                         None
