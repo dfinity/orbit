@@ -16,7 +16,6 @@ export type ApprovalThresholdPolicy = { 'VariableThreshold' : number } |
   { 'FixedThreshold' : number };
 export type AssetSymbol = string;
 export interface BankAsset {
-  'decimals' : number,
   'standards' : Array<string>,
   'metadata' : Array<[string, string]>,
   'name' : string,

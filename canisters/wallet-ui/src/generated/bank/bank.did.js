@@ -165,7 +165,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const BankAsset = IDL.Record({
-    'decimals' : IDL.Nat32,
     'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'name' : IDL.Text,
