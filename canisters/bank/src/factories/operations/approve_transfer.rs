@@ -3,11 +3,10 @@ use crate::{
     errors::WalletError,
     mappers::HelperMapper,
     models::{
-        Operation, OperationCode, OperationStatus, Transfer, TransferStatus, Wallet,
-        OPERATION_METADATA_KEY_TRANSFER_ID,
+        Operation, OperationCode, OperationContext, OperationStatus, Transfer, TransferStatus,
+        Wallet, OPERATION_METADATA_KEY_TRANSFER_ID,
     },
     repositories::{OperationRepository, TransferRepository, WalletRepository},
-    transport::OperationContextDTO,
 };
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
@@ -125,13 +124,13 @@ impl OperationProcessor for ApproveTransferOperationProcessor {
             .unwrap_or(operation.clone()))
     }
 
-    fn get_context(&self, operation: &Operation) -> Result<OperationContextDTO, ApiError> {
+    fn get_context(&self, operation: &Operation) -> Result<OperationContext, ApiError> {
         let transfer = self.get_transfer(operation)?;
         let wallet = self.get_wallet(operation)?;
 
-        Ok(OperationContextDTO {
-            transfer: Some(transfer.to_dto()),
-            wallet: Some(wallet.to_dto()),
+        Ok(OperationContext {
+            transfer: Some(transfer),
+            wallet: Some(wallet),
         })
     }
 }

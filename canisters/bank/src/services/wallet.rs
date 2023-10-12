@@ -4,11 +4,9 @@ use crate::{
     errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
-    models::{Wallet, WalletBalance},
+    models::{Wallet, WalletBalance, WalletId},
     repositories::WalletRepository,
-    transport::{
-        CreateWalletInput, FetchWalletBalancesInput, GetWalletInput, WalletBalanceDTO, WalletDTO,
-    },
+    transport::{CreateWalletInput, FetchWalletBalancesInput, WalletBalanceDTO},
 };
 use candid::Principal;
 use ic_canister_core::{
@@ -26,27 +24,53 @@ pub struct WalletService {
 }
 
 impl WithCallContext for WalletService {
-    fn with_call_context(&mut self, call_context: CallContext) -> &Self {
-        self.call_context = call_context.clone();
-        self.account_service.with_call_context(call_context);
-
-        self
+    fn with_call_context(call_context: CallContext) -> Self {
+        Self {
+            call_context: call_context.clone(),
+            account_service: AccountService::with_call_context(call_context.clone()),
+            ..Default::default()
+        }
     }
 }
 
 impl WalletService {
-    pub fn create() -> Self {
-        Default::default()
+    /// Returns the wallet associated with the given wallet id.
+    pub fn get_wallet(&self, id: &WalletId) -> ServiceResult<Wallet> {
+        let wallet_key = Wallet::key(*id);
+        let wallet =
+            self.wallet_repository
+                .get(&wallet_key)
+                .ok_or(WalletError::WalletNotFound {
+                    id: Uuid::from_bytes(*id).hyphenated().to_string(),
+                })?;
+
+        self.assert_wallet_access(&wallet)?;
+
+        Ok(wallet)
+    }
+
+    /// Returns a list of all the wallets of the requested owner identity.
+    ///
+    /// If the caller has a different identity than the requested owner, then the call
+    /// will fail with a forbidden error if the user is not an admin.
+    pub fn list_wallets(&self, owner_identity: Principal) -> ServiceResult<Vec<Wallet>> {
+        let account = self
+            .account_service
+            .get_account_by_identity(&owner_identity)?;
+
+        let wallets = self.wallet_repository.find_by_account_id(account.id);
+
+        Ok(wallets)
     }
 
     /// Creates a new wallet, if the caller has not added itself as one of the owners of the wallet,
     /// it will be added automatically.
     ///
     /// This operation will fail if the user does not have an associated account.
-    pub async fn create_wallet(&self, input: CreateWalletInput) -> ServiceResult<WalletDTO> {
+    pub async fn create_wallet(&self, input: CreateWalletInput) -> ServiceResult<Wallet> {
         let caller_account = self
             .account_service
-            .resolve_account(&self.call_context.caller())?;
+            .get_account_by_identity(&self.call_context.caller())?;
 
         let mut owners_accounts: HashSet<UUID> = HashSet::from_iter(vec![caller_account.id]);
         for account_id in input.owners.iter() {
@@ -89,37 +113,7 @@ impl WalletService {
         // happen in an asynchronous way.
         self.wallet_repository.insert(key, new_wallet.clone());
 
-        Ok(new_wallet.to_dto())
-    }
-
-    /// Returns the wallet associated with the given wallet id.
-    pub async fn get_wallet_core(&self, input: GetWalletInput) -> ServiceResult<Wallet> {
-        let caller_account = self
-            .account_service
-            .resolve_account(&self.call_context.caller())?;
-
-        let wallet_id = HelperMapper::to_uuid(input.wallet_id.clone())?;
-        let wallet_key = Wallet::key(*wallet_id.as_bytes());
-        let wallet =
-            self.wallet_repository
-                .get(&wallet_key)
-                .ok_or(WalletError::WalletNotFound {
-                    id: wallet_id.hyphenated().to_string(),
-                })?;
-
-        let is_wallet_owner = wallet.owners.contains(&caller_account.id);
-        if !is_wallet_owner {
-            Err(WalletError::Forbidden)?
-        }
-
-        Ok(wallet)
-    }
-
-    /// Returns the wallet associated with the given wallet id.
-    pub async fn get_wallet(&self, input: GetWalletInput) -> ServiceResult<WalletDTO> {
-        let wallet = self.get_wallet_core(input).await?;
-
-        Ok(wallet.to_dto())
+        Ok(new_wallet)
     }
 
     /// Returns the balances of the requested wallets.
@@ -129,10 +123,6 @@ impl WalletService {
         &self,
         input: FetchWalletBalancesInput,
     ) -> ServiceResult<Vec<WalletBalanceDTO>> {
-        let account = self
-            .account_service
-            .resolve_account(&self.call_context.caller())?;
-
         if input.wallet_ids.is_empty() || input.wallet_ids.len() > 5 {
             Err(WalletError::WalletBalancesBatchRange { min: 1, max: 5 })?
         }
@@ -147,12 +137,8 @@ impl WalletService {
             .wallet_repository
             .find_by_ids(wallet_ids.iter().map(|id| *id.as_bytes()).collect());
 
-        let can_access_wallets = wallets
-            .iter()
-            .all(|wallet| wallet.owners.contains(&account.id));
-
-        if !can_access_wallets {
-            Err(WalletError::Forbidden)?
+        for wallet in wallets.iter() {
+            self.assert_wallet_access(wallet)?;
         }
 
         let mut balances = Vec::new();
@@ -194,18 +180,24 @@ impl WalletService {
         Ok(balances)
     }
 
-    /// Returns a list of all the wallets of the requested owner, if no owner is provided then it returns
-    /// the list of all the wallets of the caller.
-    pub async fn list_wallets(&self, owner: Option<Principal>) -> ServiceResult<Vec<WalletDTO>> {
-        let owner = owner.unwrap_or(self.call_context.caller());
-        let account = self.account_service.resolve_account(&owner)?;
-        let dtos = self
-            .wallet_repository
-            .find_by_account_id(account.id)
-            .iter()
-            .map(|wallet| wallet.to_dto())
-            .collect::<Vec<WalletDTO>>();
+    /// Checks if the caller has access to the given wallet.
+    ///
+    /// Canister controllers have access to all wallets.
+    pub fn assert_wallet_access(&self, wallet: &Wallet) -> ServiceResult<()> {
+        if self.call_context.is_admin() {
+            return Ok(());
+        }
 
-        Ok(dtos)
+        let caller_account = self
+            .account_service
+            .get_account_by_identity(&self.call_context.caller())?;
+
+        let is_wallet_owner = wallet.owners.contains(&caller_account.id);
+
+        if !is_wallet_owner {
+            Err(WalletError::Forbidden)?
+        }
+
+        Ok(())
     }
 }

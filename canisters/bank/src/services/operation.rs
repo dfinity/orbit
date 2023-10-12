@@ -4,14 +4,11 @@ use crate::{
     errors::OperationError,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
-    models::{Account, Operation, OperationId, OperationStatus},
+    models::{Operation, OperationContext, OperationId, OperationStatus},
     repositories::{OperationFindByAccountWhereClause, OperationRepository, OperationWhereClause},
-    transport::{
-        EditOperationInput, GetOperationInput, GetWalletInput, ListOperationsInput,
-        ListWalletOperationsInput, OperationDTO,
-    },
+    transport::{EditOperationInput, ListOperationsInput, ListWalletOperationsInput},
 };
-use ic_canister_core::{api::ApiError, repository::Repository};
+use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
 use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
@@ -25,73 +22,94 @@ pub struct OperationService {
 }
 
 impl WithCallContext for OperationService {
-    fn with_call_context(&mut self, call_context: CallContext) -> &Self {
-        self.call_context = call_context.to_owned();
-        self.account_service
-            .with_call_context(call_context.to_owned());
-        self.wallet_service
-            .with_call_context(call_context.to_owned());
-
-        self
+    fn with_call_context(call_context: CallContext) -> Self {
+        Self {
+            call_context: call_context.clone(),
+            account_service: AccountService::with_call_context(call_context.clone()),
+            wallet_service: WalletService::with_call_context(call_context.clone()),
+            ..Default::default()
+        }
     }
 }
 
 impl OperationService {
-    pub fn create() -> Self {
-        Default::default()
-    }
-
-    pub async fn get_operation_core(&self, id: OperationId) -> ServiceResult<Operation> {
-        let operation = self.operation_repository.get(&Operation::key(id)).ok_or(
+    pub fn get_operation(&self, id: &OperationId) -> ServiceResult<Operation> {
+        let operation = self.operation_repository.get(&Operation::key(*id)).ok_or(
             OperationError::OperationNotFound {
                 operation_id: Uuid::from_bytes(id.to_owned()).hyphenated().to_string(),
             },
         )?;
-        let caller_account = self
-            .account_service
-            .resolve_account(&self.call_context.caller())?;
 
-        self.check_access_to_operation(&operation, &caller_account)?;
+        self.assert_operation_access(&operation)?;
 
         Ok(operation)
     }
 
-    pub fn check_access_to_operation(
-        &self,
-        operation: &Operation,
-        caller_account: &Account,
-    ) -> ServiceResult<()> {
-        if !operation.accounts().contains(&caller_account.id) {
-            Err(OperationError::Forbidden {
-                operation_id: Uuid::from_bytes(operation.id.to_owned())
-                    .hyphenated()
-                    .to_string(),
-            })?
-        }
-
-        Ok(())
-    }
-
-    pub async fn get_operation(&self, input: GetOperationInput) -> ServiceResult<OperationDTO> {
-        let operation_id = HelperMapper::to_uuid(input.operation_id)?;
-        let operation = self
-            .get_operation_core(operation_id.as_bytes().to_owned())
-            .await?;
-
+    pub fn get_operation_context(&self, id: &OperationId) -> ServiceResult<OperationContext> {
+        let operation = self.get_operation(id)?;
         let processor = OperationProcessorFactory::build(&operation.code);
         let context = processor.get_context(&operation)?;
 
-        Ok(operation.to_dto(context))
+        Ok(context)
     }
 
-    pub async fn edit_operation(&self, input: EditOperationInput) -> ServiceResult<OperationDTO> {
+    pub fn list_operations(&self, input: ListOperationsInput) -> ServiceResult<Vec<Operation>> {
+        let account = self
+            .account_service
+            .get_account_by_identity(&self.call_context.caller())?;
+
+        let filter_by_code = match input.code {
+            Some(code) => Some(OperationMapper::to_code(code)?),
+            None => None,
+        };
+        let operations = self.operation_repository.find_by_account_where(
+            account.id,
+            OperationFindByAccountWhereClause {
+                created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                code: filter_by_code,
+                status: input.status.map(|status| status.into()),
+                read: input.read,
+            },
+        );
+
+        Ok(operations)
+    }
+
+    pub fn list_wallet_operations(
+        &self,
+        input: ListWalletOperationsInput,
+    ) -> ServiceResult<Vec<Operation>> {
+        let account = self
+            .account_service
+            .get_account_by_identity(&self.call_context.caller())?;
+        let wallet = self
+            .wallet_service
+            .get_wallet(HelperMapper::to_uuid(input.wallet_id)?.as_bytes())?;
+
+        let filter_by_code = match input.code {
+            Some(code) => Some(OperationMapper::to_code(code)?),
+            None => None,
+        };
+        let operations = self.operation_repository.find_by_wallet_where(
+            (account.id, wallet.id),
+            OperationWhereClause {
+                created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                code: filter_by_code,
+                status: input.status.map(|status| status.into()),
+            },
+        );
+
+        Ok(operations)
+    }
+
+    pub async fn edit_operation(&self, input: EditOperationInput) -> ServiceResult<Operation> {
         let caller_account = self
             .account_service
-            .resolve_account(&self.call_context.caller())?;
+            .get_account_by_identity(&self.call_context.caller())?;
         let operation_id = HelperMapper::to_uuid(input.operation_id)?;
-        let mut operation = self
-            .get_operation_core(operation_id.as_bytes().to_owned())
-            .await?;
+        let mut operation = self.get_operation(operation_id.as_bytes())?;
         let decision = operation
             .decisions
             .iter_mut()
@@ -139,85 +157,22 @@ impl OperationService {
             .await
             .expect("Operation post processing failed");
 
-        let context = processor.get_context(&operation)?;
-
-        Ok(operation.to_dto(context))
+        Ok(operation)
     }
 
-    pub async fn list_operations(
-        &self,
-        input: ListOperationsInput,
-    ) -> ServiceResult<Vec<OperationDTO>> {
+    fn assert_operation_access(&self, operation: &Operation) -> ServiceResult<()> {
         let account = self
             .account_service
-            .resolve_account(&self.call_context.caller())?;
+            .get_account_by_identity(&self.call_context.caller())?;
 
-        let filter_by_code = match input.code {
-            Some(code) => Some(OperationMapper::to_code(code)?),
-            None => None,
-        };
-        let dtos = self
-            .operation_repository
-            .find_by_account_where(
-                account.id,
-                OperationFindByAccountWhereClause {
-                    created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                    created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                    code: filter_by_code,
-                    status: input.status.map(|status| status.into()),
-                    read: input.read,
-                },
-            )
-            .iter()
-            .map(|operation| {
-                let processor = OperationProcessorFactory::build(&operation.code);
-                let context = processor.get_context(operation)?;
+        if !operation.accounts().contains(&account.id) {
+            Err(OperationError::Forbidden {
+                operation_id: Uuid::from_bytes(operation.id.to_owned())
+                    .hyphenated()
+                    .to_string(),
+            })?
+        }
 
-                Ok(operation.to_dto(context))
-            })
-            .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
-
-        Ok(dtos)
-    }
-
-    pub async fn list_wallet_operations(
-        &self,
-        input: ListWalletOperationsInput,
-    ) -> ServiceResult<Vec<OperationDTO>> {
-        let account = self
-            .account_service
-            .resolve_account(&self.call_context.caller())?;
-        let wallet = self
-            .wallet_service
-            .get_wallet_core(GetWalletInput {
-                wallet_id: input.wallet_id,
-            })
-            .await?;
-
-        let filter_by_code = match input.code {
-            Some(code) => Some(OperationMapper::to_code(code)?),
-            None => None,
-        };
-        let dtos = self
-            .operation_repository
-            .find_by_wallet_where(
-                (account.id, wallet.id),
-                OperationWhereClause {
-                    created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                    created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                    code: filter_by_code,
-                    status: input.status.map(|status| status.into()),
-                },
-            )
-            .iter()
-            .map(|operation| {
-                let processor = OperationProcessorFactory::build(&operation.code);
-                let context = processor.get_context(operation)?;
-
-                Ok(operation.to_dto(context))
-            })
-            .collect::<Result<Vec<OperationDTO>, ApiError>>()?;
-
-        Ok(dtos)
+        Ok(())
     }
 }

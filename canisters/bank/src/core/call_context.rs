@@ -1,7 +1,10 @@
 use super::canister_config;
 use crate::{models::AccessRole, repositories::AccountRepository};
 use candid::Principal;
-use ic_canister_core::cdk::{api::trap, caller};
+use ic_canister_core::cdk::{
+    api::{id as self_canister_id, trap},
+    caller,
+};
 
 #[derive(Clone, Debug)]
 pub struct CallContext {
@@ -29,7 +32,12 @@ impl CallContext {
 
     /// Checks if the caller is an admin.
     pub fn is_admin(&self) -> bool {
-        let account = AccountRepository::default().find_account_by_identity(&self.caller);
+        if self.caller == self_canister_id() {
+            return true;
+        }
+
+        let account: Option<crate::models::Account> =
+            AccountRepository::default().find_account_by_identity(&self.caller);
 
         match account {
             Some(account) => account.access_roles.contains(&AccessRole::Admin),
@@ -39,12 +47,14 @@ impl CallContext {
 
     /// Checks if the caller has the required access role to perform the given action.
     pub fn check_access(&self, permission: &str) {
-        check_access(permission, self.caller.to_owned())
+        if !self.is_admin() {
+            check_access(permission, self.caller.to_owned())
+        }
     }
 }
 
 /// This function checks if the user has the required access role to perform the given action.
-pub fn check_access(permission: &str, caller: Principal) {
+fn check_access(permission: &str, caller: Principal) {
     let permissions = canister_config().permissions;
     let permission = permissions
         .iter()
@@ -86,4 +96,8 @@ pub fn check_access(permission: &str, caller: Principal) {
             .as_str(),
         );
     }
+}
+
+pub trait WithCallContext {
+    fn with_call_context(call_context: CallContext) -> Self;
 }

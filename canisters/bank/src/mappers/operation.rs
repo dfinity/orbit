@@ -1,6 +1,6 @@
 use crate::{
     errors::MapperError,
-    models::{Operation, OperationCode},
+    models::{Operation, OperationCode, OperationContext},
     transport::{OperationContextDTO, OperationDTO},
 };
 use ic_canister_core::utils::timestamp_to_rfc3339;
@@ -11,7 +11,7 @@ use uuid::Uuid;
 pub struct OperationMapper {}
 
 impl OperationMapper {
-    pub fn to_dto(operation: Operation, context: OperationContextDTO) -> OperationDTO {
+    pub fn to_dto(operation: Operation, context: OperationContext) -> OperationDTO {
         OperationDTO {
             id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
             originator_account_id: operation
@@ -26,7 +26,10 @@ impl OperationMapper {
                 .iter()
                 .map(|decision| decision.to_owned().into())
                 .collect(),
-            context,
+            context: OperationContextDTO {
+                transfer: context.transfer.map(|transfer| transfer.to_dto()),
+                wallet: context.wallet.map(|wallet| wallet.to_dto()),
+            },
         }
     }
 
@@ -38,7 +41,7 @@ impl OperationMapper {
 }
 
 impl Operation {
-    pub fn to_dto(&self, context: OperationContextDTO) -> OperationDTO {
+    pub fn to_dto(&self, context: OperationContext) -> OperationDTO {
         OperationMapper::to_dto(self.clone(), context)
     }
 }

@@ -1,5 +1,6 @@
 use crate::{
     core::{CallContext, WithCallContext, PERMISSION_READ_WALLET, PERMISSION_WRITE_WALLET},
+    mappers::HelperMapper,
     services::WalletService,
     transport::{
         CreateWalletInput, CreateWalletResponse, FetchWalletBalancesInput,
@@ -13,10 +14,10 @@ use ic_cdk_macros::{query, update};
 async fn create_wallet(input: CreateWalletInput) -> ApiResult<CreateWalletResponse> {
     CallContext::get().check_access(PERMISSION_WRITE_WALLET);
 
-    let created_wallet = WalletService::create()
-        .with_call_context(CallContext::get())
+    let created_wallet = WalletService::with_call_context(CallContext::get())
         .create_wallet(input)
-        .await?;
+        .await?
+        .to_dto();
 
     Ok(CreateWalletResponse {
         wallet: created_wallet,
@@ -27,22 +28,24 @@ async fn create_wallet(input: CreateWalletInput) -> ApiResult<CreateWalletRespon
 async fn get_wallet(input: GetWalletInput) -> ApiResult<GetWalletResponse> {
     CallContext::get().check_access(PERMISSION_READ_WALLET);
 
-    let wallet = WalletService::create()
-        .with_call_context(CallContext::get())
-        .get_wallet(input)
-        .await?;
+    let wallet = WalletService::with_call_context(CallContext::get())
+        .get_wallet(HelperMapper::to_uuid(input.wallet_id)?.as_bytes())?
+        .to_dto();
 
     Ok(GetWalletResponse { wallet })
 }
 
 #[query(name = "list_wallets")]
 async fn list_wallets() -> ApiResult<ListWalletResponse> {
-    CallContext::get().check_access(PERMISSION_READ_WALLET);
+    let ctx = CallContext::get();
+    let owner_identity = ctx.caller();
+    ctx.check_access(PERMISSION_READ_WALLET);
 
-    let wallets = WalletService::create()
-        .with_call_context(CallContext::get())
-        .list_wallets(None)
-        .await?;
+    let wallets = WalletService::with_call_context(ctx)
+        .list_wallets(owner_identity)?
+        .iter()
+        .map(|wallet| wallet.to_dto())
+        .collect();
 
     Ok(ListWalletResponse { wallets })
 }
@@ -53,8 +56,7 @@ async fn fetch_wallet_balances(
 ) -> ApiResult<FetchWalletBalancesResponse> {
     CallContext::get().check_access(PERMISSION_READ_WALLET);
 
-    let balances = WalletService::create()
-        .with_call_context(CallContext::get())
+    let balances = WalletService::with_call_context(CallContext::get())
         .fetch_wallet_balances(input)
         .await?;
 

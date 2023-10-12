@@ -1,7 +1,7 @@
 //! Mappers are used to facilitate the conversion between transport types and internal types.
 
-mod management;
-pub use management::*;
+mod bank;
+pub use bank::*;
 
 mod wallet;
 pub use wallet::*;

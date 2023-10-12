@@ -1,6 +1,6 @@
 use super::WASM_PAGE_SIZE;
 use crate::{
-    models::{AccessRole, WalletPolicy},
+    models::{AccessRole, BankAsset, Blockchain, BlockchainStandard, WalletPolicy},
     transport::{AccountRoleDTO, BankPermissionDTO},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
@@ -10,7 +10,11 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 use ic_stable_structures::Storable;
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+};
 
 /// The list of permissions that can be granted to roles, admin role has all permissions.
 pub const PERMISSION_ADMIN: &str = "admin";
@@ -24,6 +28,20 @@ pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
 pub const PERMISSION_REGISTER_ACCOUNT: &str = "read:register-account";
 pub const PERMISSION_READ_ACCOUNT: &str = "read:account";
 pub const PERMISSION_WRITE_ACCOUNT: &str = "write:account";
+
+thread_local! {
+  /// The list of assets that are supported by the bank canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
+  pub static BANK_ASSETS: RefCell<HashSet<BankAsset>> =
+      RefCell::new(vec![
+        BankAsset {
+          blockchain: Blockchain::InternetComputer,
+          standards: vec![BlockchainStandard::Native],
+          symbol: "ICP".to_string(),
+          name: "Internet Computer".to_string(),
+          metadata: HashMap::new(),
+        },
+      ].into_iter().collect());
+}
 
 pub fn default_bank_permissions() -> Vec<Permission> {
     vec![

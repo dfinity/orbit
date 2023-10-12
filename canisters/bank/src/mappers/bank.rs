@@ -1,42 +1,19 @@
 use crate::{
-    core::{BankAsset, CanisterConfig, Permission},
-    models::Account,
+    core::{CanisterConfig, Permission},
+    models::{BankFeatures, BankSettings},
     transport::{
         BankAssetDTO, BankCanisterInit, BankFeaturesDTO, BankPermissionDTO, BankSettingsDTO,
     },
 };
 use ic_canister_core::{cdk::api::time, utils::timestamp_to_rfc3339};
-use std::collections::HashSet;
 
-#[derive(Default, Clone, Debug)]
-pub struct ManagementMapper {}
-
-impl ManagementMapper {
-    pub fn bank_features(supported_assets: HashSet<BankAsset>) -> BankFeaturesDTO {
-        BankFeaturesDTO {
-            supported_assets: supported_assets
-                .into_iter()
-                .map(|asset| BankAssetDTO {
-                    blockchain: asset.blockchain.to_string(),
-                    symbol: asset.symbol.to_string(),
-                    standards: asset
-                        .standards
-                        .into_iter()
-                        .map(|standard| standard.to_string())
-                        .collect(),
-                    decimals: asset.decimals,
-                    name: asset.name,
-                    metadata: asset.metadata,
-                })
-                .collect(),
-        }
-    }
-
-    pub fn bank_settings(config: CanisterConfig, owners: Vec<Account>) -> BankSettingsDTO {
+impl From<BankSettings> for BankSettingsDTO {
+    fn from(settings: BankSettings) -> Self {
         BankSettingsDTO {
-            approval_threshold: config.approval_threshold,
-            owners: owners.iter().map(|owner| owner.to_dto()).collect(),
-            permissions: config
+            approval_threshold: settings.config.approval_threshold,
+            owners: settings.owners.iter().map(|owner| owner.to_dto()).collect(),
+            permissions: settings
+                .config
                 .permissions
                 .iter()
                 .map(|permission| {
@@ -52,18 +29,41 @@ impl ManagementMapper {
                     }
                 })
                 .collect(),
-            wallet_policies: config
+            wallet_policies: settings
+                .config
                 .wallet_policies
                 .iter()
                 .map(|policy| policy.clone().into())
                 .collect(),
-            last_upgrade_timestamp: timestamp_to_rfc3339(&config.last_upgrade_timestamp),
+            last_upgrade_timestamp: timestamp_to_rfc3339(&settings.config.last_upgrade_timestamp),
+        }
+    }
+}
+
+impl From<BankFeatures> for BankFeaturesDTO {
+    fn from(features: BankFeatures) -> Self {
+        BankFeaturesDTO {
+            supported_assets: features
+                .supported_assets
+                .into_iter()
+                .map(|asset| BankAssetDTO {
+                    blockchain: asset.blockchain.to_string(),
+                    symbol: asset.symbol.to_string(),
+                    standards: asset
+                        .standards
+                        .into_iter()
+                        .map(|standard| standard.to_string())
+                        .collect(),
+                    name: asset.name,
+                    metadata: asset.metadata,
+                })
+                .collect(),
         }
     }
 }
 
 impl CanisterConfig {
-    pub fn update_from_init(&mut self, init: BankCanisterInit) {
+    pub fn update_with(&mut self, init: BankCanisterInit) {
         self.approval_threshold = init.approval_threshold.unwrap_or(self.approval_threshold);
         self.last_upgrade_timestamp = time();
 
