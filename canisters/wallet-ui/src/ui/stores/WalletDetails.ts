@@ -245,10 +245,16 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
       try {
         this.reset();
         this.loading = true;
+        const activeBank = useActiveBankStore();
 
         this._wallet = await this.bankService.getWallet({
           wallet_id: walletId,
         });
+
+        const updatedBalance = activeBank.wallets.items.find(item => item.id === walletId)?.balance;
+        if (updatedBalance) {
+          this._wallet.balance = updatedBalance;
+        }
 
         this.loadSentTransfers(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
         this.loadOperations(new Date(this.defaultStartDt), new Date(this.defaultEndDt));

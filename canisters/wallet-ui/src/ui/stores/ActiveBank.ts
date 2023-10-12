@@ -72,6 +72,14 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return this._account as Account;
     },
+    sortedWallets(): Wallet[] {
+      return this.wallets.items.sort((a, b) => {
+        const firstDt = new Date(a.last_modification_timestamp).getTime();
+        const secondDt = new Date(b.last_modification_timestamp).getTime();
+
+        return secondDt - firstDt;
+      });
+    },
     lastPendingOperationDate(): Date | null {
       if (!this.pendingOperations.items.length) {
         return null;

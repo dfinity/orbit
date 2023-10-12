@@ -5,7 +5,7 @@ import { WalletApiFactory } from '~/services';
 import { WalletApi } from '~/types/Wallet';
 import { useActiveBankStore } from '~/ui/stores';
 
-const BALANCE_POLLING_INTERVAL = 60000;
+const BALANCE_POLLING_INTERVAL = 30000;
 const NOTIFICATIONS_POLLING_INTERVAL = 5000;
 
 export interface WorkerStoreState {

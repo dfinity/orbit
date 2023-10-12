@@ -16,7 +16,7 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow v-if="activeBank.wallets.items.length">
-          <VCol v-for="(wallet, idx) in activeBank.wallets.items" :key="idx" cols="12" md="6">
+          <VCol v-for="(wallet, idx) in activeBank.sortedWallets" :key="idx" cols="12" md="6">
             <VCard density="compact" variant="elevated" class="wallet-card">
               <VCardTitle>
                 <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
