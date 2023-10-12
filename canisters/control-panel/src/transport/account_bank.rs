@@ -6,11 +6,9 @@ pub struct AccountBankDTO {
     pub name: Option<String>,
 }
 
-pub type BankListItem = AccountBankDTO;
-
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ListBanksResponse {
-    pub banks: Vec<BankListItem>,
+    pub banks: Vec<AccountBankDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

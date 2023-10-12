@@ -1,12 +1,14 @@
 // The canister id of a bank.
 type BankID = principal;
+// The principal that is associated with an account.
 type AccountIdentityID = principal;
-
 // A UUID used to identify items.
 type UUID = text;
+// The id of an account.
+type AccountId = UUID;
 
 // Generic error type added to responses that can fail.
-type Error = record {
+type ApiError = record {
   // Error code, added as a string to allow for custom error codes.
   code : text;
   // Error message to be displayed to the user.
@@ -26,36 +28,20 @@ type AccountIdentity = record {
 // The user account information.
 type Account = record {
   // The UUID associated with the account.
-  id : UUID;
-  // The name of the account.
-  name : opt text;
-  // The identities associated with the account.
-  // One identity can only be associated with one account.
-  identities : vec AccountIdentityID;
-  // The identities that are not yet confirmed.
-  unconfirmed_identities : vec AccountIdentityID;
-  // Main bank used to show in the UI for this account.
-  main_bank : opt BankID;
-  // List of banks associated with the account.
-  banks : vec BankID;
-};
-
-// The user account information.
-type AccountDetails = record {
-  // The UUID associated with the account.
-  id : UUID;
+  id : AccountId;
   // The name of the account.
   name : opt text;
   // The identities associated with the account.
   // One identity can only be associated with one account.
   identities : vec AccountIdentity;
   // The identities that are not yet confirmed.
-  unconfirmed_identities : vec AccountIdentityID;
+  unconfirmed_identities : vec AccountIdentity;
   // Main bank used to show in the UI for this account.
   main_bank : opt BankID;
   // List of banks associated with the account.
-  banks : vec AccountBank;
+  banks : vec BankID;
 };
+
 // The result of managing an account.
 type ManageAccountInput = record {
   // The name of the account.
@@ -67,9 +53,6 @@ type ManageAccountInput = record {
   // The identities to associate with the account, this should add all the identities as
   // they are overriden on each call if specified.
   identities : opt vec AccountIdentity;
-  // The unconfrimed identities to associate with the account,
-  // this should add all the identities as they are overriden on each call if specified.
-  unconfirmed_identities : opt vec AccountIdentityID;
   // Manage the banks associated with the account.
   banks : opt vec AccountBank;
 };
@@ -79,10 +62,10 @@ type ManageAccountResult = variant {
   // Successfull operation result.
   Ok : record {
     // The updated account information.
-    account_details : AccountDetails;
+    account : Account;
   };
   // The error that occurred during the operation.
-  Err : Error;
+  Err : ApiError;
 };
 
 // The bank information.
@@ -93,18 +76,15 @@ type AccountBank = record {
   name : opt text;
 };
 
-// Items that are returned when listing banks.
-type BankListItem = AccountBank;
-
 // The result of listing banks.
 type ListBanksResult = variant {
   // The list of banks.
   Ok : record {
     // The list of banks.
-    banks : vec BankListItem;
+    banks : vec AccountBank;
   };
   // The error that occurred during the operation.
-  Err : Error;
+  Err : ApiError;
 };
 
 // The result of getting the main bank.
@@ -115,32 +95,18 @@ type GetMainBankResult = variant {
     bank : opt AccountBank;
   };
   // The error that occurred during the operation.
-  Err : Error;
-};
-
-// The init configuration for the default bank canister.
-type DefaultBankInit = variant {
-  // Create a new shared bank canister that the control panel can manage.
-  InitSharedBankCanister;
-  // Use a specified bank canister.
-  SpecifiedBankCanister : BankID;
-};
-
-// The init configuration for the control panel.
-type CanisterInit = record {
-  // How to initialize the default bank canister.
-  default_bank : DefaultBankInit;
+  Err : ApiError;
 };
 
 // The result of getting the account information.
-type AccountDetailsResult = variant {
+type GetAccountResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The caller account information, if available.
-    account_details : opt AccountDetails;
+    // The caller account information.
+    account : Account;
   };
   // The error that occurred during the operation.
-  Err : Error;
+  Err : ApiError;
 };
 
 // The input for the main bank when registering an account.
@@ -174,13 +140,13 @@ type RegisterAccountResult = variant {
     account : Account;
   };
   // The error that occurred during the operation.
-  Err : Error;
+  Err : ApiError;
 };
 
 // The input for associating an identity with an existing account.
 type AssociateIdentityWithAccountInput = record {
   // The account to associate the identity with.
-  account_id : UUID;
+  account_id : AccountId;
 };
 
 // The result of associating an account with an identity.
@@ -192,7 +158,7 @@ type AssociateIdentityWithAccountResult = variant {
     account : Account;
   };
   // The error that occurred during the operation.
-  Err : Error;
+  Err : ApiError;
 };
 
 // The result of removing the account associated with the caller.
@@ -203,13 +169,27 @@ type RemoveAccountResult = variant {
     account : Account;
   };
   // The error that occurred during the operation.
-  Err : Error;
+  Err : ApiError;
+};
+
+// The init configuration for the default bank canister.
+type DefaultBankInit = variant {
+  // Create a new shared bank canister that the control panel can manage.
+  InitSharedBankCanister;
+  // Use a specified bank canister.
+  SpecifiedBankCanister : BankID;
+};
+
+// The init configuration for the control panel.
+type CanisterInit = record {
+  // How to initialize the default bank canister.
+  default_bank : DefaultBankInit;
 };
 
 // The control panel service definition.
 service : (opt CanisterInit) -> {
   // Get the account information for the caller.
-  account_details : () -> (AccountDetailsResult) query;
+  get_account : () -> (GetAccountResult) query;
   // Manage the account associated with the caller.
   manage_account : (input : ManageAccountInput) -> (ManageAccountResult);
   // Create a new account for the caller.

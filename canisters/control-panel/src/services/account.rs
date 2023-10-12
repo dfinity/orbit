@@ -1,340 +1,197 @@
-use super::{AccountBankService, AccountIdentityService};
 use crate::{
-    core::{canister_config, generate_uuid_v4, ApiError, Repository, ServiceResult},
-    entities::{Account, AccountBank, AccountIdentity},
-    errors::AccountManagementError,
-    mappers::{AccountBankMapper, AccountIdentityMapper, AccountMapper},
-    repositories::{AccountBankRepository, AccountIdentityRepository, AccountRepository},
-    transport::{
-        AccountBankDTO, AccountDetailsDTO, AssociateIdentityWithAccountInput, ManageAccountInput,
-        RegisterAccountInput,
-    },
+    core::{canister_config, CallContext, WithCallContext},
+    errors::AccountError,
+    mappers::AccountMapper,
+    models::{Account, AccountBank, AccountId},
+    repositories::AccountRepository,
+    transport::{ManageAccountInput, RegisterAccountInput},
 };
 use candid::Principal;
-use std::str::FromStr;
+use ic_canister_core::repository::Repository;
+use ic_canister_core::{
+    api::{ApiError, ServiceResult},
+    model::ModelValidator,
+    utils::generate_uuid_v4,
+};
 use uuid::Uuid;
 
 #[derive(Default)]
 pub struct AccountService {
+    call_context: CallContext,
     account_repository: AccountRepository,
-    account_identity_repository: AccountIdentityRepository,
     account_mapper: AccountMapper,
-    account_identity_mapper: AccountIdentityMapper,
-    account_bank_repository: AccountBankRepository,
-    account_bank_mapper: AccountBankMapper,
-    account_identity_service: AccountIdentityService,
-    account_bank_service: AccountBankService,
+}
+
+impl WithCallContext for AccountService {
+    fn with_call_context(call_context: CallContext) -> Self {
+        Self {
+            call_context: call_context.clone(),
+            ..Default::default()
+        }
+    }
 }
 
 impl AccountService {
-    fn assert_identity_has_no_account(&self, identity: &Principal) -> Result<(), ApiError> {
-        let account_identity = self
-            .account_identity_repository
-            .find_by_identity_id(identity)?;
+    /// Returns the account associated with the given account id.
+    pub fn get_account(&self, account_id: &AccountId) -> ServiceResult<Account> {
+        let account = self
+            .account_repository
+            .get(&Account::key(account_id))
+            .ok_or(AccountError::NotFound {
+                account: Uuid::from_bytes(account_id.to_owned())
+                    .hyphenated()
+                    .to_string(),
+            })?;
 
-        if let Some(entry) = account_identity {
-            let formatted_account_id = Uuid::from_bytes(entry.account_id)
-                .as_hyphenated()
-                .to_string();
+        self.assert_account_access(&account)?;
 
-            return Err(
-                AccountManagementError::IdentityAssociatedWithAnotherAccount {
-                    account_id: formatted_account_id,
-                },
-            )?;
+        Ok(account)
+    }
+
+    /// Returns the account associated with the given user identity.
+    pub fn get_account_by_identity(&self, identity: &Principal) -> ServiceResult<Account> {
+        let account = self
+            .account_repository
+            .find_account_by_identity(identity)
+            .ok_or(AccountError::AssociatedAccountIdentityNotFound {
+                identity: identity.to_text(),
+            })?;
+
+        self.assert_account_access(&account)?;
+
+        Ok(account)
+    }
+
+    pub fn get_main_bank(&self) -> ServiceResult<Option<AccountBank>> {
+        let account = self.get_account_by_identity(&self.call_context.caller())?;
+
+        match account.main_bank {
+            Some(main_bank) => {
+                let main_bank = account
+                    .banks
+                    .into_iter()
+                    .find(|bank| bank.canister_id == main_bank)
+                    .ok_or(AccountError::MainBankNotFound)?;
+
+                Ok(Some(main_bank))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Associates the caller identity with the given account if it exists.
+    pub async fn associate_identity_with_account(
+        &self,
+        account_id: AccountId,
+    ) -> ServiceResult<Account, ApiError> {
+        let caller = self.call_context.caller();
+        self.assert_identity_is_unregistered(&caller)?;
+        let mut account = self.get_account(&account_id)?;
+
+        let unconfirmed_identity = account
+            .unconfirmed_identities
+            .clone()
+            .into_iter()
+            .find(|identity| identity.identity == caller)
+            .ok_or(AccountError::Forbidden {
+                account: Uuid::from_bytes(account_id).hyphenated().to_string(),
+            })?;
+
+        let unconfirmed_identities = account
+            .unconfirmed_identities
+            .iter()
+            .filter(|identity| identity.identity != caller)
+            .map(|identity| identity.to_owned())
+            .collect();
+
+        account.unconfirmed_identities = unconfirmed_identities;
+        account.identities.push(unconfirmed_identity);
+
+        account.validate()?;
+        self.account_repository
+            .insert(account.to_key(), account.clone());
+
+        Ok(account)
+    }
+
+    /// Registers a new account for the caller identity.
+    pub async fn register_account(
+        &self,
+        input: RegisterAccountInput,
+    ) -> ServiceResult<Account, ApiError> {
+        self.assert_identity_is_unregistered(&self.call_context.caller())?;
+
+        let account_id = generate_uuid_v4().await;
+        let account = self.account_mapper.from_register_input(
+            input.clone(),
+            *account_id.as_bytes(),
+            self.call_context.caller(),
+            canister_config().shared_bank_canister,
+        );
+
+        account.validate()?;
+        self.account_repository
+            .insert(account.to_key(), account.clone());
+
+        Ok(account)
+    }
+
+    pub async fn remove_account(&self, account_id: &AccountId) -> ServiceResult<Account> {
+        let account = self.get_account(account_id)?;
+
+        self.assert_account_access(&account)?;
+
+        self.account_repository.remove(&account.to_key());
+
+        Ok(account)
+    }
+
+    pub async fn manage_account(&self, input: ManageAccountInput) -> ServiceResult<Account> {
+        let mut account = self.get_account_by_identity(&self.call_context.caller())?;
+
+        account.update_with(input, &self.call_context.caller())?;
+        account.validate()?;
+
+        self.account_repository
+            .insert(account.to_key(), account.clone());
+
+        Ok(account)
+    }
+
+    /// Checks if the caller has access to the given account.
+    ///
+    /// Admins have access to all accounts.
+    fn assert_account_access(&self, account: &Account) -> ServiceResult<()> {
+        let is_account_owner = account
+            .identities
+            .iter()
+            .any(|identity| identity.identity == self.call_context.caller())
+            || account
+                .unconfirmed_identities
+                .iter()
+                .any(|identity| identity.identity == self.call_context.caller());
+        if !is_account_owner && !self.call_context.is_admin() {
+            Err(AccountError::Forbidden {
+                account: Uuid::from_bytes(account.id).hyphenated().to_string(),
+            })?
         }
 
         Ok(())
     }
 
-    /// Registers a new account for the caller.
-    pub async fn register_account(
-        &self,
-        caller: &Principal,
-        input: &RegisterAccountInput,
-    ) -> ServiceResult<Account, ApiError> {
-        self.assert_identity_has_no_account(caller)?;
+    /// Validates that the given identity has no associated account.
+    ///
+    /// If the identity has an associated account, an error is returned.
+    pub fn assert_identity_is_unregistered(&self, identity: &Principal) -> ServiceResult<()> {
+        let maybe_account = self.account_repository.find_account_by_identity(identity);
 
-        let account_id = generate_uuid_v4().await.as_bytes().to_owned();
-        if self.account_repository.find_by_id(&account_id)?.is_some() {
-            return Err(AccountManagementError::DuplicatedAccountId)?;
-        }
-
-        self.account_repository.find_by_id(&account_id)?;
-
-        let account = self.account_mapper.map_register_account_input_to_account(
-            input.clone(),
-            account_id,
-            *caller,
-            canister_config().shared_bank_canister,
-        );
-        let account_identity = self
-            .account_identity_mapper
-            .map_account_identity_for_registration(account_id, *caller);
-
-        self.account_repository
-            .insert(Account::key(&account_id), account.clone());
-        self.account_identity_repository.insert(
-            AccountIdentity::key(&account_identity.identity, &account_identity.account_id),
-            account_identity,
-        );
-        let bank_entries = self
-            .account_bank_mapper
-            .map_account_to_account_bank_entries(&account);
-
-        bank_entries.iter().for_each(|entry| {
-            self.account_bank_repository.insert(
-                AccountBank::key(&entry.account_id, &entry.canister_id),
-                entry.clone(),
-            );
-        });
-
-        Ok(account)
-    }
-
-    fn get_identity_account(
-        &self,
-        identity: &Principal,
-    ) -> ServiceResult<Option<Account>, ApiError> {
-        let maybe_account_identity = self
-            .account_identity_repository
-            .find_by_identity_id(identity)?;
-
-        if maybe_account_identity.is_none() {
-            return Ok(None);
-        }
-
-        let account_identity = maybe_account_identity.unwrap();
-        let maybe_account = self
-            .account_repository
-            .find_by_id(&account_identity.account_id)?;
-
-        if maybe_account.is_none() {
-            let formatted_account_id = Uuid::from_bytes(account_identity.account_id)
-                .as_hyphenated()
-                .to_string();
-
-            return Err(AccountManagementError::MissingAccountDetails {
-                account_id: formatted_account_id,
-            })?;
-        }
-
-        Ok(Some(maybe_account.unwrap()))
-    }
-
-    pub async fn get_account_details(
-        &self,
-        identity: &Principal,
-    ) -> ServiceResult<Option<AccountDetailsDTO>, ApiError> {
-        let account = self.get_identity_account(identity)?;
-        if account.is_none() {
-            return Ok(None);
-        }
-        let account = account.unwrap();
-        let identities = account
-            .identities
-            .iter()
-            .map(|identity| {
-                self.account_identity_repository
-                    .find_by_identity_id(identity)
-                    .unwrap()
-                    .unwrap()
-            })
-            .collect::<Vec<AccountIdentity>>();
-
-        let banks = self.account_bank_repository.find_by_account_id(&account.id);
-
-        let account_details =
-            self.account_mapper
-                .map_to_account_details_dto(&account, &banks, &identities);
-
-        Ok(Some(account_details))
-    }
-
-    pub async fn associate_identity_with_account(
-        &self,
-        caller: &Principal,
-        input: &AssociateIdentityWithAccountInput,
-    ) -> ServiceResult<Account, ApiError> {
-        self.assert_identity_has_no_account(caller)?;
-        let account_id = *Uuid::from_str(input.account_id.as_str())
-            .map_err(|_| AccountManagementError::MalformedAccountId {
-                account_id: input.account_id.clone(),
+        if maybe_account.is_some() {
+            let account = maybe_account.unwrap();
+            Err(AccountError::IdentityAlreadyHasAccount {
+                account: Uuid::from_bytes(account.id).hyphenated().to_string(),
             })?
-            .as_bytes();
-
-        let maybe_account = self.account_repository.find_by_id(&account_id)?;
-        if maybe_account.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
         }
 
-        let mut account = maybe_account.unwrap();
-        account
-            .unconfirmed_identities
-            .iter()
-            .find(|identity| identity == &caller)
-            .ok_or(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
-
-        let unconfirmed_identities = account
-            .unconfirmed_identities
-            .iter()
-            .filter(|identity| identity != &caller)
-            .copied()
-            .collect();
-
-        account.unconfirmed_identities = unconfirmed_identities;
-        account.identities.push(*caller);
-
-        let account_identity = self
-            .account_identity_mapper
-            .map_account_identity_for_registration(account_id, *caller);
-
-        self.account_repository
-            .insert(Account::key(&account_id), account.clone());
-        self.account_identity_repository.insert(
-            AccountIdentity::key(&account_identity.identity, &account_identity.account_id),
-            account_identity,
-        );
-
-        Ok(account)
-    }
-
-    pub async fn remove_account(&self, identity: &Principal) -> ServiceResult<Account, ApiError> {
-        let maybe_account_identity = self
-            .account_identity_repository
-            .find_by_identity_id(identity)?;
-
-        if maybe_account_identity.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
-        }
-
-        let account_identity = maybe_account_identity.unwrap();
-        let maybe_removed_account = self
-            .account_repository
-            .remove(&Account::key(&account_identity.account_id));
-
-        if maybe_removed_account.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
-        }
-
-        let removed_account = maybe_removed_account.unwrap();
-        removed_account.identities.iter().for_each(|identity| {
-            self.account_identity_repository
-                .remove(&AccountIdentity::key(identity, &removed_account.id));
-        });
-        removed_account.banks.iter().for_each(|bank| {
-            self.account_bank_repository
-                .remove(&AccountBank::key(&removed_account.id, bank));
-        });
-
-        Ok(removed_account)
-    }
-
-    pub async fn manage_account(
-        &self,
-        identity: &Principal,
-        input: &ManageAccountInput,
-    ) -> ServiceResult<AccountDetailsDTO, ApiError> {
-        let current_account = self.get_identity_account(identity)?;
-        if current_account.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
-        }
-
-        let current_account = current_account.unwrap();
-        let account_identities = match &input.identities {
-            Some(identities) => {
-                self.account_identity_service
-                    .update_account_identities(&current_account, identities, Some(identity))
-                    .await?
-            }
-            None => self
-                .account_identity_service
-                .get_account_identities(&current_account)?,
-        };
-        let account_banks = match (input.banks.to_owned(), input.main_bank) {
-            (Some(banks), Some(main_bank)) => {
-                self.account_bank_service
-                    .update_account_banks(&current_account.id, &Some(main_bank), &banks)
-                    .await?
-            }
-            (None, Some(main_bank)) => {
-                let current_bank_dtos = self
-                    .account_bank_service
-                    .get_account_banks_dtos(&current_account.id)?;
-                self.account_bank_service
-                    .update_account_banks(&current_account.id, &Some(main_bank), &current_bank_dtos)
-                    .await?
-            }
-            (Some(banks), None) => {
-                self.account_bank_service
-                    .update_account_banks(&current_account.id, &current_account.main_bank, &banks)
-                    .await?
-            }
-            (_, _) => self
-                .account_bank_service
-                .get_account_banks(&current_account.id)?,
-        };
-
-        let updated_account = self.account_mapper.update_account_with_input(
-            input,
-            &current_account,
-            &account_identities,
-            &account_banks,
-        );
-
-        if updated_account.unconfirmed_identities.len()
-            > Account::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES as usize
-        {
-            return Err(
-                AccountManagementError::TooManyUnconfirmedIdentitiesForAccount {
-                    max_identities: Account::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES,
-                },
-            )?;
-        }
-
-        let total_identities =
-            updated_account.unconfirmed_identities.len() + account_identities.len();
-
-        if total_identities > Account::MAX_ACCOUNT_IDENTITIES as usize {
-            return Err(AccountManagementError::TooManyIdentitiesForAccount {
-                max_identities: Account::MAX_ACCOUNT_IDENTITIES,
-            })?;
-        }
-
-        self.account_repository
-            .insert(Account::key(&updated_account.id), updated_account.clone());
-
-        let account_details = self.account_mapper.map_to_account_details_dto(
-            &updated_account,
-            &account_banks,
-            &account_identities,
-        );
-
-        Ok(account_details)
-    }
-
-    pub async fn get_account_main_bank(
-        &self,
-        identity: &Principal,
-    ) -> ServiceResult<Option<AccountBankDTO>> {
-        let account = self.get_identity_account(identity)?;
-        if account.is_none() {
-            return Err(AccountManagementError::NoAccountAssociatedWithCallerIdentity)?;
-        }
-
-        let account = account.unwrap();
-        match account.main_bank {
-            Some(main_bank) => {
-                let account_banks = self.account_bank_repository.find_by_account_id(&account.id);
-                let account_bank = account_banks
-                    .iter()
-                    .find(|bank| bank.canister_id == main_bank)
-                    .ok_or(AccountManagementError::AccountMissingMainBankDetails)?;
-                let dto = self.account_bank_mapper.map_to_dto(account_bank);
-
-                Ok(Some(dto))
-            }
-            None => Ok(None),
-        }
+        Ok(())
     }
 }

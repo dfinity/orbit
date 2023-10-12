@@ -4,9 +4,9 @@
 
 pub mod controllers;
 pub mod core;
-pub mod entities;
 pub mod errors;
 pub mod mappers;
+pub mod models;
 pub mod repositories;
 pub mod services;
 pub mod transport;

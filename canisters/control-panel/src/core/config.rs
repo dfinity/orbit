@@ -1,6 +1,6 @@
-use super::{Timestamp, MAX_BYTE_SIZE_PRINCIPAL, WASM_PAGE_SIZE};
-use crate::core::ic::api::time;
+use super::{MAX_BYTE_SIZE_PRINCIPAL, WASM_PAGE_SIZE};
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use ic_canister_core::{cdk::api::time, types::Timestamp};
 use ic_canister_macros::stable_object;
 use ic_cdk::trap;
 use ic_stable_structures::Storable;

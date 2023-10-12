@@ -14,8 +14,7 @@ pub struct CanisterInit {
 impl Default for CanisterInit {
     fn default() -> Self {
         Self {
-            // todo: update to shared bank canister once implemented
-            default_bank: DefaultBankInit::SpecifiedBankCanister(Principal::anonymous()),
+            default_bank: DefaultBankInit::InitSharedBankCanister,
         }
     }
 }
