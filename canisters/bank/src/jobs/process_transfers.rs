@@ -67,7 +67,7 @@ impl Job {
 
         transfer.last_modification_timestamp = time();
         self.transfer_repository
-            .insert(transfer.as_key(), transfer.to_owned());
+            .insert(transfer.to_key(), transfer.to_owned());
 
         Ok(transfer)
     }
@@ -91,7 +91,7 @@ impl Job {
             transfer.status = TransferStatus::Processing { started_at: time() };
             transfer.last_modification_timestamp = time();
             self.transfer_repository
-                .insert(transfer.as_key(), transfer.to_owned());
+                .insert(transfer.to_key(), transfer.to_owned());
         }
 
         // process the transfers
@@ -113,7 +113,7 @@ impl Job {
                 };
                 transfer.last_modification_timestamp = time();
                 self.transfer_repository
-                    .insert(transfer.as_key(), transfer.to_owned());
+                    .insert(transfer.to_key(), transfer.to_owned());
             }
         });
 

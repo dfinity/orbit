@@ -177,7 +177,7 @@ impl WalletService {
                     wallet.balance = Some(new_balance.clone());
 
                     self.wallet_repository
-                        .insert(wallet.as_key(), wallet.clone());
+                        .insert(wallet.to_key(), wallet.clone());
 
                     new_balance
                 }

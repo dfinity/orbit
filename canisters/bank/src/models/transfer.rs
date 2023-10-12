@@ -121,7 +121,7 @@ impl Transfer {
         TransferKey { id }
     }
 
-    pub fn as_key(&self) -> TransferKey {
+    pub fn to_key(&self) -> TransferKey {
         Self::key(self.id)
     }
 
@@ -132,10 +132,11 @@ impl Transfer {
             .collect()
     }
 
+    /// Gives the default expiration date for a transfer which is 14 days from the current time.
     pub fn default_expiration_dt() -> Timestamp {
-        let five_days_in_ns: u64 = 5 * 24 * 60 * 60 * 1_000_000_000;
+        let time_in_ns: u64 = 14 * 24 * 60 * 60 * 1_000_000_000;
 
-        time() + five_days_in_ns
+        time() + time_in_ns
     }
 
     pub fn make_policy_snapshot(&mut self, wallet: &Wallet) {

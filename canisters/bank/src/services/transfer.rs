@@ -156,11 +156,11 @@ impl TransferService {
 
         // save transfer to stable memory
         self.transfer_repository
-            .insert(transfer.as_key(), transfer.to_owned());
+            .insert(transfer.to_key(), transfer.to_owned());
 
         operations.iter().for_each(|operation| {
             self.operation_repository
-                .insert(operation.as_key(), operation.to_owned());
+                .insert(operation.to_key(), operation.to_owned());
         });
 
         let processor = OperationProcessorFactory::build(&OperationCode::ApproveTransfer);

@@ -54,7 +54,7 @@ impl AccountService {
                 .access_roles
                 .retain(|role| *role != AccessRole::Admin);
             self.account_repository
-                .insert(account.as_key(), account.to_owned());
+                .insert(account.to_key(), account.to_owned());
         }
 
         Ok(())
@@ -79,7 +79,7 @@ impl AccountService {
         let account_id = generate_uuid_v4().await;
         let account = AccountMapper::from_identity(*identity, *account_id.as_bytes(), roles);
         self.account_repository
-            .insert(account.as_key(), account.to_owned());
+            .insert(account.to_key(), account.to_owned());
 
         Ok(account)
     }
@@ -129,7 +129,7 @@ impl AccountService {
         account.validate()?;
 
         self.account_repository
-            .insert(account.as_key(), account.to_owned());
+            .insert(account.to_key(), account.to_owned());
 
         Ok(account.to_dto())
     }
@@ -155,7 +155,7 @@ impl AccountService {
         account.validate()?;
 
         self.account_repository
-            .insert(account.as_key(), account.to_owned());
+            .insert(account.to_key(), account.to_owned());
 
         Ok(account.to_dto())
     }
@@ -172,7 +172,7 @@ impl AccountService {
         account.validate()?;
 
         self.account_repository
-            .insert(account.as_key(), account.to_owned());
+            .insert(account.to_key(), account.to_owned());
 
         Ok(account.to_dto())
     }

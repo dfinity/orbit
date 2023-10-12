@@ -130,7 +130,7 @@ impl Operation {
         OperationKey { id: operation_id }
     }
 
-    pub fn as_key(&self) -> OperationKey {
+    pub fn to_key(&self) -> OperationKey {
         Operation::key(self.id.to_owned())
     }
 

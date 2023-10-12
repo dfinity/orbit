@@ -187,7 +187,7 @@ impl Wallet {
         WalletKey { id }
     }
 
-    pub fn as_key(&self) -> WalletKey {
+    pub fn to_key(&self) -> WalletKey {
         Self::key(self.id)
     }
 

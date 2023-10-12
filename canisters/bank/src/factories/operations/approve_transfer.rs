@@ -90,7 +90,7 @@ impl ApproveTransferOperationProcessor {
 
             transfer.last_modification_timestamp = time();
             self.transfer_repository
-                .insert(transfer.as_key(), transfer.to_owned());
+                .insert(transfer.to_key(), transfer.to_owned());
 
             let mut updated_operation = operation.to_owned();
             updated_operation.status = match is_approved {
@@ -106,7 +106,7 @@ impl ApproveTransferOperationProcessor {
                 }
             });
             self.operation_repository
-                .insert(updated_operation.as_key(), updated_operation.to_owned());
+                .insert(updated_operation.to_key(), updated_operation.to_owned());
         }
 
         Ok(())

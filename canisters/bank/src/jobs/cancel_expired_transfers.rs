@@ -1,4 +1,7 @@
-use crate::{models::TransferStatus, repositories::TransferRepository};
+use crate::{
+    models::{OperationStatus, TransferStatus},
+    repositories::{OperationRepository, TransferRepository},
+};
 use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
 use ic_cdk::api::time;
 use std::time::Duration;
@@ -6,6 +9,7 @@ use std::time::Duration;
 #[derive(Debug, Default)]
 pub struct Job {
     transfer_repository: TransferRepository,
+    operation_repository: OperationRepository,
 }
 
 /// This job is responsible for canceling the transfers that have expired while still pending.
@@ -36,12 +40,29 @@ impl Job {
         );
 
         for transfer in transfers.iter_mut() {
-            transfer.status = TransferStatus::Rejected {
-                reason: "The transfer has expired".to_string(),
+            let operations = self.operation_repository.find_by_transfer_id(transfer.id);
+            for mut operation in operations.into_iter() {
+                operation.status = OperationStatus::Rejected;
+                operation.last_modification_timestamp = time();
+                operation.decisions.iter_mut().for_each(|decision| {
+                    if let OperationStatus::Pending = decision.status {
+                        decision.status = OperationStatus::NotRequired;
+                        decision.decided_dt = Some(time());
+                        decision.status_reason = Some("The transfer has expired".to_string());
+                        decision.last_modification_timestamp = time();
+                    }
+                });
+
+                self.operation_repository
+                    .insert(operation.to_key(), operation.to_owned());
+            }
+
+            transfer.status = TransferStatus::Cancelled {
+                reason: Some("The transfer has expired".to_string()),
             };
             transfer.last_modification_timestamp = time();
             self.transfer_repository
-                .insert(transfer.as_key(), transfer.to_owned());
+                .insert(transfer.to_key(), transfer.to_owned());
         }
 
         Ok(())

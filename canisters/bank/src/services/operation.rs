@@ -130,7 +130,7 @@ impl OperationService {
         operation.validate()?;
 
         self.operation_repository
-            .insert(operation.as_key(), operation.to_owned());
+            .insert(operation.to_key(), operation.to_owned());
 
         let processor = OperationProcessorFactory::build(&operation.code);
 

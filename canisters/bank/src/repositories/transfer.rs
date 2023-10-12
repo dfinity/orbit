@@ -70,6 +70,8 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                 self.wallet_index.insert(value.to_index_by_wallet());
                 self.execution_dt_index
                     .insert(value.to_index_by_execution_dt());
+                self.expiration_dt_index
+                    .insert(value.to_index_by_expiration_dt());
 
                 None
             }
