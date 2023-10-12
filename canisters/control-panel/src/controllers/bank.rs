@@ -16,7 +16,7 @@ async fn list_banks() -> ApiResult<ListBanksResponse> {
         banks: account
             .banks
             .into_iter()
-            .map(|b| AccountBankDTO::from(b))
+            .map(AccountBankDTO::from)
             .collect(),
     })
 }
@@ -26,6 +26,6 @@ async fn get_main_bank() -> ApiResult<GetMainBankResponse> {
     let main_bank = AccountService::with_call_context(CallContext::get()).get_main_bank()?;
 
     Ok(GetMainBankResponse {
-        bank: main_bank.map(|b| AccountBankDTO::from(b)),
+        bank: main_bank.map(AccountBankDTO::from),
     })
 }

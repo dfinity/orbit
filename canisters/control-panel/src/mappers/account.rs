@@ -76,17 +76,17 @@ impl From<Account> for AccountDTO {
             banks: account
                 .banks
                 .into_iter()
-                .map(|b| AccountBankDTO::from(b))
+                .map(AccountBankDTO::from)
                 .collect(),
             identities: account
                 .identities
                 .into_iter()
-                .map(|i| AccountIdentityDTO::from(i))
+                .map(AccountIdentityDTO::from)
                 .collect(),
             unconfirmed_identities: account
                 .unconfirmed_identities
                 .into_iter()
-                .map(|i| AccountIdentityDTO::from(i))
+                .map(AccountIdentityDTO::from)
                 .collect(),
         }
     }

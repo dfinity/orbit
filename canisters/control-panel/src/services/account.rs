@@ -185,8 +185,7 @@ impl AccountService {
     pub fn assert_identity_is_unregistered(&self, identity: &Principal) -> ServiceResult<()> {
         let maybe_account = self.account_repository.find_account_by_identity(identity);
 
-        if maybe_account.is_some() {
-            let account = maybe_account.unwrap();
+        if let Some(account) = maybe_account {
             Err(AccountError::IdentityAlreadyHasAccount {
                 account: Uuid::from_bytes(account.id).hyphenated().to_string(),
             })?
