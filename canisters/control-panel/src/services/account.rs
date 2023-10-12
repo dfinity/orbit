@@ -19,7 +19,6 @@ use uuid::Uuid;
 pub struct AccountService {
     call_context: CallContext,
     account_repository: AccountRepository,
-    account_mapper: AccountMapper,
 }
 
 impl WithCallContext for AccountService {
@@ -122,7 +121,7 @@ impl AccountService {
         self.assert_identity_is_unregistered(&self.call_context.caller())?;
 
         let account_id = generate_uuid_v4().await;
-        let account = self.account_mapper.from_register_input(
+        let account = AccountMapper::from_register_input(
             input.clone(),
             *account_id.as_bytes(),
             self.call_context.caller(),

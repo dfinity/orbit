@@ -18,7 +18,6 @@ pub struct AccountMapper {}
 impl AccountMapper {
     /// Maps the registration input to an account entity.
     pub fn from_register_input(
-        &self,
         input: RegisterAccountInput,
         account_id: AccountId,
         identity: Principal,
