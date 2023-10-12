@@ -1,16 +1,12 @@
-use crate::{
-    models::{Transfer, TransferExecutionPlan, TransferId},
-    repositories::TransferRepository,
-};
+use crate::models::{Transfer, TransferExecutionPlan, TransferId};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 use ic_cdk::api::time;
 use std::hash::Hash;
 
 /// Represents a transfer index by execution time.
-#[stable_object(size = 128)]
+#[stable_object(size = 64)]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferExecutionTimeIndex {
     /// The time the transfer is scheduled to be executed.
@@ -34,13 +30,5 @@ impl Transfer {
             },
             transfer_id: self.id,
         }
-    }
-}
-
-impl TransferExecutionTimeIndex {
-    pub fn to_transfer(&self) -> Transfer {
-        TransferRepository::default()
-            .get(&Transfer::key(self.transfer_id))
-            .expect("Transfer not found")
     }
 }

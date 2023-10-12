@@ -19,6 +19,7 @@ pub const OPERATION_MEMORY_ID: MemoryId = MemoryId::new(8);
 pub const OPERATION_WALLET_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
 pub const OPERATION_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
 pub const OPERATION_TRANSFER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
+pub const TRANSFER_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 thread_local! {
   /// Static configuration of the canister.

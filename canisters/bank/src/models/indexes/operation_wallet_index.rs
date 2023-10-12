@@ -1,8 +1,6 @@
 use crate::mappers::HelperMapper;
 use crate::models::{Operation, OperationId, WalletId, OPERATION_METADATA_KEY_WALLET_ID};
-use crate::repositories::OperationRepository;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 
@@ -39,13 +37,5 @@ impl Operation {
             created_at: self.created_timestamp.to_owned(),
             wallet_id: *wallet_id.as_bytes(),
         }
-    }
-}
-
-impl OperationWalletIndex {
-    pub fn to_operation(&self) -> Operation {
-        OperationRepository::default()
-            .get(&Operation::key(self.id))
-            .expect("Operation not found")
     }
 }
