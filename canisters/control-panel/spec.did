@@ -39,7 +39,7 @@ type Account = record {
   // Main bank used to show in the UI for this account.
   main_bank : opt BankID;
   // List of banks associated with the account.
-  banks : vec BankID;
+  banks : vec AccountBank;
 };
 
 // The result of managing an account.
