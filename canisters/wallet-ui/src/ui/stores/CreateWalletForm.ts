@@ -1,20 +1,14 @@
-import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { WalletPolicy } from '~/generated/bank/bank.did';
+import { AccountId, WalletPolicy } from '~/generated/bank/bank.did';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { maxLengthRule, requiredRule, validPrincipalRule, validUuidV4Rule } from '~/ui/utils';
 
-export interface WalletOwnerEntry {
-  type: 'account' | 'principal';
-  id: string | null;
-}
-
 export interface CreateWalletForm {
   name: string | null;
-  owners: WalletOwnerEntry[];
+  owners: Array<AccountId | null>;
   blockchain: string | null;
   blockchainStandard: string | null;
   policies: Array<WalletPolicy | null>;
@@ -76,7 +70,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
       return state.form.policies.length < 10;
     },
     nrOfOwners(state): number {
-      return state.form.owners.filter(owner => owner.id !== null).length;
+      return state.form.owners.filter(id => id !== null).length;
     },
     hasChanges(state): boolean {
       return JSON.stringify(state.form) !== state.unchangedVersion;
@@ -123,7 +117,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
       this.reset();
       this.show = false;
     },
-    addOwner(owner: WalletOwnerEntry): void {
+    addOwner(owner: AccountId | null): void {
       this.form.owners.push(owner);
     },
     addNewPolicy(): void {
@@ -139,21 +133,13 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
 
       this.form.policies.push(null);
     },
-    isSelfOwnerEntry(ownerEntry: WalletOwnerEntry): boolean {
+    isSelfOwnerEntry(ownerId: AccountId | null): boolean {
       const activeBank = useActiveBankStore();
-      if (ownerEntry.id === null) {
+      if (ownerId === null) {
         return false;
       }
 
-      if (ownerEntry.type === 'account') {
-        return activeBank.account.id === ownerEntry.id;
-      }
-
-      if (ownerEntry.type === 'principal') {
-        return activeBank.account.identities.map(i => i.toText()).includes(ownerEntry.id);
-      }
-
-      return false;
+      return activeBank.account.id === ownerId;
     },
     removeOwnerByIndex(index: number): void {
       this.form.owners.splice(index, 1);
@@ -164,7 +150,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
     open(): void {
       this.reset();
       const activeBank = useActiveBankStore();
-      this.addOwner({ type: 'account', id: activeBank.account.id });
+      this.addOwner(activeBank.account.id);
 
       this.show = true;
     },
@@ -201,13 +187,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
         await bankService
           .createWallet({
             name: this.form.name ? [this.form.name] : [],
-            owners: this.form.owners.map(owner => {
-              if (owner.type === 'account') {
-                return { AccountID: `${owner.id}` };
-              }
-
-              return { Principal: Principal.fromText(`${owner.id}`) };
-            }),
+            owners: this.form.owners.filter(id => id !== null) as AccountId[],
             blockchain: `${this.form.blockchain}`,
             standard: !this.form.blockchainStandard ? 'native' : this.form.blockchainStandard,
             metadata: [],

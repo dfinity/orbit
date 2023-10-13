@@ -107,7 +107,7 @@ impl Account {
         AccountKey { id }
     }
 
-    pub fn as_key(&self) -> AccountKey {
+    pub fn to_key(&self) -> AccountKey {
         Account::key(self.id)
     }
 }

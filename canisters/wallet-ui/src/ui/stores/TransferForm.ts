@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { amountToBigInt, formatBalance, logger } from '~/core';
-import { WalletId, Transfer, WalletListItem } from '~/generated/bank/bank.did';
+import { Transfer, Wallet, WalletId } from '~/generated/bank/bank.did';
 import { useActiveBankStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { requiredRule, validTokenAmount } from '~/ui/utils';
@@ -58,7 +58,7 @@ export const useTransferFormStore = defineStore('transferForm', {
     canSave(state): boolean {
       return state.isValid && this.hasChanges;
     },
-    selectedWallet(state): WalletListItem | null {
+    selectedWallet(state): Wallet | null {
       const activeBank = useActiveBankStore();
 
       return activeBank.wallets.items.find(wallet => wallet.id === state.form.walletId) ?? null;
@@ -89,7 +89,7 @@ export const useTransferFormStore = defineStore('transferForm', {
           return {
             value: wallet.id,
             title: `${wallet.name}: ${wallet.id}`,
-            balance: `${wallet.asset_symbol}: ${balance}`,
+            balance: `${wallet.symbol}: ${balance}`,
           };
         });
     },

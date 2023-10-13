@@ -1,13 +1,12 @@
 use super::OperationProcessor;
 use crate::{
     errors::WalletError,
-    mappers::{HelperMapper, TransferMapper, WalletMapper},
+    mappers::HelperMapper,
     models::{
-        Operation, OperationCode, OperationFeedback, OperationStatus, Transfer, TransferStatus,
+        Operation, OperationCode, OperationContext, OperationStatus, Transfer, TransferStatus,
         Wallet, OPERATION_METADATA_KEY_TRANSFER_ID,
     },
     repositories::{OperationRepository, TransferRepository, WalletRepository},
-    transport::OperationContextDTO,
 };
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
@@ -17,12 +16,9 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct ApproveTransferOperationProcessor {
-    helper_mapper: HelperMapper,
     transfer_repository: TransferRepository,
     operation_repository: OperationRepository,
-    transfer_mapper: TransferMapper,
     wallet_repository: WalletRepository,
-    wallet_mapper: WalletMapper,
 }
 
 impl ApproveTransferOperationProcessor {
@@ -39,9 +35,7 @@ impl ApproveTransferOperationProcessor {
         let unparsed_transfer_id = metadata
             .get(OPERATION_METADATA_KEY_TRANSFER_ID)
             .ok_or(ApiError::new("ERR".to_string(), None, None))?;
-        let transfer_id = self
-            .helper_mapper
-            .uuid_from_str(unparsed_transfer_id.to_owned())?;
+        let transfer_id = HelperMapper::to_uuid(unparsed_transfer_id.to_owned())?;
         let transfer = self
             .transfer_repository
             .get(&Transfer::key(*transfer_id.as_bytes()))
@@ -70,12 +64,13 @@ impl ApproveTransferOperationProcessor {
     fn reevaluate_transfer(&self, operation: &Operation) -> Result<(), ApiError> {
         let mut transfer = self.get_transfer(operation)?;
 
-        let operations = self.operation_repository.find_by_transfer_id(transfer.id);
-        let total_approvals = operations
+        let total_approvals = operation
+            .decisions
             .iter()
             .filter(|operations| operations.status == OperationStatus::Adopted)
             .count();
-        let missing_feedback = operations
+        let missing_feedback = operation
+            .decisions
             .iter()
             .filter(|operations| operations.status == OperationStatus::Pending)
             .count();
@@ -94,21 +89,23 @@ impl ApproveTransferOperationProcessor {
 
             transfer.last_modification_timestamp = time();
             self.transfer_repository
-                .insert(transfer.as_key(), transfer.to_owned());
+                .insert(transfer.to_key(), transfer.to_owned());
 
-            operations.iter().for_each(|operation| {
-                let mut updated_operation = operation.to_owned();
-                if operation.status == OperationStatus::Pending {
-                    updated_operation.status = OperationStatus::Abstained;
-                    updated_operation.last_modification_timestamp = time();
-                    updated_operation.feedback = Some(OperationFeedback {
-                        created_at: time(),
-                        reason: None,
-                    });
-                    self.operation_repository
-                        .insert(updated_operation.as_key(), updated_operation.to_owned());
+            let mut updated_operation = operation.to_owned();
+            updated_operation.status = match is_approved {
+                true => OperationStatus::Adopted,
+                _ => OperationStatus::Rejected,
+            };
+
+            updated_operation.decisions.iter_mut().for_each(|decision| {
+                if decision.status == OperationStatus::Pending {
+                    decision.status = OperationStatus::NotRequired;
+                    decision.last_modification_timestamp = time();
+                    decision.decided_dt = Some(time());
                 }
             });
+            self.operation_repository
+                .insert(updated_operation.to_key(), updated_operation.to_owned());
         }
 
         Ok(())
@@ -117,20 +114,23 @@ impl ApproveTransferOperationProcessor {
 
 #[async_trait]
 impl OperationProcessor for ApproveTransferOperationProcessor {
-    async fn post_process(&self, operation: &Operation) -> Result<(), ApiError> {
+    async fn post_process(&self, operation: &Operation) -> Result<Operation, ApiError> {
         self.validate_type(operation)?;
         self.reevaluate_transfer(operation)?;
 
-        Ok(())
+        Ok(self
+            .operation_repository
+            .get(&Operation::key(operation.id))
+            .unwrap_or(operation.clone()))
     }
 
-    fn get_context(&self, operation: &Operation) -> Result<OperationContextDTO, ApiError> {
+    fn get_context(&self, operation: &Operation) -> Result<OperationContext, ApiError> {
         let transfer = self.get_transfer(operation)?;
         let wallet = self.get_wallet(operation)?;
 
-        Ok(OperationContextDTO {
-            transfer: Some(self.transfer_mapper.transfer_to_dto(transfer)),
-            wallet: Some(self.wallet_mapper.wallet_to_dto(wallet)),
+        Ok(OperationContext {
+            transfer: Some(transfer),
+            wallet: Some(wallet),
         })
     }
 }

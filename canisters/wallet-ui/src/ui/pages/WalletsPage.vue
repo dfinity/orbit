@@ -16,7 +16,7 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow v-if="activeBank.wallets.items.length">
-          <VCol v-for="(wallet, idx) in activeBank.wallets.items" :key="idx" cols="12" md="6">
+          <VCol v-for="(wallet, idx) in activeBank.sortedWallets" :key="idx" cols="12" md="6">
             <VCard density="compact" variant="elevated" class="wallet-card">
               <VCardTitle>
                 <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
@@ -25,7 +25,7 @@
                 </template>
               </VCardTitle>
               <VCardSubtitle class="wallet-card__subtitle">
-                <span>{{ wallet.asset_symbol }}</span>
+                <span>{{ wallet.symbol }}</span>
                 <template v-if="wallet.address">
                   <span>:&nbsp;</span>
                   <span class="wallet-card__subtitle__address" :title="wallet.address">
@@ -50,7 +50,7 @@
                     {{ formatBalance(wallet.balance[0].balance, wallet.balance[0].decimals) }}
                   </span>
                   <span v-else class="wallet-card__amount wallet-card__amount--unavailable">-</span>
-                  {{ wallet.asset_symbol }}
+                  {{ wallet.symbol }}
                 </p>
               </VCardText>
               <VCardActions>
@@ -58,9 +58,11 @@
                   size="x-small"
                   color="primary-variant"
                   variant="tonal"
-                  :prepend-icon="wallet.nr_owners > 1 ? mdiAccountGroup : mdiAccount"
+                  :prepend-icon="wallet.owners.length > 1 ? mdiAccountGroup : mdiAccount"
                 >
-                  {{ wallet.nr_owners > 1 ? $t('banks.joint_wallet') : $t('banks.private_wallet') }}
+                  {{
+                    wallet.owners.length > 1 ? $t('banks.joint_wallet') : $t('banks.private_wallet')
+                  }}
                 </VChip>
                 <VSpacer />
                 <VBtn

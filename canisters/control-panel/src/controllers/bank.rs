@@ -1,30 +1,31 @@
 //! Bank services.
 use crate::{
-    core::{ApiResult, CallContext},
+    core::{CallContext, WithCallContext},
     services::AccountService,
-    transport::{GetMainBankResponse, ListBanksResponse},
+    transport::{AccountBankDTO, GetMainBankResponse, ListBanksResponse},
 };
+use ic_canister_core::api::ApiResult;
 use ic_cdk_macros::query;
 
 #[query(name = "list_banks")]
 async fn list_banks() -> ApiResult<ListBanksResponse> {
-    let ctx = CallContext::get();
-    let account_service = AccountService::default();
-    let account_details = account_service.get_account_details(&ctx.caller()).await?;
+    let account = AccountService::with_call_context(CallContext::get())
+        .get_account_by_identity(&CallContext::get().caller())?;
 
     Ok(ListBanksResponse {
-        banks: match account_details {
-            Some(account) => account.banks,
-            None => vec![],
-        },
+        banks: account
+            .banks
+            .into_iter()
+            .map(AccountBankDTO::from)
+            .collect(),
     })
 }
 
 #[query(name = "get_main_bank")]
 async fn get_main_bank() -> ApiResult<GetMainBankResponse> {
-    let ctx = CallContext::get();
-    let account_service = AccountService::default();
-    let main_bank = account_service.get_account_main_bank(&ctx.caller()).await?;
+    let main_bank = AccountService::with_call_context(CallContext::get()).get_main_bank()?;
 
-    Ok(GetMainBankResponse { bank: main_bank })
+    Ok(GetMainBankResponse {
+        bank: main_bank.map(AccountBankDTO::from),
+    })
 }

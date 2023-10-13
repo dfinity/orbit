@@ -12,10 +12,13 @@
       <VListItem v-if="!activeBank.hasPendingOperations" class="text-center">
         {{ $t('terms.all_done') }}
       </VListItem>
-      <VListItem v-for="(operation, idx) in activeBank.sortedPendingOperations" :key="idx">
+      <VListItem v-for="({ loading, data }, idx) in activeBank.sortedPendingOperations" :key="idx">
         <BankOperation
-          v-model="activeBank.sortedPendingOperations[idx]"
-          @updated="() => save(operation)"
+          :loading="loading"
+          :operation="activeBank.sortedPendingOperations[idx].data"
+          @read="read => onRead(data, read)"
+          @adopted="submitDecision(data, true)"
+          @rejected="submitDecision(data, false)"
         />
         <VDivider v-if="activeBank.pendingOperations.items.length - 1 !== idx" class="mt-4" />
       </VListItem>
@@ -37,7 +40,11 @@ const emit = defineEmits<{
   (event: 'close'): void;
 }>();
 
-const save = (operation: Operation) => activeBank.saveOperation(operation);
+const onRead = (operation: Operation, read: boolean) =>
+  activeBank.saveDecision(operation.id, { read });
+
+const submitDecision = (operation: Operation, approve: boolean) =>
+  activeBank.saveDecision(operation.id, { approve });
 </script>
 
 <style lang="scss">

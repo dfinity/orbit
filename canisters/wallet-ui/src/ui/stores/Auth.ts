@@ -51,19 +51,15 @@ export const useAuthStore = defineStore('auth', {
         }
 
         icAgent.get().replaceIdentity(cachedIdentity);
-        const accountDetails = await controlPanelService.get_account_details();
-
-        if (!accountDetails) {
-          throw new Error('Account not found');
-        }
+        const account = await controlPanelService.fetchAccount();
 
         // loads information about the main bank and the list of banks for the account
         await this.initBanks();
 
         this.identity = cachedIdentity;
-        this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
-        this.accountId = accountDetails.id;
-        this._identities = accountDetails.identities.map(identity => identity.identity.toText());
+        this.accountName = account.name.length ? account.name[0] : null;
+        this.accountId = account.id;
+        this._identities = account.identities.map(identity => identity.identity.toText());
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
@@ -90,26 +86,27 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const controlPanelService = services().controlPanel;
-        const accountDetails = await controlPanelService.get_account_details();
+        const isRegistered = await controlPanelService.hasRegistration();
 
-        if (accountDetails) {
+        if (isRegistered) {
+          const account = await controlPanelService.fetchAccount();
           // loads information about the main bank and the list of banks for the account
           await this.initBanks();
 
-          this.accountName = accountDetails.name.length ? accountDetails.name[0] : null;
-          this.accountId = accountDetails.id;
-          this._identities = accountDetails.identities.map(identity => identity.identity.toText());
+          this.accountName = account.name.length ? account.name[0] : null;
+          this.accountId = account.id;
+          this._identities = account.identities.map(identity => identity.identity.toText());
           return;
         }
 
-        const account = await controlPanelService.register_with_shared_bank();
+        const account = await controlPanelService.registerWithSharedBank();
 
         // loads information about the main bank and the list of banks for the account
         await this.initBanks();
 
         this.accountName = account.name.length ? account.name[0] : null;
         this.accountId = account.id;
-        this._identities = account.identities.map(identity => identity.toText());
+        this._identities = account.identities.map(identity => identity.identity.toText());
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();

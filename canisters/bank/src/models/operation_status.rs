@@ -12,7 +12,7 @@ pub enum OperationStatus {
     Pending = 0,
     Adopted = 1,
     Rejected = 2,
-    Abstained = 3,
+    NotRequired = 3,
 }
 
 impl From<OperationStatus> for u8 {
@@ -29,7 +29,7 @@ impl TryFrom<u8> for OperationStatus {
             0 => Ok(OperationStatus::Pending),
             1 => Ok(OperationStatus::Adopted),
             2 => Ok(OperationStatus::Rejected),
-            3 => Ok(OperationStatus::Abstained),
+            3 => Ok(OperationStatus::NotRequired),
             _ => Err(()),
         }
     }
@@ -43,7 +43,7 @@ impl FromStr for OperationStatus {
             "pending" => Ok(OperationStatus::Pending),
             "adopted" => Ok(OperationStatus::Adopted),
             "rejected" => Ok(OperationStatus::Rejected),
-            "abstained" => Ok(OperationStatus::Abstained),
+            "not-required" => Ok(OperationStatus::NotRequired),
             _ => Err(()),
         }
     }
@@ -55,7 +55,7 @@ impl Display for OperationStatus {
             OperationStatus::Pending => write!(f, "pending"),
             OperationStatus::Adopted => write!(f, "adopted"),
             OperationStatus::Rejected => write!(f, "rejected"),
-            OperationStatus::Abstained => write!(f, "abstained"),
+            OperationStatus::NotRequired => write!(f, "not-required"),
         }
     }
 }

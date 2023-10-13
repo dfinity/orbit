@@ -138,7 +138,6 @@
                     variant="filled"
                     density="compact"
                     clearable
-                    :disabled="!identity.confirmed"
                     :rules="settings.validationRules.identityName"
                   />
                   <VTextField

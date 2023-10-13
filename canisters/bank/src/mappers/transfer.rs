@@ -6,7 +6,7 @@ use crate::{
     },
     transport::{
         NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferListItemDTO,
-        TransferMetadataDTO, TransferStatusDTO,
+        TransferMetadataDTO,
     },
 };
 use candid::Nat;
@@ -17,13 +17,10 @@ use ic_canister_core::{
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
-pub struct TransferMapper {
-    helper_mapper: HelperMapper,
-}
+pub struct TransferMapper {}
 
 impl TransferMapper {
-    pub fn new_transfer_from_input(
-        &self,
+    pub fn from_create_input(
         input: TransferInput,
         transfer_id: TransferId,
         initiator_account: AccountId,
@@ -34,10 +31,7 @@ impl TransferMapper {
         Ok(Transfer {
             id: transfer_id,
             initiator_account,
-            from_wallet: *self
-                .helper_mapper
-                .uuid_from_str(input.from_wallet_id)?
-                .as_bytes(),
+            from_wallet: *HelperMapper::to_uuid(input.from_wallet_id)?.as_bytes(),
             expiration_dt: input.expiration_dt.map_or(default_expiration_dt, |dt| {
                 rfc3339_to_timestamp(dt.as_str())
             }),
@@ -68,7 +62,7 @@ impl TransferMapper {
         })
     }
 
-    pub fn transfer_to_dto(&self, transfer: Transfer) -> TransferDTO {
+    pub fn to_dto(transfer: Transfer) -> TransferDTO {
         TransferDTO {
             id: Uuid::from_slice(&transfer.id)
                 .unwrap()
@@ -102,40 +96,11 @@ impl TransferMapper {
                     }
                 }
             },
-            status: self.to_transfer_status_dto(transfer.status),
+            status: transfer.status.into(),
         }
     }
 
-    pub fn to_transfer_status_dto(&self, status: TransferStatus) -> TransferStatusDTO {
-        match status {
-            TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
-                reason: reason.map(|r| r.to_owned()),
-            },
-            TransferStatus::Processing { started_at } => TransferStatusDTO::Processing {
-                started_at: timestamp_to_rfc3339(&started_at),
-            },
-            TransferStatus::Submitted => TransferStatusDTO::Submitted,
-            TransferStatus::Pending => TransferStatusDTO::Pending,
-            TransferStatus::Completed {
-                signature,
-                hash,
-                completed_at,
-            } => TransferStatusDTO::Completed {
-                signature: signature.map(|s| s.to_owned()),
-                hash: hash.map(|h| h.to_owned()),
-                completed_at: timestamp_to_rfc3339(&completed_at),
-            },
-            TransferStatus::Approved => TransferStatusDTO::Approved,
-            TransferStatus::Rejected { reason } => TransferStatusDTO::Rejected {
-                reason: reason.to_owned(),
-            },
-            TransferStatus::Failed { reason } => TransferStatusDTO::Failed {
-                reason: reason.to_owned(),
-            },
-        }
-    }
-
-    pub fn transfer_to_list_item_dto(&self, transfer: Transfer) -> TransferListItemDTO {
+    pub fn to_list_item_dto(transfer: Transfer) -> TransferListItemDTO {
         TransferListItemDTO {
             transfer_id: Uuid::from_slice(&transfer.id)
                 .unwrap()
@@ -144,7 +109,17 @@ impl TransferMapper {
             amount: transfer.amount,
             to: transfer.to_address,
             created_at: timestamp_to_rfc3339(&transfer.created_timestamp),
-            status: self.to_transfer_status_dto(transfer.status),
+            status: transfer.status.into(),
         }
+    }
+}
+
+impl Transfer {
+    pub fn to_dto(&self) -> TransferDTO {
+        TransferMapper::to_dto(self.clone())
+    }
+
+    pub fn to_list_item_dto(&self) -> TransferListItemDTO {
+        TransferMapper::to_list_item_dto(self.clone())
     }
 }

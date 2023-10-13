@@ -14,6 +14,12 @@ pub enum OperationError {
     /// Operations that have already been completed cannot be modified.
     #[error(r#"This operation was already completed, it cannot be modified."#)]
     NotAllowedModification { operation_id: String },
+    /// The reason for the operation status is too long.
+    #[error(r#"The reason for the operation status is too long."#)]
+    TaskReasonTooLong { max_len: u8 },
+    /// The operation has failed validation.
+    #[error(r#"The operation has failed validation."#)]
+    ValidationError { info: String },
 }
 
 impl DetailableError for OperationError {
@@ -30,6 +36,14 @@ impl DetailableError for OperationError {
             }
             OperationError::NotAllowedModification { operation_id } => {
                 details.insert("operation_id".to_string(), operation_id.to_string());
+                Some(details)
+            }
+            OperationError::TaskReasonTooLong { max_len } => {
+                details.insert("max_len".to_string(), max_len.to_string());
+                Some(details)
+            }
+            OperationError::ValidationError { info } => {
+                details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
         }

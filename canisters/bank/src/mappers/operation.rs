@@ -1,7 +1,7 @@
 use crate::{
     errors::MapperError,
-    models::{Operation, OperationCode, OperationStatus},
-    transport::{OperationContextDTO, OperationDTO, OperationStatusDTO},
+    models::{Operation, OperationCode, OperationContext},
+    transport::{OperationContextDTO, OperationDTO},
 };
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use std::str::FromStr;
@@ -11,50 +11,37 @@ use uuid::Uuid;
 pub struct OperationMapper {}
 
 impl OperationMapper {
-    pub fn to_operation_dto(
-        &self,
-        operation: Operation,
-        context: OperationContextDTO,
-    ) -> OperationDTO {
+    pub fn to_dto(operation: Operation, context: OperationContext) -> OperationDTO {
         OperationDTO {
             id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
-            account: Uuid::from_bytes(operation.account_id)
-                .hyphenated()
-                .to_string(),
-            read: operation.read,
-            status: match operation.status {
-                OperationStatus::Pending => OperationStatusDTO::Pending,
-                OperationStatus::Adopted => OperationStatusDTO::Adopted,
-                OperationStatus::Rejected => OperationStatusDTO::Rejected,
-                OperationStatus::Abstained => OperationStatusDTO::Abstained,
-            },
+            originator_account_id: operation
+                .originator_account_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+            status: operation.status.into(),
             metadata: operation.metadata,
             code: operation.code.to_string(),
             created_at: timestamp_to_rfc3339(&operation.created_timestamp),
-            feedback_time_at: operation
-                .feedback
-                .to_owned()
-                .map(|feedback| timestamp_to_rfc3339(&feedback.created_at)),
-            feedback_reason: match operation.feedback {
-                Some(feedback) => feedback.reason,
-                None => None,
+            decisions: operation
+                .decisions
+                .iter()
+                .map(|decision| decision.to_owned().into())
+                .collect(),
+            context: OperationContextDTO {
+                transfer: context.transfer.map(|transfer| transfer.to_dto()),
+                wallet: context.wallet.map(|wallet| wallet.to_dto()),
             },
-            context,
         }
     }
 
-    pub fn to_status(&self, status: OperationStatusDTO) -> OperationStatus {
-        match status {
-            OperationStatusDTO::Pending => OperationStatus::Pending,
-            OperationStatusDTO::Adopted => OperationStatus::Adopted,
-            OperationStatusDTO::Rejected => OperationStatus::Rejected,
-            OperationStatusDTO::Abstained => OperationStatus::Abstained,
-        }
-    }
-
-    pub fn to_code(&self, code: String) -> Result<OperationCode, MapperError> {
+    pub fn to_code(code: String) -> Result<OperationCode, MapperError> {
         OperationCode::from_str(code.as_str()).map_err(|_| MapperError::UnknownOperationCode {
             code: code.to_owned(),
         })
+    }
+}
+
+impl Operation {
+    pub fn to_dto(&self, context: OperationContext) -> OperationDTO {
+        OperationMapper::to_dto(self.clone(), context)
     }
 }

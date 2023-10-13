@@ -101,30 +101,27 @@ export const useSettingsFormStore = defineStore('settingsForm', {
     },
     async initialize(): Promise<void> {
       this.reset();
-      const details = await services().controlPanel.get_account_details();
-      if (!details) {
-        throw new Error(i18n.global.t('settings.load_failed'));
-      }
+      const account = await services().controlPanel.fetchAccount();
 
-      this.form.name = details.name?.[0] ?? null;
-      this.form.mainBank = details.main_bank?.[0]?.toText() ?? null;
-      details.banks.forEach(bank => {
+      this.form.name = account.name?.[0] ?? null;
+      this.form.mainBank = account.main_bank?.[0]?.toText() ?? null;
+      account.banks.forEach(bank => {
         this.form.banks.push({
           name: bank.name?.[0] ?? null,
           canisterId: bank.canister_id.toText(),
         });
       });
-      details.identities.forEach(identity => {
+      account.identities.forEach(confirmed => {
         this.form.identities.push({
-          name: identity.name?.[0] ?? null,
-          principal: identity.identity.toText(),
+          name: confirmed.name?.[0] ?? null,
+          principal: confirmed.identity.toText(),
           confirmed: true,
         });
       });
-      details.unconfirmed_identities.forEach(unconfirmedIdentity => {
+      account.unconfirmed_identities.forEach(unconfirmed => {
         this.form.identities.push({
-          name: null,
-          principal: unconfirmedIdentity.toText(),
+          name: unconfirmed.name?.[0] ?? null,
+          principal: unconfirmed.identity.toText(),
           confirmed: false,
         });
       });
@@ -186,20 +183,13 @@ export const useSettingsFormStore = defineStore('settingsForm', {
             })),
           ],
           identities: [
-            this.form.identities
-              .filter(identity => identity.confirmed)
-              .map(identity => ({
-                name: identity.name ? [identity.name] : [],
-                identity: Principal.fromText(identity.principal),
-              })),
-          ],
-          unconfirmed_identities: [
-            this.form.identities
-              .filter(identity => !identity.confirmed)
-              .map(unconfirmedIdentity => Principal.fromText(unconfirmedIdentity.principal)),
+            this.form.identities.map(identity => ({
+              name: identity.name ? [identity.name] : [],
+              identity: Principal.fromText(identity.principal),
+            })),
           ],
         })
-        .then(accountDetails => {
+        .then(account => {
           this.alert = {
             show: true,
             type: 'success',
@@ -208,9 +198,9 @@ export const useSettingsFormStore = defineStore('settingsForm', {
 
           const auth = useAuthStore();
           const bank = useBankStore();
-          auth.editAccount({ name: accountDetails.name?.[0] ?? null });
+          auth.editAccount({ name: account.name?.[0] ?? null });
           bank.useBanks(
-            accountDetails.banks.map(bank => ({
+            account.banks.map(bank => ({
               canisterId: bank.canister_id.toText(),
               name: bank.name?.[0] ?? null,
             })),

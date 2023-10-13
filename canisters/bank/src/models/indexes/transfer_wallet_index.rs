@@ -1,9 +1,5 @@
-use crate::{
-    models::{Transfer, TransferId, WalletId},
-    repositories::TransferRepository,
-};
+use crate::models::{Transfer, TransferId, WalletId};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 use std::hash::Hash;
@@ -30,12 +26,6 @@ pub struct TransferWalletIndexCriteria {
 impl TransferWalletIndex {
     /// The default criteria interval in nanoseconds (7 days).
     pub const DEFAULT_CRITERIA_INTERVAL_NS: u64 = 7 * 24 * 60 * 60 * 1_000_000_000;
-
-    pub fn to_transfer(&self) -> Transfer {
-        TransferRepository::default()
-            .get(&Transfer::key(self.transfer_id))
-            .expect("Transfer not found")
-    }
 }
 
 impl Transfer {

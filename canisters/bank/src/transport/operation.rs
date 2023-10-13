@@ -8,7 +8,7 @@ pub enum OperationStatusDTO {
     Rejected,
     Adopted,
     Pending,
-    Abstained,
+    NotRequired,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -18,16 +18,23 @@ pub struct OperationContextDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct OperationDecisionDTO {
+    pub account_id: AccountIdDTO,
+    pub read: bool,
+    pub status: OperationStatusDTO,
+    pub status_reason: Option<String>,
+    pub decided_at: Option<TimestampRfc3339>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct OperationDTO {
     pub id: OperationIdDTO,
     pub status: OperationStatusDTO,
     pub code: String,
-    pub read: bool,
     pub created_at: TimestampRfc3339,
     pub metadata: Vec<(String, String)>,
-    pub feedback_reason: Option<String>,
-    pub account: AccountIdDTO,
-    pub feedback_time_at: Option<TimestampRfc3339>,
+    pub originator_account_id: Option<AccountIdDTO>,
+    pub decisions: Vec<OperationDecisionDTO>,
     pub context: OperationContextDTO,
 }
 

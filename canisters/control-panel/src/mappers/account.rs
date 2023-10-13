@@ -1,27 +1,25 @@
-use super::{AccountBankMapper, AccountIdentityMapper};
+use std::collections::HashSet;
+
 use crate::{
-    core::{ic::api::time, UUID},
-    entities::{Account, AccountBank, AccountIdentity},
+    errors::AccountError,
+    models::{Account, AccountBank, AccountId, AccountIdentity},
     transport::{
-        AccountDTO, AccountDetailsDTO, ManageAccountInput, RegisterAccountBankInput,
-        RegisterAccountInput,
+        AccountBankDTO, AccountDTO, AccountIdentityDTO, ManageAccountInput,
+        RegisterAccountBankInput, RegisterAccountInput,
     },
 };
 use candid::Principal;
+use ic_canister_core::cdk::api::time;
 use uuid::Uuid;
 
 #[derive(Default)]
-pub struct AccountMapper {
-    account_identity_mapper: AccountIdentityMapper,
-    account_bank_mapper: AccountBankMapper,
-}
+pub struct AccountMapper {}
 
 impl AccountMapper {
     /// Maps the registration input to an account entity.
-    pub fn map_register_account_input_to_account(
-        &self,
+    pub fn from_register_input(
         input: RegisterAccountInput,
-        account_id: UUID,
+        account_id: AccountId,
         identity: Principal,
         global_shared_bank_canister_id: Principal,
     ) -> Account {
@@ -50,79 +48,96 @@ impl AccountMapper {
         Account {
             id: account_id,
             name: input.name,
-            banks,
+            banks: banks
+                .into_iter()
+                .map(|canister_id| AccountBank {
+                    canister_id,
+                    name: None,
+                })
+                .collect(),
             unconfirmed_identities: vec![],
-            identities: vec![identity],
+            identities: vec![AccountIdentity {
+                identity,
+                name: None,
+            }],
             last_update_timestamp: time(),
             main_bank: Some(main_bank),
         }
     }
+}
 
-    pub fn map_account_to_account_dto(&self, account: Account) -> AccountDTO {
+impl From<Account> for AccountDTO {
+    fn from(account: Account) -> Self {
         AccountDTO {
             id: Uuid::from_bytes(account.id).hyphenated().to_string(),
             name: account.name,
             main_bank: account.main_bank,
-            banks: account.banks,
-            identities: account.identities,
-            unconfirmed_identities: account.unconfirmed_identities,
-        }
-    }
-
-    pub fn map_to_account_details_dto(
-        &self,
-        account: &Account,
-        banks: &[AccountBank],
-        identities: &[AccountIdentity],
-    ) -> AccountDetailsDTO {
-        AccountDetailsDTO {
-            id: Uuid::from_bytes(account.id).hyphenated().to_string(),
-            name: account.name.clone(),
-            main_bank: account.main_bank,
-            unconfirmed_identities: account.unconfirmed_identities.clone(),
-            banks: banks
-                .iter()
-                .map(|bank| self.account_bank_mapper.map_to_dto(bank))
+            banks: account
+                .banks
+                .into_iter()
+                .map(AccountBankDTO::from)
                 .collect(),
-            identities: identities
-                .iter()
-                .map(|identity| self.account_identity_mapper.map_to_dto(identity))
+            identities: account
+                .identities
+                .into_iter()
+                .map(AccountIdentityDTO::from)
+                .collect(),
+            unconfirmed_identities: account
+                .unconfirmed_identities
+                .into_iter()
+                .map(AccountIdentityDTO::from)
                 .collect(),
         }
     }
+}
 
-    pub fn update_account_with_input(
-        &self,
-        input: &ManageAccountInput,
-        account: &Account,
-        account_identities: &[AccountIdentity],
-        account_banks: &[AccountBank],
-    ) -> Account {
-        let mut account = account.clone();
-        account.last_update_timestamp = time();
+impl Account {
+    pub fn update_with(
+        &mut self,
+        input: ManageAccountInput,
+        caller_identity: &Principal,
+    ) -> Result<(), AccountError> {
+        if let Some(new_identities) = input.identities {
+            if !new_identities
+                .iter()
+                .any(|i| i.identity == *caller_identity)
+            {
+                Err(AccountError::SelfLocked)?
+            }
 
-        if let Some(name) = &input.name {
-            account.name = Some(name.clone());
+            let mut confirmed_identities: HashSet<AccountIdentity> = HashSet::new();
+            let mut unconfirmed_identities: HashSet<AccountIdentity> = HashSet::new();
+            for new_identity in &new_identities {
+                match self
+                    .identities
+                    .iter()
+                    .any(|i| i.identity == new_identity.identity)
+                {
+                    true => {
+                        confirmed_identities.insert(AccountIdentity::from(new_identity.clone()));
+                    }
+                    false => {
+                        unconfirmed_identities.insert(AccountIdentity::from(new_identity.clone()));
+                    }
+                }
+            }
+
+            self.identities = confirmed_identities.into_iter().collect();
+            self.unconfirmed_identities = unconfirmed_identities.into_iter().collect();
         }
 
-        if let Some(unconfirmed_identities) = &input.unconfirmed_identities {
-            account.unconfirmed_identities = unconfirmed_identities.clone();
+        if let Some(name) = input.name {
+            self.name = Some(name);
         }
 
-        if let Some(main_bank) = &input.main_bank {
-            account.main_bank = Some(*main_bank);
+        if let Some(bank) = input.main_bank {
+            self.main_bank = Some(bank);
         }
 
-        account.identities = account_identities
-            .iter()
-            .map(|account_identity| account_identity.identity)
-            .collect();
+        if let Some(banks) = input.banks {
+            self.banks = banks.iter().map(|b| AccountBank::from(b.clone())).collect();
+        }
 
-        account.banks = account_banks
-            .iter()
-            .map(|account_bank| account_bank.canister_id)
-            .collect();
-
-        account
+        Ok(())
     }
 }

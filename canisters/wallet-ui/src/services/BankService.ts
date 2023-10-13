@@ -27,7 +27,6 @@ import {
   TransferListItem,
   Wallet,
   WalletBalance,
-  WalletListItem,
   _SERVICE,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
@@ -137,11 +136,7 @@ export class BankService {
     return operations.filter(operation => operation.id !== last_id);
   }
 
-  async editOperation(input: EditOperationInput): Promise<Operation> {
-    if (input.approve?.[0] !== undefined && input.read?.[0] === undefined) {
-      input.read = [true];
-    }
-
+  async submitOperationDecision(input: EditOperationInput): Promise<Operation> {
     const result = await this.actor.edit_operation(input);
 
     if ('Err' in result) {
@@ -161,7 +156,7 @@ export class BankService {
     return result.Ok.operation;
   }
 
-  async listWallets(): Promise<WalletListItem[]> {
+  async listWallets(): Promise<Wallet[]> {
     const result = await this.actor.list_wallets();
 
     if ('Err' in result) {

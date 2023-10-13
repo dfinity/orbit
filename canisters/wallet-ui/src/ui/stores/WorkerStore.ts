@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
-import { arrayBatchMaker, logger, timer } from '~/core';
-import { Transfer, WalletBalance } from '~/generated/bank/bank.did';
+import { logger, timer } from '~/core';
+import { Transfer, Wallet } from '~/generated/bank/bank.did';
+import { WalletApiFactory } from '~/services';
+import { WalletApi } from '~/types/Wallet';
 import { useActiveBankStore } from '~/ui/stores';
 
-const BALANCE_POLLING_INTERVAL = 10000;
+const BALANCE_POLLING_INTERVAL = 30000;
 const NOTIFICATIONS_POLLING_INTERVAL = 5000;
-const BALANCE_FETCH_BATCH_QUANTITY = 5;
 
 export interface WorkerStoreState {
   pollingJobs: {
@@ -50,24 +51,32 @@ export const useWorkerStore = defineStore('cache', {
           return;
         }
 
-        const requests: Promise<WalletBalance[]>[] = arrayBatchMaker(
-          activeBank.wallets.items.map(wallet => wallet.id),
-          BALANCE_FETCH_BATCH_QUANTITY,
-        ).map(walletIds => activeBank.service.fetchWalletBalances({ wallet_ids: walletIds }));
+        const walletApis: { wallet: Wallet; api: WalletApi }[] = activeBank.wallets.items
+          .map(wallet => {
+            try {
+              const api = WalletApiFactory.create(wallet);
+              return { wallet, api };
+            } catch (e) {
+              logger.warn('Wallet api not supported for wallet', { error: e, wallet: wallet.id });
+            }
+
+            return null;
+          })
+          .filter(entry => entry !== null) as { wallet: Wallet; api: WalletApi }[];
+
+        const requests = walletApis.map(async ({ wallet, api }) =>
+          api.fetchBalance().then(balance => ({ wallet, balance })),
+        );
 
         const balances = (await Promise.all(requests)).flat();
-        for (const balance of balances) {
-          activeBank.wallets.items.forEach(wallet => {
-            if (wallet.id === balance.wallet_id) {
-              wallet.balance = [
-                {
-                  balance: balance.balance,
-                  decimals: balance.decimals,
-                  last_update_timestamp: balance.last_update_timestamp,
-                },
-              ];
-            }
-          });
+        for (const { wallet, balance } of balances) {
+          wallet.balance = [
+            {
+              balance,
+              decimals: wallet.decimals,
+              last_update_timestamp: new Date().toISOString(),
+            },
+          ];
         }
       } catch (error) {
         logger.error("Failed to fetch wallets' balances", { error });
@@ -86,8 +95,13 @@ export const useWorkerStore = defineStore('cache', {
         );
 
         for (const newOperation of newOperations) {
-          if (!activeBank.pendingOperations.items.find(current => current.id === newOperation.id)) {
-            activeBank.pendingOperations.items.push(newOperation);
+          if (
+            !activeBank.pendingOperations.items.find(current => current.data.id === newOperation.id)
+          ) {
+            activeBank.pendingOperations.items.push({
+              loading: false,
+              data: newOperation,
+            });
           }
         }
       } catch (error) {

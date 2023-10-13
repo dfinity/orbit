@@ -1,6 +1,6 @@
 use crate::{
     errors::AccountError,
-    models::{AccessRole, Account, AccountIdentity},
+    models::{AccessRole, Account},
     transport::AccountDTO,
 };
 use candid::Principal;
@@ -16,9 +16,9 @@ use uuid::Uuid;
 pub struct AccountMapper {}
 
 impl AccountMapper {
-    pub fn identity_to_base_user_account(&self, identity: Principal, account_id: UUID) -> Account {
+    pub fn to_base_user_account(identity: Principal, new_account_id: UUID) -> Account {
         Account {
-            id: account_id,
+            id: new_account_id,
             identities: vec![identity],
             unconfirmed_identities: vec![],
             access_roles: vec![AccessRole::User],
@@ -27,13 +27,12 @@ impl AccountMapper {
     }
 
     pub fn from_identity(
-        &self,
         identity: Principal,
-        account_id: UUID,
+        new_account_id: UUID,
         roles: Vec<AccessRole>,
     ) -> Account {
         Account {
-            id: account_id,
+            id: new_account_id,
             identities: vec![identity],
             unconfirmed_identities: vec![],
             access_roles: roles,
@@ -41,24 +40,12 @@ impl AccountMapper {
         }
     }
 
-    pub fn from_roles(&self, account_id: UUID, roles: Vec<AccessRole>) -> Account {
+    pub fn from_roles(new_account_id: UUID, roles: Vec<AccessRole>) -> Account {
         Account {
-            id: account_id,
+            id: new_account_id,
             identities: vec![],
             unconfirmed_identities: vec![],
             access_roles: roles,
-            last_modification_timestamp: time(),
-        }
-    }
-
-    pub fn new_account_to_identity_association(
-        &self,
-        identity: Principal,
-        account: &Account,
-    ) -> AccountIdentity {
-        AccountIdentity {
-            account_id: account.id,
-            identity_id: identity,
             last_modification_timestamp: time(),
         }
     }

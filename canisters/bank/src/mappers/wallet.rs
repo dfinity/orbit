@@ -1,25 +1,20 @@
-use super::{BlockchainMapper, WalletPolicyMapper};
+use super::BlockchainMapper;
 use crate::{
     errors::MapperError,
     models::{
         AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
         WALLET_METADATA_SYMBOL_KEY,
     },
-    transport::{
-        CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO, WalletListItemDTO,
-    },
+    transport::{CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO},
 };
 use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
-pub struct WalletMapper {
-    pub wallet_policy_mapper: WalletPolicyMapper,
-    pub blockchain_mapper: BlockchainMapper,
-}
+pub struct WalletMapper {}
 
 impl WalletMapper {
-    pub fn wallet_to_dto(&self, wallet: Wallet) -> WalletDTO {
+    pub fn to_dto(wallet: Wallet) -> WalletDTO {
         WalletDTO {
             id: Uuid::from_slice(&wallet.id)
                 .unwrap()
@@ -55,23 +50,20 @@ impl WalletMapper {
             policies: wallet
                 .policies
                 .iter()
-                .map(|policy| self.wallet_policy_mapper.to_dto(policy.to_owned()))
+                .map(|policy| policy.clone().into())
                 .collect(),
             last_modification_timestamp: timestamp_to_rfc3339(&wallet.last_modification_timestamp),
         }
     }
 
-    pub fn new_wallet_from_create_input(
-        &self,
+    pub fn from_create_input(
         input: CreateWalletInput,
         wallet_id: UUID,
         address: Option<String>,
         owner_accounts: Vec<UUID>,
     ) -> Result<Wallet, MapperError> {
-        let blockchain = self.blockchain_mapper.str_to_blockchain(input.blockchain)?;
-        let standard = self
-            .blockchain_mapper
-            .str_to_blockchain_standard(input.standard)?;
+        let blockchain = BlockchainMapper::to_blockchain(input.blockchain)?;
+        let standard = BlockchainMapper::to_blockchain_standard(input.standard)?;
         let metadata = input.metadata.unwrap_or_default();
 
         if !blockchain.supported_standards().contains(&standard) {
@@ -119,7 +111,7 @@ impl WalletMapper {
             policies: input
                 .policies
                 .iter()
-                .map(|policy_dto| self.wallet_policy_mapper.from_dto(policy_dto.to_owned()))
+                .map(|policy_dto| policy_dto.clone().into())
                 .collect(),
             decimals: 0,
             symbol,
@@ -131,8 +123,7 @@ impl WalletMapper {
         Ok(new_wallet)
     }
 
-    pub fn balance_to_dto(
-        &self,
+    pub fn to_balance_dto(
         balance: WalletBalance,
         decimals: u32,
         wallet_id: WalletId,
@@ -148,35 +139,17 @@ impl WalletMapper {
         }
     }
 
-    pub fn account_to_wallet_association(
-        &self,
-        wallet: &Wallet,
-        account_id: &AccountId,
-    ) -> WalletAccount {
+    pub fn to_account_wallet_association(wallet: &Wallet, account_id: &AccountId) -> WalletAccount {
         WalletAccount {
             wallet_id: wallet.id,
             account_id: *account_id,
             last_modification_timestamp: time(),
         }
     }
+}
 
-    pub fn wallet_list_item(&self, wallet: &Wallet) -> WalletListItemDTO {
-        WalletListItemDTO {
-            id: Uuid::from_slice(&wallet.id)
-                .unwrap()
-                .hyphenated()
-                .to_string(),
-            address: wallet.address.clone(),
-            asset_symbol: wallet.symbol.clone(),
-            name: wallet.name.clone(),
-            asset_name: None,
-            decimals: wallet.decimals,
-            balance: wallet.balance.as_ref().map(|balance| WalletBalanceInfoDTO {
-                balance: balance.balance.clone(),
-                decimals: wallet.decimals,
-                last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
-            }),
-            nr_owners: wallet.owners.len() as u8,
-        }
+impl Wallet {
+    pub fn to_dto(&self) -> WalletDTO {
+        WalletMapper::to_dto(self.clone())
     }
 }

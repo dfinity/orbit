@@ -1,5 +1,6 @@
 use super::indexes::{
     transfer_execution_time_index::TransferExecutionTimeIndexRepository,
+    transfer_expiration_time_index::TransferExpirationTimeIndexRepository,
     transfer_wallet_index::TransferWalletIndexRepository,
 };
 use crate::{
@@ -7,6 +8,7 @@ use crate::{
     models::{
         indexes::{
             transfer_execution_time_index::TransferExecutionTimeIndexCriteria,
+            transfer_expiration_time_index::TransferExpirationTimeIndexCriteria,
             transfer_wallet_index::TransferWalletIndexCriteria,
         },
         Transfer, TransferKey, WalletId,
@@ -33,6 +35,7 @@ thread_local! {
 pub struct TransferRepository {
     wallet_index: TransferWalletIndexRepository,
     execution_dt_index: TransferExecutionTimeIndexRepository,
+    expiration_dt_index: TransferExpirationTimeIndexRepository,
 }
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
@@ -54,6 +57,12 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                     self.execution_dt_index
                         .insert(value.to_index_by_execution_dt());
                 }
+                let prev_expiration_dt_index = prev.to_index_by_expiration_dt();
+                if prev_expiration_dt_index != value.to_index_by_expiration_dt() {
+                    self.expiration_dt_index.remove(&prev_expiration_dt_index);
+                    self.expiration_dt_index
+                        .insert(value.to_index_by_expiration_dt());
+                }
 
                 Some(prev)
             }
@@ -61,6 +70,8 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                 self.wallet_index.insert(value.to_index_by_wallet());
                 self.execution_dt_index
                     .insert(value.to_index_by_execution_dt());
+                self.expiration_dt_index
+                    .insert(value.to_index_by_expiration_dt());
 
                 None
             }
@@ -70,11 +81,11 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
         DB.with(|m| match m.borrow_mut().remove(key) {
             Some(prev) => {
-                let wallet_index = TransferWalletIndexRepository::default();
-                let execution_dt_index = TransferExecutionTimeIndexRepository::default();
-
-                wallet_index.remove(&prev.to_index_by_wallet());
-                execution_dt_index.remove(&prev.to_index_by_execution_dt());
+                self.wallet_index.remove(&prev.to_index_by_wallet());
+                self.execution_dt_index
+                    .remove(&prev.to_index_by_execution_dt());
+                self.expiration_dt_index
+                    .remove(&prev.to_index_by_expiration_dt());
 
                 Some(prev)
             }
@@ -101,7 +112,43 @@ impl TransferRepository {
             .iter()
             .filter_map(|id| match self.get(&Transfer::key(*id)) {
                 Some(transfer) => {
-                    if transfer.status.to_string() == status {
+                    if transfer
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
+                        Some(transfer)
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            })
+            .collect::<Vec<Transfer>>()
+    }
+
+    pub fn find_by_expiration_dt_and_status(
+        &self,
+        expiration_dt_from: Option<Timestamp>,
+        expiration_dt_to: Option<Timestamp>,
+        status: String,
+    ) -> Vec<Transfer> {
+        let transfers =
+            self.expiration_dt_index
+                .find_by_criteria(TransferExpirationTimeIndexCriteria {
+                    from_dt: expiration_dt_from,
+                    to_dt: expiration_dt_to,
+                });
+
+        transfers
+            .iter()
+            .filter_map(|id| match self.get(&Transfer::key(*id)) {
+                Some(transfer) => {
+                    if transfer
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
                         Some(transfer)
                     } else {
                         None
@@ -131,7 +178,11 @@ impl TransferRepository {
             .iter()
             .filter_map(|id| match (self.get(&Transfer::key(*id)), status.clone()) {
                 (Some(transfer), Some(status)) => {
-                    if transfer.status.to_string() == status {
+                    if transfer
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
                         Some(transfer)
                     } else {
                         None

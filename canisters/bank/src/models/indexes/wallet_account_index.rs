@@ -1,9 +1,5 @@
-use crate::{
-    models::{AccountId, Wallet, WalletId},
-    repositories::WalletRepository,
-};
+use crate::models::{AccountId, Wallet, WalletId};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
 use ic_canister_macros::stable_object;
 
 #[stable_object(size = 64)]
@@ -13,14 +9,6 @@ pub struct WalletAccountIndex {
     pub account_id: AccountId,
     /// The wallet id, which is a UUID.
     pub wallet_id: WalletId,
-}
-
-impl WalletAccountIndex {
-    pub fn to_wallet(&self) -> Wallet {
-        WalletRepository::default()
-            .get(&Wallet::key(self.wallet_id))
-            .expect("Wallet not found")
-    }
 }
 
 #[derive(Clone, Debug)]

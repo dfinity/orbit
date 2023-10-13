@@ -1,9 +1,5 @@
-use crate::{
-    models::{Account, AccountId},
-    repositories::AccountRepository,
-};
+use crate::models::{Account, AccountId};
 use candid::{CandidType, Deserialize, Principal};
-use ic_canister_core::repository::Repository;
 use ic_canister_macros::stable_object;
 
 /// Represents an account identity index within the system.
@@ -30,13 +26,5 @@ impl Account {
                 account_id: self.id,
             })
             .collect::<Vec<AccountIdentityIndex>>()
-    }
-}
-
-impl AccountIdentityIndex {
-    pub fn to_account(&self) -> Account {
-        AccountRepository::default()
-            .get(&Account::key(self.account_id))
-            .expect("Account not found")
     }
 }

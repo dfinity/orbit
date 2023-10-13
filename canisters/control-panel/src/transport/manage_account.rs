@@ -1,4 +1,4 @@
-use super::{AccountBankDTO, AccountDTO, AccountDetailsDTO, AccountIdentityDTO};
+use super::{AccountBankDTO, AccountDTO, AccountIdentityDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 /// The input to manage an account.
@@ -12,13 +12,11 @@ pub struct ManageAccountInput {
     pub banks: Option<Vec<AccountBankDTO>>,
     /// The identities to associate with the account.
     pub identities: Option<Vec<AccountIdentityDTO>>,
-    /// The unconfirmed identities to associate with the account.
-    pub unconfirmed_identities: Option<Vec<Principal>>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ManageAccountResponse {
-    pub account_details: AccountDetailsDTO,
+    pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

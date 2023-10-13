@@ -276,12 +276,22 @@
                       <VCol cols="12">
                         <VTable v-if="pageStore.operations.items.length" hover class="operations">
                           <tbody>
-                            <tr v-for="(operation, _idx) in pageStore.sortedOperations" :key="_idx">
+                            <tr
+                              v-for="(
+                                { loading, data: { id: operationId } }, _idx
+                              ) in pageStore.sortedOperations"
+                              :key="_idx"
+                            >
                               <td class="py-4">
                                 <BankOperation
-                                  v-model="pageStore.sortedOperations[_idx]"
+                                  :operation="pageStore.sortedOperations[_idx].data"
                                   :outer="false"
-                                  @updated="() => saveOperation(operation)"
+                                  :loading="loading"
+                                  @read="read => pageStore.saveDecision(operationId, { read })"
+                                  @adopted="pageStore.saveDecision(operationId, { approve: true })"
+                                  @rejected="
+                                    pageStore.saveDecision(operationId, { approve: false })
+                                  "
                                 />
                               </td>
                             </tr>
@@ -327,7 +337,6 @@ import {
 import { onMounted, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 import { formatBalance } from '~/core';
-import { Operation } from '~/generated/bank/bank.did';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import BankOperation from '~/ui/components/operations/BankOperation.vue';
@@ -342,15 +351,6 @@ const settings = useSettingsStore();
 const pageStore = useWalletDetailsStore();
 
 const tab = ref<'transfers' | 'operations' | 'receivables'>('transfers');
-
-const saveOperation = async (operation: Operation) => {
-  await activeBank.saveOperation(operation);
-
-  pageStore.loadSentTransfers(
-    pageStore.transfers.fromDt ? new Date(pageStore.transfers.fromDt) : undefined,
-    pageStore.transfers.toDt ? new Date(pageStore.transfers.toDt) : undefined,
-  );
-};
 
 onMounted(() => {
   pageStore.load(`${router.currentRoute.value.params.id}`);

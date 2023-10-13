@@ -1,3 +1,4 @@
+use super::indexes::account_identity_index::AccountIdentityIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
     models::{indexes::account_identity_index::AccountIdentityIndexCriteria, Account, AccountKey},
@@ -7,8 +8,6 @@ use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
-
-use super::indexes::account_identity_index::AccountIdentityIndexRepository;
 
 thread_local! {
   /// The memory reference to the Account repository.

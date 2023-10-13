@@ -57,6 +57,9 @@ pub enum AccountError {
     /// Removing the caller identity would lock the account.
     #[error(r#"Removing the caller identity would lock the account."#)]
     SelfLocked,
+    /// Cannot remove the admin role from the caller identity.
+    #[error(r#"Cannot remove own admin role."#)]
+    CannotRemoveOwnAdminRole,
 }
 
 impl DetailableError for AccountError {

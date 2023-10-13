@@ -16,7 +16,6 @@ export type ApprovalThresholdPolicy = { 'VariableThreshold' : number } |
   { 'FixedThreshold' : number };
 export type AssetSymbol = string;
 export interface BankAsset {
-  'decimals' : number,
   'standards' : Array<string>,
   'metadata' : Array<[string, string]>,
   'name' : string,
@@ -47,7 +46,7 @@ export interface ConfirmAccountInput { 'account_id' : AccountId }
 export type ConfirmAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
 export interface CreateWalletInput {
-  'owners' : Array<{ 'Principal' : Principal } | { 'AccountID' : AccountId }>,
+  'owners' : Array<AccountId>,
   'metadata' : [] | [Array<[string, string]>],
   'name' : [] | [string],
   'blockchain' : string,
@@ -120,9 +119,7 @@ export type ListWalletOperationsResult = {
     'Ok' : { 'operations' : Array<Operation> }
   } |
   { 'Err' : Error };
-export type ListWalletResult = {
-    'Ok' : { 'wallets' : Array<WalletListItem> }
-  } |
+export type ListWalletResult = { 'Ok' : { 'wallets' : Array<Wallet> } } |
   { 'Err' : Error };
 export interface ListWalletTransfersInput {
   'status' : [] | [string],
@@ -142,20 +139,25 @@ export interface Operation {
   'context' : OperationContext,
   'metadata' : Array<[string, string]>,
   'code' : string,
-  'read' : boolean,
   'created_at' : TimestampRFC3339,
-  'feedback_reason' : [] | [string],
-  'account' : AccountId,
-  'feedback_time_at' : [] | [TimestampRFC3339],
+  'decisions' : Array<OperationDecision>,
+  'originator_account_id' : [] | [AccountId],
 }
 export interface OperationContext {
   'wallet' : [] | [Wallet],
   'transfer' : [] | [Transfer],
 }
+export interface OperationDecision {
+  'account_id' : AccountId,
+  'status' : OperationStatus,
+  'read' : boolean,
+  'status_reason' : [] | [string],
+  'decided_at' : [] | [TimestampRFC3339],
+}
 export type OperationId = string;
 export type OperationStatus = { 'Rejected' : null } |
-  { 'Abstained' : null } |
   { 'Adopted' : null } |
+  { 'NotRequired' : null } |
   { 'Pending' : null };
 export interface RegisterAccountInput { 'identities' : Array<Principal> }
 export type RegisterAccountResult = { 'Ok' : { 'account' : Account } } |
@@ -236,16 +238,6 @@ export interface WalletBalanceInfo {
   'last_update_timestamp' : TimestampRFC3339,
 }
 export type WalletId = string;
-export interface WalletListItem {
-  'id' : WalletId,
-  'decimals' : number,
-  'asset_name' : [] | [string],
-  'balance' : [] | [WalletBalanceInfo],
-  'name' : [] | [string],
-  'address' : string,
-  'asset_symbol' : AssetSymbol,
-  'nr_owners' : number,
-}
 export type WalletPolicy = { 'approval_threshold' : ApprovalThresholdPolicy };
 export interface _SERVICE {
   'bank_settings' : ActorMethod<[], BankSettingsResult>,

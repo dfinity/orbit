@@ -1,10 +1,12 @@
 <template>
   <div class="operation-item">
+    <div v-if="props.loading" class="operation-item__loading"></div>
     <div class="operation-item__read">
       <VBtn
-        :icon="operation.read ? mdiCheckCircle : mdiCheckCircleOutline"
+        v-if="decision"
+        :icon="decision.read ? mdiCheckCircle : mdiCheckCircleOutline"
         size="x-small"
-        :variant="operation.read ? 'text' : 'plain'"
+        :variant="decision.read ? 'text' : 'plain'"
         @click="onRead"
       />
     </div>
@@ -15,8 +17,11 @@
       />
       <UnknownOperation v-else v-model="operation" />
     </div>
-    <div class="operation-item__action">
-      <VMenu v-if="operationState.isPending" :close-on-content-click="false">
+    <div v-if="props.loading" class="operation-item__action">
+      <VProgressCircular indeterminate color="primary" size="small" class="mx-4" />
+    </div>
+    <div v-else class="operation-item__action">
+      <VMenu v-if="!decisionState.decided && !props.outer" :close-on-content-click="false">
         <template #activator="{ props: actionProps }">
           <VBtn v-bind="actionProps" :prepend-icon="mdiCogs" size="small" variant="text" block>
             {{ $t(`terms.edit`) }}
@@ -50,7 +55,7 @@
         </VList>
       </VMenu>
       <VChip
-        v-else
+        v-if="decisionState.decided || props.outer"
         :prepend-icon="operationState.chip.icon"
         size="x-small"
         :color="operationState.chip.color"
@@ -68,6 +73,7 @@ import {
   mdiCheck,
   mdiClose,
   mdiCogs,
+  mdiCog,
   mdiHelp,
 } from '@mdi/js';
 import { computed, provide } from 'vue';
@@ -76,42 +82,58 @@ import { i18n } from '~/ui/modules';
 import UnknownOperation from './UnknownOperation.vue';
 import { BankOperationType } from '~/types';
 import ApproveTransferOperation from './ApproveTransferOperation.vue';
+import { useActiveBankStore } from '~/ui/stores';
 
+const activeBank = useActiveBankStore();
 const props = withDefaults(
   defineProps<{
-    modelValue: Operation;
+    operation: Operation;
     outer?: boolean;
+    loading?: boolean;
   }>(),
   {
     outer: true,
+    loading: false,
   },
 );
 
 provide('bankOperationProps', { outer: props.outer });
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: Operation): void;
-  (event: 'updated'): void;
+  (event: 'update:operation', payload: Operation): void;
+  (event: 'read', payload: boolean): void;
+  (event: 'adopted'): void;
+  (event: 'rejected'): void;
 }>();
 
 const operation = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
+  get: () => props.operation,
+  set: value => emit('update:operation', value),
+});
+
+const decision = computed({
+  get: () => operation.value.decisions.find(d => d.account_id === activeBank.account.id),
+  set: value => {
+    operation.value.decisions.forEach(d => {
+      if (d.account_id === activeBank.account.id && value) {
+        d = value;
+      }
+    });
+  },
 });
 
 const onRead = () => {
-  operation.value.read = !operation.value.read;
-  emit('updated');
+  if (decision.value) {
+    emit('read', !decision.value.read);
+  }
 };
 
 const onApprove = () => {
-  operation.value.status = { Adopted: null };
-  emit('updated');
+  emit('adopted');
 };
 
 const onReject = () => {
-  operation.value.status = { Rejected: null };
-  emit('updated');
+  emit('rejected');
 };
 
 const operationState = computed(() => {
@@ -132,12 +154,34 @@ const operationState = computed(() => {
       text: i18n.global.t('terms.rejected'),
       icon: mdiClose,
     };
+  } else if ('Pending' in operation.value.status) {
+    chip = {
+      color: 'warning',
+      text: i18n.global.t('terms.pending'),
+      icon: mdiCog,
+    };
   }
 
   return {
     isPending: 'Pending' in operation.value.status,
     chip,
   };
+});
+
+const decisionState = computed(() => {
+  const state: { decided: boolean } = {
+    decided: false,
+  };
+
+  if (!decision.value) {
+    return { decided: true };
+  }
+
+  if (decision.value && !('Pending' in decision.value.status)) {
+    state.decided = true;
+  }
+
+  return state;
 });
 </script>
 <style lang="scss">
@@ -146,6 +190,16 @@ const operationState = computed(() => {
   flex-direction: row;
   align-items: center;
   gap: var(--ds-bdu);
+  position: relative;
+
+  &__loading {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgb(var(--ds-background));
+    opacity: 0.4;
+    z-index: 1;
+  }
 
   &__read,
   &__action {

@@ -5,7 +5,6 @@ import { idlFactory } from '~/generated/control-panel';
 import {
   Account,
   AccountBank,
-  AccountDetails,
   ManageAccountInput,
   RegisterAccountInput,
   _SERVICE,
@@ -22,16 +21,22 @@ export class ControlPanelService {
     });
   }
 
-  async get_account_details(): Promise<AccountDetails | null> {
-    const result = await this.actor.account_details();
+  async fetchAccount(): Promise<Account> {
+    const result = await this.actor.get_account();
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.account_details?.[0] ?? null;
+    return result.Ok.account ?? null;
   }
 
-  async register_with_shared_bank(): Promise<Account> {
+  async hasRegistration(): Promise<boolean> {
+    return await this.fetchAccount()
+      .then(_ => true)
+      .catch(() => false);
+  }
+
+  async registerWithSharedBank(): Promise<Account> {
     return this.register({
       bank: {
         SharedBank: null,
@@ -50,14 +55,14 @@ export class ControlPanelService {
     return result.Ok.account;
   }
 
-  async editAccount(input: ManageAccountInput): Promise<AccountDetails> {
+  async editAccount(input: ManageAccountInput): Promise<Account> {
     const result = await this.actor.manage_account(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.account_details;
+    return result.Ok.account;
   }
 
   async getMainBank(): Promise<Maybe<AccountBank>> {

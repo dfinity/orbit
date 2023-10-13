@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -eEuo pipefail
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 #############################################
 # GLOBAL VARS                               #
 #############################################
@@ -162,7 +165,7 @@ function uninstall_wallet_ui() {
 }
 
 function install_wallet_ui() {
-  dfx deploy --specified-id $CANISTER_ID_WALLET_UI wallet_ui
+  DFX_NETWORK=local NODE_ENV=development dfx deploy --specified-id $CANISTER_ID_WALLET_UI wallet_ui
 }
 
 function setup_wallet_ui() {
@@ -178,6 +181,10 @@ function candid_generate() {
   didc bind --target rs /tmp/icp_index.did >canisters/bank/src/generated/icp_index.rs
 
   rm /tmp/icp_index.did
+}
+
+function setup_devenv() {
+  nvm use
 }
 
 #############################################
@@ -200,6 +207,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   --init)
     shift
+    exec_function setup_devenv
     exec_function setup_icp_ledger
     exec_function setup_icp_index
     exec_function setup_internet_identity
@@ -210,31 +218,37 @@ while [[ $# -gt 0 ]]; do
     ;;
   --init-icp-ledger)
     shift
+    exec_function setup_devenv
     exec_function setup_icp_ledger
     echo
     ;;
   --init-icp-index)
     shift
+    exec_function setup_devenv
     exec_function setup_icp_index
     echo
     ;;
   --init-bank)
     shift
+    exec_function setup_devenv
     exec_function setup_bank
     echo
     ;;
   --init-control-panel)
     shift
+    exec_function setup_devenv
     exec_function setup_control_panel
     echo
     ;;
   --init-wallet-ui)
     shift
+    exec_function setup_devenv
     exec_function setup_wallet_ui
     echo
     ;;
   --candid-generate)
     shift
+    exec_function setup_devenv
     exec_function candid_generate
     echo
     ;;

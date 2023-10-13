@@ -1,5 +1,5 @@
 use super::AccountIdDTO;
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Deserialize};
 
 pub type WalletIdDTO = String;
 pub type UuidDTO = String;
@@ -33,16 +33,8 @@ pub enum WalletPolicyDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum CreateWalletInputOwnersItemDTO {
-    #[serde(rename = "Principal")]
-    Principal_(Principal),
-    #[serde(rename = "AccountID")]
-    AccountId(AccountIdDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CreateWalletInput {
-    pub owners: Vec<CreateWalletInputOwnersItemDTO>,
+    pub owners: Vec<AccountIdDTO>,
     pub name: Option<String>,
     pub blockchain: String,
     pub standard: String,
@@ -91,18 +83,6 @@ pub struct FetchWalletBalancesResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct WalletListItemDTO {
-    pub id: WalletIdDTO,
-    pub address: String,
-    pub asset_symbol: String,
-    pub asset_name: Option<String>,
-    pub name: Option<String>,
-    pub decimals: u32,
-    pub balance: Option<WalletBalanceInfoDTO>,
-    pub nr_owners: u8,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListWalletResponse {
-    pub wallets: Vec<WalletListItemDTO>,
+    pub wallets: Vec<WalletDTO>,
 }

@@ -33,6 +33,9 @@ pub enum WalletError {
         r#"Fetching wallet balances can only be done for a maximum of {max} wallets at a time."#
     )]
     WalletBalancesBatchRange { min: u8, max: u8 },
+    /// The wallet has failed validation.
+    #[error(r#"The wallet has failed validation."#)]
+    ValidationError { info: String },
 }
 
 impl DetailableError for WalletError {
@@ -45,6 +48,10 @@ impl DetailableError for WalletError {
             }
             WalletError::UnknownBlockchain { blockchain } => {
                 details.insert("blockchain".to_string(), blockchain.to_string());
+                Some(details)
+            }
+            WalletError::ValidationError { info } => {
+                details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
             WalletError::UnknownBlockchainStandard {
