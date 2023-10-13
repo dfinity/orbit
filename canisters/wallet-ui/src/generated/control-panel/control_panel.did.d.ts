@@ -2,61 +2,48 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface Account {
-  'id' : UUID,
-  'unconfirmed_identities' : Array<AccountIdentityID>,
-  'name' : [] | [string],
-  'main_bank' : [] | [BankID],
-  'banks' : Array<BankID>,
-  'identities' : Array<AccountIdentityID>,
-}
-export interface AccountBank { 'name' : [] | [string], 'canister_id' : BankID }
-export interface AccountDetails {
-  'id' : UUID,
-  'unconfirmed_identities' : Array<AccountIdentityID>,
+  'id' : AccountId,
+  'unconfirmed_identities' : Array<AccountIdentity>,
   'name' : [] | [string],
   'main_bank' : [] | [BankID],
   'banks' : Array<AccountBank>,
   'identities' : Array<AccountIdentity>,
 }
-export type AccountDetailsResult = {
-    'Ok' : { 'account_details' : [] | [AccountDetails] }
-  } |
-  { 'Err' : Error };
+export interface AccountBank { 'name' : [] | [string], 'canister_id' : BankID }
+export type AccountId = UUID;
 export interface AccountIdentity {
   'name' : [] | [string],
   'identity' : AccountIdentityID,
 }
 export type AccountIdentityID = Principal;
-export interface AssociateIdentityWithAccountInput { 'account_id' : UUID }
-export type AssociateIdentityWithAccountResult = {
-    'Ok' : { 'account' : Account }
-  } |
-  { 'Err' : Error };
-export type BankID = Principal;
-export type BankListItem = AccountBank;
-export interface CanisterInit { 'default_bank' : DefaultBankInit }
-export type DefaultBankInit = { 'InitSharedBankCanister' : null } |
-  { 'SpecifiedBankCanister' : BankID };
-export interface Error {
+export interface ApiError {
   'code' : string,
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
+export interface AssociateIdentityWithAccountInput { 'account_id' : AccountId }
+export type AssociateIdentityWithAccountResult = {
+    'Ok' : { 'account' : Account }
+  } |
+  { 'Err' : ApiError };
+export type BankID = Principal;
+export interface CanisterInit { 'default_bank' : DefaultBankInit }
+export type DefaultBankInit = { 'InitSharedBankCanister' : null } |
+  { 'SpecifiedBankCanister' : BankID };
+export type GetAccountResult = { 'Ok' : { 'account' : Account } } |
+  { 'Err' : ApiError };
 export type GetMainBankResult = { 'Ok' : { 'bank' : [] | [AccountBank] } } |
-  { 'Err' : Error };
-export type ListBanksResult = { 'Ok' : { 'banks' : Array<BankListItem> } } |
-  { 'Err' : Error };
+  { 'Err' : ApiError };
+export type ListBanksResult = { 'Ok' : { 'banks' : Array<AccountBank> } } |
+  { 'Err' : ApiError };
 export interface ManageAccountInput {
-  'unconfirmed_identities' : [] | [Array<AccountIdentityID>],
   'name' : [] | [string],
   'main_bank' : [] | [BankID],
   'banks' : [] | [Array<AccountBank>],
   'identities' : [] | [Array<AccountIdentity>],
 }
-export type ManageAccountResult = {
-    'Ok' : { 'account_details' : AccountDetails }
-  } |
-  { 'Err' : Error };
+export type ManageAccountResult = { 'Ok' : { 'account' : Account } } |
+  { 'Err' : ApiError };
 export type RegisterAccountBankInput = {
     'PrivateBank' : {
       'id' : BankID,
@@ -69,17 +56,17 @@ export interface RegisterAccountInput {
   'name' : [] | [string],
 }
 export type RegisterAccountResult = { 'Ok' : { 'account' : Account } } |
-  { 'Err' : Error };
+  { 'Err' : ApiError };
 export type RemoveAccountResult = { 'Ok' : { 'account' : Account } } |
-  { 'Err' : Error };
+  { 'Err' : ApiError };
 export type UUID = string;
 export interface _SERVICE {
-  'account_details' : ActorMethod<[], AccountDetailsResult>,
   'associate_identity_with_account' : ActorMethod<
     [AssociateIdentityWithAccountInput],
     AssociateIdentityWithAccountResult
   >,
   'delete_account' : ActorMethod<[], RemoveAccountResult>,
+  'get_account' : ActorMethod<[], GetAccountResult>,
   'get_main_bank' : ActorMethod<[], GetMainBankResult>,
   'list_banks' : ActorMethod<[], ListBanksResult>,
   'manage_account' : ActorMethod<[ManageAccountInput], ManageAccountResult>,
