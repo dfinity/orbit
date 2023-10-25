@@ -1,8 +1,5 @@
 use super::{AccountBank, AccountIdentity};
-use crate::{
-    core::{MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID},
-    errors::AccountError,
-};
+use crate::errors::AccountError;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -13,7 +10,7 @@ use ic_canister_macros::stable_object;
 pub type AccountId = UUID;
 
 /// The key used to store an account identity in stable memory.
-#[stable_object(size = AccountKey::MAX_BYTE_SIZE)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AccountKey {
     /// The UUID that identifies the account.
@@ -21,7 +18,7 @@ pub struct AccountKey {
 }
 
 /// The identity of an account.
-#[stable_object(size = Account::MAX_BYTE_SIZE)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Account {
     /// The UUID that identifies the account.
@@ -41,42 +38,6 @@ pub struct Account {
 }
 
 impl Account {
-    /// The maximum number of identities that can be associated with an account,
-    /// this is limited to have a fixed size for the account in stable memory.
-    pub const MAX_ACCOUNT_IDENTITIES: u32 = 10;
-
-    /// The maximum number of unconfirmed identities at any given time with an account.
-    pub const MAX_ACCOUNT_UNCONFIRMED_IDENTITIES: u32 = 5;
-
-    /// The maximum number of banks that can be associated with an account,
-    /// this is limited to have a fixed size for the account in stable memory.
-    pub const MAX_ACCOUNT_BANKS: u32 = 10;
-
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_UUID;
-    pub const MAX_BYTE_SIZE_NAME: u32 = 150;
-    pub const MAX_BYTE_SIZE_MAIN_BANK: u32 = MAX_BYTE_SIZE_PRINCIPAL;
-    pub const MAX_BYTE_SIZE_BANKS: u32 = AccountBank::MAX_BYTE_SIZE * Self::MAX_ACCOUNT_BANKS;
-    pub const MAX_BYTE_SIZE_IDENTITIES: u32 =
-        AccountIdentity::MAX_BYTE_SIZE * Self::MAX_ACCOUNT_IDENTITIES;
-    pub const MAX_BYTE_SIZE_UNCONFIRMED_IDENTITIES: u32 =
-        AccountIdentity::MAX_BYTE_SIZE * Self::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES;
-    pub const MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
-
-    /// The maximum size of an AccountIdentity in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = 8096;
-
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
-        - Self::MAX_BYTE_SIZE_ID
-        - Self::MAX_BYTE_SIZE_NAME
-        - Self::MAX_BYTE_SIZE_MAIN_BANK
-        - Self::MAX_BYTE_SIZE_BANKS
-        - Self::MAX_BYTE_SIZE_IDENTITIES
-        - Self::MAX_BYTE_SIZE_UNCONFIRMED_IDENTITIES
-        - Self::MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP;
-
     pub fn key(account_id: &UUID) -> AccountKey {
         AccountKey { id: *account_id }
     }
@@ -84,18 +45,6 @@ impl Account {
     pub fn to_key(&self) -> AccountKey {
         Account::key(&self.id)
     }
-}
-
-impl AccountKey {
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_UUID;
-
-    /// The maximum size of an AccountKey in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = 48;
-
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_ID;
 }
 
 pub struct AccountValidator<'model> {

@@ -3,7 +3,7 @@ use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::{cdk::api::time, types::Timestamp};
 use ic_canister_macros::stable_object;
 use ic_cdk::trap;
-use ic_stable_structures::Storable;
+use ic_stable_structures::{storable::Bound, Storable};
 use std::borrow::Cow;
 
 #[stable_object(size = WASM_PAGE_SIZE)]
@@ -80,4 +80,9 @@ impl Storable for CanisterState {
         }
         CanisterState::Initialized(CanisterConfig::from_bytes(bytes))
     }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: WASM_PAGE_SIZE,
+        is_fixed_size: false,
+    };
 }

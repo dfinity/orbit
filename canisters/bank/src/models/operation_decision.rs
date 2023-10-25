@@ -7,7 +7,7 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 
-#[stable_object(size = 256)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OperationDecision {
     /// The account id that this operation task is assigned to.

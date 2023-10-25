@@ -14,7 +14,7 @@ pub const OPERATION_METADATA_KEY_WALLET_ID: &str = "wallet_id";
 /// The operation id, which is a UUID.
 pub type OperationId = UUID;
 /// Represents an operation within the system.
-#[stable_object(size = 4096)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Operation {
     /// The operation id, which is a UUID.
@@ -38,7 +38,7 @@ pub struct Operation {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object(size = 48)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OperationKey {
     /// The operation id, which is a UUID.

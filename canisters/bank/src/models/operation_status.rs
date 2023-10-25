@@ -1,5 +1,5 @@
 use candid::{CandidType, Deserialize};
-use ic_stable_structures::{BoundedStorable, Storable};
+use ic_stable_structures::{storable::Bound, Storable};
 use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
@@ -70,10 +70,6 @@ impl Storable for OperationStatus {
         let operation_status_unit = u8::from_bytes(bytes);
         OperationStatus::try_from(operation_status_unit).unwrap()
     }
-}
 
-impl BoundedStorable for OperationStatus {
-    const MAX_SIZE: u32 = 2;
-
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Unbounded;
 }

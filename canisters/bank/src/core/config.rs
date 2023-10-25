@@ -9,7 +9,7 @@ use ic_canister_core::{
     types::Timestamp,
 };
 use ic_canister_macros::stable_object;
-use ic_stable_structures::Storable;
+use ic_stable_structures::{storable::Bound, Storable};
 use std::{
     borrow::Cow,
     cell::RefCell,
@@ -92,7 +92,7 @@ pub fn default_bank_permissions() -> Vec<Permission> {
     ]
 }
 
-#[stable_object(size = 96)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct Permission {
     pub permission_id: String,
@@ -214,4 +214,9 @@ impl Storable for CanisterState {
         }
         CanisterState::Initialized(CanisterConfig::from_bytes(bytes))
     }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: WASM_PAGE_SIZE,
+        is_fixed_size: false,
+    };
 }

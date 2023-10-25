@@ -1,30 +1,16 @@
-use crate::{core::MAX_BYTE_SIZE_PRINCIPAL, errors::AccountError};
+use crate::errors::AccountError;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
 use ic_canister_macros::stable_object;
 
 /// The identity of an account.
-#[stable_object(size = AccountIdentity::MAX_BYTE_SIZE)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct AccountIdentity {
     /// The principal ID of the identity.
     pub identity: Principal,
     /// The name of the identity (if any).
     pub name: Option<String>,
-}
-
-impl AccountIdentity {
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_IDENTITY: u32 = MAX_BYTE_SIZE_PRINCIPAL;
-    pub const MAX_BYTE_SIZE_NAME: u32 = 100;
-
-    /// The maximum size of an AccountIdentity in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = 256;
-
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 =
-        Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_IDENTITY - Self::MAX_BYTE_SIZE_NAME;
 }
 
 pub struct AccountIdentityValidator<'model> {

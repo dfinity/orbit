@@ -6,7 +6,7 @@ use ic_cdk::api::time;
 use std::hash::Hash;
 
 /// Represents a transfer index by execution time.
-#[stable_object(size = 64)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferExecutionTimeIndex {
     /// The time the transfer is scheduled to be executed.
