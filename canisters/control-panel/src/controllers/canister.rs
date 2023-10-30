@@ -1,10 +1,9 @@
 //! Canister lifecycle hooks.
 use crate::{
-    core::{canister_config, write_canister_config, CanisterConfig},
+    core::{canister_config, ic_cdk::api::time, write_canister_config, CanisterConfig},
     transport::{CanisterInit, DefaultBankInit},
 };
 use candid::Principal;
-use ic_canister_core::cdk::api::time;
 use ic_cdk_macros::{init, post_upgrade};
 
 #[init]

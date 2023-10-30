@@ -1,12 +1,11 @@
-// Internet computer api system calls.
 #[cfg(not(test))]
-mod production {
-    pub use ic_cdk::*;
-}
+pub use ic_cdk::*;
+
+#[cfg(test)]
+pub use mocks::*;
 
 // Mock ic system call api for tests.
-#[cfg(test)]
-mod test {
+pub mod mocks {
     use candid::Principal;
 
     pub fn caller() -> Principal {
@@ -53,22 +52,14 @@ mod test {
     }
 }
 
-// Use the correct module based on the environment
-#[cfg(not(test))]
-pub use production::*;
-
-#[cfg(test)]
-pub use test::*;
-
 #[cfg(test)]
 mod tests {
-    use std::time::SystemTime;
-
-    use super::{
+    use super::mocks::{
         api::{time, trap},
         caller,
     };
     use candid::Principal;
+    use std::time::SystemTime;
 
     #[test]
     fn caller_is_anonymous() {

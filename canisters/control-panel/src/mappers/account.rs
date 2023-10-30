@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-
+use crate::core::ic_cdk::api::time;
 use crate::{
     errors::AccountError,
     models::{Account, AccountBank, AccountId, AccountIdentity},
@@ -9,7 +8,7 @@ use crate::{
     },
 };
 use candid::Principal;
-use ic_canister_core::cdk::api::time;
+use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Default)]
@@ -139,5 +138,110 @@ impl Account {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::transport::RegisterAccountBankSharedInput;
+
+    use super::*;
+
+    #[test]
+    fn mapped_account_registration_with_shared_bank() {
+        let account_id = *Uuid::new_v4().as_bytes();
+        let identity = Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
+        let global_shared_bank_canister_id =
+            Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let input = RegisterAccountInput {
+            name: Some("Account".to_string()),
+            bank: RegisterAccountBankInput::SharedBank,
+        };
+
+        let account = AccountMapper::from_register_input(
+            input,
+            account_id,
+            identity,
+            global_shared_bank_canister_id,
+        );
+
+        assert_eq!(account.id, account_id);
+        assert_eq!(account.name, Some("Account".to_string()));
+        assert_eq!(account.main_bank, Some(global_shared_bank_canister_id));
+        assert_eq!(account.banks.len(), 1);
+        assert_eq!(account.banks[0].canister_id, global_shared_bank_canister_id);
+        assert_eq!(account.banks[0].name, None);
+        assert_eq!(account.identities.len(), 1);
+        assert_eq!(account.identities[0].identity, identity);
+        assert_eq!(account.identities[0].name, None);
+        assert_eq!(account.unconfirmed_identities.len(), 0);
+    }
+
+    #[test]
+    fn mapped_account_registration_with_private_bank() {
+        let account_id = *Uuid::new_v4().as_bytes();
+        let identity = Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
+        let global_shared_bank_canister_id = Principal::anonymous();
+        let main_bank = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let input = RegisterAccountInput {
+            name: Some("Account".to_string()),
+            bank: RegisterAccountBankInput::PrivateBank {
+                id: main_bank,
+                use_shared_bank: None,
+            },
+        };
+
+        let account = AccountMapper::from_register_input(
+            input,
+            account_id,
+            identity,
+            global_shared_bank_canister_id,
+        );
+
+        assert_eq!(account.id, account_id);
+        assert_eq!(account.name, Some("Account".to_string()));
+        assert_eq!(account.main_bank, Some(main_bank));
+        assert_eq!(account.banks.len(), 1);
+        assert_eq!(account.banks[0].canister_id, main_bank);
+        assert_eq!(account.banks[0].name, None);
+        assert_eq!(account.identities.len(), 1);
+        assert_eq!(account.identities[0].identity, identity);
+        assert_eq!(account.identities[0].name, None);
+        assert_eq!(account.unconfirmed_identities.len(), 0);
+    }
+
+    #[test]
+    fn mapped_account_registration_with_private_bank_and_shared() {
+        let account_id = *Uuid::new_v4().as_bytes();
+        let identity = Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
+        let global_shared_bank_canister_id = Principal::anonymous();
+        let main_bank = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let input = RegisterAccountInput {
+            name: Some("Account".to_string()),
+            bank: RegisterAccountBankInput::PrivateBank {
+                id: main_bank,
+                use_shared_bank: Some(RegisterAccountBankSharedInput { is_main: false }),
+            },
+        };
+
+        let account = AccountMapper::from_register_input(
+            input,
+            account_id,
+            identity,
+            global_shared_bank_canister_id,
+        );
+
+        assert_eq!(account.id, account_id);
+        assert_eq!(account.name, Some("Account".to_string()));
+        assert_eq!(account.main_bank, Some(main_bank));
+        assert_eq!(account.banks.len(), 2);
+        assert_eq!(account.banks[0].canister_id, main_bank);
+        assert_eq!(account.banks[0].name, None);
+        assert_eq!(account.banks[1].canister_id, global_shared_bank_canister_id);
+        assert_eq!(account.banks[1].name, None);
+        assert_eq!(account.identities.len(), 1);
+        assert_eq!(account.identities[0].identity, identity);
+        assert_eq!(account.identities[0].name, None);
+        assert_eq!(account.unconfirmed_identities.len(), 0);
     }
 }

@@ -1,10 +1,10 @@
 use super::canister_config;
-use crate::{models::AccessRole, repositories::AccountRepository};
-use candid::Principal;
-use ic_canister_core::cdk::{
+use crate::core::ic_cdk::{
     api::{id as self_canister_id, trap},
     caller,
 };
+use crate::{models::AccessRole, repositories::AccountRepository};
+use candid::Principal;
 
 #[derive(Clone, Debug)]
 pub struct CallContext {

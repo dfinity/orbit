@@ -1,4 +1,5 @@
 use super::AccountService;
+use crate::core::ic_cdk::api::time;
 use crate::{
     core::{
         canister_config, default_bank_permissions, write_canister_config, CallContext,
@@ -9,7 +10,6 @@ use crate::{
     transport::{BankCanisterInit, RegisterAccountInput},
 };
 use ic_canister_core::api::ServiceResult;
-use ic_canister_core::cdk::api::time;
 
 #[derive(Default, Debug)]
 pub struct BankService {

@@ -1,5 +1,5 @@
+use crate::core::ic_cdk::{api::id as self_canister_id, caller};
 use candid::Principal;
-use ic_canister_core::cdk::{api::id as self_canister_id, caller};
 
 #[derive(Clone, Debug)]
 pub struct CallContext {

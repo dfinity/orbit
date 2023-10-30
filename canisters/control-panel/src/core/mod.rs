@@ -11,3 +11,8 @@ pub use call_context::*;
 
 mod config;
 pub use config::*;
+
+#[cfg(not(test))]
+pub use ic_canister_core::cdk as ic_cdk;
+#[cfg(test)]
+pub use ic_canister_core::cdk::mocks as ic_cdk;
