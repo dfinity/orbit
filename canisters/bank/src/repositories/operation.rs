@@ -275,3 +275,23 @@ pub struct OperationFindByAccountWhereClause {
     pub status: Option<OperationStatus>,
     pub read: Option<bool>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::operation_test_utils;
+
+    #[test]
+    fn test_crud() {
+        let repository = OperationRepository::default();
+        let operation = operation_test_utils::mock_operation();
+
+        assert!(repository.get(&operation.to_key()).is_none());
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert!(repository.get(&operation.to_key()).is_some());
+        assert!(repository.remove(&operation.to_key()).is_some());
+        assert!(repository.get(&operation.to_key()).is_none());
+    }
+}

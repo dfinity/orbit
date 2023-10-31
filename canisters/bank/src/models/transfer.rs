@@ -275,6 +275,7 @@ impl ModelValidator<TransferError> for Transfer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use transfer_test_utils::mock_transfer;
 
     #[test]
     fn test_metadata_validation() {
@@ -438,8 +439,13 @@ mod tests {
             }
         );
     }
+}
 
-    fn mock_transfer() -> Transfer {
+#[cfg(test)]
+pub mod transfer_test_utils {
+    use super::*;
+
+    pub fn mock_transfer() -> Transfer {
         Transfer {
             id: [1; 16],
             initiator_account: [0; 16],

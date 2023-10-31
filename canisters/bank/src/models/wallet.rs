@@ -201,6 +201,7 @@ impl Wallet {
 
 #[cfg(test)]
 mod tests {
+    use super::wallet_test_utils::mock_wallet;
     use super::*;
     use crate::models::ApprovalThresholdPolicy;
 
@@ -395,8 +396,13 @@ mod tests {
 
         assert!(result.is_ok());
     }
+}
 
-    fn mock_wallet() -> Wallet {
+#[cfg(test)]
+pub mod wallet_test_utils {
+    use super::*;
+
+    pub fn mock_wallet() -> Wallet {
         Wallet {
             id: [0; 16],
             address: "0x1234".to_string(),

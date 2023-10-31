@@ -160,6 +160,7 @@ impl Operation {
 
 #[cfg(test)]
 mod tests {
+    use super::operation_test_utils::mock_operation;
     use super::*;
 
     #[test]
@@ -252,8 +253,13 @@ mod tests {
 
         assert!(result.is_ok());
     }
+}
 
-    fn mock_operation() -> Operation {
+#[cfg(test)]
+pub mod operation_test_utils {
+    use super::*;
+
+    pub fn mock_operation() -> Operation {
         Operation {
             id: [0; 16],
             originator_account_id: Some([1; 16]),

@@ -194,3 +194,23 @@ impl TransferRepository {
             .collect::<Vec<Transfer>>()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::transfer_test_utils;
+
+    #[test]
+    fn test_crud() {
+        let repository = TransferRepository::default();
+        let transfer = transfer_test_utils::mock_transfer();
+
+        assert!(repository.get(&transfer.to_key()).is_none());
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        assert!(repository.get(&transfer.to_key()).is_some());
+        assert!(repository.remove(&transfer.to_key()).is_some());
+        assert!(repository.get(&transfer.to_key()).is_none());
+    }
+}

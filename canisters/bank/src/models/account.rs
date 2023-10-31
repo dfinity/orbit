@@ -113,7 +113,8 @@ impl Account {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
+    use super::account_test_utils::mock_account;
     use super::*;
 
     #[test]
@@ -219,8 +220,13 @@ mod tests {
             }
         );
     }
+}
 
-    fn mock_account() -> Account {
+#[cfg(test)]
+pub mod account_test_utils {
+    use super::*;
+
+    pub fn mock_account() -> Account {
         Account {
             id: [0; 16],
             identities: vec![Principal::anonymous()],
