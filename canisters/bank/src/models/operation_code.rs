@@ -61,3 +61,29 @@ impl Storable for OperationCode {
 
     const BOUND: Bound = Bound::Unbounded;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn operation_code_match_string_representation() {
+        assert_eq!(
+            OperationCode::ApproveTransfer.to_string(),
+            "approve-transfer"
+        );
+        assert_eq!(
+            OperationCode::from_str("approve-transfer").unwrap(),
+            OperationCode::ApproveTransfer
+        );
+    }
+
+    #[test]
+    fn operation_code_match_number_representation() {
+        assert_eq!(OperationCode::ApproveTransfer as u8, 0);
+        assert_eq!(
+            OperationCode::try_from(0).unwrap(),
+            OperationCode::ApproveTransfer
+        );
+    }
+}

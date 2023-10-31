@@ -157,3 +157,159 @@ impl Operation {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fail_operation_metadata_too_many_entries() {
+        let operation = Operation {
+            id: [0; 16],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+            code: OperationCode::ApproveTransfer,
+            decisions: vec![],
+            metadata: vec![
+                ("a".repeat(25), "b".repeat(25)),
+                ("c".repeat(25), "d".repeat(25)),
+                ("e".repeat(25), "f".repeat(25)),
+                ("g".repeat(25), "h".repeat(25)),
+                ("i".repeat(25), "j".repeat(25)),
+                ("k".repeat(25), "l".repeat(25)),
+                ("m".repeat(25), "n".repeat(25)),
+                ("o".repeat(25), "p".repeat(25)),
+                ("q".repeat(25), "r".repeat(25)),
+                ("s".repeat(25), "t".repeat(25)),
+                ("u".repeat(25), "v".repeat(25)),
+            ],
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+        };
+
+        let result = OperationValidator::new(&operation).validate_metadata();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::ValidationError {
+                info: "Operation metadata count exceeds the maximum allowed: 10".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_operation_metadata_validation() {
+        let operation = Operation {
+            id: [0; 16],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+            code: OperationCode::ApproveTransfer,
+            decisions: vec![],
+            metadata: vec![
+                ("a".repeat(24), "b".repeat(24)),
+                ("c".repeat(24), "d".repeat(24)),
+                ("e".repeat(24), "f".repeat(24)),
+                ("g".repeat(24), "h".repeat(24)),
+                ("i".repeat(24), "j".repeat(24)),
+                ("k".repeat(24), "l".repeat(24)),
+                ("m".repeat(24), "n".repeat(24)),
+                ("o".repeat(24), "p".repeat(24)),
+                ("q".repeat(24), "r".repeat(24)),
+                ("s".repeat(24), "t".repeat(24)),
+            ],
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+        };
+
+        let result = OperationValidator::new(&operation).validate_metadata();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_operation_metadata_key_too_long() {
+        let operation = Operation {
+            id: [0; 16],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+            code: OperationCode::ApproveTransfer,
+            decisions: vec![],
+            metadata: vec![("a".repeat(25), "b".repeat(24))],
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+        };
+
+        let result = OperationValidator::new(&operation).validate_metadata();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::ValidationError {
+                info: "Operation metadata key length exceeds the maximum allowed: 24".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn fail_operaton_decisions_too_many_entries() {
+        let operation = Operation {
+            id: [0; 16],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+            code: OperationCode::ApproveTransfer,
+            decisions: vec![
+                OperationDecision {
+                    account_id: [0; 16],
+                    read: false,
+                    status: OperationStatus::Rejected,
+                    status_reason: None,
+                    decided_dt: None,
+                    last_modification_timestamp: 0,
+                };
+                OperationValidator::MAX_DECISION_ENTRIES as usize + 1
+            ],
+            metadata: vec![],
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+        };
+
+        let result = OperationValidator::new(&operation).validate_decisions();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::ValidationError {
+                info: "Operation decisions count exceeds the maximum allowed: 10".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_operation_decisions_validation() {
+        let operation = Operation {
+            id: [0; 16],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+            code: OperationCode::ApproveTransfer,
+            decisions: vec![
+                OperationDecision {
+                    account_id: [0; 16],
+                    read: false,
+                    status: OperationStatus::Rejected,
+                    status_reason: None,
+                    decided_dt: None,
+                    last_modification_timestamp: 0,
+                };
+                OperationValidator::MAX_DECISION_ENTRIES as usize - 1
+            ],
+            metadata: vec![],
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+        };
+
+        let result = OperationValidator::new(&operation).validate_decisions();
+
+        assert!(result.is_ok());
+    }
+}

@@ -63,11 +63,11 @@ impl<'account> AccountValidator<'account> {
     }
 
     pub fn validate_access_roles(&self) -> ModelValidatorResult<AccountError> {
-        if self.account.identities.len() < Self::ACCESS_ROLES_RANGE.0 as usize {
+        if self.account.access_roles.len() < Self::ACCESS_ROLES_RANGE.0 as usize {
             return Err(AccountError::TooLittleAccessRoles);
         }
 
-        if self.account.identities.len() > Self::ACCESS_ROLES_RANGE.1 as usize {
+        if self.account.access_roles.len() > Self::ACCESS_ROLES_RANGE.1 as usize {
             return Err(AccountError::TooManyAccessRoles {
                 max_access_roles: Self::ACCESS_ROLES_RANGE.1,
             });
@@ -77,7 +77,7 @@ impl<'account> AccountValidator<'account> {
     }
 
     pub fn validate_unconfirmed_identities(&self) -> ModelValidatorResult<AccountError> {
-        if self.account.identities.len() > Self::MAX_UNCONFIRMED_IDENTITIES as usize {
+        if self.account.unconfirmed_identities.len() > Self::MAX_UNCONFIRMED_IDENTITIES as usize {
             return Err(AccountError::TooManyUnconfirmedIdentities {
                 max_identities: Self::MAX_UNCONFIRMED_IDENTITIES,
             });
@@ -109,5 +109,162 @@ impl Account {
 
     pub fn to_key(&self) -> AccountKey {
         Account::key(self.id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fail_account_too_little_identities() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            access_roles: vec![],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_identities();
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AccountError::TooLittleIdentities);
+    }
+
+    #[test]
+    fn fail_account_too_many_identities() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![
+                Principal::anonymous();
+                AccountValidator::IDENTITIES_RANGE.1 as usize + 1
+            ],
+            unconfirmed_identities: vec![],
+            access_roles: vec![],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_identities();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            AccountError::TooManyIdentities {
+                max_identities: AccountValidator::IDENTITIES_RANGE.1
+            }
+        );
+    }
+
+    #[test]
+    fn test_account_identities_validation() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![Principal::anonymous(); 5],
+            unconfirmed_identities: vec![],
+            access_roles: vec![],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_identities();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_account_too_many_unconfirmed_identities() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![Principal::anonymous()],
+            unconfirmed_identities: vec![
+                Principal::anonymous();
+                AccountValidator::MAX_UNCONFIRMED_IDENTITIES as usize + 1
+            ],
+            access_roles: vec![],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_unconfirmed_identities();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            AccountError::TooManyUnconfirmedIdentities {
+                max_identities: AccountValidator::MAX_UNCONFIRMED_IDENTITIES
+            }
+        );
+    }
+
+    #[test]
+    fn test_account_unconfirmed_identities_validation() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![Principal::anonymous()],
+            unconfirmed_identities: vec![
+                Principal::anonymous();
+                AccountValidator::MAX_UNCONFIRMED_IDENTITIES as usize - 1
+            ],
+            access_roles: vec![],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_unconfirmed_identities();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_account_access_roles_validation() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            access_roles: vec![AccessRole::User],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_access_roles();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_account_access_roles_too_little() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            access_roles: vec![],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_access_roles();
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AccountError::TooLittleAccessRoles);
+    }
+
+    #[test]
+    fn fail_account_access_roles_too_many() {
+        let account = Account {
+            id: [0; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            access_roles: vec![
+                AccessRole::User;
+                AccountValidator::ACCESS_ROLES_RANGE.1 as usize + 1
+            ],
+            last_modification_timestamp: 0,
+        };
+
+        let result = AccountValidator::new(&account).validate_access_roles();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            AccountError::TooManyAccessRoles {
+                max_access_roles: AccountValidator::ACCESS_ROLES_RANGE.1
+            }
+        );
     }
 }
