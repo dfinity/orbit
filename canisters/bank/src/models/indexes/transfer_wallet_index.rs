@@ -5,7 +5,7 @@ use ic_canister_macros::stable_object;
 use std::hash::Hash;
 
 /// Represents a transfer list index in the system.
-#[stable_object(size = 128)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferWalletIndex {
     /// The wallet associated with the transfer.

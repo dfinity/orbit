@@ -2,7 +2,7 @@ use crate::models::{AccountId, Wallet, WalletId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
-#[stable_object(size = 64)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WalletAccountIndex {
     /// The account id, which is a UUID.

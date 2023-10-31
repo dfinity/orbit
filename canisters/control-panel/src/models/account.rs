@@ -1,8 +1,5 @@
 use super::{AccountBank, AccountIdentity};
-use crate::{
-    core::{MAX_BYTE_SIZE_PRINCIPAL, MAX_BYTE_SIZE_UUID},
-    errors::AccountError,
-};
+use crate::errors::AccountError;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -13,7 +10,7 @@ use ic_canister_macros::stable_object;
 pub type AccountId = UUID;
 
 /// The key used to store an account identity in stable memory.
-#[stable_object(size = AccountKey::MAX_BYTE_SIZE)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AccountKey {
     /// The UUID that identifies the account.
@@ -21,7 +18,7 @@ pub struct AccountKey {
 }
 
 /// The identity of an account.
-#[stable_object(size = Account::MAX_BYTE_SIZE)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Account {
     /// The UUID that identifies the account.
@@ -41,42 +38,6 @@ pub struct Account {
 }
 
 impl Account {
-    /// The maximum number of identities that can be associated with an account,
-    /// this is limited to have a fixed size for the account in stable memory.
-    pub const MAX_ACCOUNT_IDENTITIES: u32 = 10;
-
-    /// The maximum number of unconfirmed identities at any given time with an account.
-    pub const MAX_ACCOUNT_UNCONFIRMED_IDENTITIES: u32 = 5;
-
-    /// The maximum number of banks that can be associated with an account,
-    /// this is limited to have a fixed size for the account in stable memory.
-    pub const MAX_ACCOUNT_BANKS: u32 = 10;
-
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_UUID;
-    pub const MAX_BYTE_SIZE_NAME: u32 = 150;
-    pub const MAX_BYTE_SIZE_MAIN_BANK: u32 = MAX_BYTE_SIZE_PRINCIPAL;
-    pub const MAX_BYTE_SIZE_BANKS: u32 = AccountBank::MAX_BYTE_SIZE * Self::MAX_ACCOUNT_BANKS;
-    pub const MAX_BYTE_SIZE_IDENTITIES: u32 =
-        AccountIdentity::MAX_BYTE_SIZE * Self::MAX_ACCOUNT_IDENTITIES;
-    pub const MAX_BYTE_SIZE_UNCONFIRMED_IDENTITIES: u32 =
-        AccountIdentity::MAX_BYTE_SIZE * Self::MAX_ACCOUNT_UNCONFIRMED_IDENTITIES;
-    pub const MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
-
-    /// The maximum size of an AccountIdentity in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = 8096;
-
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
-        - Self::MAX_BYTE_SIZE_ID
-        - Self::MAX_BYTE_SIZE_NAME
-        - Self::MAX_BYTE_SIZE_MAIN_BANK
-        - Self::MAX_BYTE_SIZE_BANKS
-        - Self::MAX_BYTE_SIZE_IDENTITIES
-        - Self::MAX_BYTE_SIZE_UNCONFIRMED_IDENTITIES
-        - Self::MAX_BYTE_SIZE_LAST_UPDATE_TIMESTAMP;
-
     pub fn key(account_id: &UUID) -> AccountKey {
         AccountKey { id: *account_id }
     }
@@ -86,24 +47,13 @@ impl Account {
     }
 }
 
-impl AccountKey {
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_ID: u32 = MAX_BYTE_SIZE_UUID;
-
-    /// The maximum size of an AccountKey in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = 48;
-
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_ID;
-}
-
 pub struct AccountValidator<'model> {
     model: &'model Account,
 }
 
 impl<'model> AccountValidator<'model> {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
+    pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
     pub const MAX_UNCONFIRMED_IDENTITIES: u8 = 9;
     pub const MAX_BANKS: u8 = 10;
 
@@ -183,11 +133,36 @@ impl<'model> AccountValidator<'model> {
         Ok(())
     }
 
+    pub fn validate_name(&self) -> ModelValidatorResult<AccountError> {
+        if let Some(name) = &self.model.name {
+            if (name.trim().len() < Self::NAME_LEN_RANGE.0 as usize)
+                || (name.trim().len() > Self::NAME_LEN_RANGE.1 as usize)
+            {
+                return Err(AccountError::ValidationError {
+                    info: format!(
+                        "Account name length must be between {} and {}",
+                        Self::NAME_LEN_RANGE.0,
+                        Self::NAME_LEN_RANGE.1
+                    ),
+                });
+            }
+
+            if name.starts_with(' ') || name.ends_with(' ') {
+                return Err(AccountError::ValidationError {
+                    info: "Account name cannot start or end with a space".to_string(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn validate(&self) -> ModelValidatorResult<AccountError> {
         self.validate_identities()?;
         self.validate_unconfirmed_identities()?;
         self.validate_banks()?;
         self.validate_main_bank()?;
+        self.validate_name()?;
 
         Ok(())
     }
@@ -196,5 +171,242 @@ impl<'model> AccountValidator<'model> {
 impl ModelValidator<AccountError> for Account {
     fn validate(&self) -> ModelValidatorResult<AccountError> {
         AccountValidator::new(self).validate()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::Storable;
+    use rstest::rstest;
+
+    #[test]
+    fn valid_model_serialization() {
+        let model = Account {
+            id: [u8::MAX; 16],
+            identities: vec![AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 10,
+            name: Some("Treasury".to_string()),
+        };
+
+        let serialized_model = model.to_bytes();
+        let deserialized_model = Account::from_bytes(serialized_model);
+
+        assert_eq!(model.id, deserialized_model.id);
+        assert_eq!(model.identities, deserialized_model.identities);
+        assert_eq!(
+            model.last_update_timestamp,
+            deserialized_model.last_update_timestamp
+        );
+        assert_eq!(model.name, deserialized_model.name);
+    }
+
+    #[rstest]
+    #[case::empty_name(&"")]
+    #[case::empty_name_with_space(&" ")]
+    #[case::starts_with_space(&" Vital")]
+    #[case::ends_with_space(&"Vital ")]
+    #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMK")]
+    fn invalid_account_name(#[case] name: &str) {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 10,
+            name: Some(name.to_string()),
+        };
+        let validator = AccountValidator::new(&account);
+
+        assert!(validator.validate_name().is_err());
+    }
+
+    #[rstest]
+    #[case::short_name(&"A")]
+    #[case::common_name(&"Vital")]
+    #[case::large_name(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdM")]
+    fn valid_account_name(#[case] name: &str) {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 10,
+            name: Some(name.to_string()),
+        };
+        let validator = AccountValidator::new(&account);
+
+        assert!(validator.validate_name().is_ok());
+    }
+
+    #[test]
+    fn check_identities_validation() {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        let account_with_no_identities = account.clone();
+        let mut account_with_one_identity = account.clone();
+        let mut account_with_too_many_identities = account.clone();
+
+        account_with_one_identity.identities.push(AccountIdentity {
+            identity: Principal::anonymous(),
+            name: None,
+        });
+
+        for _ in 0..=AccountValidator::IDENTITIES_RANGE.1 {
+            account_with_too_many_identities
+                .identities
+                .push(AccountIdentity {
+                    identity: Principal::anonymous(),
+                    name: None,
+                });
+        }
+
+        assert!(AccountValidator::new(&account_with_no_identities)
+            .validate_identities()
+            .is_err());
+        assert!(AccountValidator::new(&account_with_one_identity)
+            .validate_identities()
+            .is_ok());
+        assert!(AccountValidator::new(&account_with_too_many_identities)
+            .validate_identities()
+            .is_err());
+    }
+
+    #[test]
+    fn check_unconfirmed_identities_validation() {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        let account_with_no_identities = account.clone();
+        let mut account_with_one_identity = account.clone();
+        let mut account_with_too_many_identities = account.clone();
+
+        account_with_one_identity
+            .unconfirmed_identities
+            .push(AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            });
+
+        for _ in 0..=AccountValidator::MAX_UNCONFIRMED_IDENTITIES {
+            account_with_too_many_identities
+                .unconfirmed_identities
+                .push(AccountIdentity {
+                    identity: Principal::anonymous(),
+                    name: None,
+                });
+        }
+
+        assert!(AccountValidator::new(&account_with_no_identities)
+            .validate_unconfirmed_identities()
+            .is_ok());
+        assert!(AccountValidator::new(&account_with_one_identity)
+            .validate_unconfirmed_identities()
+            .is_ok());
+        assert!(AccountValidator::new(&account_with_too_many_identities)
+            .validate_unconfirmed_identities()
+            .is_err());
+    }
+
+    #[test]
+    fn check_banks_validation() {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        let account_with_no_banks = account.clone();
+        let mut account_with_one_bank = account.clone();
+        let mut account_with_too_many_banks = account.clone();
+
+        account_with_one_bank.banks.push(AccountBank {
+            canister_id: Principal::anonymous(),
+            name: None,
+        });
+
+        for _ in 0..=AccountValidator::MAX_BANKS {
+            account_with_too_many_banks.banks.push(AccountBank {
+                canister_id: Principal::anonymous(),
+                name: None,
+            });
+        }
+
+        assert!(AccountValidator::new(&account_with_no_banks)
+            .validate_banks()
+            .is_ok());
+        assert!(AccountValidator::new(&account_with_one_bank)
+            .validate_banks()
+            .is_ok());
+        assert!(AccountValidator::new(&account_with_too_many_banks)
+            .validate_banks()
+            .is_err());
+    }
+
+    #[test]
+    fn valid_main_bank() {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![AccountBank {
+                canister_id: Principal::anonymous(),
+                name: None,
+            }],
+            main_bank: Some(Principal::anonymous()),
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        let validator = AccountValidator::new(&account);
+
+        assert!(validator.validate_main_bank().is_ok());
+    }
+
+    #[test]
+    fn invalid_main_bank() {
+        let account = Account {
+            id: [u8::MAX; 16],
+            identities: vec![],
+            unconfirmed_identities: vec![],
+            banks: vec![AccountBank {
+                canister_id: Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap(),
+                name: None,
+            }],
+            main_bank: Some(Principal::anonymous()),
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        let validator = AccountValidator::new(&account);
+
+        assert!(validator.validate_main_bank().is_err());
     }
 }

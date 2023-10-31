@@ -18,14 +18,14 @@ pub const METADATA_MEMO_KEY: &str = "memo";
 /// The transfer id, which is a UUID.
 pub type TransferId = UUID;
 
-#[stable_object(size = 128)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferExecutionPlan {
     Immediate,
     Scheduled { execution_time: Timestamp },
 }
 
-#[stable_object(size = 256)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferStatus {
     Cancelled {
@@ -65,7 +65,7 @@ impl Display for TransferStatus {
     }
 }
 
-#[stable_object(size = 256)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct PolicySnapshot {
     /// The minimum number of approvals required for the transfer to be approved.
@@ -73,7 +73,7 @@ pub struct PolicySnapshot {
 }
 
 /// Represents a transfer in the system.
-#[stable_object(size = 2048)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Transfer {
     /// The transfer id, which is a UUID.
@@ -108,7 +108,7 @@ pub struct Transfer {
     pub created_timestamp: Timestamp,
 }
 
-#[stable_object(size = 64)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferKey {
     /// The transfer id, which is a UUID.

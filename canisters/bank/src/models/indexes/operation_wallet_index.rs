@@ -5,7 +5,7 @@ use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 
 /// Index of operations by wallet id.
-#[stable_object(size = 128)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OperationWalletIndex {
     /// The wallet id that is associated with this operation.

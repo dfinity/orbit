@@ -4,7 +4,7 @@ use ic_canister_macros::stable_object;
 use std::hash::Hash;
 
 /// Represents the balance of a wallet.
-#[stable_object(size = 64)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WalletBalance {
     /// The wallet id, which is a UUID.

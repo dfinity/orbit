@@ -13,7 +13,7 @@ pub type AccountId = UUID;
 /// Represents an account within the system.
 ///
 /// An account can be associated with one or more identity.
-#[stable_object(size = 2048)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Account {
     /// The account id, which is a UUID.
@@ -28,7 +28,7 @@ pub struct Account {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object(size = 64)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountKey {
     /// The account id, which is a UUID.

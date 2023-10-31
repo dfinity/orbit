@@ -7,7 +7,7 @@ use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 
 /// Index of operations by transfer id.
-#[stable_object(size = 128)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OperationTransferIndex {
     /// The transfer id that is associated with this operation.

@@ -1,5 +1,5 @@
 use candid::{CandidType, Deserialize};
-use ic_stable_structures::{BoundedStorable, Storable};
+use ic_stable_structures::{storable::Bound, Storable};
 use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
@@ -66,10 +66,6 @@ impl Storable for AccessRole {
         let access_role_unit = u8::from_bytes(bytes);
         AccessRole::try_from(access_role_unit).unwrap()
     }
-}
 
-impl BoundedStorable for AccessRole {
-    const MAX_SIZE: u32 = 2;
-
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Unbounded;
 }

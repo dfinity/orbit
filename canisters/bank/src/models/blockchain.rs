@@ -1,6 +1,6 @@
 use super::BlockchainStandard;
 use candid::{CandidType, Deserialize};
-use ic_stable_structures::{BoundedStorable, Storable};
+use ic_stable_structures::{storable::Bound, Storable};
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -66,12 +66,8 @@ impl Storable for Blockchain {
         let chain_id: String = String::from_bytes(bytes);
         Self::from_str(&chain_id).unwrap()
     }
-}
 
-impl BoundedStorable for Blockchain {
-    const MAX_SIZE: u32 = 8;
-
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]

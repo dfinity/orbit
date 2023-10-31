@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize, Principal};
 use ic_canister_macros::stable_object;
 
 /// Represents an account identity index within the system.
-#[stable_object(size = 128)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountIdentityIndex {
     /// The identity associated with the account.

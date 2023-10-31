@@ -5,7 +5,7 @@ use ic_canister_macros::stable_object;
 use std::collections::HashSet;
 
 /// Index of operations by the account id.
-#[stable_object(size = 128)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OperationAccountIndex {
     /// The account thgat is associated with this operation.

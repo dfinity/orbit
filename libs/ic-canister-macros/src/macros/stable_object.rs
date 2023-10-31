@@ -8,7 +8,7 @@ use syn::{parse::Parser, parse2, DeriveInput, Error, Token};
 /// The macro accepts a list of arguments separated by `,`.
 #[derive(Clone, Debug)]
 struct StableObjectArguments {
-    pub size: u32,
+    pub size: Option<u32>,
 }
 
 /// The name of the argument that specifies the size of the stable memory layout.
@@ -34,32 +34,50 @@ fn stable_object_impl(
         syn::Data::Struct(_) | syn::Data::Enum(_) => {
             let object_input = parsed_input.clone();
             let object_name = object_input.ident.clone();
-            let size_value: u32 = args.size;
+            let size_value: Option<u32> = args.size;
 
-            // validate_size(object_input.clone(), args.clone())?;
+            let expanded = match size_value {
+                Some(size) => quote! {
+                    #object_input
 
-            let expanded = quote! {
-                #object_input
+                    impl ic_stable_structures::Storable for #object_name {
+                        fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+                            use candid::Encode;
 
-                impl ic_stable_structures::Storable for #object_name {
-                    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                        use candid::Encode;
+                            std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
+                        }
 
-                        std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
+                        fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+                            use candid::Decode;
+
+                            candid::Decode!(bytes.as_ref(), Self).unwrap()
+                        }
+
+                        const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Bounded {
+                            max_size: #size,
+                            is_fixed_size: false,
+                        };
                     }
+                },
+                None => quote! {
+                    #object_input
 
-                    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                        use candid::Decode;
+                    impl ic_stable_structures::Storable for #object_name {
+                        fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+                            use candid::Encode;
 
-                        candid::Decode!(bytes.as_ref(), Self).unwrap()
+                            std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
+                        }
+
+                        fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+                            use candid::Decode;
+
+                            candid::Decode!(bytes.as_ref(), Self).unwrap()
+                        }
+
+                        const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
                     }
-                }
-
-                impl ic_stable_structures::BoundedStorable for #object_name {
-                    const MAX_SIZE: u32 = #size_value;
-
-                    const IS_FIXED_SIZE: bool = false;
-                }
+                },
             };
 
             Ok(expanded.into())
@@ -70,23 +88,6 @@ fn stable_object_impl(
         )),
     }
 }
-
-// fn validate_size(
-//     input: DeriveInput,
-//     _args: StableObjectArguments,
-// ) -> Result<(), Error> {
-//     if let syn::Data::Struct(object_struct) = input.data {
-
-//     }
-
-//     // if let Fields::Named(fields_named) = &input.data {
-
-//     // }
-//     Err(Error::new_spanned(
-//         input,
-//         "The fields of the stable_object must be bounded in size",
-//     ))
-// }
 
 fn parse_stable_object_macro_arguments(args: TokenStream) -> Result<StableObjectArguments, Error> {
     let parser = syn::punctuated::Punctuated::<syn::ExprAssign, Token![,]>::parse_terminated;
@@ -129,7 +130,5 @@ fn parse_stable_object_macro_arguments(args: TokenStream) -> Result<StableObject
         }
     }
 
-    Ok(StableObjectArguments {
-        size: size.unwrap(),
-    })
+    Ok(StableObjectArguments { size })
 }
