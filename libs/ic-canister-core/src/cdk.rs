@@ -8,6 +8,8 @@ pub use mocks::*;
 pub mod mocks {
     use candid::Principal;
 
+    pub const TEST_CANISTER_ID: Principal = Principal::from_slice(&[u8::MAX; 29]);
+
     pub fn caller() -> Principal {
         Principal::anonymous()
     }
@@ -29,7 +31,11 @@ pub mod mocks {
         }
 
         pub fn id() -> Principal {
-            Principal::anonymous()
+            super::TEST_CANISTER_ID
+        }
+
+        pub fn is_controller(principal: &Principal) -> bool {
+            principal == &id()
         }
 
         pub fn trap(message: &str) -> ! {
