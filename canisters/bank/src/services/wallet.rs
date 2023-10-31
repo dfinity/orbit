@@ -1,6 +1,6 @@
 use super::AccountService;
 use crate::{
-    core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
+    core::{generate_uuid_v4, CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
     errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
@@ -11,7 +11,6 @@ use crate::{
 use candid::Principal;
 use ic_canister_core::{
     api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
-    utils::generate_uuid_v4,
 };
 use std::collections::HashSet;
 use uuid::Uuid;

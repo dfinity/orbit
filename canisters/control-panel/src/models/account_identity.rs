@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn valid_model_serialization() {
         let model = AccountIdentity {
-            identity: Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap(),
+            identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
             name: Some("Bank 1".to_string()),
         };
 

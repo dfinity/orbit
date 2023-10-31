@@ -80,3 +80,77 @@ impl AccountRepository {
             .find_map(|id| self.get(&Account::key(id)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::AccountIdentity;
+    use candid::Principal;
+
+    #[test]
+    fn check_account_insert_and_get() {
+        let repository = AccountRepository::default();
+        let account = Account {
+            id: [1; 16],
+            identities: vec![AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        assert!(repository.get(&account.to_key()).is_none());
+
+        repository.insert(account.to_key(), account.clone());
+        assert_eq!(repository.get(&account.to_key()), Some(account));
+    }
+
+    #[test]
+    fn check_account_removal() {
+        let repository = AccountRepository::default();
+        let account = Account {
+            id: [1; 16],
+            identities: vec![AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        repository.insert(account.to_key(), account.clone());
+        assert_eq!(repository.get(&account.to_key()), Some(account.clone()));
+        repository.remove(&account.to_key());
+        assert!(repository.get(&account.to_key()).is_none());
+    }
+
+    #[test]
+    fn check_account_find_by_identity() {
+        let repository = AccountRepository::default();
+        let account = Account {
+            id: [1; 16],
+            identities: vec![AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        repository.insert(account.to_key(), account.clone());
+        assert_eq!(
+            repository.find_account_by_identity(&Principal::anonymous()),
+            Some(account.clone())
+        );
+    }
+}

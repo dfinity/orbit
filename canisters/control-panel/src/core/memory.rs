@@ -50,3 +50,15 @@ pub fn write_canister_config(config: CanisterConfig) {
             .expect("failed to write canister config");
     });
 }
+
+#[cfg(test)]
+pub mod test_utils {
+    use super::write_canister_config;
+    use crate::core::{ic_cdk::api::time, CanisterConfig};
+    use candid::Principal;
+
+    pub fn init_canister_config() {
+        let config = CanisterConfig::new(Principal::anonymous(), time());
+        write_canister_config(config);
+    }
+}

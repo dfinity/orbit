@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn correct_dto_to_model_mapping() {
         let dto = AccountBankDTO {
-            canister_id: Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap(),
+            canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
             name: Some("Bank".to_string()),
         };
 
@@ -39,7 +39,7 @@ mod tests {
     #[test]
     fn correct_model_to_dto_mapping() {
         let model = AccountBank {
-            canister_id: Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap(),
+            canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
             name: Some("Bank".to_string()),
         };
 

@@ -55,3 +55,74 @@ impl IndexRepository<AccountIdentityIndex, AccountId> for AccountIdentityIndexRe
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    #[test]
+    fn check_index_exists() {
+        let repository = AccountIdentityIndexRepository::default();
+        let index = AccountIdentityIndex {
+            identity_id: Principal::anonymous(),
+            account_id: [0; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+        assert!(repository.exists(&index));
+    }
+
+    #[test]
+    fn check_index_delete() {
+        let repository = AccountIdentityIndexRepository::default();
+        let index = AccountIdentityIndex {
+            identity_id: Principal::anonymous(),
+            account_id: [0; 16],
+        };
+
+        repository.insert(index.clone());
+        assert!(repository.exists(&index));
+
+        repository.remove(&index);
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn check_index_insert() {
+        let repository = AccountIdentityIndexRepository::default();
+        let index = AccountIdentityIndex {
+            identity_id: Principal::anonymous(),
+            account_id: [0; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+        assert!(repository.exists(&index));
+    }
+
+    #[test]
+    fn check_find_account_by_identity() {
+        let repository = AccountIdentityIndexRepository::default();
+        let index = AccountIdentityIndex {
+            identity_id: Principal::anonymous(),
+            account_id: [0; 16],
+        };
+        repository.insert(index.clone());
+        let another_account_index = AccountIdentityIndex {
+            identity_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            account_id: [1; 16],
+        };
+        repository.insert(another_account_index.clone());
+
+        let found = repository.find_by_criteria(AccountIdentityIndexCriteria {
+            identity_id: another_account_index.identity_id,
+        });
+
+        assert_eq!(found.len(), 1);
+        assert_eq!(found.iter().next(), Some(&another_account_index.account_id));
+    }
+}
