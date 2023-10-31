@@ -55,3 +55,44 @@ impl IndexRepository<AccountIdentityIndex, AccountId> for AccountIdentityIndexRe
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    #[test]
+    fn test_account_identity_index_repository() {
+        let repository = AccountIdentityIndexRepository::default();
+        let index = AccountIdentityIndex {
+            identity_id: Principal::anonymous(),
+            account_id: [1; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_identity() {
+        let repository = AccountIdentityIndexRepository::default();
+        let index = AccountIdentityIndex {
+            identity_id: Principal::anonymous(),
+            account_id: [1; 16],
+        };
+
+        repository.insert(index.clone());
+
+        let result = repository.find_by_criteria(AccountIdentityIndexCriteria {
+            identity_id: Principal::anonymous(),
+        });
+
+        assert!(!result.is_empty());
+        assert!(result.contains(&[1; 16]));
+    }
+}

@@ -54,3 +54,45 @@ impl IndexRepository<WalletAccountIndex, WalletId> for WalletAccountIndexReposit
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_repository_crud() {
+        let repository = WalletAccountIndexRepository::default();
+        let index = WalletAccountIndex {
+            account_id: [1; 16],
+            wallet_id: [2; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_criteria() {
+        let repository = WalletAccountIndexRepository::default();
+        let index = WalletAccountIndex {
+            account_id: [1; 16],
+            wallet_id: [2; 16],
+        };
+
+        repository.insert(index.clone());
+
+        let criteria = WalletAccountIndexCriteria {
+            account_id: [1; 16],
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&index.wallet_id));
+    }
+}

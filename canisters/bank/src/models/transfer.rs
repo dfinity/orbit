@@ -421,10 +421,11 @@ mod tests {
     #[test]
     fn fail_expiration_dt_before_execution() {
         let mut transfer = mock_transfer();
+        let now = time();
         transfer.execution_plan = TransferExecutionPlan::Scheduled {
-            execution_time: time(),
+            execution_time: now + 1,
         };
-        transfer.expiration_dt = time() - 1;
+        transfer.expiration_dt = now;
 
         let result = TransferValidator::new(&transfer).validate_expiration_dt();
 

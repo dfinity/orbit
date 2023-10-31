@@ -20,14 +20,18 @@ pub mod mocks {
 
     pub mod api {
         use candid::Principal;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        static mut IC_TIME: SystemTime = UNIX_EPOCH;
+
+        pub fn set_mock_ic_time(time: SystemTime) {
+            unsafe {
+                IC_TIME = time;
+            }
+        }
 
         pub fn time() -> u64 {
-            use std::time::SystemTime;
-
-            SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
+            unsafe { IC_TIME.duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64 }
         }
 
         pub fn id() -> Principal {
@@ -60,12 +64,8 @@ pub mod mocks {
 
 #[cfg(test)]
 mod tests {
-    use super::mocks::{
-        api::{time, trap},
-        caller,
-    };
+    use super::mocks::{api::trap, caller};
     use candid::Principal;
-    use std::time::SystemTime;
 
     #[test]
     fn caller_is_anonymous() {
@@ -76,16 +76,5 @@ mod tests {
     #[should_panic(expected = "this is an expected panic")]
     fn trap_panics_with_given_message() {
         trap("this is an expected panic")
-    }
-
-    #[test]
-    fn time_gives_back_current_system_time() {
-        let retrieved_time = time();
-        let expected_time = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        assert_eq!(retrieved_time, expected_time)
     }
 }
