@@ -66,16 +66,10 @@ mod tests {
 
     #[test]
     fn fail_operation_decision_too_big_reason() {
-        let task = OperationDecision {
-            account_id: [0; 16],
-            read: false,
-            status: OperationStatus::Rejected,
-            status_reason: Some("a".repeat(201)),
-            decided_dt: None,
-            last_modification_timestamp: 0,
-        };
+        let mut decision = mock_decision();
+        decision.status_reason = Some("a".repeat(201));
 
-        let result = task.validate();
+        let result = decision.validate();
 
         assert!(result.is_err());
         assert_eq!(
@@ -86,17 +80,22 @@ mod tests {
 
     #[test]
     fn test_operation_decision_with_reason() {
-        let task = OperationDecision {
+        let mut decision = mock_decision();
+        decision.status_reason = Some("a".repeat(200));
+
+        let result = decision.validate();
+
+        assert!(result.is_ok());
+    }
+
+    fn mock_decision() -> OperationDecision {
+        OperationDecision {
             account_id: [0; 16],
             read: false,
             status: OperationStatus::Rejected,
-            status_reason: Some("a".repeat(200)),
+            status_reason: None,
             decided_dt: None,
             last_modification_timestamp: 0,
-        };
-
-        let result = task.validate();
-
-        assert!(result.is_ok());
+        }
     }
 }

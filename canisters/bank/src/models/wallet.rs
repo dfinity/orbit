@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn fail_policies_validation() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.policies =
             vec![
                 WalletPolicy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_policies_validation() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.policies =
             vec![
                 WalletPolicy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn fail_metadata_validation_too_many() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.metadata =
             vec![("a".repeat(25), "b".repeat(25)); WalletValidator::MAX_METADATA as usize + 1];
 
@@ -257,7 +257,7 @@ mod tests {
 
     #[test]
     fn test_metadata_validation() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.metadata =
             vec![("a".repeat(24), "b".repeat(24)); WalletValidator::MAX_METADATA as usize - 1];
 
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     fn fail_symbol_validation_too_short() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.symbol = "a".repeat(0);
 
         let result = WalletValidator::new(&wallet).validate_symbol();
@@ -284,7 +284,7 @@ mod tests {
 
     #[test]
     fn fail_symbol_validation_too_long() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.symbol = "a".repeat(9);
 
         let result = WalletValidator::new(&wallet).validate_symbol();
@@ -300,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_symbol_validation() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.symbol = "a".to_string();
 
         let result = WalletValidator::new(&wallet).validate_symbol();
@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn fail_address_too_short() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.address = "".to_string();
 
         let result = WalletValidator::new(&wallet).validate_address();
@@ -327,7 +327,7 @@ mod tests {
 
     #[test]
     fn fail_address_too_long() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.address = "a".repeat(256);
 
         let result = WalletValidator::new(&wallet).validate_address();
@@ -344,7 +344,7 @@ mod tests {
 
     #[test]
     fn test_address_validation() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.address = "a".to_string();
 
         let result = WalletValidator::new(&wallet).validate_address();
@@ -354,7 +354,7 @@ mod tests {
 
     #[test]
     fn fail_owners_too_many_entries() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.owners = vec![[0; 16]; WalletValidator::OWNERS_RANGE.1 as usize + 1];
 
         let result = WalletValidator::new(&wallet).validate_owners();
@@ -371,7 +371,7 @@ mod tests {
 
     #[test]
     fn fail_owners_too_little_entries() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.owners = vec![[0; 16]; WalletValidator::OWNERS_RANGE.0 as usize - 1];
 
         let result = WalletValidator::new(&wallet).validate_owners();
@@ -388,7 +388,7 @@ mod tests {
 
     #[test]
     fn test_owners_validation() {
-        let mut wallet = fake_wallet();
+        let mut wallet = mock_wallet();
         wallet.owners = vec![[0; 16]];
 
         let result = WalletValidator::new(&wallet).validate_owners();
@@ -396,7 +396,7 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    fn fake_wallet() -> Wallet {
+    fn mock_wallet() -> Wallet {
         Wallet {
             id: [0; 16],
             address: "0x1234".to_string(),

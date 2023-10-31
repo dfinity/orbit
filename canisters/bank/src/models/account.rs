@@ -118,13 +118,8 @@ mod tests {
 
     #[test]
     fn fail_account_too_little_identities() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![],
-            unconfirmed_identities: vec![],
-            access_roles: vec![],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.identities = vec![];
 
         let result = AccountValidator::new(&account).validate_identities();
 
@@ -134,16 +129,9 @@ mod tests {
 
     #[test]
     fn fail_account_too_many_identities() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![
-                Principal::anonymous();
-                AccountValidator::IDENTITIES_RANGE.1 as usize + 1
-            ],
-            unconfirmed_identities: vec![],
-            access_roles: vec![],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.identities =
+            vec![Principal::anonymous(); AccountValidator::IDENTITIES_RANGE.1 as usize + 1];
 
         let result = AccountValidator::new(&account).validate_identities();
 
@@ -158,13 +146,8 @@ mod tests {
 
     #[test]
     fn test_account_identities_validation() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![Principal::anonymous(); 5],
-            unconfirmed_identities: vec![],
-            access_roles: vec![],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.identities = vec![Principal::anonymous(); 5];
 
         let result = AccountValidator::new(&account).validate_identities();
 
@@ -173,16 +156,9 @@ mod tests {
 
     #[test]
     fn fail_account_too_many_unconfirmed_identities() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![Principal::anonymous()],
-            unconfirmed_identities: vec![
-                Principal::anonymous();
-                AccountValidator::MAX_UNCONFIRMED_IDENTITIES as usize + 1
-            ],
-            access_roles: vec![],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.unconfirmed_identities =
+            vec![Principal::anonymous(); AccountValidator::MAX_UNCONFIRMED_IDENTITIES as usize + 1];
 
         let result = AccountValidator::new(&account).validate_unconfirmed_identities();
 
@@ -197,16 +173,9 @@ mod tests {
 
     #[test]
     fn test_account_unconfirmed_identities_validation() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![Principal::anonymous()],
-            unconfirmed_identities: vec![
-                Principal::anonymous();
-                AccountValidator::MAX_UNCONFIRMED_IDENTITIES as usize - 1
-            ],
-            access_roles: vec![],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.unconfirmed_identities =
+            vec![Principal::anonymous(); AccountValidator::MAX_UNCONFIRMED_IDENTITIES as usize - 1];
 
         let result = AccountValidator::new(&account).validate_unconfirmed_identities();
 
@@ -215,13 +184,8 @@ mod tests {
 
     #[test]
     fn test_account_access_roles_validation() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![],
-            unconfirmed_identities: vec![],
-            access_roles: vec![AccessRole::User],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.access_roles = vec![AccessRole::User];
 
         let result = AccountValidator::new(&account).validate_access_roles();
 
@@ -230,13 +194,8 @@ mod tests {
 
     #[test]
     fn fail_account_access_roles_too_little() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![],
-            unconfirmed_identities: vec![],
-            access_roles: vec![],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.access_roles = vec![];
 
         let result = AccountValidator::new(&account).validate_access_roles();
 
@@ -246,16 +205,9 @@ mod tests {
 
     #[test]
     fn fail_account_access_roles_too_many() {
-        let account = Account {
-            id: [0; 16],
-            identities: vec![],
-            unconfirmed_identities: vec![],
-            access_roles: vec![
-                AccessRole::User;
-                AccountValidator::ACCESS_ROLES_RANGE.1 as usize + 1
-            ],
-            last_modification_timestamp: 0,
-        };
+        let mut account = mock_account();
+        account.access_roles =
+            vec![AccessRole::User; AccountValidator::ACCESS_ROLES_RANGE.1 as usize + 1];
 
         let result = AccountValidator::new(&account).validate_access_roles();
 
@@ -266,5 +218,15 @@ mod tests {
                 max_access_roles: AccountValidator::ACCESS_ROLES_RANGE.1
             }
         );
+    }
+
+    fn mock_account() -> Account {
+        Account {
+            id: [0; 16],
+            identities: vec![Principal::anonymous()],
+            unconfirmed_identities: vec![],
+            access_roles: vec![AccessRole::User],
+            last_modification_timestamp: 0,
+        }
     }
 }
