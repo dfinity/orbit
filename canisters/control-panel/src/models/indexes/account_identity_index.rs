@@ -31,9 +31,8 @@ impl Account {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::AccountIdentity;
-
     use super::*;
+    use crate::models::AccountIdentity;
     use ic_stable_structures::Storable;
 
     #[test]

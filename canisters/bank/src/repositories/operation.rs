@@ -55,16 +55,36 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                     });
                 }
 
-                let prev_wallet_index = prev.to_index_for_wallet();
-                if prev_wallet_index != value.to_index_for_wallet() {
-                    self.wallet_index.remove(&prev_wallet_index);
-                    self.wallet_index.insert(value.to_index_for_wallet());
+                match (prev.to_index_for_wallet(), value.to_index_for_wallet()) {
+                    (Some(prev), Some(current)) => {
+                        if prev != current {
+                            self.wallet_index.remove(&prev);
+                            self.wallet_index.insert(current);
+                        }
+                    }
+                    (Some(prev), None) => {
+                        self.wallet_index.remove(&prev);
+                    }
+                    (None, Some(current)) => {
+                        self.wallet_index.insert(current);
+                    }
+                    _ => {}
                 }
 
-                let prev_transfer_index = prev.to_index_for_transfer();
-                if prev_transfer_index != value.to_index_for_transfer() {
-                    self.transfer_index.remove(&prev_transfer_index);
-                    self.transfer_index.insert(value.to_index_for_transfer());
+                match (prev.to_index_for_transfer(), value.to_index_for_transfer()) {
+                    (Some(prev), Some(current)) => {
+                        if prev != current {
+                            self.transfer_index.remove(&prev);
+                            self.transfer_index.insert(current);
+                        }
+                    }
+                    (Some(prev), None) => {
+                        self.transfer_index.remove(&prev);
+                    }
+                    (None, Some(current)) => {
+                        self.transfer_index.insert(current);
+                    }
+                    _ => {}
                 }
 
                 Some(prev)
@@ -73,8 +93,12 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 value.to_index_for_accounts().iter().for_each(|index| {
                     self.account_index.insert(index.to_owned());
                 });
-                self.wallet_index.insert(value.to_index_for_wallet());
-                self.transfer_index.insert(value.to_index_for_transfer());
+                if let Some(wallet_index) = value.to_index_for_wallet() {
+                    self.wallet_index.insert(wallet_index);
+                }
+                if let Some(transfer_index) = value.to_index_for_transfer() {
+                    self.transfer_index.insert(transfer_index);
+                }
 
                 None
             }
@@ -87,8 +111,12 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 prev.to_index_for_accounts().iter().for_each(|index| {
                     self.account_index.remove(index);
                 });
-                self.wallet_index.remove(&prev.to_index_for_wallet());
-                self.transfer_index.remove(&prev.to_index_for_transfer());
+                if let Some(wallet_index) = prev.to_index_for_wallet() {
+                    self.wallet_index.remove(&wallet_index);
+                }
+                if let Some(transfer_index) = prev.to_index_for_transfer() {
+                    self.transfer_index.remove(&transfer_index);
+                }
 
                 Some(prev)
             }
