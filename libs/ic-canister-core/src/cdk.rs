@@ -14,8 +14,8 @@ pub mod mocks {
         Principal::anonymous()
     }
 
-    pub fn spawn<F: 'static + Send + std::future::Future<Output = ()>>(future: F) {
-        tokio::task::spawn(future);
+    pub fn spawn<F: 'static + std::future::Future<Output = ()>>(future: F) {
+        tokio::task::spawn_local(future);
     }
 
     pub mod api {

@@ -1,6 +1,6 @@
 use super::{AccountService, WalletService};
 use crate::{
-    core::{generate_uuid_v4, CallContext, WithCallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, WithCallContext},
     errors::{TransferError, WalletError},
     factories::blockchains::BlockchainApiFactory,
     factories::operations::OperationProcessorFactory,
@@ -15,7 +15,7 @@ use crate::{
 };
 use candid::Nat;
 use ic_canister_core::{api::ServiceResult, utils::rfc3339_to_timestamp};
-use ic_canister_core::{cdk::api::time, model::ModelValidator, repository::Repository};
+use ic_canister_core::{model::ModelValidator, repository::Repository};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]

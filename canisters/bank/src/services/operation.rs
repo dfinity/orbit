@@ -1,6 +1,6 @@
 use super::{AccountService, WalletService};
 use crate::{
-    core::{CallContext, WithCallContext},
+    core::{ic_cdk::api::time, CallContext, WithCallContext},
     errors::OperationError,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
@@ -9,8 +9,8 @@ use crate::{
     transport::{EditOperationInput, ListOperationsInput, ListWalletOperationsInput},
 };
 use ic_canister_core::repository::Repository;
+use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
-use ic_canister_core::{cdk::api::time, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]

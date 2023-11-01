@@ -1,9 +1,9 @@
 use crate::{
+    core::ic_cdk::api::time,
     models::{OperationStatus, TransferStatus},
     repositories::{OperationRepository, TransferRepository},
 };
 use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
-use ic_cdk::api::time;
 use std::time::Duration;
 
 #[derive(Debug, Default)]
