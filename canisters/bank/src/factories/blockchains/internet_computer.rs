@@ -2,6 +2,7 @@ use super::{
     BlockchainApi, BlockchainApiResult, BlockchainTransactioSubmitted, BlockchainTransactionFee,
 };
 use crate::{
+    core::ic_cdk::api::id as bank_canister_self_id,
     errors::BlockchainApiError,
     mappers::HelperMapper,
     models::{Blockchain, BlockchainStandard, Transfer, Wallet, WalletId, METADATA_MEMO_KEY},
@@ -64,7 +65,7 @@ impl InternetComputer {
 
     pub fn create() -> Self {
         Self {
-            bank_canister_id: cdk::id(),
+            bank_canister_id: bank_canister_self_id(),
         }
     }
 

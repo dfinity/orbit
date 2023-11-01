@@ -1,5 +1,6 @@
 use super::HelperMapper;
 use crate::{
+    core::ic_cdk::api::time,
     errors::MapperError,
     models::{
         AccountId, PolicySnapshot, Transfer, TransferExecutionPlan, TransferId, TransferStatus,
@@ -10,10 +11,7 @@ use crate::{
     },
 };
 use candid::Nat;
-use ic_canister_core::{
-    cdk::api::time,
-    utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
-};
+use ic_canister_core::utils::{rfc3339_to_timestamp, timestamp_to_rfc3339};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]

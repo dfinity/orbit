@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn valid_model_serialization() {
         let account_bank = AccountBank {
-            canister_id: Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap(),
+            canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
             name: Some("Bank 1".to_string()),
         };
 

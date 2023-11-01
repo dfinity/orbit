@@ -194,3 +194,103 @@ impl TransferRepository {
             .collect::<Vec<Transfer>>()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{transfer_test_utils, TransferExecutionPlan};
+
+    #[test]
+    fn perform_crud() {
+        let repository = TransferRepository::default();
+        let transfer = transfer_test_utils::mock_transfer();
+
+        assert!(repository.get(&transfer.to_key()).is_none());
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        assert!(repository.get(&transfer.to_key()).is_some());
+        assert!(repository.remove(&transfer.to_key()).is_some());
+        assert!(repository.get(&transfer.to_key()).is_none());
+    }
+
+    #[test]
+    fn find_transfer_with_execution_dt_and_status() {
+        let repository = TransferRepository::default();
+        let mut transfer = transfer_test_utils::mock_transfer();
+        transfer.execution_plan = TransferExecutionPlan::Scheduled { execution_time: 10 };
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        let transfers = repository.find_by_execution_dt_and_status(
+            Some(10),
+            Some(10),
+            transfer.status.to_string(),
+        );
+
+        assert_eq!(transfers.len(), 1);
+        assert_eq!(transfers[0], transfer);
+    }
+
+    #[test]
+    fn find_transfer_by_expiration_dt_and_status() {
+        let repository = TransferRepository::default();
+        let mut transfer = transfer_test_utils::mock_transfer();
+        transfer.expiration_dt = 10;
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        let transfers = repository.find_by_expiration_dt_and_status(
+            Some(10),
+            Some(10),
+            transfer.status.to_string(),
+        );
+
+        assert_eq!(transfers.len(), 1);
+        assert_eq!(transfers[0], transfer);
+    }
+
+    #[test]
+    fn no_transfers_of_future_expiration_dt() {
+        let repository = TransferRepository::default();
+        let mut transfer = transfer_test_utils::mock_transfer();
+        transfer.expiration_dt = 10;
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        let transfers = repository.find_by_expiration_dt_and_status(
+            Some(20),
+            None,
+            transfer.status.to_string(),
+        );
+
+        assert!(transfers.is_empty());
+    }
+
+    #[test]
+    fn find_by_wallet() {
+        let repository = TransferRepository::default();
+        let mut transfer = transfer_test_utils::mock_transfer();
+        transfer.from_wallet = [1; 16];
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        let transfers = repository.find_by_wallet([1; 16], None, None, None);
+
+        assert_eq!(transfers.len(), 1);
+        assert_eq!(transfers[0], transfer);
+    }
+
+    #[test]
+    fn no_transfer_from_unknown_wallet() {
+        let repository = TransferRepository::default();
+        let mut transfer = transfer_test_utils::mock_transfer();
+        transfer.from_wallet = [1; 16];
+
+        repository.insert(transfer.to_key(), transfer.clone());
+
+        let transfers = repository.find_by_wallet([0; 16], None, None, None);
+
+        assert!(transfers.is_empty());
+    }
+}

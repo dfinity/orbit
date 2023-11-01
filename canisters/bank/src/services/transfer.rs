@@ -1,6 +1,6 @@
 use super::{AccountService, WalletService};
 use crate::{
-    core::{CallContext, WithCallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, WithCallContext},
     errors::{TransferError, WalletError},
     factories::blockchains::BlockchainApiFactory,
     factories::operations::OperationProcessorFactory,
@@ -14,11 +14,8 @@ use crate::{
     transport::{ListWalletTransfersInput, TransferInput},
 };
 use candid::Nat;
-use ic_canister_core::{
-    api::ServiceResult,
-    utils::{generate_uuid_v4, rfc3339_to_timestamp},
-};
-use ic_canister_core::{cdk::api::time, model::ModelValidator, repository::Repository};
+use ic_canister_core::{api::ServiceResult, utils::rfc3339_to_timestamp};
+use ic_canister_core::{model::ModelValidator, repository::Repository};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -233,5 +230,119 @@ impl TransferService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use candid::Principal;
+
+    use super::*;
+    use crate::{
+        core::test_utils,
+        models::{
+            account_test_utils::mock_account, transfer_test_utils::mock_transfer,
+            wallet_test_utils::mock_wallet, Account,
+        },
+        repositories::AccountRepository,
+    };
+
+    struct TestContext {
+        repository: TransferRepository,
+        service: TransferService,
+        caller_account: Account,
+        wallet: Wallet,
+    }
+
+    fn setup() -> TestContext {
+        test_utils::init_canister_config();
+
+        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+        let mut account = mock_account();
+        account.identities = vec![call_context.caller()];
+
+        AccountRepository::default().insert(account.to_key(), account.clone());
+
+        let mut wallet = mock_wallet();
+        wallet.owners.push(account.id);
+
+        WalletRepository::default().insert(wallet.to_key(), wallet.clone());
+
+        TestContext {
+            repository: TransferRepository::default(),
+            service: TransferService::with_call_context(call_context),
+            caller_account: account,
+            wallet,
+        }
+    }
+
+    #[test]
+    fn get_transfer() {
+        let ctx = setup();
+        let mut transfer = mock_transfer();
+        transfer.from_wallet = ctx.wallet.id;
+        transfer.initiator_account = ctx.caller_account.id;
+
+        ctx.repository.insert(transfer.to_key(), transfer.clone());
+
+        let result = ctx.service.get_transfer(&transfer.id);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_get_transfer_not_allowed() {
+        let ctx = setup();
+        let mut account = mock_account();
+        account.identities = vec![Principal::anonymous()];
+        AccountRepository::default().insert(account.to_key(), account.clone());
+        let mut transfer = mock_transfer();
+        transfer.from_wallet = ctx.wallet.id;
+        transfer.initiator_account = account.id;
+
+        ctx.repository.insert(transfer.to_key(), transfer.clone());
+
+        let result = ctx.service.get_transfer(&transfer.id);
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn create_transfer_happy_path() {
+        let ctx = setup();
+        let transfer_input = TransferInput {
+            from_wallet_id: Uuid::from_bytes(ctx.wallet.id).to_string(),
+            amount: candid::Nat::from(100),
+            fee: None,
+            network: None,
+            expiration_dt: None,
+            execution_plan: None,
+            metadata: None,
+            to: "03e252ebe920437d7aaff019b78a40bca50e24e42aebff00384d62038482ac81".to_string(),
+        };
+
+        let result = ctx.service.create_transfer(transfer_input.clone()).await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().from_wallet, ctx.wallet.id);
+    }
+
+    #[tokio::test]
+    async fn fail_create_transfer_from_unknown_wallet() {
+        let ctx = setup();
+        let transfer_input = TransferInput {
+            from_wallet_id: Uuid::new_v4().to_string(),
+            amount: candid::Nat::from(100),
+            fee: None,
+            network: None,
+            expiration_dt: None,
+            execution_plan: None,
+            metadata: None,
+            to: "03e252ebe920437d7aaff019b78a40bca50e24e42aebff00384d62038482ac81".to_string(),
+        };
+
+        let result = ctx.service.create_transfer(transfer_input.clone()).await;
+
+        assert!(result.is_err());
     }
 }

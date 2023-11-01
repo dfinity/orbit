@@ -55,16 +55,36 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                     });
                 }
 
-                let prev_wallet_index = prev.to_index_for_wallet();
-                if prev_wallet_index != value.to_index_for_wallet() {
-                    self.wallet_index.remove(&prev_wallet_index);
-                    self.wallet_index.insert(value.to_index_for_wallet());
+                match (prev.to_index_for_wallet(), value.to_index_for_wallet()) {
+                    (Some(prev), Some(current)) => {
+                        if prev != current {
+                            self.wallet_index.remove(&prev);
+                            self.wallet_index.insert(current);
+                        }
+                    }
+                    (Some(prev), None) => {
+                        self.wallet_index.remove(&prev);
+                    }
+                    (None, Some(current)) => {
+                        self.wallet_index.insert(current);
+                    }
+                    _ => {}
                 }
 
-                let prev_transfer_index = prev.to_index_for_transfer();
-                if prev_transfer_index != value.to_index_for_transfer() {
-                    self.transfer_index.remove(&prev_transfer_index);
-                    self.transfer_index.insert(value.to_index_for_transfer());
+                match (prev.to_index_for_transfer(), value.to_index_for_transfer()) {
+                    (Some(prev), Some(current)) => {
+                        if prev != current {
+                            self.transfer_index.remove(&prev);
+                            self.transfer_index.insert(current);
+                        }
+                    }
+                    (Some(prev), None) => {
+                        self.transfer_index.remove(&prev);
+                    }
+                    (None, Some(current)) => {
+                        self.transfer_index.insert(current);
+                    }
+                    _ => {}
                 }
 
                 Some(prev)
@@ -73,8 +93,12 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 value.to_index_for_accounts().iter().for_each(|index| {
                     self.account_index.insert(index.to_owned());
                 });
-                self.wallet_index.insert(value.to_index_for_wallet());
-                self.transfer_index.insert(value.to_index_for_transfer());
+                if let Some(wallet_index) = value.to_index_for_wallet() {
+                    self.wallet_index.insert(wallet_index);
+                }
+                if let Some(transfer_index) = value.to_index_for_transfer() {
+                    self.transfer_index.insert(transfer_index);
+                }
 
                 None
             }
@@ -87,8 +111,12 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 prev.to_index_for_accounts().iter().for_each(|index| {
                     self.account_index.remove(index);
                 });
-                self.wallet_index.remove(&prev.to_index_for_wallet());
-                self.transfer_index.remove(&prev.to_index_for_transfer());
+                if let Some(wallet_index) = prev.to_index_for_wallet() {
+                    self.wallet_index.remove(&wallet_index);
+                }
+                if let Some(transfer_index) = prev.to_index_for_transfer() {
+                    self.transfer_index.remove(&transfer_index);
+                }
 
                 Some(prev)
             }
@@ -246,4 +274,109 @@ pub struct OperationFindByAccountWhereClause {
     pub code: Option<OperationCode>,
     pub status: Option<OperationStatus>,
     pub read: Option<bool>,
+}
+
+#[cfg(test)]
+mod tests {
+    use uuid::Uuid;
+
+    use super::*;
+    use crate::models::{
+        operation_test_utils, OperationDecision, OPERATION_METADATA_KEY_TRANSFER_ID,
+        OPERATION_METADATA_KEY_WALLET_ID,
+    };
+
+    #[test]
+    fn perform_crud() {
+        let repository = OperationRepository::default();
+        let operation = operation_test_utils::mock_operation();
+
+        assert!(repository.get(&operation.to_key()).is_none());
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert!(repository.get(&operation.to_key()).is_some());
+        assert!(repository.remove(&operation.to_key()).is_some());
+        assert!(repository.get(&operation.to_key()).is_none());
+    }
+
+    #[test]
+    fn find_by_transfer_id() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let transfer_id = Uuid::new_v4();
+        operation.metadata = vec![(
+            OPERATION_METADATA_KEY_TRANSFER_ID.to_string(),
+            transfer_id.to_string(),
+        )];
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_transfer_id(*transfer_id.as_bytes()),
+            vec![operation]
+        );
+    }
+
+    #[test]
+    fn find_by_originator_user_id() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let account_id = Uuid::new_v4();
+        operation.originator_account_id = Some(*account_id.as_bytes());
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_account_id(*account_id.as_bytes()),
+            vec![operation]
+        );
+    }
+
+    #[test]
+    fn find_by_decision_user_id() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let account_id = Uuid::new_v4();
+        operation.decisions = vec![OperationDecision {
+            account_id: *account_id.as_bytes(),
+            read: false,
+            decided_dt: None,
+            last_modification_timestamp: 0,
+            status: OperationStatus::Pending,
+            status_reason: None,
+        }];
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_account_id(*account_id.as_bytes()),
+            vec![operation]
+        );
+    }
+
+    #[test]
+    fn find_by_wallet_and_user() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let account_id = Uuid::new_v4();
+        let wallet_id = Uuid::new_v4();
+        operation.originator_account_id = Some(*account_id.as_bytes());
+        operation.metadata = vec![(
+            OPERATION_METADATA_KEY_WALLET_ID.to_string(),
+            wallet_id.to_string(),
+        )];
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_wallet_and_account_id(
+                *wallet_id.as_bytes(),
+                *account_id.as_bytes(),
+                None,
+                None
+            ),
+            vec![operation]
+        );
+    }
 }

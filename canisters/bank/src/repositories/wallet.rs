@@ -92,3 +92,51 @@ impl WalletRepository {
             .collect::<Vec<_>>()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::wallet_test_utils;
+
+    #[test]
+    fn test_crud() {
+        let repository = WalletRepository::default();
+        let wallet = wallet_test_utils::mock_wallet();
+
+        assert!(repository.get(&wallet.to_key()).is_none());
+
+        repository.insert(wallet.to_key(), wallet.clone());
+
+        assert!(repository.get(&wallet.to_key()).is_some());
+        assert!(repository.remove(&wallet.to_key()).is_some());
+        assert!(repository.get(&wallet.to_key()).is_none());
+    }
+
+    #[test]
+    fn test_find_by_account_id() {
+        let repository = WalletRepository::default();
+        let mut wallet = wallet_test_utils::mock_wallet();
+        wallet.owners = vec![[1; 16]];
+
+        repository.insert(wallet.to_key(), wallet.clone());
+
+        assert_eq!(repository.find_by_account_id([1; 16]), vec![wallet]);
+    }
+
+    #[test]
+    fn test_find_by_ids() {
+        let repository = WalletRepository::default();
+        let mut wallet1 = wallet_test_utils::mock_wallet();
+        let mut wallet2 = wallet_test_utils::mock_wallet();
+        wallet1.id = [1; 16];
+        wallet2.id = [2; 16];
+
+        repository.insert(wallet1.to_key(), wallet1.clone());
+        repository.insert(wallet2.to_key(), wallet2.clone());
+
+        assert_eq!(
+            repository.find_by_ids(vec![wallet1.id, wallet2.id]),
+            vec![wallet1, wallet2]
+        );
+    }
+}

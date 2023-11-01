@@ -1,6 +1,6 @@
 use super::AccountService;
 use crate::{
-    core::{CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
+    core::{generate_uuid_v4, CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
     errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{BlockchainMapper, HelperMapper, WalletMapper},
@@ -11,7 +11,6 @@ use crate::{
 use candid::Principal;
 use ic_canister_core::{
     api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
-    utils::generate_uuid_v4,
 };
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -199,5 +198,96 @@ impl WalletService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::test_utils,
+        models::{account_test_utils::mock_account, wallet_test_utils::mock_wallet, Account},
+        repositories::AccountRepository,
+    };
+
+    struct TestContext {
+        repository: WalletRepository,
+        service: WalletService,
+        caller_account: Account,
+    }
+
+    fn setup() -> TestContext {
+        test_utils::init_canister_config();
+
+        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+        let mut account = mock_account();
+        account.identities = vec![call_context.caller()];
+
+        AccountRepository::default().insert(account.to_key(), account.clone());
+
+        TestContext {
+            repository: WalletRepository::default(),
+            service: WalletService::with_call_context(call_context),
+            caller_account: account,
+        }
+    }
+
+    #[test]
+    fn get_wallet() {
+        let ctx = setup();
+        let mut wallet = mock_wallet();
+        wallet.owners.push(ctx.caller_account.id);
+
+        ctx.repository.insert(wallet.to_key(), wallet.clone());
+
+        let result = ctx.service.get_wallet(&wallet.id);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_get_wallet_not_allowed() {
+        let ctx = setup();
+        let wallet = mock_wallet();
+
+        ctx.repository.insert(wallet.to_key(), wallet.clone());
+
+        let result = ctx.service.get_wallet(&wallet.id);
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn create_wallet() {
+        let ctx = setup();
+        let input = CreateWalletInput {
+            name: Some("foo".to_string()),
+            owners: vec![Uuid::from_bytes(ctx.caller_account.id).to_string()],
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            metadata: None,
+            policies: vec![],
+        };
+
+        let result = ctx.service.create_wallet(input).await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn fail_create_wallet_unknown_blockchain() {
+        let ctx = setup();
+        let input = CreateWalletInput {
+            name: Some("foo".to_string()),
+            owners: vec![Uuid::from_bytes(ctx.caller_account.id).to_string()],
+            blockchain: "unknown".to_string(),
+            standard: "native".to_string(),
+            metadata: None,
+            policies: vec![],
+        };
+
+        let result = ctx.service.create_wallet(input).await;
+
+        assert!(result.is_err());
     }
 }

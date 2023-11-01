@@ -1,15 +1,15 @@
 use crate::{
-    core::{with_memory_manager, Memory, TRANSFER_WALLET_INDEX_MEMORY_ID},
+    core::{
+        ic_cdk::api::{time, trap},
+        with_memory_manager, Memory, TRANSFER_WALLET_INDEX_MEMORY_ID,
+    },
     errors::RepositoryError,
     models::{
         indexes::transfer_wallet_index::{TransferWalletIndex, TransferWalletIndexCriteria},
         TransferId,
     },
 };
-use ic_canister_core::{
-    cdk::api::{time, trap},
-    repository::IndexRepository,
-};
+use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
@@ -46,9 +46,12 @@ impl IndexRepository<TransferWalletIndex, TransferId> for TransferWalletIndexRep
             let (from_dt, to_dt) = match (criteria.from_dt, criteria.to_dt) {
                 (Some(start), Some(end)) => (start, end),
                 (Some(start), None) => (start, time()),
-                (None, Some(end)) => (end - TransferWalletIndex::DEFAULT_CRITERIA_INTERVAL_NS, end),
+                (None, Some(end)) => (
+                    end.saturating_sub(TransferWalletIndex::DEFAULT_CRITERIA_INTERVAL_NS),
+                    end,
+                ),
                 _ => (
-                    time() - TransferWalletIndex::DEFAULT_CRITERIA_INTERVAL_NS,
+                    time().saturating_sub(TransferWalletIndex::DEFAULT_CRITERIA_INTERVAL_NS),
                     time(),
                 ),
             };
@@ -72,5 +75,57 @@ impl IndexRepository<TransferWalletIndex, TransferId> for TransferWalletIndexRep
                 .map(|(index, _)| index.transfer_id)
                 .collect::<HashSet<TransferId>>()
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_repository_crud() {
+        let repository = TransferWalletIndexRepository::default();
+        let index = TransferWalletIndex {
+            transfer_id: [1; 16],
+            created_timestamp: time(),
+            wallet_id: [2; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_criteria() {
+        let repository = TransferWalletIndexRepository::default();
+        let now = time();
+        let index = TransferWalletIndex {
+            transfer_id: [1; 16],
+            created_timestamp: now,
+            wallet_id: [2; 16],
+        };
+
+        repository.insert(index.clone());
+        repository.insert(TransferWalletIndex {
+            transfer_id: [2; 16],
+            created_timestamp: now + 1,
+            wallet_id: [2; 16],
+        });
+
+        let criteria = TransferWalletIndexCriteria {
+            wallet_id: [2; 16],
+            from_dt: None,
+            to_dt: Some(now),
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&index.transfer_id));
     }
 }

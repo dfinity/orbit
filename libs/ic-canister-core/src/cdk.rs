@@ -1,36 +1,45 @@
-// Internet computer api system calls.
 #[cfg(not(test))]
-mod production {
-    pub use ic_cdk::*;
-}
+pub use ic_cdk::*;
+
+#[cfg(test)]
+pub use mocks::*;
 
 // Mock ic system call api for tests.
-#[cfg(test)]
-mod test {
+pub mod mocks {
     use candid::Principal;
+
+    pub const TEST_CANISTER_ID: Principal = Principal::from_slice(&[u8::MAX; 29]);
 
     pub fn caller() -> Principal {
         Principal::anonymous()
     }
 
-    pub fn spawn<F: 'static + Send + std::future::Future<Output = ()>>(future: F) {
-        tokio::task::spawn(future);
+    pub fn spawn<F: 'static + std::future::Future<Output = ()>>(future: F) {
+        tokio::task::spawn_local(future);
     }
 
     pub mod api {
         use candid::Principal;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        static mut IC_TIME: SystemTime = UNIX_EPOCH;
+
+        pub fn set_mock_ic_time(time: SystemTime) {
+            unsafe {
+                IC_TIME = time;
+            }
+        }
 
         pub fn time() -> u64 {
-            use std::time::SystemTime;
-
-            SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
+            unsafe { IC_TIME.duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64 }
         }
 
         pub fn id() -> Principal {
-            Principal::anonymous()
+            super::TEST_CANISTER_ID
+        }
+
+        pub fn is_controller(principal: &Principal) -> bool {
+            principal == &id()
         }
 
         pub fn trap(message: &str) -> ! {
@@ -53,21 +62,9 @@ mod test {
     }
 }
 
-// Use the correct module based on the environment
-#[cfg(not(test))]
-pub use production::*;
-
-#[cfg(test)]
-pub use test::*;
-
 #[cfg(test)]
 mod tests {
-    use std::time::SystemTime;
-
-    use super::{
-        api::{time, trap},
-        caller,
-    };
+    use super::mocks::{api::trap, caller};
     use candid::Principal;
 
     #[test]
@@ -79,16 +76,5 @@ mod tests {
     #[should_panic(expected = "this is an expected panic")]
     fn trap_panics_with_given_message() {
         trap("this is an expected panic")
-    }
-
-    #[test]
-    fn time_gives_back_current_system_time() {
-        let retrieved_time = time();
-        let expected_time = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        assert_eq!(retrieved_time, expected_time)
     }
 }

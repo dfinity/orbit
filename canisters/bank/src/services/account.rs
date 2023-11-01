@@ -1,5 +1,5 @@
 use crate::{
-    core::{CallContext, WithCallContext},
+    core::{generate_uuid_v4, CallContext, WithCallContext},
     errors::AccountError,
     mappers::{AccountMapper, HelperMapper},
     models::{AccessRole, Account, AccountId},
@@ -7,8 +7,8 @@ use crate::{
     transport::{ConfirmAccountInput, EditAccountInput, RegisterAccountInput},
 };
 use candid::Principal;
+use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
-use ic_canister_core::{api::ServiceResult, utils::generate_uuid_v4};
 use ic_canister_core::{repository::Repository, types::UUID};
 use uuid::Uuid;
 
@@ -90,7 +90,14 @@ impl AccountService {
         let account_id = generate_uuid_v4().await;
         let identities = match input.identities.is_empty() {
             true => vec![caller_identity],
-            false => input.identities,
+            false => {
+                let mut identities = input.identities;
+                if !identities.contains(&caller_identity) {
+                    identities.push(caller_identity);
+                }
+
+                identities
+            }
         };
 
         for new_identity in identities.iter() {
@@ -192,5 +199,163 @@ impl AccountService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{core::test_utils, models::account_test_utils};
+
+    struct TestContext {
+        service: AccountService,
+        repository: AccountRepository,
+    }
+
+    fn setup() -> TestContext {
+        test_utils::init_canister_config();
+
+        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+
+        TestContext {
+            repository: AccountRepository::default(),
+            service: AccountService::with_call_context(call_context),
+        }
+    }
+
+    #[test]
+    fn get_account() {
+        let ctx: TestContext = setup();
+        let mut account = account_test_utils::mock_account();
+        account.identities = vec![ctx.service.call_context.caller()];
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let result = ctx.service.get_account(&account.id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), account);
+    }
+
+    #[test]
+    fn get_account_by_identity() {
+        let ctx: TestContext = setup();
+        let mut account = account_test_utils::mock_account();
+        account.identities = vec![ctx.service.call_context.caller()];
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let result = ctx.service.get_account_by_identity(&account.identities[0]);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), account);
+    }
+
+    #[test]
+    fn not_allowed_get_account_by_identity() {
+        let ctx: TestContext = setup();
+        let mut account = account_test_utils::mock_account();
+        account.identities = vec![Principal::from_slice(&[255; 29])];
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let result = ctx.service.get_account_by_identity(&account.identities[0]);
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn can_remove_admin() {
+        let ctx: TestContext = setup();
+        let mut caller = account_test_utils::mock_account();
+        caller.identities = vec![ctx.service.call_context.caller()];
+        caller.access_roles = vec![AccessRole::Admin];
+        let mut admin = account_test_utils::mock_account();
+        admin.identities = vec![Principal::from_slice(&[255; 29])];
+        admin.access_roles = vec![AccessRole::Admin, AccessRole::User];
+
+        ctx.repository.insert(caller.to_key(), caller.clone());
+        ctx.repository.insert(admin.to_key(), admin.clone());
+
+        let result = ctx.service.remove_admin(&admin.identities[0]).await;
+        assert!(result.is_ok());
+
+        let admin = ctx.repository.get(&admin.to_key()).unwrap();
+        assert_eq!(admin.access_roles, vec![AccessRole::User]);
+    }
+
+    #[tokio::test]
+    async fn fail_remove_self_admin() {
+        let ctx: TestContext = setup();
+        let mut admin = account_test_utils::mock_account();
+        admin.identities = vec![ctx.service.call_context.caller()];
+        admin.access_roles = vec![AccessRole::Admin];
+
+        ctx.repository.insert(admin.to_key(), admin.clone());
+
+        let result = ctx.service.remove_admin(&admin.identities[0]).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn register_account_happy_path() {
+        let ctx: TestContext = setup();
+        let input = RegisterAccountInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+        };
+
+        let result = ctx.service.register_account(input, vec![]).await;
+        assert!(result.is_ok());
+
+        let account = ctx.repository.get(&result.unwrap().to_key()).unwrap();
+        assert_eq!(account.identities, vec![ctx.service.call_context.caller()]);
+        assert_eq!(
+            account.unconfirmed_identities,
+            vec![Principal::from_slice(&[2; 29])]
+        );
+        assert_eq!(account.access_roles, vec![AccessRole::User]);
+    }
+
+    #[tokio::test]
+    async fn confirm_account_identity() {
+        let ctx: TestContext = setup();
+        let mut account = account_test_utils::mock_account();
+        account.identities = vec![Principal::anonymous()];
+        account.unconfirmed_identities = vec![ctx.service.call_context.caller()];
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let input = ConfirmAccountInput {
+            account_id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+        };
+
+        let result = ctx.service.confirm_account(input).await;
+        assert!(result.is_ok());
+
+        let account = ctx.repository.get(&result.unwrap().to_key()).unwrap();
+        assert_eq!(
+            account.identities,
+            vec![Principal::anonymous(), ctx.service.call_context.caller()]
+        );
+        assert!(account.unconfirmed_identities.is_empty());
+    }
+
+    #[tokio::test]
+    async fn edit_account_happy_path() {
+        let ctx: TestContext = setup();
+        let mut account = account_test_utils::mock_account();
+        account.identities = vec![Principal::anonymous()];
+        account.unconfirmed_identities = vec![ctx.service.call_context.caller()];
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let input = EditAccountInput {
+            account_id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+            identities: Some(vec![ctx.service.call_context.caller()]),
+        };
+
+        let result = ctx.service.edit_account(input).await;
+        assert!(result.is_ok());
+
+        let account = ctx.repository.get(&result.unwrap().to_key()).unwrap();
+        assert_eq!(account.identities, vec![ctx.service.call_context.caller()]);
+        assert!(account.unconfirmed_identities.is_empty());
     }
 }

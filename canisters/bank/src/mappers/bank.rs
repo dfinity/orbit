@@ -1,11 +1,11 @@
 use crate::{
-    core::{CanisterConfig, Permission},
+    core::{ic_cdk::api::time, CanisterConfig, Permission},
     models::{BankFeatures, BankSettings},
     transport::{
         BankAssetDTO, BankCanisterInit, BankFeaturesDTO, BankPermissionDTO, BankSettingsDTO,
     },
 };
-use ic_canister_core::{cdk::api::time, utils::timestamp_to_rfc3339};
+use ic_canister_core::utils::timestamp_to_rfc3339;
 
 impl From<BankSettings> for BankSettingsDTO {
     fn from(settings: BankSettings) -> Self {

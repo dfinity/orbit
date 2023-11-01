@@ -69,3 +69,29 @@ impl Storable for AccessRole {
 
     const BOUND: Bound = Bound::Unbounded;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_access_role_string_conversion() {
+        assert_eq!(AccessRole::Admin.to_string(), "admin");
+        assert_eq!(AccessRole::User.to_string(), "user");
+        assert_eq!(AccessRole::Guest.to_string(), "guest");
+    }
+
+    #[test]
+    fn test_access_role_from_str() {
+        assert_eq!(AccessRole::from_str("admin").unwrap(), AccessRole::Admin);
+        assert_eq!(AccessRole::from_str("user").unwrap(), AccessRole::User);
+        assert_eq!(AccessRole::from_str("guest").unwrap(), AccessRole::Guest);
+    }
+
+    #[test]
+    fn test_access_role_from_number() {
+        assert_eq!(AccessRole::try_from(0).unwrap(), AccessRole::Admin);
+        assert_eq!(AccessRole::try_from(1).unwrap(), AccessRole::User);
+        assert_eq!(AccessRole::try_from(2).unwrap(), AccessRole::Guest);
+    }
+}

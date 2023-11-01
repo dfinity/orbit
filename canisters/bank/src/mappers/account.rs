@@ -1,11 +1,11 @@
 use crate::{
+    core::ic_cdk::api::time,
     errors::AccountError,
     models::{AccessRole, Account},
     transport::AccountDTO,
 };
 use candid::Principal;
 use ic_canister_core::{
-    cdk::api::time,
     types::UUID,
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };

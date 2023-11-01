@@ -59,3 +59,50 @@ impl IndexRepository<TransferExecutionTimeIndex, TransferId>
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_repository_crud() {
+        let repository = TransferExecutionTimeIndexRepository::default();
+        let index = TransferExecutionTimeIndex {
+            execution_dt: 10,
+            transfer_id: [1; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_criteria() {
+        let repository = TransferExecutionTimeIndexRepository::default();
+        let index = TransferExecutionTimeIndex {
+            execution_dt: 10,
+            transfer_id: [1; 16],
+        };
+
+        repository.insert(index.clone());
+        repository.insert(TransferExecutionTimeIndex {
+            execution_dt: 11,
+            transfer_id: [2; 16],
+        });
+
+        let criteria = TransferExecutionTimeIndexCriteria {
+            from_dt: None,
+            to_dt: Some(10),
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&index.transfer_id));
+    }
+}

@@ -1,5 +1,5 @@
 use crate::{
-    core::{canister_config, CallContext, WithCallContext},
+    core::{canister_config, generate_uuid_v4, CallContext, WithCallContext},
     errors::AccountError,
     mappers::AccountMapper,
     models::{Account, AccountBank, AccountId},
@@ -11,7 +11,6 @@ use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     api::{ApiError, ServiceResult},
     model::ModelValidator,
-    utils::generate_uuid_v4,
 };
 use uuid::Uuid;
 
@@ -191,5 +190,204 @@ impl AccountService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{models::AccountIdentity, transport::RegisterAccountBankInput};
+
+    #[test]
+    fn get_account_returns_not_found_err() {
+        let service = AccountService::default();
+        let account_id = *Uuid::new_v4().as_bytes();
+
+        let result = service.get_account(&account_id);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ApiError::from(AccountError::NotFound {
+                account: Uuid::from_bytes(account_id).hyphenated().to_string()
+            })
+        );
+    }
+
+    #[test]
+    fn success_fetch_existing_account() {
+        let service = AccountService::default();
+        let account_id = *Uuid::new_v4().as_bytes();
+        let account = Account {
+            id: account_id,
+            identities: vec![AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        service
+            .account_repository
+            .insert(account.to_key(), account.clone());
+
+        let result = service.get_account(&account_id);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), account);
+    }
+
+    #[test]
+    fn success_fetch_existing_account_by_identity() {
+        let service = AccountService::default();
+        let account_id = *Uuid::new_v4().as_bytes();
+        let account = Account {
+            id: account_id,
+            identities: vec![AccountIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        service
+            .account_repository
+            .insert(account.to_key(), account.clone());
+
+        let result = service.get_account_by_identity(&Principal::anonymous());
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), account);
+    }
+
+    #[tokio::test]
+    async fn success_register_new_account() {
+        crate::core::test_utils::init_canister_config();
+
+        let service = AccountService::default();
+        let input = RegisterAccountInput {
+            name: Some("Account".to_string()),
+            bank: RegisterAccountBankInput::PrivateBank {
+                id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+                use_shared_bank: None,
+            },
+        };
+
+        let result = service.register_account(input.clone()).await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().name, input.name);
+    }
+
+    #[tokio::test]
+    async fn failed_registering_new_account_with_same_identity() {
+        crate::core::test_utils::init_canister_config();
+
+        let service = AccountService::default();
+        let input = RegisterAccountInput {
+            name: Some("Account".to_string()),
+            bank: RegisterAccountBankInput::PrivateBank {
+                id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+                use_shared_bank: None,
+            },
+        };
+        let duplicated_account_input = RegisterAccountInput {
+            name: Some("Account 2".to_string()),
+            bank: RegisterAccountBankInput::PrivateBank {
+                id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+                use_shared_bank: None,
+            },
+        };
+
+        let result = service.register_account(input.clone()).await;
+        let duplicated_account_result = service
+            .register_account(duplicated_account_input.clone())
+            .await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().name, input.name);
+        assert!(duplicated_account_result.is_err());
+    }
+
+    #[tokio::test]
+    async fn correctly_associates_identity_with_account() {
+        crate::core::test_utils::init_canister_config();
+        let service = AccountService {
+            call_context: CallContext::new(
+                Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let account_id = *Uuid::new_v4().as_bytes();
+        let account = Account {
+            id: account_id,
+            identities: vec![],
+            unconfirmed_identities: vec![AccountIdentity {
+                identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+                name: None,
+            }],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        service
+            .account_repository
+            .insert(account.to_key(), account.clone());
+
+        let result = service.associate_identity_with_account(account_id).await;
+
+        assert!(result.is_ok());
+        let account = result.unwrap();
+
+        assert_eq!(account.identities.len(), 1);
+        assert_eq!(account.unconfirmed_identities.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn can_remove_account() {
+        crate::core::test_utils::init_canister_config();
+        let service = AccountService {
+            call_context: CallContext::new(
+                Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            ),
+            ..Default::default()
+        };
+
+        let account_id = *Uuid::new_v4().as_bytes();
+        let account = Account {
+            id: account_id,
+            identities: vec![AccountIdentity {
+                identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+                name: None,
+            }],
+            unconfirmed_identities: vec![],
+            banks: vec![],
+            main_bank: None,
+            last_update_timestamp: 0,
+            name: None,
+        };
+
+        service
+            .account_repository
+            .insert(account.to_key(), account.clone());
+
+        let result = service.remove_account(&account_id).await;
+
+        assert!(result.is_ok());
+        assert!(service
+            .account_repository
+            .get(&Account::key(&account_id))
+            .is_none());
     }
 }

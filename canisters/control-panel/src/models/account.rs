@@ -397,7 +397,7 @@ mod tests {
             identities: vec![],
             unconfirmed_identities: vec![],
             banks: vec![AccountBank {
-                canister_id: Principal::from_text("2chl6-4hpzw-vqaaa-aaaaa-c").unwrap(),
+                canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 name: None,
             }],
             main_bank: Some(Principal::anonymous()),

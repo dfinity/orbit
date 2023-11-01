@@ -1,33 +1,37 @@
+use crate::core::ic_cdk::{api::id as self_canister_id, caller};
 use candid::Principal;
-use ic_canister_core::cdk::{api::id as self_canister_id, caller};
 
 #[derive(Clone, Debug)]
 pub struct CallContext {
-    caller: Principal,
+    _caller: Principal,
 }
 
 impl Default for CallContext {
     fn default() -> Self {
         Self {
-            caller: Principal::anonymous(),
+            _caller: Principal::anonymous(),
         }
     }
 }
 
 impl CallContext {
+    pub fn new(caller: Principal) -> Self {
+        Self { _caller: caller }
+    }
+
     /// This method can only be used before any await has been called in the current call context,
     /// otherwise it will panic.
     pub fn get() -> Self {
-        Self { caller: caller() }
+        Self { _caller: caller() }
     }
 
     pub fn caller(&self) -> Principal {
-        self.caller
+        self._caller
     }
 
     /// Checks if the caller is an admin.
     pub fn is_admin(&self) -> bool {
-        self.caller == self_canister_id()
+        self._caller == self_canister_id()
     }
 }
 

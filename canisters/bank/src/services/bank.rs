@@ -1,4 +1,5 @@
 use super::AccountService;
+use crate::core::ic_cdk::api::time;
 use crate::{
     core::{
         canister_config, default_bank_permissions, write_canister_config, CallContext,
@@ -9,7 +10,6 @@ use crate::{
     transport::{BankCanisterInit, RegisterAccountInput},
 };
 use ic_canister_core::api::ServiceResult;
-use ic_canister_core::cdk::api::time;
 
 #[derive(Default, Debug)]
 pub struct BankService {
@@ -97,5 +97,48 @@ impl BankService {
         config.update_with(init.to_owned());
 
         write_canister_config(config.to_owned());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::{test_utils, PERMISSION_READ_FEATURES},
+        transport::{AccountRoleDTO, BankPermissionDTO},
+    };
+    use candid::Principal;
+
+    #[tokio::test]
+    async fn canister_upgrade() {
+        let mut config = test_utils::init_canister_config();
+        let call_context = CallContext::new(Principal::from_slice(&[1; 29]));
+        let bank_service = BankService::with_call_context(call_context.clone());
+
+        config.owners = vec![Principal::anonymous()];
+        write_canister_config(config.to_owned());
+
+        let init = BankCanisterInit {
+            owners: Some(vec![Principal::anonymous()]),
+            permissions: Some(vec![BankPermissionDTO {
+                permission_id: PERMISSION_READ_FEATURES.to_string(),
+                access_roles: vec![AccountRoleDTO::User],
+            }]),
+            ..Default::default()
+        };
+
+        bank_service.register_canister_config(config, init).await;
+
+        let canister_config = canister_config();
+        assert_eq!(canister_config.owners.len(), 1);
+        assert_eq!(canister_config.owners[0], Principal::anonymous());
+        assert!(canister_config
+            .permissions
+            .iter()
+            .any(
+                |permission| permission.permission_id == *PERMISSION_READ_FEATURES
+                    && permission.access_roles.len() == 1
+                    && permission.access_roles.contains(&AccessRole::User)
+            ));
     }
 }

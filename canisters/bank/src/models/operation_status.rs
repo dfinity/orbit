@@ -73,3 +73,56 @@ impl Storable for OperationStatus {
 
     const BOUND: Bound = Bound::Unbounded;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_string_representation() {
+        assert_eq!(OperationStatus::Pending.to_string(), "pending");
+        assert_eq!(
+            OperationStatus::from_str("pending").unwrap(),
+            OperationStatus::Pending
+        );
+        assert_eq!(OperationStatus::Adopted.to_string(), "adopted");
+        assert_eq!(
+            OperationStatus::from_str("adopted").unwrap(),
+            OperationStatus::Adopted
+        );
+        assert_eq!(OperationStatus::Rejected.to_string(), "rejected");
+        assert_eq!(
+            OperationStatus::from_str("rejected").unwrap(),
+            OperationStatus::Rejected
+        );
+        assert_eq!(OperationStatus::NotRequired.to_string(), "not-required");
+        assert_eq!(
+            OperationStatus::from_str("not-required").unwrap(),
+            OperationStatus::NotRequired
+        );
+    }
+
+    #[test]
+    fn test_status_number_representation() {
+        assert_eq!(OperationStatus::Pending as u8, 0);
+        assert_eq!(
+            OperationStatus::try_from(0).unwrap(),
+            OperationStatus::Pending
+        );
+        assert_eq!(OperationStatus::Adopted as u8, 1);
+        assert_eq!(
+            OperationStatus::try_from(1).unwrap(),
+            OperationStatus::Adopted
+        );
+        assert_eq!(OperationStatus::Rejected as u8, 2);
+        assert_eq!(
+            OperationStatus::try_from(2).unwrap(),
+            OperationStatus::Rejected
+        );
+        assert_eq!(OperationStatus::NotRequired as u8, 3);
+        assert_eq!(
+            OperationStatus::try_from(3).unwrap(),
+            OperationStatus::NotRequired
+        );
+    }
+}

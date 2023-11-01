@@ -1,4 +1,5 @@
 use super::OperationProcessor;
+use crate::core::ic_cdk::api::time;
 use crate::{
     errors::WalletError,
     mappers::HelperMapper,
@@ -10,7 +11,6 @@ use crate::{
 };
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
-use ic_canister_core::cdk::api::time;
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 
