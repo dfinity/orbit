@@ -56,3 +56,49 @@ impl IndexRepository<OperationAccountIndex, OperationId> for OperationAccountInd
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_repository_crud() {
+        let repository = OperationAccountIndexRepository::default();
+        let index = OperationAccountIndex {
+            id: [0; 16],
+            created_at: 10,
+            account_id: [1; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_criteria() {
+        let repository = OperationAccountIndexRepository::default();
+        let index = OperationAccountIndex {
+            id: [0; 16],
+            created_at: 10,
+            account_id: [1; 16],
+        };
+
+        repository.insert(index.clone());
+
+        let criteria = OperationAccountIndexCriteria {
+            account_id: [1; 16],
+            from_dt: None,
+            to_dt: None,
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&index.id));
+    }
+}

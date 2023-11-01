@@ -1,5 +1,6 @@
 use super::BlockchainMapper;
 use crate::{
+    core::ic_cdk::api::time,
     errors::MapperError,
     models::{
         AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
@@ -7,7 +8,7 @@ use crate::{
     },
     transport::{CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO},
 };
-use ic_canister_core::{cdk::api::time, types::UUID, utils::timestamp_to_rfc3339};
+use ic_canister_core::{types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]

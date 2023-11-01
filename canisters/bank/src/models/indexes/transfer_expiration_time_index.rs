@@ -28,3 +28,35 @@ impl Transfer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{PolicySnapshot, TransferExecutionPlan, TransferStatus};
+    use num_bigint::BigUint;
+
+    #[test]
+    fn test_transfer_to_index_by_expiration_dt() {
+        let transfer = Transfer {
+            id: [0; 16],
+            amount: candid::Nat(BigUint::from(0u32)),
+            blockchain_network: "icp".to_string(),
+            created_timestamp: 0,
+            expiration_dt: 5,
+            fee: candid::Nat(BigUint::from(0u32)),
+            from_wallet: [1; 16],
+            to_address: "0x1234".to_string(),
+            status: TransferStatus::Pending,
+            initiator_account: [2; 16],
+            last_modification_timestamp: 0,
+            metadata: vec![],
+            policy_snapshot: PolicySnapshot { min_approvals: 0 },
+            execution_plan: TransferExecutionPlan::Immediate,
+        };
+
+        let index = transfer.to_index_by_expiration_dt();
+
+        assert_eq!(index.transfer_id, transfer.id);
+        assert_eq!(index.expiration_dt, 5);
+    }
+}

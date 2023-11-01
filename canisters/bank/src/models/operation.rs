@@ -157,3 +157,125 @@ impl Operation {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::operation_test_utils::mock_operation;
+    use super::*;
+
+    #[test]
+    fn fail_operation_metadata_too_many_entries() {
+        let mut operation = mock_operation();
+        operation.metadata = vec![
+            ("foo".to_string(), "bar".to_string());
+            OperationValidator::MAX_METADATA_ENTRIES as usize + 1
+        ];
+
+        let result = OperationValidator::new(&operation).validate_metadata();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::ValidationError {
+                info: "Operation metadata count exceeds the maximum allowed: 10".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_operation_metadata_validation() {
+        let mut operation = mock_operation();
+        operation.metadata = vec![("a".repeat(24), "b".repeat(24)); 10];
+
+        let result = OperationValidator::new(&operation).validate_metadata();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_operation_metadata_key_too_long() {
+        let mut operation = mock_operation();
+        operation.metadata = vec![("a".repeat(25), "b".repeat(24))];
+
+        let result = OperationValidator::new(&operation).validate_metadata();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::ValidationError {
+                info: "Operation metadata key length exceeds the maximum allowed: 24".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn fail_operaton_decisions_too_many_entries() {
+        let mut operation = mock_operation();
+        operation.decisions = vec![
+            OperationDecision {
+                account_id: [0; 16],
+                read: false,
+                status: OperationStatus::Rejected,
+                status_reason: None,
+                decided_dt: None,
+                last_modification_timestamp: 0,
+            };
+            OperationValidator::MAX_DECISION_ENTRIES as usize + 1
+        ];
+
+        let result = OperationValidator::new(&operation).validate_decisions();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::ValidationError {
+                info: "Operation decisions count exceeds the maximum allowed: 10".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_operation_decisions_validation() {
+        let mut operation = mock_operation();
+        operation.decisions = vec![
+            OperationDecision {
+                account_id: [0; 16],
+                read: false,
+                status: OperationStatus::Rejected,
+                status_reason: None,
+                decided_dt: None,
+                last_modification_timestamp: 0,
+            };
+            OperationValidator::MAX_DECISION_ENTRIES as usize - 1
+        ];
+
+        let result = OperationValidator::new(&operation).validate_decisions();
+
+        assert!(result.is_ok());
+    }
+}
+
+#[cfg(test)]
+pub mod operation_test_utils {
+    use super::*;
+
+    pub fn mock_operation() -> Operation {
+        Operation {
+            id: [0; 16],
+            originator_account_id: Some([1; 16]),
+            status: OperationStatus::Adopted,
+            code: OperationCode::ApproveTransfer,
+            decisions: vec![OperationDecision {
+                account_id: [1; 16],
+                read: true,
+                status: OperationStatus::Adopted,
+                status_reason: None,
+                decided_dt: Some(0),
+                last_modification_timestamp: 0,
+            }],
+            metadata: vec![("a".repeat(25), "b".repeat(24))],
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+        }
+    }
+}

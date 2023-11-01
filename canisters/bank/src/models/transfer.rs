@@ -1,4 +1,5 @@
 use super::{AccountId, ApprovalThresholdPolicy, Wallet, WalletId, WalletPolicy};
+use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -6,7 +7,6 @@ use ic_canister_core::{
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::stable_object;
-use ic_cdk::api::time;
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter},
@@ -269,5 +269,198 @@ impl<'model> TransferValidator<'model> {
 impl ModelValidator<TransferError> for Transfer {
     fn validate(&self) -> ModelValidatorResult<TransferError> {
         TransferValidator::new(self).validate()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use transfer_test_utils::mock_transfer;
+
+    #[test]
+    fn test_metadata_validation() {
+        let mut transfer = mock_transfer();
+        transfer.metadata = vec![("foo".to_string(), "bar".to_string())];
+
+        let result = TransferValidator::new(&transfer).validate_metadata();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_operation_metadata_too_many_entries() {
+        let mut transfer = mock_transfer();
+        transfer.metadata = vec![
+            ("foo".to_string(), "bar".to_string());
+            TransferValidator::MAX_METADATA as usize + 1
+        ];
+
+        let result = TransferValidator::new(&transfer).validate_metadata();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TransferError::ValidationError {
+                info: format!(
+                    "Transfer metadata count exceeds the maximum allowed: {}",
+                    TransferValidator::MAX_METADATA
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn test_address_validation() {
+        let mut transfer = mock_transfer();
+        transfer.to_address = "a".repeat(255);
+
+        let result = TransferValidator::new(&transfer).validate_to_address();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_address_too_long() {
+        let mut transfer = mock_transfer();
+        transfer.to_address = "a".repeat(256);
+
+        let result = TransferValidator::new(&transfer).validate_to_address();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TransferError::ValidationError {
+                info: format!(
+                    "Transfer destination address length exceeds the allowed range: {} to {}",
+                    TransferValidator::ADDRESS_RANGE.0,
+                    TransferValidator::ADDRESS_RANGE.1
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn fail_address_too_short() {
+        let mut transfer = mock_transfer();
+        transfer.to_address = "".to_string();
+
+        let result = TransferValidator::new(&transfer).validate_to_address();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TransferError::ValidationError {
+                info: format!(
+                    "Transfer destination address length exceeds the allowed range: {} to {}",
+                    TransferValidator::ADDRESS_RANGE.0,
+                    TransferValidator::ADDRESS_RANGE.1
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn test_network_validation() {
+        let mut transfer = mock_transfer();
+        transfer.blockchain_network = "icp:mainnet".to_string();
+
+        let result = TransferValidator::new(&transfer).validate_network();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_network_too_long() {
+        let mut transfer = mock_transfer();
+        transfer.blockchain_network = "a".repeat(51);
+
+        let result = TransferValidator::new(&transfer).validate_network();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TransferError::ValidationError {
+                info: format!(
+                    "Transfer network length exceeds the allowed range: {} to {}",
+                    TransferValidator::NETWORK_RANGE.0,
+                    TransferValidator::NETWORK_RANGE.1
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn fail_network_too_short() {
+        let mut transfer = mock_transfer();
+        transfer.blockchain_network = "".to_string();
+
+        let result = TransferValidator::new(&transfer).validate_network();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TransferError::ValidationError {
+                info: format!(
+                    "Transfer network length exceeds the allowed range: {} to {}",
+                    TransferValidator::NETWORK_RANGE.0,
+                    TransferValidator::NETWORK_RANGE.1
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn test_expiration_dt_validation() {
+        let mut transfer = mock_transfer();
+        transfer.expiration_dt = time() + 1000;
+
+        let result = TransferValidator::new(&transfer).validate_expiration_dt();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_expiration_dt_before_execution() {
+        let mut transfer = mock_transfer();
+        let now = time();
+        transfer.execution_plan = TransferExecutionPlan::Scheduled {
+            execution_time: now + 1,
+        };
+        transfer.expiration_dt = now;
+
+        let result = TransferValidator::new(&transfer).validate_expiration_dt();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            TransferError::ValidationError {
+                info: "Transfer expiration date must be greater then the planned execution_time"
+                    .to_string()
+            }
+        );
+    }
+}
+
+#[cfg(test)]
+pub mod transfer_test_utils {
+    use super::*;
+
+    pub fn mock_transfer() -> Transfer {
+        Transfer {
+            id: [1; 16],
+            initiator_account: [0; 16],
+            from_wallet: [0; 16],
+            to_address: "x".repeat(255),
+            status: TransferStatus::Pending,
+            amount: candid::Nat::from(100),
+            fee: candid::Nat::from(0),
+            expiration_dt: Transfer::default_expiration_dt(),
+            execution_plan: TransferExecutionPlan::Immediate,
+            blockchain_network: "a".repeat(50),
+            metadata: vec![],
+            policy_snapshot: PolicySnapshot { min_approvals: 1 },
+            last_modification_timestamp: time(),
+            created_timestamp: time(),
+        }
     }
 }

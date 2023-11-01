@@ -59,3 +59,43 @@ impl ModelValidator<OperationError> for OperationDecision {
         OperationDecisionValidator::new(self).validate()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fail_operation_decision_too_big_reason() {
+        let mut decision = mock_decision();
+        decision.status_reason = Some("a".repeat(201));
+
+        let result = decision.validate();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            OperationError::TaskReasonTooLong { max_len: 200 }
+        );
+    }
+
+    #[test]
+    fn test_operation_decision_with_reason() {
+        let mut decision = mock_decision();
+        decision.status_reason = Some("a".repeat(200));
+
+        let result = decision.validate();
+
+        assert!(result.is_ok());
+    }
+
+    fn mock_decision() -> OperationDecision {
+        OperationDecision {
+            account_id: [0; 16],
+            read: false,
+            status: OperationStatus::Rejected,
+            status_reason: None,
+            decided_dt: None,
+            last_modification_timestamp: 0,
+        }
+    }
+}

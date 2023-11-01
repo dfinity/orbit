@@ -56,3 +56,49 @@ impl IndexRepository<OperationWalletIndex, OperationId> for OperationWalletIndex
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_repository_crud() {
+        let repository = OperationWalletIndexRepository::default();
+        let index = OperationWalletIndex {
+            id: [0; 16],
+            created_at: 10,
+            wallet_id: [1; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_criteria() {
+        let repository = OperationWalletIndexRepository::default();
+        let index = OperationWalletIndex {
+            id: [0; 16],
+            created_at: 10,
+            wallet_id: [1; 16],
+        };
+
+        repository.insert(index.clone());
+
+        let criteria = OperationWalletIndexCriteria {
+            wallet_id: [1; 16],
+            from_dt: None,
+            to_dt: None,
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&index.id));
+    }
+}

@@ -58,3 +58,49 @@ impl IndexRepository<OperationTransferIndex, OperationId> for OperationTransferI
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_repository_crud() {
+        let repository = OperationTransferIndexRepository::default();
+        let index = OperationTransferIndex {
+            id: [0; 16],
+            created_at: 10,
+            transfer_id: [1; 16],
+        };
+
+        assert!(!repository.exists(&index));
+
+        repository.insert(index.clone());
+
+        assert!(repository.exists(&index));
+        assert!(repository.remove(&index));
+        assert!(!repository.exists(&index));
+    }
+
+    #[test]
+    fn test_find_by_criteria() {
+        let repository = OperationTransferIndexRepository::default();
+        let index = OperationTransferIndex {
+            id: [0; 16],
+            created_at: 10,
+            transfer_id: [1; 16],
+        };
+
+        repository.insert(index.clone());
+
+        let criteria = OperationTransferIndexCriteria {
+            transfer_id: [1; 16],
+            from_dt: None,
+            to_dt: None,
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&index.id));
+    }
+}

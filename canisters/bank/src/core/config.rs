@@ -1,13 +1,11 @@
 use super::WASM_PAGE_SIZE;
 use crate::{
+    core::ic_cdk::api::{time, trap},
     models::{AccessRole, BankAsset, Blockchain, BlockchainStandard, WalletPolicy},
     transport::{AccountRoleDTO, BankPermissionDTO},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_canister_core::{
-    cdk::api::{time, trap},
-    types::Timestamp,
-};
+use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::{
@@ -219,4 +217,33 @@ impl Storable for CanisterState {
         max_size: WASM_PAGE_SIZE,
         is_fixed_size: false,
     };
+}
+
+#[cfg(test)]
+pub mod test_utils {
+    use crate::core::{write_canister_config, CanisterConfig};
+
+    pub fn init_canister_config() -> CanisterConfig {
+        let config = CanisterConfig::default();
+        write_canister_config(config.clone());
+
+        config
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn permission_admin_only_has_admin_role() {
+        let permissions = default_bank_permissions();
+        let admin_permission = permissions
+            .iter()
+            .find(|p| p.permission_id == PERMISSION_ADMIN)
+            .unwrap_or_else(|| panic!("Admin permission not found"));
+
+        assert_eq!(admin_permission.access_roles.len(), 1);
+        assert!(admin_permission.access_roles.contains(&AccessRole::Admin));
+    }
 }

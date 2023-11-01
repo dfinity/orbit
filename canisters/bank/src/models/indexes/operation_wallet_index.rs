@@ -24,18 +24,89 @@ pub struct OperationWalletIndexCriteria {
 }
 
 impl Operation {
-    pub fn to_index_for_wallet(&self) -> OperationWalletIndex {
+    pub fn to_index_for_wallet(&self) -> Option<OperationWalletIndex> {
         let metadata = self.metadata_map();
-        let unparsed_wallet_id = metadata
-            .get(OPERATION_METADATA_KEY_WALLET_ID)
-            .expect("Operation metadata does not contain a transfer id");
-        let wallet_id = HelperMapper::to_uuid(unparsed_wallet_id.to_owned())
-            .expect("Failed to parse transfer id");
+        if let Some(unparsed_wallet_id) = metadata.get(OPERATION_METADATA_KEY_WALLET_ID) {
+            let wallet_id = HelperMapper::to_uuid(unparsed_wallet_id.to_owned())
+                .expect("Failed to parse wallet id");
 
-        OperationWalletIndex {
-            id: self.id.to_owned(),
-            created_at: self.created_timestamp.to_owned(),
-            wallet_id: *wallet_id.as_bytes(),
+            return Some(OperationWalletIndex {
+                id: self.id.to_owned(),
+                created_at: self.created_timestamp.to_owned(),
+                wallet_id: *wallet_id.as_bytes(),
+            });
         }
+
+        // This operation is not related to a wallet.
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{OperationCode, OperationStatus};
+    use ic_stable_structures::Storable;
+    use uuid::Uuid;
+
+    #[test]
+    fn valid_model_serialization() {
+        let wallet_id = [0; 16];
+        let operation_id = [1; 16];
+        let model = OperationWalletIndex {
+            id: operation_id,
+            wallet_id,
+            created_at: 0,
+        };
+
+        let serialized_model = model.to_bytes();
+        let deserialized_model = OperationWalletIndex::from_bytes(serialized_model);
+
+        assert_eq!(model.id, deserialized_model.id);
+        assert_eq!(model.wallet_id, deserialized_model.wallet_id);
+    }
+
+    #[test]
+    fn correct_operation_wallet_index_mapping() {
+        let operation_id = [1; 16];
+        let wallet_id = [0; 16];
+        let operation = Operation {
+            id: operation_id,
+            code: OperationCode::ApproveTransfer,
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+            decisions: vec![],
+            metadata: vec![(
+                OPERATION_METADATA_KEY_WALLET_ID.to_string(),
+                Uuid::from_bytes(wallet_id).to_string(),
+            )],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+        };
+
+        let index = operation.to_index_for_wallet();
+
+        assert!(index.is_some());
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_operation_wallet_index_on_malformed_metadata() {
+        let operation_id = [1; 16];
+        let operation = Operation {
+            id: operation_id,
+            code: OperationCode::ApproveTransfer,
+            created_timestamp: 0,
+            last_modification_timestamp: 0,
+            decisions: vec![],
+            metadata: vec![(
+                OPERATION_METADATA_KEY_WALLET_ID.to_string(),
+                "abcd".to_string(),
+            )],
+            originator_account_id: None,
+            status: OperationStatus::Pending,
+        };
+
+        operation.to_index_for_wallet();
     }
 }

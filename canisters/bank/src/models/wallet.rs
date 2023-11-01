@@ -143,8 +143,8 @@ impl<'model> WalletValidator<'model> {
             || (self.wallet.owners.len() > Self::OWNERS_RANGE.1 as usize)
         {
             return Err(WalletError::InvalidOwnersRange {
-                min_owners: Self::ADDRESS_RANGE.0,
-                max_owners: Self::ADDRESS_RANGE.1,
+                min_owners: Self::OWNERS_RANGE.0,
+                max_owners: Self::OWNERS_RANGE.1,
             });
         }
 
@@ -196,5 +196,229 @@ impl Wallet {
             .iter()
             .map(|(key, value)| (key.to_owned(), value.to_owned()))
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wallet_test_utils::mock_wallet;
+    use super::*;
+    use crate::models::ApprovalThresholdPolicy;
+
+    #[test]
+    fn fail_policies_validation() {
+        let mut wallet = mock_wallet();
+        wallet.policies =
+            vec![
+                WalletPolicy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
+                WalletValidator::MAX_POLICIES as usize + 1
+            ];
+
+        let result = WalletValidator::new(&wallet).validate_policies();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::ValidationError {
+                info: "Wallet policies count exceeds the maximum allowed: 10".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_policies_validation() {
+        let mut wallet = mock_wallet();
+        wallet.policies =
+            vec![
+                WalletPolicy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
+                WalletValidator::MAX_POLICIES as usize - 1
+            ];
+
+        let result = WalletValidator::new(&wallet).validate_policies();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_metadata_validation_too_many() {
+        let mut wallet = mock_wallet();
+        wallet.metadata =
+            vec![("a".repeat(25), "b".repeat(25)); WalletValidator::MAX_METADATA as usize + 1];
+
+        let result = WalletValidator::new(&wallet).validate_metadata();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::ValidationError {
+                info: "Wallet metadata count exceeds the maximum allowed: 10".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_metadata_validation() {
+        let mut wallet = mock_wallet();
+        wallet.metadata =
+            vec![("a".repeat(24), "b".repeat(24)); WalletValidator::MAX_METADATA as usize - 1];
+
+        let result = WalletValidator::new(&wallet).validate_metadata();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_symbol_validation_too_short() {
+        let mut wallet = mock_wallet();
+        wallet.symbol = "a".repeat(0);
+
+        let result = WalletValidator::new(&wallet).validate_symbol();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::ValidationError {
+                info: "Wallet symbol length must be between 1 and 8".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn fail_symbol_validation_too_long() {
+        let mut wallet = mock_wallet();
+        wallet.symbol = "a".repeat(9);
+
+        let result = WalletValidator::new(&wallet).validate_symbol();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::ValidationError {
+                info: "Wallet symbol length must be between 1 and 8".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_symbol_validation() {
+        let mut wallet = mock_wallet();
+        wallet.symbol = "a".to_string();
+
+        let result = WalletValidator::new(&wallet).validate_symbol();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_address_too_short() {
+        let mut wallet = mock_wallet();
+        wallet.address = "".to_string();
+
+        let result = WalletValidator::new(&wallet).validate_address();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::InvalidAddressLength {
+                min_length: 1,
+                max_length: 255
+            }
+        );
+    }
+
+    #[test]
+    fn fail_address_too_long() {
+        let mut wallet = mock_wallet();
+        wallet.address = "a".repeat(256);
+
+        let result = WalletValidator::new(&wallet).validate_address();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::InvalidAddressLength {
+                min_length: 1,
+                max_length: 255
+            }
+        );
+    }
+
+    #[test]
+    fn test_address_validation() {
+        let mut wallet = mock_wallet();
+        wallet.address = "a".to_string();
+
+        let result = WalletValidator::new(&wallet).validate_address();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_owners_too_many_entries() {
+        let mut wallet = mock_wallet();
+        wallet.owners = vec![[0; 16]; WalletValidator::OWNERS_RANGE.1 as usize + 1];
+
+        let result = WalletValidator::new(&wallet).validate_owners();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::InvalidOwnersRange {
+                min_owners: 1,
+                max_owners: 10
+            }
+        );
+    }
+
+    #[test]
+    fn fail_owners_too_little_entries() {
+        let mut wallet = mock_wallet();
+        wallet.owners = vec![[0; 16]; WalletValidator::OWNERS_RANGE.0 as usize - 1];
+
+        let result = WalletValidator::new(&wallet).validate_owners();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            WalletError::InvalidOwnersRange {
+                min_owners: 1,
+                max_owners: 10
+            }
+        );
+    }
+
+    #[test]
+    fn test_owners_validation() {
+        let mut wallet = mock_wallet();
+        wallet.owners = vec![[0; 16]];
+
+        let result = WalletValidator::new(&wallet).validate_owners();
+
+        assert!(result.is_ok());
+    }
+}
+
+#[cfg(test)]
+pub mod wallet_test_utils {
+    use super::*;
+
+    pub fn mock_wallet() -> Wallet {
+        Wallet {
+            id: [0; 16],
+            address: "0x1234".to_string(),
+            balance: None,
+            blockchain: Blockchain::InternetComputer,
+            decimals: 0u32,
+            name: None,
+            owners: vec![],
+            policies: vec![],
+            standard: BlockchainStandard::Native,
+            last_modification_timestamp: 0,
+            metadata: vec![
+                ("a".repeat(24), "b".repeat(24));
+                WalletValidator::MAX_METADATA as usize - 1
+            ],
+            symbol: "ICP".to_string(),
+        }
     }
 }

@@ -80,3 +80,35 @@ impl AccountRepository {
             .find_map(|id| self.get(&Account::key(*id)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::account_test_utils;
+
+    #[test]
+    fn test_crud() {
+        let repository = AccountRepository::default();
+        let account = account_test_utils::mock_account();
+
+        assert!(repository.get(&account.to_key()).is_none());
+
+        repository.insert(account.to_key(), account.clone());
+
+        assert!(repository.get(&account.to_key()).is_some());
+        assert!(repository.remove(&account.to_key()).is_some());
+        assert!(repository.get(&account.to_key()).is_none());
+    }
+
+    #[test]
+    fn test_find_by_identity() {
+        let repository = AccountRepository::default();
+        let mut account = account_test_utils::mock_account();
+        account.identities = vec![Principal::anonymous()];
+        repository.insert(account.to_key(), account.clone());
+
+        let result = repository.find_account_by_identity(&Principal::anonymous());
+
+        assert!(result.is_some());
+    }
+}

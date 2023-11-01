@@ -1,12 +1,12 @@
 use crate::{
+    core::ic_cdk::{api::time, spawn},
     errors::WalletError,
     factories::blockchains::BlockchainApiFactory,
     models::{Transfer, TransferStatus, Wallet},
     repositories::{TransferRepository, WalletRepository},
 };
 use futures::future;
-use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
-use ic_cdk::api::time;
+use ic_canister_core::{api::ApiError, repository::Repository};
 use std::time::Duration;
 use uuid::Uuid;
 
