@@ -176,3 +176,115 @@ impl OperationService {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::test_utils,
+        models::{
+            account_test_utils::mock_account, operation_test_utils::mock_operation,
+            transfer_test_utils::mock_transfer, Account, OperationDecision,
+            OPERATION_METADATA_KEY_TRANSFER_ID,
+        },
+        repositories::{AccountRepository, TransferRepository},
+    };
+    use candid::Principal;
+
+    struct TestContext {
+        repository: OperationRepository,
+        transfer_repository: TransferRepository,
+        service: OperationService,
+        caller_account: Account,
+    }
+
+    fn setup() -> TestContext {
+        test_utils::init_canister_config();
+
+        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+        let mut account = mock_account();
+        account.identities = vec![call_context.caller()];
+
+        AccountRepository::default().insert(account.to_key(), account.clone());
+
+        TestContext {
+            repository: OperationRepository::default(),
+            transfer_repository: TransferRepository::default(),
+            service: OperationService::with_call_context(call_context),
+            caller_account: account,
+        }
+    }
+
+    #[test]
+    fn get_operation() {
+        let ctx = setup();
+        let mut operation = mock_operation();
+        operation.originator_account_id = Some(ctx.caller_account.id);
+
+        ctx.repository
+            .insert(operation.to_key(), operation.to_owned());
+
+        let result = ctx.service.get_operation(&operation.id);
+
+        assert_eq!(operation, result.unwrap());
+    }
+
+    #[test]
+    fn fail_get_operation_not_allowed() {
+        let ctx = setup();
+        let mut operation = mock_operation();
+        operation.originator_account_id = None;
+
+        ctx.repository
+            .insert(operation.to_key(), operation.to_owned());
+
+        let result = ctx.service.get_operation(&operation.id);
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn reject_operation_happy_path() {
+        let ctx = setup();
+        let transfer_id = Uuid::new_v4();
+        let mut transfer = mock_transfer();
+        transfer.id = *transfer_id.as_bytes();
+        let mut operation = mock_operation();
+        operation.originator_account_id = None;
+        operation.decisions = vec![OperationDecision {
+            account_id: ctx.caller_account.id,
+            decided_dt: None,
+            last_modification_timestamp: 0,
+            read: false,
+            status: OperationStatus::Pending,
+            status_reason: None,
+        }];
+        operation.metadata = vec![(
+            OPERATION_METADATA_KEY_TRANSFER_ID.to_string(),
+            transfer_id.to_string(),
+        )];
+
+        ctx.transfer_repository
+            .insert(transfer.to_key(), transfer.clone());
+        ctx.repository
+            .insert(operation.to_key(), operation.to_owned());
+
+        let result = ctx
+            .service
+            .edit_operation(EditOperationInput {
+                operation_id: Uuid::from_bytes(operation.id.to_owned())
+                    .hyphenated()
+                    .to_string(),
+                approve: Some(false),
+                reason: None,
+                read: Some(true),
+            })
+            .await;
+
+        assert!(result.is_ok());
+        assert_eq!(
+            result.unwrap().decisions[0].status,
+            OperationStatus::Rejected
+        );
+    }
+}
