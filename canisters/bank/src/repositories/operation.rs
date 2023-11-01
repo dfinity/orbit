@@ -278,11 +278,16 @@ pub struct OperationFindByAccountWhereClause {
 
 #[cfg(test)]
 mod tests {
+    use uuid::Uuid;
+
     use super::*;
-    use crate::models::operation_test_utils;
+    use crate::models::{
+        operation_test_utils, OperationDecision, OPERATION_METADATA_KEY_TRANSFER_ID,
+        OPERATION_METADATA_KEY_WALLET_ID,
+    };
 
     #[test]
-    fn test_crud() {
+    fn perform_crud() {
         let repository = OperationRepository::default();
         let operation = operation_test_utils::mock_operation();
 
@@ -293,5 +298,85 @@ mod tests {
         assert!(repository.get(&operation.to_key()).is_some());
         assert!(repository.remove(&operation.to_key()).is_some());
         assert!(repository.get(&operation.to_key()).is_none());
+    }
+
+    #[test]
+    fn find_by_transfer_id() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let transfer_id = Uuid::new_v4();
+        operation.metadata = vec![(
+            OPERATION_METADATA_KEY_TRANSFER_ID.to_string(),
+            transfer_id.to_string(),
+        )];
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_transfer_id(*transfer_id.as_bytes()),
+            vec![operation]
+        );
+    }
+
+    #[test]
+    fn find_by_originator_user_id() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let account_id = Uuid::new_v4();
+        operation.originator_account_id = Some(*account_id.as_bytes());
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_account_id(*account_id.as_bytes()),
+            vec![operation]
+        );
+    }
+
+    #[test]
+    fn find_by_decision_user_id() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let account_id = Uuid::new_v4();
+        operation.decisions = vec![OperationDecision {
+            account_id: *account_id.as_bytes(),
+            read: false,
+            decided_dt: None,
+            last_modification_timestamp: 0,
+            status: OperationStatus::Pending,
+            status_reason: None,
+        }];
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_account_id(*account_id.as_bytes()),
+            vec![operation]
+        );
+    }
+
+    #[test]
+    fn find_by_wallet_and_user() {
+        let repository = OperationRepository::default();
+        let mut operation = operation_test_utils::mock_operation();
+        let account_id = Uuid::new_v4();
+        let wallet_id = Uuid::new_v4();
+        operation.originator_account_id = Some(*account_id.as_bytes());
+        operation.metadata = vec![(
+            OPERATION_METADATA_KEY_WALLET_ID.to_string(),
+            wallet_id.to_string(),
+        )];
+
+        repository.insert(operation.to_key(), operation.clone());
+
+        assert_eq!(
+            repository.find_by_wallet_and_account_id(
+                *wallet_id.as_bytes(),
+                *account_id.as_bytes(),
+                None,
+                None
+            ),
+            vec![operation]
+        );
     }
 }
