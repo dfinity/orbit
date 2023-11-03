@@ -4,10 +4,10 @@
       <VContainer class="pt-16 pb-16 pl-8 pr-8" fluid>
         <VRow>
           <VCol md="6" sm="12">
-            <h1 class="text-h4">{{ $t('terms.wallets') }}</h1>
+            <h1 class="text-h4">{{ $t('terms.accounts') }}</h1>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
-            <NewWalletBtn />
+            <NewAccountBtn />
             <NewTransferBtn />
           </VCol>
         </VRow>
@@ -15,42 +15,42 @@
     </template>
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
-        <VRow v-if="activeBank.wallets.items.length">
-          <VCol v-for="(wallet, idx) in activeBank.sortedWallets" :key="idx" cols="12" md="6">
-            <VCard density="compact" variant="elevated" class="wallet-card">
+        <VRow v-if="activeBank.accounts.items.length">
+          <VCol v-for="(account, idx) in activeBank.sortedAccounts" :key="idx" cols="12" md="6">
+            <VCard density="compact" variant="elevated" class="account-card">
               <VCardTitle>
                 <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
-                <template v-if="wallet.name?.length">
-                  {{ wallet.name[0] }}
+                <template v-if="account.name?.length">
+                  {{ account.name[0] }}
                 </template>
               </VCardTitle>
-              <VCardSubtitle class="wallet-card__subtitle">
-                <span>{{ wallet.symbol }}</span>
-                <template v-if="wallet.address">
+              <VCardSubtitle class="account-card__subtitle">
+                <span>{{ account.symbol }}</span>
+                <template v-if="account.address">
                   <span>:&nbsp;</span>
-                  <span class="wallet-card__subtitle__address" :title="wallet.address">
-                    {{ wallet.address }}
+                  <span class="account-card__subtitle__address" :title="account.address">
+                    {{ account.address }}
                   </span>
                   <VBtn
-                    class="wallet-card__subtitle__copy"
+                    class="account-card__subtitle__copy"
                     size="x-small"
                     variant="text"
                     :icon="mdiContentCopy"
-                    @click="copyAddressToClipboard(wallet.address)"
+                    @click="copyAddressToClipboard(account.address)"
                   />
                 </template>
               </VCardSubtitle>
               <VCardText class="pb-0">
                 <p>
                   <span
-                    v-if="wallet.balance?.[0]"
-                    class="wallet-card__amount--available"
-                    :title="wallet.balance?.[0]?.last_update_timestamp"
+                    v-if="account.balance?.[0]"
+                    class="account-card__amount--available"
+                    :title="account.balance?.[0]?.last_update_timestamp"
                   >
-                    {{ formatBalance(wallet.balance[0].balance, wallet.balance[0].decimals) }}
+                    {{ formatBalance(account.balance[0].balance, account.balance[0].decimals) }}
                   </span>
-                  <span v-else class="wallet-card__amount wallet-card__amount--unavailable">-</span>
-                  {{ wallet.symbol }}
+                  <span v-else class="account-card__amount account-card__amount--unavailable">-</span>
+                  {{ account.symbol }}
                 </p>
               </VCardText>
               <VCardActions>
@@ -58,10 +58,10 @@
                   size="x-small"
                   color="primary-variant"
                   variant="tonal"
-                  :prepend-icon="wallet.owners.length > 1 ? mdiAccountGroup : mdiAccount"
+                  :prepend-icon="account.owners.length > 1 ? mdiAccountGroup : mdiAccount"
                 >
                   {{
-                    wallet.owners.length > 1 ? $t('banks.joint_wallet') : $t('banks.private_wallet')
+                    account.owners.length > 1 ? $t('banks.joint_account') : $t('banks.private_account')
                   }}
                 </VChip>
                 <VSpacer />
@@ -69,7 +69,7 @@
                   size="small"
                   variant="tonal"
                   :append-icon="mdiOpenInApp"
-                  :to="{ name: 'WalletDetails', params: { id: wallet.id } }"
+                  :to="{ name: 'Account', params: { id: account.id } }"
                 >
                   {{ $t('terms.open') }}
                 </VBtn>
@@ -79,7 +79,7 @@
         </VRow>
         <VRow v-else>
           <VCol cols="12">
-            <p class="text-h5">{{ $t('banks.no_wallets') }}</p>
+            <p class="text-h5">{{ $t('banks.no_accounts') }}</p>
           </VCol>
         </VRow>
       </VContainer>
@@ -103,7 +103,7 @@
 import { mdiAccount, mdiAccountGroup, mdiContentCopy, mdiOpenInApp, mdiWallet } from '@mdi/js';
 import { formatBalance } from '~/core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
-import NewWalletBtn from '~/ui/components/NewWalletBtn.vue';
+import NewAccountBtn from '~/ui/components/NewAccountBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore } from '~/ui/stores';
@@ -117,7 +117,7 @@ const copyAddressToClipboard = (address: string) => {
   settings.setNotification({
     show: true,
     type: 'success',
-    message: i18n.global.t('banks.wallet_address_copied_to_clipboard'),
+    message: i18n.global.t('banks.account_address_copied_to_clipboard'),
   });
 };
 </script>
@@ -140,7 +140,7 @@ const copyAddressToClipboard = (address: string) => {
   }
 }
 
-.wallet-card {
+.account-card {
   &__subtitle {
     display: flex;
     flex-direction: row;

@@ -28,7 +28,6 @@
           <p v-if="activeBank.hasUser" class="profile__principal">
             <span>{{ activeBank.user.id }}</span>
             <VBtn
-              class="wallet-card__subtitle__copy"
               size="x-small"
               variant="text"
               :icon="mdiContentCopy"

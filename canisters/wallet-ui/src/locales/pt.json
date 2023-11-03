@@ -43,10 +43,10 @@
   },
   "banks": {
     "operation_failed_to_save": "Erro ao gravar a operaração.",
-    "no_wallets": "Nenhuma carteira disponível.",
+    "no_accounts": "Nenhuma conta disponível.",
     "pending_operations": "Operaraçōes pendentes",
     "user_copied_to_clipboard": "Id de utilizador copiado.",
-    "wallet_address_copied_to_clipboard": "Endereço da carteira copiado.",
+    "account_address_copied_to_clipboard": "Endereço da conta copiado.",
     "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
     "bank_nr_title": "#{nr} Banco",
     "load_error_transfers": "Erro ao carregar as transferências.",
@@ -54,10 +54,10 @@
     "user_load_error": "Erro ao carregar a sua conta de utilizador.",
     "no_bank_user": "Nenhum utilizador de banco disponível.",
     "please_register_to_continue": "Por favor registe-se para continuar.",
-    "private_wallet": "Carteira privada",
-    "joint_wallet": "Carteira conjunta",
+    "private_account": "Conta privada",
+    "joint_account": "Conta conjunta",
     "policy": "Regra",
-    "policy_misconfigured": "As regras da sua carteira estão mal configuradas.",
+    "policy_misconfigured": "As regras da sua conta estão mal configuradas.",
     "policy_config_unavailable": "Configuração da regra indisponível.",
     "policy_fixed_approval_threshold_desc": "Número fixo de aprovações para operaraçōes",
     "policy_variable_approval_threshold_desc": "Percentual de aprovações para operaraçōes",
@@ -91,7 +91,7 @@
     "until": "Até",
     "from": "Desde",
     "amount": "Valor",
-    "wallet": "Carteira",
+    "account": "Conta",
     "send": "Enviar",
     "open": "abrir",
     "asset": "Ativo",
@@ -100,8 +100,8 @@
     "signin": "Entrar",
     "signout": "Sair",
     "anonymous": "Anónimo",
-    "wallets": "Carteiras",
-    "new_wallet": "Nova carteira",
+    "accounts": "Contas",
+    "new_account": "Nova conta",
     "policies": "Regras",
     "transfers": "Transferências",
     "transactions": "Transaçōes",
@@ -126,10 +126,10 @@
     "unconfirmed": "Não confirmado",
     "main": "Principal"
   },
-  "wallet_page": {
-    "not_found_title": "Carteira não encontrada",
-    "not_found_description": "Não foi possível aceder a carteira requisitada.",
-    "not_found_btn": "Voltar as carteiras"
+  "account_page": {
+    "not_found_title": "Conta não encontrada",
+    "not_found_description": "Não foi possível aceder a conta requisitada.",
+    "not_found_btn": "Voltar as contas"
   },
   "forms": {
     "create": "Criar",
@@ -150,7 +150,7 @@
       "name": "Menu",
       "items": {
         "home": "Início",
-        "wallets": "Carteiras",
+        "accounts": "Contas",
         "transfers": "Transferências",
         "address_book": "Endereços"
       }

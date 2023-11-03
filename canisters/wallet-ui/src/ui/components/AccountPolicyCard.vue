@@ -8,7 +8,7 @@
         :label="$t('banks.policy')"
       />
       <VSlider
-        v-if="selectedPolicy === WalletPolicyType.FixedApprovalThreshold"
+        v-if="selectedPolicy === PolicyType.FixedApprovalThreshold"
         v-model="policyInput.number"
         color="primary-variant"
         class="mt-4"
@@ -20,7 +20,7 @@
         :persistent-hint="true"
       />
       <VSlider
-        v-else-if="selectedPolicy === WalletPolicyType.VariableApprovalThreshold"
+        v-else-if="selectedPolicy === PolicyType.VariableApprovalThreshold"
         v-model="policyInput.number"
         color="primary-variant"
         class="mt-4"
@@ -44,18 +44,18 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import { WalletPolicy } from '~/generated/bank/bank.did';
+import { AccountPolicy } from '~/generated/bank/bank.did';
 import { i18n } from '~/ui/modules';
 import { useBankStore } from '~/ui/stores';
-import { WalletPolicyType } from '~/types';
+import { PolicyType } from '~/types';
 
 const props = defineProps<{
-  modelValue?: WalletPolicy | null;
+  modelValue?: AccountPolicy | null;
   owners?: number;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload?: WalletPolicy | null): void;
+  (event: 'update:modelValue', payload?: AccountPolicy | null): void;
   (event: 'removed'): void;
 }>();
 
@@ -65,13 +65,13 @@ const modelValue = computed({
 });
 
 const bankStore = useBankStore();
-const approvalItems = bankStore.walletPolicyTypes.map(type => ({
+const approvalItems = bankStore.policyTypes.map(type => ({
   title: i18n.global.t(`banks.policies.${type}`),
   value: type,
 }));
 
 const removePolicy = (): void => emit('removed');
-const selectedPolicy = ref<WalletPolicyType | null>(null);
+const selectedPolicy = ref<PolicyType | null>(null);
 const policyInput = ref<{
   number?: number;
 }>({
@@ -81,10 +81,10 @@ const policyInput = ref<{
 if (modelValue.value?.approval_threshold) {
   const threshold = modelValue.value.approval_threshold;
   if ('VariableThreshold' in threshold) {
-    selectedPolicy.value = WalletPolicyType.VariableApprovalThreshold;
+    selectedPolicy.value = PolicyType.VariableApprovalThreshold;
     policyInput.value.number = threshold.VariableThreshold;
   } else if ('FixedThreshold' in threshold) {
-    selectedPolicy.value = WalletPolicyType.FixedApprovalThreshold;
+    selectedPolicy.value = PolicyType.FixedApprovalThreshold;
     policyInput.value.number = threshold.FixedThreshold;
   }
 }
@@ -98,10 +98,10 @@ watch(selectedPolicy, () => {
   clearPolicy();
 
   switch (selectedPolicy.value) {
-    case WalletPolicyType.FixedApprovalThreshold:
+    case PolicyType.FixedApprovalThreshold:
       policyInput.value.number = 1;
       break;
-    case WalletPolicyType.VariableApprovalThreshold:
+    case PolicyType.VariableApprovalThreshold:
       policyInput.value.number = 100;
       break;
   }
@@ -117,10 +117,10 @@ const reevaluatePolicy = (): void => {
   }
 
   switch (selectedPolicy.value) {
-    case WalletPolicyType.FixedApprovalThreshold:
+    case PolicyType.FixedApprovalThreshold:
       reevaluateFixedThresholdPolicy();
       break;
-    case WalletPolicyType.VariableApprovalThreshold:
+    case PolicyType.VariableApprovalThreshold:
       reevaluateVariableThresholdPolicy();
       break;
   }

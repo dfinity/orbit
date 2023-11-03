@@ -43,10 +43,10 @@
             </VCard>
           </VCol>
           <VCol v-if="activeBank.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="activeBank.wallets.loading">
-              <VCardTitle>{{ $t('terms.wallets') }}</VCardTitle>
+            <VCard color="surface" height="100%" :loading="activeBank.accounts.loading">
+              <VCardTitle>{{ $t('terms.accounts') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
-                {{ activeBank.metrics.wallets }}
+                {{ activeBank.metrics.accounts }}
               </VCardText>
             </VCard>
           </VCol>

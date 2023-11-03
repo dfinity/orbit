@@ -13,7 +13,7 @@ export interface FetchTransfersInput {
   limit?: number;
 }
 
-export interface WalletIncomingTransfer {
+export interface AccountIncomingTransfer {
   from: string;
   amount: bigint;
   fee: bigint;
@@ -22,11 +22,11 @@ export interface WalletIncomingTransfer {
 }
 
 export interface FetchTransfersResponse {
-  transfers: WalletIncomingTransfer[];
+  transfers: AccountIncomingTransfer[];
 }
 
-export interface WalletApi {
+export interface ChainApi {
   fetchBalance(): Promise<bigint>;
 
-  fetchTransfers(input: FetchTransfersInput): Promise<WalletIncomingTransfer[]>;
+  fetchTransfers(input: FetchTransfersInput): Promise<AccountIncomingTransfer[]>;
 }

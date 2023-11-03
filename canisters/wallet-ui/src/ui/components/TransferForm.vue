@@ -4,15 +4,15 @@
       <VRow>
         <VCol cols="12" class="py-0">
           <VAutocomplete
-            v-model="transferStore.form.walletId"
+            v-model="transferStore.form.accountId"
             :label="$t('terms.from')"
             variant="solo"
-            :readonly="transferStore.fixedWallet"
+            :readonly="transferStore.fixedAccount"
             density="compact"
             :disabled="transferStore.loading"
             :prepend-icon="mdiWallet"
-            :rules="transferStore.validationRules.walletId"
-            :items="transferStore.wallets"
+            :rules="transferStore.validationRules.accountId"
+            :items="transferStore.accounts"
           >
             <template #item="{ props: itemProps, item }">
               <VListItem v-bind="itemProps" :title="item.title" :subtitle="item.raw.balance" />
@@ -59,7 +59,7 @@
 <script lang="ts" setup>
 import { mdiWallet, mdiSend, mdiNumeric } from '@mdi/js';
 import { ref, computed, watch, onMounted } from 'vue';
-import { Transfer, WalletId } from '~/generated/bank/bank.did';
+import { Transfer, AccountId } from '~/generated/bank/bank.did';
 import { useTransferFormStore } from '~/ui/stores/TransferForm';
 
 const transferStore = useTransferFormStore();
@@ -73,11 +73,11 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   modelValue: boolean;
-  walletId?: WalletId;
+  accountId?: AccountId;
 }>();
 
 onMounted(() => {
-  transferStore.load(props.walletId);
+  transferStore.load(props.accountId);
   transferStore.$subscribe(() => {
     if (transferStore.hasChanges) {
       emit('updated', true);

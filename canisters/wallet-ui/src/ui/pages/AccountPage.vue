@@ -1,35 +1,35 @@
 <template>
-  <PageLayout v-if="activeBank.hasUser" class="wallet">
+  <PageLayout v-if="activeBank.hasUser" class="account">
     <template v-if="pageStore.hasLoaded" #main-header>
-      <VContainer class="pt-16 pb-16 pl-8 pr-8 wallet__header" fluid>
-        <div class="wallet__balance">
+      <VContainer class="pt-16 pb-16 pl-8 pr-8 account__header" fluid>
+        <div class="account__balance">
           <span
-            v-if="pageStore.wallet.balance?.[0]"
-            :title="pageStore.wallet.balance?.[0]?.last_update_timestamp"
+            v-if="pageStore.account.balance?.[0]"
+            :title="pageStore.account.balance?.[0]?.last_update_timestamp"
           >
-            {{ formatBalance(pageStore.wallet.balance[0].balance, pageStore.wallet.decimals) }}
+            {{ formatBalance(pageStore.account.balance[0].balance, pageStore.account.decimals) }}
           </span>
           <span v-else>-</span>
-          &nbsp;{{ pageStore.wallet.symbol }}
+          &nbsp;{{ pageStore.account.symbol }}
         </div>
         <VRow>
-          <VCol cols="12" sm="8" class="wallet__header__details">
+          <VCol cols="12" sm="8" class="account__header__details">
             <div>
               <h1 class="text-h4">
                 <VIcon :icon="mdiWallet" size="x-small" />
-                {{ pageStore.wallet.name?.[0] ?? $t('terms.wallet') }}
+                {{ pageStore.account.name?.[0] ?? $t('terms.account') }}
               </h1>
             </div>
-            <div class="wallet__header__details__addr">
-              <small class="wallet__header__details__addr__text">
-                {{ pageStore.wallet.symbol }}: {{ pageStore.wallet.address }}
+            <div class="account__header__details__addr">
+              <small class="account__header__details__addr__text">
+                {{ pageStore.account.symbol }}: {{ pageStore.account.address }}
               </small>
               <VBtn
-                class="wallet-card__subtitle__copy"
+                class="account-card__subtitle__copy"
                 size="x-small"
                 variant="text"
                 :icon="mdiContentCopy"
-                @click="copyAddressToClipboard(`${pageStore.wallet.address}`)"
+                @click="copyAddressToClipboard(`${pageStore.account.address}`)"
               />
             </div>
             <div>
@@ -37,33 +37,33 @@
                 size="x-small"
                 color="primary-variant"
                 variant="tonal"
-                :prepend-icon="pageStore.wallet.owners.length > 1 ? mdiAccountGroup : mdiAccount"
+                :prepend-icon="pageStore.account.owners.length > 1 ? mdiAccountGroup : mdiAccount"
               >
                 {{
-                  pageStore.wallet.owners.length > 1
-                    ? $t('banks.joint_wallet')
-                    : $t('banks.private_wallet')
+                  pageStore.account.owners.length > 1
+                    ? $t('banks.joint_account')
+                    : $t('banks.private_account')
                 }}
               </VChip>
             </div>
           </VCol>
           <VCol cols="12" sm="4" class="header-actions">
             <VSpacer v-if="!mobile" />
-            <NewTransferBtn :wallet-id="pageStore.wallet.id" />
+            <NewTransferBtn :account-id="pageStore.account.id" />
           </VCol>
         </VRow>
       </VContainer>
     </template>
     <template v-else-if="!pageStore.loading" #main-header>
-      <div class="wallet__not-found pb-16">
-        <header class="text-h3 wallet__not-found__title">
-          {{ $t('wallet_page.not_found_title') }}
+      <div class="account__not-found pb-16">
+        <header class="text-h3 account__not-found__title">
+          {{ $t('account_page.not_found_title') }}
         </header>
         <p class="text-h6">
-          {{ $t('wallet_page.not_found_description') }}
+          {{ $t('account_page.not_found_description') }}
         </p>
-        <VBtn color="primary-variant mt-8" :append-icon="_mdiLink" :to="{ name: 'Wallets' }">
-          {{ $t('wallet_page.not_found_btn') }}
+        <VBtn color="primary-variant mt-8" :append-icon="_mdiLink" :to="{ name: 'AccountList' }">
+          {{ $t('account_page.not_found_btn') }}
         </VBtn>
       </div>
     </template>
@@ -78,29 +78,29 @@
               <VTab
                 :loading="pageStore.transfers.loading"
                 value="transfers"
-                class="wallet__tab__item"
+                class="account__tab__item"
               >
                 {{ $t(`terms.transfers`) }}
               </VTab>
               <VTab
-                v-if="pageStore.walletApi"
+                v-if="pageStore.chainApi"
                 :loading="pageStore.receivables.loading"
                 value="receivables"
-                class="wallet__tab__item"
+                class="account__tab__item"
               >
                 {{ $t(`terms.receivables`) }}
               </VTab>
               <VTab
                 :loading="pageStore.transfers.loading"
                 value="operations"
-                class="wallet__tab__item"
+                class="account__tab__item"
               >
                 {{ $t(`terms.operations`) }}
               </VTab>
             </VTabs>
             <VCardText>
               <VWindow v-model="tab">
-                <VWindowItem v-if="pageStore.walletApi" value="receivables">
+                <VWindowItem v-if="pageStore.chainApi" value="receivables">
                   <VContainer class="py-0">
                     <VCol cols="12" class="px-0 pb-0">
                       <VBtn
@@ -122,7 +122,7 @@
                             <td class="transfers__item__details">
                               <div class="transfers__item__details--amount">
                                 {{
-                                  `${formatBalance(transfer.amount, 8)} ${pageStore.wallet.symbol}`
+                                  `${formatBalance(transfer.amount, 8)} ${pageStore.account.symbol}`
                                 }}
                               </div>
                               <div class="transfers__item__details--to">
@@ -201,7 +201,7 @@
                                 <div class="transfers__item__details--amount">
                                   {{
                                     `${formatBalance(transfer.amount, 8)} ${
-                                      pageStore.wallet.symbol
+                                      pageStore.account.symbol
                                     }`
                                   }}
                                 </div>
@@ -342,13 +342,13 @@ import PageLayout from '~/ui/components/PageLayout.vue';
 import BankOperation from '~/ui/components/operations/BankOperation.vue';
 import TransferStatusChip from '~/ui/components/transfers/TransferStatusChip.vue';
 import { i18n, router } from '~/ui/modules';
-import { useActiveBankStore, useSettingsStore, useWalletDetailsStore } from '~/ui/stores';
+import { useActiveBankStore, useSettingsStore, useAccountDetailsStore } from '~/ui/stores';
 
 const { mobile } = useDisplay();
 
 const activeBank = useActiveBankStore();
 const settings = useSettingsStore();
-const pageStore = useWalletDetailsStore();
+const pageStore = useAccountDetailsStore();
 
 const tab = ref<'transfers' | 'operations' | 'receivables'>('transfers');
 
@@ -357,15 +357,15 @@ onMounted(() => {
 });
 
 watch(
-  activeBank.wallets,
-  wallets => {
+  activeBank.accounts,
+  accounts => {
     if (!pageStore.hasLoaded) {
       return;
     }
 
-    const updatedWallet = wallets.items.find(w => w.id === pageStore.wallet.id);
-    if (updatedWallet && pageStore._wallet) {
-      pageStore._wallet.balance = updatedWallet.balance;
+    const updatedAccount = accounts.items.find(w => w.id === pageStore.account.id);
+    if (updatedAccount && pageStore._account) {
+      pageStore._account.balance = updatedAccount.balance;
     }
   },
   {
@@ -379,7 +379,7 @@ const copyAddressToClipboard = (address: string) => {
   settings.setNotification({
     show: true,
     type: 'success',
-    message: i18n.global.t('banks.wallet_address_copied_to_clipboard'),
+    message: i18n.global.t('banks.account_address_copied_to_clipboard'),
   });
 };
 </script>
@@ -402,7 +402,7 @@ const copyAddressToClipboard = (address: string) => {
   }
 }
 
-.wallet {
+.account {
   &__not-found {
     text-align: center;
     margin-top: calc(var(--ds-bdu) * 10);

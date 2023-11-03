@@ -5,24 +5,24 @@ import {
   Operation,
   OperationStatus,
   TransferListItem,
-  Wallet,
-  WalletId,
+  Account,
+  AccountId,
   OperationId,
 } from '~/generated/bank/bank.did';
-import { BankService, WalletApiFactory } from '~/services';
-import { WalletApi, WalletIncomingTransfer } from '~/types/Wallet';
+import { BankService, ChainApiFactory } from '~/services';
+import { ChainApi, AccountIncomingTransfer } from '~/types';
 import { i18n } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore } from '~/ui/stores';
 import { LoadableItem } from '~/ui/types';
 
-export interface WalletDetailsStoreState {
+export interface AccountDetailsStoreState {
   notification: {
     show: boolean;
     type: 'success' | 'error' | 'warning' | 'info';
     message: string | null;
   };
   loading: boolean;
-  _wallet: Wallet | null;
+  _account: Account | null;
   transfers: {
     loading: boolean;
     items: TransferListItem[];
@@ -37,13 +37,13 @@ export interface WalletDetailsStoreState {
   };
   receivables: {
     loading: boolean;
-    items: WalletIncomingTransfer[];
+    items: AccountIncomingTransfer[];
   };
 }
 
-const initialState: WalletDetailsStoreState = {
+const initialState: AccountDetailsStoreState = {
   loading: false,
-  _wallet: null,
+  _account: null,
   notification: {
     message: null,
     show: false,
@@ -67,17 +67,17 @@ const initialState: WalletDetailsStoreState = {
   },
 };
 
-export const useWalletDetailsStore = defineStore('walletDetails', {
-  state: (): WalletDetailsStoreState => {
+export const useAccountDetailsStore = defineStore('accountDetails', {
+  state: (): AccountDetailsStoreState => {
     return JSON.parse(JSON.stringify(initialState));
   },
   getters: {
-    wallet(state): Wallet {
-      if (!state._wallet) {
-        throw new Error('Wallet not initialized');
+    account(state): Account {
+      if (!state._account) {
+        throw new Error('Account not initialized');
       }
 
-      return state._wallet;
+      return state._account;
     },
     defaultStartDt(): string {
       const start = new Date();
@@ -90,21 +90,21 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
     },
-    sortedReceivables(): WalletIncomingTransfer[] {
+    sortedReceivables(): AccountIncomingTransfer[] {
       return this.receivables.items.sort((a, b) => {
         return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
       });
     },
-    walletApi(): WalletApi | null {
+    chainApi(): ChainApi | null {
       try {
-        if (!this._wallet) {
+        if (!this._account) {
           return null;
         }
 
-        return WalletApiFactory.create(this._wallet);
+        return ChainApiFactory.create(this._account);
       } catch (err) {
-        logger.warn('Wallet api not supported', { err });
-        // the wallet is loaded but with limited real data since the blockchain is not supported by the UI
+        logger.warn('chain api not supported', { err });
+        // the account is loaded but with limited real data since the blockchain is not supported by the UI
         return null;
       }
     },
@@ -117,7 +117,7 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
       return new Date().toISOString();
     },
     hasLoaded(): boolean {
-      return this._wallet !== null;
+      return this._account !== null;
     },
     bankService(): BankService {
       return useActiveBankStore().service;
@@ -127,7 +127,7 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
     reset(): void {
       const reset = JSON.parse(JSON.stringify(initialState));
       this.loading = reset.loading;
-      this._wallet = reset._wallet;
+      this._account = reset._account;
       this.notification = reset.notification;
       this.transfers = reset.transfers;
       this.transfers.fromDt = new Date(this.defaultStartDt).toISOString().split('T')[0];
@@ -148,11 +148,11 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
       this.notification.show = false;
     },
     async loadReceivables(): Promise<void> {
-      if (!this.walletApi) {
+      if (!this.chainApi) {
         return;
       }
 
-      const transfers = await this.walletApi.fetchTransfers({
+      const transfers = await this.chainApi.fetchTransfers({
         from_dt: new Date(),
       });
 
@@ -188,8 +188,8 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
       try {
         this.operations.loading = true;
         this.operations.items = await this.bankService
-          .listWalletOperations({
-            wallet_id: this.wallet.id,
+          .listAccountOperations({
+            account_id: this.account.id,
             status: status ? [status] : [],
             from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
             to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
@@ -221,8 +221,8 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
     async loadSentTransfers(fromDt?: Date, toDt?: Date, status?: string): Promise<void> {
       try {
         this.transfers.loading = true;
-        this.transfers.items = await this.bankService.listWalletTransfers({
-          wallet_id: this.wallet.id,
+        this.transfers.items = await this.bankService.listAccountTransfers({
+          account_id: this.account.id,
           from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
           to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
           status: status ? [status] : [],
@@ -241,26 +241,26 @@ export const useWalletDetailsStore = defineStore('walletDetails', {
         this.transfers.loading = false;
       }
     },
-    async load(walletId: WalletId): Promise<void> {
+    async load(accountId: AccountId): Promise<void> {
       try {
         this.reset();
         this.loading = true;
         const activeBank = useActiveBankStore();
 
-        this._wallet = await this.bankService.getWallet({
-          wallet_id: walletId,
+        this._account = await this.bankService.getAccount({
+          account_id: accountId,
         });
 
-        const updatedBalance = activeBank.wallets.items.find(item => item.id === walletId)?.balance;
+        const updatedBalance = activeBank.accounts.items.find(item => item.id === accountId)?.balance;
         if (updatedBalance) {
-          this._wallet.balance = updatedBalance;
+          this._account.balance = updatedBalance;
         }
 
         this.loadSentTransfers(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
         this.loadOperations(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
         this.loadReceivables();
       } catch (e) {
-        logger.error('Failed to load wallet', { e });
+        logger.error('Failed to load account', { e });
 
         const err = e as ApiError;
         this.showPageNotification('error', err.message?.[0] ? err.message[0] : err.code);

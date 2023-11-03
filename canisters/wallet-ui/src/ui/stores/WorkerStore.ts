@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { logger, timer } from '~/core';
-import { Transfer, Wallet } from '~/generated/bank/bank.did';
-import { WalletApiFactory } from '~/services';
-import { WalletApi } from '~/types/Wallet';
+import { Transfer, Account } from '~/generated/bank/bank.did';
+import { ChainApiFactory } from '~/services';
+import { ChainApi } from '~/types/Chain';
 import { useActiveBankStore } from '~/ui/stores';
 
 const BALANCE_POLLING_INTERVAL = 30000;
@@ -30,7 +30,7 @@ export const useWorkerStore = defineStore('cache', {
     },
     start(): void {
       this.stop();
-      this.pollingJobs.balances = timer(() => this.fetchWalletBalances(), BALANCE_POLLING_INTERVAL);
+      this.pollingJobs.balances = timer(() => this.fetchAccountBalances(), BALANCE_POLLING_INTERVAL);
       this.pollingJobs.notifications = timer(
         () => this.fetchNotifications(),
         NOTIFICATIONS_POLLING_INTERVAL,
@@ -44,42 +44,42 @@ export const useWorkerStore = defineStore('cache', {
 
       return transfer;
     },
-    async fetchWalletBalances(): Promise<void> {
+    async fetchAccountBalances(): Promise<void> {
       try {
         const activeBank = useActiveBankStore();
-        if (!activeBank.hasUser || activeBank.wallets.items.length === 0) {
+        if (!activeBank.hasUser || activeBank.accounts.items.length === 0) {
           return;
         }
 
-        const walletApis: { wallet: Wallet; api: WalletApi }[] = activeBank.wallets.items
-          .map(wallet => {
+        const accountApis: { account: Account; api: ChainApi }[] = activeBank.accounts.items
+          .map(account => {
             try {
-              const api = WalletApiFactory.create(wallet);
-              return { wallet, api };
+              const api = ChainApiFactory.create(account);
+              return { account, api };
             } catch (e) {
-              logger.warn('Wallet api not supported for wallet', { error: e, wallet: wallet.id });
+              logger.warn('Chain api not supported for account', { error: e, account: account.id });
             }
 
             return null;
           })
-          .filter(entry => entry !== null) as { wallet: Wallet; api: WalletApi }[];
+          .filter(entry => entry !== null) as { account: Account; api: ChainApi }[];
 
-        const requests = walletApis.map(async ({ wallet, api }) =>
-          api.fetchBalance().then(balance => ({ wallet, balance })),
+        const requests = accountApis.map(async ({ account, api }) =>
+          api.fetchBalance().then(balance => ({ account, balance })),
         );
 
         const balances = (await Promise.all(requests)).flat();
-        for (const { wallet, balance } of balances) {
-          wallet.balance = [
+        for (const { account, balance } of balances) {
+          account.balance = [
             {
               balance,
-              decimals: wallet.decimals,
+              decimals: account.decimals,
               last_update_timestamp: new Date().toISOString(),
             },
           ];
         }
       } catch (error) {
-        logger.error("Failed to fetch wallets' balances", { error });
+        logger.error("Failed to fetch accounts' balances", { error });
       }
     },
     async fetchNotifications(): Promise<void> {

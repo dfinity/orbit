@@ -11,7 +11,7 @@
         <TransferForm
           v-if="!props.transferId"
           v-model="submitted"
-          :wallet-id="props.walletId"
+          :account-id="props.accountId"
           @loading="show => (loading = show)"
           @updated="isChanged => (hasChanges = isChanged)"
           @saved="onSave"
@@ -37,13 +37,13 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import { TransferId, WalletId } from '~/generated/bank/bank.did';
+import { TransferId, AccountId } from '~/generated/bank/bank.did';
 import { mdiClose } from '@mdi/js';
 import TransferForm from '~/ui/components/TransferForm.vue';
 
 const props = defineProps<{
   modelValue: boolean;
-  walletId?: WalletId;
+  accountId?: AccountId;
   transferId?: TransferId;
 }>();
 

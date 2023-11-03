@@ -7,7 +7,7 @@ import {
   BankFeatures,
   Operation,
   OperationId,
-  Wallet,
+  Account,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
@@ -15,7 +15,7 @@ import { useAuthStore, useSettingsStore, useWorkerStore } from '~/ui/stores';
 import { LoadableItem } from '~/ui/types';
 
 export interface BankMetrics {
-  wallets: number;
+  accounts: number;
   transfers: {
     completed: number;
     pending: number;
@@ -31,9 +31,9 @@ export interface ActiveBankStoreState {
     loading: boolean;
     details: BankFeatures | null;
   };
-  wallets: {
+  accounts: {
     loading: boolean;
-    items: Wallet[];
+    items: Account[];
   };
   pendingOperations: {
     loading: boolean;
@@ -51,7 +51,7 @@ export const useActiveBankStore = defineStore('activeBank', {
         loading: false,
         details: null,
       },
-      wallets: {
+      accounts: {
         loading: false,
         items: [],
       },
@@ -72,8 +72,8 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return this._user as User;
     },
-    sortedWallets(): Wallet[] {
-      return this.wallets.items.sort((a, b) => {
+    sortedAccounts(): Account[] {
+      return this.accounts.items.sort((a, b) => {
         const firstDt = new Date(a.last_modification_timestamp).getTime();
         const secondDt = new Date(b.last_modification_timestamp).getTime();
 
@@ -110,7 +110,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     },
     metrics(): BankMetrics {
       return {
-        wallets: this.wallets.items.length,
+        accounts: this.accounts.items.length,
         transfers: {
           completed: 0,
           pending: 0,
@@ -136,7 +136,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     reset(): void {
       this._bankId = Principal.anonymous().toText();
       this._user = null;
-      this.wallets.items = [];
+      this.accounts.items = [];
       this.features.details = null;
       this.pendingOperations.items = [];
     },
@@ -211,16 +211,16 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return null;
     },
-    async loadWalletList(): Promise<void> {
-      if (this.wallets.loading) {
+    async loadAccountList(): Promise<void> {
+      if (this.accounts.loading) {
         return;
       }
       try {
-        this.wallets.loading = true;
+        this.accounts.loading = true;
         const bankService = services().bank.withBankId(this.bankId);
-        this.wallets.items = await bankService.listWallets();
+        this.accounts.items = await bankService.listAccounts();
       } finally {
-        this.wallets.loading = false;
+        this.accounts.loading = false;
       }
     },
     async loadBankFeatures(): Promise<void> {
@@ -235,7 +235,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
     async loadDetailsAsync(): Promise<void> {
       useWorkerStore().start();
-      this.loadWalletList();
+      this.loadAccountList();
       this.loadBankFeatures();
     },
     async load(bankId: Principal): Promise<void> {

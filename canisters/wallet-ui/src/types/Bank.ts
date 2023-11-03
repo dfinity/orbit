@@ -1,9 +1,9 @@
-export enum WalletPolicyType {
+export enum PolicyType {
   VariableApprovalThreshold = 'VariableApprovalThreshold',
   FixedApprovalThreshold = 'FixedApprovalThreshold',
 }
 
-export enum WalletTransferStatus {
+export enum AccountTransferStatus {
   Pending = 'pending',
   Rejected = 'rejected',
   Failed = 'failed',

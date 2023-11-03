@@ -1,7 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { WalletPolicyType } from '~/types';
+import { PolicyType } from '~/types';
 import { i18n, services } from '~/ui/modules';
 import { useSettingsStore } from '~/ui/stores';
 
@@ -33,8 +33,8 @@ export const useBankStore = defineStore('bank', {
     main(): Principal | null {
       return this._main ? Principal.fromText(this._main) : null;
     },
-    walletPolicyTypes(): string[] {
-      return Object.values(WalletPolicyType);
+    policyTypes(): string[] {
+      return Object.values(PolicyType);
     },
   },
   actions: {

@@ -1,86 +1,86 @@
 <template>
-  <VDialog v-model="walletForm.show" persistent transition="dialog-bottom-transition" scrollable>
-    <VForm ref="form" class="wallet-form" @submit.prevent="createWallet">
-      <VCard :loading="walletForm.loading">
+  <VDialog v-model="accountForm.show" persistent transition="dialog-bottom-transition" scrollable>
+    <VForm ref="form" class="account-form" @submit.prevent="createAccount">
+      <VCard :loading="accountForm.loading">
         <VToolbar dark color="primary">
-          <VBtn icon dark @click="walletForm.close"><VIcon :icon="mdiClose" /></VBtn>
+          <VBtn icon dark @click="accountForm.close"><VIcon :icon="mdiClose" /></VBtn>
           <VToolbarTitle>
-            {{ $t('terms.new_wallet') }}
+            {{ $t('terms.new_account') }}
           </VToolbarTitle>
         </VToolbar>
         <VCardText>
           <VAlert
-            v-if="walletForm.alert.show"
-            :type="walletForm.alert.type"
+            v-if="accountForm.alert.show"
+            :type="accountForm.alert.type"
             class="mx-4 mb-4"
             variant="tonal"
             density="compact"
           >
-            {{ walletForm.alert.message }}
+            {{ accountForm.alert.message }}
           </VAlert>
           <VContainer fluid>
             <VRow>
-              <VCol cols="12" class="wallet-form__title mb-4">
+              <VCol cols="12" class="account-form__title mb-4">
                 <VBtn
                   size="small"
                   color="primary-variant"
-                  :variant="!walletForm.multiCustody ? 'tonal' : 'outlined'"
+                  :variant="!accountForm.multiCustody ? 'tonal' : 'outlined'"
                   class="mr-2"
                   :prepend-icon="mdiAccount"
-                  @click="walletForm.multiCustody = false"
+                  @click="accountForm.multiCustody = false"
                 >
-                  {{ $t('banks.private_wallet') }}
+                  {{ $t('banks.private_account') }}
                 </VBtn>
                 <VBtn
                   size="small"
                   color="primary-variant"
-                  :variant="walletForm.multiCustody ? 'tonal' : 'outlined'"
+                  :variant="accountForm.multiCustody ? 'tonal' : 'outlined'"
                   :prepend-icon="mdiAccountGroup"
-                  @click="walletForm.multiCustody = true"
+                  @click="accountForm.multiCustody = true"
                 >
-                  {{ $t('banks.joint_wallet') }}
+                  {{ $t('banks.joint_account') }}
                 </VBtn>
               </VCol>
               <VCol cols="12" class="py-0">
                 <VTextField
-                  v-model="walletForm.form.name"
+                  v-model="accountForm.form.name"
                   :label="$t('terms.name')"
                   variant="solo"
                   density="compact"
                   clearable
                   :prepend-icon="mdiWallet"
-                  :rules="walletForm.validationRules.name"
+                  :rules="accountForm.validationRules.name"
                 />
               </VCol>
               <VCol cols="12" class="py-0">
                 <VAutocomplete
-                  v-model="walletForm.form.blockchain"
+                  v-model="accountForm.form.blockchain"
                   :label="$t('terms.asset')"
                   variant="solo"
                   density="compact"
                   clearable
                   :prepend-icon="mdiKeyChainVariant"
-                  :rules="walletForm.validationRules.blockchain"
-                  :items="walletForm.supportedBlockchains"
+                  :rules="accountForm.validationRules.blockchain"
+                  :items="accountForm.supportedBlockchains"
                 />
               </VCol>
-              <template v-if="walletForm.multiCustody">
-                <VCol cols="12" class="wallet-form__title">{{ $t('terms.owners') }}</VCol>
-                <VCol v-for="(ownerId, idx) in walletForm.form.owners" :key="idx" cols="12" sm="4">
+              <template v-if="accountForm.multiCustody">
+                <VCol cols="12" class="account-form__title">{{ $t('terms.owners') }}</VCol>
+                <VCol v-for="(ownerId, idx) in accountForm.form.owners" :key="idx" cols="12" sm="4">
                   <VCard density="compact" variant="elevated">
                     <VCardText class="pb-0">
                       <VTextField
-                        v-model="walletForm.form.owners[idx]"
+                        v-model="accountForm.form.owners[idx]"
                         :prepend-icon="mdiAccount"
                         :label="$t('terms.user_id')"
                         variant="filled"
                         density="compact"
                         :rules="[
-                          ...walletForm.validationRules.ownerUser,
-                          uniqueRule(walletForm.form.owners.filter((_, self) => self !== idx)),
+                          ...accountForm.validationRules.ownerUser,
+                          uniqueRule(accountForm.form.owners.filter((_, self) => self !== idx)),
                         ]"
-                        :clearable="!walletForm.isSelfOwnerEntry(ownerId)"
-                        :disabled="walletForm.isSelfOwnerEntry(ownerId)"
+                        :clearable="!accountForm.isSelfOwnerEntry(ownerId)"
+                        :disabled="accountForm.isSelfOwnerEntry(ownerId)"
                       />
                     </VCardText>
                     <VCardActions>
@@ -88,44 +88,44 @@
                       <VBtn
                         color="error"
                         variant="text"
-                        :disabled="walletForm.isSelfOwnerEntry(ownerId)"
-                        @click="walletForm.removeOwnerByIndex(idx)"
+                        :disabled="accountForm.isSelfOwnerEntry(ownerId)"
+                        @click="accountForm.removeOwnerByIndex(idx)"
                       >
                         {{ $t('terms.remove') }}
                       </VBtn>
                     </VCardActions>
                   </VCard>
                 </VCol>
-                <VCol v-if="walletForm.canAddOwner" cols="12" md="4">
-                  <VCard density="compact" variant="plain" class="wallet-form__add">
+                <VCol v-if="accountForm.canAddOwner" cols="12" md="4">
+                  <VCard density="compact" variant="plain" class="account-form__add">
                     <VCardText class="text-center">
                       <VIcon :icon="mdiAccount" size="64" />
                     </VCardText>
                     <VCardActions>
                       <VSpacer />
-                      <VBtn color="success" variant="flat" block @click="walletForm.addOwner(null)">
+                      <VBtn color="success" variant="flat" block @click="accountForm.addOwner(null)">
                         {{ $t('terms.add') }}
                       </VBtn>
                       <VSpacer />
                     </VCardActions>
                   </VCard>
                 </VCol>
-                <VCol cols="12" class="wallet-form__title">{{ $t('terms.policies') }}</VCol>
-                <VCol v-for="(_, idx) in walletForm.form.policies" :key="idx" cols="12" md="4">
-                  <WalletPolicyCard
-                    v-model="walletForm.form.policies[idx]"
-                    :owners="walletForm.nrOfOwners"
-                    @removed="walletForm.removePolicyByIndex(idx)"
+                <VCol cols="12" class="account-form__title">{{ $t('terms.policies') }}</VCol>
+                <VCol v-for="(_, idx) in accountForm.form.policies" :key="idx" cols="12" md="4">
+                  <AccountPolicyCard
+                    v-model="accountForm.form.policies[idx]"
+                    :owners="accountForm.nrOfOwners"
+                    @removed="accountForm.removePolicyByIndex(idx)"
                   />
                 </VCol>
-                <VCol v-if="walletForm.canAddPolicy" cols="12" md="4">
-                  <VCard density="compact" variant="plain" class="wallet-form__add">
+                <VCol v-if="accountForm.canAddPolicy" cols="12" md="4">
+                  <VCard density="compact" variant="plain" class="account-form__add">
                     <VCardText class="text-center">
                       <VIcon :icon="mdiCogs" size="64" />
                     </VCardText>
                     <VCardActions>
                       <VSpacer />
-                      <VBtn color="success" variant="flat" block @click="walletForm.addNewPolicy">
+                      <VBtn color="success" variant="flat" block @click="accountForm.addNewPolicy">
                         {{ $t('terms.add') }}
                       </VBtn>
                       <VSpacer />
@@ -138,10 +138,10 @@
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn variant="text" @click="walletForm.close">{{ $t('terms.close') }}</VBtn>
+          <VBtn variant="text" @click="accountForm.close">{{ $t('terms.close') }}</VBtn>
           <VBtn
-            :disabled="!walletForm.hasChanges"
-            :loading="walletForm.loading"
+            :disabled="!accountForm.hasChanges"
+            :loading="accountForm.loading"
             color="primary"
             variant="flat"
             type="submit"
@@ -164,15 +164,15 @@ import {
   mdiCogs,
 } from '@mdi/js';
 import { ref } from 'vue';
-import { useCreateWalletFormStore } from '~/ui/stores';
+import { useCreateAccountFormStore } from '~/ui/stores';
 import { uniqueRule } from '~/ui/utils';
-import WalletPolicyCard from './WalletPolicyCard.vue';
-import { UserId, WalletPolicy } from '~/generated/bank/bank.did';
+import AccountPolicyCard from './AccountPolicyCard.vue';
+import { UserId, AccountPolicy } from '~/generated/bank/bank.did';
 
 const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null);
-const walletForm = useCreateWalletFormStore();
+const accountForm = useCreateAccountFormStore();
 
-walletForm.$subscribe((_, state) => {
+accountForm.$subscribe((_, state) => {
   const uniqOwners: Array<UserId | null> = [];
   state.form.owners.forEach(ownerId => {
     if (!uniqOwners.find(id => id === ownerId)) {
@@ -181,31 +181,31 @@ walletForm.$subscribe((_, state) => {
   });
 
   if (uniqOwners.length !== state.form.owners.length) {
-    walletForm.form.owners = [...uniqOwners];
+    accountForm.form.owners = [...uniqOwners];
   }
 
-  const uniqPolicies: Map<string, WalletPolicy | null> = new Map();
+  const uniqPolicies: Map<string, AccountPolicy | null> = new Map();
   state.form.policies.forEach(entry => {
     uniqPolicies.set(JSON.stringify(entry), entry);
   });
 
   if (uniqPolicies.size !== state.form.policies.length) {
-    walletForm.form.policies = [...uniqPolicies.values()];
+    accountForm.form.policies = [...uniqPolicies.values()];
   }
 });
 
-const createWallet = async (): Promise<void> => {
+const createAccount = async (): Promise<void> => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
-  walletForm.isValid = valid;
+  accountForm.isValid = valid;
   if (valid) {
-    await walletForm.save();
+    await accountForm.save();
   }
 };
 </script>
 
 <style scoped lang="scss">
-.wallet-form {
+.account-form {
   height: 100%;
 
   &__title {

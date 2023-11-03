@@ -40,8 +40,8 @@ const router = createRouter({
           },
         },
         {
-          path: 'wallets',
-          name: 'WalletsRouter',
+          path: 'accounts',
+          name: 'AccountsRouter',
           component: RouterView,
           meta: {
             auth: {
@@ -51,8 +51,8 @@ const router = createRouter({
           children: [
             {
               path: '',
-              name: 'Wallets',
-              component: () => import('~/ui/pages/WalletsPage.vue'),
+              name: 'AccountList',
+              component: () => import('~/ui/pages/AccountListPage.vue'),
               meta: {
                 auth: {
                   requireState: AuthState.Authenticated,
@@ -61,8 +61,8 @@ const router = createRouter({
             },
             {
               path: ':id',
-              name: 'WalletDetails',
-              component: () => import('~/ui/pages/WalletDetailsPage.vue'),
+              name: 'Account',
+              component: () => import('~/ui/pages/AccountPage.vue'),
               meta: {
                 auth: {
                   requireState: AuthState.Authenticated,

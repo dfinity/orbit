@@ -1,20 +1,20 @@
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { UserId, WalletPolicy } from '~/generated/bank/bank.did';
+import { UserId, AccountPolicy } from '~/generated/bank/bank.did';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { maxLengthRule, requiredRule, validPrincipalRule, validUuidV4Rule } from '~/ui/utils';
 
-export interface CreateWalletForm {
+export interface CreateAccountForm {
   name: string | null;
   owners: Array<UserId | null>;
   blockchain: string | null;
   blockchainStandard: string | null;
-  policies: Array<WalletPolicy | null>;
+  policies: Array<AccountPolicy | null>;
 }
 
-export interface CreateWalletFormStoreState {
+export interface CreateAccountFormStoreState {
   show: boolean;
   loading: boolean;
   isValid: boolean;
@@ -25,10 +25,10 @@ export interface CreateWalletFormStoreState {
     message: string | null;
   };
   unchangedVersion: string | null;
-  form: CreateWalletForm;
+  form: CreateAccountForm;
 }
 
-export interface CreateWalletFormValidationRules {
+export interface CreateAccountFormValidationRules {
   name: FormValidationRules;
   blockchain: FormValidationRules;
   blockchainStandard: FormValidationRules;
@@ -36,7 +36,7 @@ export interface CreateWalletFormValidationRules {
   ownerIdentity: FormValidationRules;
 }
 
-const initialState: CreateWalletFormStoreState = {
+const initialState: CreateAccountFormStoreState = {
   show: false,
   loading: false,
   isValid: true,
@@ -56,8 +56,8 @@ const initialState: CreateWalletFormStoreState = {
   },
 };
 
-export const useCreateWalletFormStore = defineStore('createWalletForm', {
-  state: (): CreateWalletFormStoreState => {
+export const useCreateAccountFormStore = defineStore('createAccountForm', {
+  state: (): CreateAccountFormStoreState => {
     return JSON.parse(JSON.stringify(initialState));
   },
   getters: {
@@ -78,7 +78,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
     canSave(state): boolean {
       return state.isValid && this.hasChanges;
     },
-    validationRules(): CreateWalletFormValidationRules {
+    validationRules(): CreateAccountFormValidationRules {
       return {
         // TODO: the length of these fields should be sent from the backend
         name: [requiredRule, maxLengthRule(50, i18n.global.t('terms.name'))],
@@ -170,9 +170,9 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
         this.clearAlert();
         this.loading = true;
 
-        const policies: WalletPolicy[] = this.form.policies.filter(
+        const policies: AccountPolicy[] = this.form.policies.filter(
           entry => entry !== null,
-        ) as WalletPolicy[];
+        ) as AccountPolicy[];
 
         const nrOfThresholdPolicies = policies.filter(
           policy => 'approval_threshold' in policy,
@@ -185,7 +185,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
         const bankService = activeBank.service;
 
         await bankService
-          .createWallet({
+          .createAccount({
             name: this.form.name ? [this.form.name] : [],
             owners: this.form.owners.filter(id => id !== null) as UserId[],
             blockchain: `${this.form.blockchain}`,
@@ -194,13 +194,13 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
             policies,
           })
           .then(result => {
-            activeBank.loadWalletList();
+            activeBank.loadAccountList();
             this.close();
 
-            router.push({ name: 'WalletDetails', params: { id: result.id } });
+            router.push({ name: 'Account', params: { id: result.id } });
           });
       } catch (err) {
-        logger.error('Failed to create wallet', { err });
+        logger.error('Failed to create account', { err });
 
         const e = err as Error;
         this.alert = {

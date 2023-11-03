@@ -1,18 +1,18 @@
 import { defineStore } from 'pinia';
 import { amountToBigInt, formatBalance, logger } from '~/core';
-import { Transfer, Wallet, WalletId } from '~/generated/bank/bank.did';
+import { Transfer, Account, AccountId } from '~/generated/bank/bank.did';
 import { useActiveBankStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { requiredRule, validTokenAmount } from '~/ui/utils';
 
 export interface TransferForm {
-  walletId: WalletId | null;
+  accountId: AccountId | null;
   amount: string | null;
   to: string | null;
 }
 
 export interface TransferFormValidationRules {
-  walletId: FormValidationRules;
+  accountId: FormValidationRules;
   amount: FormValidationRules;
   to: FormValidationRules;
 }
@@ -20,7 +20,7 @@ export interface TransferFormValidationRules {
 export interface TransferFormStoreState {
   loading: boolean;
   isValid: boolean;
-  fixedWallet: boolean;
+  fixedAccount: boolean;
   alert: {
     show: boolean;
     type: 'success' | 'error' | 'warning' | 'info';
@@ -34,14 +34,14 @@ const initialState: TransferFormStoreState = {
   loading: false,
   isValid: true,
   unchangedVersion: null,
-  fixedWallet: false,
+  fixedAccount: false,
   alert: {
     show: false,
     type: 'success',
     message: null,
   },
   form: {
-    walletId: null,
+    accountId: null,
     amount: null,
     to: null,
   },
@@ -58,38 +58,38 @@ export const useTransferFormStore = defineStore('transferForm', {
     canSave(state): boolean {
       return state.isValid && this.hasChanges;
     },
-    selectedWallet(state): Wallet | null {
+    selectedAccount(state): Account | null {
       const activeBank = useActiveBankStore();
 
-      return activeBank.wallets.items.find(wallet => wallet.id === state.form.walletId) ?? null;
+      return activeBank.accounts.items.find(account => account.id === state.form.accountId) ?? null;
     },
     validationRules(): TransferFormValidationRules {
       return {
-        walletId: [requiredRule],
+        accountId: [requiredRule],
         to: [requiredRule],
-        amount: [requiredRule, v => validTokenAmount(v, this.selectedWallet?.decimals ?? 0)],
+        amount: [requiredRule, v => validTokenAmount(v, this.selectedAccount?.decimals ?? 0)],
       };
     },
-    wallets(state): Array<{ value: string; title: string; balance: string }> {
+    accounts(state): Array<{ value: string; title: string; balance: string }> {
       const activeBank = useActiveBankStore();
 
-      return activeBank.wallets.items
-        .filter(wallet => {
-          if (!state.fixedWallet) {
+      return activeBank.accounts.items
+        .filter(account => {
+          if (!state.fixedAccount) {
             return true;
           }
 
-          return wallet.id === state.form.walletId;
+          return account.id === state.form.accountId;
         })
-        .map(wallet => {
-          const balance = wallet.balance?.[0]
-            ? `${formatBalance(wallet.balance[0].balance, wallet.balance[0].decimals)}`
+        .map(account => {
+          const balance = account.balance?.[0]
+            ? `${formatBalance(account.balance[0].balance, account.balance[0].decimals)}`
             : '-';
 
           return {
-            value: wallet.id,
-            title: `${wallet.name}: ${wallet.id}`,
-            balance: `${wallet.symbol}: ${balance}`,
+            value: account.id,
+            title: `${account.name}: ${account.id}`,
+            balance: `${account.symbol}: ${balance}`,
           };
         });
     },
@@ -102,12 +102,12 @@ export const useTransferFormStore = defineStore('transferForm', {
       this.form = reset.form;
       this.alert = reset.alert;
     },
-    load(walletId?: WalletId): void {
+    load(accountId?: AccountId): void {
       this.reset();
 
-      if (walletId) {
-        this.form.walletId = walletId;
-        this.fixedWallet = true;
+      if (accountId) {
+        this.form.accountId = accountId;
+        this.fixedAccount = true;
       }
     },
     clearAlert(): void {
@@ -127,9 +127,9 @@ export const useTransferFormStore = defineStore('transferForm', {
 
         const bank = useActiveBankStore().service;
         return await bank.createTransfer({
-          from_wallet_id: `${this.form.walletId}`,
+          from_account_id: `${this.form.accountId}`,
           to: `${this.form.to}`,
-          amount: amountToBigInt(this.form.amount ?? '', this.selectedWallet?.decimals ?? 0),
+          amount: amountToBigInt(this.form.amount ?? '', this.selectedAccount?.decimals ?? 0),
           fee: [],
           execution_plan: [],
           expiration_dt: [],
@@ -137,7 +137,7 @@ export const useTransferFormStore = defineStore('transferForm', {
           network: [],
         });
       } catch (err) {
-        logger.error('Failed to send wallet', { err });
+        logger.error('Failed to send account', { err });
 
         const e = err as Error;
         this.alert = {

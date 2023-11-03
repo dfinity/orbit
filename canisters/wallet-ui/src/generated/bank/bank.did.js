@@ -8,18 +8,10 @@ export const idlFactory = ({ IDL }) => {
     'access_roles' : IDL.Vec(UserRole),
     'permission_id' : IDL.Text,
   });
-  const ApprovalThresholdPolicy = IDL.Variant({
-    'VariableThreshold' : IDL.Nat8,
-    'FixedThreshold' : IDL.Nat8,
-  });
-  const WalletPolicy = IDL.Variant({
-    'approval_threshold' : ApprovalThresholdPolicy,
-  });
   const BankInit = IDL.Record({
     'permissions' : IDL.Opt(IDL.Vec(BankPermission)),
     'approval_threshold' : IDL.Opt(IDL.Nat8),
     'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
-    'wallet_policies' : IDL.Opt(IDL.Vec(WalletPolicy)),
   });
   const UserId = IDL.Text;
   const TimestampRFC3339 = IDL.Text;
@@ -35,7 +27,6 @@ export const idlFactory = ({ IDL }) => {
     'approval_threshold' : IDL.Nat8,
     'owners' : IDL.Vec(User),
     'last_upgrade_timestamp' : TimestampRFC3339,
-    'wallet_policies' : IDL.Vec(WalletPolicy),
   });
   const Error = IDL.Record({
     'code' : IDL.Text,
@@ -51,25 +42,32 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : Error,
   });
-  const CreateWalletInput = IDL.Record({
+  const ApprovalThresholdPolicy = IDL.Variant({
+    'VariableThreshold' : IDL.Nat8,
+    'FixedThreshold' : IDL.Nat8,
+  });
+  const AccountPolicy = IDL.Variant({
+    'approval_threshold' : ApprovalThresholdPolicy,
+  });
+  const CreateAccountInput = IDL.Record({
     'owners' : IDL.Vec(UserId),
     'metadata' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
     'name' : IDL.Opt(IDL.Text),
     'blockchain' : IDL.Text,
     'standard' : IDL.Text,
-    'policies' : IDL.Vec(WalletPolicy),
+    'policies' : IDL.Vec(AccountPolicy),
   });
-  const WalletId = IDL.Text;
-  const WalletBalanceInfo = IDL.Record({
+  const AccountId = IDL.Text;
+  const AccountBalanceInfo = IDL.Record({
     'decimals' : IDL.Nat32,
     'balance' : IDL.Nat,
     'last_update_timestamp' : TimestampRFC3339,
   });
   const AssetSymbol = IDL.Text;
-  const Wallet = IDL.Record({
-    'id' : WalletId,
+  const Account = IDL.Record({
+    'id' : AccountId,
     'decimals' : IDL.Nat32,
-    'balance' : IDL.Opt(WalletBalanceInfo),
+    'balance' : IDL.Opt(AccountBalanceInfo),
     'owners' : IDL.Vec(UserId),
     'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'name' : IDL.Opt(IDL.Text),
@@ -78,10 +76,10 @@ export const idlFactory = ({ IDL }) => {
     'last_modification_timestamp' : TimestampRFC3339,
     'standard' : IDL.Text,
     'symbol' : AssetSymbol,
-    'policies' : IDL.Vec(WalletPolicy),
+    'policies' : IDL.Vec(AccountPolicy),
   });
-  const CreateWalletResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'wallet' : Wallet }),
+  const CreateAccountResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'account' : Account }),
     'Err' : Error,
   });
   const OperationId = IDL.Text;
@@ -124,15 +122,15 @@ export const idlFactory = ({ IDL }) => {
     'to' : IDL.Text,
     'fee' : IDL.Nat,
     'status' : TransferStatus,
+    'from_account_id' : AccountId,
     'execution_plan' : TransferExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
     'metadata' : IDL.Vec(TransferMetadata),
-    'from_wallet_id' : WalletId,
     'network' : Network,
     'amount' : IDL.Nat,
   });
   const OperationContext = IDL.Record({
-    'wallet' : IDL.Opt(Wallet),
+    'account' : IDL.Opt(Account),
     'transfer' : IDL.Opt(Transfer),
   });
   const OperationDecision = IDL.Record({
@@ -176,17 +174,22 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'features' : BankFeatures }),
     'Err' : Error,
   });
-  const FetchWalletBalancesInput = IDL.Record({
-    'wallet_ids' : IDL.Vec(WalletId),
+  const FetchAccountBalancesInput = IDL.Record({
+    'account_ids' : IDL.Vec(AccountId),
   });
-  const WalletBalance = IDL.Record({
+  const AccountBalance = IDL.Record({
+    'account_id' : AccountId,
     'decimals' : IDL.Nat32,
     'balance' : IDL.Nat,
     'last_update_timestamp' : TimestampRFC3339,
-    'wallet_id' : WalletId,
   });
-  const FetchWalletBalancesResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'balances' : IDL.Vec(WalletBalance) }),
+  const FetchAccountBalancesResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'balances' : IDL.Vec(AccountBalance) }),
+    'Err' : Error,
+  });
+  const GetAccountInput = IDL.Record({ 'account_id' : AccountId });
+  const GetAccountResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'account' : Account }),
     'Err' : Error,
   });
   const GetOperationInput = IDL.Record({ 'operation_id' : OperationId });
@@ -211,9 +214,37 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : Error,
   });
-  const GetWalletInput = IDL.Record({ 'wallet_id' : WalletId });
-  const GetWalletResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'wallet' : Wallet }),
+  const ListAccountOperationsInput = IDL.Record({
+    'account_id' : AccountId,
+    'status' : IDL.Opt(OperationStatus),
+    'to_dt' : IDL.Opt(TimestampRFC3339),
+    'code' : IDL.Opt(IDL.Text),
+    'read' : IDL.Opt(IDL.Bool),
+    'from_dt' : IDL.Opt(TimestampRFC3339),
+  });
+  const ListAccountOperationsResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'operations' : IDL.Vec(Operation) }),
+    'Err' : Error,
+  });
+  const ListAccountTransfersInput = IDL.Record({
+    'account_id' : AccountId,
+    'status' : IDL.Opt(IDL.Text),
+    'to_dt' : IDL.Opt(TimestampRFC3339),
+    'from_dt' : IDL.Opt(TimestampRFC3339),
+  });
+  const TransferListItem = IDL.Record({
+    'to' : IDL.Text,
+    'status' : TransferStatus,
+    'created_at' : TimestampRFC3339,
+    'transfer_id' : TransferId,
+    'amount' : IDL.Nat,
+  });
+  const ListAccountTransfersResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'transfers' : IDL.Vec(TransferListItem) }),
+    'Err' : Error,
+  });
+  const ListAccountResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'accounts' : IDL.Vec(Account) }),
     'Err' : Error,
   });
   const ListOperationsInput = IDL.Record({
@@ -227,39 +258,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'operations' : IDL.Vec(Operation) }),
     'Err' : Error,
   });
-  const ListWalletOperationsInput = IDL.Record({
-    'status' : IDL.Opt(OperationStatus),
-    'to_dt' : IDL.Opt(TimestampRFC3339),
-    'code' : IDL.Opt(IDL.Text),
-    'read' : IDL.Opt(IDL.Bool),
-    'from_dt' : IDL.Opt(TimestampRFC3339),
-    'wallet_id' : WalletId,
-  });
-  const ListWalletOperationsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'operations' : IDL.Vec(Operation) }),
-    'Err' : Error,
-  });
-  const ListWalletTransfersInput = IDL.Record({
-    'status' : IDL.Opt(IDL.Text),
-    'to_dt' : IDL.Opt(TimestampRFC3339),
-    'from_dt' : IDL.Opt(TimestampRFC3339),
-    'wallet_id' : WalletId,
-  });
-  const TransferListItem = IDL.Record({
-    'to' : IDL.Text,
-    'status' : TransferStatus,
-    'created_at' : TimestampRFC3339,
-    'transfer_id' : TransferId,
-    'amount' : IDL.Nat,
-  });
-  const ListWalletTransfersResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'transfers' : IDL.Vec(TransferListItem) }),
-    'Err' : Error,
-  });
-  const ListWalletResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'wallets' : IDL.Vec(Wallet) }),
-    'Err' : Error,
-  });
   const RegisterUserInput = IDL.Record({
     'identities' : IDL.Vec(IDL.Principal),
   });
@@ -270,10 +268,10 @@ export const idlFactory = ({ IDL }) => {
   const TransferInput = IDL.Record({
     'to' : IDL.Text,
     'fee' : IDL.Opt(IDL.Nat),
+    'from_account_id' : AccountId,
     'execution_plan' : IDL.Opt(TransferExecutionSchedule),
     'expiration_dt' : IDL.Opt(TimestampRFC3339),
     'metadata' : IDL.Opt(IDL.Vec(TransferMetadata)),
-    'from_wallet_id' : WalletId,
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
   });
@@ -288,7 +286,11 @@ export const idlFactory = ({ IDL }) => {
         [ConfirmUserIdentityResult],
         [],
       ),
-    'create_wallet' : IDL.Func([CreateWalletInput], [CreateWalletResult], []),
+    'create_account' : IDL.Func(
+        [CreateAccountInput],
+        [CreateAccountResult],
+        [],
+      ),
     'edit_operation' : IDL.Func(
         [EditOperationInput],
         [EditOperationResult],
@@ -296,11 +298,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'edit_user' : IDL.Func([EditUserInput], [EditUserResult], []),
     'features' : IDL.Func([], [GetFeaturesResult], ['query']),
-    'fetch_wallet_balances' : IDL.Func(
-        [FetchWalletBalancesInput],
-        [FetchWalletBalancesResult],
+    'fetch_account_balances' : IDL.Func(
+        [FetchAccountBalancesInput],
+        [FetchAccountBalancesResult],
         [],
       ),
+    'get_account' : IDL.Func([GetAccountInput], [GetAccountResult], ['query']),
     'get_operation' : IDL.Func(
         [GetOperationInput],
         [GetOperationResult],
@@ -317,23 +320,22 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_user' : IDL.Func([GetUserInput], [GetUserResult], ['query']),
-    'get_wallet' : IDL.Func([GetWalletInput], [GetWalletResult], ['query']),
+    'list_account_operations' : IDL.Func(
+        [ListAccountOperationsInput],
+        [ListAccountOperationsResult],
+        ['query'],
+      ),
+    'list_account_transfers' : IDL.Func(
+        [ListAccountTransfersInput],
+        [ListAccountTransfersResult],
+        ['query'],
+      ),
+    'list_accounts' : IDL.Func([], [ListAccountResult], ['query']),
     'list_operations' : IDL.Func(
         [ListOperationsInput],
         [ListOperationsResult],
         ['query'],
       ),
-    'list_wallet_operations' : IDL.Func(
-        [ListWalletOperationsInput],
-        [ListWalletOperationsResult],
-        ['query'],
-      ),
-    'list_wallet_transfers' : IDL.Func(
-        [ListWalletTransfersInput],
-        [ListWalletTransfersResult],
-        ['query'],
-      ),
-    'list_wallets' : IDL.Func([], [ListWalletResult], ['query']),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'transfer' : IDL.Func([TransferInput], [TransferResult], []),
   });
@@ -348,18 +350,10 @@ export const init = ({ IDL }) => {
     'access_roles' : IDL.Vec(UserRole),
     'permission_id' : IDL.Text,
   });
-  const ApprovalThresholdPolicy = IDL.Variant({
-    'VariableThreshold' : IDL.Nat8,
-    'FixedThreshold' : IDL.Nat8,
-  });
-  const WalletPolicy = IDL.Variant({
-    'approval_threshold' : ApprovalThresholdPolicy,
-  });
   const BankInit = IDL.Record({
     'permissions' : IDL.Opt(IDL.Vec(BankPermission)),
     'approval_threshold' : IDL.Opt(IDL.Nat8),
     'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
-    'wallet_policies' : IDL.Opt(IDL.Vec(WalletPolicy)),
   });
   return [IDL.Opt(BankInit)];
 };

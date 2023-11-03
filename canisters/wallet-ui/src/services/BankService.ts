@@ -7,26 +7,26 @@ import {
   Error as ApiError,
   BankFeatures,
   ConfirmUserIdentityInput,
-  CreateWalletInput,
+  CreateAccountInput,
   EditUserInput,
   EditOperationInput,
-  FetchWalletBalancesInput,
+  FetchAccountBalancesInput,
   GetUserInput,
   GetOperationInput,
   GetTransferInput,
   GetTransfersInput,
-  GetWalletInput,
+  GetAccountInput,
   ListOperationsInput,
-  ListWalletOperationsInput,
-  ListWalletTransfersInput,
+  ListAccountOperationsInput,
+  ListAccountTransfersInput,
   Operation,
   OperationId,
   RegisterUserInput,
   Transfer,
   TransferInput,
   TransferListItem,
-  Wallet,
-  WalletBalance,
+  Account,
+  AccountBalance,
   _SERVICE,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
@@ -114,8 +114,8 @@ export class BankService {
     return result.Ok.operations;
   }
 
-  async listWalletOperations(input: ListWalletOperationsInput): Promise<Operation[]> {
-    const result = await this.actor.list_wallet_operations(input);
+  async listAccountOperations(input: ListAccountOperationsInput): Promise<Operation[]> {
+    const result = await this.actor.list_account_operations(input);
 
     if ('Err' in result) {
       throw result.Err;
@@ -156,28 +156,28 @@ export class BankService {
     return result.Ok.operation;
   }
 
-  async listWallets(): Promise<Wallet[]> {
-    const result = await this.actor.list_wallets();
+  async listAccounts(): Promise<Account[]> {
+    const result = await this.actor.list_accounts();
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.wallets;
+    return result.Ok.accounts;
   }
 
-  async getWallet(input: GetWalletInput): Promise<Wallet> {
-    const result = await this.actor.get_wallet(input);
+  async getAccount(input: GetAccountInput): Promise<Account> {
+    const result = await this.actor.get_account(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.wallet;
+    return result.Ok.account;
   }
 
-  async fetchWalletBalances(input: FetchWalletBalancesInput): Promise<WalletBalance[]> {
-    const result = await this.actor.fetch_wallet_balances(input);
+  async fetchAccountBalances(input: FetchAccountBalancesInput): Promise<AccountBalance[]> {
+    const result = await this.actor.fetch_account_balances(input);
 
     if ('Err' in result) {
       throw result.Err;
@@ -186,18 +186,18 @@ export class BankService {
     return result.Ok.balances;
   }
 
-  async createWallet(input: CreateWalletInput): Promise<Wallet> {
-    const result = await this.actor.create_wallet(input);
+  async createAccount(input: CreateAccountInput): Promise<Account> {
+    const result = await this.actor.create_account(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.wallet;
+    return result.Ok.account;
   }
 
-  async listWalletTransfers(input: ListWalletTransfersInput): Promise<TransferListItem[]> {
-    const result = await this.actor.list_wallet_transfers(input);
+  async listAccountTransfers(input: ListAccountTransfersInput): Promise<TransferListItem[]> {
+    const result = await this.actor.list_account_transfers(input);
 
     if ('Err' in result) {
       throw result.Err;

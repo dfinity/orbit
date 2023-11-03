@@ -43,10 +43,10 @@
   },
   "banks": {
     "operation_failed_to_save": "Operation failed to save.",
-    "no_wallets": "No wallets available.",
+    "no_accounts": "No account available.",
     "pending_operations": "Pending operations",
     "user_copied_to_clipboard": "Bank user copied.",
-    "wallet_address_copied_to_clipboard": "Wallet address copied.",
+    "account_address_copied_to_clipboard": "Account address copied.",
     "load_error": "Failed to load banks information, please try again.",
     "load_error_transfers": "Failed to load transfers.",
     "bank_nr_title": "#{nr} Bank",
@@ -54,13 +54,13 @@
     "user_load_error": "Failed to load your bank user.",
     "no_bank_user": "No bank user",
     "please_register_to_continue": "Please register with a bank to continue",
-    "private_wallet": "Private Wallet",
-    "joint_wallet": "Joint Wallet",
+    "private_account": "Private Account",
+    "joint_account": "Joint Account",
     "policy": "Policy",
-    "policy_misconfigured": "The wallet policies are misconfigured.",
+    "policy_misconfigured": "The account policies are misconfigured.",
     "policy_config_unavailable": "Policy configuration is unavailable.",
-    "policy_fixed_approval_threshold_desc": "Exact number approvals required to operate the wallet",
-    "policy_variable_approval_threshold_desc": "Percentage of approvals required to operate the wallet",
+    "policy_fixed_approval_threshold_desc": "Exact number approvals required to operate the account",
+    "policy_variable_approval_threshold_desc": "Percentage of approvals required to operate the account",
     "policies": {
       "VariableApprovalThreshold": "Percentage based approval",
       "FixedApprovalThreshold": "Exact number of approvals"
@@ -90,7 +90,7 @@
     "until": "To",
     "to": "To",
     "from": "From",
-    "wallet": "Wallet",
+    "account": "Account",
     "amount": "Amount",
     "send": "Send",
     "open": "Open",
@@ -100,8 +100,8 @@
     "signin": "Sign In",
     "signout": "Sign Out",
     "anonymous": "Anonymous",
-    "new_wallet": "New Wallet",
-    "wallets": "Wallets",
+    "new_account": "New Account",
+    "accounts": "Accounts",
     "policies": "Policies",
     "transfers": "Transfers",
     "transactions": "Transactions",
@@ -140,17 +140,17 @@
       "validTokenAmount": "This field must contain a valid amount for the selected asset."
     }
   },
-  "wallet_page": {
-    "not_found_title": "Wallet not found",
-    "not_found_description": "The wallet you are looking for could not be loaded.",
-    "not_found_btn": "Go back to wallets"
+  "account_page": {
+    "not_found_title": "Account not found",
+    "not_found_description": "The account you are looking for could not be loaded.",
+    "not_found_btn": "Go back to accounts"
   },
   "navigation": {
     "main": {
       "name": "Menu",
       "items": {
         "home": "Home",
-        "wallets": "Wallets",
+        "accounts": "Accounts",
         "transfers": "Transfers",
         "address_book": "Address Book"
       }
