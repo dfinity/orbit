@@ -3,8 +3,8 @@
 mod user;
 pub use user::*;
 
-mod wallet;
-pub use wallet::*;
+mod account;
+pub use account::*;
 
 mod transfer;
 pub use transfer::*;

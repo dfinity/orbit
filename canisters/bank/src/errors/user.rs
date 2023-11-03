@@ -1,7 +1,7 @@
 use ic_canister_core::api::DetailableError;
 use thiserror::Error;
 
-/// Container for wallet errors.
+/// Container for user errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum UserError {
     /// The user must have at least one associated identity.

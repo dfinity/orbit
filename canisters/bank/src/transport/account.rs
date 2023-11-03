@@ -1,12 +1,12 @@
 use super::UserIdDTO;
 use candid::{CandidType, Deserialize};
 
-pub type WalletIdDTO = String;
+pub type AccountIdDTO = String;
 pub type UuidDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct WalletDTO {
-    pub id: WalletIdDTO,
+pub struct AccountDTO {
+    pub id: AccountIdDTO,
     pub owners: Vec<UuidDTO>,
     pub name: Option<String>,
     pub address: String,
@@ -14,8 +14,8 @@ pub struct WalletDTO {
     pub standard: String,
     pub symbol: String,
     pub decimals: u32,
-    pub balance: Option<WalletBalanceInfoDTO>,
-    pub policies: Vec<WalletPolicyDTO>,
+    pub balance: Option<AccountBalanceInfoDTO>,
+    pub policies: Vec<AccountPolicyDTO>,
     pub metadata: Vec<(String, String)>,
     pub last_modification_timestamp: String,
 }
@@ -27,62 +27,62 @@ pub enum ApprovalThresholdPolicyDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum WalletPolicyDTO {
+pub enum AccountPolicyDTO {
     #[serde(rename = "approval_threshold")]
     ApprovalThreshold(ApprovalThresholdPolicyDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateWalletInput {
+pub struct CreateAccountInput {
     pub owners: Vec<UserIdDTO>,
     pub name: Option<String>,
     pub blockchain: String,
     pub standard: String,
-    pub policies: Vec<WalletPolicyDTO>,
+    pub policies: Vec<AccountPolicyDTO>,
     pub metadata: Option<Vec<(String, String)>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateWalletResponse {
-    pub wallet: WalletDTO,
+pub struct CreateAccountResponse {
+    pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetWalletInput {
-    pub wallet_id: WalletIdDTO,
+pub struct GetAccountInput {
+    pub account_id: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetWalletResponse {
-    pub wallet: WalletDTO,
+pub struct GetAccountResponse {
+    pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct FetchWalletBalancesInput {
-    pub wallet_ids: Vec<String>,
+pub struct FetchAccountBalancesInput {
+    pub account_ids: Vec<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct WalletBalanceDTO {
-    pub wallet_id: String,
+pub struct AccountBalanceDTO {
+    pub account_id: String,
     pub balance: candid::Nat,
     pub decimals: u32,
     pub last_update_timestamp: String,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct WalletBalanceInfoDTO {
+pub struct AccountBalanceInfoDTO {
     pub balance: candid::Nat,
     pub decimals: u32,
     pub last_update_timestamp: String,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct FetchWalletBalancesResponse {
-    pub balances: Vec<WalletBalanceDTO>,
+pub struct FetchAccountBalancesResponse {
+    pub balances: Vec<AccountBalanceDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListWalletResponse {
-    pub wallets: Vec<WalletDTO>,
+pub struct ListAccountResponse {
+    pub accounts: Vec<AccountDTO>,
 }

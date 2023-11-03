@@ -1,11 +1,11 @@
 use crate::{
     core::{
         ic_cdk::api::{time, trap},
-        with_memory_manager, Memory, TRANSFER_WALLET_INDEX_MEMORY_ID,
+        with_memory_manager, Memory, TRANSFER_ACCOUNT_INDEX_MEMORY_ID,
     },
     errors::RepositoryError,
     models::{
-        indexes::transfer_wallet_index::{TransferWalletIndex, TransferWalletIndexCriteria},
+        indexes::transfer_account_index::{TransferAccountIndex, TransferAccountIndexCriteria},
         TransferId,
     },
 };
@@ -14,30 +14,28 @@ use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
-  /// The memory reference to the Transfer repository.
-  static DB: RefCell<StableBTreeMap<TransferWalletIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<TransferAccountIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(TRANSFER_WALLET_INDEX_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(TRANSFER_ACCOUNT_INDEX_MEMORY_ID))
     )
   })
 }
 
-/// A repository that enables managing transfer in stable memory.
 #[derive(Default, Debug)]
-pub struct TransferWalletIndexRepository {}
+pub struct TransferAccountIndexRepository {}
 
-impl IndexRepository<TransferWalletIndex, TransferId> for TransferWalletIndexRepository {
-    type FindByCriteria = TransferWalletIndexCriteria;
+impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexRepository {
+    type FindByCriteria = TransferAccountIndexCriteria;
 
-    fn exists(&self, index: &TransferWalletIndex) -> bool {
+    fn exists(&self, index: &TransferAccountIndex) -> bool {
         DB.with(|m| m.borrow().get(index).is_some())
     }
 
-    fn insert(&self, index: TransferWalletIndex) {
+    fn insert(&self, index: TransferAccountIndex) {
         DB.with(|m| m.borrow_mut().insert(index, ()));
     }
 
-    fn remove(&self, index: &TransferWalletIndex) -> bool {
+    fn remove(&self, index: &TransferAccountIndex) -> bool {
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
@@ -47,11 +45,11 @@ impl IndexRepository<TransferWalletIndex, TransferId> for TransferWalletIndexRep
                 (Some(start), Some(end)) => (start, end),
                 (Some(start), None) => (start, time()),
                 (None, Some(end)) => (
-                    end.saturating_sub(TransferWalletIndex::DEFAULT_CRITERIA_INTERVAL_NS),
+                    end.saturating_sub(TransferAccountIndex::DEFAULT_CRITERIA_INTERVAL_NS),
                     end,
                 ),
                 _ => (
-                    time().saturating_sub(TransferWalletIndex::DEFAULT_CRITERIA_INTERVAL_NS),
+                    time().saturating_sub(TransferAccountIndex::DEFAULT_CRITERIA_INTERVAL_NS),
                     time(),
                 ),
             };
@@ -59,13 +57,13 @@ impl IndexRepository<TransferWalletIndex, TransferId> for TransferWalletIndexRep
                 trap(RepositoryError::CriteriaOutOfRange.to_string().as_str());
             }
 
-            let start_key = TransferWalletIndex {
-                wallet_id: criteria.wallet_id,
+            let start_key = TransferAccountIndex {
+                account_id: criteria.account_id,
                 created_timestamp: from_dt,
                 transfer_id: [u8::MIN; 16],
             };
-            let end_key = TransferWalletIndex {
-                wallet_id: criteria.wallet_id,
+            let end_key = TransferAccountIndex {
+                account_id: criteria.account_id,
                 created_timestamp: to_dt,
                 transfer_id: [u8::MAX; 16],
             };
@@ -84,11 +82,11 @@ mod tests {
 
     #[test]
     fn test_repository_crud() {
-        let repository = TransferWalletIndexRepository::default();
-        let index = TransferWalletIndex {
+        let repository = TransferAccountIndexRepository::default();
+        let index = TransferAccountIndex {
             transfer_id: [1; 16],
             created_timestamp: time(),
-            wallet_id: [2; 16],
+            account_id: [2; 16],
         };
 
         assert!(!repository.exists(&index));
@@ -102,23 +100,23 @@ mod tests {
 
     #[test]
     fn test_find_by_criteria() {
-        let repository = TransferWalletIndexRepository::default();
+        let repository = TransferAccountIndexRepository::default();
         let now = time();
-        let index = TransferWalletIndex {
+        let index = TransferAccountIndex {
             transfer_id: [1; 16],
             created_timestamp: now,
-            wallet_id: [2; 16],
+            account_id: [2; 16],
         };
 
         repository.insert(index.clone());
-        repository.insert(TransferWalletIndex {
+        repository.insert(TransferAccountIndex {
             transfer_id: [2; 16],
             created_timestamp: now + 1,
-            wallet_id: [2; 16],
+            account_id: [2; 16],
         });
 
-        let criteria = TransferWalletIndexCriteria {
-            wallet_id: [2; 16],
+        let criteria = TransferAccountIndexCriteria {
+            account_id: [2; 16],
             from_dt: None,
             to_dt: Some(now),
         };

@@ -44,7 +44,7 @@ mod tests {
             created_timestamp: 0,
             expiration_dt: 5,
             fee: candid::Nat(BigUint::from(0u32)),
-            from_wallet: [1; 16],
+            from_account: [1; 16],
             to_address: "0x1234".to_string(),
             status: TransferStatus::Pending,
             initiator_user: [2; 16],

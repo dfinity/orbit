@@ -1,4 +1,4 @@
-use super::{UserService, WalletService};
+use super::{AccountService, UserService};
 use crate::{
     core::{ic_cdk::api::time, CallContext, WithCallContext},
     errors::OperationError,
@@ -6,7 +6,7 @@ use crate::{
     mappers::{HelperMapper, OperationMapper},
     models::{Operation, OperationContext, OperationId, OperationStatus},
     repositories::{OperationFindByUserWhereClause, OperationRepository, OperationWhereClause},
-    transport::{EditOperationInput, ListOperationsInput, ListWalletOperationsInput},
+    transport::{EditOperationInput, ListAccountOperationsInput, ListOperationsInput},
 };
 use ic_canister_core::repository::Repository;
 use ic_canister_core::utils::rfc3339_to_timestamp;
@@ -17,7 +17,7 @@ use uuid::Uuid;
 pub struct OperationService {
     call_context: CallContext,
     user_service: UserService,
-    wallet_service: WalletService,
+    account_service: AccountService,
     operation_repository: OperationRepository,
 }
 
@@ -26,7 +26,7 @@ impl WithCallContext for OperationService {
         Self {
             call_context: call_context.clone(),
             user_service: UserService::with_call_context(call_context.clone()),
-            wallet_service: WalletService::with_call_context(call_context.clone()),
+            account_service: AccountService::with_call_context(call_context.clone()),
             ..Default::default()
         }
     }
@@ -76,23 +76,23 @@ impl OperationService {
         Ok(operations)
     }
 
-    pub fn list_wallet_operations(
+    pub fn list_account_operations(
         &self,
-        input: ListWalletOperationsInput,
+        input: ListAccountOperationsInput,
     ) -> ServiceResult<Vec<Operation>> {
         let user = self
             .user_service
             .get_user_by_identity(&self.call_context.caller())?;
-        let wallet = self
-            .wallet_service
-            .get_wallet(HelperMapper::to_uuid(input.wallet_id)?.as_bytes())?;
+        let account = self
+            .account_service
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
 
         let filter_by_code = match input.code {
             Some(code) => Some(OperationMapper::to_code(code)?),
             None => None,
         };
-        let operations = self.operation_repository.find_by_wallet_where(
-            (user.id, wallet.id),
+        let operations = self.operation_repository.find_by_account_where(
+            (user.id, account.id),
             OperationWhereClause {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),

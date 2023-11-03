@@ -1,13 +1,13 @@
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
-/// Represents a wallet policy within the system.
+/// Represents a account policy within the system.
 ///
-/// Policies are used to define the rules for a wallet, including approval thresholds for
+/// Policies are used to define the rules for a account, including approval thresholds for
 /// operations and others.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum WalletPolicy {
+pub enum AccountPolicy {
     ApprovalThreshold(ApprovalThresholdPolicy),
 }
 

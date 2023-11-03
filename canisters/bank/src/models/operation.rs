@@ -9,7 +9,7 @@ use ic_canister_macros::stable_object;
 use std::collections::{HashMap, HashSet};
 
 pub const OPERATION_METADATA_KEY_TRANSFER_ID: &str = "transfer_id";
-pub const OPERATION_METADATA_KEY_WALLET_ID: &str = "wallet_id";
+pub const OPERATION_METADATA_KEY_ACCOUNT_ID: &str = "account_id";
 
 /// The operation id, which is a UUID.
 pub type OperationId = UUID;

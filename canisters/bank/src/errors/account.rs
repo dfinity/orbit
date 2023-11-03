@@ -2,59 +2,59 @@ use ic_canister_core::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
-/// Container for wallet errors.
+/// Container for account errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
-pub enum WalletError {
-    /// The requested wallet was not found.
-    #[error(r#"The requested wallet was not found."#)]
-    WalletNotFound { id: String },
+pub enum AccountError {
+    /// The requested account was not found.
+    #[error(r#"The requested account was not found."#)]
+    AccountNotFound { id: String },
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
     UnknownBlockchain { blockchain: String },
     /// The given blockchain standard is unknown to the system.
     #[error(r#"The given blockchain standard is unknown to the system."#)]
     UnknownBlockchainStandard { blockchain_standard: String },
-    /// You don't have the necessary privileges to access the requested wallet.
-    #[error(r#"You don't have the necessary privileges to access the requested wallet."#)]
+    /// You don't have the necessary privileges to access the requested account.
+    #[error(r#"You don't have the necessary privileges to access the requested account."#)]
     Forbidden,
-    /// The wallet address is out of range.
+    /// The account address is out of range.
     #[error(
-        r#"The wallet address is out of range, it must be between {min_length} and {max_length}."#
+        r#"The account address is out of range, it must be between {min_length} and {max_length}."#
     )]
     InvalidAddressLength { min_length: u8, max_length: u8 },
-    /// The wallet owners selection is out of range.
-    #[error(r#"The wallet owners selection is out of range, it must be between {min_owners} and {max_owners}."#)]
+    /// The account owners selection is out of range.
+    #[error(r#"The account owners selection is out of range, it must be between {min_owners} and {max_owners}."#)]
     InvalidOwnersRange { min_owners: u8, max_owners: u8 },
     /// The requested transfer was not found.
     #[error(r#"The requested transfer was not found."#)]
     TransferNotFound { transfer_id: String },
-    /// Fetching wallet balances can only be done for a maximum of 10 wallets at a time.
+    /// Fetching account balances can only be done for a maximum of 10 accounts at a time.
     #[error(
-        r#"Fetching wallet balances can only be done for a maximum of {max} wallets at a time."#
+        r#"Fetching account balances can only be done for a maximum of {max} accounts at a time."#
     )]
-    WalletBalancesBatchRange { min: u8, max: u8 },
-    /// The wallet has failed validation.
-    #[error(r#"The wallet has failed validation."#)]
+    AccountBalancesBatchRange { min: u8, max: u8 },
+    /// The account has failed validation.
+    #[error(r#"The account has failed validation."#)]
     ValidationError { info: String },
 }
 
-impl DetailableError for WalletError {
+impl DetailableError for AccountError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
-            WalletError::WalletNotFound { id } => {
+            AccountError::AccountNotFound { id } => {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
-            WalletError::UnknownBlockchain { blockchain } => {
+            AccountError::UnknownBlockchain { blockchain } => {
                 details.insert("blockchain".to_string(), blockchain.to_string());
                 Some(details)
             }
-            WalletError::ValidationError { info } => {
+            AccountError::ValidationError { info } => {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
-            WalletError::UnknownBlockchainStandard {
+            AccountError::UnknownBlockchainStandard {
                 blockchain_standard,
             } => {
                 details.insert(
@@ -63,7 +63,7 @@ impl DetailableError for WalletError {
                 );
                 Some(details)
             }
-            WalletError::InvalidAddressLength {
+            AccountError::InvalidAddressLength {
                 min_length,
                 max_length,
             } => {
@@ -71,7 +71,7 @@ impl DetailableError for WalletError {
                 details.insert("max_length".to_string(), max_length.to_string());
                 Some(details)
             }
-            WalletError::InvalidOwnersRange {
+            AccountError::InvalidOwnersRange {
                 min_owners,
                 max_owners,
             } => {
@@ -79,11 +79,11 @@ impl DetailableError for WalletError {
                 details.insert("max_owners".to_string(), max_owners.to_string());
                 Some(details)
             }
-            WalletError::TransferNotFound { transfer_id } => {
+            AccountError::TransferNotFound { transfer_id } => {
                 details.insert("transfer_id".to_string(), transfer_id.to_string());
                 Some(details)
             }
-            WalletError::WalletBalancesBatchRange { min, max } => {
+            AccountError::AccountBalancesBatchRange { min, max } => {
                 details.insert("min".to_string(), min.to_string());
                 details.insert("max".to_string(), max.to_string());
                 Some(details)

@@ -1,30 +1,30 @@
-use crate::models::{UserId, Wallet, WalletId};
+use crate::models::{Account, AccountId, UserId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct WalletUserIndex {
+pub struct AccountUserIndex {
     /// The user id, which is a UUID.
     pub user_id: UserId,
-    /// The wallet id, which is a UUID.
-    pub wallet_id: WalletId,
+    /// The account id, which is a UUID.
+    pub account_id: AccountId,
 }
 
 #[derive(Clone, Debug)]
-pub struct WalletUserIndexCriteria {
+pub struct AccountUserIndexCriteria {
     pub user_id: UserId,
 }
 
-impl Wallet {
-    pub fn to_index_by_users(&self) -> Vec<WalletUserIndex> {
+impl Account {
+    pub fn to_index_by_users(&self) -> Vec<AccountUserIndex> {
         self.owners
             .iter()
-            .map(|owner| WalletUserIndex {
+            .map(|owner| AccountUserIndex {
                 user_id: owner.to_owned(),
-                wallet_id: self.id,
+                account_id: self.id,
             })
-            .collect::<Vec<WalletUserIndex>>()
+            .collect::<Vec<AccountUserIndex>>()
     }
 }
 
@@ -34,8 +34,8 @@ mod tests {
     use crate::models::{Blockchain, BlockchainStandard};
 
     #[test]
-    fn test_wallet_to_user_association() {
-        let wallet = Wallet {
+    fn test_account_to_user_association() {
+        let account = Account {
             id: [0; 16],
             address: "0x1234".to_string(),
             balance: None,
@@ -50,12 +50,12 @@ mod tests {
             symbol: "ICP".to_string(),
         };
 
-        let indexes = wallet.to_index_by_users();
+        let indexes = account.to_index_by_users();
 
         assert_eq!(indexes.len(), 2);
         assert_eq!(indexes[0].user_id, [1; 16]);
-        assert_eq!(indexes[0].wallet_id, [0; 16]);
+        assert_eq!(indexes[0].account_id, [0; 16]);
         assert_eq!(indexes[1].user_id, [2; 16]);
-        assert_eq!(indexes[1].wallet_id, [0; 16]);
+        assert_eq!(indexes[1].account_id, [0; 16]);
     }
 }

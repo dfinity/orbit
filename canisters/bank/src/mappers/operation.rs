@@ -28,7 +28,7 @@ impl OperationMapper {
                 .collect(),
             context: OperationContextDTO {
                 transfer: context.transfer.map(|transfer| transfer.to_dto()),
-                wallet: context.wallet.map(|wallet| wallet.to_dto()),
+                account: context.account.map(|account| account.to_dto()),
             },
         }
     }

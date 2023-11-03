@@ -1,7 +1,7 @@
 use super::WASM_PAGE_SIZE;
 use crate::{
     core::ic_cdk::api::{time, trap},
-    models::{AccessRole, BankAsset, Blockchain, BlockchainStandard, WalletPolicy},
+    models::{AccessRole, BankAsset, Blockchain, BlockchainStandard},
     transport::{BankPermissionDTO, UserRoleDTO},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
@@ -17,8 +17,8 @@ use std::{
 /// The list of permissions that can be granted to roles, admin role has all permissions.
 pub const PERMISSION_ADMIN: &str = "admin";
 pub const PERMISSION_READ_FEATURES: &str = "read:features";
-pub const PERMISSION_WRITE_WALLET: &str = "write:wallet";
-pub const PERMISSION_READ_WALLET: &str = "read:wallet";
+pub const PERMISSION_WRITE_ACCOUNT: &str = "write:account";
+pub const PERMISSION_READ_ACCOUNT: &str = "read:account";
 pub const PERMISSION_READ_TRANSFER: &str = "read:transfer";
 pub const PERMISSION_WRITE_TRANSFER: &str = "write:transfer";
 pub const PERMISSION_READ_OPERATION: &str = "read:operation";
@@ -52,11 +52,11 @@ pub fn default_bank_permissions() -> Vec<Permission> {
             access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
         },
         Permission {
-            permission_id: PERMISSION_WRITE_WALLET.to_string(),
+            permission_id: PERMISSION_WRITE_ACCOUNT.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {
-            permission_id: PERMISSION_READ_WALLET.to_string(),
+            permission_id: PERMISSION_READ_ACCOUNT.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {
@@ -108,9 +108,6 @@ pub struct CanisterConfig {
     pub permissions: Vec<Permission>,
     /// The default users of the canister.
     pub owners: Vec<Principal>,
-    /// The default wallet policies of the canister,
-    /// automatically applied to all wallets if they do not have their own policies.
-    pub wallet_policies: Vec<WalletPolicy>,
 }
 
 impl Default for CanisterConfig {
@@ -120,7 +117,6 @@ impl Default for CanisterConfig {
             approval_threshold: 100u8,
             permissions: default_bank_permissions(),
             owners: vec![],
-            wallet_policies: vec![],
         }
     }
 }

@@ -1,4 +1,4 @@
-use super::{TimestampRfc3339, UserDTO, UserRoleDTO, WalletPolicyDTO};
+use super::{TimestampRfc3339, UserDTO, UserRoleDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -12,14 +12,12 @@ pub struct BankCanisterInit {
     pub owners: Option<Vec<Principal>>,
     pub approval_threshold: Option<u8>,
     pub permissions: Option<Vec<BankPermissionDTO>>,
-    pub wallet_policies: Option<Vec<WalletPolicyDTO>>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Default)]
 pub struct BankSettingsDTO {
     pub approval_threshold: u8,
     pub permissions: Vec<BankPermissionDTO>,
-    pub wallet_policies: Vec<WalletPolicyDTO>,
     pub owners: Vec<UserDTO>,
     pub last_upgrade_timestamp: TimestampRfc3339,
 }

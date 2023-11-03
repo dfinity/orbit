@@ -1,7 +1,7 @@
 use super::indexes::{
     operation_transfer_index::OperationTransferIndexRepository,
     operation_user_index::OperationUserIndexRepository,
-    operation_wallet_index::OperationWalletIndexRepository,
+    operation_account_index::OperationAccountIndexRepository,
 };
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_MEMORY_ID},
@@ -9,9 +9,9 @@ use crate::{
         indexes::{
             operation_transfer_index::OperationTransferIndexCriteria,
             operation_user_index::OperationUserIndexCriteria,
-            operation_wallet_index::OperationWalletIndexCriteria,
+            operation_account_index::OperationAccountIndexCriteria,
         },
-        Operation, OperationCode, OperationKey, OperationStatus, TransferId, UserId, WalletId,
+        Operation, OperationCode, OperationKey, OperationStatus, TransferId, UserId, AccountId,
     },
 };
 use ic_canister_core::{
@@ -33,7 +33,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct OperationRepository {
     user_index: OperationUserIndexRepository,
-    wallet_index: OperationWalletIndexRepository,
+    account_index: OperationAccountIndexRepository,
     transfer_index: OperationTransferIndexRepository,
 }
 
@@ -55,18 +55,18 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                     });
                 }
 
-                match (prev.to_index_for_wallet(), value.to_index_for_wallet()) {
+                match (prev.to_index_for_account(), value.to_index_for_account()) {
                     (Some(prev), Some(current)) => {
                         if prev != current {
-                            self.wallet_index.remove(&prev);
-                            self.wallet_index.insert(current);
+                            self.account_index.remove(&prev);
+                            self.account_index.insert(current);
                         }
                     }
                     (Some(prev), None) => {
-                        self.wallet_index.remove(&prev);
+                        self.account_index.remove(&prev);
                     }
                     (None, Some(current)) => {
-                        self.wallet_index.insert(current);
+                        self.account_index.insert(current);
                     }
                     _ => {}
                 }
@@ -93,8 +93,8 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 value.to_index_for_users().iter().for_each(|index| {
                     self.user_index.insert(index.to_owned());
                 });
-                if let Some(wallet_index) = value.to_index_for_wallet() {
-                    self.wallet_index.insert(wallet_index);
+                if let Some(account_index) = value.to_index_for_account() {
+                    self.account_index.insert(account_index);
                 }
                 if let Some(transfer_index) = value.to_index_for_transfer() {
                     self.transfer_index.insert(transfer_index);
@@ -111,8 +111,8 @@ impl Repository<OperationKey, Operation> for OperationRepository {
                 prev.to_index_for_users().iter().for_each(|index| {
                     self.user_index.remove(index);
                 });
-                if let Some(wallet_index) = prev.to_index_for_wallet() {
-                    self.wallet_index.remove(&wallet_index);
+                if let Some(account_index) = prev.to_index_for_account() {
+                    self.account_index.remove(&account_index);
                 }
                 if let Some(transfer_index) = prev.to_index_for_transfer() {
                     self.transfer_index.remove(&transfer_index);
@@ -150,17 +150,17 @@ impl OperationRepository {
             .collect()
     }
 
-    pub fn find_by_wallet_and_user_id(
+    pub fn find_by_account_and_user_id(
         &self,
-        wallet_id: WalletId,
+        account_id: AccountId,
         user_id: UserId,
         created_from_dt: Option<Timestamp>,
         created_to_dt: Option<Timestamp>,
     ) -> Vec<Operation> {
-        let filtered_by_wallets =
-            self.wallet_index
-                .find_by_criteria(OperationWalletIndexCriteria {
-                    wallet_id: wallet_id.to_owned(),
+        let filtered_by_accounts =
+            self.account_index
+                .find_by_criteria(OperationAccountIndexCriteria {
+                    account_id: account_id.to_owned(),
                     from_dt: created_from_dt.to_owned(),
                     to_dt: created_to_dt.to_owned(),
                 });
@@ -172,7 +172,7 @@ impl OperationRepository {
                 to_dt: created_to_dt,
             });
 
-        let results = filtered_by_wallets
+        let results = filtered_by_accounts
             .intersection(&filtered_by_users)
             .copied()
             .collect::<HashSet<_>>();
@@ -183,14 +183,14 @@ impl OperationRepository {
             .collect()
     }
 
-    pub fn find_by_wallet_where(
+    pub fn find_by_account_where(
         &self,
-        key: (UserId, WalletId),
+        key: (UserId, AccountId),
         condition: OperationWhereClause,
     ) -> Vec<Operation> {
-        let (user_id, wallet_id) = key;
-        let operations = self.find_by_wallet_and_user_id(
-            wallet_id,
+        let (user_id, account_id) = key;
+        let operations = self.find_by_account_and_user_id(
+            account_id,
             user_id,
             condition.created_dt_from,
             condition.created_dt_to,
@@ -283,7 +283,7 @@ mod tests {
     use super::*;
     use crate::models::{
         operation_test_utils, OperationDecision, OPERATION_METADATA_KEY_TRANSFER_ID,
-        OPERATION_METADATA_KEY_WALLET_ID,
+        OPERATION_METADATA_KEY_ACCOUNT_ID,
     };
 
     #[test]
@@ -356,22 +356,22 @@ mod tests {
     }
 
     #[test]
-    fn find_by_wallet_and_user() {
+    fn find_by_account_and_user() {
         let repository = OperationRepository::default();
         let mut operation = operation_test_utils::mock_operation();
         let user_id = Uuid::new_v4();
-        let wallet_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
         operation.proposed_by = Some(*user_id.as_bytes());
         operation.metadata = vec![(
-            OPERATION_METADATA_KEY_WALLET_ID.to_string(),
-            wallet_id.to_string(),
+            OPERATION_METADATA_KEY_ACCOUNT_ID.to_string(),
+            account_id.to_string(),
         )];
 
         repository.insert(operation.to_key(), operation.clone());
 
         assert_eq!(
-            repository.find_by_wallet_and_user_id(
-                *wallet_id.as_bytes(),
+            repository.find_by_account_and_user_id(
+                *account_id.as_bytes(),
                 *user_id.as_bytes(),
                 None,
                 None

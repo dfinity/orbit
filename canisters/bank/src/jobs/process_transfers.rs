@@ -1,9 +1,9 @@
 use crate::{
     core::ic_cdk::{api::time, spawn},
-    errors::WalletError,
+    errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
-    models::{Transfer, TransferStatus, Wallet},
-    repositories::{TransferRepository, WalletRepository},
+    models::{Account, Transfer, TransferStatus},
+    repositories::{AccountRepository, TransferRepository},
 };
 use futures::future;
 use ic_canister_core::{api::ApiError, repository::Repository};
@@ -13,7 +13,7 @@ use uuid::Uuid;
 #[derive(Debug, Default)]
 pub struct Job {
     transfer_repository: TransferRepository,
-    wallet_repository: WalletRepository,
+    account_repository: AccountRepository,
 }
 
 /// This job is responsible for processing the transfers that have been approved and
@@ -40,17 +40,17 @@ impl Job {
     ///
     /// This function will submit the transfer to the blockchain and update its status accordingly.
     async fn process_transfer(&self, mut transfer: Transfer) -> Result<Transfer, ApiError> {
-        let wallet = self
-            .wallet_repository
-            .get(&Wallet::key(transfer.from_wallet))
-            .ok_or(WalletError::WalletNotFound {
-                id: Uuid::from_bytes(transfer.from_wallet)
+        let account = self
+            .account_repository
+            .get(&Account::key(transfer.from_account))
+            .ok_or(AccountError::AccountNotFound {
+                id: Uuid::from_bytes(transfer.from_account)
                     .hyphenated()
                     .to_string(),
             })?;
 
-        let blockchain_api = BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
-        match blockchain_api.submit_transaction(&wallet, &transfer).await {
+        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
+        match blockchain_api.submit_transaction(&account, &transfer).await {
             Ok(_) => {
                 transfer.status = TransferStatus::Completed {
                     completed_at: time(),

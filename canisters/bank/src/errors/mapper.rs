@@ -17,12 +17,12 @@ pub enum MapperError {
         blockchain: String,
         supported_standards: Vec<String>,
     },
-    /// Cannot set the symbol for native wallets.
-    #[error(r#"Cannot set the symbol for native wallets."#)]
-    NativeWalletSymbolMetadataNotAllowed,
-    /// Wallets for non native assets are required to have a defined token symbol.
-    #[error(r#"Wallets for non native assets are required to have a defined token symbol."#)]
-    NonNativeWalletSymbolRequired,
+    /// Cannot set the symbol for native assets.
+    #[error(r#"Cannot set the symbol for native assets."#)]
+    NativeAccountSymbolMetadataNotAllowed,
+    /// Accounts for non native assets are required to have a defined token symbol.
+    #[error(r#"Accounts for non native assets are required to have a defined token symbol."#)]
+    NonNativeAccountSymbolRequired,
     /// The provided format is not compatible with a UUID.
     #[error(r#"The provided format is not compatible with a UUID."#)]
     MalformedUuid {

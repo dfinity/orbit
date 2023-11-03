@@ -4,8 +4,8 @@ use crate::{
     services::OperationService,
     transport::{
         EditOperationInput, EditOperationResponse, GetOperationInput, GetOperationResponse,
-        ListOperationsInput, ListOperationsResponse, ListWalletOperationsInput,
-        ListWalletOperationsResponse,
+        ListOperationsInput, ListOperationsResponse, ListAccountOperationsInput,
+        ListAccountOperationsResponse,
     },
 };
 use ic_canister_core::api::{ApiError, ApiResult};
@@ -29,14 +29,14 @@ async fn list_operations(input: ListOperationsInput) -> ApiResult<ListOperations
     Ok(ListOperationsResponse { operations })
 }
 
-#[query(name = "list_wallet_operations")]
-async fn list_wallet_operations(
-    input: ListWalletOperationsInput,
-) -> ApiResult<ListWalletOperationsResponse> {
+#[query(name = "list_account_operations")]
+async fn list_account_operations(
+    input: ListAccountOperationsInput,
+) -> ApiResult<ListAccountOperationsResponse> {
     CallContext::get().check_access(PERMISSION_READ_OPERATION);
     let service = OperationService::with_call_context(CallContext::get());
 
-    let operations = service.list_wallet_operations(input)?.iter().try_fold(
+    let operations = service.list_account_operations(input)?.iter().try_fold(
         Vec::new(),
         |mut acc, operation| {
             let operation_context = service.get_operation_context(&operation.id)?;
@@ -45,7 +45,7 @@ async fn list_wallet_operations(
         },
     )?;
 
-    Ok(ListWalletOperationsResponse { operations })
+    Ok(ListAccountOperationsResponse { operations })
 }
 
 #[query(name = "get_operation")]

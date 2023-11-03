@@ -1,8 +1,8 @@
 // The asset symbol, e.g. "ICP" or "BTC".
 type AssetSymbol = text;
-// The internal wallet id used to identify a wallet in the
+// The internal account id used to identify a account in the
 // canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type WalletId = text;
+type AccountId = text;
 // The internal user id used to identify a user in the
 // canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type UserId = text;
@@ -23,8 +23,8 @@ type OperationStatus = variant { Pending; Adopted; Rejected; NotRequired };
 type OperationContext = record {
   // The transfer associated with the operation.
   transfer : opt Transfer;
-  // The wallet associated with the operation.
-  wallet : opt Wallet;
+  // The account associated with the operation.
+  account : opt Account;
 };
 
 // A record type that can be used to represent an operation decision.
@@ -93,9 +93,9 @@ type ListOperationsResult = variant {
 };
 
 // The input type for getting the list of operations associated with the caller.
-type ListWalletOperationsInput = record {
-  // The wallet id to retrieve the operations from.
-  wallet_id : WalletId;
+type ListAccountOperationsInput = record {
+  // The account id to retrieve the operations from.
+  account_id : AccountId;
   // The list of operation ids to retrieve.
   status : opt OperationStatus;
   // The code of the operation (e.g. "transaction").
@@ -108,8 +108,8 @@ type ListWalletOperationsInput = record {
   to_dt : opt TimestampRFC3339;
 };
 
-// The result type for getting the list of operations for a wallet.
-type ListWalletOperationsResult = variant {
+// The result type for getting the list of operations for a account.
+type ListAccountOperationsResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The list of operations.
@@ -157,9 +157,9 @@ type EditOperationResult = variant {
   Err : Error;
 };
 
-// A record type that can be used to represent a wallet balance.
-type WalletBalanceInfo = record {
-  // Balance of the wallet.
+// A record type that can be used to represent a account balance.
+type AccountBalanceInfo = record {
+  // Balance of the account.
   balance : nat;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
@@ -167,20 +167,20 @@ type WalletBalanceInfo = record {
   last_update_timestamp : TimestampRFC3339;
 };
 
-// Result type for listing all wallets.
-type ListWalletResult = variant {
+// Result type for listing all accounts.
+type ListAccountResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
-    // The list of wallets.
-    wallets : vec Wallet;
+    // The list of accounts.
+    accounts : vec Account;
   };
   // The error that occurred during the operation, if any.
   Err : Error;
 };
 
-type ListWalletTransfersInput = record {
-  // The wallet id to retrieve.
-  wallet_id : WalletId;
+type ListAccountTransfersInput = record {
+  // The account id to retrieve.
+  account_id : AccountId;
   // The transfer status in text format (e.g. "pending", "approved", etc.).
   status : opt text;
   // From which date to retrieve the transfers.
@@ -202,7 +202,7 @@ type TransferListItem = record {
   created_at : TimestampRFC3339;
 };
 
-type ListWalletTransfersResult = variant {
+type ListAccountTransfersResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
     // The list of transfers.
@@ -238,7 +238,7 @@ type User = record {
 
 // A record type that can be used to represent the bank permissions.
 type BankPermission = record {
-  // The permission identified (e.g. "create-wallet").
+  // The permission identified (e.g. "create-account").
   permission_id : text;
   // The list of roles that have the permission.
   access_roles : vec UserRole;
@@ -306,12 +306,12 @@ type TransferStatus = variant {
   };
 };
 
-// A record type that can be used to represent a transfer in a given wallet.
+// A record type that can be used to represent a transfer in a given account.
 type Transfer = record {
   // The internal operation id, this a unique identifier for the transfer.
   id : TransferId;
-  // The wallet id to use for the transfer.
-  from_wallet_id : WalletId;
+  // The account id to use for the transfer.
+  from_account_id : AccountId;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
   to : text;
   // The fee to pay for the transaction, if applicable.
@@ -344,8 +344,8 @@ type TransferExecutionSchedule = variant {
 
 // Input type for transferring funds.
 type TransferInput = record {
-  // The wallet id to use for the transaction.
-  from_wallet_id : WalletId;
+  // The account id to use for the transaction.
+  from_account_id : AccountId;
   // The amount to transfer.
   amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").
@@ -364,7 +364,7 @@ type TransferInput = record {
   // If not set, the default fee will be used.
   fee : opt nat;
   // The network to use for the transaction, if not the
-  // default network of the wallet will be used.
+  // default network of the account will be used.
   network : opt Network;
   // Trasanctions can be tagged with an optional additional info
   // (e.g. a nonce in the case of an Ethereum transaction)
@@ -422,10 +422,10 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
-// A record type that can be used to represent a wallet in the canister.
-type Wallet = record {
-  // The internal wallet id.
-  id : WalletId;
+// A record type that can be used to represent a account in the canister.
+type Account = record {
+  // The internal account id.
+  id : AccountId;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset symbol, e.g. "ICP" or "BTC".
@@ -433,24 +433,24 @@ type Wallet = record {
   // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
   standard : text;
-  // The address of the wallet (e.g. "0x1234").
+  // The address of the account (e.g. "0x1234").
   address : text;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
-  // A friendly name for the wallet.
+  // A friendly name for the account.
   name : opt text;
   // If the list is empty, the bank owners are the only owners.
   owners : vec UserId;
-  // Wallet balance when available.
-  balance : opt WalletBalanceInfo;
-  // The policies that can be used to control the wallet.
+  // Account balance when available.
+  balance : opt AccountBalanceInfo;
+  // The policies that can be used to control the account.
   //
   // If the list is empty but there are policies globally defined for the bank,
   // the global policies will be used.
-  policies : vec WalletPolicy;
-  // Metadata associated with the wallet (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  policies : vec AccountPolicy;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
-  // The time at which the wallet was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
 
@@ -466,60 +466,60 @@ type ApprovalThresholdPolicy = variant {
   FixedThreshold : nat8;
 };
 
-// The policies that can be used to control the wallet.
-type WalletPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
+// The policies that can be used to control the account.
+type AccountPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
 
-// Input type for creating a wallet.
-type CreateWalletInput = record {
+// Input type for creating a account.
+type CreateAccountInput = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard that is supported (e.g. `native`, `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
   standard : text;
-  // The list of owners of the wallet.
+  // The list of owners of the account.
   //
   // If the list is empty, the caller will be the only owner.
   owners : vec UserId;
-  // The policies that can be used to control the wallet.
-  policies : vec WalletPolicy;
-  // A friendly name for the wallet (e.g. "My Wallet").
+  // The policies that can be used to control the account.
+  policies : vec AccountPolicy;
+  // A friendly name for the account (e.g. "My Account").
   name : opt text;
-  // Metadata associated with the wallet (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : opt vec record { text; text };
 };
 
-// Result type for creating a wallet.
-type CreateWalletResult = variant {
+// Result type for creating a account.
+type CreateAccountResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
-    // The wallet that was created.
-    wallet : Wallet;
+    // The account that was created.
+    account : Account;
   };
   // The error that occurred during the operation, if any.
   Err : Error;
 };
 
-// Input type for getting a wallet.
-type GetWalletInput = record {
-  // The wallet id to retrieve.
-  wallet_id : WalletId;
+// Input type for getting a account.
+type GetAccountInput = record {
+  // The account id to retrieve.
+  account_id : AccountId;
 };
 
-// Result type for getting a wallet.
-type GetWalletResult = variant {
+// Result type for getting a account.
+type GetAccountResult = variant {
   // The result data, if the operation was successful.
   Ok : record {
-    // The wallet that was retrieved.
-    wallet : Wallet;
+    // The account that was retrieved.
+    account : Account;
   };
   // The error that occurred during the operation, if any.
   Err : Error;
 };
 
-type WalletBalance = record {
-  // The wallet id.
-  wallet_id : WalletId;
-  // The balance of the wallet.
+type AccountBalance = record {
+  // The account id.
+  account_id : AccountId;
+  // The balance of the account.
   balance : nat;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
@@ -527,18 +527,18 @@ type WalletBalance = record {
   last_update_timestamp : TimestampRFC3339;
 };
 
-// Input type for getting a wallet balance.
-type FetchWalletBalancesInput = record {
-  // The wallet ids to retrieve.
-  wallet_ids : vec WalletId;
+// Input type for getting a account balance.
+type FetchAccountBalancesInput = record {
+  // The account ids to retrieve.
+  account_ids : vec AccountId;
 };
 
-// Result type for getting a wallet.
-type FetchWalletBalancesResult = variant {
+// Result type for getting a account.
+type FetchAccountBalancesResult = variant {
   // The result data for a successful operation.
   Ok : record {
-    // The wallet balance that was retrieved.
-    balances : vec WalletBalance;
+    // The account balance that was retrieved.
+    balances : vec AccountBalance;
   };
   // The error for a failed operation.
   Err : Error;
@@ -582,8 +582,6 @@ type GetFeaturesResult = variant {
 
 // The settings of the bank.
 type BankSettings = record {
-  // The default wallet policies that are applied to all wallets.
-  wallet_policies : vec WalletPolicy;
   // The list of admin users associated with the bank.
   owners : vec User;
   // The percentage of approvals required for a bank operation to be
@@ -683,8 +681,6 @@ type BankSettingsResult = variant {
 
 // The init configuration for the bank.
 type BankInit = record {
-  // The default wallet policies that are applied to all wallets.
-  wallet_policies : opt vec WalletPolicy;
   // The list of admin principals to be associated with the bank.
   owners : opt vec principal;
   // The percentage of approvals required for a bank operation to be
@@ -704,36 +700,36 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:features"
   features : () -> (GetFeaturesResult) query;
-  // Create a new wallet.
+  // Create a new account.
   //
-  // Required permission: "write:wallet"
-  create_wallet : (input : CreateWalletInput) -> (CreateWalletResult);
-  // Get a wallet by id.
+  // Required permission: "write:account"
+  create_account : (input : CreateAccountInput) -> (CreateAccountResult);
+  // Get a account by id.
   //
-  // If the caller does not have access to the wallet, an error will be returned.
+  // If the caller does not have access to the account, an error will be returned.
   //
-  // Required permission: "read:wallet"
-  get_wallet : (input : GetWalletInput) -> (GetWalletResult) query;
-  // Get the wallet balance.
+  // Required permission: "read:account"
+  get_account : (input : GetAccountInput) -> (GetAccountResult) query;
+  // Get the account balance.
   //
-  // If the caller does not have access to the wallet, an error will be returned.
+  // If the caller does not have access to the account, an error will be returned.
   //
-  // Required permission: "read:wallet"
-  fetch_wallet_balances : (input : FetchWalletBalancesInput) -> (FetchWalletBalancesResult);
-  // List all wallets that the caller has access to.
+  // Required permission: "read:account"
+  fetch_account_balances : (input : FetchAccountBalancesInput) -> (FetchAccountBalancesResult);
+  // List all accounts that the caller has access to.
   //
-  // If the caller is not the owner of any wallet, an error will be returned.
+  // If the caller is not the owner of any account, an error will be returned.
   //
-  // Required permission: "read:wallet"
-  list_wallets : () -> (ListWalletResult) query;
-  // List all transfers from the requested wallet.
+  // Required permission: "read:account"
+  list_accounts : () -> (ListAccountResult) query;
+  // List all transfers from the requested account.
   //
   // Required permission: "read:transfer"
-  list_wallet_transfers : (input : ListWalletTransfersInput) -> (ListWalletTransfersResult) query;
-  // Transfer funds from a wallet, this operation will only create a new transaction
-  // if the wallet policies have been sucessfully fulfilled.
+  list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
+  // Transfer funds from a account, this operation will only create a new transaction
+  // if the account policies have been sucessfully fulfilled.
   //
-  // If the caller does not have access to the wallet, an error will be returned.
+  // If the caller does not have access to the account, an error will be returned.
   //
   // Required permission: "write:transfer"
   transfer : (input : TransferInput) -> (TransferResult);
@@ -751,10 +747,10 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:operation"
   list_operations : (input : ListOperationsInput) -> (ListOperationsResult) query;
-  // Get the list of operations for a given wallet.
+  // Get the list of operations for a given account.
   //
   // Required permission: "read:operation"
-  list_wallet_operations : (input : ListWalletOperationsInput) -> (ListWalletOperationsResult) query;
+  list_account_operations : (input : ListAccountOperationsInput) -> (ListAccountOperationsResult) query;
   // Get the operation by id.
   //
   // Required permission: "read:operation"

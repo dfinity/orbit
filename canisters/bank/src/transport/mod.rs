@@ -10,8 +10,8 @@ pub use common::*;
 mod management;
 pub use management::*;
 
-mod wallet;
-pub use wallet::*;
+mod account;
+pub use account::*;
 
 mod transfer;
 pub use transfer::*;

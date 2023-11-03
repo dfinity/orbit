@@ -1,17 +1,17 @@
-use super::{UserService, WalletService};
+use super::{AccountService, UserService};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::time, CallContext, WithCallContext},
-    errors::{TransferError, WalletError},
+    errors::{AccountError, TransferError},
     factories::blockchains::BlockchainApiFactory,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
-        Operation, OperationCode, OperationDecision, OperationStatus, Transfer, TransferId,
-        TransferStatus, Wallet, WalletPolicy, OPERATION_METADATA_KEY_TRANSFER_ID,
-        OPERATION_METADATA_KEY_WALLET_ID,
+        Account, AccountPolicy, Operation, OperationCode, OperationDecision, OperationStatus,
+        Transfer, TransferId, TransferStatus, OPERATION_METADATA_KEY_TRANSFER_ID,
+        OPERATION_METADATA_KEY_ACCOUNT_ID,
     },
-    repositories::{OperationRepository, TransferRepository, WalletRepository},
-    transport::{ListWalletTransfersInput, TransferInput},
+    repositories::{AccountRepository, OperationRepository, TransferRepository},
+    transport::{ListAccountTransfersInput, TransferInput},
 };
 use candid::Nat;
 use ic_canister_core::{api::ServiceResult, utils::rfc3339_to_timestamp};
@@ -22,8 +22,8 @@ use uuid::Uuid;
 pub struct TransferService {
     call_context: CallContext,
     user_service: UserService,
-    wallet_service: WalletService,
-    wallet_repository: WalletRepository,
+    account_service: AccountService,
+    account_repository: AccountRepository,
     transfer_repository: TransferRepository,
     operation_repository: OperationRepository,
 }
@@ -33,7 +33,7 @@ impl WithCallContext for TransferService {
         Self {
             call_context: call_context.clone(),
             user_service: UserService::with_call_context(call_context.clone()),
-            wallet_service: WalletService::with_call_context(call_context.clone()),
+            account_service: AccountService::with_call_context(call_context.clone()),
             ..Default::default()
         }
     }
@@ -69,26 +69,26 @@ impl TransferService {
     }
 
     pub async fn create_transfer(&self, input: TransferInput) -> ServiceResult<Transfer> {
-        // validate user is owner of wallet
+        // validate user is owner of account
         let caller_user = self
             .user_service
             .get_user_by_identity(&self.call_context.caller())?;
-        let wallet_id = HelperMapper::to_uuid(input.from_wallet_id.clone())?;
-        let wallet_key = Wallet::key(*wallet_id.as_bytes());
-        let wallet =
-            self.wallet_repository
-                .get(&wallet_key)
-                .ok_or(WalletError::WalletNotFound {
-                    id: wallet_id.hyphenated().to_string(),
+        let account_id = HelperMapper::to_uuid(input.from_account_id.clone())?;
+        let account_key = Account::key(*account_id.as_bytes());
+        let account =
+            self.account_repository
+                .get(&account_key)
+                .ok_or(AccountError::AccountNotFound {
+                    id: account_id.hyphenated().to_string(),
                 })?;
-        let is_wallet_owner = wallet.owners.contains(&caller_user.id);
-        if !is_wallet_owner {
-            Err(WalletError::Forbidden)?
+        let is_account_owner = account.owners.contains(&caller_user.id);
+        if !is_account_owner {
+            Err(AccountError::Forbidden)?
         }
 
         // create transfer
-        let blockchain_api = BlockchainApiFactory::build(&wallet.blockchain, &wallet.standard)?;
-        let default_fee = blockchain_api.transaction_fee(&wallet).await?;
+        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
+        let default_fee = blockchain_api.transaction_fee(&account).await?;
         let transfer_id = generate_uuid_v4().await;
 
         let mut transfer = TransferMapper::from_create_input(
@@ -99,13 +99,13 @@ impl TransferService {
             blockchain_api.default_network(),
             Transfer::default_expiration_dt(),
         )?;
-        transfer.make_policy_snapshot(&wallet);
+        transfer.make_policy_snapshot(&account);
 
         transfer.validate()?;
 
         // build operations
         let operations = self
-            .build_operations_from_wallet_policies(&wallet, &transfer)
+            .build_operations_from_account_policies(&account, &transfer)
             .await;
 
         let has_approve_transfer_operation = operations
@@ -136,17 +136,17 @@ impl TransferService {
         Ok(transfer)
     }
 
-    async fn build_operations_from_wallet_policies(
+    async fn build_operations_from_account_policies(
         &self,
-        wallet: &Wallet,
+        account: &Account,
         transfer: &Transfer,
     ) -> Vec<Operation> {
         let mut required_operations: Vec<Operation> = Vec::new();
-        let wallet_id = Uuid::from_bytes(wallet.id).hyphenated().to_string();
+        let account_id = Uuid::from_bytes(account.id).hyphenated().to_string();
         let transfer_id = Uuid::from_bytes(transfer.id).hyphenated().to_string();
-        for policy in wallet.policies.iter() {
+        for policy in account.policies.iter() {
             match policy {
-                WalletPolicy::ApprovalThreshold(_) => {
+                AccountPolicy::ApprovalThreshold(_) => {
                     let operation_id = generate_uuid_v4().await;
                     let mut operation = Operation {
                         id: *operation_id.as_bytes(),
@@ -160,15 +160,15 @@ impl TransferService {
                                 transfer_id.to_owned(),
                             ),
                             (
-                                OPERATION_METADATA_KEY_WALLET_ID.to_owned(),
-                                wallet_id.to_owned(),
+                                OPERATION_METADATA_KEY_ACCOUNT_ID.to_owned(),
+                                account_id.to_owned(),
                             ),
                         ],
                         last_modification_timestamp: time(),
                         decisions: Vec::new(),
                     };
 
-                    for owner in wallet.owners.iter() {
+                    for owner in account.owners.iter() {
                         operation.decisions.push(OperationDecision {
                             user_id: *owner,
                             status: match transfer.initiator_user == *owner {
@@ -193,16 +193,16 @@ impl TransferService {
         required_operations
     }
 
-    pub fn list_wallet_transfers(
+    pub fn list_account_transfers(
         &self,
-        input: ListWalletTransfersInput,
+        input: ListAccountTransfersInput,
     ) -> ServiceResult<Vec<Transfer>> {
-        let wallet = self
-            .wallet_service
-            .get_wallet(HelperMapper::to_uuid(input.wallet_id)?.as_bytes())?;
+        let account = self
+            .account_service
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
 
-        let transfers = self.transfer_repository.find_by_wallet(
-            wallet.id,
+        let transfers = self.transfer_repository.find_by_account(
+            account.id,
             input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
             input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
             input.status,
@@ -215,18 +215,18 @@ impl TransferService {
         let caller_user = self
             .user_service
             .get_user_by_identity(&self.call_context.caller())?;
-        let wallet_key = Wallet::key(transfer.from_wallet);
-        let wallet = self.wallet_repository.get(&wallet_key).ok_or({
-            WalletError::WalletNotFound {
-                id: Uuid::from_bytes(transfer.from_wallet)
+        let account_key = Account::key(transfer.from_account);
+        let account = self.account_repository.get(&account_key).ok_or({
+            AccountError::AccountNotFound {
+                id: Uuid::from_bytes(transfer.from_account)
                     .hyphenated()
                     .to_string(),
             }
         })?;
         let is_transfer_creator = caller_user.id == transfer.initiator_user;
-        let is_wallet_owner = wallet.owners.contains(&caller_user.id);
-        if !is_transfer_creator && !is_wallet_owner {
-            Err(WalletError::Forbidden)?
+        let is_account_owner = account.owners.contains(&caller_user.id);
+        if !is_transfer_creator && !is_account_owner {
+            Err(AccountError::Forbidden)?
         }
 
         Ok(())
@@ -241,8 +241,8 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            transfer_test_utils::mock_transfer, user_test_utils::mock_user,
-            wallet_test_utils::mock_wallet, User,
+            account_test_utils::mock_account, transfer_test_utils::mock_transfer,
+            user_test_utils::mock_user, User,
         },
         repositories::UserRepository,
     };
@@ -251,7 +251,7 @@ mod tests {
         repository: TransferRepository,
         service: TransferService,
         caller_user: User,
-        wallet: Wallet,
+        account: Account,
     }
 
     fn setup() -> TestContext {
@@ -263,16 +263,16 @@ mod tests {
 
         UserRepository::default().insert(user.to_key(), user.clone());
 
-        let mut wallet = mock_wallet();
-        wallet.owners.push(user.id);
+        let mut account = mock_account();
+        account.owners.push(user.id);
 
-        WalletRepository::default().insert(wallet.to_key(), wallet.clone());
+        AccountRepository::default().insert(account.to_key(), account.clone());
 
         TestContext {
             repository: TransferRepository::default(),
             service: TransferService::with_call_context(call_context),
             caller_user: user,
-            wallet,
+            account,
         }
     }
 
@@ -280,7 +280,7 @@ mod tests {
     fn get_transfer() {
         let ctx = setup();
         let mut transfer = mock_transfer();
-        transfer.from_wallet = ctx.wallet.id;
+        transfer.from_account = ctx.account.id;
         transfer.initiator_user = ctx.caller_user.id;
 
         ctx.repository.insert(transfer.to_key(), transfer.clone());
@@ -297,7 +297,7 @@ mod tests {
         user.identities = vec![Principal::anonymous()];
         UserRepository::default().insert(user.to_key(), user.clone());
         let mut transfer = mock_transfer();
-        transfer.from_wallet = ctx.wallet.id;
+        transfer.from_account = ctx.account.id;
         transfer.initiator_user = user.id;
 
         ctx.repository.insert(transfer.to_key(), transfer.clone());
@@ -311,7 +311,7 @@ mod tests {
     async fn create_transfer_happy_path() {
         let ctx = setup();
         let transfer_input = TransferInput {
-            from_wallet_id: Uuid::from_bytes(ctx.wallet.id).to_string(),
+            from_account_id: Uuid::from_bytes(ctx.account.id).to_string(),
             amount: candid::Nat::from(100),
             fee: None,
             network: None,
@@ -324,14 +324,14 @@ mod tests {
         let result = ctx.service.create_transfer(transfer_input.clone()).await;
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap().from_wallet, ctx.wallet.id);
+        assert_eq!(result.unwrap().from_account, ctx.account.id);
     }
 
     #[tokio::test]
-    async fn fail_create_transfer_from_unknown_wallet() {
+    async fn fail_create_transfer_from_unknown_account() {
         let ctx = setup();
         let transfer_input = TransferInput {
-            from_wallet_id: Uuid::new_v4().to_string(),
+            from_account_id: Uuid::new_v4().to_string(),
             amount: candid::Nat::from(100),
             fee: None,
             network: None,

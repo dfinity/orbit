@@ -1,13 +1,13 @@
 use crate::{
-    models::{ApprovalThresholdPolicy, WalletPolicy},
-    transport::{ApprovalThresholdPolicyDTO, WalletPolicyDTO},
+    models::{AccountPolicy, ApprovalThresholdPolicy},
+    transport::{AccountPolicyDTO, ApprovalThresholdPolicyDTO},
 };
 
-impl From<WalletPolicy> for WalletPolicyDTO {
-    fn from(policy: WalletPolicy) -> Self {
+impl From<AccountPolicy> for AccountPolicyDTO {
+    fn from(policy: AccountPolicy) -> Self {
         match policy {
-            WalletPolicy::ApprovalThreshold(threshold) => {
-                WalletPolicyDTO::ApprovalThreshold(match threshold {
+            AccountPolicy::ApprovalThreshold(threshold) => {
+                AccountPolicyDTO::ApprovalThreshold(match threshold {
                     ApprovalThresholdPolicy::VariableThreshold(threshold) => {
                         ApprovalThresholdPolicyDTO::VariableThreshold(threshold)
                     }
@@ -20,11 +20,11 @@ impl From<WalletPolicy> for WalletPolicyDTO {
     }
 }
 
-impl From<WalletPolicyDTO> for WalletPolicy {
-    fn from(dto: WalletPolicyDTO) -> Self {
+impl From<AccountPolicyDTO> for AccountPolicy {
+    fn from(dto: AccountPolicyDTO) -> Self {
         match dto {
-            WalletPolicyDTO::ApprovalThreshold(threshold) => {
-                WalletPolicy::ApprovalThreshold(match threshold {
+            AccountPolicyDTO::ApprovalThreshold(threshold) => {
+                AccountPolicy::ApprovalThreshold(match threshold {
                     ApprovalThresholdPolicyDTO::VariableThreshold(threshold) => {
                         ApprovalThresholdPolicy::VariableThreshold(threshold)
                     }

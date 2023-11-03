@@ -29,12 +29,6 @@ impl From<BankSettings> for BankSettingsDTO {
                     }
                 })
                 .collect(),
-            wallet_policies: settings
-                .config
-                .wallet_policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect(),
             last_upgrade_timestamp: timestamp_to_rfc3339(&settings.config.last_upgrade_timestamp),
         }
     }
@@ -94,13 +88,6 @@ impl CanisterConfig {
                     }
                 })
                 .collect::<Vec<Permission>>();
-        }
-
-        if let Some(wallet_policies) = init.wallet_policies {
-            self.wallet_policies = wallet_policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect();
         }
 
         self.owners = init.owners.unwrap_or(self.owners.to_owned());

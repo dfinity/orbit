@@ -1,7 +1,7 @@
 use super::InternetComputer;
 use crate::{
     errors::FactoryError,
-    models::{Blockchain, BlockchainStandard, Transfer, Wallet},
+    models::{Account, Blockchain, BlockchainStandard, Transfer},
 };
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
@@ -46,19 +46,22 @@ impl BlockchainTransactioSubmitted {
 
 #[async_trait]
 pub trait BlockchainApi {
-    /// Generates a new address for the given wallet.
+    /// Generates a new address for the given account.
     ///
     /// This address is used for token transfers.
-    async fn generate_address(&self, wallet: &Wallet) -> Result<String, ApiError>;
+    async fn generate_address(&self, account: &Account) -> Result<String, ApiError>;
 
-    /// Returns the latest balance of the given wallet.
-    async fn balance(&self, wallet: &Wallet) -> Result<BigUint, ApiError>;
+    /// Returns the latest balance of the given account.
+    async fn balance(&self, account: &Account) -> Result<BigUint, ApiError>;
 
-    /// Returns the decimals of the given wallet.
-    async fn decimals(&self, wallet: &Wallet) -> Result<u32, ApiError>;
+    /// Returns the decimals of the given account.
+    async fn decimals(&self, account: &Account) -> Result<u32, ApiError>;
 
     /// Returns the latest average transaction fee.
-    async fn transaction_fee(&self, wallet: &Wallet) -> Result<BlockchainTransactionFee, ApiError>;
+    async fn transaction_fee(
+        &self,
+        account: &Account,
+    ) -> Result<BlockchainTransactionFee, ApiError>;
 
     /// Returns the default network.
     fn default_network(&self) -> String;
@@ -66,7 +69,7 @@ pub trait BlockchainApi {
     /// Submits a transaction to the destination address.
     async fn submit_transaction(
         &self,
-        wallet: &Wallet,
+        account: &Account,
         transfer: &Transfer,
     ) -> Result<BlockchainTransactioSubmitted, ApiError>;
 }
@@ -83,7 +86,7 @@ impl BlockchainApiFactory {
             (Blockchain::InternetComputer, BlockchainStandard::Native) => {
                 Ok(Box::new(InternetComputer::create()))
             }
-            (blockchain, standard) => Err(FactoryError::UnsupportedBlockchainWallet {
+            (blockchain, standard) => Err(FactoryError::UnsupportedBlockchainAccount {
                 blockchain: blockchain.to_string(),
                 standard: standard.to_string(),
             }),

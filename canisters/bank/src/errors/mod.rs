@@ -2,8 +2,8 @@
 //!
 //! Error types should be specific and provide the necessary contextual information to understand the error.
 
-mod wallet;
-pub use wallet::*;
+mod account;
+pub use account::*;
 
 mod user;
 pub use user::*;
