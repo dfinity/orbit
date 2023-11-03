@@ -1,4 +1,4 @@
-use crate::models::{Transfer, TransferId, AccountId};
+use crate::models::{AccountId, Transfer, TransferId};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;

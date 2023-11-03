@@ -7,8 +7,8 @@ use crate::{
     mappers::{HelperMapper, TransferMapper},
     models::{
         Account, AccountPolicy, Operation, OperationCode, OperationDecision, OperationStatus,
-        Transfer, TransferId, TransferStatus, OPERATION_METADATA_KEY_TRANSFER_ID,
-        OPERATION_METADATA_KEY_ACCOUNT_ID,
+        Transfer, TransferId, TransferStatus, OPERATION_METADATA_KEY_ACCOUNT_ID,
+        OPERATION_METADATA_KEY_TRANSFER_ID,
     },
     repositories::{AccountRepository, OperationRepository, TransferRepository},
     transport::{ListAccountTransfersInput, TransferInput},

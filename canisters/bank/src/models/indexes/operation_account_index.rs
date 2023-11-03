@@ -1,5 +1,5 @@
 use crate::mappers::HelperMapper;
-use crate::models::{Operation, OperationId, AccountId, OPERATION_METADATA_KEY_ACCOUNT_ID};
+use crate::models::{AccountId, Operation, OperationId, OPERATION_METADATA_KEY_ACCOUNT_ID};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;

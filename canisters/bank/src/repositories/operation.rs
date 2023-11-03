@@ -1,17 +1,17 @@
 use super::indexes::{
+    operation_account_index::OperationAccountIndexRepository,
     operation_transfer_index::OperationTransferIndexRepository,
     operation_user_index::OperationUserIndexRepository,
-    operation_account_index::OperationAccountIndexRepository,
 };
 use crate::{
     core::{with_memory_manager, Memory, OPERATION_MEMORY_ID},
     models::{
         indexes::{
+            operation_account_index::OperationAccountIndexCriteria,
             operation_transfer_index::OperationTransferIndexCriteria,
             operation_user_index::OperationUserIndexCriteria,
-            operation_account_index::OperationAccountIndexCriteria,
         },
-        Operation, OperationCode, OperationKey, OperationStatus, TransferId, UserId, AccountId,
+        AccountId, Operation, OperationCode, OperationKey, OperationStatus, TransferId, UserId,
     },
 };
 use ic_canister_core::{
@@ -282,8 +282,8 @@ mod tests {
 
     use super::*;
     use crate::models::{
-        operation_test_utils, OperationDecision, OPERATION_METADATA_KEY_TRANSFER_ID,
-        OPERATION_METADATA_KEY_ACCOUNT_ID,
+        operation_test_utils, OperationDecision, OPERATION_METADATA_KEY_ACCOUNT_ID,
+        OPERATION_METADATA_KEY_TRANSFER_ID,
     };
 
     #[test]

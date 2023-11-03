@@ -5,7 +5,7 @@ use crate::{
     core::ic_cdk::api::id as bank_canister_self_id,
     errors::BlockchainApiError,
     mappers::HelperMapper,
-    models::{Blockchain, BlockchainStandard, Transfer, Account, AccountId, METADATA_MEMO_KEY},
+    models::{Account, AccountId, Blockchain, BlockchainStandard, Transfer, METADATA_MEMO_KEY},
 };
 use async_trait::async_trait;
 use byteorder::{BigEndian, ByteOrder};
@@ -148,7 +148,9 @@ impl InternetComputer {
                 created_at_time: Some(Timestamp {
                     timestamp_nanos: current_time,
                 }),
-                from_subaccount: Some(Subaccount(self.subaccount_from_bank_account_id(&bank_account.id))),
+                from_subaccount: Some(Subaccount(
+                    self.subaccount_from_bank_account_id(&bank_account.id),
+                )),
                 memo: Memo(memo),
                 to: AccountIdentifier::from_hex(&bank_transfer.to_address).unwrap(),
             },
