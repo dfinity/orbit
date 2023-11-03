@@ -72,11 +72,11 @@
                       <VTextField
                         v-model="walletForm.form.owners[idx]"
                         :prepend-icon="mdiAccount"
-                        :label="$t('terms.account_id')"
+                        :label="$t('terms.user_id')"
                         variant="filled"
                         density="compact"
                         :rules="[
-                          ...walletForm.validationRules.ownerAccount,
+                          ...walletForm.validationRules.ownerUser,
                           uniqueRule(walletForm.form.owners.filter((_, self) => self !== idx)),
                         ]"
                         :clearable="!walletForm.isSelfOwnerEntry(ownerId)"
@@ -167,13 +167,13 @@ import { ref } from 'vue';
 import { useCreateWalletFormStore } from '~/ui/stores';
 import { uniqueRule } from '~/ui/utils';
 import WalletPolicyCard from './WalletPolicyCard.vue';
-import { AccountId, WalletPolicy } from '~/generated/bank/bank.did';
+import { UserId, WalletPolicy } from '~/generated/bank/bank.did';
 
 const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null);
 const walletForm = useCreateWalletFormStore();
 
 walletForm.$subscribe((_, state) => {
-  const uniqOwners: Array<AccountId | null> = [];
+  const uniqOwners: Array<UserId | null> = [];
   state.form.owners.forEach(ownerId => {
     if (!uniqOwners.find(id => id === ownerId)) {
       uniqOwners.push(ownerId);

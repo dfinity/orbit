@@ -11,8 +11,8 @@ export interface AuthStoreState {
   initialized: boolean;
   identity: Identity | null;
   _identities: string[];
-  accountId: string | null;
-  accountName: string | null;
+  userId: string | null;
+  userName: string | null;
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -20,12 +20,12 @@ export const useAuthStore = defineStore('auth', {
     initialized: false,
     identity: null,
     _identities: [],
-    accountId: null,
-    accountName: null,
+    userId: null,
+    userName: null,
   }),
   getters: {
     isAuthenticated(): boolean {
-      return this.accountId !== null;
+      return this.userId !== null;
     },
     principal(): string | undefined {
       return this.identity?.getPrincipal().toText();
@@ -51,15 +51,15 @@ export const useAuthStore = defineStore('auth', {
         }
 
         icAgent.get().replaceIdentity(cachedIdentity);
-        const account = await controlPanelService.fetchAccount();
+        const user = await controlPanelService.getCurrentUser();
 
-        // loads information about the main bank and the list of banks for the account
+        // loads information about the main bank and the list of banks for the user
         await this.initBanks();
 
         this.identity = cachedIdentity;
-        this.accountName = account.name.length ? account.name[0] : null;
-        this.accountId = account.id;
-        this._identities = account.identities.map(identity => identity.identity.toText());
+        this.userName = user.name.length ? user.name[0] : null;
+        this.userId = user.id;
+        this._identities = user.identities.map(identity => identity.identity.toText());
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', {
     },
     async initBanks(): Promise<void> {
       const bankStore = useBankStore();
-      // loads information about the main bank and the list of banks for the account
+      // loads information about the main bank and the list of banks for the user
       await bankStore.init();
       if (bankStore.main !== null && !bankStore.main.isAnonymous()) {
         // this does not need to be awaited, it will be loaded in the background making the initial load faster
@@ -89,24 +89,24 @@ export const useAuthStore = defineStore('auth', {
         const isRegistered = await controlPanelService.hasRegistration();
 
         if (isRegistered) {
-          const account = await controlPanelService.fetchAccount();
-          // loads information about the main bank and the list of banks for the account
+          const user = await controlPanelService.getCurrentUser();
+          // loads information about the main bank and the list of banks for the user
           await this.initBanks();
 
-          this.accountName = account.name.length ? account.name[0] : null;
-          this.accountId = account.id;
-          this._identities = account.identities.map(identity => identity.identity.toText());
+          this.userName = user.name.length ? user.name[0] : null;
+          this.userId = user.id;
+          this._identities = user.identities.map(identity => identity.identity.toText());
           return;
         }
 
-        const account = await controlPanelService.registerWithSharedBank();
+        const user = await controlPanelService.registerWithSharedBank();
 
-        // loads information about the main bank and the list of banks for the account
+        // loads information about the main bank and the list of banks for the user
         await this.initBanks();
 
-        this.accountName = account.name.length ? account.name[0] : null;
-        this.accountId = account.id;
-        this._identities = account.identities.map(identity => identity.identity.toText());
+        this.userName = user.name.length ? user.name[0] : null;
+        this.userId = user.id;
+        this._identities = user.identities.map(identity => identity.identity.toText());
       } catch (error) {
         useBankStore().reset();
         this.resetIdentity();
@@ -121,15 +121,15 @@ export const useAuthStore = defineStore('auth', {
       useBankStore().reset();
       this.redirectToLogin();
     },
-    editAccount(account: { name?: Maybe<string> }): void {
-      if (account.name !== undefined) {
-        this.accountName = account.name;
+    editUser(user: { name?: Maybe<string> }): void {
+      if (user.name !== undefined) {
+        this.userName = user.name;
       }
     },
     resetIdentity(): void {
       this.identity = null;
-      this.accountName = null;
-      this.accountId = null;
+      this.userName = null;
+      this.userId = null;
       this._identities = [];
 
       icAgent.get().invalidateIdentity();

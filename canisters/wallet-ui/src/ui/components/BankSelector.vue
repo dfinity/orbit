@@ -38,7 +38,7 @@ const activeBankStore = useActiveBankStore();
 
 const selectedBank = computed({
   get(): string | null {
-    return activeBankStore.hasAccount ? activeBankStore.bankId.toString() : null;
+    return activeBankStore.hasUser ? activeBankStore.bankId.toString() : null;
   },
   set(newBankId: string | null) {
     if (!newBankId) {

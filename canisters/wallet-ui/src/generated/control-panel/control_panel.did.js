@@ -6,97 +6,87 @@ export const idlFactory = ({ IDL }) => {
   });
   const CanisterInit = IDL.Record({ 'default_bank' : DefaultBankInit });
   const UUID = IDL.Text;
-  const AccountId = UUID;
-  const AssociateIdentityWithAccountInput = IDL.Record({
-    'account_id' : AccountId,
-  });
-  const AccountIdentityID = IDL.Principal;
-  const AccountIdentity = IDL.Record({
+  const UserId = UUID;
+  const AssociateIdentityWithUserInput = IDL.Record({ 'user_id' : UserId });
+  const UserIdentityID = IDL.Principal;
+  const UserIdentity = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
-    'identity' : AccountIdentityID,
+    'identity' : UserIdentityID,
   });
-  const AccountBank = IDL.Record({
+  const UserBank = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'canister_id' : BankID,
   });
-  const Account = IDL.Record({
-    'id' : AccountId,
-    'unconfirmed_identities' : IDL.Vec(AccountIdentity),
+  const User = IDL.Record({
+    'id' : UserId,
+    'unconfirmed_identities' : IDL.Vec(UserIdentity),
     'name' : IDL.Opt(IDL.Text),
     'main_bank' : IDL.Opt(BankID),
-    'banks' : IDL.Vec(AccountBank),
-    'identities' : IDL.Vec(AccountIdentity),
+    'banks' : IDL.Vec(UserBank),
+    'identities' : IDL.Vec(UserIdentity),
   });
   const ApiError = IDL.Record({
     'code' : IDL.Text,
     'message' : IDL.Opt(IDL.Text),
     'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
   });
-  const AssociateIdentityWithAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
+  const AssociateIdentityWithUserResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const RemoveAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
-    'Err' : ApiError,
-  });
-  const GetAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
+  const RemoveUserResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
   const GetMainBankResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'bank' : IDL.Opt(AccountBank) }),
+    'Ok' : IDL.Record({ 'bank' : IDL.Opt(UserBank) }),
+    'Err' : ApiError,
+  });
+  const GetUserResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
   const ListBanksResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'banks' : IDL.Vec(AccountBank) }),
+    'Ok' : IDL.Record({ 'banks' : IDL.Vec(UserBank) }),
     'Err' : ApiError,
   });
-  const ManageAccountInput = IDL.Record({
+  const ManageUserInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'main_bank' : IDL.Opt(BankID),
-    'banks' : IDL.Opt(IDL.Vec(AccountBank)),
-    'identities' : IDL.Opt(IDL.Vec(AccountIdentity)),
+    'banks' : IDL.Opt(IDL.Vec(UserBank)),
+    'identities' : IDL.Opt(IDL.Vec(UserIdentity)),
   });
-  const ManageAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
+  const ManageUserResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const RegisterAccountBankInput = IDL.Variant({
+  const RegisterUserBankInput = IDL.Variant({
     'PrivateBank' : IDL.Record({
       'id' : BankID,
       'use_shared_bank' : IDL.Opt(IDL.Record({ 'is_main' : IDL.Bool })),
     }),
     'SharedBank' : IDL.Null,
   });
-  const RegisterAccountInput = IDL.Record({
-    'bank' : RegisterAccountBankInput,
+  const RegisterUserInput = IDL.Record({
+    'bank' : RegisterUserBankInput,
     'name' : IDL.Opt(IDL.Text),
   });
-  const RegisterAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
+  const RegisterUserResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
   return IDL.Service({
-    'associate_identity_with_account' : IDL.Func(
-        [AssociateIdentityWithAccountInput],
-        [AssociateIdentityWithAccountResult],
+    'associate_identity_with_user' : IDL.Func(
+        [AssociateIdentityWithUserInput],
+        [AssociateIdentityWithUserResult],
         [],
       ),
-    'delete_account' : IDL.Func([], [RemoveAccountResult], []),
-    'get_account' : IDL.Func([], [GetAccountResult], ['query']),
+    'delete_user' : IDL.Func([], [RemoveUserResult], []),
     'get_main_bank' : IDL.Func([], [GetMainBankResult], ['query']),
+    'get_user' : IDL.Func([], [GetUserResult], ['query']),
     'list_banks' : IDL.Func([], [ListBanksResult], ['query']),
-    'manage_account' : IDL.Func(
-        [ManageAccountInput],
-        [ManageAccountResult],
-        [],
-      ),
-    'register_account' : IDL.Func(
-        [RegisterAccountInput],
-        [RegisterAccountResult],
-        [],
-      ),
+    'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
+    'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
   });
 };
 export const init = ({ IDL }) => {

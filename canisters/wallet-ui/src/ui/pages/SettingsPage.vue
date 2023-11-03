@@ -24,7 +24,7 @@
                 {{ $t('terms.control_panel') }}
               </VTab>
               <VTab
-                v-if="activeBank.hasAccount"
+                v-if="activeBank.hasUser"
                 value="activeBank"
                 class="settings_tab__item"
                 size="small"
@@ -37,7 +37,7 @@
                 <VWindowItem value="settingsForm">
                   <SettingsForm />
                 </VWindowItem>
-                <VWindowItem v-if="activeBank.hasAccount" value="activeBank">
+                <VWindowItem v-if="activeBank.hasUser" value="activeBank">
                   <ActiveBankSettings />
                 </VWindowItem>
               </VWindow>

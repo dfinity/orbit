@@ -4,7 +4,7 @@
       <VCol cols="12 bank-form__title">{{ $t('terms.general') }}</VCol>
       <VCol cols="12" class="py-0">
         <VTextField
-          v-model="activeBank.account.id"
+          v-model="activeBank.user.id"
           :prepend-inner-icon="mdiIdentifier"
           variant="solo"
           density="compact"

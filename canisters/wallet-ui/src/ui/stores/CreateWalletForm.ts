@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { AccountId, WalletPolicy } from '~/generated/bank/bank.did';
+import { UserId, WalletPolicy } from '~/generated/bank/bank.did';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
@@ -8,7 +8,7 @@ import { maxLengthRule, requiredRule, validPrincipalRule, validUuidV4Rule } from
 
 export interface CreateWalletForm {
   name: string | null;
-  owners: Array<AccountId | null>;
+  owners: Array<UserId | null>;
   blockchain: string | null;
   blockchainStandard: string | null;
   policies: Array<WalletPolicy | null>;
@@ -32,7 +32,7 @@ export interface CreateWalletFormValidationRules {
   name: FormValidationRules;
   blockchain: FormValidationRules;
   blockchainStandard: FormValidationRules;
-  ownerAccount: FormValidationRules;
+  ownerUser: FormValidationRules;
   ownerIdentity: FormValidationRules;
 }
 
@@ -84,7 +84,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
         name: [requiredRule, maxLengthRule(50, i18n.global.t('terms.name'))],
         blockchain: [requiredRule],
         blockchainStandard: [requiredRule],
-        ownerAccount: [requiredRule, validUuidV4Rule],
+        ownerUser: [requiredRule, validUuidV4Rule],
         ownerIdentity: [requiredRule, validPrincipalRule],
       };
     },
@@ -117,7 +117,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
       this.reset();
       this.show = false;
     },
-    addOwner(owner: AccountId | null): void {
+    addOwner(owner: UserId | null): void {
       this.form.owners.push(owner);
     },
     addNewPolicy(): void {
@@ -133,13 +133,13 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
 
       this.form.policies.push(null);
     },
-    isSelfOwnerEntry(ownerId: AccountId | null): boolean {
+    isSelfOwnerEntry(ownerId: UserId | null): boolean {
       const activeBank = useActiveBankStore();
       if (ownerId === null) {
         return false;
       }
 
-      return activeBank.account.id === ownerId;
+      return activeBank.user.id === ownerId;
     },
     removeOwnerByIndex(index: number): void {
       this.form.owners.splice(index, 1);
@@ -150,7 +150,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
     open(): void {
       this.reset();
       const activeBank = useActiveBankStore();
-      this.addOwner(activeBank.account.id);
+      this.addOwner(activeBank.user.id);
 
       this.show = true;
     },
@@ -187,7 +187,7 @@ export const useCreateWalletFormStore = defineStore('createWalletForm', {
         await bankService
           .createWallet({
             name: this.form.name ? [this.form.name] : [],
-            owners: this.form.owners.filter(id => id !== null) as AccountId[],
+            owners: this.form.owners.filter(id => id !== null) as UserId[],
             blockchain: `${this.form.blockchain}`,
             standard: !this.form.blockchainStandard ? 'native' : this.form.blockchainStandard,
             metadata: [],

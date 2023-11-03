@@ -47,7 +47,7 @@ export const useWorkerStore = defineStore('cache', {
     async fetchWalletBalances(): Promise<void> {
       try {
         const activeBank = useActiveBankStore();
-        if (!activeBank.hasAccount || activeBank.wallets.items.length === 0) {
+        if (!activeBank.hasUser || activeBank.wallets.items.length === 0) {
           return;
         }
 
@@ -85,7 +85,7 @@ export const useWorkerStore = defineStore('cache', {
     async fetchNotifications(): Promise<void> {
       try {
         const activeBank = useActiveBankStore();
-        if (!activeBank.hasAccount) {
+        if (!activeBank.hasUser) {
           return;
         }
 

@@ -112,10 +112,10 @@ const operation = computed({
 });
 
 const decision = computed({
-  get: () => operation.value.decisions.find(d => d.account_id === activeBank.account.id),
+  get: () => operation.value.decisions.find(d => d.user_id === activeBank.user.id),
   set: value => {
     operation.value.decisions.forEach(d => {
-      if (d.account_id === activeBank.account.id && value) {
+      if (d.user_id === activeBank.user.id && value) {
         d = value;
       }
     });

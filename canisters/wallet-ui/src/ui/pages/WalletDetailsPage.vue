@@ -1,5 +1,5 @@
 <template>
-  <PageLayout v-if="activeBank.hasAccount" class="wallet">
+  <PageLayout v-if="activeBank.hasUser" class="wallet">
     <template v-if="pageStore.hasLoaded" #main-header>
       <VContainer class="pt-16 pb-16 pl-8 pr-8 wallet__header" fluid>
         <div class="wallet__balance">
@@ -314,7 +314,7 @@
       <VContainer class="pt-16 pb-16 pl-8 pr-8" fluid>
         <VRow>
           <VCol sm="12">
-            <h1 class="text-h4">{{ $t('banks.no_bank_account') }}</h1>
+            <h1 class="text-h4">{{ $t('banks.no_bank_user') }}</h1>
             <p class="text-subtitle">{{ $t('banks.please_register_to_continue') }}</p>
           </VCol>
         </VRow>

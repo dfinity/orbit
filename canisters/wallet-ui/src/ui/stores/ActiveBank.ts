@@ -2,7 +2,7 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
 import {
-  Account,
+  User,
   BankAsset,
   BankFeatures,
   Operation,
@@ -26,7 +26,7 @@ export interface BankMetrics {
 export interface ActiveBankStoreState {
   _bankId: string;
   loading: boolean;
-  _account: Account | null;
+  _user: User | null;
   features: {
     loading: boolean;
     details: BankFeatures | null;
@@ -46,7 +46,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     return {
       _bankId: Principal.anonymous().toString(),
       loading: false,
-      _account: null,
+      _user: null,
       features: {
         loading: false,
         details: null,
@@ -62,15 +62,15 @@ export const useActiveBankStore = defineStore('activeBank', {
     };
   },
   getters: {
-    hasAccount(): boolean {
-      return !!this._account;
+    hasUser(): boolean {
+      return !!this._user;
     },
-    account(): Account {
-      if (!this._account) {
-        throw new Error('Account not loaded');
+    user(): User {
+      if (!this._user) {
+        throw new Error('User not loaded');
       }
 
-      return this._account as Account;
+      return this._user as User;
     },
     sortedWallets(): Wallet[] {
       return this.wallets.items.sort((a, b) => {
@@ -128,34 +128,34 @@ export const useActiveBankStore = defineStore('activeBank', {
   actions: {
     setBankId(bankId: Principal): void {
       if (bankId !== this.bankId) {
-        this._account = null;
+        this._user = null;
       }
 
       this._bankId = bankId.toText();
     },
     reset(): void {
       this._bankId = Principal.anonymous().toText();
-      this._account = null;
+      this._user = null;
       this.wallets.items = [];
       this.features.details = null;
       this.pendingOperations.items = [];
     },
-    async registerAccount(): Promise<Account | null> {
+    async registerUser(): Promise<User | null> {
       const auth = useAuthStore();
       const bankService = services().bank.withBankId(this.bankId);
 
       const hasMultipleIdentities = auth.identities.length > 1;
       if (!hasMultipleIdentities) {
-        const account = await bankService.register({
+        const user = await bankService.register({
           identities: auth.identities,
         });
 
-        return account;
+        return user;
       }
 
       return this.registerWithMultiIdentityFlow();
     },
-    async registerWithMultiIdentityFlow(): Promise<Account | null> {
+    async registerWithMultiIdentityFlow(): Promise<User | null> {
       // TODO: implement multi identity register flow
 
       return null;
@@ -187,7 +187,7 @@ export const useActiveBankStore = defineStore('activeBank', {
               }
               const isPending = 'Pending' in operation.status;
               const isRead = operation.decisions.some(
-                decision => decision.account_id === this.account.id && decision.read,
+                decision => decision.user_id === this.user.id && decision.read,
               );
 
               return isPending && !isRead;
@@ -249,27 +249,27 @@ export const useActiveBankStore = defineStore('activeBank', {
       const bankService = services().bank.withBankId(this.bankId);
       const settings = useSettingsStore();
       try {
-        const account = await bankService.myAccount();
-        if (account) {
-          this._account = account;
+        const user = await bankService.myUser();
+        if (user) {
+          this._user = user;
           this.loadDetailsAsync();
           return;
         }
 
-        const registeredAccount = await this.registerAccount();
+        const registeredUser = await this.registerUser();
 
-        this._account = registeredAccount;
+        this._user = registeredUser;
 
-        if (registeredAccount) {
+        if (registeredUser) {
           this.loadDetailsAsync();
         }
       } catch (err) {
-        logger.error(`Failed to load bank account`, { err });
+        logger.error(`Failed to load bank user`, { err });
 
         settings.setNotification({
           show: true,
           type: 'error',
-          message: i18n.global.t('banks.account_load_error'),
+          message: i18n.global.t('banks.user_load_error'),
         });
       } finally {
         this.loading = false;
