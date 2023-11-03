@@ -1,5 +1,5 @@
 <template>
-  <TransferDialog v-model="open" :wallet-id="props.walletId" />
+  <TransferDialog v-model="open" :account-id="props.accountId" />
 
   <VBtn rounded color="primary-variant" :prepend-icon="mdiSend" @click="open = true">
     {{ $t('terms.new_transfer') }}
@@ -11,7 +11,7 @@ import { ref } from 'vue';
 import TransferDialog from '~/ui/components/TransferDialog.vue';
 
 const props = defineProps<{
-  walletId?: string;
+  accountId?: string;
 }>();
 
 const open = ref(false);

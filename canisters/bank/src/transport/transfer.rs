@@ -1,4 +1,4 @@
-use super::{TimestampRfc3339, WalletIdDTO};
+use super::{AccountIdDTO, TimestampRfc3339};
 use candid::{CandidType, Deserialize};
 
 pub type TransferIdDTO = String;
@@ -31,7 +31,7 @@ pub struct TransferInput {
     pub metadata: Option<Vec<TransferMetadataDTO>>,
     pub network: Option<NetworkDTO>,
     pub amount: candid::Nat,
-    pub from_wallet_id: WalletIdDTO,
+    pub from_account_id: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -61,7 +61,7 @@ pub enum TransferStatusDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferDTO {
     pub id: TransferIdDTO,
-    pub from_wallet_id: WalletIdDTO,
+    pub from_account_id: AccountIdDTO,
     pub to: String,
     pub fee: candid::Nat,
     pub amount: candid::Nat,
@@ -98,11 +98,11 @@ pub struct GetTransfersResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListWalletTransfersInput {
+pub struct ListAccountTransfersInput {
     pub status: Option<String>,
     pub to_dt: Option<TimestampRfc3339>,
     pub from_dt: Option<TimestampRfc3339>,
-    pub wallet_id: WalletIdDTO,
+    pub account_id: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -115,6 +115,6 @@ pub struct TransferListItemDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListWalletTransfersResponse {
+pub struct ListAccountTransfersResponse {
     pub transfers: Vec<TransferListItemDTO>,
 }

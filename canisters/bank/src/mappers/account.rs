@@ -1,125 +1,145 @@
+use super::BlockchainMapper;
 use crate::{
     core::ic_cdk::api::time,
-    errors::AccountError,
-    models::{AccessRole, Account},
-    transport::AccountDTO,
+    errors::MapperError,
+    models::{Account, AccountBalance, AccountId, BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY},
+    transport::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CreateAccountInput},
 };
-use candid::Principal;
-use ic_canister_core::{
-    types::UUID,
-    utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
-};
-use std::collections::HashSet;
+use ic_canister_core::{types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
 pub struct AccountMapper {}
 
 impl AccountMapper {
-    pub fn to_base_user_account(identity: Principal, new_account_id: UUID) -> Account {
-        Account {
-            id: new_account_id,
-            identities: vec![identity],
-            unconfirmed_identities: vec![],
-            access_roles: vec![AccessRole::User],
-            last_modification_timestamp: time(),
-        }
-    }
-
-    pub fn from_identity(
-        identity: Principal,
-        new_account_id: UUID,
-        roles: Vec<AccessRole>,
-    ) -> Account {
-        Account {
-            id: new_account_id,
-            identities: vec![identity],
-            unconfirmed_identities: vec![],
-            access_roles: roles,
-            last_modification_timestamp: time(),
-        }
-    }
-
-    pub fn from_roles(new_account_id: UUID, roles: Vec<AccessRole>) -> Account {
-        Account {
-            id: new_account_id,
-            identities: vec![],
-            unconfirmed_identities: vec![],
-            access_roles: roles,
-            last_modification_timestamp: time(),
-        }
-    }
-}
-
-impl AccountDTO {
-    pub fn to_account(&self) -> Account {
-        Account {
-            id: *Uuid::parse_str(&self.id).expect("Invalid UUID").as_bytes(),
-            identities: self.identities.clone(),
-            unconfirmed_identities: self.unconfirmed_identities.clone(),
-            access_roles: self
-                .access_roles
+    pub fn to_dto(account: Account) -> AccountDTO {
+        AccountDTO {
+            id: Uuid::from_slice(&account.id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
+            name: account.name,
+            decimals: account.decimals,
+            balance: match account.balance {
+                Some(balance) => Some(AccountBalanceInfoDTO {
+                    balance: balance.balance,
+                    decimals: account.decimals,
+                    last_update_timestamp: timestamp_to_rfc3339(
+                        &balance.last_modification_timestamp,
+                    ),
+                }),
+                None => None,
+            },
+            symbol: account.symbol,
+            address: account.address,
+            owners: account
+                .owners
                 .iter()
-                .map(|role| role.to_access_role())
+                .map(|owner_id| {
+                    Uuid::from_slice(owner_id.as_slice())
+                        .unwrap()
+                        .hyphenated()
+                        .to_string()
+                })
                 .collect(),
-            last_modification_timestamp: rfc3339_to_timestamp(
-                self.last_modification_timestamp.as_str(),
-            ),
+            standard: account.standard.to_string(),
+            blockchain: account.blockchain.to_string(),
+            metadata: account.metadata,
+            policies: account
+                .policies
+                .iter()
+                .map(|policy| policy.clone().into())
+                .collect(),
+            last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
+        }
+    }
+
+    pub fn from_create_input(
+        input: CreateAccountInput,
+        account_id: UUID,
+        address: Option<String>,
+        owner_users: Vec<UUID>,
+    ) -> Result<Account, MapperError> {
+        let blockchain = BlockchainMapper::to_blockchain(input.blockchain)?;
+        let standard = BlockchainMapper::to_blockchain_standard(input.standard)?;
+        let metadata = input.metadata.unwrap_or_default();
+
+        if !blockchain.supported_standards().contains(&standard) {
+            return Err(MapperError::UnsupportedBlockchainStandard {
+                blockchain: blockchain.to_string(),
+                supported_standards: blockchain
+                    .supported_standards()
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+            });
+        }
+
+        let symbol = match standard {
+            BlockchainStandard::Native => {
+                if metadata
+                    .iter()
+                    .any(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY)
+                {
+                    return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
+                }
+
+                blockchain.native_symbol().to_string()
+            }
+            _ => {
+                let symbol = metadata
+                    .iter()
+                    .find(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY);
+
+                if symbol.is_none() {
+                    return Err(MapperError::NonNativeAccountSymbolRequired);
+                }
+
+                symbol.unwrap().0.to_owned()
+            }
+        };
+
+        let new_account = Account {
+            id: account_id,
+            blockchain,
+            standard: standard.to_owned(),
+            name: input.name,
+            address: address.unwrap_or("".to_string()),
+            owners: owner_users.to_vec(),
+            policies: input
+                .policies
+                .iter()
+                .map(|policy_dto| policy_dto.clone().into())
+                .collect(),
+            decimals: 0,
+            symbol,
+            balance: None,
+            metadata,
+            last_modification_timestamp: time(),
+        };
+
+        Ok(new_account)
+    }
+
+    pub fn to_balance_dto(
+        balance: AccountBalance,
+        decimals: u32,
+        account_id: AccountId,
+    ) -> AccountBalanceDTO {
+        AccountBalanceDTO {
+            account_id: Uuid::from_slice(&account_id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
+            balance: balance.balance,
+            decimals,
+            last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
         }
     }
 }
 
 impl Account {
     pub fn to_dto(&self) -> AccountDTO {
-        AccountDTO {
-            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
-            identities: self.identities.to_owned(),
-            unconfirmed_identities: self.unconfirmed_identities.to_owned(),
-            access_roles: self.access_roles.iter().map(|role| role.to_dto()).collect(),
-            last_modification_timestamp: timestamp_to_rfc3339(&self.last_modification_timestamp),
-        }
-    }
-
-    pub fn update_with(
-        &mut self,
-        identities: Option<Vec<Principal>>,
-        caller_identity: &Principal,
-    ) -> Result<(), AccountError> {
-        if let Some(new_identities) = identities {
-            if !new_identities.contains(caller_identity) {
-                Err(AccountError::SelfLocked)?
-            }
-
-            let mut confirmed_identities: HashSet<Principal> = self
-                .identities
-                .iter()
-                .filter(|i| new_identities.contains(i))
-                .copied()
-                .collect();
-            let mut unconfirmed_identities: HashSet<Principal> = self
-                .unconfirmed_identities
-                .iter()
-                .filter(|i| new_identities.contains(i))
-                .copied()
-                .collect();
-            for identity in new_identities {
-                let is_caller = identity == *caller_identity;
-                match is_caller {
-                    true => {
-                        unconfirmed_identities.retain(|i| *i != identity);
-                        confirmed_identities.insert(identity);
-                    }
-                    false => {
-                        confirmed_identities.retain(|i| *i != identity);
-                        unconfirmed_identities.insert(identity);
-                    }
-                }
-            }
-
-            self.identities = confirmed_identities.into_iter().collect();
-            self.unconfirmed_identities = unconfirmed_identities.into_iter().collect();
-        }
-
-        Ok(())
+        AccountMapper::to_dto(self.clone())
     }
 }

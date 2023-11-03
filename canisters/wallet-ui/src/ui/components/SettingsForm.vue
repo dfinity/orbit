@@ -19,7 +19,7 @@
         <VCol cols="12 settings-form__title">{{ $t('terms.general') }}</VCol>
         <VCol cols="12" class="py-0">
           <VTextField
-            v-model="auth.accountId"
+            v-model="auth.userId"
             :prepend-inner-icon="mdiIdentifier"
             variant="solo"
             density="compact"
@@ -30,11 +30,11 @@
           <VTextField
             v-model="settings.form.name"
             :prepend-inner-icon="mdiAccount"
-            :label="$t('terms.account_name')"
+            :label="$t('terms.user_name')"
             variant="solo"
             density="compact"
             clearable
-            :rules="settings.validationRules.accountName"
+            :rules="settings.validationRules.userName"
           />
         </VCol>
       </VRow>

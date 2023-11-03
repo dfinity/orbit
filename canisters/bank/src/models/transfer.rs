@@ -1,4 +1,4 @@
-use super::{AccountId, ApprovalThresholdPolicy, Wallet, WalletId, WalletPolicy};
+use super::{Account, AccountId, AccountPolicy, ApprovalThresholdPolicy, UserId};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
@@ -78,10 +78,10 @@ pub struct PolicySnapshot {
 pub struct Transfer {
     /// The transfer id, which is a UUID.
     pub id: TransferId,
-    /// The account that initiated the transfer.
-    pub initiator_account: AccountId,
-    /// The wallet id that the transfer is from.
-    pub from_wallet: WalletId,
+    /// The user that initiated the transfer.
+    pub initiator_user: UserId,
+    /// The account id that the transfer is from.
+    pub from_account: AccountId,
     /// The destination address of the transfer.
     pub to_address: String,
     /// The current status of the transfer.
@@ -100,7 +100,7 @@ pub struct Transfer {
     pub metadata: Vec<(String, String)>,
     /// The transfer policies, which define the rules for the transfer.
     ///
-    /// It holds a snapshot of the wallet policies at the time of the transfer creation.
+    /// It holds a snapshot of the account policies at the time of the transfer creation.
     pub policy_snapshot: PolicySnapshot,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
@@ -139,17 +139,17 @@ impl Transfer {
         time() + time_in_ns
     }
 
-    pub fn make_policy_snapshot(&mut self, wallet: &Wallet) {
+    pub fn make_policy_snapshot(&mut self, account: &Account) {
         let mut policy_snapshot = PolicySnapshot { min_approvals: 1 };
 
-        for policy in wallet.policies.iter() {
+        for policy in account.policies.iter() {
             match policy {
-                WalletPolicy::ApprovalThreshold(threshold) => match threshold {
+                AccountPolicy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
                         policy_snapshot.min_approvals = *min_approvals;
                     }
                     ApprovalThresholdPolicy::VariableThreshold(percentage) => {
-                        policy_snapshot.min_approvals = ((wallet.owners.len() as f64
+                        policy_snapshot.min_approvals = ((account.owners.len() as f64
                             * (*percentage as f64 / 100.0))
                             .ceil() as u8)
                             .max(1);
@@ -448,8 +448,8 @@ pub mod transfer_test_utils {
     pub fn mock_transfer() -> Transfer {
         Transfer {
             id: [1; 16],
-            initiator_account: [0; 16],
-            from_wallet: [0; 16],
+            initiator_user: [0; 16],
+            from_account: [0; 16],
             to_address: "x".repeat(255),
             status: TransferStatus::Pending,
             amount: candid::Nat::from(100),

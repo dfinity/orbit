@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, TimestampRfc3339, TransferDTO, WalletDTO, WalletIdDTO};
+use super::{AccountDTO, AccountIdDTO, TimestampRfc3339, TransferDTO, UserIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type OperationIdDTO = String;
@@ -14,12 +14,12 @@ pub enum OperationStatusDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct OperationContextDTO {
     pub transfer: Option<TransferDTO>,
-    pub wallet: Option<WalletDTO>,
+    pub account: Option<AccountDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct OperationDecisionDTO {
-    pub account_id: AccountIdDTO,
+    pub user_id: UserIdDTO,
     pub read: bool,
     pub status: OperationStatusDTO,
     pub status_reason: Option<String>,
@@ -33,7 +33,7 @@ pub struct OperationDTO {
     pub code: String,
     pub created_at: TimestampRfc3339,
     pub metadata: Vec<(String, String)>,
-    pub originator_account_id: Option<AccountIdDTO>,
+    pub proposed_by: Option<UserIdDTO>,
     pub decisions: Vec<OperationDecisionDTO>,
     pub context: OperationContextDTO,
 }
@@ -76,8 +76,8 @@ pub struct ListOperationsResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListWalletOperationsInput {
-    pub wallet_id: WalletIdDTO,
+pub struct ListAccountOperationsInput {
+    pub account_id: AccountIdDTO,
     pub status: Option<OperationStatusDTO>,
     pub code: Option<String>,
     pub read: Option<bool>,
@@ -86,6 +86,6 @@ pub struct ListWalletOperationsInput {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListWalletOperationsResponse {
+pub struct ListAccountOperationsResponse {
     pub operations: Vec<OperationDTO>,
 }

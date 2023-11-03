@@ -1,9 +1,11 @@
-use super::indexes::account_identity_index::AccountIdentityIndexRepository;
+use super::indexes::account_user_index::AccountUserIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
-    models::{indexes::account_identity_index::AccountIdentityIndexCriteria, Account, AccountKey},
+    models::{
+        indexes::account_user_index::AccountUserIndexCriteria, Account, AccountId, AccountKey,
+        UserId,
+    },
 };
-use candid::Principal;
 use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -21,7 +23,7 @@ thread_local! {
 /// A repository that enables managing accounts in stable memory.
 #[derive(Default, Debug)]
 pub struct AccountRepository {
-    identity_index: AccountIdentityIndexRepository,
+    user_index: AccountUserIndexRepository,
 }
 
 impl Repository<AccountKey, Account> for AccountRepository {
@@ -32,22 +34,23 @@ impl Repository<AccountKey, Account> for AccountRepository {
     fn insert(&self, key: AccountKey, value: Account) -> Option<Account> {
         DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
             Some(prev) => {
-                let prev_identities = prev.to_index_for_identities();
-                let curr_identities = value.to_index_for_identities();
-                if prev_identities != curr_identities {
-                    prev_identities.iter().for_each(|index| {
-                        self.identity_index.remove(index);
+                let prev_users = prev.to_index_by_users();
+                let curr_users = value.to_index_by_users();
+
+                if prev_users != curr_users {
+                    prev_users.iter().for_each(|index| {
+                        self.user_index.remove(index);
                     });
-                    curr_identities.iter().for_each(|index| {
-                        self.identity_index.insert(index.to_owned());
+                    curr_users.iter().for_each(|index| {
+                        self.user_index.insert(index.to_owned());
                     });
                 }
 
                 Some(prev)
             }
             None => {
-                value.to_index_for_identities().iter().for_each(|index| {
-                    self.identity_index.insert(index.to_owned());
+                value.to_index_by_users().iter().for_each(|index| {
+                    self.user_index.insert(index.to_owned());
                 });
 
                 None
@@ -57,12 +60,12 @@ impl Repository<AccountKey, Account> for AccountRepository {
 
     fn remove(&self, key: &AccountKey) -> Option<Account> {
         DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                prev.to_index_for_identities().iter().for_each(|index| {
-                    self.identity_index.remove(index);
+            Some(account) => {
+                account.to_index_by_users().iter().for_each(|index| {
+                    self.user_index.remove(index);
                 });
 
-                Some(prev)
+                Some(account)
             }
             None => None,
         })
@@ -70,14 +73,21 @@ impl Repository<AccountKey, Account> for AccountRepository {
 }
 
 impl AccountRepository {
-    /// Returns the account associated with the given identity if it exists.
-    pub fn find_account_by_identity(&self, identity: &Principal) -> Option<Account> {
-        self.identity_index
-            .find_by_criteria(AccountIdentityIndexCriteria {
-                identity_id: identity.to_owned(),
-            })
+    pub fn find_by_user_id(&self, user_id: UserId) -> Vec<Account> {
+        let account_ids = self.user_index.find_by_criteria(AccountUserIndexCriteria {
+            user_id: user_id.to_owned(),
+        });
+
+        account_ids
             .iter()
-            .find_map(|id| self.get(&Account::key(*id)))
+            .filter_map(|id| self.get(&Account::key(*id)))
+            .collect::<Vec<_>>()
+    }
+
+    pub fn find_by_ids(&self, ids: Vec<AccountId>) -> Vec<Account> {
+        ids.iter()
+            .filter_map(|id| self.get(&Account::key(*id)))
+            .collect::<Vec<_>>()
     }
 }
 
@@ -101,14 +111,30 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_identity() {
+    fn test_find_by_user_id() {
         let repository = AccountRepository::default();
         let mut account = account_test_utils::mock_account();
-        account.identities = vec![Principal::anonymous()];
+        account.owners = vec![[1; 16]];
+
         repository.insert(account.to_key(), account.clone());
 
-        let result = repository.find_account_by_identity(&Principal::anonymous());
+        assert_eq!(repository.find_by_user_id([1; 16]), vec![account]);
+    }
 
-        assert!(result.is_some());
+    #[test]
+    fn test_find_by_ids() {
+        let repository = AccountRepository::default();
+        let mut account1 = account_test_utils::mock_account();
+        let mut account2 = account_test_utils::mock_account();
+        account1.id = [1; 16];
+        account2.id = [2; 16];
+
+        repository.insert(account1.to_key(), account1.clone());
+        repository.insert(account2.to_key(), account2.clone());
+
+        assert_eq!(
+            repository.find_by_ids(vec![account1.id, account2.id]),
+            vec![account1, account2]
+        );
     }
 }

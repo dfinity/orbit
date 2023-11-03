@@ -5,9 +5,9 @@ use thiserror::Error;
 /// Container for factory errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum FactoryError {
-    /// The selected wallet is not yet supported by the system.
-    #[error(r#"The selected wallet is not yet supported by the system."#)]
-    UnsupportedBlockchainWallet {
+    /// The selected account is not yet supported by the system.
+    #[error(r#"The selected account is not yet supported by the system."#)]
+    UnsupportedBlockchainAccount {
         blockchain: String,
         standard: String,
     },
@@ -16,7 +16,7 @@ pub enum FactoryError {
 impl DetailableError for FactoryError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
-        let FactoryError::UnsupportedBlockchainWallet {
+        let FactoryError::UnsupportedBlockchainAccount {
             blockchain,
             standard,
         } = self;

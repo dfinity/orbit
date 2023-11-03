@@ -1,7 +1,7 @@
-use super::{Transfer, Wallet};
+use super::{Account, Transfer};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OperationContext {
     pub transfer: Option<Transfer>,
-    pub wallet: Option<Wallet>,
+    pub account: Option<Account>,
 }

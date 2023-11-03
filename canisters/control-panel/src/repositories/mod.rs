@@ -1,6 +1,6 @@
 //! Repositories for models and related information, such as indexes.
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 pub mod indexes;

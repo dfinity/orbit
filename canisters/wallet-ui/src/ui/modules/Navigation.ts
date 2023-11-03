@@ -20,11 +20,11 @@ const mainNavigation: NavigationSection[] = [
         icon: mdiHome,
       },
       {
-        name: 'wallets',
-        localeKey: 'navigation.main.items.wallets',
+        name: 'accounts',
+        localeKey: 'navigation.main.items.accounts',
         action: {
           type: NavigationActionType.To,
-          handle: route => (route.params.locale ? `/${route.params.locale}/wallets` : '/wallets'),
+          handle: route => (route.params.locale ? `/${route.params.locale}/accounts` : '/accounts'),
         },
         icon: mdiWalletBifold,
       },

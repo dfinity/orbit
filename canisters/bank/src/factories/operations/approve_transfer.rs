@@ -1,13 +1,13 @@
 use super::OperationProcessor;
 use crate::core::ic_cdk::api::time;
 use crate::{
-    errors::WalletError,
+    errors::AccountError,
     mappers::HelperMapper,
     models::{
-        Operation, OperationCode, OperationContext, OperationStatus, Transfer, TransferStatus,
-        Wallet, OPERATION_METADATA_KEY_TRANSFER_ID,
+        Account, Operation, OperationCode, OperationContext, OperationStatus, Transfer,
+        TransferStatus, OPERATION_METADATA_KEY_TRANSFER_ID,
     },
-    repositories::{OperationRepository, TransferRepository, WalletRepository},
+    repositories::{AccountRepository, OperationRepository, TransferRepository},
 };
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
@@ -18,7 +18,7 @@ use uuid::Uuid;
 pub struct ApproveTransferOperationProcessor {
     transfer_repository: TransferRepository,
     operation_repository: OperationRepository,
-    wallet_repository: WalletRepository,
+    account_repository: AccountRepository,
 }
 
 impl ApproveTransferOperationProcessor {
@@ -44,18 +44,18 @@ impl ApproveTransferOperationProcessor {
         Ok(transfer)
     }
 
-    fn get_wallet(&self, operation: &Operation) -> Result<Wallet, ApiError> {
+    fn get_account(&self, operation: &Operation) -> Result<Account, ApiError> {
         let transfer = self.get_transfer(operation)?;
-        let wallet = self
-            .wallet_repository
-            .get(&Wallet::key(transfer.from_wallet));
+        let account = self
+            .account_repository
+            .get(&Account::key(transfer.from_account));
 
-        if let Some(wallet) = wallet {
-            return Ok(wallet);
+        if let Some(account) = account {
+            return Ok(account);
         }
 
-        Err(WalletError::WalletNotFound {
-            id: Uuid::from_bytes(transfer.from_wallet)
+        Err(AccountError::AccountNotFound {
+            id: Uuid::from_bytes(transfer.from_account)
                 .hyphenated()
                 .to_string(),
         })?
@@ -126,11 +126,11 @@ impl OperationProcessor for ApproveTransferOperationProcessor {
 
     fn get_context(&self, operation: &Operation) -> Result<OperationContext, ApiError> {
         let transfer = self.get_transfer(operation)?;
-        let wallet = self.get_wallet(operation)?;
+        let account = self.get_account(operation)?;
 
         Ok(OperationContext {
             transfer: Some(transfer),
-            wallet: Some(wallet),
+            account: Some(account),
         })
     }
 }

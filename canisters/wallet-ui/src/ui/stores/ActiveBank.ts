@@ -2,12 +2,12 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
 import {
-  Account,
+  User,
   BankAsset,
   BankFeatures,
   Operation,
   OperationId,
-  Wallet,
+  Account,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
@@ -15,7 +15,7 @@ import { useAuthStore, useSettingsStore, useWorkerStore } from '~/ui/stores';
 import { LoadableItem } from '~/ui/types';
 
 export interface BankMetrics {
-  wallets: number;
+  accounts: number;
   transfers: {
     completed: number;
     pending: number;
@@ -26,14 +26,14 @@ export interface BankMetrics {
 export interface ActiveBankStoreState {
   _bankId: string;
   loading: boolean;
-  _account: Account | null;
+  _user: User | null;
   features: {
     loading: boolean;
     details: BankFeatures | null;
   };
-  wallets: {
+  accounts: {
     loading: boolean;
-    items: Wallet[];
+    items: Account[];
   };
   pendingOperations: {
     loading: boolean;
@@ -46,12 +46,12 @@ export const useActiveBankStore = defineStore('activeBank', {
     return {
       _bankId: Principal.anonymous().toString(),
       loading: false,
-      _account: null,
+      _user: null,
       features: {
         loading: false,
         details: null,
       },
-      wallets: {
+      accounts: {
         loading: false,
         items: [],
       },
@@ -62,18 +62,18 @@ export const useActiveBankStore = defineStore('activeBank', {
     };
   },
   getters: {
-    hasAccount(): boolean {
-      return !!this._account;
+    hasUser(): boolean {
+      return !!this._user;
     },
-    account(): Account {
-      if (!this._account) {
-        throw new Error('Account not loaded');
+    user(): User {
+      if (!this._user) {
+        throw new Error('User not loaded');
       }
 
-      return this._account as Account;
+      return this._user as User;
     },
-    sortedWallets(): Wallet[] {
-      return this.wallets.items.sort((a, b) => {
+    sortedAccounts(): Account[] {
+      return this.accounts.items.sort((a, b) => {
         const firstDt = new Date(a.last_modification_timestamp).getTime();
         const secondDt = new Date(b.last_modification_timestamp).getTime();
 
@@ -110,7 +110,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     },
     metrics(): BankMetrics {
       return {
-        wallets: this.wallets.items.length,
+        accounts: this.accounts.items.length,
         transfers: {
           completed: 0,
           pending: 0,
@@ -128,34 +128,34 @@ export const useActiveBankStore = defineStore('activeBank', {
   actions: {
     setBankId(bankId: Principal): void {
       if (bankId !== this.bankId) {
-        this._account = null;
+        this._user = null;
       }
 
       this._bankId = bankId.toText();
     },
     reset(): void {
       this._bankId = Principal.anonymous().toText();
-      this._account = null;
-      this.wallets.items = [];
+      this._user = null;
+      this.accounts.items = [];
       this.features.details = null;
       this.pendingOperations.items = [];
     },
-    async registerAccount(): Promise<Account | null> {
+    async registerUser(): Promise<User | null> {
       const auth = useAuthStore();
       const bankService = services().bank.withBankId(this.bankId);
 
       const hasMultipleIdentities = auth.identities.length > 1;
       if (!hasMultipleIdentities) {
-        const account = await bankService.register({
+        const user = await bankService.register({
           identities: auth.identities,
         });
 
-        return account;
+        return user;
       }
 
       return this.registerWithMultiIdentityFlow();
     },
-    async registerWithMultiIdentityFlow(): Promise<Account | null> {
+    async registerWithMultiIdentityFlow(): Promise<User | null> {
       // TODO: implement multi identity register flow
 
       return null;
@@ -187,7 +187,7 @@ export const useActiveBankStore = defineStore('activeBank', {
               }
               const isPending = 'Pending' in operation.status;
               const isRead = operation.decisions.some(
-                decision => decision.account_id === this.account.id && decision.read,
+                decision => decision.user_id === this.user.id && decision.read,
               );
 
               return isPending && !isRead;
@@ -211,16 +211,16 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return null;
     },
-    async loadWalletList(): Promise<void> {
-      if (this.wallets.loading) {
+    async loadAccountList(): Promise<void> {
+      if (this.accounts.loading) {
         return;
       }
       try {
-        this.wallets.loading = true;
+        this.accounts.loading = true;
         const bankService = services().bank.withBankId(this.bankId);
-        this.wallets.items = await bankService.listWallets();
+        this.accounts.items = await bankService.listAccounts();
       } finally {
-        this.wallets.loading = false;
+        this.accounts.loading = false;
       }
     },
     async loadBankFeatures(): Promise<void> {
@@ -235,7 +235,7 @@ export const useActiveBankStore = defineStore('activeBank', {
     // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
     async loadDetailsAsync(): Promise<void> {
       useWorkerStore().start();
-      this.loadWalletList();
+      this.loadAccountList();
       this.loadBankFeatures();
     },
     async load(bankId: Principal): Promise<void> {
@@ -249,27 +249,27 @@ export const useActiveBankStore = defineStore('activeBank', {
       const bankService = services().bank.withBankId(this.bankId);
       const settings = useSettingsStore();
       try {
-        const account = await bankService.myAccount();
-        if (account) {
-          this._account = account;
+        const user = await bankService.myUser();
+        if (user) {
+          this._user = user;
           this.loadDetailsAsync();
           return;
         }
 
-        const registeredAccount = await this.registerAccount();
+        const registeredUser = await this.registerUser();
 
-        this._account = registeredAccount;
+        this._user = registeredUser;
 
-        if (registeredAccount) {
+        if (registeredUser) {
           this.loadDetailsAsync();
         }
       } catch (err) {
-        logger.error(`Failed to load bank account`, { err });
+        logger.error(`Failed to load bank user`, { err });
 
         settings.setNotification({
           show: true,
           type: 'error',
-          message: i18n.global.t('banks.account_load_error'),
+          message: i18n.global.t('banks.user_load_error'),
         });
       } finally {
         this.loading = false;

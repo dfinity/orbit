@@ -17,23 +17,23 @@ thread_local! {
   })
 }
 
-/// A repository that enables finding operations based on the account in stable memory.
+/// A repository that enables finding proposals based on the account id in stable memory.
 #[derive(Default, Debug)]
 pub struct OperationAccountIndexRepository {}
 
 impl IndexRepository<OperationAccountIndex, OperationId> for OperationAccountIndexRepository {
     type FindByCriteria = OperationAccountIndexCriteria;
 
-    fn exists(&self, index: &OperationAccountIndex) -> bool {
-        DB.with(|m| m.borrow().get(index).is_some())
+    fn exists(&self, key: &OperationAccountIndex) -> bool {
+        DB.with(|m| m.borrow().get(key).is_some())
     }
 
-    fn insert(&self, index: OperationAccountIndex) {
-        DB.with(|m| m.borrow_mut().insert(index, ()));
+    fn insert(&self, key: OperationAccountIndex) {
+        DB.with(|m| m.borrow_mut().insert(key, ()));
     }
 
-    fn remove(&self, index: &OperationAccountIndex) -> bool {
-        DB.with(|m| m.borrow_mut().remove(index).is_some())
+    fn remove(&self, key: &OperationAccountIndex) -> bool {
+        DB.with(|m| m.borrow_mut().remove(key).is_some())
     }
 
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<OperationId> {

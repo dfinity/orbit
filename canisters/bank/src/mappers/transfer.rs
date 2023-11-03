@@ -2,9 +2,7 @@ use super::HelperMapper;
 use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
-    models::{
-        AccountId, PolicySnapshot, Transfer, TransferExecutionPlan, TransferId, TransferStatus,
-    },
+    models::{PolicySnapshot, Transfer, TransferExecutionPlan, TransferId, TransferStatus, UserId},
     transport::{
         NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferListItemDTO,
         TransferMetadataDTO,
@@ -21,15 +19,15 @@ impl TransferMapper {
     pub fn from_create_input(
         input: TransferInput,
         transfer_id: TransferId,
-        initiator_account: AccountId,
+        initiator_user: UserId,
         default_fee: Nat,
         blockchain_network: String,
         default_expiration_dt: u64,
     ) -> Result<Transfer, MapperError> {
         Ok(Transfer {
             id: transfer_id,
-            initiator_account,
-            from_wallet: *HelperMapper::to_uuid(input.from_wallet_id)?.as_bytes(),
+            initiator_user,
+            from_account: *HelperMapper::to_uuid(input.from_account_id)?.as_bytes(),
             expiration_dt: input.expiration_dt.map_or(default_expiration_dt, |dt| {
                 rfc3339_to_timestamp(dt.as_str())
             }),
@@ -80,7 +78,7 @@ impl TransferMapper {
                 id: transfer.blockchain_network.to_owned(),
                 name: transfer.blockchain_network.to_owned(),
             },
-            from_wallet_id: Uuid::from_slice(&transfer.from_wallet)
+            from_account_id: Uuid::from_slice(&transfer.from_account)
                 .unwrap()
                 .hyphenated()
                 .to_string(),

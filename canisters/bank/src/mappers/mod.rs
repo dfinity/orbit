@@ -3,20 +3,20 @@
 mod bank;
 pub use bank::*;
 
-mod wallet;
-pub use wallet::*;
+mod account;
+pub use account::*;
 
 mod blockchain;
 pub use blockchain::*;
 
-mod wallet_policy;
-pub use wallet_policy::*;
+mod account_policy;
+pub use account_policy::*;
 
 mod helper;
 pub use helper::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod transfer;
 pub use transfer::*;

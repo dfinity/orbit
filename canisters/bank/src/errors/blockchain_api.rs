@@ -5,9 +5,9 @@ use thiserror::Error;
 /// Container for blockchain api errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum BlockchainApiError {
-    /// Failed to fetch latest wallet balance from the asset blockchain.
-    #[error(r#"Failed to fetch latest wallet balance from the asset blockchain."#)]
-    FetchBalanceFailed { wallet_id: String },
+    /// Failed to fetch latest account balance from the asset blockchain.
+    #[error(r#"Failed to fetch latest account balance from the asset blockchain."#)]
+    FetchBalanceFailed { account_id: String },
     /// The transaction failed to be submitted.
     #[error(r#"The transaction failed to be submitted."#)]
     TransactionSubmitFailed { info: String },
@@ -20,8 +20,8 @@ impl DetailableError for BlockchainApiError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
-            BlockchainApiError::FetchBalanceFailed { wallet_id } => {
-                details.insert("wallet_id".to_string(), wallet_id.to_string());
+            BlockchainApiError::FetchBalanceFailed { account_id } => {
+                details.insert("account_id".to_string(), account_id.to_string());
                 Some(details)
             }
             BlockchainApiError::TransactionSubmitFailed { info } => {

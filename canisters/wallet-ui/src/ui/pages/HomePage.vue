@@ -5,7 +5,7 @@
         <VRow>
           <VCol md="6" sm="12">
             <h1 class="text-h4">{{ $t('home.welcome_back') }}</h1>
-            <p v-if="activeBank.hasAccount" class="info-box">
+            <p v-if="activeBank.hasUser" class="info-box">
               <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
               <span>
                 {{
@@ -33,24 +33,24 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
-          <VCol v-if="!activeBank.hasAccount" cols="12" md="4">
+          <VCol v-if="!activeBank.hasUser" cols="12" md="4">
             <VCard color="surface" height="100%">
-              <VCardTitle>{{ $t('banks.no_bank_account') }}</VCardTitle>
+              <VCardTitle>{{ $t('banks.no_bank_user') }}</VCardTitle>
               <VCardSubtitle>{{ $t('banks.please_register_to_continue') }}</VCardSubtitle>
               <VCardText class="text-center mt-6 mb-6">
                 <VIcon :icon="mdiBank" size="64" />
               </VCardText>
             </VCard>
           </VCol>
-          <VCol v-if="activeBank.hasAccount" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="activeBank.wallets.loading">
-              <VCardTitle>{{ $t('terms.wallets') }}</VCardTitle>
+          <VCol v-if="activeBank.hasUser" cols="12" md="4">
+            <VCard color="surface" height="100%" :loading="activeBank.accounts.loading">
+              <VCardTitle>{{ $t('terms.accounts') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
-                {{ activeBank.metrics.wallets }}
+                {{ activeBank.metrics.accounts }}
               </VCardText>
             </VCard>
           </VCol>
-          <VCol v-if="activeBank.hasAccount" cols="12" md="4">
+          <VCol v-if="activeBank.hasUser" cols="12" md="4">
             <VCard color="surface" height="100%" :loading="activeBank.pendingOperations.loading">
               <VCardTitle>{{ $t('banks.pending_operations') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">

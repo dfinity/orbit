@@ -3,15 +3,31 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export interface Account {
   'id' : AccountId,
-  'unconfirmed_identities' : Array<Principal>,
-  'access_roles' : Array<AccountRole>,
+  'decimals' : number,
+  'balance' : [] | [AccountBalanceInfo],
+  'owners' : Array<UserId>,
+  'metadata' : Array<[string, string]>,
+  'name' : [] | [string],
+  'blockchain' : string,
+  'address' : string,
   'last_modification_timestamp' : TimestampRFC3339,
-  'identities' : Array<Principal>,
+  'standard' : string,
+  'symbol' : AssetSymbol,
+  'policies' : Array<AccountPolicy>,
+}
+export interface AccountBalance {
+  'account_id' : AccountId,
+  'decimals' : number,
+  'balance' : bigint,
+  'last_update_timestamp' : TimestampRFC3339,
+}
+export interface AccountBalanceInfo {
+  'decimals' : number,
+  'balance' : bigint,
+  'last_update_timestamp' : TimestampRFC3339,
 }
 export type AccountId = string;
-export type AccountRole = { 'Guest' : null } |
-  { 'User' : null } |
-  { 'Admin' : null };
+export type AccountPolicy = { 'approval_threshold' : ApprovalThresholdPolicy };
 export type ApprovalThresholdPolicy = { 'VariableThreshold' : number } |
   { 'FixedThreshold' : number };
 export type AssetSymbol = string;
@@ -27,39 +43,31 @@ export interface BankInit {
   'permissions' : [] | [Array<BankPermission>],
   'approval_threshold' : [] | [number],
   'owners' : [] | [Array<Principal>],
-  'wallet_policies' : [] | [Array<WalletPolicy>],
 }
 export interface BankPermission {
-  'access_roles' : Array<AccountRole>,
+  'access_roles' : Array<UserRole>,
   'permission_id' : string,
 }
 export interface BankSettings {
   'permissions' : Array<BankPermission>,
   'approval_threshold' : number,
-  'owners' : Array<Account>,
+  'owners' : Array<User>,
   'last_upgrade_timestamp' : TimestampRFC3339,
-  'wallet_policies' : Array<WalletPolicy>,
 }
 export type BankSettingsResult = { 'Ok' : { 'settings' : BankSettings } } |
   { 'Err' : Error };
-export interface ConfirmAccountInput { 'account_id' : AccountId }
-export type ConfirmAccountResult = { 'Ok' : { 'account' : Account } } |
+export interface ConfirmUserIdentityInput { 'user_id' : UserId }
+export type ConfirmUserIdentityResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : Error };
-export interface CreateWalletInput {
-  'owners' : Array<AccountId>,
+export interface CreateAccountInput {
+  'owners' : Array<UserId>,
   'metadata' : [] | [Array<[string, string]>],
   'name' : [] | [string],
   'blockchain' : string,
   'standard' : string,
-  'policies' : Array<WalletPolicy>,
+  'policies' : Array<AccountPolicy>,
 }
-export type CreateWalletResult = { 'Ok' : { 'wallet' : Wallet } } |
-  { 'Err' : Error };
-export interface EditAccountInput {
-  'account_id' : AccountId,
-  'identities' : [] | [Array<Principal>],
-}
-export type EditAccountResult = { 'Ok' : { 'account' : Account } } |
+export type CreateAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
 export interface EditOperationInput {
   'read' : [] | [boolean],
@@ -69,17 +77,23 @@ export interface EditOperationInput {
 }
 export type EditOperationResult = { 'Ok' : { 'operation' : Operation } } |
   { 'Err' : Error };
+export interface EditUserInput {
+  'user_id' : UserId,
+  'identities' : [] | [Array<Principal>],
+}
+export type EditUserResult = { 'Ok' : { 'user' : User } } |
+  { 'Err' : Error };
 export interface Error {
   'code' : string,
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
-export interface FetchWalletBalancesInput { 'wallet_ids' : Array<WalletId> }
-export type FetchWalletBalancesResult = {
-    'Ok' : { 'balances' : Array<WalletBalance> }
+export interface FetchAccountBalancesInput { 'account_ids' : Array<AccountId> }
+export type FetchAccountBalancesResult = {
+    'Ok' : { 'balances' : Array<AccountBalance> }
   } |
   { 'Err' : Error };
-export interface GetAccountInput { 'account_id' : [] | [AccountId] }
+export interface GetAccountInput { 'account_id' : AccountId }
 export type GetAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
 export type GetFeaturesResult = { 'Ok' : { 'features' : BankFeatures } } |
@@ -93,8 +107,32 @@ export type GetTransferResult = { 'Ok' : { 'transfer' : Transfer } } |
 export interface GetTransfersInput { 'transfer_ids' : Array<TransferId> }
 export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
   { 'Err' : Error };
-export interface GetWalletInput { 'wallet_id' : WalletId }
-export type GetWalletResult = { 'Ok' : { 'wallet' : Wallet } } |
+export interface GetUserInput { 'user_id' : [] | [UserId] }
+export type GetUserResult = { 'Ok' : { 'user' : User } } |
+  { 'Err' : Error };
+export interface ListAccountOperationsInput {
+  'account_id' : AccountId,
+  'status' : [] | [OperationStatus],
+  'to_dt' : [] | [TimestampRFC3339],
+  'code' : [] | [string],
+  'read' : [] | [boolean],
+  'from_dt' : [] | [TimestampRFC3339],
+}
+export type ListAccountOperationsResult = {
+    'Ok' : { 'operations' : Array<Operation> }
+  } |
+  { 'Err' : Error };
+export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
+  { 'Err' : Error };
+export interface ListAccountTransfersInput {
+  'account_id' : AccountId,
+  'status' : [] | [string],
+  'to_dt' : [] | [TimestampRFC3339],
+  'from_dt' : [] | [TimestampRFC3339],
+}
+export type ListAccountTransfersResult = {
+    'Ok' : { 'transfers' : Array<TransferListItem> }
+  } |
   { 'Err' : Error };
 export interface ListOperationsInput {
   'status' : [] | [OperationStatus],
@@ -107,30 +145,6 @@ export type ListOperationsResult = {
     'Ok' : { 'operations' : Array<Operation> }
   } |
   { 'Err' : Error };
-export interface ListWalletOperationsInput {
-  'status' : [] | [OperationStatus],
-  'to_dt' : [] | [TimestampRFC3339],
-  'code' : [] | [string],
-  'read' : [] | [boolean],
-  'from_dt' : [] | [TimestampRFC3339],
-  'wallet_id' : WalletId,
-}
-export type ListWalletOperationsResult = {
-    'Ok' : { 'operations' : Array<Operation> }
-  } |
-  { 'Err' : Error };
-export type ListWalletResult = { 'Ok' : { 'wallets' : Array<Wallet> } } |
-  { 'Err' : Error };
-export interface ListWalletTransfersInput {
-  'status' : [] | [string],
-  'to_dt' : [] | [TimestampRFC3339],
-  'from_dt' : [] | [TimestampRFC3339],
-  'wallet_id' : WalletId,
-}
-export type ListWalletTransfersResult = {
-    'Ok' : { 'transfers' : Array<TransferListItem> }
-  } |
-  { 'Err' : Error };
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;
 export interface Operation {
@@ -141,16 +155,16 @@ export interface Operation {
   'code' : string,
   'created_at' : TimestampRFC3339,
   'decisions' : Array<OperationDecision>,
-  'originator_account_id' : [] | [AccountId],
+  'proposed_by' : [] | [UserId],
 }
 export interface OperationContext {
-  'wallet' : [] | [Wallet],
+  'account' : [] | [Account],
   'transfer' : [] | [Transfer],
 }
 export interface OperationDecision {
-  'account_id' : AccountId,
   'status' : OperationStatus,
   'read' : boolean,
+  'user_id' : UserId,
   'status_reason' : [] | [string],
   'decided_at' : [] | [TimestampRFC3339],
 }
@@ -159,8 +173,8 @@ export type OperationStatus = { 'Rejected' : null } |
   { 'Adopted' : null } |
   { 'NotRequired' : null } |
   { 'Pending' : null };
-export interface RegisterAccountInput { 'identities' : Array<Principal> }
-export type RegisterAccountResult = { 'Ok' : { 'account' : Account } } |
+export interface RegisterUserInput { 'identities' : Array<Principal> }
+export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : Error };
 export type TimestampRFC3339 = string;
 export interface Transfer {
@@ -168,10 +182,10 @@ export interface Transfer {
   'to' : string,
   'fee' : bigint,
   'status' : TransferStatus,
+  'from_account_id' : AccountId,
   'execution_plan' : TransferExecutionSchedule,
   'expiration_dt' : TimestampRFC3339,
   'metadata' : Array<TransferMetadata>,
-  'from_wallet_id' : WalletId,
   'network' : Network,
   'amount' : bigint,
 }
@@ -181,10 +195,10 @@ export type TransferId = string;
 export interface TransferInput {
   'to' : string,
   'fee' : [] | [bigint],
+  'from_account_id' : AccountId,
   'execution_plan' : [] | [TransferExecutionSchedule],
   'expiration_dt' : [] | [TimestampRFC3339],
   'metadata' : [] | [Array<TransferMetadata>],
-  'from_wallet_id' : WalletId,
   'network' : [] | [Network],
   'amount' : bigint,
 }
@@ -212,62 +226,46 @@ export type TransferStatus = { 'Failed' : { 'reason' : string } } |
     }
   } |
   { 'Pending' : null };
-export interface Wallet {
-  'id' : WalletId,
-  'decimals' : number,
-  'balance' : [] | [WalletBalanceInfo],
-  'owners' : Array<AccountId>,
-  'metadata' : Array<[string, string]>,
-  'name' : [] | [string],
-  'blockchain' : string,
-  'address' : string,
+export interface User {
+  'id' : UserId,
+  'unconfirmed_identities' : Array<Principal>,
+  'access_roles' : Array<UserRole>,
   'last_modification_timestamp' : TimestampRFC3339,
-  'standard' : string,
-  'symbol' : AssetSymbol,
-  'policies' : Array<WalletPolicy>,
+  'identities' : Array<Principal>,
 }
-export interface WalletBalance {
-  'decimals' : number,
-  'balance' : bigint,
-  'last_update_timestamp' : TimestampRFC3339,
-  'wallet_id' : WalletId,
-}
-export interface WalletBalanceInfo {
-  'decimals' : number,
-  'balance' : bigint,
-  'last_update_timestamp' : TimestampRFC3339,
-}
-export type WalletId = string;
-export type WalletPolicy = { 'approval_threshold' : ApprovalThresholdPolicy };
+export type UserId = string;
+export type UserRole = { 'Guest' : null } |
+  { 'User' : null } |
+  { 'Admin' : null };
 export interface _SERVICE {
   'bank_settings' : ActorMethod<[], BankSettingsResult>,
-  'confirm_account' : ActorMethod<[ConfirmAccountInput], ConfirmAccountResult>,
-  'create_wallet' : ActorMethod<[CreateWalletInput], CreateWalletResult>,
-  'edit_account' : ActorMethod<[EditAccountInput], EditAccountResult>,
+  'confirm_user_identity' : ActorMethod<
+    [ConfirmUserIdentityInput],
+    ConfirmUserIdentityResult
+  >,
+  'create_account' : ActorMethod<[CreateAccountInput], CreateAccountResult>,
   'edit_operation' : ActorMethod<[EditOperationInput], EditOperationResult>,
+  'edit_user' : ActorMethod<[EditUserInput], EditUserResult>,
   'features' : ActorMethod<[], GetFeaturesResult>,
-  'fetch_wallet_balances' : ActorMethod<
-    [FetchWalletBalancesInput],
-    FetchWalletBalancesResult
+  'fetch_account_balances' : ActorMethod<
+    [FetchAccountBalancesInput],
+    FetchAccountBalancesResult
   >,
   'get_account' : ActorMethod<[GetAccountInput], GetAccountResult>,
   'get_operation' : ActorMethod<[GetOperationInput], GetOperationResult>,
   'get_transfer' : ActorMethod<[GetTransferInput], GetTransferResult>,
   'get_transfers' : ActorMethod<[GetTransfersInput], GetTransfersResult>,
-  'get_wallet' : ActorMethod<[GetWalletInput], GetWalletResult>,
+  'get_user' : ActorMethod<[GetUserInput], GetUserResult>,
+  'list_account_operations' : ActorMethod<
+    [ListAccountOperationsInput],
+    ListAccountOperationsResult
+  >,
+  'list_account_transfers' : ActorMethod<
+    [ListAccountTransfersInput],
+    ListAccountTransfersResult
+  >,
+  'list_accounts' : ActorMethod<[], ListAccountResult>,
   'list_operations' : ActorMethod<[ListOperationsInput], ListOperationsResult>,
-  'list_wallet_operations' : ActorMethod<
-    [ListWalletOperationsInput],
-    ListWalletOperationsResult
-  >,
-  'list_wallet_transfers' : ActorMethod<
-    [ListWalletTransfersInput],
-    ListWalletTransfersResult
-  >,
-  'list_wallets' : ActorMethod<[], ListWalletResult>,
-  'register_account' : ActorMethod<
-    [RegisterAccountInput],
-    RegisterAccountResult
-  >,
+  'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'transfer' : ActorMethod<[TransferInput], TransferResult>,
 }

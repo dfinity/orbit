@@ -13,7 +13,7 @@
         <div class="profile">
           <VAvatar color="primary-variant" size="64" image="/images/avatar.svg" />
           <VBtn class="profile__name" variant="text" :append-icon="mdiChevronDown" size="small">
-            <span>{{ auth.accountName ? auth.accountName : $t('terms.anonymous') }}</span>
+            <span>{{ auth.userName ? auth.userName : $t('terms.anonymous') }}</span>
             <VMenu activator="parent">
               <VList density="compact">
                 <VListItem :exact="true" :to="`/${$route.params.locale}/settings`">
@@ -25,18 +25,14 @@
               </VList>
             </VMenu>
           </VBtn>
-          <p v-if="activeBank.hasAccount" class="profile__principal">
-            <span>{{ activeBank.account.id }}</span>
+          <p v-if="activeBank.hasUser" class="profile__principal">
+            <span>{{ activeBank.user.id }}</span>
             <VBtn
-              class="wallet-card__subtitle__copy"
               size="x-small"
               variant="text"
               :icon="mdiContentCopy"
               @click="
-                settings.copyToClipboard(
-                  activeBank.account.id,
-                  $t('banks.account_copied_to_clipboard'),
-                )
+                settings.copyToClipboard(activeBank.user.id, $t('banks.user_copied_to_clipboard'))
               "
             />
           </p>

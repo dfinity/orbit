@@ -4,7 +4,7 @@
 <script lang="ts" setup>
 import { TransferStatus } from '~/generated/bank/bank.did';
 import { extractTransferStatus } from '~/core';
-import { WalletTransferStatus } from '~/types';
+import { AccountTransferStatus } from '~/types';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -13,16 +13,16 @@ const props = defineProps<{
   size?: 'x-small' | 'small' | 'medium' | 'large';
 }>();
 
-const chipColor = (status: WalletTransferStatus): string => {
+const chipColor = (status: AccountTransferStatus): string => {
   switch (status) {
-    case WalletTransferStatus.Completed:
+    case AccountTransferStatus.Completed:
       return 'success';
-    case WalletTransferStatus.Rejected:
-    case WalletTransferStatus.Failed:
+    case AccountTransferStatus.Rejected:
+    case AccountTransferStatus.Failed:
       return 'error';
-    case WalletTransferStatus.Pending:
+    case AccountTransferStatus.Pending:
       return 'warning';
-    case WalletTransferStatus.Approved:
+    case AccountTransferStatus.Approved:
       return 'info';
     default:
       return 'tonal';

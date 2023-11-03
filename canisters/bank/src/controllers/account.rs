@@ -1,66 +1,64 @@
 use crate::{
-    core::{
-        CallContext, WithCallContext, PERMISSION_READ_ACCOUNT, PERMISSION_REGISTER_ACCOUNT,
-        PERMISSION_WRITE_ACCOUNT,
-    },
+    core::{CallContext, WithCallContext, PERMISSION_READ_ACCOUNT, PERMISSION_WRITE_ACCOUNT},
     mappers::HelperMapper,
     services::AccountService,
     transport::{
-        ConfirmAccountInput, ConfirmAccountResponse, EditAccountInput, EditAccountResponse,
-        GetAccountInput, GetAccountResponse, RegisterAccountInput, RegisterAccountResponse,
+        CreateAccountInput, CreateAccountResponse, FetchAccountBalancesInput,
+        FetchAccountBalancesResponse, GetAccountInput, GetAccountResponse, ListAccountResponse,
     },
 };
 use ic_canister_core::api::ApiResult;
 use ic_cdk_macros::{query, update};
 
-#[update(name = "register_account")]
-async fn register_account(input: RegisterAccountInput) -> ApiResult<RegisterAccountResponse> {
-    CallContext::get().check_access(PERMISSION_REGISTER_ACCOUNT);
-
-    let account = AccountService::with_call_context(CallContext::get())
-        .register_account(input, Vec::new())
-        .await?
-        .to_dto();
-
-    Ok(RegisterAccountResponse { account })
-}
-
-#[update(name = "confirm_account")]
-async fn confirm_account(input: ConfirmAccountInput) -> ApiResult<ConfirmAccountResponse> {
-    CallContext::get().check_access(PERMISSION_REGISTER_ACCOUNT);
-
-    let account = AccountService::with_call_context(CallContext::get())
-        .confirm_account(input)
-        .await?
-        .to_dto();
-
-    Ok(ConfirmAccountResponse { account })
-}
-
-#[update(name = "edit_account")]
-async fn edit_account(input: EditAccountInput) -> ApiResult<EditAccountResponse> {
+#[update(name = "create_account")]
+async fn create_account(input: CreateAccountInput) -> ApiResult<CreateAccountResponse> {
     CallContext::get().check_access(PERMISSION_WRITE_ACCOUNT);
 
-    let account = AccountService::with_call_context(CallContext::get())
-        .edit_account(input)
+    let created_account = AccountService::with_call_context(CallContext::get())
+        .create_account(input)
         .await?
         .to_dto();
 
-    Ok(EditAccountResponse { account })
+    Ok(CreateAccountResponse {
+        account: created_account,
+    })
 }
 
 #[query(name = "get_account")]
 async fn get_account(input: GetAccountInput) -> ApiResult<GetAccountResponse> {
     CallContext::get().check_access(PERMISSION_READ_ACCOUNT);
 
-    let account = match input.account_id {
-        Some(account_id) => AccountService::with_call_context(CallContext::get())
-            .get_account(HelperMapper::to_uuid(account_id)?.as_bytes())?
-            .to_dto(),
-        _ => AccountService::with_call_context(CallContext::get())
-            .get_account_by_identity(&CallContext::get().caller())?
-            .to_dto(),
-    };
+    let account = AccountService::with_call_context(CallContext::get())
+        .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?
+        .to_dto();
 
     Ok(GetAccountResponse { account })
+}
+
+#[query(name = "list_accounts")]
+async fn list_accounts() -> ApiResult<ListAccountResponse> {
+    let ctx = CallContext::get();
+    let owner_identity = ctx.caller();
+    ctx.check_access(PERMISSION_READ_ACCOUNT);
+
+    let accounts = AccountService::with_call_context(ctx)
+        .list_accounts(owner_identity)?
+        .iter()
+        .map(|account| account.to_dto())
+        .collect();
+
+    Ok(ListAccountResponse { accounts })
+}
+
+#[update(name = "fetch_account_balances")]
+async fn fetch_account_balances(
+    input: FetchAccountBalancesInput,
+) -> ApiResult<FetchAccountBalancesResponse> {
+    CallContext::get().check_access(PERMISSION_READ_ACCOUNT);
+
+    let balances = AccountService::with_call_context(CallContext::get())
+        .fetch_account_balances(input)
+        .await?;
+
+    Ok(FetchAccountBalancesResponse { balances })
 }

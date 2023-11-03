@@ -1,5 +1,5 @@
 import { TransferStatus } from '~/generated/bank/bank.did';
-import { WalletTransferStatus } from '~/types';
+import { AccountTransferStatus } from '~/types';
 
 export const isSetAndNotFalse = (value: unknown) => {
   if (value === 'false' || value === false || value === undefined || value === null) {
@@ -45,40 +45,40 @@ export const amountToBigInt = (amount: string, decimals: number): bigint => {
   return BigInt(`${integer}${paddedDecimal}`);
 };
 
-export const extractTransferStatus = (status: TransferStatus): WalletTransferStatus => {
+export const extractTransferStatus = (status: TransferStatus): AccountTransferStatus => {
   if ('Pending' in status) {
-    return WalletTransferStatus.Pending;
+    return AccountTransferStatus.Pending;
   }
 
   if ('Approved' in status) {
-    return WalletTransferStatus.Approved;
+    return AccountTransferStatus.Approved;
   }
 
   if ('Rejected' in status) {
-    return WalletTransferStatus.Rejected;
+    return AccountTransferStatus.Rejected;
   }
 
   if ('Failed' in status) {
-    return WalletTransferStatus.Failed;
+    return AccountTransferStatus.Failed;
   }
 
   if ('Cancelled' in status) {
-    return WalletTransferStatus.Cancelled;
+    return AccountTransferStatus.Cancelled;
   }
 
   if ('Submitted' in status) {
-    return WalletTransferStatus.Submitted;
+    return AccountTransferStatus.Submitted;
   }
 
   if ('Processing' in status) {
-    return WalletTransferStatus.Processing;
+    return AccountTransferStatus.Processing;
   }
 
   if ('Completed' in status) {
-    return WalletTransferStatus.Completed;
+    return AccountTransferStatus.Completed;
   }
 
-  return WalletTransferStatus.Unknown;
+  return AccountTransferStatus.Unknown;
 };
 
 export const timer = (

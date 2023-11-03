@@ -1,21 +1,21 @@
 //! Transport layer that defines the data transfer objects (DTOs) that are used to communicate
 //! with the clients of the control panel.
 
-/// Account DTOs.
-mod account;
-pub use account::*;
+/// User DTOs.
+mod user;
+pub use user::*;
 
-/// Bank DTOs.
-mod account_bank;
-pub use account_bank::*;
+/// User bank DTOs.
+mod user_bank;
+pub use user_bank::*;
 
-/// Manage account DTOs.
-mod manage_account;
-pub use manage_account::*;
+/// Manage user DTOs.
+mod manage_user;
+pub use manage_user::*;
 
-/// Account Identity DTOs.
-mod account_identity;
-pub use account_identity::*;
+/// User Identity DTOs.
+mod user_identity;
+pub use user_identity::*;
 
 /// Canister hooks DTOs.
 mod canister;

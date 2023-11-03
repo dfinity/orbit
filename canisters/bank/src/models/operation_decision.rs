@@ -1,4 +1,4 @@
-use super::{AccountId, OperationStatus};
+use super::{OperationStatus, UserId};
 use crate::errors::OperationError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -10,11 +10,11 @@ use ic_canister_macros::stable_object;
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OperationDecision {
-    /// The account id that this operation task is assigned to.
-    pub account_id: AccountId,
-    /// If the operation is marked as read by the account that it is associated with.
+    /// The user id that this operation task is assigned to.
+    pub user_id: UserId,
+    /// If the operation is marked as read by the user that it is associated with.
     pub read: bool,
-    /// The status is provided by the associated account.
+    /// The status is provided by the associated user.
     pub status: OperationStatus,
     /// Optional reason for the operation status.
     pub status_reason: Option<String>,
@@ -90,7 +90,7 @@ mod tests {
 
     fn mock_decision() -> OperationDecision {
         OperationDecision {
-            account_id: [0; 16],
+            user_id: [0; 16],
             read: false,
             status: OperationStatus::Rejected,
             status_reason: None,

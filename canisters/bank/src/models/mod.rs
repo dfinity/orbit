@@ -2,11 +2,8 @@
 //!
 //! This module contains the storable models for the Bank canister.
 
-mod wallet;
-pub use wallet::*;
-
-mod wallet_account;
-pub use wallet_account::*;
+mod account;
+pub use account::*;
 
 mod blockchain;
 pub use blockchain::*;
@@ -17,14 +14,14 @@ pub use access_role::*;
 mod blockchain_standard;
 pub use blockchain_standard::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
-mod wallet_policy;
-pub use wallet_policy::*;
+mod account_policy;
+pub use account_policy::*;
 
-mod wallet_balance;
-pub use wallet_balance::*;
+mod account_balance;
+pub use account_balance::*;
 
 mod transfer;
 pub use transfer::*;

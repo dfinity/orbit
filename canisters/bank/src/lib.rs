@@ -1,6 +1,6 @@
 //! # Bank canister
 //!
-//! The bank canister provides a comphehensive set of APIs for managing wallets and crypto assets.
+//! The bank canister provides a comphehensive set of APIs for managing crypto assets.
 
 pub mod controllers;
 pub mod core;

@@ -1,48 +1,55 @@
-use super::TimestampRfc3339;
-use candid::{CandidType, Deserialize, Principal};
+use super::UserIdDTO;
+use candid::{CandidType, Deserialize};
 
 pub type AccountIdDTO = String;
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum AccountRoleDTO {
-    Admin = 0,
-    User = 1,
-    Guest = 2,
-}
+pub type UuidDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
     pub id: AccountIdDTO,
-    pub identities: Vec<Principal>,
-    pub unconfirmed_identities: Vec<Principal>,
-    pub access_roles: Vec<AccountRoleDTO>,
-    pub last_modification_timestamp: TimestampRfc3339,
+    pub owners: Vec<UuidDTO>,
+    pub name: Option<String>,
+    pub address: String,
+    pub blockchain: String,
+    pub standard: String,
+    pub symbol: String,
+    pub decimals: u32,
+    pub balance: Option<AccountBalanceInfoDTO>,
+    pub policies: Vec<AccountPolicyDTO>,
+    pub metadata: Vec<(String, String)>,
+    pub last_modification_timestamp: String,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct RegisterAccountInput {
-    pub identities: Vec<Principal>,
+pub enum ApprovalThresholdPolicyDTO {
+    VariableThreshold(u8),
+    FixedThreshold(u8),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct RegisterAccountResponse {
-    pub account: AccountDTO,
+pub enum AccountPolicyDTO {
+    #[serde(rename = "approval_threshold")]
+    ApprovalThreshold(ApprovalThresholdPolicyDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditAccountInput {
-    pub account_id: AccountIdDTO,
-    pub identities: Option<Vec<Principal>>,
+pub struct CreateAccountInput {
+    pub owners: Vec<UserIdDTO>,
+    pub name: Option<String>,
+    pub blockchain: String,
+    pub standard: String,
+    pub policies: Vec<AccountPolicyDTO>,
+    pub metadata: Option<Vec<(String, String)>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditAccountResponse {
+pub struct CreateAccountResponse {
     pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccountInput {
-    pub account_id: Option<AccountIdDTO>,
+    pub account_id: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -51,11 +58,31 @@ pub struct GetAccountResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ConfirmAccountInput {
-    pub account_id: AccountIdDTO,
+pub struct FetchAccountBalancesInput {
+    pub account_ids: Vec<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ConfirmAccountResponse {
-    pub account: AccountDTO,
+pub struct AccountBalanceDTO {
+    pub account_id: String,
+    pub balance: candid::Nat,
+    pub decimals: u32,
+    pub last_update_timestamp: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountBalanceInfoDTO {
+    pub balance: candid::Nat,
+    pub decimals: u32,
+    pub last_update_timestamp: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct FetchAccountBalancesResponse {
+    pub balances: Vec<AccountBalanceDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListAccountResponse {
+    pub accounts: Vec<AccountDTO>,
 }

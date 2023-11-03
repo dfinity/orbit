@@ -5,7 +5,7 @@ use crate::{
     core::ic_cdk::api::id as bank_canister_self_id,
     errors::BlockchainApiError,
     mappers::HelperMapper,
-    models::{Blockchain, BlockchainStandard, Transfer, Wallet, WalletId, METADATA_MEMO_KEY},
+    models::{Account, AccountId, Blockchain, BlockchainStandard, Transfer, METADATA_MEMO_KEY},
 };
 use async_trait::async_trait;
 use byteorder::{BigEndian, ByteOrder};
@@ -29,7 +29,7 @@ pub const ICP_TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY: &str = "block_heig
 
 #[derive(Debug)]
 pub struct InternetComputer {
-    /// This canister id is used to derive all the different wallets subaccount ids.
+    /// This canister id is used to derive all the different bank_accounts subaccount ids.
     bank_canister_id: Principal,
 }
 
@@ -73,47 +73,47 @@ impl InternetComputer {
         Principal::from_text(Self::ICP_LEDGER_CANISTER_ID).unwrap()
     }
 
-    /// Generates the corresponded subaccount id for the given wallet id.
+    /// Generates the corresponded subaccount id for the given bank_account id.
     ///
-    /// The subaccount id is a 32 bytes array that is used to identify a wallet in the ICP ledger.
-    fn subaccount_from_wallet_id(&self, wallet_id: &WalletId) -> [u8; 32] {
-        let len = wallet_id.len();
+    /// The subaccount id is a 32 bytes array that is used to identify a bank_account in the ICP ledger.
+    fn subaccount_from_bank_account_id(&self, bank_account_id: &AccountId) -> [u8; 32] {
+        let len = bank_account_id.len();
         let mut subaccount_id = [0u8; 32];
-        subaccount_id[0..len].copy_from_slice(&wallet_id[0..len]);
+        subaccount_id[0..len].copy_from_slice(&bank_account_id[0..len]);
 
         subaccount_id
     }
 
-    /// Creates the corresponded wallet account id for the given wallet id, which is the concatenation
-    /// of the bank canister id and the wallet uuid as the subaccount id.
+    /// Creates the corresponded bank_account account id for the given bank_account id, which is the concatenation
+    /// of the bank canister id and the bank_account uuid as the subaccount id.
     ///
-    /// The wallet account id is used to identify a wallet in the ICP ledger.
-    pub fn wallet_to_ledger_account(&self, wallet_id: &WalletId) -> AccountIdentifier {
-        let subaccount = self.subaccount_from_wallet_id(wallet_id);
+    /// The bank_account account id is used to identify a bank_account in the ICP ledger.
+    pub fn bank_account_to_ledger_account(&self, bank_account_id: &AccountId) -> AccountIdentifier {
+        let subaccount = self.subaccount_from_bank_account_id(bank_account_id);
 
         AccountIdentifier::new(&self.bank_canister_id, &Subaccount(subaccount))
     }
 
-    /// Generates the corresponded ledger address for the given wallet id.
+    /// Generates the corresponded ledger address for the given bank_account id.
     ///
     /// This address is used for token transfers.
-    pub fn wallet_address(&self, wallet_id: &WalletId) -> String {
-        let account = self.wallet_to_ledger_account(wallet_id);
+    pub fn bank_account_address(&self, bank_account_id: &AccountId) -> String {
+        let account = self.bank_account_to_ledger_account(bank_account_id);
 
         account.to_hex()
     }
 
-    /// Returns the latest balance of the given wallet.
-    pub async fn balance(&self, wallet: &Wallet) -> BlockchainApiResult<u64> {
+    /// Returns the latest balance of the given bank_account.
+    pub async fn balance(&self, bank_account: &Account) -> BlockchainApiResult<u64> {
         let balance = account_balance(
             Self::ledger_canister_id(),
             AccountBalanceArgs {
-                account: self.wallet_to_ledger_account(&wallet.id),
+                account: self.bank_account_to_ledger_account(&bank_account.id),
             },
         )
         .await
         .map_err(|_| BlockchainApiError::FetchBalanceFailed {
-            wallet_id: Uuid::from_bytes(wallet.id).hyphenated().to_string(),
+            account_id: Uuid::from_bytes(bank_account.id).hyphenated().to_string(),
         })?;
 
         Ok(balance.e8s())
@@ -129,7 +129,7 @@ impl InternetComputer {
 
     pub async fn submit_transfer(
         &self,
-        wallet: Wallet,
+        bank_account: Account,
         bank_transfer: Transfer,
     ) -> Result<u64, ApiError> {
         let current_time = cdk::api::time();
@@ -148,7 +148,9 @@ impl InternetComputer {
                 created_at_time: Some(Timestamp {
                     timestamp_nanos: current_time,
                 }),
-                from_subaccount: Some(Subaccount(self.subaccount_from_wallet_id(&wallet.id))),
+                from_subaccount: Some(Subaccount(
+                    self.subaccount_from_bank_account_id(&bank_account.id),
+                )),
                 memo: Memo(memo),
                 to: AccountIdentifier::from_hex(&bank_transfer.to_address).unwrap(),
             },
@@ -183,23 +185,23 @@ impl InternetComputer {
 
 #[async_trait]
 impl BlockchainApi for InternetComputer {
-    async fn generate_address(&self, wallet: &Wallet) -> BlockchainApiResult<String> {
-        Ok(self.wallet_address(&wallet.id))
+    async fn generate_address(&self, bank_account: &Account) -> BlockchainApiResult<String> {
+        Ok(self.bank_account_address(&bank_account.id))
     }
 
-    async fn balance(&self, wallet: &Wallet) -> BlockchainApiResult<BigUint> {
-        let balance = self.balance(wallet).await?;
+    async fn balance(&self, bank_account: &Account) -> BlockchainApiResult<BigUint> {
+        let balance = self.balance(bank_account).await?;
 
         Ok(BigUint::from(balance))
     }
 
-    async fn decimals(&self, _wallet: &Wallet) -> BlockchainApiResult<u32> {
+    async fn decimals(&self, _bank_account: &Account) -> BlockchainApiResult<u32> {
         Ok(self.decimals())
     }
 
     async fn transaction_fee(
         &self,
-        _wallet: &Wallet,
+        _bank_account: &Account,
     ) -> BlockchainApiResult<BlockchainTransactionFee> {
         Ok(BlockchainTransactionFee {
             fee: BigUint::from(self.transaction_fee()),
@@ -213,11 +215,11 @@ impl BlockchainApi for InternetComputer {
 
     async fn submit_transaction(
         &self,
-        wallet: &Wallet,
+        bank_account: &Account,
         transfer: &Transfer,
     ) -> BlockchainApiResult<BlockchainTransactioSubmitted> {
         let block_height = self
-            .submit_transfer(wallet.clone(), transfer.clone())
+            .submit_transfer(bank_account.clone(), transfer.clone())
             .await?;
 
         Ok(BlockchainTransactioSubmitted {

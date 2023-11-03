@@ -8,8 +8,8 @@ use std::cell::RefCell;
 pub type Memory = RestrictedMemory<DefaultMemoryImpl>;
 pub type ConfigCell = Cell<CanisterState, Memory>;
 
-pub const ACCOUNT_MEMORY_ID: MemoryId = MemoryId::new(1);
-pub const ACCOUNT_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
+pub const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
+pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
 
 thread_local! {
   /// Static configuration of the canister.

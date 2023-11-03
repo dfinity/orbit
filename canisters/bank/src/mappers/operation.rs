@@ -14,8 +14,8 @@ impl OperationMapper {
     pub fn to_dto(operation: Operation, context: OperationContext) -> OperationDTO {
         OperationDTO {
             id: Uuid::from_bytes(operation.id).hyphenated().to_string(),
-            originator_account_id: operation
-                .originator_account_id
+            proposed_by: operation
+                .proposed_by
                 .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
             status: operation.status.into(),
             metadata: operation.metadata,
@@ -28,7 +28,7 @@ impl OperationMapper {
                 .collect(),
             context: OperationContextDTO {
                 transfer: context.transfer.map(|transfer| transfer.to_dto()),
-                wallet: context.wallet.map(|wallet| wallet.to_dto()),
+                account: context.account.map(|account| account.to_dto()),
             },
         }
     }

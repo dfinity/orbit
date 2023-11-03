@@ -24,7 +24,7 @@ export interface SettingsForm {
 }
 
 export interface SettingsFormValidationRules {
-  accountName: FormValidationRules;
+  userName: FormValidationRules;
   bankName: FormValidationRules;
   identityName: FormValidationRules;
   validPrincipal: FormValidationRules;
@@ -84,7 +84,7 @@ export const useSettingsFormStore = defineStore('settingsForm', {
     validationRules(): SettingsFormValidationRules {
       return {
         // TODO: the length of these fields should be sent from the backend
-        accountName: [maxLengthRule(100, i18n.global.t('terms.account_name'))],
+        userName: [maxLengthRule(100, i18n.global.t('terms.user_name'))],
         identityName: [maxLengthRule(100, i18n.global.t('terms.identity_name'))],
         bankName: [maxLengthRule(100, i18n.global.t('terms.bank_name'))],
         validPrincipal: [requiredRule, validPrincipalRule],
@@ -101,24 +101,24 @@ export const useSettingsFormStore = defineStore('settingsForm', {
     },
     async initialize(): Promise<void> {
       this.reset();
-      const account = await services().controlPanel.fetchAccount();
+      const user = await services().controlPanel.getCurrentUser();
 
-      this.form.name = account.name?.[0] ?? null;
-      this.form.mainBank = account.main_bank?.[0]?.toText() ?? null;
-      account.banks.forEach(bank => {
+      this.form.name = user.name?.[0] ?? null;
+      this.form.mainBank = user.main_bank?.[0]?.toText() ?? null;
+      user.banks.forEach(bank => {
         this.form.banks.push({
           name: bank.name?.[0] ?? null,
           canisterId: bank.canister_id.toText(),
         });
       });
-      account.identities.forEach(confirmed => {
+      user.identities.forEach(confirmed => {
         this.form.identities.push({
           name: confirmed.name?.[0] ?? null,
           principal: confirmed.identity.toText(),
           confirmed: true,
         });
       });
-      account.unconfirmed_identities.forEach(unconfirmed => {
+      user.unconfirmed_identities.forEach(unconfirmed => {
         this.form.identities.push({
           name: unconfirmed.name?.[0] ?? null,
           principal: unconfirmed.identity.toText(),
@@ -173,7 +173,7 @@ export const useSettingsFormStore = defineStore('settingsForm', {
 
       const controlPanelService = services().controlPanel;
       await controlPanelService
-        .editAccount({
+        .editUser({
           name: this.form.name ? [this.form.name] : [],
           main_bank: this.form.mainBank ? [Principal.fromText(this.form.mainBank)] : [],
           banks: [
@@ -189,7 +189,7 @@ export const useSettingsFormStore = defineStore('settingsForm', {
             })),
           ],
         })
-        .then(account => {
+        .then(user => {
           this.alert = {
             show: true,
             type: 'success',
@@ -198,9 +198,9 @@ export const useSettingsFormStore = defineStore('settingsForm', {
 
           const auth = useAuthStore();
           const bank = useBankStore();
-          auth.editAccount({ name: account.name?.[0] ?? null });
+          auth.editUser({ name: user.name?.[0] ?? null });
           bank.useBanks(
-            account.banks.map(bank => ({
+            user.banks.map(bank => ({
               canisterId: bank.canister_id.toText(),
               name: bank.name?.[0] ?? null,
             })),

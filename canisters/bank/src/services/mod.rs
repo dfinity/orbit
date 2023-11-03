@@ -1,13 +1,13 @@
 //! Canister services used to handle the necessary business logic for the bank canister.
 
-mod wallet;
-pub use wallet::*;
+mod account;
+pub use account::*;
 
 mod transfer;
 pub use transfer::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod operation;
 pub use operation::*;

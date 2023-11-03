@@ -3,30 +3,30 @@ import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/IcAgent';
 import { idlFactory } from '~/generated/bank';
 import {
-  Account,
+  User,
   Error as ApiError,
   BankFeatures,
-  ConfirmAccountInput,
-  CreateWalletInput,
-  EditAccountInput,
+  ConfirmUserIdentityInput,
+  CreateAccountInput,
+  EditUserInput,
   EditOperationInput,
-  FetchWalletBalancesInput,
-  GetAccountInput,
+  FetchAccountBalancesInput,
+  GetUserInput,
   GetOperationInput,
   GetTransferInput,
   GetTransfersInput,
-  GetWalletInput,
+  GetAccountInput,
   ListOperationsInput,
-  ListWalletOperationsInput,
-  ListWalletTransfersInput,
+  ListAccountOperationsInput,
+  ListAccountTransfersInput,
   Operation,
   OperationId,
-  RegisterAccountInput,
+  RegisterUserInput,
   Transfer,
   TransferInput,
   TransferListItem,
-  Wallet,
-  WalletBalance,
+  Account,
+  AccountBalance,
   _SERVICE,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
@@ -34,7 +34,7 @@ import { Maybe } from '~/types';
 export class BankService {
   private actor: ActorSubclass<_SERVICE>;
 
-  public static ERR_ACCOUNT_IDENTITY_NOT_FOUND = 'NOT_FOUND_ACCOUNT_IDENTITY';
+  public static ERR_USER_IDENTITY_NOT_FOUND = 'NOT_FOUND_USER_IDENTITY';
 
   constructor(
     private agent: HttpAgent = icAgent.get(),
@@ -55,18 +55,18 @@ export class BankService {
     return this;
   }
 
-  async getAccount(input: GetAccountInput): Promise<Account> {
-    const result = await this.actor.get_account(input);
+  async getUser(input: GetUserInput): Promise<User> {
+    const result = await this.actor.get_user(input);
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.account;
+    return result.Ok.user;
   }
 
-  async myAccount(): Promise<Maybe<Account>> {
-    return this.getAccount({ account_id: [] }).catch((err: ApiError) => {
-      if (err.code === BankService.ERR_ACCOUNT_IDENTITY_NOT_FOUND) {
+  async myUser(): Promise<Maybe<User>> {
+    return this.getUser({ user_id: [] }).catch((err: ApiError) => {
+      if (err.code === BankService.ERR_USER_IDENTITY_NOT_FOUND) {
         return null;
       }
 
@@ -74,24 +74,24 @@ export class BankService {
     });
   }
 
-  async register(input: RegisterAccountInput): Promise<Account> {
-    const result = await this.actor.register_account(input);
+  async register(input: RegisterUserInput): Promise<User> {
+    const result = await this.actor.register_user(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.account;
+    return result.Ok.user;
   }
 
-  async editAccount(input: EditAccountInput): Promise<Account> {
-    const result = await this.actor.edit_account(input);
+  async editUser(input: EditUserInput): Promise<User> {
+    const result = await this.actor.edit_user(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.account;
+    return result.Ok.user;
   }
 
   async features(): Promise<BankFeatures> {
@@ -114,8 +114,8 @@ export class BankService {
     return result.Ok.operations;
   }
 
-  async listWalletOperations(input: ListWalletOperationsInput): Promise<Operation[]> {
-    const result = await this.actor.list_wallet_operations(input);
+  async listAccountOperations(input: ListAccountOperationsInput): Promise<Operation[]> {
+    const result = await this.actor.list_account_operations(input);
 
     if ('Err' in result) {
       throw result.Err;
@@ -156,28 +156,28 @@ export class BankService {
     return result.Ok.operation;
   }
 
-  async listWallets(): Promise<Wallet[]> {
-    const result = await this.actor.list_wallets();
+  async listAccounts(): Promise<Account[]> {
+    const result = await this.actor.list_accounts();
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.wallets;
+    return result.Ok.accounts;
   }
 
-  async getWallet(input: GetWalletInput): Promise<Wallet> {
-    const result = await this.actor.get_wallet(input);
+  async getAccount(input: GetAccountInput): Promise<Account> {
+    const result = await this.actor.get_account(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.wallet;
+    return result.Ok.account;
   }
 
-  async fetchWalletBalances(input: FetchWalletBalancesInput): Promise<WalletBalance[]> {
-    const result = await this.actor.fetch_wallet_balances(input);
+  async fetchAccountBalances(input: FetchAccountBalancesInput): Promise<AccountBalance[]> {
+    const result = await this.actor.fetch_account_balances(input);
 
     if ('Err' in result) {
       throw result.Err;
@@ -186,18 +186,18 @@ export class BankService {
     return result.Ok.balances;
   }
 
-  async createWallet(input: CreateWalletInput): Promise<Wallet> {
-    const result = await this.actor.create_wallet(input);
+  async createAccount(input: CreateAccountInput): Promise<Account> {
+    const result = await this.actor.create_account(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.wallet;
+    return result.Ok.account;
   }
 
-  async listWalletTransfers(input: ListWalletTransfersInput): Promise<TransferListItem[]> {
-    const result = await this.actor.list_wallet_transfers(input);
+  async listAccountTransfers(input: ListAccountTransfersInput): Promise<TransferListItem[]> {
+    const result = await this.actor.list_account_transfers(input);
 
     if ('Err' in result) {
       throw result.Err;
@@ -236,13 +236,13 @@ export class BankService {
     return result.Ok.transfer;
   }
 
-  async confirmAccount(input: ConfirmAccountInput): Promise<Account> {
-    const result = await this.actor.confirm_account(input);
+  async confirmUserIdentity(input: ConfirmUserIdentityInput): Promise<User> {
+    const result = await this.actor.confirm_user_identity(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.account;
+    return result.Ok.user;
   }
 }

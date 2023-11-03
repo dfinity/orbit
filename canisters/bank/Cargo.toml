@@ -13,7 +13,7 @@ repository = "https://github.com/dfinity/orbit-wallet"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.9.6"
+candid = { version = "0.9.10", features = ["parser"] }
 ic-cdk = "0.11"
 ic-cdk-macros = "0.8"
 ic-ledger-types = "0.8"
@@ -35,4 +35,4 @@ byteorder = "1.5"
 
 [dev-dependencies]
 rstest = "0.18.2"
-tokio = { version = "1.32.0", features = ["full"] }
+tokio = { version = "1.33.0", features = ["full"] }

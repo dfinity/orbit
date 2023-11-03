@@ -1,7 +1,7 @@
 //! Various error types for failure scenarios.
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod mapper;
 pub use mapper::*;

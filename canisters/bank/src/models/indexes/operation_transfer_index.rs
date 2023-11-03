@@ -82,7 +82,7 @@ mod tests {
                 OPERATION_METADATA_KEY_TRANSFER_ID.to_string(),
                 Uuid::from_bytes(transfer_id).to_string(),
             )],
-            originator_account_id: None,
+            proposed_by: None,
             status: OperationStatus::Pending,
         };
 
@@ -105,7 +105,7 @@ mod tests {
                 OPERATION_METADATA_KEY_TRANSFER_ID.to_string(),
                 "abcd".to_string(),
             )],
-            originator_account_id: None,
+            proposed_by: None,
             status: OperationStatus::Pending,
         };
 

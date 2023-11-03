@@ -1,20 +1,24 @@
+use super::UserService;
 use crate::{
-    core::{generate_uuid_v4, CallContext, WithCallContext},
+    core::{generate_uuid_v4, CallContext, WithCallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
     errors::AccountError,
-    mappers::{AccountMapper, HelperMapper},
-    models::{AccessRole, Account, AccountId},
+    factories::blockchains::BlockchainApiFactory,
+    mappers::{AccountMapper, BlockchainMapper, HelperMapper},
+    models::{Account, AccountBalance, AccountId},
     repositories::AccountRepository,
-    transport::{ConfirmAccountInput, EditAccountInput, RegisterAccountInput},
+    transport::{AccountBalanceDTO, CreateAccountInput, FetchAccountBalancesInput},
 };
 use candid::Principal;
-use ic_canister_core::api::ServiceResult;
-use ic_canister_core::model::ModelValidator;
-use ic_canister_core::{repository::Repository, types::UUID};
+use ic_canister_core::{
+    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
+};
+use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct AccountService {
     call_context: CallContext,
+    user_service: UserService,
     account_repository: AccountRepository,
 }
 
@@ -22,6 +26,7 @@ impl WithCallContext for AccountService {
     fn with_call_context(call_context: CallContext) -> Self {
         Self {
             call_context: call_context.clone(),
+            user_service: UserService::with_call_context(call_context.clone()),
             ..Default::default()
         }
     }
@@ -29,173 +34,164 @@ impl WithCallContext for AccountService {
 
 impl AccountService {
     /// Returns the account associated with the given account id.
-    pub fn get_account(&self, account_id: &AccountId) -> ServiceResult<Account> {
-        let account = self
-            .account_repository
-            .get(&Account::key(*account_id))
-            .ok_or(AccountError::NotFoundAccount {
-                account: Uuid::from_bytes(account_id.to_owned())
-                    .hyphenated()
-                    .to_string(),
-            })?;
-
-        self.assert_account_access(&account)?;
-
-        Ok(account)
-    }
-
-    /// Returns the account associated with the given user identity.
-    pub fn get_account_by_identity(&self, identity: &Principal) -> ServiceResult<Account> {
-        let account = self
-            .account_repository
-            .find_account_by_identity(identity)
-            .ok_or(AccountError::NotFoundAccountIdentity {
-                identity: identity.to_text(),
-            })?;
-
-        self.assert_account_access(&account)?;
-
-        Ok(account)
-    }
-
-    /// Removes the admin role from the given identity if it has an associated account.
-    pub async fn remove_admin(&self, identity: &Principal) -> ServiceResult<()> {
-        if self.call_context.caller() == *identity {
-            Err(AccountError::CannotRemoveOwnAdminRole)?
-        }
-
-        let account = self.account_repository.find_account_by_identity(identity);
-        if let Some(mut account) = account {
-            account
-                .access_roles
-                .retain(|role| *role != AccessRole::Admin);
+    pub fn get_account(&self, id: &AccountId) -> ServiceResult<Account> {
+        let account_key = Account::key(*id);
+        let account =
             self.account_repository
-                .insert(account.to_key(), account.to_owned());
-        }
+                .get(&account_key)
+                .ok_or(AccountError::AccountNotFound {
+                    id: Uuid::from_bytes(*id).hyphenated().to_string(),
+                })?;
 
-        Ok(())
+        self.assert_account_access(&account)?;
+
+        Ok(account)
     }
 
-    /// Creates a new account for the selected user identities.
+    /// Returns a list of all the accounts of the requested owner identity.
     ///
-    /// If the caller is providing other identities than the caller identity, they will be
-    /// added as unconfirmed identities if no account is associated with them.
-    pub async fn register_account(
+    /// If the caller has a different identity than the requested owner, then the call
+    /// will fail with a forbidden error if the user is not an admin.
+    pub fn list_accounts(&self, owner_identity: Principal) -> ServiceResult<Vec<Account>> {
+        let user = self.user_service.get_user_by_identity(&owner_identity)?;
+
+        let accounts = self.account_repository.find_by_user_id(user.id);
+
+        Ok(accounts)
+    }
+
+    /// Creates a new account, if the caller has not added itself as one of the owners of the account,
+    /// it will be added automatically.
+    ///
+    /// This operation will fail if the user does not have an associated user.
+    pub async fn create_account(&self, input: CreateAccountInput) -> ServiceResult<Account> {
+        let caller_user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
+
+        let mut owners_users: HashSet<UUID> = HashSet::from_iter(vec![caller_user.id]);
+        for user_id in input.owners.iter() {
+            let user_id = HelperMapper::to_uuid(user_id.clone())?;
+            self.user_service.assert_user_exists(user_id.as_bytes())?;
+
+            owners_users.insert(*user_id.as_bytes());
+        }
+
+        let uuid = generate_uuid_v4().await;
+        let key = Account::key(*uuid.as_bytes());
+        let blockchain_api = BlockchainApiFactory::build(
+            &BlockchainMapper::to_blockchain(input.blockchain.clone())?,
+            &BlockchainMapper::to_blockchain_standard(input.standard.clone())?,
+        )?;
+        let mut new_account = AccountMapper::from_create_input(
+            input,
+            *uuid.as_bytes(),
+            None,
+            owners_users.iter().copied().collect(),
+        )?;
+
+        // The account address is generated after the account is created from the user input and
+        // all the validations are successfully completed.
+        if new_account.address.is_empty() {
+            let account_address = blockchain_api.generate_address(&new_account).await?;
+            new_account.address = account_address;
+        }
+
+        // The decimals of the asset are fetched from the blockchain and stored in the account,
+        // depending on the blockchain standard used by the account the decimals used by each asset can vary.
+        new_account.decimals = blockchain_api.decimals(&new_account).await?;
+
+        // Validations happen after all the fields are set in the account to avoid partial data in the repository.
+        new_account.validate()?;
+
+        // Inserting the account into the repository and its associations is the last step of the account creation
+        // process to avoid potential consistency issues due to the fact that some of the calls to create the account
+        // happen in an asynchronous way.
+        self.account_repository.insert(key, new_account.clone());
+
+        Ok(new_account)
+    }
+
+    /// Returns the balances of the requested accounts.
+    ///
+    /// If the balance is considered fresh it will be returned, otherwise it will be fetched from the blockchain.
+    pub async fn fetch_account_balances(
         &self,
-        input: RegisterAccountInput,
-        mut roles: Vec<AccessRole>,
-    ) -> ServiceResult<Account> {
-        let caller_identity = self.call_context.caller();
-        self.assert_identity_has_no_associated_account(&caller_identity)?;
-        let account_id = generate_uuid_v4().await;
-        let identities = match input.identities.is_empty() {
-            true => vec![caller_identity],
-            false => {
-                let mut identities = input.identities;
-                if !identities.contains(&caller_identity) {
-                    identities.push(caller_identity);
+        input: FetchAccountBalancesInput,
+    ) -> ServiceResult<Vec<AccountBalanceDTO>> {
+        if input.account_ids.is_empty() || input.account_ids.len() > 5 {
+            Err(AccountError::AccountBalancesBatchRange { min: 1, max: 5 })?
+        }
+
+        let account_ids = input
+            .account_ids
+            .iter()
+            .map(|id| HelperMapper::to_uuid(id.clone()))
+            .collect::<Result<Vec<Uuid>, _>>()?;
+
+        let accounts = self
+            .account_repository
+            .find_by_ids(account_ids.iter().map(|id| *id.as_bytes()).collect());
+
+        for account in accounts.iter() {
+            self.assert_account_access(account)?;
+        }
+
+        let mut balances = Vec::new();
+        for mut account in accounts {
+            let balance_considered_fresh = match &account.balance {
+                Some(balance) => {
+                    let balance_age_ns = time() - balance.last_modification_timestamp;
+                    (balance_age_ns / 1_000_000) < ACCOUNT_BALANCE_FRESHNESS_IN_MS
                 }
+                None => false,
+            };
+            let balance: AccountBalance = match (&account.balance, balance_considered_fresh) {
+                (None, _) | (_, false) => {
+                    let blockchain_api =
+                        BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
+                    let fetched_balance = blockchain_api.balance(&account).await?;
+                    let new_balance = AccountBalance {
+                        balance: candid::Nat(fetched_balance),
+                        last_modification_timestamp: time(),
+                    };
 
-                identities
-            }
-        };
+                    account.balance = Some(new_balance.clone());
 
-        for new_identity in identities.iter() {
-            self.assert_identity_has_no_associated_account(new_identity)?;
+                    self.account_repository
+                        .insert(account.to_key(), account.clone());
+
+                    new_balance
+                }
+                (_, _) => account.balance.unwrap(),
+            };
+
+            balances.push(AccountMapper::to_balance_dto(
+                balance,
+                account.decimals,
+                account.id,
+            ));
         }
 
-        if !roles.contains(&AccessRole::User) {
-            roles.push(AccessRole::User);
-        }
-
-        let mut account = AccountMapper::from_roles(*account_id.as_bytes(), roles);
-
-        account.update_with(Some(identities), &caller_identity)?;
-        account.validate()?;
-
-        self.account_repository
-            .insert(account.to_key(), account.to_owned());
-
-        Ok(account)
-    }
-
-    /// Confirms the identity associated with the given account id and returns the updated account.
-    pub async fn confirm_account(&self, input: ConfirmAccountInput) -> ServiceResult<Account> {
-        let caller_identity = self.call_context.caller();
-        self.assert_identity_has_no_associated_account(&caller_identity)?;
-
-        let account_id = HelperMapper::to_uuid(input.account_id)?;
-        let mut account = self.get_account(account_id.as_bytes())?;
-
-        if !account.unconfirmed_identities.contains(&caller_identity) {
-            Err(AccountError::Forbidden {
-                account: Uuid::from_bytes(account.id).hyphenated().to_string(),
-            })?
-        }
-
-        account
-            .unconfirmed_identities
-            .retain(|i| *i != caller_identity);
-        account.identities.push(caller_identity);
-        account.validate()?;
-
-        self.account_repository
-            .insert(account.to_key(), account.to_owned());
-
-        Ok(account)
-    }
-
-    /// Edits the account associated with the given account id and returns the updated account.
-    pub async fn edit_account(&self, input: EditAccountInput) -> ServiceResult<Account> {
-        let caller_identity = self.call_context.caller();
-        let account_id = HelperMapper::to_uuid(input.account_id)?;
-        let mut account = self.get_account(account_id.as_bytes())?;
-
-        account.update_with(input.identities, &caller_identity)?;
-        account.validate()?;
-
-        self.account_repository
-            .insert(account.to_key(), account.to_owned());
-
-        Ok(account)
-    }
-
-    /// Asserts that the account exists from the given account id.
-    pub fn assert_account_exists(&self, account_id: &UUID) -> ServiceResult<()> {
-        self.account_repository
-            .get(&Account::key(*account_id))
-            .ok_or(AccountError::NotFoundAccount {
-                account: Uuid::from_bytes(*account_id).hyphenated().to_string(),
-            })?;
-
-        Ok(())
+        Ok(balances)
     }
 
     /// Checks if the caller has access to the given account.
     ///
-    /// Admins have access to all accounts.
-    fn assert_account_access(&self, account: &Account) -> ServiceResult<()> {
-        let is_account_owner = account.identities.contains(&self.call_context.caller())
-            || account
-                .unconfirmed_identities
-                .contains(&self.call_context.caller());
-        if !is_account_owner && !self.call_context.is_admin() {
-            Err(AccountError::Forbidden {
-                account: Uuid::from_bytes(account.id).hyphenated().to_string(),
-            })?
+    /// Canister controllers have access to all accounts.
+    pub fn assert_account_access(&self, account: &Account) -> ServiceResult<()> {
+        if self.call_context.is_admin() {
+            return Ok(());
         }
 
-        Ok(())
-    }
+        let caller_user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
 
-    /// Asserts that the given identity does not have an associated account.
-    fn assert_identity_has_no_associated_account(&self, identity: &Principal) -> ServiceResult<()> {
-        let account = self.account_repository.find_account_by_identity(identity);
+        let is_account_owner = account.owners.contains(&caller_user.id);
 
-        if let Some(account) = account {
-            Err(AccountError::IdentityAlreadyHasAccount {
-                account: Uuid::from_bytes(account.id).hyphenated().to_string(),
-            })?
+        if !is_account_owner {
+            Err(AccountError::Forbidden)?
         }
 
         Ok(())
@@ -205,157 +201,90 @@ impl AccountService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{core::test_utils, models::account_test_utils};
+    use crate::{
+        core::test_utils,
+        models::{account_test_utils::mock_account, user_test_utils::mock_user, User},
+        repositories::UserRepository,
+    };
 
     struct TestContext {
-        service: AccountService,
         repository: AccountRepository,
+        service: AccountService,
+        caller_user: User,
     }
 
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+        let mut user = mock_user();
+        user.identities = vec![call_context.caller()];
+
+        UserRepository::default().insert(user.to_key(), user.clone());
 
         TestContext {
             repository: AccountRepository::default(),
             service: AccountService::with_call_context(call_context),
+            caller_user: user,
         }
     }
 
     #[test]
     fn get_account() {
-        let ctx: TestContext = setup();
-        let mut account = account_test_utils::mock_account();
-        account.identities = vec![ctx.service.call_context.caller()];
+        let ctx = setup();
+        let mut account = mock_account();
+        account.owners.push(ctx.caller_user.id);
 
         ctx.repository.insert(account.to_key(), account.clone());
 
         let result = ctx.service.get_account(&account.id);
+
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), account);
     }
 
     #[test]
-    fn get_account_by_identity() {
-        let ctx: TestContext = setup();
-        let mut account = account_test_utils::mock_account();
-        account.identities = vec![ctx.service.call_context.caller()];
+    fn fail_get_account_not_allowed() {
+        let ctx = setup();
+        let account = mock_account();
 
         ctx.repository.insert(account.to_key(), account.clone());
 
-        let result = ctx.service.get_account_by_identity(&account.identities[0]);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), account);
-    }
+        let result = ctx.service.get_account(&account.id);
 
-    #[test]
-    fn not_allowed_get_account_by_identity() {
-        let ctx: TestContext = setup();
-        let mut account = account_test_utils::mock_account();
-        account.identities = vec![Principal::from_slice(&[255; 29])];
-
-        ctx.repository.insert(account.to_key(), account.clone());
-
-        let result = ctx.service.get_account_by_identity(&account.identities[0]);
         assert!(result.is_err());
     }
 
     #[tokio::test]
-    async fn can_remove_admin() {
-        let ctx: TestContext = setup();
-        let mut caller = account_test_utils::mock_account();
-        caller.identities = vec![ctx.service.call_context.caller()];
-        caller.access_roles = vec![AccessRole::Admin];
-        let mut admin = account_test_utils::mock_account();
-        admin.identities = vec![Principal::from_slice(&[255; 29])];
-        admin.access_roles = vec![AccessRole::Admin, AccessRole::User];
+    async fn create_account() {
+        let ctx = setup();
+        let input = CreateAccountInput {
+            name: Some("foo".to_string()),
+            owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            metadata: None,
+            policies: vec![],
+        };
 
-        ctx.repository.insert(caller.to_key(), caller.clone());
-        ctx.repository.insert(admin.to_key(), admin.clone());
+        let result = ctx.service.create_account(input).await;
 
-        let result = ctx.service.remove_admin(&admin.identities[0]).await;
         assert!(result.is_ok());
-
-        let admin = ctx.repository.get(&admin.to_key()).unwrap();
-        assert_eq!(admin.access_roles, vec![AccessRole::User]);
     }
 
     #[tokio::test]
-    async fn fail_remove_self_admin() {
-        let ctx: TestContext = setup();
-        let mut admin = account_test_utils::mock_account();
-        admin.identities = vec![ctx.service.call_context.caller()];
-        admin.access_roles = vec![AccessRole::Admin];
+    async fn fail_create_account_unknown_blockchain() {
+        let ctx = setup();
+        let input = CreateAccountInput {
+            name: Some("foo".to_string()),
+            owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
+            blockchain: "unknown".to_string(),
+            standard: "native".to_string(),
+            metadata: None,
+            policies: vec![],
+        };
 
-        ctx.repository.insert(admin.to_key(), admin.clone());
+        let result = ctx.service.create_account(input).await;
 
-        let result = ctx.service.remove_admin(&admin.identities[0]).await;
         assert!(result.is_err());
-    }
-
-    #[tokio::test]
-    async fn register_account_happy_path() {
-        let ctx: TestContext = setup();
-        let input = RegisterAccountInput {
-            identities: vec![Principal::from_slice(&[2; 29])],
-        };
-
-        let result = ctx.service.register_account(input, vec![]).await;
-        assert!(result.is_ok());
-
-        let account = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(account.identities, vec![ctx.service.call_context.caller()]);
-        assert_eq!(
-            account.unconfirmed_identities,
-            vec![Principal::from_slice(&[2; 29])]
-        );
-        assert_eq!(account.access_roles, vec![AccessRole::User]);
-    }
-
-    #[tokio::test]
-    async fn confirm_account_identity() {
-        let ctx: TestContext = setup();
-        let mut account = account_test_utils::mock_account();
-        account.identities = vec![Principal::anonymous()];
-        account.unconfirmed_identities = vec![ctx.service.call_context.caller()];
-
-        ctx.repository.insert(account.to_key(), account.clone());
-
-        let input = ConfirmAccountInput {
-            account_id: Uuid::from_bytes(account.id).hyphenated().to_string(),
-        };
-
-        let result = ctx.service.confirm_account(input).await;
-        assert!(result.is_ok());
-
-        let account = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(
-            account.identities,
-            vec![Principal::anonymous(), ctx.service.call_context.caller()]
-        );
-        assert!(account.unconfirmed_identities.is_empty());
-    }
-
-    #[tokio::test]
-    async fn edit_account_happy_path() {
-        let ctx: TestContext = setup();
-        let mut account = account_test_utils::mock_account();
-        account.identities = vec![Principal::anonymous()];
-        account.unconfirmed_identities = vec![ctx.service.call_context.caller()];
-
-        ctx.repository.insert(account.to_key(), account.clone());
-
-        let input = EditAccountInput {
-            account_id: Uuid::from_bytes(account.id).hyphenated().to_string(),
-            identities: Some(vec![ctx.service.call_context.caller()]),
-        };
-
-        let result = ctx.service.edit_account(input).await;
-        assert!(result.is_ok());
-
-        let account = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(account.identities, vec![ctx.service.call_context.caller()]);
-        assert!(account.unconfirmed_identities.is_empty());
     }
 }
