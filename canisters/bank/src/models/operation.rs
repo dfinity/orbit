@@ -1,4 +1,4 @@
-use super::{AccountId, OperationCode, OperationDecision, OperationStatus};
+use super::{OperationCode, OperationDecision, OperationStatus, UserId};
 use crate::errors::OperationError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -19,15 +19,15 @@ pub type OperationId = UUID;
 pub struct Operation {
     /// The operation id, which is a UUID.
     pub id: OperationId,
-    /// The account id that resulted in the operation creation.
+    /// The user id that resulted in the operation creation.
     ///
     /// When the operation is created by the system, this field is `None`.
-    pub originator_account_id: Option<AccountId>,
+    pub proposed_by: Option<UserId>,
     /// The status of the operation.
     pub status: OperationStatus,
     /// An operation code that represents the operation type, e.g. "transfer".
     pub code: OperationCode,
-    /// The decisions made by the accounts that this operation is assigned to.
+    /// The decisions made by the users that this operation is assigned to.
     pub decisions: Vec<OperationDecision>,
     /// The operation metadata key-value pairs, where the key is unique and the first entry in the tuple.
     /// E.g. "transfer_id" => "1234".
@@ -134,20 +134,20 @@ impl Operation {
         Operation::key(self.id.to_owned())
     }
 
-    pub fn accounts(&self) -> HashSet<AccountId> {
-        let mut accounts = HashSet::new();
-        if let Some(originator_account_id) = self.originator_account_id.to_owned() {
-            accounts.insert(originator_account_id);
+    pub fn users(&self) -> HashSet<UserId> {
+        let mut users = HashSet::new();
+        if let Some(proposed_by) = self.proposed_by.to_owned() {
+            users.insert(proposed_by);
         }
 
         self.decisions
             .iter()
-            .map(|decision| decision.account_id.to_owned())
-            .for_each(|account_id| {
-                accounts.insert(account_id);
+            .map(|decision| decision.user_id.to_owned())
+            .for_each(|user_id| {
+                users.insert(user_id);
             });
 
-        accounts
+        users
     }
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
@@ -213,7 +213,7 @@ mod tests {
         let mut operation = mock_operation();
         operation.decisions = vec![
             OperationDecision {
-                account_id: [0; 16],
+                user_id: [0; 16],
                 read: false,
                 status: OperationStatus::Rejected,
                 status_reason: None,
@@ -239,7 +239,7 @@ mod tests {
         let mut operation = mock_operation();
         operation.decisions = vec![
             OperationDecision {
-                account_id: [0; 16],
+                user_id: [0; 16],
                 read: false,
                 status: OperationStatus::Rejected,
                 status_reason: None,
@@ -262,11 +262,11 @@ pub mod operation_test_utils {
     pub fn mock_operation() -> Operation {
         Operation {
             id: [0; 16],
-            originator_account_id: Some([1; 16]),
+            proposed_by: Some([1; 16]),
             status: OperationStatus::Adopted,
             code: OperationCode::ApproveTransfer,
             decisions: vec![OperationDecision {
-                account_id: [1; 16],
+                user_id: [1; 16],
                 read: true,
                 status: OperationStatus::Adopted,
                 status_reason: None,

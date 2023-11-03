@@ -5,9 +5,6 @@
 mod wallet;
 pub use wallet::*;
 
-mod wallet_account;
-pub use wallet_account::*;
-
 mod blockchain;
 pub use blockchain::*;
 
@@ -17,8 +14,8 @@ pub use access_role::*;
 mod blockchain_standard;
 pub use blockchain_standard::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod wallet_policy;
 pub use wallet_policy::*;

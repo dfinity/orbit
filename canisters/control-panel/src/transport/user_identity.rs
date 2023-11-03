@@ -1,18 +1,18 @@
-use super::AccountDTO;
+use super::UserDTO;
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AccountIdentityDTO {
+pub struct UserIdentityDTO {
     pub identity: Principal,
     pub name: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AssociateIdentityWithAccountInput {
-    pub account_id: String,
+pub struct AssociateIdentityWithUserInput {
+    pub user_id: String,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct AssociateIdentityWithAccountResponse {
-    pub account: AccountDTO,
+pub struct AssociateIdentityWithUserResponse {
+    pub user: UserDTO,
 }

@@ -1,5 +1,5 @@
-use super::{AccountBank, AccountIdentity};
-use crate::errors::AccountError;
+use super::{UserBank, UserIdentity};
+use crate::errors::UserError;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -7,63 +7,63 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 
-pub type AccountId = UUID;
+pub type UserId = UUID;
 
-/// The key used to store an account identity in stable memory.
+/// The key used to store an user identity in stable memory.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct AccountKey {
-    /// The UUID that identifies the account.
-    pub id: AccountId,
+pub struct UserKey {
+    /// The UUID that identifies the user.
+    pub id: UserId,
 }
 
-/// The identity of an account.
+/// The identity of an user.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Account {
-    /// The UUID that identifies the account.
+pub struct User {
+    /// The UUID that identifies the user.
     pub id: UUID,
-    /// The name of the account (if any).
+    /// The name of the user (if any).
     pub name: Option<String>,
-    /// The shared bank to use for the account.
+    /// The shared bank to use for the user.
     pub main_bank: Option<Principal>,
     /// The status of the identity.
-    pub banks: Vec<AccountBank>,
-    /// The identifies associated with the account.
-    pub identities: Vec<AccountIdentity>,
-    /// The unconfirmed identifies associated with the account.
-    pub unconfirmed_identities: Vec<AccountIdentity>,
+    pub banks: Vec<UserBank>,
+    /// The identifies associated with the user.
+    pub identities: Vec<UserIdentity>,
+    /// The unconfirmed identifies associated with the user.
+    pub unconfirmed_identities: Vec<UserIdentity>,
     /// Last time the identity was updated.
     pub last_update_timestamp: Timestamp,
 }
 
-impl Account {
-    pub fn key(account_id: &UUID) -> AccountKey {
-        AccountKey { id: *account_id }
+impl User {
+    pub fn key(user_id: &UUID) -> UserKey {
+        UserKey { id: *user_id }
     }
 
-    pub fn to_key(&self) -> AccountKey {
-        Account::key(&self.id)
+    pub fn to_key(&self) -> UserKey {
+        User::key(&self.id)
     }
 }
 
-pub struct AccountValidator<'model> {
-    model: &'model Account,
+pub struct UserValidator<'model> {
+    model: &'model User,
 }
 
-impl<'model> AccountValidator<'model> {
+impl<'model> UserValidator<'model> {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
     pub const MAX_UNCONFIRMED_IDENTITIES: u8 = 9;
     pub const MAX_BANKS: u8 = 10;
 
-    pub fn new(model: &'model Account) -> Self {
+    pub fn new(model: &'model User) -> Self {
         Self { model }
     }
 
-    pub fn validate_identities(&self) -> ModelValidatorResult<AccountError> {
+    pub fn validate_identities(&self) -> ModelValidatorResult<UserError> {
         if self.model.identities.len() < Self::IDENTITIES_RANGE.0 as usize {
-            return Err(AccountError::ValidationError {
+            return Err(UserError::ValidationError {
                 info: format!(
                     "Too little identities, expected at least {} but got {}",
                     Self::IDENTITIES_RANGE.0,
@@ -73,7 +73,7 @@ impl<'model> AccountValidator<'model> {
         }
 
         if self.model.identities.len() > Self::IDENTITIES_RANGE.1 as usize {
-            return Err(AccountError::ValidationError {
+            return Err(UserError::ValidationError {
                 info: format!(
                     "Too many identities, expected at most {} but got {}",
                     Self::IDENTITIES_RANGE.1,
@@ -85,9 +85,9 @@ impl<'model> AccountValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_unconfirmed_identities(&self) -> ModelValidatorResult<AccountError> {
+    pub fn validate_unconfirmed_identities(&self) -> ModelValidatorResult<UserError> {
         if self.model.unconfirmed_identities.len() > Self::MAX_UNCONFIRMED_IDENTITIES as usize {
-            return Err(AccountError::ValidationError {
+            return Err(UserError::ValidationError {
                 info: format!(
                     "Too many unconfirmed identities, expected at most {} but got {}",
                     Self::MAX_UNCONFIRMED_IDENTITIES,
@@ -99,9 +99,9 @@ impl<'model> AccountValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_banks(&self) -> ModelValidatorResult<AccountError> {
+    pub fn validate_banks(&self) -> ModelValidatorResult<UserError> {
         if self.model.banks.len() > Self::MAX_BANKS as usize {
-            return Err(AccountError::ValidationError {
+            return Err(UserError::ValidationError {
                 info: format!(
                     "Too many banks, expected at most {} but got {}",
                     Self::MAX_BANKS,
@@ -113,7 +113,7 @@ impl<'model> AccountValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_main_bank(&self) -> ModelValidatorResult<AccountError> {
+    pub fn validate_main_bank(&self) -> ModelValidatorResult<UserError> {
         if let Some(main_bank) = &self.model.main_bank {
             if !self
                 .model
@@ -121,7 +121,7 @@ impl<'model> AccountValidator<'model> {
                 .iter()
                 .any(|bank| &bank.canister_id == main_bank)
             {
-                return Err(AccountError::ValidationError {
+                return Err(UserError::ValidationError {
                     info: format!(
                         "Main bank {} is not in the list of banks {:?}",
                         main_bank, self.model.banks
@@ -133,14 +133,14 @@ impl<'model> AccountValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_name(&self) -> ModelValidatorResult<AccountError> {
+    pub fn validate_name(&self) -> ModelValidatorResult<UserError> {
         if let Some(name) = &self.model.name {
             if (name.trim().len() < Self::NAME_LEN_RANGE.0 as usize)
                 || (name.trim().len() > Self::NAME_LEN_RANGE.1 as usize)
             {
-                return Err(AccountError::ValidationError {
+                return Err(UserError::ValidationError {
                     info: format!(
-                        "Account name length must be between {} and {}",
+                        "User name length must be between {} and {}",
                         Self::NAME_LEN_RANGE.0,
                         Self::NAME_LEN_RANGE.1
                     ),
@@ -148,8 +148,8 @@ impl<'model> AccountValidator<'model> {
             }
 
             if name.starts_with(' ') || name.ends_with(' ') {
-                return Err(AccountError::ValidationError {
-                    info: "Account name cannot start or end with a space".to_string(),
+                return Err(UserError::ValidationError {
+                    info: "User name cannot start or end with a space".to_string(),
                 });
             }
         }
@@ -157,7 +157,7 @@ impl<'model> AccountValidator<'model> {
         Ok(())
     }
 
-    pub fn validate(&self) -> ModelValidatorResult<AccountError> {
+    pub fn validate(&self) -> ModelValidatorResult<UserError> {
         self.validate_identities()?;
         self.validate_unconfirmed_identities()?;
         self.validate_banks()?;
@@ -168,9 +168,9 @@ impl<'model> AccountValidator<'model> {
     }
 }
 
-impl ModelValidator<AccountError> for Account {
-    fn validate(&self) -> ModelValidatorResult<AccountError> {
-        AccountValidator::new(self).validate()
+impl ModelValidator<UserError> for User {
+    fn validate(&self) -> ModelValidatorResult<UserError> {
+        UserValidator::new(self).validate()
     }
 }
 
@@ -182,9 +182,9 @@ mod tests {
 
     #[test]
     fn valid_model_serialization() {
-        let model = Account {
+        let model = User {
             id: [u8::MAX; 16],
-            identities: vec![AccountIdentity {
+            identities: vec![UserIdentity {
                 identity: Principal::anonymous(),
                 name: None,
             }],
@@ -196,7 +196,7 @@ mod tests {
         };
 
         let serialized_model = model.to_bytes();
-        let deserialized_model = Account::from_bytes(serialized_model);
+        let deserialized_model = User::from_bytes(serialized_model);
 
         assert_eq!(model.id, deserialized_model.id);
         assert_eq!(model.identities, deserialized_model.identities);
@@ -213,8 +213,8 @@ mod tests {
     #[case::starts_with_space(&" Vital")]
     #[case::ends_with_space(&"Vital ")]
     #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMK")]
-    fn invalid_account_name(#[case] name: &str) {
-        let account = Account {
+    fn invalid_user_name(#[case] name: &str) {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
@@ -223,7 +223,7 @@ mod tests {
             last_update_timestamp: 10,
             name: Some(name.to_string()),
         };
-        let validator = AccountValidator::new(&account);
+        let validator = UserValidator::new(&user);
 
         assert!(validator.validate_name().is_err());
     }
@@ -232,8 +232,8 @@ mod tests {
     #[case::short_name(&"A")]
     #[case::common_name(&"Vital")]
     #[case::large_name(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdM")]
-    fn valid_account_name(#[case] name: &str) {
-        let account = Account {
+    fn valid_user_name(#[case] name: &str) {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
@@ -242,14 +242,14 @@ mod tests {
             last_update_timestamp: 10,
             name: Some(name.to_string()),
         };
-        let validator = AccountValidator::new(&account);
+        let validator = UserValidator::new(&user);
 
         assert!(validator.validate_name().is_ok());
     }
 
     #[test]
     fn check_identities_validation() {
-        let account = Account {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
@@ -259,38 +259,36 @@ mod tests {
             name: None,
         };
 
-        let account_with_no_identities = account.clone();
-        let mut account_with_one_identity = account.clone();
-        let mut account_with_too_many_identities = account.clone();
+        let user_with_no_identities = user.clone();
+        let mut user_with_one_identity = user.clone();
+        let mut user_with_too_many_identities = user.clone();
 
-        account_with_one_identity.identities.push(AccountIdentity {
+        user_with_one_identity.identities.push(UserIdentity {
             identity: Principal::anonymous(),
             name: None,
         });
 
-        for _ in 0..=AccountValidator::IDENTITIES_RANGE.1 {
-            account_with_too_many_identities
-                .identities
-                .push(AccountIdentity {
-                    identity: Principal::anonymous(),
-                    name: None,
-                });
+        for _ in 0..=UserValidator::IDENTITIES_RANGE.1 {
+            user_with_too_many_identities.identities.push(UserIdentity {
+                identity: Principal::anonymous(),
+                name: None,
+            });
         }
 
-        assert!(AccountValidator::new(&account_with_no_identities)
+        assert!(UserValidator::new(&user_with_no_identities)
             .validate_identities()
             .is_err());
-        assert!(AccountValidator::new(&account_with_one_identity)
+        assert!(UserValidator::new(&user_with_one_identity)
             .validate_identities()
             .is_ok());
-        assert!(AccountValidator::new(&account_with_too_many_identities)
+        assert!(UserValidator::new(&user_with_too_many_identities)
             .validate_identities()
             .is_err());
     }
 
     #[test]
     fn check_unconfirmed_identities_validation() {
-        let account = Account {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
@@ -300,40 +298,40 @@ mod tests {
             name: None,
         };
 
-        let account_with_no_identities = account.clone();
-        let mut account_with_one_identity = account.clone();
-        let mut account_with_too_many_identities = account.clone();
+        let user_with_no_identities = user.clone();
+        let mut user_with_one_identity = user.clone();
+        let mut user_with_too_many_identities = user.clone();
 
-        account_with_one_identity
+        user_with_one_identity
             .unconfirmed_identities
-            .push(AccountIdentity {
+            .push(UserIdentity {
                 identity: Principal::anonymous(),
                 name: None,
             });
 
-        for _ in 0..=AccountValidator::MAX_UNCONFIRMED_IDENTITIES {
-            account_with_too_many_identities
+        for _ in 0..=UserValidator::MAX_UNCONFIRMED_IDENTITIES {
+            user_with_too_many_identities
                 .unconfirmed_identities
-                .push(AccountIdentity {
+                .push(UserIdentity {
                     identity: Principal::anonymous(),
                     name: None,
                 });
         }
 
-        assert!(AccountValidator::new(&account_with_no_identities)
+        assert!(UserValidator::new(&user_with_no_identities)
             .validate_unconfirmed_identities()
             .is_ok());
-        assert!(AccountValidator::new(&account_with_one_identity)
+        assert!(UserValidator::new(&user_with_one_identity)
             .validate_unconfirmed_identities()
             .is_ok());
-        assert!(AccountValidator::new(&account_with_too_many_identities)
+        assert!(UserValidator::new(&user_with_too_many_identities)
             .validate_unconfirmed_identities()
             .is_err());
     }
 
     #[test]
     fn check_banks_validation() {
-        let account = Account {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
@@ -343,40 +341,40 @@ mod tests {
             name: None,
         };
 
-        let account_with_no_banks = account.clone();
-        let mut account_with_one_bank = account.clone();
-        let mut account_with_too_many_banks = account.clone();
+        let user_with_no_banks = user.clone();
+        let mut user_with_one_bank = user.clone();
+        let mut user_with_too_many_banks = user.clone();
 
-        account_with_one_bank.banks.push(AccountBank {
+        user_with_one_bank.banks.push(UserBank {
             canister_id: Principal::anonymous(),
             name: None,
         });
 
-        for _ in 0..=AccountValidator::MAX_BANKS {
-            account_with_too_many_banks.banks.push(AccountBank {
+        for _ in 0..=UserValidator::MAX_BANKS {
+            user_with_too_many_banks.banks.push(UserBank {
                 canister_id: Principal::anonymous(),
                 name: None,
             });
         }
 
-        assert!(AccountValidator::new(&account_with_no_banks)
+        assert!(UserValidator::new(&user_with_no_banks)
             .validate_banks()
             .is_ok());
-        assert!(AccountValidator::new(&account_with_one_bank)
+        assert!(UserValidator::new(&user_with_one_bank)
             .validate_banks()
             .is_ok());
-        assert!(AccountValidator::new(&account_with_too_many_banks)
+        assert!(UserValidator::new(&user_with_too_many_banks)
             .validate_banks()
             .is_err());
     }
 
     #[test]
     fn valid_main_bank() {
-        let account = Account {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![AccountBank {
+            banks: vec![UserBank {
                 canister_id: Principal::anonymous(),
                 name: None,
             }],
@@ -385,18 +383,18 @@ mod tests {
             name: None,
         };
 
-        let validator = AccountValidator::new(&account);
+        let validator = UserValidator::new(&user);
 
         assert!(validator.validate_main_bank().is_ok());
     }
 
     #[test]
     fn invalid_main_bank() {
-        let account = Account {
+        let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![AccountBank {
+            banks: vec![UserBank {
                 canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 name: None,
             }],
@@ -405,7 +403,7 @@ mod tests {
             name: None,
         };
 
-        let validator = AccountValidator::new(&account);
+        let validator = UserValidator::new(&user);
 
         assert!(validator.validate_main_bank().is_err());
     }

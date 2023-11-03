@@ -1,17 +1,17 @@
-use crate::{models::AccountIdentity, transport::AccountIdentityDTO};
+use crate::{models::UserIdentity, transport::UserIdentityDTO};
 
-impl From<AccountIdentity> for AccountIdentityDTO {
-    fn from(account_identity: AccountIdentity) -> Self {
-        AccountIdentityDTO {
-            identity: account_identity.identity,
-            name: account_identity.name,
+impl From<UserIdentity> for UserIdentityDTO {
+    fn from(user_identity: UserIdentity) -> Self {
+        UserIdentityDTO {
+            identity: user_identity.identity,
+            name: user_identity.name,
         }
     }
 }
 
-impl From<AccountIdentityDTO> for AccountIdentity {
-    fn from(dto: AccountIdentityDTO) -> Self {
-        AccountIdentity {
+impl From<UserIdentityDTO> for UserIdentity {
+    fn from(dto: UserIdentityDTO) -> Self {
+        UserIdentity {
             identity: dto.identity,
             name: dto.name,
         }
@@ -25,12 +25,12 @@ mod tests {
 
     #[test]
     fn correct_dto_to_model_mapping() {
-        let dto = AccountIdentityDTO {
+        let dto = UserIdentityDTO {
             identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
             name: Some("Bank".to_string()),
         };
 
-        let model = AccountIdentity::from(dto.clone());
+        let model = UserIdentity::from(dto.clone());
 
         assert_eq!(model.identity, dto.identity);
         assert_eq!(model.name, dto.name);
@@ -38,12 +38,12 @@ mod tests {
 
     #[test]
     fn correct_model_to_dto_mapping() {
-        let model = AccountIdentity {
+        let model = UserIdentity {
             identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
             name: Some("Bank".to_string()),
         };
 
-        let dto = AccountIdentityDTO::from(model.clone());
+        let dto = UserIdentityDTO::from(model.clone());
 
         assert_eq!(dto.identity, model.identity);
         assert_eq!(dto.name, model.name);

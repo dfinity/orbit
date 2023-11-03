@@ -1,11 +1,11 @@
-use super::{AccountService, WalletService};
+use super::{UserService, WalletService};
 use crate::{
     core::{ic_cdk::api::time, CallContext, WithCallContext},
     errors::OperationError,
     factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, OperationMapper},
     models::{Operation, OperationContext, OperationId, OperationStatus},
-    repositories::{OperationFindByAccountWhereClause, OperationRepository, OperationWhereClause},
+    repositories::{OperationFindByUserWhereClause, OperationRepository, OperationWhereClause},
     transport::{EditOperationInput, ListOperationsInput, ListWalletOperationsInput},
 };
 use ic_canister_core::repository::Repository;
@@ -16,7 +16,7 @@ use uuid::Uuid;
 #[derive(Default, Debug)]
 pub struct OperationService {
     call_context: CallContext,
-    account_service: AccountService,
+    user_service: UserService,
     wallet_service: WalletService,
     operation_repository: OperationRepository,
 }
@@ -25,7 +25,7 @@ impl WithCallContext for OperationService {
     fn with_call_context(call_context: CallContext) -> Self {
         Self {
             call_context: call_context.clone(),
-            account_service: AccountService::with_call_context(call_context.clone()),
+            user_service: UserService::with_call_context(call_context.clone()),
             wallet_service: WalletService::with_call_context(call_context.clone()),
             ..Default::default()
         }
@@ -54,17 +54,17 @@ impl OperationService {
     }
 
     pub fn list_operations(&self, input: ListOperationsInput) -> ServiceResult<Vec<Operation>> {
-        let account = self
-            .account_service
-            .get_account_by_identity(&self.call_context.caller())?;
+        let user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
 
         let filter_by_code = match input.code {
             Some(code) => Some(OperationMapper::to_code(code)?),
             None => None,
         };
-        let operations = self.operation_repository.find_by_account_where(
-            account.id,
-            OperationFindByAccountWhereClause {
+        let operations = self.operation_repository.find_by_user_where(
+            user.id,
+            OperationFindByUserWhereClause {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 code: filter_by_code,
@@ -80,9 +80,9 @@ impl OperationService {
         &self,
         input: ListWalletOperationsInput,
     ) -> ServiceResult<Vec<Operation>> {
-        let account = self
-            .account_service
-            .get_account_by_identity(&self.call_context.caller())?;
+        let user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
         let wallet = self
             .wallet_service
             .get_wallet(HelperMapper::to_uuid(input.wallet_id)?.as_bytes())?;
@@ -92,7 +92,7 @@ impl OperationService {
             None => None,
         };
         let operations = self.operation_repository.find_by_wallet_where(
-            (account.id, wallet.id),
+            (user.id, wallet.id),
             OperationWhereClause {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
@@ -105,15 +105,15 @@ impl OperationService {
     }
 
     pub async fn edit_operation(&self, input: EditOperationInput) -> ServiceResult<Operation> {
-        let caller_account = self
-            .account_service
-            .get_account_by_identity(&self.call_context.caller())?;
+        let caller_user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
         let operation_id = HelperMapper::to_uuid(input.operation_id)?;
         let mut operation = self.get_operation(operation_id.as_bytes())?;
         let decision = operation
             .decisions
             .iter_mut()
-            .find(|decision| decision.account_id == caller_account.id);
+            .find(|decision| decision.user_id == caller_user.id);
 
         if decision.is_none() {
             Err(OperationError::Forbidden {
@@ -161,11 +161,11 @@ impl OperationService {
     }
 
     fn assert_operation_access(&self, operation: &Operation) -> ServiceResult<()> {
-        let account = self
-            .account_service
-            .get_account_by_identity(&self.call_context.caller())?;
+        let user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
 
-        if !operation.accounts().contains(&account.id) {
+        if !operation.users().contains(&user.id) {
             Err(OperationError::Forbidden {
                 operation_id: Uuid::from_bytes(operation.id.to_owned())
                     .hyphenated()
@@ -183,11 +183,11 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            account_test_utils::mock_account, operation_test_utils::mock_operation,
-            transfer_test_utils::mock_transfer, Account, OperationDecision,
+            operation_test_utils::mock_operation, transfer_test_utils::mock_transfer,
+            user_test_utils::mock_user, OperationDecision, User,
             OPERATION_METADATA_KEY_TRANSFER_ID,
         },
-        repositories::{AccountRepository, TransferRepository},
+        repositories::{TransferRepository, UserRepository},
     };
     use candid::Principal;
 
@@ -195,23 +195,23 @@ mod tests {
         repository: OperationRepository,
         transfer_repository: TransferRepository,
         service: OperationService,
-        caller_account: Account,
+        caller_user: User,
     }
 
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
-        let mut account = mock_account();
-        account.identities = vec![call_context.caller()];
+        let mut user = mock_user();
+        user.identities = vec![call_context.caller()];
 
-        AccountRepository::default().insert(account.to_key(), account.clone());
+        UserRepository::default().insert(user.to_key(), user.clone());
 
         TestContext {
             repository: OperationRepository::default(),
             transfer_repository: TransferRepository::default(),
             service: OperationService::with_call_context(call_context),
-            caller_account: account,
+            caller_user: user,
         }
     }
 
@@ -219,7 +219,7 @@ mod tests {
     fn get_operation() {
         let ctx = setup();
         let mut operation = mock_operation();
-        operation.originator_account_id = Some(ctx.caller_account.id);
+        operation.proposed_by = Some(ctx.caller_user.id);
 
         ctx.repository
             .insert(operation.to_key(), operation.to_owned());
@@ -233,7 +233,7 @@ mod tests {
     fn fail_get_operation_not_allowed() {
         let ctx = setup();
         let mut operation = mock_operation();
-        operation.originator_account_id = None;
+        operation.proposed_by = None;
 
         ctx.repository
             .insert(operation.to_key(), operation.to_owned());
@@ -250,9 +250,9 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.id = *transfer_id.as_bytes();
         let mut operation = mock_operation();
-        operation.originator_account_id = None;
+        operation.proposed_by = None;
         operation.decisions = vec![OperationDecision {
-            account_id: ctx.caller_account.id,
+            user_id: ctx.caller_user.id,
             decided_dt: None,
             last_modification_timestamp: 0,
             read: false,

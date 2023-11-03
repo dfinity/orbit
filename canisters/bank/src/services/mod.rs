@@ -6,8 +6,8 @@ pub use wallet::*;
 mod transfer;
 pub use transfer::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod operation;
 pub use operation::*;

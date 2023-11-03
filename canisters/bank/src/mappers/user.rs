@@ -1,8 +1,8 @@
 use crate::{
     core::ic_cdk::api::time,
-    errors::AccountError,
-    models::{AccessRole, Account},
-    transport::AccountDTO,
+    errors::UserError,
+    models::{AccessRole, User},
+    transport::UserDTO,
 };
 use candid::Principal;
 use ic_canister_core::{
@@ -13,26 +13,12 @@ use std::collections::HashSet;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
-pub struct AccountMapper {}
+pub struct UserMapper {}
 
-impl AccountMapper {
-    pub fn to_base_user_account(identity: Principal, new_account_id: UUID) -> Account {
-        Account {
-            id: new_account_id,
-            identities: vec![identity],
-            unconfirmed_identities: vec![],
-            access_roles: vec![AccessRole::User],
-            last_modification_timestamp: time(),
-        }
-    }
-
-    pub fn from_identity(
-        identity: Principal,
-        new_account_id: UUID,
-        roles: Vec<AccessRole>,
-    ) -> Account {
-        Account {
-            id: new_account_id,
+impl UserMapper {
+    pub fn from_identity(identity: Principal, new_user_id: UUID, roles: Vec<AccessRole>) -> User {
+        User {
+            id: new_user_id,
             identities: vec![identity],
             unconfirmed_identities: vec![],
             access_roles: roles,
@@ -40,9 +26,9 @@ impl AccountMapper {
         }
     }
 
-    pub fn from_roles(new_account_id: UUID, roles: Vec<AccessRole>) -> Account {
-        Account {
-            id: new_account_id,
+    pub fn from_roles(new_user_id: UUID, roles: Vec<AccessRole>) -> User {
+        User {
+            id: new_user_id,
             identities: vec![],
             unconfirmed_identities: vec![],
             access_roles: roles,
@@ -51,9 +37,9 @@ impl AccountMapper {
     }
 }
 
-impl AccountDTO {
-    pub fn to_account(&self) -> Account {
-        Account {
+impl UserDTO {
+    pub fn to_user(&self) -> User {
+        User {
             id: *Uuid::parse_str(&self.id).expect("Invalid UUID").as_bytes(),
             identities: self.identities.clone(),
             unconfirmed_identities: self.unconfirmed_identities.clone(),
@@ -69,9 +55,9 @@ impl AccountDTO {
     }
 }
 
-impl Account {
-    pub fn to_dto(&self) -> AccountDTO {
-        AccountDTO {
+impl User {
+    pub fn to_dto(&self) -> UserDTO {
+        UserDTO {
             id: Uuid::from_bytes(self.id).hyphenated().to_string(),
             identities: self.identities.to_owned(),
             unconfirmed_identities: self.unconfirmed_identities.to_owned(),
@@ -84,10 +70,10 @@ impl Account {
         &mut self,
         identities: Option<Vec<Principal>>,
         caller_identity: &Principal,
-    ) -> Result<(), AccountError> {
+    ) -> Result<(), UserError> {
         if let Some(new_identities) = identities {
             if !new_identities.contains(caller_identity) {
-                Err(AccountError::SelfLocked)?
+                Err(UserError::SelfLocked)?
             }
 
             let mut confirmed_identities: HashSet<Principal> = self

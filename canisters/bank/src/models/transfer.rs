@@ -1,4 +1,4 @@
-use super::{AccountId, ApprovalThresholdPolicy, Wallet, WalletId, WalletPolicy};
+use super::{ApprovalThresholdPolicy, UserId, Wallet, WalletId, WalletPolicy};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
@@ -78,8 +78,8 @@ pub struct PolicySnapshot {
 pub struct Transfer {
     /// The transfer id, which is a UUID.
     pub id: TransferId,
-    /// The account that initiated the transfer.
-    pub initiator_account: AccountId,
+    /// The user that initiated the transfer.
+    pub initiator_user: UserId,
     /// The wallet id that the transfer is from.
     pub from_wallet: WalletId,
     /// The destination address of the transfer.
@@ -448,7 +448,7 @@ pub mod transfer_test_utils {
     pub fn mock_transfer() -> Transfer {
         Transfer {
             id: [1; 16],
-            initiator_account: [0; 16],
+            initiator_user: [0; 16],
             from_wallet: [0; 16],
             to_address: "x".repeat(255),
             status: TransferStatus::Pending,

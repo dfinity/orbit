@@ -1,7 +1,7 @@
-use super::indexes::account_identity_index::AccountIdentityIndexRepository;
+use super::indexes::user_identity_index::UserIdentityIndexRepository;
 use crate::{
-    core::{with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
-    models::{indexes::account_identity_index::AccountIdentityIndexCriteria, Account, AccountKey},
+    core::{with_memory_manager, Memory, USER_MEMORY_ID},
+    models::{indexes::user_identity_index::UserIdentityIndexCriteria, User, UserKey},
 };
 use candid::Principal;
 use ic_canister_core::repository::IndexRepository;
@@ -10,26 +10,25 @@ use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::cell::RefCell;
 
 thread_local! {
-  /// The memory reference to the Account repository.
-  static DB: RefCell<StableBTreeMap<AccountKey, Account, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<UserKey, User, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(ACCOUNT_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(USER_MEMORY_ID))
     )
   })
 }
 
-/// A repository that enables managing accounts in stable memory.
+/// A repository that enables managing users in stable memory.
 #[derive(Default, Debug)]
-pub struct AccountRepository {
-    identity_index: AccountIdentityIndexRepository,
+pub struct UserRepository {
+    identity_index: UserIdentityIndexRepository,
 }
 
-impl Repository<AccountKey, Account> for AccountRepository {
-    fn get(&self, key: &AccountKey) -> Option<Account> {
+impl Repository<UserKey, User> for UserRepository {
+    fn get(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| m.borrow().get(key))
     }
 
-    fn insert(&self, key: AccountKey, value: Account) -> Option<Account> {
+    fn insert(&self, key: UserKey, value: User) -> Option<User> {
         DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
             Some(prev) => {
                 let prev_identities = prev.to_index_for_identities();
@@ -55,7 +54,7 @@ impl Repository<AccountKey, Account> for AccountRepository {
         })
     }
 
-    fn remove(&self, key: &AccountKey) -> Option<Account> {
+    fn remove(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| match m.borrow_mut().remove(key) {
             Some(prev) => {
                 prev.to_index_for_identities().iter().for_each(|index| {
@@ -69,30 +68,30 @@ impl Repository<AccountKey, Account> for AccountRepository {
     }
 }
 
-impl AccountRepository {
-    /// Returns the account associated with the given identity if it exists.
-    pub fn find_account_by_identity(&self, identity: &Principal) -> Option<Account> {
+impl UserRepository {
+    /// Returns the user associated with the given identity if it exists.
+    pub fn find_user_by_identity(&self, identity: &Principal) -> Option<User> {
         self.identity_index
-            .find_by_criteria(AccountIdentityIndexCriteria {
+            .find_by_criteria(UserIdentityIndexCriteria {
                 identity_id: identity.to_owned(),
             })
             .iter()
-            .find_map(|id| self.get(&Account::key(id)))
+            .find_map(|id| self.get(&User::key(id)))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::AccountIdentity;
+    use crate::models::UserIdentity;
     use candid::Principal;
 
     #[test]
-    fn check_account_insert_and_get() {
-        let repository = AccountRepository::default();
-        let account = Account {
+    fn check_user_insert_and_get() {
+        let repository = UserRepository::default();
+        let user = User {
             id: [1; 16],
-            identities: vec![AccountIdentity {
+            identities: vec![UserIdentity {
                 identity: Principal::anonymous(),
                 name: None,
             }],
@@ -103,18 +102,18 @@ mod tests {
             name: None,
         };
 
-        assert!(repository.get(&account.to_key()).is_none());
+        assert!(repository.get(&user.to_key()).is_none());
 
-        repository.insert(account.to_key(), account.clone());
-        assert_eq!(repository.get(&account.to_key()), Some(account));
+        repository.insert(user.to_key(), user.clone());
+        assert_eq!(repository.get(&user.to_key()), Some(user));
     }
 
     #[test]
-    fn check_account_removal() {
-        let repository = AccountRepository::default();
-        let account = Account {
+    fn check_user_removal() {
+        let repository = UserRepository::default();
+        let user = User {
             id: [1; 16],
-            identities: vec![AccountIdentity {
+            identities: vec![UserIdentity {
                 identity: Principal::anonymous(),
                 name: None,
             }],
@@ -125,18 +124,18 @@ mod tests {
             name: None,
         };
 
-        repository.insert(account.to_key(), account.clone());
-        assert_eq!(repository.get(&account.to_key()), Some(account.clone()));
-        repository.remove(&account.to_key());
-        assert!(repository.get(&account.to_key()).is_none());
+        repository.insert(user.to_key(), user.clone());
+        assert_eq!(repository.get(&user.to_key()), Some(user.clone()));
+        repository.remove(&user.to_key());
+        assert!(repository.get(&user.to_key()).is_none());
     }
 
     #[test]
-    fn check_account_find_by_identity() {
-        let repository = AccountRepository::default();
-        let account = Account {
+    fn check_user_find_by_identity() {
+        let repository = UserRepository::default();
+        let user = User {
             id: [1; 16],
-            identities: vec![AccountIdentity {
+            identities: vec![UserIdentity {
                 identity: Principal::anonymous(),
                 name: None,
             }],
@@ -147,10 +146,10 @@ mod tests {
             name: None,
         };
 
-        repository.insert(account.to_key(), account.clone());
+        repository.insert(user.to_key(), user.clone());
         assert_eq!(
-            repository.find_account_by_identity(&Principal::anonymous()),
-            Some(account.clone())
+            repository.find_user_by_identity(&Principal::anonymous()),
+            Some(user.clone())
         );
     }
 }

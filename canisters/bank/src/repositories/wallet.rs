@@ -1,9 +1,8 @@
-use super::indexes::wallet_account_index::WalletAccountIndexRepository;
+use super::indexes::wallet_user_index::WalletUserIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, WALLET_MEMORY_ID},
     models::{
-        indexes::wallet_account_index::WalletAccountIndexCriteria, AccountId, Wallet, WalletId,
-        WalletKey,
+        indexes::wallet_user_index::WalletUserIndexCriteria, UserId, Wallet, WalletId, WalletKey,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -23,7 +22,7 @@ thread_local! {
 /// A repository that enables managing wallets in stable memory.
 #[derive(Default, Debug)]
 pub struct WalletRepository {
-    account_index: WalletAccountIndexRepository,
+    user_index: WalletUserIndexRepository,
 }
 
 impl Repository<WalletKey, Wallet> for WalletRepository {
@@ -34,23 +33,23 @@ impl Repository<WalletKey, Wallet> for WalletRepository {
     fn insert(&self, key: WalletKey, value: Wallet) -> Option<Wallet> {
         DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
             Some(prev) => {
-                let prev_accounts = prev.to_index_by_accounts();
-                let curr_accounts = value.to_index_by_accounts();
+                let prev_users = prev.to_index_by_users();
+                let curr_users = value.to_index_by_users();
 
-                if prev_accounts != curr_accounts {
-                    prev_accounts.iter().for_each(|index| {
-                        self.account_index.remove(index);
+                if prev_users != curr_users {
+                    prev_users.iter().for_each(|index| {
+                        self.user_index.remove(index);
                     });
-                    curr_accounts.iter().for_each(|index| {
-                        self.account_index.insert(index.to_owned());
+                    curr_users.iter().for_each(|index| {
+                        self.user_index.insert(index.to_owned());
                     });
                 }
 
                 Some(prev)
             }
             None => {
-                value.to_index_by_accounts().iter().for_each(|index| {
-                    self.account_index.insert(index.to_owned());
+                value.to_index_by_users().iter().for_each(|index| {
+                    self.user_index.insert(index.to_owned());
                 });
 
                 None
@@ -61,8 +60,8 @@ impl Repository<WalletKey, Wallet> for WalletRepository {
     fn remove(&self, key: &WalletKey) -> Option<Wallet> {
         DB.with(|m| match m.borrow_mut().remove(key) {
             Some(wallet) => {
-                wallet.to_index_by_accounts().iter().for_each(|index| {
-                    self.account_index.remove(index);
+                wallet.to_index_by_users().iter().for_each(|index| {
+                    self.user_index.remove(index);
                 });
 
                 Some(wallet)
@@ -73,12 +72,10 @@ impl Repository<WalletKey, Wallet> for WalletRepository {
 }
 
 impl WalletRepository {
-    pub fn find_by_account_id(&self, account_id: AccountId) -> Vec<Wallet> {
-        let wallet_ids = self
-            .account_index
-            .find_by_criteria(WalletAccountIndexCriteria {
-                account_id: account_id.to_owned(),
-            });
+    pub fn find_by_user_id(&self, user_id: UserId) -> Vec<Wallet> {
+        let wallet_ids = self.user_index.find_by_criteria(WalletUserIndexCriteria {
+            user_id: user_id.to_owned(),
+        });
 
         wallet_ids
             .iter()
@@ -113,14 +110,14 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_account_id() {
+    fn test_find_by_user_id() {
         let repository = WalletRepository::default();
         let mut wallet = wallet_test_utils::mock_wallet();
         wallet.owners = vec![[1; 16]];
 
         repository.insert(wallet.to_key(), wallet.clone());
 
-        assert_eq!(repository.find_by_account_id([1; 16]), vec![wallet]);
+        assert_eq!(repository.find_by_user_id([1; 16]), vec![wallet]);
     }
 
     #[test]

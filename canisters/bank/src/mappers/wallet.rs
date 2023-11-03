@@ -2,10 +2,7 @@ use super::BlockchainMapper;
 use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
-    models::{
-        AccountId, BlockchainStandard, Wallet, WalletAccount, WalletBalance, WalletId,
-        WALLET_METADATA_SYMBOL_KEY,
-    },
+    models::{BlockchainStandard, Wallet, WalletBalance, WalletId, WALLET_METADATA_SYMBOL_KEY},
     transport::{CreateWalletInput, WalletBalanceDTO, WalletBalanceInfoDTO, WalletDTO},
 };
 use ic_canister_core::{types::UUID, utils::timestamp_to_rfc3339};
@@ -61,7 +58,7 @@ impl WalletMapper {
         input: CreateWalletInput,
         wallet_id: UUID,
         address: Option<String>,
-        owner_accounts: Vec<UUID>,
+        owner_users: Vec<UUID>,
     ) -> Result<Wallet, MapperError> {
         let blockchain = BlockchainMapper::to_blockchain(input.blockchain)?;
         let standard = BlockchainMapper::to_blockchain_standard(input.standard)?;
@@ -108,7 +105,7 @@ impl WalletMapper {
             standard: standard.to_owned(),
             name: input.name,
             address: address.unwrap_or("".to_string()),
-            owners: owner_accounts.to_vec(),
+            owners: owner_users.to_vec(),
             policies: input
                 .policies
                 .iter()
@@ -137,14 +134,6 @@ impl WalletMapper {
             balance: balance.balance,
             decimals,
             last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
-        }
-    }
-
-    pub fn to_account_wallet_association(wallet: &Wallet, account_id: &AccountId) -> WalletAccount {
-        WalletAccount {
-            wallet_id: wallet.id,
-            account_id: *account_id,
-            last_modification_timestamp: time(),
         }
     }
 }

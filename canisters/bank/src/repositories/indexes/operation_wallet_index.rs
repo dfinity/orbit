@@ -17,7 +17,7 @@ thread_local! {
   })
 }
 
-/// A repository that enables finding operations based on the account in stable memory.
+/// A repository that enables finding proposals based on the account id in stable memory.
 #[derive(Default, Debug)]
 pub struct OperationWalletIndexRepository {}
 

@@ -1,11 +1,11 @@
 // The canister id of a bank.
 type BankID = principal;
-// The principal that is associated with an account.
-type AccountIdentityID = principal;
+// The principal that is associated with an user.
+type UserIdentityID = principal;
 // A UUID used to identify items.
 type UUID = text;
-// The id of an account.
-type AccountId = UUID;
+// The id of an user.
+type UserId = UUID;
 
 // Generic error type added to responses that can fail.
 type ApiError = record {
@@ -17,59 +17,59 @@ type ApiError = record {
   details : opt vec record { text; text };
 };
 
-// The identity of an account.
-type AccountIdentity = record {
-  // The identity of the account.
-  identity : AccountIdentityID;
-  // A friendly name for the account identity.
+// The identity of an user.
+type UserIdentity = record {
+  // The identity of the user.
+  identity : UserIdentityID;
+  // A friendly name for the user identity.
   name : opt text;
 };
 
-// The user account information.
-type Account = record {
-  // The UUID associated with the account.
-  id : AccountId;
-  // The name of the account.
+// The user user information.
+type User = record {
+  // The UUID associated with the user.
+  id : UserId;
+  // The name of the user.
   name : opt text;
-  // The identities associated with the account.
-  // One identity can only be associated with one account.
-  identities : vec AccountIdentity;
+  // The identities associated with the user.
+  // One identity can only be associated with one user.
+  identities : vec UserIdentity;
   // The identities that are not yet confirmed.
-  unconfirmed_identities : vec AccountIdentity;
-  // Main bank used to show in the UI for this account.
+  unconfirmed_identities : vec UserIdentity;
+  // Main bank used to show in the UI for this user.
   main_bank : opt BankID;
-  // List of banks associated with the account.
-  banks : vec AccountBank;
+  // List of banks associated with the user.
+  banks : vec UserBank;
 };
 
-// The result of managing an account.
-type ManageAccountInput = record {
-  // The name of the account.
+// The result of managing an user.
+type ManageUserInput = record {
+  // The name of the user.
   name : opt text;
-  // The main bank to use for this account.
+  // The main bank to use for this user.
   //
-  // If specified and the bank is not already associated with the account it will be added.
+  // If specified and the bank is not already associated with the user it will be added.
   main_bank : opt BankID;
-  // The identities to associate with the account, this should add all the identities as
+  // The identities to associate with the user, this should add all the identities as
   // they are overriden on each call if specified.
-  identities : opt vec AccountIdentity;
-  // Manage the banks associated with the account.
-  banks : opt vec AccountBank;
+  identities : opt vec UserIdentity;
+  // Manage the banks associated with the user.
+  banks : opt vec UserBank;
 };
 
-// The result of managing an account.
-type ManageAccountResult = variant {
+// The result of managing an user.
+type ManageUserResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The updated account information.
-    account : Account;
+    // The updated user information.
+    user : User;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
 // The bank information.
-type AccountBank = record {
+type UserBank = record {
   // The id associated with the bank.
   canister_id : BankID;
   // The name of the bank.
@@ -81,7 +81,7 @@ type ListBanksResult = variant {
   // The list of banks.
   Ok : record {
     // The list of banks.
-    banks : vec AccountBank;
+    banks : vec UserBank;
   };
   // The error that occurred during the operation.
   Err : ApiError;
@@ -89,33 +89,33 @@ type ListBanksResult = variant {
 
 // The result of getting the main bank.
 type GetMainBankResult = variant {
-  // The main bank for the given account.
+  // The main bank for the given user.
   Ok : record {
-    // The main bank for the given account.
-    bank : opt AccountBank;
+    // The main bank for the given user.
+    bank : opt UserBank;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
-// The result of getting the account information.
-type GetAccountResult = variant {
+// The result of getting the user information.
+type GetUserResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The caller account information.
-    account : Account;
+    // The caller user information.
+    user : User;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
-// The input for the main bank when registering an account.
-type RegisterAccountBankInput = variant {
+// The input for the main bank when registering an user.
+type RegisterUserBankInput = variant {
   // Use a private bank canister.
   PrivateBank : record {
     // The id of the bank canister to use.
     id : BankID;
-    // Whether or not it should also use a shared bank for the account.
+    // Whether or not it should also use a shared bank for the user.
     use_shared_bank : opt record {
       is_main : bool;
     };
@@ -124,49 +124,49 @@ type RegisterAccountBankInput = variant {
   SharedBank;
 };
 
-// The input for registering an account.
-type RegisterAccountInput = record {
-  // The name of the account.
+// The input for registering an user.
+type RegisterUserInput = record {
+  // The name of the user.
   name : opt text;
-  // A bank canister to use for this account.
-  bank : RegisterAccountBankInput;
+  // A bank canister to use for this user.
+  bank : RegisterUserBankInput;
 };
 
-// The result of registering an account.
-type RegisterAccountResult = variant {
+// The result of registering an user.
+type RegisterUserResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The caller newly created account information.
-    account : Account;
+    // The caller newly created user information.
+    user : User;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
-// The input for associating an identity with an existing account.
-type AssociateIdentityWithAccountInput = record {
-  // The account to associate the identity with.
-  account_id : AccountId;
+// The input for associating an identity with an existing user.
+type AssociateIdentityWithUserInput = record {
+  // The user to associate the identity with.
+  user_id : UserId;
 };
 
-// The result of associating an account with an identity.
-type AssociateIdentityWithAccountResult = variant {
+// The result of associating an user with an identity.
+type AssociateIdentityWithUserResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The account information if the identity was already added to
-    // the account and this operation just activated it.
-    account : Account;
+    // The user information if the identity was already added to
+    // the user and this operation just activated it.
+    user : User;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
-// The result of removing the account associated with the caller.
-type RemoveAccountResult = variant {
+// The result of removing the user associated with the caller.
+type RemoveUserResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The caller account that was removed.
-    account : Account;
+    // The caller user that was removed.
+    user : User;
   };
   // The error that occurred during the operation.
   Err : ApiError;
@@ -188,24 +188,24 @@ type CanisterInit = record {
 
 // The control panel service definition.
 service : (opt CanisterInit) -> {
-  // Get the account information for the caller.
-  get_account : () -> (GetAccountResult) query;
-  // Manage the account associated with the caller.
-  manage_account : (input : ManageAccountInput) -> (ManageAccountResult);
-  // Create a new account for the caller.
-  register_account : (input : RegisterAccountInput) -> (RegisterAccountResult);
-  // Add account identity to the caller account, one identity can only be associated with one account.
+  // Get the user information for the caller.
+  get_user : () -> (GetUserResult) query;
+  // Manage the user associated with the caller.
+  manage_user : (input : ManageUserInput) -> (ManageUserResult);
+  // Create a new user for the caller.
+  register_user : (input : RegisterUserInput) -> (RegisterUserResult);
+  // Add user identity to the caller user, one identity can only be associated with one user.
   //
-  // This operation should be called with the identity that is being associated with the account
-  // after one identity that is already associated with the account has already approved the association.
+  // This operation should be called with the identity that is being associated with the user
+  // after one identity that is already associated with the user has already approved the association.
   //
-  // If the identity being associated is already attached with another account, this operation will fail,
-  // and the identity will need to be removed from the other account before it can be associated with this account.
-  associate_identity_with_account : (input : AssociateIdentityWithAccountInput) -> (AssociateIdentityWithAccountResult);
-  // Delete account associated with the caller.
-  delete_account : () -> (RemoveAccountResult);
+  // If the identity being associated is already attached with another user, this operation will fail,
+  // and the identity will need to be removed from the other user before it can be associated with this user.
+  associate_identity_with_user : (input : AssociateIdentityWithUserInput) -> (AssociateIdentityWithUserResult);
+  // Delete user associated with the caller.
+  delete_user : () -> (RemoveUserResult);
   // List all the banks associated with the caller.
   list_banks : () -> (ListBanksResult) query;
-  // Get main bank for the caller account.
+  // Get main bank for the caller user.
   get_main_bank : () -> (GetMainBankResult) query;
 };

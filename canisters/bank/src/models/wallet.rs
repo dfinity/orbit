@@ -1,4 +1,4 @@
-use super::{AccountId, Blockchain, BlockchainStandard, WalletBalance, WalletPolicy};
+use super::{Blockchain, BlockchainStandard, UserId, WalletBalance, WalletPolicy};
 use crate::errors::WalletError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -16,7 +16,7 @@ pub type WalletId = UUID;
 
 /// Represents a wallet in the system.
 ///
-/// A wallet can be owned by one or more accounts and can only hold one type of asset,
+/// A wallet can be associated with one or more users and can only hold one type of asset,
 /// which is defined by the blockchain, standard and symbol.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -35,11 +35,11 @@ pub struct Wallet {
     pub decimals: u32,
     /// The wallet name (e.g. `My Main Wallet`)
     pub name: Option<String>,
-    /// The wallet owners, which are a list of account ids.
+    /// The wallet owners, which are a list of user ids.
     ///
     /// If the wallet has no owners, it means that it is a system wallet and
     /// only admins of the system can operate on it.
-    pub owners: Vec<AccountId>,
+    pub owners: Vec<UserId>,
     /// The wallet balance, which is the amount of the asset that the wallet holds.
     pub balance: Option<WalletBalance>,
     /// The wallet policies, which define the rules for the wallet.

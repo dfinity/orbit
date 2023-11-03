@@ -1,4 +1,4 @@
-use super::AccountIdDTO;
+use super::UserIdDTO;
 use candid::{CandidType, Deserialize};
 
 pub type WalletIdDTO = String;
@@ -34,7 +34,7 @@ pub enum WalletPolicyDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CreateWalletInput {
-    pub owners: Vec<AccountIdDTO>,
+    pub owners: Vec<UserIdDTO>,
     pub name: Option<String>,
     pub blockchain: String,
     pub standard: String,

@@ -3,7 +3,7 @@ use crate::core::ic_cdk::{
     api::{id as self_canister_id, is_controller, trap},
     caller,
 };
-use crate::{models::AccessRole, repositories::AccountRepository};
+use crate::{models::AccessRole, repositories::UserRepository};
 use candid::Principal;
 
 #[derive(Clone, Debug)]
@@ -40,11 +40,11 @@ impl CallContext {
             return true;
         }
 
-        let account: Option<crate::models::Account> =
-            AccountRepository::default().find_account_by_identity(&self.caller);
+        let user: Option<crate::models::User> =
+            UserRepository::default().find_by_identity(&self.caller);
 
-        match account {
-            Some(account) => account.access_roles.contains(&AccessRole::Admin),
+        match user {
+            Some(user) => user.access_roles.contains(&AccessRole::Admin),
             None => false,
         }
     }
@@ -69,8 +69,8 @@ fn check_access(permission: &str, caller: Principal) {
         return;
     }
 
-    let account = AccountRepository::default()
-        .find_account_by_identity(&caller)
+    let user = UserRepository::default()
+        .find_by_identity(&caller)
         .unwrap_or_else(|| {
             trap(
                 format!(
@@ -81,7 +81,7 @@ fn check_access(permission: &str, caller: Principal) {
             )
         });
 
-    if account.access_roles.contains(&AccessRole::Admin) {
+    if user.access_roles.contains(&AccessRole::Admin) {
         // Admins have access to everything
         return;
     }
@@ -89,7 +89,7 @@ fn check_access(permission: &str, caller: Principal) {
     let user_has_access = permission
         .access_roles
         .iter()
-        .any(|required_role| account.access_roles.contains(required_role));
+        .any(|required_role| user.access_roles.contains(required_role));
 
     if !user_has_access {
         trap(
@@ -109,21 +109,21 @@ pub trait WithCallContext {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::{core::test_utils, models::Account};
+    use crate::{core::test_utils, models::User};
     use ic_canister_core::{cdk::mocks::TEST_CANISTER_ID, repository::Repository};
 
     #[test]
     fn check_caller_is_not_admin() {
         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-        let account = Account {
+        let user = User {
             id: [1; 16],
             identities: vec![caller],
             unconfirmed_identities: vec![],
             access_roles: vec![AccessRole::User],
             last_modification_timestamp: 0,
         };
-        let account_repository = AccountRepository::default();
-        account_repository.insert(account.to_key(), account.clone());
+        let user_repository = UserRepository::default();
+        user_repository.insert(user.to_key(), user.clone());
 
         let call_context = CallContext::new(caller);
         assert!(!call_context.is_admin());
@@ -132,15 +132,15 @@ pub mod tests {
     #[test]
     fn check_caller_is_admin() {
         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-        let account = Account {
+        let user = User {
             id: [1; 16],
             identities: vec![caller],
             unconfirmed_identities: vec![],
             access_roles: vec![AccessRole::Admin, AccessRole::User],
             last_modification_timestamp: 0,
         };
-        let account_repository = AccountRepository::default();
-        account_repository.insert(account.to_key(), account.clone());
+        let user_repository = UserRepository::default();
+        user_repository.insert(user.to_key(), user.clone());
 
         let call_context = CallContext::new(caller);
         assert!(call_context.is_admin());
@@ -162,15 +162,15 @@ pub mod tests {
             .unwrap_or_else(|| panic!("Permission with admin requirement not found"));
 
         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-        let account = Account {
+        let user = User {
             id: [1; 16],
             identities: vec![caller],
             unconfirmed_identities: vec![],
             access_roles: vec![AccessRole::Admin],
             last_modification_timestamp: 0,
         };
-        let account_repository = AccountRepository::default();
-        account_repository.insert(account.to_key(), account.clone());
+        let user_repository = UserRepository::default();
+        user_repository.insert(user.to_key(), user.clone());
 
         let call_context = CallContext::new(caller);
         call_context.check_access(admin_permission.permission_id.as_str());
@@ -187,15 +187,15 @@ pub mod tests {
             .unwrap_or_else(|| panic!("Permission with admin requirement not found"));
 
         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-        let account = Account {
+        let user = User {
             id: [1; 16],
             identities: vec![caller],
             unconfirmed_identities: vec![],
             access_roles: vec![AccessRole::User],
             last_modification_timestamp: 0,
         };
-        let account_repository = AccountRepository::default();
-        account_repository.insert(account.to_key(), account.clone());
+        let user_repository = UserRepository::default();
+        user_repository.insert(user.to_key(), user.clone());
 
         let call_context = CallContext::new(caller);
         call_context.check_access(admin_permission.permission_id.as_str());

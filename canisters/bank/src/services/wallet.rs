@@ -1,4 +1,4 @@
-use super::AccountService;
+use super::UserService;
 use crate::{
     core::{generate_uuid_v4, CallContext, WithCallContext, WALLET_BALANCE_FRESHNESS_IN_MS},
     errors::WalletError,
@@ -18,7 +18,7 @@ use uuid::Uuid;
 #[derive(Default, Debug)]
 pub struct WalletService {
     call_context: CallContext,
-    account_service: AccountService,
+    user_service: UserService,
     wallet_repository: WalletRepository,
 }
 
@@ -26,7 +26,7 @@ impl WithCallContext for WalletService {
     fn with_call_context(call_context: CallContext) -> Self {
         Self {
             call_context: call_context.clone(),
-            account_service: AccountService::with_call_context(call_context.clone()),
+            user_service: UserService::with_call_context(call_context.clone()),
             ..Default::default()
         }
     }
@@ -53,11 +53,9 @@ impl WalletService {
     /// If the caller has a different identity than the requested owner, then the call
     /// will fail with a forbidden error if the user is not an admin.
     pub fn list_wallets(&self, owner_identity: Principal) -> ServiceResult<Vec<Wallet>> {
-        let account = self
-            .account_service
-            .get_account_by_identity(&owner_identity)?;
+        let user = self.user_service.get_user_by_identity(&owner_identity)?;
 
-        let wallets = self.wallet_repository.find_by_account_id(account.id);
+        let wallets = self.wallet_repository.find_by_user_id(user.id);
 
         Ok(wallets)
     }
@@ -65,19 +63,18 @@ impl WalletService {
     /// Creates a new wallet, if the caller has not added itself as one of the owners of the wallet,
     /// it will be added automatically.
     ///
-    /// This operation will fail if the user does not have an associated account.
+    /// This operation will fail if the user does not have an associated user.
     pub async fn create_wallet(&self, input: CreateWalletInput) -> ServiceResult<Wallet> {
-        let caller_account = self
-            .account_service
-            .get_account_by_identity(&self.call_context.caller())?;
+        let caller_user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
 
-        let mut owners_accounts: HashSet<UUID> = HashSet::from_iter(vec![caller_account.id]);
-        for account_id in input.owners.iter() {
-            let account_id = HelperMapper::to_uuid(account_id.clone())?;
-            self.account_service
-                .assert_account_exists(account_id.as_bytes())?;
+        let mut owners_users: HashSet<UUID> = HashSet::from_iter(vec![caller_user.id]);
+        for user_id in input.owners.iter() {
+            let user_id = HelperMapper::to_uuid(user_id.clone())?;
+            self.user_service.assert_user_exists(user_id.as_bytes())?;
 
-            owners_accounts.insert(*account_id.as_bytes());
+            owners_users.insert(*user_id.as_bytes());
         }
 
         let uuid = generate_uuid_v4().await;
@@ -90,7 +87,7 @@ impl WalletService {
             input,
             *uuid.as_bytes(),
             None,
-            owners_accounts.iter().copied().collect(),
+            owners_users.iter().copied().collect(),
         )?;
 
         // The wallet address is generated after the wallet is created from the user input and
@@ -187,11 +184,11 @@ impl WalletService {
             return Ok(());
         }
 
-        let caller_account = self
-            .account_service
-            .get_account_by_identity(&self.call_context.caller())?;
+        let caller_user = self
+            .user_service
+            .get_user_by_identity(&self.call_context.caller())?;
 
-        let is_wallet_owner = wallet.owners.contains(&caller_account.id);
+        let is_wallet_owner = wallet.owners.contains(&caller_user.id);
 
         if !is_wallet_owner {
             Err(WalletError::Forbidden)?
@@ -206,29 +203,29 @@ mod tests {
     use super::*;
     use crate::{
         core::test_utils,
-        models::{account_test_utils::mock_account, wallet_test_utils::mock_wallet, Account},
-        repositories::AccountRepository,
+        models::{user_test_utils::mock_user, wallet_test_utils::mock_wallet, User},
+        repositories::UserRepository,
     };
 
     struct TestContext {
         repository: WalletRepository,
         service: WalletService,
-        caller_account: Account,
+        caller_user: User,
     }
 
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
-        let mut account = mock_account();
-        account.identities = vec![call_context.caller()];
+        let mut user = mock_user();
+        user.identities = vec![call_context.caller()];
 
-        AccountRepository::default().insert(account.to_key(), account.clone());
+        UserRepository::default().insert(user.to_key(), user.clone());
 
         TestContext {
             repository: WalletRepository::default(),
             service: WalletService::with_call_context(call_context),
-            caller_account: account,
+            caller_user: user,
         }
     }
 
@@ -236,7 +233,7 @@ mod tests {
     fn get_wallet() {
         let ctx = setup();
         let mut wallet = mock_wallet();
-        wallet.owners.push(ctx.caller_account.id);
+        wallet.owners.push(ctx.caller_user.id);
 
         ctx.repository.insert(wallet.to_key(), wallet.clone());
 
@@ -262,7 +259,7 @@ mod tests {
         let ctx = setup();
         let input = CreateWalletInput {
             name: Some("foo".to_string()),
-            owners: vec![Uuid::from_bytes(ctx.caller_account.id).to_string()],
+            owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
             blockchain: "icp".to_string(),
             standard: "native".to_string(),
             metadata: None,
@@ -279,7 +276,7 @@ mod tests {
         let ctx = setup();
         let input = CreateWalletInput {
             name: Some("foo".to_string()),
-            owners: vec![Uuid::from_bytes(ctx.caller_account.id).to_string()],
+            owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
             blockchain: "unknown".to_string(),
             standard: "native".to_string(),
             metadata: None,

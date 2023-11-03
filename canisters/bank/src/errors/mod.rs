@@ -5,8 +5,8 @@
 mod wallet;
 pub use wallet::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod mapper;
 pub use mapper::*;

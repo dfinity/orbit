@@ -47,7 +47,7 @@ mod tests {
             from_wallet: [1; 16],
             to_address: "0x1234".to_string(),
             status: TransferStatus::Pending,
-            initiator_account: [2; 16],
+            initiator_user: [2; 16],
             last_modification_timestamp: 0,
             metadata: vec![],
             policy_snapshot: PolicySnapshot { min_approvals: 0 },

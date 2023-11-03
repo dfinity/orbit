@@ -15,8 +15,8 @@ pub use wallet_policy::*;
 mod helper;
 pub use helper::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod transfer;
 pub use transfer::*;

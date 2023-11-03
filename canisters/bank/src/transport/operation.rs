@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, TimestampRfc3339, TransferDTO, WalletDTO, WalletIdDTO};
+use super::{TimestampRfc3339, TransferDTO, UserIdDTO, WalletDTO, WalletIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type OperationIdDTO = String;
@@ -19,7 +19,7 @@ pub struct OperationContextDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct OperationDecisionDTO {
-    pub account_id: AccountIdDTO,
+    pub user_id: UserIdDTO,
     pub read: bool,
     pub status: OperationStatusDTO,
     pub status_reason: Option<String>,
@@ -33,7 +33,7 @@ pub struct OperationDTO {
     pub code: String,
     pub created_at: TimestampRfc3339,
     pub metadata: Vec<(String, String)>,
-    pub originator_account_id: Option<AccountIdDTO>,
+    pub proposed_by: Option<UserIdDTO>,
     pub decisions: Vec<OperationDecisionDTO>,
     pub context: OperationContextDTO,
 }

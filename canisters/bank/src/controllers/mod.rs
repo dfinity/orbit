@@ -15,5 +15,25 @@ pub use transfer::*;
 mod operation;
 pub use operation::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
+
+#[cfg(test)]
+mod tests {
+    use crate::transport::*;
+    use ic_canister_core::api::ApiResult;
+
+    #[test]
+    fn check_candid_interface() {
+        use candid::utils::{service_compatible, CandidSource};
+
+        candid::export_service!();
+        let new_interface = __export_service();
+
+        service_compatible(
+            CandidSource::Text(&new_interface),
+            CandidSource::Text(include_str!("../../spec.did")),
+        )
+        .unwrap();
+    }
+}

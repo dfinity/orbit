@@ -80,7 +80,7 @@ mod tests {
                 OPERATION_METADATA_KEY_WALLET_ID.to_string(),
                 Uuid::from_bytes(wallet_id).to_string(),
             )],
-            originator_account_id: None,
+            proposed_by: None,
             status: OperationStatus::Pending,
         };
 
@@ -103,7 +103,7 @@ mod tests {
                 OPERATION_METADATA_KEY_WALLET_ID.to_string(),
                 "abcd".to_string(),
             )],
-            originator_account_id: None,
+            proposed_by: None,
             status: OperationStatus::Pending,
         };
 

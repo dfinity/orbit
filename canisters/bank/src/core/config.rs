@@ -2,7 +2,7 @@ use super::WASM_PAGE_SIZE;
 use crate::{
     core::ic_cdk::api::{time, trap},
     models::{AccessRole, BankAsset, Blockchain, BlockchainStandard, WalletPolicy},
-    transport::{AccountRoleDTO, BankPermissionDTO},
+    transport::{BankPermissionDTO, UserRoleDTO},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::types::Timestamp;
@@ -23,9 +23,9 @@ pub const PERMISSION_READ_TRANSFER: &str = "read:transfer";
 pub const PERMISSION_WRITE_TRANSFER: &str = "write:transfer";
 pub const PERMISSION_READ_OPERATION: &str = "read:operation";
 pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
-pub const PERMISSION_REGISTER_ACCOUNT: &str = "read:register-account";
-pub const PERMISSION_READ_ACCOUNT: &str = "read:account";
-pub const PERMISSION_WRITE_ACCOUNT: &str = "write:account";
+pub const PERMISSION_REGISTER_USER: &str = "read:register-user";
+pub const PERMISSION_READ_USER: &str = "read:user";
+pub const PERMISSION_WRITE_USER: &str = "write:user";
 
 thread_local! {
   /// The list of assets that are supported by the bank canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
@@ -76,15 +76,15 @@ pub fn default_bank_permissions() -> Vec<Permission> {
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {
-            permission_id: PERMISSION_REGISTER_ACCOUNT.to_string(),
+            permission_id: PERMISSION_REGISTER_USER.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
         },
         Permission {
-            permission_id: PERMISSION_WRITE_ACCOUNT.to_string(),
+            permission_id: PERMISSION_WRITE_USER.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {
-            permission_id: PERMISSION_READ_ACCOUNT.to_string(),
+            permission_id: PERMISSION_READ_USER.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
         },
     ]
@@ -106,7 +106,7 @@ pub struct CanisterConfig {
     pub approval_threshold: u8,
     /// The permissions of the canister.
     pub permissions: Vec<Permission>,
-    /// The default accounts of the canister.
+    /// The default users of the canister.
     pub owners: Vec<Principal>,
     /// The default wallet policies of the canister,
     /// automatically applied to all wallets if they do not have their own policies.
@@ -147,22 +147,22 @@ impl Permission {
     }
 }
 
-impl AccountRoleDTO {
+impl UserRoleDTO {
     pub fn to_access_role(&self) -> AccessRole {
         match self {
-            AccountRoleDTO::Admin => AccessRole::Admin,
-            AccountRoleDTO::User => AccessRole::User,
-            AccountRoleDTO::Guest => AccessRole::Guest,
+            UserRoleDTO::Admin => AccessRole::Admin,
+            UserRoleDTO::User => AccessRole::User,
+            UserRoleDTO::Guest => AccessRole::Guest,
         }
     }
 }
 
 impl AccessRole {
-    pub fn to_dto(&self) -> AccountRoleDTO {
+    pub fn to_dto(&self) -> UserRoleDTO {
         match self {
-            AccessRole::Admin => AccountRoleDTO::Admin,
-            AccessRole::User => AccountRoleDTO::User,
-            AccessRole::Guest => AccountRoleDTO::Guest,
+            AccessRole::Admin => UserRoleDTO::Admin,
+            AccessRole::User => UserRoleDTO::User,
+            AccessRole::Guest => UserRoleDTO::Guest,
         }
     }
 }
@@ -175,8 +175,7 @@ impl CanisterConfig {
     /// The maximum size of the CanisterConfig in stable memory.
     pub const MAX_BYTE_SIZE: u32 = WASM_PAGE_SIZE;
 
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
+    /// If this overflows then the stable memory layout will be broken.
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
         - Self::MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP
         - Self::MAX_BYTE_SIZE_APPROVAL_THRESHOLD;

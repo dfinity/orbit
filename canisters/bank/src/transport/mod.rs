@@ -19,5 +19,5 @@ pub use transfer::*;
 mod operation;
 pub use operation::*;
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;

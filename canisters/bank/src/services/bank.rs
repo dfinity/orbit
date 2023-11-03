@@ -1,28 +1,28 @@
-use super::AccountService;
+use super::UserService;
 use crate::core::ic_cdk::api::time;
 use crate::{
     core::{
         canister_config, default_bank_permissions, write_canister_config, CallContext,
         CanisterConfig, WithCallContext, BANK_ASSETS,
     },
-    models::{AccessRole, Account, BankFeatures, BankSettings},
-    repositories::AccountRepository,
-    transport::{BankCanisterInit, RegisterAccountInput},
+    models::{AccessRole, BankFeatures, BankSettings, User},
+    repositories::UserRepository,
+    transport::{BankCanisterInit, RegisterUserInput},
 };
 use ic_canister_core::api::ServiceResult;
 
 #[derive(Default, Debug)]
 pub struct BankService {
     _call_context: CallContext,
-    account_repository: AccountRepository,
-    account_service: AccountService,
+    user_repository: UserRepository,
+    user_service: UserService,
 }
 
 impl WithCallContext for BankService {
     fn with_call_context(call_context: CallContext) -> Self {
         Self {
             _call_context: call_context.clone(),
-            account_service: AccountService::with_call_context(call_context.clone()),
+            user_service: UserService::with_call_context(call_context.clone()),
             ..Default::default()
         }
     }
@@ -37,17 +37,17 @@ impl BankService {
         })
     }
 
-    /// Gets the bank settings including the canister config and the owner accounts.
+    /// Gets the bank settings including the canister config and the owner users.
     pub fn get_bank_settings(&self) -> ServiceResult<BankSettings> {
         let canister_config = canister_config();
-        let mut owners: Vec<Account> = vec![];
+        let mut owners: Vec<User> = vec![];
         for owner_principal in canister_config.owners.iter() {
-            let owner_account = self
-                .account_repository
-                .find_account_by_identity(owner_principal)
-                .expect("Owner account not found");
+            let owner_user = self
+                .user_repository
+                .find_by_identity(owner_principal)
+                .expect("Owner user not found");
 
-            owners.push(owner_account);
+            owners.push(owner_user);
         }
 
         Ok(BankSettings {
@@ -73,23 +73,23 @@ impl BankService {
                 .collect::<Vec<_>>();
 
             for admin in new_owners {
-                self.account_service
-                    .register_account(
-                        RegisterAccountInput {
+                self.user_service
+                    .register_user(
+                        RegisterUserInput {
                             identities: vec![*admin],
                         },
                         vec![AccessRole::Admin],
                     )
                     .await
-                    .expect("Failed to register admin account");
+                    .expect("Failed to register admin user");
             }
         }
 
         for unassigned_admin in removed_owners {
-            self.account_service
+            self.user_service
                 .remove_admin(unassigned_admin)
                 .await
-                .expect("Failed to unregister admin account");
+                .expect("Failed to unregister admin user");
         }
 
         config.permissions = default_bank_permissions();
@@ -105,7 +105,7 @@ mod tests {
     use super::*;
     use crate::{
         core::{test_utils, PERMISSION_READ_FEATURES},
-        transport::{AccountRoleDTO, BankPermissionDTO},
+        transport::{BankPermissionDTO, UserRoleDTO},
     };
     use candid::Principal;
 
@@ -122,7 +122,7 @@ mod tests {
             owners: Some(vec![Principal::anonymous()]),
             permissions: Some(vec![BankPermissionDTO {
                 permission_id: PERMISSION_READ_FEATURES.to_string(),
-                access_roles: vec![AccountRoleDTO::User],
+                access_roles: vec![UserRoleDTO::User],
             }]),
             ..Default::default()
         };

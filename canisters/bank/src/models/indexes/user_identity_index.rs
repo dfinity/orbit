@@ -1,31 +1,31 @@
-use crate::models::{Account, AccountId};
+use crate::models::{User, UserId};
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_macros::stable_object;
 
-/// Represents an account identity index within the system.
+/// Represents an user identity index within the system.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AccountIdentityIndex {
-    /// The identity associated with the account.
+pub struct UserIdentityIndex {
+    /// The identity associated with the user.
     pub identity_id: Principal,
-    /// The account id, which is a UUID.
-    pub account_id: AccountId,
+    /// The user id, which is a UUID.
+    pub user_id: UserId,
 }
 
 #[derive(Clone, Debug)]
-pub struct AccountIdentityIndexCriteria {
+pub struct UserIdentityIndexCriteria {
     pub identity_id: Principal,
 }
 
-impl Account {
-    pub fn to_index_for_identities(&self) -> Vec<AccountIdentityIndex> {
+impl User {
+    pub fn to_index_for_identities(&self) -> Vec<UserIdentityIndex> {
         self.identities
             .iter()
-            .map(|identity| AccountIdentityIndex {
+            .map(|identity| UserIdentityIndex {
                 identity_id: identity.to_owned(),
-                account_id: self.id,
+                user_id: self.id,
             })
-            .collect::<Vec<AccountIdentityIndex>>()
+            .collect::<Vec<UserIdentityIndex>>()
     }
 }
 
@@ -37,23 +37,23 @@ mod tests {
 
     #[test]
     fn valid_model_serialization() {
-        let model = AccountIdentityIndex {
+        let model = UserIdentityIndex {
             identity_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            account_id: [u8::MAX; 16],
+            user_id: [u8::MAX; 16],
         };
 
         let serialized_model = model.to_bytes();
-        let deserialized_model = AccountIdentityIndex::from_bytes(serialized_model);
+        let deserialized_model = UserIdentityIndex::from_bytes(serialized_model);
 
         assert_eq!(model.identity_id, deserialized_model.identity_id);
-        assert_eq!(model.account_id, deserialized_model.account_id);
+        assert_eq!(model.user_id, deserialized_model.user_id);
     }
 
     #[test]
-    fn valid_account_identities_to_indexes() {
-        let account_id = [u8::MAX; 16];
-        let account = Account {
-            id: account_id,
+    fn valid_user_identities_to_indexes() {
+        let user_id = [u8::MAX; 16];
+        let user = User {
+            id: user_id,
             identities: vec![
                 Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 Principal::from_text("asrmz-lmaaa-aaaaa-qaaeq-cai").unwrap(),
@@ -63,7 +63,7 @@ mod tests {
             last_modification_timestamp: 0,
         };
 
-        let indexes = account.to_index_for_identities();
+        let indexes = user.to_index_for_identities();
 
         assert_eq!(indexes.len(), 2);
         assert_eq!(
@@ -74,7 +74,7 @@ mod tests {
             indexes[1].identity_id,
             Principal::from_text("asrmz-lmaaa-aaaaa-qaaeq-cai").unwrap()
         );
-        assert_eq!(indexes[0].account_id, account_id);
-        assert_eq!(indexes[1].account_id, account_id);
+        assert_eq!(indexes[0].user_id, user_id);
+        assert_eq!(indexes[1].user_id, user_id);
     }
 }

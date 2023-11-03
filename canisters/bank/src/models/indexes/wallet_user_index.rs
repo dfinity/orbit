@@ -1,30 +1,30 @@
-use crate::models::{AccountId, Wallet, WalletId};
+use crate::models::{UserId, Wallet, WalletId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct WalletAccountIndex {
-    /// The account id, which is a UUID.
-    pub account_id: AccountId,
+pub struct WalletUserIndex {
+    /// The user id, which is a UUID.
+    pub user_id: UserId,
     /// The wallet id, which is a UUID.
     pub wallet_id: WalletId,
 }
 
 #[derive(Clone, Debug)]
-pub struct WalletAccountIndexCriteria {
-    pub account_id: WalletId,
+pub struct WalletUserIndexCriteria {
+    pub user_id: UserId,
 }
 
 impl Wallet {
-    pub fn to_index_by_accounts(&self) -> Vec<WalletAccountIndex> {
+    pub fn to_index_by_users(&self) -> Vec<WalletUserIndex> {
         self.owners
             .iter()
-            .map(|owner| WalletAccountIndex {
-                account_id: owner.to_owned(),
+            .map(|owner| WalletUserIndex {
+                user_id: owner.to_owned(),
                 wallet_id: self.id,
             })
-            .collect::<Vec<WalletAccountIndex>>()
+            .collect::<Vec<WalletUserIndex>>()
     }
 }
 
@@ -34,7 +34,7 @@ mod tests {
     use crate::models::{Blockchain, BlockchainStandard};
 
     #[test]
-    fn test_wallet_to_account_association() {
+    fn test_wallet_to_user_association() {
         let wallet = Wallet {
             id: [0; 16],
             address: "0x1234".to_string(),
@@ -50,12 +50,12 @@ mod tests {
             symbol: "ICP".to_string(),
         };
 
-        let indexes = wallet.to_index_by_accounts();
+        let indexes = wallet.to_index_by_users();
 
         assert_eq!(indexes.len(), 2);
-        assert_eq!(indexes[0].account_id, [1; 16]);
+        assert_eq!(indexes[0].user_id, [1; 16]);
         assert_eq!(indexes[0].wallet_id, [0; 16]);
-        assert_eq!(indexes[1].account_id, [2; 16]);
+        assert_eq!(indexes[1].user_id, [2; 16]);
         assert_eq!(indexes[1].wallet_id, [0; 16]);
     }
 }

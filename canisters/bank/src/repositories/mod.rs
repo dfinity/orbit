@@ -1,7 +1,7 @@
 //! Repositories for entities and related data, including indexes to facilitate data retrieval.
 
-mod account;
-pub use account::*;
+mod user;
+pub use user::*;
 
 mod wallet;
 pub use wallet::*;

@@ -1,7 +1,7 @@
 use crate::{
-    core::{with_memory_manager, Memory, WALLET_ACCOUNT_INDEX_MEMORY_ID},
+    core::{with_memory_manager, Memory, WALLET_USER_INDEX_MEMORY_ID},
     models::{
-        indexes::wallet_account_index::{WalletAccountIndex, WalletAccountIndexCriteria},
+        indexes::wallet_user_index::{WalletUserIndex, WalletUserIndexCriteria},
         WalletId,
     },
 };
@@ -10,40 +10,40 @@ use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<WalletAccountIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<WalletUserIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(WALLET_ACCOUNT_INDEX_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(WALLET_USER_INDEX_MEMORY_ID))
     )
   })
 }
 
-/// A repository that enables finding wallets based on the id of the account in stable memory.
+/// A repository that enables finding wallets based on the id of the user in stable memory.
 #[derive(Default, Debug)]
-pub struct WalletAccountIndexRepository {}
+pub struct WalletUserIndexRepository {}
 
-impl IndexRepository<WalletAccountIndex, WalletId> for WalletAccountIndexRepository {
-    type FindByCriteria = WalletAccountIndexCriteria;
+impl IndexRepository<WalletUserIndex, WalletId> for WalletUserIndexRepository {
+    type FindByCriteria = WalletUserIndexCriteria;
 
-    fn exists(&self, index: &WalletAccountIndex) -> bool {
+    fn exists(&self, index: &WalletUserIndex) -> bool {
         DB.with(|m| m.borrow().get(index).is_some())
     }
 
-    fn insert(&self, index: WalletAccountIndex) {
+    fn insert(&self, index: WalletUserIndex) {
         DB.with(|m| m.borrow_mut().insert(index, ()));
     }
 
-    fn remove(&self, index: &WalletAccountIndex) -> bool {
+    fn remove(&self, index: &WalletUserIndex) -> bool {
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<WalletId> {
         DB.with(|db| {
-            let start_key = WalletAccountIndex {
-                account_id: criteria.account_id,
+            let start_key = WalletUserIndex {
+                user_id: criteria.user_id,
                 wallet_id: [u8::MIN; 16],
             };
-            let end_key = WalletAccountIndex {
-                account_id: criteria.account_id,
+            let end_key = WalletUserIndex {
+                user_id: criteria.user_id,
                 wallet_id: [u8::MAX; 16],
             };
 
@@ -61,9 +61,9 @@ mod tests {
 
     #[test]
     fn test_repository_crud() {
-        let repository = WalletAccountIndexRepository::default();
-        let index = WalletAccountIndex {
-            account_id: [1; 16],
+        let repository = WalletUserIndexRepository::default();
+        let index = WalletUserIndex {
+            user_id: [1; 16],
             wallet_id: [2; 16],
         };
 
@@ -78,17 +78,15 @@ mod tests {
 
     #[test]
     fn test_find_by_criteria() {
-        let repository = WalletAccountIndexRepository::default();
-        let index = WalletAccountIndex {
-            account_id: [1; 16],
+        let repository = WalletUserIndexRepository::default();
+        let index = WalletUserIndex {
+            user_id: [1; 16],
             wallet_id: [2; 16],
         };
 
         repository.insert(index.clone());
 
-        let criteria = WalletAccountIndexCriteria {
-            account_id: [1; 16],
-        };
+        let criteria = WalletUserIndexCriteria { user_id: [1; 16] };
 
         let result = repository.find_by_criteria(criteria);
 

@@ -10,7 +10,7 @@ use std::borrow::Cow;
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
     /// This is the shared bank canister that is user by default for all
-    /// accounts that don't have a private bank canister.
+    /// users that don't have a private bank canister.
     pub shared_bank_canister: Principal,
 
     /// Last time the canister was upgraded or initialized.
@@ -43,8 +43,7 @@ impl CanisterConfig {
     /// The maximum size of the CanisterConfig in stable memory.
     pub const MAX_BYTE_SIZE: u32 = WASM_PAGE_SIZE;
 
-    /// The number of bytes that are not used by the account and could be used to add more fields to the account
-    /// without breaking the stable memory layout, if this overflows then the stable memory layout will be broken.
+    /// If this overflows then the stable memory layout will be broken.
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
         - Self::MAX_BYTE_SIZE_SHARED_BANK_CANISTER
         - Self::MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP;
