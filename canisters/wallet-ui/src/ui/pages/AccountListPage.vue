@@ -49,7 +49,9 @@
                   >
                     {{ formatBalance(account.balance[0].balance, account.balance[0].decimals) }}
                   </span>
-                  <span v-else class="account-card__amount account-card__amount--unavailable">-</span>
+                  <span v-else class="account-card__amount account-card__amount--unavailable"
+                    >-</span
+                  >
                   {{ account.symbol }}
                 </p>
               </VCardText>
@@ -61,7 +63,9 @@
                   :prepend-icon="account.owners.length > 1 ? mdiAccountGroup : mdiAccount"
                 >
                   {{
-                    account.owners.length > 1 ? $t('banks.joint_account') : $t('banks.private_account')
+                    account.owners.length > 1
+                      ? $t('banks.joint_account')
+                      : $t('banks.private_account')
                   }}
                 </VChip>
                 <VSpacer />

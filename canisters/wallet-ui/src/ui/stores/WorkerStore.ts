@@ -30,7 +30,10 @@ export const useWorkerStore = defineStore('cache', {
     },
     start(): void {
       this.stop();
-      this.pollingJobs.balances = timer(() => this.fetchAccountBalances(), BALANCE_POLLING_INTERVAL);
+      this.pollingJobs.balances = timer(
+        () => this.fetchAccountBalances(),
+        BALANCE_POLLING_INTERVAL,
+      );
       this.pollingJobs.notifications = timer(
         () => this.fetchNotifications(),
         NOTIFICATIONS_POLLING_INTERVAL,

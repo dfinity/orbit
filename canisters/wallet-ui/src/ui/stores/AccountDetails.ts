@@ -251,7 +251,8 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
           account_id: accountId,
         });
 
-        const updatedBalance = activeBank.accounts.items.find(item => item.id === accountId)?.balance;
+        const updatedBalance = activeBank.accounts.items.find(item => item.id === accountId)
+          ?.balance;
         if (updatedBalance) {
           this._account.balance = updatedBalance;
         }

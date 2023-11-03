@@ -103,7 +103,12 @@
                     </VCardText>
                     <VCardActions>
                       <VSpacer />
-                      <VBtn color="success" variant="flat" block @click="accountForm.addOwner(null)">
+                      <VBtn
+                        color="success"
+                        variant="flat"
+                        block
+                        @click="accountForm.addOwner(null)"
+                      >
                         {{ $t('terms.add') }}
                       </VBtn>
                       <VSpacer />
