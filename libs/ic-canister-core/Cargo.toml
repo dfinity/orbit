@@ -24,4 +24,6 @@ time = { version = "0.3", features = ["formatting", "parsing"] }
 thiserror = "1.0"
 convert_case = "0.6"
 serde_json = "1.0"
-tokio = { version = "1.32.0", features = ["full"] }
+
+[dev-dependencies]
+tokio = { version = "1.33.0", features = ["full"] }

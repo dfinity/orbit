@@ -5,6 +5,7 @@ pub use ic_cdk::*;
 pub use mocks::*;
 
 // Mock ic system call api for tests.
+#[cfg(not(target_arch = "wasm32"))]
 pub mod mocks {
     use candid::Principal;
 
@@ -14,8 +15,8 @@ pub mod mocks {
         Principal::anonymous()
     }
 
-    pub fn spawn<F: 'static + std::future::Future<Output = ()>>(future: F) {
-        tokio::task::spawn_local(future);
+    pub fn spawn<F: 'static + std::future::Future<Output = ()>>(_future: F) {
+        // do nothing since this is a mock for testing purposes
     }
 
     pub mod api {
