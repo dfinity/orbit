@@ -148,9 +148,9 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.APP_INTERNET_IDENTITY_CANISTER_ID': JSON.stringify(
         canisters.get('internet_identity'),
       ),
-      'import.meta.env.APP_INTERNET_IDENTITY_PROVIDER_URL': JSON.stringify(
-        `http://${canisters.get('internet_identity')}.localhost:4943`,
-      ),
+      'import.meta.env.APP_INTERNET_IDENTITY_PROVIDER_URL': isProduction
+        ? process.env.APP_INTERNET_IDENTITY_PROVIDER_URL
+        : JSON.stringify(`http://${canisters.get('internet_identity')}.localhost:4943`),
       'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.get('control_panel')),
       'process.env.CANISTER_ID_ICP_INDEX': JSON.stringify(canisters.get('icp_index')),
     },
