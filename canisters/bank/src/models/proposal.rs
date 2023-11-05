@@ -278,7 +278,7 @@ pub mod proposal_test_utils {
                 decided_dt: Some(0),
                 last_modification_timestamp: 0,
             }],
-            metadata: vec![("a".repeat(25), "b".repeat(24))],
+            metadata: vec![("foo".to_string(), "bar".to_string())],
             created_timestamp: 0,
             last_modification_timestamp: 0,
         }
