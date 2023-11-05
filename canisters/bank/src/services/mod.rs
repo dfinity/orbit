@@ -9,8 +9,8 @@ pub use transfer::*;
 mod user;
 pub use user::*;
 
-mod operation;
-pub use operation::*;
+mod proposal;
+pub use proposal::*;
 
 mod bank;
 pub use bank::*;

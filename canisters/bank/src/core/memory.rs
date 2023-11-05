@@ -15,10 +15,10 @@ pub const ACCOUNT_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
 pub const TRANSFER_MEMORY_ID: MemoryId = MemoryId::new(5);
 pub const TRANSFER_EXECUTION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
 pub const TRANSFER_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(7);
-pub const OPERATION_MEMORY_ID: MemoryId = MemoryId::new(8);
-pub const OPERATION_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
-pub const OPERATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
-pub const OPERATION_TRANSFER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
+pub const PROPOSAL_MEMORY_ID: MemoryId = MemoryId::new(8);
+pub const PROPOSAL_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
+pub const PROPOSAL_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
+pub const PROPOSAL_TRANSFER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
 pub const TRANSFER_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 thread_local! {

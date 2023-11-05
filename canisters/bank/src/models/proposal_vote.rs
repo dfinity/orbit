@@ -1,5 +1,5 @@
-use super::{OperationStatus, UserId};
-use crate::errors::OperationError;
+use super::{ProposalVoteStatus, UserId};
+use crate::errors::ProposalError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -9,36 +9,35 @@ use ic_canister_macros::stable_object;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct OperationDecision {
-    /// The user id that this operation task is assigned to.
+pub struct ProposalVote {
+    /// The user id associated with the vote.
     pub user_id: UserId,
-    /// If the operation is marked as read by the user that it is associated with.
     pub read: bool,
     /// The status is provided by the associated user.
-    pub status: OperationStatus,
-    /// Optional reason for the operation status.
+    pub status: ProposalVoteStatus,
+    /// Optional reason for the vote status.
     pub status_reason: Option<String>,
-    /// When the operation was acted on.
+    /// When the vote was decided.
     pub decided_dt: Option<Timestamp>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
 
-pub struct OperationDecisionValidator<'model> {
-    task: &'model OperationDecision,
+pub struct ProposalVoteValidator<'model> {
+    task: &'model ProposalVote,
 }
 
-impl<'model> OperationDecisionValidator<'model> {
+impl<'model> ProposalVoteValidator<'model> {
     pub const MAX_REASON_LEN: u8 = 200;
 
-    pub fn new(task: &'model OperationDecision) -> OperationDecisionValidator {
-        OperationDecisionValidator { task }
+    pub fn new(task: &'model ProposalVote) -> ProposalVoteValidator {
+        ProposalVoteValidator { task }
     }
 
-    pub fn validate_reason(&self) -> ModelValidatorResult<OperationError> {
+    pub fn validate_reason(&self) -> ModelValidatorResult<ProposalError> {
         if let Some(reason) = &self.task.status_reason {
             if reason.len() > Self::MAX_REASON_LEN as usize {
-                return Err(OperationError::TaskReasonTooLong {
+                return Err(ProposalError::VoteReasonTooLong {
                     max_len: Self::MAX_REASON_LEN,
                 });
             }
@@ -47,16 +46,16 @@ impl<'model> OperationDecisionValidator<'model> {
         Ok(())
     }
 
-    pub fn validate(&self) -> ModelValidatorResult<OperationError> {
+    pub fn validate(&self) -> ModelValidatorResult<ProposalError> {
         self.validate_reason()?;
 
         Ok(())
     }
 }
 
-impl ModelValidator<OperationError> for OperationDecision {
-    fn validate(&self) -> ModelValidatorResult<OperationError> {
-        OperationDecisionValidator::new(self).validate()
+impl ModelValidator<ProposalError> for ProposalVote {
+    fn validate(&self) -> ModelValidatorResult<ProposalError> {
+        ProposalVoteValidator::new(self).validate()
     }
 }
 
@@ -65,7 +64,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fail_operation_decision_too_big_reason() {
+    fn fail_proposal_vote_too_big_reason() {
         let mut decision = mock_decision();
         decision.status_reason = Some("a".repeat(201));
 
@@ -74,12 +73,12 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
-            OperationError::TaskReasonTooLong { max_len: 200 }
+            ProposalError::VoteReasonTooLong { max_len: 200 }
         );
     }
 
     #[test]
-    fn test_operation_decision_with_reason() {
+    fn test_proposal_vote_with_reason() {
         let mut decision = mock_decision();
         decision.status_reason = Some("a".repeat(200));
 
@@ -88,11 +87,11 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    fn mock_decision() -> OperationDecision {
-        OperationDecision {
+    fn mock_decision() -> ProposalVote {
+        ProposalVote {
             user_id: [0; 16],
             read: false,
-            status: OperationStatus::Rejected,
+            status: ProposalVoteStatus::Rejected,
             status_reason: None,
             decided_dt: None,
             last_modification_timestamp: 0,

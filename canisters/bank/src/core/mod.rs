@@ -12,6 +12,9 @@ pub use memory::*;
 mod call_context;
 pub use call_context::*;
 
+mod processor;
+pub use processor::*;
+
 #[cfg(not(test))]
 pub use ic_canister_core::cdk as ic_cdk;
 #[cfg(test)]

@@ -1,8 +1,8 @@
 use crate::{
-    core::{with_memory_manager, Memory, OPERATION_USER_INDEX_MEMORY_ID},
+    core::{with_memory_manager, Memory, PROPOSAL_USER_INDEX_MEMORY_ID},
     models::{
-        indexes::operation_user_index::{OperationUserIndex, OperationUserIndexCriteria},
-        OperationId,
+        indexes::proposal_user_index::{ProposalUserIndex, ProposalUserIndexCriteria},
+        ProposalId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -10,49 +10,49 @@ use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<OperationUserIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<ProposalUserIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(OPERATION_USER_INDEX_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(PROPOSAL_USER_INDEX_MEMORY_ID))
     )
   })
 }
 
 /// A repository that enables finding operations based on the user in stable memory.
 #[derive(Default, Debug)]
-pub struct OperationUserIndexRepository {}
+pub struct ProposalUserIndexRepository {}
 
-impl IndexRepository<OperationUserIndex, OperationId> for OperationUserIndexRepository {
-    type FindByCriteria = OperationUserIndexCriteria;
+impl IndexRepository<ProposalUserIndex, ProposalId> for ProposalUserIndexRepository {
+    type FindByCriteria = ProposalUserIndexCriteria;
 
-    fn exists(&self, index: &OperationUserIndex) -> bool {
+    fn exists(&self, index: &ProposalUserIndex) -> bool {
         DB.with(|m| m.borrow().get(index).is_some())
     }
 
-    fn insert(&self, index: OperationUserIndex) {
+    fn insert(&self, index: ProposalUserIndex) {
         DB.with(|m| m.borrow_mut().insert(index, ()));
     }
 
-    fn remove(&self, index: &OperationUserIndex) -> bool {
+    fn remove(&self, index: &ProposalUserIndex) -> bool {
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<OperationId> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<ProposalId> {
         DB.with(|db| {
-            let start_key = OperationUserIndex {
+            let start_key = ProposalUserIndex {
                 user_id: criteria.user_id.to_owned(),
                 created_at: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
-                id: [u8::MIN; 16],
+                proposal_id: [u8::MIN; 16],
             };
-            let end_key = OperationUserIndex {
+            let end_key = ProposalUserIndex {
                 user_id: criteria.user_id.to_owned(),
                 created_at: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
-                id: [u8::MAX; 16],
+                proposal_id: [u8::MAX; 16],
             };
 
             db.borrow()
                 .range(start_key..=end_key)
-                .map(|(index, _)| index.id)
-                .collect::<HashSet<OperationId>>()
+                .map(|(index, _)| index.proposal_id)
+                .collect::<HashSet<ProposalId>>()
         })
     }
 }
@@ -63,9 +63,9 @@ mod tests {
 
     #[test]
     fn test_repository_crud() {
-        let repository = OperationUserIndexRepository::default();
-        let index = OperationUserIndex {
-            id: [0; 16],
+        let repository = ProposalUserIndexRepository::default();
+        let index = ProposalUserIndex {
+            proposal_id: [0; 16],
             created_at: 10,
             user_id: [1; 16],
         };
@@ -81,16 +81,16 @@ mod tests {
 
     #[test]
     fn test_find_by_criteria() {
-        let repository = OperationUserIndexRepository::default();
-        let index = OperationUserIndex {
-            id: [0; 16],
+        let repository = ProposalUserIndexRepository::default();
+        let index = ProposalUserIndex {
+            proposal_id: [0; 16],
             created_at: 10,
             user_id: [1; 16],
         };
 
         repository.insert(index.clone());
 
-        let criteria = OperationUserIndexCriteria {
+        let criteria = ProposalUserIndexCriteria {
             user_id: [1; 16],
             from_dt: None,
             to_dt: None,
@@ -99,6 +99,6 @@ mod tests {
         let result = repository.find_by_criteria(criteria);
 
         assert_eq!(result.len(), 1);
-        assert!(result.contains(&index.id));
+        assert!(result.contains(&index.proposal_id));
     }
 }

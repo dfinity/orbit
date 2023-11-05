@@ -6,6 +6,7 @@ pub mod controllers;
 pub mod core;
 pub mod errors;
 pub mod factories;
+pub mod features;
 pub mod jobs;
 pub mod mappers;
 pub mod models;

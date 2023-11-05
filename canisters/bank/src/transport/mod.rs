@@ -16,8 +16,8 @@ pub use account::*;
 mod transfer;
 pub use transfer::*;
 
-mod operation;
-pub use operation::*;
+mod proposal;
+pub use proposal::*;
 
 mod user;
 pub use user::*;

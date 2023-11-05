@@ -23,5 +23,5 @@ pub use repository::*;
 mod transfer;
 pub use transfer::*;
 
-mod operation;
-pub use operation::*;
+mod proposal;
+pub use proposal::*;

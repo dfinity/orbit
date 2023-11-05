@@ -1,75 +1,71 @@
 use crate::{
     core::{CallContext, WithCallContext, PERMISSION_READ_OPERATION, PERMISSION_WRITE_OPERATION},
     mappers::HelperMapper,
-    services::OperationService,
+    services::ProposalService,
     transport::{
-        EditOperationInput, EditOperationResponse, GetOperationInput, GetOperationResponse,
-        ListAccountOperationsInput, ListAccountOperationsResponse, ListOperationsInput,
-        ListOperationsResponse,
+        GetProposalInput, GetProposalResponse, ListAccountProposalsInput,
+        ListAccountProposalsResponse, ListProposalsInput, ListProposalsResponse, ProposalDTO,
+        VoteOnProposalInput, VoteOnProposalResponse,
     },
 };
 use ic_canister_core::api::{ApiError, ApiResult};
 use ic_cdk_macros::{query, update};
 
-#[query(name = "list_operations")]
-async fn list_operations(input: ListOperationsInput) -> ApiResult<ListOperationsResponse> {
+#[query(name = "list_proposals")]
+async fn list_proposals(input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
     CallContext::get().check_access(PERMISSION_READ_OPERATION);
-    let service = OperationService::with_call_context(CallContext::get());
+    let service = ProposalService::with_call_context(CallContext::get());
 
-    let operations =
+    let proposals =
         service
-            .list_operations(input)?
-            .iter()
-            .try_fold(Vec::new(), |mut acc, operation| {
-                let operation_context = service.get_operation_context(&operation.id)?;
-                acc.push(operation.to_dto(operation_context));
+            .list_proposals(input)?
+            .into_iter()
+            .try_fold(Vec::new(), |mut acc, proposal| {
+                acc.push(ProposalDTO::from(proposal));
                 Ok::<Vec<_>, ApiError>(acc)
             })?;
 
-    Ok(ListOperationsResponse { operations })
+    Ok(ListProposalsResponse { proposals })
 }
 
-#[query(name = "list_account_operations")]
-async fn list_account_operations(
-    input: ListAccountOperationsInput,
-) -> ApiResult<ListAccountOperationsResponse> {
+#[query(name = "list_account_proposals")]
+async fn list_account_proposals(
+    input: ListAccountProposalsInput,
+) -> ApiResult<ListAccountProposalsResponse> {
     CallContext::get().check_access(PERMISSION_READ_OPERATION);
-    let service = OperationService::with_call_context(CallContext::get());
+    let service = ProposalService::with_call_context(CallContext::get());
 
-    let operations = service.list_account_operations(input)?.iter().try_fold(
-        Vec::new(),
-        |mut acc, operation| {
-            let operation_context = service.get_operation_context(&operation.id)?;
-            acc.push(operation.to_dto(operation_context));
+    let proposals = service
+        .list_account_proposals(input)?
+        .into_iter()
+        .try_fold(Vec::new(), |mut acc, proposal| {
+            acc.push(ProposalDTO::from(proposal));
             Ok::<Vec<_>, ApiError>(acc)
-        },
-    )?;
+        })?;
 
-    Ok(ListAccountOperationsResponse { operations })
+    Ok(ListAccountProposalsResponse { proposals })
 }
 
-#[query(name = "get_operation")]
-async fn get_operation(input: GetOperationInput) -> ApiResult<GetOperationResponse> {
+#[query(name = "get_proposal")]
+async fn get_proposal(input: GetProposalInput) -> ApiResult<GetProposalResponse> {
     CallContext::get().check_access(PERMISSION_READ_OPERATION);
-    let service = OperationService::with_call_context(CallContext::get());
+    let service = ProposalService::with_call_context(CallContext::get());
 
-    let operation = service.get_operation(HelperMapper::to_uuid(input.operation_id)?.as_bytes())?;
-    let operation_context = service.get_operation_context(&operation.id)?;
+    let proposal = service.get_proposal(HelperMapper::to_uuid(input.proposal_id)?.as_bytes())?;
 
-    Ok(GetOperationResponse {
-        operation: operation.to_dto(operation_context),
+    Ok(GetProposalResponse {
+        proposal: ProposalDTO::from(proposal),
     })
 }
 
-#[update(name = "edit_operation")]
-async fn edit_operation(input: EditOperationInput) -> ApiResult<EditOperationResponse> {
+#[update(name = "vote_on_proposal")]
+async fn vote_on_proposal(input: VoteOnProposalInput) -> ApiResult<VoteOnProposalResponse> {
     CallContext::get().check_access(PERMISSION_WRITE_OPERATION);
-    let service = OperationService::with_call_context(CallContext::get());
+    let service = ProposalService::with_call_context(CallContext::get());
 
-    let operation = service.edit_operation(input).await?;
-    let operation_context = service.get_operation_context(&operation.id)?;
+    let proposal = service.vote_on_proposal(input).await?;
 
-    Ok(EditOperationResponse {
-        operation: operation.to_dto(operation_context),
+    Ok(VoteOnProposalResponse {
+        proposal: ProposalDTO::from(proposal),
     })
 }

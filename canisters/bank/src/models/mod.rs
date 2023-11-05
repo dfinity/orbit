@@ -26,20 +26,23 @@ pub use account_balance::*;
 mod transfer;
 pub use transfer::*;
 
-mod operation_status;
-pub use operation_status::*;
+mod proposal_status;
+pub use proposal_status::*;
 
-mod operation_code;
-pub use operation_code::*;
+mod proposal_vote_status;
+pub use proposal_vote_status::*;
 
-mod operation;
-pub use operation::*;
+mod proposal_operation;
+pub use proposal_operation::*;
 
-mod operation_decision;
-pub use operation_decision::*;
+mod proposal_operation_type;
+pub use proposal_operation_type::*;
 
-mod operation_context;
-pub use operation_context::*;
+mod proposal;
+pub use proposal::*;
+
+mod proposal_vote;
+pub use proposal_vote::*;
 
 mod bank_asset;
 pub use bank_asset::*;

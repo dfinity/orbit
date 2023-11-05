@@ -1,17 +1,18 @@
 use super::indexes::{
-    operation_account_index::OperationAccountIndexRepository,
-    operation_transfer_index::OperationTransferIndexRepository,
-    operation_user_index::OperationUserIndexRepository,
+    proposal_account_index::ProposalAccountIndexRepository,
+    proposal_transfer_index::ProposalTransferIndexRepository,
+    proposal_user_index::ProposalUserIndexRepository,
 };
 use crate::{
-    core::{with_memory_manager, Memory, OPERATION_MEMORY_ID},
+    core::{with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
     models::{
         indexes::{
-            operation_account_index::OperationAccountIndexCriteria,
-            operation_transfer_index::OperationTransferIndexCriteria,
-            operation_user_index::OperationUserIndexCriteria,
+            proposal_account_index::ProposalAccountIndexCriteria,
+            proposal_transfer_index::ProposalTransferIndexCriteria,
+            proposal_user_index::ProposalUserIndexCriteria,
         },
-        AccountId, Operation, OperationCode, OperationKey, OperationStatus, TransferId, UserId,
+        AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatus, TransferId,
+        UserId,
     },
 };
 use ic_canister_core::{
@@ -22,27 +23,27 @@ use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<OperationKey, Operation, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(OPERATION_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(PROPOSAL_MEMORY_ID))
     )
   })
 }
 
-/// A repository that enables managing system operations in stable memory.
+/// A repository that enables managing system proposals in stable memory.
 #[derive(Default, Debug)]
-pub struct OperationRepository {
-    user_index: OperationUserIndexRepository,
-    account_index: OperationAccountIndexRepository,
-    transfer_index: OperationTransferIndexRepository,
+pub struct ProposalRepository {
+    user_index: ProposalUserIndexRepository,
+    account_index: ProposalAccountIndexRepository,
+    transfer_index: ProposalTransferIndexRepository,
 }
 
-impl Repository<OperationKey, Operation> for OperationRepository {
-    fn get(&self, key: &OperationKey) -> Option<Operation> {
+impl Repository<ProposalKey, Proposal> for ProposalRepository {
+    fn get(&self, key: &ProposalKey) -> Option<Proposal> {
         DB.with(|m| m.borrow().get(key))
     }
 
-    fn insert(&self, key: OperationKey, value: Operation) -> Option<Operation> {
+    fn insert(&self, key: ProposalKey, value: Proposal) -> Option<Proposal> {
         DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
             Some(prev) => {
                 let prev_users_index = prev.to_index_for_users();
@@ -105,7 +106,7 @@ impl Repository<OperationKey, Operation> for OperationRepository {
         })
     }
 
-    fn remove(&self, key: &OperationKey) -> Option<Operation> {
+    fn remove(&self, key: &ProposalKey) -> Option<Proposal> {
         DB.with(|m| match m.borrow_mut().remove(key) {
             Some(prev) => {
                 prev.to_index_for_users().iter().for_each(|index| {
@@ -125,28 +126,28 @@ impl Repository<OperationKey, Operation> for OperationRepository {
     }
 }
 
-impl OperationRepository {
-    pub fn find_by_transfer_id(&self, transfer_id: TransferId) -> Vec<Operation> {
+impl ProposalRepository {
+    pub fn find_by_transfer_id(&self, transfer_id: TransferId) -> Vec<Proposal> {
         self.transfer_index
-            .find_by_criteria(OperationTransferIndexCriteria {
+            .find_by_criteria(ProposalTransferIndexCriteria {
                 transfer_id: transfer_id.to_owned(),
                 from_dt: None,
                 to_dt: None,
             })
             .iter()
-            .filter_map(|id| self.get(&Operation::key(*id)))
+            .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect()
     }
 
-    pub fn find_by_user_id(&self, user_id: UserId) -> Vec<Operation> {
+    pub fn find_by_user_id(&self, user_id: UserId) -> Vec<Proposal> {
         self.user_index
-            .find_by_criteria(OperationUserIndexCriteria {
+            .find_by_criteria(ProposalUserIndexCriteria {
                 user_id: user_id.to_owned(),
                 from_dt: None,
                 to_dt: None,
             })
             .iter()
-            .filter_map(|id| self.get(&Operation::key(*id)))
+            .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect()
     }
 
@@ -156,21 +157,19 @@ impl OperationRepository {
         user_id: UserId,
         created_from_dt: Option<Timestamp>,
         created_to_dt: Option<Timestamp>,
-    ) -> Vec<Operation> {
+    ) -> Vec<Proposal> {
         let filtered_by_accounts =
             self.account_index
-                .find_by_criteria(OperationAccountIndexCriteria {
+                .find_by_criteria(ProposalAccountIndexCriteria {
                     account_id: account_id.to_owned(),
                     from_dt: created_from_dt.to_owned(),
                     to_dt: created_to_dt.to_owned(),
                 });
-        let filtered_by_users = self
-            .user_index
-            .find_by_criteria(OperationUserIndexCriteria {
-                user_id: user_id.to_owned(),
-                from_dt: created_from_dt,
-                to_dt: created_to_dt,
-            });
+        let filtered_by_users = self.user_index.find_by_criteria(ProposalUserIndexCriteria {
+            user_id: user_id.to_owned(),
+            from_dt: created_from_dt,
+            to_dt: created_to_dt,
+        });
 
         let results = filtered_by_accounts
             .intersection(&filtered_by_users)
@@ -179,77 +178,78 @@ impl OperationRepository {
 
         results
             .iter()
-            .filter_map(|id| self.get(&Operation::key(*id)))
+            .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect()
     }
 
     pub fn find_by_account_where(
         &self,
-        key: (UserId, AccountId),
-        condition: OperationWhereClause,
-    ) -> Vec<Operation> {
-        let (user_id, account_id) = key;
-        let operations = self.find_by_account_and_user_id(
+        (user_id, account_id): (UserId, AccountId),
+        condition: ProposalWhereClause,
+    ) -> Vec<Proposal> {
+        self.find_by_account_and_user_id(
             account_id,
             user_id,
             condition.created_dt_from,
             condition.created_dt_to,
-        );
+        )
+        .iter()
+        .filter(|proposal| {
+            let mut match_operation_type = true;
+            let mut match_status = true;
 
-        operations
-            .iter()
-            .filter(|operation| {
-                let mut match_code = true;
-                let mut match_status = true;
+            if let Some(operation_type) = &condition.operation_type {
+                match_operation_type =
+                    ProposalOperationType::from(proposal.operation.clone()) == *operation_type;
+            }
 
-                if let Some(code) = condition.code.clone() {
-                    match_code = operation.code == code;
-                }
+            if let Some(status) = condition.status.clone() {
+                match_status = proposal.status == status;
+            }
 
-                if let Some(status) = condition.status.clone() {
-                    match_status = operation.status == status;
-                }
-
-                match_code && match_status
-            })
-            .map(|o| o.to_owned())
-            .collect::<Vec<_>>()
+            match_operation_type && match_status
+        })
+        .map(|o| o.to_owned())
+        .collect::<Vec<_>>()
     }
 
     pub fn find_by_user_where(
         &self,
         user_id: UserId,
-        condition: OperationFindByUserWhereClause,
-    ) -> Vec<Operation> {
+        condition: ProposalFindByUserWhereClause,
+    ) -> Vec<Proposal> {
         self.user_index
-            .find_by_criteria(OperationUserIndexCriteria {
+            .find_by_criteria(ProposalUserIndexCriteria {
                 user_id: user_id.to_owned(),
                 from_dt: condition.created_dt_from,
                 to_dt: condition.created_dt_to,
             })
             .iter()
-            .filter_map(|id| match self.get(&Operation::key(*id)) {
-                Some(operation) => {
-                    let mut match_code = true;
+            .filter_map(|id| match self.get(&Proposal::key(*id)) {
+                Some(proposal) => {
+                    let mut match_operation_type = true;
                     let mut match_read = true;
                     let mut match_status = true;
 
-                    if let Some(code) = condition.code.clone() {
-                        match_code = operation.code == code;
+                    if let Some(operation_type) = &condition.operation_type {
+                        match_operation_type =
+                            ProposalOperationType::from(proposal.operation.clone())
+                                == *operation_type;
                     }
 
                     if let Some(read) = condition.read {
-                        match_read = operation.decisions.iter().any(|operation| {
-                            operation.user_id == user_id && operation.read == read
-                        });
+                        match_read = proposal
+                            .votes
+                            .iter()
+                            .any(|proposal| proposal.user_id == user_id && proposal.read == read);
                     }
 
-                    if let Some(status) = condition.status.clone() {
-                        match_status = operation.status == status;
+                    if let Some(status) = &condition.status {
+                        match_status = proposal.status == *status;
                     }
 
-                    match match_code && match_read && match_status {
-                        true => Some(operation),
+                    match match_operation_type && match_read && match_status {
+                        true => Some(proposal),
                         false => None,
                     }
                 }
@@ -260,114 +260,113 @@ impl OperationRepository {
 }
 
 #[derive(Debug)]
-pub struct OperationWhereClause {
+pub struct ProposalWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
-    pub code: Option<OperationCode>,
-    pub status: Option<OperationStatus>,
+    pub operation_type: Option<ProposalOperationType>,
+    pub status: Option<ProposalStatus>,
 }
 
 #[derive(Debug)]
-pub struct OperationFindByUserWhereClause {
+pub struct ProposalFindByUserWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
-    pub code: Option<OperationCode>,
-    pub status: Option<OperationStatus>,
+    pub operation_type: Option<ProposalOperationType>,
+    pub status: Option<ProposalStatus>,
     pub read: Option<bool>,
 }
 
 #[cfg(test)]
 mod tests {
-    use uuid::Uuid;
-
     use super::*;
     use crate::models::{
-        operation_test_utils, OperationDecision, OPERATION_METADATA_KEY_ACCOUNT_ID,
-        OPERATION_METADATA_KEY_TRANSFER_ID,
+        proposal_test_utils::mock_proposal, ProposalOperation, ProposalVote, ProposalVoteStatus,
+        TransferOperationContext,
     };
+    use uuid::Uuid;
 
     #[test]
     fn perform_crud() {
-        let repository = OperationRepository::default();
-        let operation = operation_test_utils::mock_operation();
+        let repository = ProposalRepository::default();
+        let proposal = mock_proposal();
 
-        assert!(repository.get(&operation.to_key()).is_none());
+        assert!(repository.get(&proposal.to_key()).is_none());
 
-        repository.insert(operation.to_key(), operation.clone());
+        repository.insert(proposal.to_key(), proposal.clone());
 
-        assert!(repository.get(&operation.to_key()).is_some());
-        assert!(repository.remove(&operation.to_key()).is_some());
-        assert!(repository.get(&operation.to_key()).is_none());
+        assert!(repository.get(&proposal.to_key()).is_some());
+        assert!(repository.remove(&proposal.to_key()).is_some());
+        assert!(repository.get(&proposal.to_key()).is_none());
     }
 
     #[test]
     fn find_by_transfer_id() {
-        let repository = OperationRepository::default();
-        let mut operation = operation_test_utils::mock_operation();
+        let repository = ProposalRepository::default();
+        let mut proposal = mock_proposal();
         let transfer_id = Uuid::new_v4();
-        operation.metadata = vec![(
-            OPERATION_METADATA_KEY_TRANSFER_ID.to_string(),
-            transfer_id.to_string(),
-        )];
+        proposal.operation = ProposalOperation::Transfer(TransferOperationContext {
+            transfer_id: *transfer_id.as_bytes(),
+            account_id: [0; 16],
+        });
 
-        repository.insert(operation.to_key(), operation.clone());
+        repository.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(
             repository.find_by_transfer_id(*transfer_id.as_bytes()),
-            vec![operation]
+            vec![proposal]
         );
     }
 
     #[test]
     fn find_by_originator_user_id() {
-        let repository = OperationRepository::default();
-        let mut operation = operation_test_utils::mock_operation();
+        let repository = ProposalRepository::default();
+        let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
-        operation.proposed_by = Some(*user_id.as_bytes());
+        proposal.proposed_by = Some(*user_id.as_bytes());
 
-        repository.insert(operation.to_key(), operation.clone());
+        repository.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(
             repository.find_by_user_id(*user_id.as_bytes()),
-            vec![operation]
+            vec![proposal]
         );
     }
 
     #[test]
     fn find_by_decision_user_id() {
-        let repository = OperationRepository::default();
-        let mut operation = operation_test_utils::mock_operation();
+        let repository = ProposalRepository::default();
+        let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
-        operation.decisions = vec![OperationDecision {
+        proposal.votes = vec![ProposalVote {
             user_id: *user_id.as_bytes(),
             read: false,
             decided_dt: None,
             last_modification_timestamp: 0,
-            status: OperationStatus::Pending,
+            status: ProposalVoteStatus::Pending,
             status_reason: None,
         }];
 
-        repository.insert(operation.to_key(), operation.clone());
+        repository.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(
             repository.find_by_user_id(*user_id.as_bytes()),
-            vec![operation]
+            vec![proposal]
         );
     }
 
     #[test]
     fn find_by_account_and_user() {
-        let repository = OperationRepository::default();
-        let mut operation = operation_test_utils::mock_operation();
+        let repository = ProposalRepository::default();
+        let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
         let account_id = Uuid::new_v4();
-        operation.proposed_by = Some(*user_id.as_bytes());
-        operation.metadata = vec![(
-            OPERATION_METADATA_KEY_ACCOUNT_ID.to_string(),
-            account_id.to_string(),
-        )];
+        proposal.proposed_by = Some(*user_id.as_bytes());
+        proposal.operation = ProposalOperation::Transfer(TransferOperationContext {
+            transfer_id: [0; 16],
+            account_id: *account_id.as_bytes(),
+        });
 
-        repository.insert(operation.to_key(), operation.clone());
+        repository.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(
             repository.find_by_account_and_user_id(
@@ -376,7 +375,7 @@ mod tests {
                 None,
                 None
             ),
-            vec![operation]
+            vec![proposal]
         );
     }
 }

@@ -8,47 +8,47 @@ use std::{
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
-pub enum OperationCode {
-    ApproveTransfer = 0,
+pub enum ProposalOperationType {
+    Transfer = 0,
 }
 
-impl From<OperationCode> for u8 {
-    fn from(role: OperationCode) -> Self {
+impl From<ProposalOperationType> for u8 {
+    fn from(role: ProposalOperationType) -> Self {
         role as u8
     }
 }
 
-impl TryFrom<u8> for OperationCode {
+impl TryFrom<u8> for ProposalOperationType {
     type Error = ();
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(OperationCode::ApproveTransfer),
+            0 => Ok(ProposalOperationType::Transfer),
             _ => Err(()),
         }
     }
 }
 
-impl FromStr for OperationCode {
+impl FromStr for ProposalOperationType {
     type Err = ();
 
-    fn from_str(variant: &str) -> Result<OperationCode, Self::Err> {
+    fn from_str(variant: &str) -> Result<ProposalOperationType, Self::Err> {
         match variant {
-            "approve-transfer" => Ok(OperationCode::ApproveTransfer),
+            "transfer" => Ok(ProposalOperationType::Transfer),
             _ => Err(()),
         }
     }
 }
 
-impl Display for OperationCode {
+impl Display for ProposalOperationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            OperationCode::ApproveTransfer => write!(f, "approve-transfer"),
+            ProposalOperationType::Transfer => write!(f, "transfer"),
         }
     }
 }
 
-impl Storable for OperationCode {
+impl Storable for ProposalOperationType {
     fn to_bytes(&self) -> Cow<[u8]> {
         let operation_code_unit: u8 = self.to_owned().into();
         Cow::Owned(operation_code_unit.to_bytes().to_vec())
@@ -56,7 +56,7 @@ impl Storable for OperationCode {
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         let operation_code_unit = u8::from_bytes(bytes);
-        OperationCode::try_from(operation_code_unit).unwrap()
+        ProposalOperationType::try_from(operation_code_unit).unwrap()
     }
 
     const BOUND: Bound = Bound::Unbounded;
@@ -68,22 +68,19 @@ mod tests {
 
     #[test]
     fn operation_code_match_string_representation() {
+        assert_eq!(ProposalOperationType::Transfer.to_string(), "transfer");
         assert_eq!(
-            OperationCode::ApproveTransfer.to_string(),
-            "approve-transfer"
-        );
-        assert_eq!(
-            OperationCode::from_str("approve-transfer").unwrap(),
-            OperationCode::ApproveTransfer
+            ProposalOperationType::from_str("transfer").unwrap(),
+            ProposalOperationType::Transfer
         );
     }
 
     #[test]
     fn operation_code_match_number_representation() {
-        assert_eq!(OperationCode::ApproveTransfer as u8, 0);
+        assert_eq!(ProposalOperationType::Transfer as u8, 0);
         assert_eq!(
-            OperationCode::try_from(0).unwrap(),
-            OperationCode::ApproveTransfer
+            ProposalOperationType::try_from(0).unwrap(),
+            ProposalOperationType::Transfer
         );
     }
 }
