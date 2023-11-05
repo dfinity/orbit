@@ -1,27 +1,24 @@
 <template>
-  <div class="operation-item">
-    <div v-if="props.loading" class="operation-item__loading"></div>
-    <div class="operation-item__read">
+  <div class="proposal-item">
+    <div v-if="props.loading" class="proposal-item__loading"></div>
+    <div class="proposal-item__read">
       <VBtn
-        v-if="decision"
-        :icon="decision.read ? mdiCheckCircle : mdiCheckCircleOutline"
+        v-if="vote"
+        :icon="vote.read ? mdiCheckCircle : mdiCheckCircleOutline"
         size="x-small"
-        :variant="decision.read ? 'text' : 'plain'"
+        :variant="vote.read ? 'text' : 'plain'"
         @click="onRead"
       />
     </div>
-    <div class="operation-item__code">
-      <ApproveTransferOperation
-        v-if="operation.code === BankOperationType.ApproveTransfer"
-        v-model="operation"
-      />
-      <UnknownOperation v-else v-model="operation" />
+    <div class="proposal-item__code">
+      <TransferProposal v-if="BankProposalType.Transfer in proposal.operation" v-model="proposal" />
+      <UnknownProposal v-else v-model="proposal" />
     </div>
-    <div v-if="props.loading" class="operation-item__action">
+    <div v-if="props.loading" class="proposal-item__action">
       <VProgressCircular indeterminate color="primary" size="small" class="mx-4" />
     </div>
-    <div v-else class="operation-item__action">
-      <VMenu v-if="!decisionState.decided && !props.outer" :close-on-content-click="false">
+    <div v-else class="proposal-item__action">
+      <VMenu v-if="!voteState.decided && !props.outer" :close-on-content-click="false">
         <template #activator="{ props: actionProps }">
           <VBtn v-bind="actionProps" :prepend-icon="mdiCogs" size="small" variant="text" block>
             {{ $t(`terms.edit`) }}
@@ -55,13 +52,13 @@
         </VList>
       </VMenu>
       <VChip
-        v-if="decisionState.decided || props.outer"
-        :prepend-icon="operationState.chip.icon"
+        v-if="voteState.decided || props.outer"
+        :prepend-icon="proposalState.chip.icon"
         size="x-small"
-        :color="operationState.chip.color"
+        :color="proposalState.chip.color"
         variant="tonal"
       >
-        {{ operationState.chip.text }}
+        {{ proposalState.chip.text }}
       </VChip>
     </div>
   </div>
@@ -77,17 +74,17 @@ import {
   mdiHelp,
 } from '@mdi/js';
 import { computed, provide } from 'vue';
-import { Operation } from '~/generated/bank/bank.did';
+import { Proposal } from '~/generated/bank/bank.did';
 import { i18n } from '~/ui/modules';
-import UnknownOperation from './UnknownOperation.vue';
-import { BankOperationType } from '~/types';
-import ApproveTransferOperation from './ApproveTransferOperation.vue';
+import UnknownProposal from './UnknownProposal.vue';
+import { BankProposalType } from '~/types';
+import TransferProposal from './TransferProposal.vue';
 import { useActiveBankStore } from '~/ui/stores';
 
 const activeBank = useActiveBankStore();
 const props = withDefaults(
   defineProps<{
-    operation: Operation;
+    proposal: Proposal;
     outer?: boolean;
     loading?: boolean;
   }>(),
@@ -97,24 +94,24 @@ const props = withDefaults(
   },
 );
 
-provide('bankOperationProps', { outer: props.outer });
+provide('bankProposalProps', { outer: props.outer });
 
 const emit = defineEmits<{
-  (event: 'update:operation', payload: Operation): void;
+  (event: 'update:proposal', payload: Proposal): void;
   (event: 'read', payload: boolean): void;
   (event: 'adopted'): void;
   (event: 'rejected'): void;
 }>();
 
-const operation = computed({
-  get: () => props.operation,
-  set: value => emit('update:operation', value),
+const proposal = computed({
+  get: () => props.proposal,
+  set: value => emit('update:proposal', value),
 });
 
-const decision = computed({
-  get: () => operation.value.decisions.find(d => d.user_id === activeBank.user.id),
+const vote = computed({
+  get: () => proposal.value.votes.find(d => d.user_id === activeBank.user.id),
   set: value => {
-    operation.value.decisions.forEach(d => {
+    proposal.value.votes.forEach(d => {
       if (d.user_id === activeBank.user.id && value) {
         d = value;
       }
@@ -123,8 +120,8 @@ const decision = computed({
 });
 
 const onRead = () => {
-  if (decision.value) {
-    emit('read', !decision.value.read);
+  if (vote.value) {
+    emit('read', !vote.value.read);
   }
 };
 
@@ -136,25 +133,25 @@ const onReject = () => {
   emit('rejected');
 };
 
-const operationState = computed(() => {
+const proposalState = computed(() => {
   let chip: { color: string; text: string; icon: string } = {
     color: 'info',
     text: i18n.global.t('terms.abstained'),
     icon: mdiHelp,
   };
-  if ('Adopted' in operation.value.status) {
+  if ('Adopted' in proposal.value.status) {
     chip = {
       color: 'success',
       text: i18n.global.t('terms.approved'),
       icon: mdiCheck,
     };
-  } else if ('Rejected' in operation.value.status) {
+  } else if ('Rejected' in proposal.value.status) {
     chip = {
       color: 'error',
       text: i18n.global.t('terms.rejected'),
       icon: mdiClose,
     };
-  } else if ('Pending' in operation.value.status) {
+  } else if ('Pending' in proposal.value.status) {
     chip = {
       color: 'warning',
       text: i18n.global.t('terms.pending'),
@@ -163,21 +160,21 @@ const operationState = computed(() => {
   }
 
   return {
-    isPending: 'Pending' in operation.value.status,
+    isPending: 'Pending' in proposal.value.status,
     chip,
   };
 });
 
-const decisionState = computed(() => {
+const voteState = computed(() => {
   const state: { decided: boolean } = {
     decided: false,
   };
 
-  if (!decision.value) {
+  if (!vote.value) {
     return { decided: true };
   }
 
-  if (decision.value && !('Pending' in decision.value.status)) {
+  if (vote.value && !('Pending' in vote.value.status)) {
     state.decided = true;
   }
 
@@ -185,7 +182,7 @@ const decisionState = computed(() => {
 });
 </script>
 <style lang="scss">
-.operation-item {
+.proposal-item {
   display: flex;
   flex-direction: row;
   align-items: center;

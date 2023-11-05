@@ -8,9 +8,6 @@ use ic_canister_core::{
 use ic_canister_macros::stable_object;
 use std::collections::{HashMap, HashSet};
 
-pub const PROPOSAL_METADATA_KEY_TRANSFER_ID: &str = "transfer_id";
-pub const PROPOSAL_METADATA_KEY_ACCOUNT_ID: &str = "account_id";
-
 /// The proposal id, which is a UUID.
 pub type ProposalId = UUID;
 

@@ -92,10 +92,10 @@
               </VTab>
               <VTab
                 :loading="pageStore.transfers.loading"
-                value="operations"
+                value="proposals"
                 class="account__tab__item"
               >
-                {{ $t(`terms.operations`) }}
+                {{ $t(`terms.proposals`) }}
               </VTab>
             </VTabs>
             <VCardText>
@@ -223,30 +223,30 @@
                     </VRow>
                   </VContainer>
                 </VWindowItem>
-                <VWindowItem value="operations">
+                <VWindowItem value="proposals">
                   <VContainer>
                     <VRow>
                       <VCol cols="12" md="4" class="py-0">
                         <VTextField
-                          v-model="pageStore.operations.fromDt"
+                          v-model="pageStore.proposals.fromDt"
                           :prepend-inner-icon="mdiCalendar"
                           density="compact"
                           type="date"
                           :label="$t(`terms.from`)"
                           variant="solo"
-                          :disabled="pageStore.operations.loading"
+                          :disabled="pageStore.proposals.loading"
                           class="mb-2"
                           hide-details
                         />
                       </VCol>
                       <VCol cols="12" md="4" class="py-0">
                         <VTextField
-                          v-model="pageStore.operations.toDt"
+                          v-model="pageStore.proposals.toDt"
                           :prepend-inner-icon="mdiCalendar"
                           density="compact"
                           type="date"
                           :label="$t(`terms.until`)"
-                          :disabled="pageStore.operations.loading"
+                          :disabled="pageStore.proposals.loading"
                           variant="solo"
                           class="mb-2"
                           hide-details
@@ -258,14 +258,14 @@
                           variant="tonal"
                           color="primary-variant"
                           :prepend-icon="mdiRefresh"
-                          :loading="pageStore.operations.loading"
+                          :loading="pageStore.proposals.loading"
                           @click="
-                            pageStore.loadOperations(
-                              pageStore.operations.fromDt
-                                ? new Date(pageStore.operations.fromDt)
+                            pageStore.loadProposals(
+                              pageStore.proposals.fromDt
+                                ? new Date(pageStore.proposals.fromDt)
                                 : undefined,
-                              pageStore.operations.toDt
-                                ? new Date(pageStore.operations.toDt)
+                              pageStore.proposals.toDt
+                                ? new Date(pageStore.proposals.toDt)
                                 : undefined,
                             )
                           "
@@ -274,30 +274,28 @@
                         </VBtn>
                       </VCol>
                       <VCol cols="12">
-                        <VTable v-if="pageStore.operations.items.length" hover class="operations">
+                        <VTable v-if="pageStore.proposals.items.length" hover class="proposals">
                           <tbody>
                             <tr
                               v-for="(
-                                { loading, data: { id: operationId } }, _idx
-                              ) in pageStore.sortedOperations"
+                                { loading, data: { id: proposalId } }, _idx
+                              ) in pageStore.sortedProposals"
                               :key="_idx"
                             >
                               <td class="py-4">
-                                <BankOperation
-                                  :operation="pageStore.sortedOperations[_idx].data"
+                                <BankProposal
+                                  :proposal="pageStore.sortedProposals[_idx].data"
                                   :outer="false"
                                   :loading="loading"
-                                  @read="read => pageStore.saveDecision(operationId, { read })"
-                                  @adopted="pageStore.saveDecision(operationId, { approve: true })"
-                                  @rejected="
-                                    pageStore.saveDecision(operationId, { approve: false })
-                                  "
+                                  @read="read => pageStore.saveDecision(proposalId, { read })"
+                                  @adopted="pageStore.saveDecision(proposalId, { approve: true })"
+                                  @rejected="pageStore.saveDecision(proposalId, { approve: false })"
                                 />
                               </td>
                             </tr>
                           </tbody>
                         </VTable>
-                        <p v-else class="text-h6">{{ $t(`banks.no_operations_found_search`) }}</p>
+                        <p v-else class="text-h6">{{ $t(`banks.no_proposals_found_search`) }}</p>
                       </VCol>
                     </VRow>
                   </VContainer>
@@ -339,7 +337,7 @@ import { useDisplay } from 'vuetify';
 import { formatBalance } from '~/core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
-import BankOperation from '~/ui/components/operations/BankOperation.vue';
+import BankProposal from '~/ui/components/proposals/BankProposal.vue';
 import TransferStatusChip from '~/ui/components/transfers/TransferStatusChip.vue';
 import { i18n, router } from '~/ui/modules';
 import { useActiveBankStore, useSettingsStore, useAccountDetailsStore } from '~/ui/stores';
@@ -350,7 +348,7 @@ const activeBank = useActiveBankStore();
 const settings = useSettingsStore();
 const pageStore = useAccountDetailsStore();
 
-const tab = ref<'transfers' | 'operations' | 'receivables'>('transfers');
+const tab = ref<'transfers' | 'proposals' | 'receivables'>('transfers');
 
 onMounted(() => {
   pageStore.load(`${router.currentRoute.value.params.id}`);

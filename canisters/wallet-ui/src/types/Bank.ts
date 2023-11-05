@@ -15,7 +15,7 @@ export enum AccountTransferStatus {
   Unknown = 'unknown',
 }
 
-export enum BankOperationType {
-  ApproveTransfer = 'approve-transfer',
-  Unknown = 'unknown',
+export enum BankProposalType {
+  Transfer = 'Transfer',
+  Unknown = 'Unknown',
 }

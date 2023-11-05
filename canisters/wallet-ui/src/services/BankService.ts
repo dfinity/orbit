@@ -9,18 +9,18 @@ import {
   ConfirmUserIdentityInput,
   CreateAccountInput,
   EditUserInput,
-  EditOperationInput,
+  VoteOnProposalInput,
   FetchAccountBalancesInput,
   GetUserInput,
-  GetOperationInput,
+  GetProposalInput,
   GetTransferInput,
   GetTransfersInput,
   GetAccountInput,
-  ListOperationsInput,
-  ListAccountOperationsInput,
+  ListProposalsInput,
+  ListAccountProposalsInput,
   ListAccountTransfersInput,
-  Operation,
-  OperationId,
+  Proposal,
+  ProposalId,
   RegisterUserInput,
   Transfer,
   TransferInput,
@@ -104,56 +104,56 @@ export class BankService {
     return result.Ok.features;
   }
 
-  async listOperations(input: ListOperationsInput): Promise<Operation[]> {
-    const result = await this.actor.list_operations(input);
+  async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
+    const result = await this.actor.list_proposals(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operations;
+    return result.Ok.proposals;
   }
 
-  async listAccountOperations(input: ListAccountOperationsInput): Promise<Operation[]> {
-    const result = await this.actor.list_account_operations(input);
+  async listAccountProposals(input: ListAccountProposalsInput): Promise<Proposal[]> {
+    const result = await this.actor.list_account_proposals(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operations;
+    return result.Ok.proposals;
   }
 
-  async listUnreadPendingOperations(from_dt?: Date, last_id?: OperationId): Promise<Operation[]> {
-    const operations = await this.listOperations({
+  async listUnreadPendingProposals(from_dt?: Date, last_id?: ProposalId): Promise<Proposal[]> {
+    const proposals = await this.listProposals({
       read: [false],
-      code: [],
+      operation_type: [],
       status: [{ Pending: null }],
       from_dt: from_dt ? [from_dt.toISOString()] : [],
       to_dt: [],
     });
 
-    return operations.filter(operation => operation.id !== last_id);
+    return proposals.filter(proposal => proposal.id !== last_id);
   }
 
-  async submitOperationDecision(input: EditOperationInput): Promise<Operation> {
-    const result = await this.actor.edit_operation(input);
+  async voteOnProposal(input: VoteOnProposalInput): Promise<Proposal> {
+    const result = await this.actor.vote_on_proposal(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operation;
+    return result.Ok.proposal;
   }
 
-  async getOperation(input: GetOperationInput): Promise<Operation> {
-    const result = await this.actor.get_operation(input);
+  async getProposal(input: GetProposalInput): Promise<Proposal> {
+    const result = await this.actor.get_proposal(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operation;
+    return result.Ok.proposal;
   }
 
   async listAccounts(): Promise<Account[]> {

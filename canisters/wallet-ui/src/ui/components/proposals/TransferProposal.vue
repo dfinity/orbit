@@ -1,11 +1,11 @@
 <template>
-  <div class="operation-item__code__title">
-    {{ $t(`banks.operations.approve_transfer.title`) }}
+  <div class="proposal-item__code__title">
+    {{ $t(`banks.proposals.approve_transfer.title`) }}
     <span v-if="account && transfer">
       <small>| {{ account.symbol }}: {{ formatBalance(transfer.amount, account.decimals) }}</small>
     </span>
   </div>
-  <div class="operation-item__code__time">
+  <div class="proposal-item__code__time">
     <VBtn
       v-if="injectedProps.outer && account"
       :prepend-icon="mdiWallet"
@@ -16,9 +16,9 @@
     >
       {{ account?.name?.[0] ? account?.name[0] : $t('terms.account') }}
     </VBtn>
-    <VChip size="x-small" :title="operation.created_at" variant="tonal">
+    <VChip size="x-small" :title="proposal.created_at" variant="tonal">
       <VIcon :icon="mdiClockOutline" size="x-small" />&nbsp;
-      {{ new Date(operation.created_at).toLocaleDateString() }}
+      {{ new Date(proposal.created_at).toLocaleDateString() }}
     </VChip>
     <VChip v-if="transfer && account && !injectedProps.outer" size="x-small">
       {{ $t(`terms.to`) }}: {{ transfer.to }}
@@ -29,26 +29,26 @@
 import { mdiClockOutline, mdiWallet, mdiOpenInApp } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { formatBalance } from '~/core';
-import { Operation } from '~/generated/bank/bank.did';
+import { Proposal } from '~/generated/bank/bank.did';
 
 const props = defineProps<{
-  modelValue: Operation;
+  modelValue: Proposal;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: Operation): void;
+  (event: 'update:modelValue', payload: Proposal): void;
   (event: 'read', payload: boolean): void;
 }>();
 
-const injectedProps = inject('bankOperationProps', {
+const injectedProps = inject('bankProposalProps', {
   outer: true,
 });
 
-const operation = computed({
+const proposal = computed<Proposal>({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
 
-const account = computed(() => operation.value.context.account?.[0] ?? null);
-const transfer = computed(() => operation.value.context.transfer?.[0] ?? null);
+const account = computed(() => proposal.value.operation.Transfer.account);
+const transfer = computed(() => proposal.value.operation.Transfer.transfer);
 </script>

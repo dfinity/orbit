@@ -5,8 +5,8 @@ import {
   User,
   BankAsset,
   BankFeatures,
-  Operation,
-  OperationId,
+  Proposal,
+  ProposalId,
   Account,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
@@ -20,7 +20,7 @@ export interface BankMetrics {
     completed: number;
     pending: number;
   };
-  pendingOperations: number;
+  pendingProposals: number;
 }
 
 export interface ActiveBankStoreState {
@@ -35,9 +35,9 @@ export interface ActiveBankStoreState {
     loading: boolean;
     items: Account[];
   };
-  pendingOperations: {
+  pendingProposals: {
     loading: boolean;
-    items: LoadableItem<Operation>[];
+    items: LoadableItem<Proposal>[];
   };
 }
 
@@ -55,7 +55,7 @@ export const useActiveBankStore = defineStore('activeBank', {
         loading: false,
         items: [],
       },
-      pendingOperations: {
+      pendingProposals: {
         loading: false,
         items: [],
       },
@@ -80,30 +80,30 @@ export const useActiveBankStore = defineStore('activeBank', {
         return secondDt - firstDt;
       });
     },
-    lastPendingOperationDate(): Date | null {
-      if (!this.pendingOperations.items.length) {
+    lastPendingProposalDate(): Date | null {
+      if (!this.pendingProposals.items.length) {
         return null;
       }
 
-      return new Date(this.pendingOperations.items[0].data.created_at);
+      return new Date(this.pendingProposals.items[0].data.created_at);
     },
-    lastPendingOperationId(): OperationId | null {
-      if (!this.pendingOperations.items.length) {
+    lastPendingProposalId(): ProposalId | null {
+      if (!this.pendingProposals.items.length) {
         return null;
       }
 
-      return this.pendingOperations.items[0].data.id;
+      return this.pendingProposals.items[0].data.id;
     },
-    sortedPendingOperations(): LoadableItem<Operation>[] {
-      return this.pendingOperations.items.sort((a, b) => {
+    sortedPendingProposals(): LoadableItem<Proposal>[] {
+      return this.pendingProposals.items.sort((a, b) => {
         const firstDt = new Date(a.data.created_at);
         const secondDt = new Date(b.data.created_at);
 
         return secondDt.getTime() - firstDt.getTime();
       });
     },
-    hasPendingOperations(): boolean {
-      return this.pendingOperations.items.length > 0;
+    hasPendingProposals(): boolean {
+      return this.pendingProposals.items.length > 0;
     },
     bankId(): Principal {
       return Principal.fromText(this._bankId);
@@ -115,7 +115,7 @@ export const useActiveBankStore = defineStore('activeBank', {
           completed: 0,
           pending: 0,
         },
-        pendingOperations: this.pendingOperations.items.length,
+        pendingProposals: this.pendingProposals.items.length,
       };
     },
     supportedAssets(): BankAsset[] {
@@ -138,7 +138,7 @@ export const useActiveBankStore = defineStore('activeBank', {
       this._user = null;
       this.accounts.items = [];
       this.features.details = null;
-      this.pendingOperations.items = [];
+      this.pendingProposals.items = [];
     },
     async registerUser(): Promise<User | null> {
       const auth = useAuthStore();
@@ -161,51 +161,49 @@ export const useActiveBankStore = defineStore('activeBank', {
       return null;
     },
     async saveDecision(
-      operationId: OperationId,
+      proposalId: ProposalId,
       decision: { approve?: boolean; reason?: string; read?: boolean },
-    ): Promise<Operation | null> {
+    ): Promise<Proposal | null> {
       const settings = useSettingsStore();
-      const pendingOperation = this.pendingOperations.items.find(
-        item => item.data.id === operationId,
-      );
-      if (pendingOperation) {
-        pendingOperation.loading = true;
+      const pendingProposal = this.pendingProposals.items.find(item => item.data.id === proposalId);
+      if (pendingProposal) {
+        pendingProposal.loading = true;
       }
 
       try {
         return await this.service
-          .submitOperationDecision({
-            operation_id: operationId,
+          .voteOnProposal({
+            proposal_id: proposalId,
             approve: decision.approve !== undefined ? [decision.approve] : [],
             read: decision.read !== undefined ? [decision.read] : [],
             reason: decision.reason !== undefined ? [decision.reason] : [],
           })
-          .then(operation => {
-            this.pendingOperations.items = this.pendingOperations.items.filter(item => {
-              if (item.data.id !== operation.id) {
+          .then(proposal => {
+            this.pendingProposals.items = this.pendingProposals.items.filter(item => {
+              if (item.data.id !== proposal.id) {
                 return true;
               }
-              const isPending = 'Pending' in operation.status;
-              const isRead = operation.decisions.some(
-                decision => decision.user_id === this.user.id && decision.read,
+              const isPending = 'Pending' in proposal.status;
+              const isRead = proposal.votes.some(
+                vote => vote.user_id === this.user.id && vote.read,
               );
 
               return isPending && !isRead;
             });
 
-            return operation;
+            return proposal;
           });
       } catch (err) {
-        logger.error(`Failed to save operation`, { err });
+        logger.error(`Failed to save proposal`, { err });
 
         settings.setNotification({
           show: true,
           type: 'error',
-          message: i18n.global.t('banks.operation_failed_to_save'),
+          message: i18n.global.t('banks.proposal_failed_to_save'),
         });
       } finally {
-        if (pendingOperation) {
-          pendingOperation.loading = false;
+        if (pendingProposal) {
+          pendingProposal.loading = false;
         }
       }
 
