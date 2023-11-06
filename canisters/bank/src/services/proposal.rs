@@ -130,12 +130,13 @@ impl ProposalService {
         }
 
         proposal.validate()?;
-        proposal.post_process()?;
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
 
-        Ok(proposal)
+        proposal.post_process()?;
+
+        Ok(self.get_proposal(proposal_id.as_bytes())?)
     }
 
     fn assert_proposal_access(&self, proposal: &Proposal) -> ServiceResult<()> {
