@@ -9,18 +9,17 @@ import {
   ConfirmUserIdentityInput,
   CreateAccountInput,
   EditUserInput,
-  EditOperationInput,
+  VoteOnProposalInput,
   FetchAccountBalancesInput,
   GetUserInput,
-  GetOperationInput,
+  GetProposalInput,
   GetTransferInput,
   GetTransfersInput,
   GetAccountInput,
-  ListOperationsInput,
-  ListAccountOperationsInput,
+  Notification,
+  ListAccountProposalsInput,
   ListAccountTransfersInput,
-  Operation,
-  OperationId,
+  Proposal,
   RegisterUserInput,
   Transfer,
   TransferInput,
@@ -28,6 +27,9 @@ import {
   Account,
   AccountBalance,
   _SERVICE,
+  ListNotificationsInput,
+  NotificationId,
+  MarkNotificationsReadInput,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
 
@@ -104,56 +106,59 @@ export class BankService {
     return result.Ok.features;
   }
 
-  async listOperations(input: ListOperationsInput): Promise<Operation[]> {
-    const result = await this.actor.list_operations(input);
+  async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {
+    const result = await this.actor.list_notifications(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operations;
+    return result.Ok.notifications;
   }
 
-  async listAccountOperations(input: ListAccountOperationsInput): Promise<Operation[]> {
-    const result = await this.actor.list_account_operations(input);
+  async listAccountProposals(input: ListAccountProposalsInput): Promise<Proposal[]> {
+    const result = await this.actor.list_account_proposals(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operations;
+    return result.Ok.proposals;
   }
 
-  async listUnreadPendingOperations(from_dt?: Date, last_id?: OperationId): Promise<Operation[]> {
-    const operations = await this.listOperations({
-      read: [false],
-      code: [],
-      status: [{ Pending: null }],
+  async listUnreadNotifications(from_dt?: Date, last_id?: NotificationId): Promise<Notification[]> {
+    const notifications = await this.listNotifications({
+      notification_type: [],
+      status: [{ Sent: null }],
       from_dt: from_dt ? [from_dt.toISOString()] : [],
       to_dt: [],
     });
 
-    return operations.filter(operation => operation.id !== last_id);
+    return notifications.filter(notification => notification.id !== last_id);
   }
 
-  async submitOperationDecision(input: EditOperationInput): Promise<Operation> {
-    const result = await this.actor.edit_operation(input);
+  async markNotificationAsRead(input: MarkNotificationsReadInput): Promise<void> {
+    await this.actor.mark_notifications_read(input);
+  }
+
+  async voteOnProposal(input: VoteOnProposalInput): Promise<Proposal> {
+    const result = await this.actor.vote_on_proposal(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operation;
+    return result.Ok.proposal;
   }
 
-  async getOperation(input: GetOperationInput): Promise<Operation> {
-    const result = await this.actor.get_operation(input);
+  async getProposal(input: GetProposalInput): Promise<Proposal> {
+    const result = await this.actor.get_proposal(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.operation;
+    return result.Ok.proposal;
   }
 
   async listAccounts(): Promise<Account[]> {

@@ -1,16 +1,15 @@
-use super::{AccountService, UserService};
+use super::{AccountService, NotificationService, UserService};
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, WithCallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, PostProcessor, WithCallContext},
     errors::{AccountError, TransferError},
     factories::blockchains::BlockchainApiFactory,
-    factories::operations::OperationProcessorFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
-        Account, AccountPolicy, Operation, OperationCode, OperationDecision, OperationStatus,
-        Transfer, TransferId, TransferStatus, OPERATION_METADATA_KEY_ACCOUNT_ID,
-        OPERATION_METADATA_KEY_TRANSFER_ID,
+        Account, NotificationType, Proposal, ProposalOperation, ProposalStatus, ProposalVote,
+        ProposalVoteStatus, Transfer, TransferId, TransferOperationContext,
+        TransferProposalCreatedNotification,
     },
-    repositories::{AccountRepository, OperationRepository, TransferRepository},
+    repositories::{AccountRepository, ProposalRepository, TransferRepository},
     transport::{ListAccountTransfersInput, TransferInput},
 };
 use candid::Nat;
@@ -25,7 +24,8 @@ pub struct TransferService {
     account_service: AccountService,
     account_repository: AccountRepository,
     transfer_repository: TransferRepository,
-    operation_repository: OperationRepository,
+    proposal_repository: ProposalRepository,
+    notification_service: NotificationService,
 }
 
 impl WithCallContext for TransferService {
@@ -91,7 +91,7 @@ impl TransferService {
         let default_fee = blockchain_api.transaction_fee(&account).await?;
         let transfer_id = generate_uuid_v4().await;
 
-        let mut transfer = TransferMapper::from_create_input(
+        let transfer = TransferMapper::from_create_input(
             input,
             *transfer_id.as_bytes(),
             caller_user.id,
@@ -99,98 +99,78 @@ impl TransferService {
             blockchain_api.default_network(),
             Transfer::default_expiration_dt(),
         )?;
-        transfer.make_policy_snapshot(&account);
 
         transfer.validate()?;
-
-        // build operations
-        let operations = self
-            .build_operations_from_account_policies(&account, &transfer)
-            .await;
-
-        let has_approve_transfer_operation = operations
-            .iter()
-            .any(|operation| matches!(operation.code, OperationCode::ApproveTransfer));
-
-        if !has_approve_transfer_operation {
-            transfer.status = TransferStatus::Approved;
-        }
 
         // save transfer to stable memory
         self.transfer_repository
             .insert(transfer.to_key(), transfer.to_owned());
 
-        operations.iter().for_each(|operation| {
-            self.operation_repository
-                .insert(operation.to_key(), operation.to_owned());
-        });
+        // this await is within the canister so a trap inside create_transfer_proposal will revert the canister state
+        let mut proposal = self.create_transfer_proposal(&account, &transfer).await?;
 
-        let processor = OperationProcessorFactory::build(&OperationCode::ApproveTransfer);
-        for operation in operations.iter() {
-            processor
-                .post_process(operation)
-                .await
-                .expect("Operation post processing failed");
-        }
+        proposal.post_process()?;
 
         Ok(transfer)
     }
 
-    async fn build_operations_from_account_policies(
+    async fn create_transfer_proposal(
         &self,
         account: &Account,
         transfer: &Transfer,
-    ) -> Vec<Operation> {
-        let mut required_operations: Vec<Operation> = Vec::new();
-        let account_id = Uuid::from_bytes(account.id).hyphenated().to_string();
-        let transfer_id = Uuid::from_bytes(transfer.id).hyphenated().to_string();
-        for policy in account.policies.iter() {
-            match policy {
-                AccountPolicy::ApprovalThreshold(_) => {
-                    let operation_id = generate_uuid_v4().await;
-                    let mut operation = Operation {
-                        id: *operation_id.as_bytes(),
-                        code: OperationCode::ApproveTransfer,
-                        status: OperationStatus::Pending,
-                        created_timestamp: time(),
-                        proposed_by: Some(transfer.initiator_user),
-                        metadata: vec![
-                            (
-                                OPERATION_METADATA_KEY_TRANSFER_ID.to_owned(),
-                                transfer_id.to_owned(),
-                            ),
-                            (
-                                OPERATION_METADATA_KEY_ACCOUNT_ID.to_owned(),
-                                account_id.to_owned(),
-                            ),
-                        ],
-                        last_modification_timestamp: time(),
-                        decisions: Vec::new(),
-                    };
+    ) -> ServiceResult<Proposal> {
+        let proposal_id = generate_uuid_v4().await;
+        let mut proposal = Proposal {
+            id: *proposal_id.as_bytes(),
+            status: ProposalStatus::Pending,
+            created_timestamp: time(),
+            proposed_by: Some(transfer.initiator_user),
+            operation: ProposalOperation::Transfer(TransferOperationContext {
+                transfer_id: transfer.id,
+                account_id: account.id,
+            }),
+            metadata: vec![],
+            last_modification_timestamp: time(),
+            votes: Vec::new(),
+        };
 
-                    for owner in account.owners.iter() {
-                        operation.decisions.push(OperationDecision {
-                            user_id: *owner,
-                            status: match transfer.initiator_user == *owner {
-                                true => OperationStatus::Adopted,
-                                false => OperationStatus::Pending,
-                            },
-                            decided_dt: match transfer.initiator_user == *owner {
-                                true => Some(time()),
-                                false => None,
-                            },
-                            last_modification_timestamp: time(),
-                            read: transfer.initiator_user == *owner,
-                            status_reason: None,
-                        });
-                    }
+        for owner in account.owners.iter() {
+            proposal.votes.push(ProposalVote {
+                user_id: *owner,
+                status: match transfer.initiator_user == *owner {
+                    true => ProposalVoteStatus::Adopted,
+                    false => ProposalVoteStatus::Pending,
+                },
+                decided_dt: match transfer.initiator_user == *owner {
+                    true => Some(time()),
+                    false => None,
+                },
+                last_modification_timestamp: time(),
+                status_reason: None,
+            });
 
-                    required_operations.push(operation.to_owned());
-                }
+            if transfer.initiator_user != *owner {
+                self.notification_service
+                    .send_notification(
+                        *owner,
+                        NotificationType::TransferProposalCreated(
+                            TransferProposalCreatedNotification {
+                                account_id: account.id,
+                                proposal_id: proposal.id,
+                                transfer_id: transfer.id,
+                            },
+                        ),
+                        None,
+                        None,
+                    )
+                    .await?;
             }
         }
 
-        required_operations
+        self.proposal_repository
+            .insert(proposal.to_key(), proposal.clone());
+
+        Ok(proposal)
     }
 
     pub fn list_account_transfers(

@@ -9,8 +9,8 @@
               <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
               <span>
                 {{
-                  activeBank.metrics.pendingOperations > 0
-                    ? $t('home.notifications.some', { count: activeBank.metrics.pendingOperations })
+                  activeBank.metrics.notifications > 0
+                    ? $t('home.notifications.some', { count: activeBank.metrics.notifications })
                     : $t('home.notifications.none')
                 }}
               </span>
@@ -51,10 +51,10 @@
             </VCard>
           </VCol>
           <VCol v-if="activeBank.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="activeBank.pendingOperations.loading">
-              <VCardTitle>{{ $t('banks.pending_operations') }}</VCardTitle>
+            <VCard color="surface" height="100%" :loading="activeBank.notifications.loading">
+              <VCardTitle>{{ $t('banks.pending_proposals') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
-                {{ activeBank.metrics.pendingOperations }}
+                {{ activeBank.metrics.notifications }}
               </VCardText>
             </VCard>
           </VCol>

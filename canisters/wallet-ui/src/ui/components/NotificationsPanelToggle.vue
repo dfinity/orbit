@@ -2,7 +2,7 @@
   <VMenu v-if="!mobile" v-model="notificationsPopup" location="end" :close-on-content-click="false">
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
-        <VBadge dot :color="activeBank.hasPendingOperations ? 'warning' : 'transparent'">
+        <VBadge dot :color="activeBank.hasNotifications ? 'warning' : 'transparent'">
           <VIcon :icon="toggleIcon" size="small" />
         </VBadge>
       </VBtn>
@@ -20,7 +20,7 @@
   >
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
-        <VBadge dot :color="activeBank.hasPendingOperations ? 'warning' : 'transparent'">
+        <VBadge dot :color="activeBank.hasNotifications ? 'warning' : 'transparent'">
           <VIcon :icon="toggleIcon" size="small" />
         </VBadge>
       </VBtn>

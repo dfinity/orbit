@@ -26,6 +26,8 @@ pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
 pub const PERMISSION_REGISTER_USER: &str = "read:register-user";
 pub const PERMISSION_READ_USER: &str = "read:user";
 pub const PERMISSION_WRITE_USER: &str = "write:user";
+pub const PERMISSION_READ_NOTIFICATION: &str = "read:notification";
+pub const PERMISSION_WRITE_NOTIFICATION: &str = "write:notification";
 
 thread_local! {
   /// The list of assets that are supported by the bank canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
@@ -86,6 +88,14 @@ pub fn default_bank_permissions() -> Vec<Permission> {
         Permission {
             permission_id: PERMISSION_READ_USER.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User, AccessRole::Guest],
+        },
+        Permission {
+            permission_id: PERMISSION_READ_NOTIFICATION.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
+        },
+        Permission {
+            permission_id: PERMISSION_WRITE_NOTIFICATION.to_string(),
+            access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
     ]
 }

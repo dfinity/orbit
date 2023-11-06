@@ -11,6 +11,9 @@ pub use user::*;
 mod mapper;
 pub use mapper::*;
 
+mod notification;
+pub use notification::*;
+
 mod factory;
 pub use factory::*;
 
@@ -23,5 +26,5 @@ pub use repository::*;
 mod transfer;
 pub use transfer::*;
 
-mod operation;
-pub use operation::*;
+mod proposal;
+pub use proposal::*;

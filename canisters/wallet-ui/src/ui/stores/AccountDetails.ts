@@ -2,12 +2,12 @@ import { defineStore } from 'pinia';
 import { endOfDay, logger, startOfDay } from '~/core';
 import {
   Error as ApiError,
-  Operation,
-  OperationStatus,
+  Proposal,
+  ProposalStatus,
   TransferListItem,
   Account,
   AccountId,
-  OperationId,
+  ProposalId,
 } from '~/generated/bank/bank.did';
 import { BankService, ChainApiFactory } from '~/services';
 import { ChainApi, AccountIncomingTransfer } from '~/types';
@@ -29,9 +29,9 @@ export interface AccountDetailsStoreState {
     fromDt: string | null;
     toDt: string | null;
   };
-  operations: {
+  proposals: {
     loading: boolean;
-    items: LoadableItem<Operation>[];
+    items: LoadableItem<Proposal>[];
     fromDt: string | null;
     toDt: string | null;
   };
@@ -55,7 +55,7 @@ const initialState: AccountDetailsStoreState = {
     fromDt: null,
     toDt: null,
   },
-  operations: {
+  proposals: {
     loading: false,
     items: [],
     fromDt: null,
@@ -108,8 +108,8 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         return null;
       }
     },
-    sortedOperations(): LoadableItem<Operation>[] {
-      return this.operations.items.sort((a, b) => {
+    sortedProposals(): LoadableItem<Proposal>[] {
+      return this.proposals.items.sort((a, b) => {
         return new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime();
       });
     },
@@ -132,9 +132,9 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
       this.transfers = reset.transfers;
       this.transfers.fromDt = new Date(this.defaultStartDt).toISOString().split('T')[0];
       this.transfers.toDt = new Date(this.defaultEndDt).toISOString().split('T')[0];
-      this.operations = reset.operations;
-      this.operations.fromDt = new Date(this.defaultStartDt).toISOString().split('T')[0];
-      this.operations.toDt = new Date(this.defaultEndDt).toISOString().split('T')[0];
+      this.proposals = reset.proposals;
+      this.proposals.fromDt = new Date(this.defaultStartDt).toISOString().split('T')[0];
+      this.proposals.toDt = new Date(this.defaultEndDt).toISOString().split('T')[0];
       this.receivables = reset.receivables;
     },
     showPageNotification(type: 'error' | 'success' | 'warning' | 'info', message: string): void {
@@ -159,63 +159,62 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
       this.receivables.items = transfers;
     },
     async saveDecision(
-      operationId: OperationId,
-      decision: { approve?: boolean; reason?: string; read?: boolean },
+      proposalId: ProposalId,
+      decision: { approve?: boolean; reason?: string },
     ): Promise<void> {
       const activeBank = useActiveBankStore();
-      const item = this.operations.items.find(item => item.data.id === operationId);
+      const item = this.proposals.items.find(item => item.data.id === proposalId);
       if (!item) {
-        logger.warn('Decision not saved, operation not found', { operationId });
+        logger.warn('Decision not saved, proposal not found', { proposalId });
         return;
       }
 
       item.loading = true;
-      const operation = await activeBank
-        .saveDecision(operationId, decision)
+      const proposal = await activeBank
+        .saveDecision(proposalId, decision)
         .finally(() => (item.loading = false));
 
-      if (!operation) {
+      if (!proposal) {
         return;
       }
 
-      this.operations.items.forEach(item => {
-        if (item.data.id === operation.id) {
-          item.data = operation;
+      this.proposals.items.forEach(item => {
+        if (item.data.id === proposal.id) {
+          item.data = proposal;
         }
       });
     },
-    async loadOperations(fromDt?: Date, toDt?: Date, status?: OperationStatus): Promise<void> {
+    async loadProposals(fromDt?: Date, toDt?: Date, status?: ProposalStatus): Promise<void> {
       try {
-        this.operations.loading = true;
-        this.operations.items = await this.bankService
-          .listAccountOperations({
+        this.proposals.loading = true;
+        this.proposals.items = await this.bankService
+          .listAccountProposals({
             account_id: this.account.id,
             status: status ? [status] : [],
             from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
             to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-            code: [],
-            read: [],
+            operation_type: [],
           })
-          .then(operations => {
-            return operations.map(operation => {
+          .then(proposals => {
+            return proposals.map(proposal => {
               return {
                 loading: false,
-                data: operation,
+                data: proposal,
               };
             });
           });
       } catch (e) {
-        logger.error('Failed to load operations', { e });
+        logger.error('Failed to load proposals', { e });
         const settings = useSettingsStore();
-        this.operations.items = [];
+        this.proposals.items = [];
 
         settings.setNotification({
           show: true,
-          message: i18n.global.t('banks.load_error_operations'),
+          message: i18n.global.t('banks.load_error_proposals'),
           type: 'error',
         });
       } finally {
-        this.operations.loading = false;
+        this.proposals.loading = false;
       }
     },
     async loadSentTransfers(fromDt?: Date, toDt?: Date, status?: string): Promise<void> {
@@ -258,7 +257,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         }
 
         this.loadSentTransfers(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
-        this.loadOperations(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
+        this.loadProposals(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
         this.loadReceivables();
       } catch (e) {
         logger.error('Failed to load account', { e });

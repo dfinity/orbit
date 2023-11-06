@@ -1,7 +1,7 @@
 use crate::{
     core::ic_cdk::api::time,
-    models::{OperationStatus, TransferStatus},
-    repositories::{OperationRepository, TransferRepository},
+    models::{ProposalStatus, ProposalVoteStatus, TransferStatus},
+    repositories::{ProposalRepository, TransferRepository},
 };
 use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
 use std::time::Duration;
@@ -9,7 +9,7 @@ use std::time::Duration;
 #[derive(Debug, Default)]
 pub struct Job {
     transfer_repository: TransferRepository,
-    operation_repository: OperationRepository,
+    proposal_repository: ProposalRepository,
 }
 
 /// This job is responsible for canceling the transfers that have expired while still pending.
@@ -40,21 +40,21 @@ impl Job {
         );
 
         for transfer in transfers.iter_mut() {
-            let operations = self.operation_repository.find_by_transfer_id(transfer.id);
-            for mut operation in operations.into_iter() {
-                operation.status = OperationStatus::Rejected;
-                operation.last_modification_timestamp = time();
-                operation.decisions.iter_mut().for_each(|decision| {
-                    if let OperationStatus::Pending = decision.status {
-                        decision.status = OperationStatus::NotRequired;
-                        decision.decided_dt = Some(time());
-                        decision.status_reason = Some("The transfer has expired".to_string());
-                        decision.last_modification_timestamp = time();
+            let proposals = self.proposal_repository.find_by_transfer_id(transfer.id);
+            for mut proposal in proposals.into_iter() {
+                proposal.status = ProposalStatus::Rejected;
+                proposal.last_modification_timestamp = time();
+                proposal.votes.iter_mut().for_each(|vote| {
+                    if let ProposalVoteStatus::Pending = vote.status {
+                        vote.status = ProposalVoteStatus::NotRequired;
+                        vote.decided_dt = Some(time());
+                        vote.status_reason = Some("The transfer has expired".to_string());
+                        vote.last_modification_timestamp = time();
                     }
                 });
 
-                self.operation_repository
-                    .insert(operation.to_key(), operation.to_owned());
+                self.proposal_repository
+                    .insert(proposal.to_key(), proposal.to_owned());
             }
 
             transfer.status = TransferStatus::Cancelled {

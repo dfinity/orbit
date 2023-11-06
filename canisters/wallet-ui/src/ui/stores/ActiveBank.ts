@@ -5,9 +5,11 @@ import {
   User,
   BankAsset,
   BankFeatures,
-  Operation,
-  OperationId,
+  Proposal,
+  ProposalId,
+  NotificationId,
   Account,
+  Notification,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
@@ -20,7 +22,7 @@ export interface BankMetrics {
     completed: number;
     pending: number;
   };
-  pendingOperations: number;
+  notifications: number;
 }
 
 export interface ActiveBankStoreState {
@@ -35,9 +37,9 @@ export interface ActiveBankStoreState {
     loading: boolean;
     items: Account[];
   };
-  pendingOperations: {
+  notifications: {
     loading: boolean;
-    items: LoadableItem<Operation>[];
+    items: LoadableItem<Notification>[];
   };
 }
 
@@ -55,7 +57,7 @@ export const useActiveBankStore = defineStore('activeBank', {
         loading: false,
         items: [],
       },
-      pendingOperations: {
+      notifications: {
         loading: false,
         items: [],
       },
@@ -80,30 +82,30 @@ export const useActiveBankStore = defineStore('activeBank', {
         return secondDt - firstDt;
       });
     },
-    lastPendingOperationDate(): Date | null {
-      if (!this.pendingOperations.items.length) {
+    lastNotificationDate(): Date | null {
+      if (!this.notifications.items.length) {
         return null;
       }
 
-      return new Date(this.pendingOperations.items[0].data.created_at);
+      return new Date(this.notifications.items[0].data.created_at);
     },
-    lastPendingOperationId(): OperationId | null {
-      if (!this.pendingOperations.items.length) {
+    lastNotificationId(): ProposalId | null {
+      if (!this.notifications.items.length) {
         return null;
       }
 
-      return this.pendingOperations.items[0].data.id;
+      return this.notifications.items[0].data.id;
     },
-    sortedPendingOperations(): LoadableItem<Operation>[] {
-      return this.pendingOperations.items.sort((a, b) => {
+    sortedNotifications(): LoadableItem<Notification>[] {
+      return this.notifications.items.sort((a, b) => {
         const firstDt = new Date(a.data.created_at);
         const secondDt = new Date(b.data.created_at);
 
         return secondDt.getTime() - firstDt.getTime();
       });
     },
-    hasPendingOperations(): boolean {
-      return this.pendingOperations.items.length > 0;
+    hasNotifications(): boolean {
+      return this.notifications.items.length > 0;
     },
     bankId(): Principal {
       return Principal.fromText(this._bankId);
@@ -115,7 +117,7 @@ export const useActiveBankStore = defineStore('activeBank', {
           completed: 0,
           pending: 0,
         },
-        pendingOperations: this.pendingOperations.items.length,
+        notifications: this.notifications.items.length,
       };
     },
     supportedAssets(): BankAsset[] {
@@ -138,7 +140,7 @@ export const useActiveBankStore = defineStore('activeBank', {
       this._user = null;
       this.accounts.items = [];
       this.features.details = null;
-      this.pendingOperations.items = [];
+      this.notifications.items = [];
     },
     async registerUser(): Promise<User | null> {
       const auth = useAuthStore();
@@ -160,53 +162,57 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return null;
     },
-    async saveDecision(
-      operationId: OperationId,
-      decision: { approve?: boolean; reason?: string; read?: boolean },
-    ): Promise<Operation | null> {
+    async markNotificationRead(notificationId: NotificationId, read: boolean): Promise<void> {
       const settings = useSettingsStore();
-      const pendingOperation = this.pendingOperations.items.find(
-        item => item.data.id === operationId,
-      );
-      if (pendingOperation) {
-        pendingOperation.loading = true;
+      const notification = this.notifications.items.find(item => item.data.id === notificationId);
+      if (!notification) {
+        return;
       }
 
       try {
-        return await this.service
-          .submitOperationDecision({
-            operation_id: operationId,
-            approve: decision.approve !== undefined ? [decision.approve] : [],
-            read: decision.read !== undefined ? [decision.read] : [],
-            reason: decision.reason !== undefined ? [decision.reason] : [],
-          })
-          .then(operation => {
-            this.pendingOperations.items = this.pendingOperations.items.filter(item => {
-              if (item.data.id !== operation.id) {
-                return true;
-              }
-              const isPending = 'Pending' in operation.status;
-              const isRead = operation.decisions.some(
-                decision => decision.user_id === this.user.id && decision.read,
-              );
+        notification.loading = true;
+        await this.service.markNotificationAsRead({
+          notification_ids: [notificationId],
+          read,
+        });
 
-              return isPending && !isRead;
-            });
-
-            return operation;
-          });
+        if (read) {
+          this.notifications.items = this.notifications.items.filter(
+            item => item.data.id !== notificationId,
+          );
+        }
       } catch (err) {
-        logger.error(`Failed to save operation`, { err });
+        logger.error(`Failed to save notification`, { err });
 
         settings.setNotification({
           show: true,
           type: 'error',
-          message: i18n.global.t('banks.operation_failed_to_save'),
+          message: i18n.global.t('banks.notification_failed_to_save'),
         });
       } finally {
-        if (pendingOperation) {
-          pendingOperation.loading = false;
-        }
+        notification.loading = false;
+      }
+    },
+    async saveDecision(
+      proposalId: ProposalId,
+      decision: { approve?: boolean; reason?: string; read?: boolean },
+    ): Promise<Proposal | null> {
+      const settings = useSettingsStore();
+
+      try {
+        return await this.service.voteOnProposal({
+          proposal_id: proposalId,
+          approve: decision.approve !== undefined ? [decision.approve] : [],
+          reason: decision.reason !== undefined ? [decision.reason] : [],
+        });
+      } catch (err) {
+        logger.error(`Failed to save proposal`, { err });
+
+        settings.setNotification({
+          show: true,
+          type: 'error',
+          message: i18n.global.t('banks.proposal_failed_to_save'),
+        });
       }
 
       return null;

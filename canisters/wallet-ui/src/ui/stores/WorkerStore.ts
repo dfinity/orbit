@@ -92,23 +92,23 @@ export const useWorkerStore = defineStore('cache', {
           return;
         }
 
-        const newOperations = await activeBank.service.listUnreadPendingOperations(
-          activeBank.lastPendingOperationDate ?? undefined,
-          activeBank.lastPendingOperationId ?? undefined,
+        const newNotifications = await activeBank.service.listUnreadNotifications(
+          activeBank.lastNotificationDate ?? undefined,
+          activeBank.lastNotificationId ?? undefined,
         );
 
-        for (const newOperation of newOperations) {
+        for (const newNotification of newNotifications) {
           if (
-            !activeBank.pendingOperations.items.find(current => current.data.id === newOperation.id)
+            !activeBank.notifications.items.find(current => current.data.id === newNotification.id)
           ) {
-            activeBank.pendingOperations.items.push({
+            activeBank.notifications.items.push({
               loading: false,
-              data: newOperation,
+              data: newNotification,
             });
           }
         }
       } catch (error) {
-        logger.error('Failed to fetch pending operations', { error });
+        logger.error('Failed to fetch unread notifications', { error });
       }
     },
   },

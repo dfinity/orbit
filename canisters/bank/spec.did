@@ -10,149 +10,244 @@ type UserId = text;
 type NetworkId = text;
 // The transfer id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type TransferId = text;
-// An operation id used to have bank operations uniquely
-// identifiable (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type OperationId = text;
+// A proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type ProposalId = text;
+// The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type NotificationId = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
 
-// The status of an operation.
-type OperationStatus = variant { Pending; Adopted; Rejected; NotRequired };
-
-// The context of which the operation was created.
-type OperationContext = record {
-  // The transfer associated with the operation.
-  transfer : opt Transfer;
-  // The account associated with the operation.
-  account : opt Account;
+// Defines the various states that a notification can be in.
+type NotificationStatus = variant {
+  // The notification has been sent.
+  Sent;
+  // The notification has been read by the user.
+  Read;
 };
 
-// A record type that can be used to represent an operation decision.
-type OperationDecision = record {
+// Representsd the different types of notifications within the system.
+type NotificationType = variant {
+  // Notification for system-wide messages.
+  // This can be used for announcements, scheduled maintenance reminders, or other important system messages.
+  SystemMessage;
+  // Notification for the creation of a new proposal.
+  // This should be used to alert users when a new proposal that requires their attention has been created.
+  ProposalCreated : record {
+    // The proposal id.
+    proposal_id : ProposalId;
+  };
+  // Notification for the creation of a new transfer proposal.
+  // This should be used to alert users when a new transfer proposal that requires their attention has been created.
+  TransferProposalCreated : record {
+    // The proposal id.
+    proposal_id : ProposalId;
+    transfer_id : TransferId;
+    account_id : AccountId;
+  };
+};
+
+type NotificationTypeInput = variant {
+  SystemMessage;
+  ProposalCreated;
+  TransferProposalCreated;
+};
+
+// A record type that can be used to represent a notification.
+type Notification = record {
+  // The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : NotificationId;
+  // The type of the notification.
+  notification_type : NotificationType;
+  // The notification status.
+  status : NotificationStatus;
+  // The user that the notification is for.
+  target_user_id : UserId;
+  // The notification title.
+  title : record {
+    // The notification title in the default locale.
+    body : text;
+    // The locale key that can be used to retrieve the title in the user locale.
+    locale_key : text;
+  };
+  // The notification message.
+  message : record {
+    // The notification message in the default locale.
+    body : text;
+    // The locale key that can be used to retrieve the message in the user locale.
+    locale_key : text;
+  };
+  // The time at which the notification was created.
+  created_at : TimestampRFC3339;
+};
+
+// The input type for getting the list of notifications associated with the caller.
+type ListNotificationsInput = record {
+  // Show only notifications with the given status.
+  status : opt NotificationStatus;
+  // The type of the notification (e.g. "system-message").
+  notification_type : opt NotificationTypeInput;
+  // From which created time to retrieve the notifications.
+  from_dt : opt TimestampRFC3339;
+  // Until which created time to retrieve the notifications.
+  to_dt : opt TimestampRFC3339;
+};
+
+// The result type for getting the list of notifications.
+type ListNotificationsResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of notifications ordered by creation time (newest first).
+    notifications : vec Notification;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+type MarkNotificationsReadInput = record {
+  // The notifications to mark as read.
+  notification_ids : vec NotificationId;
+  // If true, all notifications will be marked as read.
+  read : bool;
+};
+
+type MarkNotificationReadResult = variant {
+  Ok;
+  Err : Error;
+};
+
+// The status of a proposal.
+type ProposalStatus = variant { Pending; Adopted; Rejected };
+
+// The status of a proposal.
+type ProposalVoteStatus = variant { Pending; Adopted; Rejected; NotRequired };
+
+// A record type that can be used to represent a vote on a proposal.
+type ProposalVote = record {
   // The user that has taken the decision.
   user_id : UserId;
-  // The final decision status that the user has taken,
-  // once provided it cannot be changed.
-  status : OperationStatus;
-  // Optional reason for the operation status.
+  // The user has added to the proposal, once provided it cannot be changed.
+  status : ProposalVoteStatus;
+  // Optional reason for the vote status.
   status_reason : opt text;
-  // The use can mark the operation as read or not to keep track
-  // of the decisions in a simpler manner.
-  read : bool;
-  // The time at which the operation was decided.
+  // The time at which the vote was added.
   decided_at : opt TimestampRFC3339;
 };
 
-// A record type that can be used to represent an operation in the bank.
-type Operation = record {
-  // The operation id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-  id : OperationId;
-  // The code of the operation (e.g. "approve-transfer").
-  code : text;
+type ProposalOperationType = variant {
+  // A new transfer of funds from a given account.
+  Transfer;
+};
+
+type ProposalOperation = variant {
+  // A new transfer of funds from a given account.
+  Transfer : record {
+    // The transfer associated with the proposal.
+    transfer : Transfer;
+    // The account associated with the transfer.
+    account : Account;
+  };
+};
+
+// A record type that can be used to represent a proposed operation in the bank.
+type Proposal = record {
+  // The proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : ProposalId;
+  // The operation that was proposed.
+  operation : ProposalOperation;
   // The user that created the proposal.
   proposed_by : opt UserId;
-  // The list of users that need to decide on the operation.
-  decisions : vec OperationDecision;
-  // The time at which the operation was created.
+  // The list of user votes on the proposal.
+  votes : vec ProposalVote;
+  // The time at which the proposal was created.
   created_at : TimestampRFC3339;
-  // The metadata associated with the operation.
+  // The proposal approval status.
+  status : ProposalStatus;
+  // The metadata associated with the proposal.
   //
   // The metadata is a list of key-value pairs that can be used to store
-  // additional information about the operation (e.g. `{"transfer_id": "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0"}`).
+  // additional information about the proposal.
   metadata : vec record { text; text };
-  // The operation approval status.
-  status : OperationStatus;
-  // The context of the operation.
-  context : OperationContext;
 };
 
-// The input type for getting the list of operations associated with the caller.
-type ListOperationsInput = record {
-  // The list of operation ids to retrieve.
-  status : opt OperationStatus;
-  // The code of the operation (e.g. "transaction").
-  code : opt text;
-  // Wether the operation has been read or not.
-  read : opt bool;
-  // From which created time to retrieve the operations.
+// The input type for getting the list of proposals associated with the caller.
+type ListProposalsInput = record {
+  // Show only proposals with the given status.
+  status : opt ProposalStatus;
+  // The type of the proposal (e.g. "transfer").
+  operation_type : opt ProposalOperationType;
+  // From which created time to retrieve the proposals.
   from_dt : opt TimestampRFC3339;
-  // Until which created time to retrieve the operations.
+  // Until which created time to retrieve the proposals.
   to_dt : opt TimestampRFC3339;
 };
 
-// The result type for getting the list of operations.
-type ListOperationsResult = variant {
-  // The result data, if the operation was successful.
+// The result type for getting the list of proposals.
+type ListProposalsResult = variant {
+  // The result data for a successful execution.
   Ok : record {
-    // The list of operations.
-    operations : vec Operation;
+    // The list of proposals.
+    proposals : vec Proposal;
   };
-  // The error that occurred during the operation, if any
-  // (e.g. the user does not have access to the operation).
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
-// The input type for getting the list of operations associated with the caller.
-type ListAccountOperationsInput = record {
-  // The account id to retrieve the operations from.
+// The input type for getting the list of proposals associated with the account.
+type ListAccountProposalsInput = record {
+  // The account id to retrieve the proposals from.
   account_id : AccountId;
-  // The list of operation ids to retrieve.
-  status : opt OperationStatus;
-  // The code of the operation (e.g. "transaction").
-  code : opt text;
-  // Wether the operation has been read or not.
-  read : opt bool;
-  // From which created time to retrieve the operations.
+  // Show only proposals with the given status.
+  status : opt ProposalStatus;
+  // The type of the proposal (e.g. "transfer").
+  operation_type : opt ProposalOperationType;
+  // From which created time to retrieve them.
   from_dt : opt TimestampRFC3339;
-  // Until which created time to retrieve the operations.
+  // Until which created time to retrieve them.
   to_dt : opt TimestampRFC3339;
 };
 
-// The result type for getting the list of operations for a account.
-type ListAccountOperationsResult = variant {
-  // The result data, if the operation was successful.
+// The result type for getting the list of proposals for the given account.
+type ListAccountProposalsResult = variant {
+  // The result data for a successful execution.
   Ok : record {
-    // The list of operations.
-    operations : vec Operation;
+    // The list of proposals.
+    proposals : vec Proposal;
   };
-  // The error that occurred during the operation, if any
-  // (e.g. the user does not have access to the operation).
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
-// Input type for getting an operation.
-type GetOperationInput = record {
-  // The operation id to retrieve.
-  operation_id : OperationId;
+// Input type for getting a proposal.
+type GetProposalInput = record {
+  // The proposal id to retrieve.
+  proposal_id : ProposalId;
 };
 
-// Result type for getting an operation.
-type GetOperationResult = variant {
-  // The result data.
+// Result type for retrieving a proposal.
+type GetProposalResult = variant {
+  // The result data for a successful execution.
   Ok : record {
-    // The operation that was retrieved.
-    operation : Operation;
+    // The proposal that was requested.
+    proposal : Proposal;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
-// Input type for editing an operation.
-type EditOperationInput = record {
-  // The operation id to updated.
-  operation_id : OperationId;
-  // If true the operation is approved, otherwise it is rejected.
+// Input type for voting on a proposal.
+type VoteOnProposalInput = record {
+  // The proposal id to interact with.
+  proposal_id : ProposalId;
+  // True if the user approves the proposal, false otherwise.
   approve : opt bool;
   // The reason for the approval or rejection.
   reason : opt text;
-  // Set the operation as read.
-  read : opt bool;
 };
 
-// Result type for editing an operation.
-type EditOperationResult = variant {
+// Result type for voting on a proposal.
+type VoteOnProposalResult = variant {
   Ok : record {
-    operation : Operation;
+    proposal : Proposal;
   };
   Err : Error;
 };
@@ -169,12 +264,10 @@ type AccountBalanceInfo = record {
 
 // Result type for listing all accounts.
 type ListAccountResult = variant {
-  // The result data, if the operation was successful.
   Ok : record {
     // The list of accounts.
     accounts : vec Account;
   };
-  // The error that occurred during the operation, if any.
   Err : Error;
 };
 
@@ -203,12 +296,12 @@ type TransferListItem = record {
 };
 
 type ListAccountTransfersResult = variant {
-  // The result data, if the operation was successful.
+  // The result data for a successful execution.
   Ok : record {
     // The list of transfers.
     transfers : vec TransferListItem;
   };
-  // The error that occurred during the operation, if any.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -218,7 +311,7 @@ type UserRole = variant {
   Admin;
   // Any authenticated user has this role.
   User;
-  // The guest role is also used to allow operations when the user does not have the user defined.
+  // The guest role is also used to allow access when the user does not have the user defined.
   Guest;
 };
 
@@ -308,7 +401,7 @@ type TransferStatus = variant {
 
 // A record type that can be used to represent a transfer in a given account.
 type Transfer = record {
-  // The internal operation id, this a unique identifier for the transfer.
+  // The internal transfer id, this a unique identifier for the transfer.
   id : TransferId;
   // The account id to use for the transfer.
   from_account_id : AccountId;
@@ -330,7 +423,7 @@ type Transfer = record {
   metadata : vec TransferMetadata;
 };
 
-// The schedule for executing a transaction of a given transfer operation.
+// The schedule for executing a transaction of a given transfer.
 type TransferExecutionSchedule = variant {
   // The transaction will be executed immediately.
   Immediate;
@@ -373,12 +466,12 @@ type TransferInput = record {
 
 // Result type for transferring funds.
 type TransferResult = variant {
-  // The result data, if the operation was successful.
+  // The result data for a successful execution.
   Ok : record {
     // The transfer that was created.
     transfer : Transfer;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -388,12 +481,12 @@ type GetTransferInput = record {
 };
 
 type GetTransferResult = variant {
-  // The result data, if the operation was successful.
+  // The result data for a successful execution.
   Ok : record {
     // The transfer that was retrieved.
     transfer : Transfer;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -403,12 +496,12 @@ type GetTransfersInput = record {
 };
 
 type GetTransfersResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The transfer that was retrieved.
     transfers : vec Transfer;
   };
-  // The error for a failed operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -490,12 +583,12 @@ type CreateAccountInput = record {
 
 // Result type for creating a account.
 type CreateAccountResult = variant {
-  // The result data, if the operation was successful.
+  // The result data for a successful execution.
   Ok : record {
     // The account that was created.
     account : Account;
   };
-  // The error that occurred during the operation, if any.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -507,12 +600,12 @@ type GetAccountInput = record {
 
 // Result type for getting a account.
 type GetAccountResult = variant {
-  // The result data, if the operation was successful.
+  // The result data for a successful execution.
   Ok : record {
     // The account that was retrieved.
     account : Account;
   };
-  // The error that occurred during the operation, if any.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -535,12 +628,12 @@ type FetchAccountBalancesInput = record {
 
 // Result type for getting a account.
 type FetchAccountBalancesResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The account balance that was retrieved.
     balances : vec AccountBalance;
   };
-  // The error for a failed operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -571,12 +664,12 @@ type BankFeatures = record {
 
 // Result type for getting the bank feature details.
 type GetFeaturesResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The bank features.
     features : BankFeatures;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -584,7 +677,7 @@ type GetFeaturesResult = variant {
 type BankSettings = record {
   // The list of admin users associated with the bank.
   owners : vec User;
-  // The percentage of approvals required for a bank operation to be
+  // The percentage of approvals required for a bank proposal to be
   // executed (e.g. upgrade the canister).
   //
   // Only admin users are considered for the approval threshold.
@@ -605,12 +698,12 @@ type GetUserInput = record {
 
 // Result type for retrieving a user.
 type GetUserResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The user that was retrieved.
     user : User;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -622,12 +715,12 @@ type RegisterUserInput = record {
 
 // Result type for registering an user.
 type RegisterUserResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The user that was registered.
     user : User;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -641,12 +734,12 @@ type EditUserInput = record {
 
 // Result type for editing an user.
 type EditUserResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The user that was updated.
     user : User;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
@@ -658,24 +751,23 @@ type ConfirmUserIdentityInput = record {
 
 // Result type for confirming a user and its associated identity.
 type ConfirmUserIdentityResult = variant {
-  // The result data for a successful operation.
+  // The result data for a successful execution.
   Ok : record {
     // The user that was confirmed.
     user : User;
   };
-  // The error that occurred during the operation.
+  // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
 // Result type for getting the bank settings.
 type BankSettingsResult = variant {
-  // The result data, if the operation was successful.
+  // The result data for a successful execution.
   Ok : record {
     // The bank settings.
     settings : BankSettings;
   };
-  // The error that occurred during the operation, if any
-  // (e.g. the caller is not an admin).
+  // The error that occurred (e.g. the caller is not an admin).
   Err : Error;
 };
 
@@ -683,7 +775,7 @@ type BankSettingsResult = variant {
 type BankInit = record {
   // The list of admin principals to be associated with the bank.
   owners : opt vec principal;
-  // The percentage of approvals required for a bank operation to be
+  // The percentage of approvals required for a bank proposal to be
   // executed (e.g. upgrade the canister).
   //
   // Only admin users are considered for the approval threshold.
@@ -700,6 +792,14 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:features"
   features : () -> (GetFeaturesResult) query;
+  // Get the list of notifications associated with the caller.
+  //
+  // Required permission: "read:notification"
+  list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
+  // Mark the notifications as read.
+  //
+  // Required permission: "write:notification"
+  mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
   // Create a new account.
   //
   // Required permission: "write:account"
@@ -726,7 +826,7 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:transfer"
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
-  // Transfer funds from a account, this operation will only create a new transaction
+  // Transfer funds from a selected account, this action will only create a new transaction
   // if the account policies have been sucessfully fulfilled.
   //
   // If the caller does not have access to the account, an error will be returned.
@@ -743,22 +843,22 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:transfer"
   get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
-  // Get the list of operations.
+  // Get the list of proposals.
   //
-  // Required permission: "read:operation"
-  list_operations : (input : ListOperationsInput) -> (ListOperationsResult) query;
-  // Get the list of operations for a given account.
+  // Required permission: "read:proposal"
+  list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
+  // Get the list of proposals for a given account.
   //
-  // Required permission: "read:operation"
-  list_account_operations : (input : ListAccountOperationsInput) -> (ListAccountOperationsResult) query;
-  // Get the operation by id.
+  // Required permission: "read:proposal"
+  list_account_proposals : (input : ListAccountProposalsInput) -> (ListAccountProposalsResult) query;
+  // Get the proposal by id.
   //
-  // Required permission: "read:operation"
-  get_operation : (input : GetOperationInput) -> (GetOperationResult) query;
-  // Record the decision of the caller on the operation.
+  // Required permission: "read:proposal"
+  get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
+  // Record the vote of the user on the proposal.
   //
-  // Required permission: "write:operation"
-  edit_operation : (input : EditOperationInput) -> (EditOperationResult);
+  // Required permission: "write:proposal"
+  vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
   // Register a user in the bank.
   //
   // Required permission: "write:register-user"

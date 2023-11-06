@@ -47,6 +47,9 @@ pub enum MapperError {
         /// The string provided.
         code: String,
     },
+    /// The mapper context is missing required information.
+    #[error(r#"The mapper context is missing required information."#)]
+    ContextError { info: String },
 }
 
 impl DetailableError for MapperError {
@@ -91,6 +94,10 @@ impl DetailableError for MapperError {
             }
             MapperError::UnknownOperationCode { code } => {
                 details.insert("code".to_string(), code.to_string());
+                Some(details)
+            }
+            MapperError::ContextError { info } => {
+                details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
             _ => None,

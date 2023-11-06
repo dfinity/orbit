@@ -9,7 +9,10 @@ pub use account::*;
 mod transfer;
 pub use transfer::*;
 
-mod operation;
-pub use operation::*;
+mod notification;
+pub use notification::*;
+
+mod proposal;
+pub use proposal::*;
 
 pub mod indexes;
