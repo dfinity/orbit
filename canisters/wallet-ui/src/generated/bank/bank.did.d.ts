@@ -107,7 +107,6 @@ export interface ListAccountProposalsInput {
   'status' : [] | [ProposalStatus],
   'to_dt' : [] | [TimestampRFC3339],
   'operation_type' : [] | [ProposalOperationType],
-  'read' : [] | [boolean],
   'from_dt' : [] | [TimestampRFC3339],
 }
 export type ListAccountProposalsResult = {
@@ -126,17 +125,58 @@ export type ListAccountTransfersResult = {
     'Ok' : { 'transfers' : Array<TransferListItem> }
   } |
   { 'Err' : Error };
+export interface ListNotificationsInput {
+  'status' : [] | [NotificationStatus],
+  'to_dt' : [] | [TimestampRFC3339],
+  'from_dt' : [] | [TimestampRFC3339],
+  'notification_type' : [] | [NotificationTypeInput],
+}
+export type ListNotificationsResult = {
+    'Ok' : { 'notifications' : Array<Notification> }
+  } |
+  { 'Err' : Error };
 export interface ListProposalsInput {
   'status' : [] | [ProposalStatus],
   'to_dt' : [] | [TimestampRFC3339],
   'operation_type' : [] | [ProposalOperationType],
-  'read' : [] | [boolean],
   'from_dt' : [] | [TimestampRFC3339],
 }
 export type ListProposalsResult = { 'Ok' : { 'proposals' : Array<Proposal> } } |
   { 'Err' : Error };
+export type MarkNotificationReadResult = { 'Ok' : null } |
+  { 'Err' : Error };
+export interface MarkNotificationsReadInput {
+  'notification_ids' : Array<NotificationId>,
+  'read' : boolean,
+}
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;
+export interface Notification {
+  'id' : NotificationId,
+  'status' : NotificationStatus,
+  'title' : { 'locale_key' : string, 'body' : string },
+  'created_at' : TimestampRFC3339,
+  'notification_type' : NotificationType,
+  'message' : { 'locale_key' : string, 'body' : string },
+  'target_user_id' : UserId,
+}
+export type NotificationId = string;
+export type NotificationStatus = { 'Read' : null } |
+  { 'Sent' : null };
+export type NotificationType = {
+    'ProposalCreated' : { 'proposal_id' : ProposalId }
+  } |
+  { 'SystemMessage' : null } |
+  {
+    'TransferProposalCreated' : {
+      'account_id' : AccountId,
+      'transfer_id' : TransferId,
+      'proposal_id' : ProposalId,
+    }
+  };
+export type NotificationTypeInput = { 'ProposalCreated' : null } |
+  { 'SystemMessage' : null } |
+  { 'TransferProposalCreated' : null };
 export interface Proposal {
   'id' : ProposalId,
   'status' : ProposalStatus,
@@ -156,7 +196,6 @@ export type ProposalStatus = { 'Rejected' : null } |
   { 'Pending' : null };
 export interface ProposalVote {
   'status' : ProposalVoteStatus,
-  'read' : boolean,
   'user_id' : UserId,
   'status_reason' : [] | [string],
   'decided_at' : [] | [TimestampRFC3339],
@@ -230,7 +269,6 @@ export type UserRole = { 'Guest' : null } |
   { 'User' : null } |
   { 'Admin' : null };
 export interface VoteOnProposalInput {
-  'read' : [] | [boolean],
   'approve' : [] | [boolean],
   'proposal_id' : ProposalId,
   'reason' : [] | [string],
@@ -264,7 +302,15 @@ export interface _SERVICE {
     ListAccountTransfersResult
   >,
   'list_accounts' : ActorMethod<[], ListAccountResult>,
+  'list_notifications' : ActorMethod<
+    [ListNotificationsInput],
+    ListNotificationsResult
+  >,
   'list_proposals' : ActorMethod<[ListProposalsInput], ListProposalsResult>,
+  'mark_notifications_read' : ActorMethod<
+    [MarkNotificationsReadInput],
+    MarkNotificationReadResult
+  >,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'transfer' : ActorMethod<[TransferInput], TransferResult>,
   'vote_on_proposal' : ActorMethod<[VoteOnProposalInput], VoteOnProposalResult>,

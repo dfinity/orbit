@@ -228,7 +228,6 @@ impl ProposalRepository {
             .filter_map(|id| match self.get(&Proposal::key(*id)) {
                 Some(proposal) => {
                     let mut match_operation_type = true;
-                    let mut match_read = true;
                     let mut match_status = true;
 
                     if let Some(operation_type) = &condition.operation_type {
@@ -237,18 +236,11 @@ impl ProposalRepository {
                                 == *operation_type;
                     }
 
-                    if let Some(read) = condition.read {
-                        match_read = proposal
-                            .votes
-                            .iter()
-                            .any(|proposal| proposal.user_id == user_id && proposal.read == read);
-                    }
-
                     if let Some(status) = &condition.status {
                         match_status = proposal.status == *status;
                     }
 
-                    match match_operation_type && match_read && match_status {
+                    match match_operation_type && match_status {
                         true => Some(proposal),
                         false => None,
                     }
@@ -273,7 +265,6 @@ pub struct ProposalFindByUserWhereClause {
     pub created_dt_to: Option<Timestamp>,
     pub operation_type: Option<ProposalOperationType>,
     pub status: Option<ProposalStatus>,
-    pub read: Option<bool>,
 }
 
 #[cfg(test)]
@@ -339,7 +330,6 @@ mod tests {
         let user_id = Uuid::new_v4();
         proposal.votes = vec![ProposalVote {
             user_id: *user_id.as_bytes(),
-            read: false,
             decided_dt: None,
             last_modification_timestamp: 0,
             status: ProposalVoteStatus::Pending,

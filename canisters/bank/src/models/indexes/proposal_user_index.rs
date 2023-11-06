@@ -78,7 +78,6 @@ mod tests {
                 status_reason: None,
                 decided_dt: None,
                 last_modification_timestamp: 0,
-                read: false,
                 status: ProposalVoteStatus::Pending,
             },
             ProposalVote {
@@ -86,7 +85,6 @@ mod tests {
                 status_reason: None,
                 decided_dt: None,
                 last_modification_timestamp: 0,
-                read: false,
                 status: ProposalVoteStatus::Pending,
             },
         ];

@@ -1,15 +1,6 @@
 <template>
   <div class="proposal-item">
     <div v-if="props.loading" class="proposal-item__loading"></div>
-    <div class="proposal-item__read">
-      <VBtn
-        v-if="vote"
-        :icon="vote.read ? mdiCheckCircle : mdiCheckCircleOutline"
-        size="x-small"
-        :variant="vote.read ? 'text' : 'plain'"
-        @click="onRead"
-      />
-    </div>
     <div class="proposal-item__code">
       <TransferProposal v-if="BankProposalType.Transfer in proposal.operation" v-model="proposal" />
       <UnknownProposal v-else v-model="proposal" />
@@ -64,15 +55,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import {
-  mdiCheckCircleOutline,
-  mdiCheckCircle,
-  mdiCheck,
-  mdiClose,
-  mdiCogs,
-  mdiCog,
-  mdiHelp,
-} from '@mdi/js';
+import { mdiCheck, mdiClose, mdiCogs, mdiCog, mdiHelp } from '@mdi/js';
 import { computed, provide } from 'vue';
 import { Proposal } from '~/generated/bank/bank.did';
 import { i18n } from '~/ui/modules';
@@ -98,7 +81,6 @@ provide('bankProposalProps', { outer: props.outer });
 
 const emit = defineEmits<{
   (event: 'update:proposal', payload: Proposal): void;
-  (event: 'read', payload: boolean): void;
   (event: 'adopted'): void;
   (event: 'rejected'): void;
 }>();
@@ -118,12 +100,6 @@ const vote = computed({
     });
   },
 });
-
-const onRead = () => {
-  if (vote.value) {
-    emit('read', !vote.value.read);
-  }
-};
 
 const onApprove = () => {
   emit('adopted');
@@ -198,7 +174,6 @@ const voteState = computed(() => {
     z-index: 1;
   }
 
-  &__read,
   &__action {
     flex: 0 0 auto;
   }

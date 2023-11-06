@@ -2,7 +2,7 @@ use super::HelperMapper;
 use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
-    models::{PolicySnapshot, Transfer, TransferExecutionPlan, TransferId, TransferStatus, UserId},
+    models::{Transfer, TransferExecutionPlan, TransferId, TransferStatus, UserId},
     transport::{
         NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferListItemDTO,
         TransferMetadataDTO,
@@ -52,7 +52,6 @@ impl TransferMapper {
                 },
                 None => TransferExecutionPlan::Immediate,
             },
-            policy_snapshot: PolicySnapshot { min_approvals: 1 },
             last_modification_timestamp: time(),
             created_timestamp: time(),
         })

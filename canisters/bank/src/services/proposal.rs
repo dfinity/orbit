@@ -59,7 +59,6 @@ impl ProposalService {
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 operation_type: filter_by_operation_type,
                 status: input.status.map(|status| status.into()),
-                read: input.read,
             },
         );
 
@@ -126,11 +125,8 @@ impl ProposalService {
                 true => ProposalVoteStatus::Adopted,
                 false => ProposalVoteStatus::Rejected,
             };
-            vote.read = true;
             vote.decided_dt = Some(time());
             vote.status_reason = input.reason;
-        } else if let Some(read) = input.read {
-            vote.read = read;
         }
 
         proposal.validate()?;
@@ -237,7 +233,6 @@ mod tests {
             user_id: ctx.caller_user.id,
             decided_dt: None,
             last_modification_timestamp: 0,
-            read: false,
             status: ProposalVoteStatus::Pending,
             status_reason: None,
         }];
@@ -259,7 +254,6 @@ mod tests {
                     .to_string(),
                 approve: Some(false),
                 reason: None,
-                read: Some(true),
             })
             .await;
 

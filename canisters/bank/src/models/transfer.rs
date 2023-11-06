@@ -67,7 +67,7 @@ impl Display for TransferStatus {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct PolicySnapshot {
+pub struct PolicyRequirements {
     /// The minimum number of approvals required for the transfer to be approved.
     pub min_approvals: u8,
 }
@@ -98,10 +98,6 @@ pub struct Transfer {
     pub blockchain_network: String,
     /// The transfer metadata (e.g. `memo`, `description`, etc.)
     pub metadata: Vec<(String, String)>,
-    /// The transfer policies, which define the rules for the transfer.
-    ///
-    /// It holds a snapshot of the account policies at the time of the transfer creation.
-    pub policy_snapshot: PolicySnapshot,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
     /// The creation timestamp of the transfer.
@@ -139,17 +135,17 @@ impl Transfer {
         time() + time_in_ns
     }
 
-    pub fn make_policy_snapshot(&mut self, account: &Account) {
-        let mut policy_snapshot = PolicySnapshot { min_approvals: 1 };
+    pub fn policy_requirements(&self, account: &Account) -> PolicyRequirements {
+        let mut requirements = PolicyRequirements { min_approvals: 1 };
 
         for policy in account.policies.iter() {
             match policy {
                 AccountPolicy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
-                        policy_snapshot.min_approvals = *min_approvals;
+                        requirements.min_approvals = *min_approvals;
                     }
                     ApprovalThresholdPolicy::VariableThreshold(percentage) => {
-                        policy_snapshot.min_approvals = ((account.owners.len() as f64
+                        requirements.min_approvals = ((account.owners.len() as f64
                             * (*percentage as f64 / 100.0))
                             .ceil() as u8)
                             .max(1);
@@ -158,7 +154,7 @@ impl Transfer {
             }
         }
 
-        self.policy_snapshot = policy_snapshot;
+        requirements
     }
 }
 
@@ -458,7 +454,6 @@ pub mod transfer_test_utils {
             execution_plan: TransferExecutionPlan::Immediate,
             blockchain_network: "a".repeat(50),
             metadata: vec![],
-            policy_snapshot: PolicySnapshot { min_approvals: 1 },
             last_modification_timestamp: time(),
             created_timestamp: time(),
         }

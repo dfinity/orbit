@@ -160,7 +160,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
     },
     async saveDecision(
       proposalId: ProposalId,
-      decision: { approve?: boolean; reason?: string; read?: boolean },
+      decision: { approve?: boolean; reason?: string },
     ): Promise<void> {
       const activeBank = useActiveBankStore();
       const item = this.proposals.items.find(item => item.data.id === proposalId);
@@ -194,7 +194,6 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
             from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
             to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
             operation_type: [],
-            read: [],
           })
           .then(proposals => {
             return proposals.map(proposal => {

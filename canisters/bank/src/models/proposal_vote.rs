@@ -12,7 +12,6 @@ use ic_canister_macros::stable_object;
 pub struct ProposalVote {
     /// The user id associated with the vote.
     pub user_id: UserId,
-    pub read: bool,
     /// The status is provided by the associated user.
     pub status: ProposalVoteStatus,
     /// Optional reason for the vote status.
@@ -90,7 +89,6 @@ mod tests {
     fn mock_decision() -> ProposalVote {
         ProposalVote {
             user_id: [0; 16],
-            read: false,
             status: ProposalVoteStatus::Rejected,
             status_reason: None,
             decided_dt: None,

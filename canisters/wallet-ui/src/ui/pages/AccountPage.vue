@@ -287,7 +287,6 @@
                                   :proposal="pageStore.sortedProposals[_idx].data"
                                   :outer="false"
                                   :loading="loading"
-                                  @read="read => pageStore.saveDecision(proposalId, { read })"
                                   @adopted="pageStore.saveDecision(proposalId, { approve: true })"
                                   @rejected="pageStore.saveDecision(proposalId, { approve: false })"
                                 />

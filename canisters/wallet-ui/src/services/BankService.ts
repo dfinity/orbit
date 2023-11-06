@@ -16,11 +16,10 @@ import {
   GetTransferInput,
   GetTransfersInput,
   GetAccountInput,
-  ListProposalsInput,
+  Notification,
   ListAccountProposalsInput,
   ListAccountTransfersInput,
   Proposal,
-  ProposalId,
   RegisterUserInput,
   Transfer,
   TransferInput,
@@ -28,6 +27,9 @@ import {
   Account,
   AccountBalance,
   _SERVICE,
+  ListNotificationsInput,
+  NotificationId,
+  MarkNotificationsReadInput,
 } from '~/generated/bank/bank.did';
 import { Maybe } from '~/types';
 
@@ -104,14 +106,14 @@ export class BankService {
     return result.Ok.features;
   }
 
-  async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
-    const result = await this.actor.list_proposals(input);
+  async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {
+    const result = await this.actor.list_notifications(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.proposals;
+    return result.Ok.notifications;
   }
 
   async listAccountProposals(input: ListAccountProposalsInput): Promise<Proposal[]> {
@@ -124,16 +126,19 @@ export class BankService {
     return result.Ok.proposals;
   }
 
-  async listUnreadPendingProposals(from_dt?: Date, last_id?: ProposalId): Promise<Proposal[]> {
-    const proposals = await this.listProposals({
-      read: [false],
-      operation_type: [],
-      status: [{ Pending: null }],
+  async listUnreadNotifications(from_dt?: Date, last_id?: NotificationId): Promise<Notification[]> {
+    const notifications = await this.listNotifications({
+      notification_type: [],
+      status: [{ Sent: null }],
       from_dt: from_dt ? [from_dt.toISOString()] : [],
       to_dt: [],
     });
 
-    return proposals.filter(proposal => proposal.id !== last_id);
+    return notifications.filter(notification => notification.id !== last_id);
+  }
+
+  async markNotificationAsRead(input: MarkNotificationsReadInput): Promise<void> {
+    await this.actor.mark_notifications_read(input);
   }
 
   async voteOnProposal(input: VoteOnProposalInput): Promise<Proposal> {

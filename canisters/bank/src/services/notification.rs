@@ -108,18 +108,28 @@ impl NotificationService {
                         "system_message_title".to_string(),
                     ),
                     NotificationType::ProposalCreated(_) => (
-                        "A new proposal has been created. Please review it and vote on the action to be taken.".to_string(),
+                        "New proposal created".to_string(),
                         "notification_proposal_created".to_string(),
                     ),
                     NotificationType::TransferProposalCreated(_) => (
-                        "A new transfer proposal has been created. Please review it and vote on the action to be taken.".to_string(),
+                        "New transfer requested".to_string(),
                         "notification_transfer_proposal_created_title".to_string(),
                     ),
-                }
+                },
             },
             message: match message {
                 Some(message) => message,
-                None => ("".to_string(), "".to_string()),
+                None => match &notification_type {
+                    NotificationType::SystemMessage => ("".to_string(), "".to_string()),
+                    NotificationType::ProposalCreated(_) => (
+                        "Please review it and vote on the action to be taken.".to_string(),
+                        "notification_proposal_created_message".to_string(),
+                    ),
+                    NotificationType::TransferProposalCreated(_) => (
+                        "Please review it and vote on the action to be taken.".to_string(),
+                        "notification_transfer_proposal_created_message".to_string(),
+                    ),
+                },
             },
             notification_type,
             created_timestamp: time(),

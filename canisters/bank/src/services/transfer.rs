@@ -91,7 +91,7 @@ impl TransferService {
         let default_fee = blockchain_api.transaction_fee(&account).await?;
         let transfer_id = generate_uuid_v4().await;
 
-        let mut transfer = TransferMapper::from_create_input(
+        let transfer = TransferMapper::from_create_input(
             input,
             *transfer_id.as_bytes(),
             caller_user.id,
@@ -99,7 +99,6 @@ impl TransferService {
             blockchain_api.default_network(),
             Transfer::default_expiration_dt(),
         )?;
-        transfer.make_policy_snapshot(&account);
 
         transfer.validate()?;
 
@@ -147,7 +146,6 @@ impl TransferService {
                     false => None,
                 },
                 last_modification_timestamp: time(),
-                read: transfer.initiator_user == *owner,
                 status_reason: None,
             });
 

@@ -7,7 +7,6 @@ impl From<ProposalVote> for ProposalVoteDTO {
         Self {
             user_id: Uuid::from_bytes(vote.user_id).hyphenated().to_string(),
             decided_at: vote.decided_dt.map(|dt| timestamp_to_rfc3339(&dt)),
-            read: vote.read,
             status: vote.status.into(),
             status_reason: vote.status_reason,
         }

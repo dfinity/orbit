@@ -92,23 +92,23 @@ export const useWorkerStore = defineStore('cache', {
           return;
         }
 
-        const newProposals = await activeBank.service.listUnreadPendingProposals(
-          activeBank.lastPendingProposalDate ?? undefined,
-          activeBank.lastPendingProposalId ?? undefined,
+        const newNotifications = await activeBank.service.listUnreadNotifications(
+          activeBank.lastNotificationDate ?? undefined,
+          activeBank.lastNotificationId ?? undefined,
         );
 
-        for (const newProposal of newProposals) {
+        for (const newNotification of newNotifications) {
           if (
-            !activeBank.pendingProposals.items.find(current => current.data.id === newProposal.id)
+            !activeBank.notifications.items.find(current => current.data.id === newNotification.id)
           ) {
-            activeBank.pendingProposals.items.push({
+            activeBank.notifications.items.push({
               loading: false,
-              data: newProposal,
+              data: newNotification,
             });
           }
         }
       } catch (error) {
-        logger.error('Failed to fetch pending proposals', { error });
+        logger.error('Failed to fetch unread notifications', { error });
       }
     },
   },

@@ -36,7 +36,7 @@ impl Transfer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{PolicySnapshot, TransferStatus};
+    use crate::models::TransferStatus;
     use num_bigint::BigUint;
 
     #[test]
@@ -54,7 +54,6 @@ mod tests {
             initiator_user: [2; 16],
             last_modification_timestamp: 0,
             metadata: vec![],
-            policy_snapshot: PolicySnapshot { min_approvals: 0 },
             execution_plan: TransferExecutionPlan::Scheduled { execution_time: 2 },
         };
 
@@ -79,7 +78,6 @@ mod tests {
             initiator_user: [2; 16],
             last_modification_timestamp: 0,
             metadata: vec![],
-            policy_snapshot: PolicySnapshot { min_approvals: 0 },
             execution_plan: TransferExecutionPlan::Immediate,
         };
 

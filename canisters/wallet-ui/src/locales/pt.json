@@ -43,6 +43,7 @@
   },
   "banks": {
     "proposal_failed_to_save": "Erro ao gravar a proposta.",
+    "notification_failed_to_save": "Erro ao gravar a notificação.",
     "no_accounts": "Nenhuma conta disponível.",
     "pending_proposals": "Propostas pendentes",
     "user_copied_to_clipboard": "Id de utilizador copiado.",

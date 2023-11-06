@@ -37,7 +37,6 @@ pub enum ProposalOperationTypeDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalVoteDTO {
     pub user_id: UserIdDTO,
-    pub read: bool,
     pub status: ProposalVoteStatusDTO,
     pub status_reason: Option<String>,
     pub decided_at: Option<TimestampRfc3339>,
@@ -56,7 +55,6 @@ pub struct ProposalDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct VoteOnProposalInput {
-    pub read: Option<bool>,
     pub approve: Option<bool>,
     pub proposal_id: ProposalIdDTO,
     pub reason: Option<String>,
@@ -81,7 +79,6 @@ pub struct GetProposalResponse {
 pub struct ListProposalsInput {
     pub status: Option<ProposalStatusDTO>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
-    pub read: Option<bool>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,
 }
@@ -96,7 +93,6 @@ pub struct ListAccountProposalsInput {
     pub account_id: AccountIdDTO,
     pub status: Option<ProposalStatusDTO>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
-    pub read: Option<bool>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,
 }

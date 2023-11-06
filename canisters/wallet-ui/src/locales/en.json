@@ -43,6 +43,7 @@
   },
   "banks": {
     "proposal_failed_to_save": "Proposal failed to save.",
+    "notification_failed_to_save": "Notification failed to save.",
     "no_accounts": "No account available.",
     "pending_proposals": "Pending proposals",
     "user_copied_to_clipboard": "Bank user copied.",

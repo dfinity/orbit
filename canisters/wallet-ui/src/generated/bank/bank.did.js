@@ -135,7 +135,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const ProposalVote = IDL.Record({
     'status' : ProposalVoteStatus,
-    'read' : IDL.Bool,
     'user_id' : UserId,
     'status_reason' : IDL.Opt(IDL.Text),
     'decided_at' : IDL.Opt(TimestampRFC3339),
@@ -213,7 +212,6 @@ export const idlFactory = ({ IDL }) => {
     'status' : IDL.Opt(ProposalStatus),
     'to_dt' : IDL.Opt(TimestampRFC3339),
     'operation_type' : IDL.Opt(ProposalOperationType),
-    'read' : IDL.Opt(IDL.Bool),
     'from_dt' : IDL.Opt(TimestampRFC3339),
   });
   const ListAccountProposalsResult = IDL.Variant({
@@ -241,15 +239,60 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'accounts' : IDL.Vec(Account) }),
     'Err' : Error,
   });
+  const NotificationStatus = IDL.Variant({
+    'Read' : IDL.Null,
+    'Sent' : IDL.Null,
+  });
+  const NotificationTypeInput = IDL.Variant({
+    'ProposalCreated' : IDL.Null,
+    'SystemMessage' : IDL.Null,
+    'TransferProposalCreated' : IDL.Null,
+  });
+  const ListNotificationsInput = IDL.Record({
+    'status' : IDL.Opt(NotificationStatus),
+    'to_dt' : IDL.Opt(TimestampRFC3339),
+    'from_dt' : IDL.Opt(TimestampRFC3339),
+    'notification_type' : IDL.Opt(NotificationTypeInput),
+  });
+  const NotificationId = IDL.Text;
+  const NotificationType = IDL.Variant({
+    'ProposalCreated' : IDL.Record({ 'proposal_id' : ProposalId }),
+    'SystemMessage' : IDL.Null,
+    'TransferProposalCreated' : IDL.Record({
+      'account_id' : AccountId,
+      'transfer_id' : TransferId,
+      'proposal_id' : ProposalId,
+    }),
+  });
+  const Notification = IDL.Record({
+    'id' : NotificationId,
+    'status' : NotificationStatus,
+    'title' : IDL.Record({ 'locale_key' : IDL.Text, 'body' : IDL.Text }),
+    'created_at' : TimestampRFC3339,
+    'notification_type' : NotificationType,
+    'message' : IDL.Record({ 'locale_key' : IDL.Text, 'body' : IDL.Text }),
+    'target_user_id' : UserId,
+  });
+  const ListNotificationsResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'notifications' : IDL.Vec(Notification) }),
+    'Err' : Error,
+  });
   const ListProposalsInput = IDL.Record({
     'status' : IDL.Opt(ProposalStatus),
     'to_dt' : IDL.Opt(TimestampRFC3339),
     'operation_type' : IDL.Opt(ProposalOperationType),
-    'read' : IDL.Opt(IDL.Bool),
     'from_dt' : IDL.Opt(TimestampRFC3339),
   });
   const ListProposalsResult = IDL.Variant({
     'Ok' : IDL.Record({ 'proposals' : IDL.Vec(Proposal) }),
+    'Err' : Error,
+  });
+  const MarkNotificationsReadInput = IDL.Record({
+    'notification_ids' : IDL.Vec(NotificationId),
+    'read' : IDL.Bool,
+  });
+  const MarkNotificationReadResult = IDL.Variant({
+    'Ok' : IDL.Null,
     'Err' : Error,
   });
   const RegisterUserInput = IDL.Record({
@@ -274,7 +317,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const VoteOnProposalInput = IDL.Record({
-    'read' : IDL.Opt(IDL.Bool),
     'approve' : IDL.Opt(IDL.Bool),
     'proposal_id' : ProposalId,
     'reason' : IDL.Opt(IDL.Text),
@@ -330,10 +372,20 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'list_accounts' : IDL.Func([], [ListAccountResult], ['query']),
+    'list_notifications' : IDL.Func(
+        [ListNotificationsInput],
+        [ListNotificationsResult],
+        ['query'],
+      ),
     'list_proposals' : IDL.Func(
         [ListProposalsInput],
         [ListProposalsResult],
         ['query'],
+      ),
+    'mark_notifications_read' : IDL.Func(
+        [MarkNotificationsReadInput],
+        [MarkNotificationReadResult],
+        [],
       ),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'transfer' : IDL.Func([TransferInput], [TransferResult], []),

@@ -7,7 +7,9 @@ import {
   BankFeatures,
   Proposal,
   ProposalId,
+  NotificationId,
   Account,
+  Notification,
 } from '~/generated/bank/bank.did';
 import { BankService } from '~/services';
 import { i18n, services } from '~/ui/modules';
@@ -20,7 +22,7 @@ export interface BankMetrics {
     completed: number;
     pending: number;
   };
-  pendingProposals: number;
+  notifications: number;
 }
 
 export interface ActiveBankStoreState {
@@ -35,9 +37,9 @@ export interface ActiveBankStoreState {
     loading: boolean;
     items: Account[];
   };
-  pendingProposals: {
+  notifications: {
     loading: boolean;
-    items: LoadableItem<Proposal>[];
+    items: LoadableItem<Notification>[];
   };
 }
 
@@ -55,7 +57,7 @@ export const useActiveBankStore = defineStore('activeBank', {
         loading: false,
         items: [],
       },
-      pendingProposals: {
+      notifications: {
         loading: false,
         items: [],
       },
@@ -80,30 +82,30 @@ export const useActiveBankStore = defineStore('activeBank', {
         return secondDt - firstDt;
       });
     },
-    lastPendingProposalDate(): Date | null {
-      if (!this.pendingProposals.items.length) {
+    lastNotificationDate(): Date | null {
+      if (!this.notifications.items.length) {
         return null;
       }
 
-      return new Date(this.pendingProposals.items[0].data.created_at);
+      return new Date(this.notifications.items[0].data.created_at);
     },
-    lastPendingProposalId(): ProposalId | null {
-      if (!this.pendingProposals.items.length) {
+    lastNotificationId(): ProposalId | null {
+      if (!this.notifications.items.length) {
         return null;
       }
 
-      return this.pendingProposals.items[0].data.id;
+      return this.notifications.items[0].data.id;
     },
-    sortedPendingProposals(): LoadableItem<Proposal>[] {
-      return this.pendingProposals.items.sort((a, b) => {
+    sortedNotifications(): LoadableItem<Notification>[] {
+      return this.notifications.items.sort((a, b) => {
         const firstDt = new Date(a.data.created_at);
         const secondDt = new Date(b.data.created_at);
 
         return secondDt.getTime() - firstDt.getTime();
       });
     },
-    hasPendingProposals(): boolean {
-      return this.pendingProposals.items.length > 0;
+    hasNotifications(): boolean {
+      return this.notifications.items.length > 0;
     },
     bankId(): Principal {
       return Principal.fromText(this._bankId);
@@ -115,7 +117,7 @@ export const useActiveBankStore = defineStore('activeBank', {
           completed: 0,
           pending: 0,
         },
-        pendingProposals: this.pendingProposals.items.length,
+        notifications: this.notifications.items.length,
       };
     },
     supportedAssets(): BankAsset[] {
@@ -138,7 +140,7 @@ export const useActiveBankStore = defineStore('activeBank', {
       this._user = null;
       this.accounts.items = [];
       this.features.details = null;
-      this.pendingProposals.items = [];
+      this.notifications.items = [];
     },
     async registerUser(): Promise<User | null> {
       const auth = useAuthStore();
@@ -160,39 +162,49 @@ export const useActiveBankStore = defineStore('activeBank', {
 
       return null;
     },
+    async markNotificationRead(notificationId: NotificationId, read: boolean): Promise<void> {
+      const settings = useSettingsStore();
+      const notification = this.notifications.items.find(item => item.data.id === notificationId);
+      if (!notification) {
+        return;
+      }
+
+      try {
+        notification.loading = true;
+        await this.service.markNotificationAsRead({
+          notification_ids: [notificationId],
+          read,
+        });
+
+        if (read) {
+          this.notifications.items = this.notifications.items.filter(
+            item => item.data.id !== notificationId,
+          );
+        }
+      } catch (err) {
+        logger.error(`Failed to save notification`, { err });
+
+        settings.setNotification({
+          show: true,
+          type: 'error',
+          message: i18n.global.t('banks.notification_failed_to_save'),
+        });
+      } finally {
+        notification.loading = false;
+      }
+    },
     async saveDecision(
       proposalId: ProposalId,
       decision: { approve?: boolean; reason?: string; read?: boolean },
     ): Promise<Proposal | null> {
       const settings = useSettingsStore();
-      const pendingProposal = this.pendingProposals.items.find(item => item.data.id === proposalId);
-      if (pendingProposal) {
-        pendingProposal.loading = true;
-      }
 
       try {
-        return await this.service
-          .voteOnProposal({
-            proposal_id: proposalId,
-            approve: decision.approve !== undefined ? [decision.approve] : [],
-            read: decision.read !== undefined ? [decision.read] : [],
-            reason: decision.reason !== undefined ? [decision.reason] : [],
-          })
-          .then(proposal => {
-            this.pendingProposals.items = this.pendingProposals.items.filter(item => {
-              if (item.data.id !== proposal.id) {
-                return true;
-              }
-              const isPending = 'Pending' in proposal.status;
-              const isRead = proposal.votes.some(
-                vote => vote.user_id === this.user.id && vote.read,
-              );
-
-              return isPending && !isRead;
-            });
-
-            return proposal;
-          });
+        return await this.service.voteOnProposal({
+          proposal_id: proposalId,
+          approve: decision.approve !== undefined ? [decision.approve] : [],
+          reason: decision.reason !== undefined ? [decision.reason] : [],
+        });
       } catch (err) {
         logger.error(`Failed to save proposal`, { err });
 
@@ -201,10 +213,6 @@ export const useActiveBankStore = defineStore('activeBank', {
           type: 'error',
           message: i18n.global.t('banks.proposal_failed_to_save'),
         });
-      } finally {
-        if (pendingProposal) {
-          pendingProposal.loading = false;
-        }
       }
 
       return null;

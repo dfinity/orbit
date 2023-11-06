@@ -1,6 +1,7 @@
 use crate::core::ic_cdk::api::time;
 use crate::core::PostProcessor;
-use crate::models::{ProposalOperation, ProposalVoteStatus};
+use crate::models::{Account, AccountId, ProposalOperation, ProposalVoteStatus};
+use crate::repositories::AccountRepository;
 use crate::{
     core::ic_cdk::api::trap,
     models::{Proposal, ProposalStatus, Transfer, TransferStatus},
@@ -14,6 +15,7 @@ use uuid::Uuid;
 pub struct TransferProposalProcessor<'proposal> {
     transfer_repository: TransferRepository,
     proposal_repository: ProposalRepository,
+    account_repository: AccountRepository,
     proposal: &'proposal Proposal,
 }
 
@@ -31,6 +33,7 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
             proposal,
             transfer_repository: TransferRepository::default(),
             proposal_repository: ProposalRepository::default(),
+            account_repository: AccountRepository::default(),
         }
     }
 
@@ -47,8 +50,20 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
             })
     }
 
+    fn get_account(&self, account_id: &AccountId) -> Account {
+        self.account_repository
+            .get(&Account::key(*account_id))
+            .unwrap_or_else(|| {
+                trap(&format!(
+                    "Account not found: {}",
+                    Uuid::from_bytes(*account_id).hyphenated()
+                ))
+            })
+    }
+
     fn reevaluate_transfer(&self, proposal: &Proposal) -> Result<(), ApiError> {
         let mut transfer = self.get_transfer(proposal);
+        let account = &self.get_account(&transfer.from_account);
 
         let total_approvals = proposal
             .votes
@@ -61,9 +76,10 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
             .filter(|vote| vote.status == ProposalVoteStatus::Pending)
             .count();
 
-        let is_approved = total_approvals >= transfer.policy_snapshot.min_approvals as usize;
+        let policy_requirements = transfer.policy_requirements(account);
+        let is_approved = total_approvals >= policy_requirements.min_approvals as usize;
         let can_still_be_approved =
-            total_approvals + missing_feedback >= transfer.policy_snapshot.min_approvals as usize;
+            total_approvals + missing_feedback >= policy_requirements.min_approvals as usize;
 
         if !can_still_be_approved || is_approved {
             transfer.status = match is_approved {

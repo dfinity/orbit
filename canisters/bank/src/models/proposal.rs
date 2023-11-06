@@ -212,7 +212,6 @@ mod tests {
         proposal.votes = vec![
             ProposalVote {
                 user_id: [0; 16],
-                read: false,
                 status: ProposalVoteStatus::Rejected,
                 status_reason: None,
                 decided_dt: None,
@@ -238,7 +237,6 @@ mod tests {
         proposal.votes = vec![
             ProposalVote {
                 user_id: [0; 16],
-                read: false,
                 status: ProposalVoteStatus::Rejected,
                 status_reason: None,
                 decided_dt: None,
@@ -269,7 +267,6 @@ pub mod proposal_test_utils {
             }),
             votes: vec![ProposalVote {
                 user_id: [1; 16],
-                read: true,
                 status: ProposalVoteStatus::Adopted,
                 status_reason: None,
                 decided_dt: Some(0),

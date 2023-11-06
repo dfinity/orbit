@@ -9,18 +9,16 @@
     </VList>
     <VDivider />
     <VList density="compact">
-      <VListItem v-if="!activeBank.hasPendingProposals" class="text-center">
+      <VListItem v-if="!activeBank.hasNotifications" class="text-center">
         {{ $t('terms.all_done') }}
       </VListItem>
-      <VListItem v-for="({ loading, data }, idx) in activeBank.sortedPendingProposals" :key="idx">
-        <BankProposal
+      <VListItem v-for="({ loading, data }, idx) in activeBank.sortedNotifications" :key="idx">
+        <NotificationListItem
           :loading="loading"
-          :proposal="activeBank.sortedPendingProposals[idx].data"
+          :notification="activeBank.sortedNotifications[idx].data"
           @read="read => onRead(data, read)"
-          @adopted="submitDecision(data, true)"
-          @rejected="submitDecision(data, false)"
         />
-        <VDivider v-if="activeBank.pendingProposals.items.length - 1 !== idx" class="mt-4" />
+        <VDivider v-if="activeBank.notifications.items.length - 1 !== idx" class="mt-4" />
       </VListItem>
     </VList>
   </VCard>
@@ -29,9 +27,9 @@
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
 import { useActiveBankStore } from '~/ui/stores';
-import BankProposal from './proposals/BankProposal.vue';
-import { Proposal } from '~/generated/bank/bank.did';
+import { Notification } from '~/generated/bank/bank.did';
 import { useDisplay } from 'vuetify';
+import NotificationListItem from '~/ui/components/NotificationListItem.vue';
 
 const { mobile } = useDisplay();
 const activeBank = useActiveBankStore();
@@ -40,11 +38,8 @@ const emit = defineEmits<{
   (event: 'close'): void;
 }>();
 
-const onRead = (proposal: Proposal, read: boolean) =>
-  activeBank.saveDecision(proposal.id, { read });
-
-const submitDecision = (proposal: Proposal, approve: boolean) =>
-  activeBank.saveDecision(proposal.id, { approve });
+const onRead = (notification: Notification, read: boolean) =>
+  activeBank.markNotificationRead(notification.id, read);
 </script>
 
 <style lang="scss">

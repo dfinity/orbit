@@ -20,8 +20,8 @@ pub const PROPOSAL_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
 pub const PROPOSAL_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
 pub const PROPOSAL_TRANSFER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
 pub const TRANSFER_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
-pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(9);
-pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
+pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(13);
+pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);
 
 thread_local! {
   /// Static configuration of the canister.
