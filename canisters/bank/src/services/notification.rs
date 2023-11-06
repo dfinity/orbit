@@ -1,9 +1,9 @@
 use super::UserService;
 use crate::{
-    core::{ic_cdk::api::time, CallContext, WithCallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, WithCallContext},
     errors::NotificationError,
     mappers::HelperMapper,
-    models::{Notification, NotificationId, NotificationStatus},
+    models::{Notification, NotificationId, NotificationStatus, NotificationType, UserId},
     repositories::{NotificationFindByUserWhereClause, NotificationRepository},
     transport::{ListNotificationsInput, MarkNotificationsReadInput},
 };
@@ -84,6 +84,52 @@ impl NotificationService {
             self.notification_repository
                 .insert(notification.to_key(), notification.clone());
         }
+
+        Ok(())
+    }
+
+    pub async fn send_notification(
+        &self,
+        user_id: UserId,
+        notification_type: NotificationType,
+        title: Option<(String, String)>,
+        message: Option<(String, String)>,
+    ) -> ServiceResult<()> {
+        let notification_id = generate_uuid_v4().await;
+        let notification = Notification {
+            id: *notification_id.as_bytes(),
+            status: NotificationStatus::Sent,
+            target_user_id: user_id,
+            title: match title {
+                Some(title) => title,
+                None => match &notification_type {
+                    NotificationType::SystemMessage => (
+                        "system_message_title".to_string(),
+                        "system_message_title".to_string(),
+                    ),
+                    NotificationType::ProposalCreated(_) => (
+                        "A new proposal has been created. Please review it and vote on the action to be taken.".to_string(),
+                        "notification_proposal_created".to_string(),
+                    ),
+                    NotificationType::TransferProposalCreated(_) => (
+                        "A new transfer proposal has been created. Please review it and vote on the action to be taken.".to_string(),
+                        "notification_transfer_proposal_created_title".to_string(),
+                    ),
+                }
+            },
+            message: match message {
+                Some(message) => message,
+                None => ("".to_string(), "".to_string()),
+            },
+            notification_type,
+            created_timestamp: time(),
+            last_modification_timestamp: time(),
+        };
+
+        notification.validate()?;
+
+        self.notification_repository
+            .insert(notification.to_key(), notification);
 
         Ok(())
     }

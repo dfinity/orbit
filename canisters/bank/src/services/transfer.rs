@@ -1,12 +1,13 @@
-use super::{AccountService, UserService};
+use super::{AccountService, NotificationService, UserService};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::time, CallContext, PostProcessor, WithCallContext},
     errors::{AccountError, TransferError},
     factories::blockchains::BlockchainApiFactory,
     mappers::{HelperMapper, TransferMapper},
     models::{
-        Account, Proposal, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus,
-        Transfer, TransferId, TransferOperationContext,
+        Account, NotificationType, Proposal, ProposalOperation, ProposalStatus, ProposalVote,
+        ProposalVoteStatus, Transfer, TransferId, TransferOperationContext,
+        TransferProposalCreatedNotification,
     },
     repositories::{AccountRepository, ProposalRepository, TransferRepository},
     transport::{ListAccountTransfersInput, TransferInput},
@@ -24,6 +25,7 @@ pub struct TransferService {
     account_repository: AccountRepository,
     transfer_repository: TransferRepository,
     proposal_repository: ProposalRepository,
+    notification_service: NotificationService,
 }
 
 impl WithCallContext for TransferService {
@@ -106,14 +108,18 @@ impl TransferService {
             .insert(transfer.to_key(), transfer.to_owned());
 
         // this await is within the canister so a trap inside create_transfer_proposal will revert the canister state
-        let mut proposal = self.create_transfer_proposal(&account, &transfer).await;
+        let mut proposal = self.create_transfer_proposal(&account, &transfer).await?;
 
         proposal.post_process()?;
 
         Ok(transfer)
     }
 
-    async fn create_transfer_proposal(&self, account: &Account, transfer: &Transfer) -> Proposal {
+    async fn create_transfer_proposal(
+        &self,
+        account: &Account,
+        transfer: &Transfer,
+    ) -> ServiceResult<Proposal> {
         let proposal_id = generate_uuid_v4().await;
         let mut proposal = Proposal {
             id: *proposal_id.as_bytes(),
@@ -144,12 +150,29 @@ impl TransferService {
                 read: transfer.initiator_user == *owner,
                 status_reason: None,
             });
+
+            if transfer.initiator_user != *owner {
+                self.notification_service
+                    .send_notification(
+                        *owner,
+                        NotificationType::TransferProposalCreated(
+                            TransferProposalCreatedNotification {
+                                account_id: account.id,
+                                proposal_id: proposal.id,
+                                transfer_id: transfer.id,
+                            },
+                        ),
+                        None,
+                        None,
+                    )
+                    .await?;
+            }
         }
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.clone());
 
-        proposal
+        Ok(proposal)
     }
 
     pub fn list_account_transfers(
