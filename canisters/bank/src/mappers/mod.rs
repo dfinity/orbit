@@ -12,6 +12,15 @@ pub use blockchain::*;
 mod account_policy;
 pub use account_policy::*;
 
+mod notification;
+pub use notification::*;
+
+mod notification_status;
+pub use notification_status::*;
+
+mod notification_type;
+pub use notification_type::*;
+
 mod proposal_operation_type;
 pub use proposal_operation_type::*;
 

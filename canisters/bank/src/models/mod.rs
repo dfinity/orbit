@@ -26,6 +26,15 @@ pub use account_balance::*;
 mod transfer;
 pub use transfer::*;
 
+mod notification;
+pub use notification::*;
+
+mod notification_status;
+pub use notification_status::*;
+
+mod notification_type;
+pub use notification_type::*;
+
 mod proposal_status;
 pub use proposal_status::*;
 

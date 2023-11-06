@@ -10,6 +10,9 @@ pub use common::*;
 mod management;
 pub use management::*;
 
+mod notification;
+pub use notification::*;
+
 mod account;
 pub use account::*;
 

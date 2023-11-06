@@ -9,6 +9,9 @@ pub use account::*;
 mod transfer;
 pub use transfer::*;
 
+mod notification;
+pub use notification::*;
+
 mod proposal;
 pub use proposal::*;
 

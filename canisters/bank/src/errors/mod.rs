@@ -11,6 +11,9 @@ pub use user::*;
 mod mapper;
 pub use mapper::*;
 
+mod notification;
+pub use notification::*;
+
 mod factory;
 pub use factory::*;
 

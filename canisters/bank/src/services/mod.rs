@@ -3,6 +3,9 @@
 mod account;
 pub use account::*;
 
+mod notification;
+pub use notification::*;
+
 mod transfer;
 pub use transfer::*;
 

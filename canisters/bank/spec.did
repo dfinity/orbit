@@ -12,8 +12,108 @@ type NetworkId = text;
 type TransferId = text;
 // A proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type ProposalId = text;
+// The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type NotificationId = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
+
+// Defines the various states that a notification can be in.
+type NotificationStatus = variant {
+  // The notification has been sent.
+  Sent;
+  // The notification has been read by the user.
+  Read;
+};
+
+// Representsd the different types of notifications within the system.
+type NotificationType = variant {
+  // Notification for system-wide messages.
+  // This can be used for announcements, scheduled maintenance reminders, or other important system messages.
+  SystemMessage;
+  // Notification for the creation of a new proposal.
+  // This should be used to alert users when a new proposal that requires their attention has been created.
+  ProposalCreated : record {
+    // The proposal id.
+    proposal_id : ProposalId;
+  };
+  // Notification for the creation of a new transfer proposal.
+  // This should be used to alert users when a new transfer proposal that requires their attention has been created.
+  TransferProposalCreated : record {
+    // The proposal id.
+    proposal_id : ProposalId;
+    transfer_id : TransferId;
+    account_id : AccountId;
+  };
+};
+
+type NotificationTypeInput = variant {
+  SystemMessage;
+  ProposalCreated;
+  TransferProposalCreated;
+};
+
+// A record type that can be used to represent a notification.
+type Notification = record {
+  // The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : NotificationId;
+  // The type of the notification.
+  notification_type : NotificationType;
+  // The notification status.
+  status : NotificationStatus;
+  // The user that the notification is for.
+  target_user_id : UserId;
+  // The notification title.
+  title : record {
+    // The notification title in the default locale.
+    body : text;
+    // The locale key that can be used to retrieve the title in the user locale.
+    locale_key : text;
+  };
+  // The notification message.
+  message : record {
+    // The notification message in the default locale.
+    body : text;
+    // The locale key that can be used to retrieve the message in the user locale.
+    locale_key : text;
+  };
+  // The time at which the notification was created.
+  created_at : TimestampRFC3339;
+};
+
+// The input type for getting the list of notifications associated with the caller.
+type ListNotificationsInput = record {
+  // Show only notifications with the given status.
+  status : opt NotificationStatus;
+  // The type of the notification (e.g. "system-message").
+  notification_type : opt NotificationTypeInput;
+  // From which created time to retrieve the notifications.
+  from_dt : opt TimestampRFC3339;
+  // Until which created time to retrieve the notifications.
+  to_dt : opt TimestampRFC3339;
+};
+
+// The result type for getting the list of notifications.
+type ListNotificationsResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of notifications ordered by creation time (newest first).
+    notifications : vec Notification;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+type MarkNotificationsReadInput = record {
+  // The notifications to mark as read.
+  notification_ids : vec NotificationId;
+  // If true, all notifications will be marked as read.
+  read : bool;
+};
+
+type MarkNotificationReadResult = variant {
+  Ok;
+  Err : Error;
+};
 
 // The status of a proposal.
 type ProposalStatus = variant { Pending; Adopted; Rejected };
@@ -29,8 +129,6 @@ type ProposalVote = record {
   status : ProposalVoteStatus;
   // Optional reason for the vote status.
   status_reason : opt text;
-  // The use can mark the vote as read or not to keep track of the decisions in a simpler manner.
-  read : bool;
   // The time at which the vote was added.
   decided_at : opt TimestampRFC3339;
 };
@@ -77,8 +175,6 @@ type ListProposalsInput = record {
   status : opt ProposalStatus;
   // The type of the proposal (e.g. "transfer").
   operation_type : opt ProposalOperationType;
-  // Wether the proposal has been marked as read or not by the user.
-  read : opt bool;
   // From which created time to retrieve the proposals.
   from_dt : opt TimestampRFC3339;
   // Until which created time to retrieve the proposals.
@@ -104,8 +200,6 @@ type ListAccountProposalsInput = record {
   status : opt ProposalStatus;
   // The type of the proposal (e.g. "transfer").
   operation_type : opt ProposalOperationType;
-  // Wether the proposal has been read or not.
-  read : opt bool;
   // From which created time to retrieve them.
   from_dt : opt TimestampRFC3339;
   // Until which created time to retrieve them.
@@ -148,8 +242,6 @@ type VoteOnProposalInput = record {
   approve : opt bool;
   // The reason for the approval or rejection.
   reason : opt text;
-  // Set the proposal as read or not.
-  read : opt bool;
 };
 
 // Result type for voting on a proposal.
@@ -700,6 +792,14 @@ service : (opt BankInit) -> {
   //
   // Required permission: "read:features"
   features : () -> (GetFeaturesResult) query;
+  // Get the list of notifications associated with the caller.
+  //
+  // Required permission: "read:notification"
+  list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
+  // Mark the notifications as read.
+  //
+  // Required permission: "write:notification"
+  mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
   // Create a new account.
   //
   // Required permission: "write:account"
