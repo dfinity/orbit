@@ -1,6 +1,6 @@
 <template>
   <div class="proposal-item__code__title">
-    {{ $t(`banks.proposals.approve_transfer.title`) }}
+    {{ $t(`banks.proposals.transfer.title`) }}
     <span v-if="account && transfer">
       <small>| {{ account.symbol }}: {{ formatBalance(transfer.amount, account.decimals) }}</small>
     </span>

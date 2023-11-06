@@ -42,9 +42,9 @@
     "load_failed": "Your user information failed to load, please try again."
   },
   "banks": {
-    "operation_failed_to_save": "Operation failed to save.",
+    "proposal_failed_to_save": "Proposal failed to save.",
     "no_accounts": "No account available.",
-    "pending_operations": "Pending operations",
+    "pending_proposals": "Pending proposals",
     "user_copied_to_clipboard": "Bank user copied.",
     "account_address_copied_to_clipboard": "Account address copied.",
     "load_error": "Failed to load banks information, please try again.",
@@ -65,21 +65,21 @@
       "VariableApprovalThreshold": "Percentage based approval",
       "FixedApprovalThreshold": "Exact number of approvals"
     },
-    "operations": {
-      "approve_transfer": {
+    "proposals": {
+      "transfer": {
         "title": "Approve transfer"
       }
     },
     "no_receivables_found_search": "No receivables found for the search criteria.",
     "no_transfers_found_search": "No transfers found for the search criteria.",
-    "no_operations_found_search": "No operations found for the search criteria."
+    "no_proposals_found_search": "No proposals found for the search criteria."
   },
   "terms": {
     "receivables": "Receivables",
     "bank": "Bank",
     "all_done": "All done",
     "approve": "Approve",
-    "operations": "Operations",
+    "proposals": "Proposals",
     "approved": "Approved",
     "abstained": "Abstained",
     "reject": "Reject",

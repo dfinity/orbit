@@ -42,9 +42,9 @@
     "load_failed": "Falha ao procurar as informaçōes da sua conta, por favor, tente novament."
   },
   "banks": {
-    "operation_failed_to_save": "Erro ao gravar a operaração.",
+    "proposal_failed_to_save": "Erro ao gravar a proposta.",
     "no_accounts": "Nenhuma conta disponível.",
-    "pending_operations": "Operaraçōes pendentes",
+    "pending_proposals": "Propostas pendentes",
     "user_copied_to_clipboard": "Id de utilizador copiado.",
     "account_address_copied_to_clipboard": "Endereço da conta copiado.",
     "load_error": "Erro ao carregar as informaçōes dos bancos, por favor, tente novamente.",
@@ -65,14 +65,14 @@
       "VariableApprovalThreshold": "Aprovação por porcentagem",
       "FixedApprovalThreshold": "Aprovação por votos fixos"
     },
-    "operations": {
-      "approve_transfer": {
+    "proposals": {
+      "transfer": {
         "title": "Approvar transferência"
       }
     },
     "no_receivables_found_search": "Nenhuma transferência recebida encontrada para a pesquisa.",
     "no_transfers_found_search": "Nenhuma transferência encontrada para a pesquisa.",
-    "no_operations_found_search": "Nenhuma operaração encontrada para a pesquisa."
+    "no_proposals_found_search": "Nenhuma proposta encontrada para a pesquisa."
   },
   "terms": {
     "receivables": "Recebimentos",
@@ -80,7 +80,7 @@
     "all_done": "Tudo pronto",
     "destination_address": "Endereço de destino",
     "search": "Procurar",
-    "operations": "Operaraçōes",
+    "proposals": "Propostas",
     "approve": "Aprovar",
     "abstained": "Abstido",
     "approved": "Aprovado",
