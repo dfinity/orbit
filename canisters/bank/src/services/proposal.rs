@@ -136,7 +136,7 @@ impl ProposalService {
 
         proposal.post_process()?;
 
-        Ok(self.get_proposal(proposal_id.as_bytes())?)
+        self.get_proposal(proposal_id.as_bytes())
     }
 
     fn assert_proposal_access(&self, proposal: &Proposal) -> ServiceResult<()> {
@@ -162,17 +162,18 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            proposal_test_utils::mock_proposal, transfer_test_utils::mock_transfer,
-            user_test_utils::mock_user, ProposalOperation, ProposalVote, ProposalVoteStatus,
-            TransferOperationContext, User,
+            account_test_utils::mock_account, proposal_test_utils::mock_proposal,
+            transfer_test_utils::mock_transfer, user_test_utils::mock_user, ProposalOperation,
+            ProposalVote, ProposalVoteStatus, TransferOperationContext, User,
         },
-        repositories::{TransferRepository, UserRepository},
+        repositories::{AccountRepository, TransferRepository, UserRepository},
     };
     use candid::Principal;
 
     struct TestContext {
         repository: ProposalRepository,
         transfer_repository: TransferRepository,
+        account_repository: AccountRepository,
         service: ProposalService,
         caller_user: User,
     }
@@ -189,6 +190,7 @@ mod tests {
         TestContext {
             repository: ProposalRepository::default(),
             transfer_repository: TransferRepository::default(),
+            account_repository: AccountRepository::default(),
             service: ProposalService::with_call_context(call_context),
             caller_user: user,
         }
@@ -226,8 +228,12 @@ mod tests {
     async fn reject_proposal_happy_path() {
         let ctx = setup();
         let transfer_id = Uuid::new_v4();
+        let account_id = Uuid::new_v4();
+        let mut account = mock_account();
+        account.id = *account_id.as_bytes();
         let mut transfer = mock_transfer();
         transfer.id = *transfer_id.as_bytes();
+        transfer.from_account = *account_id.as_bytes();
         let mut proposal = mock_proposal();
         proposal.proposed_by = None;
         proposal.votes = vec![ProposalVote {
@@ -242,6 +248,8 @@ mod tests {
             account_id: [0; 16],
         });
 
+        ctx.account_repository
+            .insert(account.to_key(), account.clone());
         ctx.transfer_repository
             .insert(transfer.to_key(), transfer.clone());
         ctx.repository
