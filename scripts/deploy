@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -eEuo pipefail
+
+echo "------------------------------------------------------"
+echo "Deploying Orbit to the IC"
+echo "------------------------------------------------------"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+dfx deploy --network ic bank
+dfx deploy --network ic control_panel --argument "(
+  opt record {
+    default_bank = variant {
+      SpecifiedBankCanister = principal \"$(dfx canister id bank --network ic)\"
+    };
+  })
+"
+DFX_NETWORK=ic NODE_ENV=production dfx deploy --network ic wallet_ui
+
+echo "------------------------------------------------------"
+echo "Finished deploying Orbit to the IC"
+echo "------------------------------------------------------"

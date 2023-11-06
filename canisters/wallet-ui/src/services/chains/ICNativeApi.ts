@@ -8,7 +8,7 @@ import { FetchTransfersInput, ChainApi, AccountIncomingTransfer } from '~/types/
 
 export class ICNativeApi implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;
-  static PAGE_SIZE = 100;
+  static PAGE_SIZE = 10;
 
   constructor(private readonly account: Account) {
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {

@@ -67,3 +67,4 @@ out
 dist
 coverage
 .dfx
+canister_ids.json
