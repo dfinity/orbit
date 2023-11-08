@@ -110,7 +110,7 @@ lazy_static! {
     };
 }
 
-#[update(name = "queueUpgrade")]
+#[update]
 async fn queue_upgrade(params: UpgradeParams) -> QueueUpgradeResponse {
     match QUEUER.queue(params).await {
         Ok(()) => QueueUpgradeResponse::Ok,

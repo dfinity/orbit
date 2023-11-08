@@ -1,5 +1,5 @@
 type InitArg = record {
-  targetCanister: principal;
+  target_canister: principal;
 };
 
 type UpgradeParams = record {
@@ -20,5 +20,5 @@ type QueueUpgradeResponse = variant {
 };
 
 service: (InitArg) -> {
-  "queueUpgrade": (UpgradeParams) -> (QueueUpgradeResponse);
+  "queue_upgrade": (UpgradeParams) -> (QueueUpgradeResponse);
 }

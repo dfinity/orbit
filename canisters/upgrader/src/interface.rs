@@ -23,7 +23,6 @@ impl Storable for UpgradeParams {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct InitArg {
-    #[serde(rename = "targetCanister")]
     pub target_canister: Principal,
 }
 
