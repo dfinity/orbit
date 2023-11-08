@@ -1,5 +1,7 @@
 use std::{cell::RefCell, thread::LocalKey, time::Duration};
 
+use candid::{CandidType, Deserialize, Principal};
+use ic_canister_macros::stable_object;
 use ic_cdk::{init, post_upgrade, update};
 use ic_cdk_timers::set_timer_interval;
 use ic_stable_structures::{
@@ -35,8 +37,12 @@ thread_local! {
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 }
 
+#[stable_object]
+#[derive(CandidType, Deserialize)]
+pub struct StorablePrincipal(Principal);
+
 thread_local! {
-    static TARGET_CANISTER_ID: RefCell<StableValue<String>> = RefCell::new(
+    static TARGET_CANISTER_ID: RefCell<StableValue<StorablePrincipal>> = RefCell::new(
         StableValue::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_TARGET_CANISTER_ID))),
         )
@@ -53,7 +59,7 @@ pub struct VerifyChecksum<T, H>(T, H);
 
 pub struct WithLogs<T>(T, String);
 
-pub struct CheckController<T>(T, LocalRef<StableValue<String>>);
+pub struct CheckController<T>(T, LocalRef<StableValue<StorablePrincipal>>);
 
 fn init_timers_fn() {
     set_timer_interval(10 * SECOND, || {
@@ -69,7 +75,7 @@ fn init_timers_fn() {
 fn init_fn(InitArg { target_canister }: InitArg) {
     TARGET_CANISTER_ID.with(|id| {
         let mut id = id.borrow_mut();
-        id.insert((), target_canister.to_string());
+        id.insert((), StorablePrincipal(target_canister));
     });
 
     init_timers_fn();

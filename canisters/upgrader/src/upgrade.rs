@@ -1,13 +1,12 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
-use candid::Principal;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
 
 use crate::{
-    hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue, VerifyChecksum,
-    WithLogs,
+    hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue,
+    StorablePrincipal, VerifyChecksum, WithLogs,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -27,11 +26,11 @@ pub trait Upgrade: Sync + Send {
 
 #[derive(Clone)]
 pub struct Upgrader {
-    target: LocalRef<StableValue<String>>,
+    target: LocalRef<StableValue<StorablePrincipal>>,
 }
 
 impl Upgrader {
-    pub fn new(target: LocalRef<StableValue<String>>) -> Self {
+    pub fn new(target: LocalRef<StableValue<StorablePrincipal>>) -> Self {
         Self { target }
     }
 }
@@ -39,17 +38,13 @@ impl Upgrader {
 #[async_trait]
 impl Upgrade for Upgrader {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self.target.with(|id| {
-            id.borrow()
-                .get(&())
-                .map(Principal::from_text)
-                .context("canister id not set")?
-                .context("failed to parse principal")
-        })?;
+        let id = self
+            .target
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
         mgmt::install_code(InstallCodeArgument {
             mode: CanisterInstallMode::Upgrade,
-            canister_id: id,
+            canister_id: id.0,
             wasm_module: ps.module,
             arg: vec![],
         })
@@ -80,16 +75,12 @@ impl<T: Upgrade> Upgrade for WithCleanup<T> {
 #[async_trait]
 impl<T: Upgrade> Upgrade for CheckController<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self.1.with(|id| {
-            id.borrow()
-                .get(&())
-                .map(Principal::from_text)
-                .context("canister id not set")?
-                .context("failed to parse principal")
-        })?;
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
         let (resp,) = mgmt::canister_info(CanisterInfoRequest {
-            canister_id: id,
+            canister_id: id.0,
             num_requested_changes: None,
         })
         .await

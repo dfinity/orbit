@@ -1,11 +1,10 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
-use candid::Principal;
 use ic_cdk::api::management_canister::main::{self as mgmt, CanisterInfoRequest};
 
 use crate::{
-    hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue, VerifyChecksum,
-    WithLogs,
+    hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue,
+    StorablePrincipal, VerifyChecksum, WithLogs,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -50,16 +49,12 @@ impl Queue for Queuer {
 #[async_trait]
 impl<T: Queue> Queue for CheckController<T> {
     async fn queue(&self, ps: UpgradeParams) -> Result<(), QueueError> {
-        let id = self.1.with(|id| {
-            id.borrow()
-                .get(&())
-                .map(Principal::from_text)
-                .context("canister id not set")?
-                .context("failed to parse principal")
-        })?;
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
         let (resp,) = mgmt::canister_info(CanisterInfoRequest {
-            canister_id: id,
+            canister_id: id.0,
             num_requested_changes: None,
         })
         .await
@@ -84,20 +79,16 @@ impl<T: Queue, H: Hash> Queue for VerifyChecksum<T, H> {
     }
 }
 
-pub struct WithAuthorization<T>(pub T, pub LocalRef<StableValue<String>>);
+pub struct WithAuthorization<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
 
 #[async_trait]
 impl<T: Queue> Queue for WithAuthorization<T> {
     async fn queue(&self, ps: UpgradeParams) -> Result<(), QueueError> {
-        let id = self.1.with(|id| {
-            id.borrow()
-                .get(&())
-                .map(Principal::from_text)
-                .context("canister id not set")?
-                .context("failed to parse principal")
-        })?;
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
-        if !ic_cdk::caller().eq(&id) {
+        if !ic_cdk::caller().eq(&id.0) {
             return Err(QueueError::Unauthorized);
         }
 
