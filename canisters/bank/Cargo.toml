@@ -13,26 +13,26 @@ repository = "https://github.com/dfinity/orbit-wallet"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = { version = "0.9.10", features = ["parser"] }
-ic-cdk = "0.11"
-ic-cdk-macros = "0.8"
-ic-ledger-types = "0.8"
-ic-stable-structures = "0.6.0"
-ic-cdk-timers = "0.5"
-serde = "1.0.188"
-thiserror = "1.0.48"
-uuid = { version = "1.4.1", features = ["serde", "v4"] }
-ic-canister-core = { path = "../../libs/ic-canister-core", version = "0.1.0" }
-ic-canister-macros = { path = "../../libs/ic-canister-macros", version = "0.1.0" }
-serde_bytes = "0.11"
-sha2 = "0.10"
-hex = "0.4"
-futures = "0.3"
-async-trait = "0.1"
-num-bigint = "0.4"
-num-traits = "0.2"
-byteorder = "1.5"
+async-trait = { workspace = true }
+byteorder = { workspace = true }
+candid = { workspace = true, features = ["parser"] }
+futures = { workspace = true }
+hex = { workspace = true }
+ic-canister-core = { workspace = true }
+ic-canister-macros = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
+ic-cdk-timers = { workspace = true }
+num-bigint = { workspace = true }
+num-traits = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true, features = ["serde", "v4"] }
 
 [dev-dependencies]
-rstest = "0.18.2"
-tokio = { version = "1.33.0", features = ["full"] }
+rstest = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
