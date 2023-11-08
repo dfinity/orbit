@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1.0.75"
 async-trait = "0.1.74"
-candid = "0.9.9"
+candid = { version = "0.9.9", features = ["parser"] }
 hex = "0.4.3"
 ic-canister-macros = { path = "../../libs/ic-canister-macros", version = "0.1.0" }
 ic-cdk = "0.11.3"
