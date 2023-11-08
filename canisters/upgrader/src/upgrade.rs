@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
+use mockall::automock;
 
 use crate::{
     hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue,
@@ -19,6 +20,7 @@ pub enum UpgradeError {
     UnexpectedError(#[from] anyhow::Error),
 }
 
+#[automock]
 #[async_trait]
 pub trait Upgrade: Sync + Send {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError>;
@@ -127,5 +129,101 @@ impl<T: Upgrade> Upgrade for WithLogs<T> {
         );
 
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Error;
+    use mockall::predicate;
+
+    use super::*;
+    use crate::{hash::MockHash, QUEUED_UPGRADE_PARAMS};
+
+    #[tokio::test]
+    async fn verify_checksum_invalid() -> Result<(), Error> {
+        // Hash
+        let mut h = MockHash::new();
+        h.expect_hash()
+            .times(1)
+            .with(predicate::eq("module".as_bytes().to_vec()))
+            .return_const("other".as_bytes().to_vec());
+
+        // Upgrade
+        let mut u = MockUpgrade::new();
+        u.expect_upgrade().times(0);
+
+        let out = VerifyChecksum(u, h)
+            .upgrade(UpgradeParams {
+                module: "module".as_bytes().to_vec(),
+                checksum: "hash".as_bytes().to_vec(),
+            })
+            .await;
+
+        match out {
+            Err(UpgradeError::ChecksumMismatch) => {}
+            _ => return Err(anyhow!("expected a checksum mismatch but none occurred")),
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn verify_checksum_valid() -> Result<(), Error> {
+        // Hash
+        let mut h = MockHash::new();
+        h.expect_hash()
+            .times(1)
+            .with(predicate::eq("module".as_bytes().to_vec()))
+            .return_const("hash".as_bytes().to_vec());
+
+        // Upgrade
+        let mut u = MockUpgrade::new();
+        u.expect_upgrade()
+            .times(1)
+            .with(predicate::eq(UpgradeParams {
+                module: "module".as_bytes().to_vec(),
+                checksum: "hash".as_bytes().to_vec(),
+            }))
+            .returning(|_| Ok(()));
+
+        let out = VerifyChecksum(u, h)
+            .upgrade(UpgradeParams {
+                module: "module".as_bytes().to_vec(),
+                checksum: "hash".as_bytes().to_vec(),
+            })
+            .await;
+
+        match out {
+            Ok(()) => {}
+            _ => return Err(anyhow!("expected checksum verification to succeed")),
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn with_cleanup() -> Result<(), Error> {
+        // Upgrade
+        let mut u = MockUpgrade::new();
+        u.expect_upgrade().times(1).returning(|_| Ok(()));
+
+        let ps = UpgradeParams {
+            module: "module".as_bytes().to_vec(),
+            checksum: "hash".as_bytes().to_vec(),
+        };
+
+        QUEUED_UPGRADE_PARAMS.with(|v| v.borrow_mut().insert((), ps.clone()));
+
+        WithCleanup(u, &QUEUED_UPGRADE_PARAMS)
+            .upgrade(ps)
+            .await
+            .context("failed to call upgrade")?;
+
+        if QUEUED_UPGRADE_PARAMS.with(|v| v.borrow().get(&()).is_some()) {
+            return Err(anyhow!("expected queued params to be cleaned up"));
+        }
+
+        Ok(())
     }
 }

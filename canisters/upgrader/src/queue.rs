@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{self as mgmt, CanisterInfoRequest};
+use mockall::automock;
 
 use crate::{
     hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue,
@@ -19,6 +20,7 @@ pub enum QueueError {
     UnexpectedError(#[from] anyhow::Error),
 }
 
+#[automock]
 #[async_trait]
 pub trait Queue: Sync + Send {
     async fn queue(&self, ps: UpgradeParams) -> Result<(), QueueError>;
@@ -133,5 +135,76 @@ impl<T: Queue> Queue for WithLogs<T> {
         );
 
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Error;
+    use mockall::predicate;
+
+    use super::*;
+    use crate::hash::MockHash;
+
+    #[tokio::test]
+    async fn verify_checksum_invalid() -> Result<(), Error> {
+        // Hash
+        let mut h = MockHash::new();
+        h.expect_hash()
+            .times(1)
+            .with(predicate::eq("module".as_bytes().to_vec()))
+            .return_const("other".as_bytes().to_vec());
+
+        // Queue
+        let mut q = MockQueue::new();
+        q.expect_queue().times(0);
+
+        let out = VerifyChecksum(q, h)
+            .queue(UpgradeParams {
+                module: "module".as_bytes().to_vec(),
+                checksum: "hash".as_bytes().to_vec(),
+            })
+            .await;
+
+        match out {
+            Err(QueueError::ChecksumMismatch) => {}
+            _ => return Err(anyhow!("expected a checksum mismatch but none occurred")),
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn verify_checksum_valid() -> Result<(), Error> {
+        // Hash
+        let mut h = MockHash::new();
+        h.expect_hash()
+            .times(1)
+            .with(predicate::eq("module".as_bytes().to_vec()))
+            .return_const("hash".as_bytes().to_vec());
+
+        // Queue
+        let mut q = MockQueue::new();
+        q.expect_queue()
+            .times(1)
+            .with(predicate::eq(UpgradeParams {
+                module: "module".as_bytes().to_vec(),
+                checksum: "hash".as_bytes().to_vec(),
+            }))
+            .returning(|_| Ok(()));
+
+        let out = VerifyChecksum(q, h)
+            .queue(UpgradeParams {
+                module: "module".as_bytes().to_vec(),
+                checksum: "hash".as_bytes().to_vec(),
+            })
+            .await;
+
+        match out {
+            Ok(()) => {}
+            _ => return Err(anyhow!("expected checksum verification to succeed")),
+        }
+
+        Ok(())
     }
 }

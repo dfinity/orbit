@@ -2,7 +2,7 @@ use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_macros::stable_object;
 
 #[stable_object]
-#[derive(Clone, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct UpgradeParams {
     pub module: Vec<u8>,
     pub checksum: Vec<u8>,
