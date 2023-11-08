@@ -13,6 +13,7 @@ repository = "https://github.com/dfinity/orbit-wallet"
 crate-type = ["cdylib"]
 
 [dependencies]
+async-trait = { workspace = true }
 candid = { workspace = true, features = ["parser"] }
 getrandom = { workspace = true, features = ["custom"] }
 ic-canister-core = { workspace = true }
@@ -21,6 +22,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+lazy_static = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }

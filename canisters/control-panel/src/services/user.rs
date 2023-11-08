@@ -1,5 +1,5 @@
 use crate::{
-    core::{canister_config, generate_uuid_v4, CallContext, WithCallContext},
+    core::{canister_config, generate_uuid_v4, CallContext},
     errors::UserError,
     mappers::UserMapper,
     models::{User, UserBank, UserId},
@@ -14,24 +14,20 @@ use ic_canister_core::{
 };
 use uuid::Uuid;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct UserService {
-    call_context: CallContext,
     user_repository: UserRepository,
 }
 
-impl WithCallContext for UserService {
-    fn with_call_context(call_context: CallContext) -> Self {
+impl UserService {
+    pub fn new() -> Self {
         Self {
-            call_context: call_context.clone(),
             ..Default::default()
         }
     }
-}
 
-impl UserService {
     /// Returns the user associated with the given user id.
-    pub fn get_user(&self, user_id: &UserId) -> ServiceResult<User> {
+    pub fn get_user(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<User> {
         let user = self
             .user_repository
             .get(&User::key(user_id))
@@ -41,26 +37,30 @@ impl UserService {
                     .to_string(),
             })?;
 
-        self.assert_user_access(&user)?;
+        self.assert_user_access(&user, ctx)?;
 
         Ok(user)
     }
 
     /// Returns the user associated with the given user identity.
-    pub fn get_user_by_identity(&self, identity: &Principal) -> ServiceResult<User> {
+    pub fn get_user_by_identity(
+        &self,
+        identity: &Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
         let user = self.user_repository.find_user_by_identity(identity).ok_or(
             UserError::AssociatedUserIdentityNotFound {
                 identity: identity.to_text(),
             },
         )?;
 
-        self.assert_user_access(&user)?;
+        self.assert_user_access(&user, ctx)?;
 
         Ok(user)
     }
 
-    pub fn get_main_bank(&self) -> ServiceResult<Option<UserBank>> {
-        let user = self.get_user_by_identity(&self.call_context.caller())?;
+    pub fn get_main_bank(&self, ctx: &CallContext) -> ServiceResult<Option<UserBank>> {
+        let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
         match user.main_bank {
             Some(main_bank) => {
@@ -80,10 +80,11 @@ impl UserService {
     pub async fn associate_identity_with_user(
         &self,
         user_id: UserId,
+        ctx: &CallContext,
     ) -> ServiceResult<User, ApiError> {
-        let caller = self.call_context.caller();
+        let caller = ctx.caller();
         self.assert_identity_is_unregistered(&caller)?;
-        let mut user = self.get_user(&user_id)?;
+        let mut user = self.get_user(&user_id, ctx)?;
 
         let unconfirmed_identity = user
             .unconfirmed_identities
@@ -111,14 +112,18 @@ impl UserService {
     }
 
     /// Registers a new user for the caller identity.
-    pub async fn register_user(&self, input: RegisterUserInput) -> ServiceResult<User, ApiError> {
-        self.assert_identity_is_unregistered(&self.call_context.caller())?;
+    pub async fn register_user(
+        &self,
+        input: RegisterUserInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<User, ApiError> {
+        self.assert_identity_is_unregistered(&ctx.caller())?;
 
         let user_id = generate_uuid_v4().await;
         let user = UserMapper::from_register_input(
             input.clone(),
             *user_id.as_bytes(),
-            self.call_context.caller(),
+            ctx.caller(),
             canister_config().shared_bank_canister,
         );
 
@@ -128,20 +133,24 @@ impl UserService {
         Ok(user)
     }
 
-    pub async fn remove_user(&self, user_id: &UserId) -> ServiceResult<User> {
-        let user = self.get_user(user_id)?;
+    pub async fn remove_user(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<User> {
+        let user = self.get_user(user_id, ctx)?;
 
-        self.assert_user_access(&user)?;
+        self.assert_user_access(&user, ctx)?;
 
         self.user_repository.remove(&user.to_key());
 
         Ok(user)
     }
 
-    pub async fn manage_user(&self, input: ManageUserInput) -> ServiceResult<User> {
-        let mut user = self.get_user_by_identity(&self.call_context.caller())?;
+    pub async fn manage_user(
+        &self,
+        input: ManageUserInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let mut user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
-        user.update_with(input, &self.call_context.caller())?;
+        user.update_with(input, &ctx.caller())?;
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.clone());
@@ -152,16 +161,16 @@ impl UserService {
     /// Checks if the caller has access to the given user.
     ///
     /// Admins have access to all users.
-    fn assert_user_access(&self, user: &User) -> ServiceResult<()> {
+    fn assert_user_access(&self, user: &User, ctx: &CallContext) -> ServiceResult<()> {
         let is_user_owner = user
             .identities
             .iter()
-            .any(|identity| identity.identity == self.call_context.caller())
+            .any(|identity| identity.identity == ctx.caller())
             || user
                 .unconfirmed_identities
                 .iter()
-                .any(|identity| identity.identity == self.call_context.caller());
-        if !is_user_owner && !self.call_context.is_admin() {
+                .any(|identity| identity.identity == ctx.caller());
+        if !is_user_owner && !ctx.is_admin() {
             Err(UserError::Forbidden {
                 user: Uuid::from_bytes(user.id).hyphenated().to_string(),
             })?
@@ -193,10 +202,11 @@ mod tests {
 
     #[test]
     fn get_user_returns_not_found_err() {
-        let service = UserService::default();
+        let ctx = CallContext::default();
+        let service = UserService::new();
         let user_id = *Uuid::new_v4().as_bytes();
 
-        let result = service.get_user(&user_id);
+        let result = service.get_user(&user_id, &ctx);
 
         assert!(result.is_err());
         assert_eq!(
@@ -209,7 +219,8 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user() {
-        let service = UserService::default();
+        let ctx = CallContext::default();
+        let service = UserService::new();
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
             id: user_id,
@@ -226,7 +237,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_id);
+        let result = service.get_user(&user_id, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -234,7 +245,8 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user_by_identity() {
-        let service = UserService::default();
+        let ctx = CallContext::default();
+        let service = UserService::new();
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
             id: user_id,
@@ -251,7 +263,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user_by_identity(&Principal::anonymous());
+        let result = service.get_user_by_identity(&Principal::anonymous(), &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -261,7 +273,8 @@ mod tests {
     async fn success_register_new_user() {
         crate::core::test_utils::init_canister_config();
 
-        let service = UserService::default();
+        let ctx = CallContext::default();
+        let service = UserService::new();
         let input = RegisterUserInput {
             name: Some("User".to_string()),
             bank: RegisterUserBankInput::PrivateBank {
@@ -270,7 +283,7 @@ mod tests {
             },
         };
 
-        let result = service.register_user(input.clone()).await;
+        let result = service.register_user(input.clone(), &ctx).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap().name, input.name);
@@ -280,7 +293,8 @@ mod tests {
     async fn failed_registering_new_user_with_same_identity() {
         crate::core::test_utils::init_canister_config();
 
-        let service = UserService::default();
+        let ctx = CallContext::default();
+        let service = UserService::new();
         let input = RegisterUserInput {
             name: Some("User".to_string()),
             bank: RegisterUserBankInput::PrivateBank {
@@ -296,8 +310,10 @@ mod tests {
             },
         };
 
-        let result = service.register_user(input.clone()).await;
-        let duplicated_user_result = service.register_user(duplicated_user_input.clone()).await;
+        let result = service.register_user(input.clone(), &ctx).await;
+        let duplicated_user_result = service
+            .register_user(duplicated_user_input.clone(), &ctx)
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap().name, input.name);
@@ -307,13 +323,8 @@ mod tests {
     #[tokio::test]
     async fn correctly_associates_identity_with_user() {
         crate::core::test_utils::init_canister_config();
-        let service = UserService {
-            call_context: CallContext::new(
-                Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            ),
-            ..Default::default()
-        };
-
+        let ctx = CallContext::new(Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap());
+        let service = UserService::new();
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
             id: user_id,
@@ -330,7 +341,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.associate_identity_with_user(user_id).await;
+        let result = service.associate_identity_with_user(user_id, &ctx).await;
 
         assert!(result.is_ok());
         let user = result.unwrap();
@@ -342,12 +353,8 @@ mod tests {
     #[tokio::test]
     async fn can_remove_user() {
         crate::core::test_utils::init_canister_config();
-        let service = UserService {
-            call_context: CallContext::new(
-                Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            ),
-            ..Default::default()
-        };
+        let ctx = CallContext::new(Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap());
+        let service = UserService::new();
 
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
@@ -365,7 +372,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.remove_user(&user_id).await;
+        let result = service.remove_user(&user_id, &ctx).await;
 
         assert!(result.is_ok());
         assert!(service.user_repository.get(&User::key(&user_id)).is_none());
