@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "canisters/bank",
   "canisters/control-panel",
+  "canisters/upgrader",
   "libs/ic-canister-core",
   "libs/ic-canister-macros",
 ]

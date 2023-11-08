@@ -1,0 +1,20 @@
+[package]
+name = "upgrader"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1.0.75"
+async-trait = "0.1.74"
+candid = "0.9.9"
+hex = "0.4.3"
+ic-cdk = "0.11.3"
+ic-cdk-timers = "0.5.1"
+ic-stable-structures = "0.6.0"
+lazy_static = "1.4.0"
+serde = { version = "1.0.190", features = ["derive"] }
+sha2 = "0.10.8"
+thiserror = "1.0.50"
