@@ -1,24 +1,11 @@
-use std::borrow::Cow;
-
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_stable_structures::{storable::Bound, Storable};
+use ic_canister_macros::stable_object;
 
+#[stable_object]
 #[derive(Clone, CandidType, Deserialize)]
 pub struct UpgradeParams {
     pub module: Vec<u8>,
     pub checksum: Vec<u8>,
-}
-
-impl Storable for UpgradeParams {
-    const BOUND: Bound = Bound::Unbounded;
-
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(&bytes, Self).unwrap()
-    }
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

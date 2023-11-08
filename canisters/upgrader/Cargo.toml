@@ -11,6 +11,7 @@ anyhow = "1.0.75"
 async-trait = "0.1.74"
 candid = "0.9.9"
 hex = "0.4.3"
+ic-canister-macros = { path = "../../libs/ic-canister-macros", version = "0.1.0" }
 ic-cdk = "0.11.3"
 ic-cdk-timers = "0.5.1"
 ic-stable-structures = "0.6.0"
