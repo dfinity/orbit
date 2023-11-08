@@ -1,0 +1,24 @@
+type InitArg = record {
+  target_canister: principal;
+};
+
+type UpgradeParams = record {
+  module: blob;
+  checksum: blob;
+};
+
+type QueueUpgradeError = variant {
+  ChecksumMismatch;
+  NotController;
+  Unauthorized;
+  UnexpectedError: text;
+};
+
+type QueueUpgradeResponse = variant {
+  Ok;
+  Err: QueueUpgradeError;
+};
+
+service: (InitArg) -> {
+  "queue_upgrade": (UpgradeParams) -> (QueueUpgradeResponse);
+}
