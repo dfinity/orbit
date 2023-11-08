@@ -7,19 +7,17 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-anyhow = "1.0.75"
-async-trait = "0.1.74"
-candid = { version = "0.9.9", features = ["parser"] }
-hex = "0.4.3"
-ic-canister-macros = { path = "../../libs/ic-canister-macros", version = "0.1.0" }
-ic-cdk = "0.11.3"
-ic-cdk-timers = "0.5.1"
-ic-stable-structures = "0.6.0"
-lazy_static = "1.4.0"
-mockall = "0.11.4"
-serde = { version = "1.0.190", features = ["derive"] }
-sha2 = "0.10.8"
-thiserror = "1.0.50"
-
-[dev-dependencies]
-tokio = { version = "1.33.0", features = ["full"] }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+candid = { workspace = true, features = ["parser"] }
+hex = { workspace = true }
+ic-canister-macros = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+lazy_static = { workspace = true }
+mockall = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
