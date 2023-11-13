@@ -67,6 +67,16 @@
                 : undefined
             "
           >
+            <VAlert
+              class="my-4 mx-4"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              title="Development Version 🚧"
+            >
+              This development version will be facing ongoing updates that may result in complete
+              loss of data and/or funds.
+            </VAlert>
             <slot name="main-body"></slot>
           </div>
         </slot>
