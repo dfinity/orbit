@@ -1,11 +1,11 @@
 //! Bank services.
 use crate::{
-    core::CallContext,
+    core::{ic_cdk::api::print, CallContext},
     services::UserService,
     transport::{GetMainBankResponse, ListBanksResponse, UserBankDTO},
 };
-use ic_canister_core::api::ApiResult;
-use ic_canister_macros::with_logs;
+use ic_canister_core::api::{ApiError, ApiResult};
+use ic_canister_macros::{with_logs, with_middleware};
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 
@@ -30,12 +30,32 @@ pub struct BankController {
     user_service: UserService,
 }
 
+pub struct MiddlewareContext {
+    pub ctx: CallContext,
+    
+}
+
+fn middleware_exec() -> Result<(), String> {
+    print(format!("######## Middleware executed! #########"));
+
+    Ok(())
+}
+
+fn middleware_after<T>(_result: &Result<T, ApiError>) -> Result<(), String>
+where
+    T: std::fmt::Debug,
+{
+    print(format!("######## Middleware executed! #########"));
+
+    Ok(())
+}
+
 impl BankController {
-    pub fn new(user_service: UserService) -> Self {
+    fn new(user_service: UserService) -> Self {
         Self { user_service }
     }
 
-    #[with_logs]
+    #[with_middleware(attach = "middleware_after", when = "after")]
     /// Returns list of banks associated with the user.
     async fn list_banks(&self) -> ApiResult<ListBanksResponse> {
         let ctx = CallContext::get();
@@ -48,7 +68,7 @@ impl BankController {
         })
     }
 
-    #[with_logs]
+    #[with_middleware(attach = "middleware_exec", when = "before")]
     /// Returns main bank associated with the user if any.
     async fn get_main_bank(&self) -> ApiResult<GetMainBankResponse> {
         let ctx = CallContext::get();

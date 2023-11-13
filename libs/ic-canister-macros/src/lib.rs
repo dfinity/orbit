@@ -81,3 +81,17 @@ pub fn with_logs(input_args: TokenStream, input: TokenStream) -> TokenStream {
         input,
     )
 }
+
+#[proc_macro_attribute]
+pub fn with_middleware(input_args: TokenStream, input: TokenStream) -> TokenStream {
+    utils::handle_macro_errors(
+        |input_args, input| {
+            let macro_impl = macros::with_middleware::WithMiddlewareMacro::new(input_args, input);
+
+            macro_impl.build()
+        },
+        macros::with_middleware::WithMiddlewareMacro::MACRO_NAME,
+        input_args,
+        input,
+    )
+}
