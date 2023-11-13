@@ -14,11 +14,11 @@ pub fn call_context() -> CallContext {
     CallContext::get()
 }
 
-pub fn log_call(function_name: &'static str, context: CallContext) {
+pub fn log_call(middleware: (&'static str, &Vec<&'static str>), context: CallContext) {
     ic_cdk::api::print(
         serde_json::to_string(&LogMessage {
-            function: function_name.to_string(),
-            message: "started execution".to_string(),
+            function: middleware.0.to_string(),
+            message: format!("started execution with args {:?}", middleware.1),
             timestamp: ic_cdk::api::time(),
             caller: context.caller().to_text(),
         })
@@ -26,13 +26,16 @@ pub fn log_call(function_name: &'static str, context: CallContext) {
     );
 }
 
-pub fn log_call_result<T>(function_name: &'static str, context: CallContext, result: &T)
-where
+pub fn log_call_result<T>(
+    middleware: (&'static str, &Vec<&'static str>),
+    context: CallContext,
+    result: &T,
+) where
     T: std::fmt::Debug,
 {
     ic_cdk::api::print(
         serde_json::to_string(&LogMessage {
-            function: function_name.to_string(),
+            function: middleware.0.to_string(),
             message: format!("completed execution with result {:?}", result),
             timestamp: ic_cdk::api::time(),
             caller: context.caller().to_text(),

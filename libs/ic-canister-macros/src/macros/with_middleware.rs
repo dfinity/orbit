@@ -14,7 +14,7 @@ struct MacroArguments {
     /// This is a function that returns a `Result<(), String>` and it can take as an argument the
     /// `context` if set and the result of the function when set to "after". The first argument is always
     /// the function name that it was attached to.
-    pub function: String,
+    pub middleware: String,
     /// When to call the middleware function, possible values are "before" and "after".
     ///
     /// Default value is "before".
@@ -23,6 +23,8 @@ struct MacroArguments {
     ///
     /// This is a function that creates a context to pass to the middleware function.
     pub context: Option<String>,
+    /// The arguments to pass to the middleware function.
+    pub middleware_args: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -50,6 +52,7 @@ impl WithMiddlewareMacro {
     const MACRO_ARG_KEY_GUARD: &str = "guard";
     const MACRO_ARG_KEY_WHEN: &str = "when";
     const MACRO_ARG_KEY_CONTEXT: &str = "context";
+    const MACRO_ARG_KEY_ARGS: &str = "args";
 
     fn expand_implementation(&self, args: &MacroArguments) -> Result<TokenStream, Error> {
         let parsed_input: syn::Item = parse2(self.input.clone().into())?;
@@ -62,7 +65,8 @@ impl WithMiddlewareMacro {
                 block,
             }) => {
                 let fn_name = &sig.ident;
-                let middleware_fn = syn::Ident::new(&args.function, Span::call_site());
+                let middleware_args = &args.middleware_args;
+                let middleware_fn = syn::Ident::new(&args.middleware, Span::call_site());
                 let mut use_before = false;
                 let mut use_after = false;
                 let mut with_context = false;
@@ -92,6 +96,10 @@ impl WithMiddlewareMacro {
                     syn::ReturnType::Type(_, ty) => quote! { #ty },
                 };
 
+                let middleware_args_expansion = quote! {
+                    let middleware_args = vec![ #( #middleware_args ),* ];
+                };
+
                 let context_expansion = match &args.context {
                     Some(context_fn_name) => {
                         with_context = true;
@@ -102,16 +110,22 @@ impl WithMiddlewareMacro {
                 };
 
                 let before_expansion = match (use_before, with_context) {
-                    (true, true) => quote! { #middleware_fn (stringify!(#fn_name), context); },
-                    (true, false) => quote! { #middleware_fn (stringify!(#fn_name)); },
+                    (true, true) => {
+                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context); }
+                    }
+                    (true, false) => {
+                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args)); }
+                    }
                     (_, _) => quote! {},
                 };
 
                 let after_expansion = match (use_after, with_context) {
                     (true, true) => {
-                        quote! { #middleware_fn (stringify!(#fn_name), context, &result); }
+                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context, &result); }
                     }
-                    (true, false) => quote! { #middleware_fn (stringify!(#fn_name), &result); },
+                    (true, false) => {
+                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), &result); }
+                    }
                     (_, _) => quote! {},
                 };
 
@@ -120,6 +134,7 @@ impl WithMiddlewareMacro {
                         // The context should be created before anything else as it can be used by to add additional
                         // information such as the execution time of the function.
                         #context_expansion
+                        #middleware_args_expansion
 
                         #before_expansion
 
@@ -151,6 +166,7 @@ impl WithMiddlewareMacro {
         let mut attach_fn: Option<String> = None;
         let mut attach_when: Option<String> = Some(String::from("before"));
         let mut attach_context: Option<String> = None;
+        let mut attach_args = Vec::new();
 
         for expr in args {
             let syn::ExprAssign {
@@ -190,6 +206,21 @@ impl WithMiddlewareMacro {
                             attach_context = Some(lit_str.value());
                         }
                     }
+
+                    Self::MACRO_ARG_KEY_ARGS => {
+                        if let syn::Expr::Array(array) = *right {
+                            for expr in array.elems {
+                                if let syn::Expr::Lit(syn::ExprLit {
+                                    lit: syn::Lit::Str(lit_str),
+                                    ..
+                                }) = expr
+                                {
+                                    attach_args.push(lit_str.value());
+                                }
+                            }
+                        }
+                    }
+
                     unknown_arg => {
                         return Err(Error::new(
                             expr_path.path.get_ident().unwrap().span(),
@@ -206,9 +237,10 @@ impl WithMiddlewareMacro {
 
         match (attach_fn, attach_when, attach_context) {
             (Some(attach_fn), Some(attach_when), ctx) => Ok(MacroArguments {
-                function: attach_fn,
+                middleware: attach_fn,
                 when: attach_when,
                 context: ctx,
+                middleware_args: attach_args,
             }),
             (None, _, _) => Err(Error::new(
                 Span::call_site(),

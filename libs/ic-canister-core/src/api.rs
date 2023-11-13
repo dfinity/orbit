@@ -89,8 +89,3 @@ pub type ApiResult<Data = ()> = Result<Data, ApiError>;
 
 pub type ServiceResult<CompletedOperation = (), FailedOperation = ApiError> =
     Result<CompletedOperation, FailedOperation>;
-
-/// Controller traits.
-pub struct WithLogs<T>(pub T);
-pub struct WithAuthorization<T>(pub T);
-pub struct WithMetrics<T>(pub T);
