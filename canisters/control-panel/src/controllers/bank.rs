@@ -1,11 +1,12 @@
 //! Bank services.
+use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::{
-    core::{ic_cdk::api::print, CallContext},
+    core::CallContext,
     services::UserService,
     transport::{GetMainBankResponse, ListBanksResponse, UserBankDTO},
 };
-use ic_canister_core::api::{ApiError, ApiResult};
-use ic_canister_macros::{with_logs, with_middleware};
+use ic_canister_core::api::ApiResult;
+use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 
@@ -30,33 +31,14 @@ pub struct BankController {
     user_service: UserService,
 }
 
-pub struct MiddlewareContext {
-    pub ctx: CallContext,
-    
-}
-
-fn middleware_exec() -> Result<(), String> {
-    print(format!("######## Middleware executed! #########"));
-
-    Ok(())
-}
-
-fn middleware_after<T>(_result: &Result<T, ApiError>) -> Result<(), String>
-where
-    T: std::fmt::Debug,
-{
-    print(format!("######## Middleware executed! #########"));
-
-    Ok(())
-}
-
 impl BankController {
     fn new(user_service: UserService) -> Self {
         Self { user_service }
     }
 
-    #[with_middleware(attach = "middleware_after", when = "after")]
     /// Returns list of banks associated with the user.
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn list_banks(&self) -> ApiResult<ListBanksResponse> {
         let ctx = CallContext::get();
         let user = self
@@ -67,9 +49,9 @@ impl BankController {
             banks: user.banks.into_iter().map(UserBankDTO::from).collect(),
         })
     }
-
-    #[with_middleware(attach = "middleware_exec", when = "before")]
     /// Returns main bank associated with the user if any.
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn get_main_bank(&self) -> ApiResult<GetMainBankResponse> {
         let ctx = CallContext::get();
         let main_bank = self.user_service.get_main_bank(&ctx)?;

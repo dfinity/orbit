@@ -1,4 +1,5 @@
 //! User services.
+use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::{
     core::CallContext,
     mappers::HelperMapper,
@@ -10,7 +11,7 @@ use crate::{
     },
 };
 use ic_canister_core::api::ApiResult;
-use ic_canister_macros::with_logs;
+use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 
@@ -58,7 +59,8 @@ impl UserController {
         Self { user_service }
     }
 
-    #[with_logs]
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn get_user(&self) -> ApiResult<GetUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self
@@ -70,7 +72,8 @@ impl UserController {
         })
     }
 
-    #[with_logs]
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn register_user(&self, input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.register_user(input, &ctx).await?;
@@ -80,7 +83,8 @@ impl UserController {
         })
     }
 
-    #[with_logs]
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn manage_user(&self, input: ManageUserInput) -> ApiResult<ManageUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.manage_user(input, &ctx).await?;
@@ -90,7 +94,8 @@ impl UserController {
         })
     }
 
-    #[with_logs]
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn delete_user(&self) -> ApiResult<DeleteUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self
@@ -104,7 +109,8 @@ impl UserController {
         })
     }
 
-    #[with_logs]
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn associate_identity_with_user(
         &self,
         input: AssociateIdentityWithUserInput,

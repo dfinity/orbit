@@ -8,12 +8,10 @@
 
 extern crate proc_macro;
 
-mod constants;
-mod interface;
 mod macros;
 mod utils;
 
-use interface::MacroDefinition;
+use crate::macros::MacroDefinition;
 use proc_macro::TokenStream;
 
 #[proc_macro_attribute]
@@ -26,62 +24,66 @@ pub fn stable_object(metadata: TokenStream, input: TokenStream) -> TokenStream {
     )
 }
 
-/// A procedural macro to automatically log the start and end of async functions.
-/// This macro is designed to be used on async functions to provide consistent logging
-/// for function entry and exit points, including the result of the function.
+/// The `with_middleware` procedural macro is designed to inject middleware functionality
+/// into Rust functions. It enables pre- or post-execution of specified middleware,
+/// allowing for additional processing such as logging, authorization, or metrics gathering
+/// without intruding into the function's core logic.
 ///
 /// # Parameters
-/// - `prefix`: An optional string literal that will be prepended to log messages for
-///   identification. If not provided, no prefix will be used.
+/// - `function`: The name of the middleware function to be invoked. This function should
+///   return a `()` and can optionally take a context object and/or the
+///   function result (for `when="after"`). The first argument of this function is always
+///   the name of the function to which the macro is attached.
+/// - `when`: Specifies when the middleware is to be executed, either `"before"` or `"after"`
+///   the function's execution. Defaults to `"before"` if not specified.
+/// - `context`: (Optional) The name of a function that generates a context to be passed
+///   to the middleware function. This function should return a context object.
 ///
 /// # Usage
-/// Apply this macro to async functions in an implementation block where you want
-/// automatic logging.
+/// Annotate functions with `#[with_middleware]`, specifying the middleware function, the
+/// execution time (before/after), and optionally a context generator function.
 ///
 /// # Examples
 ///
-/// Without a prefix:
+/// Basic usage with a middleware function executed before the function body:
 /// ```ignore
-/// #[with_logs]
-/// async fn my_async_function(&self) -> Result<MyType, MyError> {
-///     // Function implementation
+/// #[with_middleware(function = "my_middleware")]
+/// async fn my_function() {
+///     // Function body
 /// }
 /// ```
 ///
-/// With a prefix:
+/// Using a context function and executing middleware after the function body:
 /// ```ignore
-/// #[with_logs(prefix = "testing")]
-/// async fn my_async_function(&self) -> Result<MyType, MyError> {
-///     // Function implementation
+/// #[with_middleware(function = "my_middleware", when = "after", context = "create_context")]
+/// async fn my_function() {
+///     // Function body
 /// }
+/// ```
+///
+/// # Middleware Function Signatures
+/// - For `when="before"`:
+///   ```rust
+///   fn my_middleware(fn_name: &'static str, ctx: MyContext) -> Result<(), String>;
+///   ```
+/// - For `when="after"`:
+///   ```rust
+///   fn my_middleware(fn_name: &'static str, ctx: MyContext, result: &FunctionResultType);
+///   ```
+///   Replace `MyContext` and `FunctionResultType` with appropriate types as per your application's design.
+///
+/// # Context Function Signature
+/// If a context function is specified, it should have the following signature:
+/// ```rust
+/// fn build_context() -> MyContext;
 /// ```
 ///
 /// # Notes
-/// - This macro is intended for use with `async` functions only.
-/// - The macro will log the start of the function with "Function <function_name> started"
-///   and the end with "Function <function_name> completed with result <result>".
-/// - The result of the function is expected to implement `std::fmt::Debug` to be logged.
-///
-/// # Compatibility
-/// This macro is not compatible with the `async_trait` macro.
-///
-/// # Errors
-/// If the macro is applied to a non-async function, or if the result type does not
-/// implement `Debug`, it will result in a compilation error.
-#[proc_macro_attribute]
-pub fn with_logs(input_args: TokenStream, input: TokenStream) -> TokenStream {
-    utils::handle_macro_errors(
-        |input_args, input| {
-            let macro_impl = macros::with_logs::WithLogsMacro::new(input_args, input);
-
-            macro_impl.build()
-        },
-        macros::with_logs::WithLogsMacro::MACRO_NAME,
-        input_args,
-        input,
-    )
-}
-
+/// - Ensure that the middleware and context functions are available in the scope where
+///   the macro is used.
+/// - The macro currently supports only function items. Other items like structs or enums
+///   are not supported.
+/// - The macro is designed to work with async functions.
 #[proc_macro_attribute]
 pub fn with_middleware(input_args: TokenStream, input: TokenStream) -> TokenStream {
     utils::handle_macro_errors(

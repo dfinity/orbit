@@ -1,4 +1,3 @@
-use crate::constants::WASM_PAGE_BYTE_SIZE;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse::Parser, parse2, DeriveInput, Error, Token};
@@ -96,7 +95,7 @@ fn parse_stable_object_macro_arguments(args: TokenStream) -> Result<StableObject
     // The byte size to allocate for the stable memory layout.
     //
     // This is the default value, it can be overridden by the user using the `size` argument.
-    let mut size: Option<u32> = Some(WASM_PAGE_BYTE_SIZE);
+    let mut size: Option<u32> = None;
 
     for expr in args {
         let syn::ExprAssign {

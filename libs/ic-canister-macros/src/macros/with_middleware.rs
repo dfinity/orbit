@@ -1,16 +1,28 @@
-use crate::interface::MacroDefinition;
+use super::MacroDefinition;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use syn::{parse::Parser, parse2, Error, Token};
 
-/// The arguments passed to the macro.
+/// The arguments passed to the `with_middleware` macro.
 ///
 /// The macro accepts a list of arguments separated by `,`.
 #[derive(Clone, Debug)]
 struct MacroArguments {
-    pub attach: String,
+    /// The name of the middleware function to call.
+    ///
+    /// This is a function that returns a `Result<(), String>` and it can take as an argument the
+    /// `context` if set and the result of the function when set to "after". The first argument is always
+    /// the function name that it was attached to.
+    pub function: String,
+    /// When to call the middleware function, possible values are "before" and "after".
+    ///
+    /// Default value is "before".
     pub when: String,
+    /// The context to pass to the middleware function.
+    ///
+    /// This is a function that creates a context to pass to the middleware function.
+    pub context: Option<String>,
 }
 
 #[derive(Debug)]
@@ -35,10 +47,9 @@ impl MacroDefinition for WithMiddlewareMacro {
 }
 
 impl WithMiddlewareMacro {
-    /// The name of the middleware function to call.
-    const MACRO_ARG_KEY_ATTACH: &str = "attach";
-    /// Specifies when to call the middleware function, possible values are "before" and "after".
+    const MACRO_ARG_KEY_GUARD: &str = "guard";
     const MACRO_ARG_KEY_WHEN: &str = "when";
+    const MACRO_ARG_KEY_CONTEXT: &str = "context";
 
     fn expand_implementation(&self, args: &MacroArguments) -> Result<TokenStream, Error> {
         let parsed_input: syn::Item = parse2(self.input.clone().into())?;
@@ -50,21 +61,18 @@ impl WithMiddlewareMacro {
                 sig,
                 block,
             }) => {
-                // let fn_name = &sig.ident;
-                let middleware_fn = syn::Ident::new(&args.attach, Span::call_site());
-                let mut middleware_before_fn = quote! {};
-                let mut middleware_after_fn = quote! {};
+                let fn_name = &sig.ident;
+                let middleware_fn = syn::Ident::new(&args.function, Span::call_site());
+                let mut use_before = false;
+                let mut use_after = false;
+                let mut with_context = false;
 
                 match args.when.as_str() {
                     "before" => {
-                        middleware_before_fn = quote! {
-                            #middleware_fn ().expect("Middleware failed");
-                        };
+                        use_before = true;
                     }
                     "after" => {
-                        middleware_after_fn = quote! {
-                            #middleware_fn (&result).expect("Middleware failed");
-                        };
+                        use_after = true;
                     }
                     _ => {
                         return Err(Error::new_spanned(
@@ -84,14 +92,41 @@ impl WithMiddlewareMacro {
                     syn::ReturnType::Type(_, ty) => quote! { #ty },
                 };
 
+                let context_expansion = match &args.context {
+                    Some(context_fn_name) => {
+                        with_context = true;
+                        let context_fn = syn::Ident::new(context_fn_name, Span::call_site());
+                        quote! { let context = #context_fn (); }
+                    }
+                    None => quote! {},
+                };
+
+                let before_expansion = match (use_before, with_context) {
+                    (true, true) => quote! { #middleware_fn (stringify!(#fn_name), context); },
+                    (true, false) => quote! { #middleware_fn (stringify!(#fn_name)); },
+                    (_, _) => quote! {},
+                };
+
+                let after_expansion = match (use_after, with_context) {
+                    (true, true) => {
+                        quote! { #middleware_fn (stringify!(#fn_name), context, &result); }
+                    }
+                    (true, false) => quote! { #middleware_fn (stringify!(#fn_name), &result); },
+                    (_, _) => quote! {},
+                };
+
                 let expanded = quote! {
                     #(#attrs)* #vis #sig {
-                        #middleware_before_fn
+                        // The context should be created before anything else as it can be used by to add additional
+                        // information such as the execution time of the function.
+                        #context_expansion
+
+                        #before_expansion
 
                         // The async block should be directly within the async function
                         let result: #return_type = async move #block.await;
 
-                        #middleware_after_fn
+                        #after_expansion
 
                         result
                     }
@@ -115,6 +150,7 @@ impl WithMiddlewareMacro {
 
         let mut attach_fn: Option<String> = None;
         let mut attach_when: Option<String> = Some(String::from("before"));
+        let mut attach_context: Option<String> = None;
 
         for expr in args {
             let syn::ExprAssign {
@@ -126,7 +162,7 @@ impl WithMiddlewareMacro {
 
             if let syn::Expr::Path(expr_path) = *left {
                 match expr_path.path.get_ident().unwrap().to_string().as_str() {
-                    Self::MACRO_ARG_KEY_ATTACH => {
+                    Self::MACRO_ARG_KEY_GUARD => {
                         if let syn::Expr::Lit(syn::ExprLit {
                             lit: syn::Lit::Str(lit_str),
                             ..
@@ -144,6 +180,16 @@ impl WithMiddlewareMacro {
                             attach_when = Some(lit_str.value());
                         }
                     }
+
+                    Self::MACRO_ARG_KEY_CONTEXT => {
+                        if let syn::Expr::Lit(syn::ExprLit {
+                            lit: syn::Lit::Str(lit_str),
+                            ..
+                        }) = *right
+                        {
+                            attach_context = Some(lit_str.value());
+                        }
+                    }
                     unknown_arg => {
                         return Err(Error::new(
                             expr_path.path.get_ident().unwrap().span(),
@@ -158,20 +204,21 @@ impl WithMiddlewareMacro {
             }
         }
 
-        match (attach_fn, attach_when) {
-            (Some(attach_fn), Some(attach_when)) => Ok(MacroArguments {
-                attach: attach_fn,
+        match (attach_fn, attach_when, attach_context) {
+            (Some(attach_fn), Some(attach_when), ctx) => Ok(MacroArguments {
+                function: attach_fn,
                 when: attach_when,
+                context: ctx,
             }),
-            (None, _) => Err(Error::new(
+            (None, _, _) => Err(Error::new(
                 Span::call_site(),
                 format!(
                     "Missing argument \"{}\" passed to the \"{}\" macro",
-                    Self::MACRO_ARG_KEY_ATTACH,
+                    Self::MACRO_ARG_KEY_GUARD,
                     Self::MACRO_NAME
                 ),
             )),
-            (_, None) => Err(Error::new(
+            (_, None, _) => Err(Error::new(
                 Span::call_site(),
                 format!(
                     "Missing argument \"{}\" passed to the \"{}\" macro",
