@@ -63,18 +63,18 @@ pub fn stable_object(metadata: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// # Middleware Function Signatures
 /// - For `when="before"`:
-///   ```rust
+///   ```ignore
 ///   fn my_middleware(fn_name: &'static str, ctx: MyContext) -> Result<(), String>;
 ///   ```
 /// - For `when="after"`:
-///   ```rust
+///   ```ignore
 ///   fn my_middleware(fn_name: &'static str, ctx: MyContext, result: &FunctionResultType);
 ///   ```
 ///   Replace `MyContext` and `FunctionResultType` with appropriate types as per your application's design.
 ///
 /// # Context Function Signature
 /// If a context function is specified, it should have the following signature:
-/// ```rust
+/// ```ignore
 /// fn build_context() -> MyContext;
 /// ```
 ///

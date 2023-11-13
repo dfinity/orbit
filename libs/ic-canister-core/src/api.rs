@@ -51,7 +51,7 @@ impl ApiError {
         );
         map.insert(
             "details".to_string(),
-            json!(&self.details.clone().unwrap_or(HashMap::new())).to_string(),
+            json!(&self.details.clone().unwrap_or_default()).to_string(),
         );
 
         json!(map).to_string()

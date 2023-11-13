@@ -18,7 +18,7 @@ pub fn log_call(function_name: &'static str, context: CallContext) {
     ic_cdk::api::print(
         serde_json::to_string(&LogMessage {
             function: function_name.to_string(),
-            message: format!("started execution"),
+            message: "started execution".to_string(),
             timestamp: ic_cdk::api::time(),
             caller: context.caller().to_text(),
         })
