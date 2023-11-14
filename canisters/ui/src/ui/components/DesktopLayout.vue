@@ -1,0 +1,271 @@
+<template>
+  <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
+    <VNavigationDrawer v-model="settings.showSidebar" class="sidebar" width="260" color="primary">
+      <div class="sidebar__header">
+        <slot name="sidebar-header">
+          <SidenavHeader v-if="auth.isAuthenticated" />
+        </slot>
+      </div>
+      <div class="sidebar__nav">
+        <slot name="sidebar-nav">
+          <SidenavMenu v-if="auth.isAuthenticated" />
+        </slot>
+      </div>
+      <div class="sidebar__footer">
+        <slot name="sidebar-footer">
+          <a href="https://internetcomputer.org" target="_blank">
+            <img :src="icLogoHorizontal" height="20" />
+          </a>
+        </slot>
+      </div>
+    </VNavigationDrawer>
+  </slot>
+  <slot v-if="!isSetAndNotFalse(props.hideBody)" name="body">
+    <VMain class="body" full-height>
+      <slot name="toolbar">
+        <VToolbar density="compact" class="toolbar">
+          <div v-if="!isSetAndNotFalse(props.hideToolbarContext)" class="toolbar__context">
+            <slot name="toolbar-context">
+              <BrandLogo v-if="!auth.isAuthenticated" />
+              <VBtn
+                v-if="auth.isAuthenticated"
+                :icon="mdiMenuOpen"
+                @click.prevent="settings.toogleSidebar"
+              />
+            </slot>
+          </div>
+          <VSpacer />
+          <div class="toolbar__actions">
+            <slot name="toolbar-actions">
+              <VBtn :icon="themeSwitcherIcon" @click.prevent="settings.toogleTheme" />
+              <LanguageSelector />
+              <WalletSelector v-if="auth.isAuthenticated" />
+            </slot>
+          </div>
+        </VToolbar>
+      </slot>
+      <nav
+        class="topnav"
+        :style="
+          props.backgroundColor
+            ? `background-color: rgb(var(--ds-${props.backgroundColor}));`
+            : undefined
+        "
+      >
+        <slot name="topnav"></slot>
+      </nav>
+      <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
+        <slot name="main">
+          <header v-if="!isSetAndNotFalse(props.hideMainHeader)" class="main__header">
+            <slot name="main-header"></slot>
+          </header>
+          <div
+            class="main__body"
+            :style="
+              props.backgroundColor
+                ? `background-color: rgb(var(--ds-${props.backgroundColor}));`
+                : undefined
+            "
+          >
+            <VAlert
+              class="my-4 mx-4"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              title="Development Version 🚧"
+            >
+              This development version will be facing ongoing updates that may result in complete
+              loss of data and/or funds.
+            </VAlert>
+            <slot name="main-body"></slot>
+          </div>
+        </slot>
+      </div>
+      <VFooter
+        v-if="!isSetAndNotFalse(props.hideFooter)"
+        class="footer"
+        :color="props.backgroundColor ? props.backgroundColor : `background`"
+      >
+        <slot name="footer">
+          <VContainer fluid>
+            <VRow>
+              <VCol class="footer__left text-left">
+                <slot name="footer-left">
+                  <slot name="footer-right">{{ $t('footer.copyright') }}</slot>
+                </slot>
+              </VCol>
+              <VCol class="footer__right text-right">
+                <a href="https://github.com/dfinity/orbit-wallet" target="_blank">
+                  <img :src="ghMarkImg" class="footer__gh-mark" />{{
+                    $t('footer.github.description')
+                  }}
+                </a>
+              </VCol>
+            </VRow>
+          </VContainer>
+        </slot>
+      </VFooter>
+    </VMain>
+  </slot>
+</template>
+
+<script lang="ts" setup>
+import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
+import { computed, inject } from 'vue';
+import { isSetAndNotFalse } from '~/core';
+import WalletSelector from '~/ui/components/WalletSelector.vue';
+import BrandLogo from '~/ui/components/BrandLogo.vue';
+import SidenavHeader from '~/ui/components/SidenavHeader.vue';
+import SidenavMenu from '~/ui/components/SidenavMenu.vue';
+import { useAuthStore, useSettingsStore } from '~/ui/stores';
+import LanguageSelector from './LanguageSelector.vue';
+
+const settings = useSettingsStore();
+const auth = useAuthStore();
+
+const props = inject('pageLayoutProps', {
+  backgroundColor: undefined,
+  hideSidebar: false,
+  hideBody: false,
+  hideMain: false,
+  hideMainHeader: false,
+  hideFooter: false,
+  hideToolbarContext: false,
+});
+
+const icLogoHorizontal = computed(() => {
+  return settings.isDarkTheme
+    ? '/images/internet-computer-horizontal-light.png'
+    : '/images/internet-computer-horizontal-light.png';
+});
+
+const ghMarkImg = computed(() => {
+  return settings.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
+});
+
+const themeSwitcherIcon = computed(() => {
+  return settings.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
+});
+</script>
+
+<style lang="scss">
+.sidebar {
+  .v-navigation-drawer__content {
+    display: flex;
+    flex-direction: column;
+  }
+}
+</style>
+
+<style scoped lang="scss">
+.page-layout--desktop {
+  .sidebar {
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    &__header {
+      width: 100%;
+      flex-shrink: 0;
+      min-height: var(--ds-toolbar-height);
+    }
+
+    &__nav {
+      width: 100%;
+      flex-grow: 1;
+    }
+
+    &__footer {
+      min-height: var(--ds-toolbar-height);
+      text-align: center;
+      justify-content: center;
+      line-height: var(--ds-toolbar-height);
+    }
+  }
+
+  .toolbar {
+    display: flex;
+    flex-direction: row;
+    background-color: rgb(var(--ds-surface));
+    color: rgb(var(--ds-on-surface));
+    border-bottom: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-background-border));
+
+    &__actions {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: end;
+    }
+  }
+
+  .topnav {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .body {
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main {
+    width: 100%;
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+
+    &__header {
+      width: 100%;
+      background-color: rgb(var(--ds-surface));
+      color: rgb(var(--ds-on-surface));
+    }
+
+    &__body {
+      width: 100%;
+      flex-grow: 1;
+    }
+  }
+
+  .footer {
+    height: var(--ds-toolbar-height);
+    min-height: var(--ds-toolbar-height);
+    max-height: var(--ds-toolbar-height);
+    line-height: var(--ds-toolbar-height);
+    font-size: var(--ds-font-size-xxs);
+    background-color: transparent;
+    box-sizing: content-box;
+
+    .v-container {
+      padding: 0;
+      border-top: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-background-border));
+
+      > .v-row {
+        margin: 0;
+      }
+    }
+
+    .v-col.footer__left,
+    .v-col.footer__right {
+      padding: 0;
+      height: var(--ds-toolbar-height);
+      min-height: var(--ds-toolbar-height);
+      max-height: var(--ds-toolbar-height);
+      line-height: var(--ds-toolbar-height);
+    }
+
+    &__gh-mark {
+      height: var(--ds-font-size-xxs);
+      width: var(--ds-font-size-xxs);
+      vertical-align: middle;
+      margin-right: calc(var(--ds-bdu) / 2);
+    }
+  }
+}
+</style>
