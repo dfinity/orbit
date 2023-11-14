@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-  "canisters/bank",
   "canisters/control-panel",
   "canisters/upgrader",
+  "canisters/wallet",
   "libs/ic-canister-core",
   "libs/ic-canister-macros",
 ]

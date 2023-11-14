@@ -5,7 +5,7 @@
 mod user;
 pub use user::*;
 
-/// User bank DTOs.
+/// User Wallet DTOs.
 mod user_wallet;
 pub use user_wallet::*;
 
