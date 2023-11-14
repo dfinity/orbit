@@ -21,8 +21,8 @@ pub const PERMISSION_WRITE_ACCOUNT: &str = "write:account";
 pub const PERMISSION_READ_ACCOUNT: &str = "read:account";
 pub const PERMISSION_READ_TRANSFER: &str = "read:transfer";
 pub const PERMISSION_WRITE_TRANSFER: &str = "write:transfer";
-pub const PERMISSION_READ_OPERATION: &str = "read:operation";
-pub const PERMISSION_WRITE_OPERATION: &str = "write:operation";
+pub const PERMISSION_READ_PROPOSAL: &str = "read:proposal";
+pub const PERMISSION_VOTE_ON_PROPOSAL: &str = "vote-on-proposal";
 pub const PERMISSION_REGISTER_USER: &str = "read:register-user";
 pub const PERMISSION_READ_USER: &str = "read:user";
 pub const PERMISSION_WRITE_USER: &str = "write:user";
@@ -70,11 +70,11 @@ pub fn default_wallet_permissions() -> Vec<Permission> {
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {
-            permission_id: PERMISSION_READ_OPERATION.to_string(),
+            permission_id: PERMISSION_READ_PROPOSAL.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {
-            permission_id: PERMISSION_WRITE_OPERATION.to_string(),
+            permission_id: PERMISSION_VOTE_ON_PROPOSAL.to_string(),
             access_roles: vec![AccessRole::Admin, AccessRole::User],
         },
         Permission {

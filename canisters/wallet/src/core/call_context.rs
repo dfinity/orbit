@@ -102,10 +102,6 @@ fn check_access(permission: &str, caller: Principal) {
     }
 }
 
-pub trait WithCallContext {
-    fn with_call_context(call_context: CallContext) -> Self;
-}
-
 #[cfg(test)]
 pub mod tests {
     use super::*;
