@@ -21,6 +21,9 @@ pub use proposal::*;
 mod user;
 pub use user::*;
 
+mod upgrade;
+pub use upgrade::*;
+
 #[cfg(test)]
 mod tests {
     use crate::transport::*;

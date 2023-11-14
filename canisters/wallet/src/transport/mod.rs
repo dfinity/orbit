@@ -24,3 +24,6 @@ pub use proposal::*;
 
 mod user;
 pub use user::*;
+
+mod upgrade;
+pub use upgrade::*;

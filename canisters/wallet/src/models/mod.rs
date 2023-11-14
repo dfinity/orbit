@@ -62,4 +62,7 @@ pub use wallet_settings::*;
 mod wallet_features;
 pub use wallet_features::*;
 
+mod upgrade;
+pub use upgrade::*;
+
 pub mod indexes;

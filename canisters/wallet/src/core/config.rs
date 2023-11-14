@@ -28,6 +28,8 @@ pub const PERMISSION_READ_USER: &str = "read:user";
 pub const PERMISSION_WRITE_USER: &str = "write:user";
 pub const PERMISSION_READ_NOTIFICATION: &str = "read:notification";
 pub const PERMISSION_WRITE_NOTIFICATION: &str = "write:notification";
+pub const PERMISSION_READ_UPGRADE: &str = "read:upgrade";
+pub const PERMISSION_WRITE_UPGRADE: &str = "write:upgrade";
 
 thread_local! {
   /// The list of assets that are supported by the wallet canister (e.g. `ICP`, `BTC`, `ETH`, etc.)

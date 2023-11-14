@@ -50,3 +50,9 @@ pub use proposal_vote_status::*;
 
 mod proposal_vote;
 pub use proposal_vote::*;
+
+mod upgrade;
+pub use upgrade::*;
+
+mod upgrade_status;
+pub use upgrade_status::*;

@@ -17,3 +17,6 @@ pub use proposal::*;
 
 mod wallet;
 pub use wallet::*;
+
+mod upgrade;
+pub use upgrade::*;
