@@ -46,7 +46,7 @@ async fn delete_user() -> ApiResult<DeleteUserResponse> {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: UserController = UserController::new(UserService::new());
+    static ref CONTROLLER: UserController = UserController::new(UserService::default());
 }
 
 #[derive(Debug)]
