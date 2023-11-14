@@ -8,9 +8,9 @@ pub use user::*;
 mod canister;
 pub use canister::*;
 
-/// Bank entrypoints.
-mod bank;
-pub use bank::*;
+/// Wallet entrypoints.
+mod wallet;
+pub use wallet::*;
 
 #[cfg(test)]
 mod tests {

@@ -1,12 +1,12 @@
-use super::{UserBankDTO, UserIdentityDTO};
+use super::{UserIdentityDTO, UserWalletDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UserDTO {
     pub id: String,
     pub name: Option<String>,
-    pub main_bank: Option<Principal>,
-    pub banks: Vec<UserBankDTO>,
+    pub main_wallet: Option<Principal>,
+    pub wallets: Vec<UserWalletDTO>,
     pub identities: Vec<UserIdentityDTO>,
     pub unconfirmed_identities: Vec<UserIdentityDTO>,
 }

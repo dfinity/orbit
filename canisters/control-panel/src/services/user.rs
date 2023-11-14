@@ -2,7 +2,7 @@ use crate::{
     core::{canister_config, generate_uuid_v4, CallContext},
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserBank, UserId},
+    models::{User, UserId, UserWallet},
     repositories::UserRepository,
     transport::{ManageUserInput, RegisterUserInput},
 };
@@ -59,18 +59,18 @@ impl UserService {
         Ok(user)
     }
 
-    pub fn get_main_bank(&self, ctx: &CallContext) -> ServiceResult<Option<UserBank>> {
+    pub fn get_main_wallet(&self, ctx: &CallContext) -> ServiceResult<Option<UserWallet>> {
         let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
-        match user.main_bank {
-            Some(main_bank) => {
-                let main_bank = user
-                    .banks
+        match user.main_wallet {
+            Some(main_wallet) => {
+                let main_wallet = user
+                    .wallets
                     .into_iter()
-                    .find(|bank| bank.canister_id == main_bank)
-                    .ok_or(UserError::MainBankNotFound)?;
+                    .find(|wallet| wallet.canister_id == main_wallet)
+                    .ok_or(UserError::MainWalletNotFound)?;
 
-                Ok(Some(main_bank))
+                Ok(Some(main_wallet))
             }
             None => Ok(None),
         }
@@ -124,7 +124,7 @@ impl UserService {
             input.clone(),
             *user_id.as_bytes(),
             ctx.caller(),
-            canister_config().shared_bank_canister,
+            canister_config().shared_wallet_canister,
         );
 
         user.validate()?;
@@ -198,7 +198,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{models::UserIdentity, transport::RegisterUserBankInput};
+    use crate::{models::UserIdentity, transport::RegisterUserWalletInput};
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -229,8 +229,8 @@ mod tests {
                 name: None,
             }],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
@@ -255,8 +255,8 @@ mod tests {
                 name: None,
             }],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
@@ -277,9 +277,9 @@ mod tests {
         let service = UserService::new();
         let input = RegisterUserInput {
             name: Some("User".to_string()),
-            bank: RegisterUserBankInput::PrivateBank {
+            wallet: RegisterUserWalletInput::PrivateWallet {
                 id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                use_shared_bank: None,
+                use_shared_wallet: None,
             },
         };
 
@@ -297,16 +297,16 @@ mod tests {
         let service = UserService::new();
         let input = RegisterUserInput {
             name: Some("User".to_string()),
-            bank: RegisterUserBankInput::PrivateBank {
+            wallet: RegisterUserWalletInput::PrivateWallet {
                 id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                use_shared_bank: None,
+                use_shared_wallet: None,
             },
         };
         let duplicated_user_input = RegisterUserInput {
             name: Some("User 2".to_string()),
-            bank: RegisterUserBankInput::PrivateBank {
+            wallet: RegisterUserWalletInput::PrivateWallet {
                 id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                use_shared_bank: None,
+                use_shared_wallet: None,
             },
         };
 
@@ -333,8 +333,8 @@ mod tests {
                 identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 name: None,
             }],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
@@ -364,8 +364,8 @@ mod tests {
                 name: None,
             }],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };

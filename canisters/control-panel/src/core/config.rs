@@ -9,9 +9,9 @@ use std::borrow::Cow;
 #[stable_object(size = WASM_PAGE_SIZE)]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
-    /// This is the shared bank canister that is user by default for all
-    /// users that don't have a private bank canister.
-    pub shared_bank_canister: Principal,
+    /// This is the shared wallet canister that is user by default for all
+    /// users that don't have a private wallet canister.
+    pub shared_wallet_canister: Principal,
 
     /// Last time the canister was upgraded or initialized.
     pub last_upgrade_timestamp: Timestamp,
@@ -20,16 +20,16 @@ pub struct CanisterConfig {
 impl Default for CanisterConfig {
     fn default() -> Self {
         Self {
-            shared_bank_canister: Principal::anonymous(),
+            shared_wallet_canister: Principal::anonymous(),
             last_upgrade_timestamp: time(),
         }
     }
 }
 
 impl CanisterConfig {
-    pub fn new(shared_bank_canister: Principal, last_upgrade_timestamp: Timestamp) -> Self {
+    pub fn new(shared_wallet_canister: Principal, last_upgrade_timestamp: Timestamp) -> Self {
         Self {
-            shared_bank_canister,
+            shared_wallet_canister,
             last_upgrade_timestamp,
         }
     }
@@ -37,7 +37,7 @@ impl CanisterConfig {
 
 impl CanisterConfig {
     /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_SHARED_BANK_CANISTER: u32 = MAX_BYTE_SIZE_PRINCIPAL;
+    pub const MAX_BYTE_SIZE_SHARED_WALLET_CANISTER: u32 = MAX_BYTE_SIZE_PRINCIPAL;
     pub const MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
 
     /// The maximum size of the CanisterConfig in stable memory.
@@ -45,7 +45,7 @@ impl CanisterConfig {
 
     /// If this overflows then the stable memory layout will be broken.
     pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
-        - Self::MAX_BYTE_SIZE_SHARED_BANK_CANISTER
+        - Self::MAX_BYTE_SIZE_SHARED_WALLET_CANISTER
         - Self::MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP;
 }
 

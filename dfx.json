@@ -21,7 +21,7 @@
         }
       },
       "declarations": {
-        "output": "canisters/wallet-ui/src/generated/icp_index",
+        "output": "canisters/ui/src/generated/icp_index",
         "node_compatibility": true
       }
     },
@@ -35,7 +35,7 @@
         }
       },
       "declarations": {
-        "output": "./canisters/wallet-ui/src/generated/internet-identity",
+        "output": "./canisters/ui/src/generated/internet-identity",
         "node_compatibility": true
       }
     },
@@ -44,32 +44,28 @@
       "package": "control_panel",
       "candid": "canisters/control-panel/spec.did",
       "declarations": {
-        "output": "canisters/wallet-ui/src/generated/control-panel",
+        "output": "canisters/ui/src/generated/control-panel",
         "node_compatibility": true
       },
       "optimize": "cycles"
     },
-    "bank": {
+    "wallet": {
       "type": "rust",
-      "package": "bank",
-      "candid": "canisters/bank/spec.did",
+      "package": "wallet",
+      "candid": "canisters/wallet/spec.did",
       "declarations": {
-        "output": "canisters/wallet-ui/src/generated/bank",
+        "output": "canisters/ui/src/generated/wallet",
         "node_compatibility": true
       },
       "optimize": "cycles"
     },
-    "wallet_ui": {
+    "ui": {
       "type": "assets",
-      "source": ["canisters/wallet-ui/dist/"],
+      "source": ["canisters/ui/dist/"],
       "frontend": {
-        "entrypoint": "canisters/wallet-ui/dist/index.html"
+        "entrypoint": "canisters/ui/dist/index.html"
       },
-      "build": "pnpm --filter '@dfinity/orbit-wallet-ui' build",
-      "declarations": {
-        "output": "canisters/wallet-ui/src/generated/wallet-ui",
-        "node_compatibility": true
-      }
+      "build": "pnpm --filter '@dfinity/orbit-ui' build"
     }
   },
   "defaults": {
