@@ -34,7 +34,3 @@ impl CallContext {
         self._caller == self_canister_id()
     }
 }
-
-pub trait WithCallContext {
-    fn with_call_context(call_context: CallContext) -> Self;
-}

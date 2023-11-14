@@ -20,12 +20,6 @@ pub struct UserService {
 }
 
 impl UserService {
-    pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
-
     /// Returns the user associated with the given user id.
     pub fn get_user(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<User> {
         let user = self
@@ -203,7 +197,7 @@ mod tests {
     #[test]
     fn get_user_returns_not_found_err() {
         let ctx = CallContext::default();
-        let service = UserService::new();
+        let service = UserService::default();
         let user_id = *Uuid::new_v4().as_bytes();
 
         let result = service.get_user(&user_id, &ctx);
@@ -220,7 +214,7 @@ mod tests {
     #[test]
     fn success_fetch_existing_user() {
         let ctx = CallContext::default();
-        let service = UserService::new();
+        let service = UserService::default();
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
             id: user_id,
@@ -246,7 +240,7 @@ mod tests {
     #[test]
     fn success_fetch_existing_user_by_identity() {
         let ctx = CallContext::default();
-        let service = UserService::new();
+        let service = UserService::default();
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
             id: user_id,
@@ -274,7 +268,7 @@ mod tests {
         crate::core::test_utils::init_canister_config();
 
         let ctx = CallContext::default();
-        let service = UserService::new();
+        let service = UserService::default();
         let input = RegisterUserInput {
             name: Some("User".to_string()),
             wallet: RegisterUserWalletInput::PrivateWallet {
@@ -294,7 +288,7 @@ mod tests {
         crate::core::test_utils::init_canister_config();
 
         let ctx = CallContext::default();
-        let service = UserService::new();
+        let service = UserService::default();
         let input = RegisterUserInput {
             name: Some("User".to_string()),
             wallet: RegisterUserWalletInput::PrivateWallet {
@@ -324,7 +318,7 @@ mod tests {
     async fn correctly_associates_identity_with_user() {
         crate::core::test_utils::init_canister_config();
         let ctx = CallContext::new(Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap());
-        let service = UserService::new();
+        let service = UserService::default();
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {
             id: user_id,
@@ -354,7 +348,7 @@ mod tests {
     async fn can_remove_user() {
         crate::core::test_utils::init_canister_config();
         let ctx = CallContext::new(Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap());
-        let service = UserService::new();
+        let service = UserService::default();
 
         let user_id = *Uuid::new_v4().as_bytes();
         let user = User {

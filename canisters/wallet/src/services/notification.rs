@@ -1,6 +1,6 @@
 use super::UserService;
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, WithCallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, CallContext},
     errors::NotificationError,
     mappers::HelperMapper,
     models::{Notification, NotificationId, NotificationStatus, NotificationType, UserId},
@@ -14,23 +14,16 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct NotificationService {
-    call_context: CallContext,
     user_service: UserService,
     notification_repository: NotificationRepository,
 }
 
-impl WithCallContext for NotificationService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            call_context: call_context.clone(),
-            user_service: UserService::with_call_context(call_context.clone()),
-            ..Default::default()
-        }
-    }
-}
-
 impl NotificationService {
-    pub fn get_notification(&self, id: &NotificationId) -> ServiceResult<Notification> {
+    pub fn get_notification(
+        &self,
+        id: &NotificationId,
+        ctx: &CallContext,
+    ) -> ServiceResult<Notification> {
         let notification = self
             .notification_repository
             .get(&Notification::key(*id))
@@ -38,7 +31,7 @@ impl NotificationService {
                 id: Uuid::from_bytes(id.to_owned()).hyphenated().to_string(),
             })?;
 
-        self.assert_notification_access(&notification)?;
+        self.assert_notification_access(&notification, ctx)?;
 
         Ok(notification)
     }
@@ -46,10 +39,9 @@ impl NotificationService {
     pub fn list_notifications(
         &self,
         input: ListNotificationsInput,
+        ctx: &CallContext,
     ) -> ServiceResult<Vec<Notification>> {
-        let user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let filter_by_type = input.notification_type.map(|t| t.to_string());
 
@@ -66,11 +58,15 @@ impl NotificationService {
         Ok(notifications)
     }
 
-    pub async fn mark_read(&self, input: MarkNotificationsReadInput) -> ServiceResult<()> {
+    pub async fn mark_read(
+        &self,
+        input: MarkNotificationsReadInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<()> {
         let mut notifications = input
             .notification_ids
             .iter()
-            .map(|id| self.get_notification(HelperMapper::to_uuid(id.clone())?.as_bytes()))
+            .map(|id| self.get_notification(HelperMapper::to_uuid(id.clone())?.as_bytes(), ctx))
             .collect::<Result<Vec<Notification>, _>>()?;
 
         for notification in notifications.iter_mut() {
@@ -144,10 +140,12 @@ impl NotificationService {
         Ok(())
     }
 
-    fn assert_notification_access(&self, notification: &Notification) -> ServiceResult<()> {
-        let user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+    fn assert_notification_access(
+        &self,
+        notification: &Notification,
+        ctx: &CallContext,
+    ) -> ServiceResult<()> {
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         if user.id != notification.target_user_id {
             Err(NotificationError::Forbidden {
@@ -175,20 +173,22 @@ mod tests {
         repository: NotificationRepository,
         service: NotificationService,
         caller_user: User,
+        call_context: CallContext,
     }
 
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
-        let mut user = mock_user();
+        let mut user: User = mock_user();
         user.identities = vec![call_context.caller()];
 
         UserRepository::default().insert(user.to_key(), user.clone());
 
         TestContext {
             repository: NotificationRepository::default(),
-            service: NotificationService::with_call_context(call_context),
+            service: NotificationService::default(),
+            call_context,
             caller_user: user,
         }
     }
@@ -202,7 +202,9 @@ mod tests {
         ctx.repository
             .insert(notification.to_key(), notification.to_owned());
 
-        let result = ctx.service.get_notification(&notification.id);
+        let result = ctx
+            .service
+            .get_notification(&notification.id, &ctx.call_context);
 
         assert_eq!(notification, result.unwrap());
     }
@@ -216,7 +218,9 @@ mod tests {
         ctx.repository
             .insert(notification.to_key(), notification.to_owned());
 
-        let result = ctx.service.get_notification(&notification.id);
+        let result = ctx
+            .service
+            .get_notification(&notification.id, &ctx.call_context);
 
         assert!(result.is_err());
     }
@@ -235,10 +239,13 @@ mod tests {
 
         let result = ctx
             .service
-            .mark_read(MarkNotificationsReadInput {
-                notification_ids: vec![notification_id.to_string()],
-                read: true,
-            })
+            .mark_read(
+                MarkNotificationsReadInput {
+                    notification_ids: vec![notification_id.to_string()],
+                    read: true,
+                },
+                &ctx.call_context,
+            )
             .await;
 
         assert!(result.is_ok());

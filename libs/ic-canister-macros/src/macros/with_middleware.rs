@@ -7,7 +7,7 @@ use syn::{parse::Parser, parse2, Error, Token};
 /// The arguments passed to the `with_middleware` macro.
 ///
 /// The macro accepts a list of arguments separated by `,`.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct MacroArguments {
     /// The name of the middleware function to call.
     ///
@@ -24,7 +24,13 @@ struct MacroArguments {
     /// This is a function that creates a context to pass to the middleware function.
     pub context: Option<String>,
     /// The arguments to pass to the middleware function.
-    pub middleware_args: Vec<String>,
+    pub middleware_args: Vec<ArgValue>,
+}
+
+#[derive(Debug)]
+enum ArgValue {
+    StrLit(String),
+    Path(String),
 }
 
 #[derive(Debug)]
@@ -96,9 +102,16 @@ impl WithMiddlewareMacro {
                     syn::ReturnType::Type(_, ty) => quote! { #ty },
                 };
 
-                let middleware_args_expansion = quote! {
-                    let middleware_args = vec![ #( #middleware_args ),* ];
-                };
+                let middleware_args = middleware_args
+                    .iter()
+                    .map(|arg| match arg {
+                        ArgValue::StrLit(lit) => quote! { #lit },
+                        ArgValue::Path(path) => {
+                            let path = syn::Ident::new(path, Span::call_site());
+                            quote! { #path }
+                        }
+                    })
+                    .collect::<Vec<proc_macro2::TokenStream>>();
 
                 let context_expansion = match &args.context {
                     Some(context_fn_name) => {
@@ -134,7 +147,7 @@ impl WithMiddlewareMacro {
                         // The context should be created before anything else as it can be used by to add additional
                         // information such as the execution time of the function.
                         #context_expansion
-                        #middleware_args_expansion
+                        let middleware_args = vec![ #( #middleware_args ),* ];
 
                         #before_expansion
 
@@ -210,12 +223,24 @@ impl WithMiddlewareMacro {
                     Self::MACRO_ARG_KEY_ARGS => {
                         if let syn::Expr::Array(array) = *right {
                             for expr in array.elems {
-                                if let syn::Expr::Lit(syn::ExprLit {
-                                    lit: syn::Lit::Str(lit_str),
-                                    ..
-                                }) = expr
-                                {
-                                    attach_args.push(lit_str.value());
+                                match expr {
+                                    syn::Expr::Lit(syn::ExprLit {
+                                        lit: syn::Lit::Str(lit_str),
+                                        ..
+                                    }) => {
+                                        attach_args.push(ArgValue::StrLit(lit_str.value()));
+                                    }
+                                    syn::Expr::Path(expr_path) => {
+                                        if let Some(ident) = expr_path.path.get_ident() {
+                                            attach_args.push(ArgValue::Path(ident.to_string()));
+                                        }
+                                    }
+                                    _ => {
+                                        return Err(Error::new_spanned(
+                                            expr,
+                                            "Unsupported argument type",
+                                        ))
+                                    }
                                 }
                             }
                         }

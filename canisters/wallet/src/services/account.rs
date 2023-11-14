@@ -1,6 +1,6 @@
 use super::UserService;
 use crate::{
-    core::{generate_uuid_v4, CallContext, WithCallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
+    core::{generate_uuid_v4, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{AccountMapper, BlockchainMapper, HelperMapper},
@@ -17,24 +17,13 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct AccountService {
-    call_context: CallContext,
     user_service: UserService,
     account_repository: AccountRepository,
 }
 
-impl WithCallContext for AccountService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            call_context: call_context.clone(),
-            user_service: UserService::with_call_context(call_context.clone()),
-            ..Default::default()
-        }
-    }
-}
-
 impl AccountService {
     /// Returns the account associated with the given account id.
-    pub fn get_account(&self, id: &AccountId) -> ServiceResult<Account> {
+    pub fn get_account(&self, id: &AccountId, ctx: &CallContext) -> ServiceResult<Account> {
         let account_key = Account::key(*id);
         let account =
             self.account_repository
@@ -43,7 +32,7 @@ impl AccountService {
                     id: Uuid::from_bytes(*id).hyphenated().to_string(),
                 })?;
 
-        self.assert_account_access(&account)?;
+        self.assert_account_access(&account, ctx)?;
 
         Ok(account)
     }
@@ -52,8 +41,14 @@ impl AccountService {
     ///
     /// If the caller has a different identity than the requested owner, then the call
     /// will fail with a forbidden error if the user is not an admin.
-    pub fn list_accounts(&self, owner_identity: Principal) -> ServiceResult<Vec<Account>> {
-        let user = self.user_service.get_user_by_identity(&owner_identity)?;
+    pub fn list_accounts(
+        &self,
+        owner_identity: Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<Vec<Account>> {
+        let user = self
+            .user_service
+            .get_user_by_identity(&owner_identity, ctx)?;
 
         let accounts = self.account_repository.find_by_user_id(user.id);
 
@@ -64,10 +59,12 @@ impl AccountService {
     /// it will be added automatically.
     ///
     /// This operation will fail if the user does not have an associated user.
-    pub async fn create_account(&self, input: CreateAccountInput) -> ServiceResult<Account> {
-        let caller_user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+    pub async fn create_account(
+        &self,
+        input: CreateAccountInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<Account> {
+        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let mut owners_users: HashSet<UUID> = HashSet::from_iter(vec![caller_user.id]);
         for user_id in input.owners.iter() {
@@ -118,6 +115,7 @@ impl AccountService {
     pub async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,
+        ctx: &CallContext,
     ) -> ServiceResult<Vec<AccountBalanceDTO>> {
         if input.account_ids.is_empty() || input.account_ids.len() > 5 {
             Err(AccountError::AccountBalancesBatchRange { min: 1, max: 5 })?
@@ -134,7 +132,7 @@ impl AccountService {
             .find_by_ids(account_ids.iter().map(|id| *id.as_bytes()).collect());
 
         for account in accounts.iter() {
-            self.assert_account_access(account)?;
+            self.assert_account_access(account, ctx)?;
         }
 
         let mut balances = Vec::new();
@@ -179,14 +177,12 @@ impl AccountService {
     /// Checks if the caller has access to the given account.
     ///
     /// Canister controllers have access to all accounts.
-    pub fn assert_account_access(&self, account: &Account) -> ServiceResult<()> {
-        if self.call_context.is_admin() {
+    pub fn assert_account_access(&self, account: &Account, ctx: &CallContext) -> ServiceResult<()> {
+        if ctx.is_admin() {
             return Ok(());
         }
 
-        let caller_user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let is_account_owner = account.owners.contains(&caller_user.id);
 
@@ -211,6 +207,7 @@ mod tests {
         repository: AccountRepository,
         service: AccountService,
         caller_user: User,
+        call_context: CallContext,
     }
 
     fn setup() -> TestContext {
@@ -224,8 +221,9 @@ mod tests {
 
         TestContext {
             repository: AccountRepository::default(),
-            service: AccountService::with_call_context(call_context),
+            service: AccountService::default(),
             caller_user: user,
+            call_context,
         }
     }
 
@@ -237,7 +235,7 @@ mod tests {
 
         ctx.repository.insert(account.to_key(), account.clone());
 
-        let result = ctx.service.get_account(&account.id);
+        let result = ctx.service.get_account(&account.id, &ctx.call_context);
 
         assert!(result.is_ok());
     }
@@ -249,7 +247,7 @@ mod tests {
 
         ctx.repository.insert(account.to_key(), account.clone());
 
-        let result = ctx.service.get_account(&account.id);
+        let result = ctx.service.get_account(&account.id, &ctx.call_context);
 
         assert!(result.is_err());
     }
@@ -266,7 +264,7 @@ mod tests {
             policies: vec![],
         };
 
-        let result = ctx.service.create_account(input).await;
+        let result = ctx.service.create_account(input, &ctx.call_context).await;
 
         assert!(result.is_ok());
     }
@@ -283,7 +281,7 @@ mod tests {
             policies: vec![],
         };
 
-        let result = ctx.service.create_account(input).await;
+        let result = ctx.service.create_account(input, &ctx.call_context).await;
 
         assert!(result.is_err());
     }

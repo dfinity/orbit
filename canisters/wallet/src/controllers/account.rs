@@ -1,5 +1,6 @@
+use crate::core::{PERMISSION_READ_ACCOUNT, PERMISSION_WRITE_ACCOUNT};
 use crate::{
-    core::{CallContext, WithCallContext, PERMISSION_READ_ACCOUNT, PERMISSION_WRITE_ACCOUNT},
+    core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
     services::AccountService,
     transport::{
@@ -8,57 +9,99 @@ use crate::{
     },
 };
 use ic_canister_core::api::ApiResult;
+use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
+use lazy_static::lazy_static;
 
+// Canister entrypoints for the controller.
 #[update(name = "create_account")]
 async fn create_account(input: CreateAccountInput) -> ApiResult<CreateAccountResponse> {
-    CallContext::get().check_access(PERMISSION_WRITE_ACCOUNT);
-
-    let created_account = AccountService::with_call_context(CallContext::get())
-        .create_account(input)
-        .await?
-        .to_dto();
-
-    Ok(CreateAccountResponse {
-        account: created_account,
-    })
+    CONTROLLER.create_account(input).await
 }
 
 #[query(name = "get_account")]
 async fn get_account(input: GetAccountInput) -> ApiResult<GetAccountResponse> {
-    CallContext::get().check_access(PERMISSION_READ_ACCOUNT);
-
-    let account = AccountService::with_call_context(CallContext::get())
-        .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?
-        .to_dto();
-
-    Ok(GetAccountResponse { account })
+    CONTROLLER.get_account(input).await
 }
 
 #[query(name = "list_accounts")]
 async fn list_accounts() -> ApiResult<ListAccountResponse> {
-    let ctx = CallContext::get();
-    let owner_identity = ctx.caller();
-    ctx.check_access(PERMISSION_READ_ACCOUNT);
-
-    let accounts = AccountService::with_call_context(ctx)
-        .list_accounts(owner_identity)?
-        .iter()
-        .map(|account| account.to_dto())
-        .collect();
-
-    Ok(ListAccountResponse { accounts })
+    CONTROLLER.list_accounts().await
 }
 
 #[update(name = "fetch_account_balances")]
 async fn fetch_account_balances(
     input: FetchAccountBalancesInput,
 ) -> ApiResult<FetchAccountBalancesResponse> {
-    CallContext::get().check_access(PERMISSION_READ_ACCOUNT);
+    CONTROLLER.fetch_account_balances(input).await
+}
 
-    let balances = AccountService::with_call_context(CallContext::get())
-        .fetch_account_balances(input)
-        .await?;
+// Controller initialization and implementation.
+lazy_static! {
+    static ref CONTROLLER: AccountController = AccountController::new(AccountService::default());
+}
 
-    Ok(FetchAccountBalancesResponse { balances })
+#[derive(Debug)]
+pub struct AccountController {
+    account_service: AccountService,
+}
+
+impl AccountController {
+    pub fn new(account_service: AccountService) -> Self {
+        Self { account_service }
+    }
+
+    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_WRITE_ACCOUNT])]
+    async fn create_account(&self, input: CreateAccountInput) -> ApiResult<CreateAccountResponse> {
+        let created_account = self
+            .account_service
+            .create_account(input, &call_context())
+            .await?
+            .to_dto();
+
+        Ok(CreateAccountResponse {
+            account: created_account,
+        })
+    }
+
+    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
+        let account = self
+            .account_service
+            .get_account(
+                HelperMapper::to_uuid(input.account_id)?.as_bytes(),
+                &call_context(),
+            )?
+            .to_dto();
+
+        Ok(GetAccountResponse { account })
+    }
+
+    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    async fn list_accounts(&self) -> ApiResult<ListAccountResponse> {
+        let ctx = call_context();
+        let owner_identity = ctx.caller();
+
+        let accounts = self
+            .account_service
+            .list_accounts(owner_identity, &ctx)?
+            .iter()
+            .map(|account| account.to_dto())
+            .collect();
+
+        Ok(ListAccountResponse { accounts })
+    }
+
+    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    async fn fetch_account_balances(
+        &self,
+        input: FetchAccountBalancesInput,
+    ) -> ApiResult<FetchAccountBalancesResponse> {
+        let balances = self
+            .account_service
+            .fetch_account_balances(input, &call_context())
+            .await?;
+
+        Ok(FetchAccountBalancesResponse { balances })
+    }
 }

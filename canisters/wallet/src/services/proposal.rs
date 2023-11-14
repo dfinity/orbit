@@ -1,6 +1,6 @@
 use super::{AccountService, UserService};
 use crate::{
-    core::{ic_cdk::api::time, CallContext, PostProcessor, WithCallContext},
+    core::{ic_cdk::api::time, CallContext, PostProcessor},
     errors::ProposalError,
     mappers::HelperMapper,
     models::{Proposal, ProposalId, ProposalOperationType, ProposalVoteStatus},
@@ -14,25 +14,13 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct ProposalService {
-    call_context: CallContext,
     user_service: UserService,
     account_service: AccountService,
     proposal_repository: ProposalRepository,
 }
 
-impl WithCallContext for ProposalService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            call_context: call_context.clone(),
-            user_service: UserService::with_call_context(call_context.clone()),
-            account_service: AccountService::with_call_context(call_context.clone()),
-            ..Default::default()
-        }
-    }
-}
-
 impl ProposalService {
-    pub fn get_proposal(&self, id: &ProposalId) -> ServiceResult<Proposal> {
+    pub fn get_proposal(&self, id: &ProposalId, ctx: &CallContext) -> ServiceResult<Proposal> {
         let proposal =
             self.proposal_repository
                 .get(&Proposal::key(*id))
@@ -40,15 +28,17 @@ impl ProposalService {
                     proposal_id: Uuid::from_bytes(id.to_owned()).hyphenated().to_string(),
                 })?;
 
-        self.assert_proposal_access(&proposal)?;
+        self.assert_proposal_access(&proposal, ctx)?;
 
         Ok(proposal)
     }
 
-    pub fn list_proposals(&self, input: ListProposalsInput) -> ServiceResult<Vec<Proposal>> {
-        let user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+    pub fn list_proposals(
+        &self,
+        input: ListProposalsInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<Vec<Proposal>> {
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
 
@@ -68,13 +58,12 @@ impl ProposalService {
     pub fn list_account_proposals(
         &self,
         input: ListAccountProposalsInput,
+        ctx: &CallContext,
     ) -> ServiceResult<Vec<Proposal>> {
-        let user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let account = self
             .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes(), ctx)?;
 
         let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
 
@@ -91,12 +80,14 @@ impl ProposalService {
         Ok(proposals)
     }
 
-    pub async fn vote_on_proposal(&self, input: VoteOnProposalInput) -> ServiceResult<Proposal> {
-        let caller_user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+    pub async fn vote_on_proposal(
+        &self,
+        input: VoteOnProposalInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<Proposal> {
+        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let proposal_id = HelperMapper::to_uuid(input.proposal_id)?;
-        let mut proposal = self.get_proposal(proposal_id.as_bytes())?;
+        let mut proposal = self.get_proposal(proposal_id.as_bytes(), ctx)?;
         let vote = proposal
             .votes
             .iter_mut()
@@ -136,13 +127,11 @@ impl ProposalService {
 
         proposal.post_process()?;
 
-        self.get_proposal(proposal_id.as_bytes())
+        self.get_proposal(proposal_id.as_bytes(), ctx)
     }
 
-    fn assert_proposal_access(&self, proposal: &Proposal) -> ServiceResult<()> {
-        let user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+    fn assert_proposal_access(&self, proposal: &Proposal, ctx: &CallContext) -> ServiceResult<()> {
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         if !proposal.users().contains(&user.id) {
             Err(ProposalError::Forbidden {
@@ -176,6 +165,7 @@ mod tests {
         account_repository: AccountRepository,
         service: ProposalService,
         caller_user: User,
+        call_context: CallContext,
     }
 
     fn setup() -> TestContext {
@@ -191,8 +181,9 @@ mod tests {
             repository: ProposalRepository::default(),
             transfer_repository: TransferRepository::default(),
             account_repository: AccountRepository::default(),
-            service: ProposalService::with_call_context(call_context),
+            service: ProposalService::default(),
             caller_user: user,
+            call_context,
         }
     }
 
@@ -205,7 +196,7 @@ mod tests {
         ctx.repository
             .insert(proposal.to_key(), proposal.to_owned());
 
-        let result = ctx.service.get_proposal(&proposal.id);
+        let result = ctx.service.get_proposal(&proposal.id, &ctx.call_context);
 
         assert_eq!(proposal, result.unwrap());
     }
@@ -219,7 +210,7 @@ mod tests {
         ctx.repository
             .insert(proposal.to_key(), proposal.to_owned());
 
-        let result = ctx.service.get_proposal(&proposal.id);
+        let result = ctx.service.get_proposal(&proposal.id, &ctx.call_context);
 
         assert!(result.is_err());
     }
@@ -257,13 +248,16 @@ mod tests {
 
         let result = ctx
             .service
-            .vote_on_proposal(VoteOnProposalInput {
-                proposal_id: Uuid::from_bytes(proposal.id.to_owned())
-                    .hyphenated()
-                    .to_string(),
-                approve: Some(false),
-                reason: None,
-            })
+            .vote_on_proposal(
+                VoteOnProposalInput {
+                    proposal_id: Uuid::from_bytes(proposal.id.to_owned())
+                        .hyphenated()
+                        .to_string(),
+                    approve: Some(false),
+                    reason: None,
+                },
+                &ctx.call_context,
+            )
             .await;
 
         assert!(result.is_ok());

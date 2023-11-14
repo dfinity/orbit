@@ -23,7 +23,7 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: WalletController = WalletController::new(UserService::new());
+    static ref CONTROLLER: WalletController = WalletController::new(UserService::default());
 }
 
 #[derive(Debug)]

@@ -15,6 +15,8 @@ pub use call_context::*;
 mod processor;
 pub use processor::*;
 
+pub mod middlewares;
+
 #[cfg(not(test))]
 pub use ic_canister_core::cdk as ic_cdk;
 #[cfg(test)]

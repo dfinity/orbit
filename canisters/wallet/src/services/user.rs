@@ -1,5 +1,5 @@
 use crate::{
-    core::{generate_uuid_v4, CallContext, WithCallContext},
+    core::{generate_uuid_v4, CallContext},
     errors::UserError,
     mappers::{HelperMapper, UserMapper},
     models::{AccessRole, User, UserId},
@@ -14,22 +14,12 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct UserService {
-    call_context: CallContext,
     user_repository: UserRepository,
-}
-
-impl WithCallContext for UserService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            call_context: call_context.clone(),
-            ..Default::default()
-        }
-    }
 }
 
 impl UserService {
     /// Returns the user associated with the given user id.
-    pub fn get_user(&self, user_id: &UserId) -> ServiceResult<User> {
+    pub fn get_user(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<User> {
         let user =
             self.user_repository
                 .get(&User::key(*user_id))
@@ -39,27 +29,31 @@ impl UserService {
                         .to_string(),
                 })?;
 
-        self.assert_user_access(&user)?;
+        self.assert_user_access(&user, ctx)?;
 
         Ok(user)
     }
 
     /// Returns the user associated with the given user identity.
-    pub fn get_user_by_identity(&self, identity: &Principal) -> ServiceResult<User> {
+    pub fn get_user_by_identity(
+        &self,
+        identity: &Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
         let user = self.user_repository.find_by_identity(identity).ok_or(
             UserError::NotFoundUserIdentity {
                 identity: identity.to_text(),
             },
         )?;
 
-        self.assert_user_access(&user)?;
+        self.assert_user_access(&user, ctx)?;
 
         Ok(user)
     }
 
     /// Removes the admin role from the given identity if it has an associated user.
-    pub async fn remove_admin(&self, identity: &Principal) -> ServiceResult<()> {
-        if self.call_context.caller() == *identity {
+    pub async fn remove_admin(&self, identity: &Principal, ctx: &CallContext) -> ServiceResult<()> {
+        if ctx.caller() == *identity {
             Err(UserError::CannotRemoveOwnAdminRole)?
         }
 
@@ -80,8 +74,9 @@ impl UserService {
         &self,
         input: RegisterUserInput,
         mut roles: Vec<AccessRole>,
+        ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let caller_identity = self.call_context.caller();
+        let caller_identity = ctx.caller();
         self.assert_identity_has_no_associated_user(&caller_identity)?;
         let user_id = generate_uuid_v4().await;
         let identities = match input.identities.is_empty() {
@@ -118,12 +113,13 @@ impl UserService {
     pub async fn confirm_user_identity(
         &self,
         input: ConfirmUserIdentityInput,
+        ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let caller_identity = self.call_context.caller();
+        let caller_identity = ctx.caller();
         self.assert_identity_has_no_associated_user(&caller_identity)?;
 
         let user_id = HelperMapper::to_uuid(input.user_id)?;
-        let mut user = self.get_user(user_id.as_bytes())?;
+        let mut user = self.get_user(user_id.as_bytes(), ctx)?;
 
         if !user.unconfirmed_identities.contains(&caller_identity) {
             Err(UserError::Forbidden {
@@ -142,10 +138,10 @@ impl UserService {
     }
 
     /// Edits the user associated with the given user id and returns the updated user.
-    pub async fn edit_user(&self, input: EditUserInput) -> ServiceResult<User> {
-        let caller_identity = self.call_context.caller();
+    pub async fn edit_user(&self, input: EditUserInput, ctx: &CallContext) -> ServiceResult<User> {
+        let caller_identity = ctx.caller();
         let user_id = HelperMapper::to_uuid(input.user_id)?;
-        let mut user = self.get_user(user_id.as_bytes())?;
+        let mut user = self.get_user(user_id.as_bytes(), ctx)?;
 
         user.update_with(input.identities, &caller_identity)?;
         user.validate()?;
@@ -169,12 +165,10 @@ impl UserService {
     /// Checks if the caller has access to the given user.
     ///
     /// Admins have access to all users.
-    fn assert_user_access(&self, user: &User) -> ServiceResult<()> {
-        let is_user_owner = user.identities.contains(&self.call_context.caller())
-            || user
-                .unconfirmed_identities
-                .contains(&self.call_context.caller());
-        if !is_user_owner && !self.call_context.is_admin() {
+    fn assert_user_access(&self, user: &User, ctx: &CallContext) -> ServiceResult<()> {
+        let is_user_owner = user.identities.contains(&ctx.caller())
+            || user.unconfirmed_identities.contains(&ctx.caller());
+        if !is_user_owner && !ctx.is_admin() {
             Err(UserError::Forbidden {
                 user: Uuid::from_bytes(user.id).hyphenated().to_string(),
             })?
@@ -205,16 +199,16 @@ mod tests {
     struct TestContext {
         service: UserService,
         repository: UserRepository,
+        call_context: CallContext,
     }
 
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
-        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
-
         TestContext {
             repository: UserRepository::default(),
-            service: UserService::with_call_context(call_context),
+            service: UserService::default(),
+            call_context: CallContext::new(Principal::from_slice(&[9; 29])),
         }
     }
 
@@ -222,11 +216,11 @@ mod tests {
     fn get_user() {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![ctx.service.call_context.caller()];
+        user.identities = vec![ctx.call_context.caller()];
 
         ctx.repository.insert(user.to_key(), user.clone());
 
-        let result = ctx.service.get_user(&user.id);
+        let result = ctx.service.get_user(&user.id, &ctx.call_context);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
     }
@@ -235,11 +229,13 @@ mod tests {
     fn get_user_by_identity() {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![ctx.service.call_context.caller()];
+        user.identities = vec![ctx.call_context.caller()];
 
         ctx.repository.insert(user.to_key(), user.clone());
 
-        let result = ctx.service.get_user_by_identity(&user.identities[0]);
+        let result = ctx
+            .service
+            .get_user_by_identity(&user.identities[0], &ctx.call_context);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
     }
@@ -252,7 +248,9 @@ mod tests {
 
         ctx.repository.insert(user.to_key(), user.clone());
 
-        let result = ctx.service.get_user_by_identity(&user.identities[0]);
+        let result = ctx
+            .service
+            .get_user_by_identity(&user.identities[0], &ctx.call_context);
         assert!(result.is_err());
     }
 
@@ -260,7 +258,7 @@ mod tests {
     async fn can_remove_admin() {
         let ctx: TestContext = setup();
         let mut caller = user_test_utils::mock_user();
-        caller.identities = vec![ctx.service.call_context.caller()];
+        caller.identities = vec![ctx.call_context.caller()];
         caller.access_roles = vec![AccessRole::Admin];
         let mut admin = user_test_utils::mock_user();
         admin.identities = vec![Principal::from_slice(&[255; 29])];
@@ -269,7 +267,10 @@ mod tests {
         ctx.repository.insert(caller.to_key(), caller.clone());
         ctx.repository.insert(admin.to_key(), admin.clone());
 
-        let result = ctx.service.remove_admin(&admin.identities[0]).await;
+        let result = ctx
+            .service
+            .remove_admin(&admin.identities[0], &ctx.call_context)
+            .await;
         assert!(result.is_ok());
 
         let admin = ctx.repository.get(&admin.to_key()).unwrap();
@@ -280,12 +281,15 @@ mod tests {
     async fn fail_remove_self_admin() {
         let ctx: TestContext = setup();
         let mut admin = user_test_utils::mock_user();
-        admin.identities = vec![ctx.service.call_context.caller()];
+        admin.identities = vec![ctx.call_context.caller()];
         admin.access_roles = vec![AccessRole::Admin];
 
         ctx.repository.insert(admin.to_key(), admin.clone());
 
-        let result = ctx.service.remove_admin(&admin.identities[0]).await;
+        let result = ctx
+            .service
+            .remove_admin(&admin.identities[0], &ctx.call_context)
+            .await;
         assert!(result.is_err());
     }
 
@@ -296,11 +300,14 @@ mod tests {
             identities: vec![Principal::from_slice(&[2; 29])],
         };
 
-        let result = ctx.service.register_user(input, vec![]).await;
+        let result = ctx
+            .service
+            .register_user(input, vec![], &ctx.call_context)
+            .await;
         assert!(result.is_ok());
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(user.identities, vec![ctx.service.call_context.caller()]);
+        assert_eq!(user.identities, vec![ctx.call_context.caller()]);
         assert_eq!(
             user.unconfirmed_identities,
             vec![Principal::from_slice(&[2; 29])]
@@ -313,7 +320,7 @@ mod tests {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
         user.identities = vec![Principal::anonymous()];
-        user.unconfirmed_identities = vec![ctx.service.call_context.caller()];
+        user.unconfirmed_identities = vec![ctx.call_context.caller()];
 
         ctx.repository.insert(user.to_key(), user.clone());
 
@@ -321,13 +328,16 @@ mod tests {
             user_id: Uuid::from_bytes(user.id).hyphenated().to_string(),
         };
 
-        let result = ctx.service.confirm_user_identity(input).await;
+        let result = ctx
+            .service
+            .confirm_user_identity(input, &ctx.call_context)
+            .await;
         assert!(result.is_ok());
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
         assert_eq!(
             user.identities,
-            vec![Principal::anonymous(), ctx.service.call_context.caller()]
+            vec![Principal::anonymous(), ctx.call_context.caller()]
         );
         assert!(user.unconfirmed_identities.is_empty());
     }
@@ -337,20 +347,20 @@ mod tests {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
         user.identities = vec![Principal::anonymous()];
-        user.unconfirmed_identities = vec![ctx.service.call_context.caller()];
+        user.unconfirmed_identities = vec![ctx.call_context.caller()];
 
         ctx.repository.insert(user.to_key(), user.clone());
 
         let input = EditUserInput {
             user_id: Uuid::from_bytes(user.id).hyphenated().to_string(),
-            identities: Some(vec![ctx.service.call_context.caller()]),
+            identities: Some(vec![ctx.call_context.caller()]),
         };
 
-        let result = ctx.service.edit_user(input).await;
+        let result = ctx.service.edit_user(input, &ctx.call_context).await;
         assert!(result.is_ok());
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(user.identities, vec![ctx.service.call_context.caller()]);
+        assert_eq!(user.identities, vec![ctx.call_context.caller()]);
         assert!(user.unconfirmed_identities.is_empty());
     }
 }

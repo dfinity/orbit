@@ -1,6 +1,6 @@
 use super::{AccountService, NotificationService, UserService};
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, PostProcessor, WithCallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, PostProcessor},
     errors::{AccountError, TransferError},
     factories::blockchains::BlockchainApiFactory,
     mappers::{HelperMapper, TransferMapper},
@@ -19,7 +19,6 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct TransferService {
-    call_context: CallContext,
     user_service: UserService,
     account_service: AccountService,
     account_repository: AccountRepository,
@@ -28,19 +27,8 @@ pub struct TransferService {
     notification_service: NotificationService,
 }
 
-impl WithCallContext for TransferService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            call_context: call_context.clone(),
-            user_service: UserService::with_call_context(call_context.clone()),
-            account_service: AccountService::with_call_context(call_context.clone()),
-            ..Default::default()
-        }
-    }
-}
-
 impl TransferService {
-    pub fn get_transfer(&self, id: &TransferId) -> ServiceResult<Transfer> {
+    pub fn get_transfer(&self, id: &TransferId, ctx: &CallContext) -> ServiceResult<Transfer> {
         let transfer_key = Transfer::key(*id);
         let transfer = self.transfer_repository.get(&transfer_key).ok_or({
             TransferError::TransferNotFound {
@@ -48,31 +36,37 @@ impl TransferService {
             }
         })?;
 
-        self.assert_transfer_access(&transfer)?;
+        self.assert_transfer_access(&transfer, ctx)?;
 
         Ok(transfer)
     }
 
-    pub fn get_transfers(&self, transfer_ids: Vec<TransferId>) -> ServiceResult<Vec<Transfer>> {
+    pub fn get_transfers(
+        &self,
+        transfer_ids: Vec<TransferId>,
+        ctx: &CallContext,
+    ) -> ServiceResult<Vec<Transfer>> {
         if transfer_ids.len() > 50 {
             Err(TransferError::GetTransfersBatchNotAllowed { max: 50 })?
         }
 
         let mut transfers = Vec::new();
         for transfer_id in transfer_ids.iter() {
-            let transfer = self.get_transfer(transfer_id)?;
-            self.assert_transfer_access(&transfer)?;
+            let transfer = self.get_transfer(transfer_id, ctx)?;
+            self.assert_transfer_access(&transfer, ctx)?;
             transfers.push(transfer);
         }
 
         Ok(transfers)
     }
 
-    pub async fn create_transfer(&self, input: TransferInput) -> ServiceResult<Transfer> {
+    pub async fn create_transfer(
+        &self,
+        input: TransferInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<Transfer> {
         // validate user is owner of account
-        let caller_user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let account_id = HelperMapper::to_uuid(input.from_account_id.clone())?;
         let account_key = Account::key(*account_id.as_bytes());
         let account =
@@ -176,10 +170,11 @@ impl TransferService {
     pub fn list_account_transfers(
         &self,
         input: ListAccountTransfersInput,
+        ctx: &CallContext,
     ) -> ServiceResult<Vec<Transfer>> {
         let account = self
             .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes(), ctx)?;
 
         let transfers = self.transfer_repository.find_by_account(
             account.id,
@@ -191,10 +186,8 @@ impl TransferService {
         Ok(transfers)
     }
 
-    fn assert_transfer_access(&self, transfer: &Transfer) -> ServiceResult<()> {
-        let caller_user = self
-            .user_service
-            .get_user_by_identity(&self.call_context.caller())?;
+    fn assert_transfer_access(&self, transfer: &Transfer, ctx: &CallContext) -> ServiceResult<()> {
+        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let account_key = Account::key(transfer.from_account);
         let account = self.account_repository.get(&account_key).ok_or({
             AccountError::AccountNotFound {
@@ -232,6 +225,7 @@ mod tests {
         service: TransferService,
         caller_user: User,
         account: Account,
+        call_context: CallContext,
     }
 
     fn setup() -> TestContext {
@@ -250,9 +244,10 @@ mod tests {
 
         TestContext {
             repository: TransferRepository::default(),
-            service: TransferService::with_call_context(call_context),
+            service: TransferService::default(),
             caller_user: user,
             account,
+            call_context,
         }
     }
 
@@ -265,7 +260,7 @@ mod tests {
 
         ctx.repository.insert(transfer.to_key(), transfer.clone());
 
-        let result = ctx.service.get_transfer(&transfer.id);
+        let result = ctx.service.get_transfer(&transfer.id, &ctx.call_context);
 
         assert!(result.is_ok());
     }
@@ -282,7 +277,7 @@ mod tests {
 
         ctx.repository.insert(transfer.to_key(), transfer.clone());
 
-        let result = ctx.service.get_transfer(&transfer.id);
+        let result = ctx.service.get_transfer(&transfer.id, &ctx.call_context);
 
         assert!(result.is_err());
     }
@@ -301,7 +296,10 @@ mod tests {
             to: "03e252ebe920437d7aaff019b78a40bca50e24e42aebff00384d62038482ac81".to_string(),
         };
 
-        let result = ctx.service.create_transfer(transfer_input.clone()).await;
+        let result = ctx
+            .service
+            .create_transfer(transfer_input.clone(), &ctx.call_context)
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap().from_account, ctx.account.id);
@@ -321,7 +319,10 @@ mod tests {
             to: "03e252ebe920437d7aaff019b78a40bca50e24e42aebff00384d62038482ac81".to_string(),
         };
 
-        let result = ctx.service.create_transfer(transfer_input.clone()).await;
+        let result = ctx
+            .service
+            .create_transfer(transfer_input.clone(), &ctx.call_context)
+            .await;
 
         assert!(result.is_err());
     }

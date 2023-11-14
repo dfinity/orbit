@@ -3,7 +3,7 @@ use crate::core::ic_cdk::api::time;
 use crate::{
     core::{
         canister_config, default_wallet_permissions, write_canister_config, CallContext,
-        CanisterConfig, WithCallContext, WALLET_ASSETS,
+        CanisterConfig, WALLET_ASSETS,
     },
     models::{AccessRole, User, WalletFeatures, WalletSettings},
     repositories::UserRepository,
@@ -13,19 +13,8 @@ use ic_canister_core::api::ServiceResult;
 
 #[derive(Default, Debug)]
 pub struct WalletService {
-    _call_context: CallContext,
     user_repository: UserRepository,
     user_service: UserService,
-}
-
-impl WithCallContext for WalletService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            _call_context: call_context.clone(),
-            user_service: UserService::with_call_context(call_context.clone()),
-            ..Default::default()
-        }
-    }
 }
 
 impl WalletService {
@@ -63,6 +52,7 @@ impl WalletService {
         &self,
         mut config: CanisterConfig,
         init: WalletCanisterInit,
+        ctx: &CallContext,
     ) {
         let mut removed_owners = vec![];
         if let Some(new_owners) = &init.owners {
@@ -79,6 +69,7 @@ impl WalletService {
                             identities: vec![*admin],
                         },
                         vec![AccessRole::Admin],
+                        ctx,
                     )
                     .await
                     .expect("Failed to register admin user");
@@ -87,7 +78,7 @@ impl WalletService {
 
         for unassigned_admin in removed_owners {
             self.user_service
-                .remove_admin(unassigned_admin)
+                .remove_admin(unassigned_admin, ctx)
                 .await
                 .expect("Failed to unregister admin user");
         }
@@ -113,7 +104,7 @@ mod tests {
     async fn canister_upgrade() {
         let mut config = test_utils::init_canister_config();
         let call_context = CallContext::new(Principal::from_slice(&[1; 29]));
-        let wallet_service = WalletService::with_call_context(call_context.clone());
+        let wallet_service = WalletService::default();
 
         config.owners = vec![Principal::anonymous()];
         write_canister_config(config.to_owned());
@@ -127,7 +118,9 @@ mod tests {
             ..Default::default()
         };
 
-        wallet_service.register_canister_config(config, init).await;
+        wallet_service
+            .register_canister_config(config, init, &call_context)
+            .await;
 
         let canister_config = canister_config();
         assert_eq!(canister_config.owners.len(), 1);

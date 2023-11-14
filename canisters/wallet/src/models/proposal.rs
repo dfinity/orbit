@@ -23,7 +23,7 @@ pub struct Proposal {
     pub proposed_by: Option<UserId>,
     /// The status that the proposal is in.
     pub status: ProposalStatus,
-    /// An proposal that the proposal should execute, e.g. "transfer".
+    /// An operation that the proposal should execute, e.g. "transfer".
     pub operation: ProposalOperation,
     /// The votes that the proposal has received.
     pub votes: Vec<ProposalVote>,
