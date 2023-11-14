@@ -71,7 +71,7 @@ mod tests {
     fn valid_model_serialization() {
         let model = UserIdentity {
             identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            name: Some("Bank 1".to_string()),
+            name: Some("Wallet 1".to_string()),
         };
 
         let serialized_model = model.to_bytes();
@@ -88,11 +88,11 @@ mod tests {
     #[case::ends_with_space(&"Main ")]
     #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrmqUUkbgkbgg")]
     fn invalid_identity_name(#[case] name: &str) {
-        let user_bank = UserIdentity {
+        let user_identity = UserIdentity {
             identity: Principal::anonymous(),
             name: Some(String::from(name)),
         };
-        let validator = UserIdentityValidator::new(&user_bank);
+        let validator = UserIdentityValidator::new(&user_identity);
 
         assert!(validator.validate_name().is_err());
     }
@@ -103,12 +103,12 @@ mod tests {
     #[case::short_number_name(Some(String::from("1")))]
     #[case::common_name(Some(String::from("Main")))]
     #[case::long_name(Some(String::from("amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrmqUUkbgkbg")))]
-    fn valid_user_bank_name(#[case] name: Option<String>) {
-        let user_bank = UserIdentity {
+    fn valid_user_identity_name(#[case] name: Option<String>) {
+        let user_identity = UserIdentity {
             identity: Principal::anonymous(),
             name,
         };
-        let validator = UserIdentityValidator::new(&user_bank);
+        let validator = UserIdentityValidator::new(&user_identity);
 
         assert!(validator.validate_name().is_ok());
     }

@@ -27,7 +27,7 @@ mod tests {
     fn correct_dto_to_model_mapping() {
         let dto = UserIdentityDTO {
             identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            name: Some("Bank".to_string()),
+            name: Some("Main".to_string()),
         };
 
         let model = UserIdentity::from(dto.clone());
@@ -40,7 +40,7 @@ mod tests {
     fn correct_model_to_dto_mapping() {
         let model = UserIdentity {
             identity: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            name: Some("Bank".to_string()),
+            name: Some("Main".to_string()),
         };
 
         let dto = UserIdentityDTO::from(model.clone());

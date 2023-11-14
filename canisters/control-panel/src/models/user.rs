@@ -1,4 +1,4 @@
-use super::{UserBank, UserIdentity};
+use super::{UserIdentity, UserWallet};
 use crate::errors::UserError;
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::{
@@ -25,10 +25,10 @@ pub struct User {
     pub id: UUID,
     /// The name of the user (if any).
     pub name: Option<String>,
-    /// The shared bank to use for the user.
-    pub main_bank: Option<Principal>,
+    /// The shared wallet to use for the user.
+    pub main_wallet: Option<Principal>,
     /// The status of the identity.
-    pub banks: Vec<UserBank>,
+    pub wallets: Vec<UserWallet>,
     /// The identifies associated with the user.
     pub identities: Vec<UserIdentity>,
     /// The unconfirmed identifies associated with the user.
@@ -55,7 +55,7 @@ impl<'model> UserValidator<'model> {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
     pub const MAX_UNCONFIRMED_IDENTITIES: u8 = 9;
-    pub const MAX_BANKS: u8 = 10;
+    pub const MAX_WALLETS: u8 = 10;
 
     pub fn new(model: &'model User) -> Self {
         Self { model }
@@ -99,13 +99,13 @@ impl<'model> UserValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_banks(&self) -> ModelValidatorResult<UserError> {
-        if self.model.banks.len() > Self::MAX_BANKS as usize {
+    pub fn validate_wallets(&self) -> ModelValidatorResult<UserError> {
+        if self.model.wallets.len() > Self::MAX_WALLETS as usize {
             return Err(UserError::ValidationError {
                 info: format!(
-                    "Too many banks, expected at most {} but got {}",
-                    Self::MAX_BANKS,
-                    self.model.banks.len()
+                    "Too many wallets, expected at most {} but got {}",
+                    Self::MAX_WALLETS,
+                    self.model.wallets.len()
                 ),
             });
         }
@@ -113,18 +113,18 @@ impl<'model> UserValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_main_bank(&self) -> ModelValidatorResult<UserError> {
-        if let Some(main_bank) = &self.model.main_bank {
+    pub fn validate_main_wallet(&self) -> ModelValidatorResult<UserError> {
+        if let Some(main_wallet) = &self.model.main_wallet {
             if !self
                 .model
-                .banks
+                .wallets
                 .iter()
-                .any(|bank| &bank.canister_id == main_bank)
+                .any(|wallet| &wallet.canister_id == main_wallet)
             {
                 return Err(UserError::ValidationError {
                     info: format!(
-                        "Main bank {} is not in the list of banks {:?}",
-                        main_bank, self.model.banks
+                        "Main wallet {} is not in the list of wallets {:?}",
+                        main_wallet, self.model.wallets
                     ),
                 });
             }
@@ -160,8 +160,8 @@ impl<'model> UserValidator<'model> {
     pub fn validate(&self) -> ModelValidatorResult<UserError> {
         self.validate_identities()?;
         self.validate_unconfirmed_identities()?;
-        self.validate_banks()?;
-        self.validate_main_bank()?;
+        self.validate_wallets()?;
+        self.validate_main_wallet()?;
         self.validate_name()?;
 
         Ok(())
@@ -189,8 +189,8 @@ mod tests {
                 name: None,
             }],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 10,
             name: Some("Treasury".to_string()),
         };
@@ -218,8 +218,8 @@ mod tests {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 10,
             name: Some(name.to_string()),
         };
@@ -237,8 +237,8 @@ mod tests {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 10,
             name: Some(name.to_string()),
         };
@@ -253,8 +253,8 @@ mod tests {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
@@ -292,8 +292,8 @@ mod tests {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
@@ -330,81 +330,81 @@ mod tests {
     }
 
     #[test]
-    fn check_banks_validation() {
+    fn check_wallets_validation() {
         let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
 
-        let user_with_no_banks = user.clone();
-        let mut user_with_one_bank = user.clone();
-        let mut user_with_too_many_banks = user.clone();
+        let user_with_no_wallets = user.clone();
+        let mut user_with_one_wallet = user.clone();
+        let mut user_with_too_many_wallets = user.clone();
 
-        user_with_one_bank.banks.push(UserBank {
+        user_with_one_wallet.wallets.push(UserWallet {
             canister_id: Principal::anonymous(),
             name: None,
         });
 
-        for _ in 0..=UserValidator::MAX_BANKS {
-            user_with_too_many_banks.banks.push(UserBank {
+        for _ in 0..=UserValidator::MAX_WALLETS {
+            user_with_too_many_wallets.wallets.push(UserWallet {
                 canister_id: Principal::anonymous(),
                 name: None,
             });
         }
 
-        assert!(UserValidator::new(&user_with_no_banks)
-            .validate_banks()
+        assert!(UserValidator::new(&user_with_no_wallets)
+            .validate_wallets()
             .is_ok());
-        assert!(UserValidator::new(&user_with_one_bank)
-            .validate_banks()
+        assert!(UserValidator::new(&user_with_one_wallet)
+            .validate_wallets()
             .is_ok());
-        assert!(UserValidator::new(&user_with_too_many_banks)
-            .validate_banks()
+        assert!(UserValidator::new(&user_with_too_many_wallets)
+            .validate_wallets()
             .is_err());
     }
 
     #[test]
-    fn valid_main_bank() {
+    fn valid_main_wallet() {
         let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![UserBank {
+            wallets: vec![UserWallet {
                 canister_id: Principal::anonymous(),
                 name: None,
             }],
-            main_bank: Some(Principal::anonymous()),
+            main_wallet: Some(Principal::anonymous()),
             last_update_timestamp: 0,
             name: None,
         };
 
         let validator = UserValidator::new(&user);
 
-        assert!(validator.validate_main_bank().is_ok());
+        assert!(validator.validate_main_wallet().is_ok());
     }
 
     #[test]
-    fn invalid_main_bank() {
+    fn invalid_main_wallet() {
         let user = User {
             id: [u8::MAX; 16],
             identities: vec![],
             unconfirmed_identities: vec![],
-            banks: vec![UserBank {
+            wallets: vec![UserWallet {
                 canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 name: None,
             }],
-            main_bank: Some(Principal::anonymous()),
+            main_wallet: Some(Principal::anonymous()),
             last_update_timestamp: 0,
             name: None,
         };
 
         let validator = UserValidator::new(&user);
 
-        assert!(validator.validate_main_bank().is_err());
+        assert!(validator.validate_main_wallet().is_err());
     }
 }

@@ -6,8 +6,8 @@ mod user;
 pub use user::*;
 
 /// User bank DTOs.
-mod user_bank;
-pub use user_bank::*;
+mod user_wallet;
+pub use user_wallet::*;
 
 /// Manage user DTOs.
 mod manage_user;

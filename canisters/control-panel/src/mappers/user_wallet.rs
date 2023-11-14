@@ -1,17 +1,17 @@
-use crate::{models::UserBank, transport::UserBankDTO};
+use crate::{models::UserWallet, transport::UserWalletDTO};
 
-impl From<UserBank> for UserBankDTO {
-    fn from(user_bank: UserBank) -> Self {
-        UserBankDTO {
-            canister_id: user_bank.canister_id,
-            name: user_bank.name,
+impl From<UserWallet> for UserWalletDTO {
+    fn from(user_wallet: UserWallet) -> Self {
+        UserWalletDTO {
+            canister_id: user_wallet.canister_id,
+            name: user_wallet.name,
         }
     }
 }
 
-impl From<UserBankDTO> for UserBank {
-    fn from(dto: UserBankDTO) -> Self {
-        UserBank {
+impl From<UserWalletDTO> for UserWallet {
+    fn from(dto: UserWalletDTO) -> Self {
+        UserWallet {
             canister_id: dto.canister_id,
             name: dto.name,
         }
@@ -25,12 +25,12 @@ mod tests {
 
     #[test]
     fn correct_dto_to_model_mapping() {
-        let dto = UserBankDTO {
+        let dto = UserWalletDTO {
             canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            name: Some("Bank".to_string()),
+            name: Some("Wallet".to_string()),
         };
 
-        let model = UserBank::from(dto.clone());
+        let model = UserWallet::from(dto.clone());
 
         assert_eq!(model.canister_id, dto.canister_id);
         assert_eq!(model.name, dto.name);
@@ -38,12 +38,12 @@ mod tests {
 
     #[test]
     fn correct_model_to_dto_mapping() {
-        let model = UserBank {
+        let model = UserWallet {
             canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            name: Some("Bank".to_string()),
+            name: Some("Wallet".to_string()),
         };
 
-        let dto = UserBankDTO::from(model.clone());
+        let dto = UserWalletDTO::from(model.clone());
 
         assert_eq!(dto.canister_id, model.canister_id);
         assert_eq!(dto.name, model.name);

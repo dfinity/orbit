@@ -34,9 +34,9 @@ pub enum UserError {
     /// Removing the caller identity would lock the user.
     #[error(r#"Removing the caller identity would lock the user."#)]
     SelfLocked,
-    /// The main bank associated with the user was not found.
-    #[error(r#"The main bank associated with the user was not found."#)]
-    MainBankNotFound,
+    /// The main wallet associated with the user was not found.
+    #[error(r#"The main wallet associated with the user was not found."#)]
+    MainWalletNotFound,
 }
 
 impl DetailableError for UserError {

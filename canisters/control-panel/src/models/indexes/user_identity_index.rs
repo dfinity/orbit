@@ -64,8 +64,8 @@ mod tests {
                 },
             ],
             unconfirmed_identities: vec![],
-            banks: vec![],
-            main_bank: None,
+            wallets: vec![],
+            main_wallet: None,
             last_update_timestamp: 0,
             name: None,
         };
