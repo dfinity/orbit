@@ -1,7 +1,7 @@
 use ic_canister_core::api::ServiceResult;
 
 use crate::{
-    core::{CallContext, WithCallContext},
+    core::CallContext,
     models::Upgrade,
     repositories::{AccountRepository, ProposalRepository, TransferRepository},
     transport::UpgradeInput,
@@ -20,19 +20,12 @@ pub struct UpgradeService {
     notification_service: NotificationService,
 }
 
-impl WithCallContext for UpgradeService {
-    fn with_call_context(call_context: CallContext) -> Self {
-        Self {
-            call_context: call_context.clone(),
-            user_service: UserService::with_call_context(call_context.clone()),
-            account_service: AccountService::with_call_context(call_context.clone()),
-            ..Default::default()
-        }
-    }
-}
-
 impl UpgradeService {
-    pub async fn create_upgrade(&self, input: UpgradeInput) -> ServiceResult<Upgrade> {
+    pub async fn create_upgrade(
+        &self,
+        input: UpgradeInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<Upgrade> {
         Ok(Upgrade {
             id: todo!(),
             initiator_user: todo!(),
