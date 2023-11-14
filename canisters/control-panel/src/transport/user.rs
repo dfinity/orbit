@@ -1,4 +1,4 @@
-use super::{UserWalletDTO, UserIdentityDTO};
+use super::{UserIdentityDTO, UserWalletDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

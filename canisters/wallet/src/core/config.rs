@@ -1,8 +1,8 @@
 use super::WASM_PAGE_SIZE;
 use crate::{
     core::ic_cdk::api::{time, trap},
-    models::{AccessRole, WalletAsset, Blockchain, BlockchainStandard},
-    transport::{WalletPermissionDTO, UserRoleDTO},
+    models::{AccessRole, Blockchain, BlockchainStandard, WalletAsset},
+    transport::{UserRoleDTO, WalletPermissionDTO},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::types::Timestamp;

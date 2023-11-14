@@ -10,12 +10,12 @@ export NVM_DIR="$HOME/.nvm"
 
 MINTER_IDENTITY_NAME="minter"
 WHOAMI=$(dfx identity whoami)
-CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
-CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_CONTROL_PANEL="bw4dl-smaaa-aaaaa-qaacq-cai"
-CANISTER_ID_WALLET="avqkn-guaaa-aaaaa-qaaea-cai"
 CANISTER_ID_ICP_INDEX="qhbym-qaaaa-aaaaa-aaafq-cai"
-CANISTER_ID_WALLET_UI="asrmz-lmaaa-aaaaa-qaaeq-cai"
+CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
+CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
+CANISTER_ID_UI="asrmz-lmaaa-aaaaa-qaaeq-cai"
+CANISTER_ID_WALLET="avqkn-guaaa-aaaaa-qaaea-cai"
 
 #############################################
 # USAGE                                     #
@@ -33,8 +33,12 @@ Usage:
 
 Options:
   --init configures all the dependencies for the development environment
-  --init-wallet fresh installs the wallet canister
+  --init-control-panel fresh installs the control panel canister
+  --init-icp-index fresh installs the icp index canister, used to query the ledger transactions
   --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
+  --init-internet-identity fresh installs the internet identity canister
+  --init-ui fresh installs the wallet canister
+  --init-wallet fresh installs the wallet canister
   --candid-generate generates the code for the candid specifications that the wallet uses
 EOF
 }
@@ -160,17 +164,17 @@ function setup_wallet() {
   install_wallet
 }
 
-function uninstall_wallet_ui() {
-  dfx canister delete wallet_ui -y >/dev/null 2>&1 || true
+function uninstall_ui() {
+  dfx canister delete ui -y >/dev/null 2>&1 || true
 }
 
-function install_wallet_ui() {
-  DFX_NETWORK=local NODE_ENV=development dfx deploy --specified-id $CANISTER_ID_WALLET_UI wallet_ui
+function install_ui() {
+  DFX_NETWORK=local NODE_ENV=development dfx deploy --specified-id $CANISTER_ID_UI ui
 }
 
-function setup_wallet_ui() {
-  uninstall_wallet_ui
-  install_wallet_ui
+function setup_ui() {
+  uninstall_ui
+  install_ui
 }
 
 function candid_generate() {
@@ -213,7 +217,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_internet_identity
     exec_function setup_wallet
     exec_function setup_control_panel
-    exec_function setup_wallet_ui
+    exec_function setup_ui
     echo
     ;;
   --init-icp-ledger)
@@ -240,10 +244,10 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_control_panel
     echo
     ;;
-  --init-wallet-ui)
+  --init-ui)
     shift
     exec_function setup_devenv
-    exec_function setup_wallet_ui
+    exec_function setup_ui
     echo
     ;;
   --candid-generate)

@@ -1,10 +1,10 @@
 use crate::core::ic_cdk::api::time;
 use crate::{
     errors::UserError,
-    models::{User, UserWallet, UserId, UserIdentity},
+    models::{User, UserId, UserIdentity, UserWallet},
     transport::{
-        ManageUserInput, RegisterUserWalletInput, RegisterUserInput, UserWalletDTO, UserDTO,
-        UserIdentityDTO,
+        ManageUserInput, RegisterUserInput, RegisterUserWalletInput, UserDTO, UserIdentityDTO,
+        UserWalletDTO,
     },
 };
 use candid::Principal;
@@ -130,7 +130,10 @@ impl User {
         }
 
         if let Some(wallets) = input.wallets {
-            self.wallets = wallets.iter().map(|b| UserWallet::from(b.clone())).collect();
+            self.wallets = wallets
+                .iter()
+                .map(|b| UserWallet::from(b.clone()))
+                .collect();
         }
 
         Ok(())
@@ -165,7 +168,10 @@ mod tests {
         assert_eq!(user.name, Some("User".to_string()));
         assert_eq!(user.main_wallet, Some(global_shared_wallet_canister_id));
         assert_eq!(user.wallets.len(), 1);
-        assert_eq!(user.wallets[0].canister_id, global_shared_wallet_canister_id);
+        assert_eq!(
+            user.wallets[0].canister_id,
+            global_shared_wallet_canister_id
+        );
         assert_eq!(user.wallets[0].name, None);
         assert_eq!(user.identities.len(), 1);
         assert_eq!(user.identities[0].identity, identity);
@@ -233,7 +239,10 @@ mod tests {
         assert_eq!(user.wallets.len(), 2);
         assert_eq!(user.wallets[0].canister_id, main_wallet);
         assert_eq!(user.wallets[0].name, None);
-        assert_eq!(user.wallets[1].canister_id, global_shared_wallet_canister_id);
+        assert_eq!(
+            user.wallets[1].canister_id,
+            global_shared_wallet_canister_id
+        );
         assert_eq!(user.wallets[1].name, None);
         assert_eq!(user.identities.len(), 1);
         assert_eq!(user.identities[0].identity, identity);

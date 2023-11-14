@@ -88,7 +88,10 @@ impl InternetComputer {
     /// of the wallet canister id and the wallet_account uuid as the subaccount id.
     ///
     /// The wallet_account account id is used to identify a wallet_account in the ICP ledger.
-    pub fn wallet_account_to_ledger_account(&self, wallet_account_id: &AccountId) -> AccountIdentifier {
+    pub fn wallet_account_to_ledger_account(
+        &self,
+        wallet_account_id: &AccountId,
+    ) -> AccountIdentifier {
         let subaccount = self.subaccount_from_wallet_account_id(wallet_account_id);
 
         AccountIdentifier::new(&self.wallet_canister_id, &Subaccount(subaccount))
