@@ -1,21 +1,24 @@
+use super::AccountId;
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
-use super::{AccountId, TransferId};
-
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalOperation {
-    Transfer(TransferOperationContext),
+    Transfer(TransferOperation),
 }
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TransferOperationContext {
-    pub transfer_id: TransferId,
-    pub account_id: AccountId,
+pub struct TransferOperation {
+    pub from_account_id: AccountId,
+    pub to: String,
+    pub amount: candid::Nat,
+    pub metadata: Vec<(String, String)>,
+    pub network: String,
+    pub fee: Option<candid::Nat>,
 }
 
 impl Display for ProposalOperation {
@@ -24,9 +27,8 @@ impl Display for ProposalOperation {
             ProposalOperation::Transfer(ctx) => {
                 write!(
                     f,
-                    "transfer id {} from account {}",
-                    Uuid::from_bytes(ctx.transfer_id).hyphenated(),
-                    Uuid::from_bytes(ctx.account_id).hyphenated()
+                    "transfer from account {}",
+                    Uuid::from_bytes(ctx.from_account_id).hyphenated(),
                 )
             }
         }
@@ -40,12 +42,16 @@ mod tests {
     #[test]
     fn match_string_representation() {
         assert_eq!(
-            ProposalOperation::Transfer(TransferOperationContext {
-                account_id: [0; 16],
-                transfer_id: [1; 16]
+            ProposalOperation::Transfer(TransferOperation {
+                to: "0x1234".to_string(),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                amount: candid::Nat::from(0),
+                from_account_id: [0; 16],
             })
             .to_string(),
-            "transfer id 01010101-0101-0101-0101-010101010101 from account 00000000-0000-0000-0000-000000000000"
+            "transfer from account 00000000-0000-0000-0000-000000000000"
         );
     }
 }

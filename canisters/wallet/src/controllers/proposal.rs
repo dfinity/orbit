@@ -1,4 +1,7 @@
-use crate::core::{PERMISSION_READ_PROPOSAL, PERMISSION_VOTE_ON_PROPOSAL};
+use crate::core::{
+    PERMISSION_CREATE_PROPOSAL, PERMISSION_READ_PROPOSAL, PERMISSION_VOTE_ON_PROPOSAL,
+};
+use crate::transport::{CreateProposalInput, CreateProposalResponse};
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
@@ -37,6 +40,11 @@ async fn vote_on_proposal(input: VoteOnProposalInput) -> ApiResult<VoteOnProposa
     CONTROLLER.vote_on_proposal(input).await
 }
 
+#[update(name = "create_proposal")]
+async fn create_proposal(input: CreateProposalInput) -> ApiResult<CreateProposalResponse> {
+    CONTROLLER.create_proposal(input).await
+}
+
 // Controller initialization and implementation.
 lazy_static! {
     static ref CONTROLLER: ProposalController = ProposalController::new(ProposalService::default());
@@ -50,6 +58,21 @@ pub struct ProposalController {
 impl ProposalController {
     fn new(proposal_service: ProposalService) -> Self {
         Self { proposal_service }
+    }
+
+    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_CREATE_PROPOSAL])]
+    async fn create_proposal(
+        &self,
+        input: CreateProposalInput,
+    ) -> ApiResult<CreateProposalResponse> {
+        let proposal = self
+            .proposal_service
+            .create_proposal(input, &call_context())
+            .await?;
+
+        Ok(CreateProposalResponse {
+            proposal: ProposalDTO::from(proposal),
+        })
     }
 
     #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_PROPOSAL])]

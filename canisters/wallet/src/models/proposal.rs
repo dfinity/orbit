@@ -1,4 +1,8 @@
-use super::{ProposalOperation, ProposalStatus, ProposalVote, UserId};
+use super::{
+    AccountPolicy, PolicyStatus, ProposalOperation, ProposalStatus, ProposalVote,
+    ProposalVoteStatus, UserId,
+};
+use crate::core::ic_cdk::api::time;
 use crate::errors::ProposalError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -11,12 +15,23 @@ use std::collections::{HashMap, HashSet};
 /// The proposal id, which is a UUID.
 pub type ProposalId = UUID;
 
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ProposalExecutionPlan {
+    Immediate,
+    Scheduled { execution_time: Timestamp },
+}
+
 /// Represents a proposal within the system.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Proposal {
     /// The proposal id, which is a UUID.
     pub id: ProposalId,
+    /// The title of the proposal.
+    pub title: String,
+    /// The summary of the proposal, this is a longer description of the proposal.
+    pub summary: Option<String>,
     /// The user id that resulted in the proposal creation.
     ///
     /// When the proposal is created by the system, this field is `None`.
@@ -25,6 +40,10 @@ pub struct Proposal {
     pub status: ProposalStatus,
     /// An operation that the proposal should execute, e.g. "transfer".
     pub operation: ProposalOperation,
+    /// The expiration date of the proposal.
+    pub expiration_dt: Timestamp,
+    /// The execution plan of the proposal.
+    pub execution_plan: ProposalExecutionPlan,
     /// The votes that the proposal has received.
     pub votes: Vec<ProposalVote>,
     /// The proposal metadata key-value pairs, where the key is unique and the first entry in the tuple.
@@ -153,6 +172,42 @@ impl Proposal {
             .map(|(key, value)| (key.to_owned(), value.to_owned()))
             .collect()
     }
+
+    /// Gives the default expiration date for a proposal which is 7 days from the current time.
+    pub fn default_expiration_dt_ns() -> Timestamp {
+        let time_in_ns: u64 = 14 * 24 * 60 * 60 * 1_000_000_000;
+
+        time() + time_in_ns
+    }
+
+    pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
+        if self.votes.iter().any(|vote| vote.user_id == user_id) {
+            // users can only vote once per proposal
+            return;
+        }
+
+        self.votes.push(ProposalVote {
+            user_id,
+            status: vote,
+            status_reason: reason,
+            decided_dt: time(),
+            last_modification_timestamp: time(),
+        });
+    }
+
+    pub fn reevaluate(&mut self, policies: Vec<(AccountPolicy, PolicyStatus)>) {
+        if policies
+            .iter()
+            .all(|(_, status)| status == &PolicyStatus::Fullfilled)
+        {
+            self.status = ProposalStatus::Adopted;
+        } else if policies
+            .iter()
+            .any(|(_, status)| status == &PolicyStatus::Failed)
+        {
+            self.status = ProposalStatus::Rejected;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -214,7 +269,7 @@ mod tests {
                 user_id: [0; 16],
                 status: ProposalVoteStatus::Rejected,
                 status_reason: None,
-                decided_dt: None,
+                decided_dt: 0,
                 last_modification_timestamp: 0,
             };
             ProposalValidator::MAX_VOTES_ENTRIES as usize + 1
@@ -239,7 +294,7 @@ mod tests {
                 user_id: [0; 16],
                 status: ProposalVoteStatus::Rejected,
                 status_reason: None,
-                decided_dt: None,
+                decided_dt: 0,
                 last_modification_timestamp: 0,
             };
             ProposalValidator::MAX_VOTES_ENTRIES as usize - 1
@@ -253,23 +308,33 @@ mod tests {
 
 #[cfg(test)]
 pub mod proposal_test_utils {
+    use num_bigint::BigUint;
+
     use super::*;
-    use crate::models::{ProposalVoteStatus, TransferOperationContext};
+    use crate::models::{ProposalVoteStatus, TransferOperation};
 
     pub fn mock_proposal() -> Proposal {
         Proposal {
             id: [0; 16],
+            title: "foo".to_string(),
+            summary: Some("bar".to_string()),
             proposed_by: Some([1; 16]),
             status: ProposalStatus::Adopted,
-            operation: ProposalOperation::Transfer(TransferOperationContext {
-                transfer_id: [0; 16],
-                account_id: [1; 16],
+            expiration_dt: 100,
+            execution_plan: ProposalExecutionPlan::Immediate,
+            operation: ProposalOperation::Transfer(TransferOperation {
+                amount: candid::Nat(BigUint::from(100u32)),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+                from_account_id: [1; 16],
             }),
             votes: vec![ProposalVote {
                 user_id: [1; 16],
-                status: ProposalVoteStatus::Adopted,
+                status: ProposalVoteStatus::Accepted,
                 status_reason: None,
-                decided_dt: Some(0),
+                decided_dt: 0,
                 last_modification_timestamp: 0,
             }],
             metadata: vec![("foo".to_string(), "bar".to_string())],

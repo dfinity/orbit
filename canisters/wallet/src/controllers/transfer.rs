@@ -1,24 +1,19 @@
-use crate::core::{PERMISSION_READ_TRANSFER, PERMISSION_WRITE_TRANSFER};
+use crate::core::PERMISSION_READ_TRANSFER;
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
     services::TransferService,
     transport::{
         GetTransferInput, GetTransferResponse, GetTransfersInput, GetTransfersResponse,
-        ListAccountTransfersInput, ListAccountTransfersResponse, TransferInput, TransferResponse,
+        ListAccountTransfersInput, ListAccountTransfersResponse,
     },
 };
 use ic_canister_core::api::{ApiError, ApiResult};
 use ic_canister_macros::with_middleware;
-use ic_cdk_macros::{query, update};
+use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 
 // Canister entrypoints for the controller.
-#[update(name = "transfer")]
-async fn transfer(input: TransferInput) -> ApiResult<TransferResponse> {
-    CONTROLLER.transfer(input).await
-}
-
 #[query(name = "get_transfer")]
 async fn get_transfer(input: GetTransferInput) -> ApiResult<GetTransferResponse> {
     CONTROLLER.get_transfer(input).await
@@ -49,18 +44,6 @@ pub struct TransferController {
 impl TransferController {
     fn new(transfer_service: TransferService) -> Self {
         Self { transfer_service }
-    }
-
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_WRITE_TRANSFER])]
-    async fn transfer(&self, input: TransferInput) -> ApiResult<TransferResponse> {
-        let transfer = self
-            .transfer_service
-            .create_transfer(input, &call_context())
-            .await?;
-
-        Ok(TransferResponse {
-            transfer: transfer.to_dto(),
-        })
     }
 
     #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_TRANSFER])]

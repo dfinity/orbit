@@ -9,10 +9,8 @@ use std::{
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum ProposalVoteStatus {
-    Pending = 0,
-    Adopted = 1,
-    Rejected = 2,
-    NotRequired = 3,
+    Accepted = 0,
+    Rejected = 1,
 }
 
 impl From<ProposalVoteStatus> for u8 {
@@ -26,10 +24,8 @@ impl TryFrom<u8> for ProposalVoteStatus {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(ProposalVoteStatus::Pending),
-            1 => Ok(ProposalVoteStatus::Adopted),
-            2 => Ok(ProposalVoteStatus::Rejected),
-            3 => Ok(ProposalVoteStatus::NotRequired),
+            0 => Ok(ProposalVoteStatus::Accepted),
+            1 => Ok(ProposalVoteStatus::Rejected),
             _ => Err(()),
         }
     }
@@ -40,10 +36,8 @@ impl FromStr for ProposalVoteStatus {
 
     fn from_str(variant: &str) -> Result<ProposalVoteStatus, Self::Err> {
         match variant {
-            "pending" => Ok(ProposalVoteStatus::Pending),
-            "adopted" => Ok(ProposalVoteStatus::Adopted),
+            "accepted" => Ok(ProposalVoteStatus::Accepted),
             "rejected" => Ok(ProposalVoteStatus::Rejected),
-            "not-required" => Ok(ProposalVoteStatus::NotRequired),
             _ => Err(()),
         }
     }
@@ -52,10 +46,8 @@ impl FromStr for ProposalVoteStatus {
 impl Display for ProposalVoteStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ProposalVoteStatus::Pending => write!(f, "pending"),
-            ProposalVoteStatus::Adopted => write!(f, "adopted"),
+            ProposalVoteStatus::Accepted => write!(f, "accepted"),
             ProposalVoteStatus::Rejected => write!(f, "rejected"),
-            ProposalVoteStatus::NotRequired => write!(f, "not-required"),
         }
     }
 }
@@ -80,49 +72,29 @@ mod tests {
 
     #[test]
     fn test_status_string_representation() {
-        assert_eq!(ProposalVoteStatus::Pending.to_string(), "pending");
+        assert_eq!(ProposalVoteStatus::Accepted.to_string(), "accepted");
         assert_eq!(
-            ProposalVoteStatus::from_str("pending").unwrap(),
-            ProposalVoteStatus::Pending
-        );
-        assert_eq!(ProposalVoteStatus::Adopted.to_string(), "adopted");
-        assert_eq!(
-            ProposalVoteStatus::from_str("adopted").unwrap(),
-            ProposalVoteStatus::Adopted
+            ProposalVoteStatus::from_str("accepted").unwrap(),
+            ProposalVoteStatus::Accepted
         );
         assert_eq!(ProposalVoteStatus::Rejected.to_string(), "rejected");
         assert_eq!(
             ProposalVoteStatus::from_str("rejected").unwrap(),
             ProposalVoteStatus::Rejected
         );
-        assert_eq!(ProposalVoteStatus::NotRequired.to_string(), "not-required");
-        assert_eq!(
-            ProposalVoteStatus::from_str("not-required").unwrap(),
-            ProposalVoteStatus::NotRequired
-        );
     }
 
     #[test]
     fn test_status_number_representation() {
-        assert_eq!(ProposalVoteStatus::Pending as u8, 0);
+        assert_eq!(ProposalVoteStatus::Accepted as u8, 0);
         assert_eq!(
             ProposalVoteStatus::try_from(0).unwrap(),
-            ProposalVoteStatus::Pending
+            ProposalVoteStatus::Accepted
         );
-        assert_eq!(ProposalVoteStatus::Adopted as u8, 1);
+        assert_eq!(ProposalVoteStatus::Rejected as u8, 1);
         assert_eq!(
             ProposalVoteStatus::try_from(1).unwrap(),
-            ProposalVoteStatus::Adopted
-        );
-        assert_eq!(ProposalVoteStatus::Rejected as u8, 2);
-        assert_eq!(
-            ProposalVoteStatus::try_from(2).unwrap(),
             ProposalVoteStatus::Rejected
-        );
-        assert_eq!(ProposalVoteStatus::NotRequired as u8, 3);
-        assert_eq!(
-            ProposalVoteStatus::try_from(3).unwrap(),
-            ProposalVoteStatus::NotRequired
         );
     }
 }

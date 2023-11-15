@@ -45,7 +45,7 @@ impl BlockchainTransactioSubmitted {
 }
 
 #[async_trait]
-pub trait BlockchainApi {
+pub trait BlockchainApi: Send + Sync {
     /// Generates a new address for the given account.
     ///
     /// This address is used for token transfers.

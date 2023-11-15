@@ -1,17 +1,9 @@
-use super::indexes::{
-    transfer_account_index::TransferAccountIndexRepository,
-    transfer_execution_time_index::TransferExecutionTimeIndexRepository,
-    transfer_expiration_time_index::TransferExpirationTimeIndexRepository,
-};
+use super::indexes::transfer_account_index::TransferAccountIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
     models::{
-        indexes::{
-            transfer_account_index::TransferAccountIndexCriteria,
-            transfer_execution_time_index::TransferExecutionTimeIndexCriteria,
-            transfer_expiration_time_index::TransferExpirationTimeIndexCriteria,
-        },
-        AccountId, Transfer, TransferKey,
+        indexes::transfer_account_index::TransferAccountIndexCriteria, AccountId, Transfer,
+        TransferKey,
     },
 };
 use ic_canister_core::{
@@ -34,8 +26,6 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct TransferRepository {
     account_index: TransferAccountIndexRepository,
-    execution_dt_index: TransferExecutionTimeIndexRepository,
-    expiration_dt_index: TransferExpirationTimeIndexRepository,
 }
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
@@ -51,27 +41,11 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                     self.account_index.remove(&prev_account_index);
                     self.account_index.insert(value.to_index_by_account());
                 }
-                let prev_execution_dt_index = prev.to_index_by_execution_dt();
-                if prev_execution_dt_index != value.to_index_by_execution_dt() {
-                    self.execution_dt_index.remove(&prev_execution_dt_index);
-                    self.execution_dt_index
-                        .insert(value.to_index_by_execution_dt());
-                }
-                let prev_expiration_dt_index = prev.to_index_by_expiration_dt();
-                if prev_expiration_dt_index != value.to_index_by_expiration_dt() {
-                    self.expiration_dt_index.remove(&prev_expiration_dt_index);
-                    self.expiration_dt_index
-                        .insert(value.to_index_by_expiration_dt());
-                }
 
                 Some(prev)
             }
             None => {
                 self.account_index.insert(value.to_index_by_account());
-                self.execution_dt_index
-                    .insert(value.to_index_by_execution_dt());
-                self.expiration_dt_index
-                    .insert(value.to_index_by_expiration_dt());
 
                 None
             }
@@ -82,10 +56,6 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
         DB.with(|m| match m.borrow_mut().remove(key) {
             Some(prev) => {
                 self.account_index.remove(&prev.to_index_by_account());
-                self.execution_dt_index
-                    .remove(&prev.to_index_by_execution_dt());
-                self.expiration_dt_index
-                    .remove(&prev.to_index_by_expiration_dt());
 
                 Some(prev)
             }
@@ -95,70 +65,6 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
 }
 
 impl TransferRepository {
-    pub fn find_by_execution_dt_and_status(
-        &self,
-        execution_dt_from: Option<Timestamp>,
-        execution_dt_to: Option<Timestamp>,
-        status: String,
-    ) -> Vec<Transfer> {
-        let transfers =
-            self.execution_dt_index
-                .find_by_criteria(TransferExecutionTimeIndexCriteria {
-                    from_dt: execution_dt_from,
-                    to_dt: execution_dt_to,
-                });
-
-        transfers
-            .iter()
-            .filter_map(|id| match self.get(&Transfer::key(*id)) {
-                Some(transfer) => {
-                    if transfer
-                        .status
-                        .to_string()
-                        .eq_ignore_ascii_case(status.as_str())
-                    {
-                        Some(transfer)
-                    } else {
-                        None
-                    }
-                }
-                None => None,
-            })
-            .collect::<Vec<Transfer>>()
-    }
-
-    pub fn find_by_expiration_dt_and_status(
-        &self,
-        expiration_dt_from: Option<Timestamp>,
-        expiration_dt_to: Option<Timestamp>,
-        status: String,
-    ) -> Vec<Transfer> {
-        let transfers =
-            self.expiration_dt_index
-                .find_by_criteria(TransferExpirationTimeIndexCriteria {
-                    from_dt: expiration_dt_from,
-                    to_dt: expiration_dt_to,
-                });
-
-        transfers
-            .iter()
-            .filter_map(|id| match self.get(&Transfer::key(*id)) {
-                Some(transfer) => {
-                    if transfer
-                        .status
-                        .to_string()
-                        .eq_ignore_ascii_case(status.as_str())
-                    {
-                        Some(transfer)
-                    } else {
-                        None
-                    }
-                }
-                None => None,
-            })
-            .collect::<Vec<Transfer>>()
-    }
-
     pub fn find_by_account(
         &self,
         account_id: AccountId,
@@ -198,7 +104,7 @@ impl TransferRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{transfer_test_utils, TransferExecutionPlan};
+    use crate::models::transfer_test_utils;
 
     #[test]
     fn perform_crud() {
@@ -214,58 +120,58 @@ mod tests {
         assert!(repository.get(&transfer.to_key()).is_none());
     }
 
-    #[test]
-    fn find_transfer_with_execution_dt_and_status() {
-        let repository = TransferRepository::default();
-        let mut transfer = transfer_test_utils::mock_transfer();
-        transfer.execution_plan = TransferExecutionPlan::Scheduled { execution_time: 10 };
+    // #[test]
+    // fn find_transfer_with_execution_dt_and_status() {
+    //     let repository = TransferRepository::default();
+    //     let mut transfer = transfer_test_utils::mock_transfer();
+    //     transfer.execution_plan = TransferExecutionPlan::Scheduled { execution_time: 10 };
 
-        repository.insert(transfer.to_key(), transfer.clone());
+    //     repository.insert(transfer.to_key(), transfer.clone());
 
-        let transfers = repository.find_by_execution_dt_and_status(
-            Some(10),
-            Some(10),
-            transfer.status.to_string(),
-        );
+    //     let transfers = repository.find_by_execution_dt_and_status(
+    //         Some(10),
+    //         Some(10),
+    //         transfer.status.to_string(),
+    //     );
 
-        assert_eq!(transfers.len(), 1);
-        assert_eq!(transfers[0], transfer);
-    }
+    //     assert_eq!(transfers.len(), 1);
+    //     assert_eq!(transfers[0], transfer);
+    // }
 
-    #[test]
-    fn find_transfer_by_expiration_dt_and_status() {
-        let repository = TransferRepository::default();
-        let mut transfer = transfer_test_utils::mock_transfer();
-        transfer.expiration_dt = 10;
+    // #[test]
+    // fn find_transfer_by_expiration_dt_and_status() {
+    //     let repository = TransferRepository::default();
+    //     let mut transfer = transfer_test_utils::mock_transfer();
+    //     transfer.expiration_dt = 10;
 
-        repository.insert(transfer.to_key(), transfer.clone());
+    //     repository.insert(transfer.to_key(), transfer.clone());
 
-        let transfers = repository.find_by_expiration_dt_and_status(
-            Some(10),
-            Some(10),
-            transfer.status.to_string(),
-        );
+    //     let transfers = repository.find_by_expiration_dt_and_status(
+    //         Some(10),
+    //         Some(10),
+    //         transfer.status.to_string(),
+    //     );
 
-        assert_eq!(transfers.len(), 1);
-        assert_eq!(transfers[0], transfer);
-    }
+    //     assert_eq!(transfers.len(), 1);
+    //     assert_eq!(transfers[0], transfer);
+    // }
 
-    #[test]
-    fn no_transfers_of_future_expiration_dt() {
-        let repository = TransferRepository::default();
-        let mut transfer = transfer_test_utils::mock_transfer();
-        transfer.expiration_dt = 10;
+    // #[test]
+    // fn no_transfers_of_future_expiration_dt() {
+    //     let repository = TransferRepository::default();
+    //     let mut transfer = transfer_test_utils::mock_transfer();
+    //     transfer.expiration_dt = 10;
 
-        repository.insert(transfer.to_key(), transfer.clone());
+    //     repository.insert(transfer.to_key(), transfer.clone());
 
-        let transfers = repository.find_by_expiration_dt_and_status(
-            Some(20),
-            None,
-            transfer.status.to_string(),
-        );
+    //     let transfers = repository.find_by_expiration_dt_and_status(
+    //         Some(20),
+    //         None,
+    //         transfer.status.to_string(),
+    //     );
 
-        assert!(transfers.is_empty());
-    }
+    //     assert!(transfers.is_empty());
+    // }
 
     #[test]
     fn find_by_account() {

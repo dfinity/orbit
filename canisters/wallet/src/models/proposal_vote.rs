@@ -17,7 +17,7 @@ pub struct ProposalVote {
     /// Optional reason for the vote status.
     pub status_reason: Option<String>,
     /// When the vote was decided.
-    pub decided_dt: Option<Timestamp>,
+    pub decided_dt: Timestamp,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -91,7 +91,7 @@ mod tests {
             user_id: [0; 16],
             status: ProposalVoteStatus::Rejected,
             status_reason: None,
-            decided_dt: None,
+            decided_dt: 0,
             last_modification_timestamp: 0,
         }
     }

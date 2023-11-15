@@ -20,6 +20,9 @@ pub enum ProposalError {
     /// The proposal has failed validation.
     #[error(r#"The proposal has failed validation."#)]
     ValidationError { info: String },
+    /// You can't vote on the requested proposal.
+    #[error(r#"You can't vote on the requested proposal."#)]
+    VoteNotAllowed,
 }
 
 impl DetailableError for ProposalError {
@@ -46,6 +49,7 @@ impl DetailableError for ProposalError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
+            ProposalError::VoteNotAllowed => None,
         }
     }
 }
