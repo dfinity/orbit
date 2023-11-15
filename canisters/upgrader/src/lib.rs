@@ -13,7 +13,7 @@ use lazy_static::lazy_static;
 use crate::{
     hash::{Hash, Sha256Hasher},
     interface::{InitArg, QueueUpgradeError, QueueUpgradeResponse, UpgradeParams},
-    queue::{Queue, QueueError, Queuer, WithAuthorization, WithHexDecode},
+    queue::{Queue, QueueError, Queuer, WithAuthorization},
     upgrade::{Upgrade, Upgrader, WithCleanup},
 };
 
@@ -97,7 +97,6 @@ lazy_static! {
     static ref QUEUER: Box<dyn Queue> = {
         let q = Queuer::new(&QUEUED_UPGRADE_PARAMS);
         let q = VerifyChecksum(q, &HASHER);
-        let q = WithHexDecode(q);
         let q = CheckController(q, &TARGET_CANISTER_ID);
         let q = WithAuthorization(q, &TARGET_CANISTER_ID);
         let q = WithLogs(q, "queue".to_string());

@@ -98,20 +98,6 @@ impl<T: Queue> Queue for WithAuthorization<T> {
     }
 }
 
-pub struct WithHexDecode<T>(pub T);
-
-#[async_trait]
-impl<T: Queue> Queue for WithHexDecode<T> {
-    async fn queue(&self, ps: UpgradeParams) -> Result<(), QueueError> {
-        let ps = UpgradeParams {
-            module: hex::decode(ps.module).context("failed to decode module")?,
-            checksum: hex::decode(ps.checksum).context("failed to decode checksum")?,
-        };
-
-        self.0.queue(ps).await
-    }
-}
-
 #[async_trait]
 impl<T: Queue> Queue for WithLogs<T> {
     async fn queue(&self, ps: UpgradeParams) -> Result<(), QueueError> {
