@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
-use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
+use ic_cdk::api::management_canister::{
+    main::{self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument},
+    provisional::CanisterIdRecord,
 };
 use mockall::automock;
 
@@ -44,6 +45,12 @@ impl Upgrade for Upgrader {
             .target
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
+        // Stop
+        mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
+
+        // Upgrade
         mgmt::install_code(InstallCodeArgument {
             mode: CanisterInstallMode::Upgrade,
             canister_id: id.0,
@@ -52,6 +59,11 @@ impl Upgrade for Upgrader {
         })
         .await
         .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
+
+        // Start
+        mgmt::start_canister(CanisterIdRecord { canister_id: id.0 })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to start canister: {err}"))?;
 
         Ok(())
     }
