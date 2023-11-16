@@ -31,9 +31,7 @@ impl ProposalService {
                     proposal_id: Uuid::from_bytes(id.to_owned()).hyphenated().to_string(),
                 })?;
 
-        // let processor = ProposalFactory::create_processor(&proposal);
-
-        // todo: add access validation
+        self.assert_proposal_access(&proposal, ctx)?;
 
         Ok(proposal)
     }
@@ -99,14 +97,10 @@ impl ProposalService {
         // Different proposal types may have different validation rules.
         proposal.validate()?;
 
-        // When a proposal is created, it is immediately processed to determine its status.
-        // This is done because the proposal may be immediately rejected or adopted based on the policies.
-        let mut processor = ProposalFactory::create_processor(&proposal);
-
         // Different proposal types may have different access rules.
         // todo: add access validation
 
-        if processor.can_vote(&proposer.id) {
+        if proposal.can_vote(&proposer.id) {
             proposal.add_vote(
                 proposer.id,
                 ProposalVoteStatus::Accepted,
@@ -114,8 +108,9 @@ impl ProposalService {
             );
         }
 
-        let policies = processor.evaluate_policies();
-        proposal.reevaluate(policies);
+        // When a proposal is created, it is immediately evaluated to determine its status.
+        // This is done because the proposal may be immediately rejected or adopted based on the policies.
+        proposal.reevaluate();
 
         // Validate the proposal after the reevaluation.
         proposal.validate()?;
@@ -134,11 +129,8 @@ impl ProposalService {
         let voter = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let proposal_id = HelperMapper::to_uuid(input.proposal_id)?;
         let mut proposal = self.get_proposal(proposal_id.as_bytes(), ctx)?;
-        let mut processor = ProposalFactory::create_processor(&proposal);
 
-        // todo: add access validation
-
-        if !processor.can_vote(&voter.id) {
+        if !proposal.can_vote(&voter.id) {
             Err(ProposalError::VoteNotAllowed)?
         }
 
@@ -150,8 +142,7 @@ impl ProposalService {
         proposal.add_vote(voter.id, vote_decision, input.reason);
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
-        let policies = processor.evaluate_policies();
-        proposal.reevaluate(policies);
+        proposal.reevaluate();
 
         // Validate the proposal after the reevaluation.
         proposal.validate()?;
@@ -164,8 +155,10 @@ impl ProposalService {
 
     fn assert_proposal_access(&self, proposal: &Proposal, ctx: &CallContext) -> ServiceResult<()> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let processor = ProposalFactory::create_processor(&proposal);
+        let has_access = processor.has_access(&user.id);
 
-        if !proposal.users().contains(&user.id) {
+        if !proposal.users().contains(&user.id) && !has_access {
             Err(ProposalError::Forbidden {
                 proposal_id: Uuid::from_bytes(proposal.id.to_owned())
                     .hyphenated()
@@ -184,8 +177,8 @@ mod tests {
         core::test_utils,
         models::{
             account_test_utils::mock_account, proposal_test_utils::mock_proposal,
-            user_test_utils::mock_user, ProposalOperation, ProposalVoteStatus, TransferOperation,
-            User,
+            user_test_utils::mock_user, AccountPolicy, ApprovalThresholdPolicy, ProposalOperation,
+            ProposalVoteStatus, TransferOperation, User,
         },
         repositories::{AccountRepository, UserRepository},
     };
@@ -220,9 +213,26 @@ mod tests {
     #[test]
     fn get_proposal() {
         let ctx = setup();
+        let account_id = Uuid::new_v4();
+        let mut account = mock_account();
+        account.id = *account_id.as_bytes();
+        account.owners = vec![[2; 16]];
+        account.policies = vec![AccountPolicy::ApprovalThreshold(
+            ApprovalThresholdPolicy::VariableThreshold(100),
+        )];
         let mut proposal = mock_proposal();
         proposal.proposed_by = Some(ctx.caller_user.id);
+        proposal.operation = ProposalOperation::Transfer(TransferOperation {
+            from_account_id: *account_id.as_bytes(),
+            amount: candid::Nat(100u32.into()),
+            fee: None,
+            metadata: vec![],
+            network: "mainnet".to_string(),
+            to: "0x1234".to_string(),
+        });
 
+        ctx.account_repository
+            .insert(account.to_key(), account.clone());
         ctx.repository
             .insert(proposal.to_key(), proposal.to_owned());
 
@@ -234,9 +244,26 @@ mod tests {
     #[test]
     fn fail_get_proposal_not_allowed() {
         let ctx = setup();
+        let account_id = Uuid::new_v4();
+        let mut account = mock_account();
+        account.id = *account_id.as_bytes();
+        account.owners = vec![[2; 16]];
+        account.policies = vec![AccountPolicy::ApprovalThreshold(
+            ApprovalThresholdPolicy::VariableThreshold(100),
+        )];
         let mut proposal = mock_proposal();
         proposal.proposed_by = None;
-
+        proposal.operation = ProposalOperation::Transfer(TransferOperation {
+            from_account_id: *account_id.as_bytes(),
+            amount: candid::Nat(100u32.into()),
+            fee: None,
+            metadata: vec![],
+            network: "mainnet".to_string(),
+            to: "0x1234".to_string(),
+        });
+        
+        ctx.account_repository
+            .insert(account.to_key(), account.clone());
         ctx.repository
             .insert(proposal.to_key(), proposal.to_owned());
 
@@ -252,6 +279,9 @@ mod tests {
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
         account.owners = vec![ctx.caller_user.id];
+        account.policies = vec![AccountPolicy::ApprovalThreshold(
+            ApprovalThresholdPolicy::VariableThreshold(100),
+        )];
         let mut proposal = mock_proposal();
         proposal.proposed_by = None;
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
@@ -262,6 +292,7 @@ mod tests {
             network: "mainnet".to_string(),
             to: "0x1234".to_string(),
         });
+        proposal.votes = vec![];
 
         ctx.account_repository
             .insert(account.to_key(), account.clone());

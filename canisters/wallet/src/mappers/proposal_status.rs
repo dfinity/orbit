@@ -14,7 +14,9 @@ impl From<ProposalStatus> for ProposalStatusDTO {
             ProposalStatus::Processing { started_at } => ProposalStatusDTO::Processing {
                 started_at: timestamp_to_rfc3339(&started_at),
             },
-            ProposalStatus::Scheduled => ProposalStatusDTO::Scheduled,
+            ProposalStatus::Scheduled { scheduled_at } => ProposalStatusDTO::Scheduled {
+                scheduled_at: timestamp_to_rfc3339(&scheduled_at),
+            },
             ProposalStatus::Cancelled { reason } => ProposalStatusDTO::Cancelled { reason },
         }
     }
@@ -33,7 +35,9 @@ impl From<ProposalStatusDTO> for ProposalStatus {
             ProposalStatusDTO::Processing { started_at } => ProposalStatus::Processing {
                 started_at: rfc3339_to_timestamp(started_at.as_str()),
             },
-            ProposalStatusDTO::Scheduled => ProposalStatus::Scheduled,
+            ProposalStatusDTO::Scheduled { scheduled_at } => ProposalStatus::Scheduled {
+                scheduled_at: rfc3339_to_timestamp(&scheduled_at),
+            },
             ProposalStatusDTO::Cancelled { reason } => ProposalStatus::Cancelled { reason },
         }
     }

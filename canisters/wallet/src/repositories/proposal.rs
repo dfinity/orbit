@@ -1,6 +1,8 @@
 use super::indexes::{
     proposal_account_index::ProposalAccountIndexRepository,
     proposal_expiration_time_index::ProposalExpirationTimeIndexRepository,
+    proposal_scheduled_index::ProposalScheduledIndexRepository,
+    proposal_status_index::ProposalStatusIndexRepository,
     proposal_user_index::ProposalUserIndexRepository,
 };
 use crate::{
@@ -9,13 +11,15 @@ use crate::{
         indexes::{
             proposal_account_index::ProposalAccountIndexCriteria,
             proposal_expiration_time_index::ProposalExpirationTimeIndexCriteria,
+            proposal_scheduled_index::ProposalScheduledIndexCriteria,
+            proposal_status_index::ProposalStatusIndexCriteria,
             proposal_user_index::ProposalUserIndexCriteria,
         },
         AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatus, UserId,
     },
 };
 use ic_canister_core::{
-    repository::{IndexRepository, Repository},
+    repository::{IndexRepository, RefreshIndexMode, Repository},
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -35,6 +39,8 @@ pub struct ProposalRepository {
     user_index: ProposalUserIndexRepository,
     account_index: ProposalAccountIndexRepository,
     expiration_dt_index: ProposalExpirationTimeIndexRepository,
+    status_index: ProposalStatusIndexRepository,
+    scheduled_index: ProposalScheduledIndexRepository,
 }
 
 impl Repository<ProposalKey, Proposal> for ProposalRepository {
@@ -43,73 +49,85 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
     }
 
     fn insert(&self, key: ProposalKey, value: Proposal) -> Option<Proposal> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_users_index = prev.to_index_for_users();
-                if prev_users_index != value.to_index_for_users() {
-                    prev_users_index.iter().for_each(|index| {
-                        self.user_index.remove(index);
-                    });
-                    value.to_index_for_users().iter().for_each(|index| {
-                        self.user_index.insert(index.to_owned());
-                    });
-                }
-
-                match (prev.to_index_for_account(), value.to_index_for_account()) {
-                    (Some(prev), Some(current)) => {
-                        if prev != current {
-                            self.account_index.remove(&prev);
-                            self.account_index.insert(current);
-                        }
-                    }
-                    (Some(prev), None) => {
-                        self.account_index.remove(&prev);
-                    }
-                    (None, Some(current)) => {
-                        self.account_index.insert(current);
-                    }
-                    _ => {}
-                }
-
-                let prev_expiration_dt_index = prev.to_index_by_expiration_dt();
-                if prev_expiration_dt_index != value.to_index_by_expiration_dt() {
-                    self.expiration_dt_index.remove(&prev_expiration_dt_index);
-                    self.expiration_dt_index
-                        .insert(value.to_index_by_expiration_dt());
-                }
-
-                Some(prev)
-            }
-            None => {
-                value.to_index_for_users().iter().for_each(|index| {
-                    self.user_index.insert(index.to_owned());
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+            self.user_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_users()),
+                    current: value.to_index_for_users(),
                 });
-                if let Some(account_index) = value.to_index_for_account() {
-                    self.account_index.insert(account_index);
-                }
-                self.expiration_dt_index
-                    .insert(value.to_index_by_expiration_dt());
 
-                None
-            }
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map_or(None, |prev| prev.to_index_for_account()),
+                    current: value.to_index_for_account(),
+                });
+            self.scheduled_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map_or(None, |prev| prev.to_index_by_scheduled()),
+                    current: value.to_index_by_scheduled(),
+                });
+            self.expiration_dt_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map_or(None, |prev| Some(prev.to_index_by_expiration_dt())),
+                    current: Some(value.to_index_by_expiration_dt()),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map_or(None, |prev| Some(prev.to_index_by_status())),
+                    current: Some(value.to_index_by_status()),
+                });
+
+            prev
         })
     }
 
     fn remove(&self, key: &ProposalKey) -> Option<Proposal> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                prev.to_index_for_users().iter().for_each(|index| {
-                    self.user_index.remove(index);
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.user_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_users()),
                 });
-                if let Some(account_index) = prev.to_index_for_account() {
-                    self.account_index.remove(&account_index);
-                }
-                self.expiration_dt_index
-                    .remove(&prev.to_index_by_expiration_dt());
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map_or(None, |prev| prev.to_index_for_account()),
+                });
+            self.scheduled_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map_or(None, |prev| prev.to_index_by_scheduled()),
+                });
+            self.expiration_dt_index.refresh_index_on_modification(
+                RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map_or(None, |prev| Some(prev.to_index_by_expiration_dt())),
+                },
+            );
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map_or(None, |prev| Some(prev.to_index_by_status())),
+                });
 
-                Some(prev)
-            }
-            None => None,
+            prev
         })
     }
 }
@@ -156,6 +174,41 @@ impl ProposalRepository {
                 }
                 None => None,
             })
+            .collect::<Vec<Proposal>>()
+    }
+
+    pub fn find_by_status(
+        &self,
+        status: String,
+        from_last_update_dt: Option<Timestamp>,
+        to_last_update_dt: Option<Timestamp>,
+    ) -> Vec<Proposal> {
+        let proposals = self
+            .status_index
+            .find_by_criteria(ProposalStatusIndexCriteria {
+                status: status.to_owned(),
+                from_dt: from_last_update_dt,
+                to_dt: to_last_update_dt,
+            });
+
+        proposals
+            .iter()
+            .filter_map(|id| self.get(&Proposal::key(*id)))
+            .collect::<Vec<Proposal>>()
+    }
+
+    pub fn find_scheduled(
+        &self,
+        from_dt: Option<Timestamp>,
+        to_dt: Option<Timestamp>,
+    ) -> Vec<Proposal> {
+        let proposals = self
+            .scheduled_index
+            .find_by_criteria(ProposalScheduledIndexCriteria { from_dt, to_dt });
+
+        proposals
+            .iter()
+            .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect::<Vec<Proposal>>()
     }
 

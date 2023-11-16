@@ -1,6 +1,6 @@
 use crate::{
-    core::{generate_uuid_v4, CallContext},
-    models::{Proposal, ProposalExecutionPlan, ProposalOperation, AccountPolicy, PolicyStatus},
+    core::generate_uuid_v4,
+    models::{AccountPolicy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
     transport::{CreateProposalInput, ProposalOperationInput},
 };
 use async_trait::async_trait;
@@ -9,20 +9,16 @@ use uuid::Uuid;
 
 mod transfer;
 
-pub trait ProposalCreator {
-    fn create_proposal(&self, proposal: Proposal);
-}
-
 #[async_trait]
 pub trait ProposalProcessor: Send + Sync {
     /// Reevaluates the status of the proposal.
-    fn evaluate_policies(&mut self) -> Vec<(AccountPolicy, PolicyStatus)>;
+    fn evaluate_policies(&self) -> Vec<(AccountPolicy, PolicyStatus)>;
 
     /// Returns true if the user can vote on the proposal.
     fn can_vote(&self, user_id: &UUID) -> bool;
 
     /// Checks if the user has access to the proposal.
-    fn has_access(&self, ctx: &CallContext) -> bool;
+    fn has_access(&self, user_id: &UUID) -> bool;
 
     /// Executes the proposal.
     ///
@@ -66,7 +62,9 @@ impl ProposalFactory {
         }
     }
 
-    pub fn create_processor(proposal: &Proposal) -> Box<dyn ProposalProcessor> {
+    pub fn create_processor<'proposal>(
+        proposal: &'proposal Proposal,
+    ) -> Box<dyn ProposalProcessor + 'proposal> {
         match &proposal.operation {
             ProposalOperation::Transfer(_) => {
                 Box::new(transfer::TransferProposalProcessor::new(proposal))

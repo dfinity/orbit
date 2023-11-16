@@ -120,7 +120,12 @@ type ProposalStatus = variant {
   Created;
   Adopted;
   Rejected;
-  Scheduled;
+  Cancelled : record {
+    reason : opt text;
+  };
+  Scheduled : record {
+    scheduled_at : TimestampRFC3339;
+  };
   Processing : record {
     started_at : TimestampRFC3339;
   };
@@ -133,7 +138,7 @@ type ProposalStatus = variant {
 };
 
 // The status of a proposal.
-type ProposalVoteStatus = variant { Pending; Adopted; Rejected; NotRequired };
+type ProposalVoteStatus = variant { Accepted; Rejected };
 
 // A record type that can be used to represent a vote on a proposal.
 type ProposalVote = record {
@@ -220,8 +225,8 @@ type Proposal = record {
   id : ProposalId;
   // The proposal title.
   title : text;
-  // The proposal description (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
-  description : opt text;
+  // The proposal summary (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
+  summary : opt text;
   // The operation that was proposed.
   operation : ProposalOperation;
   // The user that created the proposal.
@@ -249,8 +254,8 @@ type CreateProposalInput = record {
   operation : ProposalOperationInput;
   // The proposal title (e.g. "Payment to John").
   title : opt text;
-  // The proposal description (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
-  description : opt text;
+  // The proposal summary (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
+  summary : opt text;
   // The time at which the proposal will execute if adopted.
   execution_plan : opt ProposalExecutionSchedule;
 };
@@ -334,7 +339,7 @@ type VoteOnProposalInput = record {
   // The proposal id to interact with.
   proposal_id : ProposalId;
   // True if the user approves the proposal, false otherwise.
-  approve : opt bool;
+  approve : bool;
   // The reason for the approval or rejection.
   reason : opt text;
 };
@@ -451,15 +456,8 @@ type TransferMetadata = record {
 
 // The status of a transfer.
 type TransferStatus = variant {
-  // The transfer is pending approval.
-  Pending;
-  // The transfer has been approved.
-  Approved;
-  // The transfer has been rejected.
-  Rejected : record {
-    // The reason for the rejection.
-    reason : text;
-  };
+  // The transfer is created for processing.
+  Created;
   // The transfer has been failed.
   Failed : record {
     // The failure reason.
@@ -508,26 +506,10 @@ type Transfer = record {
   amount : nat;
   // The status of the transfer.
   status : TransferStatus;
-  // The transfer is only executed if all the policies are fulfilled before the `expiration_dt`.
-  expiration_dt : TimestampRFC3339;
-  // When the transaction should be executed.
-  execution_plan : TransferExecutionSchedule;
   // The network used when submitting the transaction to the blockchain.
   network : Network;
   // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
   metadata : vec TransferMetadata;
-};
-
-// The schedule for executing a transaction of a given transfer.
-type TransferExecutionSchedule = variant {
-  // The transaction will be executed immediately.
-  Immediate;
-  // The transaction will be executed at a given time.
-  Scheduled : record {
-    // The time at which the transaction will be executed,
-    // it must be in the future.
-    execution_time : TimestampRFC3339;
-  };
 };
 
 type GetTransferInput = record {

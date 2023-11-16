@@ -18,7 +18,8 @@ pub const TRANSFER_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(7);
 pub const PROPOSAL_MEMORY_ID: MemoryId = MemoryId::new(8);
 pub const PROPOSAL_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
 pub const PROPOSAL_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
-pub const PROPOSAL_TRANSFER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
+pub const PROPOSAL_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
+pub const PROPOSAL_SCHEDULED_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(13);
 pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);
 

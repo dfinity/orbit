@@ -6,7 +6,7 @@ use ic_canister_macros::stable_object;
 pub enum PolicyStatus {
     Pending,
     Failed,
-    Fullfilled,
+    Fulfilled,
 }
 
 /// Represents a account policy within the system.

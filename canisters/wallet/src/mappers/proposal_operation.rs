@@ -22,8 +22,8 @@ impl From<TransferOperation> for TransferOperationDTO {
                 })
                 .collect(),
             network: NetworkDTO {
-                id: operation.network,
-                name: operation.network,
+                id: operation.network.clone(),
+                name: operation.network.clone(),
             },
         }
     }

@@ -17,7 +17,6 @@ pub struct TransferService {
     account_service: AccountService,
     account_repository: AccountRepository,
     transfer_repository: TransferRepository,
-    proposal_repository: ProposalRepository,
     notification_service: NotificationService,
 }
 

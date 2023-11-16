@@ -9,7 +9,7 @@ pub enum ProposalStatus {
     Created,
     Adopted,
     Rejected,
-    Scheduled,
+    Scheduled { scheduled_at: Timestamp },
     Cancelled { reason: Option<String> },
     Processing { started_at: Timestamp },
     Completed { completed_at: Timestamp },
@@ -22,7 +22,7 @@ impl Display for ProposalStatus {
             ProposalStatus::Created => write!(f, "created"),
             ProposalStatus::Adopted => write!(f, "adopted"),
             ProposalStatus::Rejected => write!(f, "rejected"),
-            ProposalStatus::Scheduled => write!(f, "scheduled"),
+            ProposalStatus::Scheduled { .. } => write!(f, "scheduled"),
             ProposalStatus::Processing { .. } => write!(f, "processing"),
             ProposalStatus::Completed { .. } => write!(f, "completed"),
             ProposalStatus::Failed { .. } => write!(f, "failed"),
@@ -40,7 +40,10 @@ mod tests {
         assert_eq!(ProposalStatus::Created.to_string(), "created");
         assert_eq!(ProposalStatus::Adopted.to_string(), "adopted");
         assert_eq!(ProposalStatus::Rejected.to_string(), "rejected");
-        assert_eq!(ProposalStatus::Scheduled.to_string(), "scheduled");
+        assert_eq!(
+            ProposalStatus::Scheduled { scheduled_at: 0 }.to_string(),
+            "scheduled"
+        );
         assert_eq!(
             ProposalStatus::Processing { started_at: 0 }.to_string(),
             "processing"

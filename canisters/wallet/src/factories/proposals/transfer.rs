@@ -1,6 +1,6 @@
 use super::ProposalProcessor;
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::trap, CallContext},
+    core::{generate_uuid_v4, ic_cdk::api::trap},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
@@ -8,7 +8,7 @@ use crate::{
         ProposalExecutionPlan, ProposalOperation, ProposalStatus, ProposalVoteStatus, Transfer,
         TransferOperation,
     },
-    repositories::{AccountRepository, ProposalRepository, TransferRepository},
+    repositories::{AccountRepository, TransferRepository},
     transport::ProposalOperationInput,
 };
 use async_trait::async_trait;
@@ -20,7 +20,6 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct TransferProposalProcessor<'proposal> {
     transfer_repository: TransferRepository,
-    proposal_repository: ProposalRepository,
     account_repository: AccountRepository,
     proposal: &'proposal Proposal,
 }
@@ -30,7 +29,6 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
         Self {
             proposal,
             transfer_repository: TransferRepository::default(),
-            proposal_repository: ProposalRepository::default(),
             account_repository: AccountRepository::default(),
         }
     }
@@ -57,7 +55,7 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
 
 #[async_trait]
 impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
-    fn evaluate_policies(&mut self) -> Vec<(AccountPolicy, PolicyStatus)> {
+    fn evaluate_policies(&self) -> Vec<(AccountPolicy, PolicyStatus)> {
         let account = self.get_account();
         let mut policy_list = account
             .policies
@@ -82,7 +80,9 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
             })
             .count();
 
-        for (policy, mut status) in policy_list.iter() {
+        for i in 0..policy_list.len() {
+            let (policy, status) = &mut policy_list[i];
+
             match policy {
                 AccountPolicy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
@@ -90,9 +90,9 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
                             total_approvals + missing_votes >= *min_approvals as usize;
 
                         if total_approvals >= *min_approvals as usize {
-                            status = PolicyStatus::Fullfilled;
+                            *status = PolicyStatus::Fulfilled;
                         } else if !can_still_be_approved {
-                            status = PolicyStatus::Failed;
+                            *status = PolicyStatus::Failed;
                         }
                     }
                     ApprovalThresholdPolicy::VariableThreshold(percentage) => {
@@ -100,14 +100,13 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
                             * (*percentage as f64 / 100.0))
                             .ceil() as u8)
                             .max(1);
-
                         let can_still_be_approved =
                             total_approvals + missing_votes >= min_approvals as usize;
 
                         if total_approvals >= min_approvals as usize {
-                            status = PolicyStatus::Fullfilled;
+                            *status = PolicyStatus::Fulfilled;
                         } else if !can_still_be_approved {
-                            status = PolicyStatus::Failed;
+                            *status = PolicyStatus::Failed;
                         }
                     }
                 },
@@ -139,19 +138,19 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         let account = self.get_account();
 
         let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
-        let fee = match input.fee {
-            Some(fee) => fee,
+        let fee = match &input.fee {
+            Some(fee) => fee.clone(),
             None => candid::Nat(blockchain_api.transaction_fee(&account).await?.fee),
         };
         let transfer = Transfer::new(
             *transfer_id.as_bytes(),
             self.proposal.proposed_by.expect("Proposer not found"),
             input.from_account_id,
-            input.to,
-            input.metadata,
-            input.amount,
+            input.to.clone(),
+            input.metadata.clone(),
+            input.amount.clone(),
             fee,
-            input.network,
+            input.network.clone(),
         );
 
         transfer.validate()?;
@@ -162,9 +161,10 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         Ok(())
     }
 
-    fn has_access(&self, ctx: &CallContext) -> bool {
-        // todo: validate access to proposal
-        true
+    fn has_access(&self, user_id: &UUID) -> bool {
+        let account = self.get_account();
+
+        self.proposal.users().contains(user_id) || account.owners.contains(user_id)
     }
 
     fn new_proposal(

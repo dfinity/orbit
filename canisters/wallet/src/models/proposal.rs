@@ -1,9 +1,8 @@
 use super::{
-    AccountPolicy, PolicyStatus, ProposalOperation, ProposalStatus, ProposalVote,
-    ProposalVoteStatus, UserId,
+    PolicyStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
-use crate::core::ic_cdk::api::time;
 use crate::errors::ProposalError;
+use crate::{core::ic_cdk::api::time, factories::proposals::ProposalFactory};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -180,6 +179,12 @@ impl Proposal {
         time() + time_in_ns
     }
 
+    pub fn can_vote(&self, user_id: &UUID) -> bool {
+        let processor = ProposalFactory::create_processor(self);
+
+        processor.can_vote(user_id)
+    }
+
     pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
         if self.votes.iter().any(|vote| vote.user_id == user_id) {
             // users can only vote once per proposal
@@ -195,10 +200,16 @@ impl Proposal {
         });
     }
 
-    pub fn reevaluate(&mut self, policies: Vec<(AccountPolicy, PolicyStatus)>) {
+    pub fn reevaluate(&mut self) {
+        let processor = ProposalFactory::create_processor(self);
+        let policies = processor.evaluate_policies();
+
+        // must drop the processor before updating the proposal due to it being borrowed by the processor
+        drop(processor);
+
         if policies
             .iter()
-            .all(|(_, status)| status == &PolicyStatus::Fullfilled)
+            .all(|(_, status)| status == &PolicyStatus::Fulfilled)
         {
             self.status = ProposalStatus::Adopted;
         } else if policies

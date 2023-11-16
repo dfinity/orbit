@@ -8,7 +8,7 @@ pub enum ProposalStatusDTO {
     Created,
     Adopted,
     Rejected,
-    Scheduled,
+    Scheduled { scheduled_at: TimestampRfc3339 },
     Processing { started_at: TimestampRfc3339 },
     Completed { completed_at: TimestampRfc3339 },
     Failed { reason: Option<String> },
