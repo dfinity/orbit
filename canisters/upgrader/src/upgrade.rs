@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
+    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
 use mockall::automock;
 
@@ -54,6 +54,45 @@ impl Upgrade for Upgrader {
         .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
 
         Ok(())
+    }
+}
+
+pub struct WithStop<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+
+#[async_trait]
+impl<T: Upgrade> Upgrade for WithStop<T> {
+    /// Perform an upgrade but ensure that the target canister is stopped first
+    async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+
+        mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
+
+        self.0.upgrade(ps).await
+    }
+}
+
+pub struct WithStart<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+
+#[async_trait]
+impl<T: Upgrade> Upgrade for WithStart<T> {
+    /// Perform an upgrade but ensure that the target canister is restarted
+    /// regardless of the upgrade succeeding or not
+    async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
+        let out = self.0.upgrade(ps).await;
+
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+
+        mgmt::start_canister(CanisterIdRecord { canister_id: id.0 })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to start canister: {err}"))?;
+
+        out
     }
 }
 
