@@ -45,12 +45,6 @@ impl Upgrade for Upgrader {
             .target
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
-        // Stop
-        mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
-            .await
-            .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
-
-        // Upgrade
         mgmt::install_code(InstallCodeArgument {
             mode: CanisterInstallMode::Upgrade,
             canister_id: id.0,
@@ -60,12 +54,43 @@ impl Upgrade for Upgrader {
         .await
         .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
 
-        // Start
+        Ok(())
+    }
+}
+
+pub struct WithStop<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+
+#[async_trait]
+impl<T: Upgrade> Upgrade for WithStop<T> {
+    async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+
+        mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
+
+        self.0.upgrade(ps).await
+    }
+}
+
+pub struct WithStart<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+
+#[async_trait]
+impl<T: Upgrade> Upgrade for WithStart<T> {
+    async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
+        let out = self.0.upgrade(ps).await;
+
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+
         mgmt::start_canister(CanisterIdRecord { canister_id: id.0 })
             .await
             .map_err(|(_, err)| anyhow!("failed to start canister: {err}"))?;
 
-        Ok(())
+        out
     }
 }
 

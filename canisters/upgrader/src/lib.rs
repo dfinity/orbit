@@ -14,7 +14,7 @@ use crate::{
     hash::{Hash, Sha256Hasher},
     interface::{InitArg, QueueUpgradeError, QueueUpgradeResponse, UpgradeParams},
     queue::{Queue, QueueError, Queuer, WithAuthorization},
-    upgrade::{Upgrade, Upgrader, WithCleanup},
+    upgrade::{Upgrade, Upgrader, WithCleanup, WithStart, WithStop},
 };
 
 mod hash;
@@ -107,6 +107,8 @@ lazy_static! {
 lazy_static! {
     static ref UPGRADER: Box<dyn Upgrade> = {
         let u = Upgrader::new(&TARGET_CANISTER_ID);
+        let u = WithStop(u, &TARGET_CANISTER_ID);
+        let u = WithStart(u, &TARGET_CANISTER_ID);
         let u = VerifyChecksum(u, &HASHER);
         let u = CheckController(u, &TARGET_CANISTER_ID);
         let u = WithCleanup(u, &QUEUED_UPGRADE_PARAMS);
