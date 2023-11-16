@@ -14,7 +14,7 @@ pub struct InitArg {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum QueueUpgradeError {
+pub enum TriggerUpgradeError {
     ChecksumMismatch,
     NotController,
     Unauthorized,
@@ -22,7 +22,7 @@ pub enum QueueUpgradeError {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub enum QueueUpgradeResponse {
+pub enum TriggerUpgradeResponse {
     Ok,
-    Err(QueueUpgradeError),
+    Err(TriggerUpgradeError),
 }

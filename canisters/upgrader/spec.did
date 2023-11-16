@@ -7,18 +7,18 @@ type UpgradeParams = record {
   checksum: blob;
 };
 
-type QueueUpgradeError = variant {
+type TriggerUpgradeError = variant {
   ChecksumMismatch;
   NotController;
   Unauthorized;
   UnexpectedError: text;
 };
 
-type QueueUpgradeResponse = variant {
+type TriggerUpgradeResponse = variant {
   Ok;
-  Err: QueueUpgradeError;
+  Err: TriggerUpgradeError;
 };
 
 service: (InitArg) -> {
-  "queue_upgrade": (UpgradeParams) -> (QueueUpgradeResponse);
+  "trigger_upgrade": (UpgradeParams) -> (TriggerUpgradeResponse);
 }
