@@ -28,7 +28,13 @@ Please make sure you have the following installed:
 
 ### Building the Code
 
-The following steps can be used to setup the Orbit canister ecosystem for local development.
+Start a local replica listening on port 4943:
+
+```
+dfx start --clean --host 127.0.0.1:4943
+```
+
+Then the following steps can be used to setup the Orbit canister ecosystem for local development.
 
 ```bash
 ./orbit --init
