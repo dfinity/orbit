@@ -40,12 +40,18 @@ const resolveCanisterIds = (): Map<string, string> => {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const isProduction = mode === 'production';
+  const isDevelopment =
+    process.env.NODE_ENV && process.env.NODE_ENV.length
+      ? process.env.NODE_ENV === 'development'
+      : mode === 'development';
+  const isProduction = !isDevelopment;
+  mode = isProduction ? 'production' : 'development';
   const localesPath = resolve(__dirname, 'src/locales');
   const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.json'));
   const canisters = resolveCanisterIds();
 
   return {
+    mode,
     base: '/',
     root: '.',
     publicDir: './public',
