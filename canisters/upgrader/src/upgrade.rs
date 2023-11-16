@@ -1,8 +1,7 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
-use ic_cdk::api::management_canister::{
-    main::{self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument},
-    provisional::CanisterIdRecord,
+use ic_cdk::api::management_canister::main::{
+    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
 use mockall::automock;
 
