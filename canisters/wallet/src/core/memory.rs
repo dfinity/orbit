@@ -22,6 +22,7 @@ pub const PROPOSAL_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
 pub const PROPOSAL_SCHEDULED_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(13);
 pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);
+pub const TRANSFER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(15);
 
 thread_local! {
   /// Static configuration of the canister.

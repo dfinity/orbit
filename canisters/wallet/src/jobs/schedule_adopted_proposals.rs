@@ -26,7 +26,7 @@ impl Job {
 
     pub async fn run() {
         Self::default()
-            .process_adopted_transfers()
+            .process_adopted_proposals()
             .await
             .expect("Failed to schedule adopted proposals");
     }
@@ -34,7 +34,7 @@ impl Job {
     /// Processes all the proposals that have been adopted but are not yet scheduled to be executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` proposals at once.
-    async fn process_adopted_transfers(&self) -> Result<(), ApiError> {
+    async fn process_adopted_proposals(&self) -> Result<(), ApiError> {
         let current_time = time();
         let mut proposals = self.proposal_repository.find_by_status(
             ProposalStatus::Adopted.to_string(),

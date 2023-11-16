@@ -10,7 +10,6 @@ impl From<TransferStatus> for TransferStatusDTO {
             TransferStatus::Processing { started_at } => TransferStatusDTO::Processing {
                 started_at: timestamp_to_rfc3339(&started_at),
             },
-            TransferStatus::Submitted => TransferStatusDTO::Submitted,
             TransferStatus::Created => TransferStatusDTO::Created,
             TransferStatus::Completed {
                 signature,

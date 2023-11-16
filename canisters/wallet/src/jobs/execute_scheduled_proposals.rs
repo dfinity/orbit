@@ -13,8 +13,8 @@ pub struct Job {
     proposal_repository: ProposalRepository,
 }
 
-/// This job is responsible for processing the poposals that have been adopted and
-/// are ready to be submitted to the blockchain.
+/// This job is responsible for processing the proposals that have been adopted and
+/// are ready to be executed.
 impl Job {
     pub const INTERVAL_SECS: u64 = 5;
     pub const MAX_BATCH_SIZE: usize = 20;
@@ -63,7 +63,7 @@ impl Job {
         let results = future::join_all(requests).await;
         let proposals = proposals.clone();
 
-        // update the status of the transfers
+        // update the status of the proposals
         results
             .iter()
             .enumerate()

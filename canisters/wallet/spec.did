@@ -470,8 +470,6 @@ type TransferStatus = variant {
     // The reason for the cancellation.
     reason : opt text;
   };
-  // The transfer has been submitted for execution.
-  Submitted;
   // The transfer is being processed.
   Processing : record {
     // The time at which the transfer started being processed.

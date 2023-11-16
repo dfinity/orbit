@@ -22,7 +22,6 @@ pub type TransferId = UUID;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferStatus {
     Created,
-    Submitted,
     Cancelled {
         reason: Option<String>,
     },
@@ -44,7 +43,6 @@ impl Display for TransferStatus {
         match self {
             TransferStatus::Created => write!(f, "created"),
             TransferStatus::Cancelled { .. } => write!(f, "cancelled"),
-            TransferStatus::Submitted => write!(f, "submitted"),
             TransferStatus::Processing { .. } => write!(f, "processing"),
             TransferStatus::Completed { .. } => write!(f, "completed"),
             TransferStatus::Failed { .. } => write!(f, "failed"),

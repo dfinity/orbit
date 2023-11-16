@@ -39,7 +39,6 @@ pub struct TransferOperationDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum TransferStatusDTO {
     Created,
-    Submitted,
     Cancelled {
         reason: Option<String>,
     },

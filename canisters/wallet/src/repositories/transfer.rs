@@ -1,13 +1,19 @@
-use super::indexes::transfer_account_index::TransferAccountIndexRepository;
+use super::indexes::{
+    transfer_account_index::TransferAccountIndexRepository,
+    transfer_status_index::TransferStatusIndexRepository,
+};
 use crate::{
     core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
     models::{
-        indexes::transfer_account_index::TransferAccountIndexCriteria, AccountId, Transfer,
-        TransferKey,
+        indexes::{
+            transfer_account_index::TransferAccountIndexCriteria,
+            transfer_status_index::TransferStatusIndexCriteria,
+        },
+        AccountId, Transfer, TransferKey,
     },
 };
 use ic_canister_core::{
-    repository::{IndexRepository, Repository},
+    repository::{IndexRepository, RefreshIndexMode, Repository},
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -26,6 +32,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct TransferRepository {
     account_index: TransferAccountIndexRepository,
+    status_index: TransferStatusIndexRepository,
 }
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
@@ -34,32 +41,36 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     }
 
     fn insert(&self, key: TransferKey, value: Transfer) -> Option<Transfer> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_account_index = prev.to_index_by_account();
-                if prev_account_index != value.to_index_by_account() {
-                    self.account_index.remove(&prev_account_index);
-                    self.account_index.insert(value.to_index_by_account());
-                }
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_by_account()),
+                    current: Some(value.to_index_by_account()),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_by_status()),
+                    current: Some(value.to_index_by_status()),
+                });
 
-                Some(prev)
-            }
-            None => {
-                self.account_index.insert(value.to_index_by_account());
-
-                None
-            }
+            prev
         })
     }
 
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                self.account_index.remove(&prev.to_index_by_account());
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_account()),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_status()),
+                });
 
-                Some(prev)
-            }
-            None => None,
+            prev
         })
     }
 }
@@ -97,6 +108,26 @@ impl TransferRepository {
                 (Some(transfer), None) => Some(transfer),
                 _ => None,
             })
+            .collect::<Vec<Transfer>>()
+    }
+
+    pub fn find_by_status(
+        &self,
+        status: String,
+        from_last_update_dt: Option<Timestamp>,
+        to_last_update_dt: Option<Timestamp>,
+    ) -> Vec<Transfer> {
+        let transfers = self
+            .status_index
+            .find_by_criteria(TransferStatusIndexCriteria {
+                status: status.to_owned(),
+                from_dt: from_last_update_dt,
+                to_dt: to_last_update_dt,
+            });
+
+        transfers
+            .iter()
+            .filter_map(|id| self.get(&Transfer::key(*id)))
             .collect::<Vec<Transfer>>()
     }
 }

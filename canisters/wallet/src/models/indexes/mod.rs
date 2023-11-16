@@ -6,4 +6,5 @@ pub mod proposal_scheduled_index;
 pub mod proposal_status_index;
 pub mod proposal_user_index;
 pub mod transfer_account_index;
+pub mod transfer_status_index;
 pub mod user_identity_index;
