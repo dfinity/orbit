@@ -1,11 +1,12 @@
 use crate::{
     core::ic_cdk::{api::time, spawn},
+    errors::ProposalError,
     factories::proposals::ProposalFactory,
     models::{Proposal, ProposalStatus},
     repositories::ProposalRepository,
 };
 use futures::future;
-use ic_canister_core::{api::ApiError, repository::Repository};
+use ic_canister_core::repository::Repository;
 use std::time::Duration;
 
 #[derive(Debug, Default)]
@@ -36,7 +37,7 @@ impl Job {
     /// Processes all the proposals that have been adopted but are not yet executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` proposals at once.
-    async fn execute_scheduled_proposals(&self) -> Result<(), ApiError> {
+    async fn execute_scheduled_proposals(&self) -> Result<(), ProposalError> {
         let current_time = time();
         let mut proposals = self
             .proposal_repository
@@ -80,7 +81,7 @@ impl Job {
                 Err(e) => {
                     let mut proposal = proposals[pos].clone();
                     proposal.status = ProposalStatus::Failed {
-                        reason: Some(e.to_json_string()),
+                        reason: Some(e.to_string()),
                     };
                     proposal.last_modification_timestamp = time();
                     self.proposal_repository
@@ -94,7 +95,7 @@ impl Job {
     /// Executes a single proposal.
     ///
     /// This function will handle the proposal execution for the given operation type.
-    async fn execute_proposal(&self, proposal: Proposal) -> Result<Proposal, ApiError> {
+    async fn execute_proposal(&self, proposal: Proposal) -> Result<Proposal, ProposalError> {
         let processor = ProposalFactory::create_processor(&proposal);
 
         processor.execute().await?;

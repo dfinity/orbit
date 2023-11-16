@@ -1,4 +1,4 @@
-use super::{Account, AccountId, Policy, ApprovalThresholdPolicy, UserId};
+use super::{Account, AccountId, ApprovalThresholdPolicy, Policy, UserId};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};

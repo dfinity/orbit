@@ -1,10 +1,11 @@
 use super::ProposalProcessor;
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
+    errors::ProposalError,
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, Policy, ApprovalThresholdPolicy, NotificationType, PolicyStatus, Proposal,
+        Account, ApprovalThresholdPolicy, NotificationType, Policy, PolicyStatus, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalStatus, ProposalVoteStatus, Transfer,
         TransferOperation, TransferProposalCreatedNotification,
     },
@@ -15,7 +16,7 @@ use crate::{
 use async_trait::async_trait;
 use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
-use ic_canister_core::{api::ApiError, types::UUID};
+use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -126,22 +127,31 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         should_vote && account.owners.contains(user_id)
     }
 
-    async fn execute(&self) -> Result<(), ApiError> {
+    async fn execute(&self) -> Result<(), ProposalError> {
         if self.proposal.status != ProposalStatus::Adopted {
-            Err(ApiError::new(
-                "PROPOSAL_NOT_ADOPTED".to_string(),
-                Some("Proposal is not adopted".to_string()),
-                None,
-            ))?;
+            Err(ProposalError::ExecutionFailedNotAdopted)?;
         }
         let input = self.unwrap_operation();
         let transfer_id = generate_uuid_v4().await;
         let account = self.get_account();
 
-        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
+        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
+            .map_err(|e| ProposalError::ExecutionError {
+                reason: format!("Failed to build blockchain api: {}", e),
+            })?;
         let fee = match &input.fee {
             Some(fee) => fee.clone(),
-            None => candid::Nat(blockchain_api.transaction_fee(&account).await?.fee),
+            None => {
+                let transaction_fee =
+                    blockchain_api
+                        .transaction_fee(&account)
+                        .await
+                        .map_err(|e| ProposalError::ExecutionError {
+                            reason: format!("Failed to build blockchain api: {}", e),
+                        })?;
+
+                candid::Nat(transaction_fee.fee)
+            }
         };
         let transfer = Transfer::new(
             *transfer_id.as_bytes(),
@@ -154,7 +164,11 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
             input.network.clone(),
         );
 
-        transfer.validate()?;
+        transfer
+            .validate()
+            .map_err(|e| ProposalError::ExecutionError {
+                reason: format!("Failed to validate transfer: {}", e),
+            })?;
 
         self.transfer_repository
             .insert(transfer.to_key(), transfer.to_owned());
@@ -200,9 +214,13 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         summary: Option<String>,
         execution_plan: Option<ProposalExecutionPlan>,
         operation: ProposalOperationInput,
-    ) -> Result<Proposal, ApiError> {
+    ) -> Result<Proposal, ProposalError> {
         let ProposalOperationInput::Transfer(operation) = operation;
-        let from_account_id = HelperMapper::to_uuid(operation.from_account_id)?;
+        let from_account_id = HelperMapper::to_uuid(operation.from_account_id).map_err(|e| {
+            ProposalError::ValidationError {
+                info: format!("Invalid from_account_id: {}", e),
+            }
+        })?;
         let proposal = Proposal::new(
             id,
             proposed_by_user,

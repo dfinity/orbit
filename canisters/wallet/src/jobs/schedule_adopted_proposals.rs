@@ -1,9 +1,10 @@
 use crate::{
     core::ic_cdk::{api::time, spawn},
+    errors::ProposalError,
     models::{ProposalExecutionPlan, ProposalStatus},
     repositories::ProposalRepository,
 };
-use ic_canister_core::{api::ApiError, repository::Repository};
+use ic_canister_core::repository::Repository;
 use std::time::Duration;
 
 #[derive(Debug, Default)]
@@ -34,7 +35,7 @@ impl Job {
     /// Processes all the proposals that have been adopted but are not yet scheduled to be executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` proposals at once.
-    async fn process_adopted_proposals(&self) -> Result<(), ApiError> {
+    async fn process_adopted_proposals(&self) -> Result<(), ProposalError> {
         let current_time = time();
         let mut proposals = self.proposal_repository.find_by_status(
             ProposalStatus::Adopted.to_string(),

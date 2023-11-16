@@ -1,4 +1,4 @@
-use super::{AccountBalance, Policy, Blockchain, BlockchainStandard, UserId};
+use super::{AccountBalance, Blockchain, BlockchainStandard, Policy, UserId};
 use crate::errors::AccountError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{

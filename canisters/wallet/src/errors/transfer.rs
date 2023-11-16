@@ -13,6 +13,9 @@ pub enum TransferError {
     /// The transfer has failed validation.
     #[error(r#"The transfer has failed validation."#)]
     ValidationError { info: String },
+    /// Transfer execution failed due to {reason}.
+    #[error(r#"Transfer execution failed due to `{reason}`."#)]
+    ExecutionError { reason: String },
 }
 
 impl DetailableError for TransferError {
@@ -29,6 +32,10 @@ impl DetailableError for TransferError {
             }
             TransferError::ValidationError { info } => {
                 details.insert("info".to_string(), info.to_string());
+                Some(details)
+            }
+            TransferError::ExecutionError { reason } => {
+                details.insert("reason".to_string(), reason.to_string());
                 Some(details)
             }
         }

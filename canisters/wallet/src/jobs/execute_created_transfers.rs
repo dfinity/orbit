@@ -1,12 +1,12 @@
 use crate::{
     core::ic_cdk::{api::time, spawn},
-    errors::AccountError,
+    errors::TransferError,
     factories::blockchains::BlockchainApiFactory,
     models::{Account, Transfer, TransferStatus},
     repositories::{AccountRepository, TransferRepository},
 };
 use futures::future;
-use ic_canister_core::{api::ApiError, repository::Repository};
+use ic_canister_core::repository::Repository;
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -39,7 +39,7 @@ impl Job {
     /// Executes all the transfers that have been created but are not yet submitted to the blockchain.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` transfers at once.
-    async fn execute_created_transfers(&self) -> Result<(), ApiError> {
+    async fn execute_created_transfers(&self) -> Result<(), TransferError> {
         let current_time = time();
         let mut transfers = self.transfer_repository.find_by_status(
             TransferStatus::Created.to_string(),
@@ -87,7 +87,7 @@ impl Job {
                 Err(e) => {
                     let mut transfer = transfers[pos].clone();
                     transfer.status = TransferStatus::Failed {
-                        reason: e.to_json_string(),
+                        reason: e.to_string(),
                     };
                     transfer.last_modification_timestamp = time();
                     self.transfer_repository
@@ -101,17 +101,21 @@ impl Job {
     /// Executes a single transfer.
     ///
     /// This function will handle the submission of the transfer to the blockchain.
-    async fn submit_transfer(&self, mut transfer: Transfer) -> Result<Transfer, ApiError> {
+    async fn submit_transfer(&self, mut transfer: Transfer) -> Result<Transfer, TransferError> {
         let account = self
             .account_repository
             .get(&Account::key(transfer.from_account))
-            .ok_or(AccountError::AccountNotFound {
-                id: Uuid::from_bytes(transfer.from_account)
-                    .hyphenated()
-                    .to_string(),
+            .ok_or(TransferError::ValidationError {
+                info: format!(
+                    "Transfer account not found for id {}",
+                    Uuid::from_bytes(transfer.from_account).hyphenated()
+                ),
             })?;
 
-        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
+        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
+            .map_err(|e| TransferError::ExecutionError {
+                reason: format!("Failed to build blockchain api: {}", e),
+            })?;
         match blockchain_api.submit_transaction(&account, &transfer).await {
             Ok(_) => {
                 transfer.status = TransferStatus::Completed {

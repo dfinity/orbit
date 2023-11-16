@@ -1,10 +1,11 @@
 use crate::{
     core::generate_uuid_v4,
+    errors::ProposalError,
     models::{Policy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
     transport::{CreateProposalInput, ProposalOperationInput},
 };
 use async_trait::async_trait;
-use ic_canister_core::{api::ApiError, types::UUID};
+use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
 mod transfer;
@@ -23,7 +24,7 @@ pub trait ProposalProcessor: Send + Sync {
     /// Executes the proposal.
     ///
     /// Panics if the proposal is not adopted.
-    async fn execute(&self) -> Result<(), ApiError>;
+    async fn execute(&self) -> Result<(), ProposalError>;
 
     /// The post create hook is called after the proposal is created and can be used
     /// for additional processing (e.g. sending notifications)
@@ -41,7 +42,7 @@ pub trait ProposalProcessor: Send + Sync {
         summary: Option<String>,
         execution_plan: Option<ProposalExecutionPlan>,
         operation: ProposalOperationInput,
-    ) -> Result<Proposal, ApiError>
+    ) -> Result<Proposal, ProposalError>
     where
         Self: Sized;
 }
@@ -53,7 +54,7 @@ impl ProposalFactory {
     pub async fn create_proposal(
         proposed_by_user: UUID,
         input: CreateProposalInput,
-    ) -> Result<Proposal, ApiError> {
+    ) -> Result<Proposal, ProposalError> {
         let proposal_id = generate_uuid_v4().await;
 
         match input.operation {

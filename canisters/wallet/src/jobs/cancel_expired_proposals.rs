@@ -1,5 +1,8 @@
-use crate::{core::ic_cdk::api::time, models::ProposalStatus, repositories::ProposalRepository};
-use ic_canister_core::{api::ApiError, cdk::spawn, repository::Repository};
+use crate::{
+    core::ic_cdk::api::time, errors::ProposalError, models::ProposalStatus,
+    repositories::ProposalRepository,
+};
+use ic_canister_core::{cdk::spawn, repository::Repository};
 use std::time::Duration;
 
 #[derive(Debug, Default)]
@@ -26,7 +29,7 @@ impl Job {
     }
 
     /// Cancel the proposals that have expired while still pending.
-    async fn cancel_proposals(&self) -> Result<(), ApiError> {
+    async fn cancel_proposals(&self) -> Result<(), ProposalError> {
         let current_time = time();
         let mut proposals = self.proposal_repository.find_by_expiration_dt_and_status(
             Some(current_time),

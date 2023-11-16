@@ -180,7 +180,7 @@ mod tests {
         core::test_utils,
         models::{
             account_test_utils::mock_account, proposal_test_utils::mock_proposal,
-            user_test_utils::mock_user, Policy, ApprovalThresholdPolicy, ProposalOperation,
+            user_test_utils::mock_user, ApprovalThresholdPolicy, Policy, ProposalOperation,
             ProposalVoteStatus, TransferOperation, User,
         },
         repositories::{AccountRepository, UserRepository},
