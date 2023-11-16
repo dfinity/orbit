@@ -62,15 +62,13 @@ pub struct WithCleanup<T>(pub T, pub LocalRef<StableValue<UpgradeParams>>);
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithCleanup<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let out = self.0.upgrade(ps).await;
-
         // Clear queue
         self.1.with(|q| {
             let mut q = q.borrow_mut();
             q.remove(&());
         });
 
-        out
+        self.0.upgrade(ps).await
     }
 }
 
