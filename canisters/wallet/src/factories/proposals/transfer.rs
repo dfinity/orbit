@@ -1,7 +1,7 @@
 use super::ProposalProcessor;
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
-    errors::ProposalError,
+    errors::{ProposalError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
@@ -127,16 +127,16 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         should_vote && account.owners.contains(user_id)
     }
 
-    async fn execute(&self) -> Result<(), ProposalError> {
+    async fn execute(&self) -> Result<(), ProposalExecuteError> {
         if self.proposal.status != ProposalStatus::Adopted {
-            Err(ProposalError::ExecutionFailedNotAdopted)?;
+            Err(ProposalExecuteError::NotAdopted)?;
         }
         let input = self.unwrap_operation();
         let transfer_id = generate_uuid_v4().await;
         let account = self.get_account();
 
         let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
-            .map_err(|e| ProposalError::ExecutionError {
+            .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to build blockchain api: {}", e),
             })?;
         let fee = match &input.fee {
@@ -146,7 +146,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
                     blockchain_api
                         .transaction_fee(&account)
                         .await
-                        .map_err(|e| ProposalError::ExecutionError {
+                        .map_err(|e| ProposalExecuteError::Failed {
                             reason: format!("Failed to build blockchain api: {}", e),
                         })?;
 
@@ -166,7 +166,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
 
         transfer
             .validate()
-            .map_err(|e| ProposalError::ExecutionError {
+            .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to validate transfer: {}", e),
             })?;
 

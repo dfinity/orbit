@@ -28,3 +28,6 @@ pub use transfer::*;
 
 mod proposal;
 pub use proposal::*;
+
+mod proposal_execute;
+pub use proposal_execute::*;

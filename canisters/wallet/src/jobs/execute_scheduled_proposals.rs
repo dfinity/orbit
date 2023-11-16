@@ -1,6 +1,6 @@
 use crate::{
     core::ic_cdk::{api::time, spawn},
-    errors::ProposalError,
+    errors::ProposalExecuteError,
     factories::proposals::ProposalFactory,
     models::{Proposal, ProposalStatus},
     repositories::ProposalRepository,
@@ -37,7 +37,7 @@ impl Job {
     /// Processes all the proposals that have been adopted but are not yet executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` proposals at once.
-    async fn execute_scheduled_proposals(&self) -> Result<(), ProposalError> {
+    async fn execute_scheduled_proposals(&self) -> Result<(), ProposalExecuteError> {
         let current_time = time();
         let mut proposals = self
             .proposal_repository
@@ -95,7 +95,7 @@ impl Job {
     /// Executes a single proposal.
     ///
     /// This function will handle the proposal execution for the given operation type.
-    async fn execute_proposal(&self, proposal: Proposal) -> Result<Proposal, ProposalError> {
+    async fn execute_proposal(&self, proposal: Proposal) -> Result<Proposal, ProposalExecuteError> {
         let processor = ProposalFactory::create_processor(&proposal);
 
         processor.execute().await?;

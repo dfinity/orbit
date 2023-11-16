@@ -1,6 +1,6 @@
 use crate::{
     core::generate_uuid_v4,
-    errors::ProposalError,
+    errors::{ProposalError, ProposalExecuteError},
     models::{Policy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
     transport::{CreateProposalInput, ProposalOperationInput},
 };
@@ -24,7 +24,7 @@ pub trait ProposalProcessor: Send + Sync {
     /// Executes the proposal.
     ///
     /// Panics if the proposal is not adopted.
-    async fn execute(&self) -> Result<(), ProposalError>;
+    async fn execute(&self) -> Result<(), ProposalExecuteError>;
 
     /// The post create hook is called after the proposal is created and can be used
     /// for additional processing (e.g. sending notifications)
