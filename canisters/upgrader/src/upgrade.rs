@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
+use candid::Encode;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
@@ -48,7 +49,7 @@ impl Upgrade for Upgrader {
             mode: CanisterInstallMode::Upgrade,
             canister_id: id.0,
             wasm_module: ps.module,
-            arg: vec![],
+            arg: Encode!(&()).unwrap(),
         })
         .await
         .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
