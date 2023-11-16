@@ -4,11 +4,12 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, AccountPolicy, ApprovalThresholdPolicy, PolicyStatus, Proposal,
+        Account, AccountPolicy, ApprovalThresholdPolicy, NotificationType, PolicyStatus, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalStatus, ProposalVoteStatus, Transfer,
-        TransferOperation,
+        TransferOperation, TransferProposalCreatedNotification,
     },
     repositories::{AccountRepository, TransferRepository},
+    services::NotificationService,
     transport::ProposalOperationInput,
 };
 use async_trait::async_trait;
@@ -22,6 +23,7 @@ pub struct TransferProposalProcessor<'proposal> {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
     proposal: &'proposal Proposal,
+    notification_service: NotificationService,
 }
 
 impl<'proposal> TransferProposalProcessor<'proposal> {
@@ -30,6 +32,7 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
             proposal,
             transfer_repository: TransferRepository::default(),
             account_repository: AccountRepository::default(),
+            notification_service: NotificationService::default(),
         }
     }
 
@@ -80,9 +83,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
             })
             .count();
 
-        for i in 0..policy_list.len() {
-            let (policy, status) = &mut policy_list[i];
-
+        for (policy, status) in &mut policy_list {
             match policy {
                 AccountPolicy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
@@ -165,6 +166,31 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         let account = self.get_account();
 
         self.proposal.users().contains(user_id) || account.owners.contains(user_id)
+    }
+
+    async fn post_create(&self) {
+        let account = self.get_account();
+
+        for owner in account.owners {
+            let should_send = !self.proposal.users().contains(&owner);
+
+            if should_send {
+                self.notification_service
+                    .send_notification(
+                        owner,
+                        NotificationType::TransferProposalCreated(
+                            TransferProposalCreatedNotification {
+                                account_id: account.id,
+                                proposal_id: self.proposal.id,
+                            },
+                        ),
+                        None,
+                        None,
+                    )
+                    .await
+                    .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
+            }
+        }
     }
 
     fn new_proposal(

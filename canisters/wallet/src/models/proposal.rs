@@ -219,6 +219,11 @@ impl Proposal {
             self.status = ProposalStatus::Rejected;
         }
     }
+
+    pub async fn post_create(&self) {
+        let processor = ProposalFactory::create_processor(self);
+        processor.post_create().await;
+    }
 }
 
 #[cfg(test)]

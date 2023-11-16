@@ -1,7 +1,6 @@
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
-
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum PolicyStatus {
     Pending,

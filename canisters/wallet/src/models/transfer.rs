@@ -133,6 +133,7 @@ impl Transfer {
         requirements
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         transfer_id: UUID,
         initiator_user: UUID,

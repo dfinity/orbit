@@ -61,30 +61,22 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
 
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map_or(None, |prev| prev.to_index_for_account()),
+                    previous: prev.clone().and_then(|prev| prev.to_index_for_account()),
                     current: value.to_index_for_account(),
                 });
             self.scheduled_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map_or(None, |prev| prev.to_index_by_scheduled()),
+                    previous: prev.clone().and_then(|prev| prev.to_index_by_scheduled()),
                     current: value.to_index_by_scheduled(),
                 });
             self.expiration_dt_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map_or(None, |prev| Some(prev.to_index_by_expiration_dt())),
+                    previous: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
                     current: Some(value.to_index_by_expiration_dt()),
                 });
             self.status_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map_or(None, |prev| Some(prev.to_index_by_status())),
+                    previous: prev.clone().clone().map(|prev| prev.to_index_by_status()),
                     current: Some(value.to_index_by_status()),
                 });
 
@@ -103,28 +95,20 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                 });
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map_or(None, |prev| prev.to_index_for_account()),
+                    current: prev.clone().and_then(|prev| prev.to_index_for_account()),
                 });
             self.scheduled_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map_or(None, |prev| prev.to_index_by_scheduled()),
+                    current: prev.clone().and_then(|prev| prev.to_index_by_scheduled()),
                 });
             self.expiration_dt_index.refresh_index_on_modification(
                 RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map_or(None, |prev| Some(prev.to_index_by_expiration_dt())),
+                    current: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
                 },
             );
             self.status_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map_or(None, |prev| Some(prev.to_index_by_status())),
+                    current: prev.clone().map(|prev| prev.to_index_by_status()),
                 });
 
             prev

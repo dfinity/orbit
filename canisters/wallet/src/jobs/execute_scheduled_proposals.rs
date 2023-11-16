@@ -94,8 +94,8 @@ impl Job {
     /// Executes a single proposal.
     ///
     /// This function will handle the proposal execution for the given operation type.
-    async fn execute_proposal(&self, mut proposal: Proposal) -> Result<Proposal, ApiError> {
-        let processor = ProposalFactory::create_processor(&mut proposal);
+    async fn execute_proposal(&self, proposal: Proposal) -> Result<Proposal, ApiError> {
+        let processor = ProposalFactory::create_processor(&proposal);
 
         processor.execute().await?;
 

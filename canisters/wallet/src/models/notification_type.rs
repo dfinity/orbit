@@ -1,5 +1,5 @@
-use super::{AccountId, ProposalId, TransferId};
 use candid::{CandidType, Deserialize};
+use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 use std::fmt::{Display, Formatter};
 
@@ -18,15 +18,14 @@ pub enum NotificationType {
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalCreatedNotification {
-    pub proposal_id: ProposalId,
+    pub proposal_id: UUID,
 }
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferProposalCreatedNotification {
-    pub proposal_id: ProposalId,
-    pub account_id: AccountId,
-    pub transfer_id: TransferId,
+    pub proposal_id: UUID,
+    pub account_id: UUID,
 }
 
 impl Display for NotificationType {
@@ -64,7 +63,6 @@ mod tests {
             NotificationType::TransferProposalCreated(TransferProposalCreatedNotification {
                 proposal_id: [0; 16],
                 account_id: [1; 16],
-                transfer_id: [2; 16],
             })
             .to_string(),
             "transfer-proposal-created"

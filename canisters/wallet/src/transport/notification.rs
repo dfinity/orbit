@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, ProposalIdDTO, TimestampRfc3339, TransferIdDTO, UserIdDTO};
+use super::{AccountIdDTO, ProposalIdDTO, TimestampRfc3339, UserIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type NotificationIdDTO = String;
@@ -25,7 +25,6 @@ pub struct ProposalCreatedNotificationDTO {
 pub struct TransferProposalCreatedNotificationDTO {
     pub proposal_id: ProposalIdDTO,
     pub account_id: AccountIdDTO,
-    pub transfer_id: TransferIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

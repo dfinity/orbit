@@ -11,7 +11,7 @@ mod transfer;
 
 #[async_trait]
 pub trait ProposalProcessor: Send + Sync {
-    /// Reevaluates the status of the proposal.
+    /// Reevaluates the status of the associated policies.
     fn evaluate_policies(&self) -> Vec<(AccountPolicy, PolicyStatus)>;
 
     /// Returns true if the user can vote on the proposal.
@@ -24,6 +24,14 @@ pub trait ProposalProcessor: Send + Sync {
     ///
     /// Panics if the proposal is not adopted.
     async fn execute(&self) -> Result<(), ApiError>;
+
+    /// The post create hook is called after the proposal is created and can be used
+    /// for additional processing (e.g. sending notifications)
+    ///
+    /// Should panic if the post create hook fails to rollback state changes.
+    async fn post_create(&self) {
+        // noop by default
+    }
 
     /// Creates a new proposal for the operation but does not save it.
     fn new_proposal(

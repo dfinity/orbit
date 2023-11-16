@@ -41,7 +41,6 @@ impl From<NotificationType> for NotificationTypeDTO {
                     TransferProposalCreatedNotificationDTO {
                         proposal_id: Uuid::from_bytes(ctx.proposal_id).to_string(),
                         account_id: Uuid::from_bytes(ctx.account_id).to_string(),
-                        transfer_id: Uuid::from_bytes(ctx.transfer_id).to_string(),
                     },
                 )
             }

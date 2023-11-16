@@ -10,6 +10,8 @@ type UserId = text;
 type NetworkId = text;
 // The transfer id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type TransferId = text;
+// Most ids under the wallet canister are in the UUID format (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type UUID = text;
 // A proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type ProposalId = text;
 // The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -34,15 +36,13 @@ type NotificationType = variant {
   // This should be used to alert users when a new proposal that requires their attention has been created.
   ProposalCreated : record {
     // The proposal id.
-    proposal_id : ProposalId;
+    proposal_id : UUID;
   };
   // Notification for the creation of a new transfer proposal.
   // This should be used to alert users when a new transfer proposal that requires their attention has been created.
   TransferProposalCreated : record {
-    // The proposal id.
-    proposal_id : ProposalId;
-    transfer_id : TransferId;
-    account_id : AccountId;
+    proposal_id : UUID;
+    account_id : UUID;
   };
 };
 

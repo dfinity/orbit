@@ -118,6 +118,9 @@ impl ProposalService {
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
 
+        // Handles post processing logic like sending notifications.
+        proposal.post_create().await;
+
         Ok(proposal)
     }
 
@@ -155,7 +158,7 @@ impl ProposalService {
 
     fn assert_proposal_access(&self, proposal: &Proposal, ctx: &CallContext) -> ServiceResult<()> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-        let processor = ProposalFactory::create_processor(&proposal);
+        let processor = ProposalFactory::create_processor(proposal);
         let has_access = processor.has_access(&user.id);
 
         if !proposal.users().contains(&user.id) && !has_access {
@@ -261,7 +264,7 @@ mod tests {
             network: "mainnet".to_string(),
             to: "0x1234".to_string(),
         });
-        
+
         ctx.account_repository
             .insert(account.to_key(), account.clone());
         ctx.repository
