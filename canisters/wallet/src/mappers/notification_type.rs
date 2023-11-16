@@ -44,6 +44,12 @@ impl From<NotificationType> for NotificationTypeDTO {
                     },
                 )
             }
+            NotificationType::AccountEditProposalCreated(proposal_id, account_id) => {
+                NotificationTypeDTO::AccountEditProposalCreated(
+                    Uuid::from_bytes(proposal_id).to_string(),
+                    Uuid::from_bytes(account_id).to_string(),
+                )
+            }
         }
     }
 }

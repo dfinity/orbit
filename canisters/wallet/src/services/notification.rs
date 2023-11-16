@@ -111,19 +111,19 @@ impl NotificationService {
                         "New transfer requested".to_string(),
                         "notification_transfer_proposal_created_title".to_string(),
                     ),
+                    NotificationType::AccountEditProposalCreated(_, _) => (
+                        "New account edit requested".to_string(),
+                        "notification_account_edit_proposal_created_title".to_string(),
+                    ),
                 },
             },
             message: match message {
                 Some(message) => message,
                 None => match &notification_type {
                     NotificationType::SystemMessage => ("".to_string(), "".to_string()),
-                    NotificationType::ProposalCreated(_) => (
+                    _ => (
                         "Please review it and vote on the action to be taken.".to_string(),
-                        "notification_proposal_created_message".to_string(),
-                    ),
-                    NotificationType::TransferProposalCreated(_) => (
-                        "Please review it and vote on the action to be taken.".to_string(),
-                        "notification_transfer_proposal_created_message".to_string(),
+                        "notification_proposal_created".to_string(),
                     ),
                 },
             },

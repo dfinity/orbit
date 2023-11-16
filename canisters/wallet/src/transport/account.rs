@@ -21,6 +21,16 @@ pub struct AccountDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountEditOperationInput {
+    pub account_id: AccountIdDTO,
+    pub owners: Option<Vec<UserIdDTO>>,
+    pub policies: Option<Vec<PolicyDTO>>,
+    pub name: Option<String>,
+}
+
+pub type AccountEditOperationDTO = AccountEditOperationInput;
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ApprovalThresholdPolicyDTO {
     VariableThreshold(u8),
     FixedThreshold(u8),

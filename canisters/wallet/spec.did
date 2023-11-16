@@ -44,6 +44,8 @@ type NotificationType = variant {
     proposal_id : UUID;
     account_id : UUID;
   };
+
+  AccountEditProposalCreated : record { text; text };
 };
 
 type NotificationTypeInput = variant {
@@ -155,6 +157,8 @@ type ProposalVote = record {
 type ProposalOperationType = variant {
   // A new transfer of funds from a given account.
   Transfer;
+  // An operation for updating information of an account.
+  AccountEdit;
 };
 
 // Input type for transferring funds.
@@ -176,6 +180,20 @@ type TransferOperationInput = record {
   // (e.g. a nonce in the case of an Ethereum transaction)
   metadata : opt vec TransferMetadata;
 };
+
+// Input type for editing an account through a proposal.
+type AccountEditOperationInput = record {
+  // The account id that will be edited.
+  account_id : AccountId;
+  // The updated list of owners of the account.
+  owners : opt vec UserId;
+  // The updated list of policies that can be used to control the account.
+  policies : opt vec Policy;
+  // A friendly name for the account (e.g. "My Account").
+  name : opt text;
+};
+
+type AccountEditOperation = AccountEditOperationInput;
 
 // Input type for transferring funds.
 type TransferOperation = record {
@@ -200,11 +218,15 @@ type TransferOperation = record {
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
+  // An operation for updating information of an account.
+  AccountEdit : AccountEditOperation;
 };
 
 type ProposalOperationInput = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperationInput;
+  // An operation for updating information of an account.
+  AccountEdit : AccountEditOperationInput;
 };
 
 // The schedule for executing a transaction of a given transfer.

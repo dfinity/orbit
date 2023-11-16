@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
+mod account_edit;
 mod transfer;
 
 #[async_trait]
@@ -68,6 +69,16 @@ impl ProposalFactory {
                     input.operation,
                 )
             }
+            ProposalOperationInput::AccountEdit(_) => {
+                account_edit::AccountEditProposalProcessor::new_proposal(
+                    proposal_id,
+                    proposed_by_user,
+                    input.title,
+                    input.summary,
+                    input.execution_plan.map(Into::into),
+                    input.operation,
+                )
+            }
         }
     }
 
@@ -77,6 +88,9 @@ impl ProposalFactory {
         match &proposal.operation {
             ProposalOperation::Transfer(_) => {
                 Box::new(transfer::TransferProposalProcessor::new(proposal))
+            }
+            ProposalOperation::AccountEdit(_) => {
+                Box::new(account_edit::AccountEditProposalProcessor::new(proposal))
             }
         }
     }

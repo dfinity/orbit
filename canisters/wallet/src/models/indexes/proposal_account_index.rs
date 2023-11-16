@@ -24,13 +24,15 @@ pub struct ProposalAccountIndexCriteria {
 
 impl Proposal {
     pub fn to_index_for_account(&self) -> Option<ProposalAccountIndex> {
-        let ProposalOperation::Transfer(ctx) = &self.operation;
+        if let ProposalOperation::Transfer(ctx) = &self.operation {
+            return Some(ProposalAccountIndex {
+                proposal_id: self.id.to_owned(),
+                created_at: self.created_timestamp.to_owned(),
+                account_id: ctx.from_account_id.to_owned(),
+            });
+        }
 
-        Some(ProposalAccountIndex {
-            proposal_id: self.id.to_owned(),
-            created_at: self.created_timestamp.to_owned(),
-            account_id: ctx.from_account_id.to_owned(),
-        })
+        None
     }
 }
 

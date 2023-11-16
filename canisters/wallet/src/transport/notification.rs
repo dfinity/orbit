@@ -14,6 +14,7 @@ pub enum NotificationTypeDTO {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotificationDTO),
     TransferProposalCreated(TransferProposalCreatedNotificationDTO),
+    AccountEditProposalCreated(ProposalIdDTO, AccountIdDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

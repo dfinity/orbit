@@ -1,15 +1,14 @@
 use super::ProposalProcessor;
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::trap},
+    core::ic_cdk::api::trap,
     errors::{ProposalError, ProposalExecuteError},
-    factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, ApprovalThresholdPolicy, NotificationType, Policy, PolicyStatus, Proposal,
-        ProposalExecutionPlan, ProposalOperation, ProposalStatus, ProposalVoteStatus, Transfer,
-        TransferOperation, TransferProposalCreatedNotification,
+        Account, AccountEditOperation, ApprovalThresholdPolicy, NotificationType, Policy,
+        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation, ProposalStatus,
+        ProposalVoteStatus,
     },
-    repositories::{AccountRepository, TransferRepository},
+    repositories::AccountRepository,
     services::NotificationService,
     transport::ProposalOperationInput,
 };
@@ -20,46 +19,44 @@ use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct TransferProposalProcessor<'proposal> {
-    transfer_repository: TransferRepository,
-    account_repository: AccountRepository,
+pub struct AccountEditProposalProcessor<'proposal> {
     proposal: &'proposal Proposal,
+    account_repository: AccountRepository,
     notification_service: NotificationService,
 }
 
-impl<'proposal> TransferProposalProcessor<'proposal> {
+impl<'proposal> AccountEditProposalProcessor<'proposal> {
     pub fn new(proposal: &'proposal Proposal) -> Self {
         Self {
             proposal,
-            transfer_repository: TransferRepository::default(),
             account_repository: AccountRepository::default(),
             notification_service: NotificationService::default(),
         }
     }
 
-    fn unwrap_operation(&self) -> &TransferOperation {
+    fn unwrap_operation(&self) -> &AccountEditOperation {
         match self.proposal.operation {
-            ProposalOperation::Transfer(ref ctx) => ctx,
+            ProposalOperation::AccountEdit(ref ctx) => ctx,
             _ => trap("Invalid proposal operation for processor"),
         }
     }
 
     fn get_account(&self) -> Account {
-        let ctx = self.unwrap_operation();
+        let operation = self.unwrap_operation();
 
         self.account_repository
-            .get(&Account::key(ctx.from_account_id))
+            .get(&Account::key(operation.account_id))
             .unwrap_or_else(|| {
                 trap(&format!(
                     "Account not found: {}",
-                    Uuid::from_bytes(ctx.from_account_id).hyphenated()
+                    Uuid::from_bytes(operation.account_id).hyphenated()
                 ))
             })
     }
 }
 
 #[async_trait]
-impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
+impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         let account = self.get_account();
         let mut policy_list = account
@@ -133,46 +130,28 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
             Err(ProposalExecuteError::NotAdopted)?;
         }
         let input = self.unwrap_operation();
-        let transfer_id = generate_uuid_v4().await;
-        let account = self.get_account();
+        let mut account = self.get_account();
 
-        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
-            .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to build blockchain api: {}", e),
-            })?;
-        let fee = match &input.fee {
-            Some(fee) => fee.clone(),
-            None => {
-                let transaction_fee =
-                    blockchain_api
-                        .transaction_fee(&account)
-                        .await
-                        .map_err(|e| ProposalExecuteError::Failed {
-                            reason: format!("Failed to build blockchain api: {}", e),
-                        })?;
+        if let Some(name) = &input.name {
+            account.name = Some(name.clone());
+        }
 
-                candid::Nat(transaction_fee.fee)
-            }
-        };
-        let transfer = Transfer::new(
-            *transfer_id.as_bytes(),
-            self.proposal.proposed_by.expect("Proposer not found"),
-            input.from_account_id,
-            input.to.clone(),
-            input.metadata.clone(),
-            input.amount.clone(),
-            fee,
-            input.network.clone(),
-        );
+        if let Some(owners) = &input.owners {
+            account.owners = owners.clone();
+        }
 
-        transfer
+        if let Some(policies) = &input.policies {
+            account.policies = policies.clone();
+        }
+
+        account
             .validate()
             .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to validate transfer: {}", e),
+                reason: format!("Failed to validate account: {}", e),
             })?;
 
-        self.transfer_repository
-            .insert(transfer.to_key(), transfer.to_owned());
+        self.account_repository
+            .insert(account.to_key(), account.to_owned());
 
         Ok(())
     }
@@ -193,12 +172,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
                 self.notification_service
                     .send_notification(
                         owner,
-                        NotificationType::TransferProposalCreated(
-                            TransferProposalCreatedNotification {
-                                account_id: account.id,
-                                proposal_id: self.proposal.id,
-                            },
-                        ),
+                        NotificationType::AccountEditProposalCreated(self.proposal.id, account.id),
                         None,
                         None,
                     )
@@ -217,32 +191,44 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         operation: ProposalOperationInput,
     ) -> Result<Proposal, ProposalError> {
         match operation {
-            ProposalOperationInput::Transfer(operation) => {
-                let from_account_id =
-                    HelperMapper::to_uuid(operation.from_account_id).map_err(|e| {
-                        ProposalError::ValidationError {
-                            info: format!("Invalid from_account_id: {}", e),
-                        }
-                    })?;
+            ProposalOperationInput::AccountEdit(input) => {
+                let from_account_id = HelperMapper::to_uuid(input.account_id).map_err(|e| {
+                    ProposalError::ValidationError {
+                        info: format!("Invalid from_account_id: {}", e),
+                    }
+                })?;
+
                 let proposal = Proposal::new(
                     id,
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::Transfer(TransferOperation {
-                        from_account_id: *from_account_id.as_bytes(),
-                        to: operation.to,
-                        amount: operation.amount,
-                        fee: operation.fee,
-                        // todo: add metadata mapping
-                        metadata: vec![],
-                        // todo: add network mapping
-                        network: match operation.network {
-                            Some(network) => network.id,
-                            None => "mainnet".to_string(),
+                    ProposalOperation::AccountEdit(AccountEditOperation {
+                        account_id: *from_account_id.as_bytes(),
+                        owners: match input.owners {
+                            Some(owners) => Some(
+                                owners
+                                    .into_iter()
+                                    .map(|owner| {
+                                        HelperMapper::to_uuid(owner)
+                                            .map_err(|e| ProposalError::ValidationError {
+                                                info: format!("Invalid owner: {}", e),
+                                            })
+                                            .map(|uuid| *uuid.as_bytes())
+                                    })
+                                    .collect::<Result<Vec<UUID>, _>>()?,
+                            ),
+                            None => None,
                         },
+                        policies: input.policies.map(|policies| {
+                            policies
+                                .iter()
+                                .map(|policy| policy.clone().into())
+                                .collect()
+                        }),
+                        name: input.name,
                     }),
                     execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
-                    title.unwrap_or_else(|| "Transfer".to_string()),
+                    title.unwrap_or_else(|| "Account edit".to_string()),
                     summary,
                 );
 

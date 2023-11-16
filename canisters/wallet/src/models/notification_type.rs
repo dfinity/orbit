@@ -3,9 +3,12 @@ use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 use std::fmt::{Display, Formatter};
 
+use super::{AccountId, ProposalId};
+
 pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
 pub const PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "proposal-created";
 pub const TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "transfer-proposal-created";
+pub const ACCOUNT_EDIT_PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "account-edit-proposal-created";
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -13,6 +16,7 @@ pub enum NotificationType {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotification),
     TransferProposalCreated(TransferProposalCreatedNotification),
+    AccountEditProposalCreated(ProposalId, AccountId),
 }
 
 #[stable_object]
@@ -37,6 +41,9 @@ impl Display for NotificationType {
             }
             NotificationType::ProposalCreated(_) => {
                 write!(f, "{}", PROPOSAL_CREATED_NOTIFICATION_TYPE)
+            }
+            NotificationType::AccountEditProposalCreated(_, _) => {
+                write!(f, "{}", ACCOUNT_EDIT_PROPOSAL_CREATED_NOTIFICATION_TYPE)
             }
         }
     }
@@ -66,6 +73,10 @@ mod tests {
             })
             .to_string(),
             "transfer-proposal-created"
+        );
+        assert_eq!(
+            NotificationType::AccountEditProposalCreated([0; 16], [1; 16]).to_string(),
+            "account-edit-proposal-created"
         );
     }
 }
