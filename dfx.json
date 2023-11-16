@@ -65,7 +65,7 @@
       "frontend": {
         "entrypoint": "canisters/ui/dist/index.html"
       },
-      "build": "pnpm --filter '@dfinity/orbit-ui' build"
+      "build": "pnpm --filter '@dfinity/orbit-wallet-ui' build"
     }
   },
   "defaults": {
