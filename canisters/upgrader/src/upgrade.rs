@@ -62,6 +62,7 @@ pub struct WithStop<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithStop<T> {
+    /// Perform an upgrade but ensure that the target canister is stopped first
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let id = self
             .1
@@ -79,6 +80,8 @@ pub struct WithStart<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithStart<T> {
+    /// Perform an upgrade but ensure that the target canister is restarted
+    /// regardless of the upgrade succeeding or not
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let out = self.0.upgrade(ps).await;
 
