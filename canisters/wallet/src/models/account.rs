@@ -1,4 +1,4 @@
-use super::{AccountBalance, AccountPolicy, Blockchain, BlockchainStandard, UserId};
+use super::{AccountBalance, Policy, Blockchain, BlockchainStandard, UserId};
 use crate::errors::AccountError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -43,7 +43,7 @@ pub struct Account {
     /// The account balance, which is the amount of the asset that the account holds.
     pub balance: Option<AccountBalance>,
     /// The account policies, which define the rules for the account.
-    pub policies: Vec<AccountPolicy>,
+    pub policies: Vec<Policy>,
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
@@ -210,7 +210,7 @@ mod tests {
         let mut account = mock_account();
         account.policies =
             vec![
-                AccountPolicy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
+                Policy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
                 AccountValidator::MAX_POLICIES as usize + 1
             ];
 
@@ -230,7 +230,7 @@ mod tests {
         let mut account = mock_account();
         account.policies =
             vec![
-                AccountPolicy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
+                Policy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
                 AccountValidator::MAX_POLICIES as usize - 1
             ];
 

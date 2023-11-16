@@ -575,7 +575,7 @@ type Account = record {
   //
   // If the list is empty but there are policies globally defined for the wallet,
   // the global policies will be used.
-  policies : vec AccountPolicy;
+  policies : vec Policy;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
@@ -594,8 +594,8 @@ type ApprovalThresholdPolicy = variant {
   FixedThreshold : nat8;
 };
 
-// The policies that can be used to control the account.
-type AccountPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
+// The policies that can be used to control the operation in the wallet.
+type Policy = variant { approval_threshold : ApprovalThresholdPolicy };
 
 // Input type for creating a account.
 type CreateAccountInput = record {
@@ -609,7 +609,7 @@ type CreateAccountInput = record {
   // If the list is empty, the caller will be the only owner.
   owners : vec UserId;
   // The policies that can be used to control the account.
-  policies : vec AccountPolicy;
+  policies : vec Policy;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).

@@ -180,7 +180,7 @@ mod tests {
         core::test_utils,
         models::{
             account_test_utils::mock_account, proposal_test_utils::mock_proposal,
-            user_test_utils::mock_user, AccountPolicy, ApprovalThresholdPolicy, ProposalOperation,
+            user_test_utils::mock_user, Policy, ApprovalThresholdPolicy, ProposalOperation,
             ProposalVoteStatus, TransferOperation, User,
         },
         repositories::{AccountRepository, UserRepository},
@@ -220,7 +220,7 @@ mod tests {
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
         account.owners = vec![[2; 16]];
-        account.policies = vec![AccountPolicy::ApprovalThreshold(
+        account.policies = vec![Policy::ApprovalThreshold(
             ApprovalThresholdPolicy::VariableThreshold(100),
         )];
         let mut proposal = mock_proposal();
@@ -251,7 +251,7 @@ mod tests {
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
         account.owners = vec![[2; 16]];
-        account.policies = vec![AccountPolicy::ApprovalThreshold(
+        account.policies = vec![Policy::ApprovalThreshold(
             ApprovalThresholdPolicy::VariableThreshold(100),
         )];
         let mut proposal = mock_proposal();
@@ -282,7 +282,7 @@ mod tests {
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
         account.owners = vec![ctx.caller_user.id];
-        account.policies = vec![AccountPolicy::ApprovalThreshold(
+        account.policies = vec![Policy::ApprovalThreshold(
             ApprovalThresholdPolicy::VariableThreshold(100),
         )];
         let mut proposal = mock_proposal();

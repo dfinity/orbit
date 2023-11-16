@@ -1,4 +1,4 @@
-use super::{Account, AccountId, AccountPolicy, ApprovalThresholdPolicy, UserId};
+use super::{Account, AccountId, Policy, ApprovalThresholdPolicy, UserId};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
@@ -114,7 +114,7 @@ impl Transfer {
 
         for policy in account.policies.iter() {
             match policy {
-                AccountPolicy::ApprovalThreshold(threshold) => match threshold {
+                Policy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
                         requirements.min_approvals = *min_approvals;
                     }

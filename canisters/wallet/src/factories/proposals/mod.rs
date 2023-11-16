@@ -1,6 +1,6 @@
 use crate::{
     core::generate_uuid_v4,
-    models::{AccountPolicy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
+    models::{Policy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
     transport::{CreateProposalInput, ProposalOperationInput},
 };
 use async_trait::async_trait;
@@ -12,7 +12,7 @@ mod transfer;
 #[async_trait]
 pub trait ProposalProcessor: Send + Sync {
     /// Reevaluates the status of the associated policies.
-    fn evaluate_policies(&self) -> Vec<(AccountPolicy, PolicyStatus)>;
+    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)>;
 
     /// Returns true if the user can vote on the proposal.
     fn can_vote(&self, user_id: &UUID) -> bool;

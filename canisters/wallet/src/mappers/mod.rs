@@ -9,8 +9,8 @@ pub use account::*;
 mod blockchain;
 pub use blockchain::*;
 
-mod account_policy;
-pub use account_policy::*;
+mod policy;
+pub use policy::*;
 
 mod notification;
 pub use notification::*;

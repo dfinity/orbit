@@ -8,13 +8,13 @@ pub enum PolicyStatus {
     Fulfilled,
 }
 
-/// Represents a account policy within the system.
+/// Represents a policy within the system.
 ///
-/// Policies are used to define the rules for a account, including approval thresholds for
+/// Policies are used to define the rules of operating within the wallet, including approval thresholds for
 /// operations and others.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AccountPolicy {
+pub enum Policy {
     ApprovalThreshold(ApprovalThresholdPolicy),
 }
 

@@ -4,7 +4,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, AccountPolicy, ApprovalThresholdPolicy, NotificationType, PolicyStatus, Proposal,
+        Account, Policy, ApprovalThresholdPolicy, NotificationType, PolicyStatus, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalStatus, ProposalVoteStatus, Transfer,
         TransferOperation, TransferProposalCreatedNotification,
     },
@@ -58,13 +58,13 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
 
 #[async_trait]
 impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
-    fn evaluate_policies(&self) -> Vec<(AccountPolicy, PolicyStatus)> {
+    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         let account = self.get_account();
         let mut policy_list = account
             .policies
             .into_iter()
             .map(|policy| (policy, PolicyStatus::Pending))
-            .collect::<Vec<(AccountPolicy, PolicyStatus)>>();
+            .collect::<Vec<(Policy, PolicyStatus)>>();
         let total_approvals = self
             .proposal
             .votes
@@ -85,7 +85,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
 
         for (policy, status) in &mut policy_list {
             match policy {
-                AccountPolicy::ApprovalThreshold(threshold) => match threshold {
+                Policy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
                         let can_still_be_approved =
                             total_approvals + missing_votes >= *min_approvals as usize;
@@ -120,7 +120,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
     fn can_vote(&self, user_id: &UUID) -> bool {
         let account = self.get_account();
         let should_vote = account.policies.iter().any(|policy| match policy {
-            AccountPolicy::ApprovalThreshold(_) => true,
+            Policy::ApprovalThreshold(_) => true,
         });
 
         should_vote && account.owners.contains(user_id)

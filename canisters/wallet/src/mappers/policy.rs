@@ -1,13 +1,13 @@
 use crate::{
-    models::{AccountPolicy, ApprovalThresholdPolicy},
-    transport::{AccountPolicyDTO, ApprovalThresholdPolicyDTO},
+    models::{Policy, ApprovalThresholdPolicy},
+    transport::{PolicyDTO, ApprovalThresholdPolicyDTO},
 };
 
-impl From<AccountPolicy> for AccountPolicyDTO {
-    fn from(policy: AccountPolicy) -> Self {
+impl From<Policy> for PolicyDTO {
+    fn from(policy: Policy) -> Self {
         match policy {
-            AccountPolicy::ApprovalThreshold(threshold) => {
-                AccountPolicyDTO::ApprovalThreshold(match threshold {
+            Policy::ApprovalThreshold(threshold) => {
+                PolicyDTO::ApprovalThreshold(match threshold {
                     ApprovalThresholdPolicy::VariableThreshold(threshold) => {
                         ApprovalThresholdPolicyDTO::VariableThreshold(threshold)
                     }
@@ -20,11 +20,11 @@ impl From<AccountPolicy> for AccountPolicyDTO {
     }
 }
 
-impl From<AccountPolicyDTO> for AccountPolicy {
-    fn from(dto: AccountPolicyDTO) -> Self {
+impl From<PolicyDTO> for Policy {
+    fn from(dto: PolicyDTO) -> Self {
         match dto {
-            AccountPolicyDTO::ApprovalThreshold(threshold) => {
-                AccountPolicy::ApprovalThreshold(match threshold {
+            PolicyDTO::ApprovalThreshold(threshold) => {
+                Policy::ApprovalThreshold(match threshold {
                     ApprovalThresholdPolicyDTO::VariableThreshold(threshold) => {
                         ApprovalThresholdPolicy::VariableThreshold(threshold)
                     }
