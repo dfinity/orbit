@@ -45,11 +45,12 @@ impl Upgrade for Upgrader {
             .target
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
+        let bytes = Encode!(&()).unwrap();
         mgmt::install_code(InstallCodeArgument {
             mode: CanisterInstallMode::Upgrade,
             canister_id: id.0,
             wasm_module: ps.module,
-            arg: Encode!(&()).unwrap(),
+            arg: bytes,
         })
         .await
         .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
