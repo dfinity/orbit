@@ -170,9 +170,7 @@ export const useCreateAccountFormStore = defineStore('createAccountForm', {
         this.clearAlert();
         this.loading = true;
 
-        const policies: Policy[] = this.form.policies.filter(
-          entry => entry !== null,
-        ) as Policy[];
+        const policies: Policy[] = this.form.policies.filter(entry => entry !== null) as Policy[];
 
         const nrOfThresholdPolicies = policies.filter(
           policy => 'approval_threshold' in policy,

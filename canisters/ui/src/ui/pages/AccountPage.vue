@@ -288,13 +288,17 @@
                                   :outer="false"
                                   :loading="loading"
                                   @adopted="pageStore.voteOnProposal(proposalId, { approve: true })"
-                                  @rejected="pageStore.voteOnProposal(proposalId, { approve: false })"
+                                  @rejected="
+                                    pageStore.voteOnProposal(proposalId, { approve: false })
+                                  "
                                 />
                               </td>
                             </tr>
                           </tbody>
                         </VTable>
-                        <p v-else class="text-h6">{{ $t(`wallets.no_withdraw_request_found_search`) }}</p>
+                        <p v-else class="text-h6">
+                          {{ $t(`wallets.no_withdraw_request_found_search`) }}
+                        </p>
                       </VCol>
                     </VRow>
                   </VContainer>
