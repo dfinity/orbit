@@ -65,4 +65,4 @@ jobs:
           shared-key: "build-wasms"
           save-if: "false"
       - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh false
+        run: ./scripts/run-integration-tests.sh
