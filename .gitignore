@@ -68,3 +68,5 @@ dist
 coverage
 .dfx
 canister_ids.json
+canisters/integration_tests/pocket-ic
+wasms/*.wasm.gz

@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
   "canisters/control-panel",
+  "canisters/integration_tests",
   "canisters/upgrader",
   "canisters/wallet",
   "libs/ic-canister-core",
@@ -33,6 +34,7 @@ lazy_static = "1.4.0"
 mockall = "0.11.4"
 num-bigint = "0.4"
 num-traits = "0.2"
+pocket-ic = "1.0.0"
 proc-macro2 = "1.0"
 quote = "1.0"
 rand_chacha = "0.3.1"
