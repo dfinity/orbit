@@ -7,7 +7,7 @@ use pocket_ic::call_candid_as;
 use std::ops::Deref;
 
 #[test]
-fn basic_transfer_test() {
+fn basic_register_user_test() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env, canister_ids, ..

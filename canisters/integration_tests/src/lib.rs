@@ -12,15 +12,15 @@ mod utils;
 pub struct TestEnv {
     pub env: PocketIc,
     pub canister_ids: CanisterIds,
-    pub minter: Principal,
     pub controller: Principal,
+    pub minter: Principal,
 }
 
 #[derive(Debug)]
 pub struct CanisterIds {
+    pub icp_ledger: Principal,
+    pub icp_index: Principal,
     pub control_panel: Principal,
     pub upgrader: Principal,
     pub wallet: Principal,
-    pub icp_ledger: Principal,
-    pub icp_index: Principal,
 }

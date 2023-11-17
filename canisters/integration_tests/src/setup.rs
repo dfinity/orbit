@@ -39,9 +39,9 @@ pub fn setup_new_env() -> TestEnv {
 
     let mut env = PocketIc::new();
     env.set_time(SystemTime::now());
-    let minter = minter_test_id();
     let controller = controller_test_id();
-    let canister_ids = install_canisters(&mut env, minter, controller);
+    let minter = minter_test_id();
+    let canister_ids = install_canisters(&mut env, controller, minter);
 
     TestEnv {
         env,
@@ -55,13 +55,14 @@ fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
     env.create_canister_with_settings(None, Some(controller))
 }
 
-fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principal) -> CanisterIds {
+fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principal) -> CanisterIds {
     let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
     let nns_ledger_canister_id = nns_canister_ids[2];
     let nns_index_canister_id = nns_canister_ids[11];
 
-    let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
     let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
+    let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
+
     let icp_ledger_canister_wasm = include_bytes!("../wasms/icp_ledger.wasm.gz").to_vec();
     let icp_ledger_init_args = NnsLedgerCanisterPayload::Init(NnsLedgerCanisterInitPayload {
         minting_account: minting_account.to_string(),
@@ -96,41 +97,36 @@ fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principa
     let upgrader = create_canister(env, controller);
     let wallet = create_canister(env, controller);
 
-    let control_panel_wasm_bytes = include_bytes!("../wasms/control_panel.wasm.gz").to_vec();
+    let control_panel_wasm = include_bytes!("../wasms/control_panel.wasm.gz").to_vec();
     let control_panel_init_args = ControlPanelCanisterInit {
         default_wallet: DefaultWalletInit::SpecifiedWalletCanister(wallet),
     };
     env.install_canister(
         control_panel,
-        control_panel_wasm_bytes,
+        control_panel_wasm,
         Encode!(&control_panel_init_args).unwrap(),
         Some(controller),
     );
 
-    let upgrader_wasm_bytes = include_bytes!("../wasms/upgrader.wasm.gz").to_vec();
+    let upgrader_wasm = include_bytes!("../wasms/upgrader.wasm.gz").to_vec();
     let upgrader_init_args = UpgraderInitArg {
         target_canister: wallet,
     };
     env.install_canister(
         upgrader,
-        upgrader_wasm_bytes,
+        upgrader_wasm,
         Encode!(&upgrader_init_args).unwrap(),
         Some(controller),
     );
 
-    let wallet_wasm_bytes = include_bytes!("../wasms/wallet.wasm.gz").to_vec();
-    env.install_canister(
-        wallet,
-        wallet_wasm_bytes,
-        Encode!(&()).unwrap(),
-        Some(controller),
-    );
+    let wallet_wasm = include_bytes!("../wasms/wallet.wasm.gz").to_vec();
+    env.install_canister(wallet, wallet_wasm, Encode!(&()).unwrap(), Some(controller));
 
     CanisterIds {
+        icp_ledger: nns_ledger_canister_id,
+        icp_index: nns_index_canister_id,
         control_panel,
         upgrader,
         wallet,
-        icp_ledger: nns_ledger_canister_id,
-        icp_index: nns_index_canister_id,
     }
 }
