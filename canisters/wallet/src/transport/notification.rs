@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, ProposalIdDTO, TimestampRfc3339, TransferIdDTO, UserIdDTO};
+use super::{AccountIdDTO, ProposalIdDTO, TimestampRfc3339, UserIdDTO};
 use candid::{CandidType, Deserialize};
 
 pub type NotificationIdDTO = String;
@@ -14,6 +14,7 @@ pub enum NotificationTypeDTO {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotificationDTO),
     TransferProposalCreated(TransferProposalCreatedNotificationDTO),
+    AccountProposalCreated(AccountProposalCreatedNotificationDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -22,10 +23,15 @@ pub struct ProposalCreatedNotificationDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountProposalCreatedNotificationDTO {
+    pub proposal_id: ProposalIdDTO,
+    pub account_id: AccountIdDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferProposalCreatedNotificationDTO {
     pub proposal_id: ProposalIdDTO,
     pub account_id: AccountIdDTO,
-    pub transfer_id: TransferIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -33,6 +39,7 @@ pub enum NotificationTypeInput {
     SystemMessage,
     ProposalCreated,
     TransferProposalCreated,
+    AccountProposalCreated,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

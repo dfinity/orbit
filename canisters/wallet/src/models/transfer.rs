@@ -1,4 +1,4 @@
-use super::{Account, AccountId, AccountPolicy, ApprovalThresholdPolicy, UserId};
+use super::{Account, AccountId, ApprovalThresholdPolicy, Policy, UserId};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
@@ -20,30 +20,18 @@ pub type TransferId = UUID;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum TransferExecutionPlan {
-    Immediate,
-    Scheduled { execution_time: Timestamp },
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferStatus {
+    Created,
     Cancelled {
         reason: Option<String>,
     },
     Processing {
         started_at: Timestamp,
     },
-    Submitted,
-    Pending,
     Completed {
         signature: Option<String>,
         hash: Option<String>,
         completed_at: Timestamp,
-    },
-    Approved,
-    Rejected {
-        reason: String,
     },
     Failed {
         reason: String,
@@ -53,13 +41,10 @@ pub enum TransferStatus {
 impl Display for TransferStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            TransferStatus::Created => write!(f, "created"),
             TransferStatus::Cancelled { .. } => write!(f, "cancelled"),
-            TransferStatus::Submitted => write!(f, "submitted"),
-            TransferStatus::Pending => write!(f, "pending"),
             TransferStatus::Processing { .. } => write!(f, "processing"),
             TransferStatus::Completed { .. } => write!(f, "completed"),
-            TransferStatus::Approved => write!(f, "approved"),
-            TransferStatus::Rejected { .. } => write!(f, "rejected"),
             TransferStatus::Failed { .. } => write!(f, "failed"),
         }
     }
@@ -90,10 +75,6 @@ pub struct Transfer {
     pub amount: candid::Nat,
     /// The fee of the transfer.
     pub fee: candid::Nat,
-    /// The expiration date of the transfer.
-    pub expiration_dt: Timestamp,
-    /// The execution plan of the transfer.
-    pub execution_plan: TransferExecutionPlan,
     /// The blockchain network that the transfer will be executed on.
     pub blockchain_network: String,
     /// The transfer metadata (e.g. `memo`, `description`, etc.)
@@ -128,19 +109,12 @@ impl Transfer {
             .collect()
     }
 
-    /// Gives the default expiration date for a transfer which is 14 days from the current time.
-    pub fn default_expiration_dt() -> Timestamp {
-        let time_in_ns: u64 = 14 * 24 * 60 * 60 * 1_000_000_000;
-
-        time() + time_in_ns
-    }
-
     pub fn policy_requirements(&self, account: &Account) -> PolicyRequirements {
         let mut requirements = PolicyRequirements { min_approvals: 1 };
 
         for policy in account.policies.iter() {
             match policy {
-                AccountPolicy::ApprovalThreshold(threshold) => match threshold {
+                Policy::ApprovalThreshold(threshold) => match threshold {
                     ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
                         requirements.min_approvals = *min_approvals;
                     }
@@ -155,6 +129,32 @@ impl Transfer {
         }
 
         requirements
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        transfer_id: UUID,
+        initiator_user: UUID,
+        from_account: UUID,
+        to_address: String,
+        metadata: Vec<(String, String)>,
+        amount: candid::Nat,
+        fee: candid::Nat,
+        blockchain_network: String,
+    ) -> Self {
+        Self {
+            id: transfer_id,
+            initiator_user,
+            from_account,
+            to_address,
+            status: TransferStatus::Created,
+            amount,
+            fee,
+            blockchain_network,
+            metadata,
+            last_modification_timestamp: time(),
+            created_timestamp: time(),
+        }
     }
 }
 
@@ -238,25 +238,25 @@ impl<'model> TransferValidator<'model> {
         Ok(())
     }
 
-    pub fn validate_expiration_dt(&self) -> ModelValidatorResult<TransferError> {
-        if let TransferExecutionPlan::Scheduled { execution_time } = &self.transfer.execution_plan {
-            if self.transfer.expiration_dt < *execution_time {
-                return Err(TransferError::ValidationError {
-                    info:
-                        "Transfer expiration date must be greater then the planned execution_time"
-                            .to_string(),
-                });
-            }
-        }
+    // pub fn validate_expiration_dt(&self) -> ModelValidatorResult<TransferError> {
+    //     if let TransferExecutionPlan::Scheduled { execution_time } = &self.transfer.execution_plan {
+    //         if self.transfer.expiration_dt < *execution_time {
+    //             return Err(TransferError::ValidationError {
+    //                 info:
+    //                     "Transfer expiration date must be greater then the planned execution_time"
+    //                         .to_string(),
+    //             });
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub fn validate(&self) -> ModelValidatorResult<TransferError> {
         self.validate_metadata()?;
         self.validate_to_address()?;
         self.validate_network()?;
-        self.validate_expiration_dt()?;
+        // self.validate_expiration_dt()?;
 
         Ok(())
     }
@@ -405,36 +405,36 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_expiration_dt_validation() {
-        let mut transfer = mock_transfer();
-        transfer.expiration_dt = time() + 1000;
+    // #[test]
+    // fn test_expiration_dt_validation() {
+    //     let mut transfer = mock_transfer();
+    //     transfer.expiration_dt = time() + 1000;
 
-        let result = TransferValidator::new(&transfer).validate_expiration_dt();
+    //     let result = TransferValidator::new(&transfer).validate_expiration_dt();
 
-        assert!(result.is_ok());
-    }
+    //     assert!(result.is_ok());
+    // }
 
-    #[test]
-    fn fail_expiration_dt_before_execution() {
-        let mut transfer = mock_transfer();
-        let now = time();
-        transfer.execution_plan = TransferExecutionPlan::Scheduled {
-            execution_time: now + 1,
-        };
-        transfer.expiration_dt = now;
+    // #[test]
+    // fn fail_expiration_dt_before_execution() {
+    //     let mut transfer = mock_transfer();
+    //     let now = time();
+    //     transfer.execution_plan = TransferExecutionPlan::Scheduled {
+    //         execution_time: now + 1,
+    //     };
+    //     transfer.expiration_dt = now;
 
-        let result = TransferValidator::new(&transfer).validate_expiration_dt();
+    //     let result = TransferValidator::new(&transfer).validate_expiration_dt();
 
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            TransferError::ValidationError {
-                info: "Transfer expiration date must be greater then the planned execution_time"
-                    .to_string()
-            }
-        );
-    }
+    //     assert!(result.is_err());
+    //     assert_eq!(
+    //         result.unwrap_err(),
+    //         TransferError::ValidationError {
+    //             info: "Transfer expiration date must be greater then the planned execution_time"
+    //                 .to_string()
+    //         }
+    //     );
+    // }
 }
 
 #[cfg(test)]
@@ -447,11 +447,9 @@ pub mod transfer_test_utils {
             initiator_user: [0; 16],
             from_account: [0; 16],
             to_address: "x".repeat(255),
-            status: TransferStatus::Pending,
+            status: TransferStatus::Created,
             amount: candid::Nat::from(100),
             fee: candid::Nat::from(0),
-            expiration_dt: Transfer::default_expiration_dt(),
-            execution_plan: TransferExecutionPlan::Immediate,
             blockchain_network: "a".repeat(50),
             metadata: vec![],
             last_modification_timestamp: time(),

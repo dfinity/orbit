@@ -10,6 +10,8 @@ type UserId = text;
 type NetworkId = text;
 // The transfer id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type TransferId = text;
+// Most ids under the wallet canister are in the UUID format (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+type UUID = text;
 // A proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type ProposalId = text;
 // The notification id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -34,15 +36,21 @@ type NotificationType = variant {
   // This should be used to alert users when a new proposal that requires their attention has been created.
   ProposalCreated : record {
     // The proposal id.
-    proposal_id : ProposalId;
+    proposal_id : UUID;
   };
   // Notification for the creation of a new transfer proposal.
   // This should be used to alert users when a new transfer proposal that requires their attention has been created.
   TransferProposalCreated : record {
-    // The proposal id.
-    proposal_id : ProposalId;
-    transfer_id : TransferId;
-    account_id : AccountId;
+    proposal_id : UUID;
+    account_id : UUID;
+  };
+  // Notification for the creation of a new account related proposal.
+  //
+  // This should be used to alert users when a new account related proposal that requires
+  // their attention has been created.
+  AccountProposalCreated : record {
+    proposal_id : UUID;
+    account_id : UUID;
   };
 };
 
@@ -50,6 +58,7 @@ type NotificationTypeInput = variant {
   SystemMessage;
   ProposalCreated;
   TransferProposalCreated;
+  AccountProposalCreated;
 };
 
 // A record type that can be used to represent a notification.
@@ -116,10 +125,29 @@ type MarkNotificationReadResult = variant {
 };
 
 // The status of a proposal.
-type ProposalStatus = variant { Pending; Adopted; Rejected };
+type ProposalStatus = variant {
+  Created;
+  Adopted;
+  Rejected;
+  Cancelled : record {
+    reason : opt text;
+  };
+  Scheduled : record {
+    scheduled_at : TimestampRFC3339;
+  };
+  Processing : record {
+    started_at : TimestampRFC3339;
+  };
+  Completed : record {
+    completed_at : TimestampRFC3339;
+  };
+  Failed : record {
+    reason : opt text;
+  };
+};
 
 // The status of a proposal.
-type ProposalVoteStatus = variant { Pending; Adopted; Rejected; NotRequired };
+type ProposalVoteStatus = variant { Accepted; Rejected };
 
 // A record type that can be used to represent a vote on a proposal.
 type ProposalVote = record {
@@ -130,21 +158,93 @@ type ProposalVote = record {
   // Optional reason for the vote status.
   status_reason : opt text;
   // The time at which the vote was added.
-  decided_at : opt TimestampRFC3339;
+  decided_at : TimestampRFC3339;
 };
 
 type ProposalOperationType = variant {
   // A new transfer of funds from a given account.
   Transfer;
+  // An operation for updating information of an account.
+  AccountEdit;
+};
+
+// Input type for transferring funds.
+type TransferOperationInput = record {
+  // The account id to use for the transaction.
+  from_account_id : AccountId;
+  // The amount to transfer.
+  amount : nat;
+  // The destination address of the transaction (e.g. "1BvBMSE...").
+  to : text;
+  // The fee to pay for the transaction, if applicable.
+  //
+  // If not set, the default fee will be used.
+  fee : opt nat;
+  // The network to use for the transaction, if not the
+  // default network of the account will be used.
+  network : opt Network;
+  // Trasanctions can be tagged with an optional additional info
+  // (e.g. a nonce in the case of an Ethereum transaction)
+  metadata : opt vec TransferMetadata;
+};
+
+// Input type for editing an account through a proposal.
+type AccountEditOperationInput = record {
+  // The account id that will be edited.
+  account_id : AccountId;
+  // The updated list of owners of the account.
+  owners : opt vec UserId;
+  // The updated list of policies that can be used to control the account.
+  policies : opt vec Policy;
+  // A friendly name for the account (e.g. "My Account").
+  name : opt text;
+};
+
+type AccountEditOperation = AccountEditOperationInput;
+
+// Input type for transferring funds.
+type TransferOperation = record {
+  // The account to use for the transaction.
+  from_account : Account;
+  // The amount to transfer.
+  amount : nat;
+  // The destination address of the transaction (e.g. "1BvBMSE...").
+  to : text;
+  // The network to use for the transaction, if not the
+  // default network of the account will be used.
+  network : Network;
+  // Trasanctions can be tagged with an optional additional info
+  // (e.g. a nonce in the case of an Ethereum transaction)
+  metadata : vec TransferMetadata;
+  // The fee to pay for the transaction, if applicable.
+  //
+  // If not set, the default fee will be used.
+  fee : opt nat;
 };
 
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
-  Transfer : record {
-    // The transfer associated with the proposal.
-    transfer : Transfer;
-    // The account associated with the transfer.
-    account : Account;
+  Transfer : TransferOperation;
+  // An operation for updating information of an account.
+  AccountEdit : AccountEditOperation;
+};
+
+type ProposalOperationInput = variant {
+  // A new transfer of funds from a given account.
+  Transfer : TransferOperationInput;
+  // An operation for updating information of an account.
+  AccountEdit : AccountEditOperationInput;
+};
+
+// The schedule for executing a transaction of a given transfer.
+type ProposalExecutionSchedule = variant {
+  // The transaction will be executed immediately.
+  Immediate;
+  // The transaction will be executed at a given time.
+  Scheduled : record {
+    // The time at which the transaction will be executed,
+    // it must be in the future.
+    execution_time : TimestampRFC3339;
   };
 };
 
@@ -152,6 +252,10 @@ type ProposalOperation = variant {
 type Proposal = record {
   // The proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : ProposalId;
+  // The proposal title.
+  title : text;
+  // The proposal summary (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
+  summary : opt text;
   // The operation that was proposed.
   operation : ProposalOperation;
   // The user that created the proposal.
@@ -162,11 +266,36 @@ type Proposal = record {
   created_at : TimestampRFC3339;
   // The proposal approval status.
   status : ProposalStatus;
+  // The time at which the proposal will expire.
+  expiration_dt : TimestampRFC3339;
+  // The time at which the proposal should be executed if adopted.
+  execution_plan : ProposalExecutionSchedule;
   // The metadata associated with the proposal.
   //
   // The metadata is a list of key-value pairs that can be used to store
   // additional information about the proposal.
   metadata : vec record { text; text };
+};
+
+// The input type for creating a proposal.
+type CreateProposalInput = record {
+  // The operation that was proposed.
+  operation : ProposalOperationInput;
+  // The proposal title (e.g. "Payment to John").
+  title : opt text;
+  // The proposal summary (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
+  summary : opt text;
+  // The time at which the proposal will execute if adopted.
+  execution_plan : opt ProposalExecutionSchedule;
+};
+
+// The result type for creating a proposal.
+type CreateProposalResult = variant {
+  Ok : record {
+    proposal : Proposal;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
 };
 
 // The input type for getting the list of proposals associated with the caller.
@@ -239,7 +368,7 @@ type VoteOnProposalInput = record {
   // The proposal id to interact with.
   proposal_id : ProposalId;
   // True if the user approves the proposal, false otherwise.
-  approve : opt bool;
+  approve : bool;
   // The reason for the approval or rejection.
   reason : opt text;
 };
@@ -356,15 +485,8 @@ type TransferMetadata = record {
 
 // The status of a transfer.
 type TransferStatus = variant {
-  // The transfer is pending approval.
-  Pending;
-  // The transfer has been approved.
-  Approved;
-  // The transfer has been rejected.
-  Rejected : record {
-    // The reason for the rejection.
-    reason : text;
-  };
+  // The transfer is created for processing.
+  Created;
   // The transfer has been failed.
   Failed : record {
     // The failure reason.
@@ -377,8 +499,6 @@ type TransferStatus = variant {
     // The reason for the cancellation.
     reason : opt text;
   };
-  // The transfer has been submitted for execution.
-  Submitted;
   // The transfer is being processed.
   Processing : record {
     // The time at which the transfer started being processed.
@@ -413,66 +533,10 @@ type Transfer = record {
   amount : nat;
   // The status of the transfer.
   status : TransferStatus;
-  // The transfer is only executed if all the policies are fulfilled before the `expiration_dt`.
-  expiration_dt : TimestampRFC3339;
-  // When the transaction should be executed.
-  execution_plan : TransferExecutionSchedule;
   // The network used when submitting the transaction to the blockchain.
   network : Network;
   // Transfers can be tagged with optional additional info (e.g. a `nonce` for Ethereum transactions).
   metadata : vec TransferMetadata;
-};
-
-// The schedule for executing a transaction of a given transfer.
-type TransferExecutionSchedule = variant {
-  // The transaction will be executed immediately.
-  Immediate;
-  // The transaction will be executed at a given time.
-  Scheduled : record {
-    // The time at which the transaction will be executed,
-    // it must be in the future.
-    execution_time : TimestampRFC3339;
-  };
-};
-
-// Input type for transferring funds.
-type TransferInput = record {
-  // The account id to use for the transaction.
-  from_account_id : AccountId;
-  // The amount to transfer.
-  amount : nat;
-  // The destination address of the transaction (e.g. "1BvBMSE...").
-  to : text;
-  // The transaction will not be created if the transfer
-  // was not approved until the `expiration_dt`.
-  //
-  // If not set, the system will use the default expiration time.
-  expiration_dt : opt TimestampRFC3339;
-  // When the transaction should be executed.
-  //
-  // If not set, the default option used by the system is `Immediate`.
-  execution_plan : opt TransferExecutionSchedule;
-  // The fee to pay for the transaction, if applicable.
-  //
-  // If not set, the default fee will be used.
-  fee : opt nat;
-  // The network to use for the transaction, if not the
-  // default network of the account will be used.
-  network : opt Network;
-  // Trasanctions can be tagged with an optional additional info
-  // (e.g. a nonce in the case of an Ethereum transaction)
-  metadata : opt vec TransferMetadata;
-};
-
-// Result type for transferring funds.
-type TransferResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The transfer that was created.
-    transfer : Transfer;
-  };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
 };
 
 type GetTransferInput = record {
@@ -540,7 +604,7 @@ type Account = record {
   //
   // If the list is empty but there are policies globally defined for the wallet,
   // the global policies will be used.
-  policies : vec AccountPolicy;
+  policies : vec Policy;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
@@ -559,8 +623,8 @@ type ApprovalThresholdPolicy = variant {
   FixedThreshold : nat8;
 };
 
-// The policies that can be used to control the account.
-type AccountPolicy = variant { approval_threshold : ApprovalThresholdPolicy };
+// The policies that can be used to control the operation in the wallet.
+type Policy = variant { approval_threshold : ApprovalThresholdPolicy };
 
 // Input type for creating a account.
 type CreateAccountInput = record {
@@ -574,7 +638,7 @@ type CreateAccountInput = record {
   // If the list is empty, the caller will be the only owner.
   owners : vec UserId;
   // The policies that can be used to control the account.
-  policies : vec AccountPolicy;
+  policies : vec Policy;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
@@ -826,13 +890,6 @@ service : (opt WalletInit) -> {
   //
   // Required permission: "read:transfer"
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
-  // Transfer funds from a selected account, this action will only create a new transaction
-  // if the account policies have been sucessfully fulfilled.
-  //
-  // If the caller does not have access to the account, an error will be returned.
-  //
-  // Required permission: "write:transfer"
-  transfer : (input : TransferInput) -> (TransferResult);
   // Get a transfer by id.
   //
   // If the caller does not have access to the transfer, an error will be returned.
@@ -843,6 +900,12 @@ service : (opt WalletInit) -> {
   //
   // Required permission: "read:transfer"
   get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
+  // Create a new proposal.
+  //
+  // The proposal will be created and the caller will be added as the proposer.
+  //
+  // Required permission: "create-proposal"
+  create_proposal : (input : CreateProposalInput) -> (CreateProposalResult);
   // Get the list of proposals.
   //
   // Required permission: "read:proposal"

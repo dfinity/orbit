@@ -2,7 +2,7 @@
   <TransferDialog v-model="open" :account-id="props.accountId" />
 
   <VBtn rounded color="primary-variant" :prepend-icon="mdiSend" @click="open = true">
-    {{ $t('terms.new_transfer') }}
+    {{ $t('terms.new_withdraw') }}
   </VBtn>
 </template>
 <script lang="ts" setup>

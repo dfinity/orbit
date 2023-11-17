@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { amountToBigInt, formatBalance, logger } from '~/core';
-import { Transfer, Account, AccountId } from '~/generated/wallet/wallet.did';
+import { Proposal, Account, AccountId } from '~/generated/wallet/wallet.did';
 import { useActiveWalletStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { requiredRule, validTokenAmount } from '~/ui/utils';
@@ -119,7 +119,7 @@ export const useTransferFormStore = defineStore('transferForm', {
         message: null,
       };
     },
-    async save(): Promise<Transfer | false> {
+    async save(): Promise<Proposal | false> {
       try {
         if (!this.isValid) {
           return false;
@@ -128,15 +128,21 @@ export const useTransferFormStore = defineStore('transferForm', {
         this.loading = true;
 
         const wallet = useActiveWalletStore().service;
-        return await wallet.createTransfer({
-          from_account_id: `${this.form.accountId}`,
-          to: `${this.form.to}`,
-          amount: amountToBigInt(this.form.amount ?? '', this.selectedAccount?.decimals ?? 0),
-          fee: [],
+
+        return await wallet.createProposal({
+          title: [],
+          summary: [],
+          operation: {
+            Transfer: {
+              from_account_id: `${this.form.accountId}`,
+              to: `${this.form.to}`,
+              amount: amountToBigInt(this.form.amount ?? '', this.selectedAccount?.decimals ?? 0),
+              fee: [],
+              metadata: [],
+              network: [],
+            },
+          },
           execution_plan: [],
-          expiration_dt: [],
-          metadata: [],
-          network: [],
         });
       } catch (err) {
         logger.error('Failed to send account', { err });

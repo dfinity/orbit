@@ -1,60 +1,72 @@
 use crate::{
-    core::ic_cdk::api::trap,
-    models::{Account, ProposalOperation, Transfer},
-    repositories::{AccountRepository, TransferRepository},
-    transport::{ProposalOperationDTO, ProposedTransferOperationDTO},
+    models::{Account, AccountEditOperation, ProposalOperation, TransferOperation},
+    repositories::AccountRepository,
+    transport::{
+        AccountEditOperationDTO, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
+        TransferOperationDTO,
+    },
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 
-pub struct ProposalMapperContext {
-    pub transfer: Option<Transfer>,
-    pub account: Option<Account>,
+impl TransferOperation {
+    pub fn into_dto(self, account: Account) -> TransferOperationDTO {
+        TransferOperationDTO {
+            amount: self.amount,
+            from_account: account.to_dto(),
+            to: self.to,
+            fee: self.fee,
+            metadata: self
+                .metadata
+                .iter()
+                .map(|(k, v)| TransferMetadataDTO {
+                    key: k.to_string(),
+                    value: v.to_string(),
+                })
+                .collect(),
+            network: NetworkDTO {
+                id: self.network.clone(),
+                name: self.network.clone(),
+            },
+        }
+    }
 }
 
-impl From<ProposalOperation> for ProposalMapperContext {
-    fn from(operation: ProposalOperation) -> ProposalMapperContext {
-        match operation {
-            ProposalOperation::Transfer(ctx) => {
-                let transfer = TransferRepository::default()
-                    .get(&Transfer::key(ctx.transfer_id))
-                    .unwrap_or_else(|| {
-                        trap(&format!(
-                            "MapperError: Transfer not found: {}",
-                            Uuid::from_bytes(ctx.transfer_id).hyphenated()
-                        ))
-                    });
-
-                let account = AccountRepository::default()
-                    .get(&Account::key(transfer.from_account))
-                    .unwrap_or_else(|| {
-                        trap(&format!(
-                            "MapperError: Account not found: {}",
-                            Uuid::from_bytes(transfer.from_account).hyphenated()
-                        ))
-                    });
-
-                Self {
-                    transfer: Some(transfer),
-                    account: Some(account),
-                }
-            }
+impl From<AccountEditOperation> for AccountEditOperationDTO {
+    fn from(operation: AccountEditOperation) -> AccountEditOperationDTO {
+        AccountEditOperationDTO {
+            account_id: Uuid::from_bytes(operation.account_id)
+                .hyphenated()
+                .to_string(),
+            name: operation.name,
+            owners: operation.owners.map(|owners| {
+                owners
+                    .iter()
+                    .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
+                    .collect()
+            }),
+            policies: operation.policies.map(|policies| {
+                policies
+                    .iter()
+                    .map(|policy| policy.clone().into())
+                    .collect()
+            }),
         }
     }
 }
 
 impl From<ProposalOperation> for ProposalOperationDTO {
     fn from(operation: ProposalOperation) -> ProposalOperationDTO {
-        let context = ProposalMapperContext::from(operation.clone());
         match operation {
-            ProposalOperation::Transfer(_) => {
-                let transfer = context.transfer.expect("Missing transfer context");
-                let account = context.account.expect("Missing account context");
+            ProposalOperation::Transfer(operation) => {
+                let account = AccountRepository::default()
+                    .get(&Account::key(operation.from_account_id))
+                    .expect("Account not found");
 
-                ProposalOperationDTO::Transfer(ProposedTransferOperationDTO {
-                    transfer: transfer.to_dto(),
-                    account: account.to_dto(),
-                })
+                ProposalOperationDTO::Transfer(Box::new(operation.into_dto(account)))
+            }
+            ProposalOperation::AccountEdit(operation) => {
+                ProposalOperationDTO::AccountEdit(operation.into())
             }
         }
     }

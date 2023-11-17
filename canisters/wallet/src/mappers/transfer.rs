@@ -1,62 +1,14 @@
-use super::HelperMapper;
 use crate::{
-    core::ic_cdk::api::time,
-    errors::MapperError,
-    models::{Transfer, TransferExecutionPlan, TransferId, TransferStatus, UserId},
-    transport::{
-        NetworkDTO, TransferDTO, TransferExecutionScheduleDTO, TransferInput, TransferListItemDTO,
-        TransferMetadataDTO,
-    },
+    models::Transfer,
+    transport::{NetworkDTO, TransferDTO, TransferListItemDTO, TransferMetadataDTO},
 };
-use candid::Nat;
-use ic_canister_core::utils::{rfc3339_to_timestamp, timestamp_to_rfc3339};
+use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
 pub struct TransferMapper {}
 
 impl TransferMapper {
-    pub fn from_create_input(
-        input: TransferInput,
-        transfer_id: TransferId,
-        initiator_user: UserId,
-        default_fee: Nat,
-        blockchain_network: String,
-        default_expiration_dt: u64,
-    ) -> Result<Transfer, MapperError> {
-        Ok(Transfer {
-            id: transfer_id,
-            initiator_user,
-            from_account: *HelperMapper::to_uuid(input.from_account_id)?.as_bytes(),
-            expiration_dt: input.expiration_dt.map_or(default_expiration_dt, |dt| {
-                rfc3339_to_timestamp(dt.as_str())
-            }),
-            fee: input.fee.unwrap_or(default_fee),
-            metadata: input.metadata.map_or(vec![], |data| {
-                data.iter()
-                    .map(|entry| (entry.key.to_owned(), entry.value.to_owned()))
-                    .collect()
-            }),
-            amount: input.amount,
-            to_address: input.to,
-            status: TransferStatus::Pending,
-            blockchain_network,
-            execution_plan: match input.execution_plan {
-                Some(plan) => match plan {
-                    TransferExecutionScheduleDTO::Immediate => TransferExecutionPlan::Immediate,
-                    TransferExecutionScheduleDTO::Scheduled { execution_time } => {
-                        TransferExecutionPlan::Scheduled {
-                            execution_time: rfc3339_to_timestamp(execution_time.as_str()),
-                        }
-                    }
-                },
-                None => TransferExecutionPlan::Immediate,
-            },
-            last_modification_timestamp: time(),
-            created_timestamp: time(),
-        })
-    }
-
     pub fn to_dto(transfer: Transfer) -> TransferDTO {
         TransferDTO {
             id: Uuid::from_slice(&transfer.id)
@@ -82,15 +34,6 @@ impl TransferMapper {
                 .hyphenated()
                 .to_string(),
             to: transfer.to_address,
-            expiration_dt: timestamp_to_rfc3339(&transfer.expiration_dt),
-            execution_plan: match transfer.execution_plan {
-                TransferExecutionPlan::Immediate => TransferExecutionScheduleDTO::Immediate,
-                TransferExecutionPlan::Scheduled { execution_time } => {
-                    TransferExecutionScheduleDTO::Scheduled {
-                        execution_time: timestamp_to_rfc3339(&execution_time),
-                    }
-                }
-            },
             status: transfer.status.into(),
         }
     }

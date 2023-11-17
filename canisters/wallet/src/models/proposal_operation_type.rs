@@ -10,6 +10,7 @@ use std::{
 #[repr(u8)]
 pub enum ProposalOperationType {
     Transfer = 0,
+    AccountEdit = 1,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -24,6 +25,7 @@ impl TryFrom<u8> for ProposalOperationType {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(ProposalOperationType::Transfer),
+            1 => Ok(ProposalOperationType::AccountEdit),
             _ => Err(()),
         }
     }
@@ -35,6 +37,7 @@ impl FromStr for ProposalOperationType {
     fn from_str(variant: &str) -> Result<ProposalOperationType, Self::Err> {
         match variant {
             "transfer" => Ok(ProposalOperationType::Transfer),
+            "account_edit" => Ok(ProposalOperationType::AccountEdit),
             _ => Err(()),
         }
     }
@@ -44,6 +47,7 @@ impl Display for ProposalOperationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ProposalOperationType::Transfer => write!(f, "transfer"),
+            ProposalOperationType::AccountEdit => write!(f, "account_edit"),
         }
     }
 }
@@ -73,6 +77,14 @@ mod tests {
             ProposalOperationType::from_str("transfer").unwrap(),
             ProposalOperationType::Transfer
         );
+        assert_eq!(
+            ProposalOperationType::AccountEdit.to_string(),
+            "account_edit"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("account_edit").unwrap(),
+            ProposalOperationType::AccountEdit
+        );
     }
 
     #[test]
@@ -81,6 +93,11 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(0).unwrap(),
             ProposalOperationType::Transfer
+        );
+        assert_eq!(ProposalOperationType::AccountEdit as u8, 1);
+        assert_eq!(
+            ProposalOperationType::try_from(1).unwrap(),
+            ProposalOperationType::AccountEdit
         );
     }
 }

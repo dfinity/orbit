@@ -193,16 +193,16 @@ export const useActiveWalletStore = defineStore('activeWallet', {
         notification.loading = false;
       }
     },
-    async saveDecision(
+    async voteOnProposal(
       proposalId: ProposalId,
-      decision: { approve?: boolean; reason?: string; read?: boolean },
+      decision: { approve: boolean; reason?: string },
     ): Promise<Proposal | null> {
       const settings = useSettingsStore();
 
       try {
         return await this.service.voteOnProposal({
           proposal_id: proposalId,
-          approve: decision.approve !== undefined ? [decision.approve] : [],
+          approve: decision.approve,
           reason: decision.reason !== undefined ? [decision.reason] : [],
         });
       } catch (err) {

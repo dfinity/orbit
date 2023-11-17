@@ -76,16 +76,16 @@ mod tests {
             ProposalVote {
                 user_id: [1; 16],
                 status_reason: None,
-                decided_dt: None,
+                decided_dt: 0,
                 last_modification_timestamp: 0,
-                status: ProposalVoteStatus::Pending,
+                status: ProposalVoteStatus::Accepted,
             },
             ProposalVote {
                 user_id: [2; 16],
                 status_reason: None,
-                decided_dt: None,
+                decided_dt: 0,
                 last_modification_timestamp: 0,
-                status: ProposalVoteStatus::Pending,
+                status: ProposalVoteStatus::Accepted,
             },
         ];
 

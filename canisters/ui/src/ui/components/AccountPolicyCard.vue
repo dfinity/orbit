@@ -44,18 +44,18 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import { AccountPolicy } from '~/generated/wallet/wallet.did';
+import { Policy } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores';
 import { PolicyType } from '~/types';
 
 const props = defineProps<{
-  modelValue?: AccountPolicy | null;
+  modelValue?: Policy | null;
   owners?: number;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload?: AccountPolicy | null): void;
+  (event: 'update:modelValue', payload?: Policy | null): void;
   (event: 'removed'): void;
 }>();
 

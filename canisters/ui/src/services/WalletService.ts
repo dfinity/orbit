@@ -22,7 +22,7 @@ import {
   Proposal,
   RegisterUserInput,
   Transfer,
-  TransferInput,
+  CreateProposalInput,
   TransferListItem,
   Account,
   AccountBalance,
@@ -231,14 +231,14 @@ export class WalletService {
     return result.Ok.transfers;
   }
 
-  async createTransfer(input: TransferInput): Promise<Transfer> {
-    const result = await this.actor.transfer(input);
+  async createProposal(input: CreateProposalInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal(input);
 
     if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.transfer;
+    return result.Ok.proposal;
   }
 
   async confirmUserIdentity(input: ConfirmUserIdentityInput): Promise<User> {

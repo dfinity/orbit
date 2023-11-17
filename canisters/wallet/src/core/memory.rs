@@ -13,15 +13,16 @@ pub const ACCOUNT_MEMORY_ID: MemoryId = MemoryId::new(2);
 pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
 pub const ACCOUNT_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
 pub const TRANSFER_MEMORY_ID: MemoryId = MemoryId::new(5);
-pub const TRANSFER_EXECUTION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
+pub const PROPOSAL_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
 pub const TRANSFER_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(7);
 pub const PROPOSAL_MEMORY_ID: MemoryId = MemoryId::new(8);
 pub const PROPOSAL_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
 pub const PROPOSAL_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
-pub const PROPOSAL_TRANSFER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
-pub const TRANSFER_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
+pub const PROPOSAL_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
+pub const PROPOSAL_SCHEDULED_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(13);
 pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);
+pub const TRANSFER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(15);
 
 thread_local! {
   /// Static configuration of the canister.

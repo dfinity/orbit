@@ -172,7 +172,7 @@ import { ref } from 'vue';
 import { useCreateAccountFormStore } from '~/ui/stores';
 import { uniqueRule } from '~/ui/utils';
 import AccountPolicyCard from './AccountPolicyCard.vue';
-import { UserId, AccountPolicy } from '~/generated/wallet/wallet.did';
+import { UserId, Policy } from '~/generated/wallet/wallet.did';
 
 const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null);
 const accountForm = useCreateAccountFormStore();
@@ -189,7 +189,7 @@ accountForm.$subscribe((_, state) => {
     accountForm.form.owners = [...uniqOwners];
   }
 
-  const uniqPolicies: Map<string, AccountPolicy | null> = new Map();
+  const uniqPolicies: Map<string, Policy | null> = new Map();
   state.form.policies.forEach(entry => {
     uniqPolicies.set(JSON.stringify(entry), entry);
   });

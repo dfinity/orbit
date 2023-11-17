@@ -35,7 +35,7 @@ export interface AccountDetailsStoreState {
     fromDt: string | null;
     toDt: string | null;
   };
-  receivables: {
+  deposits: {
     loading: boolean;
     items: AccountIncomingTransfer[];
   };
@@ -61,7 +61,7 @@ const initialState: AccountDetailsStoreState = {
     fromDt: null,
     toDt: null,
   },
-  receivables: {
+  deposits: {
     loading: false,
     items: [],
   },
@@ -90,8 +90,8 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
     },
-    sortedReceivables(): AccountIncomingTransfer[] {
-      return this.receivables.items.sort((a, b) => {
+    sortedDeposits(): AccountIncomingTransfer[] {
+      return this.deposits.items.sort((a, b) => {
         return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
       });
     },
@@ -135,7 +135,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
       this.proposals = reset.proposals;
       this.proposals.fromDt = new Date(this.defaultStartDt).toISOString().split('T')[0];
       this.proposals.toDt = new Date(this.defaultEndDt).toISOString().split('T')[0];
-      this.receivables = reset.receivables;
+      this.deposits = reset.deposits;
     },
     showPageNotification(type: 'error' | 'success' | 'warning' | 'info', message: string): void {
       this.notification = {
@@ -147,7 +147,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
     clearPageNotification(): void {
       this.notification.show = false;
     },
-    async loadReceivables(): Promise<void> {
+    async loadDeposits(): Promise<void> {
       if (!this.chainApi) {
         return;
       }
@@ -156,11 +156,11 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         from_dt: new Date(),
       });
 
-      this.receivables.items = transfers;
+      this.deposits.items = transfers;
     },
-    async saveDecision(
+    async voteOnProposal(
       proposalId: ProposalId,
-      decision: { approve?: boolean; reason?: string },
+      decision: { approve: boolean; reason?: string },
     ): Promise<void> {
       const activeWallet = useActiveWalletStore();
       const item = this.proposals.items.find(item => item.data.id === proposalId);
@@ -171,7 +171,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
 
       item.loading = true;
       const proposal = await activeWallet
-        .saveDecision(proposalId, decision)
+        .voteOnProposal(proposalId, decision)
         .finally(() => (item.loading = false));
 
       if (!proposal) {
@@ -204,13 +204,13 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
             });
           });
       } catch (e) {
-        logger.error('Failed to load proposals', { e });
+        logger.error('Failed to load withdraw requests', { e });
         const settings = useSettingsStore();
         this.proposals.items = [];
 
         settings.setNotification({
           show: true,
-          message: i18n.global.t('wallets.load_error_proposals'),
+          message: i18n.global.t('wallets.load_error_withdraw_requests'),
           type: 'error',
         });
       } finally {
@@ -233,7 +233,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
 
         settings.setNotification({
           show: true,
-          message: i18n.global.t('wallets.load_error_transfers'),
+          message: i18n.global.t('wallets.load_error_withdrawal'),
           type: 'error',
         });
       } finally {
@@ -258,7 +258,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
 
         this.loadSentTransfers(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
         this.loadProposals(new Date(this.defaultStartDt), new Date(this.defaultEndDt));
-        this.loadReceivables();
+        this.loadDeposits();
       } catch (e) {
         logger.error('Failed to load account', { e });
 

@@ -1,6 +1,8 @@
 use super::indexes::{
     proposal_account_index::ProposalAccountIndexRepository,
-    proposal_transfer_index::ProposalTransferIndexRepository,
+    proposal_expiration_time_index::ProposalExpirationTimeIndexRepository,
+    proposal_scheduled_index::ProposalScheduledIndexRepository,
+    proposal_status_index::ProposalStatusIndexRepository,
     proposal_user_index::ProposalUserIndexRepository,
 };
 use crate::{
@@ -8,19 +10,20 @@ use crate::{
     models::{
         indexes::{
             proposal_account_index::ProposalAccountIndexCriteria,
-            proposal_transfer_index::ProposalTransferIndexCriteria,
+            proposal_expiration_time_index::ProposalExpirationTimeIndexCriteria,
+            proposal_scheduled_index::ProposalScheduledIndexCriteria,
+            proposal_status_index::ProposalStatusIndexCriteria,
             proposal_user_index::ProposalUserIndexCriteria,
         },
-        AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatus, TransferId,
-        UserId,
+        AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatus, UserId,
     },
 };
 use ic_canister_core::{
-    repository::{IndexRepository, Repository},
+    repository::{IndexRepository, RefreshIndexMode, Repository},
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::{cell::RefCell, collections::HashSet};
+use std::cell::RefCell;
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -35,7 +38,9 @@ thread_local! {
 pub struct ProposalRepository {
     user_index: ProposalUserIndexRepository,
     account_index: ProposalAccountIndexRepository,
-    transfer_index: ProposalTransferIndexRepository,
+    expiration_dt_index: ProposalExpirationTimeIndexRepository,
+    status_index: ProposalStatusIndexRepository,
+    scheduled_index: ProposalScheduledIndexRepository,
 }
 
 impl Repository<ProposalKey, Proposal> for ProposalRepository {
@@ -44,101 +49,74 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
     }
 
     fn insert(&self, key: ProposalKey, value: Proposal) -> Option<Proposal> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_users_index = prev.to_index_for_users();
-                if prev_users_index != value.to_index_for_users() {
-                    prev_users_index.iter().for_each(|index| {
-                        self.user_index.remove(index);
-                    });
-                    value.to_index_for_users().iter().for_each(|index| {
-                        self.user_index.insert(index.to_owned());
-                    });
-                }
-
-                match (prev.to_index_for_account(), value.to_index_for_account()) {
-                    (Some(prev), Some(current)) => {
-                        if prev != current {
-                            self.account_index.remove(&prev);
-                            self.account_index.insert(current);
-                        }
-                    }
-                    (Some(prev), None) => {
-                        self.account_index.remove(&prev);
-                    }
-                    (None, Some(current)) => {
-                        self.account_index.insert(current);
-                    }
-                    _ => {}
-                }
-
-                match (prev.to_index_for_transfer(), value.to_index_for_transfer()) {
-                    (Some(prev), Some(current)) => {
-                        if prev != current {
-                            self.transfer_index.remove(&prev);
-                            self.transfer_index.insert(current);
-                        }
-                    }
-                    (Some(prev), None) => {
-                        self.transfer_index.remove(&prev);
-                    }
-                    (None, Some(current)) => {
-                        self.transfer_index.insert(current);
-                    }
-                    _ => {}
-                }
-
-                Some(prev)
-            }
-            None => {
-                value.to_index_for_users().iter().for_each(|index| {
-                    self.user_index.insert(index.to_owned());
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+            self.user_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_users()),
+                    current: value.to_index_for_users(),
                 });
-                if let Some(account_index) = value.to_index_for_account() {
-                    self.account_index.insert(account_index);
-                }
-                if let Some(transfer_index) = value.to_index_for_transfer() {
-                    self.transfer_index.insert(transfer_index);
-                }
 
-                None
-            }
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().and_then(|prev| prev.to_index_for_account()),
+                    current: value.to_index_for_account(),
+                });
+            self.scheduled_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().and_then(|prev| prev.to_index_by_scheduled()),
+                    current: value.to_index_by_scheduled(),
+                });
+            self.expiration_dt_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
+                    current: Some(value.to_index_by_expiration_dt()),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().clone().map(|prev| prev.to_index_by_status()),
+                    current: Some(value.to_index_by_status()),
+                });
+
+            prev
         })
     }
 
     fn remove(&self, key: &ProposalKey) -> Option<Proposal> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                prev.to_index_for_users().iter().for_each(|index| {
-                    self.user_index.remove(index);
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.user_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_users()),
                 });
-                if let Some(account_index) = prev.to_index_for_account() {
-                    self.account_index.remove(&account_index);
-                }
-                if let Some(transfer_index) = prev.to_index_for_transfer() {
-                    self.transfer_index.remove(&transfer_index);
-                }
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().and_then(|prev| prev.to_index_for_account()),
+                });
+            self.scheduled_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().and_then(|prev| prev.to_index_by_scheduled()),
+                });
+            self.expiration_dt_index.refresh_index_on_modification(
+                RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
+                },
+            );
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_status()),
+                });
 
-                Some(prev)
-            }
-            None => None,
+            prev
         })
     }
 }
 
 impl ProposalRepository {
-    pub fn find_by_transfer_id(&self, transfer_id: TransferId) -> Vec<Proposal> {
-        self.transfer_index
-            .find_by_criteria(ProposalTransferIndexCriteria {
-                transfer_id: transfer_id.to_owned(),
-                from_dt: None,
-                to_dt: None,
-            })
-            .iter()
-            .filter_map(|id| self.get(&Proposal::key(*id)))
-            .collect()
-    }
-
     pub fn find_by_user_id(&self, user_id: UserId) -> Vec<Proposal> {
         self.user_index
             .find_by_criteria(ProposalUserIndexCriteria {
@@ -151,10 +129,76 @@ impl ProposalRepository {
             .collect()
     }
 
-    pub fn find_by_account_and_user_id(
+    pub fn find_by_expiration_dt_and_status(
+        &self,
+        expiration_dt_from: Option<Timestamp>,
+        expiration_dt_to: Option<Timestamp>,
+        status: String,
+    ) -> Vec<Proposal> {
+        let proposals =
+            self.expiration_dt_index
+                .find_by_criteria(ProposalExpirationTimeIndexCriteria {
+                    from_dt: expiration_dt_from,
+                    to_dt: expiration_dt_to,
+                });
+
+        proposals
+            .iter()
+            .filter_map(|id| match self.get(&Proposal::key(*id)) {
+                Some(proposal) => {
+                    if proposal
+                        .status
+                        .to_string()
+                        .eq_ignore_ascii_case(status.as_str())
+                    {
+                        Some(proposal)
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            })
+            .collect::<Vec<Proposal>>()
+    }
+
+    pub fn find_by_status(
+        &self,
+        status: String,
+        from_last_update_dt: Option<Timestamp>,
+        to_last_update_dt: Option<Timestamp>,
+    ) -> Vec<Proposal> {
+        let proposals = self
+            .status_index
+            .find_by_criteria(ProposalStatusIndexCriteria {
+                status: status.to_owned(),
+                from_dt: from_last_update_dt,
+                to_dt: to_last_update_dt,
+            });
+
+        proposals
+            .iter()
+            .filter_map(|id| self.get(&Proposal::key(*id)))
+            .collect::<Vec<Proposal>>()
+    }
+
+    pub fn find_scheduled(
+        &self,
+        from_dt: Option<Timestamp>,
+        to_dt: Option<Timestamp>,
+    ) -> Vec<Proposal> {
+        let proposals = self
+            .scheduled_index
+            .find_by_criteria(ProposalScheduledIndexCriteria { from_dt, to_dt });
+
+        proposals
+            .iter()
+            .filter_map(|id| self.get(&Proposal::key(*id)))
+            .collect::<Vec<Proposal>>()
+    }
+
+    pub fn find_by_account(
         &self,
         account_id: AccountId,
-        user_id: UserId,
         created_from_dt: Option<Timestamp>,
         created_to_dt: Option<Timestamp>,
     ) -> Vec<Proposal> {
@@ -165,18 +209,8 @@ impl ProposalRepository {
                     from_dt: created_from_dt.to_owned(),
                     to_dt: created_to_dt.to_owned(),
                 });
-        let filtered_by_users = self.user_index.find_by_criteria(ProposalUserIndexCriteria {
-            user_id: user_id.to_owned(),
-            from_dt: created_from_dt,
-            to_dt: created_to_dt,
-        });
 
-        let results = filtered_by_accounts
-            .intersection(&filtered_by_users)
-            .copied()
-            .collect::<HashSet<_>>();
-
-        results
+        filtered_by_accounts
             .iter()
             .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect()
@@ -184,12 +218,11 @@ impl ProposalRepository {
 
     pub fn find_by_account_where(
         &self,
-        (user_id, account_id): (UserId, AccountId),
+        account_id: AccountId,
         condition: ProposalWhereClause,
     ) -> Vec<Proposal> {
-        self.find_by_account_and_user_id(
+        self.find_by_account(
             account_id,
-            user_id,
             condition.created_dt_from,
             condition.created_dt_to,
         )
@@ -271,9 +304,10 @@ pub struct ProposalFindByUserWhereClause {
 mod tests {
     use super::*;
     use crate::models::{
-        proposal_test_utils::mock_proposal, ProposalOperation, ProposalVote, ProposalVoteStatus,
-        TransferOperationContext,
+        proposal_test_utils::{self, mock_proposal},
+        ProposalOperation, ProposalVote, ProposalVoteStatus, TransferOperation,
     };
+    use num_bigint::BigUint;
     use uuid::Uuid;
 
     #[test]
@@ -288,24 +322,6 @@ mod tests {
         assert!(repository.get(&proposal.to_key()).is_some());
         assert!(repository.remove(&proposal.to_key()).is_some());
         assert!(repository.get(&proposal.to_key()).is_none());
-    }
-
-    #[test]
-    fn find_by_transfer_id() {
-        let repository = ProposalRepository::default();
-        let mut proposal = mock_proposal();
-        let transfer_id = Uuid::new_v4();
-        proposal.operation = ProposalOperation::Transfer(TransferOperationContext {
-            transfer_id: *transfer_id.as_bytes(),
-            account_id: [0; 16],
-        });
-
-        repository.insert(proposal.to_key(), proposal.clone());
-
-        assert_eq!(
-            repository.find_by_transfer_id(*transfer_id.as_bytes()),
-            vec![proposal]
-        );
     }
 
     #[test]
@@ -330,9 +346,9 @@ mod tests {
         let user_id = Uuid::new_v4();
         proposal.votes = vec![ProposalVote {
             user_id: *user_id.as_bytes(),
-            decided_dt: None,
+            decided_dt: 0,
             last_modification_timestamp: 0,
-            status: ProposalVoteStatus::Pending,
+            status: ProposalVoteStatus::Accepted,
             status_reason: None,
         }];
 
@@ -345,27 +361,77 @@ mod tests {
     }
 
     #[test]
-    fn find_by_account_and_user() {
+    fn find_by_account() {
         let repository = ProposalRepository::default();
         let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
         let account_id = Uuid::new_v4();
         proposal.proposed_by = Some(*user_id.as_bytes());
-        proposal.operation = ProposalOperation::Transfer(TransferOperationContext {
-            transfer_id: [0; 16],
-            account_id: *account_id.as_bytes(),
+        proposal.operation = ProposalOperation::Transfer(TransferOperation {
+            amount: candid::Nat(BigUint::from(100u32)),
+            fee: None,
+            metadata: vec![],
+            network: "mainnet".to_string(),
+            to: "0x1234".to_string(),
+            from_account_id: *account_id.as_bytes(),
         });
 
         repository.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(
-            repository.find_by_account_and_user_id(
-                *account_id.as_bytes(),
-                *user_id.as_bytes(),
-                None,
-                None
-            ),
+            repository.find_by_account(*account_id.as_bytes(), None, None),
             vec![proposal]
         );
+    }
+
+    #[test]
+    fn find_by_expiration_dt_and_status() {
+        let repository = ProposalRepository::default();
+        for i in 0..=50 {
+            let mut proposal = proposal_test_utils::mock_proposal();
+            proposal.id = *Uuid::new_v4().as_bytes();
+            proposal.expiration_dt = i;
+            proposal.status = ProposalStatus::Created;
+            repository.insert(proposal.to_key(), proposal.clone());
+        }
+
+        let last_six = repository.find_by_expiration_dt_and_status(
+            Some(45),
+            None,
+            ProposalStatus::Created.to_string(),
+        );
+
+        let middle_eleven = repository.find_by_expiration_dt_and_status(
+            Some(30),
+            Some(40),
+            ProposalStatus::Created.to_string(),
+        );
+
+        let first_three = repository.find_by_expiration_dt_and_status(
+            None,
+            Some(2),
+            ProposalStatus::Created.to_string(),
+        );
+
+        assert_eq!(last_six.len(), 6);
+        assert_eq!(middle_eleven.len(), 11);
+        assert_eq!(first_three.len(), 3);
+    }
+
+    #[test]
+    fn no_of_future_expiration_dt() {
+        let repository = ProposalRepository::default();
+        let mut proposal = proposal_test_utils::mock_proposal();
+        proposal.expiration_dt = 10;
+
+        repository.insert(proposal.to_key(), proposal.clone());
+
+        let proposals = repository.find_by_expiration_dt_and_status(
+            Some(20),
+            None,
+            proposal.status.to_string(),
+        );
+
+        assert!(proposals.is_empty());
     }
 }

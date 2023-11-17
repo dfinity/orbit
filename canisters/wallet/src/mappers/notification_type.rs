@@ -1,11 +1,12 @@
 use crate::{
     models::{
-        NotificationType, PROPOSAL_CREATED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE,
+        NotificationType, ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE,
+        PROPOSAL_CREATED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE,
         TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE,
     },
     transport::{
-        NotificationTypeDTO, NotificationTypeInput, ProposalCreatedNotificationDTO,
-        TransferProposalCreatedNotificationDTO,
+        AccountProposalCreatedNotificationDTO, NotificationTypeDTO, NotificationTypeInput,
+        ProposalCreatedNotificationDTO, TransferProposalCreatedNotificationDTO,
     },
 };
 use std::fmt::{Display, Formatter};
@@ -22,6 +23,9 @@ impl Display for NotificationTypeInput {
             }
             NotificationTypeInput::ProposalCreated => {
                 write!(f, "{}", PROPOSAL_CREATED_NOTIFICATION_TYPE)
+            }
+            NotificationTypeInput::AccountProposalCreated => {
+                write!(f, "{}", ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE)
             }
         }
     }
@@ -41,9 +45,14 @@ impl From<NotificationType> for NotificationTypeDTO {
                     TransferProposalCreatedNotificationDTO {
                         proposal_id: Uuid::from_bytes(ctx.proposal_id).to_string(),
                         account_id: Uuid::from_bytes(ctx.account_id).to_string(),
-                        transfer_id: Uuid::from_bytes(ctx.transfer_id).to_string(),
                     },
                 )
+            }
+            NotificationType::AccountProposalCreated(proposal_id, account_id) => {
+                NotificationTypeDTO::AccountProposalCreated(AccountProposalCreatedNotificationDTO {
+                    account_id: Uuid::from_bytes(account_id).to_string(),
+                    proposal_id: Uuid::from_bytes(proposal_id).to_string(),
+                })
             }
         }
     }

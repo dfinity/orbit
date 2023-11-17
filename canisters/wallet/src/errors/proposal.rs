@@ -20,6 +20,15 @@ pub enum ProposalError {
     /// The proposal has failed validation.
     #[error(r#"The proposal has failed validation."#)]
     ValidationError { info: String },
+    /// You can't vote on the requested proposal.
+    #[error(r#"You can't vote on the requested proposal."#)]
+    VoteNotAllowed,
+    /// Proposal execution failed due to {reason}.
+    #[error(r#"Proposal execution failed due to `{reason}`."#)]
+    ExecutionError { reason: String },
+    /// Proposal can't be executed because it was not adopted.
+    #[error(r#"Proposal can't be executed because it was not adopted."#)]
+    ExecutionFailedNotAdopted,
 }
 
 impl DetailableError for ProposalError {
@@ -46,6 +55,11 @@ impl DetailableError for ProposalError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
+            ProposalError::ExecutionError { reason } => {
+                details.insert("reason".to_string(), reason.to_string());
+                Some(details)
+            }
+            _ => None,
         }
     }
 }

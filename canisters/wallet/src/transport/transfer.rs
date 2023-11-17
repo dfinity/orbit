@@ -1,14 +1,8 @@
-use super::{AccountIdDTO, TimestampRfc3339};
+use super::{AccountDTO, AccountIdDTO, TimestampRfc3339};
 use candid::{CandidType, Deserialize};
 
 pub type TransferIdDTO = String;
 pub type NetworkIdDTO = String;
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum TransferExecutionScheduleDTO {
-    Immediate,
-    Scheduled { execution_time: TimestampRfc3339 },
-}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferMetadataDTO {
@@ -23,35 +17,38 @@ pub struct NetworkDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct TransferInput {
+pub struct TransferOperationInput {
+    pub from_account_id: AccountIdDTO,
     pub to: String,
+    pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,
-    pub expiration_dt: Option<TimestampRfc3339>,
-    pub execution_plan: Option<TransferExecutionScheduleDTO>,
     pub metadata: Option<Vec<TransferMetadataDTO>>,
     pub network: Option<NetworkDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct TransferOperationDTO {
+    pub from_account: AccountDTO,
+    pub to: String,
     pub amount: candid::Nat,
-    pub from_account_id: AccountIdDTO,
+    pub metadata: Vec<TransferMetadataDTO>,
+    pub network: NetworkDTO,
+    pub fee: Option<candid::Nat>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum TransferStatusDTO {
+    Created,
     Cancelled {
         reason: Option<String>,
     },
     Processing {
         started_at: TimestampRfc3339,
     },
-    Submitted,
-    Pending,
     Completed {
         signature: Option<String>,
         hash: Option<String>,
         completed_at: TimestampRfc3339,
-    },
-    Approved,
-    Rejected {
-        reason: String,
     },
     Failed {
         reason: String,
@@ -66,8 +63,6 @@ pub struct TransferDTO {
     pub fee: candid::Nat,
     pub amount: candid::Nat,
     pub status: TransferStatusDTO,
-    pub expiration_dt: TimestampRfc3339,
-    pub execution_plan: TransferExecutionScheduleDTO,
     pub network: NetworkDTO,
     pub metadata: Vec<TransferMetadataDTO>,
 }

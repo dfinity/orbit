@@ -1,20 +1,14 @@
-use super::{AccountService, NotificationService, UserService};
+use super::{AccountService, UserService};
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::time, CallContext, PostProcessor},
+    core::CallContext,
     errors::{AccountError, TransferError},
-    factories::blockchains::BlockchainApiFactory,
-    mappers::{HelperMapper, TransferMapper},
-    models::{
-        Account, NotificationType, Proposal, ProposalOperation, ProposalStatus, ProposalVote,
-        ProposalVoteStatus, Transfer, TransferId, TransferOperationContext,
-        TransferProposalCreatedNotification,
-    },
-    repositories::{AccountRepository, ProposalRepository, TransferRepository},
-    transport::{ListAccountTransfersInput, TransferInput},
+    mappers::HelperMapper,
+    models::{Account, Transfer, TransferId},
+    repositories::{AccountRepository, TransferRepository},
+    transport::ListAccountTransfersInput,
 };
-use candid::Nat;
+use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, utils::rfc3339_to_timestamp};
-use ic_canister_core::{model::ModelValidator, repository::Repository};
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -23,8 +17,6 @@ pub struct TransferService {
     account_service: AccountService,
     account_repository: AccountRepository,
     transfer_repository: TransferRepository,
-    proposal_repository: ProposalRepository,
-    notification_service: NotificationService,
 }
 
 impl TransferService {
@@ -58,113 +50,6 @@ impl TransferService {
         }
 
         Ok(transfers)
-    }
-
-    pub async fn create_transfer(
-        &self,
-        input: TransferInput,
-        ctx: &CallContext,
-    ) -> ServiceResult<Transfer> {
-        // validate user is owner of account
-        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-        let account_id = HelperMapper::to_uuid(input.from_account_id.clone())?;
-        let account_key = Account::key(*account_id.as_bytes());
-        let account =
-            self.account_repository
-                .get(&account_key)
-                .ok_or(AccountError::AccountNotFound {
-                    id: account_id.hyphenated().to_string(),
-                })?;
-        let is_account_owner = account.owners.contains(&caller_user.id);
-        if !is_account_owner {
-            Err(AccountError::Forbidden)?
-        }
-
-        // create transfer
-        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
-        let default_fee = blockchain_api.transaction_fee(&account).await?;
-        let transfer_id = generate_uuid_v4().await;
-
-        let transfer = TransferMapper::from_create_input(
-            input,
-            *transfer_id.as_bytes(),
-            caller_user.id,
-            Nat(default_fee.fee),
-            blockchain_api.default_network(),
-            Transfer::default_expiration_dt(),
-        )?;
-
-        transfer.validate()?;
-
-        // save transfer to stable memory
-        self.transfer_repository
-            .insert(transfer.to_key(), transfer.to_owned());
-
-        // this await is within the canister so a trap inside create_transfer_proposal will revert the canister state
-        let mut proposal = self.create_transfer_proposal(&account, &transfer).await?;
-
-        proposal.post_process()?;
-
-        Ok(transfer)
-    }
-
-    async fn create_transfer_proposal(
-        &self,
-        account: &Account,
-        transfer: &Transfer,
-    ) -> ServiceResult<Proposal> {
-        let proposal_id = generate_uuid_v4().await;
-        let mut proposal = Proposal {
-            id: *proposal_id.as_bytes(),
-            status: ProposalStatus::Pending,
-            created_timestamp: time(),
-            proposed_by: Some(transfer.initiator_user),
-            operation: ProposalOperation::Transfer(TransferOperationContext {
-                transfer_id: transfer.id,
-                account_id: account.id,
-            }),
-            metadata: vec![],
-            last_modification_timestamp: time(),
-            votes: Vec::new(),
-        };
-
-        for owner in account.owners.iter() {
-            proposal.votes.push(ProposalVote {
-                user_id: *owner,
-                status: match transfer.initiator_user == *owner {
-                    true => ProposalVoteStatus::Adopted,
-                    false => ProposalVoteStatus::Pending,
-                },
-                decided_dt: match transfer.initiator_user == *owner {
-                    true => Some(time()),
-                    false => None,
-                },
-                last_modification_timestamp: time(),
-                status_reason: None,
-            });
-
-            if transfer.initiator_user != *owner {
-                self.notification_service
-                    .send_notification(
-                        *owner,
-                        NotificationType::TransferProposalCreated(
-                            TransferProposalCreatedNotification {
-                                account_id: account.id,
-                                proposal_id: proposal.id,
-                                transfer_id: transfer.id,
-                            },
-                        ),
-                        None,
-                        None,
-                    )
-                    .await?;
-            }
-        }
-
-        self.proposal_repository
-            .insert(proposal.to_key(), proposal.clone());
-
-        Ok(proposal)
     }
 
     pub fn list_account_transfers(
@@ -278,51 +163,6 @@ mod tests {
         ctx.repository.insert(transfer.to_key(), transfer.clone());
 
         let result = ctx.service.get_transfer(&transfer.id, &ctx.call_context);
-
-        assert!(result.is_err());
-    }
-
-    #[tokio::test]
-    async fn create_transfer_happy_path() {
-        let ctx = setup();
-        let transfer_input = TransferInput {
-            from_account_id: Uuid::from_bytes(ctx.account.id).to_string(),
-            amount: candid::Nat::from(100),
-            fee: None,
-            network: None,
-            expiration_dt: None,
-            execution_plan: None,
-            metadata: None,
-            to: "03e252ebe920437d7aaff019b78a40bca50e24e42aebff00384d62038482ac81".to_string(),
-        };
-
-        let result = ctx
-            .service
-            .create_transfer(transfer_input.clone(), &ctx.call_context)
-            .await;
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().from_account, ctx.account.id);
-    }
-
-    #[tokio::test]
-    async fn fail_create_transfer_from_unknown_account() {
-        let ctx = setup();
-        let transfer_input = TransferInput {
-            from_account_id: Uuid::new_v4().to_string(),
-            amount: candid::Nat::from(100),
-            fee: None,
-            network: None,
-            expiration_dt: None,
-            execution_plan: None,
-            metadata: None,
-            to: "03e252ebe920437d7aaff019b78a40bca50e24e42aebff00384d62038482ac81".to_string(),
-        };
-
-        let result = ctx
-            .service
-            .create_transfer(transfer_input.clone(), &ctx.call_context)
-            .await;
 
         assert!(result.is_err());
     }

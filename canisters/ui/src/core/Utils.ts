@@ -46,16 +46,8 @@ export const amountToBigInt = (amount: string, decimals: number): bigint => {
 };
 
 export const extractTransferStatus = (status: TransferStatus): AccountTransferStatus => {
-  if ('Pending' in status) {
-    return AccountTransferStatus.Pending;
-  }
-
-  if ('Approved' in status) {
-    return AccountTransferStatus.Approved;
-  }
-
-  if ('Rejected' in status) {
-    return AccountTransferStatus.Rejected;
+  if ('Created' in status) {
+    return AccountTransferStatus.Created;
   }
 
   if ('Failed' in status) {
@@ -64,10 +56,6 @@ export const extractTransferStatus = (status: TransferStatus): AccountTransferSt
 
   if ('Cancelled' in status) {
     return AccountTransferStatus.Cancelled;
-  }
-
-  if ('Submitted' in status) {
-    return AccountTransferStatus.Submitted;
   }
 
   if ('Processing' in status) {

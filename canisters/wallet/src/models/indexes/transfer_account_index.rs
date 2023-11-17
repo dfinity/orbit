@@ -41,7 +41,7 @@ impl Transfer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{TransferExecutionPlan, TransferStatus};
+    use crate::models::TransferStatus;
     use num_bigint::BigUint;
 
     #[test]
@@ -51,15 +51,13 @@ mod tests {
             amount: candid::Nat(BigUint::from(0u32)),
             blockchain_network: "icp".to_string(),
             created_timestamp: 1,
-            expiration_dt: 5,
             fee: candid::Nat(BigUint::from(0u32)),
             from_account: [1; 16],
             to_address: "0x1234".to_string(),
-            status: TransferStatus::Pending,
+            status: TransferStatus::Created,
             initiator_user: [2; 16],
             last_modification_timestamp: 0,
             metadata: vec![],
-            execution_plan: TransferExecutionPlan::Immediate,
         };
 
         let index = transfer.to_index_by_account();

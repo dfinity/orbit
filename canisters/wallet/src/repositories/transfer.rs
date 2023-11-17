@@ -1,21 +1,19 @@
 use super::indexes::{
     transfer_account_index::TransferAccountIndexRepository,
-    transfer_execution_time_index::TransferExecutionTimeIndexRepository,
-    transfer_expiration_time_index::TransferExpirationTimeIndexRepository,
+    transfer_status_index::TransferStatusIndexRepository,
 };
 use crate::{
     core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
     models::{
         indexes::{
             transfer_account_index::TransferAccountIndexCriteria,
-            transfer_execution_time_index::TransferExecutionTimeIndexCriteria,
-            transfer_expiration_time_index::TransferExpirationTimeIndexCriteria,
+            transfer_status_index::TransferStatusIndexCriteria,
         },
         AccountId, Transfer, TransferKey,
     },
 };
 use ic_canister_core::{
-    repository::{IndexRepository, Repository},
+    repository::{IndexRepository, RefreshIndexMode, Repository},
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -34,8 +32,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct TransferRepository {
     account_index: TransferAccountIndexRepository,
-    execution_dt_index: TransferExecutionTimeIndexRepository,
-    expiration_dt_index: TransferExpirationTimeIndexRepository,
+    status_index: TransferStatusIndexRepository,
 }
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
@@ -44,121 +41,41 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     }
 
     fn insert(&self, key: TransferKey, value: Transfer) -> Option<Transfer> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_account_index = prev.to_index_by_account();
-                if prev_account_index != value.to_index_by_account() {
-                    self.account_index.remove(&prev_account_index);
-                    self.account_index.insert(value.to_index_by_account());
-                }
-                let prev_execution_dt_index = prev.to_index_by_execution_dt();
-                if prev_execution_dt_index != value.to_index_by_execution_dt() {
-                    self.execution_dt_index.remove(&prev_execution_dt_index);
-                    self.execution_dt_index
-                        .insert(value.to_index_by_execution_dt());
-                }
-                let prev_expiration_dt_index = prev.to_index_by_expiration_dt();
-                if prev_expiration_dt_index != value.to_index_by_expiration_dt() {
-                    self.expiration_dt_index.remove(&prev_expiration_dt_index);
-                    self.expiration_dt_index
-                        .insert(value.to_index_by_expiration_dt());
-                }
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_by_account()),
+                    current: Some(value.to_index_by_account()),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_by_status()),
+                    current: Some(value.to_index_by_status()),
+                });
 
-                Some(prev)
-            }
-            None => {
-                self.account_index.insert(value.to_index_by_account());
-                self.execution_dt_index
-                    .insert(value.to_index_by_execution_dt());
-                self.expiration_dt_index
-                    .insert(value.to_index_by_expiration_dt());
-
-                None
-            }
+            prev
         })
     }
 
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                self.account_index.remove(&prev.to_index_by_account());
-                self.execution_dt_index
-                    .remove(&prev.to_index_by_execution_dt());
-                self.expiration_dt_index
-                    .remove(&prev.to_index_by_expiration_dt());
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.account_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_account()),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_status()),
+                });
 
-                Some(prev)
-            }
-            None => None,
+            prev
         })
     }
 }
 
 impl TransferRepository {
-    pub fn find_by_execution_dt_and_status(
-        &self,
-        execution_dt_from: Option<Timestamp>,
-        execution_dt_to: Option<Timestamp>,
-        status: String,
-    ) -> Vec<Transfer> {
-        let transfers =
-            self.execution_dt_index
-                .find_by_criteria(TransferExecutionTimeIndexCriteria {
-                    from_dt: execution_dt_from,
-                    to_dt: execution_dt_to,
-                });
-
-        transfers
-            .iter()
-            .filter_map(|id| match self.get(&Transfer::key(*id)) {
-                Some(transfer) => {
-                    if transfer
-                        .status
-                        .to_string()
-                        .eq_ignore_ascii_case(status.as_str())
-                    {
-                        Some(transfer)
-                    } else {
-                        None
-                    }
-                }
-                None => None,
-            })
-            .collect::<Vec<Transfer>>()
-    }
-
-    pub fn find_by_expiration_dt_and_status(
-        &self,
-        expiration_dt_from: Option<Timestamp>,
-        expiration_dt_to: Option<Timestamp>,
-        status: String,
-    ) -> Vec<Transfer> {
-        let transfers =
-            self.expiration_dt_index
-                .find_by_criteria(TransferExpirationTimeIndexCriteria {
-                    from_dt: expiration_dt_from,
-                    to_dt: expiration_dt_to,
-                });
-
-        transfers
-            .iter()
-            .filter_map(|id| match self.get(&Transfer::key(*id)) {
-                Some(transfer) => {
-                    if transfer
-                        .status
-                        .to_string()
-                        .eq_ignore_ascii_case(status.as_str())
-                    {
-                        Some(transfer)
-                    } else {
-                        None
-                    }
-                }
-                None => None,
-            })
-            .collect::<Vec<Transfer>>()
-    }
-
     pub fn find_by_account(
         &self,
         account_id: AccountId,
@@ -193,12 +110,32 @@ impl TransferRepository {
             })
             .collect::<Vec<Transfer>>()
     }
+
+    pub fn find_by_status(
+        &self,
+        status: String,
+        from_last_update_dt: Option<Timestamp>,
+        to_last_update_dt: Option<Timestamp>,
+    ) -> Vec<Transfer> {
+        let transfers = self
+            .status_index
+            .find_by_criteria(TransferStatusIndexCriteria {
+                status: status.to_owned(),
+                from_dt: from_last_update_dt,
+                to_dt: to_last_update_dt,
+            });
+
+        transfers
+            .iter()
+            .filter_map(|id| self.get(&Transfer::key(*id)))
+            .collect::<Vec<Transfer>>()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{transfer_test_utils, TransferExecutionPlan};
+    use crate::models::transfer_test_utils;
 
     #[test]
     fn perform_crud() {
@@ -212,59 +149,6 @@ mod tests {
         assert!(repository.get(&transfer.to_key()).is_some());
         assert!(repository.remove(&transfer.to_key()).is_some());
         assert!(repository.get(&transfer.to_key()).is_none());
-    }
-
-    #[test]
-    fn find_transfer_with_execution_dt_and_status() {
-        let repository = TransferRepository::default();
-        let mut transfer = transfer_test_utils::mock_transfer();
-        transfer.execution_plan = TransferExecutionPlan::Scheduled { execution_time: 10 };
-
-        repository.insert(transfer.to_key(), transfer.clone());
-
-        let transfers = repository.find_by_execution_dt_and_status(
-            Some(10),
-            Some(10),
-            transfer.status.to_string(),
-        );
-
-        assert_eq!(transfers.len(), 1);
-        assert_eq!(transfers[0], transfer);
-    }
-
-    #[test]
-    fn find_transfer_by_expiration_dt_and_status() {
-        let repository = TransferRepository::default();
-        let mut transfer = transfer_test_utils::mock_transfer();
-        transfer.expiration_dt = 10;
-
-        repository.insert(transfer.to_key(), transfer.clone());
-
-        let transfers = repository.find_by_expiration_dt_and_status(
-            Some(10),
-            Some(10),
-            transfer.status.to_string(),
-        );
-
-        assert_eq!(transfers.len(), 1);
-        assert_eq!(transfers[0], transfer);
-    }
-
-    #[test]
-    fn no_transfers_of_future_expiration_dt() {
-        let repository = TransferRepository::default();
-        let mut transfer = transfer_test_utils::mock_transfer();
-        transfer.expiration_dt = 10;
-
-        repository.insert(transfer.to_key(), transfer.clone());
-
-        let transfers = repository.find_by_expiration_dt_and_status(
-            Some(20),
-            None,
-            transfer.status.to_string(),
-        );
-
-        assert!(transfers.is_empty());
     }
 
     #[test]

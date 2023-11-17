@@ -15,10 +15,20 @@ pub struct AccountDTO {
     pub symbol: String,
     pub decimals: u32,
     pub balance: Option<AccountBalanceInfoDTO>,
-    pub policies: Vec<AccountPolicyDTO>,
+    pub policies: Vec<PolicyDTO>,
     pub metadata: Vec<(String, String)>,
     pub last_modification_timestamp: String,
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountEditOperationInput {
+    pub account_id: AccountIdDTO,
+    pub owners: Option<Vec<UserIdDTO>>,
+    pub policies: Option<Vec<PolicyDTO>>,
+    pub name: Option<String>,
+}
+
+pub type AccountEditOperationDTO = AccountEditOperationInput;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ApprovalThresholdPolicyDTO {
@@ -27,7 +37,7 @@ pub enum ApprovalThresholdPolicyDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AccountPolicyDTO {
+pub enum PolicyDTO {
     #[serde(rename = "approval_threshold")]
     ApprovalThreshold(ApprovalThresholdPolicyDTO),
 }
@@ -38,7 +48,7 @@ pub struct CreateAccountInput {
     pub name: Option<String>,
     pub blockchain: String,
     pub standard: String,
-    pub policies: Vec<AccountPolicyDTO>,
+    pub policies: Vec<PolicyDTO>,
     pub metadata: Option<Vec<(String, String)>>,
 }
 
