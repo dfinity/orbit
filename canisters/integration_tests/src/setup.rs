@@ -2,6 +2,7 @@ use crate::interfaces::{
     ControlPanelCanisterInit, DefaultWalletInit, NnsIndexCanisterInitPayload,
     NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload, UpgraderInitArg,
 };
+use crate::utils::{controller_test_id, minter_test_id};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
@@ -38,8 +39,8 @@ pub fn setup_new_env() -> TestEnv {
 
     let mut env = PocketIc::new();
     env.set_time(SystemTime::now());
-    let minter = Principal::anonymous();
-    let controller = Principal::anonymous();
+    let minter = minter_test_id();
+    let controller = controller_test_id();
     let canister_ids = install_canisters(&mut env, minter, controller);
 
     TestEnv {
@@ -55,7 +56,7 @@ fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
 }
 
 fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, minter)).collect();
+    let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
     let nns_ledger_canister_id = nns_canister_ids[2];
     let nns_index_canister_id = nns_canister_ids[11];
 
@@ -77,7 +78,7 @@ fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principa
         nns_ledger_canister_id,
         icp_ledger_canister_wasm,
         Encode!(&icp_ledger_init_args).unwrap(),
-        None,
+        Some(controller),
     );
 
     let icp_index_canister_wasm = include_bytes!("../wasms/icp_index.wasm.gz").to_vec();
@@ -88,7 +89,7 @@ fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principa
         nns_index_canister_id,
         icp_index_canister_wasm,
         Encode!(&icp_index_init_args).unwrap(),
-        None,
+        Some(controller),
     );
 
     let control_panel = create_canister(env, controller);
@@ -103,7 +104,7 @@ fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principa
         control_panel,
         control_panel_wasm_bytes,
         Encode!(&control_panel_init_args).unwrap(),
-        None,
+        Some(controller),
     );
 
     let upgrader_wasm_bytes = include_bytes!("../wasms/upgrader.wasm.gz").to_vec();
@@ -114,11 +115,16 @@ fn install_canisters(env: &mut PocketIc, minter: Principal, controller: Principa
         upgrader,
         upgrader_wasm_bytes,
         Encode!(&upgrader_init_args).unwrap(),
-        None,
+        Some(controller),
     );
 
     let wallet_wasm_bytes = include_bytes!("../wasms/wallet.wasm.gz").to_vec();
-    env.install_canister(wallet, wallet_wasm_bytes, Encode!(&()).unwrap(), None);
+    env.install_canister(
+        wallet,
+        wallet_wasm_bytes,
+        Encode!(&()).unwrap(),
+        Some(controller),
+    );
 
     CanisterIds {
         control_panel,
