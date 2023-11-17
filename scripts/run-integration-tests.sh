@@ -21,7 +21,7 @@ else
     exit 1
 fi
 
-if [ $BUILD_WASMS = true ]
+if [ $BUILD_WASMS == "true" ]
 then
     ./scripts/generate-all-canister-wasms.sh
 fi
