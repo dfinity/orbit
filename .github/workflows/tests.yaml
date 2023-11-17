@@ -60,9 +60,5 @@ jobs:
           override: true
       - name: 'Setup WASM target for Rust'
         run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-wasms"
-          save-if: "false"
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh
