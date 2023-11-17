@@ -4,7 +4,7 @@ use crate::{
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
-    models::{Proposal, ProposalId, ProposalOperationType, ProposalVoteStatus},
+    models::{Proposal, ProposalId, ProposalOperationType, ProposalStatus, ProposalVoteStatus},
     repositories::{ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause},
     transport::{
         CreateProposalInput, ListAccountProposalsInput, ListProposalsInput, VoteOnProposalInput,
@@ -63,7 +63,6 @@ impl ProposalService {
         input: ListAccountProposalsInput,
         ctx: &CallContext,
     ) -> ServiceResult<Vec<Proposal>> {
-        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let account = self
             .account_service
             .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes(), ctx)?;
@@ -71,7 +70,7 @@ impl ProposalService {
         let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
 
         let proposals = self.proposal_repository.find_by_account_where(
-            (user.id, account.id),
+            account.id,
             ProposalWhereClause {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
@@ -133,7 +132,7 @@ impl ProposalService {
         let proposal_id = HelperMapper::to_uuid(input.proposal_id)?;
         let mut proposal = self.get_proposal(proposal_id.as_bytes(), ctx)?;
 
-        if !proposal.can_vote(&voter.id) {
+        if proposal.status != ProposalStatus::Created || !proposal.can_vote(&voter.id) {
             Err(ProposalError::VoteNotAllowed)?
         }
 
@@ -287,6 +286,7 @@ mod tests {
         )];
         let mut proposal = mock_proposal();
         proposal.proposed_by = None;
+        proposal.status = ProposalStatus::Created;
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
             from_account_id: *account_id.as_bytes(),
             amount: candid::Nat(100u32.into()),

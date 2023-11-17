@@ -13,7 +13,7 @@
       <VProgressCircular indeterminate color="primary" size="small" class="mx-4" />
     </div>
     <div v-else class="proposal-item__action">
-      <VMenu v-if="!voteState.decided && !props.outer" :close-on-content-click="false">
+      <VMenu v-if="canVote && !props.outer" :close-on-content-click="false">
         <template #activator="{ props: actionProps }">
           <VBtn v-bind="actionProps" :prepend-icon="mdiCogs" size="small" variant="text" block>
             {{ $t(`terms.edit`) }}
@@ -47,7 +47,7 @@
         </VList>
       </VMenu>
       <VChip
-        v-if="voteState.decided || props.outer"
+        v-if="!canVote || props.outer"
         :prepend-icon="proposalState.chip.icon"
         size="x-small"
         :color="proposalState.chip.color"
@@ -94,15 +94,12 @@ const proposal = computed({
   set: value => emit('update:proposal', value),
 });
 
-const vote = computed({
-  get: () => proposal.value.votes.find(d => d.user_id === activeWallet.user.id),
-  set: value => {
-    proposal.value.votes.forEach(d => {
-      if (d.user_id === activeWallet.user.id && value) {
-        d = value;
-      }
-    });
-  },
+const canVote = computed(() => {
+  if (!('Created' in proposal.value.status)) {
+    return false;
+  }
+
+  return !proposal.value.votes.find(d => d.user_id === activeWallet.user.id);
 });
 
 const onApprove = () => {
@@ -171,22 +168,6 @@ const proposalState = computed(() => {
   }
 
   return { chip };
-});
-
-const voteState = computed(() => {
-  const state: { decided: boolean } = {
-    decided: false,
-  };
-
-  if (!vote.value) {
-    return { decided: true };
-  }
-
-  if (vote.value && !('Pending' in vote.value.status)) {
-    state.decided = true;
-  }
-
-  return state;
 });
 </script>
 <style lang="scss">

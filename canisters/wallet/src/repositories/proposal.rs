@@ -23,7 +23,7 @@ use ic_canister_core::{
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::{cell::RefCell, collections::HashSet};
+use std::cell::RefCell;
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -196,10 +196,9 @@ impl ProposalRepository {
             .collect::<Vec<Proposal>>()
     }
 
-    pub fn find_by_account_and_user_id(
+    pub fn find_by_account(
         &self,
         account_id: AccountId,
-        user_id: UserId,
         created_from_dt: Option<Timestamp>,
         created_to_dt: Option<Timestamp>,
     ) -> Vec<Proposal> {
@@ -210,18 +209,8 @@ impl ProposalRepository {
                     from_dt: created_from_dt.to_owned(),
                     to_dt: created_to_dt.to_owned(),
                 });
-        let filtered_by_users = self.user_index.find_by_criteria(ProposalUserIndexCriteria {
-            user_id: user_id.to_owned(),
-            from_dt: created_from_dt,
-            to_dt: created_to_dt,
-        });
 
-        let results = filtered_by_accounts
-            .intersection(&filtered_by_users)
-            .copied()
-            .collect::<HashSet<_>>();
-
-        results
+        filtered_by_accounts
             .iter()
             .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect()
@@ -229,12 +218,11 @@ impl ProposalRepository {
 
     pub fn find_by_account_where(
         &self,
-        (user_id, account_id): (UserId, AccountId),
+        account_id: AccountId,
         condition: ProposalWhereClause,
     ) -> Vec<Proposal> {
-        self.find_by_account_and_user_id(
+        self.find_by_account(
             account_id,
-            user_id,
             condition.created_dt_from,
             condition.created_dt_to,
         )
@@ -373,7 +361,7 @@ mod tests {
     }
 
     #[test]
-    fn find_by_account_and_user() {
+    fn find_by_account() {
         let repository = ProposalRepository::default();
         let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
@@ -391,12 +379,7 @@ mod tests {
         repository.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(
-            repository.find_by_account_and_user_id(
-                *account_id.as_bytes(),
-                *user_id.as_bytes(),
-                None,
-                None
-            ),
+            repository.find_by_account(*account_id.as_bytes(), None, None),
             vec![proposal]
         );
     }
@@ -404,19 +387,35 @@ mod tests {
     #[test]
     fn find_by_expiration_dt_and_status() {
         let repository = ProposalRepository::default();
-        let mut proposal = proposal_test_utils::mock_proposal();
-        proposal.expiration_dt = 10;
+        for i in 0..=50 {
+            let mut proposal = proposal_test_utils::mock_proposal();
+            proposal.id = *Uuid::new_v4().as_bytes();
+            proposal.expiration_dt = i;
+            proposal.status = ProposalStatus::Created;
+            repository.insert(proposal.to_key(), proposal.clone());
+        }
 
-        repository.insert(proposal.to_key(), proposal.clone());
-
-        let proposals = repository.find_by_expiration_dt_and_status(
-            Some(10),
-            Some(10),
-            proposal.status.to_string(),
+        let last_six = repository.find_by_expiration_dt_and_status(
+            Some(45),
+            None,
+            ProposalStatus::Created.to_string(),
         );
 
-        assert_eq!(proposals.len(), 1);
-        assert_eq!(proposals[0], proposal);
+        let middle_eleven = repository.find_by_expiration_dt_and_status(
+            Some(30),
+            Some(40),
+            ProposalStatus::Created.to_string(),
+        );
+
+        let first_three = repository.find_by_expiration_dt_and_status(
+            None,
+            Some(2),
+            ProposalStatus::Created.to_string(),
+        );
+
+        assert_eq!(last_six.len(), 6);
+        assert_eq!(middle_eleven.len(), 11);
+        assert_eq!(first_three.len(), 3);
     }
 
     #[test]

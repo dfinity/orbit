@@ -63,7 +63,7 @@ impl From<ProposalOperation> for ProposalOperationDTO {
                     .get(&Account::key(operation.from_account_id))
                     .expect("Account not found");
 
-                ProposalOperationDTO::Transfer(operation.into_dto(account))
+                ProposalOperationDTO::Transfer(Box::new(operation.into_dto(account)))
             }
             ProposalOperation::AccountEdit(operation) => {
                 ProposalOperationDTO::AccountEdit(operation.into())

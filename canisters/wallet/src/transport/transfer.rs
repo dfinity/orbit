@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, TimestampRfc3339, AccountDTO};
+use super::{AccountDTO, AccountIdDTO, TimestampRfc3339};
 use candid::{CandidType, Deserialize};
 
 pub type TransferIdDTO = String;

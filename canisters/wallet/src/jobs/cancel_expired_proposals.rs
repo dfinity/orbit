@@ -32,8 +32,8 @@ impl Job {
     async fn cancel_proposals(&self) -> Result<(), ProposalError> {
         let current_time = time();
         let mut proposals = self.proposal_repository.find_by_expiration_dt_and_status(
-            Some(current_time),
             None,
+            Some(current_time),
             ProposalStatus::Created.to_string(),
         );
 

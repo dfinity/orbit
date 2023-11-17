@@ -158,7 +158,7 @@ type ProposalVote = record {
   // Optional reason for the vote status.
   status_reason : opt text;
   // The time at which the vote was added.
-  decided_at : opt TimestampRFC3339;
+  decided_at : TimestampRFC3339;
 };
 
 type ProposalOperationType = variant {

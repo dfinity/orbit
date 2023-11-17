@@ -201,7 +201,7 @@ export interface ProposalVote {
   'status' : ProposalVoteStatus,
   'user_id' : UserId,
   'status_reason' : [] | [string],
-  'decided_at' : [] | [TimestampRFC3339],
+  'decided_at' : TimestampRFC3339,
 }
 export type ProposalVoteStatus = { 'Rejected' : null } |
   { 'Accepted' : null };

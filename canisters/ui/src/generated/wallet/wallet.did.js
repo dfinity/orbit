@@ -122,7 +122,7 @@ export const idlFactory = ({ IDL }) => {
     'status' : ProposalVoteStatus,
     'user_id' : UserId,
     'status_reason' : IDL.Opt(IDL.Text),
-    'decided_at' : IDL.Opt(TimestampRFC3339),
+    'decided_at' : TimestampRFC3339,
   });
   const AccountEditOperation = AccountEditOperationInput;
   const TransferOperation = IDL.Record({

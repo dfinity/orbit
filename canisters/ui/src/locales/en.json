@@ -97,6 +97,7 @@
     "open": "Open",
     "asset": "Asset",
     "user": "User",
+    "unknown": "Unknown",
     "user_id": "User Id",
     "signin": "Sign In",
     "signout": "Sign Out",

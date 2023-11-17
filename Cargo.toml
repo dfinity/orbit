@@ -22,8 +22,8 @@ convert_case = "0.6"
 futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
-ic-canister-core = { path = "./libs/ic-canister-core", version = "0.1.0" }
-ic-canister-macros = { path = "./libs/ic-canister-macros", version = "0.1.0" }
+ic-canister-core = { path = "./libs/ic-canister-core" }
+ic-canister-macros = { path = "./libs/ic-canister-macros" }
 ic-cdk = "0.11"
 ic-cdk-macros = "0.8"
 ic-cdk-timers = "0.5"

@@ -174,7 +174,7 @@ impl Proposal {
 
     /// Gives the default expiration date for a proposal which is 7 days from the current time.
     pub fn default_expiration_dt_ns() -> Timestamp {
-        let time_in_ns: u64 = 14 * 24 * 60 * 60 * 1_000_000_000;
+        let time_in_ns: u64 = 7 * 24 * 60 * 60 * 1_000_000_000;
 
         time() + time_in_ns
     }

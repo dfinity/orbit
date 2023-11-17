@@ -32,7 +32,7 @@ pub enum ProposalExecutionScheduleDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationDTO {
-    Transfer(TransferOperationDTO),
+    Transfer(Box<TransferOperationDTO>),
     AccountEdit(AccountEditOperationInput),
 }
 
@@ -61,14 +61,14 @@ pub struct ProposalDTO {
     pub id: ProposalIdDTO,
     pub title: String,
     pub summary: Option<String>,
-    pub status: ProposalStatusDTO,
     pub operation: ProposalOperationDTO,
+    pub proposed_by: Option<UserIdDTO>,
+    pub votes: Vec<ProposalVoteDTO>,
     pub created_at: TimestampRfc3339,
+    pub status: ProposalStatusDTO,
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: ProposalExecutionScheduleDTO,
     pub metadata: Vec<(String, String)>,
-    pub proposed_by: Option<UserIdDTO>,
-    pub votes: Vec<ProposalVoteDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
