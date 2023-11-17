@@ -172,8 +172,11 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
                 self.notification_service
                     .send_notification(
                         owner,
-                        NotificationType::AccountEditProposalCreated(self.proposal.id, account.id),
-                        None,
+                        NotificationType::AccountProposalCreated(self.proposal.id, account.id),
+                        Some((
+                            "Account edit requested".to_string(),
+                            "notification_account_edit_proposed_title".to_string(),
+                        )),
                         None,
                     )
                     .await

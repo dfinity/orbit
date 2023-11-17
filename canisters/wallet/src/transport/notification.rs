@@ -14,12 +14,18 @@ pub enum NotificationTypeDTO {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotificationDTO),
     TransferProposalCreated(TransferProposalCreatedNotificationDTO),
-    AccountEditProposalCreated(ProposalIdDTO, AccountIdDTO),
+    AccountProposalCreated(AccountProposalCreatedNotificationDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalCreatedNotificationDTO {
     pub proposal_id: ProposalIdDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountProposalCreatedNotificationDTO {
+    pub proposal_id: ProposalIdDTO,
+    pub account_id: AccountIdDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -33,6 +39,7 @@ pub enum NotificationTypeInput {
     SystemMessage,
     ProposalCreated,
     TransferProposalCreated,
+    AccountProposalCreated,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

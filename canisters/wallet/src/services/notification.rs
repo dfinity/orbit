@@ -111,9 +111,9 @@ impl NotificationService {
                         "New transfer requested".to_string(),
                         "notification_transfer_proposal_created_title".to_string(),
                     ),
-                    NotificationType::AccountEditProposalCreated(_, _) => (
-                        "New account edit requested".to_string(),
-                        "notification_account_edit_proposal_created_title".to_string(),
+                    NotificationType::AccountProposalCreated(_, _) => (
+                        "New account action requested".to_string(),
+                        "notification_account_proposal_created_title".to_string(),
                     ),
                 },
             },
