@@ -59,14 +59,14 @@
 <script lang="ts" setup>
 import { mdiWallet, mdiSend, mdiNumeric } from '@mdi/js';
 import { ref, computed, watch, onMounted } from 'vue';
-import { Transfer, AccountId } from '~/generated/wallet/wallet.did';
+import { AccountId, Proposal } from '~/generated/wallet/wallet.did';
 import { useTransferFormStore } from '~/ui/stores/TransferForm';
 
 const transferStore = useTransferFormStore();
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: boolean): void;
-  (event: 'saved', payload: Transfer): void;
+  (event: 'saved', payload: Proposal): void;
   (event: 'loading', payload: boolean): void;
   (event: 'updated', payload: boolean): void;
 }>();
@@ -108,9 +108,9 @@ const submit = async () => {
   if (valid) {
     transferStore.loading = true;
     emit('loading', transferStore.loading);
-    const transfer = await transferStore.save();
-    if (transfer) {
-      emit('saved', transfer);
+    const proposal = await transferStore.save();
+    if (proposal) {
+      emit('saved', proposal);
     }
     emit('loading', transferStore.loading);
   }

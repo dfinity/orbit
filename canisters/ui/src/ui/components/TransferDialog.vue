@@ -4,7 +4,7 @@
       <VToolbar dark color="primary">
         <VBtn icon dark @click="closeDialog()"><VIcon :icon="mdiClose" /></VBtn>
         <VToolbarTitle>
-          {{ props.transferId ? $t('terms.transfer') : $t('terms.new_transfer') }}
+          {{ props.transferId ? $t('terms.withdrawal') : $t('terms.new_withdraw') }}
         </VToolbarTitle>
       </VToolbar>
       <VCardText>

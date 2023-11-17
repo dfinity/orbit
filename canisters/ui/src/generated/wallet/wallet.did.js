@@ -36,7 +36,7 @@ export const idlFactory = ({ IDL }) => {
     'VariableThreshold' : IDL.Nat8,
     'FixedThreshold' : IDL.Nat8,
   });
-  const AccountPolicy = IDL.Variant({
+  const Policy = IDL.Variant({
     'approval_threshold' : ApprovalThresholdPolicy,
   });
   const CreateAccountInput = IDL.Record({
@@ -45,7 +45,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'blockchain' : IDL.Text,
     'standard' : IDL.Text,
-    'policies' : IDL.Vec(AccountPolicy),
+    'policies' : IDL.Vec(Policy),
   });
   const AccountId = IDL.Text;
   const AccountBalanceInfo = IDL.Record({
@@ -66,10 +66,92 @@ export const idlFactory = ({ IDL }) => {
     'last_modification_timestamp' : TimestampRFC3339,
     'standard' : IDL.Text,
     'symbol' : AssetSymbol,
-    'policies' : IDL.Vec(AccountPolicy),
+    'policies' : IDL.Vec(Policy),
   });
   const CreateAccountResult = IDL.Variant({
     'Ok' : IDL.Record({ 'account' : Account }),
+    'Err' : Error,
+  });
+  const ProposalExecutionSchedule = IDL.Variant({
+    'Immediate' : IDL.Null,
+    'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
+  });
+  const AccountEditOperationInput = IDL.Record({
+    'account_id' : AccountId,
+    'owners' : IDL.Opt(IDL.Vec(UserId)),
+    'name' : IDL.Opt(IDL.Text),
+    'policies' : IDL.Opt(IDL.Vec(Policy)),
+  });
+  const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const NetworkId = IDL.Text;
+  const Network = IDL.Record({ 'id' : NetworkId, 'name' : IDL.Text });
+  const TransferOperationInput = IDL.Record({
+    'to' : IDL.Text,
+    'fee' : IDL.Opt(IDL.Nat),
+    'from_account_id' : AccountId,
+    'metadata' : IDL.Opt(IDL.Vec(TransferMetadata)),
+    'network' : IDL.Opt(Network),
+    'amount' : IDL.Nat,
+  });
+  const ProposalOperationInput = IDL.Variant({
+    'AccountEdit' : AccountEditOperationInput,
+    'Transfer' : TransferOperationInput,
+  });
+  const CreateProposalInput = IDL.Record({
+    'title' : IDL.Opt(IDL.Text),
+    'execution_plan' : IDL.Opt(ProposalExecutionSchedule),
+    'summary' : IDL.Opt(IDL.Text),
+    'operation' : ProposalOperationInput,
+  });
+  const ProposalId = IDL.Text;
+  const ProposalStatus = IDL.Variant({
+    'Failed' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
+    'Rejected' : IDL.Null,
+    'Scheduled' : IDL.Record({ 'scheduled_at' : TimestampRFC3339 }),
+    'Adopted' : IDL.Null,
+    'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
+    'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
+    'Created' : IDL.Null,
+    'Completed' : IDL.Record({ 'completed_at' : TimestampRFC3339 }),
+  });
+  const ProposalVoteStatus = IDL.Variant({
+    'Rejected' : IDL.Null,
+    'Accepted' : IDL.Null,
+  });
+  const ProposalVote = IDL.Record({
+    'status' : ProposalVoteStatus,
+    'user_id' : UserId,
+    'status_reason' : IDL.Opt(IDL.Text),
+    'decided_at' : IDL.Opt(TimestampRFC3339),
+  });
+  const AccountEditOperation = AccountEditOperationInput;
+  const TransferOperation = IDL.Record({
+    'to' : IDL.Text,
+    'fee' : IDL.Opt(IDL.Nat),
+    'metadata' : IDL.Vec(TransferMetadata),
+    'network' : Network,
+    'from_account' : Account,
+    'amount' : IDL.Nat,
+  });
+  const ProposalOperation = IDL.Variant({
+    'AccountEdit' : AccountEditOperation,
+    'Transfer' : TransferOperation,
+  });
+  const Proposal = IDL.Record({
+    'id' : ProposalId,
+    'status' : ProposalStatus,
+    'title' : IDL.Text,
+    'execution_plan' : ProposalExecutionSchedule,
+    'expiration_dt' : TimestampRFC3339,
+    'votes' : IDL.Vec(ProposalVote),
+    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'created_at' : TimestampRFC3339,
+    'summary' : IDL.Opt(IDL.Text),
+    'operation' : ProposalOperation,
+    'proposed_by' : IDL.Opt(UserId),
+  });
+  const CreateProposalResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'proposal' : Proposal }),
     'Err' : Error,
   });
   const EditUserInput = IDL.Record({
@@ -112,76 +194,34 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'account' : Account }),
     'Err' : Error,
   });
-  const ProposalId = IDL.Text;
   const GetProposalInput = IDL.Record({ 'proposal_id' : ProposalId });
-  const ProposalStatus = IDL.Variant({
-    'Rejected' : IDL.Null,
-    'Adopted' : IDL.Null,
-    'Pending' : IDL.Null,
-  });
-  const ProposalVoteStatus = IDL.Variant({
-    'Rejected' : IDL.Null,
-    'Adopted' : IDL.Null,
-    'NotRequired' : IDL.Null,
-    'Pending' : IDL.Null,
-  });
-  const ProposalVote = IDL.Record({
-    'status' : ProposalVoteStatus,
-    'user_id' : UserId,
-    'status_reason' : IDL.Opt(IDL.Text),
-    'decided_at' : IDL.Opt(TimestampRFC3339),
+  const GetProposalResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'proposal' : Proposal }),
+    'Err' : Error,
   });
   const TransferId = IDL.Text;
+  const GetTransferInput = IDL.Record({ 'transfer_id' : TransferId });
   const TransferStatus = IDL.Variant({
     'Failed' : IDL.Record({ 'reason' : IDL.Text }),
-    'Approved' : IDL.Null,
-    'Rejected' : IDL.Record({ 'reason' : IDL.Text }),
     'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
-    'Submitted' : IDL.Null,
     'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
+    'Created' : IDL.Null,
     'Completed' : IDL.Record({
       'signature' : IDL.Opt(IDL.Text),
       'hash' : IDL.Opt(IDL.Text),
       'completed_at' : TimestampRFC3339,
     }),
-    'Pending' : IDL.Null,
   });
-  const TransferExecutionSchedule = IDL.Variant({
-    'Immediate' : IDL.Null,
-    'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
-  });
-  const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
-  const NetworkId = IDL.Text;
-  const Network = IDL.Record({ 'id' : NetworkId, 'name' : IDL.Text });
   const Transfer = IDL.Record({
     'id' : TransferId,
     'to' : IDL.Text,
     'fee' : IDL.Nat,
     'status' : TransferStatus,
     'from_account_id' : AccountId,
-    'execution_plan' : TransferExecutionSchedule,
-    'expiration_dt' : TimestampRFC3339,
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : Network,
     'amount' : IDL.Nat,
   });
-  const ProposalOperation = IDL.Variant({
-    'Transfer' : IDL.Record({ 'account' : Account, 'transfer' : Transfer }),
-  });
-  const Proposal = IDL.Record({
-    'id' : ProposalId,
-    'status' : ProposalStatus,
-    'votes' : IDL.Vec(ProposalVote),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
-    'created_at' : TimestampRFC3339,
-    'operation' : ProposalOperation,
-    'proposed_by' : IDL.Opt(UserId),
-  });
-  const GetProposalResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposal' : Proposal }),
-    'Err' : Error,
-  });
-  const GetTransferInput = IDL.Record({ 'transfer_id' : TransferId });
   const GetTransferResult = IDL.Variant({
     'Ok' : IDL.Record({ 'transfer' : Transfer }),
     'Err' : Error,
@@ -198,7 +238,10 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : Error,
   });
-  const ProposalOperationType = IDL.Variant({ 'Transfer' : IDL.Null });
+  const ProposalOperationType = IDL.Variant({
+    'AccountEdit' : IDL.Null,
+    'Transfer' : IDL.Null,
+  });
   const ListAccountProposalsInput = IDL.Record({
     'account_id' : AccountId,
     'status' : IDL.Opt(ProposalStatus),
@@ -239,6 +282,7 @@ export const idlFactory = ({ IDL }) => {
     'ProposalCreated' : IDL.Null,
     'SystemMessage' : IDL.Null,
     'TransferProposalCreated' : IDL.Null,
+    'AccountProposalCreated' : IDL.Null,
   });
   const ListNotificationsInput = IDL.Record({
     'status' : IDL.Opt(NotificationStatus),
@@ -247,13 +291,17 @@ export const idlFactory = ({ IDL }) => {
     'notification_type' : IDL.Opt(NotificationTypeInput),
   });
   const NotificationId = IDL.Text;
+  const UUID = IDL.Text;
   const NotificationType = IDL.Variant({
-    'ProposalCreated' : IDL.Record({ 'proposal_id' : ProposalId }),
+    'ProposalCreated' : IDL.Record({ 'proposal_id' : UUID }),
     'SystemMessage' : IDL.Null,
     'TransferProposalCreated' : IDL.Record({
-      'account_id' : AccountId,
-      'transfer_id' : TransferId,
-      'proposal_id' : ProposalId,
+      'account_id' : UUID,
+      'proposal_id' : UUID,
+    }),
+    'AccountProposalCreated' : IDL.Record({
+      'account_id' : UUID,
+      'proposal_id' : UUID,
     }),
   });
   const Notification = IDL.Record({
@@ -294,22 +342,8 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : Error,
   });
-  const TransferInput = IDL.Record({
-    'to' : IDL.Text,
-    'fee' : IDL.Opt(IDL.Nat),
-    'from_account_id' : AccountId,
-    'execution_plan' : IDL.Opt(TransferExecutionSchedule),
-    'expiration_dt' : IDL.Opt(TimestampRFC3339),
-    'metadata' : IDL.Opt(IDL.Vec(TransferMetadata)),
-    'network' : IDL.Opt(Network),
-    'amount' : IDL.Nat,
-  });
-  const TransferResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'transfer' : Transfer }),
-    'Err' : Error,
-  });
   const VoteOnProposalInput = IDL.Record({
-    'approve' : IDL.Opt(IDL.Bool),
+    'approve' : IDL.Bool,
     'proposal_id' : ProposalId,
     'reason' : IDL.Opt(IDL.Text),
   });
@@ -336,6 +370,11 @@ export const idlFactory = ({ IDL }) => {
     'create_account' : IDL.Func(
         [CreateAccountInput],
         [CreateAccountResult],
+        [],
+      ),
+    'create_proposal' : IDL.Func(
+        [CreateProposalInput],
+        [CreateProposalResult],
         [],
       ),
     'edit_user' : IDL.Func([EditUserInput], [EditUserResult], []),
@@ -389,7 +428,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
-    'transfer' : IDL.Func([TransferInput], [TransferResult], []),
     'vote_on_proposal' : IDL.Func(
         [VoteOnProposalInput],
         [VoteOnProposalResult],

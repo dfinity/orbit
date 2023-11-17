@@ -17,12 +17,12 @@ const chipColor = (status: AccountTransferStatus): string => {
   switch (status) {
     case AccountTransferStatus.Completed:
       return 'success';
-    case AccountTransferStatus.Rejected:
+    case AccountTransferStatus.Cancelled:
     case AccountTransferStatus.Failed:
       return 'error';
-    case AccountTransferStatus.Pending:
+    case AccountTransferStatus.Processing:
       return 'warning';
-    case AccountTransferStatus.Approved:
+    case AccountTransferStatus.Created:
       return 'info';
     default:
       return 'tonal';

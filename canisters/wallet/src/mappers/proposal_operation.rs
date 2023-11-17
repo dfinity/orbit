@@ -1,22 +1,22 @@
 use crate::{
-    models::{AccountEditOperation, ProposalOperation, TransferOperation},
+    models::{Account, AccountEditOperation, ProposalOperation, TransferOperation},
+    repositories::AccountRepository,
     transport::{
         AccountEditOperationDTO, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
         TransferOperationDTO,
     },
 };
+use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 
-impl From<TransferOperation> for TransferOperationDTO {
-    fn from(operation: TransferOperation) -> TransferOperationDTO {
+impl TransferOperation {
+    pub fn into_dto(self, account: Account) -> TransferOperationDTO {
         TransferOperationDTO {
-            amount: operation.amount,
-            from_account_id: Uuid::from_bytes(operation.from_account_id)
-                .hyphenated()
-                .to_string(),
-            to: operation.to,
-            fee: operation.fee,
-            metadata: operation
+            amount: self.amount,
+            from_account: account.to_dto(),
+            to: self.to,
+            fee: self.fee,
+            metadata: self
                 .metadata
                 .iter()
                 .map(|(k, v)| TransferMetadataDTO {
@@ -25,8 +25,8 @@ impl From<TransferOperation> for TransferOperationDTO {
                 })
                 .collect(),
             network: NetworkDTO {
-                id: operation.network.clone(),
-                name: operation.network.clone(),
+                id: self.network.clone(),
+                name: self.network.clone(),
             },
         }
     }
@@ -59,7 +59,11 @@ impl From<ProposalOperation> for ProposalOperationDTO {
     fn from(operation: ProposalOperation) -> ProposalOperationDTO {
         match operation {
             ProposalOperation::Transfer(operation) => {
-                ProposalOperationDTO::Transfer(operation.into())
+                let account = AccountRepository::default()
+                    .get(&Account::key(operation.from_account_id))
+                    .expect("Account not found");
+
+                ProposalOperationDTO::Transfer(operation.into_dto(account))
             }
             ProposalOperation::AccountEdit(operation) => {
                 ProposalOperationDTO::AccountEdit(operation.into())

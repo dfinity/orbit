@@ -1,4 +1,4 @@
-use super::{AccountIdDTO, TimestampRfc3339};
+use super::{AccountIdDTO, TimestampRfc3339, AccountDTO};
 use candid::{CandidType, Deserialize};
 
 pub type TransferIdDTO = String;
@@ -28,7 +28,7 @@ pub struct TransferOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferOperationDTO {
-    pub from_account_id: AccountIdDTO,
+    pub from_account: AccountDTO,
     pub to: String,
     pub amount: candid::Nat,
     pub metadata: Vec<TransferMetadataDTO>,

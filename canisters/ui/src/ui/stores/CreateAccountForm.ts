@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { UserId, AccountPolicy } from '~/generated/wallet/wallet.did';
+import { UserId, Policy } from '~/generated/wallet/wallet.did';
 import { i18n, router } from '~/ui/modules';
 import { useActiveWalletStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
@@ -11,7 +11,7 @@ export interface CreateAccountForm {
   owners: Array<UserId | null>;
   blockchain: string | null;
   blockchainStandard: string | null;
-  policies: Array<AccountPolicy | null>;
+  policies: Array<Policy | null>;
 }
 
 export interface CreateAccountFormStoreState {
@@ -170,9 +170,9 @@ export const useCreateAccountFormStore = defineStore('createAccountForm', {
         this.clearAlert();
         this.loading = true;
 
-        const policies: AccountPolicy[] = this.form.policies.filter(
+        const policies: Policy[] = this.form.policies.filter(
           entry => entry !== null,
-        ) as AccountPolicy[];
+        ) as Policy[];
 
         const nrOfThresholdPolicies = policies.filter(
           policy => 'approval_threshold' in policy,

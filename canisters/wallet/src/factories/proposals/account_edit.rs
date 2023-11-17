@@ -5,8 +5,7 @@ use crate::{
     mappers::HelperMapper,
     models::{
         Account, AccountEditOperation, ApprovalThresholdPolicy, NotificationType, Policy,
-        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation, ProposalStatus,
-        ProposalVoteStatus,
+        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus,
     },
     repositories::AccountRepository,
     services::NotificationService,
@@ -126,9 +125,6 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
     }
 
     async fn execute(&self) -> Result<(), ProposalExecuteError> {
-        if self.proposal.status != ProposalStatus::Adopted {
-            Err(ProposalExecuteError::NotAdopted)?;
-        }
         let input = self.unwrap_operation();
         let mut account = self.get_account();
 

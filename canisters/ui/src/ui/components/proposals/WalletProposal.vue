@@ -5,6 +5,7 @@
       <TransferProposal
         v-if="WalletProposalType.Transfer in proposal.operation"
         v-model="proposal"
+        :operation="proposal.operation[WalletProposalType.Transfer]"
       />
       <UnknownProposal v-else v-model="proposal" />
     </div>
@@ -115,13 +116,20 @@ const onReject = () => {
 const proposalState = computed(() => {
   let chip: { color: string; text: string; icon: string } = {
     color: 'info',
-    text: i18n.global.t('terms.abstained'),
+    text: i18n.global.t('terms.unknown'),
     icon: mdiHelp,
   };
+
   if ('Adopted' in proposal.value.status) {
     chip = {
       color: 'success',
       text: i18n.global.t('terms.approved'),
+      icon: mdiCheck,
+    };
+  } else if ('Completed' in proposal.value.status) {
+    chip = {
+      color: 'success',
+      text: i18n.global.t('terms.completed'),
       icon: mdiCheck,
     };
   } else if ('Rejected' in proposal.value.status) {
@@ -130,18 +138,39 @@ const proposalState = computed(() => {
       text: i18n.global.t('terms.rejected'),
       icon: mdiClose,
     };
-  } else if ('Pending' in proposal.value.status) {
+  } else if ('Failed' in proposal.value.status) {
     chip = {
-      color: 'warning',
-      text: i18n.global.t('terms.pending'),
+      color: 'error',
+      text: i18n.global.t('terms.failed'),
+      icon: mdiClose,
+    };
+  } else if ('Cancelled' in proposal.value.status) {
+    chip = {
+      color: 'error',
+      text: i18n.global.t('terms.cancelled'),
+      icon: mdiClose,
+    };
+  } else if ('Created' in proposal.value.status) {
+    chip = {
+      color: 'info',
+      text: i18n.global.t('terms.created'),
+      icon: mdiCog,
+    };
+  } else if ('Processing' in proposal.value.status) {
+    chip = {
+      color: 'pending',
+      text: i18n.global.t('terms.processing'),
+      icon: mdiCog,
+    };
+  } else if ('Scheduled' in proposal.value.status) {
+    chip = {
+      color: 'pending',
+      text: i18n.global.t('terms.scheduled'),
       icon: mdiCog,
     };
   }
 
-  return {
-    isPending: 'Pending' in proposal.value.status,
-    chip,
-  };
+  return { chip };
 });
 
 const voteState = computed(() => {

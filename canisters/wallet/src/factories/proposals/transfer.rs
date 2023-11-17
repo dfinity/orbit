@@ -6,8 +6,8 @@ use crate::{
     mappers::HelperMapper,
     models::{
         Account, ApprovalThresholdPolicy, NotificationType, Policy, PolicyStatus, Proposal,
-        ProposalExecutionPlan, ProposalOperation, ProposalStatus, ProposalVoteStatus, Transfer,
-        TransferOperation, TransferProposalCreatedNotification,
+        ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
+        TransferProposalCreatedNotification,
     },
     repositories::{AccountRepository, TransferRepository},
     services::NotificationService,
@@ -129,9 +129,6 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
     }
 
     async fn execute(&self) -> Result<(), ProposalExecuteError> {
-        if self.proposal.status != ProposalStatus::Adopted {
-            Err(ProposalExecuteError::NotAdopted)?;
-        }
         let input = self.unwrap_operation();
         let transfer_id = generate_uuid_v4().await;
         let account = self.get_account();

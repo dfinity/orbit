@@ -77,30 +77,30 @@
             <VTabs v-model="tab" center-active class="px-8">
               <VTab
                 :loading="pageStore.transfers.loading"
-                value="transfers"
+                value="withdrawals"
                 class="account__tab__item"
               >
-                {{ $t(`terms.transfers`) }}
+                {{ $t(`terms.withdrawals`) }}
               </VTab>
               <VTab
                 v-if="pageStore.chainApi"
-                :loading="pageStore.receivables.loading"
-                value="receivables"
+                :loading="pageStore.deposits.loading"
+                value="deposits"
                 class="account__tab__item"
               >
-                {{ $t(`terms.receivables`) }}
+                {{ $t(`terms.deposits`) }}
               </VTab>
               <VTab
                 :loading="pageStore.transfers.loading"
                 value="proposals"
                 class="account__tab__item"
               >
-                {{ $t(`terms.proposals`) }}
+                {{ $t(`terms.withdraw_requests`) }}
               </VTab>
             </VTabs>
             <VCardText>
               <VWindow v-model="tab">
-                <VWindowItem v-if="pageStore.chainApi" value="receivables">
+                <VWindowItem v-if="pageStore.chainApi" value="deposits">
                   <VContainer class="py-0">
                     <VCol cols="12" class="px-0 pb-0">
                       <VBtn
@@ -108,16 +108,16 @@
                         variant="tonal"
                         color="primary-variant"
                         :prepend-icon="mdiRefresh"
-                        :loading="pageStore.receivables.loading"
-                        @click="pageStore.loadReceivables"
+                        :loading="pageStore.deposits.loading"
+                        @click="pageStore.loadDeposits"
                       >
                         {{ $t(`terms.search`) }}
                       </VBtn>
                     </VCol>
                     <VCol cols="12" class="px-0 pt-1">
-                      <VTable v-if="pageStore.receivables.items.length" hover class="receivables">
+                      <VTable v-if="pageStore.deposits.items.length" hover>
                         <tbody>
-                          <tr v-for="(transfer, _idx) in pageStore.sortedReceivables" :key="_idx">
+                          <tr v-for="(transfer, _idx) in pageStore.sortedDeposits" :key="_idx">
                             <td class="transfers__item__icon"><VIcon :icon="mdiTransfer" /></td>
                             <td class="transfers__item__details">
                               <div class="transfers__item__details--amount">
@@ -138,11 +138,11 @@
                           </tr>
                         </tbody>
                       </VTable>
-                      <p v-else class="text-h6">{{ $t(`wallets.no_receivables_found_search`) }}</p>
+                      <p v-else class="text-h6">{{ $t(`wallets.no_deposit_found_search`) }}</p>
                     </VCol>
                   </VContainer>
                 </VWindowItem>
-                <VWindowItem value="transfers">
+                <VWindowItem value="withdrawals">
                   <VContainer>
                     <VRow>
                       <VCol cols="12" md="4" class="py-0">
@@ -218,7 +218,7 @@
                             </tr>
                           </tbody>
                         </VTable>
-                        <p v-else class="text-h6">{{ $t(`wallets.no_transfers_found_search`) }}</p>
+                        <p v-else class="text-h6">{{ $t(`wallets.no_withdrawal_found_search`) }}</p>
                       </VCol>
                     </VRow>
                   </VContainer>
@@ -287,14 +287,14 @@
                                   :proposal="pageStore.sortedProposals[_idx].data"
                                   :outer="false"
                                   :loading="loading"
-                                  @adopted="pageStore.saveDecision(proposalId, { approve: true })"
-                                  @rejected="pageStore.saveDecision(proposalId, { approve: false })"
+                                  @adopted="pageStore.voteOnProposal(proposalId, { approve: true })"
+                                  @rejected="pageStore.voteOnProposal(proposalId, { approve: false })"
                                 />
                               </td>
                             </tr>
                           </tbody>
                         </VTable>
-                        <p v-else class="text-h6">{{ $t(`wallets.no_proposals_found_search`) }}</p>
+                        <p v-else class="text-h6">{{ $t(`wallets.no_withdraw_request_found_search`) }}</p>
                       </VCol>
                     </VRow>
                   </VContainer>
@@ -347,7 +347,7 @@ const activeWallet = useActiveWalletStore();
 const settings = useSettingsStore();
 const pageStore = useAccountDetailsStore();
 
-const tab = ref<'transfers' | 'proposals' | 'receivables'>('transfers');
+const tab = ref<'withdrawals' | 'proposals' | 'deposits'>('withdrawals');
 
 onMounted(() => {
   pageStore.load(`${router.currentRoute.value.params.id}`);

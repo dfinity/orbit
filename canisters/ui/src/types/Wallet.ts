@@ -4,12 +4,9 @@ export enum PolicyType {
 }
 
 export enum AccountTransferStatus {
-  Pending = 'pending',
-  Rejected = 'rejected',
+  Created = 'created',
   Failed = 'failed',
-  Approved = 'approved',
   Cancelled = 'cancelled',
-  Submitted = 'submitted',
   Processing = 'processing',
   Completed = 'completed',
   Unknown = 'unknown',
@@ -17,5 +14,6 @@ export enum AccountTransferStatus {
 
 export enum WalletProposalType {
   Transfer = 'Transfer',
+  AccountEdit = 'AccountEdit',
   Unknown = 'Unknown',
 }

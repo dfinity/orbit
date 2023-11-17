@@ -204,8 +204,8 @@ type AccountEditOperation = AccountEditOperationInput;
 
 // Input type for transferring funds.
 type TransferOperation = record {
-  // The account id to use for the transaction.
-  from_account_id : AccountId;
+  // The account to use for the transaction.
+  from_account : Account;
   // The amount to transfer.
   amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").
