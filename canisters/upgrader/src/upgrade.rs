@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use candid::Encode;
@@ -6,10 +8,7 @@ use ic_cdk::api::management_canister::main::{
 };
 use mockall::automock;
 
-use crate::{
-    hash::Hash, interface::UpgradeParams, CheckController, LocalRef, StableValue,
-    StorablePrincipal, VerifyChecksum, WithLogs,
-};
+use crate::{hash::Hash, interface::UpgradeParams, LocalRef, StableValue, StorablePrincipal};
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
@@ -17,13 +16,15 @@ pub enum UpgradeError {
     ChecksumMismatch,
     #[error("canister is not a controller of target canister")]
     NotController,
+    #[error("unauthorized")]
+    Unauthorized,
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
 
 #[automock]
 #[async_trait]
-pub trait Upgrade: Sync + Send {
+pub trait Upgrade: 'static + Sync + Send {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError>;
 }
 
@@ -98,20 +99,41 @@ impl<T: Upgrade> Upgrade for WithStart<T> {
     }
 }
 
-pub struct WithCleanup<T>(pub T, pub LocalRef<StableValue<UpgradeParams>>);
+pub struct WithBackground<T>(pub Arc<T>);
 
 #[async_trait]
-impl<T: Upgrade> Upgrade for WithCleanup<T> {
+impl<T: Upgrade> Upgrade for WithBackground<T> {
+    /// Spawn a background task performing the upgrade
+    /// so that it is performed in a non-blocking manner
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        // Clear queue
-        self.1.with(|q| {
-            let mut q = q.borrow_mut();
-            q.remove(&());
+        let u = self.0.clone();
+
+        ic_cdk::spawn(async move {
+            let _ = u.upgrade(ps).await;
         });
+
+        Ok(())
+    }
+}
+
+pub struct WithAuthorization<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+
+#[async_trait]
+impl<T: Upgrade> Upgrade for WithAuthorization<T> {
+    async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
+        let id = self
+            .1
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+
+        if !ic_cdk::caller().eq(&id.0) {
+            return Err(UpgradeError::Unauthorized);
+        }
 
         self.0.upgrade(ps).await
     }
 }
+
+pub struct CheckController<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for CheckController<T> {
@@ -135,6 +157,8 @@ impl<T: Upgrade> Upgrade for CheckController<T> {
     }
 }
 
+pub struct VerifyChecksum<T, H>(pub T, pub H);
+
 #[async_trait]
 impl<T: Upgrade, H: Hash> Upgrade for VerifyChecksum<T, H> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
@@ -146,18 +170,16 @@ impl<T: Upgrade, H: Hash> Upgrade for VerifyChecksum<T, H> {
     }
 }
 
+pub struct WithLogs<T>(pub T, pub String);
+
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithLogs<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let out = self.0.upgrade(ps).await;
 
         let status = match &out {
-            Ok(_) => "ok",
-            Err(err) => match err {
-                UpgradeError::ChecksumMismatch => "checksum-mismatch",
-                UpgradeError::NotController => "not-controller",
-                UpgradeError::UnexpectedError(_) => "fail",
-            },
+            Ok(_) => "ok".to_string(),
+            Err(err) => err.to_string(),
         };
 
         ic_cdk::println!(
@@ -177,7 +199,7 @@ mod tests {
     use mockall::predicate;
 
     use super::*;
-    use crate::{hash::MockHash, QUEUED_UPGRADE_PARAMS};
+    use crate::hash::MockHash;
 
     #[tokio::test]
     async fn verify_checksum_invalid() -> Result<(), Error> {
@@ -236,31 +258,6 @@ mod tests {
         match out {
             Ok(()) => {}
             _ => return Err(anyhow!("expected checksum verification to succeed")),
-        }
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn with_cleanup() -> Result<(), Error> {
-        // Upgrade
-        let mut u = MockUpgrade::new();
-        u.expect_upgrade().times(1).returning(|_| Ok(()));
-
-        let ps = UpgradeParams {
-            module: "module".as_bytes().to_vec(),
-            checksum: "hash".as_bytes().to_vec(),
-        };
-
-        QUEUED_UPGRADE_PARAMS.with(|v| v.borrow_mut().insert((), ps.clone()));
-
-        WithCleanup(u, &QUEUED_UPGRADE_PARAMS)
-            .upgrade(ps)
-            .await
-            .context("failed to call upgrade")?;
-
-        if QUEUED_UPGRADE_PARAMS.with(|v| v.borrow().get(&()).is_some()) {
-            return Err(anyhow!("expected queued params to be cleaned up"));
         }
 
         Ok(())

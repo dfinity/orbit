@@ -4,7 +4,7 @@ use sha2::{Digest, Sha256};
 use crate::LocalRef;
 
 #[automock]
-pub trait Hash: Sync + Send {
+pub trait Hash: 'static + Sync + Send {
     fn hash(&self, data: &[u8]) -> Vec<u8>;
 }
 
