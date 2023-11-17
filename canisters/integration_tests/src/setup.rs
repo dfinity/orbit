@@ -9,7 +9,9 @@ use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::PocketIc;
 use std::collections::{HashMap, HashSet};
 use std::env;
-use std::path::Path;
+use std::fs::File;
+use std::io::Read;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
@@ -63,7 +65,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
     let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
 
-    let icp_ledger_canister_wasm = include_bytes!("../wasms/icp_ledger.wasm.gz").to_vec();
+    let icp_ledger_canister_wasm = get_canister_wasm("icp_ledger").to_vec();
     let icp_ledger_init_args = NnsLedgerCanisterPayload::Init(NnsLedgerCanisterInitPayload {
         minting_account: minting_account.to_string(),
         initial_values: HashMap::from([(
@@ -82,7 +84,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Some(controller),
     );
 
-    let icp_index_canister_wasm = include_bytes!("../wasms/icp_index.wasm.gz").to_vec();
+    let icp_index_canister_wasm = get_canister_wasm("icp_index").to_vec();
     let icp_index_init_args = NnsIndexCanisterInitPayload {
         ledger_id: nns_ledger_canister_id,
     };
@@ -97,7 +99,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     let upgrader = create_canister(env, controller);
     let wallet = create_canister(env, controller);
 
-    let control_panel_wasm = include_bytes!("../wasms/control_panel.wasm.gz").to_vec();
+    let control_panel_wasm = get_canister_wasm("control_panel").to_vec();
     let control_panel_init_args = ControlPanelCanisterInit {
         default_wallet: DefaultWalletInit::SpecifiedWalletCanister(wallet),
     };
@@ -108,7 +110,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Some(controller),
     );
 
-    let upgrader_wasm = include_bytes!("../wasms/upgrader.wasm.gz").to_vec();
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let upgrader_init_args = UpgraderInitArg {
         target_canister: wallet,
     };
@@ -119,7 +121,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Some(controller),
     );
 
-    let wallet_wasm = include_bytes!("../wasms/wallet.wasm.gz").to_vec();
+    let wallet_wasm = get_canister_wasm("wallet").to_vec();
     env.install_canister(wallet, wallet_wasm, Encode!(&()).unwrap(), Some(controller));
 
     CanisterIds {
@@ -129,4 +131,28 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         upgrader,
         wallet,
     }
+}
+
+fn get_canister_wasm(canister_name: &str) -> Vec<u8> {
+    read_file_from_local_bin(&format!("{canister_name}.wasm.gz"))
+}
+
+fn local_bin() -> PathBuf {
+    let mut file_path = PathBuf::from(
+        std::env::var("CARGO_MANIFEST_DIR")
+            .expect("Failed to read CARGO_MANIFEST_DIR env variable"),
+    );
+    file_path.push("wasms");
+    file_path
+}
+
+fn read_file_from_local_bin(file_name: &str) -> Vec<u8> {
+    let mut file_path = local_bin();
+    file_path.push(file_name);
+
+    let mut file = File::open(&file_path)
+        .unwrap_or_else(|_| panic!("Failed to open file: {}", file_path.to_str().unwrap()));
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).expect("Failed to read file");
+    bytes
 }
