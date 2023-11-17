@@ -65,4 +65,5 @@ coverage
 .dfx
 canister_ids.json
 canisters/integration_tests/pocket-ic
+ic-wasm
 wasms/*.wasm.gz

@@ -28,11 +28,19 @@ done
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
 
 echo Optimising wasm
-if ! cargo install --list | grep -Fxq "ic-wasm v0.3.7:"
+if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
 then
-  cargo install --version 0.3.7 ic-wasm
+    URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-linux64"
+elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
+then
+    URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-macos"
+else
+    echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
+    exit 1
 fi
-ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
+curl -sL "${URL}" -o ic-wasm || exit 1
+chmod +x ic-wasm
+./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
 
 echo Compressing wasm
 mkdir -p wasms
