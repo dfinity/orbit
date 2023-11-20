@@ -848,11 +848,14 @@ name = "integration_tests"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "control_panel_api",
  "ic-canister-core",
  "ic-ledger-types",
  "lazy_static",
  "pocket-ic",
  "serde",
+ "upgrader_api",
+ "wallet_api",
 ]
 
 [[package]]

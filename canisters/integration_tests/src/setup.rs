@@ -1,10 +1,10 @@
 use crate::interfaces::{
-    ControlPanelCanisterInit, DefaultWalletInit, NnsIndexCanisterInitPayload,
-    NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload, UpgraderInitArg,
+    NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
 use crate::utils::{controller_test_id, minter_test_id};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
+use control_panel_api::{CanisterInit as ControlPanelInitArg, DefaultWalletInit};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::PocketIc;
 use std::collections::{HashMap, HashSet};
@@ -13,6 +13,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+use upgrader_api::InitArg as UpgraderInitArg;
+use wallet_api::WalletCanisterInit as WalletInitArg;
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -100,7 +102,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     let wallet = create_canister(env, controller);
 
     let control_panel_wasm = get_canister_wasm("control_panel").to_vec();
-    let control_panel_init_args = ControlPanelCanisterInit {
+    let control_panel_init_args = ControlPanelInitArg {
         default_wallet: DefaultWalletInit::SpecifiedWalletCanister(wallet),
     };
     env.install_canister(
@@ -122,7 +124,17 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     );
 
     let wallet_wasm = get_canister_wasm("wallet").to_vec();
-    env.install_canister(wallet, wallet_wasm, Encode!(&()).unwrap(), Some(controller));
+    let wallet_init_args = WalletInitArg {
+        approval_threshold: None,
+        owners: None,
+        permissions: None,
+    };
+    env.install_canister(
+        wallet,
+        wallet_wasm,
+        Encode!(&wallet_init_args).unwrap(),
+        Some(controller),
+    );
 
     CanisterIds {
         icp_ledger: nns_ledger_canister_id,

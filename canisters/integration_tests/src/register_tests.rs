@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::interfaces::{RegisterUserInput, RegisterUserResponse};
 use crate::utils::user_test_id;
 use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
 use pocket_ic::call_candid_as;
 use std::ops::Deref;
+use wallet_api::{RegisterUserInput, RegisterUserResponse};
 
 #[test]
 fn basic_register_user_test() {
