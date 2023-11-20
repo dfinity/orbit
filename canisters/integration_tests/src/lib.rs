@@ -3,7 +3,6 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
 
-mod env;
 mod interfaces;
 mod register_tests;
 mod setup;
