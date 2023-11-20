@@ -42,7 +42,7 @@
     "control_panel": {
       "type": "rust",
       "package": "control_panel",
-      "candid": "canisters/control-panel/spec.did",
+      "candid": "canisters/control-panel/api/spec.did",
       "declarations": {
         "output": "canisters/ui/src/generated/control-panel",
         "node_compatibility": true
@@ -52,7 +52,7 @@
     "wallet": {
       "type": "rust",
       "package": "wallet",
-      "candid": "canisters/wallet/spec.did",
+      "candid": "canisters/wallet/api/spec.did",
       "declarations": {
         "output": "canisters/ui/src/generated/wallet",
         "node_compatibility": true

@@ -1,0 +1,24 @@
+type InitArg = record {
+  target_canister: principal;
+};
+
+type UpgradeParams = record {
+  module: blob;
+  checksum: blob;
+};
+
+type TriggerUpgradeError = variant {
+  ChecksumMismatch;
+  NotController;
+  Unauthorized;
+  UnexpectedError: text;
+};
+
+type TriggerUpgradeResponse = variant {
+  Ok;
+  Err: TriggerUpgradeError;
+};
+
+service: (InitArg) -> {
+  "trigger_upgrade": (UpgradeParams) -> (TriggerUpgradeResponse);
+}
