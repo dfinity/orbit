@@ -1,5 +1,8 @@
 use crate::{
-    core::ic_cdk::{api::time, spawn},
+    core::ic_cdk::{
+        api::{print, time},
+        spawn,
+    },
     errors::TransferError,
     factories::blockchains::BlockchainApiFactory,
     models::{Account, Proposal, ProposalStatus, Transfer, TransferId, TransferStatus},
@@ -71,6 +74,11 @@ impl Job {
                 }
                 None => {
                     // if the proposal is not found, mark the transfer as failed
+                    print(format!(
+                        "Error: proposal not found for transfer {}",
+                        Uuid::from_bytes(transfer.id).hyphenated()
+                    ));
+
                     let mut transfer = transfer.clone();
                     transfer.status = TransferStatus::Failed {
                         reason: "Proposal not found".to_string(),
@@ -117,6 +125,11 @@ impl Job {
                         proposal.last_modification_timestamp = time();
                         self.proposal_repository
                             .insert(proposal.to_key(), proposal.to_owned());
+                    } else {
+                        print(format!(
+                            "Error: proposal not found for transfer {}",
+                            Uuid::from_bytes(transfer.id).hyphenated()
+                        ));
                     }
                 }
                 Err(e) => {
@@ -136,6 +149,11 @@ impl Job {
                         proposal.last_modification_timestamp = time();
                         self.proposal_repository
                             .insert(proposal.to_key(), proposal.to_owned());
+                    } else {
+                        print(format!(
+                            "Error: proposal not found for transfer {}",
+                            Uuid::from_bytes(transfer.id).hyphenated()
+                        ));
                     }
                 }
             });
