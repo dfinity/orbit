@@ -58,5 +58,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: 'Setup WASM target for Rust'
+        run: rustup target add wasm32-unknown-unknown
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh
