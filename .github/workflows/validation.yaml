@@ -62,7 +62,7 @@ jobs:
       - name: 'Check code'
         run: |
           cargo fmt --all -- --check
-          cargo clippy --verbose --tests --benches --workspace -- -D clippy::all
+          cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
         env:
           RUST_BACKTRACE: 1
   validate-node:
