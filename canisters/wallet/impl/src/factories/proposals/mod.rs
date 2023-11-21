@@ -29,8 +29,6 @@ pub trait ProposalProcessor: Send + Sync {
     fn has_access(&self, user_id: &UUID) -> bool;
 
     /// Executes the proposal.
-    ///
-    /// Panics if the proposal is not adopted.
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
 
     /// The post create hook is called after the proposal is created and can be used
