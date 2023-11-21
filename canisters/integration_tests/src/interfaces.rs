@@ -83,5 +83,5 @@ pub fn send_icp(
     memo: u64,
 ) -> Result<u64, TransferError> {
     let to = AccountIdentifier::new(&beneficiary_id, &DEFAULT_SUBACCOUNT);
-    send_icp_to_account(&env, sender_id, to, e8s, memo)
+    send_icp_to_account(env, sender_id, to, e8s, memo)
 }

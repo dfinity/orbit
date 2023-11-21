@@ -61,21 +61,21 @@ fn make_transfer_successful() {
     let account_dto = res.0.unwrap().account;
 
     // send ICP to user
-    send_icp(&env, controller, user_id, 1 * ICP + 2 * ICP_FEE, 0).unwrap();
+    send_icp(&env, controller, user_id, ICP + 2 * ICP_FEE, 0).unwrap();
     let user_balance = get_icp_balance(&env, user_id);
-    assert_eq!(user_balance, 1 * ICP + 2 * ICP_FEE);
+    assert_eq!(user_balance, ICP + 2 * ICP_FEE);
 
     // send ICP to orbit wallet account
     let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
-    send_icp_to_account(&env, user_id, account_address, 1 * ICP + 1 * ICP_FEE, 0).unwrap();
+    send_icp_to_account(&env, user_id, account_address, ICP + ICP_FEE, 0).unwrap();
 
     // check user balance after transfer to orbit wallet account
     let new_user_balance = get_icp_balance(&env, user_id);
-    assert_eq!(new_user_balance, 0 * ICP);
+    assert_eq!(new_user_balance, 0);
 
     // check beneficiary balance
     let old_beneficiary_balance = get_icp_balance(&env, beneficiary_id);
-    assert_eq!(old_beneficiary_balance, 0 * ICP);
+    assert_eq!(old_beneficiary_balance, 0);
 
     // make transfer proposal to beneficiary
     let transfer = TransferOperationInput {
@@ -128,5 +128,5 @@ fn make_transfer_successful() {
 
     // check beneficiary balance after completed transfer
     let new_beneficiary_balance = get_icp_balance(&env, beneficiary_id);
-    assert_eq!(new_beneficiary_balance, 1 * ICP);
+    assert_eq!(new_beneficiary_balance, ICP);
 }
