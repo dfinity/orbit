@@ -69,16 +69,8 @@ impl Job {
             .iter()
             .enumerate()
             .for_each(|(pos, result)| match result {
-                Ok((proposal, execute_state)) => {
+                Ok(proposal) => {
                     let mut proposal = proposal.clone();
-                    proposal.status = match execute_state {
-                        ProposalExecuteStage::Completed => ProposalStatus::Completed {
-                            completed_at: time(),
-                        },
-                        ProposalExecuteStage::Processing => {
-                            ProposalStatus::Processing { started_at: time() }
-                        }
-                    };
                     proposal.last_modification_timestamp = time();
                     self.proposal_repository
                         .insert(proposal.to_key(), proposal.to_owned());
@@ -102,14 +94,21 @@ impl Job {
     /// This function will handle the proposal execution for the given operation type.
     async fn execute_proposal(
         &self,
-        proposal: Proposal,
-    ) -> Result<(Proposal, ProposalExecuteStage), ProposalExecuteError> {
+        mut proposal: Proposal,
+    ) -> Result<Proposal, ProposalExecuteError> {
         let processor = ProposalFactory::create_processor(&proposal);
 
         let execute_state = processor.execute().await?;
 
         drop(processor);
 
-        Ok((proposal, execute_state))
+        proposal.status = match execute_state {
+            ProposalExecuteStage::Completed => ProposalStatus::Completed {
+                completed_at: time(),
+            },
+            ProposalExecuteStage::Processing => ProposalStatus::Processing { started_at: time() },
+        };
+
+        Ok(proposal)
     }
 }
