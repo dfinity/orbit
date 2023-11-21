@@ -1,4 +1,4 @@
-use super::ProposalProcessor;
+use super::{ProposalExecuteStage, ProposalProcessor};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
     errors::{ProposalError, ProposalExecuteError},
@@ -128,7 +128,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         should_vote && account.owners.contains(user_id)
     }
 
-    async fn execute(&self) -> Result<(), ProposalExecuteError> {
+    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let input = self.unwrap_operation();
         let transfer_id = generate_uuid_v4().await;
         let account = self.get_account();
@@ -152,6 +152,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
             }
         };
         let transfer = Transfer::new(
+            self.proposal.id,
             *transfer_id.as_bytes(),
             self.proposal.proposed_by.expect("Proposer not found"),
             input.from_account_id,
@@ -171,7 +172,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         self.transfer_repository
             .insert(transfer.to_key(), transfer.to_owned());
 
-        Ok(())
+        Ok(ProposalExecuteStage::Processing)
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {

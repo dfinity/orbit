@@ -73,6 +73,8 @@ pub struct Transfer {
     pub status: TransferStatus,
     /// The amount of the transfer.
     pub amount: candid::Nat,
+    /// The proposal id that the transfer is associated with.
+    pub proposal_id: UUID,
     /// The fee of the transfer.
     pub fee: candid::Nat,
     /// The blockchain network that the transfer will be executed on.
@@ -133,6 +135,7 @@ impl Transfer {
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(
+        proposal_id: UUID,
         transfer_id: UUID,
         initiator_user: UUID,
         from_account: UUID,
@@ -147,6 +150,7 @@ impl Transfer {
             initiator_user,
             from_account,
             to_address,
+            proposal_id,
             status: TransferStatus::Created,
             amount,
             fee,
@@ -446,6 +450,7 @@ pub mod transfer_test_utils {
             id: [1; 16],
             initiator_user: [0; 16],
             from_account: [0; 16],
+            proposal_id: [2; 16],
             to_address: "x".repeat(255),
             status: TransferStatus::Created,
             amount: candid::Nat::from(100),

@@ -1,4 +1,4 @@
-use super::ProposalProcessor;
+use super::{ProposalExecuteStage, ProposalProcessor};
 use crate::{
     core::ic_cdk::api::trap,
     errors::{ProposalError, ProposalExecuteError},
@@ -124,7 +124,7 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
         should_vote && account.owners.contains(user_id)
     }
 
-    async fn execute(&self) -> Result<(), ProposalExecuteError> {
+    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let input = self.unwrap_operation();
         let mut account = self.get_account();
 
@@ -149,7 +149,7 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
         self.account_repository
             .insert(account.to_key(), account.to_owned());
 
-        Ok(())
+        Ok(ProposalExecuteStage::Completed)
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {

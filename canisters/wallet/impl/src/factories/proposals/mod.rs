@@ -11,6 +11,12 @@ use wallet_api::{CreateProposalInput, ProposalOperationInput};
 mod account_edit;
 mod transfer;
 
+#[derive(Debug)]
+pub enum ProposalExecuteStage {
+    Completed = 0,
+    Processing = 1,
+}
+
 #[async_trait]
 pub trait ProposalProcessor: Send + Sync {
     /// Reevaluates the status of the associated policies.
@@ -25,7 +31,7 @@ pub trait ProposalProcessor: Send + Sync {
     /// Executes the proposal.
     ///
     /// Panics if the proposal is not adopted.
-    async fn execute(&self) -> Result<(), ProposalExecuteError>;
+    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
 
     /// The post create hook is called after the proposal is created and can be used
     /// for additional processing (e.g. sending notifications)
