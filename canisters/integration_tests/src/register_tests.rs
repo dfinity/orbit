@@ -6,7 +6,7 @@ use pocket_ic::call_candid_as;
 use wallet_api::{RegisterUserInput, RegisterUserResponse};
 
 #[test]
-fn basic_register_user_test() {
+fn register_user_successful() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();

@@ -6,6 +6,7 @@ use pocket_ic::PocketIc;
 mod interfaces;
 mod register_tests;
 mod setup;
+mod transfer_tests;
 mod utils;
 
 pub struct TestEnv {
