@@ -31,7 +31,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v3
       - name: 'Test cargo crates'
-        run: cargo test --locked
+        run: cargo test --locked --workspace --exclude integration_tests
   test-node:
     name: 'test-node:required'
     runs-on: ubuntu-latest
@@ -46,3 +46,19 @@ jobs:
       - name: 'Check code'
         run: |
           pnpm test -- --run
+  integration-tests:
+    name: 'integration-tests:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup Rust'
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: 'Setup WASM target for Rust'
+        run: rustup target add wasm32-unknown-unknown
+      - name: Run integration tests
+        run: ./scripts/run-integration-tests.sh
