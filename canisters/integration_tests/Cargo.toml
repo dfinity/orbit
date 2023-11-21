@@ -1,0 +1,15 @@
+[package]
+name = "integration_tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+candid = { workspace = true, features = ["parser"] }
+ic-canister-core = { workspace = true }
+ic-ledger-types = { workspace = true }
+lazy_static = { workspace = true }
+pocket-ic = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+control_panel_api = { path = "../control-panel/api" }
+upgrader_api = { path = "../upgrader/api" }
+wallet_api = { path = "../wallet/api" }
