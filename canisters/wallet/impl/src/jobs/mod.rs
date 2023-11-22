@@ -29,8 +29,8 @@ pub fn register_job<Job: ScheduledJob>() {
 
 /// Register all the jobs that run in the background to perform tasks within the canister.
 pub async fn register_jobs() {
-    register_job::<execute_scheduled_proposals::Job>();
     register_job::<schedule_adopted_proposals::Job>();
+    register_job::<execute_scheduled_proposals::Job>();
     register_job::<cancel_expired_proposals::Job>();
     register_job::<execute_created_transfers::Job>();
 }
