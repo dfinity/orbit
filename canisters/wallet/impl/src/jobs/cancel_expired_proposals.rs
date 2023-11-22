@@ -12,6 +12,7 @@ pub struct Job {
 #[async_trait]
 impl ScheduledJob for Job {
     const INTERVAL_SECS: u64 = 60;
+    const ALLOW_CONCURRENT_EXECUTION: bool = false;
 
     async fn run() {
         Self::default().cancel_proposals().await;
