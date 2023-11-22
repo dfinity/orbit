@@ -1,7 +1,7 @@
 use crate::{
     core::ic_cdk::{api::time, spawn},
     errors::ProposalExecuteError,
-    factories::proposals::ProposalFactory,
+    factories::proposals::{ProposalExecuteStage, ProposalFactory},
     models::{Proposal, ProposalStatus},
     repositories::ProposalRepository,
 };
@@ -70,11 +70,6 @@ impl Job {
             .enumerate()
             .for_each(|(pos, result)| match result {
                 Ok(proposal) => {
-                    let mut proposal = proposal.clone();
-                    proposal.status = ProposalStatus::Completed {
-                        completed_at: time(),
-                    };
-                    proposal.last_modification_timestamp = time();
                     self.proposal_repository
                         .insert(proposal.to_key(), proposal.to_owned());
                 }
@@ -95,12 +90,24 @@ impl Job {
     /// Executes a single proposal.
     ///
     /// This function will handle the proposal execution for the given operation type.
-    async fn execute_proposal(&self, proposal: Proposal) -> Result<Proposal, ProposalExecuteError> {
+    async fn execute_proposal(
+        &self,
+        mut proposal: Proposal,
+    ) -> Result<Proposal, ProposalExecuteError> {
         let processor = ProposalFactory::create_processor(&proposal);
 
-        processor.execute().await?;
+        let execute_state = processor.execute().await?;
 
         drop(processor);
+
+        proposal.status = match execute_state {
+            ProposalExecuteStage::Completed => ProposalStatus::Completed {
+                completed_at: time(),
+            },
+            ProposalExecuteStage::Processing => ProposalStatus::Processing { started_at: time() },
+        };
+
+        proposal.last_modification_timestamp = time();
 
         Ok(proposal)
     }

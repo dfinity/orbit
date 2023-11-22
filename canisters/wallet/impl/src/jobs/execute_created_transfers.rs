@@ -1,19 +1,23 @@
 use crate::{
-    core::ic_cdk::{api::time, spawn},
+    core::ic_cdk::{
+        api::{print, time},
+        spawn,
+    },
     errors::TransferError,
     factories::blockchains::BlockchainApiFactory,
-    models::{Account, Transfer, TransferStatus},
-    repositories::{AccountRepository, TransferRepository},
+    models::{Account, Proposal, ProposalStatus, Transfer, TransferId, TransferStatus},
+    repositories::{AccountRepository, ProposalRepository, TransferRepository},
 };
 use futures::future;
 use ic_canister_core::repository::Repository;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 use uuid::Uuid;
 
 #[derive(Debug, Default)]
 pub struct Job {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
+    proposal_repository: ProposalRepository,
 }
 
 /// This job is responsible for executing the transfers that have been created and
@@ -58,11 +62,40 @@ impl Job {
                 .insert(transfer.to_key(), transfer.to_owned());
         }
 
+        // load proposals associated with the transfers
+        let mut proposals: HashMap<TransferId, Proposal> = HashMap::new();
+        for transfer in transfers.iter() {
+            match self
+                .proposal_repository
+                .get(&Proposal::key(transfer.proposal_id))
+            {
+                Some(proposal) => {
+                    proposals.insert(transfer.id, proposal);
+                }
+                None => {
+                    // if the proposal is not found, mark the transfer as failed
+                    print(format!(
+                        "Error: proposal not found for transfer {}",
+                        Uuid::from_bytes(transfer.id).hyphenated()
+                    ));
+
+                    let mut transfer = transfer.clone();
+                    transfer.status = TransferStatus::Failed {
+                        reason: "Proposal not found".to_string(),
+                    };
+                    transfer.last_modification_timestamp = time();
+                    self.transfer_repository
+                        .insert(transfer.to_key(), transfer.to_owned());
+                }
+            }
+        }
+
         // batch the transfers to be executed
         let requests = transfers
             .clone()
             .into_iter()
-            .map(|transfer| self.submit_transfer(transfer));
+            .filter(|transfer| proposals.contains_key(&transfer.id))
+            .map(|transfer| self.execute_transfer(transfer));
 
         // wait for all the transfers to be executed
         let results = future::join_all(requests).await;
@@ -83,6 +116,21 @@ impl Job {
                     transfer.last_modification_timestamp = time();
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
+
+                    if let Some(proposal) = proposals.get(&transfer.id) {
+                        let mut proposal = proposal.clone();
+                        proposal.status = ProposalStatus::Completed {
+                            completed_at: time(),
+                        };
+                        proposal.last_modification_timestamp = time();
+                        self.proposal_repository
+                            .insert(proposal.to_key(), proposal.to_owned());
+                    } else {
+                        print(format!(
+                            "Error: proposal not found for transfer {}",
+                            Uuid::from_bytes(transfer.id).hyphenated()
+                        ));
+                    }
                 }
                 Err(e) => {
                     let mut transfer = transfers[pos].clone();
@@ -92,6 +140,21 @@ impl Job {
                     transfer.last_modification_timestamp = time();
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
+
+                    if let Some(proposal) = proposals.get(&transfer.id) {
+                        let mut proposal = proposal.clone();
+                        proposal.status = ProposalStatus::Failed {
+                            reason: Some(e.to_string()),
+                        };
+                        proposal.last_modification_timestamp = time();
+                        self.proposal_repository
+                            .insert(proposal.to_key(), proposal.to_owned());
+                    } else {
+                        print(format!(
+                            "Error: proposal not found for transfer {}",
+                            Uuid::from_bytes(transfer.id).hyphenated()
+                        ));
+                    }
                 }
             });
 
@@ -101,7 +164,7 @@ impl Job {
     /// Executes a single transfer.
     ///
     /// This function will handle the submission of the transfer to the blockchain.
-    async fn submit_transfer(&self, mut transfer: Transfer) -> Result<Transfer, TransferError> {
+    async fn execute_transfer(&self, transfer: Transfer) -> Result<Transfer, TransferError> {
         let account = self
             .account_repository
             .get(&Account::key(transfer.from_account))
@@ -116,20 +179,12 @@ impl Job {
             .map_err(|e| TransferError::ExecutionError {
                 reason: format!("Failed to build blockchain api: {}", e),
             })?;
-        match blockchain_api.submit_transaction(&account, &transfer).await {
-            Ok(_) => {
-                transfer.status = TransferStatus::Completed {
-                    completed_at: time(),
-                    hash: None,
-                    signature: None,
-                };
-            }
-            Err(error) => {
-                transfer.status = TransferStatus::Failed {
-                    reason: error.to_json_string(),
-                };
-            }
-        };
+
+        if let Err(error) = blockchain_api.submit_transaction(&account, &transfer).await {
+            Err(TransferError::ExecutionError {
+                reason: error.to_json_string(),
+            })?
+        }
 
         Ok(transfer)
     }
