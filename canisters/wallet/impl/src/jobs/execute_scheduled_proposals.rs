@@ -1,43 +1,39 @@
+use super::ScheduledJob;
 use crate::{
-    core::ic_cdk::{api::time, spawn},
+    core::ic_cdk::api::time,
     errors::ProposalExecuteError,
     factories::proposals::{ProposalExecuteStage, ProposalFactory},
     models::{Proposal, ProposalStatus},
     repositories::ProposalRepository,
 };
+use async_trait::async_trait;
 use futures::future;
 use ic_canister_core::repository::Repository;
-use std::time::Duration;
 
 #[derive(Debug, Default)]
 pub struct Job {
     proposal_repository: ProposalRepository,
 }
 
+#[async_trait]
+impl ScheduledJob for Job {
+    const INTERVAL_SECS: u64 = 5;
+    const ALLOW_CONCURRENT_EXECUTION: bool = true;
+
+    async fn run() {
+        Self::default().execute_scheduled_proposals().await;
+    }
+}
+
 /// This job is responsible for processing the proposals that have been adopted and
 /// are ready to be executed.
 impl Job {
-    pub const INTERVAL_SECS: u64 = 5;
     pub const MAX_BATCH_SIZE: usize = 20;
-
-    pub fn register() {
-        let interval = Duration::from_secs(Self::INTERVAL_SECS);
-        ic_cdk_timers::set_timer_interval(interval, || {
-            spawn(Self::run());
-        });
-    }
-
-    pub async fn run() {
-        Self::default()
-            .execute_scheduled_proposals()
-            .await
-            .expect("Failed to execute proposals");
-    }
 
     /// Processes all the proposals that have been adopted but are not yet executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` proposals at once.
-    async fn execute_scheduled_proposals(&self) -> Result<(), ProposalExecuteError> {
+    async fn execute_scheduled_proposals(&self) {
         let current_time = time();
         let mut proposals = self
             .proposal_repository
@@ -83,8 +79,6 @@ impl Job {
                         .insert(proposal.to_key(), proposal.to_owned());
                 }
             });
-
-        Ok(())
     }
 
     /// Executes a single proposal.

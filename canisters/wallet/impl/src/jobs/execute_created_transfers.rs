@@ -1,16 +1,15 @@
+use super::ScheduledJob;
 use crate::{
-    core::ic_cdk::{
-        api::{print, time},
-        spawn,
-    },
+    core::ic_cdk::api::{print, time},
     errors::TransferError,
     factories::blockchains::BlockchainApiFactory,
     models::{Account, Proposal, ProposalStatus, Transfer, TransferId, TransferStatus},
     repositories::{AccountRepository, ProposalRepository, TransferRepository},
 };
+use async_trait::async_trait;
 use futures::future;
 use ic_canister_core::repository::Repository;
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug, Default)]
@@ -20,30 +19,24 @@ pub struct Job {
     proposal_repository: ProposalRepository,
 }
 
+#[async_trait]
+impl ScheduledJob for Job {
+    const INTERVAL_SECS: u64 = 5;
+
+    async fn run() {
+        Self::default().execute_created_transfers().await;
+    }
+}
+
 /// This job is responsible for executing the transfers that have been created and
 /// are ready to be submitted to the blockchain.
 impl Job {
-    pub const INTERVAL_SECS: u64 = 5;
     pub const MAX_BATCH_SIZE: usize = 20;
-
-    pub fn register() {
-        let interval = Duration::from_secs(Self::INTERVAL_SECS);
-        ic_cdk_timers::set_timer_interval(interval, || {
-            spawn(Self::run());
-        });
-    }
-
-    pub async fn run() {
-        Self::default()
-            .execute_created_transfers()
-            .await
-            .expect("Failed to execute proposals");
-    }
 
     /// Executes all the transfers that have been created but are not yet submitted to the blockchain.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` transfers at once.
-    async fn execute_created_transfers(&self) -> Result<(), TransferError> {
+    async fn execute_created_transfers(&self) {
         let current_time = time();
         let mut transfers = self.transfer_repository.find_by_status(
             TransferStatus::Created.to_string(),
@@ -157,8 +150,6 @@ impl Job {
                     }
                 }
             });
-
-        Ok(())
     }
 
     /// Executes a single transfer.
