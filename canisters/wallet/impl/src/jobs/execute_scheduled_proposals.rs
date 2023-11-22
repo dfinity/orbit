@@ -70,8 +70,6 @@ impl Job {
             .enumerate()
             .for_each(|(pos, result)| match result {
                 Ok(proposal) => {
-                    let mut proposal = proposal.clone();
-                    proposal.last_modification_timestamp = time();
                     self.proposal_repository
                         .insert(proposal.to_key(), proposal.to_owned());
                 }
@@ -108,6 +106,8 @@ impl Job {
             },
             ProposalExecuteStage::Processing => ProposalStatus::Processing { started_at: time() },
         };
+
+        proposal.last_modification_timestamp = time();
 
         Ok(proposal)
     }

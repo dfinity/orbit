@@ -95,7 +95,7 @@ impl Job {
             .clone()
             .into_iter()
             .filter(|transfer| proposals.contains_key(&transfer.id))
-            .map(|transfer| self.submit_transfer(transfer));
+            .map(|transfer| self.execute_transfer(transfer));
 
         // wait for all the transfers to be executed
         let results = future::join_all(requests).await;
@@ -164,7 +164,7 @@ impl Job {
     /// Executes a single transfer.
     ///
     /// This function will handle the submission of the transfer to the blockchain.
-    async fn submit_transfer(&self, transfer: Transfer) -> Result<Transfer, TransferError> {
+    async fn execute_transfer(&self, transfer: Transfer) -> Result<Transfer, TransferError> {
         let account = self
             .account_repository
             .get(&Account::key(transfer.from_account))
