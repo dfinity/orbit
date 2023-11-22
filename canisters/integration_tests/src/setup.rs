@@ -41,7 +41,10 @@ pub fn setup_new_env() -> TestEnv {
         ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
     }
 
-    let mut env = PocketIcBuilder::new().with_nns_subnet().with_application_subnet().build();
+    let mut env = PocketIcBuilder::new()
+        .with_nns_subnet()
+        .with_application_subnet()
+        .build();
     env.set_time(SystemTime::now());
     let controller = controller_test_id();
     let minter = minter_test_id();
