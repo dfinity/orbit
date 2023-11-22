@@ -3,6 +3,7 @@ use ic_ledger_types::{
     AccountBalanceArgs, AccountIdentifier, Memo, Tokens, TransferArgs, TransferError,
     DEFAULT_SUBACCOUNT,
 };
+use pocket_ic::common::rest::RawEffectivePrincipal;
 use pocket_ic::{call_candid_as, PocketIc};
 use std::collections::{HashMap, HashSet};
 
@@ -33,6 +34,7 @@ pub fn get_icp_balance(env: &PocketIc, user_id: Principal) -> u64 {
     let res: (Tokens,) = call_candid_as(
         env,
         ledger_canister_id,
+        RawEffectivePrincipal::None,
         user_id,
         "account_balance",
         (account_balance_args,),
@@ -67,6 +69,7 @@ pub fn send_icp_to_account(
     let res: (Result<u64, TransferError>,) = call_candid_as(
         env,
         ledger_canister_id,
+        RawEffectivePrincipal::None,
         sender_id,
         "transfer",
         (transfer_args,),

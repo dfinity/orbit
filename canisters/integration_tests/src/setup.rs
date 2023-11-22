@@ -6,7 +6,7 @@ use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use control_panel_api::{CanisterInit as ControlPanelInitArg, DefaultWalletInit};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::PocketIc;
+use pocket_ic::{PocketIc, PocketIcBuilder};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
@@ -41,7 +41,10 @@ pub fn setup_new_env() -> TestEnv {
         ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
     }
 
-    let mut env = PocketIc::new();
+    let mut env = PocketIcBuilder::new()
+        .with_nns_subnet()
+        .with_application_subnet()
+        .build();
     env.set_time(SystemTime::now());
     let controller = controller_test_id();
     let minter = minter_test_id();
@@ -56,13 +59,24 @@ pub fn setup_new_env() -> TestEnv {
 }
 
 fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
-    env.create_canister_with_settings(None, Some(controller))
+    let canister_id = env.create_canister_with_settings(Some(controller), None);
+    env.add_cycles(canister_id, 100_000_000_000_000_u128);
+    canister_id
 }
 
 fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
-    let nns_ledger_canister_id = nns_canister_ids[2];
-    let nns_index_canister_id = nns_canister_ids[11];
+    let specified_nns_ledger_canister_id =
+        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let nns_ledger_canister_id = env
+        .create_canister_with_id(Some(controller), None, specified_nns_ledger_canister_id)
+        .unwrap();
+    assert_eq!(nns_ledger_canister_id, specified_nns_ledger_canister_id);
+    let specified_nns_index_canister_id =
+        Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
+    let nns_index_canister_id = env
+        .create_canister_with_id(Some(controller), None, specified_nns_index_canister_id)
+        .unwrap();
+    assert_eq!(nns_index_canister_id, specified_nns_index_canister_id);
 
     let controller_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
     let minting_account = AccountIdentifier::new(&minter, &DEFAULT_SUBACCOUNT);
