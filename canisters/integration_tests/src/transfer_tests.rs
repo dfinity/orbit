@@ -108,6 +108,8 @@ fn make_transfer_successful() {
 
     // wait for the proposal to be executed (timer's period is 5 seconds)
     env.set_time(env.get_time() + Duration::from_secs(5));
+    // need multiple rounds to make xnet call to ledger and process callback
+    env.tick();
     env.tick();
 
     // check transfer proposal status
