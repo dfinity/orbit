@@ -7,6 +7,7 @@ use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
 use pocket_ic::call_candid_as;
+use pocket_ic::common::rest::RawEffectivePrincipal;
 use std::time::Duration;
 use wallet_api::{
     ApiErrorDTO, CreateAccountInput, CreateAccountResponse, CreateProposalInput,
@@ -34,6 +35,7 @@ fn make_transfer_successful() {
     let res: (ApiResult<RegisterUserResponse>,) = call_candid_as(
         &env,
         canister_ids.wallet,
+        RawEffectivePrincipal::None,
         user_id,
         "register_user",
         (register_args,),
@@ -53,6 +55,7 @@ fn make_transfer_successful() {
     let res: (ApiResult<CreateAccountResponse>,) = call_candid_as(
         &env,
         canister_ids.wallet,
+        RawEffectivePrincipal::None,
         user_id,
         "create_account",
         (create_account_args,),
@@ -95,6 +98,7 @@ fn make_transfer_successful() {
     let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = call_candid_as(
         &env,
         canister_ids.wallet,
+        RawEffectivePrincipal::None,
         user_id,
         "create_proposal",
         (transfer_proposal,),
@@ -113,6 +117,7 @@ fn make_transfer_successful() {
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = call_candid_as(
         &env,
         canister_ids.wallet,
+        RawEffectivePrincipal::None,
         user_id,
         "get_proposal",
         (get_proposal_args,),

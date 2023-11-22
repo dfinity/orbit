@@ -6,6 +6,7 @@ use control_panel_api::{
 };
 use ic_canister_core::api::ApiResult;
 use pocket_ic::call_candid_as;
+use pocket_ic::common::rest::RawEffectivePrincipal;
 
 #[test]
 fn register_user_successful() {
@@ -20,6 +21,7 @@ fn register_user_successful() {
     let res: (ApiResult<GetMainWalletResponse>,) = call_candid_as(
         &env,
         canister_ids.control_panel,
+        RawEffectivePrincipal::None,
         user_id,
         "get_main_wallet",
         (),
@@ -40,6 +42,7 @@ fn register_user_successful() {
     let res: (ApiResult<RegisterUserResponse>,) = call_candid_as(
         &env,
         canister_ids.control_panel,
+        RawEffectivePrincipal::None,
         user_id,
         "register_user",
         (register_args,),
@@ -52,6 +55,7 @@ fn register_user_successful() {
     let res: (ApiResult<GetMainWalletResponse>,) = call_candid_as(
         &env,
         canister_ids.control_panel,
+        RawEffectivePrincipal::None,
         user_id,
         "get_main_wallet",
         (),
