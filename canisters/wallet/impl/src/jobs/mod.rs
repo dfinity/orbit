@@ -37,10 +37,10 @@ pub fn register_job<Job: ScheduledJob>() {
         let is_running = is_running.clone();
 
         spawn(async move {
-            if Job::ALLOW_CONCURRENT_EXECUTION || !is_running.load(Ordering::SeqCst) {
-                is_running.store(true, Ordering::SeqCst);
+            if Job::ALLOW_CONCURRENT_EXECUTION || !is_running.load(Ordering::Relaxed) {
+                is_running.store(true, Ordering::Relaxed);
                 Job::run().await;
-                is_running.store(false, Ordering::SeqCst);
+                is_running.store(false, Ordering::Relaxed);
             }
         });
     });
