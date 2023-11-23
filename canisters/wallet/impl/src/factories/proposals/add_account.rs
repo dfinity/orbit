@@ -52,7 +52,8 @@ impl<'proposal> ProposalProcessor for AddAccountProposalProcessor<'proposal> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let input = self.unwrap_operation();
 
-        let account = self.account_service
+        let account = self
+            .account_service
             .create_account(input.clone())
             .await
             .map_err(|e| ProposalExecuteError::Failed {

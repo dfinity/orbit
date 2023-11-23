@@ -10,10 +10,10 @@ use pocket_ic::call_candid_as;
 use pocket_ic::common::rest::RawEffectivePrincipal;
 use std::time::Duration;
 use wallet_api::{
-    ApiErrorDTO, AddAccountOperationInput, CreateProposalInput,
-    CreateProposalResponse, GetProposalInput, GetProposalResponse, ProposalExecutionScheduleDTO,
+    AddAccountOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
+    GetProposalInput, GetProposalResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO,
     ProposalOperationInput, ProposalStatusDTO, RegisterUserInput, RegisterUserResponse,
-    TransferOperationInput, ProposalOperationDTO,
+    TransferOperationInput,
 };
 
 #[test]

@@ -8,8 +8,8 @@ use ic_canister_core::types::UUID;
 use uuid::Uuid;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
-mod edit_account;
 mod add_account;
+mod edit_account;
 mod transfer;
 
 #[derive(Debug)]

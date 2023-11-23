@@ -1,4 +1,4 @@
-use super::{AccountId, Policy, UserId, Blockchain, BlockchainStandard};
+use super::{AccountId, Blockchain, BlockchainStandard, Policy, UserId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 

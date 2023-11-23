@@ -110,11 +110,7 @@ impl AccountMapper {
             name: input.name,
             address: address.unwrap_or("".to_string()),
             owners: input.owners.to_vec(),
-            policies: input
-                .policies
-                .iter()
-                .map(|policy_dto| policy_dto.clone().into())
-                .collect(),
+            policies: input.policies.to_vec(),
             decimals: 0,
             symbol,
             balance: None,

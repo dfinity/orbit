@@ -4,8 +4,8 @@ use crate::{
     errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, NotificationType, Policy,
-        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
+        Account, EditAccountOperation, NotificationType, Policy, PolicyStatus, Proposal,
+        ProposalExecutionPlan, ProposalOperation,
     },
     repositories::AccountRepository,
     services::NotificationService,
@@ -96,7 +96,9 @@ impl<'proposal> ProposalProcessor for EditAccountProposalProcessor<'proposal> {
         self.account_repository
             .insert(account.to_key(), account.to_owned());
 
-        Ok(ProposalExecuteStage::Completed(self.proposal.operation.clone()))
+        Ok(ProposalExecuteStage::Completed(
+            self.proposal.operation.clone(),
+        ))
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {

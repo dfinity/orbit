@@ -3,7 +3,9 @@
     <VCard :loading="loading">
       <VToolbar dark color="primary">
         <VToolbarTitle v-if="props.mode === 'add'">{{ $t('terms.new_account') }}</VToolbarTitle>
-        <VToolbarTitle v-else-if="props.mode === 'edit'">{{ $t('terms.edit_account') }}</VToolbarTitle>
+        <VToolbarTitle v-else-if="props.mode === 'edit'">{{
+          $t('terms.edit_account')
+        }}</VToolbarTitle>
         <VToolbarTitle v-else>{{ $t('terms.account') }}</VToolbarTitle>
         <VBtn :icon="mdiClose" variant="text" dark @click="closeDialog" />
       </VToolbar>

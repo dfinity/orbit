@@ -98,7 +98,9 @@ impl Job {
             ProposalExecuteStage::Completed(_) => ProposalStatus::Completed {
                 completed_at: time(),
             },
-            ProposalExecuteStage::Processing(_) => ProposalStatus::Processing { started_at: time() },
+            ProposalExecuteStage::Processing(_) => {
+                ProposalStatus::Processing { started_at: time() }
+            }
         };
 
         proposal.operation = match execute_state {
