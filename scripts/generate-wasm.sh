@@ -8,6 +8,9 @@ cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
 PACKAGE="${CANISTER_NAME}"
+OSTYPE=$(uname -s) || OSTYPE=$OSTYPE
+OSTYPE="${OSTYPE,,}"
+RUNNER_OS="${RUNNER_OS:-}"
 
 if [ -z "${CARGO_HOME:-}" ]
 then

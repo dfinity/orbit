@@ -10,10 +10,10 @@ use pocket_ic::call_candid_as;
 use pocket_ic::common::rest::RawEffectivePrincipal;
 use std::time::Duration;
 use wallet_api::{
-    ApiErrorDTO, CreateAccountInput, CreateAccountResponse, CreateProposalInput,
+    ApiErrorDTO, AddAccountOperationInput, CreateProposalInput,
     CreateProposalResponse, GetProposalInput, GetProposalResponse, ProposalExecutionScheduleDTO,
     ProposalOperationInput, ProposalStatusDTO, RegisterUserInput, RegisterUserResponse,
-    TransferOperationInput,
+    TransferOperationInput, ProposalOperationDTO,
 };
 
 #[test]
@@ -44,24 +44,62 @@ fn make_transfer_successful() {
     let user_dto = res.0.unwrap().user;
 
     // create account
-    let create_account_args = CreateAccountInput {
+    let create_account_args = AddAccountOperationInput {
         owners: vec![user_dto.id],
-        name: None,
+        name: "test".to_string(),
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
         policies: vec![],
-        metadata: None,
+        metadata: vec![],
     };
-    let res: (ApiResult<CreateAccountResponse>,) = call_candid_as(
+    let add_account_proposal = CreateProposalInput {
+        operation: ProposalOperationInput::AddAccount(create_account_args),
+        title: None,
+        summary: None,
+        execution_plan: Some(ProposalExecutionScheduleDTO::Immediate),
+    };
+    let res: (ApiResult<CreateProposalResponse>,) = call_candid_as(
         &env,
         canister_ids.wallet,
         RawEffectivePrincipal::None,
         user_id,
-        "create_account",
-        (create_account_args,),
+        "create_proposal",
+        (add_account_proposal,),
     )
     .unwrap();
-    let account_dto = res.0.unwrap().account;
+    let account_creation_proposal_dto = res.0.unwrap().proposal;
+    match account_creation_proposal_dto.status {
+        ProposalStatusDTO::Adopted { .. } => {}
+        _ => {
+            panic!("proposal must be adopted by now");
+        }
+    };
+
+    // wait for the proposal to be executed (timer's period is 5 seconds)
+    env.set_time(env.get_time() + Duration::from_secs(5));
+    env.tick();
+
+    // fetch the created account id from the proposal
+    let get_proposal_args = GetProposalInput {
+        proposal_id: account_creation_proposal_dto.id,
+    };
+    let res: (ApiResult<CreateProposalResponse>,) = call_candid_as(
+        &env,
+        canister_ids.wallet,
+        RawEffectivePrincipal::None,
+        user_id,
+        "get_proposal",
+        (get_proposal_args,),
+    )
+    .unwrap();
+
+    let finalized_proposal = res.0.unwrap().proposal;
+    let account_dto = match finalized_proposal.operation {
+        ProposalOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
+        _ => {
+            panic!("proposal must be AddAccount");
+        }
+    };
 
     // send ICP to user
     send_icp(&env, controller, user_id, ICP + 2 * ICP_FEE, 0).unwrap();

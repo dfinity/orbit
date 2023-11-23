@@ -9,6 +9,10 @@ cd $SCRIPT_DIR/..
 BUILD_WASMS=${1:-true}
 TEST_THREADS=${2:-2}
 TESTNAME=${3:-}
+OSTYPE=$(uname -s) || OSTYPE=$OSTYPE
+OSTYPE="${OSTYPE,,}"
+RUNNER_OS="${RUNNER_OS:-}"
+
 
 if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
 then
