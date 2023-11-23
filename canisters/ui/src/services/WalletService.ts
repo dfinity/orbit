@@ -7,7 +7,6 @@ import {
   Error as ApiError,
   WalletFeatures,
   ConfirmUserIdentityInput,
-  CreateAccountInput,
   EditUserInput,
   VoteOnProposalInput,
   FetchAccountBalancesInput,
@@ -189,16 +188,6 @@ export class WalletService {
     }
 
     return result.Ok.balances;
-  }
-
-  async createAccount(input: CreateAccountInput): Promise<Account> {
-    const result = await this.actor.create_account(input);
-
-    if ('Err' in result) {
-      throw result.Err;
-    }
-
-    return result.Ok.account;
   }
 
   async listAccountTransfers(input: ListAccountTransfersInput): Promise<TransferListItem[]> {

@@ -32,56 +32,11 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : Error,
   });
-  const ApprovalThresholdPolicy = IDL.Variant({
-    'VariableThreshold' : IDL.Nat8,
-    'FixedThreshold' : IDL.Nat8,
-  });
-  const Policy = IDL.Variant({
-    'approval_threshold' : ApprovalThresholdPolicy,
-  });
-  const CreateAccountInput = IDL.Record({
-    'owners' : IDL.Vec(UserId),
-    'metadata' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
-    'name' : IDL.Opt(IDL.Text),
-    'blockchain' : IDL.Text,
-    'standard' : IDL.Text,
-    'policies' : IDL.Vec(Policy),
-  });
-  const AccountId = IDL.Text;
-  const AccountBalanceInfo = IDL.Record({
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Nat,
-    'last_update_timestamp' : TimestampRFC3339,
-  });
-  const AssetSymbol = IDL.Text;
-  const Account = IDL.Record({
-    'id' : AccountId,
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Opt(AccountBalanceInfo),
-    'owners' : IDL.Vec(UserId),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
-    'name' : IDL.Opt(IDL.Text),
-    'blockchain' : IDL.Text,
-    'address' : IDL.Text,
-    'last_modification_timestamp' : TimestampRFC3339,
-    'standard' : IDL.Text,
-    'symbol' : AssetSymbol,
-    'policies' : IDL.Vec(Policy),
-  });
-  const CreateAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
-    'Err' : Error,
-  });
   const ProposalExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
-  const AccountEditOperationInput = IDL.Record({
-    'account_id' : AccountId,
-    'owners' : IDL.Opt(IDL.Vec(UserId)),
-    'name' : IDL.Opt(IDL.Text),
-    'policies' : IDL.Opt(IDL.Vec(Policy)),
-  });
+  const AccountId = IDL.Text;
   const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const NetworkId = IDL.Text;
   const Network = IDL.Record({ 'id' : NetworkId, 'name' : IDL.Text });
@@ -93,9 +48,31 @@ export const idlFactory = ({ IDL }) => {
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
   });
+  const ApprovalThresholdPolicy = IDL.Variant({
+    'VariableThreshold' : IDL.Nat8,
+    'FixedThreshold' : IDL.Nat8,
+  });
+  const Policy = IDL.Variant({
+    'approval_threshold' : ApprovalThresholdPolicy,
+  });
+  const EditAccountOperationInput = IDL.Record({
+    'account_id' : AccountId,
+    'owners' : IDL.Opt(IDL.Vec(UserId)),
+    'name' : IDL.Opt(IDL.Text),
+    'policies' : IDL.Opt(IDL.Vec(Policy)),
+  });
+  const AddAccountOperationInput = IDL.Record({
+    'owners' : IDL.Vec(UserId),
+    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'standard' : IDL.Text,
+    'policies' : IDL.Vec(Policy),
+  });
   const ProposalOperationInput = IDL.Variant({
-    'AccountEdit' : AccountEditOperationInput,
     'Transfer' : TransferOperationInput,
+    'EditAccount' : EditAccountOperationInput,
+    'AddAccount' : AddAccountOperationInput,
   });
   const CreateProposalInput = IDL.Record({
     'title' : IDL.Opt(IDL.Text),
@@ -124,7 +101,26 @@ export const idlFactory = ({ IDL }) => {
     'status_reason' : IDL.Opt(IDL.Text),
     'decided_at' : TimestampRFC3339,
   });
-  const AccountEditOperation = AccountEditOperationInput;
+  const AccountBalanceInfo = IDL.Record({
+    'decimals' : IDL.Nat32,
+    'balance' : IDL.Nat,
+    'last_update_timestamp' : TimestampRFC3339,
+  });
+  const AssetSymbol = IDL.Text;
+  const Account = IDL.Record({
+    'id' : AccountId,
+    'decimals' : IDL.Nat32,
+    'balance' : IDL.Opt(AccountBalanceInfo),
+    'owners' : IDL.Vec(UserId),
+    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'address' : IDL.Text,
+    'last_modification_timestamp' : TimestampRFC3339,
+    'standard' : IDL.Text,
+    'symbol' : AssetSymbol,
+    'policies' : IDL.Vec(Policy),
+  });
   const TransferOperation = IDL.Record({
     'to' : IDL.Text,
     'fee' : IDL.Opt(IDL.Nat),
@@ -133,9 +129,20 @@ export const idlFactory = ({ IDL }) => {
     'from_account' : Account,
     'amount' : IDL.Nat,
   });
+  const EditAccountOperation = EditAccountOperationInput;
+  const AddAccountOperation = IDL.Record({
+    'owners' : IDL.Vec(UserId),
+    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'account' : IDL.Opt(Account),
+    'standard' : IDL.Text,
+    'policies' : IDL.Vec(Policy),
+  });
   const ProposalOperation = IDL.Variant({
-    'AccountEdit' : AccountEditOperation,
     'Transfer' : TransferOperation,
+    'EditAccount' : EditAccountOperation,
+    'AddAccount' : AddAccountOperation,
   });
   const Proposal = IDL.Record({
     'id' : ProposalId,
@@ -239,8 +246,9 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ProposalOperationType = IDL.Variant({
-    'AccountEdit' : IDL.Null,
     'Transfer' : IDL.Null,
+    'EditAccount' : IDL.Null,
+    'AddAccount' : IDL.Null,
   });
   const ListAccountProposalsInput = IDL.Record({
     'account_id' : AccountId,
@@ -365,11 +373,6 @@ export const idlFactory = ({ IDL }) => {
     'confirm_user_identity' : IDL.Func(
         [ConfirmUserIdentityInput],
         [ConfirmUserIdentityResult],
-        [],
-      ),
-    'create_account' : IDL.Func(
-        [CreateAccountInput],
-        [CreateAccountResult],
         [],
       ),
     'create_proposal' : IDL.Func(

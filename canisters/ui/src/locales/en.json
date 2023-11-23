@@ -103,6 +103,7 @@
     "signout": "Sign Out",
     "anonymous": "Anonymous",
     "new_account": "New Account",
+    "edit_account": "Edit Account",
     "accounts": "Accounts",
     "policies": "Policies",
     "transfers": "Transfers",
@@ -136,6 +137,7 @@
   },
   "forms": {
     "create": "Create",
+    "edit": "Edit",
     "wallets": "Wallets ({min}/{max})",
     "identities": "Identities ({min}/{max})",
     "save_changes": "Save Changes",

@@ -4,6 +4,7 @@
       <VSelect
         v-model="selectedPolicy"
         :items="approvalItems"
+        :readonly="isViewMode"
         density="compact"
         :label="$t('wallets.policy')"
       />
@@ -14,6 +15,7 @@
         class="mt-4"
         thumb-label="always"
         :step="1"
+        :readonly="isViewMode"
         :min="1"
         :max="props.owners ?? 1"
         :hint="$t('wallets.policy_fixed_approval_threshold_desc')"
@@ -24,6 +26,7 @@
         v-model="policyInput.number"
         color="primary-variant"
         class="mt-4"
+        :readonly="isViewMode"
         thumb-label="always"
         :step="1"
         :min="1"
@@ -33,7 +36,7 @@
       />
       <div v-else>{{ $t('wallets.policy_config_unavailable') }}</div>
     </VCardText>
-    <VCardActions>
+    <VCardActions v-if="!isViewMode">
       <VSpacer />
       <VBtn color="error" variant="text" @click="removePolicy">
         {{ $t('terms.remove') }}
@@ -52,12 +55,15 @@ import { PolicyType } from '~/types';
 const props = defineProps<{
   modelValue?: Policy | null;
   owners?: number;
+  mode?: 'edit' | 'view';
 }>();
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload?: Policy | null): void;
   (event: 'removed'): void;
 }>();
+
+const isViewMode = computed(() => props.mode === 'view');
 
 const modelValue = computed({
   get: () => props.modelValue,

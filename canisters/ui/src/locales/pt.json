@@ -109,6 +109,7 @@
     "anonymous": "Anónimo",
     "accounts": "Contas",
     "new_account": "Nova conta",
+    "edit_account": "Editar conta",
     "policies": "Regras",
     "transfers": "Transferências",
     "withdrawals": "Withdrawals",
@@ -141,6 +142,7 @@
   },
   "forms": {
     "create": "Criar",
+    "edit": "Editar",
     "wallets": "Carteiras ({min}/{max})",
     "identities": "Identidades ({min}/{max})",
     "save_changes": "Gravar alteraçōes",
