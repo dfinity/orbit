@@ -8,13 +8,14 @@ use ic_canister_core::types::UUID;
 use uuid::Uuid;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
-mod account_edit;
+mod edit_account;
+mod add_account;
 mod transfer;
 
 #[derive(Debug)]
 pub enum ProposalExecuteStage {
-    Completed = 0,
-    Processing = 1,
+    Completed(ProposalOperation),
+    Processing(ProposalOperation),
 }
 
 #[async_trait]
@@ -73,8 +74,18 @@ impl ProposalFactory {
                     input.operation,
                 )
             }
-            ProposalOperationInput::AccountEdit(_) => {
-                account_edit::AccountEditProposalProcessor::new_proposal(
+            ProposalOperationInput::EditAccount(_) => {
+                edit_account::EditAccountProposalProcessor::new_proposal(
+                    proposal_id,
+                    proposed_by_user,
+                    input.title,
+                    input.summary,
+                    input.execution_plan.map(Into::into),
+                    input.operation,
+                )
+            }
+            ProposalOperationInput::AddAccount(_) => {
+                add_account::AddAccountProposalProcessor::new_proposal(
                     proposal_id,
                     proposed_by_user,
                     input.title,
@@ -93,8 +104,11 @@ impl ProposalFactory {
             ProposalOperation::Transfer(_) => {
                 Box::new(transfer::TransferProposalProcessor::new(proposal))
             }
-            ProposalOperation::AccountEdit(_) => {
-                Box::new(account_edit::AccountEditProposalProcessor::new(proposal))
+            ProposalOperation::EditAccount(_) => {
+                Box::new(edit_account::EditAccountProposalProcessor::new(proposal))
+            }
+            ProposalOperation::AddAccount(_) => {
+                Box::new(add_account::AddAccountProposalProcessor::new(proposal))
             }
         }
     }

@@ -1,4 +1,4 @@
-use super::{AccountId, Policy, UserId};
+use super::{AccountId, Policy, UserId, Blockchain, BlockchainStandard};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
@@ -6,7 +6,8 @@ use ic_canister_macros::stable_object;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalOperation {
     Transfer(TransferOperation),
-    AccountEdit(AccountEditOperation),
+    EditAccount(EditAccountOperation),
+    AddAccount(AddAccountOperation),
 }
 
 #[stable_object]
@@ -22,9 +23,22 @@ pub struct TransferOperation {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AccountEditOperation {
+pub struct EditAccountOperation {
     pub account_id: AccountId,
     pub owners: Option<Vec<UserId>>,
     pub policies: Option<Vec<Policy>>,
     pub name: Option<String>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAccountOperation {
+    /// The account id is only available after the operation is executed.
+    pub id: Option<AccountId>,
+    pub name: String,
+    pub owners: Vec<UserId>,
+    pub policies: Vec<Policy>,
+    pub blockchain: Blockchain,
+    pub standard: BlockchainStandard,
+    pub metadata: Vec<(String, String)>,
 }

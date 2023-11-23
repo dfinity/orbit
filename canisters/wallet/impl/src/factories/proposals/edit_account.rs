@@ -4,8 +4,8 @@ use crate::{
     errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, AccountEditOperation, ApprovalThresholdPolicy, NotificationType, Policy,
-        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus,
+        Account, EditAccountOperation, NotificationType, Policy,
+        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     repositories::AccountRepository,
     services::NotificationService,
@@ -18,13 +18,13 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct AccountEditProposalProcessor<'proposal> {
+pub struct EditAccountProposalProcessor<'proposal> {
     proposal: &'proposal Proposal,
     account_repository: AccountRepository,
     notification_service: NotificationService,
 }
 
-impl<'proposal> AccountEditProposalProcessor<'proposal> {
+impl<'proposal> EditAccountProposalProcessor<'proposal> {
     pub fn new(proposal: &'proposal Proposal) -> Self {
         Self {
             proposal,
@@ -33,9 +33,9 @@ impl<'proposal> AccountEditProposalProcessor<'proposal> {
         }
     }
 
-    fn unwrap_operation(&self) -> &AccountEditOperation {
+    fn unwrap_operation(&self) -> &EditAccountOperation {
         match self.proposal.operation {
-            ProposalOperation::AccountEdit(ref ctx) => ctx,
+            ProposalOperation::EditAccount(ref ctx) => ctx,
             _ => trap("Invalid proposal operation for processor"),
         }
     }
@@ -55,64 +55,11 @@ impl<'proposal> AccountEditProposalProcessor<'proposal> {
 }
 
 #[async_trait]
-impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
+impl<'proposal> ProposalProcessor for EditAccountProposalProcessor<'proposal> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
-        let account = self.get_account();
-        let mut policy_list = account
-            .policies
-            .into_iter()
-            .map(|policy| (policy, PolicyStatus::Pending))
-            .collect::<Vec<(Policy, PolicyStatus)>>();
-        let total_approvals = self
-            .proposal
-            .votes
-            .iter()
-            .filter(|vote| vote.status == ProposalVoteStatus::Accepted)
-            .count();
-        let missing_votes = account
-            .owners
-            .iter()
-            .filter(|owner| {
-                !self
-                    .proposal
-                    .votes
-                    .iter()
-                    .any(|vote| vote.user_id == **owner)
-            })
-            .count();
+        // TODO: Add policy evaluation once final policy design is ready
 
-        for (policy, status) in &mut policy_list {
-            match policy {
-                Policy::ApprovalThreshold(threshold) => match threshold {
-                    ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
-                        let can_still_be_approved =
-                            total_approvals + missing_votes >= *min_approvals as usize;
-
-                        if total_approvals >= *min_approvals as usize {
-                            *status = PolicyStatus::Fulfilled;
-                        } else if !can_still_be_approved {
-                            *status = PolicyStatus::Failed;
-                        }
-                    }
-                    ApprovalThresholdPolicy::VariableThreshold(percentage) => {
-                        let min_approvals = ((account.owners.len() as f64
-                            * (*percentage as f64 / 100.0))
-                            .ceil() as u8)
-                            .max(1);
-                        let can_still_be_approved =
-                            total_approvals + missing_votes >= min_approvals as usize;
-
-                        if total_approvals >= min_approvals as usize {
-                            *status = PolicyStatus::Fulfilled;
-                        } else if !can_still_be_approved {
-                            *status = PolicyStatus::Failed;
-                        }
-                    }
-                },
-            }
-        }
-
-        policy_list
+        Vec::new()
     }
 
     fn can_vote(&self, user_id: &UUID) -> bool {
@@ -129,7 +76,7 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
         let mut account = self.get_account();
 
         if let Some(name) = &input.name {
-            account.name = Some(name.clone());
+            account.name = name.clone();
         }
 
         if let Some(owners) = &input.owners {
@@ -149,7 +96,7 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
         self.account_repository
             .insert(account.to_key(), account.to_owned());
 
-        Ok(ProposalExecuteStage::Completed)
+        Ok(ProposalExecuteStage::Completed(self.proposal.operation.clone()))
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {
@@ -190,7 +137,7 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
         operation: ProposalOperationInput,
     ) -> Result<Proposal, ProposalError> {
         match operation {
-            ProposalOperationInput::AccountEdit(input) => {
+            ProposalOperationInput::EditAccount(input) => {
                 let from_account_id = HelperMapper::to_uuid(input.account_id).map_err(|e| {
                     ProposalError::ValidationError {
                         info: format!("Invalid from_account_id: {}", e),
@@ -201,7 +148,7 @@ impl<'proposal> ProposalProcessor for AccountEditProposalProcessor<'proposal> {
                     id,
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::AccountEdit(AccountEditOperation {
+                    ProposalOperation::EditAccount(EditAccountOperation {
                         account_id: *from_account_id.as_bytes(),
                         owners: match input.owners {
                             Some(owners) => Some(

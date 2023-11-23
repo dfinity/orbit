@@ -34,7 +34,7 @@ pub struct Account {
     /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
     pub decimals: u32,
     /// The account name (e.g. `My Main Account`)
-    pub name: Option<String>,
+    pub name: String,
     /// The account owners, which are a list of user ids.
     ///
     /// If the account has no owners, it means that it is a system account and
@@ -409,7 +409,7 @@ pub mod account_test_utils {
             balance: None,
             blockchain: Blockchain::InternetComputer,
             decimals: 0u32,
-            name: None,
+            name: "foo".to_string(),
             owners: vec![],
             policies: vec![],
             standard: BlockchainStandard::Native,

@@ -8,7 +8,7 @@ pub type UuidDTO = String;
 pub struct AccountDTO {
     pub id: AccountIdDTO,
     pub owners: Vec<UuidDTO>,
-    pub name: Option<String>,
+    pub name: String,
     pub address: String,
     pub blockchain: String,
     pub standard: String,
@@ -21,14 +21,35 @@ pub struct AccountDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccountEditOperationInput {
+pub struct EditAccountOperationInput {
     pub account_id: AccountIdDTO,
     pub owners: Option<Vec<UserIdDTO>>,
     pub policies: Option<Vec<PolicyDTO>>,
     pub name: Option<String>,
 }
 
-pub type AccountEditOperationDTO = AccountEditOperationInput;
+pub type EditAccountOperationDTO = EditAccountOperationInput;
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddAccountOperationInput {
+    pub name: String,
+    pub owners: Vec<UserIdDTO>,
+    pub policies: Vec<PolicyDTO>,
+    pub blockchain: String,
+    pub standard: String,
+    pub metadata: Vec<(String, String)>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddAccountOperationDTO {
+    pub account: Option<AccountDTO>,
+    pub name: String,
+    pub owners: Vec<UserIdDTO>,
+    pub policies: Vec<PolicyDTO>,
+    pub blockchain: String,
+    pub standard: String,
+    pub metadata: Vec<(String, String)>,
+}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ApprovalThresholdPolicyDTO {
@@ -40,21 +61,6 @@ pub enum ApprovalThresholdPolicyDTO {
 pub enum PolicyDTO {
     #[serde(rename = "approval_threshold")]
     ApprovalThreshold(ApprovalThresholdPolicyDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateAccountInput {
-    pub owners: Vec<UserIdDTO>,
-    pub name: Option<String>,
-    pub blockchain: String,
-    pub standard: String,
-    pub policies: Vec<PolicyDTO>,
-    pub metadata: Option<Vec<(String, String)>>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateAccountResponse {
-    pub account: AccountDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

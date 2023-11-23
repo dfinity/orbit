@@ -1,4 +1,4 @@
-use crate::core::{PERMISSION_READ_ACCOUNT, PERMISSION_WRITE_ACCOUNT};
+use crate::core::PERMISSION_READ_ACCOUNT;
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
@@ -9,16 +9,11 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
-    CreateAccountInput, CreateAccountResponse, FetchAccountBalancesInput,
-    FetchAccountBalancesResponse, GetAccountInput, GetAccountResponse, ListAccountResponse,
+    FetchAccountBalancesInput, FetchAccountBalancesResponse, GetAccountInput, GetAccountResponse,
+    ListAccountResponse,
 };
 
 // Canister entrypoints for the controller.
-#[update(name = "create_account")]
-async fn create_account(input: CreateAccountInput) -> ApiResult<CreateAccountResponse> {
-    CONTROLLER.create_account(input).await
-}
-
 #[query(name = "get_account")]
 async fn get_account(input: GetAccountInput) -> ApiResult<GetAccountResponse> {
     CONTROLLER.get_account(input).await
@@ -49,19 +44,6 @@ pub struct AccountController {
 impl AccountController {
     pub fn new(account_service: AccountService) -> Self {
         Self { account_service }
-    }
-
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_WRITE_ACCOUNT])]
-    async fn create_account(&self, input: CreateAccountInput) -> ApiResult<CreateAccountResponse> {
-        let created_account = self
-            .account_service
-            .create_account(input, &call_context())
-            .await?
-            .to_dto();
-
-        Ok(CreateAccountResponse {
-            account: created_account,
-        })
     }
 
     #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]

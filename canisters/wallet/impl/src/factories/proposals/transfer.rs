@@ -172,7 +172,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         self.transfer_repository
             .insert(transfer.to_key(), transfer.to_owned());
 
-        Ok(ProposalExecuteStage::Processing)
+        Ok(ProposalExecuteStage::Processing(self.proposal.operation.clone()))
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {

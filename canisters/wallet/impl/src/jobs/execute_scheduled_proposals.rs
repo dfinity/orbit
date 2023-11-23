@@ -95,10 +95,15 @@ impl Job {
         drop(processor);
 
         proposal.status = match execute_state {
-            ProposalExecuteStage::Completed => ProposalStatus::Completed {
+            ProposalExecuteStage::Completed(_) => ProposalStatus::Completed {
                 completed_at: time(),
             },
-            ProposalExecuteStage::Processing => ProposalStatus::Processing { started_at: time() },
+            ProposalExecuteStage::Processing(_) => ProposalStatus::Processing { started_at: time() },
+        };
+
+        proposal.operation = match execute_state {
+            ProposalExecuteStage::Completed(operation) => operation,
+            ProposalExecuteStage::Processing(operation) => operation,
         };
 
         proposal.last_modification_timestamp = time();

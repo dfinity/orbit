@@ -3,17 +3,16 @@ use crate::{
     core::{generate_uuid_v4, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
-    mappers::{AccountMapper, BlockchainMapper, HelperMapper},
-    models::{Account, AccountBalance, AccountId},
+    mappers::{AccountMapper, HelperMapper},
+    models::{Account, AccountBalance, AccountId, AddAccountOperation},
     repositories::AccountRepository,
 };
 use candid::Principal;
 use ic_canister_core::{
-    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
+    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository,
 };
-use std::collections::HashSet;
 use uuid::Uuid;
-use wallet_api::{AccountBalanceDTO, CreateAccountInput, FetchAccountBalancesInput};
+use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput};
 
 #[derive(Default, Debug)]
 pub struct AccountService {
@@ -59,33 +58,16 @@ impl AccountService {
     /// it will be added automatically.
     ///
     /// This operation will fail if the user does not have an associated user.
-    pub async fn create_account(
-        &self,
-        input: CreateAccountInput,
-        ctx: &CallContext,
-    ) -> ServiceResult<Account> {
-        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-
-        let mut owners_users: HashSet<UUID> = HashSet::from_iter(vec![caller_user.id]);
+    pub async fn create_account(&self, input: AddAccountOperation) -> ServiceResult<Account> {
         for user_id in input.owners.iter() {
-            let user_id = HelperMapper::to_uuid(user_id.clone())?;
-            self.user_service.assert_user_exists(user_id.as_bytes())?;
-
-            owners_users.insert(*user_id.as_bytes());
+            self.user_service.assert_user_exists(user_id)?;
         }
 
         let uuid = generate_uuid_v4().await;
         let key = Account::key(*uuid.as_bytes());
-        let blockchain_api = BlockchainApiFactory::build(
-            &BlockchainMapper::to_blockchain(input.blockchain.clone())?,
-            &BlockchainMapper::to_blockchain_standard(input.standard.clone())?,
-        )?;
-        let mut new_account = AccountMapper::from_create_input(
-            input,
-            *uuid.as_bytes(),
-            None,
-            owners_users.iter().copied().collect(),
-        )?;
+        let blockchain_api =
+            BlockchainApiFactory::build(&input.blockchain.clone(), &input.standard.clone())?;
+        let mut new_account = AccountMapper::from_create_input(input, *uuid.as_bytes(), None)?;
 
         // The account address is generated after the account is created from the user input and
         // all the validations are successfully completed.
@@ -196,6 +178,8 @@ impl AccountService {
 
 #[cfg(test)]
 mod tests {
+    use wallet_api::AddAccountOperationInput;
+
     use super::*;
     use crate::{
         core::test_utils,
@@ -255,33 +239,34 @@ mod tests {
     #[tokio::test]
     async fn create_account() {
         let ctx = setup();
-        let input = CreateAccountInput {
-            name: Some("foo".to_string()),
+        let input = AddAccountOperationInput {
+            name: "foo".to_string(),
             owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
             blockchain: "icp".to_string(),
             standard: "native".to_string(),
-            metadata: None,
+            metadata: vec![],
             policies: vec![],
         };
 
-        let result = ctx.service.create_account(input, &ctx.call_context).await;
+        let result = ctx.service.create_account(input.into()).await;
 
         assert!(result.is_ok());
     }
 
     #[tokio::test]
+    #[should_panic]
     async fn fail_create_account_unknown_blockchain() {
         let ctx = setup();
-        let input = CreateAccountInput {
-            name: Some("foo".to_string()),
+        let input = AddAccountOperationInput {
+            name: "foo".to_string(),
             owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
             blockchain: "unknown".to_string(),
             standard: "native".to_string(),
-            metadata: None,
+            metadata: vec![],
             policies: vec![],
         };
 
-        let result = ctx.service.create_account(input, &ctx.call_context).await;
+        let result = ctx.service.create_account(input.into()).await;
 
         assert!(result.is_err());
     }

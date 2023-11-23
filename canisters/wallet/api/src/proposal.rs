@@ -1,5 +1,7 @@
+use crate::{AddAccountOperationInput, AddAccountOperationDTO, EditAccountOperationDTO};
+
 use super::{
-    AccountEditOperationInput, AccountIdDTO, TimestampRfc3339, TransferOperationDTO,
+    EditAccountOperationInput, AccountIdDTO, TimestampRfc3339, TransferOperationDTO,
     TransferOperationInput, UserIdDTO,
 };
 use candid::{CandidType, Deserialize};
@@ -33,19 +35,22 @@ pub enum ProposalExecutionScheduleDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationDTO {
     Transfer(Box<TransferOperationDTO>),
-    AccountEdit(AccountEditOperationInput),
+    EditAccount(Box<EditAccountOperationDTO>),
+    AddAccount(Box<AddAccountOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationInput {
     Transfer(TransferOperationInput),
-    AccountEdit(AccountEditOperationInput),
+    EditAccount(EditAccountOperationInput),
+    AddAccount(AddAccountOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationTypeDTO {
     Transfer,
-    AccountEdit,
+    EditAccount,
+    AddAccount,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
