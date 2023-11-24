@@ -245,6 +245,16 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : Error,
   });
+  const ProposalStatusCode = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Rejected' : IDL.Null,
+    'Scheduled' : IDL.Null,
+    'Adopted' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Processing' : IDL.Null,
+    'Created' : IDL.Null,
+    'Completed' : IDL.Null,
+  });
   const ProposalOperationType = IDL.Variant({
     'Transfer' : IDL.Null,
     'EditAccount' : IDL.Null,
@@ -252,7 +262,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListAccountProposalsInput = IDL.Record({
     'account_id' : AccountId,
-    'status' : IDL.Opt(ProposalStatus),
+    'status' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
     'to_dt' : IDL.Opt(TimestampRFC3339),
     'operation_type' : IDL.Opt(ProposalOperationType),
     'from_dt' : IDL.Opt(TimestampRFC3339),
@@ -326,7 +336,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ListProposalsInput = IDL.Record({
-    'status' : IDL.Opt(ProposalStatus),
+    'status' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
     'to_dt' : IDL.Opt(TimestampRFC3339),
     'operation_type' : IDL.Opt(ProposalOperationType),
     'from_dt' : IDL.Opt(TimestampRFC3339),

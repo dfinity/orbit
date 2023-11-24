@@ -25,6 +25,11 @@ export interface WalletMetrics {
   notifications: number;
 }
 
+export interface PendingAccount {
+  name: string;
+  proposalId: string;
+}
+
 export interface ActiveWalletStoreState {
   _walletId: string;
   loading: boolean;
@@ -36,6 +41,10 @@ export interface ActiveWalletStoreState {
   accounts: {
     loading: boolean;
     items: Account[];
+  };
+  pendingAccounts: {
+    loading: boolean;
+    items: PendingAccount[];
   };
   notifications: {
     loading: boolean;
@@ -54,6 +63,10 @@ export const useActiveWalletStore = defineStore('activeWallet', {
         details: null,
       },
       accounts: {
+        loading: false,
+        items: [],
+      },
+      pendingAccounts: {
         loading: false,
         items: [],
       },
@@ -229,6 +242,38 @@ export const useActiveWalletStore = defineStore('activeWallet', {
         this.accounts.loading = false;
       }
     },
+    async loadPendingAccountList(): Promise<void> {
+      if (this.pendingAccounts.loading) {
+        return;
+      }
+      try {
+        this.pendingAccounts.loading = true;
+        const walletService = services().wallet.withWalletId(this.walletId);
+        const proposals = await walletService.listProposals({
+          operation_type: [{ AddAccount: null }],
+          status: [
+            [{ Created: null }, { Adopted: null }, { Processing: null }, { Scheduled: null }],
+          ],
+          from_dt: [],
+          to_dt: [],
+        });
+
+        this.pendingAccounts.items = proposals
+          .map(proposal => {
+            if ('AddAccount' in proposal.operation) {
+              return {
+                name: proposal.operation.AddAccount.name,
+                proposalId: proposal.id,
+              };
+            }
+
+            return null;
+          })
+          .filter(p => p !== null) as PendingAccount[];
+      } finally {
+        this.pendingAccounts.loading = false;
+      }
+    },
     async loadWalletFeatures(): Promise<void> {
       try {
         this.features.loading = true;
@@ -242,6 +287,7 @@ export const useActiveWalletStore = defineStore('activeWallet', {
     async loadDetailsAsync(): Promise<void> {
       useWorkerStore().start();
       this.loadAccountList();
+      this.loadPendingAccountList();
       this.loadWalletFeatures();
     },
     async load(walletId: Principal): Promise<void> {

@@ -20,6 +20,18 @@ pub enum ProposalStatusDTO {
     Cancelled { reason: Option<String> },
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum ProposalStatusCodeDTO {
+    Created,
+    Adopted,
+    Rejected,
+    Scheduled,
+    Processing,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalVoteStatusDTO {
     Accepted,
@@ -108,7 +120,7 @@ pub struct GetProposalResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsInput {
-    pub status: Option<ProposalStatusDTO>,
+    pub status: Option<Vec<ProposalStatusCodeDTO>>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,
@@ -122,7 +134,7 @@ pub struct ListProposalsResponse {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccountProposalsInput {
     pub account_id: AccountIdDTO,
-    pub status: Option<ProposalStatusDTO>,
+    pub status: Option<Vec<ProposalStatusCodeDTO>>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,

@@ -29,6 +29,7 @@ import {
   ListNotificationsInput,
   NotificationId,
   MarkNotificationsReadInput,
+  ListProposalsInput,
 } from '~/generated/wallet/wallet.did';
 import { Maybe } from '~/types';
 
@@ -117,6 +118,16 @@ export class WalletService {
 
   async listAccountProposals(input: ListAccountProposalsInput): Promise<Proposal[]> {
     const result = await this.actor.list_account_proposals(input);
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposals;
+  }
+
+  async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
+    const result = await this.actor.list_proposals(input);
 
     if ('Err' in result) {
       throw result.Err;

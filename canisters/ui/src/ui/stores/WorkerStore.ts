@@ -7,11 +7,13 @@ import { useActiveWalletStore } from '~/ui/stores';
 
 const BALANCE_POLLING_INTERVAL = 30000;
 const NOTIFICATIONS_POLLING_INTERVAL = 5000;
+const PENDING_ACCOUNTS_POLLING_INTERVAL = 20000;
 
 export interface WorkerStoreState {
   pollingJobs: {
     balances?: NodeJS.Timeout;
     notifications?: NodeJS.Timeout;
+    pendingAccounts?: NodeJS.Timeout;
   };
   cachedTransfers: Record<string, Transfer>;
 }
@@ -27,6 +29,7 @@ export const useWorkerStore = defineStore('cache', {
     stop(): void {
       clearInterval(this.pollingJobs.balances);
       clearInterval(this.pollingJobs.notifications);
+      clearInterval(this.pollingJobs.pendingAccounts);
     },
     start(): void {
       this.stop();
@@ -37,6 +40,10 @@ export const useWorkerStore = defineStore('cache', {
       this.pollingJobs.notifications = timer(
         () => this.fetchNotifications(),
         NOTIFICATIONS_POLLING_INTERVAL,
+      );
+      this.pollingJobs.notifications = timer(
+        () => this.fetchAccounts(),
+        PENDING_ACCOUNTS_POLLING_INTERVAL,
       );
     },
     getTransferFromCache(id: string): Transfer {
@@ -111,6 +118,20 @@ export const useWorkerStore = defineStore('cache', {
         }
       } catch (error) {
         logger.error('Failed to fetch unread notifications', { error });
+      }
+    },
+
+    async fetchAccounts(): Promise<void> {
+      try {
+        const activeWallet = useActiveWalletStore();
+        if (!activeWallet.hasUser) {
+          return;
+        }
+
+        await activeWallet.loadAccountList();
+        await activeWallet.loadPendingAccountList();
+      } catch (error) {
+        logger.error('Failed to fetch updated account list', { error });
       }
     },
   },

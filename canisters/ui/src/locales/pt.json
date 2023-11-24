@@ -42,6 +42,9 @@
     "load_failed": "Falha ao procurar as informaçōes da sua conta, por favor, tente novament."
   },
   "wallets": {
+    "add_account_proposal_saved": "Pedido de criação de conta enviado",
+    "edit_account_proposal_saved": "Pedido de atualização de conta enviado",
+    "pending_account_creation_subtitle": "Criação de conta pendente ...",
     "proposal_failed_to_save": "Erro ao gravar a proposta.",
     "notification_failed_to_save": "Erro ao gravar a notificação.",
     "no_accounts": "Nenhuma conta disponível.",

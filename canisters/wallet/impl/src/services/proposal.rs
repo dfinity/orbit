@@ -51,7 +51,7 @@ impl ProposalService {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 operation_type: filter_by_operation_type,
-                status: input.status.map(|status| status.into()),
+                status: input.status.map(|status| status),
             },
         );
 
@@ -75,7 +75,7 @@ impl ProposalService {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 operation_type: filter_by_operation_type,
-                status: input.status.map(|status| status.into()),
+                status: input.status.map(|status| status),
             },
         );
 

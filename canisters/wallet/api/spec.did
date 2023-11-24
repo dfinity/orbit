@@ -146,6 +146,18 @@ type ProposalStatus = variant {
   };
 };
 
+// The status code of a proposal.
+type ProposalStatusCode = variant {
+  Created;
+  Adopted;
+  Rejected;
+  Cancelled;
+  Scheduled;
+  Processing;
+  Completed;
+  Failed;
+};
+
 // The status of a proposal.
 type ProposalVoteStatus = variant { Accepted; Rejected };
 
@@ -340,7 +352,7 @@ type CreateProposalResult = variant {
 // The input type for getting the list of proposals associated with the caller.
 type ListProposalsInput = record {
   // Show only proposals with the given status.
-  status : opt ProposalStatus;
+  status : opt vec ProposalStatusCode;
   // The type of the proposal (e.g. "transfer").
   operation_type : opt ProposalOperationType;
   // From which created time to retrieve the proposals.
@@ -365,7 +377,7 @@ type ListAccountProposalsInput = record {
   // The account id to retrieve the proposals from.
   account_id : AccountId;
   // Show only proposals with the given status.
-  status : opt ProposalStatus;
+  status : opt vec ProposalStatusCode;
   // The type of the proposal (e.g. "transfer").
   operation_type : opt ProposalOperationType;
   // From which created time to retrieve them.

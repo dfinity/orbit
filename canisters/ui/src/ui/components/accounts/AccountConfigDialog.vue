@@ -40,6 +40,8 @@ import { computed, ref } from 'vue';
 import AccountForm from './AccountForm.vue';
 import { mdiClose } from '@mdi/js';
 import { Account } from '~/generated/wallet/wallet.did';
+import { useSettingsStore } from '~/ui/stores';
+import { i18n } from '~/ui/modules';
 
 const props = withDefaults(
   defineProps<{
@@ -56,6 +58,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (event: 'update:modelValue', value: boolean): void;
+  (event: 'saved'): void;
 }>();
 
 const show = computed({
@@ -73,6 +76,16 @@ const closeDialog = (): void => {
 
 const onSave = (): void => {
   closeDialog();
+  emit('saved');
+
+  useSettingsStore().setNotification({
+    show: true,
+    type: 'success',
+    message:
+      props.mode === 'add'
+        ? i18n.global.t('wallets.add_account_proposal_saved')
+        : i18n.global.t('wallets.edit_account_proposal_saved'),
+  });
 };
 
 const submitted = ref(false);

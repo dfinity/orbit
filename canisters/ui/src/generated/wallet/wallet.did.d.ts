@@ -100,7 +100,7 @@ export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : Error };
 export interface ListAccountProposalsInput {
   'account_id' : AccountId,
-  'status' : [] | [ProposalStatus],
+  'status' : [] | [Array<ProposalStatusCode>],
   'to_dt' : [] | [TimestampRFC3339],
   'operation_type' : [] | [ProposalOperationType],
   'from_dt' : [] | [TimestampRFC3339],
@@ -132,7 +132,7 @@ export type ListNotificationsResult = {
   } |
   { 'Err' : Error };
 export interface ListProposalsInput {
-  'status' : [] | [ProposalStatus],
+  'status' : [] | [Array<ProposalStatusCode>],
   'to_dt' : [] | [TimestampRFC3339],
   'operation_type' : [] | [ProposalOperationType],
   'from_dt' : [] | [TimestampRFC3339],
@@ -205,6 +205,14 @@ export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
   { 'Created' : null } |
   { 'Completed' : { 'completed_at' : TimestampRFC3339 } };
+export type ProposalStatusCode = { 'Failed' : null } |
+  { 'Rejected' : null } |
+  { 'Scheduled' : null } |
+  { 'Adopted' : null } |
+  { 'Cancelled' : null } |
+  { 'Processing' : null } |
+  { 'Created' : null } |
+  { 'Completed' : null };
 export interface ProposalVote {
   'status' : ProposalVoteStatus,
   'user_id' : UserId,

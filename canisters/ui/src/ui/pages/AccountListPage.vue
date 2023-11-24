@@ -7,7 +7,7 @@
             <h1 class="text-h4">{{ $t('terms.accounts') }}</h1>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
-            <AddAccountBtn />
+            <AddAccountBtn @created="activeWallet.loadPendingAccountList" />
             <NewTransferBtn />
           </VCol>
         </VRow>
@@ -15,7 +15,9 @@
     </template>
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
-        <VRow v-if="activeWallet.accounts.items.length">
+        <VRow
+          v-if="activeWallet.accounts.items.length || activeWallet.pendingAccounts.items.length"
+        >
           <VCol v-for="(account, idx) in activeWallet.sortedAccounts" :key="idx" cols="12" md="6">
             <VCard density="compact" variant="elevated" class="account-card">
               <VCardTitle>
@@ -76,6 +78,22 @@
                   {{ $t('terms.open') }}
                 </VBtn>
               </VCardActions>
+            </VCard>
+          </VCol>
+          <VCol
+            v-for="(pendingAccount, idx) in activeWallet.pendingAccounts.items"
+            :key="idx"
+            cols="12"
+            md="6"
+          >
+            <VCard density="compact" variant="elevated" class="account-card">
+              <VCardTitle>
+                <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
+                {{ pendingAccount.name }}
+              </VCardTitle>
+              <VCardSubtitle class="account-card__subtitle mb-4">
+                {{ $t("wallets.pending_account_creation_subtitle") }}
+              </VCardSubtitle>
             </VCard>
           </VCol>
         </VRow>
