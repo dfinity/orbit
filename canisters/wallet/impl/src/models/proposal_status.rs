@@ -1,8 +1,8 @@
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
-use wallet_api::ProposalStatusCodeDTO;
 use std::fmt::{Display, Formatter};
+use wallet_api::ProposalStatusCodeDTO;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

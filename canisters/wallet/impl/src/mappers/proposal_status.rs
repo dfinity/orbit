@@ -1,6 +1,6 @@
 use crate::models::ProposalStatus;
 use ic_canister_core::utils::{rfc3339_to_timestamp, timestamp_to_rfc3339};
-use wallet_api::{ProposalStatusDTO, ProposalStatusCodeDTO};
+use wallet_api::{ProposalStatusCodeDTO, ProposalStatusDTO};
 
 impl From<ProposalStatus> for ProposalStatusDTO {
     fn from(status: ProposalStatus) -> Self {

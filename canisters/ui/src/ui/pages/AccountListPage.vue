@@ -92,7 +92,7 @@
                 {{ pendingAccount.name }}
               </VCardTitle>
               <VCardSubtitle class="account-card__subtitle mb-4">
-                {{ $t("wallets.pending_account_creation_subtitle") }}
+                {{ $t('wallets.pending_account_creation_subtitle') }}
               </VCardSubtitle>
             </VCard>
           </VCol>

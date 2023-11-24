@@ -238,7 +238,7 @@ impl ProposalRepository {
 
             if let Some(status) = &condition.status {
                 match_status = status
-                    .into_iter()
+                    .iter()
                     .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
             }
 
@@ -273,7 +273,7 @@ impl ProposalRepository {
 
                     if let Some(status) = &condition.status {
                         match_status = status
-                            .into_iter()
+                            .iter()
                             .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
                     }
 
