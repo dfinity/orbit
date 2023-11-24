@@ -1,4 +1,4 @@
-use super::{ProposalExecuteStage, ProposalProcessor};
+use super::{ProposalExecuteStage, ProposalHandler};
 use crate::{
     core::ic_cdk::api::trap,
     errors::{ProposalError, ProposalExecuteError},
@@ -18,13 +18,13 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct EditAccountProposalProcessor<'proposal> {
+pub struct EditAccountProposal<'proposal> {
     proposal: &'proposal Proposal,
     account_repository: AccountRepository,
     notification_service: NotificationService,
 }
 
-impl<'proposal> EditAccountProposalProcessor<'proposal> {
+impl<'proposal> EditAccountProposal<'proposal> {
     pub fn new(proposal: &'proposal Proposal) -> Self {
         Self {
             proposal,
@@ -55,7 +55,7 @@ impl<'proposal> EditAccountProposalProcessor<'proposal> {
 }
 
 #[async_trait]
-impl<'proposal> ProposalProcessor for EditAccountProposalProcessor<'proposal> {
+impl<'proposal> ProposalHandler for EditAccountProposal<'proposal> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         // TODO: Add policy evaluation once final policy design is ready
 

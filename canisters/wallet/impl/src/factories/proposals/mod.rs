@@ -12,6 +12,10 @@ mod add_account;
 mod edit_account;
 mod transfer;
 
+use add_account::AddAccountProposal;
+use edit_account::EditAccountProposal;
+use transfer::TransferProposal;
+
 #[derive(Debug)]
 pub enum ProposalExecuteStage {
     Completed(ProposalOperation),
@@ -19,7 +23,7 @@ pub enum ProposalExecuteStage {
 }
 
 #[async_trait]
-pub trait ProposalProcessor: Send + Sync {
+pub trait ProposalHandler: Send + Sync {
     /// Reevaluates the status of the associated policies.
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)>;
 
@@ -53,6 +57,21 @@ pub trait ProposalProcessor: Send + Sync {
         Self: Sized;
 }
 
+fn create_proposal<Handler: ProposalHandler>(
+    proposal_id: Uuid,
+    proposed_by_user: UUID,
+    input: CreateProposalInput,
+) -> Result<Proposal, ProposalError> {
+    Handler::new_proposal(
+        proposal_id,
+        proposed_by_user,
+        input.title,
+        input.summary,
+        input.execution_plan.map(Into::into),
+        input.operation,
+    )
+}
+
 #[derive(Debug)]
 pub struct ProposalFactory {}
 
@@ -61,55 +80,28 @@ impl ProposalFactory {
         proposed_by_user: UUID,
         input: CreateProposalInput,
     ) -> Result<Proposal, ProposalError> {
-        let proposal_id = generate_uuid_v4().await;
+        let id = generate_uuid_v4().await;
 
         match input.operation {
             ProposalOperationInput::Transfer(_) => {
-                transfer::TransferProposalProcessor::new_proposal(
-                    proposal_id,
-                    proposed_by_user,
-                    input.title,
-                    input.summary,
-                    input.execution_plan.map(Into::into),
-                    input.operation,
-                )
+                create_proposal::<TransferProposal>(id, proposed_by_user, input)
             }
             ProposalOperationInput::EditAccount(_) => {
-                edit_account::EditAccountProposalProcessor::new_proposal(
-                    proposal_id,
-                    proposed_by_user,
-                    input.title,
-                    input.summary,
-                    input.execution_plan.map(Into::into),
-                    input.operation,
-                )
+                create_proposal::<EditAccountProposal>(id, proposed_by_user, input)
             }
             ProposalOperationInput::AddAccount(_) => {
-                add_account::AddAccountProposalProcessor::new_proposal(
-                    proposal_id,
-                    proposed_by_user,
-                    input.title,
-                    input.summary,
-                    input.execution_plan.map(Into::into),
-                    input.operation,
-                )
+                create_proposal::<AddAccountProposal>(id, proposed_by_user, input)
             }
         }
     }
 
-    pub fn create_processor<'proposal>(
+    pub fn build_handler<'proposal>(
         proposal: &'proposal Proposal,
-    ) -> Box<dyn ProposalProcessor + 'proposal> {
+    ) -> Box<dyn ProposalHandler + 'proposal> {
         match &proposal.operation {
-            ProposalOperation::Transfer(_) => {
-                Box::new(transfer::TransferProposalProcessor::new(proposal))
-            }
-            ProposalOperation::EditAccount(_) => {
-                Box::new(edit_account::EditAccountProposalProcessor::new(proposal))
-            }
-            ProposalOperation::AddAccount(_) => {
-                Box::new(add_account::AddAccountProposalProcessor::new(proposal))
-            }
+            ProposalOperation::Transfer(_) => Box::new(TransferProposal::new(proposal)),
+            ProposalOperation::EditAccount(_) => Box::new(EditAccountProposal::new(proposal)),
+            ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
         }
     }
 }

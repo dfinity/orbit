@@ -14,7 +14,7 @@ use wallet_api::{
 use super::{BlockchainMapper, HelperMapper};
 
 impl TransferOperation {
-    pub fn into_dto(self, account: Account) -> TransferOperationDTO {
+    pub fn to_dto(self, account: Account) -> TransferOperationDTO {
         TransferOperationDTO {
             amount: self.amount,
             from_account: account.to_dto(),
@@ -117,7 +117,7 @@ impl From<ProposalOperation> for ProposalOperationDTO {
                     .get(&Account::key(operation.from_account_id))
                     .expect("Account not found");
 
-                ProposalOperationDTO::Transfer(Box::new(operation.into_dto(account)))
+                ProposalOperationDTO::Transfer(Box::new(operation.to_dto(account)))
             }
             ProposalOperation::EditAccount(operation) => {
                 ProposalOperationDTO::EditAccount(Box::new(operation.into()))
