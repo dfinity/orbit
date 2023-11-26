@@ -1,12 +1,10 @@
 use crate::setup::setup_new_env;
-use crate::utils::user_test_id;
+use crate::utils::{update_candid_as, user_test_id};
 use crate::TestEnv;
 use control_panel_api::{
     GetMainWalletResponse, RegisterUserInput, RegisterUserResponse, RegisterUserWalletInput,
 };
 use ic_canister_core::api::ApiResult;
-use pocket_ic::call_candid_as;
-use pocket_ic::common::rest::RawEffectivePrincipal;
 
 #[test]
 fn register_user_successful() {
@@ -18,10 +16,9 @@ fn register_user_successful() {
     let user_name = "TestUser".to_string();
 
     // user has no wallet so far
-    let res: (ApiResult<GetMainWalletResponse>,) = call_candid_as(
+    let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
-        RawEffectivePrincipal::None,
         user_id,
         "get_main_wallet",
         (),
@@ -39,10 +36,9 @@ fn register_user_successful() {
         name: Some(user_name.clone()),
         wallet: wallet_args,
     };
-    let res: (ApiResult<RegisterUserResponse>,) = call_candid_as(
+    let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
-        RawEffectivePrincipal::None,
         user_id,
         "register_user",
         (register_args,),
@@ -52,10 +48,9 @@ fn register_user_successful() {
     assert_eq!(user_dto.name, Some(user_name));
 
     // get main wallet
-    let res: (ApiResult<GetMainWalletResponse>,) = call_candid_as(
+    let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
-        RawEffectivePrincipal::None,
         user_id,
         "get_main_wallet",
         (),
