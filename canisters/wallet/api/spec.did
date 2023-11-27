@@ -230,7 +230,7 @@ type AddAccountOperation = record {
   name : text;
   // The updated list of owners of the account.
   owners : vec UserId;
-  // The updated list of policies that can be used to control the account.
+  // The list of policies that can be used to control the account.
   policies : vec Policy;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
