@@ -274,7 +274,7 @@ type ProposalOperationInput = variant {
   Transfer : TransferOperationInput;
   // An operation for updating information of an account.
   EditAccount : EditAccountOperationInput;
-  // An operation for adding a new wallet account.
+  // An operation for adding a new account.
   AddAccount : AddAccountOperationInput;
 };
 
