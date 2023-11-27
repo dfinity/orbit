@@ -1,9 +1,7 @@
 use crate::setup::setup_new_env;
-use crate::utils::user_test_id;
+use crate::utils::{update_candid_as, user_test_id};
 use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
-use pocket_ic::call_candid_as;
-use pocket_ic::common::rest::RawEffectivePrincipal;
 use wallet_api::{RegisterUserInput, RegisterUserResponse};
 
 #[test]
@@ -17,10 +15,9 @@ fn register_user_successful() {
     let register_args = RegisterUserInput {
         identities: vec![user_id],
     };
-    let _res: (ApiResult<RegisterUserResponse>,) = call_candid_as(
+    let _res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        RawEffectivePrincipal::None,
         user_id,
         "register_user",
         (register_args,),

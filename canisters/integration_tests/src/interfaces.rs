@@ -1,10 +1,10 @@
+use crate::utils::update_candid_as;
 use candid::{CandidType, Principal};
 use ic_ledger_types::{
     AccountBalanceArgs, AccountIdentifier, Memo, Tokens, TransferArgs, TransferError,
     DEFAULT_SUBACCOUNT,
 };
-use pocket_ic::common::rest::RawEffectivePrincipal;
-use pocket_ic::{call_candid_as, PocketIc};
+use pocket_ic::PocketIc;
 use std::collections::{HashMap, HashSet};
 
 #[derive(CandidType)]
@@ -31,10 +31,9 @@ pub fn get_icp_balance(env: &PocketIc, user_id: Principal) -> u64 {
     let ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     let account = AccountIdentifier::new(&user_id, &DEFAULT_SUBACCOUNT);
     let account_balance_args = AccountBalanceArgs { account };
-    let res: (Tokens,) = call_candid_as(
+    let res: (Tokens,) = update_candid_as(
         env,
         ledger_canister_id,
-        RawEffectivePrincipal::None,
         user_id,
         "account_balance",
         (account_balance_args,),
@@ -66,10 +65,9 @@ pub fn send_icp_to_account(
         to: beneficiary_account,
         created_at_time: None,
     };
-    let res: (Result<u64, TransferError>,) = call_candid_as(
+    let res: (Result<u64, TransferError>,) = update_candid_as(
         env,
         ledger_canister_id,
-        RawEffectivePrincipal::None,
         sender_id,
         "transfer",
         (transfer_args,),
