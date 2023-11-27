@@ -272,7 +272,7 @@ type AddUserOperationInput = record {
   groups : vec UUID;
   // The status of the user (e.g. `Active`).
   //
-  // The user must be active to be able to use the wallet.
+  // The user must be active to be able to practically use the wallet.
   status : UserStatus;
 };
 
