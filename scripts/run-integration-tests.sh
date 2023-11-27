@@ -14,7 +14,7 @@ OSTYPE="${OSTYPE,,}"
 RUNNER_OS="${RUNNER_OS:-}"
 
 
-if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
+if [[ "$OSTYPE" == "linux"* || "$RUNNER_OS" == "Linux" ]]
 then
     PLATFORM=linux
 elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
