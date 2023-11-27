@@ -7,7 +7,7 @@
             <h1 class="text-h4">{{ $t('terms.accounts') }}</h1>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
-            <NewAccountBtn />
+            <AddAccountBtn @created="activeWallet.loadPendingAccountList" />
             <NewTransferBtn />
           </VCol>
         </VRow>
@@ -15,14 +15,14 @@
     </template>
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
-        <VRow v-if="activeWallet.accounts.items.length">
+        <VRow
+          v-if="activeWallet.accounts.items.length || activeWallet.pendingAccounts.items.length"
+        >
           <VCol v-for="(account, idx) in activeWallet.sortedAccounts" :key="idx" cols="12" md="6">
             <VCard density="compact" variant="elevated" class="account-card">
               <VCardTitle>
                 <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
-                <template v-if="account.name?.length">
-                  {{ account.name[0] }}
-                </template>
+                {{ account.name }}
               </VCardTitle>
               <VCardSubtitle class="account-card__subtitle">
                 <span>{{ account.symbol }}</span>
@@ -80,6 +80,22 @@
               </VCardActions>
             </VCard>
           </VCol>
+          <VCol
+            v-for="(pendingAccount, idx) in activeWallet.pendingAccounts.items"
+            :key="idx"
+            cols="12"
+            md="6"
+          >
+            <VCard density="compact" variant="elevated" class="account-card">
+              <VCardTitle>
+                <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
+                {{ pendingAccount.name }}
+              </VCardTitle>
+              <VCardSubtitle class="account-card__subtitle mb-4">
+                {{ $t('wallets.pending_account_creation_subtitle') }}
+              </VCardSubtitle>
+            </VCard>
+          </VCol>
         </VRow>
         <VRow v-else>
           <VCol cols="12">
@@ -107,7 +123,7 @@
 import { mdiAccount, mdiAccountGroup, mdiContentCopy, mdiOpenInApp, mdiWallet } from '@mdi/js';
 import { formatBalance } from '~/core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
-import NewAccountBtn from '~/ui/components/NewAccountBtn.vue';
+import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
 import { useActiveWalletStore, useSettingsStore } from '~/ui/stores';

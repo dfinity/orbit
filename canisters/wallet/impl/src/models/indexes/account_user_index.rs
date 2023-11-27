@@ -41,7 +41,7 @@ mod tests {
             balance: None,
             blockchain: Blockchain::InternetComputer,
             decimals: 0u32,
-            name: None,
+            name: "Private".to_string(),
             owners: vec![[1; 16], [2; 16]],
             policies: vec![],
             standard: BlockchainStandard::Native,

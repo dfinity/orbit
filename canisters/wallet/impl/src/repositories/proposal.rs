@@ -15,7 +15,7 @@ use crate::{
             proposal_status_index::ProposalStatusIndexCriteria,
             proposal_user_index::ProposalUserIndexCriteria,
         },
-        AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatus, UserId,
+        AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatusCode, UserId,
     },
 };
 use ic_canister_core::{
@@ -236,8 +236,10 @@ impl ProposalRepository {
                     ProposalOperationType::from(proposal.operation.clone()) == *operation_type;
             }
 
-            if let Some(status) = condition.status.clone() {
-                match_status = proposal.status == status;
+            if let Some(status) = &condition.status {
+                match_status = status
+                    .iter()
+                    .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
             }
 
             match_operation_type && match_status
@@ -270,7 +272,9 @@ impl ProposalRepository {
                     }
 
                     if let Some(status) = &condition.status {
-                        match_status = proposal.status == *status;
+                        match_status = status
+                            .iter()
+                            .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
                     }
 
                     match match_operation_type && match_status {
@@ -289,7 +293,7 @@ pub struct ProposalWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
     pub operation_type: Option<ProposalOperationType>,
-    pub status: Option<ProposalStatus>,
+    pub status: Option<Vec<ProposalStatusCode>>,
 }
 
 #[derive(Debug)]
@@ -297,7 +301,7 @@ pub struct ProposalFindByUserWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
     pub operation_type: Option<ProposalOperationType>,
-    pub status: Option<ProposalStatus>,
+    pub status: Option<Vec<ProposalStatusCode>>,
 }
 
 #[cfg(test)]
@@ -305,7 +309,7 @@ mod tests {
     use super::*;
     use crate::models::{
         proposal_test_utils::{self, mock_proposal},
-        ProposalOperation, ProposalVote, ProposalVoteStatus, TransferOperation,
+        ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, TransferOperation,
     };
     use num_bigint::BigUint;
     use uuid::Uuid;

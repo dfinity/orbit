@@ -180,9 +180,9 @@ impl Proposal {
     }
 
     pub fn can_vote(&self, user_id: &UUID) -> bool {
-        let processor = ProposalFactory::create_processor(self);
+        let proposal_handler = ProposalFactory::build_handler(self);
 
-        processor.can_vote(user_id)
+        proposal_handler.can_vote(user_id)
     }
 
     pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
@@ -201,11 +201,11 @@ impl Proposal {
     }
 
     pub fn reevaluate(&mut self) {
-        let processor = ProposalFactory::create_processor(self);
-        let policies = processor.evaluate_policies();
+        let proposal_handler = ProposalFactory::build_handler(self);
+        let policies = proposal_handler.evaluate_policies();
 
-        // must drop the processor before updating the proposal due to it being borrowed by the processor
-        drop(processor);
+        // must drop before updating the proposal due to it being borrowed by the handler
+        drop(proposal_handler);
 
         if policies
             .iter()
@@ -220,9 +220,9 @@ impl Proposal {
         }
     }
 
-    pub async fn post_create(&self) {
-        let processor = ProposalFactory::create_processor(self);
-        processor.post_create().await;
+    pub async fn on_created(&self) {
+        let proposal_handler = ProposalFactory::build_handler(self);
+        proposal_handler.on_created().await;
     }
 }
 

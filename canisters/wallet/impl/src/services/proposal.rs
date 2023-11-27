@@ -51,7 +51,7 @@ impl ProposalService {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 operation_type: filter_by_operation_type,
-                status: input.status.map(|status| status.into()),
+                status: input.status,
             },
         );
 
@@ -75,7 +75,7 @@ impl ProposalService {
                 created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 operation_type: filter_by_operation_type,
-                status: input.status.map(|status| status.into()),
+                status: input.status,
             },
         );
 
@@ -118,7 +118,7 @@ impl ProposalService {
             .insert(proposal.to_key(), proposal.to_owned());
 
         // Handles post processing logic like sending notifications.
-        proposal.post_create().await;
+        proposal.on_created().await;
 
         Ok(proposal)
     }
@@ -157,8 +157,8 @@ impl ProposalService {
 
     fn assert_proposal_access(&self, proposal: &Proposal, ctx: &CallContext) -> ServiceResult<()> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-        let processor = ProposalFactory::create_processor(proposal);
-        let has_access = processor.has_access(&user.id);
+        let proposal_handler = ProposalFactory::build_handler(proposal);
+        let has_access = proposal_handler.has_access(&user.id);
 
         if !proposal.users().contains(&user.id) && !has_access {
             Err(ProposalError::Forbidden {

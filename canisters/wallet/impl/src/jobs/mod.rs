@@ -17,7 +17,7 @@ mod execute_scheduled_proposals;
 mod schedule_adopted_proposals;
 
 #[async_trait]
-pub trait ScheduledJob {
+pub trait ScheduledJob: Send + Sync {
     /// Whether the job can be executed concurrently.
     const ALLOW_CONCURRENT_EXECUTION: bool = true;
 

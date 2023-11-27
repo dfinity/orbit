@@ -8,6 +8,9 @@ cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
 PACKAGE="${CANISTER_NAME}"
+OSTYPE=$(uname -s) || OSTYPE=$OSTYPE
+OSTYPE="${OSTYPE,,}"
+RUNNER_OS="${RUNNER_OS:-}"
 
 if [ -z "${CARGO_HOME:-}" ]
 then
@@ -28,7 +31,7 @@ done
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
 
 echo Optimising wasm
-if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
+if [[ "$OSTYPE" == "linux"* || "$RUNNER_OS" == "Linux" ]]
 then
     URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-linux64"
 elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]

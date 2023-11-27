@@ -146,6 +146,18 @@ type ProposalStatus = variant {
   };
 };
 
+// The status code of a proposal.
+type ProposalStatusCode = variant {
+  Created;
+  Adopted;
+  Rejected;
+  Cancelled;
+  Scheduled;
+  Processing;
+  Completed;
+  Failed;
+};
+
 // The status of a proposal.
 type ProposalVoteStatus = variant { Accepted; Rejected };
 
@@ -159,13 +171,6 @@ type ProposalVote = record {
   status_reason : opt text;
   // The time at which the vote was added.
   decided_at : TimestampRFC3339;
-};
-
-type ProposalOperationType = variant {
-  // A new transfer of funds from a given account.
-  Transfer;
-  // An operation for updating information of an account.
-  AccountEdit;
 };
 
 // Input type for transferring funds.
@@ -189,7 +194,7 @@ type TransferOperationInput = record {
 };
 
 // Input type for editing an account through a proposal.
-type AccountEditOperationInput = record {
+type EditAccountOperationInput = record {
   // The account id that will be edited.
   account_id : AccountId;
   // The updated list of owners of the account.
@@ -200,7 +205,40 @@ type AccountEditOperationInput = record {
   name : opt text;
 };
 
-type AccountEditOperation = AccountEditOperationInput;
+type EditAccountOperation = EditAccountOperationInput;
+
+// Input type for adding an account through a proposal.
+type AddAccountOperationInput = record {
+  // A friendly name for the account (e.g. "My Account").
+  name : text;
+  // The list of owners of the account.
+  owners : vec UserId;
+  // The list of policies that can be used to control the account.
+  policies : vec Policy;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
+  standard : text;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec record { text; text };
+};
+
+type AddAccountOperation = record {
+  // The account, only available after the proposal is executed.
+  account : opt Account;
+  // A friendly name for the account (e.g. "My Account").
+  name : text;
+  // The list of owners of the account.
+  owners : vec UserId;
+  // The list of policies that can be used to control the account.
+  policies : vec Policy;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
+  standard : text;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec record { text; text };
+};
 
 // Input type for transferring funds.
 type TransferOperation = record {
@@ -226,14 +264,27 @@ type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
   // An operation for updating information of an account.
-  AccountEdit : AccountEditOperation;
+  EditAccount : EditAccountOperation;
+  // An operation for creating a new account.
+  AddAccount : AddAccountOperation;
 };
 
 type ProposalOperationInput = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperationInput;
   // An operation for updating information of an account.
-  AccountEdit : AccountEditOperationInput;
+  EditAccount : EditAccountOperationInput;
+  // An operation for adding a new account.
+  AddAccount : AddAccountOperationInput;
+};
+
+type ProposalOperationType = variant {
+  // A new transfer of funds from a given account.
+  Transfer;
+  // An operation for updating information of an account.
+  EditAccount;
+  // An operation for creating a new account.
+  AddAccount;
 };
 
 // The schedule for executing a transaction of a given transfer.
@@ -301,7 +352,7 @@ type CreateProposalResult = variant {
 // The input type for getting the list of proposals associated with the caller.
 type ListProposalsInput = record {
   // Show only proposals with the given status.
-  status : opt ProposalStatus;
+  status : opt vec ProposalStatusCode;
   // The type of the proposal (e.g. "transfer").
   operation_type : opt ProposalOperationType;
   // From which created time to retrieve the proposals.
@@ -326,7 +377,7 @@ type ListAccountProposalsInput = record {
   // The account id to retrieve the proposals from.
   account_id : AccountId;
   // Show only proposals with the given status.
-  status : opt ProposalStatus;
+  status : opt vec ProposalStatusCode;
   // The type of the proposal (e.g. "transfer").
   operation_type : opt ProposalOperationType;
   // From which created time to retrieve them.
@@ -595,7 +646,7 @@ type Account = record {
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
   // A friendly name for the account.
-  name : opt text;
+  name : text;
   // If the list is empty, the wallet owners are the only owners.
   owners : vec UserId;
   // Account balance when available.
@@ -625,36 +676,6 @@ type ApprovalThresholdPolicy = variant {
 
 // The policies that can be used to control the operation in the wallet.
 type Policy = variant { approval_threshold : ApprovalThresholdPolicy };
-
-// Input type for creating a account.
-type CreateAccountInput = record {
-  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-  blockchain : text;
-  // The asset standard that is supported (e.g. `native`, `erc20`, etc.), canonically represented as a lowercase string
-  // with spaces replaced with underscores.
-  standard : text;
-  // The list of owners of the account.
-  //
-  // If the list is empty, the caller will be the only owner.
-  owners : vec UserId;
-  // The policies that can be used to control the account.
-  policies : vec Policy;
-  // A friendly name for the account (e.g. "My Account").
-  name : opt text;
-  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
-  metadata : opt vec record { text; text };
-};
-
-// Result type for creating a account.
-type CreateAccountResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The account that was created.
-    account : Account;
-  };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
-};
 
 // Input type for getting a account.
 type GetAccountInput = record {
@@ -864,10 +885,6 @@ service : (opt WalletInit) -> {
   //
   // Required permission: "write:notification"
   mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
-  // Create a new account.
-  //
-  // Required permission: "write:account"
-  create_account : (input : CreateAccountInput) -> (CreateAccountResult);
   // Get a account by id.
   //
   // If the caller does not have access to the account, an error will be returned.

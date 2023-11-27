@@ -7,7 +7,7 @@ export interface Account {
   'balance' : [] | [AccountBalanceInfo],
   'owners' : Array<UserId>,
   'metadata' : Array<[string, string]>,
-  'name' : [] | [string],
+  'name' : string,
   'blockchain' : string,
   'address' : string,
   'last_modification_timestamp' : TimestampRFC3339,
@@ -26,29 +26,29 @@ export interface AccountBalanceInfo {
   'balance' : bigint,
   'last_update_timestamp' : TimestampRFC3339,
 }
-export type AccountEditOperation = AccountEditOperationInput;
-export interface AccountEditOperationInput {
-  'account_id' : AccountId,
-  'owners' : [] | [Array<UserId>],
-  'name' : [] | [string],
-  'policies' : [] | [Array<Policy>],
-}
 export type AccountId = string;
+export interface AddAccountOperation {
+  'owners' : Array<UserId>,
+  'metadata' : Array<[string, string]>,
+  'name' : string,
+  'blockchain' : string,
+  'account' : [] | [Account],
+  'standard' : string,
+  'policies' : Array<Policy>,
+}
+export interface AddAccountOperationInput {
+  'owners' : Array<UserId>,
+  'metadata' : Array<[string, string]>,
+  'name' : string,
+  'blockchain' : string,
+  'standard' : string,
+  'policies' : Array<Policy>,
+}
 export type ApprovalThresholdPolicy = { 'VariableThreshold' : number } |
   { 'FixedThreshold' : number };
 export type AssetSymbol = string;
 export interface ConfirmUserIdentityInput { 'user_id' : UserId }
 export type ConfirmUserIdentityResult = { 'Ok' : { 'user' : User } } |
-  { 'Err' : Error };
-export interface CreateAccountInput {
-  'owners' : Array<UserId>,
-  'metadata' : [] | [Array<[string, string]>],
-  'name' : [] | [string],
-  'blockchain' : string,
-  'standard' : string,
-  'policies' : Array<Policy>,
-}
-export type CreateAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
 export interface CreateProposalInput {
   'title' : [] | [string],
@@ -58,6 +58,13 @@ export interface CreateProposalInput {
 }
 export type CreateProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
   { 'Err' : Error };
+export type EditAccountOperation = EditAccountOperationInput;
+export interface EditAccountOperationInput {
+  'account_id' : AccountId,
+  'owners' : [] | [Array<UserId>],
+  'name' : [] | [string],
+  'policies' : [] | [Array<Policy>],
+}
 export interface EditUserInput {
   'user_id' : UserId,
   'identities' : [] | [Array<Principal>],
@@ -93,7 +100,7 @@ export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : Error };
 export interface ListAccountProposalsInput {
   'account_id' : AccountId,
-  'status' : [] | [ProposalStatus],
+  'status' : [] | [Array<ProposalStatusCode>],
   'to_dt' : [] | [TimestampRFC3339],
   'operation_type' : [] | [ProposalOperationType],
   'from_dt' : [] | [TimestampRFC3339],
@@ -125,7 +132,7 @@ export type ListNotificationsResult = {
   } |
   { 'Err' : Error };
 export interface ListProposalsInput {
-  'status' : [] | [ProposalStatus],
+  'status' : [] | [Array<ProposalStatusCode>],
   'to_dt' : [] | [TimestampRFC3339],
   'operation_type' : [] | [ProposalOperationType],
   'from_dt' : [] | [TimestampRFC3339],
@@ -181,14 +188,15 @@ export interface Proposal {
 export type ProposalExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type ProposalId = string;
-export type ProposalOperation = { 'AccountEdit' : AccountEditOperation } |
-  { 'Transfer' : TransferOperation };
-export type ProposalOperationInput = {
-    'AccountEdit' : AccountEditOperationInput
-  } |
-  { 'Transfer' : TransferOperationInput };
-export type ProposalOperationType = { 'AccountEdit' : null } |
-  { 'Transfer' : null };
+export type ProposalOperation = { 'Transfer' : TransferOperation } |
+  { 'EditAccount' : EditAccountOperation } |
+  { 'AddAccount' : AddAccountOperation };
+export type ProposalOperationInput = { 'Transfer' : TransferOperationInput } |
+  { 'EditAccount' : EditAccountOperationInput } |
+  { 'AddAccount' : AddAccountOperationInput };
+export type ProposalOperationType = { 'Transfer' : null } |
+  { 'EditAccount' : null } |
+  { 'AddAccount' : null };
 export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Rejected' : null } |
   { 'Scheduled' : { 'scheduled_at' : TimestampRFC3339 } } |
@@ -197,6 +205,14 @@ export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
   { 'Created' : null } |
   { 'Completed' : { 'completed_at' : TimestampRFC3339 } };
+export type ProposalStatusCode = { 'Failed' : null } |
+  { 'Rejected' : null } |
+  { 'Scheduled' : null } |
+  { 'Adopted' : null } |
+  { 'Cancelled' : null } |
+  { 'Processing' : null } |
+  { 'Created' : null } |
+  { 'Completed' : null };
 export interface ProposalVote {
   'status' : ProposalVoteStatus,
   'user_id' : UserId,
@@ -304,7 +320,6 @@ export interface _SERVICE {
     [ConfirmUserIdentityInput],
     ConfirmUserIdentityResult
   >,
-  'create_account' : ActorMethod<[CreateAccountInput], CreateAccountResult>,
   'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,
   'edit_user' : ActorMethod<[EditUserInput], EditUserResult>,
   'features' : ActorMethod<[], GetFeaturesResult>,

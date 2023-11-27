@@ -1,12 +1,14 @@
-use super::BlockchainMapper;
 use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
-    models::{Account, AccountBalance, AccountId, BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY},
+    models::{
+        Account, AccountBalance, AccountId, AddAccountOperation, BlockchainStandard,
+        ACCOUNT_METADATA_SYMBOL_KEY,
+    },
 };
 use ic_canister_core::{types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
-use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CreateAccountInput};
+use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO};
 
 #[derive(Default, Clone, Debug)]
 pub struct AccountMapper {}
@@ -55,19 +57,19 @@ impl AccountMapper {
     }
 
     pub fn from_create_input(
-        input: CreateAccountInput,
+        input: AddAccountOperation,
         account_id: UUID,
         address: Option<String>,
-        owner_users: Vec<UUID>,
     ) -> Result<Account, MapperError> {
-        let blockchain = BlockchainMapper::to_blockchain(input.blockchain)?;
-        let standard = BlockchainMapper::to_blockchain_standard(input.standard)?;
-        let metadata = input.metadata.unwrap_or_default();
-
-        if !blockchain.supported_standards().contains(&standard) {
+        if !input
+            .blockchain
+            .supported_standards()
+            .contains(&input.standard)
+        {
             return Err(MapperError::UnsupportedBlockchainStandard {
-                blockchain: blockchain.to_string(),
-                supported_standards: blockchain
+                blockchain: input.blockchain.to_string(),
+                supported_standards: input
+                    .blockchain
                     .supported_standards()
                     .iter()
                     .map(|s| s.to_string())
@@ -75,19 +77,21 @@ impl AccountMapper {
             });
         }
 
-        let symbol = match standard {
+        let symbol = match input.standard {
             BlockchainStandard::Native => {
-                if metadata
+                if input
+                    .metadata
                     .iter()
                     .any(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY)
                 {
                     return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
                 }
 
-                blockchain.native_symbol().to_string()
+                input.blockchain.native_symbol().to_string()
             }
             _ => {
-                let symbol = metadata
+                let symbol = input
+                    .metadata
                     .iter()
                     .find(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY);
 
@@ -101,20 +105,16 @@ impl AccountMapper {
 
         let new_account = Account {
             id: account_id,
-            blockchain,
-            standard: standard.to_owned(),
+            blockchain: input.blockchain,
+            standard: input.standard,
             name: input.name,
             address: address.unwrap_or("".to_string()),
-            owners: owner_users.to_vec(),
-            policies: input
-                .policies
-                .iter()
-                .map(|policy_dto| policy_dto.clone().into())
-                .collect(),
+            owners: input.owners.to_vec(),
+            policies: input.policies.to_vec(),
             decimals: 0,
             symbol,
             balance: None,
-            metadata,
+            metadata: input.metadata,
             last_modification_timestamp: time(),
         };
 

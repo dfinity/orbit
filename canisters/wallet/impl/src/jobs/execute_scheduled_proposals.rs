@@ -88,17 +88,24 @@ impl Job {
         &self,
         mut proposal: Proposal,
     ) -> Result<Proposal, ProposalExecuteError> {
-        let processor = ProposalFactory::create_processor(&proposal);
+        let proposal_handler = ProposalFactory::build_handler(&proposal);
 
-        let execute_state = processor.execute().await?;
+        let execute_state = proposal_handler.execute().await?;
 
-        drop(processor);
+        drop(proposal_handler);
 
         proposal.status = match execute_state {
-            ProposalExecuteStage::Completed => ProposalStatus::Completed {
+            ProposalExecuteStage::Completed(_) => ProposalStatus::Completed {
                 completed_at: time(),
             },
-            ProposalExecuteStage::Processing => ProposalStatus::Processing { started_at: time() },
+            ProposalExecuteStage::Processing(_) => {
+                ProposalStatus::Processing { started_at: time() }
+            }
+        };
+
+        proposal.operation = match execute_state {
+            ProposalExecuteStage::Completed(operation) => operation,
+            ProposalExecuteStage::Processing(operation) => operation,
         };
 
         proposal.last_modification_timestamp = time();

@@ -7,7 +7,6 @@ import {
   Error as ApiError,
   WalletFeatures,
   ConfirmUserIdentityInput,
-  CreateAccountInput,
   EditUserInput,
   VoteOnProposalInput,
   FetchAccountBalancesInput,
@@ -30,6 +29,7 @@ import {
   ListNotificationsInput,
   NotificationId,
   MarkNotificationsReadInput,
+  ListProposalsInput,
 } from '~/generated/wallet/wallet.did';
 import { Maybe } from '~/types';
 
@@ -126,6 +126,16 @@ export class WalletService {
     return result.Ok.proposals;
   }
 
+  async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
+    const result = await this.actor.list_proposals(input);
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposals;
+  }
+
   async listUnreadNotifications(from_dt?: Date, last_id?: NotificationId): Promise<Notification[]> {
     const notifications = await this.listNotifications({
       notification_type: [],
@@ -189,16 +199,6 @@ export class WalletService {
     }
 
     return result.Ok.balances;
-  }
-
-  async createAccount(input: CreateAccountInput): Promise<Account> {
-    const result = await this.actor.create_account(input);
-
-    if ('Err' in result) {
-      throw result.Err;
-    }
-
-    return result.Ok.account;
   }
 
   async listAccountTransfers(input: ListAccountTransfersInput): Promise<TransferListItem[]> {

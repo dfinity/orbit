@@ -17,7 +17,7 @@
       variant="tonal"
       :append-icon="mdiOpenInApp"
     >
-      {{ operation.from_account?.name?.[0] ? operation.from_account.name[0] : $t('terms.account') }}
+      {{ operation.from_account.name }}
     </VBtn>
     <VChip size="x-small" :title="proposal.created_at" variant="tonal">
       <VIcon :icon="mdiClockOutline" size="x-small" />&nbsp;

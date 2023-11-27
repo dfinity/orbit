@@ -1,4 +1,4 @@
-use super::{ProposalExecuteStage, ProposalProcessor};
+use super::{ProposalExecuteStage, ProposalHandler};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
     errors::{ProposalError, ProposalExecuteError},
@@ -20,14 +20,14 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct TransferProposalProcessor<'proposal> {
+pub struct TransferProposal<'proposal> {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
     proposal: &'proposal Proposal,
     notification_service: NotificationService,
 }
 
-impl<'proposal> TransferProposalProcessor<'proposal> {
+impl<'proposal> TransferProposal<'proposal> {
     pub fn new(proposal: &'proposal Proposal) -> Self {
         Self {
             proposal,
@@ -59,7 +59,7 @@ impl<'proposal> TransferProposalProcessor<'proposal> {
 }
 
 #[async_trait]
-impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
+impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         let account = self.get_account();
         let mut policy_list = account
@@ -172,7 +172,9 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         self.transfer_repository
             .insert(transfer.to_key(), transfer.to_owned());
 
-        Ok(ProposalExecuteStage::Processing)
+        Ok(ProposalExecuteStage::Processing(
+            self.proposal.operation.clone(),
+        ))
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {
@@ -181,7 +183,7 @@ impl<'proposal> ProposalProcessor for TransferProposalProcessor<'proposal> {
         self.proposal.users().contains(user_id) || account.owners.contains(user_id)
     }
 
-    async fn post_create(&self) {
+    async fn on_created(&self) {
         let account = self.get_account();
 
         for owner in account.owners {

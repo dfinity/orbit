@@ -42,6 +42,9 @@
     "load_failed": "Your user information failed to load, please try again."
   },
   "wallets": {
+    "add_account_proposal_saved": "Account creation request sent",
+    "edit_account_proposal_saved": "Account update request sent",
+    "pending_account_creation_subtitle": "Pending account creation ...",
     "proposal_failed_to_save": "Proposal failed to save.",
     "notification_failed_to_save": "Notification failed to save.",
     "no_accounts": "No account available.",
@@ -103,6 +106,7 @@
     "signout": "Sign Out",
     "anonymous": "Anonymous",
     "new_account": "New Account",
+    "edit_account": "Edit Account",
     "accounts": "Accounts",
     "policies": "Policies",
     "transfers": "Transfers",
@@ -136,6 +140,7 @@
   },
   "forms": {
     "create": "Create",
+    "edit": "Edit",
     "wallets": "Wallets ({min}/{max})",
     "identities": "Identities ({min}/{max})",
     "save_changes": "Save Changes",

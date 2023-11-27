@@ -5,7 +5,8 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
     fn from(dto: ProposalOperationTypeDTO) -> Self {
         match dto {
             ProposalOperationTypeDTO::Transfer => ProposalOperationType::Transfer,
-            ProposalOperationTypeDTO::AccountEdit => ProposalOperationType::AccountEdit,
+            ProposalOperationTypeDTO::EditAccount => ProposalOperationType::EditAccount,
+            ProposalOperationTypeDTO::AddAccount => ProposalOperationType::AddAccount,
         }
     }
 }
@@ -14,7 +15,8 @@ impl From<ProposalOperation> for ProposalOperationType {
     fn from(operation: ProposalOperation) -> Self {
         match operation {
             ProposalOperation::Transfer(_) => ProposalOperationType::Transfer,
-            ProposalOperation::AccountEdit(_) => ProposalOperationType::AccountEdit,
+            ProposalOperation::EditAccount(_) => ProposalOperationType::EditAccount,
+            ProposalOperation::AddAccount(_) => ProposalOperationType::AddAccount,
         }
     }
 }

@@ -8,17 +8,22 @@ use ic_canister_core::types::UUID;
 use uuid::Uuid;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
-mod account_edit;
+mod add_account;
+mod edit_account;
 mod transfer;
+
+use add_account::AddAccountProposal;
+use edit_account::EditAccountProposal;
+use transfer::TransferProposal;
 
 #[derive(Debug)]
 pub enum ProposalExecuteStage {
-    Completed = 0,
-    Processing = 1,
+    Completed(ProposalOperation),
+    Processing(ProposalOperation),
 }
 
 #[async_trait]
-pub trait ProposalProcessor: Send + Sync {
+pub trait ProposalHandler: Send + Sync {
     /// Reevaluates the status of the associated policies.
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)>;
 
@@ -35,7 +40,7 @@ pub trait ProposalProcessor: Send + Sync {
     /// for additional processing (e.g. sending notifications)
     ///
     /// Should panic if the post create hook fails to rollback state changes.
-    async fn post_create(&self) {
+    async fn on_created(&self) {
         // noop by default
     }
 
@@ -52,6 +57,21 @@ pub trait ProposalProcessor: Send + Sync {
         Self: Sized;
 }
 
+fn create_proposal<Handler: ProposalHandler>(
+    proposal_id: Uuid,
+    proposed_by_user: UUID,
+    input: CreateProposalInput,
+) -> Result<Proposal, ProposalError> {
+    Handler::new_proposal(
+        proposal_id,
+        proposed_by_user,
+        input.title,
+        input.summary,
+        input.execution_plan.map(Into::into),
+        input.operation,
+    )
+}
+
 #[derive(Debug)]
 pub struct ProposalFactory {}
 
@@ -60,42 +80,28 @@ impl ProposalFactory {
         proposed_by_user: UUID,
         input: CreateProposalInput,
     ) -> Result<Proposal, ProposalError> {
-        let proposal_id = generate_uuid_v4().await;
+        let id = generate_uuid_v4().await;
 
         match input.operation {
             ProposalOperationInput::Transfer(_) => {
-                transfer::TransferProposalProcessor::new_proposal(
-                    proposal_id,
-                    proposed_by_user,
-                    input.title,
-                    input.summary,
-                    input.execution_plan.map(Into::into),
-                    input.operation,
-                )
+                create_proposal::<TransferProposal>(id, proposed_by_user, input)
             }
-            ProposalOperationInput::AccountEdit(_) => {
-                account_edit::AccountEditProposalProcessor::new_proposal(
-                    proposal_id,
-                    proposed_by_user,
-                    input.title,
-                    input.summary,
-                    input.execution_plan.map(Into::into),
-                    input.operation,
-                )
+            ProposalOperationInput::EditAccount(_) => {
+                create_proposal::<EditAccountProposal>(id, proposed_by_user, input)
+            }
+            ProposalOperationInput::AddAccount(_) => {
+                create_proposal::<AddAccountProposal>(id, proposed_by_user, input)
             }
         }
     }
 
-    pub fn create_processor<'proposal>(
+    pub fn build_handler<'proposal>(
         proposal: &'proposal Proposal,
-    ) -> Box<dyn ProposalProcessor + 'proposal> {
+    ) -> Box<dyn ProposalHandler + 'proposal> {
         match &proposal.operation {
-            ProposalOperation::Transfer(_) => {
-                Box::new(transfer::TransferProposalProcessor::new(proposal))
-            }
-            ProposalOperation::AccountEdit(_) => {
-                Box::new(account_edit::AccountEditProposalProcessor::new(proposal))
-            }
+            ProposalOperation::Transfer(_) => Box::new(TransferProposal::new(proposal)),
+            ProposalOperation::EditAccount(_) => Box::new(EditAccountProposal::new(proposal)),
+            ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
         }
     }
 }

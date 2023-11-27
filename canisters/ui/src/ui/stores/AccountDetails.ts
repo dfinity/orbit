@@ -3,7 +3,7 @@ import { endOfDay, logger, startOfDay } from '~/core';
 import {
   Error as ApiError,
   Proposal,
-  ProposalStatus,
+  ProposalStatusCode,
   TransferListItem,
   Account,
   AccountId,
@@ -184,13 +184,13 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         }
       });
     },
-    async loadProposals(fromDt?: Date, toDt?: Date, status?: ProposalStatus): Promise<void> {
+    async loadProposals(fromDt?: Date, toDt?: Date, status?: ProposalStatusCode): Promise<void> {
       try {
         this.proposals.loading = true;
         this.proposals.items = await this.walletService
           .listAccountProposals({
             account_id: this.account.id,
-            status: status ? [status] : [],
+            status: status ? [[status]] : [],
             from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
             to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
             operation_type: [],

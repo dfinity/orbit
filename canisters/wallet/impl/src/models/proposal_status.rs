@@ -2,6 +2,7 @@ use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 use std::fmt::{Display, Formatter};
+use wallet_api::ProposalStatusCodeDTO;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -15,6 +16,8 @@ pub enum ProposalStatus {
     Completed { completed_at: Timestamp },
     Failed { reason: Option<String> },
 }
+
+pub type ProposalStatusCode = ProposalStatusCodeDTO;
 
 impl Display for ProposalStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

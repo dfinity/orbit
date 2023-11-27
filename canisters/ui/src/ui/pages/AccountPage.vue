@@ -17,7 +17,11 @@
             <div>
               <h1 class="text-h4">
                 <VIcon :icon="mdiWallet" size="x-small" />
-                {{ pageStore.account.name?.[0] ?? $t('terms.account') }}
+                {{ pageStore.account.name }}
+                <!--TODO: add access control if the user can edit the account-->
+                <template v-if="true">
+                  <EditAccountBtn v-model="pageStore.account" />
+                </template>
               </h1>
             </div>
             <div class="account__header__details__addr">
@@ -344,6 +348,7 @@ import WalletProposal from '~/ui/components/proposals/WalletProposal.vue';
 import TransferStatusChip from '~/ui/components/transfers/TransferStatusChip.vue';
 import { i18n, router } from '~/ui/modules';
 import { useActiveWalletStore, useSettingsStore, useAccountDetailsStore } from '~/ui/stores';
+import EditAccountBtn from '~/ui/components/accounts/EditAccountBtn.vue';
 
 const { mobile } = useDisplay();
 

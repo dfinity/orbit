@@ -1,5 +1,7 @@
+use crate::{AddAccountOperationDTO, AddAccountOperationInput, EditAccountOperationDTO};
+
 use super::{
-    AccountEditOperationInput, AccountIdDTO, TimestampRfc3339, TransferOperationDTO,
+    AccountIdDTO, EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO,
     TransferOperationInput, UserIdDTO,
 };
 use candid::{CandidType, Deserialize};
@@ -11,11 +13,23 @@ pub enum ProposalStatusDTO {
     Created,
     Adopted,
     Rejected,
+    Cancelled { reason: Option<String> },
     Scheduled { scheduled_at: TimestampRfc3339 },
     Processing { started_at: TimestampRfc3339 },
     Completed { completed_at: TimestampRfc3339 },
     Failed { reason: Option<String> },
-    Cancelled { reason: Option<String> },
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum ProposalStatusCodeDTO {
+    Created,
+    Adopted,
+    Rejected,
+    Cancelled,
+    Scheduled,
+    Processing,
+    Completed,
+    Failed,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -33,19 +47,22 @@ pub enum ProposalExecutionScheduleDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationDTO {
     Transfer(Box<TransferOperationDTO>),
-    AccountEdit(AccountEditOperationInput),
+    EditAccount(Box<EditAccountOperationDTO>),
+    AddAccount(Box<AddAccountOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationInput {
     Transfer(TransferOperationInput),
-    AccountEdit(AccountEditOperationInput),
+    EditAccount(EditAccountOperationInput),
+    AddAccount(AddAccountOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalOperationTypeDTO {
     Transfer,
-    AccountEdit,
+    EditAccount,
+    AddAccount,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -103,7 +120,7 @@ pub struct GetProposalResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsInput {
-    pub status: Option<ProposalStatusDTO>,
+    pub status: Option<Vec<ProposalStatusCodeDTO>>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,
@@ -117,7 +134,7 @@ pub struct ListProposalsResponse {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccountProposalsInput {
     pub account_id: AccountIdDTO,
-    pub status: Option<ProposalStatusDTO>,
+    pub status: Option<Vec<ProposalStatusCodeDTO>>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,
