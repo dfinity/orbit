@@ -268,7 +268,7 @@ type AddUserOperationInput = record {
   // The list of groups the user belongs to.
   //
   // Users can be tagged with groups that can be used to control access to the wallet 
-  // (e.g. "UUID of the finance group").
+  // (e.g. the UUID of the finance group).
   groups : vec UUID;
   // The status of the user (e.g. "active").
   //
