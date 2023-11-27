@@ -2,12 +2,10 @@ use crate::interfaces::{
     default_account, get_icp_balance, send_icp, send_icp_to_account, ICP, ICP_FEE,
 };
 use crate::setup::setup_new_env;
-use crate::utils::user_test_id;
+use crate::utils::{update_candid_as, user_test_id};
 use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
-use pocket_ic::call_candid_as;
-use pocket_ic::common::rest::RawEffectivePrincipal;
 use std::time::Duration;
 use wallet_api::{
     ApiErrorDTO, CreateAccountInput, CreateAccountResponse, CreateProposalInput,
@@ -32,10 +30,9 @@ fn make_transfer_successful() {
     let register_args = RegisterUserInput {
         identities: vec![user_id],
     };
-    let res: (ApiResult<RegisterUserResponse>,) = call_candid_as(
+    let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        RawEffectivePrincipal::None,
         user_id,
         "register_user",
         (register_args,),
@@ -52,10 +49,9 @@ fn make_transfer_successful() {
         policies: vec![],
         metadata: None,
     };
-    let res: (ApiResult<CreateAccountResponse>,) = call_candid_as(
+    let res: (ApiResult<CreateAccountResponse>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        RawEffectivePrincipal::None,
         user_id,
         "create_account",
         (create_account_args,),
@@ -95,10 +91,9 @@ fn make_transfer_successful() {
         summary: None,
         execution_plan: Some(ProposalExecutionScheduleDTO::Immediate),
     };
-    let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = call_candid_as(
+    let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        RawEffectivePrincipal::None,
         user_id,
         "create_proposal",
         (transfer_proposal,),
@@ -116,10 +111,9 @@ fn make_transfer_successful() {
     let get_proposal_args = GetProposalInput {
         proposal_id: proposal_dto.id,
     };
-    let res: (Result<GetProposalResponse, ApiErrorDTO>,) = call_candid_as(
+    let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        RawEffectivePrincipal::None,
         user_id,
         "get_proposal",
         (get_proposal_args,),
