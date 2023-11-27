@@ -270,7 +270,7 @@ type AddUserOperationInput = record {
   // Users can be tagged with groups that can be used to control access to the wallet 
   // (e.g. the UUID of the finance group).
   groups : vec UUID;
-  // The status of the user (e.g. "active").
+  // The status of the user (e.g. `Active`).
   //
   // The user must be active to be able to use the wallet.
   status : UserStatus;
