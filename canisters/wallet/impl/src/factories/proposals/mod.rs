@@ -40,7 +40,7 @@ pub trait ProposalHandler: Send + Sync {
     /// for additional processing (e.g. sending notifications)
     ///
     /// Should panic if the post create hook fails to rollback state changes.
-    async fn post_create(&self) {
+    async fn on_created(&self) {
         // noop by default
     }
 

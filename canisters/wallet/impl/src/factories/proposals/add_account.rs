@@ -75,7 +75,7 @@ impl<'proposal> ProposalHandler for AddAccountProposal<'proposal> {
         self.proposal.users().contains(user_id)
     }
 
-    async fn post_create(&self) {
+    async fn on_created(&self) {
         // TODO: Add once policy design is ready
     }
 

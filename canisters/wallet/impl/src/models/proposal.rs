@@ -220,9 +220,9 @@ impl Proposal {
         }
     }
 
-    pub async fn post_create(&self) {
+    pub async fn on_created(&self) {
         let proposal_handler = ProposalFactory::build_handler(self);
-        proposal_handler.post_create().await;
+        proposal_handler.on_created().await;
     }
 }
 

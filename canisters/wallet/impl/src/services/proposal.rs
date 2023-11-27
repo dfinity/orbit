@@ -118,7 +118,7 @@ impl ProposalService {
             .insert(proposal.to_key(), proposal.to_owned());
 
         // Handles post processing logic like sending notifications.
-        proposal.post_create().await;
+        proposal.on_created().await;
 
         Ok(proposal)
     }

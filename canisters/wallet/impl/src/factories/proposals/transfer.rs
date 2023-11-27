@@ -183,7 +183,7 @@ impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
         self.proposal.users().contains(user_id) || account.owners.contains(user_id)
     }
 
-    async fn post_create(&self) {
+    async fn on_created(&self) {
         let account = self.get_account();
 
         for owner in account.owners {
