@@ -31,7 +31,7 @@ done
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
 
 echo Optimising wasm
-if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
+if [[ "$OSTYPE" == "linux"* || "$RUNNER_OS" == "Linux" ]]
 then
     URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-linux64"
 elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
