@@ -70,6 +70,8 @@ impl<'proposal> ProposalHandler for AddAccountProposal<'proposal> {
     }
 
     fn has_access(&self, user_id: &UUID) -> bool {
+        // TODO: Add necessary access policies once final policy design is ready
+
         self.proposal.users().contains(user_id)
     }
 

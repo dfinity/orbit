@@ -13,11 +13,11 @@ pub enum ProposalStatusDTO {
     Created,
     Adopted,
     Rejected,
+    Cancelled { reason: Option<String> },
     Scheduled { scheduled_at: TimestampRfc3339 },
     Processing { started_at: TimestampRfc3339 },
     Completed { completed_at: TimestampRfc3339 },
     Failed { reason: Option<String> },
-    Cancelled { reason: Option<String> },
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -25,11 +25,11 @@ pub enum ProposalStatusCodeDTO {
     Created,
     Adopted,
     Rejected,
+    Cancelled,
     Scheduled,
     Processing,
     Completed,
     Failed,
-    Cancelled,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
