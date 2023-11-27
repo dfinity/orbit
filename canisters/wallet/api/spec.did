@@ -302,7 +302,7 @@ type EditUserOperationInput = record {
 };
 
 type EditUserOperation = record {
-  // The input added to the proposal to edit the user.
+  // The input to the proposal to edit the user.
   input : EditUserOperationInput;
 };
 
