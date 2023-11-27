@@ -17,6 +17,9 @@ pub use blockchain_standard::*;
 mod user;
 pub use user::*;
 
+mod user_status;
+pub use user_status::*;
+
 mod policy;
 pub use policy::*;
 

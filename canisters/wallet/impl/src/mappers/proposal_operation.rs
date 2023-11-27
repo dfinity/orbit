@@ -1,13 +1,15 @@
 use crate::{
     models::{
-        Account, AddAccountOperation, EditAccountOperation, ProposalOperation, TransferOperation,
+        Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
+        ProposalOperation, TransferOperation, User,
     },
-    repositories::AccountRepository,
+    repositories::{AccountRepository, UserRepository},
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
-    AddAccountOperationDTO, AddAccountOperationInput, EditAccountOperationDTO, NetworkDTO,
+    AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
+    EditAccountOperationDTO, EditUserOperationDTO, EditUserOperationInput, NetworkDTO,
     ProposalOperationDTO, TransferMetadataDTO, TransferOperationDTO,
 };
 
@@ -36,6 +38,28 @@ impl TransferOperation {
     }
 }
 
+impl AddAccountOperation {
+    pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
+        AddAccountOperationDTO {
+            account: account.map(|account| account.to_dto()),
+            name: self.name,
+            owners: self
+                .owners
+                .iter()
+                .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
+                .collect(),
+            policies: self
+                .policies
+                .iter()
+                .map(|policy| policy.clone().into())
+                .collect(),
+            blockchain: self.blockchain.to_string(),
+            standard: self.standard.to_string(),
+            metadata: self.metadata,
+        }
+    }
+}
+
 impl From<EditAccountOperation> for EditAccountOperationDTO {
     fn from(operation: EditAccountOperation) -> EditAccountOperationDTO {
         EditAccountOperationDTO {
@@ -59,24 +83,32 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
     }
 }
 
-impl AddAccountOperation {
-    pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
-        AddAccountOperationDTO {
-            account: account.map(|account| account.to_dto()),
-            name: self.name,
-            owners: self
-                .owners
-                .iter()
-                .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
-                .collect(),
-            policies: self
-                .policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect(),
-            blockchain: self.blockchain.to_string(),
-            standard: self.standard.to_string(),
-            metadata: self.metadata,
+impl AddUserOperation {
+    pub fn to_dto(self, user: Option<User>) -> AddUserOperationDTO {
+        AddUserOperationDTO {
+            user: user.map(|user| user.to_dto()),
+            input: AddUserOperationInput {
+                name: self.input.name,
+                identities: self.input.identities,
+                groups: self.input.groups,
+                status: self.input.status.into(),
+            },
+        }
+    }
+}
+
+impl From<EditUserOperation> for EditUserOperationDTO {
+    fn from(operation: EditUserOperation) -> EditUserOperationDTO {
+        EditUserOperationDTO {
+            input: EditUserOperationInput {
+                id: Uuid::from_bytes(operation.input.user_id)
+                    .hyphenated()
+                    .to_string(),
+                name: operation.input.name,
+                identities: operation.input.identities,
+                groups: operation.input.groups,
+                status: operation.input.status.map(Into::into),
+            },
         }
     }
 }
@@ -119,9 +151,6 @@ impl From<ProposalOperation> for ProposalOperationDTO {
 
                 ProposalOperationDTO::Transfer(Box::new(operation.to_dto(account)))
             }
-            ProposalOperation::EditAccount(operation) => {
-                ProposalOperationDTO::EditAccount(Box::new(operation.into()))
-            }
             ProposalOperation::AddAccount(operation) => {
                 let account = operation.id.map(|id| {
                     AccountRepository::default()
@@ -130,6 +159,21 @@ impl From<ProposalOperation> for ProposalOperationDTO {
                 });
 
                 ProposalOperationDTO::AddAccount(Box::new(operation.to_dto(account)))
+            }
+            ProposalOperation::EditAccount(operation) => {
+                ProposalOperationDTO::EditAccount(Box::new(operation.into()))
+            }
+            ProposalOperation::AddUser(operation) => {
+                let user = operation.user_id.map(|id| {
+                    UserRepository::default()
+                        .get(&User::key(id))
+                        .expect("User not found")
+                });
+
+                ProposalOperationDTO::AddUser(Box::new(operation.to_dto(user)))
+            }
+            ProposalOperation::EditUser(operation) => {
+                ProposalOperationDTO::EditUser(Box::new(operation.into()))
             }
         }
     }

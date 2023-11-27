@@ -10,8 +10,10 @@ use std::{
 #[repr(u8)]
 pub enum ProposalOperationType {
     Transfer = 0,
-    EditAccount = 1,
-    AddAccount = 2,
+    AddAccount = 1,
+    EditAccount = 2,
+    AddUser = 3,
+    EditUser = 4,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -26,8 +28,10 @@ impl TryFrom<u8> for ProposalOperationType {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(ProposalOperationType::Transfer),
-            1 => Ok(ProposalOperationType::EditAccount),
-            2 => Ok(ProposalOperationType::AddAccount),
+            1 => Ok(ProposalOperationType::AddAccount),
+            2 => Ok(ProposalOperationType::EditAccount),
+            3 => Ok(ProposalOperationType::AddUser),
+            4 => Ok(ProposalOperationType::EditUser),
             _ => Err(()),
         }
     }
@@ -39,8 +43,10 @@ impl FromStr for ProposalOperationType {
     fn from_str(variant: &str) -> Result<ProposalOperationType, Self::Err> {
         match variant {
             "transfer" => Ok(ProposalOperationType::Transfer),
-            "edit_account" => Ok(ProposalOperationType::EditAccount),
             "add_account" => Ok(ProposalOperationType::AddAccount),
+            "edit_account" => Ok(ProposalOperationType::EditAccount),
+            "add_user" => Ok(ProposalOperationType::AddUser),
+            "edit_user" => Ok(ProposalOperationType::EditUser),
             _ => Err(()),
         }
     }
@@ -50,8 +56,10 @@ impl Display for ProposalOperationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ProposalOperationType::Transfer => write!(f, "transfer"),
-            ProposalOperationType::EditAccount => write!(f, "edit_account"),
             ProposalOperationType::AddAccount => write!(f, "add_account"),
+            ProposalOperationType::EditAccount => write!(f, "edit_account"),
+            ProposalOperationType::AddUser => write!(f, "add_user"),
+            ProposalOperationType::EditUser => write!(f, "edit_user"),
         }
     }
 }
@@ -94,6 +102,16 @@ mod tests {
             ProposalOperationType::from_str("add_account").unwrap(),
             ProposalOperationType::AddAccount
         );
+        assert_eq!(ProposalOperationType::AddUser.to_string(), "add_user");
+        assert_eq!(
+            ProposalOperationType::from_str("add_user").unwrap(),
+            ProposalOperationType::AddUser
+        );
+        assert_eq!(ProposalOperationType::EditUser.to_string(), "edit_user");
+        assert_eq!(
+            ProposalOperationType::from_str("edit_user").unwrap(),
+            ProposalOperationType::EditUser
+        );
     }
 
     #[test]
@@ -103,15 +121,25 @@ mod tests {
             ProposalOperationType::try_from(0).unwrap(),
             ProposalOperationType::Transfer
         );
-        assert_eq!(ProposalOperationType::EditAccount as u8, 1);
+        assert_eq!(ProposalOperationType::AddAccount as u8, 1);
         assert_eq!(
             ProposalOperationType::try_from(1).unwrap(),
-            ProposalOperationType::EditAccount
+            ProposalOperationType::AddAccount
         );
-        assert_eq!(ProposalOperationType::AddAccount as u8, 2);
+        assert_eq!(ProposalOperationType::EditAccount as u8, 2);
         assert_eq!(
             ProposalOperationType::try_from(2).unwrap(),
-            ProposalOperationType::AddAccount
+            ProposalOperationType::EditAccount
+        );
+        assert_eq!(ProposalOperationType::AddUser as u8, 3);
+        assert_eq!(
+            ProposalOperationType::try_from(3).unwrap(),
+            ProposalOperationType::AddUser
+        );
+        assert_eq!(ProposalOperationType::EditUser as u8, 4);
+        assert_eq!(
+            ProposalOperationType::try_from(4).unwrap(),
+            ProposalOperationType::EditUser
         );
     }
 }
