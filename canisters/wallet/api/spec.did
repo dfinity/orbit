@@ -234,7 +234,7 @@ type AddAccountOperation = record {
   policies : vec Policy;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The asset standard that is supported (e.g. `native`, `erc20`, etc.).
+  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
