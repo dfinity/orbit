@@ -279,7 +279,7 @@ type AddUserOperationInput = record {
 type AddUserOperation = record {
   // The user that was added, only available after the proposal is executed.
   user : opt User;
-  // The input added to the proposal to add the user.
+  // The input to the proposal to add the user.
   input : AddUserOperationInput;
 };
 
