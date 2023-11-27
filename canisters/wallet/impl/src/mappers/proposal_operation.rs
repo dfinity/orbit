@@ -1,3 +1,4 @@
+use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
@@ -12,8 +13,6 @@ use wallet_api::{
     EditAccountOperationDTO, EditUserOperationDTO, EditUserOperationInput, NetworkDTO,
     ProposalOperationDTO, TransferMetadataDTO, TransferOperationDTO,
 };
-
-use super::{BlockchainMapper, HelperMapper};
 
 impl TransferOperation {
     pub fn to_dto(self, account: Account) -> TransferOperationDTO {
@@ -60,6 +59,34 @@ impl AddAccountOperation {
     }
 }
 
+impl From<AddAccountOperationInput> for AddAccountOperation {
+    fn from(input: AddAccountOperationInput) -> AddAccountOperation {
+        AddAccountOperation {
+            id: None,
+            name: input.name,
+            owners: input
+                .owners
+                .iter()
+                .map(|owner| {
+                    *HelperMapper::to_uuid(owner.clone())
+                        .expect("Invalid owner id")
+                        .as_bytes()
+                })
+                .collect(),
+            policies: input
+                .policies
+                .iter()
+                .map(|policy| policy.clone().into())
+                .collect(),
+            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
+                .expect("Invalid blockchain"),
+            standard: BlockchainMapper::to_blockchain_standard(input.standard)
+                .expect("Invalid blockchain standard"),
+            metadata: input.metadata,
+        }
+    }
+}
+
 impl From<EditAccountOperation> for EditAccountOperationDTO {
     fn from(operation: EditAccountOperation) -> EditAccountOperationDTO {
         EditAccountOperationDTO {
@@ -90,7 +117,12 @@ impl AddUserOperation {
             input: AddUserOperationInput {
                 name: self.input.name,
                 identities: self.input.identities,
-                groups: self.input.groups,
+                groups: self
+                    .input
+                    .groups
+                    .iter()
+                    .map(|group| Uuid::from_bytes(*group).hyphenated().to_string())
+                    .collect(),
                 status: self.input.status.into(),
             },
         }
@@ -106,37 +138,56 @@ impl From<EditUserOperation> for EditUserOperationDTO {
                     .to_string(),
                 name: operation.input.name,
                 identities: operation.input.identities,
-                groups: operation.input.groups,
+                groups: operation.input.groups.map(|groups| {
+                    groups
+                        .iter()
+                        .map(|group| Uuid::from_bytes(*group).hyphenated().to_string())
+                        .collect()
+                }),
                 status: operation.input.status.map(Into::into),
             },
         }
     }
 }
 
-impl From<AddAccountOperationInput> for AddAccountOperation {
-    fn from(input: AddAccountOperationInput) -> AddAccountOperation {
-        AddAccountOperation {
-            id: None,
+impl From<AddUserOperationInput> for crate::models::AddUserOperationInput {
+    fn from(input: AddUserOperationInput) -> crate::models::AddUserOperationInput {
+        crate::models::AddUserOperationInput {
             name: input.name,
-            owners: input
-                .owners
+            identities: input.identities,
+            groups: input
+                .groups
                 .iter()
-                .map(|owner| {
-                    *HelperMapper::to_uuid(owner.clone())
-                        .expect("Invalid owner id")
+                .map(|group| {
+                    *HelperMapper::to_uuid(group.clone())
+                        .expect("Invalid group id")
                         .as_bytes()
                 })
                 .collect(),
-            policies: input
-                .policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect(),
-            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
-                .expect("Invalid blockchain"),
-            standard: BlockchainMapper::to_blockchain_standard(input.standard)
-                .expect("Invalid blockchain standard"),
-            metadata: input.metadata,
+            status: input.status.into(),
+        }
+    }
+}
+
+impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
+    fn from(input: EditUserOperationInput) -> crate::models::EditUserOperationInput {
+        crate::models::EditUserOperationInput {
+            user_id: *HelperMapper::to_uuid(input.id)
+                .expect("Invalid user id")
+                .as_bytes(),
+            name: input.name,
+            identities: input.identities,
+            groups: input.groups.map(|groups| {
+                groups
+                    .iter()
+                    .map(|group| {
+                        *HelperMapper::to_uuid(group.clone())
+                            .expect("Invalid group id")
+                            .as_bytes()
+                    })
+                    .collect()
+            }),
+            status: input.status.map(Into::into),
         }
     }
 }

@@ -267,8 +267,9 @@ type AddUserOperationInput = record {
   identities : vec principal;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet (e.g. "finance").
-  groups : vec text;
+  // Users can be tagged with groups that can be used to control access to the wallet 
+  // (e.g. "UUID of the finance group").
+  groups : vec UUID;
   // The status of the user (e.g. "active").
   //
   // The user must be active to be able to use the wallet.
@@ -291,8 +292,9 @@ type EditUserOperationInput = record {
   identities : opt vec principal;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet (e.g. "finance").
-  groups : opt vec text;
+  // Users can be tagged with groups that can be used to control access to the wallet 
+  // (e.g. "UUID of the finance group").
+  groups : opt vec UUID;
   // The status of the user (e.g. "active").
   //
   // The user must be active to be able to use the wallet.
