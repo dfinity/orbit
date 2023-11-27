@@ -92,10 +92,9 @@ impl ProposalFactory {
             ProposalOperationInput::AddAccount(_) => {
                 create_proposal::<AddAccountProposal>(id, proposed_by_user, input)
             }
-            _ => trap(&format!(
-                "Unsupported proposal operation: {:?}",
-                input.operation
-            )),
+            ProposalOperationInput::AddUser(_) | ProposalOperationInput::EditUser(_) => {
+                trap(&format!("Not yet supported: {:?}", input.operation))
+            }
         }
     }
 
@@ -106,10 +105,9 @@ impl ProposalFactory {
             ProposalOperation::Transfer(_) => Box::new(TransferProposal::new(proposal)),
             ProposalOperation::EditAccount(_) => Box::new(EditAccountProposal::new(proposal)),
             ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
-            _ => trap(&format!(
-                "Unsupported proposal operation: {:?}",
-                proposal.operation
-            )),
+            ProposalOperation::AddUser(_) | ProposalOperation::EditUser(_) => {
+                trap(&format!("Not yet supported: {:?}", proposal.operation))
+            }
         }
     }
 }
