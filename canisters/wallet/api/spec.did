@@ -211,7 +211,7 @@ type EditAccountOperation = EditAccountOperationInput;
 type AddAccountOperationInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : text;
-  // The updated list of owners of the account.
+  // The list of owners of the account.
   owners : vec UserId;
   // The list of policies that can be used to control the account.
   policies : vec Policy;
