@@ -28,16 +28,15 @@ impl TransferOperation {
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
-                metadata: Some(
-                    self.input
-                        .metadata
-                        .iter()
-                        .map(|(k, v)| TransferMetadataDTO {
-                            key: k.to_string(),
-                            value: v.to_string(),
-                        })
-                        .collect(),
-                ),
+                metadata: self
+                    .input
+                    .metadata
+                    .iter()
+                    .map(|(k, v)| TransferMetadataDTO {
+                        key: k.to_string(),
+                        value: v.to_string(),
+                    })
+                    .collect(),
                 network: Some(NetworkDTO {
                     id: self.input.network.clone(),
                     name: self.input.network.clone(),
@@ -76,7 +75,7 @@ impl AddAccountOperation {
 impl From<AddAccountOperationDTO> for AddAccountOperation {
     fn from(operation: AddAccountOperationDTO) -> AddAccountOperation {
         AddAccountOperation {
-            id: operation.account.map(|account| {
+            account_id: operation.account.map(|account| {
                 *HelperMapper::to_uuid(account.id)
                     .expect("Invalid account id")
                     .as_bytes()
@@ -265,7 +264,7 @@ impl From<ProposalOperation> for ProposalOperationDTO {
                 ProposalOperationDTO::Transfer(Box::new(operation.to_dto(account)))
             }
             ProposalOperation::AddAccount(operation) => {
-                let account = operation.id.map(|id| {
+                let account = operation.account_id.map(|id| {
                     AccountRepository::default()
                         .get(&Account::key(id))
                         .expect("Account not found")

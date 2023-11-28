@@ -119,7 +119,7 @@ fn make_transfer_successful() {
         to: default_account(beneficiary_id),
         amount: ICP.into(),
         fee: None,
-        metadata: None,
+        metadata: vec![],
         network: None,
     };
     let transfer_proposal = CreateProposalInput {

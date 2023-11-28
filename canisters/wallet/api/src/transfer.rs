@@ -22,7 +22,7 @@ pub struct TransferOperationInput {
     pub to: String,
     pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,
-    pub metadata: Option<Vec<TransferMetadataDTO>>,
+    pub metadata: Vec<TransferMetadataDTO>,
     pub network: Option<NetworkDTO>,
 }
 

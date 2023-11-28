@@ -36,7 +36,7 @@ pub struct TransferOperationInput {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperation {
     /// The account id is only available after the operation is executed.
-    pub id: Option<AccountId>,
+    pub account_id: Option<AccountId>,
     pub input: AddAccountOperationInput,
 }
 

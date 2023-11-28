@@ -243,7 +243,7 @@ mod tests {
     async fn create_account() {
         let ctx = setup();
         let input = AddAccountOperation {
-            id: None,
+            account_id: None,
             input: AddAccountOperationInput {
                 name: "foo".to_string(),
                 owners: vec![ctx.caller_user.id],
@@ -263,7 +263,7 @@ mod tests {
     async fn fail_create_account_invalid_blockchain_standard() {
         let ctx = setup();
         let input = AddAccountOperation {
-            id: None,
+            account_id: None,
             input: AddAccountOperationInput {
                 name: "foo".to_string(),
                 owners: vec![ctx.caller_user.id],
