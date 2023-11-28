@@ -37,6 +37,8 @@ impl UserGroupService {
             last_modification_timestamp: time(),
         };
 
+        // todo: check if user group name is unique
+
         user_group.validate()?;
 
         self.user_group_repository
@@ -47,6 +49,8 @@ impl UserGroupService {
 
     pub async fn edit(&self, input: EditUserGroupOperationInput) -> ServiceResult<UserGroup> {
         let mut user_group = self.get(&input.user_group_id)?;
+
+        // todo: check if user group name is unique
 
         user_group.name = input.name.to_string();
         user_group.last_modification_timestamp = time();
