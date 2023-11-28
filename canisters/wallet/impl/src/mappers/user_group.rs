@@ -93,3 +93,28 @@ impl From<RemoveUserGroupOperation> for wallet_api::RemoveUserGroupOperationDTO 
         }
     }
 }
+
+impl From<wallet_api::AddUserGroupOperationInput> for AddUserGroupOperation {
+    fn from(input: wallet_api::AddUserGroupOperationInput) -> Self {
+        Self {
+            user_group_id: None,
+            input: input.into(),
+        }
+    }
+}
+
+impl From<wallet_api::EditUserGroupOperationInput> for EditUserGroupOperation {
+    fn from(input: wallet_api::EditUserGroupOperationInput) -> Self {
+        Self {
+            input: input.into(),
+        }
+    }
+}
+
+impl From<wallet_api::RemoveUserGroupOperationInput> for RemoveUserGroupOperation {
+    fn from(input: wallet_api::RemoveUserGroupOperationInput) -> Self {
+        Self {
+            input: input.into(),
+        }
+    }
+}

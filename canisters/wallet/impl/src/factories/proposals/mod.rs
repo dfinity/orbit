@@ -9,11 +9,17 @@ use uuid::Uuid;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
 mod add_account;
+mod add_user_group;
 mod edit_account;
+mod edit_user_group;
+mod remove_user_group;
 mod transfer;
 
 use add_account::AddAccountProposal;
+use add_user_group::AddUserGroupProposal;
 use edit_account::EditAccountProposal;
+use edit_user_group::EditUserGroupProposal;
+use remove_user_group::RemoveUserGroupProposal;
 use transfer::TransferProposal;
 
 #[derive(Debug)]
@@ -92,12 +98,18 @@ impl ProposalFactory {
             ProposalOperationInput::AddAccount(_) => {
                 create_proposal::<AddAccountProposal>(id, proposed_by_user, input)
             }
+            ProposalOperationInput::AddUserGroup(_) => {
+                create_proposal::<AddUserGroupProposal>(id, proposed_by_user, input)
+            }
+            ProposalOperationInput::EditUserGroup(_) => {
+                create_proposal::<EditUserGroupProposal>(id, proposed_by_user, input)
+            }
+            ProposalOperationInput::RemoveUserGroup(_) => {
+                create_proposal::<RemoveUserGroupProposal>(id, proposed_by_user, input)
+            }
             ProposalOperationInput::AddUser(_)
             | ProposalOperationInput::EditUser(_)
-            | ProposalOperationInput::EditUserStatus(_)
-            | ProposalOperationInput::AddUserGroup(_)
-            | ProposalOperationInput::EditUserGroup(_)
-            | ProposalOperationInput::RemoveUserGroup(_) => {
+            | ProposalOperationInput::EditUserStatus(_) => {
                 trap(&format!("Not yet supported: {:?}", input.operation))
             }
         }
@@ -110,12 +122,14 @@ impl ProposalFactory {
             ProposalOperation::Transfer(_) => Box::new(TransferProposal::new(proposal)),
             ProposalOperation::EditAccount(_) => Box::new(EditAccountProposal::new(proposal)),
             ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
+            ProposalOperation::AddUserGroup(_) => Box::new(AddUserGroupProposal::new(proposal)),
+            ProposalOperation::EditUserGroup(_) => Box::new(EditUserGroupProposal::new(proposal)),
+            ProposalOperation::RemoveUserGroup(_) => {
+                Box::new(RemoveUserGroupProposal::new(proposal))
+            }
             ProposalOperation::AddUser(_)
             | ProposalOperation::EditUser(_)
-            | ProposalOperation::EditUserStatus(_)
-            | ProposalOperation::AddUserGroup(_)
-            | ProposalOperation::EditUserGroup(_)
-            | ProposalOperation::RemoveUserGroup(_) => {
+            | ProposalOperation::EditUserStatus(_) => {
                 trap(&format!("Not yet supported: {:?}", proposal.operation))
             }
         }

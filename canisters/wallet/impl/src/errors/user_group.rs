@@ -16,6 +16,12 @@ pub enum UserGroupError {
         /// The minimum length allowed.
         min_length: u8,
     },
+    /// The user group was not found.
+    #[error("The user group with id {id} was not found.")]
+    NotFound {
+        /// The user group id.
+        id: String,
+    },
 }
 
 impl DetailableError for UserGroupError {
@@ -28,6 +34,10 @@ impl DetailableError for UserGroupError {
             }
             UserGroupError::NameTooShort { min_length } => {
                 details.insert("min_length".to_string(), min_length.to_string());
+                Some(details)
+            }
+            UserGroupError::NotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
         }

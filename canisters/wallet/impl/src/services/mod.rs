@@ -12,6 +12,9 @@ pub use transfer::*;
 mod user;
 pub use user::*;
 
+mod user_group;
+pub use user_group::*;
+
 mod proposal;
 pub use proposal::*;
 
