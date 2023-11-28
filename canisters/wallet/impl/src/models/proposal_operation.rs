@@ -1,13 +1,17 @@
-use super::{AccountId, Blockchain, BlockchainStandard, Policy, UserId};
-use candid::{CandidType, Deserialize};
+use super::{AccountId, Blockchain, BlockchainStandard, Policy, UserId, UserStatus};
+use candid::{CandidType, Deserialize, Principal};
+use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalOperation {
     Transfer(TransferOperation),
-    EditAccount(EditAccountOperation),
     AddAccount(AddAccountOperation),
+    EditAccount(EditAccountOperation),
+    AddUser(AddUserOperation),
+    EditUser(EditUserOperation),
+    EditUserStatus(EditUserStatusOperation),
 }
 
 #[stable_object]
@@ -23,15 +27,6 @@ pub struct TransferOperation {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditAccountOperation {
-    pub account_id: AccountId,
-    pub owners: Option<Vec<UserId>>,
-    pub policies: Option<Vec<Policy>>,
-    pub name: Option<String>,
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperation {
     /// The account id is only available after the operation is executed.
     pub id: Option<AccountId>,
@@ -41,4 +36,57 @@ pub struct AddAccountOperation {
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
     pub metadata: Vec<(String, String)>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAccountOperation {
+    pub account_id: AccountId,
+    pub owners: Option<Vec<UserId>>,
+    pub policies: Option<Vec<Policy>>,
+    pub name: Option<String>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddUserOperationInput {
+    pub name: Option<String>,
+    pub identities: Vec<Principal>,
+    pub groups: Vec<UUID>,
+    pub status: UserStatus,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddUserOperation {
+    pub user_id: Option<UUID>,
+    pub input: AddUserOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserOperationInput {
+    pub user_id: UUID,
+    pub name: Option<String>,
+    pub identities: Option<Vec<Principal>>,
+    pub groups: Option<Vec<UUID>>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserOperation {
+    pub input: EditUserOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserStatusOperationInput {
+    pub user_id: UUID,
+    pub status: UserStatus,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserStatusOperation {
+    pub input: EditUserStatusOperationInput,
 }

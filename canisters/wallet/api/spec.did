@@ -260,6 +260,62 @@ type TransferOperation = record {
   fee : opt nat;
 };
 
+type AddUserOperationInput = record {
+  // The user name (e.g. "John Doe").
+  name : opt text;
+  // The principals associated with the user.
+  identities : vec principal;
+  // The list of groups the user belongs to.
+  //
+  // Users can be tagged with groups that can be used to control access to the wallet 
+  // (e.g. the UUID of the finance group).
+  groups : vec UUID;
+  // The status of the user (e.g. `Active`).
+  //
+  // The user must be active to be able to practically use the wallet.
+  status : UserStatus;
+};
+
+type AddUserOperation = record {
+  // The user that was added, only available after the proposal is executed.
+  user : opt User;
+  // The input to the proposal to add the user.
+  input : AddUserOperationInput;
+};
+
+type EditUserOperationInput = record {
+  // The id of the user to edit.
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : opt text;
+  // The principals associated with the user.
+  identities : opt vec principal;
+  // The list of groups the user belongs to.
+  //
+  // Users can be tagged with groups that can be used to control access to the wallet 
+  // (e.g. "UUID of the finance group").
+  groups : opt vec UUID;
+};
+
+type EditUserOperation = record {
+  // The input to the proposal to edit the user.
+  input : EditUserOperationInput;
+};
+
+type EditUserStatusOperationInput = record {
+  // The id of the user to edit.
+  id : UUID;
+  // The status of the user (e.g. `Active`).
+  //
+  // The user must be active to be able to practically use the wallet.
+  status : UserStatus;
+};
+
+type EditUserStatusOperation = record {
+  // The input to the proposal to edit the user.
+  input : EditUserStatusOperationInput;
+};
+
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
@@ -267,6 +323,12 @@ type ProposalOperation = variant {
   EditAccount : EditAccountOperation;
   // An operation for creating a new account.
   AddAccount : AddAccountOperation;
+  // An operation for adding a new user.
+  AddUser : AddUserOperation;
+  // An operation for editing an existing user.
+  EditUser : EditUserOperation;
+  // An operation for editing the status of an existing user.
+  EditUserStatus : EditUserStatusOperation;
 };
 
 type ProposalOperationInput = variant {
@@ -276,6 +338,12 @@ type ProposalOperationInput = variant {
   EditAccount : EditAccountOperationInput;
   // An operation for adding a new account.
   AddAccount : AddAccountOperationInput;
+  // An operation for adding a new user.
+  AddUser : AddUserOperationInput;
+  // An operation for editing an existing user.
+  EditUser : EditUserOperationInput;
+  // An operation for editing the status of an existing user.
+  EditUserStatus : EditUserStatusOperationInput;
 };
 
 type ProposalOperationType = variant {
@@ -285,6 +353,12 @@ type ProposalOperationType = variant {
   EditAccount;
   // An operation for creating a new account.
   AddAccount;
+  // An operation for adding a new user.
+  AddUser;
+  // An operation for editing an existing user.
+  EditUser;
+  // An operation for editing the status of an existing user.
+  EditUserStatus;
 };
 
 // The schedule for executing a transaction of a given transfer.
@@ -493,6 +567,13 @@ type UserRole = variant {
   User;
   // The guest role is also used to allow access when the user does not have the user defined.
   Guest;
+};
+
+type UserStatus = variant {
+  // The user is active.
+  Active;
+  // The user is inactive.
+  Inactive;
 };
 
 // A record type that can be used to represent a user in the wallet.

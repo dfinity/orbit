@@ -1,5 +1,5 @@
 use crate::{
-    core::generate_uuid_v4,
+    core::{generate_uuid_v4, ic_cdk::api::trap},
     errors::{ProposalError, ProposalExecuteError},
     models::{Policy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
 };
@@ -92,6 +92,11 @@ impl ProposalFactory {
             ProposalOperationInput::AddAccount(_) => {
                 create_proposal::<AddAccountProposal>(id, proposed_by_user, input)
             }
+            ProposalOperationInput::AddUser(_)
+            | ProposalOperationInput::EditUser(_)
+            | ProposalOperationInput::EditUserStatus(_) => {
+                trap(&format!("Not yet supported: {:?}", input.operation))
+            }
         }
     }
 
@@ -102,6 +107,11 @@ impl ProposalFactory {
             ProposalOperation::Transfer(_) => Box::new(TransferProposal::new(proposal)),
             ProposalOperation::EditAccount(_) => Box::new(EditAccountProposal::new(proposal)),
             ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
+            ProposalOperation::AddUser(_)
+            | ProposalOperation::EditUser(_)
+            | ProposalOperation::EditUserStatus(_) => {
+                trap(&format!("Not yet supported: {:?}", proposal.operation))
+            }
         }
     }
 }

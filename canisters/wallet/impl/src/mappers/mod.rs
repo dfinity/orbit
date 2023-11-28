@@ -33,6 +33,9 @@ pub use helper::*;
 mod user;
 pub use user::*;
 
+mod user_status;
+pub use user_status::*;
+
 mod transfer;
 pub use transfer::*;
 
