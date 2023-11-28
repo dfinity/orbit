@@ -193,6 +193,16 @@ type TransferOperationInput = record {
   metadata : opt vec TransferMetadata;
 };
 
+// Input type for transferring funds.
+type TransferOperation = record {
+  // The account to use for the transaction.
+  from_account : Account;
+  // The network to use for the transaction.
+  network : Network;
+  // The input to the proposal to transfer funds.
+  input : TransferOperationInput;
+};
+
 // Input type for editing an account through a proposal.
 type EditAccountOperationInput = record {
   // The account id that will be edited.
@@ -205,7 +215,10 @@ type EditAccountOperationInput = record {
   name : opt text;
 };
 
-type EditAccountOperation = EditAccountOperationInput;
+type EditAccountOperation = record {
+  // The input to the proposal to edit the account.
+  input : EditAccountOperationInput;
+};
 
 // Input type for adding an account through a proposal.
 type AddAccountOperationInput = record {
@@ -226,38 +239,8 @@ type AddAccountOperationInput = record {
 type AddAccountOperation = record {
   // The account, only available after the proposal is executed.
   account : opt Account;
-  // A friendly name for the account (e.g. "My Account").
-  name : text;
-  // The list of owners of the account.
-  owners : vec UserId;
-  // The list of policies that can be used to control the account.
-  policies : vec Policy;
-  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-  blockchain : text;
-  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
-  standard : text;
-  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
-  metadata : vec record { text; text };
-};
-
-// Input type for transferring funds.
-type TransferOperation = record {
-  // The account to use for the transaction.
-  from_account : Account;
-  // The amount to transfer.
-  amount : nat;
-  // The destination address of the transaction (e.g. "1BvBMSE...").
-  to : text;
-  // The network to use for the transaction, if not the
-  // default network of the account will be used.
-  network : Network;
-  // Trasanctions can be tagged with an optional additional info
-  // (e.g. a nonce in the case of an Ethereum transaction)
-  metadata : vec TransferMetadata;
-  // The fee to pay for the transaction, if applicable.
-  //
-  // If not set, the default fee will be used.
-  fee : opt nat;
+  // The input to the proposal to add the account.
+  input : AddAccountOperationInput;
 };
 
 type AddUserOperationInput = record {
@@ -384,7 +367,7 @@ type Proposal = record {
   // The operation that was proposed.
   operation : ProposalOperation;
   // The user that created the proposal.
-  proposed_by : opt UserId;
+  proposed_by : UserId;
   // The list of user votes on the proposal.
   votes : vec ProposalVote;
   // The time at which the proposal was created.
@@ -623,13 +606,6 @@ type TransferStatus = variant {
   Failed : record {
     // The failure reason.
     reason : text;
-  };
-  // The transfer has been cancelled by the initiator.
-  //
-  // This can happen if the initiator cancels the transfer before it is approved.
-  Cancelled : record {
-    // The reason for the cancellation.
-    reason : opt text;
   };
   // The transfer is being processed.
   Processing : record {

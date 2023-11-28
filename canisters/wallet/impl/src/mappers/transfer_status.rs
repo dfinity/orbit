@@ -5,9 +5,6 @@ use wallet_api::TransferStatusDTO;
 impl From<TransferStatus> for TransferStatusDTO {
     fn from(status: TransferStatus) -> Self {
         match status {
-            TransferStatus::Cancelled { reason } => TransferStatusDTO::Cancelled {
-                reason: reason.map(|r| r.to_owned()),
-            },
             TransferStatus::Processing { started_at } => TransferStatusDTO::Processing {
                 started_at: timestamp_to_rfc3339(&started_at),
             },

@@ -32,9 +32,7 @@ pub struct Proposal {
     /// The summary of the proposal, this is a longer description of the proposal.
     pub summary: Option<String>,
     /// The user id that resulted in the proposal creation.
-    ///
-    /// When the proposal is created by the system, this field is `None`.
-    pub proposed_by: Option<UserId>,
+    pub proposed_by: UserId,
     /// The status that the proposal is in.
     pub status: ProposalStatus,
     /// An operation that the proposal should execute, e.g. "transfer".
@@ -151,9 +149,7 @@ impl Proposal {
 
     pub fn users(&self) -> HashSet<UserId> {
         let mut users = HashSet::new();
-        if let Some(proposed_by) = self.proposed_by.to_owned() {
-            users.insert(proposed_by);
-        }
+        users.insert(self.proposed_by.to_owned());
 
         self.votes
             .iter()
@@ -327,24 +323,27 @@ pub mod proposal_test_utils {
     use num_bigint::BigUint;
 
     use super::*;
-    use crate::models::{ProposalVoteStatus, TransferOperation};
+    use crate::models::{ProposalVoteStatus, TransferOperation, TransferOperationInput};
 
     pub fn mock_proposal() -> Proposal {
         Proposal {
             id: [0; 16],
             title: "foo".to_string(),
             summary: Some("bar".to_string()),
-            proposed_by: Some([1; 16]),
+            proposed_by: [1; 16],
             status: ProposalStatus::Adopted,
             expiration_dt: 100,
             execution_plan: ProposalExecutionPlan::Immediate,
             operation: ProposalOperation::Transfer(TransferOperation {
-                amount: candid::Nat(BigUint::from(100u32)),
-                fee: None,
-                metadata: vec![],
-                network: "mainnet".to_string(),
-                to: "0x1234".to_string(),
-                from_account_id: [1; 16],
+                transfer_id: None,
+                input: TransferOperationInput {
+                    network: "mainnet".to_string(),
+                    amount: candid::Nat(BigUint::from(100u32)),
+                    fee: None,
+                    metadata: vec![],
+                    to: "0x1234".to_string(),
+                    from_account_id: [1; 16],
+                },
             }),
             votes: vec![ProposalVote {
                 user_id: [1; 16],

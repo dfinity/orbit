@@ -57,18 +57,20 @@ impl AccountMapper {
     }
 
     pub fn from_create_input(
-        input: AddAccountOperation,
+        operation: AddAccountOperation,
         account_id: UUID,
         address: Option<String>,
     ) -> Result<Account, MapperError> {
-        if !input
+        if !operation
+            .input
             .blockchain
             .supported_standards()
-            .contains(&input.standard)
+            .contains(&operation.input.standard)
         {
             return Err(MapperError::UnsupportedBlockchainStandard {
-                blockchain: input.blockchain.to_string(),
-                supported_standards: input
+                blockchain: operation.input.blockchain.to_string(),
+                supported_standards: operation
+                    .input
                     .blockchain
                     .supported_standards()
                     .iter()
@@ -77,9 +79,10 @@ impl AccountMapper {
             });
         }
 
-        let symbol = match input.standard {
+        let symbol = match operation.input.standard {
             BlockchainStandard::Native => {
-                if input
+                if operation
+                    .input
                     .metadata
                     .iter()
                     .any(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY)
@@ -87,10 +90,11 @@ impl AccountMapper {
                     return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
                 }
 
-                input.blockchain.native_symbol().to_string()
+                operation.input.blockchain.native_symbol().to_string()
             }
             _ => {
-                let symbol = input
+                let symbol = operation
+                    .input
                     .metadata
                     .iter()
                     .find(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY);
@@ -105,16 +109,16 @@ impl AccountMapper {
 
         let new_account = Account {
             id: account_id,
-            blockchain: input.blockchain,
-            standard: input.standard,
-            name: input.name,
+            blockchain: operation.input.blockchain,
+            standard: operation.input.standard,
+            name: operation.input.name,
             address: address.unwrap_or("".to_string()),
-            owners: input.owners.to_vec(),
-            policies: input.policies.to_vec(),
+            owners: operation.input.owners.to_vec(),
+            policies: operation.input.policies.to_vec(),
             decimals: 0,
             symbol,
             balance: None,
-            metadata: input.metadata,
+            metadata: operation.input.metadata,
             last_modification_timestamp: time(),
         };
 

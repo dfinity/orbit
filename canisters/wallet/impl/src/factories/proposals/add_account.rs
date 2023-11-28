@@ -93,7 +93,10 @@ impl<'proposal> ProposalHandler for AddAccountProposal<'proposal> {
                     id,
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::AddAccount(AddAccountOperation::from(input)),
+                    ProposalOperation::AddAccount(AddAccountOperation {
+                        id: None,
+                        input: input.into(),
+                    }),
                     execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
                     title.unwrap_or_else(|| "Account creation".to_string()),
                     summary,

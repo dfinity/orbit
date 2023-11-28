@@ -7,7 +7,7 @@ use crate::{
     models::{
         Account, ApprovalThresholdPolicy, NotificationType, Policy, PolicyStatus, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
-        TransferProposalCreatedNotification,
+        TransferOperationInput, TransferProposalCreatedNotification,
     },
     repositories::{AccountRepository, TransferRepository},
     services::NotificationService,
@@ -45,14 +45,14 @@ impl<'proposal> TransferProposal<'proposal> {
     }
 
     fn get_account(&self) -> Account {
-        let ctx = self.unwrap_operation();
+        let operation = self.unwrap_operation();
 
         self.account_repository
-            .get(&Account::key(ctx.from_account_id))
+            .get(&Account::key(operation.input.from_account_id))
             .unwrap_or_else(|| {
                 trap(&format!(
                     "Account not found: {}",
-                    Uuid::from_bytes(ctx.from_account_id).hyphenated()
+                    Uuid::from_bytes(operation.input.from_account_id).hyphenated()
                 ))
             })
     }
@@ -129,7 +129,7 @@ impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
     }
 
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let input = self.unwrap_operation();
+        let operation = self.unwrap_operation();
         let transfer_id = generate_uuid_v4().await;
         let account = self.get_account();
 
@@ -137,7 +137,7 @@ impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to build blockchain api: {}", e),
             })?;
-        let fee = match &input.fee {
+        let fee = match &operation.input.fee {
             Some(fee) => fee.clone(),
             None => {
                 let transaction_fee =
@@ -154,13 +154,13 @@ impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
         let transfer = Transfer::new(
             self.proposal.id,
             *transfer_id.as_bytes(),
-            self.proposal.proposed_by.expect("Proposer not found"),
-            input.from_account_id,
-            input.to.clone(),
-            input.metadata.clone(),
-            input.amount.clone(),
+            self.proposal.proposed_by,
+            operation.input.from_account_id,
+            operation.input.to.clone(),
+            operation.input.metadata.clone(),
+            operation.input.amount.clone(),
             fee,
-            input.network.clone(),
+            operation.input.network.clone(),
         );
 
         transfer
@@ -229,16 +229,19 @@ impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
                     ProposalOperation::Transfer(TransferOperation {
-                        from_account_id: *from_account_id.as_bytes(),
-                        to: operation.to,
-                        amount: operation.amount,
-                        fee: operation.fee,
-                        // todo: add metadata mapping
-                        metadata: vec![],
-                        // todo: add network mapping
-                        network: match operation.network {
-                            Some(network) => network.id,
-                            None => "mainnet".to_string(),
+                        transfer_id: None,
+                        input: TransferOperationInput {
+                            from_account_id: *from_account_id.as_bytes(),
+                            to: operation.to,
+                            amount: operation.amount,
+                            fee: operation.fee,
+                            // todo: add metadata mapping
+                            metadata: vec![],
+                            // todo: add network mapping
+                            network: match operation.network {
+                                Some(network) => network.id,
+                                None => "mainnet".to_string(),
+                            },
                         },
                     }),
                     execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),

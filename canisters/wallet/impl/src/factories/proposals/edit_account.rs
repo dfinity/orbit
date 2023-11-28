@@ -4,8 +4,8 @@ use crate::{
     errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, NotificationType, Policy, PolicyStatus, Proposal,
-        ProposalExecutionPlan, ProposalOperation,
+        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Policy,
+        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     repositories::AccountRepository,
     services::NotificationService,
@@ -44,11 +44,11 @@ impl<'proposal> EditAccountProposal<'proposal> {
         let operation = self.unwrap_operation();
 
         self.account_repository
-            .get(&Account::key(operation.account_id))
+            .get(&Account::key(operation.input.account_id))
             .unwrap_or_else(|| {
                 trap(&format!(
                     "Account not found: {}",
-                    Uuid::from_bytes(operation.account_id).hyphenated()
+                    Uuid::from_bytes(operation.input.account_id).hyphenated()
                 ))
             })
     }
@@ -72,18 +72,18 @@ impl<'proposal> ProposalHandler for EditAccountProposal<'proposal> {
     }
 
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let input = self.unwrap_operation();
+        let operation = self.unwrap_operation();
         let mut account = self.get_account();
 
-        if let Some(name) = &input.name {
+        if let Some(name) = &operation.input.name {
             account.name = name.clone();
         }
 
-        if let Some(owners) = &input.owners {
+        if let Some(owners) = &operation.input.owners {
             account.owners = owners.clone();
         }
 
-        if let Some(policies) = &input.policies {
+        if let Some(policies) = &operation.input.policies {
             account.policies = policies.clone();
         }
 
@@ -151,29 +151,31 @@ impl<'proposal> ProposalHandler for EditAccountProposal<'proposal> {
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
                     ProposalOperation::EditAccount(EditAccountOperation {
-                        account_id: *from_account_id.as_bytes(),
-                        owners: match input.owners {
-                            Some(owners) => Some(
-                                owners
-                                    .into_iter()
-                                    .map(|owner| {
-                                        HelperMapper::to_uuid(owner)
-                                            .map_err(|e| ProposalError::ValidationError {
-                                                info: format!("Invalid owner: {}", e),
-                                            })
-                                            .map(|uuid| *uuid.as_bytes())
-                                    })
-                                    .collect::<Result<Vec<UUID>, _>>()?,
-                            ),
-                            None => None,
+                        input: EditAccountOperationInput {
+                            account_id: *from_account_id.as_bytes(),
+                            owners: match input.owners {
+                                Some(owners) => Some(
+                                    owners
+                                        .into_iter()
+                                        .map(|owner| {
+                                            HelperMapper::to_uuid(owner)
+                                                .map_err(|e| ProposalError::ValidationError {
+                                                    info: format!("Invalid owner: {}", e),
+                                                })
+                                                .map(|uuid| *uuid.as_bytes())
+                                        })
+                                        .collect::<Result<Vec<UUID>, _>>()?,
+                                ),
+                                None => None,
+                            },
+                            policies: input.policies.map(|policies| {
+                                policies
+                                    .iter()
+                                    .map(|policy| policy.clone().into())
+                                    .collect()
+                            }),
+                            name: input.name,
                         },
-                        policies: input.policies.map(|policies| {
-                            policies
-                                .iter()
-                                .map(|policy| policy.clone().into())
-                                .collect()
-                        }),
-                        name: input.name,
                     }),
                     execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
                     title.unwrap_or_else(|| "Account edit".to_string()),

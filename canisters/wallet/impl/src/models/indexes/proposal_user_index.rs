@@ -26,9 +26,7 @@ pub struct ProposalUserIndexCriteria {
 impl Proposal {
     pub fn to_index_for_users(&self) -> Vec<ProposalUserIndex> {
         let mut users = HashSet::<UserId>::new();
-        if let Some(proposed_by) = &self.proposed_by {
-            users.insert(proposed_by.to_owned());
-        }
+        users.insert(self.proposed_by.to_owned());
         self.votes.iter().for_each(|d| {
             users.insert(d.user_id);
         });
@@ -71,7 +69,7 @@ mod tests {
     fn valid_user_proposal_indexes() {
         let mut proposal = mock_proposal();
         proposal.id = [1; 16];
-        proposal.proposed_by = Some([u8::MAX; 16]);
+        proposal.proposed_by = [u8::MAX; 16];
         proposal.votes = vec![
             ProposalVote {
                 user_id: [1; 16],
@@ -92,9 +90,7 @@ mod tests {
         let indexes = proposal.to_index_for_users();
 
         assert_eq!(indexes.len(), 3);
-        assert!(indexes
-            .iter()
-            .any(|i| i.user_id == proposal.proposed_by.unwrap()));
+        assert!(indexes.iter().any(|i| i.user_id == proposal.proposed_by));
         assert!(indexes.iter().any(|i| i.user_id == [1; 16]));
         assert!(indexes.iter().any(|i| i.user_id == [2; 16]));
     }

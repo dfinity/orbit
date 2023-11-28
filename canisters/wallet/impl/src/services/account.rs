@@ -58,16 +58,18 @@ impl AccountService {
     /// it will be added automatically.
     ///
     /// This operation will fail if the user does not have an associated user.
-    pub async fn create_account(&self, input: AddAccountOperation) -> ServiceResult<Account> {
-        for user_id in input.owners.iter() {
+    pub async fn create_account(&self, operation: AddAccountOperation) -> ServiceResult<Account> {
+        for user_id in operation.input.owners.iter() {
             self.user_service.assert_user_exists(user_id)?;
         }
 
         let uuid = generate_uuid_v4().await;
         let key = Account::key(*uuid.as_bytes());
-        let blockchain_api =
-            BlockchainApiFactory::build(&input.blockchain.clone(), &input.standard.clone())?;
-        let mut new_account = AccountMapper::from_create_input(input, *uuid.as_bytes(), None)?;
+        let blockchain_api = BlockchainApiFactory::build(
+            &operation.input.blockchain.clone(),
+            &operation.input.standard.clone(),
+        )?;
+        let mut new_account = AccountMapper::from_create_input(operation, *uuid.as_bytes(), None)?;
 
         // The account address is generated after the account is created from the user input and
         // all the validations are successfully completed.
@@ -178,12 +180,13 @@ impl AccountService {
 
 #[cfg(test)]
 mod tests {
-    use wallet_api::AddAccountOperationInput;
-
     use super::*;
     use crate::{
         core::test_utils,
-        models::{account_test_utils::mock_account, user_test_utils::mock_user, User},
+        models::{
+            account_test_utils::mock_account, user_test_utils::mock_user, AddAccountOperationInput,
+            Blockchain, BlockchainStandard, User,
+        },
         repositories::UserRepository,
     };
 
@@ -239,34 +242,39 @@ mod tests {
     #[tokio::test]
     async fn create_account() {
         let ctx = setup();
-        let input = AddAccountOperationInput {
-            name: "foo".to_string(),
-            owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
-            blockchain: "icp".to_string(),
-            standard: "native".to_string(),
-            metadata: vec![],
-            policies: vec![],
+        let input = AddAccountOperation {
+            id: None,
+            input: AddAccountOperationInput {
+                name: "foo".to_string(),
+                owners: vec![ctx.caller_user.id],
+                blockchain: Blockchain::InternetComputer,
+                standard: BlockchainStandard::Native,
+                metadata: vec![],
+                policies: vec![],
+            },
         };
 
-        let result = ctx.service.create_account(input.into()).await;
+        let result = ctx.service.create_account(input).await;
 
         assert!(result.is_ok());
     }
 
     #[tokio::test]
-    #[should_panic]
-    async fn fail_create_account_unknown_blockchain() {
+    async fn fail_create_account_invalid_blockchain_standard() {
         let ctx = setup();
-        let input = AddAccountOperationInput {
-            name: "foo".to_string(),
-            owners: vec![Uuid::from_bytes(ctx.caller_user.id).to_string()],
-            blockchain: "unknown".to_string(),
-            standard: "native".to_string(),
-            metadata: vec![],
-            policies: vec![],
+        let input = AddAccountOperation {
+            id: None,
+            input: AddAccountOperationInput {
+                name: "foo".to_string(),
+                owners: vec![ctx.caller_user.id],
+                blockchain: Blockchain::InternetComputer,
+                standard: BlockchainStandard::ERC20,
+                metadata: vec![],
+                policies: vec![],
+            },
         };
 
-        let result = ctx.service.create_account(input.into()).await;
+        let result = ctx.service.create_account(input).await;
 
         assert!(result.is_err());
     }
