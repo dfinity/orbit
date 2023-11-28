@@ -30,7 +30,7 @@ then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
-cd canisters/integration_tests
+cd canisters/integration-tests
 echo "PocketIC download starting"
 curl -sO https://download.dfinity.systems/ic/69e1408347723dbaa7a6cd2faa9b65c42abbe861/openssl-static-binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz
@@ -41,4 +41,4 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister
 ./scripts/download-nns-canister-wasm.sh icp_index ic-icp-index-canister
 
-cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
+cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS

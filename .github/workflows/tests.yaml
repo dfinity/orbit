@@ -31,7 +31,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v3
       - name: 'Test cargo crates'
-        run: cargo test --locked --workspace --exclude integration_tests
+        run: cargo test --locked --workspace --exclude integration-tests
   test-node:
     name: 'test-node:required'
     runs-on: ubuntu-latest
