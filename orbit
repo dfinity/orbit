@@ -189,6 +189,12 @@ function candid_generate() {
 
 function setup_devenv() {
   nvm use
+
+  if ! command -v pnpm >/dev/null 2>&1; then
+    echo "pnpm not found, installing..."
+    npm install -g pnpm
+  fi
+
   pnpm install
 }
 
