@@ -2,9 +2,9 @@ use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
-        EditUserStatusOperation, ProposalOperation, TransferOperation, User,
+        EditUserStatusOperation, ProposalOperation, TransferOperation, User, UserGroup,
     },
-    repositories::{AccountRepository, UserRepository},
+    repositories::{AccountRepository, UserGroupRepository, UserRepository},
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
@@ -289,6 +289,21 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::EditUserStatus(operation) => {
                 ProposalOperationDTO::EditUserStatus(Box::new(operation.into()))
+            }
+            ProposalOperation::AddUserGroup(operation) => {
+                let user_group = operation.user_group_id.map(|id| {
+                    UserGroupRepository::default()
+                        .get(&UserGroup::key(id))
+                        .expect("User group not found")
+                });
+
+                ProposalOperationDTO::AddUserGroup(Box::new(operation.to_dto(user_group)))
+            }
+            ProposalOperation::EditUserGroup(operation) => {
+                ProposalOperationDTO::EditUserGroup(Box::new(operation.into()))
+            }
+            ProposalOperation::RemoveUserGroup(operation) => {
+                ProposalOperationDTO::RemoveUserGroup(Box::new(operation.into()))
             }
         }
     }

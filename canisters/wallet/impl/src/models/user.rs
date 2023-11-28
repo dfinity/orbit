@@ -112,7 +112,7 @@ impl User {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::user_test_utils::mock_user;
     use super::*;
 

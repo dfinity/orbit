@@ -1,8 +1,8 @@
 use super::UserIdDTO;
+use crate::UuidDTO;
 use candid::{CandidType, Deserialize};
 
 pub type AccountIdDTO = String;
-pub type UuidDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {

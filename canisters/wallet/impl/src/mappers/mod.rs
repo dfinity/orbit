@@ -33,6 +33,9 @@ pub use helper::*;
 mod user;
 pub use user::*;
 
+mod user_group;
+pub use user_group::*;
+
 mod user_status;
 pub use user_status::*;
 

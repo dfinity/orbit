@@ -10,6 +10,9 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::AddUser => ProposalOperationType::AddUser,
             ProposalOperationTypeDTO::EditUser => ProposalOperationType::EditUser,
             ProposalOperationTypeDTO::EditUserStatus => ProposalOperationType::EditUserStatus,
+            ProposalOperationTypeDTO::AddUserGroup => ProposalOperationType::AddUserGroup,
+            ProposalOperationTypeDTO::EditUserGroup => ProposalOperationType::EditUserGroup,
+            ProposalOperationTypeDTO::RemoveUserGroup => ProposalOperationType::RemoveUserGroup,
         }
     }
 }
@@ -23,6 +26,9 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::AddUser(_) => ProposalOperationType::AddUser,
             ProposalOperation::EditUser(_) => ProposalOperationType::EditUser,
             ProposalOperation::EditUserStatus(_) => ProposalOperationType::EditUserStatus,
+            ProposalOperation::AddUserGroup(_) => ProposalOperationType::AddUserGroup,
+            ProposalOperation::EditUserGroup(_) => ProposalOperationType::EditUserGroup,
+            ProposalOperation::RemoveUserGroup(_) => ProposalOperationType::RemoveUserGroup,
         }
     }
 }

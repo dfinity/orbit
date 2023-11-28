@@ -94,7 +94,10 @@ impl ProposalFactory {
             }
             ProposalOperationInput::AddUser(_)
             | ProposalOperationInput::EditUser(_)
-            | ProposalOperationInput::EditUserStatus(_) => {
+            | ProposalOperationInput::EditUserStatus(_)
+            | ProposalOperationInput::AddUserGroup(_)
+            | ProposalOperationInput::EditUserGroup(_)
+            | ProposalOperationInput::RemoveUserGroup(_) => {
                 trap(&format!("Not yet supported: {:?}", input.operation))
             }
         }
@@ -109,7 +112,10 @@ impl ProposalFactory {
             ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
             ProposalOperation::AddUser(_)
             | ProposalOperation::EditUser(_)
-            | ProposalOperation::EditUserStatus(_) => {
+            | ProposalOperation::EditUserStatus(_)
+            | ProposalOperation::AddUserGroup(_)
+            | ProposalOperation::EditUserGroup(_)
+            | ProposalOperation::RemoveUserGroup(_) => {
                 trap(&format!("Not yet supported: {:?}", proposal.operation))
             }
         }

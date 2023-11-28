@@ -12,6 +12,9 @@ pub enum ProposalOperation {
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
     EditUserStatus(EditUserStatusOperation),
+    AddUserGroup(AddUserGroupOperation),
+    EditUserGroup(EditUserGroupOperation),
+    RemoveUserGroup(RemoveUserGroupOperation),
 }
 
 #[stable_object]
@@ -108,4 +111,42 @@ pub struct EditUserStatusOperation {
 pub struct EditUserStatusOperationInput {
     pub user_id: UUID,
     pub status: UserStatus,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddUserGroupOperation {
+    pub user_group_id: Option<UUID>,
+    pub input: AddUserGroupOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddUserGroupOperationInput {
+    pub name: String,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserGroupOperation {
+    pub input: EditUserGroupOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserGroupOperationInput {
+    pub user_group_id: UUID,
+    pub name: String,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveUserGroupOperation {
+    pub input: RemoveUserGroupOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveUserGroupOperationInput {
+    pub user_group_id: UUID,
 }

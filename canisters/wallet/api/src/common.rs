@@ -2,6 +2,7 @@ use candid::{CandidType, Deserialize};
 use std::collections::HashMap;
 
 pub type TimestampRfc3339 = String;
+pub type UuidDTO = String;
 
 /// Generic error type used for calls.
 #[derive(CandidType, Deserialize, Clone, Debug)]
