@@ -281,7 +281,7 @@ export interface TransferOperationInput {
   'to' : string,
   'fee' : [] | [bigint],
   'from_account_id' : AccountId,
-  'metadata' : [] | [Array<TransferMetadata>],
+  'metadata' : Array<TransferMetadata>,
   'network' : [] | [Network],
   'amount' : bigint,
 }

@@ -61,7 +61,7 @@ export const idlFactory = ({ IDL }) => {
     'to' : IDL.Text,
     'fee' : IDL.Opt(IDL.Nat),
     'from_account_id' : AccountId,
-    'metadata' : IDL.Opt(IDL.Vec(TransferMetadata)),
+    'metadata' : IDL.Vec(TransferMetadata),
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
   });
