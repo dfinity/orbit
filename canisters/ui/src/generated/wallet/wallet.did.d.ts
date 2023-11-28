@@ -28,13 +28,8 @@ export interface AccountBalanceInfo {
 }
 export type AccountId = string;
 export interface AddAccountOperation {
-  'owners' : Array<UserId>,
-  'metadata' : Array<[string, string]>,
-  'name' : string,
-  'blockchain' : string,
   'account' : [] | [Account],
-  'standard' : string,
-  'policies' : Array<Policy>,
+  'input' : AddAccountOperationInput,
 }
 export interface AddAccountOperationInput {
   'owners' : Array<UserId>,
@@ -43,6 +38,16 @@ export interface AddAccountOperationInput {
   'blockchain' : string,
   'standard' : string,
   'policies' : Array<Policy>,
+}
+export interface AddUserOperation {
+  'user' : [] | [User],
+  'input' : AddUserOperationInput,
+}
+export interface AddUserOperationInput {
+  'status' : UserStatus,
+  'groups' : Array<UUID>,
+  'name' : [] | [string],
+  'identities' : Array<Principal>,
 }
 export type ApprovalThresholdPolicy = { 'VariableThreshold' : number } |
   { 'FixedThreshold' : number };
@@ -58,7 +63,7 @@ export interface CreateProposalInput {
 }
 export type CreateProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
   { 'Err' : Error };
-export type EditAccountOperation = EditAccountOperationInput;
+export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
   'account_id' : AccountId,
   'owners' : [] | [Array<UserId>],
@@ -69,8 +74,22 @@ export interface EditUserInput {
   'user_id' : UserId,
   'identities' : [] | [Array<Principal>],
 }
+export interface EditUserOperation { 'input' : EditUserOperationInput }
+export interface EditUserOperationInput {
+  'id' : UUID,
+  'groups' : [] | [Array<UUID>],
+  'name' : [] | [string],
+  'identities' : [] | [Array<Principal>],
+}
 export type EditUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : Error };
+export interface EditUserStatusOperation {
+  'input' : EditUserStatusOperationInput,
+}
+export interface EditUserStatusOperationInput {
+  'id' : UUID,
+  'status' : UserStatus,
+}
 export interface Error {
   'code' : string,
   'message' : [] | [string],
@@ -183,19 +202,28 @@ export interface Proposal {
   'created_at' : TimestampRFC3339,
   'summary' : [] | [string],
   'operation' : ProposalOperation,
-  'proposed_by' : [] | [UserId],
+  'proposed_by' : UserId,
 }
 export type ProposalExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type ProposalId = string;
-export type ProposalOperation = { 'Transfer' : TransferOperation } |
+export type ProposalOperation = { 'AddUser' : AddUserOperation } |
+  { 'EditUser' : EditUserOperation } |
+  { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
+  { 'EditUserStatus' : EditUserStatusOperation } |
   { 'AddAccount' : AddAccountOperation };
-export type ProposalOperationInput = { 'Transfer' : TransferOperationInput } |
+export type ProposalOperationInput = { 'AddUser' : AddUserOperationInput } |
+  { 'EditUser' : EditUserOperationInput } |
+  { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
+  { 'EditUserStatus' : EditUserStatusOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
-export type ProposalOperationType = { 'Transfer' : null } |
+export type ProposalOperationType = { 'AddUser' : null } |
+  { 'EditUser' : null } |
+  { 'Transfer' : null } |
   { 'EditAccount' : null } |
+  { 'EditUserStatus' : null } |
   { 'AddAccount' : null };
 export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Rejected' : null } |
@@ -245,12 +273,9 @@ export interface TransferListItem {
 }
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
-  'to' : string,
-  'fee' : [] | [bigint],
-  'metadata' : Array<TransferMetadata>,
   'network' : Network,
   'from_account' : Account,
-  'amount' : bigint,
+  'input' : TransferOperationInput,
 }
 export interface TransferOperationInput {
   'to' : string,
@@ -261,7 +286,6 @@ export interface TransferOperationInput {
   'amount' : bigint,
 }
 export type TransferStatus = { 'Failed' : { 'reason' : string } } |
-  { 'Cancelled' : { 'reason' : [] | [string] } } |
   { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
   { 'Created' : null } |
   {
@@ -283,6 +307,8 @@ export type UserId = string;
 export type UserRole = { 'Guest' : null } |
   { 'User' : null } |
   { 'Admin' : null };
+export type UserStatus = { 'Inactive' : null } |
+  { 'Active' : null };
 export interface VoteOnProposalInput {
   'approve' : boolean,
   'proposal_id' : ProposalId,

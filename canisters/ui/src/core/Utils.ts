@@ -54,10 +54,6 @@ export const extractTransferStatus = (status: TransferStatus): AccountTransferSt
     return AccountTransferStatus.Failed;
   }
 
-  if ('Cancelled' in status) {
-    return AccountTransferStatus.Cancelled;
-  }
-
   if ('Processing' in status) {
     return AccountTransferStatus.Processing;
   }

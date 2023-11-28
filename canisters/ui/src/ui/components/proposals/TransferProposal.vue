@@ -4,7 +4,7 @@
     <span>
       <small>
         | {{ operation.from_account.symbol }}:
-        {{ formatBalance(operation.amount, operation.from_account.decimals) }}
+        {{ formatBalance(operation.input.amount, operation.from_account.decimals) }}
       </small>
     </span>
   </div>
@@ -24,7 +24,7 @@
       {{ new Date(proposal.created_at).toLocaleDateString() }}
     </VChip>
     <VChip v-if="!injectedProps.outer" size="x-small">
-      {{ $t(`terms.to`) }}: {{ operation.to }}
+      {{ $t(`terms.to`) }}: {{ operation.input.to }}
     </VChip>
   </div>
 </template>

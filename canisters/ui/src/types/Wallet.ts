@@ -6,7 +6,6 @@ export enum PolicyType {
 export enum AccountTransferStatus {
   Created = 'created',
   Failed = 'failed',
-  Cancelled = 'cancelled',
   Processing = 'processing',
   Completed = 'completed',
   Unknown = 'unknown',
