@@ -6,7 +6,9 @@ type AccountId = text;
 // The internal user id used to identify a user in the
 // canister (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type UserId = text;
-// The network id, unique to the canister and associated (e.g. "icp:mainnet").
+// The network id, represented by the blockchain symbol and network name (e.g. "icp:mainnet").
+//
+// Must be unique within the canister.
 type NetworkId = text;
 // The transfer id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type TransferId = text;
@@ -250,7 +252,7 @@ type AddUserOperationInput = record {
   identities : vec principal;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet 
+  // Users can be tagged with groups that can be used to control access to the wallet
   // (e.g. the UUID of the finance group).
   groups : vec UUID;
   // The status of the user (e.g. `Active`).
@@ -275,7 +277,7 @@ type EditUserOperationInput = record {
   identities : opt vec principal;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet 
+  // Users can be tagged with groups that can be used to control access to the wallet
   // (e.g. "UUID of the finance group").
   groups : opt vec UUID;
 };
@@ -583,7 +585,9 @@ type WalletPermission = record {
 
 // The blockchain network to used in a transaction.
 type Network = record {
-  // The network id, unique to the canister and associated (e.g. "icp:mainnet").
+  // The network id, represented by the blockchain symbol and network name (e.g. "icp:mainnet").
+  //
+  // Must be unique within the canister.
   id : NetworkId;
   // The name of the network (e.g. "Mainnet").
   name : text;
