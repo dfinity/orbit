@@ -28,7 +28,10 @@ pub struct EditAccountOperationInput {
     pub name: Option<String>,
 }
 
-pub type EditAccountOperationDTO = EditAccountOperationInput;
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditAccountOperationDTO {
+    pub input: EditAccountOperationInput,
+}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationInput {
@@ -43,12 +46,7 @@ pub struct AddAccountOperationInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationDTO {
     pub account: Option<AccountDTO>,
-    pub name: String,
-    pub owners: Vec<UserIdDTO>,
-    pub policies: Vec<PolicyDTO>,
-    pub blockchain: String,
-    pub standard: String,
-    pub metadata: Vec<(String, String)>,
+    pub input: AddAccountOperationInput,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

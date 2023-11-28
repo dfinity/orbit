@@ -63,7 +63,7 @@ impl<'proposal> ProposalHandler for AddAccountProposal<'proposal> {
         let mut operation = self.proposal.operation.clone();
 
         if let ProposalOperation::AddAccount(ref mut ctx) = operation {
-            ctx.id = Some(account.id);
+            ctx.account_id = Some(account.id);
         }
 
         Ok(ProposalExecuteStage::Completed(operation))
@@ -93,7 +93,10 @@ impl<'proposal> ProposalHandler for AddAccountProposal<'proposal> {
                     id,
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::AddAccount(AddAccountOperation::from(input)),
+                    ProposalOperation::AddAccount(AddAccountOperation {
+                        account_id: None,
+                        input: input.into(),
+                    }),
                     execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
                     title.unwrap_or_else(|| "Account creation".to_string()),
                     summary,

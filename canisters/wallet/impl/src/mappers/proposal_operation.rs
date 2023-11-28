@@ -10,29 +10,37 @@ use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
-    EditAccountOperationDTO, EditUserOperationDTO, EditUserOperationInput,
-    EditUserStatusOperationDTO, EditUserStatusOperationInput, NetworkDTO, ProposalOperationDTO,
-    TransferMetadataDTO, TransferOperationDTO,
+    EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
+    EditUserOperationInput, EditUserStatusOperationDTO, EditUserStatusOperationInput, NetworkDTO,
+    ProposalOperationDTO, TransferMetadataDTO, TransferOperationDTO, TransferOperationInput,
 };
 
 impl TransferOperation {
     pub fn to_dto(self, account: Account) -> TransferOperationDTO {
         TransferOperationDTO {
-            amount: self.amount,
             from_account: account.to_dto(),
-            to: self.to,
-            fee: self.fee,
-            metadata: self
-                .metadata
-                .iter()
-                .map(|(k, v)| TransferMetadataDTO {
-                    key: k.to_string(),
-                    value: v.to_string(),
-                })
-                .collect(),
             network: NetworkDTO {
-                id: self.network.clone(),
-                name: self.network.clone(),
+                id: self.input.network.clone(),
+                name: self.input.network.clone(),
+            },
+            input: TransferOperationInput {
+                from_account_id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+                amount: self.input.amount,
+                to: self.input.to,
+                fee: self.input.fee,
+                metadata: self
+                    .input
+                    .metadata
+                    .iter()
+                    .map(|(k, v)| TransferMetadataDTO {
+                        key: k.to_string(),
+                        value: v.to_string(),
+                    })
+                    .collect(),
+                network: Some(NetworkDTO {
+                    id: self.input.network.clone(),
+                    name: self.input.network.clone(),
+                }),
             },
         }
     }
@@ -42,28 +50,44 @@ impl AddAccountOperation {
     pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
         AddAccountOperationDTO {
             account: account.map(|account| account.to_dto()),
-            name: self.name,
-            owners: self
-                .owners
-                .iter()
-                .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
-                .collect(),
-            policies: self
-                .policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect(),
-            blockchain: self.blockchain.to_string(),
-            standard: self.standard.to_string(),
-            metadata: self.metadata,
+            input: AddAccountOperationInput {
+                name: self.input.name,
+                owners: self
+                    .input
+                    .owners
+                    .iter()
+                    .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
+                    .collect(),
+                policies: self
+                    .input
+                    .policies
+                    .iter()
+                    .map(|policy| policy.clone().into())
+                    .collect(),
+                blockchain: self.input.blockchain.to_string(),
+                standard: self.input.standard.to_string(),
+                metadata: self.input.metadata,
+            },
         }
     }
 }
 
-impl From<AddAccountOperationInput> for AddAccountOperation {
-    fn from(input: AddAccountOperationInput) -> AddAccountOperation {
+impl From<AddAccountOperationDTO> for AddAccountOperation {
+    fn from(operation: AddAccountOperationDTO) -> AddAccountOperation {
         AddAccountOperation {
-            id: None,
+            account_id: operation.account.map(|account| {
+                *HelperMapper::to_uuid(account.id)
+                    .expect("Invalid account id")
+                    .as_bytes()
+            }),
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput {
+    fn from(input: AddAccountOperationInput) -> crate::models::AddAccountOperationInput {
+        crate::models::AddAccountOperationInput {
             name: input.name,
             owners: input
                 .owners
@@ -91,22 +115,24 @@ impl From<AddAccountOperationInput> for AddAccountOperation {
 impl From<EditAccountOperation> for EditAccountOperationDTO {
     fn from(operation: EditAccountOperation) -> EditAccountOperationDTO {
         EditAccountOperationDTO {
-            account_id: Uuid::from_bytes(operation.account_id)
-                .hyphenated()
-                .to_string(),
-            name: operation.name,
-            owners: operation.owners.map(|owners| {
-                owners
-                    .iter()
-                    .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
-                    .collect()
-            }),
-            policies: operation.policies.map(|policies| {
-                policies
-                    .iter()
-                    .map(|policy| policy.clone().into())
-                    .collect()
-            }),
+            input: EditAccountOperationInput {
+                account_id: Uuid::from_bytes(operation.input.account_id)
+                    .hyphenated()
+                    .to_string(),
+                name: operation.input.name,
+                owners: operation.input.owners.map(|owners| {
+                    owners
+                        .iter()
+                        .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
+                        .collect()
+                }),
+                policies: operation.input.policies.map(|policies| {
+                    policies
+                        .iter()
+                        .map(|policy| policy.clone().into())
+                        .collect()
+                }),
+            },
         }
     }
 }
@@ -232,13 +258,13 @@ impl From<ProposalOperation> for ProposalOperationDTO {
         match operation {
             ProposalOperation::Transfer(operation) => {
                 let account = AccountRepository::default()
-                    .get(&Account::key(operation.from_account_id))
+                    .get(&Account::key(operation.input.from_account_id))
                     .expect("Account not found");
 
                 ProposalOperationDTO::Transfer(Box::new(operation.to_dto(account)))
             }
             ProposalOperation::AddAccount(operation) => {
-                let account = operation.id.map(|id| {
+                let account = operation.account_id.map(|id| {
                     AccountRepository::default()
                         .get(&Account::key(id))
                         .expect("Account not found")

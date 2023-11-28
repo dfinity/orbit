@@ -17,6 +17,13 @@ pub enum ProposalOperation {
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferOperation {
+    pub transfer_id: Option<UUID>,
+    pub input: TransferOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct TransferOperationInput {
     pub from_account_id: AccountId,
     pub to: String,
     pub amount: candid::Nat,
@@ -29,7 +36,13 @@ pub struct TransferOperation {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperation {
     /// The account id is only available after the operation is executed.
-    pub id: Option<AccountId>,
+    pub account_id: Option<AccountId>,
+    pub input: AddAccountOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAccountOperationInput {
     pub name: String,
     pub owners: Vec<UserId>,
     pub policies: Vec<Policy>,
@@ -41,10 +54,23 @@ pub struct AddAccountOperation {
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccountOperation {
+    pub input: EditAccountOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAccountOperationInput {
     pub account_id: AccountId,
     pub owners: Option<Vec<UserId>>,
     pub policies: Option<Vec<Policy>>,
     pub name: Option<String>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddUserOperation {
+    pub user_id: Option<UUID>,
+    pub input: AddUserOperationInput,
 }
 
 #[stable_object]
@@ -58,9 +84,8 @@ pub struct AddUserOperationInput {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AddUserOperation {
-    pub user_id: Option<UUID>,
-    pub input: AddUserOperationInput,
+pub struct EditUserOperation {
+    pub input: EditUserOperationInput,
 }
 
 #[stable_object]
@@ -74,8 +99,8 @@ pub struct EditUserOperationInput {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditUserOperation {
-    pub input: EditUserOperationInput,
+pub struct EditUserStatusOperation {
+    pub input: EditUserStatusOperationInput,
 }
 
 #[stable_object]
@@ -83,10 +108,4 @@ pub struct EditUserOperation {
 pub struct EditUserStatusOperationInput {
     pub user_id: UUID,
     pub status: UserStatus,
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditUserStatusOperation {
-    pub input: EditUserStatusOperationInput,
 }

@@ -262,7 +262,7 @@ export const useActiveWalletStore = defineStore('activeWallet', {
           .map(proposal => {
             if ('AddAccount' in proposal.operation) {
               return {
-                name: proposal.operation.AddAccount.name,
+                name: proposal.operation.AddAccount.input.name,
                 proposalId: proposal.id,
               };
             }

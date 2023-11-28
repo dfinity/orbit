@@ -22,26 +22,20 @@ pub struct TransferOperationInput {
     pub to: String,
     pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,
-    pub metadata: Option<Vec<TransferMetadataDTO>>,
+    pub metadata: Vec<TransferMetadataDTO>,
     pub network: Option<NetworkDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferOperationDTO {
     pub from_account: AccountDTO,
-    pub to: String,
-    pub amount: candid::Nat,
-    pub metadata: Vec<TransferMetadataDTO>,
     pub network: NetworkDTO,
-    pub fee: Option<candid::Nat>,
+    pub input: TransferOperationInput,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum TransferStatusDTO {
     Created,
-    Cancelled {
-        reason: Option<String>,
-    },
     Processing {
         started_at: TimestampRfc3339,
     },

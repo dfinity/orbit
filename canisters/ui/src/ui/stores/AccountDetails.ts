@@ -111,7 +111,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
     sortedProposals(): LoadableItem<Proposal>[] {
       return this.proposals.items.sort((a, b) => {
         return new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime();
-      });
+      }) as LoadableItem<Proposal>[];
     },
     defaultEndDt(): string {
       return new Date().toISOString();

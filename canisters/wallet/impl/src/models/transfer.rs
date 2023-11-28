@@ -22,9 +22,6 @@ pub type TransferId = UUID;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferStatus {
     Created,
-    Cancelled {
-        reason: Option<String>,
-    },
     Processing {
         started_at: Timestamp,
     },
@@ -42,7 +39,6 @@ impl Display for TransferStatus {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             TransferStatus::Created => write!(f, "created"),
-            TransferStatus::Cancelled { .. } => write!(f, "cancelled"),
             TransferStatus::Processing { .. } => write!(f, "processing"),
             TransferStatus::Completed { .. } => write!(f, "completed"),
             TransferStatus::Failed { .. } => write!(f, "failed"),

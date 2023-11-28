@@ -13,9 +13,9 @@ impl From<Proposal> for ProposalDTO {
     fn from(proposal: Proposal) -> ProposalDTO {
         ProposalDTO {
             id: Uuid::from_bytes(proposal.id).hyphenated().to_string(),
-            proposed_by: proposal
-                .proposed_by
-                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+            proposed_by: Uuid::from_bytes(proposal.proposed_by)
+                .hyphenated()
+                .to_string(),
             status: proposal.status.into(),
             metadata: proposal.metadata,
             operation: proposal.operation.into(),
@@ -48,7 +48,7 @@ impl Proposal {
             title,
             operation,
             summary,
-            proposed_by: Some(proposer),
+            proposed_by: proposer,
             status: ProposalStatus::Created,
             expiration_dt,
             execution_plan,

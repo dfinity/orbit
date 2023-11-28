@@ -180,7 +180,7 @@ mod tests {
         models::{
             account_test_utils::mock_account, proposal_test_utils::mock_proposal,
             user_test_utils::mock_user, ApprovalThresholdPolicy, Policy, ProposalOperation,
-            ProposalVoteStatus, TransferOperation, User,
+            ProposalVoteStatus, TransferOperation, TransferOperationInput, User,
         },
         repositories::{AccountRepository, UserRepository},
     };
@@ -223,14 +223,17 @@ mod tests {
             ApprovalThresholdPolicy::VariableThreshold(100),
         )];
         let mut proposal = mock_proposal();
-        proposal.proposed_by = Some(ctx.caller_user.id);
+        proposal.proposed_by = ctx.caller_user.id;
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
-            from_account_id: *account_id.as_bytes(),
-            amount: candid::Nat(100u32.into()),
-            fee: None,
-            metadata: vec![],
-            network: "mainnet".to_string(),
-            to: "0x1234".to_string(),
+            transfer_id: None,
+            input: TransferOperationInput {
+                from_account_id: *account_id.as_bytes(),
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
         });
 
         ctx.account_repository
@@ -254,14 +257,17 @@ mod tests {
             ApprovalThresholdPolicy::VariableThreshold(100),
         )];
         let mut proposal = mock_proposal();
-        proposal.proposed_by = None;
+        proposal.proposed_by = [8; 16];
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
-            from_account_id: *account_id.as_bytes(),
-            amount: candid::Nat(100u32.into()),
-            fee: None,
-            metadata: vec![],
-            network: "mainnet".to_string(),
-            to: "0x1234".to_string(),
+            transfer_id: None,
+            input: TransferOperationInput {
+                from_account_id: *account_id.as_bytes(),
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
         });
 
         ctx.account_repository
@@ -285,15 +291,18 @@ mod tests {
             ApprovalThresholdPolicy::VariableThreshold(100),
         )];
         let mut proposal = mock_proposal();
-        proposal.proposed_by = None;
+        proposal.proposed_by = [8; 16];
         proposal.status = ProposalStatus::Created;
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
-            from_account_id: *account_id.as_bytes(),
-            amount: candid::Nat(100u32.into()),
-            fee: None,
-            metadata: vec![],
-            network: "mainnet".to_string(),
-            to: "0x1234".to_string(),
+            transfer_id: None,
+            input: TransferOperationInput {
+                from_account_id: *account_id.as_bytes(),
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
         });
         proposal.votes = vec![];
 

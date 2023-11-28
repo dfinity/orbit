@@ -310,6 +310,7 @@ mod tests {
     use crate::models::{
         proposal_test_utils::{self, mock_proposal},
         ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, TransferOperation,
+        TransferOperationInput,
     };
     use num_bigint::BigUint;
     use uuid::Uuid;
@@ -333,7 +334,7 @@ mod tests {
         let repository = ProposalRepository::default();
         let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
-        proposal.proposed_by = Some(*user_id.as_bytes());
+        proposal.proposed_by = *user_id.as_bytes();
 
         repository.insert(proposal.to_key(), proposal.clone());
 
@@ -370,14 +371,17 @@ mod tests {
         let mut proposal = mock_proposal();
         let user_id = Uuid::new_v4();
         let account_id = Uuid::new_v4();
-        proposal.proposed_by = Some(*user_id.as_bytes());
+        proposal.proposed_by = *user_id.as_bytes();
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
-            amount: candid::Nat(BigUint::from(100u32)),
-            fee: None,
-            metadata: vec![],
-            network: "mainnet".to_string(),
-            to: "0x1234".to_string(),
-            from_account_id: *account_id.as_bytes(),
+            transfer_id: None,
+            input: TransferOperationInput {
+                amount: candid::Nat(BigUint::from(100u32)),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+                from_account_id: *account_id.as_bytes(),
+            },
         });
 
         repository.insert(proposal.to_key(), proposal.clone());

@@ -17,7 +17,6 @@ const chipColor = (status: AccountTransferStatus): string => {
   switch (status) {
     case AccountTransferStatus.Completed:
       return 'success';
-    case AccountTransferStatus.Cancelled:
     case AccountTransferStatus.Failed:
       return 'error';
     case AccountTransferStatus.Processing:

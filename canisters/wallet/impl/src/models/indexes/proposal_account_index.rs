@@ -28,7 +28,7 @@ impl Proposal {
             return Some(ProposalAccountIndex {
                 proposal_id: self.id.to_owned(),
                 created_at: self.created_timestamp.to_owned(),
-                account_id: ctx.from_account_id.to_owned(),
+                account_id: ctx.input.from_account_id.to_owned(),
             });
         }
 
@@ -39,7 +39,9 @@ impl Proposal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{proposal_test_utils::mock_proposal, TransferOperation};
+    use crate::models::{
+        proposal_test_utils::mock_proposal, TransferOperation, TransferOperationInput,
+    };
     use ic_stable_structures::Storable;
     use num_bigint::BigUint;
 
@@ -64,12 +66,15 @@ mod tests {
     fn correct_proposal_account_index_mapping() {
         let mut proposal = mock_proposal();
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
-            amount: candid::Nat(BigUint::from(100u32)),
-            fee: None,
-            metadata: vec![],
-            network: "mainnet".to_string(),
-            to: "0x1234".to_string(),
-            from_account_id: [0; 16],
+            transfer_id: None,
+            input: TransferOperationInput {
+                amount: candid::Nat(BigUint::from(100u32)),
+                fee: None,
+                metadata: vec![],
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+                from_account_id: [0; 16],
+            },
         });
 
         let index = proposal.to_index_for_account();

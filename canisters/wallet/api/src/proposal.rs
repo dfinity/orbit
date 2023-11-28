@@ -92,7 +92,7 @@ pub struct ProposalDTO {
     pub title: String,
     pub summary: Option<String>,
     pub operation: ProposalOperationDTO,
-    pub proposed_by: Option<UserIdDTO>,
+    pub proposed_by: UserIdDTO,
     pub votes: Vec<ProposalVoteDTO>,
     pub created_at: TimestampRfc3339,
     pub status: ProposalStatusDTO,
