@@ -86,10 +86,20 @@ pub struct EditUserOperationInput {
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<String>>,
-    pub status: Option<UserStatusDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditUserOperationDTO {
     pub input: EditUserOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditUserStatusOperationInput {
+    pub id: UserIdDTO,
+    pub status: UserStatusDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditUserStatusOperationDTO {
+    pub input: EditUserStatusOperationInput,
 }

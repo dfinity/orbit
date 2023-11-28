@@ -9,6 +9,7 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::EditAccount => ProposalOperationType::EditAccount,
             ProposalOperationTypeDTO::AddUser => ProposalOperationType::AddUser,
             ProposalOperationTypeDTO::EditUser => ProposalOperationType::EditUser,
+            ProposalOperationTypeDTO::EditUserStatus => ProposalOperationType::EditUserStatus,
         }
     }
 }
@@ -21,6 +22,7 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::EditAccount(_) => ProposalOperationType::EditAccount,
             ProposalOperation::AddUser(_) => ProposalOperationType::AddUser,
             ProposalOperation::EditUser(_) => ProposalOperationType::EditUser,
+            ProposalOperation::EditUserStatus(_) => ProposalOperationType::EditUserStatus,
         }
     }
 }

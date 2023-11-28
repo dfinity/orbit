@@ -11,6 +11,7 @@ pub enum ProposalOperation {
     EditAccount(EditAccountOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
+    EditUserStatus(EditUserStatusOperation),
 }
 
 #[stable_object]
@@ -69,11 +70,23 @@ pub struct EditUserOperationInput {
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
-    pub status: Option<UserStatus>,
 }
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditUserOperation {
     pub input: EditUserOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserStatusOperationInput {
+    pub user_id: UUID,
+    pub status: UserStatus,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditUserStatusOperation {
+    pub input: EditUserStatusOperationInput,
 }

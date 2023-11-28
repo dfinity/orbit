@@ -295,15 +295,25 @@ type EditUserOperationInput = record {
   // Users can be tagged with groups that can be used to control access to the wallet 
   // (e.g. "UUID of the finance group").
   groups : opt vec UUID;
-  // The status of the user (e.g. "active").
-  //
-  // The user must be active to be able to use the wallet.
-  status : opt UserStatus;
 };
 
 type EditUserOperation = record {
   // The input to the proposal to edit the user.
   input : EditUserOperationInput;
+};
+
+type EditUserStatusOperationInput = record {
+  // The id of the user to edit.
+  id : UUID;
+  // The status of the user (e.g. `Active`).
+  //
+  // The user must be active to be able to practically use the wallet.
+  status : UserStatus;
+};
+
+type EditUserStatusOperation = record {
+  // The input to the proposal to edit the user.
+  input : EditUserStatusOperationInput;
 };
 
 type ProposalOperation = variant {
@@ -317,6 +327,8 @@ type ProposalOperation = variant {
   AddUser : AddUserOperation;
   // An operation for editing an existing user.
   EditUser : EditUserOperation;
+  // An operation for editing the status of an existing user.
+  EditUserStatus : EditUserStatusOperation;
 };
 
 type ProposalOperationInput = variant {
@@ -330,6 +342,8 @@ type ProposalOperationInput = variant {
   AddUser : AddUserOperationInput;
   // An operation for editing an existing user.
   EditUser : EditUserOperationInput;
+  // An operation for editing the status of an existing user.
+  EditUserStatus : EditUserStatusOperationInput;
 };
 
 type ProposalOperationType = variant {
@@ -343,6 +357,8 @@ type ProposalOperationType = variant {
   AddUser;
   // An operation for editing an existing user.
   EditUser;
+  // An operation for editing the status of an existing user.
+  EditUserStatus;
 };
 
 // The schedule for executing a transaction of a given transfer.

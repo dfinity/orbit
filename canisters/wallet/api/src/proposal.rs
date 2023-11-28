@@ -1,6 +1,7 @@
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
     EditAccountOperationDTO, EditUserOperationDTO, EditUserOperationInput,
+    EditUserStatusOperationDTO, EditUserStatusOperationInput,
 };
 
 use super::{
@@ -54,6 +55,7 @@ pub enum ProposalOperationDTO {
     EditAccount(Box<EditAccountOperationDTO>),
     AddUser(Box<AddUserOperationDTO>),
     EditUser(Box<EditUserOperationDTO>),
+    EditUserStatus(Box<EditUserStatusOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -63,6 +65,7 @@ pub enum ProposalOperationInput {
     EditAccount(EditAccountOperationInput),
     AddUser(AddUserOperationInput),
     EditUser(EditUserOperationInput),
+    EditUserStatus(EditUserStatusOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -72,6 +75,7 @@ pub enum ProposalOperationTypeDTO {
     EditAccount,
     AddUser,
     EditUser,
+    EditUserStatus,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

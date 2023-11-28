@@ -14,6 +14,7 @@ pub enum ProposalOperationType {
     EditAccount = 2,
     AddUser = 3,
     EditUser = 4,
+    EditUserStatus = 5,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -32,6 +33,7 @@ impl TryFrom<u8> for ProposalOperationType {
             2 => Ok(ProposalOperationType::EditAccount),
             3 => Ok(ProposalOperationType::AddUser),
             4 => Ok(ProposalOperationType::EditUser),
+            5 => Ok(ProposalOperationType::EditUserStatus),
             _ => Err(()),
         }
     }
@@ -47,6 +49,7 @@ impl FromStr for ProposalOperationType {
             "edit_account" => Ok(ProposalOperationType::EditAccount),
             "add_user" => Ok(ProposalOperationType::AddUser),
             "edit_user" => Ok(ProposalOperationType::EditUser),
+            "edit_user_status" => Ok(ProposalOperationType::EditUserStatus),
             _ => Err(()),
         }
     }
@@ -60,6 +63,7 @@ impl Display for ProposalOperationType {
             ProposalOperationType::EditAccount => write!(f, "edit_account"),
             ProposalOperationType::AddUser => write!(f, "add_user"),
             ProposalOperationType::EditUser => write!(f, "edit_user"),
+            ProposalOperationType::EditUserStatus => write!(f, "edit_user_status"),
         }
     }
 }
@@ -112,6 +116,14 @@ mod tests {
             ProposalOperationType::from_str("edit_user").unwrap(),
             ProposalOperationType::EditUser
         );
+        assert_eq!(
+            ProposalOperationType::EditUserStatus.to_string(),
+            "edit_user_status"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("edit_user_status").unwrap(),
+            ProposalOperationType::EditUserStatus
+        );
     }
 
     #[test]
@@ -140,6 +152,11 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(4).unwrap(),
             ProposalOperationType::EditUser
+        );
+        assert_eq!(ProposalOperationType::EditUserStatus as u8, 5);
+        assert_eq!(
+            ProposalOperationType::try_from(5).unwrap(),
+            ProposalOperationType::EditUserStatus
         );
     }
 }
