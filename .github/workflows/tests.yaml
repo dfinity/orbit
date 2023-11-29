@@ -84,13 +84,14 @@ jobs:
       - name: 'List Output Directory'
         run: |
           echo $HOME
+          echo ${{ github.workspace }}
           pwd
           ls -l canisters/integration-tests/wasms
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.canister }}-artifact
-          path: canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
+          path: ${{ github.workspace }}canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
           retention-days: 10
   integration-tests:
     name: 'integration-tests:required'
