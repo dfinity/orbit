@@ -60,11 +60,15 @@ jobs:
         uses: actions/checkout@v3
       - name: 'Build Package'
         run: ./scripts/generate-wasm.sh ${{ matrix.package }}
+      - name: 'Prepare artifacts'
+        run: |
+          mkdir -p artifacts
+          mv canisters/integration-tests/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.package }}-artifact
-          path: canisters/integration-tests/wasms/${{ matrix.package }}.wasm.gz
+          name: integration-tests
+          path: artifacts/${{ matrix.package }}.wasm.gz
           retention-days: 10
   download-canisters:
     name: Download Canister
@@ -82,16 +86,16 @@ jobs:
       - name: 'Download Canister'
         run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
       - name: 'Prepare artifacts'
-        run: | 
+        run: |
           mkdir -p artifacts
           mv canisters/integration-tests/wasms/* artifacts
-          ls -l ${{ github.workspace }}/artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: integration-tests
           path: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
+          if-no-files-found: error
   integration-tests:
     name: 'integration-tests:required'
     needs: [build-wasms, download-canisters]
@@ -103,7 +107,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v3
       - name: 'Download Artifacts'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: integration-tests
           path: canisters/integration-tests/wasms
