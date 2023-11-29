@@ -46,17 +46,25 @@ jobs:
       - name: 'Check code'
         run: |
           pnpm test -- --run
+  
+  # Github Actions only supports jobs to be run in parallel, not steps, so we have to build the packages in a 
+  # separate job from the integration tests to speed up the build.
+  integration-tests-prepare:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [control_panel, upgrader, wallet]
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Build Package'
+        run: ./scripts/generate-wasm.sh ${{ matrix.package }}
   integration-tests:
     name: 'integration-tests:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: Build canisters in parallel to speed up integration tests
-        uses: sambacha/parallelish@v1.0.0
-        with:
-          cmd1: ./scripts/generate-wasm.sh control_panel
-          cmd2: ./scripts/generate-wasm.sh upgrader
-          cmd3: ./scripts/generate-wasm.sh wallet
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh
