@@ -46,11 +46,11 @@ jobs:
       - name: 'Check code'
         run: |
           pnpm test -- --run
-  
-  # Github Actions only supports jobs to be run in parallel, not steps, so we have to build the packages in a 
+
+  # Github Actions only supports jobs to be run in parallel, not steps, so we have to build the packages in a
   # separate job from the integration tests to speed up the build.
-  build-integration-tests:
-    name: Build Packages
+  build-wasms:
+    name: Build canister
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,12 +60,44 @@ jobs:
         uses: actions/checkout@v3
       - name: 'Build Package'
         run: ./scripts/generate-wasm.sh ${{ matrix.package }}
-  integration-tests:
-    name: 'integration-tests:required'
-    needs: build-integration-tests
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.package }}-artifact
+          path: canisters/integration-tests/wasms/${{ matrix.package }}.wasm.gz
+  download-nns-canisters:
+    name: Download NNS Canister
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - canister: 'icp_ledger'
+            name: 'ledger-canister'
+          - canister: 'icp_index'
+            name: 'ic-icp-index-canister'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
+      - name: 'Download Canister'
+        run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.canister }}-artifact
+          path: canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
+  integration-tests:
+    name: 'integration-tests:required'
+    needs: [build-wasms, download-nns-canisters]
+    runs-on: ubuntu-latest
+    env:
+      BUILD_WASMS: 'false'
+      DOWNLOAD_NNS_CANISTERS: 'false'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Download Artifacts'
+        uses: actions/download-artifact@v2
+        with:
+          path: canisters/integration-tests/wasms
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh
