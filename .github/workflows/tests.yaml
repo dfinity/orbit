@@ -52,13 +52,5 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: 'Setup Rust'
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: 'Setup WASM target for Rust'
-        run: rustup target add wasm32-unknown-unknown
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh
