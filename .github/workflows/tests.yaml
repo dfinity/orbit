@@ -81,11 +81,17 @@ jobs:
         uses: actions/checkout@v3
       - name: 'Download Canister'
         run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
+      - name: 'List Output Directory'
+        run: |
+          echo $HOME
+          echo ${{ github.workspace }}
+          pwd
+          ls -l canisters/integration-tests/wasms
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v2
         with:
           name: integration-tests
-          path: ${{ matrix.canister }}.wasm.gz
+          path: /canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
           retention-days: 10
   integration-tests:
     name: 'integration-tests:required'
