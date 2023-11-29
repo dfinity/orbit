@@ -91,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.canister }}-artifact
-          path: ${{ github.workspace }}canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
+          path: ${{ github.workspace }}/canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
           retention-days: 10
   integration-tests:
     name: 'integration-tests:required'
