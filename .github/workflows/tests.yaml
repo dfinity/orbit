@@ -87,6 +87,8 @@ jobs:
           echo ${{ github.workspace }}
           pwd
           ls -l canisters/integration-tests/wasms
+          cd ${{ github.workspace }}/canisters/integration-tests/wasms/
+          ls -l .
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v2
         with:
