@@ -65,8 +65,8 @@ jobs:
         with:
           name: ${{ matrix.package }}-artifact
           path: canisters/integration-tests/wasms/${{ matrix.package }}.wasm.gz
-  download-nns-canisters:
-    name: Download NNS Canister
+  download-canisters:
+    name: Download Canister
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -80,6 +80,8 @@ jobs:
         uses: actions/checkout@v3
       - name: 'Download Canister'
         run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
+      - name: 'List Output Directory'
+        run: ls -l canisters/integration-tests/wasms/
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v2
         with:
@@ -87,7 +89,7 @@ jobs:
           path: canisters/integration-tests/wasms/${{ matrix.canister }}.wasm.gz
   integration-tests:
     name: 'integration-tests:required'
-    needs: [build-wasms, download-nns-canisters]
+    needs: [build-wasms, download-canisters]
     runs-on: ubuntu-latest
     env:
       BUILD_WASMS: 'false'
