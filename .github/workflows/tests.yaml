@@ -104,9 +104,19 @@ jobs:
           path: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
           if-no-files-found: error
+  build-integration-tests:
+    name: Build Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: 'Build'
+        run: cargo build --package integration-tests
   integration-tests:
     name: 'integration-tests:required'
-    needs: [build-wasms, download-canisters]
+    needs: [build-wasms, build-integration-tests, download-canisters]
     runs-on: ubuntu-latest
     env:
       BUILD_WASMS: 'false'
