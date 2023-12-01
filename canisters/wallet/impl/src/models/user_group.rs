@@ -24,43 +24,29 @@ pub struct UserGroupKey {
     pub id: UUID,
 }
 
-pub struct UserGroupValidator<'group> {
-    group: &'group UserGroup,
-}
+const NAME_RANGE: (u8, u8) = (1, 50);
 
-impl<'group> UserGroupValidator<'group> {
-    pub const NAME_RANGE: (u8, u8) = (1, 50);
-
-    pub fn new(group: &'group UserGroup) -> UserGroupValidator {
-        UserGroupValidator { group }
+fn validate_name(name: &String) -> ModelValidatorResult<UserGroupError> {
+    if name.len() < NAME_RANGE.0 as usize {
+        return Err(UserGroupError::NameTooShort {
+            min_length: NAME_RANGE.0,
+        });
     }
 
-    pub fn validate_name(&self) -> ModelValidatorResult<UserGroupError> {
-        if self.group.name.len() < Self::NAME_RANGE.0 as usize {
-            return Err(UserGroupError::NameTooShort {
-                min_length: Self::NAME_RANGE.0,
-            });
-        }
-
-        if self.group.name.len() > Self::NAME_RANGE.1 as usize {
-            return Err(UserGroupError::NameTooLong {
-                max_length: Self::NAME_RANGE.1,
-            });
-        }
-
-        Ok(())
+    if name.len() > NAME_RANGE.1 as usize {
+        return Err(UserGroupError::NameTooLong {
+            max_length: NAME_RANGE.1,
+        });
     }
 
-    pub fn validate(&self) -> ModelValidatorResult<UserGroupError> {
-        self.validate_name()?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 impl ModelValidator<UserGroupError> for UserGroup {
     fn validate(&self) -> ModelValidatorResult<UserGroupError> {
-        UserGroupValidator::new(self).validate()
+        validate_name(&self.name)?;
+
+        Ok(())
     }
 }
 
@@ -84,13 +70,13 @@ mod tests {
         let mut group = mock_user_group();
         group.name = String::new();
 
-        let result = UserGroupValidator::new(&group).validate_name();
+        let result = validate_name(&group.name);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
             UserGroupError::NameTooShort {
-                min_length: UserGroupValidator::NAME_RANGE.0
+                min_length: NAME_RANGE.0
             }
         );
     }
@@ -98,25 +84,25 @@ mod tests {
     #[test]
     fn fail_user_group_name_too_long() {
         let mut group: UserGroup = mock_user_group();
-        group.name = "a".repeat(UserGroupValidator::NAME_RANGE.1 as usize + 1);
+        group.name = "a".repeat(NAME_RANGE.1 as usize + 1);
 
-        let result = UserGroupValidator::new(&group).validate_name();
+        let result = validate_name(&group.name);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
             UserGroupError::NameTooLong {
-                max_length: UserGroupValidator::NAME_RANGE.1
+                max_length: NAME_RANGE.1
             }
         );
     }
 
     #[test]
     fn test_user_group_name_validation() {
-        let mut user = mock_user_group();
-        user.name = "finance".to_string();
+        let mut group = mock_user_group();
+        group.name = "finance".to_string();
 
-        let result = UserGroupValidator::new(&user).validate_name();
+        let result = validate_name(&group.name);
 
         assert!(result.is_ok());
     }
