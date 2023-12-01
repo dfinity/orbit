@@ -14,12 +14,12 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct RemoveUserGroupProposal<'proposal> {
+pub struct RemoveUserGroupProposalHandler<'proposal> {
     proposal: &'proposal Proposal,
     user_group_service: UserGroupService,
 }
 
-impl<'proposal> RemoveUserGroupProposal<'proposal> {
+impl<'proposal> RemoveUserGroupProposalHandler<'proposal> {
     pub fn new(proposal: &'proposal Proposal) -> Self {
         Self {
             proposal,
@@ -36,7 +36,7 @@ impl<'proposal> RemoveUserGroupProposal<'proposal> {
 }
 
 #[async_trait]
-impl<'proposal> ProposalHandler for RemoveUserGroupProposal<'proposal> {
+impl<'proposal> ProposalHandler for RemoveUserGroupProposalHandler<'proposal> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         // TODO: Add policy evaluation once final policy design is ready
 

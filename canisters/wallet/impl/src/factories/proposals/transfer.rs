@@ -20,14 +20,14 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct TransferProposal<'proposal> {
+pub struct TransferProposalHandler<'proposal> {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
     proposal: &'proposal Proposal,
     notification_service: NotificationService,
 }
 
-impl<'proposal> TransferProposal<'proposal> {
+impl<'proposal> TransferProposalHandler<'proposal> {
     pub fn new(proposal: &'proposal Proposal) -> Self {
         Self {
             proposal,
@@ -59,7 +59,7 @@ impl<'proposal> TransferProposal<'proposal> {
 }
 
 #[async_trait]
-impl<'proposal> ProposalHandler for TransferProposal<'proposal> {
+impl<'proposal> ProposalHandler for TransferProposalHandler<'proposal> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         let account = self.get_account();
         let mut policy_list = account

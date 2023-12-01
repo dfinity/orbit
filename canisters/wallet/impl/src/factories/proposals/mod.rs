@@ -15,12 +15,12 @@ mod edit_user_group;
 mod remove_user_group;
 mod transfer;
 
-use add_account::AddAccountProposal;
-use add_user_group::AddUserGroupProposal;
-use edit_account::EditAccountProposal;
-use edit_user_group::EditUserGroupProposal;
-use remove_user_group::RemoveUserGroupProposal;
-use transfer::TransferProposal;
+use add_account::AddAccountProposalHandler;
+use add_user_group::AddUserGroupProposalHandler;
+use edit_account::EditAccountProposalHandler;
+use edit_user_group::EditUserGroupProposalHandler;
+use remove_user_group::RemoveUserGroupProposalHandler;
+use transfer::TransferProposalHandler;
 
 #[derive(Debug)]
 pub enum ProposalExecuteStage {
@@ -90,22 +90,22 @@ impl ProposalFactory {
 
         match input.operation {
             ProposalOperationInput::Transfer(_) => {
-                create_proposal::<TransferProposal>(id, proposed_by_user, input)
+                create_proposal::<TransferProposalHandler>(id, proposed_by_user, input)
             }
             ProposalOperationInput::EditAccount(_) => {
-                create_proposal::<EditAccountProposal>(id, proposed_by_user, input)
+                create_proposal::<EditAccountProposalHandler>(id, proposed_by_user, input)
             }
             ProposalOperationInput::AddAccount(_) => {
-                create_proposal::<AddAccountProposal>(id, proposed_by_user, input)
+                create_proposal::<AddAccountProposalHandler>(id, proposed_by_user, input)
             }
             ProposalOperationInput::AddUserGroup(_) => {
-                create_proposal::<AddUserGroupProposal>(id, proposed_by_user, input)
+                create_proposal::<AddUserGroupProposalHandler>(id, proposed_by_user, input)
             }
             ProposalOperationInput::EditUserGroup(_) => {
-                create_proposal::<EditUserGroupProposal>(id, proposed_by_user, input)
+                create_proposal::<EditUserGroupProposalHandler>(id, proposed_by_user, input)
             }
             ProposalOperationInput::RemoveUserGroup(_) => {
-                create_proposal::<RemoveUserGroupProposal>(id, proposed_by_user, input)
+                create_proposal::<RemoveUserGroupProposalHandler>(id, proposed_by_user, input)
             }
             ProposalOperationInput::AddUser(_)
             | ProposalOperationInput::EditUser(_)
@@ -119,13 +119,13 @@ impl ProposalFactory {
         proposal: &'proposal Proposal,
     ) -> Box<dyn ProposalHandler + 'proposal> {
         match &proposal.operation {
-            ProposalOperation::Transfer(_) => Box::new(TransferProposal::new(proposal)),
-            ProposalOperation::EditAccount(_) => Box::new(EditAccountProposal::new(proposal)),
-            ProposalOperation::AddAccount(_) => Box::new(AddAccountProposal::new(proposal)),
-            ProposalOperation::AddUserGroup(_) => Box::new(AddUserGroupProposal::new(proposal)),
-            ProposalOperation::EditUserGroup(_) => Box::new(EditUserGroupProposal::new(proposal)),
+            ProposalOperation::Transfer(_) => Box::new(TransferProposalHandler::new(proposal)),
+            ProposalOperation::EditAccount(_) => Box::new(EditAccountProposalHandler::new(proposal)),
+            ProposalOperation::AddAccount(_) => Box::new(AddAccountProposalHandler::new(proposal)),
+            ProposalOperation::AddUserGroup(_) => Box::new(AddUserGroupProposalHandler::new(proposal)),
+            ProposalOperation::EditUserGroup(_) => Box::new(EditUserGroupProposalHandler::new(proposal)),
             ProposalOperation::RemoveUserGroup(_) => {
-                Box::new(RemoveUserGroupProposal::new(proposal))
+                Box::new(RemoveUserGroupProposalHandler::new(proposal))
             }
             ProposalOperation::AddUser(_)
             | ProposalOperation::EditUser(_)
