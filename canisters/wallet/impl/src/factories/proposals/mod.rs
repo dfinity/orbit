@@ -115,15 +115,19 @@ impl ProposalFactory {
         }
     }
 
-    pub fn build_handler<'p>(
-        proposal: &'p Proposal,
-    ) -> Box<dyn ProposalHandler + 'p> {
+    pub fn build_handler<'p>(proposal: &'p Proposal) -> Box<dyn ProposalHandler + 'p> {
         match &proposal.operation {
             ProposalOperation::Transfer(_) => Box::new(TransferProposalHandler::new(proposal)),
-            ProposalOperation::EditAccount(_) => Box::new(EditAccountProposalHandler::new(proposal)),
+            ProposalOperation::EditAccount(_) => {
+                Box::new(EditAccountProposalHandler::new(proposal))
+            }
             ProposalOperation::AddAccount(_) => Box::new(AddAccountProposalHandler::new(proposal)),
-            ProposalOperation::AddUserGroup(_) => Box::new(AddUserGroupProposalHandler::new(proposal)),
-            ProposalOperation::EditUserGroup(_) => Box::new(EditUserGroupProposalHandler::new(proposal)),
+            ProposalOperation::AddUserGroup(_) => {
+                Box::new(AddUserGroupProposalHandler::new(proposal))
+            }
+            ProposalOperation::EditUserGroup(_) => {
+                Box::new(EditUserGroupProposalHandler::new(proposal))
+            }
             ProposalOperation::RemoveUserGroup(_) => {
                 Box::new(RemoveUserGroupProposalHandler::new(proposal))
             }
