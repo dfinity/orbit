@@ -115,9 +115,9 @@ impl ProposalFactory {
         }
     }
 
-    pub fn build_handler<'proposal>(
-        proposal: &'proposal Proposal,
-    ) -> Box<dyn ProposalHandler + 'proposal> {
+    pub fn build_handler<'p>(
+        proposal: &'p Proposal,
+    ) -> Box<dyn ProposalHandler + 'p> {
         match &proposal.operation {
             ProposalOperation::Transfer(_) => Box::new(TransferProposalHandler::new(proposal)),
             ProposalOperation::EditAccount(_) => Box::new(EditAccountProposalHandler::new(proposal)),

@@ -14,13 +14,13 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct AddAccountProposalHandler<'proposal> {
-    proposal: &'proposal Proposal,
+pub struct AddAccountProposalHandler<'p> {
+    proposal: &'p Proposal,
     account_service: AccountService,
 }
 
-impl<'proposal> AddAccountProposalHandler<'proposal> {
-    pub fn new(proposal: &'proposal Proposal) -> Self {
+impl<'p> AddAccountProposalHandler<'p> {
+    pub fn new(proposal: &'p Proposal) -> Self {
         Self {
             proposal,
             account_service: AccountService::default(),
@@ -36,7 +36,7 @@ impl<'proposal> AddAccountProposalHandler<'proposal> {
 }
 
 #[async_trait]
-impl<'proposal> ProposalHandler for AddAccountProposalHandler<'proposal> {
+impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         // TODO: Add policy evaluation once final policy design is ready
 

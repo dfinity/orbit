@@ -62,13 +62,13 @@ pub struct ProposalValidator<'model> {
     proposal: &'model Proposal,
 }
 
-impl<'proposal> ProposalValidator<'proposal> {
+impl<'model> ProposalValidator<'model> {
     pub const MAX_METADATA_KEY_LEN: u8 = 24;
     pub const MAX_METADATA_VALUE_LEN: u8 = 255;
     pub const MAX_METADATA_ENTRIES: u8 = 10;
     pub const MAX_VOTES_ENTRIES: u8 = 10;
 
-    pub fn new(proposal: &'proposal Proposal) -> ProposalValidator {
+    pub fn new(proposal: &'model Proposal) -> ProposalValidator {
         ProposalValidator { proposal }
     }
 
