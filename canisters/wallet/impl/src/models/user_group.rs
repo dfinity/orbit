@@ -1,4 +1,4 @@
-use crate::errors::UserGroupError;
+use crate::{errors::UserGroupError, repositories::use_user_group_repository};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -52,9 +52,26 @@ fn validate_name(name: &String) -> ModelValidatorResult<UserGroupError> {
     Ok(())
 }
 
+fn validate_unique_name(
+    user_group_id: &UUID,
+    name: &String,
+) -> ModelValidatorResult<UserGroupError> {
+    let current_user_group = use_user_group_repository().find_by_name(name);
+    if let Some(current_user_group) = current_user_group {
+        if current_user_group.id != *user_group_id {
+            return Err(UserGroupError::NonUniqueName {
+                name: name.to_string(),
+            });
+        }
+    }
+
+    Ok(())
+}
+
 impl ModelValidator<UserGroupError> for UserGroup {
     fn validate(&self) -> ModelValidatorResult<UserGroupError> {
         validate_name(&self.name)?;
+        validate_unique_name(&self.id, &self.name)?;
 
         Ok(())
     }
@@ -64,6 +81,7 @@ impl ModelValidator<UserGroupError> for UserGroup {
 mod tests {
     use super::user_group_test_utils::mock_user_group;
     use super::*;
+    use ic_canister_core::repository::Repository;
 
     #[test]
     fn fail_user_group_name_too_short() {
@@ -103,6 +121,41 @@ mod tests {
         group.name = "finance".to_string();
 
         let result = validate_name(&group.name);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_user_group_non_unique_name() {
+        let mut group = mock_user_group();
+        let mut group1 = mock_user_group();
+        group.id = [0; 16];
+        group.name = "finance".to_string();
+        group1.id = [1; 16];
+        group1.name = "finance".to_string();
+
+        use_user_group_repository().insert(group.to_key(), group.clone());
+
+        let result = validate_unique_name(&group1.id, &group1.name);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            UserGroupError::NonUniqueName {
+                name: group.name.to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn validation_of_unique_name_change_succeeds() {
+        let mut group = mock_user_group();
+        group.id = [0; 16];
+        group.name = "finance".to_string();
+
+        use_user_group_repository().insert(group.to_key(), group.clone());
+
+        let result = validate_unique_name(&group.id, &group.name);
 
         assert!(result.is_ok());
     }

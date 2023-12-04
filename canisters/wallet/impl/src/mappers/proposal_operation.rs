@@ -4,7 +4,7 @@ use crate::{
         Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
         EditUserStatusOperation, ProposalOperation, TransferOperation, User, UserGroup,
     },
-    repositories::{AccountRepository, UserGroupRepository, UserRepository},
+    repositories::{use_user_group_repository, AccountRepository, UserRepository},
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
@@ -292,7 +292,7 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::AddUserGroup(operation) => {
                 let user_group = operation.user_group_id.map(|id| {
-                    UserGroupRepository::default()
+                    use_user_group_repository()
                         .get(&UserGroup::key(id))
                         .expect("User group not found")
                 });
