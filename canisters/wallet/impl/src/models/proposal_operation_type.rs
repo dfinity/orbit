@@ -15,6 +15,9 @@ pub enum ProposalOperationType {
     AddUser = 3,
     EditUser = 4,
     EditUserStatus = 5,
+    AddUserGroup = 6,
+    EditUserGroup = 7,
+    RemoveUserGroup = 8,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -34,6 +37,9 @@ impl TryFrom<u8> for ProposalOperationType {
             3 => Ok(ProposalOperationType::AddUser),
             4 => Ok(ProposalOperationType::EditUser),
             5 => Ok(ProposalOperationType::EditUserStatus),
+            6 => Ok(ProposalOperationType::AddUserGroup),
+            7 => Ok(ProposalOperationType::EditUserGroup),
+            8 => Ok(ProposalOperationType::RemoveUserGroup),
             _ => Err(()),
         }
     }
@@ -50,6 +56,9 @@ impl FromStr for ProposalOperationType {
             "add_user" => Ok(ProposalOperationType::AddUser),
             "edit_user" => Ok(ProposalOperationType::EditUser),
             "edit_user_status" => Ok(ProposalOperationType::EditUserStatus),
+            "add_user_group" => Ok(ProposalOperationType::AddUserGroup),
+            "edit_user_group" => Ok(ProposalOperationType::EditUserGroup),
+            "remove_user_group" => Ok(ProposalOperationType::RemoveUserGroup),
             _ => Err(()),
         }
     }
@@ -64,6 +73,9 @@ impl Display for ProposalOperationType {
             ProposalOperationType::AddUser => write!(f, "add_user"),
             ProposalOperationType::EditUser => write!(f, "edit_user"),
             ProposalOperationType::EditUserStatus => write!(f, "edit_user_status"),
+            ProposalOperationType::AddUserGroup => write!(f, "add_user_group"),
+            ProposalOperationType::EditUserGroup => write!(f, "edit_user_group"),
+            ProposalOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
         }
     }
 }
@@ -124,6 +136,30 @@ mod tests {
             ProposalOperationType::from_str("edit_user_status").unwrap(),
             ProposalOperationType::EditUserStatus
         );
+        assert_eq!(
+            ProposalOperationType::AddUserGroup.to_string(),
+            "add_user_group"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("add_user_group").unwrap(),
+            ProposalOperationType::AddUserGroup
+        );
+        assert_eq!(
+            ProposalOperationType::EditUserGroup.to_string(),
+            "edit_user_group"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("edit_user_group").unwrap(),
+            ProposalOperationType::EditUserGroup
+        );
+        assert_eq!(
+            ProposalOperationType::RemoveUserGroup.to_string(),
+            "remove_user_group"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("remove_user_group").unwrap(),
+            ProposalOperationType::RemoveUserGroup
+        );
     }
 
     #[test]
@@ -157,6 +193,21 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(5).unwrap(),
             ProposalOperationType::EditUserStatus
+        );
+        assert_eq!(ProposalOperationType::AddUserGroup as u8, 6);
+        assert_eq!(
+            ProposalOperationType::try_from(6).unwrap(),
+            ProposalOperationType::AddUserGroup
+        );
+        assert_eq!(ProposalOperationType::EditUserGroup as u8, 7);
+        assert_eq!(
+            ProposalOperationType::try_from(7).unwrap(),
+            ProposalOperationType::EditUserGroup
+        );
+        assert_eq!(ProposalOperationType::RemoveUserGroup as u8, 8);
+        assert_eq!(
+            ProposalOperationType::try_from(8).unwrap(),
+            ProposalOperationType::RemoveUserGroup
         );
     }
 }

@@ -3,10 +3,10 @@ use crate::{
     core::ic_cdk::api::trap,
     errors::{ProposalError, ProposalExecuteError},
     models::{
-        AddAccountOperation, Policy, PolicyStatus, Proposal, ProposalExecutionPlan,
+        AddUserGroupOperation, Policy, PolicyStatus, Proposal, ProposalExecutionPlan,
         ProposalOperation,
     },
-    services::AccountService,
+    services::UserGroupService,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -14,29 +14,29 @@ use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 #[derive(Debug)]
-pub struct AddAccountProposalHandler<'p> {
+pub struct AddUserGroupProposalHandler<'p> {
     proposal: &'p Proposal,
-    account_service: AccountService,
+    user_group_service: UserGroupService,
 }
 
-impl<'p> AddAccountProposalHandler<'p> {
+impl<'p> AddUserGroupProposalHandler<'p> {
     pub fn new(proposal: &'p Proposal) -> Self {
         Self {
             proposal,
-            account_service: AccountService::default(),
+            user_group_service: UserGroupService::default(),
         }
     }
 
-    fn unwrap_operation(&self) -> &AddAccountOperation {
+    fn unwrap_operation(&self) -> &AddUserGroupOperation {
         match self.proposal.operation {
-            ProposalOperation::AddAccount(ref ctx) => ctx,
+            ProposalOperation::AddUserGroup(ref ctx) => ctx,
             _ => trap("Invalid proposal operation for processor"),
         }
     }
 }
 
 #[async_trait]
-impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
+impl<'p> ProposalHandler for AddUserGroupProposalHandler<'p> {
     fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
         // TODO: Add policy evaluation once final policy design is ready
 
@@ -49,26 +49,6 @@ impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
         false
     }
 
-    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let input = self.unwrap_operation();
-
-        let account = self
-            .account_service
-            .create_account(input.clone())
-            .await
-            .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to create account: {}", e),
-            })?;
-
-        let mut operation = self.proposal.operation.clone();
-
-        if let ProposalOperation::AddAccount(ref mut ctx) = operation {
-            ctx.account_id = Some(account.id);
-        }
-
-        Ok(ProposalExecuteStage::Completed(operation))
-    }
-
     fn has_access(&self, user_id: &UUID) -> bool {
         // TODO: Add necessary access policies once final policy design is ready
 
@@ -77,6 +57,26 @@ impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
 
     async fn on_created(&self) {
         // TODO: Add once policy design is ready
+    }
+
+    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
+        let operation = self.unwrap_operation();
+
+        let user_group = self
+            .user_group_service
+            .create(operation.input.clone())
+            .await
+            .map_err(|e| ProposalExecuteError::Failed {
+                reason: format!("Failed to create user group: {}", e),
+            })?;
+
+        let mut operation = self.proposal.operation.clone();
+
+        if let ProposalOperation::AddUserGroup(ref mut op) = operation {
+            op.user_group_id = Some(user_group.id);
+        }
+
+        Ok(ProposalExecuteStage::Completed(operation))
     }
 
     fn new_proposal(
@@ -88,17 +88,14 @@ impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
         operation: ProposalOperationInput,
     ) -> Result<Proposal, ProposalError> {
         match operation {
-            ProposalOperationInput::AddAccount(input) => {
+            ProposalOperationInput::AddUserGroup(input) => {
                 let proposal = Proposal::new(
                     id,
                     proposed_by_user,
                     Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::AddAccount(AddAccountOperation {
-                        account_id: None,
-                        input: input.into(),
-                    }),
+                    ProposalOperation::AddUserGroup(input.into()),
                     execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
-                    title.unwrap_or_else(|| "Account creation".to_string()),
+                    title.unwrap_or_else(|| "User group creation".to_string()),
                     summary,
                 );
 

@@ -91,6 +91,12 @@ pub struct TransferKey {
 }
 
 impl Transfer {
+    pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
+    pub const NETWORK_RANGE: (u8, u8) = (1, 50);
+    pub const MAX_METADATA: u8 = 10;
+    pub const MAX_METADATA_KEY_LEN: u8 = 24;
+    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
+
     /// Creates a new transfer key from the given key components.
     pub fn key(id: TransferId) -> TransferKey {
         TransferKey { id }
@@ -158,113 +164,78 @@ impl Transfer {
     }
 }
 
-pub struct TransferValidator<'model> {
-    transfer: &'model Transfer,
+fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<TransferError> {
+    if metadata.len() > Transfer::MAX_METADATA as usize {
+        return Err(TransferError::ValidationError {
+            info: format!(
+                "Transfer metadata count exceeds the maximum allowed: {}",
+                Transfer::MAX_METADATA
+            ),
+        });
+    }
+
+    for (key, value) in metadata.iter() {
+        if key.len() > Transfer::MAX_METADATA_KEY_LEN as usize {
+            return Err(TransferError::ValidationError {
+                info: format!(
+                    "Transfer metadata key length exceeds the maximum allowed: {}",
+                    Transfer::MAX_METADATA_KEY_LEN
+                ),
+            });
+        }
+
+        if value.len() > Transfer::MAX_METADATA_VALUE_LEN as usize {
+            return Err(TransferError::ValidationError {
+                info: format!(
+                    "Transfer metadata value length exceeds the maximum allowed: {}",
+                    Transfer::MAX_METADATA_VALUE_LEN
+                ),
+            });
+        }
+    }
+
+    Ok(())
 }
 
-impl<'model> TransferValidator<'model> {
-    pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
-    pub const NETWORK_RANGE: (u8, u8) = (1, 50);
-    pub const MAX_METADATA: u8 = 10;
-    pub const MAX_METADATA_KEY_LEN: u8 = 24;
-    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
-
-    pub fn new(transfer: &'model Transfer) -> Self {
-        Self { transfer }
+fn validate_to_address(to_address: &String) -> ModelValidatorResult<TransferError> {
+    if (to_address.len() < Transfer::ADDRESS_RANGE.0 as usize)
+        || (to_address.len() > Transfer::ADDRESS_RANGE.1 as usize)
+    {
+        return Err(TransferError::ValidationError {
+            info: format!(
+                "Transfer destination address length exceeds the allowed range: {} to {}",
+                Transfer::ADDRESS_RANGE.0,
+                Transfer::ADDRESS_RANGE.1
+            ),
+        });
     }
 
-    pub fn validate_metadata(&self) -> ModelValidatorResult<TransferError> {
-        if self.transfer.metadata.len() > Self::MAX_METADATA as usize {
-            return Err(TransferError::ValidationError {
-                info: format!(
-                    "Transfer metadata count exceeds the maximum allowed: {}",
-                    Self::MAX_METADATA
-                ),
-            });
-        }
+    Ok(())
+}
 
-        for (key, value) in self.transfer.metadata.iter() {
-            if key.len() > Self::MAX_METADATA_KEY_LEN as usize {
-                return Err(TransferError::ValidationError {
-                    info: format!(
-                        "Transfer metadata key length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_KEY_LEN
-                    ),
-                });
-            }
-
-            if value.len() > Self::MAX_METADATA_VALUE_LEN as usize {
-                return Err(TransferError::ValidationError {
-                    info: format!(
-                        "Transfer metadata value length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_VALUE_LEN
-                    ),
-                });
-            }
-        }
-
-        Ok(())
+fn validate_network(blockchain_network: &String) -> ModelValidatorResult<TransferError> {
+    if (blockchain_network.len() < Transfer::NETWORK_RANGE.0 as usize)
+        || (blockchain_network.len() > Transfer::NETWORK_RANGE.1 as usize)
+    {
+        return Err(TransferError::ValidationError {
+            info: format!(
+                "Transfer network length exceeds the allowed range: {} to {}",
+                Transfer::NETWORK_RANGE.0,
+                Transfer::NETWORK_RANGE.1
+            ),
+        });
     }
 
-    pub fn validate_to_address(&self) -> ModelValidatorResult<TransferError> {
-        if (self.transfer.to_address.len() < Self::ADDRESS_RANGE.0 as usize)
-            || (self.transfer.to_address.len() > Self::ADDRESS_RANGE.1 as usize)
-        {
-            return Err(TransferError::ValidationError {
-                info: format!(
-                    "Transfer destination address length exceeds the allowed range: {} to {}",
-                    Self::ADDRESS_RANGE.0,
-                    Self::ADDRESS_RANGE.1
-                ),
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_network(&self) -> ModelValidatorResult<TransferError> {
-        if (self.transfer.blockchain_network.len() < Self::NETWORK_RANGE.0 as usize)
-            || (self.transfer.blockchain_network.len() > Self::NETWORK_RANGE.1 as usize)
-        {
-            return Err(TransferError::ValidationError {
-                info: format!(
-                    "Transfer network length exceeds the allowed range: {} to {}",
-                    Self::NETWORK_RANGE.0,
-                    Self::NETWORK_RANGE.1
-                ),
-            });
-        }
-
-        Ok(())
-    }
-
-    // pub fn validate_expiration_dt(&self) -> ModelValidatorResult<TransferError> {
-    //     if let TransferExecutionPlan::Scheduled { execution_time } = &self.transfer.execution_plan {
-    //         if self.transfer.expiration_dt < *execution_time {
-    //             return Err(TransferError::ValidationError {
-    //                 info:
-    //                     "Transfer expiration date must be greater then the planned execution_time"
-    //                         .to_string(),
-    //             });
-    //         }
-    //     }
-
-    //     Ok(())
-    // }
-
-    pub fn validate(&self) -> ModelValidatorResult<TransferError> {
-        self.validate_metadata()?;
-        self.validate_to_address()?;
-        self.validate_network()?;
-        // self.validate_expiration_dt()?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 impl ModelValidator<TransferError> for Transfer {
     fn validate(&self) -> ModelValidatorResult<TransferError> {
-        TransferValidator::new(self).validate()
+        validate_metadata(&self.metadata)?;
+        validate_to_address(&self.to_address)?;
+        validate_network(&self.blockchain_network)?;
+
+        Ok(())
     }
 }
 
@@ -278,7 +249,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.metadata = vec![("foo".to_string(), "bar".to_string())];
 
-        let result = TransferValidator::new(&transfer).validate_metadata();
+        let result = validate_metadata(&transfer.metadata);
 
         assert!(result.is_ok());
     }
@@ -286,12 +257,10 @@ mod tests {
     #[test]
     fn fail_operation_metadata_too_many_entries() {
         let mut transfer = mock_transfer();
-        transfer.metadata = vec![
-            ("foo".to_string(), "bar".to_string());
-            TransferValidator::MAX_METADATA as usize + 1
-        ];
+        transfer.metadata =
+            vec![("foo".to_string(), "bar".to_string()); Transfer::MAX_METADATA as usize + 1];
 
-        let result = TransferValidator::new(&transfer).validate_metadata();
+        let result = validate_metadata(&transfer.metadata);
 
         assert!(result.is_err());
         assert_eq!(
@@ -299,7 +268,7 @@ mod tests {
             TransferError::ValidationError {
                 info: format!(
                     "Transfer metadata count exceeds the maximum allowed: {}",
-                    TransferValidator::MAX_METADATA
+                    Transfer::MAX_METADATA
                 )
             }
         );
@@ -310,7 +279,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.to_address = "a".repeat(255);
 
-        let result = TransferValidator::new(&transfer).validate_to_address();
+        let result = validate_to_address(&transfer.to_address);
 
         assert!(result.is_ok());
     }
@@ -318,9 +287,9 @@ mod tests {
     #[test]
     fn fail_address_too_long() {
         let mut transfer = mock_transfer();
-        transfer.to_address = "a".repeat(256);
+        transfer.to_address = "a".repeat(Transfer::ADDRESS_RANGE.1 as usize + 1);
 
-        let result = TransferValidator::new(&transfer).validate_to_address();
+        let result = validate_to_address(&transfer.to_address);
 
         assert!(result.is_err());
         assert_eq!(
@@ -328,8 +297,8 @@ mod tests {
             TransferError::ValidationError {
                 info: format!(
                     "Transfer destination address length exceeds the allowed range: {} to {}",
-                    TransferValidator::ADDRESS_RANGE.0,
-                    TransferValidator::ADDRESS_RANGE.1
+                    Transfer::ADDRESS_RANGE.0,
+                    Transfer::ADDRESS_RANGE.1
                 )
             }
         );
@@ -340,7 +309,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.to_address = "".to_string();
 
-        let result = TransferValidator::new(&transfer).validate_to_address();
+        let result = validate_to_address(&transfer.to_address);
 
         assert!(result.is_err());
         assert_eq!(
@@ -348,8 +317,8 @@ mod tests {
             TransferError::ValidationError {
                 info: format!(
                     "Transfer destination address length exceeds the allowed range: {} to {}",
-                    TransferValidator::ADDRESS_RANGE.0,
-                    TransferValidator::ADDRESS_RANGE.1
+                    Transfer::ADDRESS_RANGE.0,
+                    Transfer::ADDRESS_RANGE.1
                 )
             }
         );
@@ -360,7 +329,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.blockchain_network = "icp:mainnet".to_string();
 
-        let result = TransferValidator::new(&transfer).validate_network();
+        let result = validate_network(&transfer.blockchain_network);
 
         assert!(result.is_ok());
     }
@@ -368,9 +337,9 @@ mod tests {
     #[test]
     fn fail_network_too_long() {
         let mut transfer = mock_transfer();
-        transfer.blockchain_network = "a".repeat(51);
+        transfer.blockchain_network = "a".repeat(Transfer::NETWORK_RANGE.1 as usize + 1);
 
-        let result = TransferValidator::new(&transfer).validate_network();
+        let result = validate_network(&transfer.blockchain_network);
 
         assert!(result.is_err());
         assert_eq!(
@@ -378,8 +347,8 @@ mod tests {
             TransferError::ValidationError {
                 info: format!(
                     "Transfer network length exceeds the allowed range: {} to {}",
-                    TransferValidator::NETWORK_RANGE.0,
-                    TransferValidator::NETWORK_RANGE.1
+                    Transfer::NETWORK_RANGE.0,
+                    Transfer::NETWORK_RANGE.1
                 )
             }
         );
@@ -390,7 +359,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.blockchain_network = "".to_string();
 
-        let result = TransferValidator::new(&transfer).validate_network();
+        let result = validate_network(&transfer.blockchain_network);
 
         assert!(result.is_err());
         assert_eq!(
@@ -398,43 +367,12 @@ mod tests {
             TransferError::ValidationError {
                 info: format!(
                     "Transfer network length exceeds the allowed range: {} to {}",
-                    TransferValidator::NETWORK_RANGE.0,
-                    TransferValidator::NETWORK_RANGE.1
+                    Transfer::NETWORK_RANGE.0,
+                    Transfer::NETWORK_RANGE.1
                 )
             }
         );
     }
-
-    // #[test]
-    // fn test_expiration_dt_validation() {
-    //     let mut transfer = mock_transfer();
-    //     transfer.expiration_dt = time() + 1000;
-
-    //     let result = TransferValidator::new(&transfer).validate_expiration_dt();
-
-    //     assert!(result.is_ok());
-    // }
-
-    // #[test]
-    // fn fail_expiration_dt_before_execution() {
-    //     let mut transfer = mock_transfer();
-    //     let now = time();
-    //     transfer.execution_plan = TransferExecutionPlan::Scheduled {
-    //         execution_time: now + 1,
-    //     };
-    //     transfer.expiration_dt = now;
-
-    //     let result = TransferValidator::new(&transfer).validate_expiration_dt();
-
-    //     assert!(result.is_err());
-    //     assert_eq!(
-    //         result.unwrap_err(),
-    //         TransferError::ValidationError {
-    //             info: "Transfer expiration date must be greater then the planned execution_time"
-    //                 .to_string()
-    //         }
-    //     );
-    // }
 }
 
 #[cfg(test)]

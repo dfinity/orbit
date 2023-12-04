@@ -35,59 +35,45 @@ pub struct NotificationKey {
     pub id: NotificationId,
 }
 
-pub struct NotificationValidator<'model> {
-    notification: &'model Notification,
+fn validate_title(title: &(String, String)) -> ModelValidatorResult<NotificationError> {
+    if title.0.len() > Notification::MAX_TITLE_LEN as usize {
+        return Err(NotificationError::ValidationError {
+            info: format!(
+                "Notification title exceeds the maximum allowed: {}",
+                Notification::MAX_TITLE_LEN
+            ),
+        });
+    }
+
+    Ok(())
 }
 
-impl<'model> NotificationValidator<'model> {
-    pub const MAX_TITLE_LEN: u8 = 255;
-    pub const MAX_MESSAGE_LEN: u32 = 4096;
-
-    pub fn new(notification: &'model Notification) -> NotificationValidator {
-        NotificationValidator { notification }
+fn validate_message(message: &(String, String)) -> ModelValidatorResult<NotificationError> {
+    if message.0.len() > Notification::MAX_MESSAGE_LEN as usize {
+        return Err(NotificationError::ValidationError {
+            info: format!(
+                "Notification message exceeds the maximum allowed: {}",
+                Notification::MAX_MESSAGE_LEN
+            ),
+        });
     }
 
-    pub fn validate_title(&self) -> ModelValidatorResult<NotificationError> {
-        if self.notification.title.0.len() > Self::MAX_TITLE_LEN as usize {
-            return Err(NotificationError::ValidationError {
-                info: format!(
-                    "Notification title exceeds the maximum allowed: {}",
-                    Self::MAX_TITLE_LEN
-                ),
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_message(&self) -> ModelValidatorResult<NotificationError> {
-        if self.notification.message.0.len() > Self::MAX_MESSAGE_LEN as usize {
-            return Err(NotificationError::ValidationError {
-                info: format!(
-                    "Notification message exceeds the maximum allowed: {}",
-                    Self::MAX_MESSAGE_LEN
-                ),
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate(&self) -> ModelValidatorResult<NotificationError> {
-        self.validate_title()?;
-        self.validate_message()?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 impl ModelValidator<NotificationError> for Notification {
     fn validate(&self) -> ModelValidatorResult<NotificationError> {
-        NotificationValidator::new(self).validate()
+        validate_title(&self.title)?;
+        validate_message(&self.message)?;
+
+        Ok(())
     }
 }
 
 impl Notification {
+    pub const MAX_TITLE_LEN: u8 = 255;
+    pub const MAX_MESSAGE_LEN: u32 = 4096;
+
     pub fn key(id: NotificationId) -> NotificationKey {
         NotificationKey { id }
     }
@@ -105,9 +91,9 @@ mod tests {
     #[test]
     fn fail_notification_title_too_long() {
         let mut notitication = mock_notification();
-        notitication.title.0 = "a".repeat(NotificationValidator::MAX_TITLE_LEN as usize + 1);
+        notitication.title.0 = "a".repeat(Notification::MAX_TITLE_LEN as usize + 1);
 
-        let result = NotificationValidator::new(&notitication).validate_title();
+        let result = validate_title(&notitication.title);
 
         assert!(result.is_err());
         assert_eq!(
@@ -115,7 +101,7 @@ mod tests {
             NotificationError::ValidationError {
                 info: format!(
                     "Notification title exceeds the maximum allowed: {}",
-                    NotificationValidator::MAX_TITLE_LEN
+                    Notification::MAX_TITLE_LEN
                 )
             }
         );
@@ -124,9 +110,9 @@ mod tests {
     #[test]
     fn fail_notification_message_too_long() {
         let mut notitication = mock_notification();
-        notitication.message.0 = "a".repeat(NotificationValidator::MAX_MESSAGE_LEN as usize + 1);
+        notitication.message.0 = "a".repeat(Notification::MAX_MESSAGE_LEN as usize + 1);
 
-        let result = NotificationValidator::new(&notitication).validate_message();
+        let result = validate_message(&notitication.message);
 
         assert!(result.is_err());
         assert_eq!(
@@ -134,7 +120,7 @@ mod tests {
             NotificationError::ValidationError {
                 info: format!(
                     "Notification message exceeds the maximum allowed: {}",
-                    NotificationValidator::MAX_MESSAGE_LEN
+                    Notification::MAX_MESSAGE_LEN
                 )
             }
         );

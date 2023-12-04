@@ -59,11 +59,107 @@ pub struct AccountKey {
     pub id: AccountId,
 }
 
-pub struct AccountValidator<'model> {
-    account: &'model Account,
+fn validate_policies(policies: &Vec<Policy>) -> ModelValidatorResult<AccountError> {
+    if policies.len() > Account::MAX_POLICIES as usize {
+        return Err(AccountError::ValidationError {
+            info: format!(
+                "Account policies count exceeds the maximum allowed: {}",
+                Account::MAX_POLICIES
+            ),
+        });
+    }
+
+    Ok(())
 }
 
-impl<'model> AccountValidator<'model> {
+fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<AccountError> {
+    if metadata.len() > Account::MAX_METADATA as usize {
+        return Err(AccountError::ValidationError {
+            info: format!(
+                "Account metadata count exceeds the maximum allowed: {}",
+                Account::MAX_METADATA
+            ),
+        });
+    }
+
+    for (key, value) in metadata.iter() {
+        if key.len() > Account::MAX_METADATA_KEY_LEN as usize {
+            return Err(AccountError::ValidationError {
+                info: format!(
+                    "Account metadata key length exceeds the maximum allowed: {}",
+                    Account::MAX_METADATA_KEY_LEN
+                ),
+            });
+        }
+
+        if value.len() > Account::MAX_METADATA_VALUE_LEN as usize {
+            return Err(AccountError::ValidationError {
+                info: format!(
+                    "Account metadata value length exceeds the maximum allowed: {}",
+                    Account::MAX_METADATA_VALUE_LEN
+                ),
+            });
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_symbol(symbol: &String) -> ModelValidatorResult<AccountError> {
+    if (symbol.len() < Account::SYMBOL_RANGE.0 as usize)
+        || (symbol.len() > Account::SYMBOL_RANGE.1 as usize)
+    {
+        return Err(AccountError::ValidationError {
+            info: format!(
+                "Account symbol length must be between {} and {}",
+                Account::SYMBOL_RANGE.0,
+                Account::SYMBOL_RANGE.1
+            ),
+        });
+    }
+
+    Ok(())
+}
+
+fn validate_owners(owners: &Vec<UUID>) -> ModelValidatorResult<AccountError> {
+    if (owners.len() < Account::OWNERS_RANGE.0 as usize)
+        || (owners.len() > Account::OWNERS_RANGE.1 as usize)
+    {
+        return Err(AccountError::InvalidOwnersRange {
+            min_owners: Account::OWNERS_RANGE.0,
+            max_owners: Account::OWNERS_RANGE.1,
+        });
+    }
+
+    Ok(())
+}
+
+fn validate_address(address: &String) -> ModelValidatorResult<AccountError> {
+    if (address.len() < Account::ADDRESS_RANGE.0 as usize)
+        || (address.len() > Account::ADDRESS_RANGE.1 as usize)
+    {
+        return Err(AccountError::InvalidAddressLength {
+            min_length: Account::ADDRESS_RANGE.0,
+            max_length: Account::ADDRESS_RANGE.1,
+        });
+    }
+
+    Ok(())
+}
+
+impl ModelValidator<AccountError> for Account {
+    fn validate(&self) -> ModelValidatorResult<AccountError> {
+        validate_policies(&self.policies)?;
+        validate_metadata(&self.metadata)?;
+        validate_symbol(&self.symbol)?;
+        validate_address(&self.address)?;
+        validate_owners(&self.owners)?;
+
+        Ok(())
+    }
+}
+
+impl Account {
     pub const OWNERS_RANGE: (u8, u8) = (1, 10);
     pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
     pub const SYMBOL_RANGE: (u8, u8) = (1, 8);
@@ -72,116 +168,6 @@ impl<'model> AccountValidator<'model> {
     pub const MAX_METADATA_KEY_LEN: u8 = 24;
     pub const MAX_METADATA_VALUE_LEN: u8 = 255;
 
-    pub fn new(account: &'model Account) -> AccountValidator {
-        AccountValidator { account }
-    }
-
-    pub fn validate_policies(&self) -> ModelValidatorResult<AccountError> {
-        if self.account.policies.len() > Self::MAX_POLICIES as usize {
-            return Err(AccountError::ValidationError {
-                info: format!(
-                    "Account policies count exceeds the maximum allowed: {}",
-                    Self::MAX_POLICIES
-                ),
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_metadata(&self) -> ModelValidatorResult<AccountError> {
-        if self.account.metadata.len() > Self::MAX_METADATA as usize {
-            return Err(AccountError::ValidationError {
-                info: format!(
-                    "Account metadata count exceeds the maximum allowed: {}",
-                    Self::MAX_METADATA
-                ),
-            });
-        }
-
-        for (key, value) in self.account.metadata.iter() {
-            if key.len() > Self::MAX_METADATA_KEY_LEN as usize {
-                return Err(AccountError::ValidationError {
-                    info: format!(
-                        "Account metadata key length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_KEY_LEN
-                    ),
-                });
-            }
-
-            if value.len() > Self::MAX_METADATA_VALUE_LEN as usize {
-                return Err(AccountError::ValidationError {
-                    info: format!(
-                        "Account metadata value length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_VALUE_LEN
-                    ),
-                });
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_symbol(&self) -> ModelValidatorResult<AccountError> {
-        if (self.account.symbol.len() < Self::SYMBOL_RANGE.0 as usize)
-            || (self.account.symbol.len() > Self::SYMBOL_RANGE.1 as usize)
-        {
-            return Err(AccountError::ValidationError {
-                info: format!(
-                    "Account symbol length must be between {} and {}",
-                    Self::SYMBOL_RANGE.0,
-                    Self::SYMBOL_RANGE.1
-                ),
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_owners(&self) -> ModelValidatorResult<AccountError> {
-        if (self.account.owners.len() < Self::OWNERS_RANGE.0 as usize)
-            || (self.account.owners.len() > Self::OWNERS_RANGE.1 as usize)
-        {
-            return Err(AccountError::InvalidOwnersRange {
-                min_owners: Self::OWNERS_RANGE.0,
-                max_owners: Self::OWNERS_RANGE.1,
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_address(&self) -> ModelValidatorResult<AccountError> {
-        if (self.account.address.len() < Self::ADDRESS_RANGE.0 as usize)
-            || (self.account.address.len() > Self::ADDRESS_RANGE.1 as usize)
-        {
-            return Err(AccountError::InvalidAddressLength {
-                min_length: Self::ADDRESS_RANGE.0,
-                max_length: Self::ADDRESS_RANGE.1,
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate(&self) -> ModelValidatorResult<AccountError> {
-        self.validate_policies()?;
-        self.validate_metadata()?;
-        self.validate_symbol()?;
-        self.validate_address()?;
-        self.validate_owners()?;
-
-        Ok(())
-    }
-}
-
-impl ModelValidator<AccountError> for Account {
-    fn validate(&self) -> ModelValidatorResult<AccountError> {
-        AccountValidator::new(self).validate()
-    }
-}
-
-impl Account {
     /// Creates a new account key from the given key components.
     pub fn key(id: AccountId) -> AccountKey {
         AccountKey { id }
@@ -211,10 +197,10 @@ mod tests {
         account.policies =
             vec![
                 Policy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
-                AccountValidator::MAX_POLICIES as usize + 1
+                Account::MAX_POLICIES as usize + 1
             ];
 
-        let result = AccountValidator::new(&account).validate_policies();
+        let result = validate_policies(&account.policies);
 
         assert!(result.is_err());
         assert_eq!(
@@ -231,10 +217,10 @@ mod tests {
         account.policies =
             vec![
                 Policy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
-                AccountValidator::MAX_POLICIES as usize - 1
+                Account::MAX_POLICIES as usize - 1
             ];
 
-        let result = AccountValidator::new(&account).validate_policies();
+        let result = validate_policies(&account.policies);
 
         assert!(result.is_ok());
     }
@@ -243,9 +229,9 @@ mod tests {
     fn fail_metadata_validation_too_many() {
         let mut account = mock_account();
         account.metadata =
-            vec![("a".repeat(25), "b".repeat(25)); AccountValidator::MAX_METADATA as usize + 1];
+            vec![("a".repeat(25), "b".repeat(25)); Account::MAX_METADATA as usize + 1];
 
-        let result = AccountValidator::new(&account).validate_metadata();
+        let result = validate_metadata(&account.metadata);
 
         assert!(result.is_err());
         assert_eq!(
@@ -260,9 +246,9 @@ mod tests {
     fn test_metadata_validation() {
         let mut account = mock_account();
         account.metadata =
-            vec![("a".repeat(24), "b".repeat(24)); AccountValidator::MAX_METADATA as usize - 1];
+            vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1];
 
-        let result = AccountValidator::new(&account).validate_metadata();
+        let result = validate_metadata(&account.metadata);
 
         assert!(result.is_ok());
     }
@@ -272,7 +258,7 @@ mod tests {
         let mut account = mock_account();
         account.symbol = "a".repeat(0);
 
-        let result = AccountValidator::new(&account).validate_symbol();
+        let result = validate_symbol(&account.symbol);
 
         assert!(result.is_err());
         assert_eq!(
@@ -286,9 +272,9 @@ mod tests {
     #[test]
     fn fail_symbol_validation_too_long() {
         let mut account = mock_account();
-        account.symbol = "a".repeat(9);
+        account.symbol = "a".repeat(Account::SYMBOL_RANGE.1 as usize + 1);
 
-        let result = AccountValidator::new(&account).validate_symbol();
+        let result = validate_symbol(&account.symbol);
 
         assert!(result.is_err());
         assert_eq!(
@@ -304,7 +290,7 @@ mod tests {
         let mut account = mock_account();
         account.symbol = "a".to_string();
 
-        let result = AccountValidator::new(&account).validate_symbol();
+        let result = validate_symbol(&account.symbol);
 
         assert!(result.is_ok());
     }
@@ -314,7 +300,7 @@ mod tests {
         let mut account = mock_account();
         account.address = "".to_string();
 
-        let result = AccountValidator::new(&account).validate_address();
+        let result = validate_address(&account.address);
 
         assert!(result.is_err());
         assert_eq!(
@@ -329,9 +315,9 @@ mod tests {
     #[test]
     fn fail_address_too_long() {
         let mut account = mock_account();
-        account.address = "a".repeat(256);
+        account.address = "a".repeat(Account::ADDRESS_RANGE.1 as usize + 1);
 
-        let result = AccountValidator::new(&account).validate_address();
+        let result = validate_address(&account.address);
 
         assert!(result.is_err());
         assert_eq!(
@@ -348,7 +334,7 @@ mod tests {
         let mut account = mock_account();
         account.address = "a".to_string();
 
-        let result = AccountValidator::new(&account).validate_address();
+        let result = validate_address(&account.address);
 
         assert!(result.is_ok());
     }
@@ -356,9 +342,9 @@ mod tests {
     #[test]
     fn fail_owners_too_many_entries() {
         let mut account = mock_account();
-        account.owners = vec![[0; 16]; AccountValidator::OWNERS_RANGE.1 as usize + 1];
+        account.owners = vec![[0; 16]; Account::OWNERS_RANGE.1 as usize + 1];
 
-        let result = AccountValidator::new(&account).validate_owners();
+        let result = validate_owners(&account.owners);
 
         assert!(result.is_err());
         assert_eq!(
@@ -373,9 +359,9 @@ mod tests {
     #[test]
     fn fail_owners_too_little_entries() {
         let mut account = mock_account();
-        account.owners = vec![[0; 16]; AccountValidator::OWNERS_RANGE.0 as usize - 1];
+        account.owners = vec![[0; 16]; Account::OWNERS_RANGE.0 as usize - 1];
 
-        let result = AccountValidator::new(&account).validate_owners();
+        let result = validate_owners(&account.owners);
 
         assert!(result.is_err());
         assert_eq!(
@@ -392,7 +378,7 @@ mod tests {
         let mut account = mock_account();
         account.owners = vec![[0; 16]];
 
-        let result = AccountValidator::new(&account).validate_owners();
+        let result = validate_owners(&account.owners);
 
         assert!(result.is_ok());
     }
@@ -414,10 +400,7 @@ pub mod account_test_utils {
             policies: vec![],
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
-            metadata: vec![
-                ("a".repeat(24), "b".repeat(24));
-                AccountValidator::MAX_METADATA as usize - 1
-            ],
+            metadata: vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1],
             symbol: "ICP".to_string(),
         }
     }

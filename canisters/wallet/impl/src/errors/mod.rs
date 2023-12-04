@@ -8,6 +8,9 @@ pub use account::*;
 mod user;
 pub use user::*;
 
+mod user_group;
+pub use user_group::*;
+
 mod mapper;
 pub use mapper::*;
 

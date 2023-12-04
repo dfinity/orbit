@@ -299,6 +299,40 @@ type EditUserStatusOperation = record {
   input : EditUserStatusOperationInput;
 };
 
+type AddUserGroupOperationInput = record {
+  // The name of the group.
+  name : text;
+};
+
+type AddUserGroupOperation = record {
+  // The user group that was added, only available after the proposal is executed.
+  user_group : opt UserGroup;
+  // The input to the proposal to add the user group.
+  input : AddUserGroupOperationInput;
+};
+
+type EditUserGroupOperationInput = record {
+  // The id of the group to edit.
+  user_group_id : UUID;
+  // The name of the group.
+  name : text;
+};
+
+type EditUserGroupOperation = record {
+  // The input to the proposal to edit the user group.
+  input : EditUserGroupOperationInput;
+};
+
+type RemoveUserGroupOperationInput = record {
+  // The id of the group to remove.
+  user_group_id : UUID;
+};
+
+type RemoveUserGroupOperation = record {
+  // The input to the proposal to remove the user group.
+  input : RemoveUserGroupOperationInput;
+};
+
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
@@ -312,6 +346,12 @@ type ProposalOperation = variant {
   EditUser : EditUserOperation;
   // An operation for editing the status of an existing user.
   EditUserStatus : EditUserStatusOperation;
+  // An operation for adding a new user group.
+  AddUserGroup : AddUserGroupOperation;
+  // An operation for editing an existing user group.
+  EditUserGroup : EditUserGroupOperation;
+  // An operation for removing an existing user group.
+  RemoveUserGroup : RemoveUserGroupOperation;
 };
 
 type ProposalOperationInput = variant {
@@ -327,6 +367,12 @@ type ProposalOperationInput = variant {
   EditUser : EditUserOperationInput;
   // An operation for editing the status of an existing user.
   EditUserStatus : EditUserStatusOperationInput;
+  // An operation for adding a new user group.
+  AddUserGroup : AddUserGroupOperationInput;
+  // An operation for editing an existing user group.
+  EditUserGroup : EditUserGroupOperationInput;
+  // An operation for removing an existing user group.
+  RemoveUserGroup : RemoveUserGroupOperationInput;
 };
 
 type ProposalOperationType = variant {
@@ -342,6 +388,12 @@ type ProposalOperationType = variant {
   EditUser;
   // An operation for editing the status of an existing user.
   EditUserStatus;
+  // An operation for adding a new user group.
+  AddUserGroup;
+  // An operation for editing an existing user group.
+  EditUserGroup;
+  // An operation for removing an existing user group.
+  RemoveUserGroup;
 };
 
 // The schedule for executing a transaction of a given transfer.
@@ -550,6 +602,14 @@ type UserRole = variant {
   User;
   // The guest role is also used to allow access when the user does not have the user defined.
   Guest;
+};
+
+// A record type that can be used to represent a user group in the wallet.
+type UserGroup = record {
+  // The UUID of the group (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The name of the group (e.g. "Finance").
+  name : text;
 };
 
 type UserStatus = variant {

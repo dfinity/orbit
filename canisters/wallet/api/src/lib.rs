@@ -24,3 +24,6 @@ pub use proposal::*;
 
 mod user;
 pub use user::*;
+
+mod user_group;
+pub use user_group::*;

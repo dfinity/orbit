@@ -34,73 +34,11 @@ pub struct UserKey {
     pub id: UserId,
 }
 
-pub struct UserValidator<'user> {
-    user: &'user User,
-}
-
-impl<'user> UserValidator<'user> {
+impl User {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const ACCESS_ROLES_RANGE: (u8, u8) = (1, 10);
     pub const MAX_UNCONFIRMED_IDENTITIES: u8 = 9;
 
-    pub fn new(user: &'user User) -> UserValidator {
-        UserValidator { user }
-    }
-
-    pub fn validate_identities(&self) -> ModelValidatorResult<UserError> {
-        if self.user.identities.len() < Self::IDENTITIES_RANGE.0 as usize {
-            return Err(UserError::TooLittleIdentities);
-        }
-
-        if self.user.identities.len() > Self::IDENTITIES_RANGE.1 as usize {
-            return Err(UserError::TooManyIdentities {
-                max_identities: Self::IDENTITIES_RANGE.1,
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_access_roles(&self) -> ModelValidatorResult<UserError> {
-        if self.user.access_roles.len() < Self::ACCESS_ROLES_RANGE.0 as usize {
-            return Err(UserError::TooLittleAccessRoles);
-        }
-
-        if self.user.access_roles.len() > Self::ACCESS_ROLES_RANGE.1 as usize {
-            return Err(UserError::TooManyAccessRoles {
-                max_access_roles: Self::ACCESS_ROLES_RANGE.1,
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate_unconfirmed_identities(&self) -> ModelValidatorResult<UserError> {
-        if self.user.unconfirmed_identities.len() > Self::MAX_UNCONFIRMED_IDENTITIES as usize {
-            return Err(UserError::TooManyUnconfirmedIdentities {
-                max_identities: Self::MAX_UNCONFIRMED_IDENTITIES,
-            });
-        }
-
-        Ok(())
-    }
-
-    pub fn validate(&self) -> ModelValidatorResult<UserError> {
-        self.validate_identities()?;
-        self.validate_unconfirmed_identities()?;
-        self.validate_access_roles()?;
-
-        Ok(())
-    }
-}
-
-impl ModelValidator<UserError> for User {
-    fn validate(&self) -> ModelValidatorResult<UserError> {
-        UserValidator::new(self).validate()
-    }
-}
-
-impl User {
     /// Creates a new user key from the given key components.
     pub fn key(id: UserId) -> UserKey {
         UserKey { id }
@@ -111,8 +49,58 @@ impl User {
     }
 }
 
+fn validate_identities(identities: &Vec<Principal>) -> ModelValidatorResult<UserError> {
+    if identities.len() < User::IDENTITIES_RANGE.0 as usize {
+        return Err(UserError::TooLittleIdentities);
+    }
+
+    if identities.len() > User::IDENTITIES_RANGE.1 as usize {
+        return Err(UserError::TooManyIdentities {
+            max_identities: User::IDENTITIES_RANGE.1,
+        });
+    }
+
+    Ok(())
+}
+
+fn validate_access_roles(access_roles: &Vec<AccessRole>) -> ModelValidatorResult<UserError> {
+    if access_roles.len() < User::ACCESS_ROLES_RANGE.0 as usize {
+        return Err(UserError::TooLittleAccessRoles);
+    }
+
+    if access_roles.len() > User::ACCESS_ROLES_RANGE.1 as usize {
+        return Err(UserError::TooManyAccessRoles {
+            max_access_roles: User::ACCESS_ROLES_RANGE.1,
+        });
+    }
+
+    Ok(())
+}
+
+fn validate_unconfirmed_identities(
+    unconfirmed_identities: &Vec<Principal>,
+) -> ModelValidatorResult<UserError> {
+    if unconfirmed_identities.len() > User::MAX_UNCONFIRMED_IDENTITIES as usize {
+        return Err(UserError::TooManyUnconfirmedIdentities {
+            max_identities: User::MAX_UNCONFIRMED_IDENTITIES,
+        });
+    }
+
+    Ok(())
+}
+
+impl ModelValidator<UserError> for User {
+    fn validate(&self) -> ModelValidatorResult<UserError> {
+        validate_identities(&self.identities)?;
+        validate_unconfirmed_identities(&self.unconfirmed_identities)?;
+        validate_access_roles(&self.access_roles)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::user_test_utils::mock_user;
     use super::*;
 
@@ -121,7 +109,7 @@ pub mod tests {
         let mut user = mock_user();
         user.identities = vec![];
 
-        let result = UserValidator::new(&user).validate_identities();
+        let result = validate_identities(&user.identities);
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), UserError::TooLittleIdentities);
@@ -130,16 +118,15 @@ pub mod tests {
     #[test]
     fn fail_user_too_many_identities() {
         let mut user = mock_user();
-        user.identities =
-            vec![Principal::anonymous(); UserValidator::IDENTITIES_RANGE.1 as usize + 1];
+        user.identities = vec![Principal::anonymous(); User::IDENTITIES_RANGE.1 as usize + 1];
 
-        let result = UserValidator::new(&user).validate_identities();
+        let result = validate_identities(&user.identities);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
             UserError::TooManyIdentities {
-                max_identities: UserValidator::IDENTITIES_RANGE.1
+                max_identities: User::IDENTITIES_RANGE.1
             }
         );
     }
@@ -149,7 +136,7 @@ pub mod tests {
         let mut user = mock_user();
         user.identities = vec![Principal::anonymous(); 5];
 
-        let result = UserValidator::new(&user).validate_identities();
+        let result = validate_identities(&user.identities);
 
         assert!(result.is_ok());
     }
@@ -158,15 +145,15 @@ pub mod tests {
     fn fail_user_too_many_unconfirmed_identities() {
         let mut user = mock_user();
         user.unconfirmed_identities =
-            vec![Principal::anonymous(); UserValidator::MAX_UNCONFIRMED_IDENTITIES as usize + 1];
+            vec![Principal::anonymous(); User::MAX_UNCONFIRMED_IDENTITIES as usize + 1];
 
-        let result = UserValidator::new(&user).validate_unconfirmed_identities();
+        let result = validate_unconfirmed_identities(&user.unconfirmed_identities);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
             UserError::TooManyUnconfirmedIdentities {
-                max_identities: UserValidator::MAX_UNCONFIRMED_IDENTITIES
+                max_identities: User::MAX_UNCONFIRMED_IDENTITIES
             }
         );
     }
@@ -175,9 +162,9 @@ pub mod tests {
     fn test_user_unconfirmed_identities_validation() {
         let mut user = mock_user();
         user.unconfirmed_identities =
-            vec![Principal::anonymous(); UserValidator::MAX_UNCONFIRMED_IDENTITIES as usize - 1];
+            vec![Principal::anonymous(); User::MAX_UNCONFIRMED_IDENTITIES as usize - 1];
 
-        let result = UserValidator::new(&user).validate_unconfirmed_identities();
+        let result = validate_unconfirmed_identities(&user.unconfirmed_identities);
 
         assert!(result.is_ok());
     }
@@ -187,7 +174,7 @@ pub mod tests {
         let mut user = mock_user();
         user.access_roles = vec![AccessRole::User];
 
-        let result = UserValidator::new(&user).validate_access_roles();
+        let result = validate_access_roles(&user.access_roles);
 
         assert!(result.is_ok());
     }
@@ -197,7 +184,7 @@ pub mod tests {
         let mut user = mock_user();
         user.access_roles = vec![];
 
-        let result = UserValidator::new(&user).validate_access_roles();
+        let result = validate_access_roles(&user.access_roles);
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), UserError::TooLittleAccessRoles);
@@ -206,16 +193,15 @@ pub mod tests {
     #[test]
     fn fail_user_access_roles_too_many() {
         let mut user = mock_user();
-        user.access_roles =
-            vec![AccessRole::User; UserValidator::ACCESS_ROLES_RANGE.1 as usize + 1];
+        user.access_roles = vec![AccessRole::User; User::ACCESS_ROLES_RANGE.1 as usize + 1];
 
-        let result = UserValidator::new(&user).validate_access_roles();
+        let result = validate_access_roles(&user.access_roles);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
             UserError::TooManyAccessRoles {
-                max_access_roles: UserValidator::ACCESS_ROLES_RANGE.1
+                max_access_roles: User::ACCESS_ROLES_RANGE.1
             }
         );
     }
