@@ -58,86 +58,69 @@ pub struct ProposalKey {
     pub id: ProposalId,
 }
 
-pub struct ProposalValidator<'model> {
-    proposal: &'model Proposal,
+fn validate_votes(votes: &Vec<ProposalVote>) -> ModelValidatorResult<ProposalError> {
+    if votes.len() > Proposal::MAX_VOTES_ENTRIES as usize {
+        return Err(ProposalError::ValidationError {
+            info: format!(
+                "Proposal vote count exceeds the maximum allowed: {}",
+                Proposal::MAX_VOTES_ENTRIES
+            ),
+        });
+    }
+
+    votes.iter().try_for_each(|decision| decision.validate())?;
+
+    Ok(())
 }
 
-impl<'model> ProposalValidator<'model> {
+fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<ProposalError> {
+    if metadata.len() > Proposal::MAX_METADATA_ENTRIES as usize {
+        return Err(ProposalError::ValidationError {
+            info: format!(
+                "Proposal metadata count exceeds the maximum allowed: {}",
+                Proposal::MAX_METADATA_ENTRIES
+            ),
+        });
+    }
+
+    for (key, value) in metadata.iter() {
+        if key.len() > Proposal::MAX_METADATA_KEY_LEN as usize {
+            return Err(ProposalError::ValidationError {
+                info: format!(
+                    "Proposal metadata key length exceeds the maximum allowed: {}",
+                    Proposal::MAX_METADATA_KEY_LEN
+                ),
+            });
+        }
+
+        if value.len() > Proposal::MAX_METADATA_VALUE_LEN as usize {
+            return Err(ProposalError::ValidationError {
+                info: format!(
+                    "Proposal metadata value length exceeds the maximum allowed: {}",
+                    Proposal::MAX_METADATA_VALUE_LEN
+                ),
+            });
+        }
+    }
+
+    Ok(())
+}
+
+impl ModelValidator<ProposalError> for Proposal {
+    fn validate(&self) -> ModelValidatorResult<ProposalError> {
+        validate_metadata(&self.metadata)?;
+        validate_votes(&self.votes)?;
+
+        Ok(())
+    }
+}
+
+impl Proposal {
     pub const MAX_METADATA_KEY_LEN: u8 = 24;
     pub const MAX_METADATA_VALUE_LEN: u8 = 255;
     pub const MAX_METADATA_ENTRIES: u8 = 10;
     pub const MAX_VOTES_ENTRIES: u8 = 10;
 
-    pub fn new(proposal: &'model Proposal) -> ProposalValidator {
-        ProposalValidator { proposal }
-    }
-
-    pub fn validate_votes(&self) -> ModelValidatorResult<ProposalError> {
-        if self.proposal.votes.len() > Self::MAX_VOTES_ENTRIES as usize {
-            return Err(ProposalError::ValidationError {
-                info: format!(
-                    "Proposal vote count exceeds the maximum allowed: {}",
-                    Self::MAX_VOTES_ENTRIES
-                ),
-            });
-        }
-
-        self.proposal
-            .votes
-            .iter()
-            .try_for_each(|decision| decision.validate())?;
-
-        Ok(())
-    }
-
-    pub fn validate_metadata(&self) -> ModelValidatorResult<ProposalError> {
-        if self.proposal.metadata.len() > Self::MAX_METADATA_ENTRIES as usize {
-            return Err(ProposalError::ValidationError {
-                info: format!(
-                    "Proposal metadata count exceeds the maximum allowed: {}",
-                    Self::MAX_METADATA_ENTRIES
-                ),
-            });
-        }
-
-        for (key, value) in self.proposal.metadata.iter() {
-            if key.len() > Self::MAX_METADATA_KEY_LEN as usize {
-                return Err(ProposalError::ValidationError {
-                    info: format!(
-                        "Proposal metadata key length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_KEY_LEN
-                    ),
-                });
-            }
-
-            if value.len() > Self::MAX_METADATA_VALUE_LEN as usize {
-                return Err(ProposalError::ValidationError {
-                    info: format!(
-                        "Proposal metadata value length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_VALUE_LEN
-                    ),
-                });
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn validate(&self) -> ModelValidatorResult<ProposalError> {
-        self.validate_metadata()?;
-        self.validate_votes()?;
-
-        Ok(())
-    }
-}
-
-impl ModelValidator<ProposalError> for Proposal {
-    fn validate(&self) -> ModelValidatorResult<ProposalError> {
-        ProposalValidator::new(self).validate()
-    }
-}
-
-impl Proposal {
     /// Creates a new proposal key from the given key components.
     pub fn key(proposal_id: ProposalId) -> ProposalKey {
         ProposalKey { id: proposal_id }
@@ -233,10 +216,10 @@ mod tests {
         let mut proposal = mock_proposal();
         proposal.metadata = vec![
             ("foo".to_string(), "bar".to_string());
-            ProposalValidator::MAX_METADATA_ENTRIES as usize + 1
+            Proposal::MAX_METADATA_ENTRIES as usize + 1
         ];
 
-        let result = ProposalValidator::new(&proposal).validate_metadata();
+        let result = validate_metadata(&proposal.metadata);
 
         assert!(result.is_err());
         assert_eq!(
@@ -252,7 +235,7 @@ mod tests {
         let mut proposal = mock_proposal();
         proposal.metadata = vec![("a".repeat(24), "b".repeat(24)); 10];
 
-        let result = ProposalValidator::new(&proposal).validate_metadata();
+        let result = validate_metadata(&proposal.metadata);
 
         assert!(result.is_ok());
     }
@@ -262,7 +245,7 @@ mod tests {
         let mut proposal = mock_proposal();
         proposal.metadata = vec![("a".repeat(25), "b".repeat(24))];
 
-        let result = ProposalValidator::new(&proposal).validate_metadata();
+        let result = validate_metadata(&proposal.metadata);
 
         assert!(result.is_err());
         assert_eq!(
@@ -284,10 +267,10 @@ mod tests {
                 decided_dt: 0,
                 last_modification_timestamp: 0,
             };
-            ProposalValidator::MAX_VOTES_ENTRIES as usize + 1
+            Proposal::MAX_VOTES_ENTRIES as usize + 1
         ];
 
-        let result = ProposalValidator::new(&proposal).validate_votes();
+        let result = validate_votes(&proposal.votes);
 
         assert!(result.is_err());
         assert_eq!(
@@ -309,10 +292,10 @@ mod tests {
                 decided_dt: 0,
                 last_modification_timestamp: 0,
             };
-            ProposalValidator::MAX_VOTES_ENTRIES as usize - 1
+            Proposal::MAX_VOTES_ENTRIES as usize - 1
         ];
 
-        let result = ProposalValidator::new(&proposal).validate_votes();
+        let result = validate_votes(&proposal.votes);
 
         assert!(result.is_ok());
     }

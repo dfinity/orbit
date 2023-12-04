@@ -24,18 +24,28 @@ pub struct UserGroupKey {
     pub id: UUID,
 }
 
-const NAME_RANGE: (u8, u8) = (1, 50);
+impl UserGroup {
+    const NAME_RANGE: (u8, u8) = (1, 50);
+
+    pub fn key(id: UUID) -> UserGroupKey {
+        UserGroupKey { id }
+    }
+
+    pub fn to_key(&self) -> UserGroupKey {
+        UserGroup::key(self.id)
+    }
+}
 
 fn validate_name(name: &String) -> ModelValidatorResult<UserGroupError> {
-    if name.len() < NAME_RANGE.0 as usize {
+    if name.len() < UserGroup::NAME_RANGE.0 as usize {
         return Err(UserGroupError::NameTooShort {
-            min_length: NAME_RANGE.0,
+            min_length: UserGroup::NAME_RANGE.0,
         });
     }
 
-    if name.len() > NAME_RANGE.1 as usize {
+    if name.len() > UserGroup::NAME_RANGE.1 as usize {
         return Err(UserGroupError::NameTooLong {
-            max_length: NAME_RANGE.1,
+            max_length: UserGroup::NAME_RANGE.1,
         });
     }
 
@@ -47,16 +57,6 @@ impl ModelValidator<UserGroupError> for UserGroup {
         validate_name(&self.name)?;
 
         Ok(())
-    }
-}
-
-impl UserGroup {
-    pub fn key(id: UUID) -> UserGroupKey {
-        UserGroupKey { id }
-    }
-
-    pub fn to_key(&self) -> UserGroupKey {
-        UserGroup::key(self.id)
     }
 }
 
@@ -76,7 +76,7 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             UserGroupError::NameTooShort {
-                min_length: NAME_RANGE.0
+                min_length: UserGroup::NAME_RANGE.0
             }
         );
     }
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn fail_user_group_name_too_long() {
         let mut group: UserGroup = mock_user_group();
-        group.name = "a".repeat(NAME_RANGE.1 as usize + 1);
+        group.name = "a".repeat(UserGroup::NAME_RANGE.1 as usize + 1);
 
         let result = validate_name(&group.name);
 
@@ -92,7 +92,7 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             UserGroupError::NameTooLong {
-                max_length: NAME_RANGE.1
+                max_length: UserGroup::NAME_RANGE.1
             }
         );
     }

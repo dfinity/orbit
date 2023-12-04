@@ -22,39 +22,27 @@ pub struct ProposalVote {
     pub last_modification_timestamp: Timestamp,
 }
 
-pub struct ProposalVoteValidator<'model> {
-    task: &'model ProposalVote,
+impl ProposalVote {
+    pub const MAX_REASON_LEN: u8 = 200;
 }
 
-impl<'model> ProposalVoteValidator<'model> {
-    pub const MAX_REASON_LEN: u8 = 200;
-
-    pub fn new(task: &'model ProposalVote) -> ProposalVoteValidator {
-        ProposalVoteValidator { task }
-    }
-
-    pub fn validate_reason(&self) -> ModelValidatorResult<ProposalError> {
-        if let Some(reason) = &self.task.status_reason {
-            if reason.len() > Self::MAX_REASON_LEN as usize {
-                return Err(ProposalError::VoteReasonTooLong {
-                    max_len: Self::MAX_REASON_LEN,
-                });
-            }
+fn validate_reason(reason: &Option<String>) -> ModelValidatorResult<ProposalError> {
+    if let Some(reason) = reason {
+        if reason.len() > ProposalVote::MAX_REASON_LEN as usize {
+            return Err(ProposalError::VoteReasonTooLong {
+                max_len: ProposalVote::MAX_REASON_LEN,
+            });
         }
-
-        Ok(())
     }
 
-    pub fn validate(&self) -> ModelValidatorResult<ProposalError> {
-        self.validate_reason()?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 impl ModelValidator<ProposalError> for ProposalVote {
     fn validate(&self) -> ModelValidatorResult<ProposalError> {
-        ProposalVoteValidator::new(self).validate()
+        validate_reason(&self.status_reason)?;
+
+        Ok(())
     }
 }
 
