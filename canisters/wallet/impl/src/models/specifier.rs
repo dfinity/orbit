@@ -18,12 +18,6 @@ pub enum AddressSpecifier {
 }
 
 #[derive(Clone)]
-pub enum GroupSpecifier {
-    Any,
-    Name(Vec<UUID>),
-}
-
-#[derive(Clone)]
 pub enum UserSpecifier {
     Any,
     Group(Vec<UUID>),
