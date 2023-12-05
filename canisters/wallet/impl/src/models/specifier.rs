@@ -260,13 +260,10 @@ mod tests {
         ];
 
         for tc in tcs {
-            // Proposal
-            let p = mock_proposal();
+            let proposal = mock_proposal();
+            let specifier = tc.1;
 
-            // Specifier
-            let s = tc.1;
-
-            if !m.is_match((p, s)).await? {
+            if !m.is_match((proposal, specifier)).await? {
                 return Err(anyhow!("expected true but got false"));
             }
         }
@@ -297,17 +294,13 @@ mod tests {
         ];
 
         for tc in tcs {
-            // Proposal
-            let mut p = mock_proposal();
-            p.proposed_by = tc.0;
+            let mut proposal = mock_proposal();
+            proposal.proposed_by = tc.0;
 
-            // Voter
-            let u = tc.1;
+            let voter = tc.1;
+            let specifier = tc.2;
 
-            // Specifier
-            let s = tc.2;
-
-            if !m.is_match((p, u, s)).await? {
+            if !m.is_match((proposal, voter, specifier)).await? {
                 return Err(anyhow!("expected true but got false"));
             };
         }
