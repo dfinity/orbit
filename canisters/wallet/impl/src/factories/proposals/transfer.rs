@@ -9,7 +9,7 @@ use crate::{
         ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
         TransferOperationInput, TransferProposalCreatedNotification,
     },
-    repositories::{use_account_repository, TransferRepository},
+    repositories::{TransferRepository, ACCOUNT_REPOSITORY},
     services::NotificationService,
 };
 use async_trait::async_trait;
@@ -18,17 +18,15 @@ use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
-impl TransferOperation {
-    fn get_account(&self) -> Account {
-        use_account_repository()
-            .get(&Account::key(self.input.from_account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(self.input.from_account_id).hyphenated()
-                ))
-            })
-    }
+fn get_account(from_account_id: &UUID) -> Account {
+    ACCOUNT_REPOSITORY
+        .get(&Account::key(*from_account_id))
+        .unwrap_or_else(|| {
+            trap(&format!(
+                "Account not found: {}",
+                Uuid::from_bytes(*from_account_id).hyphenated()
+            ))
+        })
 }
 
 pub struct TransferProposalCreate {}
@@ -99,7 +97,7 @@ impl<'p, 'o> TransferProposalCreateHook<'p, 'o> {
 #[async_trait]
 impl CreateHook for TransferProposalCreateHook<'_, '_> {
     async fn on_created(&self) {
-        let account = self.operation.get_account();
+        let account = get_account(&self.operation.input.from_account_id);
 
         for owner in account.owners {
             let should_send = self.proposal.proposed_by != owner;
@@ -140,7 +138,7 @@ impl<'p, 'o> TransferProposalValidate<'p, 'o> {
 
 impl Validate for TransferProposalValidate<'_, '_> {
     fn can_vote(&self, user_id: &UUID) -> bool {
-        let account = self.operation.get_account();
+        let account = get_account(&self.operation.input.from_account_id);
         let should_vote = account.policies.iter().any(|policy| match policy {
             Policy::ApprovalThreshold(_) => true,
         });
@@ -149,7 +147,7 @@ impl Validate for TransferProposalValidate<'_, '_> {
     }
 
     fn can_view(&self, user_id: &UUID) -> bool {
-        let account = self.operation.get_account();
+        let account = get_account(&self.operation.input.from_account_id);
 
         self.can_vote(user_id)
             || account.owners.contains(user_id)
@@ -174,7 +172,7 @@ impl<'p, 'o> TransferProposalEvaluate<'p, 'o> {
 #[async_trait]
 impl Evaluate for TransferProposalEvaluate<'_, '_> {
     async fn evaluate(&self) -> Vec<(Policy, PolicyStatus)> {
-        let account = self.operation.get_account();
+        let account = get_account(&self.operation.input.from_account_id);
         let mut policy_list = account
             .policies
             .into_iter()
@@ -253,7 +251,7 @@ impl<'p, 'o> TransferProposalExecute<'p, 'o> {
 impl Execute for TransferProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let transfer_id = generate_uuid_v4().await;
-        let account = self.operation.get_account();
+        let account = get_account(&self.operation.input.from_account_id);
 
         let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
             .map_err(|e| ProposalExecuteError::Failed {

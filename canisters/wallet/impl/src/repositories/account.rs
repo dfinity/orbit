@@ -22,11 +22,7 @@ thread_local! {
 }
 
 lazy_static! {
-    static ref REPOSITORY: AccountRepository = AccountRepository::default();
-}
-
-pub fn use_account_repository() -> &'static AccountRepository {
-    &REPOSITORY
+    pub static ref ACCOUNT_REPOSITORY: AccountRepository = AccountRepository::default();
 }
 
 /// A repository that enables managing accounts in stable memory.
