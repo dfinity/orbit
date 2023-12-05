@@ -9,6 +9,7 @@ use crate::{
 use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use lazy_static::lazy_static;
 use std::cell::RefCell;
 
 thread_local! {
@@ -18,6 +19,14 @@ thread_local! {
       StableBTreeMap::init(memory_manager.get(ACCOUNT_MEMORY_ID))
     )
   })
+}
+
+lazy_static! {
+    static ref REPOSITORY: AccountRepository = AccountRepository::default();
+}
+
+pub fn use_account_repository() -> &'static AccountRepository {
+    &REPOSITORY
 }
 
 /// A repository that enables managing accounts in stable memory.

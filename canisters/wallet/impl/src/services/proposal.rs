@@ -157,8 +157,7 @@ impl ProposalService {
 
     fn assert_proposal_access(&self, proposal: &Proposal, ctx: &CallContext) -> ServiceResult<()> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-        let proposal_handler = ProposalFactory::build_handler(proposal);
-        let has_access = proposal_handler.has_access(&user.id);
+        let has_access = proposal.can_view(&user.id);
 
         if !proposal.users().contains(&user.id) && !has_access {
             Err(ProposalError::Forbidden {

@@ -159,9 +159,15 @@ impl Proposal {
     }
 
     pub fn can_vote(&self, user_id: &UUID) -> bool {
-        let proposal_handler = ProposalFactory::build_handler(self);
+        let proposal_handler = ProposalFactory::validator(self);
 
         proposal_handler.can_vote(user_id)
+    }
+
+    pub fn can_view(&self, user_id: &UUID) -> bool {
+        let proposal_handler = ProposalFactory::validator(self);
+
+        proposal_handler.can_view(user_id)
     }
 
     pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
@@ -179,9 +185,9 @@ impl Proposal {
         });
     }
 
-    pub fn reevaluate(&mut self) {
-        let proposal_handler = ProposalFactory::build_handler(self);
-        let policies = proposal_handler.evaluate_policies();
+    pub async fn reevaluate(&mut self) {
+        let proposal_handler = ProposalFactory::evaluator(self);
+        let policies = proposal_handler.evaluate().await;
 
         // must drop before updating the proposal due to it being borrowed by the handler
         drop(proposal_handler);
@@ -200,7 +206,7 @@ impl Proposal {
     }
 
     pub async fn on_created(&self) {
-        let proposal_handler = ProposalFactory::build_handler(self);
+        let proposal_handler = ProposalFactory::create_hook(self);
         proposal_handler.on_created().await;
     }
 }

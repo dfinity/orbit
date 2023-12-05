@@ -1,11 +1,10 @@
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
     errors::{ProposalError, ProposalExecuteError},
-    models::{Policy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation},
+    models::{Policy, PolicyStatus, Proposal, ProposalOperation},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
-use uuid::Uuid;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
 mod add_account;
@@ -15,12 +14,10 @@ mod edit_user_group;
 mod remove_user_group;
 mod transfer;
 
-use add_account::AddAccountProposalHandler;
-use add_user_group::AddUserGroupProposalHandler;
-use edit_account::EditAccountProposalHandler;
-use edit_user_group::EditUserGroupProposalHandler;
-use remove_user_group::RemoveUserGroupProposalHandler;
-use transfer::TransferProposalHandler;
+use self::transfer::{
+    TransferProposalCreate, TransferProposalCreateHook, TransferProposalEvaluate,
+    TransferProposalExecute, TransferProposalValidate,
+};
 
 #[derive(Debug)]
 pub enum ProposalExecuteStage {
@@ -29,53 +26,60 @@ pub enum ProposalExecuteStage {
 }
 
 #[async_trait]
-pub trait ProposalHandler: Send + Sync {
-    /// Reevaluates the status of the associated policies.
-    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)>;
+pub trait Execute: Send + Sync {
+    /// Executes the proposal and returns the operation that was executed with the stage that the execution is in.
+    ///
+    /// The stage is used to indicate if the operation was completed or if it is still processing.
+    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
+}
 
+#[async_trait]
+pub trait Evaluate: Send + Sync {
+    /// Reevaluates the status of the associated policies.
+    async fn evaluate(&self) -> Vec<(Policy, PolicyStatus)>;
+}
+
+#[async_trait]
+pub trait Validate: Send + Sync {
     /// Returns true if the user can vote on the proposal.
+    ///
+    /// Votes are only allowed if the proposal is still open and has policies that
+    /// include voting such as approval threshold, minimun votes, veto votes, etc...
     fn can_vote(&self, user_id: &UUID) -> bool;
 
-    /// Checks if the user has access to the proposal.
-    fn has_access(&self, user_id: &UUID) -> bool;
+    /// Checks if the user has access to view the proposal details.
+    fn can_view(&self, user_id: &UUID) -> bool;
+}
 
-    /// Executes the proposal.
-    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
-
-    /// The post create hook is called after the proposal is created and can be used
-    /// for additional processing (e.g. sending notifications)
-    ///
-    /// Should panic if the post create hook fails to rollback state changes.
-    async fn on_created(&self) {
-        // noop by default
-    }
-
+#[async_trait]
+pub trait Create<T>: Send + Sync {
     /// Creates a new proposal for the operation but does not save it.
-    fn new_proposal(
-        id: Uuid,
+    fn create(
+        proposal_id: UUID,
         proposed_by_user: UUID,
-        title: Option<String>,
-        summary: Option<String>,
-        execution_plan: Option<ProposalExecutionPlan>,
-        operation: ProposalOperationInput,
+        input: CreateProposalInput,
+        operation_input: T,
     ) -> Result<Proposal, ProposalError>
     where
         Self: Sized;
 }
 
-fn create_proposal<Handler: ProposalHandler>(
-    proposal_id: Uuid,
+#[async_trait]
+pub trait CreateHook: Send + Sync {
+    /// The post create hook is called after the proposal is created and can be used
+    /// for additional processing (e.g. sending notifications).
+    async fn on_created(&self) {
+        // noop by default
+    }
+}
+
+fn create_proposal<OperationInput, Creator: Create<OperationInput>>(
+    proposal_id: UUID,
     proposed_by_user: UUID,
     input: CreateProposalInput,
+    operation_input: OperationInput,
 ) -> Result<Proposal, ProposalError> {
-    Handler::new_proposal(
-        proposal_id,
-        proposed_by_user,
-        input.title,
-        input.summary,
-        input.execution_plan.map(Into::into),
-        input.operation,
-    )
+    Creator::create(proposal_id, proposed_by_user, input, operation_input)
 }
 
 #[derive(Debug)]
@@ -86,56 +90,54 @@ impl ProposalFactory {
         proposed_by_user: UUID,
         input: CreateProposalInput,
     ) -> Result<Proposal, ProposalError> {
-        let id = generate_uuid_v4().await;
+        let id = *generate_uuid_v4().await.as_bytes();
 
-        match input.operation {
-            ProposalOperationInput::Transfer(_) => {
-                create_proposal::<TransferProposalHandler>(id, proposed_by_user, input)
+        match &input.operation {
+            ProposalOperationInput::Transfer(operation) => {
+                create_proposal::<wallet_api::TransferOperationInput, TransferProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
             }
-            ProposalOperationInput::EditAccount(_) => {
-                create_proposal::<EditAccountProposalHandler>(id, proposed_by_user, input)
-            }
-            ProposalOperationInput::AddAccount(_) => {
-                create_proposal::<AddAccountProposalHandler>(id, proposed_by_user, input)
-            }
-            ProposalOperationInput::AddUserGroup(_) => {
-                create_proposal::<AddUserGroupProposalHandler>(id, proposed_by_user, input)
-            }
-            ProposalOperationInput::EditUserGroup(_) => {
-                create_proposal::<EditUserGroupProposalHandler>(id, proposed_by_user, input)
-            }
-            ProposalOperationInput::RemoveUserGroup(_) => {
-                create_proposal::<RemoveUserGroupProposalHandler>(id, proposed_by_user, input)
-            }
-            ProposalOperationInput::AddUser(_)
-            | ProposalOperationInput::EditUser(_)
-            | ProposalOperationInput::EditUserStatus(_) => {
-                trap(&format!("Not yet supported: {:?}", input.operation))
-            }
+            _ => trap(&format!("Not yet supported: {:?}", input.operation)),
         }
     }
 
-    pub fn build_handler<'p>(proposal: &'p Proposal) -> Box<dyn ProposalHandler + 'p> {
+    pub fn create_hook<'p>(proposal: &'p Proposal) -> Box<dyn CreateHook + 'p> {
         match &proposal.operation {
-            ProposalOperation::Transfer(_) => Box::new(TransferProposalHandler::new(proposal)),
-            ProposalOperation::EditAccount(_) => {
-                Box::new(EditAccountProposalHandler::new(proposal))
+            ProposalOperation::Transfer(operation) => {
+                Box::new(TransferProposalCreateHook::new(proposal, operation))
             }
-            ProposalOperation::AddAccount(_) => Box::new(AddAccountProposalHandler::new(proposal)),
-            ProposalOperation::AddUserGroup(_) => {
-                Box::new(AddUserGroupProposalHandler::new(proposal))
+            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+        }
+    }
+
+    pub fn validator<'p>(proposal: &'p Proposal) -> Box<dyn Validate + 'p> {
+        match &proposal.operation {
+            ProposalOperation::Transfer(operation) => {
+                Box::new(TransferProposalValidate::new(proposal, operation))
             }
-            ProposalOperation::EditUserGroup(_) => {
-                Box::new(EditUserGroupProposalHandler::new(proposal))
+            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+        }
+    }
+
+    pub fn evaluator<'p>(proposal: &'p Proposal) -> Box<dyn Evaluate + 'p> {
+        match &proposal.operation {
+            ProposalOperation::Transfer(operation) => {
+                Box::new(TransferProposalEvaluate::new(proposal, operation))
             }
-            ProposalOperation::RemoveUserGroup(_) => {
-                Box::new(RemoveUserGroupProposalHandler::new(proposal))
+            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+        }
+    }
+
+    pub fn executor<'p>(proposal: &'p Proposal) -> Box<dyn Execute + 'p> {
+        match &proposal.operation {
+            ProposalOperation::Transfer(operation) => {
+                Box::new(TransferProposalExecute::new(proposal, operation))
             }
-            ProposalOperation::AddUser(_)
-            | ProposalOperation::EditUser(_)
-            | ProposalOperation::EditUserStatus(_) => {
-                trap(&format!("Not yet supported: {:?}", proposal.operation))
-            }
+            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
         }
     }
 }

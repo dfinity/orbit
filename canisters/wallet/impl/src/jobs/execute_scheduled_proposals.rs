@@ -88,11 +88,11 @@ impl Job {
         &self,
         mut proposal: Proposal,
     ) -> Result<Proposal, ProposalExecuteError> {
-        let proposal_handler = ProposalFactory::build_handler(&proposal);
+        let executor = ProposalFactory::executor(&proposal);
 
-        let execute_state = proposal_handler.execute().await?;
+        let execute_state = executor.execute().await?;
 
-        drop(proposal_handler);
+        drop(executor);
 
         proposal.status = match execute_state {
             ProposalExecuteStage::Completed(_) => ProposalStatus::Completed {
