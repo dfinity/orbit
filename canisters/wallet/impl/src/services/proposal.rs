@@ -109,7 +109,7 @@ impl ProposalService {
 
         // When a proposal is created, it is immediately evaluated to determine its status.
         // This is done because the proposal may be immediately rejected or adopted based on the policies.
-        proposal.reevaluate();
+        proposal.reevaluate().await;
 
         // Validate the proposal after the reevaluation.
         proposal.validate()?;
@@ -144,7 +144,7 @@ impl ProposalService {
         proposal.add_vote(voter.id, vote_decision, input.reason);
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
-        proposal.reevaluate();
+        proposal.reevaluate().await;
 
         // Validate the proposal after the reevaluation.
         proposal.validate()?;

@@ -7,11 +7,11 @@ use async_trait::async_trait;
 use ic_canister_core::types::UUID;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
-mod add_account;
-mod add_user_group;
-mod edit_account;
-mod edit_user_group;
-mod remove_user_group;
+// mod add_account;
+// mod add_user_group;
+// mod edit_account;
+// mod edit_user_group;
+// mod remove_user_group;
 mod transfer;
 
 use self::transfer::{

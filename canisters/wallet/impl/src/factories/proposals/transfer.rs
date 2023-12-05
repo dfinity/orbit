@@ -141,7 +141,7 @@ impl<'p, 'o> TransferProposalValidate<'p, 'o> {
 
 #[async_trait]
 impl Validate for TransferProposalValidate<'_, '_> {
-    async fn can_vote(&self, user_id: &UUID) -> bool {
+    fn can_vote(&self, user_id: &UUID) -> bool {
         let account = self.operation.get_account();
         let should_vote = account.policies.iter().any(|policy| match policy {
             Policy::ApprovalThreshold(_) => true,
@@ -150,7 +150,7 @@ impl Validate for TransferProposalValidate<'_, '_> {
         should_vote && account.owners.contains(user_id)
     }
 
-    async fn can_view(&self, user_id: &UUID) -> bool {
+    fn can_view(&self, user_id: &UUID) -> bool {
         let account = self.operation.get_account();
 
         self.proposal.users().contains(user_id) || account.owners.contains(user_id)
@@ -253,7 +253,7 @@ impl<'p, 'o> TransferProposalExecute<'p, 'o> {
 impl Execute for TransferProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let transfer_id = generate_uuid_v4().await;
-        let account = self.get_account();
+        let account = self.operation.get_account();
 
         let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
             .map_err(|e| ProposalExecuteError::Failed {
