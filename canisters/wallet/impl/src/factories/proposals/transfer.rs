@@ -33,7 +33,6 @@ impl TransferOperation {
 
 pub struct TransferProposalCreate {}
 
-#[async_trait]
 impl Create<wallet_api::TransferOperationInput> for TransferProposalCreate {
     fn create(
         proposal_id: UUID,
@@ -139,7 +138,6 @@ impl<'p, 'o> TransferProposalValidate<'p, 'o> {
     }
 }
 
-#[async_trait]
 impl Validate for TransferProposalValidate<'_, '_> {
     fn can_vote(&self, user_id: &UUID) -> bool {
         let account = self.operation.get_account();

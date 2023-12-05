@@ -39,7 +39,6 @@ pub trait Evaluate: Send + Sync {
     async fn evaluate(&self) -> Vec<(Policy, PolicyStatus)>;
 }
 
-#[async_trait]
 pub trait Validate: Send + Sync {
     /// Returns true if the user can vote on the proposal.
     ///
@@ -51,7 +50,6 @@ pub trait Validate: Send + Sync {
     fn can_view(&self, user_id: &UUID) -> bool;
 }
 
-#[async_trait]
 pub trait Create<T>: Send + Sync {
     /// Creates a new proposal for the operation but does not save it.
     fn create(
