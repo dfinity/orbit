@@ -3,6 +3,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
 
+use crate::errors::MatchError;
+
 use super::{Proposal, ProposalOperation, ProposalOperationType};
 
 #[derive(Clone)]
@@ -44,12 +46,6 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
             ProposalSpecifier::Transfer(_, _) => ProposalOperationType::Transfer,
         }
     }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum MatchError {
-    #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
 }
 
 #[async_trait]
@@ -260,7 +256,9 @@ mod tests {
         ];
 
         for tc in tcs {
-            let proposal = mock_proposal();
+            let mut proposal = mock_proposal();
+            proposal.operation = tc.0;
+
             let specifier = tc.1;
 
             if !m.is_match((proposal, specifier)).await? {
