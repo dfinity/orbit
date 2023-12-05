@@ -102,7 +102,7 @@ impl CreateHook for TransferProposalCreateHook<'_, '_> {
         let account = self.operation.get_account();
 
         for owner in account.owners {
-            let should_send = !self.proposal.users().contains(&owner);
+            let should_send = self.proposal.proposed_by != owner;
 
             if should_send {
                 self.notification_service
@@ -151,7 +151,9 @@ impl Validate for TransferProposalValidate<'_, '_> {
     fn can_view(&self, user_id: &UUID) -> bool {
         let account = self.operation.get_account();
 
-        self.proposal.users().contains(user_id) || account.owners.contains(user_id)
+        self.can_vote(user_id)
+            || account.owners.contains(user_id)
+            || self.proposal.users().contains(user_id)
     }
 }
 
