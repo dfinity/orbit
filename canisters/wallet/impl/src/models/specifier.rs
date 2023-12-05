@@ -175,14 +175,15 @@ mod tests {
     use candid::Nat;
 
     use crate::models::{
+        proposal_test_utils::mock_proposal,
         specifier::{
             AccountMatcher, AccountSpecifier, AddressMatcher, AddressSpecifier, Match,
             ProposalMatcher, ProposalSpecifier, UserMatcher, UserSpecifier,
         },
         AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
         Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
-        EditUserOperationInput, Proposal, ProposalExecutionPlan, ProposalOperation, ProposalStatus,
-        TransferOperation, TransferOperationInput, UserStatus,
+        EditUserOperationInput, ProposalOperation, TransferOperation, TransferOperationInput,
+        UserStatus,
     };
 
     #[tokio::test]
@@ -260,20 +261,7 @@ mod tests {
 
         for tc in tcs {
             // Proposal
-            let p = Proposal {
-                id: [0; 16],
-                title: "title".into(),
-                summary: None,
-                proposed_by: [0; 16],
-                status: ProposalStatus::Created,
-                operation: tc.0,
-                expiration_dt: 0,
-                execution_plan: ProposalExecutionPlan::Immediate,
-                votes: vec![],
-                metadata: vec![],
-                created_timestamp: 0,
-                last_modification_timestamp: 0,
-            };
+            let p = mock_proposal();
 
             // Specifier
             let s = tc.1;
@@ -310,27 +298,8 @@ mod tests {
 
         for tc in tcs {
             // Proposal
-            let p = Proposal {
-                id: [0; 16],
-                title: "title".into(),
-                summary: None,
-                proposed_by: tc.0,
-                status: ProposalStatus::Created,
-                operation: ProposalOperation::EditAccount(EditAccountOperation {
-                    input: EditAccountOperationInput {
-                        account_id: [0; 16],
-                        owners: None,
-                        policies: None,
-                        name: None,
-                    },
-                }),
-                expiration_dt: 0,
-                execution_plan: ProposalExecutionPlan::Immediate,
-                votes: vec![],
-                metadata: vec![],
-                created_timestamp: 0,
-                last_modification_timestamp: 0,
-            };
+            let mut p = mock_proposal();
+            p.proposed_by = tc.0;
 
             // Voter
             let u = tc.1;
