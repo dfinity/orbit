@@ -2,7 +2,7 @@ use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validat
 use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation, RemoveUserGroupOperation,
+        EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation, RemoveUserGroupOperation,
     },
     services::USER_GROUP_SERVICE,
 };
@@ -102,10 +102,10 @@ impl<'p, 'o> RemoveUserGroupProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for RemoveUserGroupProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
         // TODO: Add once final policy design is ready
 
-        Ok(PolicyStatus::Accepted)
+        Ok(EvaluationStatus::Adopted)
     }
 }
 

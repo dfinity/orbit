@@ -5,7 +5,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, ApprovalThresholdPolicy, NotificationType, Policy, PolicyStatus, Proposal,
+        Account, ApprovalThresholdPolicy, NotificationType, Policy, EvaluationStatus, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
         TransferOperationInput, TransferProposalCreatedNotification,
     },
@@ -172,13 +172,13 @@ impl<'p, 'o> TransferProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for TransferProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
         let account = get_account(&self.operation.input.from_account_id);
         let mut policy_list = account
             .policies
             .into_iter()
-            .map(|policy| (policy, PolicyStatus::Pending))
-            .collect::<Vec<(Policy, PolicyStatus)>>();
+            .map(|policy| (policy, EvaluationStatus::Pending))
+            .collect::<Vec<(Policy, EvaluationStatus)>>();
         let total_approvals = self
             .proposal
             .votes
@@ -205,9 +205,9 @@ impl Evaluate for TransferProposalEvaluate<'_, '_> {
                             total_approvals + missing_votes >= *min_approvals as usize;
 
                         if total_approvals >= *min_approvals as usize {
-                            *status = PolicyStatus::Accepted;
+                            *status = EvaluationStatus::Adopted;
                         } else if !can_still_be_approved {
-                            *status = PolicyStatus::Rejected;
+                            *status = EvaluationStatus::Rejected;
                         }
                     }
                     ApprovalThresholdPolicy::VariableThreshold(percentage) => {
@@ -219,9 +219,9 @@ impl Evaluate for TransferProposalEvaluate<'_, '_> {
                             total_approvals + missing_votes >= min_approvals as usize;
 
                         if total_approvals >= min_approvals as usize {
-                            *status = PolicyStatus::Accepted;
+                            *status = EvaluationStatus::Adopted;
                         } else if !can_still_be_approved {
-                            *status = PolicyStatus::Rejected;
+                            *status = EvaluationStatus::Rejected;
                         }
                     }
                 },
@@ -230,17 +230,17 @@ impl Evaluate for TransferProposalEvaluate<'_, '_> {
 
         if policy_list
             .iter()
-            .all(|(_, status)| status == &PolicyStatus::Accepted)
+            .all(|(_, status)| status == &EvaluationStatus::Adopted)
         {
-            return Ok(PolicyStatus::Accepted);
+            return Ok(EvaluationStatus::Adopted);
         } else if policy_list
             .iter()
-            .any(|(_, status)| status == &PolicyStatus::Rejected)
+            .any(|(_, status)| status == &EvaluationStatus::Rejected)
         {
-            return Ok(PolicyStatus::Rejected);
+            return Ok(EvaluationStatus::Rejected);
         }
 
-        Ok(PolicyStatus::Pending)
+        Ok(EvaluationStatus::Pending)
     }
 }
 

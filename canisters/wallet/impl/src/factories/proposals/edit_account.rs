@@ -4,8 +4,8 @@ use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Policy,
-        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
+        Account, EditAccountOperation, EditAccountOperationInput, EvaluationStatus,
+        NotificationType, Policy, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     repositories::ACCOUNT_REPOSITORY,
     services::NotificationService,
@@ -179,10 +179,10 @@ impl<'p, 'o> EditAccountProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for EditAccountProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
         // TODO: Add once final policy design is ready
 
-        Ok(PolicyStatus::Accepted)
+        Ok(EvaluationStatus::Adopted)
     }
 }
 

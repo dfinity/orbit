@@ -1,5 +1,5 @@
 use super::{
-    PolicyStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
+    EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
 use crate::errors::{ProposalError, ProposalEvaluateError};
 use crate::{core::ic_cdk::api::time, factories::proposals::ProposalFactory};
@@ -191,9 +191,9 @@ impl Proposal {
         // must drop before updating the proposal due to it being borrowed by the evaluator
         drop(evaluator);
 
-        if evaluation_status == PolicyStatus::Accepted {
+        if evaluation_status == EvaluationStatus::Adopted {
             self.status = ProposalStatus::Adopted;
-        } else if evaluation_status == PolicyStatus::Rejected {
+        } else if evaluation_status == EvaluationStatus::Rejected {
             self.status = ProposalStatus::Rejected;
         }
 

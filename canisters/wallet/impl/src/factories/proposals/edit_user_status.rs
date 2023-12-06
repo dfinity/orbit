@@ -1,7 +1,7 @@
 use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{EditUserStatusOperation, PolicyStatus, Proposal},
+    models::{EditUserStatusOperation, EvaluationStatus, Proposal},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -84,10 +84,10 @@ impl<'p, 'o> EditUserStatusProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for EditUserStatusProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
         // TODO: Add once final policy design is ready
 
-        Ok(PolicyStatus::Accepted)
+        Ok(EvaluationStatus::Adopted)
     }
 }
 

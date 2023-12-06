@@ -2,7 +2,7 @@ use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validat
 use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        AddAccountOperation, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
+        AddAccountOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     services::AccountService,
 };
@@ -106,10 +106,10 @@ impl<'p, 'o> AddAccountProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for AddAccountProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
         // TODO: Add once final policy design is ready
 
-        Ok(PolicyStatus::Accepted)
+        Ok(EvaluationStatus::Adopted)
     }
 }
 

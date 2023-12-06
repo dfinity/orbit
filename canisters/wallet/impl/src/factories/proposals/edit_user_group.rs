@@ -2,7 +2,7 @@ use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validat
 use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        EditUserGroupOperation, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
+        EditUserGroupOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     services::USER_GROUP_SERVICE,
 };
@@ -100,10 +100,10 @@ impl<'p, 'o> EditUserGroupProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for EditUserGroupProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
         // TODO: Add once final policy design is ready
 
-        Ok(PolicyStatus::Accepted)
+        Ok(EvaluationStatus::Adopted)
     }
 }
 
