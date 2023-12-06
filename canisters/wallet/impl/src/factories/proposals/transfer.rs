@@ -5,7 +5,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, ApprovalThresholdPolicy, NotificationType, Policy, EvaluationStatus, Proposal,
+        Account, ApprovalThresholdPolicy, EvaluationStatus, NotificationType, Policy, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
         TransferOperationInput, TransferProposalCreatedNotification,
     },

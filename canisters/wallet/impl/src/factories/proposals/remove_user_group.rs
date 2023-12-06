@@ -2,7 +2,8 @@ use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validat
 use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation, RemoveUserGroupOperation,
+        EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
+        RemoveUserGroupOperation,
     },
     services::USER_GROUP_SERVICE,
 };
