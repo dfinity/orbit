@@ -3,7 +3,7 @@ use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 
 #[stable_object]
-#[derive(Clone, CandidType, Deserialize)]
+#[derive(Debug, Clone, CandidType, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum UpgradeTarget {
     Wallet,
     Upgrader,

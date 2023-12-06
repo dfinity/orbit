@@ -4,6 +4,7 @@ use crate::{
     EditAccountOperationDTO, EditUserGroupOperationDTO, EditUserGroupOperationInput,
     EditUserOperationDTO, EditUserOperationInput, EditUserStatusOperationDTO,
     EditUserStatusOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
+    UpgradeOperationDTO, UpgradeOperationInput,
 };
 
 use super::{
@@ -61,6 +62,7 @@ pub enum ProposalOperationDTO {
     AddUserGroup(Box<AddUserGroupOperationDTO>),
     EditUserGroup(Box<EditUserGroupOperationDTO>),
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
+    Upgrade(Box<UpgradeOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -74,6 +76,7 @@ pub enum ProposalOperationInput {
     AddUserGroup(AddUserGroupOperationInput),
     EditUserGroup(EditUserGroupOperationInput),
     RemoveUserGroup(RemoveUserGroupOperationInput),
+    Upgrade(UpgradeOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -87,6 +90,7 @@ pub enum ProposalOperationTypeDTO {
     AddUserGroup,
     EditUserGroup,
     RemoveUserGroup,
+    Upgrade,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

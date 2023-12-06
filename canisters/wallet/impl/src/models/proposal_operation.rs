@@ -1,4 +1,6 @@
-use super::{AccountId, Blockchain, BlockchainStandard, Policy, UserId, UserStatus};
+use super::{
+    upgrade::UpgradeTarget, AccountId, Blockchain, BlockchainStandard, Policy, UserId, UserStatus,
+};
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
@@ -15,6 +17,7 @@ pub enum ProposalOperation {
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
+    Upgrade(UpgradeOperation),
 }
 
 #[stable_object]
@@ -151,4 +154,18 @@ pub struct RemoveUserGroupOperation {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RemoveUserGroupOperationInput {
     pub user_group_id: UUID,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UpgradeOperationInput {
+    pub target: UpgradeTarget,
+    pub module: Vec<u8>,
+    pub checksum: Vec<u8>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UpgradeOperation {
+    pub input: UpgradeOperationInput,
 }

@@ -16,6 +16,7 @@ mod edit_user_group;
 mod edit_user_status;
 mod remove_user_group;
 mod transfer;
+mod upgrade;
 
 use self::{
     add_account::{
@@ -55,6 +56,10 @@ use self::{
     transfer::{
         TransferProposalCreate, TransferProposalCreateHook, TransferProposalEvaluate,
         TransferProposalExecute, TransferProposalValidate,
+    },
+    upgrade::{
+        UpgradeProposalCreate, UpgradeProposalCreateHook, UpgradeProposalEvaluate,
+        UpgradeProposalExecute, UpgradeProposalValidate,
     },
 };
 
@@ -196,6 +201,14 @@ impl ProposalFactory {
                     EditUserStatusProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
+            ProposalOperationInput::Upgrade(operation) => {
+                create_proposal::<wallet_api::UpgradeOperationInput, UpgradeProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
         }
     }
 
@@ -227,6 +240,9 @@ impl ProposalFactory {
             }
             ProposalOperation::EditUserStatus(operation) => {
                 Box::new(EditUserStatusProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::Upgrade(operation) => {
+                Box::new(UpgradeProposalCreateHook::new(proposal, operation))
             }
         }
     }
@@ -260,6 +276,9 @@ impl ProposalFactory {
             ProposalOperation::EditUserStatus(operation) => {
                 Box::new(EditUserStatusProposalValidate::new(proposal, operation))
             }
+            ProposalOperation::Upgrade(operation) => {
+                Box::new(UpgradeProposalValidate::new(proposal, operation))
+            }
         }
     }
 
@@ -292,6 +311,9 @@ impl ProposalFactory {
             ProposalOperation::EditUserStatus(operation) => {
                 Box::new(EditUserStatusProposalEvaluate::new(proposal, operation))
             }
+            ProposalOperation::Upgrade(operation) => {
+                Box::new(UpgradeProposalEvaluate::new(proposal, operation))
+            }
         }
     }
 
@@ -323,6 +345,9 @@ impl ProposalFactory {
             }
             ProposalOperation::EditUserStatus(operation) => {
                 Box::new(EditUserStatusProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::Upgrade(operation) => {
+                Box::new(UpgradeProposalExecute::new(proposal, operation))
             }
         }
     }

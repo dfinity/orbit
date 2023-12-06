@@ -13,6 +13,7 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::AddUserGroup => ProposalOperationType::AddUserGroup,
             ProposalOperationTypeDTO::EditUserGroup => ProposalOperationType::EditUserGroup,
             ProposalOperationTypeDTO::RemoveUserGroup => ProposalOperationType::RemoveUserGroup,
+            ProposalOperationTypeDTO::Upgrade => ProposalOperationType::Upgrade,
         }
     }
 }
@@ -29,6 +30,7 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::AddUserGroup(_) => ProposalOperationType::AddUserGroup,
             ProposalOperation::EditUserGroup(_) => ProposalOperationType::EditUserGroup,
             ProposalOperation::RemoveUserGroup(_) => ProposalOperationType::RemoveUserGroup,
+            ProposalOperation::Upgrade(_) => ProposalOperationType::Upgrade,
         }
     }
 }
