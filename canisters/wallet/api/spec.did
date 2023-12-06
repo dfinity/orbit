@@ -248,6 +248,8 @@ type AddUserOperationInput = record {
   name : opt text;
   // The principals associated with the user.
   identities : vec principal;
+  // The unconfirmed principals associated with the user.
+  unconfirmed_identities : vec principal;
   // The list of groups the user belongs to.
   //
   // Users can be tagged with groups that can be used to control access to the wallet
@@ -623,12 +625,18 @@ type UserStatus = variant {
 type User = record {
   // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UserId;
+  // The user name (e.g. "John Doe").
+  name : opt text;
+  // The status of the user (e.g. `Active`).
+  status : UserStatus;
+  // The list of groups the user belongs to.
+  //
+  // Users can be tagged with groups that can be used to control access to the wallet
+  groups : vec UserGroup;
   // The principals associated with the user.
   identities : vec principal;
   // The unconfirmed principals associated with the user.
   unconfirmed_identities : vec principal;
-  // The role of the user.
-  access_roles : vec UserRole;
   // The time at which the user was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
@@ -909,42 +917,6 @@ type GetUserResult = variant {
   Err : Error;
 };
 
-// Input type for registering a user.
-type RegisterUserInput = record {
-  // The principals associated with the user.
-  identities : vec principal;
-};
-
-// Result type for registering an user.
-type RegisterUserResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The user that was registered.
-    user : User;
-  };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
-};
-
-// Input type for editing a user.
-type EditUserInput = record {
-  // The user id to update.
-  user_id : UserId;
-  // The principals associated with the user.
-  identities : opt vec principal;
-};
-
-// Result type for editing an user.
-type EditUserResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The user that was updated.
-    user : User;
-  };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
-};
-
 // Input type for confirming an user and its associated identity.
 type ConfirmUserIdentityInput = record {
   // The user id to confirm.
@@ -1056,18 +1028,10 @@ service : (opt WalletInit) -> {
   //
   // Required permission: "write:proposal"
   vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
-  // Register a user in the wallet.
-  //
-  // Required permission: "write:register-user"
-  register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Confirm that the caller owns the user.
   //
   // Required permission: "write:register-user"
   confirm_user_identity : (input : ConfirmUserIdentityInput) -> (ConfirmUserIdentityResult);
-  // Edit the provided wallet user.
-  //
-  // Required permission: "write:user"
-  edit_user : (input : EditUserInput) -> (EditUserResult);
   // Get the user associated with the caller or the user id provided.
   //
   // Required permission: "read:user"

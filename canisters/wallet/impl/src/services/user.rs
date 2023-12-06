@@ -2,15 +2,20 @@ use crate::{
     core::{generate_uuid_v4, CallContext},
     errors::UserError,
     mappers::{HelperMapper, UserMapper},
-    models::{AccessRole, User, UserId},
+    models::{AddUserOperationInput, EditUserOperationInput, User, UserId, ADMIN_GROUP_ID},
     repositories::UserRepository,
 };
 use candid::Principal;
 use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
 use ic_canister_core::{repository::Repository, types::UUID};
+use lazy_static::lazy_static;
 use uuid::Uuid;
-use wallet_api::{ConfirmUserIdentityInput, EditUserInput, RegisterUserInput};
+use wallet_api::ConfirmUserIdentityInput;
+
+lazy_static! {
+    pub static ref USER_SERVICE: UserService = UserService::default();
+}
 
 #[derive(Default, Debug)]
 pub struct UserService {
@@ -59,49 +64,54 @@ impl UserService {
 
         let user = self.user_repository.find_by_identity(identity);
         if let Some(mut user) = user {
-            user.access_roles.retain(|role| *role != AccessRole::Admin);
+            user.groups.retain(|group| *group != *ADMIN_GROUP_ID);
             self.user_repository.insert(user.to_key(), user.to_owned());
         }
 
         Ok(())
     }
 
-    /// Creates a new user for the selected user identities.
+    /// Creates a new user with the given user details and returns the created user.
     ///
-    /// If the caller is providing other identities than the caller identity, they will be
-    /// added as unconfirmed identities if no user is associated with them.
-    pub async fn register_user(
+    /// This method can only be called by the wallet canister.
+    pub async fn add_user(
         &self,
-        input: RegisterUserInput,
-        mut roles: Vec<AccessRole>,
+        input: AddUserOperationInput,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let caller_identity = ctx.caller();
-        self.assert_identity_has_no_associated_user(&caller_identity)?;
+        if !ctx.self_canister_id() {
+            Err(UserError::Unauthorized)?
+        }
+
+        for identity in input.identities.iter() {
+            self.assert_identity_has_no_associated_user(identity)?;
+        }
+
         let user_id = generate_uuid_v4().await;
-        let identities = match input.identities.is_empty() {
-            true => vec![caller_identity],
-            false => {
-                let mut identities = input.identities;
-                if !identities.contains(&caller_identity) {
-                    identities.push(caller_identity);
-                }
+        let user = UserMapper::from_create_input(*user_id.as_bytes(), input);
 
-                identities
-            }
-        };
+        user.validate()?;
 
-        for new_identity in identities.iter() {
-            self.assert_identity_has_no_associated_user(new_identity)?;
+        self.user_repository.insert(user.to_key(), user.to_owned());
+
+        Ok(user)
+    }
+
+    /// Edits the user associated with the given user id and returns the updated user.
+    ///
+    /// This method can only be called by the wallet canister.
+    pub async fn edit_user(
+        &self,
+        input: EditUserOperationInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        if !ctx.self_canister_id() {
+            Err(UserError::Unauthorized)?
         }
 
-        if !roles.contains(&AccessRole::User) {
-            roles.push(AccessRole::User);
-        }
+        let mut user = self.get_user(&input.user_id, ctx)?;
 
-        let mut user = UserMapper::from_roles(*user_id.as_bytes(), roles);
-
-        user.update_with(Some(identities), &caller_identity)?;
+        user.update_with(input)?;
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.to_owned());
@@ -130,20 +140,6 @@ impl UserService {
         user.unconfirmed_identities
             .retain(|i| *i != caller_identity);
         user.identities.push(caller_identity);
-        user.validate()?;
-
-        self.user_repository.insert(user.to_key(), user.to_owned());
-
-        Ok(user)
-    }
-
-    /// Edits the user associated with the given user id and returns the updated user.
-    pub async fn edit_user(&self, input: EditUserInput, ctx: &CallContext) -> ServiceResult<User> {
-        let caller_identity = ctx.caller();
-        let user_id = HelperMapper::to_uuid(input.user_id)?;
-        let mut user = self.get_user(user_id.as_bytes(), ctx)?;
-
-        user.update_with(input.identities, &caller_identity)?;
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.to_owned());
@@ -194,7 +190,11 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{core::test_utils, models::user_test_utils};
+    use crate::{
+        core::test_utils,
+        models::{user_test_utils, UserStatus},
+    };
+    use crate::core::ic_cdk::api::id as self_canister_id;
 
     struct TestContext {
         service: UserService,
@@ -259,10 +259,10 @@ mod tests {
         let ctx: TestContext = setup();
         let mut caller = user_test_utils::mock_user();
         caller.identities = vec![ctx.call_context.caller()];
-        caller.access_roles = vec![AccessRole::Admin];
+        caller.groups = vec![*ADMIN_GROUP_ID];
         let mut admin = user_test_utils::mock_user();
         admin.identities = vec![Principal::from_slice(&[255; 29])];
-        admin.access_roles = vec![AccessRole::Admin, AccessRole::User];
+        admin.groups = vec![*ADMIN_GROUP_ID, [1; 16]];
 
         ctx.repository.insert(caller.to_key(), caller.clone());
         ctx.repository.insert(admin.to_key(), admin.clone());
@@ -274,7 +274,7 @@ mod tests {
         assert!(result.is_ok());
 
         let admin = ctx.repository.get(&admin.to_key()).unwrap();
-        assert_eq!(admin.access_roles, vec![AccessRole::User]);
+        assert_eq!(admin.groups, vec![[1; 16]]);
     }
 
     #[tokio::test]
@@ -282,7 +282,7 @@ mod tests {
         let ctx: TestContext = setup();
         let mut admin = user_test_utils::mock_user();
         admin.identities = vec![ctx.call_context.caller()];
-        admin.access_roles = vec![AccessRole::Admin];
+        admin.groups = vec![*ADMIN_GROUP_ID];
 
         ctx.repository.insert(admin.to_key(), admin.clone());
 
@@ -294,25 +294,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn register_user_happy_path() {
+    async fn add_user_happy_path() {
         let ctx: TestContext = setup();
-        let input = RegisterUserInput {
+        let input = AddUserOperationInput {
             identities: vec![Principal::from_slice(&[2; 29])],
+            unconfirmed_identities: vec![],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: None,
         };
+        let call_context = CallContext::new(self_canister_id());
 
-        let result = ctx
-            .service
-            .register_user(input, vec![], &ctx.call_context)
-            .await;
+        let result = ctx.service.add_user(input, &call_context).await;
         assert!(result.is_ok());
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(user.identities, vec![ctx.call_context.caller()]);
-        assert_eq!(
-            user.unconfirmed_identities,
-            vec![Principal::from_slice(&[2; 29])]
-        );
-        assert_eq!(user.access_roles, vec![AccessRole::User]);
+        assert_eq!(user.identities, vec![Principal::from_slice(&[2; 29])]);
+        assert_eq!(user.unconfirmed_identities, vec![]);
+        assert_eq!(user.groups, vec![*ADMIN_GROUP_ID]);
     }
 
     #[tokio::test]
@@ -351,12 +350,16 @@ mod tests {
 
         ctx.repository.insert(user.to_key(), user.clone());
 
-        let input = EditUserInput {
-            user_id: Uuid::from_bytes(user.id).hyphenated().to_string(),
+        let input = EditUserOperationInput {
+            user_id: user.id,
             identities: Some(vec![ctx.call_context.caller()]),
+            unconfirmed_identities: None,
+            groups: None,
+            name: None,
         };
 
-        let result = ctx.service.edit_user(input, &ctx.call_context).await;
+        let call_context = CallContext::new(self_canister_id());
+        let result = ctx.service.edit_user(input, &call_context).await;
         assert!(result.is_ok());
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();

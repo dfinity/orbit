@@ -2,9 +2,9 @@ use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
-        EditUserStatusOperation, ProposalOperation, TransferOperation, User, UserGroup,
+        EditUserStatusOperation, ProposalOperation, TransferOperation, User,
     },
-    repositories::{use_user_group_repository, AccountRepository, UserRepository},
+    repositories::{AccountRepository, UserRepository, USER_GROUP_REPOSITORY},
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
@@ -140,10 +140,11 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
 impl AddUserOperation {
     pub fn to_dto(self, user: Option<User>) -> AddUserOperationDTO {
         AddUserOperationDTO {
-            user: user.map(|user| user.to_dto()),
+            user: user.map(|user| user.into()),
             input: AddUserOperationInput {
                 name: self.input.name,
                 identities: self.input.identities,
+                unconfirmed_identities: self.input.unconfirmed_identities,
                 groups: self
                     .input
                     .groups
@@ -164,6 +165,7 @@ impl From<EditUserOperation> for EditUserOperationDTO {
                     .hyphenated()
                     .to_string(),
                 name: operation.input.name,
+                unconfirmed_identities: operation.input.unconfirmed_identities,
                 identities: operation.input.identities,
                 groups: operation.input.groups.map(|groups| {
                     groups
@@ -181,6 +183,7 @@ impl From<AddUserOperationInput> for crate::models::AddUserOperationInput {
         crate::models::AddUserOperationInput {
             name: input.name,
             identities: input.identities,
+            unconfirmed_identities: input.unconfirmed_identities,
             groups: input
                 .groups
                 .iter()
@@ -203,6 +206,7 @@ impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
                 .as_bytes(),
             name: input.name,
             identities: input.identities,
+            unconfirmed_identities: input.unconfirmed_identities,
             groups: input.groups.map(|groups| {
                 groups
                     .iter()
@@ -292,8 +296,8 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::AddUserGroup(operation) => {
                 let user_group = operation.user_group_id.map(|id| {
-                    use_user_group_repository()
-                        .get(&UserGroup::key(id))
+                    USER_GROUP_REPOSITORY
+                        .get(&id)
                         .expect("User group not found")
                 });
 

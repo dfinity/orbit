@@ -1,15 +1,16 @@
 use super::UserService;
 use crate::core::ic_cdk::api::time;
+use crate::models::{AddUserOperationInput, UserStatus, ADMIN_GROUP_ID};
 use crate::{
     core::{
         canister_config, default_wallet_permissions, write_canister_config, CallContext,
         CanisterConfig, WALLET_ASSETS,
     },
-    models::{AccessRole, User, WalletFeatures, WalletSettings},
+    models::{User, WalletFeatures, WalletSettings},
     repositories::UserRepository,
 };
 use ic_canister_core::api::ServiceResult;
-use wallet_api::{RegisterUserInput, WalletCanisterInit};
+use wallet_api::WalletCanisterInit;
 
 #[derive(Default, Debug)]
 pub struct WalletService {
@@ -64,11 +65,14 @@ impl WalletService {
 
             for admin in new_owners {
                 self.user_service
-                    .register_user(
-                        RegisterUserInput {
+                    .add_user(
+                        AddUserOperationInput {
                             identities: vec![*admin],
+                            groups: vec![ADMIN_GROUP_ID.to_owned()],
+                            name: None,
+                            status: UserStatus::Active,
+                            unconfirmed_identities: vec![],
                         },
-                        vec![AccessRole::Admin],
                         ctx,
                     )
                     .await
@@ -94,14 +98,14 @@ impl WalletService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{test_utils, PERMISSION_READ_FEATURES};
+    use crate::core::{test_utils, PERMISSION_READ_FEATURES, ic_cdk::api::id as self_canister_id};
     use candid::Principal;
     use wallet_api::{UserRoleDTO, WalletPermissionDTO};
 
     #[tokio::test]
     async fn canister_upgrade() {
         let mut config = test_utils::init_canister_config();
-        let call_context = CallContext::new(Principal::from_slice(&[1; 29]));
+        let call_context = CallContext::new(self_canister_id());
         let wallet_service = WalletService::default();
 
         config.owners = vec![Principal::anonymous()];
@@ -123,13 +127,5 @@ mod tests {
         let canister_config = canister_config();
         assert_eq!(canister_config.owners.len(), 1);
         assert_eq!(canister_config.owners[0], Principal::anonymous());
-        assert!(canister_config
-            .permissions
-            .iter()
-            .any(
-                |permission| permission.permission_id == *PERMISSION_READ_FEATURES
-                    && permission.access_roles.len() == 1
-                    && permission.access_roles.contains(&AccessRole::User)
-            ));
     }
 }

@@ -32,7 +32,7 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::AccessRole;
+    use crate::models::user_test_utils::mock_user;
     use ic_stable_structures::Storable;
 
     #[test]
@@ -52,16 +52,12 @@ mod tests {
     #[test]
     fn valid_user_identities_to_indexes() {
         let user_id = [u8::MAX; 16];
-        let user = User {
-            id: user_id,
-            identities: vec![
-                Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                Principal::from_text("asrmz-lmaaa-aaaaa-qaaeq-cai").unwrap(),
-            ],
-            unconfirmed_identities: vec![],
-            access_roles: vec![AccessRole::User],
-            last_modification_timestamp: 0,
-        };
+        let mut user = mock_user();
+        user.id = user_id;
+        user.identities = vec![
+            Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            Principal::from_text("asrmz-lmaaa-aaaaa-qaaeq-cai").unwrap(),
+        ];
 
         let indexes = user.to_index_for_identities();
 

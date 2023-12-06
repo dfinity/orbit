@@ -81,6 +81,7 @@ pub struct AddUserOperation {
 pub struct AddUserOperationInput {
     pub name: Option<String>,
     pub identities: Vec<Principal>,
+    pub unconfirmed_identities: Vec<Principal>,
     pub groups: Vec<UUID>,
     pub status: UserStatus,
 }
@@ -97,6 +98,7 @@ pub struct EditUserOperationInput {
     pub user_id: UUID,
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
+    pub unconfirmed_identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
 }
 

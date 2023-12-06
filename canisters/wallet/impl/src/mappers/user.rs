@@ -1,10 +1,12 @@
 use crate::{
     core::ic_cdk::api::time,
     errors::UserError,
-    models::{AccessRole, User},
+    models::{AddUserOperationInput, EditUserOperationInput, User},
+    repositories::USER_GROUP_REPOSITORY,
 };
 use candid::Principal;
 use ic_canister_core::{
+    repository::Repository,
     types::UUID,
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
@@ -12,96 +14,96 @@ use std::collections::HashSet;
 use uuid::Uuid;
 use wallet_api::UserDTO;
 
+use super::HelperMapper;
+
 #[derive(Default, Clone, Debug)]
 pub struct UserMapper {}
 
 impl UserMapper {
-    pub fn from_identity(identity: Principal, new_user_id: UUID, roles: Vec<AccessRole>) -> User {
+    pub fn from_create_input(new_user_id: UUID, input: AddUserOperationInput) -> User {
         User {
             id: new_user_id,
-            identities: vec![identity],
-            unconfirmed_identities: vec![],
-            access_roles: roles,
-            last_modification_timestamp: time(),
-        }
-    }
-
-    pub fn from_roles(new_user_id: UUID, roles: Vec<AccessRole>) -> User {
-        User {
-            id: new_user_id,
-            identities: vec![],
-            unconfirmed_identities: vec![],
-            access_roles: roles,
+            identities: input.identities,
+            unconfirmed_identities: input.unconfirmed_identities,
+            groups: input.groups,
+            name: input.name,
+            status: input.status,
             last_modification_timestamp: time(),
         }
     }
 }
 
-impl User {
-    pub fn from_dto(user: UserDTO) -> Self {
+impl From<User> for UserDTO {
+    fn from(user: User) -> Self {
+        UserDTO {
+            id: Uuid::from_bytes(user.id).hyphenated().to_string(),
+            identities: user.identities,
+            unconfirmed_identities: user.unconfirmed_identities,
+            name: user.name,
+            status: user.status.into(),
+            groups: user
+                .groups
+                .iter()
+                .map(|group| {
+                    USER_GROUP_REPOSITORY
+                        .get(group)
+                        .expect("Invalid group")
+                        .into()
+                })
+                .collect(),
+            last_modification_timestamp: timestamp_to_rfc3339(&user.last_modification_timestamp),
+        }
+    }
+}
+
+impl From<UserDTO> for User {
+    fn from(user: UserDTO) -> Self {
         Self {
             id: *Uuid::parse_str(&user.id).expect("Invalid UUID").as_bytes(),
-            identities: user.identities.clone(),
-            unconfirmed_identities: user.unconfirmed_identities.clone(),
-            access_roles: user
-                .access_roles
+            identities: user.identities,
+            unconfirmed_identities: user.unconfirmed_identities,
+            name: user.name,
+            status: user.status.into(),
+            groups: user
+                .groups
                 .iter()
-                .map(|role| AccessRole::from_dto(role.clone()))
+                .map(|group| {
+                    *HelperMapper::to_uuid(group.id.to_owned())
+                        .expect("Invalid UUID")
+                        .as_bytes()
+                })
                 .collect(),
             last_modification_timestamp: rfc3339_to_timestamp(
                 user.last_modification_timestamp.as_str(),
             ),
         }
     }
+}
 
-    pub fn to_dto(&self) -> UserDTO {
-        UserDTO {
-            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
-            identities: self.identities.to_owned(),
-            unconfirmed_identities: self.unconfirmed_identities.to_owned(),
-            access_roles: self.access_roles.iter().map(|role| role.to_dto()).collect(),
-            last_modification_timestamp: timestamp_to_rfc3339(&self.last_modification_timestamp),
-        }
-    }
-
-    pub fn update_with(
-        &mut self,
-        identities: Option<Vec<Principal>>,
-        caller_identity: &Principal,
-    ) -> Result<(), UserError> {
-        if let Some(new_identities) = identities {
-            if !new_identities.contains(caller_identity) {
-                Err(UserError::SelfLocked)?
-            }
-
-            let mut confirmed_identities: HashSet<Principal> = self
-                .identities
-                .iter()
-                .filter(|i| new_identities.contains(i))
-                .copied()
-                .collect();
+impl User {
+    pub fn update_with(&mut self, input: EditUserOperationInput) -> Result<(), UserError> {
+        if let Some(new_identities) = &input.identities {
             let mut unconfirmed_identities: HashSet<Principal> = self
                 .unconfirmed_identities
                 .iter()
                 .filter(|i| new_identities.contains(i))
                 .copied()
                 .collect();
+
             for identity in new_identities {
-                let is_caller = identity == *caller_identity;
-                match is_caller {
-                    true => {
-                        unconfirmed_identities.retain(|i| *i != identity);
-                        confirmed_identities.insert(identity);
-                    }
-                    false => {
-                        confirmed_identities.retain(|i| *i != identity);
-                        unconfirmed_identities.insert(identity);
-                    }
-                }
+                unconfirmed_identities.retain(|i| *i != *identity);
             }
 
-            self.identities = confirmed_identities.into_iter().collect();
+            self.identities = new_identities.to_owned();
             self.unconfirmed_identities = unconfirmed_identities.into_iter().collect();
+        }
+
+        if let Some(new_groups) = input.groups {
+            self.groups = new_groups;
+        }
+
+        if let Some(new_name) = input.name {
+            self.name = Some(new_name);
         }
 
         Ok(())

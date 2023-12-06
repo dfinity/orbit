@@ -1,10 +1,13 @@
-use crate::{errors::UserGroupError, repositories::use_user_group_repository};
+use crate::{errors::UserGroupError, repositories::USER_GROUP_REPOSITORY};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::stable_object;
+use uuid::Uuid;
+
+pub const ADMIN_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452352).as_bytes();
 
 /// Represents a user group within the system.
 #[stable_object]
@@ -18,22 +21,8 @@ pub struct UserGroup {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct UserGroupKey {
-    pub id: UUID,
-}
-
 impl UserGroup {
     const NAME_RANGE: (u8, u8) = (1, 50);
-
-    pub fn key(id: UUID) -> UserGroupKey {
-        UserGroupKey { id }
-    }
-
-    pub fn to_key(&self) -> UserGroupKey {
-        UserGroup::key(self.id)
-    }
 }
 
 fn validate_name(name: &String) -> ModelValidatorResult<UserGroupError> {
@@ -56,7 +45,7 @@ fn validate_unique_name(
     user_group_id: &UUID,
     name: &String,
 ) -> ModelValidatorResult<UserGroupError> {
-    let current_user_group = use_user_group_repository().find_by_name(name);
+    let current_user_group = USER_GROUP_REPOSITORY.find_by_name(name);
     if let Some(current_user_group) = current_user_group {
         if current_user_group.id != *user_group_id {
             return Err(UserGroupError::NonUniqueName {
@@ -134,7 +123,7 @@ mod tests {
         group1.id = [1; 16];
         group1.name = "finance".to_string();
 
-        use_user_group_repository().insert(group.to_key(), group.clone());
+        USER_GROUP_REPOSITORY.insert(group.id, group.clone());
 
         let result = validate_unique_name(&group1.id, &group1.name);
 
@@ -153,7 +142,7 @@ mod tests {
         group.id = [0; 16];
         group.name = "finance".to_string();
 
-        use_user_group_repository().insert(group.to_key(), group.clone());
+        USER_GROUP_REPOSITORY.insert(group.id, group.clone());
 
         let result = validate_unique_name(&group.id, &group.name);
 

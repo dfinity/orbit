@@ -24,12 +24,12 @@ pub struct UserGroupService {
 
 impl UserGroupService {
     pub fn get(&self, user_group_id: &UUID) -> ServiceResult<UserGroup> {
-        let user_group = self
-            .user_group_repository
-            .get(&UserGroup::key(*user_group_id))
-            .ok_or(UserGroupError::NotFound {
-                id: Uuid::from_bytes(*user_group_id).hyphenated().to_string(),
-            })?;
+        let user_group =
+            self.user_group_repository
+                .get(user_group_id)
+                .ok_or(UserGroupError::NotFound {
+                    id: Uuid::from_bytes(*user_group_id).hyphenated().to_string(),
+                })?;
 
         Ok(user_group)
     }
@@ -45,7 +45,7 @@ impl UserGroupService {
         user_group.validate()?;
 
         self.user_group_repository
-            .insert(user_group.to_key(), user_group.clone());
+            .insert(user_group.id, user_group.clone());
 
         Ok(user_group)
     }
@@ -59,7 +59,7 @@ impl UserGroupService {
         user_group.validate()?;
 
         self.user_group_repository
-            .insert(user_group.to_key(), user_group.clone());
+            .insert(user_group.id, user_group.clone());
 
         Ok(user_group)
     }
@@ -67,7 +67,7 @@ impl UserGroupService {
     pub async fn remove(&self, input: RemoveUserGroupOperationInput) -> ServiceResult<()> {
         let user_group = self.get(&input.user_group_id)?;
 
-        self.user_group_repository.remove(&user_group.to_key());
+        self.user_group_repository.remove(&user_group.id);
 
         Ok(())
     }

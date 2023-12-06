@@ -19,14 +19,11 @@ pub enum UserError {
         /// The maximum number of identities allowed.
         max_identities: u8,
     },
-    /// The user has too little access roles associated.
-    #[error(r#"The user has too little access roles associated."#)]
-    TooLittleAccessRoles,
-    /// The user has too many access roles.
-    #[error(r#"The user has too many access roles, it cannot have more than {max_access_roles}."#)]
-    TooManyAccessRoles {
+    /// The user has too many user groups, it cannot have more than {max}.
+    #[error(r#"The user has too many user groups, it cannot have more than {max}."#)]
+    TooManyUserGroups {
         /// The maximum number of access roles allowed.
-        max_access_roles: u8,
+        max: u8,
     },
     /// The requested user identity was not found.
     #[error(r#"The requested user identity was not found."#)]
@@ -58,6 +55,14 @@ pub enum UserError {
     /// Cannot remove the admin role from the caller identity.
     #[error(r#"Cannot remove own admin role."#)]
     CannotRemoveOwnAdminRole,
+    /// Name is too long.
+    #[error(r#"Name is too long, it cannot have more than {max_length}."#)]
+    NameTooLong {
+        /// The maximum length of the name.
+        max_length: usize,
+    },
+    #[error(r#"You're not authorized to perform this action."#)]
+    Unauthorized,
 }
 
 impl DetailableError for UserError {
@@ -72,8 +77,8 @@ impl DetailableError for UserError {
                 details.insert("max_identities".to_string(), max_identities.to_string());
                 Some(details)
             }
-            UserError::TooManyAccessRoles { max_access_roles } => {
-                details.insert("max_access_roles".to_string(), max_access_roles.to_string());
+            UserError::TooManyUserGroups { max } => {
+                details.insert("max".to_string(), max.to_string());
                 Some(details)
             }
             UserError::NotFoundUserIdentity { identity } => {
@@ -90,6 +95,10 @@ impl DetailableError for UserError {
             }
             UserError::Forbidden { user } => {
                 details.insert("user".to_string(), user.to_string());
+                Some(details)
+            }
+            UserError::NameTooLong { max_length } => {
+                details.insert("max_length".to_string(), max_length.to_string());
                 Some(details)
             }
             _ => None,
