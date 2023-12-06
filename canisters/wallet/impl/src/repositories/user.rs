@@ -7,6 +7,7 @@ use candid::Principal;
 use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use lazy_static::lazy_static;
 use std::cell::RefCell;
 
 thread_local! {
@@ -17,6 +18,10 @@ thread_local! {
   })
 }
 
+lazy_static! {
+    pub static ref USER_REPOSITORY: UserRepository = UserRepository::default();
+}
+
 /// A repository that enables managing users in stable memory.
 #[derive(Default, Debug)]
 pub struct UserRepository {
@@ -24,6 +29,10 @@ pub struct UserRepository {
 }
 
 impl Repository<UserKey, User> for UserRepository {
+    fn list(&self) -> Vec<User> {
+        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+    }
+
     fn get(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| m.borrow().get(key))
     }
