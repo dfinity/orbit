@@ -24,6 +24,10 @@ pub struct UserRepository {
 }
 
 impl Repository<UserKey, User> for UserRepository {
+    fn list(&self) -> Vec<User> {
+        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+    }
+
     fn get(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| m.borrow().get(key))
     }

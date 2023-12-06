@@ -18,4 +18,6 @@ pub use notification::*;
 mod proposal;
 pub use proposal::*;
 
+pub mod policy;
+
 pub mod indexes;

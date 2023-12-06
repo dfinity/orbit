@@ -1,33 +1,40 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
+use ic_canister_macros::stable_object;
 
 use crate::errors::MatchError;
 
 use super::{Proposal, ProposalOperation, ProposalOperationType};
 
-#[derive(Clone)]
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AccountSpecifier {
     Any,
     Group(Vec<UUID>),
     Id(Vec<UUID>),
 }
 
-#[derive(Clone)]
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AddressSpecifier {
     Any,
 }
 
-#[derive(Clone)]
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum UserSpecifier {
     Any,
     Group(Vec<UUID>),
     Id(Vec<UUID>),
+    Owner,
     Proposer,
 }
 
-#[derive(Clone)]
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalSpecifier {
     AddAccount,
     AddUser,
@@ -102,6 +109,9 @@ impl Match<(Proposal, UUID, UserSpecifier)> for UserMatcher {
 
             // Id
             UserSpecifier::Id(ids) => Ok(ids.contains(&id)),
+
+            // TODO: Owner (most likely will require a MatchError::NotApplicable variant)
+            UserSpecifier::Owner => todo!(),
 
             // Proposer
             UserSpecifier::Proposer => Ok(p.proposed_by == id),

@@ -25,3 +25,5 @@ pub use ic_canister_core::utils::generate_uuid_v4;
 pub async fn generate_uuid_v4() -> uuid::Uuid {
     uuid::Uuid::new_v4()
 }
+
+pub mod proposal;
