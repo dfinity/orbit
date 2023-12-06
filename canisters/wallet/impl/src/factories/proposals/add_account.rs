@@ -1,60 +1,140 @@
-use super::{ProposalExecuteStage, ProposalHandler};
+use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
-    core::ic_cdk::api::trap,
-    errors::{ProposalError, ProposalExecuteError},
+    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        AddAccountOperation, Policy, PolicyStatus, Proposal, ProposalExecutionPlan,
-        ProposalOperation,
+        AddAccountOperation, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     services::AccountService,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
-use uuid::Uuid;
-use wallet_api::ProposalOperationInput;
 
-#[derive(Debug)]
-pub struct AddAccountProposalHandler<'p> {
-    proposal: &'p Proposal,
-    account_service: AccountService,
+pub struct AddAccountProposalCreate {}
+
+impl Create<wallet_api::AddAccountOperationInput> for AddAccountProposalCreate {
+    fn create(
+        proposal_id: UUID,
+        proposed_by_user: UUID,
+        input: wallet_api::CreateProposalInput,
+        operation_input: wallet_api::AddAccountOperationInput,
+    ) -> Result<Proposal, ProposalError> {
+        let proposal = Proposal::new(
+            proposal_id,
+            proposed_by_user,
+            Proposal::default_expiration_dt_ns(),
+            ProposalOperation::AddAccount(AddAccountOperation {
+                account_id: None,
+                input: operation_input.into(),
+            }),
+            input
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(ProposalExecutionPlan::Immediate),
+            input
+                .title
+                .unwrap_or_else(|| "Account creation".to_string()),
+            input.summary,
+        );
+
+        Ok(proposal)
+    }
 }
 
-impl<'p> AddAccountProposalHandler<'p> {
-    pub fn new(proposal: &'p Proposal) -> Self {
-        Self {
-            proposal,
-            account_service: AccountService::default(),
-        }
-    }
+pub struct AddAccountProposalCreateHook<'p, 'o> {
+    _proposal: &'p Proposal,
+    _operation: &'o AddAccountOperation,
+}
 
-    fn unwrap_operation(&self) -> &AddAccountOperation {
-        match self.proposal.operation {
-            ProposalOperation::AddAccount(ref ctx) => ctx,
-            _ => trap("Invalid proposal operation for processor"),
+impl<'p, 'o> AddAccountProposalCreateHook<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
+        Self {
+            _proposal: proposal,
+            _operation: operation,
         }
     }
 }
 
 #[async_trait]
-impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
-    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
-        // TODO: Add policy evaluation once final policy design is ready
-
-        Vec::new()
+impl CreateHook for AddAccountProposalCreateHook<'_, '_> {
+    async fn on_created(&self) {
+        // TODO: Add once policy design is ready
     }
+}
 
+pub struct AddAccountProposalValidate<'p, 'o> {
+    proposal: &'p Proposal,
+    _operation: &'o AddAccountOperation,
+}
+
+impl<'p, 'o> AddAccountProposalValidate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
+        Self {
+            proposal,
+            _operation: operation,
+        }
+    }
+}
+
+#[async_trait]
+impl Validate for AddAccountProposalValidate<'_, '_> {
     fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add policy evaluation once final policy design is ready
+        // TODO: Add once final policy design is ready
 
         false
     }
 
-    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let input = self.unwrap_operation();
+    fn can_view(&self, user_id: &UUID) -> bool {
+        self.can_vote(user_id)
+            || self.proposal.voters().contains(user_id)
+            || self.proposal.proposed_by == *user_id
+    }
+}
 
+pub struct AddAccountProposalEvaluate<'p, 'o> {
+    _proposal: &'p Proposal,
+    _operation: &'o AddAccountOperation,
+}
+
+impl<'p, 'o> AddAccountProposalEvaluate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
+        Self {
+            _proposal: proposal,
+            _operation: operation,
+        }
+    }
+}
+
+#[async_trait]
+impl Evaluate for AddAccountProposalEvaluate<'_, '_> {
+    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+        // TODO: Add once final policy design is ready
+
+        Ok(PolicyStatus::Accepted)
+    }
+}
+
+pub struct AddAccountProposalExecute<'p, 'o> {
+    proposal: &'p Proposal,
+    operation: &'o AddAccountOperation,
+    account_service: AccountService,
+}
+
+impl<'p, 'o> AddAccountProposalExecute<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
+        Self {
+            proposal,
+            operation,
+            account_service: AccountService::default(),
+        }
+    }
+}
+
+#[async_trait]
+impl Execute for AddAccountProposalExecute<'_, '_> {
+    async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let account = self
             .account_service
-            .create_account(input.clone())
+            .create_account(self.operation.clone())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to create account: {}", e),
@@ -62,51 +142,10 @@ impl<'p> ProposalHandler for AddAccountProposalHandler<'p> {
 
         let mut operation = self.proposal.operation.clone();
 
-        if let ProposalOperation::AddAccount(ref mut ctx) = operation {
-            ctx.account_id = Some(account.id);
+        if let ProposalOperation::AddAccount(ref mut operation) = operation {
+            operation.account_id = Some(account.id);
         }
 
         Ok(ProposalExecuteStage::Completed(operation))
-    }
-
-    fn has_access(&self, user_id: &UUID) -> bool {
-        // TODO: Add necessary access policies once final policy design is ready
-
-        self.proposal.users().contains(user_id)
-    }
-
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
-    }
-
-    fn new_proposal(
-        id: Uuid,
-        proposed_by_user: UUID,
-        title: Option<String>,
-        summary: Option<String>,
-        execution_plan: Option<ProposalExecutionPlan>,
-        operation: ProposalOperationInput,
-    ) -> Result<Proposal, ProposalError> {
-        match operation {
-            ProposalOperationInput::AddAccount(input) => {
-                let proposal = Proposal::new(
-                    id,
-                    proposed_by_user,
-                    Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::AddAccount(AddAccountOperation {
-                        account_id: None,
-                        input: input.into(),
-                    }),
-                    execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
-                    title.unwrap_or_else(|| "Account creation".to_string()),
-                    summary,
-                );
-
-                Ok(proposal)
-            }
-            _ => Err(ProposalError::ValidationError {
-                info: "Invalid operation for proposal creation".to_string(),
-            })?,
-        }
     }
 }

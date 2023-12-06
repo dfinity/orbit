@@ -1,70 +1,133 @@
-use super::{ProposalExecuteStage, ProposalHandler};
+use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
-    core::ic_cdk::api::trap,
-    errors::{ProposalError, ProposalExecuteError},
+    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        AddUserGroupOperation, Policy, PolicyStatus, Proposal, ProposalExecutionPlan,
-        ProposalOperation,
+        AddUserGroupOperation, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
     },
-    services::UserGroupService,
+    services::USER_GROUP_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
-use uuid::Uuid;
-use wallet_api::ProposalOperationInput;
 
-#[derive(Debug)]
-pub struct AddUserGroupProposalHandler<'p> {
-    proposal: &'p Proposal,
-    user_group_service: UserGroupService,
+pub struct AddUserGroupProposalCreate {}
+
+impl Create<wallet_api::AddUserGroupOperationInput> for AddUserGroupProposalCreate {
+    fn create(
+        proposal_id: UUID,
+        proposed_by_user: UUID,
+        input: wallet_api::CreateProposalInput,
+        operation_input: wallet_api::AddUserGroupOperationInput,
+    ) -> Result<Proposal, ProposalError> {
+        let proposal = Proposal::new(
+            proposal_id,
+            proposed_by_user,
+            Proposal::default_expiration_dt_ns(),
+            ProposalOperation::AddUserGroup(operation_input.into()),
+            input
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(ProposalExecutionPlan::Immediate),
+            input
+                .title
+                .unwrap_or_else(|| "User group creation".to_string()),
+            input.summary,
+        );
+
+        Ok(proposal)
+    }
 }
 
-impl<'p> AddUserGroupProposalHandler<'p> {
-    pub fn new(proposal: &'p Proposal) -> Self {
-        Self {
-            proposal,
-            user_group_service: UserGroupService::default(),
-        }
-    }
+pub struct AddUserGroupProposalCreateHook<'p, 'o> {
+    _proposal: &'p Proposal,
+    _operation: &'o AddUserGroupOperation,
+}
 
-    fn unwrap_operation(&self) -> &AddUserGroupOperation {
-        match self.proposal.operation {
-            ProposalOperation::AddUserGroup(ref ctx) => ctx,
-            _ => trap("Invalid proposal operation for processor"),
+impl<'p, 'o> AddUserGroupProposalCreateHook<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
+        Self {
+            _proposal: proposal,
+            _operation: operation,
         }
     }
 }
 
 #[async_trait]
-impl<'p> ProposalHandler for AddUserGroupProposalHandler<'p> {
-    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
-        // TODO: Add policy evaluation once final policy design is ready
-
-        Vec::new()
+impl CreateHook for AddUserGroupProposalCreateHook<'_, '_> {
+    async fn on_created(&self) {
+        // TODO: Add once policy design is ready
     }
+}
 
+pub struct AddUserGroupProposalValidate<'p, 'o> {
+    proposal: &'p Proposal,
+    _operation: &'o AddUserGroupOperation,
+}
+
+impl<'p, 'o> AddUserGroupProposalValidate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
+        Self {
+            proposal,
+            _operation: operation,
+        }
+    }
+}
+
+impl Validate for AddUserGroupProposalValidate<'_, '_> {
     fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add policy evaluation once final policy design is ready
+        // TODO: Add once policy design is ready
 
         false
     }
 
-    fn has_access(&self, user_id: &UUID) -> bool {
-        // TODO: Add necessary access policies once final policy design is ready
-
-        self.proposal.users().contains(user_id)
+    fn can_view(&self, user_id: &UUID) -> bool {
+        self.can_vote(user_id)
+            || self.proposal.voters().contains(user_id)
+            || self.proposal.proposed_by == *user_id
     }
+}
 
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
+pub struct AddUserGroupProposalEvaluate<'p, 'o> {
+    _proposal: &'p Proposal,
+    _operation: &'o AddUserGroupOperation,
+}
+
+impl<'p, 'o> AddUserGroupProposalEvaluate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
+        Self {
+            _proposal: proposal,
+            _operation: operation,
+        }
     }
+}
 
+#[async_trait]
+impl Evaluate for AddUserGroupProposalEvaluate<'_, '_> {
+    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+        // TODO: Add once final policy design is ready
+
+        Ok(PolicyStatus::Accepted)
+    }
+}
+
+pub struct AddUserGroupProposalExecute<'p, 'o> {
+    proposal: &'p Proposal,
+    operation: &'o AddUserGroupOperation,
+}
+
+impl<'p, 'o> AddUserGroupProposalExecute<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
+        Self {
+            proposal,
+            operation,
+        }
+    }
+}
+
+#[async_trait]
+impl Execute for AddUserGroupProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let operation = self.unwrap_operation();
-
-        let user_group = self
-            .user_group_service
-            .create(operation.input.clone())
+        let user_group = USER_GROUP_SERVICE
+            .create(self.operation.input.clone())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to create user group: {}", e),
@@ -77,33 +140,5 @@ impl<'p> ProposalHandler for AddUserGroupProposalHandler<'p> {
         }
 
         Ok(ProposalExecuteStage::Completed(operation))
-    }
-
-    fn new_proposal(
-        id: Uuid,
-        proposed_by_user: UUID,
-        title: Option<String>,
-        summary: Option<String>,
-        execution_plan: Option<ProposalExecutionPlan>,
-        operation: ProposalOperationInput,
-    ) -> Result<Proposal, ProposalError> {
-        match operation {
-            ProposalOperationInput::AddUserGroup(input) => {
-                let proposal = Proposal::new(
-                    id,
-                    proposed_by_user,
-                    Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::AddUserGroup(input.into()),
-                    execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
-                    title.unwrap_or_else(|| "User group creation".to_string()),
-                    summary,
-                );
-
-                Ok(proposal)
-            }
-            _ => Err(ProposalError::ValidationError {
-                info: "Invalid operation for proposal creation".to_string(),
-            })?,
-        }
     }
 }

@@ -1,69 +1,133 @@
-use super::{ProposalExecuteStage, ProposalHandler};
+use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
-    core::ic_cdk::api::trap,
-    errors::{ProposalError, ProposalExecuteError},
+    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
-        Policy, PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
-        RemoveUserGroupOperation,
+        PolicyStatus, Proposal, ProposalExecutionPlan, ProposalOperation, RemoveUserGroupOperation,
     },
-    services::UserGroupService,
+    services::USER_GROUP_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
-use uuid::Uuid;
-use wallet_api::ProposalOperationInput;
 
-#[derive(Debug)]
-pub struct RemoveUserGroupProposalHandler<'p> {
-    proposal: &'p Proposal,
-    user_group_service: UserGroupService,
+pub struct RemoveUserGroupProposalCreate {}
+
+impl Create<wallet_api::RemoveUserGroupOperationInput> for RemoveUserGroupProposalCreate {
+    fn create(
+        proposal_id: UUID,
+        proposed_by_user: UUID,
+        input: wallet_api::CreateProposalInput,
+        operation_input: wallet_api::RemoveUserGroupOperationInput,
+    ) -> Result<Proposal, ProposalError> {
+        let proposal = Proposal::new(
+            proposal_id,
+            proposed_by_user,
+            Proposal::default_expiration_dt_ns(),
+            ProposalOperation::RemoveUserGroup(operation_input.into()),
+            input
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(ProposalExecutionPlan::Immediate),
+            input
+                .title
+                .unwrap_or_else(|| "User group removal".to_string()),
+            input.summary,
+        );
+
+        Ok(proposal)
+    }
 }
 
-impl<'p> RemoveUserGroupProposalHandler<'p> {
-    pub fn new(proposal: &'p Proposal) -> Self {
-        Self {
-            proposal,
-            user_group_service: UserGroupService::default(),
-        }
-    }
+pub struct RemoveUserGroupProposalCreateHook<'p, 'o> {
+    _proposal: &'p Proposal,
+    _operation: &'o RemoveUserGroupOperation,
+}
 
-    fn unwrap_operation(&self) -> &RemoveUserGroupOperation {
-        match self.proposal.operation {
-            ProposalOperation::RemoveUserGroup(ref ctx) => ctx,
-            _ => trap("Invalid proposal operation for processor"),
+impl<'p, 'o> RemoveUserGroupProposalCreateHook<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
+        Self {
+            _proposal: proposal,
+            _operation: operation,
         }
     }
 }
 
 #[async_trait]
-impl<'p> ProposalHandler for RemoveUserGroupProposalHandler<'p> {
-    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
-        // TODO: Add policy evaluation once final policy design is ready
-
-        Vec::new()
+impl CreateHook for RemoveUserGroupProposalCreateHook<'_, '_> {
+    async fn on_created(&self) {
+        // TODO: Add once policy design is ready
     }
+}
 
+pub struct RemoveUserGroupProposalValidate<'p, 'o> {
+    proposal: &'p Proposal,
+    _operation: &'o RemoveUserGroupOperation,
+}
+
+impl<'p, 'o> RemoveUserGroupProposalValidate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
+        Self {
+            proposal,
+            _operation: operation,
+        }
+    }
+}
+
+impl Validate for RemoveUserGroupProposalValidate<'_, '_> {
     fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add policy evaluation once final policy design is ready
+        // TODO: Add once policy design is ready
 
         false
     }
 
-    fn has_access(&self, user_id: &UUID) -> bool {
-        // TODO: Add necessary access policies once final policy design is ready
-
-        self.proposal.users().contains(user_id)
+    fn can_view(&self, user_id: &UUID) -> bool {
+        self.can_vote(user_id)
+            || self.proposal.voters().contains(user_id)
+            || self.proposal.proposed_by == *user_id
     }
+}
 
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
+pub struct RemoveUserGroupProposalEvaluate<'p, 'o> {
+    _proposal: &'p Proposal,
+    _operation: &'o RemoveUserGroupOperation,
+}
+
+impl<'p, 'o> RemoveUserGroupProposalEvaluate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
+        Self {
+            _proposal: proposal,
+            _operation: operation,
+        }
     }
+}
 
+#[async_trait]
+impl Evaluate for RemoveUserGroupProposalEvaluate<'_, '_> {
+    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
+        // TODO: Add once final policy design is ready
+
+        Ok(PolicyStatus::Accepted)
+    }
+}
+
+pub struct RemoveUserGroupProposalExecute<'p, 'o> {
+    proposal: &'p Proposal,
+    operation: &'o RemoveUserGroupOperation,
+}
+
+impl<'p, 'o> RemoveUserGroupProposalExecute<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
+        Self {
+            proposal,
+            operation,
+        }
+    }
+}
+
+#[async_trait]
+impl Execute for RemoveUserGroupProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let operation = self.unwrap_operation();
-
-        self.user_group_service
-            .remove(operation.input.clone())
+        USER_GROUP_SERVICE
+            .remove(self.operation.input.clone())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to remove user group: {}", e),
@@ -72,33 +136,5 @@ impl<'p> ProposalHandler for RemoveUserGroupProposalHandler<'p> {
         Ok(ProposalExecuteStage::Completed(
             self.proposal.operation.clone(),
         ))
-    }
-
-    fn new_proposal(
-        id: Uuid,
-        proposed_by_user: UUID,
-        title: Option<String>,
-        summary: Option<String>,
-        execution_plan: Option<ProposalExecutionPlan>,
-        operation: ProposalOperationInput,
-    ) -> Result<Proposal, ProposalError> {
-        match operation {
-            ProposalOperationInput::RemoveUserGroup(input) => {
-                let proposal = Proposal::new(
-                    id,
-                    proposed_by_user,
-                    Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::RemoveUserGroup(input.into()),
-                    execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
-                    title.unwrap_or_else(|| "User group removal".to_string()),
-                    summary,
-                );
-
-                Ok(proposal)
-            }
-            _ => Err(ProposalError::ValidationError {
-                info: "Invalid operation for proposal creation".to_string(),
-            })?,
-        }
     }
 }

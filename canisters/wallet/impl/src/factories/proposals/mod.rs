@@ -1,5 +1,5 @@
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::trap},
+    core::generate_uuid_v4,
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{PolicyStatus, Proposal, ProposalOperation},
 };
@@ -7,16 +7,55 @@ use async_trait::async_trait;
 use ic_canister_core::types::UUID;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
-// mod add_account;
-// mod add_user_group;
-// mod edit_account;
-// mod edit_user_group;
-// mod remove_user_group;
+mod add_account;
+mod add_user;
+mod add_user_group;
+mod edit_account;
+mod edit_user;
+mod edit_user_group;
+mod edit_user_status;
+mod remove_user_group;
 mod transfer;
 
-use self::transfer::{
-    TransferProposalCreate, TransferProposalCreateHook, TransferProposalEvaluate,
-    TransferProposalExecute, TransferProposalValidate,
+use self::{
+    add_account::{
+        AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalEvaluate,
+        AddAccountProposalExecute, AddAccountProposalValidate,
+    },
+    add_user::{
+        AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalEvaluate,
+        AddUserProposalExecute, AddUserProposalValidate,
+    },
+    add_user_group::{
+        AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalEvaluate,
+        AddUserGroupProposalExecute, AddUserGroupProposalValidate,
+    },
+    edit_account::{
+        EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalEvaluate,
+        EditAccountProposalExecute, EditAccountProposalValidate,
+    },
+    edit_user::{
+        EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalEvaluate,
+        EditUserProposalExecute, EditUserProposalValidate,
+    },
+    edit_user_group::{
+        EditUserGroupProposalCreate, EditUserGroupProposalCreateHook,
+        EditUserGroupProposalEvaluate, EditUserGroupProposalExecute, EditUserGroupProposalValidate,
+    },
+    edit_user_status::{
+        EditUserStatusProposalCreate, EditUserStatusProposalCreateHook,
+        EditUserStatusProposalEvaluate, EditUserStatusProposalExecute,
+        EditUserStatusProposalValidate,
+    },
+    remove_user_group::{
+        RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
+        RemoveUserGroupProposalEvaluate, RemoveUserGroupProposalExecute,
+        RemoveUserGroupProposalValidate,
+    },
+    transfer::{
+        TransferProposalCreate, TransferProposalCreateHook, TransferProposalEvaluate,
+        TransferProposalExecute, TransferProposalValidate,
+    },
 };
 
 #[derive(Debug)]
@@ -99,7 +138,64 @@ impl ProposalFactory {
                     operation.clone(),
                 )
             }
-            _ => trap(&format!("Not yet supported: {:?}", input.operation)),
+            ProposalOperationInput::AddAccount(operation) => {
+                create_proposal::<wallet_api::AddAccountOperationInput, AddAccountProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
+            ProposalOperationInput::EditAccount(operation) => {
+                create_proposal::<wallet_api::EditAccountOperationInput, EditAccountProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
+            ProposalOperationInput::AddUserGroup(operation) => {
+                create_proposal::<wallet_api::AddUserGroupOperationInput, AddUserGroupProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
+            ProposalOperationInput::EditUserGroup(operation) => {
+                create_proposal::<
+                    wallet_api::EditUserGroupOperationInput,
+                    EditUserGroupProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::RemoveUserGroup(operation) => {
+                create_proposal::<
+                    wallet_api::RemoveUserGroupOperationInput,
+                    RemoveUserGroupProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::AddUser(operation) => {
+                create_proposal::<wallet_api::AddUserOperationInput, AddUserProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
+            ProposalOperationInput::EditUser(operation) => {
+                create_proposal::<wallet_api::EditUserOperationInput, EditUserProposalCreate>(
+                    id,
+                    proposed_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
+            ProposalOperationInput::EditUserStatus(operation) => {
+                create_proposal::<
+                    wallet_api::EditUserStatusOperationInput,
+                    EditUserStatusProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
         }
     }
 
@@ -108,7 +204,30 @@ impl ProposalFactory {
             ProposalOperation::Transfer(operation) => {
                 Box::new(TransferProposalCreateHook::new(proposal, operation))
             }
-            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+            ProposalOperation::AddAccount(operation) => {
+                Box::new(AddAccountProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::EditAccount(operation) => {
+                Box::new(EditAccountProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::AddUserGroup(operation) => {
+                Box::new(AddUserGroupProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::EditUserGroup(operation) => {
+                Box::new(EditUserGroupProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::RemoveUserGroup(operation) => {
+                Box::new(RemoveUserGroupProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::AddUser(operation) => {
+                Box::new(AddUserProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::EditUser(operation) => {
+                Box::new(EditUserProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::EditUserStatus(operation) => {
+                Box::new(EditUserStatusProposalCreateHook::new(proposal, operation))
+            }
         }
     }
 
@@ -117,7 +236,30 @@ impl ProposalFactory {
             ProposalOperation::Transfer(operation) => {
                 Box::new(TransferProposalValidate::new(proposal, operation))
             }
-            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+            ProposalOperation::AddAccount(operation) => {
+                Box::new(AddAccountProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::EditAccount(operation) => {
+                Box::new(EditAccountProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::AddUserGroup(operation) => {
+                Box::new(AddUserGroupProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::EditUserGroup(operation) => {
+                Box::new(EditUserGroupProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::RemoveUserGroup(operation) => {
+                Box::new(RemoveUserGroupProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::AddUser(operation) => {
+                Box::new(AddUserProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::EditUser(operation) => {
+                Box::new(EditUserProposalValidate::new(proposal, operation))
+            }
+            ProposalOperation::EditUserStatus(operation) => {
+                Box::new(EditUserStatusProposalValidate::new(proposal, operation))
+            }
         }
     }
 
@@ -126,7 +268,30 @@ impl ProposalFactory {
             ProposalOperation::Transfer(operation) => {
                 Box::new(TransferProposalEvaluate::new(proposal, operation))
             }
-            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+            ProposalOperation::AddAccount(operation) => {
+                Box::new(AddAccountProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::EditAccount(operation) => {
+                Box::new(EditAccountProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::AddUserGroup(operation) => {
+                Box::new(AddUserGroupProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::EditUserGroup(operation) => {
+                Box::new(EditUserGroupProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::RemoveUserGroup(operation) => {
+                Box::new(RemoveUserGroupProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::AddUser(operation) => {
+                Box::new(AddUserProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::EditUser(operation) => {
+                Box::new(EditUserProposalEvaluate::new(proposal, operation))
+            }
+            ProposalOperation::EditUserStatus(operation) => {
+                Box::new(EditUserStatusProposalEvaluate::new(proposal, operation))
+            }
         }
     }
 
@@ -135,7 +300,30 @@ impl ProposalFactory {
             ProposalOperation::Transfer(operation) => {
                 Box::new(TransferProposalExecute::new(proposal, operation))
             }
-            _ => trap(&format!("Not yet supported: {:?}", proposal.operation)),
+            ProposalOperation::AddAccount(operation) => {
+                Box::new(AddAccountProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::EditAccount(operation) => {
+                Box::new(EditAccountProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::AddUserGroup(operation) => {
+                Box::new(AddUserGroupProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::EditUserGroup(operation) => {
+                Box::new(EditUserGroupProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::RemoveUserGroup(operation) => {
+                Box::new(RemoveUserGroupProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::AddUser(operation) => {
+                Box::new(AddUserProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::EditUser(operation) => {
+                Box::new(EditUserProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::EditUserStatus(operation) => {
+                Box::new(EditUserStatusProposalExecute::new(proposal, operation))
+            }
         }
     }
 }

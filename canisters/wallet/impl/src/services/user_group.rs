@@ -10,7 +10,12 @@ use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
+use lazy_static::lazy_static;
 use uuid::Uuid;
+
+lazy_static! {
+    pub static ref USER_GROUP_SERVICE: UserGroupService = UserGroupService::default();
+}
 
 #[derive(Default, Debug)]
 pub struct UserGroupService {
