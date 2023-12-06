@@ -335,6 +335,25 @@ type RemoveUserGroupOperation = record {
   input : RemoveUserGroupOperationInput;
 };
 
+type UpgradeTarget = variant {
+  Wallet;
+  Upgrader;
+};
+
+type UpgradeOperationInput = record {
+  // The target to upgrade.
+  target : UpgradeTarget;
+  // The wasm module to upgrade to.
+  module : blob;
+  // The checksum of the wasm module.
+  checksum : blob;
+};
+
+type UpgradeOperation = record {
+  // The input to the proposal to upgrade a canister.
+  input : UpgradeOperationInput;
+};
+
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
@@ -354,6 +373,8 @@ type ProposalOperation = variant {
   EditUserGroup : EditUserGroupOperation;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperation;
+  // An operation for upgrading a canister.
+  Upgrade : UpgradeOperation;
 };
 
 type ProposalOperationInput = variant {
@@ -375,6 +396,8 @@ type ProposalOperationInput = variant {
   EditUserGroup : EditUserGroupOperationInput;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperationInput;
+  // An operation for upgrading a canister.
+  Upgrade : UpgradeOperationInput;
 };
 
 type ProposalOperationType = variant {
@@ -396,6 +419,8 @@ type ProposalOperationType = variant {
   EditUserGroup;
   // An operation for removing an existing user group.
   RemoveUserGroup;
+  // An operation for upgrading a canister.
+  Upgrade;
 };
 
 // The schedule for executing a transaction of a given transfer.
