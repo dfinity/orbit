@@ -130,9 +130,8 @@ impl Proposal {
         Proposal::key(self.id.to_owned())
     }
 
-    pub fn users(&self) -> HashSet<UserId> {
+    pub fn voters(&self) -> HashSet<UserId> {
         let mut users = HashSet::new();
-        users.insert(self.proposed_by.to_owned());
 
         self.votes
             .iter()

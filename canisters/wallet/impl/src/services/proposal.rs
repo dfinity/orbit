@@ -159,7 +159,7 @@ impl ProposalService {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let has_access = proposal.can_view(&user.id);
 
-        if !proposal.users().contains(&user.id) && !has_access {
+        if !proposal.voters().contains(&user.id) && !has_access {
             Err(ProposalError::Forbidden {
                 proposal_id: Uuid::from_bytes(proposal.id.to_owned())
                     .hyphenated()

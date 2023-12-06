@@ -151,7 +151,8 @@ impl Validate for TransferProposalValidate<'_, '_> {
 
         self.can_vote(user_id)
             || account.owners.contains(user_id)
-            || self.proposal.users().contains(user_id)
+            || self.proposal.voters().contains(user_id)
+            || self.proposal.proposed_by == *user_id
     }
 }
 
