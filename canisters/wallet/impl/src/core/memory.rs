@@ -25,6 +25,7 @@ pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(14);
 pub const TRANSFER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(15);
 pub const USER_GROUP_MEMORY_ID: MemoryId = MemoryId::new(16);
 pub const USER_GROUP_NAME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(17);
+pub const PROPOSAL_POLICIES_MEMORY_ID: MemoryId = MemoryId::new(18);
 
 thread_local! {
   /// Static configuration of the canister.

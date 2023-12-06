@@ -32,6 +32,10 @@ pub struct UserGroupRepository {
 }
 
 impl Repository<UserGroupKey, UserGroup> for UserGroupRepository {
+    fn list(&self) -> Vec<UserGroup> {
+        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+    }
+
     fn get(&self, key: &UserGroupKey) -> Option<UserGroup> {
         DB.with(|m| m.borrow().get(key))
     }

@@ -36,6 +36,10 @@ pub struct TransferRepository {
 }
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
+    fn list(&self) -> Vec<Transfer> {
+        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+    }
+
     fn get(&self, key: &TransferKey) -> Option<Transfer> {
         DB.with(|m| m.borrow().get(key))
     }

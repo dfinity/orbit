@@ -2,6 +2,9 @@ use std::collections::HashSet;
 
 /// A repository is a generic interface for storing and retrieving data.
 pub trait Repository<Key, Value> {
+    /// Returns the list of records from the repository.
+    fn list(&self) -> Vec<Value>;
+
     /// Returns the record from the repository if it exists.
     fn get(&self, key: &Key) -> Option<Value>;
 
