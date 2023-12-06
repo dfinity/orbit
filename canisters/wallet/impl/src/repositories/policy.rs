@@ -18,8 +18,7 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref PROPOSAL_POLICY_REPOSITORY: ProposalPolicyRepository =
-        ProposalPolicyRepository::default();
+    pub static ref PROPOSAL_POLICY_REPOSITORY: ProposalPolicyRepository = ProposalPolicyRepository;
 }
 
 /// A repository that enables managing proposal policies in stable memory.
