@@ -1,7 +1,7 @@
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
-    errors::{ProposalError, ProposalExecuteError},
-    models::{Policy, PolicyStatus, Proposal, ProposalOperation},
+    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
+    models::{PolicyStatus, Proposal, ProposalOperation},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -36,7 +36,7 @@ pub trait Execute: Send + Sync {
 #[async_trait]
 pub trait Evaluate: Send + Sync {
     /// Reevaluates the status of the associated policies.
-    async fn evaluate(&self) -> Vec<(Policy, PolicyStatus)>;
+    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError>;
 }
 
 pub trait Validate: Send + Sync {

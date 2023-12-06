@@ -1,7 +1,7 @@
 use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
-    errors::{ProposalError, ProposalExecuteError},
+    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
@@ -171,7 +171,7 @@ impl<'p, 'o> TransferProposalEvaluate<'p, 'o> {
 
 #[async_trait]
 impl Evaluate for TransferProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Vec<(Policy, PolicyStatus)> {
+    async fn evaluate(&self) -> Result<PolicyStatus, ProposalEvaluateError> {
         let account = get_account(&self.operation.input.from_account_id);
         let mut policy_list = account
             .policies
@@ -204,9 +204,9 @@ impl Evaluate for TransferProposalEvaluate<'_, '_> {
                             total_approvals + missing_votes >= *min_approvals as usize;
 
                         if total_approvals >= *min_approvals as usize {
-                            *status = PolicyStatus::Fulfilled;
+                            *status = PolicyStatus::Accepted;
                         } else if !can_still_be_approved {
-                            *status = PolicyStatus::Failed;
+                            *status = PolicyStatus::Rejected;
                         }
                     }
                     ApprovalThresholdPolicy::VariableThreshold(percentage) => {
@@ -218,16 +218,28 @@ impl Evaluate for TransferProposalEvaluate<'_, '_> {
                             total_approvals + missing_votes >= min_approvals as usize;
 
                         if total_approvals >= min_approvals as usize {
-                            *status = PolicyStatus::Fulfilled;
+                            *status = PolicyStatus::Accepted;
                         } else if !can_still_be_approved {
-                            *status = PolicyStatus::Failed;
+                            *status = PolicyStatus::Rejected;
                         }
                     }
                 },
             }
         }
 
-        policy_list
+        if policy_list
+            .iter()
+            .all(|(_, status)| status == &PolicyStatus::Accepted)
+        {
+            return Ok(PolicyStatus::Accepted);
+        } else if policy_list
+            .iter()
+            .any(|(_, status)| status == &PolicyStatus::Rejected)
+        {
+            return Ok(PolicyStatus::Rejected);
+        }
+
+        Ok(PolicyStatus::Pending)
     }
 }
 

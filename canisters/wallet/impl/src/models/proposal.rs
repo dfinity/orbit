@@ -1,7 +1,7 @@
 use super::{
     PolicyStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
-use crate::errors::ProposalError;
+use crate::errors::{ProposalError, ProposalEvaluateError};
 use crate::{core::ic_cdk::api::time, factories::proposals::ProposalFactory};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -185,24 +185,20 @@ impl Proposal {
         });
     }
 
-    pub async fn reevaluate(&mut self) {
+    pub async fn reevaluate(&mut self) -> Result<(), ProposalEvaluateError> {
         let evaluator = ProposalFactory::evaluator(self);
-        let policies = evaluator.evaluate().await;
+        let evaluation_status = evaluator.evaluate().await?;
 
         // must drop before updating the proposal due to it being borrowed by the evaluator
         drop(evaluator);
 
-        if policies
-            .iter()
-            .all(|(_, status)| status == &PolicyStatus::Fulfilled)
-        {
+        if evaluation_status == PolicyStatus::Accepted {
             self.status = ProposalStatus::Adopted;
-        } else if policies
-            .iter()
-            .any(|(_, status)| status == &PolicyStatus::Failed)
-        {
+        } else if evaluation_status == PolicyStatus::Rejected {
             self.status = ProposalStatus::Rejected;
         }
+
+        Ok(())
     }
 
     pub async fn on_created(&self) {
