@@ -109,7 +109,7 @@ impl ProposalService {
 
         // When a proposal is created, it is immediately evaluated to determine its status.
         // This is done because the proposal may be immediately rejected or adopted based on the policies.
-        proposal.reevaluate();
+        proposal.reevaluate().await?;
 
         // Validate the proposal after the reevaluation.
         proposal.validate()?;
@@ -144,7 +144,7 @@ impl ProposalService {
         proposal.add_vote(voter.id, vote_decision, input.reason);
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
-        proposal.reevaluate();
+        proposal.reevaluate().await?;
 
         // Validate the proposal after the reevaluation.
         proposal.validate()?;
@@ -157,10 +157,9 @@ impl ProposalService {
 
     fn assert_proposal_access(&self, proposal: &Proposal, ctx: &CallContext) -> ServiceResult<()> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-        let proposal_handler = ProposalFactory::build_handler(proposal);
-        let has_access = proposal_handler.has_access(&user.id);
+        let has_access = proposal.can_view(&user.id);
 
-        if !proposal.users().contains(&user.id) && !has_access {
+        if !proposal.voters().contains(&user.id) && !has_access {
             Err(ProposalError::Forbidden {
                 proposal_id: Uuid::from_bytes(proposal.id.to_owned())
                     .hyphenated()

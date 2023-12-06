@@ -1,7 +1,7 @@
 use super::{
-    PolicyStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
+    EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
-use crate::errors::ProposalError;
+use crate::errors::{ProposalError, ProposalEvaluateError};
 use crate::{core::ic_cdk::api::time, factories::proposals::ProposalFactory};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -130,9 +130,8 @@ impl Proposal {
         Proposal::key(self.id.to_owned())
     }
 
-    pub fn users(&self) -> HashSet<UserId> {
+    pub fn voters(&self) -> HashSet<UserId> {
         let mut users = HashSet::new();
-        users.insert(self.proposed_by.to_owned());
 
         self.votes
             .iter()
@@ -159,9 +158,15 @@ impl Proposal {
     }
 
     pub fn can_vote(&self, user_id: &UUID) -> bool {
-        let proposal_handler = ProposalFactory::build_handler(self);
+        let validator = ProposalFactory::validator(self);
 
-        proposal_handler.can_vote(user_id)
+        validator.can_vote(user_id)
+    }
+
+    pub fn can_view(&self, user_id: &UUID) -> bool {
+        let validator = ProposalFactory::validator(self);
+
+        validator.can_view(user_id)
     }
 
     pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
@@ -179,29 +184,25 @@ impl Proposal {
         });
     }
 
-    pub fn reevaluate(&mut self) {
-        let proposal_handler = ProposalFactory::build_handler(self);
-        let policies = proposal_handler.evaluate_policies();
+    pub async fn reevaluate(&mut self) -> Result<(), ProposalEvaluateError> {
+        let evaluator = ProposalFactory::evaluator(self);
+        let evaluation_status = evaluator.evaluate().await?;
 
-        // must drop before updating the proposal due to it being borrowed by the handler
-        drop(proposal_handler);
+        // must drop before updating the proposal due to it being borrowed by the evaluator
+        drop(evaluator);
 
-        if policies
-            .iter()
-            .all(|(_, status)| status == &PolicyStatus::Fulfilled)
-        {
+        if evaluation_status == EvaluationStatus::Adopted {
             self.status = ProposalStatus::Adopted;
-        } else if policies
-            .iter()
-            .any(|(_, status)| status == &PolicyStatus::Failed)
-        {
+        } else if evaluation_status == EvaluationStatus::Rejected {
             self.status = ProposalStatus::Rejected;
         }
+
+        Ok(())
     }
 
     pub async fn on_created(&self) {
-        let proposal_handler = ProposalFactory::build_handler(self);
-        proposal_handler.on_created().await;
+        let create_hook = ProposalFactory::create_hook(self);
+        create_hook.on_created().await;
     }
 }
 

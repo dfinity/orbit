@@ -3,7 +3,7 @@ use crate::{
     models::{Proposal, ProposalExecutionPlan, ProposalOperation, ProposalStatus, UserId},
 };
 use ic_canister_core::{
-    types::Timestamp,
+    types::{Timestamp, UUID},
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
 use uuid::Uuid;
@@ -35,7 +35,7 @@ impl From<Proposal> for ProposalDTO {
 
 impl Proposal {
     pub fn new(
-        proposal_id: Uuid,
+        proposal_id: UUID,
         proposer: UserId,
         expiration_dt: Timestamp,
         operation: ProposalOperation,
@@ -44,7 +44,7 @@ impl Proposal {
         summary: Option<String>,
     ) -> Proposal {
         Proposal {
-            id: *proposal_id.as_bytes(),
+            id: proposal_id,
             title,
             operation,
             summary,

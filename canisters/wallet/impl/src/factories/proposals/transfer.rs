@@ -1,15 +1,15 @@
-use super::{ProposalExecuteStage, ProposalHandler};
+use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
-    errors::{ProposalError, ProposalExecuteError},
+    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, ApprovalThresholdPolicy, NotificationType, Policy, PolicyStatus, Proposal,
+        Account, ApprovalThresholdPolicy, EvaluationStatus, NotificationType, Policy, Proposal,
         ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
         TransferOperationInput, TransferProposalCreatedNotification,
     },
-    repositories::{AccountRepository, TransferRepository},
+    repositories::{TransferRepository, ACCOUNT_REPOSITORY},
     services::NotificationService,
 };
 use async_trait::async_trait;
@@ -17,56 +17,168 @@ use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
 use uuid::Uuid;
-use wallet_api::ProposalOperationInput;
 
-#[derive(Debug)]
-pub struct TransferProposalHandler<'p> {
-    transfer_repository: TransferRepository,
-    account_repository: AccountRepository,
+fn get_account(from_account_id: &UUID) -> Account {
+    ACCOUNT_REPOSITORY
+        .get(&Account::key(*from_account_id))
+        .unwrap_or_else(|| {
+            trap(&format!(
+                "Account not found: {}",
+                Uuid::from_bytes(*from_account_id).hyphenated()
+            ))
+        })
+}
+
+pub struct TransferProposalCreate {}
+
+impl Create<wallet_api::TransferOperationInput> for TransferProposalCreate {
+    fn create(
+        proposal_id: UUID,
+        proposed_by_user: UUID,
+        input: wallet_api::CreateProposalInput,
+        operation_input: wallet_api::TransferOperationInput,
+    ) -> Result<Proposal, ProposalError> {
+        let from_account_id =
+            HelperMapper::to_uuid(operation_input.from_account_id).map_err(|e| {
+                ProposalError::ValidationError {
+                    info: format!("Invalid from_account_id: {}", e),
+                }
+            })?;
+        let proposal = Proposal::new(
+            proposal_id,
+            proposed_by_user,
+            Proposal::default_expiration_dt_ns(),
+            ProposalOperation::Transfer(TransferOperation {
+                transfer_id: None,
+                input: TransferOperationInput {
+                    from_account_id: *from_account_id.as_bytes(),
+                    to: operation_input.to,
+                    amount: operation_input.amount,
+                    fee: operation_input.fee,
+                    // todo: add metadata mapping
+                    metadata: vec![],
+                    // todo: add network mapping
+                    network: match operation_input.network {
+                        Some(network) => network.id,
+                        None => "mainnet".to_string(),
+                    },
+                },
+            }),
+            input
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(ProposalExecutionPlan::Immediate),
+            input.title.unwrap_or_else(|| "Transfer".to_string()),
+            input.summary,
+        );
+
+        proposal.validate()?;
+
+        Ok(proposal)
+    }
+}
+
+pub struct TransferProposalCreateHook<'p, 'o> {
     proposal: &'p Proposal,
+    operation: &'o TransferOperation,
     notification_service: NotificationService,
 }
 
-impl<'p> TransferProposalHandler<'p> {
-    pub fn new(proposal: &'p Proposal) -> Self {
+impl<'p, 'o> TransferProposalCreateHook<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
         Self {
             proposal,
-            transfer_repository: TransferRepository::default(),
-            account_repository: AccountRepository::default(),
+            operation,
             notification_service: NotificationService::default(),
         }
-    }
-
-    fn unwrap_operation(&self) -> &TransferOperation {
-        match self.proposal.operation {
-            ProposalOperation::Transfer(ref ctx) => ctx,
-            _ => trap("Invalid proposal operation for processor"),
-        }
-    }
-
-    fn get_account(&self) -> Account {
-        let operation = self.unwrap_operation();
-
-        self.account_repository
-            .get(&Account::key(operation.input.from_account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(operation.input.from_account_id).hyphenated()
-                ))
-            })
     }
 }
 
 #[async_trait]
-impl<'p> ProposalHandler for TransferProposalHandler<'p> {
-    fn evaluate_policies(&self) -> Vec<(Policy, PolicyStatus)> {
-        let account = self.get_account();
+impl CreateHook for TransferProposalCreateHook<'_, '_> {
+    async fn on_created(&self) {
+        let account = get_account(&self.operation.input.from_account_id);
+
+        for owner in account.owners {
+            let should_send = self.proposal.proposed_by != owner;
+
+            if should_send {
+                self.notification_service
+                    .send_notification(
+                        owner,
+                        NotificationType::TransferProposalCreated(
+                            TransferProposalCreatedNotification {
+                                account_id: account.id,
+                                proposal_id: self.proposal.id,
+                            },
+                        ),
+                        None,
+                        None,
+                    )
+                    .await
+                    .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
+            }
+        }
+    }
+}
+
+pub struct TransferProposalValidate<'p, 'o> {
+    proposal: &'p Proposal,
+    operation: &'o TransferOperation,
+}
+
+impl<'p, 'o> TransferProposalValidate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
+        Self {
+            proposal,
+            operation,
+        }
+    }
+}
+
+impl Validate for TransferProposalValidate<'_, '_> {
+    fn can_vote(&self, user_id: &UUID) -> bool {
+        let account = get_account(&self.operation.input.from_account_id);
+        let should_vote = account.policies.iter().any(|policy| match policy {
+            Policy::ApprovalThreshold(_) => true,
+        });
+
+        should_vote && account.owners.contains(user_id)
+    }
+
+    fn can_view(&self, user_id: &UUID) -> bool {
+        let account = get_account(&self.operation.input.from_account_id);
+
+        self.can_vote(user_id)
+            || account.owners.contains(user_id)
+            || self.proposal.voters().contains(user_id)
+            || self.proposal.proposed_by == *user_id
+    }
+}
+
+pub struct TransferProposalEvaluate<'p, 'o> {
+    proposal: &'p Proposal,
+    operation: &'o TransferOperation,
+}
+
+impl<'p, 'o> TransferProposalEvaluate<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
+        Self {
+            proposal,
+            operation,
+        }
+    }
+}
+
+#[async_trait]
+impl Evaluate for TransferProposalEvaluate<'_, '_> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
+        let account = get_account(&self.operation.input.from_account_id);
         let mut policy_list = account
             .policies
             .into_iter()
-            .map(|policy| (policy, PolicyStatus::Pending))
-            .collect::<Vec<(Policy, PolicyStatus)>>();
+            .map(|policy| (policy, EvaluationStatus::Pending))
+            .collect::<Vec<(Policy, EvaluationStatus)>>();
         let total_approvals = self
             .proposal
             .votes
@@ -93,9 +205,9 @@ impl<'p> ProposalHandler for TransferProposalHandler<'p> {
                             total_approvals + missing_votes >= *min_approvals as usize;
 
                         if total_approvals >= *min_approvals as usize {
-                            *status = PolicyStatus::Fulfilled;
+                            *status = EvaluationStatus::Adopted;
                         } else if !can_still_be_approved {
-                            *status = PolicyStatus::Failed;
+                            *status = EvaluationStatus::Rejected;
                         }
                     }
                     ApprovalThresholdPolicy::VariableThreshold(percentage) => {
@@ -107,37 +219,58 @@ impl<'p> ProposalHandler for TransferProposalHandler<'p> {
                             total_approvals + missing_votes >= min_approvals as usize;
 
                         if total_approvals >= min_approvals as usize {
-                            *status = PolicyStatus::Fulfilled;
+                            *status = EvaluationStatus::Adopted;
                         } else if !can_still_be_approved {
-                            *status = PolicyStatus::Failed;
+                            *status = EvaluationStatus::Rejected;
                         }
                     }
                 },
             }
         }
 
-        policy_list
+        if policy_list
+            .iter()
+            .all(|(_, status)| status == &EvaluationStatus::Adopted)
+        {
+            return Ok(EvaluationStatus::Adopted);
+        } else if policy_list
+            .iter()
+            .any(|(_, status)| status == &EvaluationStatus::Rejected)
+        {
+            return Ok(EvaluationStatus::Rejected);
+        }
+
+        Ok(EvaluationStatus::Pending)
     }
+}
 
-    fn can_vote(&self, user_id: &UUID) -> bool {
-        let account = self.get_account();
-        let should_vote = account.policies.iter().any(|policy| match policy {
-            Policy::ApprovalThreshold(_) => true,
-        });
+pub struct TransferProposalExecute<'p, 'o> {
+    proposal: &'p Proposal,
+    operation: &'o TransferOperation,
+    transfer_repository: TransferRepository,
+}
 
-        should_vote && account.owners.contains(user_id)
+impl<'p, 'o> TransferProposalExecute<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
+        Self {
+            proposal,
+            operation,
+            transfer_repository: TransferRepository::default(),
+        }
     }
+}
 
+#[async_trait]
+impl Execute for TransferProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let operation = self.unwrap_operation();
         let transfer_id = generate_uuid_v4().await;
-        let account = self.get_account();
+        let account = get_account(&self.operation.input.from_account_id);
 
         let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to build blockchain api: {}", e),
             })?;
-        let fee = match &operation.input.fee {
+        let fee = match &self.operation.input.fee {
             Some(fee) => fee.clone(),
             None => {
                 let transaction_fee =
@@ -145,7 +278,7 @@ impl<'p> ProposalHandler for TransferProposalHandler<'p> {
                         .transaction_fee(&account)
                         .await
                         .map_err(|e| ProposalExecuteError::Failed {
-                            reason: format!("Failed to build blockchain api: {}", e),
+                            reason: format!("Failed to fetch transaction fee: {}", e),
                         })?;
 
                 candid::Nat(transaction_fee.fee)
@@ -155,12 +288,12 @@ impl<'p> ProposalHandler for TransferProposalHandler<'p> {
             self.proposal.id,
             *transfer_id.as_bytes(),
             self.proposal.proposed_by,
-            operation.input.from_account_id,
-            operation.input.to.clone(),
-            operation.input.metadata.clone(),
-            operation.input.amount.clone(),
+            self.operation.input.from_account_id,
+            self.operation.input.to.clone(),
+            self.operation.input.metadata.clone(),
+            self.operation.input.amount.clone(),
             fee,
-            operation.input.network.clone(),
+            self.operation.input.network.clone(),
         );
 
         transfer
@@ -175,85 +308,5 @@ impl<'p> ProposalHandler for TransferProposalHandler<'p> {
         Ok(ProposalExecuteStage::Processing(
             self.proposal.operation.clone(),
         ))
-    }
-
-    fn has_access(&self, user_id: &UUID) -> bool {
-        let account = self.get_account();
-
-        self.proposal.users().contains(user_id) || account.owners.contains(user_id)
-    }
-
-    async fn on_created(&self) {
-        let account = self.get_account();
-
-        for owner in account.owners {
-            let should_send = !self.proposal.users().contains(&owner);
-
-            if should_send {
-                self.notification_service
-                    .send_notification(
-                        owner,
-                        NotificationType::TransferProposalCreated(
-                            TransferProposalCreatedNotification {
-                                account_id: account.id,
-                                proposal_id: self.proposal.id,
-                            },
-                        ),
-                        None,
-                        None,
-                    )
-                    .await
-                    .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
-            }
-        }
-    }
-
-    fn new_proposal(
-        id: Uuid,
-        proposed_by_user: UUID,
-        title: Option<String>,
-        summary: Option<String>,
-        execution_plan: Option<ProposalExecutionPlan>,
-        operation: ProposalOperationInput,
-    ) -> Result<Proposal, ProposalError> {
-        match operation {
-            ProposalOperationInput::Transfer(operation) => {
-                let from_account_id =
-                    HelperMapper::to_uuid(operation.from_account_id).map_err(|e| {
-                        ProposalError::ValidationError {
-                            info: format!("Invalid from_account_id: {}", e),
-                        }
-                    })?;
-                let proposal = Proposal::new(
-                    id,
-                    proposed_by_user,
-                    Proposal::default_expiration_dt_ns(),
-                    ProposalOperation::Transfer(TransferOperation {
-                        transfer_id: None,
-                        input: TransferOperationInput {
-                            from_account_id: *from_account_id.as_bytes(),
-                            to: operation.to,
-                            amount: operation.amount,
-                            fee: operation.fee,
-                            // todo: add metadata mapping
-                            metadata: vec![],
-                            // todo: add network mapping
-                            network: match operation.network {
-                                Some(network) => network.id,
-                                None => "mainnet".to_string(),
-                            },
-                        },
-                    }),
-                    execution_plan.unwrap_or(ProposalExecutionPlan::Immediate),
-                    title.unwrap_or_else(|| "Transfer".to_string()),
-                    summary,
-                );
-
-                Ok(proposal)
-            }
-            _ => Err(ProposalError::ValidationError {
-                info: "Invalid operation for proposal creation".to_string(),
-            })?,
-        }
     }
 }
