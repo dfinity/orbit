@@ -21,3 +21,5 @@ pub use proposal::*;
 pub mod policy;
 
 pub mod indexes;
+
+pub mod upgrade;

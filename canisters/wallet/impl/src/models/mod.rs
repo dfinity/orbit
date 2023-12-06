@@ -68,8 +68,7 @@ pub use wallet_settings::*;
 mod wallet_features;
 pub use wallet_features::*;
 
-pub mod indexes;
-
-pub mod specifier;
-
 pub mod criteria;
+pub mod indexes;
+pub mod specifier;
+pub mod upgrade;
