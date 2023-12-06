@@ -69,3 +69,5 @@ mod wallet_features;
 pub use wallet_features::*;
 
 pub mod indexes;
+
+mod specifier;
