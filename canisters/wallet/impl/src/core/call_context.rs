@@ -37,7 +37,7 @@ impl CallContext {
         self.caller
     }
 
-    pub fn is_system(&self) -> bool {
+    pub fn caller_is_controller_or_self(&self) -> bool {
         self.caller == self_canister_id() || is_controller(&self.caller)
     }
 
