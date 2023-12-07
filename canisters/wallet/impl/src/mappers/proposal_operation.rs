@@ -2,7 +2,8 @@ use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
-        EditUserStatusOperation, ProposalOperation, TransferOperation, User,
+        EditUserStatusOperation, ProposalOperation, TransferOperation, UpgradeOperation,
+        UpgradeTarget, User,
     },
     repositories::{AccountRepository, UserRepository, USER_GROUP_REPOSITORY},
 };
@@ -13,6 +14,7 @@ use wallet_api::{
     EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
     EditUserOperationInput, EditUserStatusOperationDTO, EditUserStatusOperationInput, NetworkDTO,
     ProposalOperationDTO, TransferMetadataDTO, TransferOperationDTO, TransferOperationInput,
+    UpgradeOperationDTO, UpgradeOperationInput, UpgradeTargetDTO,
 };
 
 impl TransferOperation {
@@ -257,6 +259,52 @@ impl From<crate::models::EditUserStatusOperationInput> for EditUserStatusOperati
     }
 }
 
+impl From<UpgradeTarget> for UpgradeTargetDTO {
+    fn from(value: UpgradeTarget) -> Self {
+        match value {
+            UpgradeTarget::Wallet => UpgradeTargetDTO::Wallet,
+            UpgradeTarget::Upgrader => UpgradeTargetDTO::Upgrader,
+        }
+    }
+}
+
+impl From<UpgradeTargetDTO> for UpgradeTarget {
+    fn from(value: UpgradeTargetDTO) -> Self {
+        match value {
+            UpgradeTargetDTO::Wallet => UpgradeTarget::Wallet,
+            UpgradeTargetDTO::Upgrader => UpgradeTarget::Upgrader,
+        }
+    }
+}
+
+impl From<crate::models::UpgradeOperationInput> for UpgradeOperationInput {
+    fn from(input: crate::models::UpgradeOperationInput) -> UpgradeOperationInput {
+        UpgradeOperationInput {
+            target: input.target.into(),
+            module: input.module,
+            checksum: input.checksum,
+        }
+    }
+}
+
+impl From<UpgradeOperationInput> for crate::models::UpgradeOperationInput {
+    fn from(input: UpgradeOperationInput) -> crate::models::UpgradeOperationInput {
+        crate::models::UpgradeOperationInput {
+            target: input.target.into(),
+            module: input.module,
+            checksum: input.checksum,
+        }
+    }
+}
+
+impl From<UpgradeOperation> for UpgradeOperationDTO {
+    fn from(operation: UpgradeOperation) -> UpgradeOperationDTO {
+        UpgradeOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
 impl From<ProposalOperation> for ProposalOperationDTO {
     fn from(operation: ProposalOperation) -> ProposalOperationDTO {
         match operation {
@@ -308,6 +356,9 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::RemoveUserGroup(operation) => {
                 ProposalOperationDTO::RemoveUserGroup(Box::new(operation.into()))
+            }
+            ProposalOperation::Upgrade(operation) => {
+                ProposalOperationDTO::Upgrade(Box::new(operation.into()))
             }
         }
     }

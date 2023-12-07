@@ -27,3 +27,6 @@ pub use user::*;
 
 mod user_group;
 pub use user_group::*;
+
+mod upgrade;
+pub use upgrade::*;
