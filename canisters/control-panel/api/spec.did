@@ -17,25 +17,10 @@ type ApiError = record {
   details : opt vec record { text; text };
 };
 
-// The identity of an user.
-type UserIdentity = record {
-  // The identity of the user.
-  identity : UserIdentityID;
-  // A friendly name for the user identity.
-  name : opt text;
-};
-
 // The user user information.
 type User = record {
-  // The UUID associated with the user.
-  id : UserId;
-  // The name of the user.
-  name : opt text;
-  // The identities associated with the user.
-  // One identity can only be associated with one user.
-  identities : vec UserIdentity;
-  // The identities that are not yet confirmed.
-  unconfirmed_identities : vec UserIdentity;
+  // The identity associated with the user.
+  id : principal;
   // Main wallet used to show in the UI for this user.
   main_wallet : opt WalletID;
   // List of wallets associated with the user.
@@ -44,15 +29,10 @@ type User = record {
 
 // The result of managing an user.
 type ManageUserInput = record {
-  // The name of the user.
-  name : opt text;
   // The main wallet to use for this user.
   //
   // If specified and the wallet is not already associated with the user it will be added.
   main_wallet : opt WalletID;
-  // The identities to associate with the user, this should add all the identities as
-  // they are overriden on each call if specified.
-  identities : opt vec UserIdentity;
   // Manage the wallets associated with the user.
   wallets : opt vec UserWallet;
 };
@@ -126,8 +106,6 @@ type RegisterUserWalletInput = variant {
 
 // The input for registering an user.
 type RegisterUserInput = record {
-  // The name of the user.
-  name : opt text;
   // A wallet canister to use for this user.
   wallet : RegisterUserWalletInput;
 };
@@ -137,24 +115,6 @@ type RegisterUserResult = variant {
   // Successfull operation result.
   Ok : record {
     // The caller newly created user information.
-    user : User;
-  };
-  // The error that occurred during the operation.
-  Err : ApiError;
-};
-
-// The input for associating an identity with an existing user.
-type AssociateIdentityWithUserInput = record {
-  // The user to associate the identity with.
-  user_id : UserId;
-};
-
-// The result of associating an user with an identity.
-type AssociateIdentityWithUserResult = variant {
-  // Successfull operation result.
-  Ok : record {
-    // The user information if the identity was already added to
-    // the user and this operation just activated it.
     user : User;
   };
   // The error that occurred during the operation.
@@ -194,14 +154,6 @@ service : (opt CanisterInit) -> {
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
-  // Add user identity to the caller user, one identity can only be associated with one user.
-  //
-  // This operation should be called with the identity that is being associated with the user
-  // after one identity that is already associated with the user has already approved the association.
-  //
-  // If the identity being associated is already attached with another user, this operation will fail,
-  // and the identity will need to be removed from the other user before it can be associated with this user.
-  associate_identity_with_user : (input : AssociateIdentityWithUserInput) -> (AssociateIdentityWithUserResult);
   // Delete user associated with the caller.
   delete_user : () -> (RemoveUserResult);
   // List all the wallets associated with the caller.

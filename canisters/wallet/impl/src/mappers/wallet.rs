@@ -11,7 +11,11 @@ impl From<WalletSettings> for WalletSettingsDTO {
     fn from(settings: WalletSettings) -> Self {
         WalletSettingsDTO {
             approval_threshold: settings.config.approval_threshold,
-            owners: settings.owners.iter().map(|owner| owner.clone().into()).collect(),
+            owners: settings
+                .owners
+                .iter()
+                .map(|owner| owner.clone().into())
+                .collect(),
             permissions: settings
                 .config
                 .permissions

@@ -1,10 +1,9 @@
 //! User services.
 use crate::core::middlewares::{call_context, log_call, log_call_result};
-use crate::{core::CallContext, mappers::HelperMapper, services::UserService};
+use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
-    AssociateIdentityWithUserInput, AssociateIdentityWithUserResponse, DeleteUserResponse,
-    GetUserResponse, ManageUserInput, ManageUserResponse, RegisterUserInput, RegisterUserResponse,
-    UserDTO,
+    DeleteUserResponse, GetUserResponse, ManageUserInput, ManageUserResponse, RegisterUserInput,
+    RegisterUserResponse, UserDTO,
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
@@ -26,13 +25,6 @@ async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserRespon
 #[update(name = "manage_user")]
 async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
     CONTROLLER.manage_user(input).await
-}
-
-#[update(name = "associate_identity_with_user")]
-async fn associate_identity_with_user(
-    input: AssociateIdentityWithUserInput,
-) -> ApiResult<AssociateIdentityWithUserResponse> {
-    CONTROLLER.associate_identity_with_user(input).await
 }
 
 #[update(name = "delete_user")]
@@ -59,9 +51,7 @@ impl UserController {
     #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn get_user(&self) -> ApiResult<GetUserResponse> {
         let ctx: CallContext = CallContext::get();
-        let user = self
-            .user_service
-            .get_user_by_identity(&ctx.caller(), &ctx)?;
+        let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
 
         Ok(GetUserResponse {
             user: UserDTO::from(user),
@@ -94,31 +84,12 @@ impl UserController {
     #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
     async fn delete_user(&self) -> ApiResult<DeleteUserResponse> {
         let ctx: CallContext = CallContext::get();
-        let user = self
-            .user_service
-            .get_user_by_identity(&ctx.caller(), &ctx)?;
+        let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
 
         let deleted_user = UserService::default().remove_user(&user.id, &ctx).await?;
 
         Ok(DeleteUserResponse {
             user: UserDTO::from(deleted_user),
-        })
-    }
-
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
-    async fn associate_identity_with_user(
-        &self,
-        input: AssociateIdentityWithUserInput,
-    ) -> ApiResult<AssociateIdentityWithUserResponse> {
-        let ctx: CallContext = CallContext::get();
-        let user = self
-            .user_service
-            .associate_identity_with_user(*HelperMapper::to_uuid(input.user_id)?.as_bytes(), &ctx)
-            .await?;
-
-        Ok(AssociateIdentityWithUserResponse {
-            user: UserDTO::from(user),
         })
     }
 }

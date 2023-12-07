@@ -3,9 +3,6 @@
 mod user;
 pub use user::*;
 
-mod user_identity;
-pub use user_identity::*;
-
 mod user_wallet;
 pub use user_wallet::*;
 

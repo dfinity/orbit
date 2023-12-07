@@ -1,7 +1,12 @@
 use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 use crate::{
+    core::ic_cdk::api::id as self_canister_id,
+    core::CallContext,
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{AddUserOperation, EvaluationStatus, Proposal},
+    models::{
+        AddUserOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
+    },
+    services::USER_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -10,12 +15,28 @@ pub struct AddUserProposalCreate {}
 
 impl Create<wallet_api::AddUserOperationInput> for AddUserProposalCreate {
     fn create(
-        _proposal_id: UUID,
-        _proposed_by_user: UUID,
-        _input: wallet_api::CreateProposalInput,
-        _operation_input: wallet_api::AddUserOperationInput,
+        proposal_id: UUID,
+        proposed_by_user: UUID,
+        input: wallet_api::CreateProposalInput,
+        operation_input: wallet_api::AddUserOperationInput,
     ) -> Result<Proposal, ProposalError> {
-        todo!()
+        let proposal = Proposal::new(
+            proposal_id,
+            proposed_by_user,
+            Proposal::default_expiration_dt_ns(),
+            ProposalOperation::AddUser(AddUserOperation {
+                user_id: None,
+                input: operation_input.into(),
+            }),
+            input
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(ProposalExecutionPlan::Immediate),
+            input.title.unwrap_or_else(|| "User creation".to_string()),
+            input.summary,
+        );
+
+        Ok(proposal)
     }
 }
 
@@ -92,15 +113,15 @@ impl Evaluate for AddUserProposalEvaluate<'_, '_> {
 }
 
 pub struct AddUserProposalExecute<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddUserOperation,
+    proposal: &'p Proposal,
+    operation: &'o AddUserOperation,
 }
 
 impl<'p, 'o> AddUserProposalExecute<'p, 'o> {
     pub fn new(proposal: &'p Proposal, operation: &'o AddUserOperation) -> Self {
         Self {
-            _proposal: proposal,
-            _operation: operation,
+            proposal,
+            operation,
         }
     }
 }
@@ -108,6 +129,22 @@ impl<'p, 'o> AddUserProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for AddUserProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        todo!()
+        let user = USER_SERVICE
+            .add_user(
+                self.operation.input.clone(),
+                &CallContext::new(self_canister_id()),
+            )
+            .await
+            .map_err(|e| ProposalExecuteError::Failed {
+                reason: format!("Failed to create user: {}", e),
+            })?;
+
+        let mut operation = self.proposal.operation.clone();
+
+        if let ProposalOperation::AddUser(ref mut operation) = operation {
+            operation.user_id = Some(user.id);
+        }
+
+        Ok(ProposalExecuteStage::Completed(operation))
     }
 }

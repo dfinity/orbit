@@ -73,13 +73,13 @@ impl UserService {
 
     /// Creates a new user with the given user details and returns the created user.
     ///
-    /// This method can only be called by the wallet canister.
+    /// This method can only be called by a system call (self canister call or controller).
     pub async fn add_user(
         &self,
         input: AddUserOperationInput,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        if !ctx.self_canister_id() {
+        if !ctx.is_system() {
             Err(UserError::Unauthorized)?
         }
 
@@ -99,13 +99,13 @@ impl UserService {
 
     /// Edits the user associated with the given user id and returns the updated user.
     ///
-    /// This method can only be called by the wallet canister.
+    /// This method can only be called by a system call (self canister call or controller).
     pub async fn edit_user(
         &self,
         input: EditUserOperationInput,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        if !ctx.self_canister_id() {
+        if !ctx.is_system() {
             Err(UserError::Unauthorized)?
         }
 
@@ -190,11 +190,11 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::ic_cdk::api::id as self_canister_id;
     use crate::{
         core::test_utils,
         models::{user_test_utils, UserStatus},
     };
-    use crate::core::ic_cdk::api::id as self_canister_id;
 
     struct TestContext {
         service: UserService,

@@ -37,8 +37,8 @@ impl CallContext {
         self.caller
     }
 
-    pub fn self_canister_id(&self) -> bool {
-        self.caller == self_canister_id()
+    pub fn is_system(&self) -> bool {
+        self.caller == self_canister_id() || is_controller(&self.caller)
     }
 
     /// Checks if the caller is an admin.
@@ -88,25 +88,9 @@ fn check_access(permission: &str, caller: Principal) {
             )
         });
 
-    if user.groups.contains(ADMIN_GROUP_ID) {
-        // Admins have access to everything
-        return;
+    if !user.groups.contains(ADMIN_GROUP_ID) {
+        // TODO: Add validation once resource access control is integrated with the new permission model
     }
-
-    // let user_has_access = permission
-    //     .access_roles
-    //     .iter()
-    //     .any(|required_role| user.access_roles.contains(required_role));
-
-    // if !user_has_access {
-    //     trap(
-    //         format!(
-    //             "Access denied for user with principal `{}`",
-    //             caller.to_text()
-    //         )
-    //         .as_str(),
-    //     );
-    // }
 }
 
 #[cfg(test)]
