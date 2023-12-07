@@ -1,16 +1,16 @@
 use super::indexes::user_group_name_index::UserGroupNameIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, USER_GROUP_MEMORY_ID},
-    models::{indexes::user_group_name_index::UserGroupNameIndexCriteria, UserGroup, UserGroupKey},
+    models::{indexes::user_group_name_index::UserGroupNameIndexCriteria, UserGroup},
 };
-use ic_canister_core::repository::Repository;
 use ic_canister_core::repository::{IndexRepository, RefreshIndexMode};
+use ic_canister_core::{repository::Repository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::cell::RefCell;
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<UserGroupKey, UserGroup, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<UUID, UserGroup, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
       StableBTreeMap::init(memory_manager.get(USER_GROUP_MEMORY_ID))
     )
@@ -18,11 +18,7 @@ thread_local! {
 }
 
 lazy_static! {
-    static ref REPOSITORY: UserGroupRepository = UserGroupRepository::default();
-}
-
-pub fn use_user_group_repository() -> &'static UserGroupRepository {
-    &REPOSITORY
+    pub static ref USER_GROUP_REPOSITORY: UserGroupRepository = UserGroupRepository::default();
 }
 
 /// A repository that enables managing users in stable memory.
@@ -31,16 +27,16 @@ pub struct UserGroupRepository {
     name_index: UserGroupNameIndexRepository,
 }
 
-impl Repository<UserGroupKey, UserGroup> for UserGroupRepository {
+impl Repository<UUID, UserGroup> for UserGroupRepository {
     fn list(&self) -> Vec<UserGroup> {
-        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
-    fn get(&self, key: &UserGroupKey) -> Option<UserGroup> {
+    fn get(&self, key: &UUID) -> Option<UserGroup> {
         DB.with(|m| m.borrow().get(key))
     }
 
-    fn insert(&self, key: UserGroupKey, value: UserGroup) -> Option<UserGroup> {
+    fn insert(&self, key: UUID, value: UserGroup) -> Option<UserGroup> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
             self.name_index
@@ -53,7 +49,7 @@ impl Repository<UserGroupKey, UserGroup> for UserGroupRepository {
         })
     }
 
-    fn remove(&self, key: &UserGroupKey) -> Option<UserGroup> {
+    fn remove(&self, key: &UUID) -> Option<UserGroup> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
             self.name_index
@@ -80,7 +76,7 @@ impl UserGroupRepository {
 
         let user_group_id = user_group_ids.iter().next().unwrap();
 
-        self.get(&UserGroup::key(*user_group_id))
+        self.get(user_group_id)
     }
 }
 
@@ -94,13 +90,13 @@ mod tests {
         let repository = UserGroupRepository::default();
         let user_group = user_group_test_utils::mock_user_group();
 
-        assert!(repository.get(&user_group.to_key()).is_none());
+        assert!(repository.get(&user_group.id).is_none());
 
-        repository.insert(user_group.to_key(), user_group.clone());
+        repository.insert(user_group.id.to_owned(), user_group.clone());
 
-        assert!(repository.get(&user_group.to_key()).is_some());
-        assert!(repository.remove(&user_group.to_key()).is_some());
-        assert!(repository.get(&user_group.to_key()).is_none());
+        assert!(repository.get(&user_group.id).is_some());
+        assert!(repository.remove(&user_group.id).is_some());
+        assert!(repository.get(&user_group.id).is_none());
     }
 
     #[test]
@@ -110,10 +106,10 @@ mod tests {
 
         assert!(repository.find_by_name(&user_group.name).is_none());
 
-        repository.insert(user_group.to_key(), user_group.clone());
+        repository.insert(user_group.id, user_group.clone());
 
         assert!(repository.find_by_name(&user_group.name).is_some());
-        assert!(repository.remove(&user_group.to_key()).is_some());
+        assert!(repository.remove(&user_group.id).is_some());
         assert!(repository.find_by_name(&user_group.name).is_none());
     }
 }

@@ -72,7 +72,7 @@ impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
             AccountSpecifier::Any => Ok(true),
 
             // Group
-            AccountSpecifier::Group(ids) => todo!(),
+            AccountSpecifier::Group(_ids) => todo!(),
 
             // Id
             AccountSpecifier::Id(ids) => Ok(ids.contains(&id)),
@@ -105,7 +105,7 @@ impl Match<(Proposal, UUID, UserSpecifier)> for UserMatcher {
             UserSpecifier::Any => Ok(true),
 
             // Group
-            UserSpecifier::Group(ids) => todo!(),
+            UserSpecifier::Group(_ids) => todo!(),
 
             // Id
             UserSpecifier::Id(ids) => Ok(ids.contains(&id)),
@@ -223,6 +223,7 @@ mod tests {
                         identities: vec![],
                         groups: vec![],
                         status: UserStatus::Active,
+                        unconfirmed_identities: vec![],
                     },
                 }),
                 ProposalSpecifier::AddUser,
@@ -245,6 +246,7 @@ mod tests {
                         name: None,
                         identities: None,
                         groups: None,
+                        unconfirmed_identities: None,
                     },
                 }),
                 ProposalSpecifier::EditUser(UserSpecifier::Any),

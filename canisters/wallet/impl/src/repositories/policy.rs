@@ -27,7 +27,7 @@ pub struct ProposalPolicyRepository;
 
 impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
     fn list(&self) -> Vec<ProposalPolicy> {
-        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
     fn get(&self, key: &UUID) -> Option<ProposalPolicy> {

@@ -29,7 +29,7 @@ pub struct NotificationRepository {
 
 impl Repository<NotificationKey, Notification> for NotificationRepository {
     fn list(&self) -> Vec<Notification> {
-        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
     fn get(&self, key: &NotificationKey) -> Option<Notification> {

@@ -1,7 +1,7 @@
 use crate::interfaces::{
     default_account, get_icp_balance, send_icp, send_icp_to_account, ICP, ICP_FEE,
 };
-use crate::setup::setup_new_env;
+use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{update_candid_as, user_test_id};
 use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
@@ -9,8 +9,8 @@ use ic_ledger_types::AccountIdentifier;
 use std::time::Duration;
 use wallet_api::{
     AddAccountOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
-    GetProposalInput, GetProposalResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO,
-    ProposalOperationInput, ProposalStatusDTO, RegisterUserInput, RegisterUserResponse,
+    GetProposalInput, GetProposalResponse, GetUserInput, GetUserResponse,
+    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
     TransferOperationInput,
 };
 
@@ -23,19 +23,16 @@ fn make_transfer_successful() {
         ..
     } = setup_new_env();
 
-    let user_id = user_test_id(0);
     let beneficiary_id = user_test_id(1);
 
     // register user
-    let register_args = RegisterUserInput {
-        identities: vec![user_id],
-    };
-    let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
+    let get_user_args = GetUserInput { user_id: None };
+    let res: (ApiResult<GetUserResponse>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        user_id,
-        "register_user",
-        (register_args,),
+        WALLET_ADMIN_USER,
+        "get_user",
+        (get_user_args,),
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
@@ -58,11 +55,16 @@ fn make_transfer_successful() {
     let res: (ApiResult<CreateProposalResponse>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        user_id,
+        WALLET_ADMIN_USER,
         "create_proposal",
         (add_account_proposal,),
     )
     .unwrap();
+
+    // wait for the proposal to be adopted (timer's period is 5 seconds)
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+
     let account_creation_proposal_dto = res.0.unwrap().proposal;
     match account_creation_proposal_dto.status {
         ProposalStatusDTO::Adopted { .. } => {}
@@ -72,7 +74,7 @@ fn make_transfer_successful() {
     };
 
     // wait for the proposal to be executed (timer's period is 5 seconds)
-    env.set_time(env.get_time() + Duration::from_secs(5));
+    env.advance_time(Duration::from_secs(5));
     env.tick();
 
     // fetch the created account id from the proposal
@@ -82,13 +84,22 @@ fn make_transfer_successful() {
     let res: (ApiResult<CreateProposalResponse>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        user_id,
+        WALLET_ADMIN_USER,
         "get_proposal",
         (get_proposal_args,),
     )
     .unwrap();
-
     let finalized_proposal = res.0.unwrap().proposal;
+    match finalized_proposal.status {
+        ProposalStatusDTO::Completed { .. } => {}
+        _ => {
+            panic!(
+                "proposal must be completed by now but instead is {:?}",
+                finalized_proposal.status
+            );
+        }
+    };
+
     let account_dto = match finalized_proposal.operation {
         ProposalOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
         _ => {
@@ -97,16 +108,16 @@ fn make_transfer_successful() {
     };
 
     // send ICP to user
-    send_icp(&env, controller, user_id, ICP + 2 * ICP_FEE, 0).unwrap();
-    let user_balance = get_icp_balance(&env, user_id);
+    send_icp(&env, controller, WALLET_ADMIN_USER, ICP + 2 * ICP_FEE, 0).unwrap();
+    let user_balance = get_icp_balance(&env, WALLET_ADMIN_USER);
     assert_eq!(user_balance, ICP + 2 * ICP_FEE);
 
     // send ICP to orbit wallet account
     let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
-    send_icp_to_account(&env, user_id, account_address, ICP + ICP_FEE, 0).unwrap();
+    send_icp_to_account(&env, WALLET_ADMIN_USER, account_address, ICP + ICP_FEE, 0).unwrap();
 
     // check user balance after transfer to orbit wallet account
-    let new_user_balance = get_icp_balance(&env, user_id);
+    let new_user_balance = get_icp_balance(&env, WALLET_ADMIN_USER);
     assert_eq!(new_user_balance, 0);
 
     // check beneficiary balance
@@ -131,16 +142,18 @@ fn make_transfer_successful() {
     let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        user_id,
+        WALLET_ADMIN_USER,
         "create_proposal",
         (transfer_proposal,),
     )
     .unwrap();
     let proposal_dto = res.0.unwrap().proposal;
 
-    // wait for the proposal to be executed (timer's period is 5 seconds)
-    env.set_time(env.get_time() + Duration::from_secs(5));
-    // need multiple rounds to make xnet call to ledger and process callback
+    // wait for the proposal to be adopted (timer's period is 5 seconds)
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+    // wait for the proposal to be processing (timer's period is 5 seconds) and first is set to processing
+    env.advance_time(Duration::from_secs(5));
     env.tick();
     env.tick();
 
@@ -151,7 +164,7 @@ fn make_transfer_successful() {
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
         canister_ids.wallet,
-        user_id,
+        WALLET_ADMIN_USER,
         "get_proposal",
         (get_proposal_args,),
     )
@@ -160,7 +173,10 @@ fn make_transfer_successful() {
     match new_proposal_dto.status {
         ProposalStatusDTO::Completed { .. } => {}
         _ => {
-            panic!("proposal must be completed by now");
+            panic!(
+                "proposal must be completed by now but instead is {:?}",
+                new_proposal_dto.status
+            );
         }
     };
 

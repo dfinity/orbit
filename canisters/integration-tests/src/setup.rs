@@ -12,11 +12,13 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use upgrader_api::InitArg as UpgraderInitArg;
 use wallet_api::WalletCanisterInit as WalletInitArg;
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
+
+pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 
 pub fn setup_new_env() -> TestEnv {
     let path = match env::var_os("POCKET_IC_BIN") {
@@ -140,7 +142,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     let wallet_wasm = get_canister_wasm("wallet").to_vec();
     let wallet_init_args = WalletInitArg {
         approval_threshold: None,
-        owners: None,
+        owners: Some(vec![WALLET_ADMIN_USER]),
         permissions: None,
     };
     env.install_canister(
@@ -149,6 +151,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Encode!(&wallet_init_args).unwrap(),
         Some(controller),
     );
+    // required because the admin users of the wallet are added through a timer after the canister is installed
+    env.advance_time(Duration::from_secs(1));
+    // required because the wallet canister adds the admin users through a timer after it is installed
+    // which is required because it requires inter canister calls to initialize the UUIDs generator with a call
+    // to `raw_rand` which is not allowed in init calls
+    env.tick();
+    env.tick();
+    env.tick();
 
     CanisterIds {
         icp_ledger: nns_ledger_canister_id,

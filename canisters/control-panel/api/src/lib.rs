@@ -13,10 +13,6 @@ pub use user_wallet::*;
 mod manage_user;
 pub use manage_user::*;
 
-/// User Identity DTOs.
-mod user_identity;
-pub use user_identity::*;
-
 /// Canister hooks DTOs.
 mod canister;
 pub use canister::*;

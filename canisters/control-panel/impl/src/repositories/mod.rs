@@ -2,5 +2,3 @@
 
 mod user;
 pub use user::*;
-
-pub mod indexes;

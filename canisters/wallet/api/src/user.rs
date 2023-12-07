@@ -1,3 +1,5 @@
+use crate::UserGroupDTO;
+
 use super::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
 
@@ -21,29 +23,10 @@ pub struct UserDTO {
     pub id: UserIdDTO,
     pub identities: Vec<Principal>,
     pub unconfirmed_identities: Vec<Principal>,
-    pub access_roles: Vec<UserRoleDTO>,
+    pub groups: Vec<UserGroupDTO>,
+    pub status: UserStatusDTO,
+    pub name: Option<String>,
     pub last_modification_timestamp: TimestampRfc3339,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct RegisterUserInput {
-    pub identities: Vec<Principal>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct RegisterUserResponse {
-    pub user: UserDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditUserInput {
-    pub user_id: UserIdDTO,
-    pub identities: Option<Vec<Principal>>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditUserResponse {
-    pub user: UserDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -70,6 +53,7 @@ pub struct ConfirmUserIdentityResponse {
 pub struct AddUserOperationInput {
     pub name: Option<String>,
     pub identities: Vec<Principal>,
+    pub unconfirmed_identities: Vec<Principal>,
     pub groups: Vec<String>,
     pub status: UserStatusDTO,
 }
@@ -85,6 +69,7 @@ pub struct EditUserOperationInput {
     pub id: UserIdDTO,
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
+    pub unconfirmed_identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<String>>,
 }
 

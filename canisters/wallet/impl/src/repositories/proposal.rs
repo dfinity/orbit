@@ -45,7 +45,7 @@ pub struct ProposalRepository {
 
 impl Repository<ProposalKey, Proposal> for ProposalRepository {
     fn list(&self) -> Vec<Proposal> {
-        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
     fn get(&self, key: &ProposalKey) -> Option<Proposal> {

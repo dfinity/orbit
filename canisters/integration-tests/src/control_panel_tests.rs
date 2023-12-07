@@ -13,7 +13,6 @@ fn register_user_successful() {
     } = setup_new_env();
 
     let user_id = user_test_id(0);
-    let user_name = "TestUser".to_string();
 
     // user has no wallet so far
     let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
@@ -25,7 +24,7 @@ fn register_user_successful() {
     )
     .unwrap();
     let err = res.0.unwrap_err();
-    assert_eq!(err.code, "ASSOCIATED_USER_IDENTITY_NOT_FOUND");
+    assert_eq!(err.code, "NOT_FOUND");
 
     // register user
     let wallet_args = RegisterUserWalletInput::PrivateWallet {
@@ -33,7 +32,6 @@ fn register_user_successful() {
         use_shared_wallet: None,
     };
     let register_args = RegisterUserInput {
-        name: Some(user_name.clone()),
         wallet: wallet_args,
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
@@ -45,7 +43,7 @@ fn register_user_successful() {
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.name, Some(user_name));
+    assert_eq!(user_dto.id, user_id);
 
     // get main wallet
     let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(

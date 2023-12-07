@@ -33,7 +33,7 @@ pub struct AccountRepository {
 
 impl Repository<AccountKey, Account> for AccountRepository {
     fn list(&self) -> Vec<Account> {
-        DB.with(|m| m.borrow().iter().map(|(k, v)| v).collect())
+        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
     fn get(&self, key: &AccountKey) -> Option<Account> {
