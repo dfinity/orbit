@@ -300,9 +300,6 @@ impl From<UpgradeOperationInput> for crate::models::UpgradeOperationInput {
 impl From<UpgradeOperation> for UpgradeOperationDTO {
     fn from(operation: UpgradeOperation) -> UpgradeOperationDTO {
         UpgradeOperationDTO {
-            // TODO: What to do here?
-            upgrade: None,
-
             input: operation.input.into(),
         }
     }
