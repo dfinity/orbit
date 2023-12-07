@@ -13,9 +13,11 @@ use ic_canister_macros::stable_object;
 pub struct User {
     /// The UUID that identifies the user.
     pub id: Principal,
-    /// The shared wallet to use for the user.
+    /// The main wallet to use for the user, this is the wallet that will be used by default.
     pub main_wallet: Option<Principal>,
-    /// The status of the identity.
+    /// All the wallets that the user has access to (including the main wallet).
+    /// 
+    /// The user can optionally give a name to each wallet to make it easier to identify them.
     pub wallets: Vec<UserWallet>,
     /// Last time the identity was updated.
     pub last_update_timestamp: Timestamp,
