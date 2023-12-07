@@ -71,4 +71,3 @@ pub use wallet_features::*;
 pub mod criteria;
 pub mod indexes;
 pub mod specifier;
-pub mod upgrade;

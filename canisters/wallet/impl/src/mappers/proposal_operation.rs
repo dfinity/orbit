@@ -1,9 +1,9 @@
 use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
-        upgrade::UpgradeTarget, Account, AddAccountOperation, AddUserOperation,
-        EditAccountOperation, EditUserOperation, EditUserStatusOperation, ProposalOperation,
-        TransferOperation, UpgradeOperation, User,
+        Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
+        EditUserStatusOperation, ProposalOperation, TransferOperation, UpgradeOperation,
+        UpgradeTarget, User,
     },
     repositories::{AccountRepository, UserRepository, USER_GROUP_REPOSITORY},
 };
