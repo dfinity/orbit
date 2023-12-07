@@ -16,7 +16,7 @@ pub struct User {
     /// The main wallet to use for the user, this is the wallet that will be used by default.
     pub main_wallet: Option<Principal>,
     /// All the wallets that the user has access to (including the main wallet).
-    /// 
+    ///
     /// The user can optionally give a name to each wallet to make it easier to identify them.
     pub wallets: Vec<UserWallet>,
     /// Last time the identity was updated.
