@@ -49,6 +49,10 @@ impl WalletService {
     // init calls can't perform inter-canister calls so we need to delay tasks such as user registration
     // with a one-off timer to allow the canister to be initialized first and then perform them,
     // this is needed because properties like ids are generated based on UUIDs which requires `raw_rand` to be used.
+    //
+    // WARNING: we do not perform locking, the canister might already receive calls before the timer is executed,
+    // currently this is not a problem because the admins would simply get an access denied error but if more
+    // complex/required business logic is added to the timer a locking mechanism should be added.
     #[allow(unused_variables)]
     fn register_canister_config_post_process(&self, owners: Vec<Principal>, ctx: CallContext) {
         #[cfg(target_arch = "wasm32")]

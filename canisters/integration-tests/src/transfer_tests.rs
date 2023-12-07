@@ -155,8 +155,6 @@ fn make_transfer_successful() {
     // wait for the proposal to be processing (timer's period is 5 seconds) and first is set to processing
     env.advance_time(Duration::from_secs(5));
     env.tick();
-    // wait for the transfer to be executed (timer's period is 5 seconds)
-    env.advance_time(Duration::from_secs(5));
     env.tick();
 
     // check transfer proposal status
