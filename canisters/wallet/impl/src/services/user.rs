@@ -79,7 +79,7 @@ impl UserService {
         input: AddUserOperationInput,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        if !ctx.is_system() {
+        if !ctx.caller_is_controller_or_self() {
             Err(UserError::Unauthorized)?
         }
 
@@ -105,7 +105,7 @@ impl UserService {
         input: EditUserOperationInput,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        if !ctx.is_system() {
+        if !ctx.caller_is_controller_or_self() {
             Err(UserError::Unauthorized)?
         }
 

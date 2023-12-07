@@ -153,6 +153,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     );
     // required because the admin users of the wallet are added through a timer after the canister is installed
     env.advance_time(Duration::from_secs(1));
+    // required because the wallet canister adds the admin users through a timer after it is installed
+    // which is required because it requires inter canister calls to initialize the UUIDs generator with a call
+    // to `raw_rand` which is not allowed in init calls
     env.tick();
     env.tick();
     env.tick();

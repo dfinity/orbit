@@ -62,7 +62,7 @@ fn make_transfer_successful() {
     .unwrap();
 
     // wait for the proposal to be adopted (timer's period is 5 seconds)
-    env.set_time(env.get_time() + Duration::from_secs(5));
+    env.advance_time(Duration::from_secs(5));
     env.tick();
 
     let account_creation_proposal_dto = res.0.unwrap().proposal;
@@ -74,7 +74,7 @@ fn make_transfer_successful() {
     };
 
     // wait for the proposal to be executed (timer's period is 5 seconds)
-    env.set_time(env.get_time() + Duration::from_secs(5));
+    env.advance_time(Duration::from_secs(5));
     env.tick();
 
     // fetch the created account id from the proposal
@@ -150,13 +150,13 @@ fn make_transfer_successful() {
     let proposal_dto = res.0.unwrap().proposal;
 
     // wait for the proposal to be adopted (timer's period is 5 seconds)
-    env.set_time(env.get_time() + Duration::from_secs(5));
+    env.advance_time(Duration::from_secs(5));
     env.tick();
-    // wait for the proposal to be executed (timer's period is 5 seconds) and first is set to processing
-    env.set_time(env.get_time() + Duration::from_secs(5));
+    // wait for the proposal to be processing (timer's period is 5 seconds) and first is set to processing
+    env.advance_time(Duration::from_secs(5));
     env.tick();
     // wait for the transfer to be executed (timer's period is 5 seconds)
-    env.set_time(env.get_time() + Duration::from_secs(5));
+    env.advance_time(Duration::from_secs(5));
     env.tick();
 
     // check transfer proposal status
