@@ -6,7 +6,9 @@ use crate::{
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
         EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation,
+        UpgradeTarget,
     },
+    services::UpgradeService,
 };
 
 use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
@@ -123,6 +125,28 @@ impl<'p, 'o> UpgradeProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for UpgradeProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        todo!()
+        let svc = UpgradeService {
+            upgrader_canister_id: None,
+        };
+
+        match self.operation.input.target {
+            UpgradeTarget::Wallet => svc
+                .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
+                .await
+                .map_err(|err| ProposalExecuteError::Failed {
+                    reason: format!("failed to upgrade wallet: {}", err),
+                }),
+
+            UpgradeTarget::Upgrader => svc
+                .upgrade_upgrader(&self.operation.input.module)
+                .await
+                .map_err(|err| ProposalExecuteError::Failed {
+                    reason: format!("failed to upgrade upgrader: {}", err),
+                }),
+        }?;
+
+        Ok(ProposalExecuteStage::Completed(
+            self.proposal.operation.clone(),
+        ))
     }
 }
