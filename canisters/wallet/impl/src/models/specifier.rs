@@ -60,6 +60,7 @@ pub trait Match<T>: Sync + Send {
     async fn is_match(&self, v: T) -> Result<bool, MatchError>;
 }
 
+#[derive(Clone)]
 pub struct AccountMatcher;
 
 #[async_trait]
@@ -80,6 +81,7 @@ impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
     }
 }
 
+#[derive(Clone)]
 pub struct AddressMatcher;
 
 #[async_trait]
@@ -93,6 +95,7 @@ impl Match<(Proposal, String, AddressSpecifier)> for AddressMatcher {
     }
 }
 
+#[derive(Clone)]
 pub struct UserMatcher;
 
 #[async_trait]
@@ -119,10 +122,11 @@ impl Match<(Proposal, UUID, UserSpecifier)> for UserMatcher {
     }
 }
 
+#[derive(Clone)]
 pub struct ProposalMatcher {
-    account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
-    address_matcher: Arc<dyn Match<(Proposal, String, AddressSpecifier)>>,
-    user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
+    pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
+    pub address_matcher: Arc<dyn Match<(Proposal, String, AddressSpecifier)>>,
+    pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
 }
 
 #[async_trait]

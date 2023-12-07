@@ -1,9 +1,7 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
 use crate::{
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{
-        AddAccountOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
-    },
+    errors::{ProposalError, ProposalExecuteError},
+    models::{AddAccountOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
     services::AccountService,
 };
 use async_trait::async_trait;
@@ -87,29 +85,6 @@ impl Validate for AddAccountProposalValidate<'_, '_> {
         self.can_vote(user_id)
             || self.proposal.voters().contains(user_id)
             || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct AddAccountProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddAccountOperation,
-}
-
-impl<'p, 'o> AddAccountProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for AddAccountProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
     }
 }
 

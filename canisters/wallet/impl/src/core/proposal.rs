@@ -1,12 +1,6 @@
-use std::sync::Arc;
-
-use anyhow::Context;
-use async_trait::async_trait;
-use ic_canister_core::repository::Repository;
-
+use super::evaluation::Evaluate;
 use crate::{
     errors::EvaluateError,
-    factories::proposals::Evaluate,
     models::{
         criteria::EvaluateCriteria,
         specifier::{Match, ProposalSpecifier},
@@ -14,6 +8,10 @@ use crate::{
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
+use anyhow::Context;
+use async_trait::async_trait;
+use ic_canister_core::repository::Repository;
+use std::sync::Arc;
 
 pub struct ProposalEvaluator {
     pub proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
@@ -21,8 +19,22 @@ pub struct ProposalEvaluator {
     pub proposal: Proposal,
 }
 
+impl ProposalEvaluator {
+    pub fn new(
+        proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
+        criteria_evaluator: Arc<dyn EvaluateCriteria>,
+        proposal: Proposal,
+    ) -> Self {
+        Self {
+            proposal_matcher,
+            criteria_evaluator,
+            proposal,
+        }
+    }
+}
+
 #[async_trait]
-impl Evaluate for ProposalEvaluator {
+impl Evaluate<EvaluationStatus> for ProposalEvaluator {
     async fn evaluate(&self) -> Result<EvaluationStatus, EvaluateError> {
         for plc in PROPOSAL_POLICY_REPOSITORY.list() {
             // Check if the proposal matches the policy

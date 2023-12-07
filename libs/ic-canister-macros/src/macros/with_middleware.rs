@@ -1,7 +1,7 @@
 use super::MacroDefinition;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{parse::Parser, parse2, Error, Token};
 
 /// The arguments passed to the `with_middleware` macro.
@@ -25,12 +25,15 @@ struct MacroArguments {
     pub context: Option<String>,
     /// The arguments to pass to the middleware function.
     pub middleware_args: Vec<ArgValue>,
+    /// Whether the middleware function is async or not.
+    pub is_async_middleware: bool,
 }
 
 #[derive(Debug)]
 enum ArgValue {
     StrLit(String),
     Path(String),
+    Token(proc_macro2::TokenStream),
 }
 
 #[derive(Debug)]
@@ -55,6 +58,7 @@ impl MacroDefinition for WithMiddlewareMacro {
 }
 
 impl WithMiddlewareMacro {
+    const MACRO_ARG_KEY_IS_ASYNC: &str = "is_async";
     const MACRO_ARG_KEY_GUARD: &str = "guard";
     const MACRO_ARG_KEY_WHEN: &str = "when";
     const MACRO_ARG_KEY_CONTEXT: &str = "context";
@@ -72,6 +76,7 @@ impl WithMiddlewareMacro {
             }) => {
                 let fn_name = &sig.ident;
                 let middleware_args = &args.middleware_args;
+                let is_async_middleware = args.is_async_middleware;
                 let middleware_fn = syn::Ident::new(&args.middleware, Span::call_site());
                 let mut use_before = false;
                 let mut use_after = false;
@@ -110,6 +115,7 @@ impl WithMiddlewareMacro {
                             let path = syn::Ident::new(path, Span::call_site());
                             quote! { #path }
                         }
+                        ArgValue::Token(token) => quote! { #token },
                     })
                     .collect::<Vec<proc_macro2::TokenStream>>();
 
@@ -124,20 +130,36 @@ impl WithMiddlewareMacro {
 
                 let before_expansion = match (use_before, with_context) {
                     (true, true) => {
-                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context); }
+                        if is_async_middleware {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context).await; }
+                        } else {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context); }
+                        }
                     }
                     (true, false) => {
-                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args)); }
+                        if is_async_middleware {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args)).await; }
+                        } else {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args)); }
+                        }
                     }
                     (_, _) => quote! {},
                 };
 
                 let after_expansion = match (use_after, with_context) {
                     (true, true) => {
-                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context, &result); }
+                        if is_async_middleware {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context, &result).await; }
+                        } else {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), context, &result); }
+                        }
                     }
                     (true, false) => {
-                        quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), &result); }
+                        if is_async_middleware {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), &result).await; }
+                        } else {
+                            quote! { #middleware_fn ((stringify!(#fn_name), &middleware_args), &result); }
+                        }
                     }
                     (_, _) => quote! {},
                 };
@@ -180,6 +202,7 @@ impl WithMiddlewareMacro {
         let mut attach_when: Option<String> = Some(String::from("before"));
         let mut attach_context: Option<String> = None;
         let mut attach_args = Vec::new();
+        let mut attach_is_async = false;
 
         for expr in args {
             let syn::ExprAssign {
@@ -198,6 +221,15 @@ impl WithMiddlewareMacro {
                         }) = *right
                         {
                             attach_fn = Some(lit_str.value());
+                        }
+                    }
+                    Self::MACRO_ARG_KEY_IS_ASYNC => {
+                        if let syn::Expr::Lit(syn::ExprLit {
+                            lit: syn::Lit::Bool(lit_bool),
+                            ..
+                        }) = *right
+                        {
+                            attach_is_async = lit_bool.value();
                         }
                     }
                     Self::MACRO_ARG_KEY_WHEN => {
@@ -236,10 +268,8 @@ impl WithMiddlewareMacro {
                                         }
                                     }
                                     _ => {
-                                        return Err(Error::new_spanned(
-                                            expr,
-                                            "Unsupported argument type",
-                                        ))
+                                        // Convert the expression to a TokenStream and store it in the attach_args
+                                        attach_args.push(ArgValue::Token(expr.to_token_stream()));
                                     }
                                 }
                             }
@@ -266,6 +296,7 @@ impl WithMiddlewareMacro {
                 when: attach_when,
                 context: ctx,
                 middleware_args: attach_args,
+                is_async_middleware: attach_is_async,
             }),
             (None, _, _) => Err(Error::new(
                 Span::call_site(),

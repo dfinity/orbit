@@ -24,13 +24,15 @@ pub enum Resource {
     UserGroup = 10,
     AddressBook = 11,
     Account = 12,
+    Proposal = 13,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum AccessModifier {
     Default = 0,
-    All = 1,
+    Write = 1,
+    All = 2,
 }
 
 #[stable_object]
@@ -66,6 +68,7 @@ impl TryFrom<u8> for Resource {
             10 => Ok(Resource::UserGroup),
             11 => Ok(Resource::AddressBook),
             12 => Ok(Resource::Account),
+            13 => Ok(Resource::Proposal),
             _ => Err(()),
         }
     }
@@ -87,6 +90,7 @@ impl Display for Resource {
             Resource::UserGroup => write!(f, "user_group"),
             Resource::AddressBook => write!(f, "address_book"),
             Resource::Account => write!(f, "account"),
+            Resource::Proposal => write!(f, "proposal"),
         }
     }
 }
@@ -97,7 +101,8 @@ impl TryFrom<u8> for AccessModifier {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(AccessModifier::Default),
-            1 => Ok(AccessModifier::All),
+            1 => Ok(AccessModifier::Write),
+            2 => Ok(AccessModifier::All),
             _ => Err(()),
         }
     }
@@ -107,6 +112,7 @@ impl Display for AccessModifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             AccessModifier::Default => write!(f, "default"),
+            AccessModifier::Write => write!(f, "write"),
             AccessModifier::All => write!(f, "all"),
         }
     }
@@ -193,6 +199,8 @@ mod tests {
         assert_eq!(Resource::try_from(11).unwrap(), Resource::AddressBook);
         assert_eq!(Resource::Account as u8, 12);
         assert_eq!(Resource::try_from(12).unwrap(), Resource::Account);
+        assert_eq!(Resource::Proposal as u8, 13);
+        assert_eq!(Resource::try_from(13).unwrap(), Resource::Proposal);
     }
 
     #[test]
@@ -228,6 +236,7 @@ mod tests {
         assert_eq!(Resource::UserGroup.to_string(), "user_group");
         assert_eq!(Resource::AddressBook.to_string(), "address_book");
         assert_eq!(Resource::Account.to_string(), "account");
+        assert_eq!(Resource::Proposal.to_string(), "proposal");
     }
 
     #[test]
@@ -237,13 +246,16 @@ mod tests {
             AccessModifier::try_from(0).unwrap(),
             AccessModifier::Default
         );
-        assert_eq!(AccessModifier::All as u8, 1);
-        assert_eq!(AccessModifier::try_from(1).unwrap(), AccessModifier::All);
+        assert_eq!(AccessModifier::Write as u8, 1);
+        assert_eq!(AccessModifier::try_from(1).unwrap(), AccessModifier::Write);
+        assert_eq!(AccessModifier::All as u8, 2);
+        assert_eq!(AccessModifier::try_from(2).unwrap(), AccessModifier::All);
     }
 
     #[test]
     fn access_modifier_string_representation() {
         assert_eq!(AccessModifier::Default.to_string(), "default");
+        assert_eq!(AccessModifier::Write.to_string(), "write");
         assert_eq!(AccessModifier::All.to_string(), "all");
     }
 }

@@ -1,4 +1,5 @@
-use crate::core::{PERMISSION_READ_USER, PERMISSION_REGISTER_USER};
+use crate::core::middlewares::ResourceAccess;
+use crate::models::access_control::{AccessModifier, Resource};
 use crate::{
     core::{
         middlewares::{authorize, call_context},
@@ -43,7 +44,8 @@ impl UserController {
         Self { user_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_REGISTER_USER])]
+    /// No authorization required since the user will be calling this with a new identity that is not
+    /// yet confirmed with a user.
     async fn confirm_user_identity(
         &self,
         input: ConfirmUserIdentityInput,
@@ -57,7 +59,14 @@ impl UserController {
         Ok(ConfirmUserIdentityResponse { user })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_USER])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [
+            ResourceAccess(Resource::User, AccessModifier::Default)
+        ],
+        is_async = true
+    )]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
         let ctx = call_context();
         let user = match input.user_id {

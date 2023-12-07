@@ -1,7 +1,7 @@
 use crate::{
-    core::generate_uuid_v4,
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{EvaluationStatus, Proposal, ProposalOperation},
+    core::{access_control::evaluate_caller_access, generate_uuid_v4, CallContext},
+    errors::{ProposalError, ProposalExecuteError},
+    models::{access_control::AccessModifier, Proposal, ProposalOperation},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -19,42 +19,40 @@ mod transfer;
 
 use self::{
     add_account::{
-        AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalEvaluate,
-        AddAccountProposalExecute, AddAccountProposalValidate,
+        AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalExecute,
+        AddAccountProposalValidate,
     },
     add_user::{
-        AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalEvaluate,
-        AddUserProposalExecute, AddUserProposalValidate,
+        AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute,
+        AddUserProposalValidate,
     },
     add_user_group::{
-        AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalEvaluate,
-        AddUserGroupProposalExecute, AddUserGroupProposalValidate,
+        AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
+        AddUserGroupProposalValidate,
     },
     edit_account::{
-        EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalEvaluate,
-        EditAccountProposalExecute, EditAccountProposalValidate,
+        EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalExecute,
+        EditAccountProposalValidate,
     },
     edit_user::{
-        EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalEvaluate,
-        EditUserProposalExecute, EditUserProposalValidate,
+        EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute,
+        EditUserProposalValidate,
     },
     edit_user_group::{
-        EditUserGroupProposalCreate, EditUserGroupProposalCreateHook,
-        EditUserGroupProposalEvaluate, EditUserGroupProposalExecute, EditUserGroupProposalValidate,
+        EditUserGroupProposalCreate, EditUserGroupProposalCreateHook, EditUserGroupProposalExecute,
+        EditUserGroupProposalValidate,
     },
     edit_user_status::{
         EditUserStatusProposalCreate, EditUserStatusProposalCreateHook,
-        EditUserStatusProposalEvaluate, EditUserStatusProposalExecute,
-        EditUserStatusProposalValidate,
+        EditUserStatusProposalExecute, EditUserStatusProposalValidate,
     },
     remove_user_group::{
         RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
-        RemoveUserGroupProposalEvaluate, RemoveUserGroupProposalExecute,
-        RemoveUserGroupProposalValidate,
+        RemoveUserGroupProposalExecute, RemoveUserGroupProposalValidate,
     },
     transfer::{
-        TransferProposalCreate, TransferProposalCreateHook, TransferProposalEvaluate,
-        TransferProposalExecute, TransferProposalValidate,
+        TransferProposalCreate, TransferProposalCreateHook, TransferProposalExecute,
+        TransferProposalValidate,
     },
 };
 
@@ -70,12 +68,6 @@ pub trait Execute: Send + Sync {
     ///
     /// The stage is used to indicate if the operation was completed or if it is still processing.
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
-}
-
-#[async_trait]
-pub trait Evaluate: Send + Sync {
-    /// Reevaluates the status of the associated policies.
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError>;
 }
 
 pub trait Validate: Send + Sync {
@@ -127,8 +119,15 @@ impl ProposalFactory {
         proposed_by_user: UUID,
         input: CreateProposalInput,
     ) -> Result<Proposal, ProposalError> {
-        let id = *generate_uuid_v4().await.as_bytes();
+        evaluate_caller_access(
+            &CallContext::default(),
+            &input.operation.clone().into(),
+            &AccessModifier::Write,
+        )
+        .await
+        .map_err(|_| ProposalError::Unauthorized {})?;
 
+        let id = *generate_uuid_v4().await.as_bytes();
         match &input.operation {
             ProposalOperationInput::Transfer(operation) => {
                 create_proposal::<wallet_api::TransferOperationInput, TransferProposalCreate>(
@@ -259,38 +258,6 @@ impl ProposalFactory {
             }
             ProposalOperation::EditUserStatus(operation) => {
                 Box::new(EditUserStatusProposalValidate::new(proposal, operation))
-            }
-        }
-    }
-
-    pub fn evaluator<'p>(proposal: &'p Proposal) -> Box<dyn Evaluate + 'p> {
-        match &proposal.operation {
-            ProposalOperation::Transfer(operation) => {
-                Box::new(TransferProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::AddAccount(operation) => {
-                Box::new(AddAccountProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditAccount(operation) => {
-                Box::new(EditAccountProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::AddUserGroup(operation) => {
-                Box::new(AddUserGroupProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserGroup(operation) => {
-                Box::new(EditUserGroupProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::RemoveUserGroup(operation) => {
-                Box::new(RemoveUserGroupProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::AddUser(operation) => {
-                Box::new(AddUserProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditUser(operation) => {
-                Box::new(EditUserProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserStatus(operation) => {
-                Box::new(EditUserStatusProposalEvaluate::new(proposal, operation))
             }
         }
     }

@@ -1,13 +1,12 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
+    errors::{ProposalError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, ApprovalThresholdPolicy, EvaluationStatus, NotificationType, Policy, Proposal,
-        ProposalExecutionPlan, ProposalOperation, ProposalVoteStatus, Transfer, TransferOperation,
-        TransferOperationInput, TransferProposalCreatedNotification,
+        Account, NotificationType, Policy, Proposal, ProposalExecutionPlan, ProposalOperation,
+        Transfer, TransferOperation, TransferOperationInput, TransferProposalCreatedNotification,
     },
     repositories::{TransferRepository, ACCOUNT_REPOSITORY},
     services::NotificationService,
@@ -153,94 +152,6 @@ impl Validate for TransferProposalValidate<'_, '_> {
             || account.owners.contains(user_id)
             || self.proposal.voters().contains(user_id)
             || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct TransferProposalEvaluate<'p, 'o> {
-    proposal: &'p Proposal,
-    operation: &'o TransferOperation,
-}
-
-impl<'p, 'o> TransferProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
-        Self {
-            proposal,
-            operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for TransferProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        let account = get_account(&self.operation.input.from_account_id);
-        let mut policy_list = account
-            .policies
-            .into_iter()
-            .map(|policy| (policy, EvaluationStatus::Pending))
-            .collect::<Vec<(Policy, EvaluationStatus)>>();
-        let total_approvals = self
-            .proposal
-            .votes
-            .iter()
-            .filter(|vote| vote.status == ProposalVoteStatus::Accepted)
-            .count();
-        let missing_votes = account
-            .owners
-            .iter()
-            .filter(|owner| {
-                !self
-                    .proposal
-                    .votes
-                    .iter()
-                    .any(|vote| vote.user_id == **owner)
-            })
-            .count();
-
-        for (policy, status) in &mut policy_list {
-            match policy {
-                Policy::ApprovalThreshold(threshold) => match threshold {
-                    ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
-                        let can_still_be_approved =
-                            total_approvals + missing_votes >= *min_approvals as usize;
-
-                        if total_approvals >= *min_approvals as usize {
-                            *status = EvaluationStatus::Adopted;
-                        } else if !can_still_be_approved {
-                            *status = EvaluationStatus::Rejected;
-                        }
-                    }
-                    ApprovalThresholdPolicy::VariableThreshold(percentage) => {
-                        let min_approvals = ((account.owners.len() as f64
-                            * (*percentage as f64 / 100.0))
-                            .ceil() as u8)
-                            .max(1);
-                        let can_still_be_approved =
-                            total_approvals + missing_votes >= min_approvals as usize;
-
-                        if total_approvals >= min_approvals as usize {
-                            *status = EvaluationStatus::Adopted;
-                        } else if !can_still_be_approved {
-                            *status = EvaluationStatus::Rejected;
-                        }
-                    }
-                },
-            }
-        }
-
-        if policy_list
-            .iter()
-            .all(|(_, status)| status == &EvaluationStatus::Adopted)
-        {
-            return Ok(EvaluationStatus::Adopted);
-        } else if policy_list
-            .iter()
-            .any(|(_, status)| status == &EvaluationStatus::Rejected)
-        {
-            return Ok(EvaluationStatus::Rejected);
-        }
-
-        Ok(EvaluationStatus::Pending)
     }
 }
 

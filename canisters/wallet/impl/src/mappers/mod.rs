@@ -56,3 +56,6 @@ pub use proposal_vote_status::*;
 
 mod proposal_vote;
 pub use proposal_vote::*;
+
+mod access_control;
+pub use access_control::*;

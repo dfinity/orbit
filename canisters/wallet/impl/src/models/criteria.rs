@@ -68,6 +68,7 @@ pub trait EvaluateCriteria: Sync + Send {
         -> Result<EvaluationStatus, EvaluateError>;
 }
 
+#[derive(Clone)]
 pub struct CriteriaEvaluator {
     pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
 }

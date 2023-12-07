@@ -1,9 +1,7 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
 use crate::{
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{
-        AddUserGroupOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
-    },
+    errors::{ProposalError, ProposalExecuteError},
+    models::{AddUserGroupOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
     services::USER_GROUP_SERVICE,
 };
 use async_trait::async_trait;
@@ -83,29 +81,6 @@ impl Validate for AddUserGroupProposalValidate<'_, '_> {
         self.can_vote(user_id)
             || self.proposal.voters().contains(user_id)
             || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct AddUserGroupProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddUserGroupOperation,
-}
-
-impl<'p, 'o> AddUserGroupProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for AddUserGroupProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
     }
 }
 

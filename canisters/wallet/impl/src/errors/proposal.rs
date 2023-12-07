@@ -29,6 +29,8 @@ pub enum ProposalError {
     /// Proposal can't be executed because it was not adopted.
     #[error(r#"Proposal can't be executed because it was not adopted."#)]
     ExecutionFailedNotAdopted,
+    #[error(r#"You don't have permission to create the requested proposal."#)]
+    Unauthorized,
 }
 
 impl DetailableError for ProposalError {

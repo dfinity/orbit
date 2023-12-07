@@ -1,11 +1,11 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
 use crate::{
     core::ic_cdk::api::trap,
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
+    errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, EditAccountOperationInput, EvaluationStatus,
-        NotificationType, Policy, Proposal, ProposalExecutionPlan, ProposalOperation,
+        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Policy,
+        Proposal, ProposalExecutionPlan, ProposalOperation,
     },
     repositories::ACCOUNT_REPOSITORY,
     services::NotificationService,
@@ -160,29 +160,6 @@ impl Validate for EditAccountProposalValidate<'_, '_> {
         self.can_vote(user_id)
             || self.proposal.voters().contains(user_id)
             || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct EditAccountProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o EditAccountOperation,
-}
-
-impl<'p, 'o> EditAccountProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditAccountOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for EditAccountProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
     }
 }
 

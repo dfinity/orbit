@@ -1,11 +1,9 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
 use crate::{
     core::ic_cdk::api::id as self_canister_id,
     core::CallContext,
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{
-        AddUserOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
-    },
+    errors::{ProposalError, ProposalExecuteError},
+    models::{AddUserOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
     services::USER_SERVICE,
 };
 use async_trait::async_trait;
@@ -86,29 +84,6 @@ impl Validate for AddUserProposalValidate<'_, '_> {
         self.can_vote(user_id)
             || self.proposal.voters().contains(user_id)
             || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct AddUserProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddUserOperation,
-}
-
-impl<'p, 'o> AddUserProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddUserOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for AddUserProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
     }
 }
 

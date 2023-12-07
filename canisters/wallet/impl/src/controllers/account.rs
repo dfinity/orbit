@@ -1,7 +1,7 @@
-use crate::core::PERMISSION_READ_ACCOUNT;
+use crate::mappers::HelperMapper;
+use crate::models::access_control::{AccessModifier, Resource};
 use crate::{
-    core::middlewares::{authorize, call_context},
-    mappers::HelperMapper,
+    core::middlewares::{authorize, call_context, ResourceAccess},
     services::AccountService,
 };
 use ic_canister_core::api::ApiResult;
@@ -46,7 +46,14 @@ impl AccountController {
         Self { account_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [
+            ResourceAccess(Resource::Account, AccessModifier::Default)
+        ],
+        is_async = true
+    )]
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
         let account = self
             .account_service
@@ -59,7 +66,14 @@ impl AccountController {
         Ok(GetAccountResponse { account })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [
+            ResourceAccess(Resource::Account, AccessModifier::Default)
+        ],
+        is_async = true
+    )]
     async fn list_accounts(&self) -> ApiResult<ListAccountResponse> {
         let ctx = call_context();
         let owner_identity = ctx.caller();
@@ -74,7 +88,14 @@ impl AccountController {
         Ok(ListAccountResponse { accounts })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [
+            ResourceAccess(Resource::Account, AccessModifier::Default)
+        ],
+        is_async = true
+    )]
     async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,

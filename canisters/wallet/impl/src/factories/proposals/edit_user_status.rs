@@ -1,7 +1,7 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
 use crate::{
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{EditUserStatusOperation, EvaluationStatus, Proposal},
+    errors::{ProposalError, ProposalExecuteError},
+    models::{EditUserStatusOperation, Proposal},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -65,29 +65,6 @@ impl Validate for EditUserStatusProposalValidate<'_, '_> {
         self.can_vote(user_id)
             || self.proposal.voters().contains(user_id)
             || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct EditUserStatusProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o EditUserStatusOperation,
-}
-
-impl<'p, 'o> EditUserStatusProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditUserStatusOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for EditUserStatusProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
     }
 }
 

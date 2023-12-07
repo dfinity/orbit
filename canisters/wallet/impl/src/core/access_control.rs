@@ -16,8 +16,8 @@ pub struct AccessControlEvaluator<'ctx> {
     pub access_modifier: AccessModifier,
 }
 
-impl AccessControlEvaluator<'_> {
-    pub fn new<'ctx>(
+impl<'ctx> AccessControlEvaluator<'ctx> {
+    pub fn new(
         call_context: &'ctx CallContext,
         resource: Resource,
         access_modifier: AccessModifier,
@@ -55,8 +55,8 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
                 continue;
             }
 
-            match (access_policy.specifier, user) {
-                (UserSpecifier::Any, Some(user)) => {
+            match (access_policy.specifier, &user) {
+                (UserSpecifier::Any, Some(_user)) => {
                     return Ok(true);
                 }
                 (UserSpecifier::Id(user_ids), Some(user)) => {
@@ -94,7 +94,7 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
 /// This function checks if the user has the required access role to perform the given action.
 ///
 /// It uses the access control policies defined in the canister configuration.
-async fn evaluate_caller_access(
+pub async fn evaluate_caller_access(
     ctx: &CallContext,
     resource: &Resource,
     access_modifier: &AccessModifier,

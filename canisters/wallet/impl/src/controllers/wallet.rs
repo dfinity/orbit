@@ -1,4 +1,5 @@
-use crate::core::{PERMISSION_ADMIN, PERMISSION_READ_FEATURES};
+use crate::core::middlewares::ResourceAccess;
+use crate::models::access_control::{AccessModifier, Resource};
 use crate::{
     core::{
         canister_config_mut,
@@ -72,7 +73,14 @@ impl WalletController {
         register_jobs().await;
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_FEATURES])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [
+            ResourceAccess(Resource::User, AccessModifier::Default)
+        ],
+        is_async = true
+    )]
     async fn get_wallet_features(&self) -> ApiResult<WalletFeaturesResponse> {
         let features = self.wallet_service.get_features()?;
 
@@ -81,7 +89,14 @@ impl WalletController {
         })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_ADMIN])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [
+            ResourceAccess(Resource::User, AccessModifier::All)
+        ],
+        is_async = true
+    )]
     async fn wallet_settings(&self) -> ApiResult<WalletSettingsResponse> {
         let settings = self.wallet_service.get_wallet_settings()?;
 
