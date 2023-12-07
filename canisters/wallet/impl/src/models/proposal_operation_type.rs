@@ -164,6 +164,10 @@ mod tests {
             ProposalOperationType::from_str("remove_user_group").unwrap(),
             ProposalOperationType::RemoveUserGroup
         );
+        assert_eq!(
+            ProposalOperationType::from_str("upgrade").unwrap(),
+            ProposalOperationType::Upgrade
+        );
     }
 
     #[test]
@@ -212,6 +216,11 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(8).unwrap(),
             ProposalOperationType::RemoveUserGroup
+        );
+        assert_eq!(ProposalOperationType::Upgrade as u8, 9);
+        assert_eq!(
+            ProposalOperationType::try_from(9).unwrap(),
+            ProposalOperationType::Upgrade
         );
     }
 }
