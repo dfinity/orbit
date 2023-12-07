@@ -27,3 +27,5 @@ pub async fn generate_uuid_v4() -> uuid::Uuid {
 }
 
 pub mod proposal;
+pub mod access_control;
+pub mod evaluation;

@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use ic_canister_core::repository::Repository;
 
 use crate::{
-    errors::ProposalEvaluateError,
+    errors::EvaluateError,
     factories::proposals::Evaluate,
     models::{
         criteria::EvaluateCriteria,
@@ -23,7 +23,7 @@ pub struct ProposalEvaluator {
 
 #[async_trait]
 impl Evaluate for ProposalEvaluator {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
+    async fn evaluate(&self) -> Result<EvaluationStatus, EvaluateError> {
         for plc in PROPOSAL_POLICY_REPOSITORY.list() {
             // Check if the proposal matches the policy
             if !self

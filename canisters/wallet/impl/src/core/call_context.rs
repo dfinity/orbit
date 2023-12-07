@@ -1,10 +1,14 @@
-use super::canister_config;
+use super::{access_control::AccessControlEvaluator, canister_config, evaluation::Evaluate};
 use crate::{
     core::ic_cdk::{
         api::{id as self_canister_id, is_controller, trap},
         caller,
     },
-    models::ADMIN_GROUP_ID,
+    errors::AccessControlError,
+    models::{
+        access_control::{AccessModifier, Resource},
+        ADMIN_GROUP_ID,
+    },
 };
 use crate::{models::AccessRole, repositories::UserRepository};
 use candid::Principal;
@@ -62,6 +66,31 @@ impl CallContext {
             check_access(permission, self.caller.to_owned())
         }
     }
+}
+
+/// This function checks if the user has the required access role to perform the given action.
+///
+/// It uses the access control policies defined in the canister configuration.
+async fn evaluate_caller_access(
+    ctx: &CallContext,
+    resource: &Resource,
+    access_modifier: &AccessModifier,
+) -> Result<(), AccessControlError> {
+    let evaluator =
+        AccessControlEvaluator::new(ctx, resource.to_owned(), access_modifier.to_owned());
+    let has_access = evaluator
+        .evaluate()
+        .await
+        .map_err(|e| AccessControlError::UnexpectedError(e.into()))?;
+
+    if !has_access {
+        return Err(AccessControlError::Unauthorized {
+            resource: resource.to_string(),
+            access_modifier: access_modifier.to_string(),
+        });
+    }
+
+    Ok(())
 }
 
 /// This function checks if the user has the required access role to perform the given action.

@@ -35,8 +35,11 @@ pub use proposal::*;
 mod proposal_execute;
 pub use proposal_execute::*;
 
-mod proposal_evaluate;
-pub use proposal_evaluate::*;
+mod evaluate;
+pub use evaluate::*;
 
 mod specifier;
 pub use specifier::*;
+
+mod access_control;
+pub use access_control::*;
