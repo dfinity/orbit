@@ -14,7 +14,6 @@ pub struct UpgradeDTO {
     pub target: UpgradeTargetDTO,
     pub module: Vec<u8>,
     pub checksum: Vec<u8>,
-    pub metadata: Vec<(String, String)>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
