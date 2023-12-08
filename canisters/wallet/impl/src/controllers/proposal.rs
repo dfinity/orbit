@@ -1,5 +1,5 @@
 use crate::core::middlewares::ResourceAccess;
-use crate::models::access_control::{AccessModifier, Resource};
+use crate::models::access_control::AccessModifier;
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
@@ -58,14 +58,14 @@ impl ProposalController {
         Self { proposal_service }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Proposal, AccessModifier::Write)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Proposal, AccessModifier::Write)
+    //     ],
+    //     is_async = true
+    // )]
     async fn create_proposal(
         &self,
         input: CreateProposalInput,
@@ -80,14 +80,14 @@ impl ProposalController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Proposal, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Proposal, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let proposals = self
             .proposal_service
@@ -101,14 +101,14 @@ impl ProposalController {
         Ok(ListProposalsResponse { proposals })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Proposal, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Proposal, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn list_account_proposals(
         &self,
         input: ListAccountProposalsInput,
@@ -125,14 +125,14 @@ impl ProposalController {
         Ok(ListAccountProposalsResponse { proposals })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Proposal, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Proposal, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn get_proposal(&self, input: GetProposalInput) -> ApiResult<GetProposalResponse> {
         let proposal = self.proposal_service.get_proposal(
             HelperMapper::to_uuid(input.proposal_id)?.as_bytes(),
@@ -144,14 +144,14 @@ impl ProposalController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Proposal, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Proposal, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn vote_on_proposal(
         &self,
         input: VoteOnProposalInput,

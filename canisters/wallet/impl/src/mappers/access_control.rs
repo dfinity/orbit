@@ -1,34 +1,31 @@
-use crate::models::{access_control::Resource, ProposalOperationType};
-use wallet_api::ProposalOperationInput;
+use super::HelperMapper;
+use crate::models::{access_control::ResourceSpecifier, specifier::AccountSpecifier};
+use ic_canister_core::types::UUID;
 
-impl From<ProposalOperationType> for Resource {
-    fn from(proposal_operation_type: ProposalOperationType) -> Self {
-        match proposal_operation_type {
-            ProposalOperationType::Transfer => Resource::TransferProposal,
-            ProposalOperationType::AddAccount => Resource::AddAccountProposal,
-            ProposalOperationType::AddUser => Resource::AddUserProposal,
-            ProposalOperationType::AddUserGroup => Resource::AddUserGroupProposal,
-            ProposalOperationType::EditAccount => Resource::EditAccountProposal,
-            ProposalOperationType::EditUser => Resource::EditUserProposal,
-            ProposalOperationType::EditUserGroup => Resource::EditUserGroupProposal,
-            ProposalOperationType::EditUserStatus => Resource::EditUserStatusProposal,
-            ProposalOperationType::RemoveUserGroup => Resource::RemoveUserGroupProposal,
-        }
+impl From<&wallet_api::GetAccountInput> for ResourceSpecifier {
+    fn from(input: &wallet_api::GetAccountInput) -> Self {
+        let account_id = *HelperMapper::to_uuid(input.account_id.to_owned())
+            .expect("Invalid account id")
+            .as_bytes();
+
+        ResourceSpecifier::Account(AccountSpecifier::Id([account_id].to_vec()))
     }
 }
 
-impl From<ProposalOperationInput> for Resource {
-    fn from(proposal_operation_input: ProposalOperationInput) -> Self {
-        match proposal_operation_input {
-            ProposalOperationInput::Transfer(_) => Resource::TransferProposal,
-            ProposalOperationInput::AddAccount(_) => Resource::AddAccountProposal,
-            ProposalOperationInput::AddUser(_) => Resource::AddUserProposal,
-            ProposalOperationInput::AddUserGroup(_) => Resource::AddUserGroupProposal,
-            ProposalOperationInput::EditAccount(_) => Resource::EditAccountProposal,
-            ProposalOperationInput::EditUser(_) => Resource::EditUserProposal,
-            ProposalOperationInput::EditUserGroup(_) => Resource::EditUserGroupProposal,
-            ProposalOperationInput::EditUserStatus(_) => Resource::EditUserStatusProposal,
-            ProposalOperationInput::RemoveUserGroup(_) => Resource::RemoveUserGroupProposal,
-        }
+impl From<&wallet_api::FetchAccountBalancesInput> for ResourceSpecifier {
+    fn from(input: &wallet_api::FetchAccountBalancesInput) -> Self {
+        let account_ids = input
+            .account_ids
+            .iter()
+            .map(|account_id| {
+                let account_id = *HelperMapper::to_uuid(account_id.to_owned())
+                    .expect("Invalid account id")
+                    .as_bytes();
+
+                account_id
+            })
+            .collect::<Vec<UUID>>();
+
+        ResourceSpecifier::Account(AccountSpecifier::Id(account_ids.to_vec()))
     }
 }

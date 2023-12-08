@@ -66,17 +66,13 @@ pub struct AccountMatcher;
 #[async_trait]
 impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
     async fn is_match(&self, v: (Proposal, UUID, AccountSpecifier)) -> Result<bool, MatchError> {
-        let (_, id, s) = v;
+        let (_, account_id, specifier) = v;
 
-        match s {
-            // Any
+        match specifier {
             AccountSpecifier::Any => Ok(true),
-
-            // Group
+            // TODO: Add once account groups are implemented
             AccountSpecifier::Group(_ids) => todo!(),
-
-            // Id
-            AccountSpecifier::Id(ids) => Ok(ids.contains(&id)),
+            AccountSpecifier::Id(ids) => Ok(ids.contains(&account_id)),
         }
     }
 }
@@ -101,23 +97,15 @@ pub struct UserMatcher;
 #[async_trait]
 impl Match<(Proposal, UUID, UserSpecifier)> for UserMatcher {
     async fn is_match(&self, v: (Proposal, UUID, UserSpecifier)) -> Result<bool, MatchError> {
-        let (p, id, s) = v;
+        let (p, user_id, specifier) = v;
 
-        match s {
-            // Any
+        match specifier {
             UserSpecifier::Any => Ok(true),
-
-            // Group
             UserSpecifier::Group(_ids) => todo!(),
-
-            // Id
-            UserSpecifier::Id(ids) => Ok(ids.contains(&id)),
-
+            UserSpecifier::Id(ids) => Ok(ids.contains(&user_id)),
             // TODO: Owner (most likely will require a MatchError::NotApplicable variant)
             UserSpecifier::Owner => todo!(),
-
-            // Proposer
-            UserSpecifier::Proposer => Ok(p.proposed_by == id),
+            UserSpecifier::Proposer => Ok(p.proposed_by == user_id),
         }
     }
 }

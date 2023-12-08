@@ -6,13 +6,6 @@ use candid::{CandidType, Deserialize, Principal};
 pub type UserIdDTO = String;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum UserRoleDTO {
-    Admin = 0,
-    User = 1,
-    Guest = 2,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum UserStatusDTO {
     Active,
     Inactive,

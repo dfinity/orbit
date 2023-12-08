@@ -1,7 +1,7 @@
 use crate::{
-    core::{access_control::evaluate_caller_access, generate_uuid_v4, CallContext},
+    core::generate_uuid_v4,
     errors::{ProposalError, ProposalExecuteError},
-    models::{access_control::AccessModifier, Proposal, ProposalOperation},
+    models::{Proposal, ProposalOperation},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -119,14 +119,6 @@ impl ProposalFactory {
         proposed_by_user: UUID,
         input: CreateProposalInput,
     ) -> Result<Proposal, ProposalError> {
-        evaluate_caller_access(
-            &CallContext::default(),
-            &input.operation.clone().into(),
-            &AccessModifier::Write,
-        )
-        .await
-        .map_err(|_| ProposalError::Unauthorized {})?;
-
         let id = *generate_uuid_v4().await.as_bytes();
         match &input.operation {
             ProposalOperationInput::Transfer(operation) => {

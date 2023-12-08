@@ -1,11 +1,20 @@
-use super::indexes::user_identity_index::UserIdentityIndexRepository;
+use super::indexes::{
+    user_identity_index::UserIdentityIndexRepository,
+    user_status_group_index::UserStatusGroupIndexRepository,
+};
 use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
-    models::{indexes::user_identity_index::UserIdentityIndexCriteria, User, UserKey},
+    models::{
+        indexes::{
+            user_identity_index::UserIdentityIndexCriteria,
+            user_status_group_index::UserStatusGroupIndexCriteria,
+        },
+        User, UserKey, UserStatus,
+    },
 };
 use candid::Principal;
-use ic_canister_core::repository::IndexRepository;
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{IndexRepository, RefreshIndexMode};
+use ic_canister_core::{repository::Repository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::cell::RefCell;
@@ -26,6 +35,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct UserRepository {
     identity_index: UserIdentityIndexRepository,
+    group_status_index: UserStatusGroupIndexRepository,
 }
 
 impl Repository<UserKey, User> for UserRepository {
@@ -38,41 +48,45 @@ impl Repository<UserKey, User> for UserRepository {
     }
 
     fn insert(&self, key: UserKey, value: User) -> Option<User> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_identities = prev.to_index_for_identities();
-                let curr_identities = value.to_index_for_identities();
-                if prev_identities != curr_identities {
-                    prev_identities.iter().for_each(|index| {
-                        self.identity_index.remove(index);
-                    });
-                    curr_identities.iter().for_each(|index| {
-                        self.identity_index.insert(index.to_owned());
-                    });
-                }
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
 
-                Some(prev)
-            }
-            None => {
-                value.to_index_for_identities().iter().for_each(|index| {
-                    self.identity_index.insert(index.to_owned());
+            self.identity_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_identities()),
+                    current: value.to_index_for_identities(),
+                });
+            self.group_status_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_groups()),
+                    current: value.to_index_for_groups(),
                 });
 
-                None
-            }
+            prev
         })
     }
 
     fn remove(&self, key: &UserKey) -> Option<User> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                prev.to_index_for_identities().iter().for_each(|index| {
-                    self.identity_index.remove(index);
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.identity_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_identities()),
+                });
+            self.group_status_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_for_groups()),
                 });
 
-                Some(prev)
-            }
-            None => None,
+            prev
         })
     }
 }
@@ -86,6 +100,18 @@ impl UserRepository {
             })
             .iter()
             .find_map(|id| self.get(&User::key(*id)))
+    }
+
+    /// Returns the users associated with the given group and their user status if they exist.
+    pub fn find_by_group_and_status(&self, group_id: &UUID, status: &UserStatus) -> Vec<User> {
+        self.group_status_index
+            .find_by_criteria(UserStatusGroupIndexCriteria {
+                group_id: group_id.to_owned(),
+                user_status: status.to_owned(),
+            })
+            .iter()
+            .filter_map(|user_id| self.get(&User::key(*user_id)))
+            .collect()
     }
 }
 
@@ -118,5 +144,18 @@ mod tests {
         let result = repository.find_by_identity(&Principal::anonymous());
 
         assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_find_by_group_and_user_status() {
+        let repository = UserRepository::default();
+        let mut user = user_test_utils::mock_user();
+        user.groups = vec![[0; 16]];
+        user.status = UserStatus::Inactive;
+        repository.insert(user.to_key(), user.clone());
+
+        let result = repository.find_by_group_and_status(&[0; 16], &UserStatus::Inactive);
+
+        assert!(!result.is_empty());
     }
 }

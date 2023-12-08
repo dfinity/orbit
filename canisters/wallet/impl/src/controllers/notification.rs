@@ -1,5 +1,5 @@
 use crate::core::middlewares::ResourceAccess;
-use crate::models::access_control::{AccessModifier, Resource};
+use crate::models::access_control::{AccessModifier};
 use crate::{
     core::middlewares::{authorize, call_context},
     services::NotificationService,
@@ -41,14 +41,14 @@ impl NotificationController {
         }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::User, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::User, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn list_notifications(
         &self,
         input: ListNotificationsInput,
@@ -65,14 +65,14 @@ impl NotificationController {
         Ok(ListNotificationsResponse { notifications })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::User, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::User, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn mark_notifications_read(&self, input: MarkNotificationsReadInput) -> ApiResult<()> {
         self.notification_service
             .mark_read(input, &call_context())

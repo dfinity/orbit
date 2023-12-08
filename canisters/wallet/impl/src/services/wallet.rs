@@ -1,10 +1,7 @@
 use super::UserService;
 use crate::core::ic_cdk::api::time;
 use crate::{
-    core::{
-        canister_config, default_wallet_permissions, write_canister_config, CallContext,
-        CanisterConfig, WALLET_ASSETS,
-    },
+    core::{canister_config, write_canister_config, CallContext, CanisterConfig, WALLET_ASSETS},
     models::{User, WalletFeatures, WalletSettings},
     repositories::UserRepository,
 };
@@ -131,7 +128,6 @@ impl WalletService {
                 .expect("Failed to unregister admin user");
         }
 
-        config.permissions = default_wallet_permissions();
         config.last_upgrade_timestamp = time();
         config.update_with(init.to_owned());
 
@@ -144,9 +140,8 @@ impl WalletService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils, PERMISSION_READ_FEATURES};
+    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils};
     use candid::Principal;
-    use wallet_api::{UserRoleDTO, WalletPermissionDTO};
 
     #[tokio::test]
     async fn canister_upgrade() {
@@ -159,10 +154,6 @@ mod tests {
 
         let init = WalletCanisterInit {
             owners: Some(vec![Principal::anonymous()]),
-            permissions: Some(vec![WalletPermissionDTO {
-                permission_id: PERMISSION_READ_FEATURES.to_string(),
-                access_roles: vec![UserRoleDTO::User],
-            }]),
             ..Default::default()
         };
 

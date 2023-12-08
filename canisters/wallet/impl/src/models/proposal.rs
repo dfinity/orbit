@@ -1,9 +1,7 @@
-use super::criteria::CriteriaEvaluator;
-use super::specifier::{AccountMatcher, AddressMatcher, ProposalMatcher, UserMatcher};
 use super::{
     EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
-use crate::core::evaluation::Evaluate;
+use crate::core::evaluation::{Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER};
 use crate::core::proposal::ProposalEvaluator;
 use crate::errors::{EvaluateError, ProposalError};
 use crate::{core::ic_cdk::api::time, factories::proposals::ProposalFactory};
@@ -14,7 +12,6 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
 /// The proposal id, which is a UUID.
 pub type ProposalId = UUID;
@@ -192,14 +189,8 @@ impl Proposal {
     pub async fn reevaluate(&mut self) -> Result<(), EvaluateError> {
         let evaluator = ProposalEvaluator {
             proposal: self.to_owned(),
-            proposal_matcher: Arc::new(ProposalMatcher {
-                account_matcher: Arc::new(AccountMatcher),
-                address_matcher: Arc::new(AddressMatcher),
-                user_matcher: Arc::new(UserMatcher),
-            }),
-            criteria_evaluator: Arc::new(CriteriaEvaluator {
-                user_matcher: Arc::new(UserMatcher),
-            }),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
         let evaluation_status = evaluator.evaluate().await?;

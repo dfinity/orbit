@@ -1,5 +1,5 @@
 use crate::core::middlewares::ResourceAccess;
-use crate::models::access_control::{AccessModifier, Resource};
+use crate::models::access_control::{AccessModifier};
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
@@ -47,14 +47,14 @@ impl TransferController {
         Self { transfer_service }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Account, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Account, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn get_transfer(&self, input: GetTransferInput) -> ApiResult<GetTransferResponse> {
         let transfer = self.transfer_service.get_transfer(
             HelperMapper::to_uuid(input.transfer_id)?.as_bytes(),
@@ -66,14 +66,14 @@ impl TransferController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Account, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Account, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn get_transfers(&self, input: GetTransfersInput) -> ApiResult<GetTransfersResponse> {
         let ids: Vec<_> = input
             .transfer_ids
@@ -91,14 +91,14 @@ impl TransferController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::Account, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::Account, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn list_account_transfers(
         &self,
         input: ListAccountTransfersInput,

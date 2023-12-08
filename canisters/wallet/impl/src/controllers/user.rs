@@ -1,5 +1,5 @@
 use crate::core::middlewares::ResourceAccess;
-use crate::models::access_control::{AccessModifier, Resource};
+use crate::models::access_control::{AccessModifier};
 use crate::{
     core::{
         middlewares::{authorize, call_context},
@@ -59,14 +59,14 @@ impl UserController {
         Ok(ConfirmUserIdentityResponse { user })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(Resource::User, AccessModifier::Default)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(Resource::User, AccessModifier::Default)
+    //     ],
+    //     is_async = true
+    // )]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
         let ctx = call_context();
         let user = match input.user_id {

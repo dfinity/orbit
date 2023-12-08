@@ -141,9 +141,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
 
     let wallet_wasm = get_canister_wasm("wallet").to_vec();
     let wallet_init_args = WalletInitArg {
-        approval_threshold: None,
         owners: Some(vec![WALLET_ADMIN_USER]),
-        permissions: None,
     };
     env.install_canister(
         wallet,

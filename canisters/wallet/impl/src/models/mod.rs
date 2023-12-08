@@ -8,9 +8,6 @@ pub use account::*;
 mod blockchain;
 pub use blockchain::*;
 
-mod access_role;
-pub use access_role::*;
-
 mod blockchain_standard;
 pub use blockchain_standard::*;
 

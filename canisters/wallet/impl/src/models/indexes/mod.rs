@@ -1,3 +1,4 @@
+pub mod access_control_resource_index;
 pub mod account_user_index;
 pub mod notification_user_index;
 pub mod proposal_account_index;
@@ -9,3 +10,4 @@ pub mod transfer_account_index;
 pub mod transfer_status_index;
 pub mod user_group_name_index;
 pub mod user_identity_index;
+pub mod user_status_group_index;

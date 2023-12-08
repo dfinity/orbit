@@ -1,5 +1,6 @@
 use crate::mappers::HelperMapper;
-use crate::models::access_control::{AccessModifier, Resource};
+use crate::models::access_control::{AccessModifier, ResourceSpecifier};
+use crate::models::specifier::AccountSpecifier;
 use crate::{
     core::middlewares::{authorize, call_context, ResourceAccess},
     services::AccountService,
@@ -50,7 +51,7 @@ impl AccountController {
         guard = "authorize",
         context = "call_context",
         args = [
-            ResourceAccess(Resource::Account, AccessModifier::Default)
+            ResourceAccess(ResourceSpecifier::from(&input), AccessModifier::Read)
         ],
         is_async = true
     )]
@@ -70,7 +71,7 @@ impl AccountController {
         guard = "authorize",
         context = "call_context",
         args = [
-            ResourceAccess(Resource::Account, AccessModifier::Default)
+            ResourceAccess(ResourceSpecifier::Account(AccountSpecifier::Any), AccessModifier::Default)
         ],
         is_async = true
     )]
@@ -92,7 +93,7 @@ impl AccountController {
         guard = "authorize",
         context = "call_context",
         args = [
-            ResourceAccess(Resource::Account, AccessModifier::Default)
+            ResourceAccess(ResourceSpecifier::from(&input), AccessModifier::Read)
         ],
         is_async = true
     )]

@@ -5,8 +5,9 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, NotificationType, Policy, Proposal, ProposalExecutionPlan, ProposalOperation,
-        Transfer, TransferOperation, TransferOperationInput, TransferProposalCreatedNotification,
+        Account, NotificationType, Policy, Proposal,
+        ProposalExecutionPlan, ProposalOperation, Transfer, TransferOperation,
+        TransferOperationInput, TransferProposalCreatedNotification,
     },
     repositories::{TransferRepository, ACCOUNT_REPOSITORY},
     services::NotificationService,
