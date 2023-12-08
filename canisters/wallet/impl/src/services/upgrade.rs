@@ -47,6 +47,8 @@ impl UpgradeService {
 
     /// Execute an upgrade of the upgrader canister.
     pub async fn upgrade_upgrader(&self, module: &[u8]) -> ServiceResult<()> {
+        use candid::Encode;
+
         let upgrader_canister_id = match self.upgrader_canister_id {
             Some(id) => Ok(id.to_owned()),
             None => Err(ApiError::new(
@@ -75,11 +77,13 @@ impl UpgradeService {
         }
 
         // Upgrade canister
+        let arg = Encode!(&()).unwrap();
+
         let upgrade_result = mgmt::install_code(InstallCodeArgument {
             mode: CanisterInstallMode::Upgrade,
             canister_id: upgrader_canister_id.to_owned(),
             wasm_module: module.to_owned(),
-            arg: vec![],
+            arg,
         })
         .await
         .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None));
