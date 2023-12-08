@@ -1,5 +1,4 @@
-use anyhow::anyhow;
-use candid::{CandidType, Encode, Principal};
+use candid::{CandidType, Principal};
 use ic_canister_core::api::{ApiError, ServiceResult};
 use ic_cdk::api::management_canister::{
     main::{self as mgmt, CanisterInstallMode, InstallCodeArgument},
