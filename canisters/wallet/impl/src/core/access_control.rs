@@ -6,15 +6,18 @@ use crate::{
     core::ic_cdk::api::print,
     errors::{AccessControlError, EvaluateError, MatchError},
     models::{
-        access_control::{AccessControlPolicy, AccessModifier, ResourceSpecifier},
+        access_control::{
+            AccessControlPolicy, AccessModifier, ResourceIdentifier, ResourceSpecifier,
+        },
         specifier::{Match, UserSpecifier},
-        User,
+        User, UserId,
     },
     repositories::{access_control::ACCESS_CONTROL_REPOSITORY, USER_REPOSITORY},
 };
 use async_trait::async_trait;
 use futures::{stream, StreamExt};
-use std::sync::Arc;
+use ic_canister_core::repository::Repository;
+use std::{collections::HashSet, sync::Arc};
 
 pub struct AccessControlEvaluator<'ctx> {
     pub call_context: &'ctx CallContext,
@@ -79,13 +82,47 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlResourceU
     ) -> Result<bool, MatchError> {
         let (requested_user, access_policy) = v;
 
-        match access_policy.resource {
-            ResourceSpecifier::User(policy_user) | ResourceSpecifier::UserStatus(policy_user) => {
-                if let UserSpecifier::Id(users) = policy_user {
-                    return Ok(true);
+        let mut requested_users = HashSet::new();
+        let mut requested_user_group_ids = HashSet::new();
+        if let UserSpecifier::Id(user_ids) = requested_user.as_ref() {
+            requested_users = user_ids
+                .iter()
+                .filter_map(|user_id| USER_REPOSITORY.get(&User::key(user_id.to_owned())))
+                .collect();
+        } else if let UserSpecifier::Group(group_ids) = requested_user.as_ref() {
+            requested_user_group_ids = group_ids.iter().cloned().collect();
+        }
+
+        if let ResourceSpecifier::User(policy_user) | ResourceSpecifier::UserStatus(policy_user) =
+            access_policy.resource
+        {
+            let is_match = match policy_user {
+                UserSpecifier::Any => true,
+                UserSpecifier::Group(group_ids) => {
+                    let match_requested_groups = requested_user_group_ids.iter().all(|group_id| {
+                        group_ids
+                            .iter()
+                            .any(|policy_group_id| policy_group_id == group_id)
+                    });
+
+                    let match_requested_users = requested_users.iter().all(|requested_user| {
+                        group_ids.iter().any(|group_id| {
+                            requested_user
+                                .groups
+                                .iter()
+                                .any(|requested_user_group_id| requested_user_group_id == group_id)
+                        })
+                    });
+
+                    match_requested_groups && match_requested_users
                 }
-            }
-            _ => {}
+                UserSpecifier::Id(user_ids) => requested_users.iter().all(|requested_user| {
+                    user_ids.iter().any(|user_id| *user_id == requested_user.id)
+                }),
+                _ => false,
+            };
+
+            return Ok(is_match);
         }
 
         Ok(false)
@@ -95,6 +132,7 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlResourceU
 /// A matcher that checks if the caller has access to the given resource and access modifier.
 pub struct AccessControlMatcher {
     pub user_matcher: Arc<dyn Match<(Arc<User>, AccessControlPolicy)>>,
+    pub user_resource_matcher: Arc<dyn Match<(Arc<UserSpecifier>, AccessControlPolicy)>>,
 }
 
 #[async_trait]
@@ -117,7 +155,29 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
         let filtered_policies = match resource {
             ResourceSpecifier::Account(account) => policies,
             ResourceSpecifier::Transfer(account, address) => policies,
-            ResourceSpecifier::User(user) | ResourceSpecifier::UserStatus(user) => policies,
+            ResourceSpecifier::User(user) | ResourceSpecifier::UserStatus(user) => {
+                let requested_user = &Arc::new(user);
+                stream::iter(policies.iter())
+                    .filter_map(|policy| async move {
+                        match self
+                            .user_resource_matcher
+                            .is_match((requested_user.to_owned(), policy.to_owned()))
+                            .await
+                        {
+                            Ok(true) => Some(policy.to_owned()),
+                            Ok(false) => None,
+                            Err(e) => {
+                                print(&format!("Failed user resource matcher: {:?}", e));
+
+                                None
+                            }
+                        }
+                    })
+                    .collect()
+                    .await
+            }
+            // Resources that are whole sets of data (e.g. address book, etc...) do not have a specific id,
+            // so all policies are kept.
             _ => policies,
         };
 

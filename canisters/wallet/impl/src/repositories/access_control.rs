@@ -89,7 +89,9 @@ impl AccessControlRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_control::access_control_test_utils::mock_access_policy;
+    use crate::models::access_control::{
+        access_control_test_utils::mock_access_policy, ResourceSpecifier,
+    };
 
     #[test]
     fn test_crud() {

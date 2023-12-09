@@ -1,4 +1,6 @@
-use super::access_control::{AccessControlMatcher, AccessControlUserMatcher};
+use super::access_control::{
+    AccessControlMatcher, AccessControlResourceUserMatcher, AccessControlUserMatcher,
+};
 use crate::{
     errors::EvaluateError,
     models::{
@@ -24,9 +26,12 @@ lazy_static! {
     });
     pub static ref ACCESS_CONTROL_USER_MATCHER: Arc<AccessControlUserMatcher> =
         Arc::new(AccessControlUserMatcher);
+    pub static ref ACCESS_CONTROL_RESOURCE_USER_MATCHER: Arc<AccessControlResourceUserMatcher> =
+        Arc::new(AccessControlResourceUserMatcher);
     pub static ref ACCESS_CONTROL_MATCHER: Arc<AccessControlMatcher> =
         Arc::new(AccessControlMatcher {
             user_matcher: ACCESS_CONTROL_USER_MATCHER.clone(),
+            user_resource_matcher: ACCESS_CONTROL_RESOURCE_USER_MATCHER.clone(),
         });
 }
 

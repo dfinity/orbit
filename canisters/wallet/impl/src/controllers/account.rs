@@ -89,14 +89,14 @@ impl AccountController {
         Ok(ListAccountResponse { accounts })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [
-            ResourceAccess(ResourceSpecifier::from(&input), AccessModifier::Read)
-        ],
-        is_async = true
-    )]
+    // #[with_middleware(
+    //     guard = "authorize",
+    //     context = "call_context",
+    //     args = [
+    //         ResourceAccess(ResourceSpecifier::from(&input), AccessModifier::Read)
+    //     ],
+    //     is_async = true
+    // )]
     async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,

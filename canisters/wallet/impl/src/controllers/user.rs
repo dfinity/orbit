@@ -44,8 +44,10 @@ impl UserController {
         Self { user_service }
     }
 
-    /// No authorization required since the user will be calling this with a new identity that is not
-    /// yet confirmed with a user.
+    /// Confirms the user identity if the provided user has the caller identity as unconfirmed.
+    /// 
+    /// No authorization required since the user will be calling this 
+    /// with a new identity that is not yet confirmed.
     async fn confirm_user_identity(
         &self,
         input: ConfirmUserIdentityInput,

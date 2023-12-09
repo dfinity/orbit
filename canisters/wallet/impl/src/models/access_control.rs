@@ -1,4 +1,7 @@
-use super::specifier::{AccountSpecifier, AddressSpecifier, UserSpecifier};
+use super::{
+    specifier::{AccountSpecifier, AddressSpecifier, UserSpecifier},
+    AccountId, UserId,
+};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
@@ -7,6 +10,17 @@ use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
 };
+
+/// Resource identifiers are used to uniquely identify a resource in the system (e.g. a user, an account, etc.).
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceIdentifier {
+    Transfer(Option<AccountId>, Option<String>),
+    Account(Option<AccountId>),
+    UserGroup,
+    User(Option<UserId>),
+    UserStatus(Option<UserId>),
+    AddressBook,
+}
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -48,6 +62,19 @@ impl Display for ResourceSpecifier {
             ResourceSpecifier::Account(_) => write!(f, "account"),
             ResourceSpecifier::UserStatus(_) => write!(f, "user_status"),
             ResourceSpecifier::Transfer(_, _) => write!(f, "transfer"),
+        }
+    }
+}
+
+impl Display for ResourceIdentifier {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceIdentifier::User(_) => write!(f, "user"),
+            ResourceIdentifier::UserGroup => write!(f, "user_group"),
+            ResourceIdentifier::AddressBook => write!(f, "address_book"),
+            ResourceIdentifier::Account(_) => write!(f, "account"),
+            ResourceIdentifier::UserStatus(_) => write!(f, "user_status"),
+            ResourceIdentifier::Transfer(_, _) => write!(f, "transfer"),
         }
     }
 }
