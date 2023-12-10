@@ -387,6 +387,8 @@ mod tests {
 #[cfg(test)]
 pub mod account_test_utils {
     use super::*;
+    use crate::repositories::ACCOUNT_REPOSITORY;
+    use ic_canister_core::repository::Repository;
 
     pub fn mock_account() -> Account {
         Account {
@@ -403,5 +405,13 @@ pub mod account_test_utils {
             metadata: vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1],
             symbol: "ICP".to_string(),
         }
+    }
+
+    pub fn add_account(id: &UUID) -> Account {
+        let mut account = mock_account();
+        account.id = id.to_owned();
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.to_owned());
+
+        account
     }
 }
