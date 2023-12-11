@@ -19,6 +19,30 @@ type NotificationId = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
 
+type PolicyCriteria = variant {
+  Auto : EvaluationStatus;
+  ApprovalThreshold : record { UserSpecifier; float64 };
+  MinimumVotes : record { UserSpecifier; nat16 };
+  IsAddressKYC;
+  Or : vec PolicyCriteria;
+  And : vec PolicyCriteria;
+  Not : PolicyCriteria;
+};
+
+type UserSpecifier = variant {
+  Any;
+  Id : vec UserId;
+  Group : vec UUID;
+  Owner;
+  Proposer;
+};
+
+type EvaluationStatus = variant {
+  Pending;
+  Adopted;
+  Rejected;
+};
+
 // Defines the various states that a notification can be in.
 type NotificationStatus = variant {
   // The notification has been sent.
@@ -209,8 +233,8 @@ type EditAccountOperationInput = record {
   account_id : AccountId;
   // The updated list of owners of the account.
   owners : opt vec UserId;
-  // The updated list of policies that can be used to control the account.
-  policies : opt vec Policy;
+  // The updated criterias to use for withdrawing funds from the account.
+  transfer_criteria : opt PolicyCriteria;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
 };
@@ -226,8 +250,8 @@ type AddAccountOperationInput = record {
   name : text;
   // The list of owners of the account.
   owners : vec UserId;
-  // The list of policies that can be used to control the account.
-  policies : vec Policy;
+  // The criterias to use for withdrawing funds from the account.
+  transfer_criteria : PolicyCriteria;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
@@ -783,31 +807,11 @@ type Account = record {
   owners : vec UserId;
   // Account balance when available.
   balance : opt AccountBalanceInfo;
-  // The policies that can be used to control the account.
-  //
-  // If the list is empty but there are policies globally defined for the wallet,
-  // the global policies will be used.
-  policies : vec Policy;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
-
-type ApprovalThresholdPolicy = variant {
-  // The percentage of approvals required for a transaction to be executed.
-  //
-  // The value must be between 0 and 100.
-  VariableThreshold : nat8;
-
-  // The number of approvals required for a transaction to be executed.
-  //
-  // If there are less owners than the threshold, the number of owners will be used.
-  FixedThreshold : nat8;
-};
-
-// The policies that can be used to control the operation in the wallet.
-type Policy = variant { approval_threshold : ApprovalThresholdPolicy };
 
 // Input type for getting a account.
 type GetAccountInput = record {

@@ -166,8 +166,7 @@ mod tests {
             proposal_test_utils::mock_proposal,
             specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier, UserSpecifier},
             user_test_utils::mock_user,
-            ApprovalThresholdPolicy, Policy, ProposalOperation, ProposalStatus, TransferOperation,
-            TransferOperationInput, User,
+            ProposalOperation, ProposalStatus, TransferOperation, TransferOperationInput, User,
         },
         repositories::{policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository},
     };
@@ -206,9 +205,6 @@ mod tests {
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
         account.owners = vec![[2; 16]];
-        account.policies = vec![Policy::ApprovalThreshold(
-            ApprovalThresholdPolicy::VariableThreshold(100),
-        )];
         let mut proposal = mock_proposal();
         proposal.proposed_by = ctx.caller_user.id;
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
@@ -240,9 +236,6 @@ mod tests {
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
         account.owners = vec![ctx.caller_user.id];
-        account.policies = vec![Policy::ApprovalThreshold(
-            ApprovalThresholdPolicy::VariableThreshold(100),
-        )];
         let mut proposal = mock_proposal();
         proposal.proposed_by = [8; 16];
         proposal.status = ProposalStatus::Created;

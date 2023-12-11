@@ -43,7 +43,6 @@ mod tests {
             decimals: 0u32,
             name: "Private".to_string(),
             owners: vec![[1; 16], [2; 16]],
-            policies: vec![],
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
             metadata: vec![],

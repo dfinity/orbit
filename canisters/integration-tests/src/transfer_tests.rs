@@ -9,9 +9,9 @@ use ic_ledger_types::AccountIdentifier;
 use std::time::Duration;
 use wallet_api::{
     AddAccountOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
-    GetProposalInput, GetProposalResponse, GetUserInput, GetUserResponse,
+    CriteriaDTO, GetProposalInput, GetProposalResponse, GetUserInput, GetUserResponse,
     ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
-    TransferOperationInput,
+    TransferOperationInput, UserSpecifierDTO,
 };
 
 #[test]
@@ -43,7 +43,7 @@ fn make_transfer_successful() {
         name: "test".to_string(),
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
-        policies: vec![],
+        transfer_criteria: CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 1f64),
         metadata: vec![],
     };
     let add_account_proposal = CreateProposalInput {

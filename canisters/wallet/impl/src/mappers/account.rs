@@ -47,11 +47,7 @@ impl AccountMapper {
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata,
-            policies: account
-                .policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect(),
+            transfer_criteria: None,
             last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
         }
     }
@@ -114,7 +110,6 @@ impl AccountMapper {
             name: operation.input.name,
             address: address.unwrap_or("".to_string()),
             owners: operation.input.owners.to_vec(),
-            policies: operation.input.policies.to_vec(),
             decimals: 0,
             symbol,
             balance: None,

@@ -1,4 +1,4 @@
-use super::{AccountId, Blockchain, BlockchainStandard, Policy, UserId, UserStatus};
+use super::{criteria::Criteria, AccountId, Blockchain, BlockchainStandard, UserId, UserStatus};
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
@@ -49,10 +49,10 @@ pub struct AddAccountOperation {
 pub struct AddAccountOperationInput {
     pub name: String,
     pub owners: Vec<UserId>,
-    pub policies: Vec<Policy>,
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
     pub metadata: Vec<(String, String)>,
+    pub transfer_criteria: Criteria,
 }
 
 #[stable_object]
@@ -66,7 +66,7 @@ pub struct EditAccountOperation {
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
     pub owners: Option<Vec<UserId>>,
-    pub policies: Option<Vec<Policy>>,
+    pub transfer_criteria: Option<Criteria>,
     pub name: Option<String>,
 }
 

@@ -1,4 +1,4 @@
-use super::{Proposal, ProposalOperation, ProposalOperationType};
+use super::{Account, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use async_trait::async_trait;
@@ -117,8 +117,17 @@ impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
                 Ok(false)
             }
             UserSpecifier::Id(ids) => Ok(ids.contains(&voter_id)),
-            // TODO: Owner (most likely will require a MatchError::NotApplicable variant)
-            UserSpecifier::Owner => todo!(),
+            UserSpecifier::Owner => {
+                if let ProposalOperation::Transfer(op) = p.operation {
+                    if let Some(account) = crate::repositories::ACCOUNT_REPOSITORY
+                        .get(&Account::key(op.input.from_account_id))
+                    {
+                        return Ok(account.owners.contains(&voter_id));
+                    }
+                }
+
+                Ok(false)
+            }
             UserSpecifier::Proposer => Ok(p.proposed_by == voter_id),
         }
     }
@@ -187,6 +196,7 @@ mod tests {
     use candid::Nat;
 
     use crate::models::{
+        criteria::Criteria,
         proposal_test_utils::mock_proposal,
         specifier::{
             AccountMatcher, AccountSpecifier, AddressMatcher, AddressSpecifier, Match,
@@ -194,8 +204,8 @@ mod tests {
         },
         AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
         Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
-        EditUserOperationInput, ProposalOperation, TransferOperation, TransferOperationInput,
-        UserStatus,
+        EditUserOperationInput, EvaluationStatus, ProposalOperation, TransferOperation,
+        TransferOperationInput, UserStatus,
     };
 
     #[tokio::test]
@@ -213,10 +223,10 @@ mod tests {
                     input: AddAccountOperationInput {
                         name: "account-1".into(),
                         owners: vec![],
-                        policies: vec![],
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: vec![],
+                        transfer_criteria: Criteria::Auto(EvaluationStatus::Adopted),
                     },
                 }),
                 ProposalSpecifier::AddAccount,
@@ -239,7 +249,7 @@ mod tests {
                     input: EditAccountOperationInput {
                         account_id: [0; 16],
                         owners: None,
-                        policies: None,
+                        transfer_criteria: None,
                         name: None,
                     },
                 }),

@@ -1,24 +1,85 @@
-use std::sync::Arc;
-
+use super::{
+    specifier::{Match, UserSpecifier},
+    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus,
+};
+use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use anyhow::{anyhow, Error};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
 use futures::{stream, StreamExt, TryStreamExt};
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
-
-use crate::{errors::MatchError, repositories::USER_REPOSITORY};
-
-use super::{
-    specifier::{Match, UserSpecifier},
-    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus,
-};
+use std::cmp::Ordering;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 #[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct Ratio(pub f64);
 
+impl Ratio {
+    fn is_nan(&self) -> bool {
+        self.0.is_nan()
+    }
+}
+
 impl Eq for Ratio {}
+
+impl PartialEq for Ratio {
+    fn eq(&self, other: &Self) -> bool {
+        if self.is_nan() || other.is_nan() {
+            false
+        } else {
+            self.0 == other.0
+        }
+    }
+}
+
+impl Hash for Ratio {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Handle special cases such as NaN and zeros
+        if self.0.is_nan() {
+            // Hash a constant value for NaN
+            "NaN".hash(state);
+        } else if self.0 == 0.0 {
+            // Hash zero consistently, regardless of sign
+            0.0f64.to_bits().hash(state);
+        } else {
+            // For normal cases, hash the bit representation
+            self.0.to_bits().hash(state);
+        }
+    }
+}
+
+impl PartialOrd for Ratio {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Ratio {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            _ => {
+                if self.0 == other.0 {
+                    // Handle the case of positive and negative zero
+                    if self.0.is_sign_positive() == other.0.is_sign_positive() {
+                        Ordering::Equal
+                    } else if self.0.is_sign_positive() {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Less
+                    }
+                } else {
+                    self.0.partial_cmp(&other.0).unwrap()
+                }
+            }
+        }
+    }
+}
 
 impl TryFrom<f64> for Ratio {
     type Error = Error;
@@ -33,7 +94,7 @@ impl TryFrom<f64> for Ratio {
 }
 
 #[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Criteria {
     // Auto
     Auto(EvaluationStatus),

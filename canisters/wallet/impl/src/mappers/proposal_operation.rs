@@ -60,12 +60,7 @@ impl AddAccountOperation {
                     .iter()
                     .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
                     .collect(),
-                policies: self
-                    .input
-                    .policies
-                    .iter()
-                    .map(|policy| policy.clone().into())
-                    .collect(),
+                transfer_criteria: self.input.transfer_criteria.into(),
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
                 metadata: self.input.metadata,
@@ -100,11 +95,7 @@ impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput 
                         .as_bytes()
                 })
                 .collect(),
-            policies: input
-                .policies
-                .iter()
-                .map(|policy| policy.clone().into())
-                .collect(),
+            transfer_criteria: input.transfer_criteria.into(),
             blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
                 .expect("Invalid blockchain"),
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
@@ -128,12 +119,10 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                         .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
                         .collect()
                 }),
-                policies: operation.input.policies.map(|policies| {
-                    policies
-                        .iter()
-                        .map(|policy| policy.clone().into())
-                        .collect()
-                }),
+                transfer_criteria: operation
+                    .input
+                    .transfer_criteria
+                    .map(|criteria| criteria.into()),
             },
         }
     }

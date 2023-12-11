@@ -1,10 +1,13 @@
-use super::UserService;
+use super::{UserService, POLICY_SERVICE};
 use crate::{
     core::{generate_uuid_v4, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{AccountMapper, HelperMapper},
-    models::{Account, AccountBalance, AccountId, AddAccountOperation},
+    models::{
+        specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier},
+        Account, AccountBalance, AccountId, AddAccountOperation,
+    },
     repositories::AccountRepository,
 };
 use candid::Principal;
@@ -69,7 +72,8 @@ impl AccountService {
             &operation.input.blockchain.clone(),
             &operation.input.standard.clone(),
         )?;
-        let mut new_account = AccountMapper::from_create_input(operation, *uuid.as_bytes(), None)?;
+        let mut new_account =
+            AccountMapper::from_create_input(operation.to_owned(), *uuid.as_bytes(), None)?;
 
         // The account address is generated after the account is created from the user input and
         // all the validations are successfully completed.
@@ -84,6 +88,17 @@ impl AccountService {
 
         // Validations happen after all the fields are set in the account to avoid partial data in the repository.
         new_account.validate()?;
+
+        // adds the associated transfer policy based on the transfer criteria
+        POLICY_SERVICE
+            .add_proposal_policy(
+                ProposalSpecifier::Transfer(
+                    AccountSpecifier::Id(vec![*uuid.as_bytes()]),
+                    AddressSpecifier::Any,
+                ),
+                operation.input.transfer_criteria.to_owned(),
+            )
+            .await?;
 
         // Inserting the account into the repository and its associations is the last step of the account creation
         // process to avoid potential consistency issues due to the fact that some of the calls to create the account
@@ -184,8 +199,8 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            account_test_utils::mock_account, user_test_utils::mock_user, AddAccountOperationInput,
-            Blockchain, BlockchainStandard, User,
+            account_test_utils::mock_account, criteria::Criteria, user_test_utils::mock_user,
+            AddAccountOperationInput, Blockchain, BlockchainStandard, EvaluationStatus, User,
         },
         repositories::UserRepository,
     };
@@ -250,7 +265,7 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: vec![],
-                policies: vec![],
+                transfer_criteria: Criteria::Auto(EvaluationStatus::Adopted),
             },
         };
 
@@ -270,7 +285,7 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::ERC20,
                 metadata: vec![],
-                policies: vec![],
+                transfer_criteria: Criteria::Auto(EvaluationStatus::Adopted),
             },
         };
 

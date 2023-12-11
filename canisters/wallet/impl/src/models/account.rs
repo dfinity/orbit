@@ -1,4 +1,4 @@
-use super::{AccountBalance, Blockchain, BlockchainStandard, Policy, UserId};
+use super::{AccountBalance, Blockchain, BlockchainStandard, UserId};
 use crate::errors::AccountError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
@@ -42,8 +42,6 @@ pub struct Account {
     pub owners: Vec<UserId>,
     /// The account balance, which is the amount of the asset that the account holds.
     pub balance: Option<AccountBalance>,
-    /// The account policies, which define the rules for the account.
-    pub policies: Vec<Policy>,
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
@@ -57,19 +55,6 @@ pub struct Account {
 pub struct AccountKey {
     /// The account id, which is a UUID.
     pub id: AccountId,
-}
-
-fn validate_policies(policies: &Vec<Policy>) -> ModelValidatorResult<AccountError> {
-    if policies.len() > Account::MAX_POLICIES as usize {
-        return Err(AccountError::ValidationError {
-            info: format!(
-                "Account policies count exceeds the maximum allowed: {}",
-                Account::MAX_POLICIES
-            ),
-        });
-    }
-
-    Ok(())
 }
 
 fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<AccountError> {
@@ -149,7 +134,6 @@ fn validate_address(address: &String) -> ModelValidatorResult<AccountError> {
 
 impl ModelValidator<AccountError> for Account {
     fn validate(&self) -> ModelValidatorResult<AccountError> {
-        validate_policies(&self.policies)?;
         validate_metadata(&self.metadata)?;
         validate_symbol(&self.symbol)?;
         validate_address(&self.address)?;
@@ -189,41 +173,6 @@ impl Account {
 mod tests {
     use super::account_test_utils::mock_account;
     use super::*;
-    use crate::models::ApprovalThresholdPolicy;
-
-    #[test]
-    fn fail_policies_validation() {
-        let mut account = mock_account();
-        account.policies =
-            vec![
-                Policy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
-                Account::MAX_POLICIES as usize + 1
-            ];
-
-        let result = validate_policies(&account.policies);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AccountError::ValidationError {
-                info: "Account policies count exceeds the maximum allowed: 10".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn test_policies_validation() {
-        let mut account = mock_account();
-        account.policies =
-            vec![
-                Policy::ApprovalThreshold(ApprovalThresholdPolicy::FixedThreshold(1),);
-                Account::MAX_POLICIES as usize - 1
-            ];
-
-        let result = validate_policies(&account.policies);
-
-        assert!(result.is_ok());
-    }
 
     #[test]
     fn fail_metadata_validation_too_many() {
@@ -399,7 +348,6 @@ pub mod account_test_utils {
             decimals: 0u32,
             name: "foo".to_string(),
             owners: vec![],
-            policies: vec![],
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
             metadata: vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1],

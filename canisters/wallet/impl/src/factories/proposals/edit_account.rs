@@ -53,12 +53,7 @@ impl Create<wallet_api::EditAccountOperationInput> for EditAccountProposalCreate
                         ),
                         None => None,
                     },
-                    policies: operation_input.policies.map(|policies| {
-                        policies
-                            .iter()
-                            .map(|policy| policy.clone().into())
-                            .collect()
-                    }),
+                    transfer_criteria: operation_input.transfer_criteria.map(Into::into),
                     name: operation_input.name,
                 },
             }),
@@ -157,8 +152,9 @@ impl Execute for EditAccountProposalExecute<'_, '_> {
             account.owners = owners.clone();
         }
 
-        if let Some(policies) = &self.operation.input.policies {
-            account.policies = policies.clone();
+        if let Some(_criteria) = &self.operation.input.transfer_criteria {
+            // TODO: Add edit of transfer criteria for account
+            todo!()
         }
 
         account
