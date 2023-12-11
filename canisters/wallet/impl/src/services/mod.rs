@@ -23,3 +23,6 @@ pub use wallet::*;
 
 mod policy;
 pub use policy::*;
+
+mod upgrade;
+pub use upgrade::*;

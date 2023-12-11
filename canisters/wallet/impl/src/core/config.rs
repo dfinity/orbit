@@ -4,7 +4,7 @@ use crate::{
     models::{Blockchain, BlockchainStandard, WalletAsset},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_canister_core::types::Timestamp;
+use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::{
@@ -34,6 +34,8 @@ pub struct CanisterConfig {
     pub last_upgrade_timestamp: Timestamp,
     /// The default users of the canister.
     pub owners: Vec<Principal>,
+    /// An optionally pending upgrade proposal.
+    pub upgrade_proposal: Option<UUID>,
 }
 
 impl Default for CanisterConfig {
@@ -41,6 +43,7 @@ impl Default for CanisterConfig {
         Self {
             last_upgrade_timestamp: time(),
             owners: vec![],
+            upgrade_proposal: None,
         }
     }
 }

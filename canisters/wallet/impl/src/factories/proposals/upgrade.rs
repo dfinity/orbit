@@ -1,7 +1,9 @@
 use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
+    core::{canister_config, write_canister_config, CanisterConfig},
     errors::{ProposalError, ProposalExecuteError},
-    models::{Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation},
+    models::{Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation, UpgradeTarget},
+    services::UPGRADE_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -55,15 +57,15 @@ impl CreateHook for UpgradeProposalCreateHook<'_, '_> {
 }
 
 pub struct UpgradeProposalExecute<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o UpgradeOperation,
+    proposal: &'p Proposal,
+    operation: &'o UpgradeOperation,
 }
 
 impl<'p, 'o> UpgradeProposalExecute<'p, 'o> {
     pub fn new(proposal: &'p Proposal, operation: &'o UpgradeOperation) -> Self {
         Self {
-            _proposal: proposal,
-            _operation: operation,
+            proposal,
+            operation,
         }
     }
 }
@@ -71,6 +73,46 @@ impl<'p, 'o> UpgradeProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for UpgradeProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        todo!()
+        match self.operation.input.target {
+            UpgradeTarget::Wallet => {
+                write_canister_config(CanisterConfig {
+                    upgrade_proposal: Some(self.proposal.id.to_owned()),
+                    ..canister_config()
+                });
+
+                let out = UPGRADE_SERVICE
+                    .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
+                    .await
+                    .map_err(|err| ProposalExecuteError::Failed {
+                        reason: format!("failed to upgrade wallet: {}", err),
+                    });
+
+                if out.is_err() {
+                    write_canister_config(CanisterConfig {
+                        upgrade_proposal: None,
+                        ..canister_config()
+                    });
+                }
+
+                out?;
+
+                Ok(ProposalExecuteStage::Processing(
+                    self.proposal.operation.clone(),
+                ))
+            }
+
+            UpgradeTarget::Upgrader => {
+                UPGRADE_SERVICE
+                    .upgrade_upgrader(&self.operation.input.module)
+                    .await
+                    .map_err(|err| ProposalExecuteError::Failed {
+                        reason: format!("failed to upgrade upgrader: {}", err),
+                    })?;
+
+                Ok(ProposalExecuteStage::Completed(
+                    self.proposal.operation.clone(),
+                ))
+            }
+        }
     }
 }
