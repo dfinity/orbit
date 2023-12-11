@@ -18,6 +18,7 @@ pub enum ProposalOperationType {
     AddUserGroup = 6,
     EditUserGroup = 7,
     RemoveUserGroup = 8,
+    Upgrade = 9,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -40,6 +41,7 @@ impl TryFrom<u8> for ProposalOperationType {
             6 => Ok(ProposalOperationType::AddUserGroup),
             7 => Ok(ProposalOperationType::EditUserGroup),
             8 => Ok(ProposalOperationType::RemoveUserGroup),
+            9 => Ok(ProposalOperationType::Upgrade),
             _ => Err(()),
         }
     }
@@ -59,6 +61,7 @@ impl FromStr for ProposalOperationType {
             "add_user_group" => Ok(ProposalOperationType::AddUserGroup),
             "edit_user_group" => Ok(ProposalOperationType::EditUserGroup),
             "remove_user_group" => Ok(ProposalOperationType::RemoveUserGroup),
+            "upgrade" => Ok(ProposalOperationType::Upgrade),
             _ => Err(()),
         }
     }
@@ -76,6 +79,7 @@ impl Display for ProposalOperationType {
             ProposalOperationType::AddUserGroup => write!(f, "add_user_group"),
             ProposalOperationType::EditUserGroup => write!(f, "edit_user_group"),
             ProposalOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
+            ProposalOperationType::Upgrade => write!(f, "upgrade"),
         }
     }
 }
@@ -160,6 +164,10 @@ mod tests {
             ProposalOperationType::from_str("remove_user_group").unwrap(),
             ProposalOperationType::RemoveUserGroup
         );
+        assert_eq!(
+            ProposalOperationType::from_str("upgrade").unwrap(),
+            ProposalOperationType::Upgrade
+        );
     }
 
     #[test]
@@ -208,6 +216,11 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(8).unwrap(),
             ProposalOperationType::RemoveUserGroup
+        );
+        assert_eq!(ProposalOperationType::Upgrade as u8, 9);
+        assert_eq!(
+            ProposalOperationType::try_from(9).unwrap(),
+            ProposalOperationType::Upgrade
         );
     }
 }

@@ -4,7 +4,7 @@ use crate::{
     models::{
         access_control::{
             AccountActionSpecifier, AccountSpecifier, ProposalActionSpecifier, ResourceSpecifier,
-            ResourceType, TransferActionSpecifier,
+            ResourceType, TransferActionSpecifier, UpgradeActionSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier},
         Transfer,
@@ -209,6 +209,9 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                 ResourceType::UserGroup,
                 AccountActionSpecifier::Delete(CommonSpecifier::Any),
             ),
+            ProposalOperationInput::Upgrade(_) => {
+                ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create)
+            }
         }
     }
 }

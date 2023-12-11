@@ -15,6 +15,7 @@ pub enum ProposalOperation {
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
+    Upgrade(UpgradeOperation),
 }
 
 #[stable_object]
@@ -151,4 +152,25 @@ pub struct RemoveUserGroupOperation {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RemoveUserGroupOperationInput {
     pub user_group_id: UUID,
+}
+
+#[stable_object]
+#[derive(Debug, Clone, CandidType, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum UpgradeTarget {
+    Wallet,
+    Upgrader,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UpgradeOperationInput {
+    pub target: UpgradeTarget,
+    pub module: Vec<u8>,
+    pub checksum: Vec<u8>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct UpgradeOperation {
+    pub input: UpgradeOperationInput,
 }
