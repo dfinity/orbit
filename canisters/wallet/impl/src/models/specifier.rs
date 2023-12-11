@@ -1,17 +1,22 @@
-use std::sync::Arc;
-
+use super::{Proposal, ProposalOperation, ProposalOperationType};
+use crate::errors::MatchError;
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
-
-use crate::errors::MatchError;
-
-use super::{Proposal, ProposalOperation, ProposalOperationType};
+use std::sync::Arc;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AccountSpecifier {
+    Any,
+    Group(Vec<UUID>),
+    Id(Vec<UUID>),
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CommonSpecifier {
     Any,
     Group(Vec<UUID>),
     Id(Vec<UUID>),

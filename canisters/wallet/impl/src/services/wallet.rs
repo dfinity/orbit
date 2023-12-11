@@ -154,7 +154,6 @@ mod tests {
 
         let init = WalletCanisterInit {
             owners: Some(vec![Principal::anonymous()]),
-            ..Default::default()
         };
 
         wallet_service

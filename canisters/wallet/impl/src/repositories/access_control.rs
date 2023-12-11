@@ -2,7 +2,7 @@ use super::indexes::access_control_resource_index::AccessControlPolicyResourceIn
 use crate::{
     core::{with_memory_manager, Memory, ACCESS_CONTROL_MEMORY_ID},
     models::{
-        access_control::{AccessControlPolicy, AccessModifier, ResourceSpecifier},
+        access_control::{AccessControlPolicy, ResourceSpecifier},
         indexes::access_control_resource_index::AccessControlPolicyResourceIndexCriteria,
     },
 };
@@ -70,15 +70,10 @@ impl Repository<UUID, AccessControlPolicy> for AccessControlRepository {
 }
 
 impl AccessControlRepository {
-    pub fn find_by_resource_and_access(
-        &self,
-        resource: &ResourceSpecifier,
-        access: &AccessModifier,
-    ) -> Vec<AccessControlPolicy> {
+    pub fn find_by_resource(&self, resource: &ResourceSpecifier) -> Vec<AccessControlPolicy> {
         self.resource_index
             .find_by_criteria(AccessControlPolicyResourceIndexCriteria {
-                resource: resource.to_string(),
-                access: access.to_owned(),
+                resource: resource.to_key(),
             })
             .into_iter()
             .filter_map(|policy_id| self.get(&policy_id))
@@ -89,8 +84,12 @@ impl AccessControlRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_control::{
-        access_control_test_utils::mock_access_policy, ResourceSpecifier,
+    use crate::models::{
+        access_control::{
+            access_control_test_utils::mock_access_policy, AddressBookActionSpecifier,
+            ResourceSpecifier, ResourceType,
+        },
+        specifier::CommonSpecifier,
     };
 
     #[test]
@@ -111,13 +110,17 @@ mod tests {
     fn test_find_by_resource_and_access() {
         let repository = &ACCESS_CONTROL_REPOSITORY;
         let mut policy = mock_access_policy();
-        policy.access = AccessModifier::Read;
-        policy.resource = ResourceSpecifier::AddressBook;
+        policy.resource = ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        );
 
         repository.insert(policy.id.to_owned(), policy.clone());
 
-        let policies = repository
-            .find_by_resource_and_access(&ResourceSpecifier::AddressBook, &AccessModifier::Read);
+        let policies = repository.find_by_resource(&ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        ));
 
         assert_eq!(policies.len(), 1);
         assert_eq!(policies[0], policy);

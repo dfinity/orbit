@@ -1,8 +1,7 @@
 use crate::mappers::HelperMapper;
-use crate::models::access_control::{AccessModifier, ResourceSpecifier};
-use crate::models::specifier::AccountSpecifier;
+use crate::models::access_control::{AccountActionSpecifier, ResourceSpecifier, ResourceType};
 use crate::{
-    core::middlewares::{authorize, call_context, ResourceAccess},
+    core::middlewares::{authorize, call_context},
     services::AccountService,
 };
 use ic_canister_core::api::ApiResult;
@@ -50,9 +49,7 @@ impl AccountController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [
-            ResourceAccess(ResourceSpecifier::from(&input), AccessModifier::Read)
-        ],
+        args = [ResourceSpecifier::from(&input)],
         is_async = true
     )]
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
@@ -70,9 +67,7 @@ impl AccountController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [
-            ResourceAccess(ResourceSpecifier::Account(AccountSpecifier::Any), AccessModifier::Default)
-        ],
+        args = [ResourceSpecifier::Common(ResourceType::Account, AccountActionSpecifier::List)],
         is_async = true
     )]
     async fn list_accounts(&self) -> ApiResult<ListAccountResponse> {
@@ -89,14 +84,12 @@ impl AccountController {
         Ok(ListAccountResponse { accounts })
     }
 
-    // #[with_middleware(
-    //     guard = "authorize",
-    //     context = "call_context",
-    //     args = [
-    //         ResourceAccess(ResourceSpecifier::from(&input), AccessModifier::Read)
-    //     ],
-    //     is_async = true
-    // )]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,

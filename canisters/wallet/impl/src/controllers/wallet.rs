@@ -1,5 +1,3 @@
-use crate::core::middlewares::ResourceAccess;
-use crate::models::access_control::{AccessModifier};
 use crate::{
     core::{
         canister_config_mut,
@@ -7,6 +5,7 @@ use crate::{
         CanisterConfig,
     },
     jobs::register_jobs,
+    models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
     services::WalletService,
 };
 use ic_canister_core::api::ApiResult;
@@ -73,14 +72,12 @@ impl WalletController {
         register_jobs().await;
     }
 
-    // #[with_middleware(
-    //     guard = "authorize",
-    //     context = "call_context",
-    //     args = [
-    //         ResourceAccess(Resource::User, AccessModifier::Default)
-    //     ],
-    //     is_async = true
-    // )]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)],
+        is_async = true
+    )]
     async fn get_wallet_features(&self) -> ApiResult<WalletFeaturesResponse> {
         let features = self.wallet_service.get_features()?;
 
@@ -89,14 +86,12 @@ impl WalletController {
         })
     }
 
-    // #[with_middleware(
-    //     guard = "authorize",
-    //     context = "call_context",
-    //     args = [
-    //         ResourceAccess(Resource::User, AccessModifier::All)
-    //     ],
-    //     is_async = true
-    // )]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::Read)],
+        is_async = true
+    )]
     async fn wallet_settings(&self) -> ApiResult<WalletSettingsResponse> {
         let settings = self.wallet_service.get_wallet_settings()?;
 

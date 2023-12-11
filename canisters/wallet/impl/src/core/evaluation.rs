@@ -37,7 +37,7 @@ lazy_static! {
     pub static ref ACCESS_CONTROL_MATCHER: Arc<AccessControlMatcher> =
         Arc::new(AccessControlMatcher {
             user_matcher: ACCESS_CONTROL_USER_MATCHER.clone(),
-            user_resource_matcher: ACCESS_CONTROL_POLICY_USER_MATCHER.clone(),
+            policy_user_matcher: ACCESS_CONTROL_POLICY_USER_MATCHER.clone(),
             policy_account_matcher: ACCESS_CONTROL_POLICY_ACCOUNT_MATCHER.clone(),
             policy_crypto_address_matcher: ACCESS_CONTROL_POLICY_CRYPTO_ADDRESS_MATCHER.clone(),
         });

@@ -17,6 +17,7 @@ use ic_canister_core::{
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use lazy_static::lazy_static;
 use std::cell::RefCell;
 
 thread_local! {
@@ -26,6 +27,10 @@ thread_local! {
       StableBTreeMap::init(memory_manager.get(TRANSFER_MEMORY_ID))
     )
   })
+}
+
+lazy_static! {
+    pub static ref TRANSFER_REPOSITORY: TransferRepository = TransferRepository::default();
 }
 
 /// A repository that enables managing transfer in stable memory.

@@ -6,8 +6,11 @@ use crate::{
     core::ic_cdk::api::print,
     errors::{AccessControlError, EvaluateError, MatchError},
     models::{
-        access_control::{AccessControlPolicy, AccessModifier, ResourceSpecifier},
-        specifier::{AccountSpecifier, AddressSpecifier, Match, UserSpecifier},
+        access_control::{
+            AccessControlPolicy, AccountSpecifier, CommonActionSpecifier, ResourceSpecifier,
+            ResourceType, TransferActionSpecifier, UserSpecifier,
+        },
+        specifier::{AddressSpecifier, CommonSpecifier, Match},
         Account, User,
     },
     repositories::{
@@ -22,19 +25,16 @@ use std::{collections::HashSet, sync::Arc};
 pub struct AccessControlEvaluator<'ctx> {
     pub call_context: &'ctx CallContext,
     pub resource: ResourceSpecifier,
-    pub access_modifier: AccessModifier,
 }
 
 impl<'ctx> AccessControlEvaluator<'ctx> {
     pub fn new(
         call_context: &'ctx CallContext,
         resource: ResourceSpecifier,
-        access_modifier: AccessModifier,
     ) -> AccessControlEvaluator<'ctx> {
         AccessControlEvaluator {
             call_context,
             resource,
-            access_modifier,
         }
     }
 }
@@ -57,7 +57,6 @@ impl Match<(Arc<User>, AccessControlPolicy)> for AccessControlUserMatcher {
                 .iter()
                 .any(|allowed_user_id| caller.id == *allowed_user_id),
             UserSpecifier::Any => true,
-            _ => false,
         };
 
         Ok(is_match)
@@ -78,21 +77,31 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlPolicyUse
 
         let mut requested_users = HashSet::new();
         let mut requested_user_group_ids = HashSet::new();
-        if let UserSpecifier::Id(user_ids) = requested_user.as_ref() {
+        if let CommonSpecifier::Id(user_ids) = requested_user.as_ref() {
             requested_users = user_ids
                 .iter()
                 .filter_map(|user_id| USER_REPOSITORY.get(&User::key(user_id.to_owned())))
                 .collect();
-        } else if let UserSpecifier::Group(group_ids) = requested_user.as_ref() {
+        } else if let CommonSpecifier::Group(group_ids) = requested_user.as_ref() {
             requested_user_group_ids = group_ids.iter().cloned().collect();
         }
 
-        if let ResourceSpecifier::User(policy_user) | ResourceSpecifier::UserStatus(policy_user) =
-            access_policy.resource
+        if let ResourceSpecifier::Common(
+            ResourceType::User,
+            CommonActionSpecifier::Read(policy_user),
+        )
+        | ResourceSpecifier::Common(
+            ResourceType::User,
+            CommonActionSpecifier::Update(policy_user),
+        )
+        | ResourceSpecifier::Common(
+            ResourceType::User,
+            CommonActionSpecifier::Delete(policy_user),
+        ) = access_policy.resource
         {
             let is_match = match policy_user {
-                UserSpecifier::Any => true,
-                UserSpecifier::Group(group_ids) => {
+                CommonSpecifier::Any => true,
+                CommonSpecifier::Group(group_ids) => {
                     if requested_user_group_ids.is_empty() && requested_users.is_empty() {
                         // If the requested users and groups are empty, then by default we filter out the policy,
                         // otherwise this would allow access when requested for an empty list of users and groups.
@@ -116,7 +125,7 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlPolicyUse
 
                     match_requested_groups && match_requested_users
                 }
-                UserSpecifier::Id(user_ids) => match requested_users.is_empty() {
+                CommonSpecifier::Id(user_ids) => match requested_users.is_empty() {
                     // If the requested users is empty, then by default we filter out the policy, otherwise this would
                     // allow access when requested for an empty list of users.
                     true => false,
@@ -124,7 +133,6 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlPolicyUse
                         user_ids.iter().any(|user_id| *user_id == requested_user.id)
                     }),
                 },
-                _ => false,
             };
 
             return Ok(is_match);
@@ -147,23 +155,37 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
 
         let mut requested_accounts = HashSet::new();
         let mut requested_account_group_ids = HashSet::new();
-        if let AccountSpecifier::Id(account_ids) = requested_account.as_ref() {
+        if let CommonSpecifier::Id(account_ids) = requested_account.as_ref() {
             requested_accounts = account_ids
                 .iter()
                 .filter_map(|account_id| {
                     ACCOUNT_REPOSITORY.get(&Account::key(account_id.to_owned()))
                 })
                 .collect();
-        } else if let AccountSpecifier::Group(group_ids) = requested_account.as_ref() {
+        } else if let CommonSpecifier::Group(group_ids) = requested_account.as_ref() {
             requested_account_group_ids = group_ids.iter().cloned().collect();
         }
 
-        if let ResourceSpecifier::Account(policy_account)
-        | ResourceSpecifier::Transfer(policy_account, _) = access_policy.resource
+        if let ResourceSpecifier::Common(
+            ResourceType::Account,
+            CommonActionSpecifier::Read(policy_account),
+        )
+        | ResourceSpecifier::Common(
+            ResourceType::Account,
+            CommonActionSpecifier::Update(policy_account),
+        )
+        | ResourceSpecifier::Common(
+            ResourceType::Account,
+            CommonActionSpecifier::Delete(policy_account),
+        )
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Create(policy_account, _))
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(policy_account, _))
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(policy_account, _)) =
+            access_policy.resource
         {
             let is_match = match policy_account {
-                AccountSpecifier::Any => true,
-                AccountSpecifier::Group(group_ids) => {
+                CommonSpecifier::Any => true,
+                CommonSpecifier::Group(group_ids) => {
                     if requested_account_group_ids.is_empty() && requested_accounts.is_empty() {
                         // If the requested accounts and groups are empty, then by default we filter out the policy,
                         // otherwise this would allow access when requested for an empty list of accounts and groups.
@@ -183,7 +205,7 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
 
                     match_requested_groups && match_requested_users
                 }
-                AccountSpecifier::Id(account_ids) => match requested_accounts.is_empty() {
+                CommonSpecifier::Id(account_ids) => match requested_accounts.is_empty() {
                     // If the requested accounts is empty, then by default we filter out the policy, otherwise this would
                     // allow access when requested for an empty list of accounts.
                     true => false,
@@ -215,7 +237,11 @@ impl Match<(Arc<AddressSpecifier>, AccessControlPolicy)>
     ) -> Result<bool, MatchError> {
         let (_, access_policy) = v;
 
-        if let ResourceSpecifier::Transfer(_, policy_address) = access_policy.resource {
+        if let ResourceSpecifier::Transfer(TransferActionSpecifier::Create(_, policy_address))
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(_, policy_address))
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(_, policy_address)) =
+            access_policy.resource
+        {
             let is_match = match policy_address {
                 AddressSpecifier::Any => true,
                 // TODO: Add support for address id's variant once added.
@@ -231,30 +257,32 @@ impl Match<(Arc<AddressSpecifier>, AccessControlPolicy)>
 /// A matcher that checks if the caller has access to the given resource and access modifier.
 pub struct AccessControlMatcher {
     pub user_matcher: Arc<dyn Match<(Arc<User>, AccessControlPolicy)>>,
-    pub user_resource_matcher: Arc<dyn Match<(Arc<UserSpecifier>, AccessControlPolicy)>>,
-    pub policy_account_matcher: Arc<dyn Match<(Arc<AccountSpecifier>, AccessControlPolicy)>>,
+    pub policy_user_matcher: Arc<dyn Match<(Arc<CommonSpecifier>, AccessControlPolicy)>>,
+    pub policy_account_matcher: Arc<dyn Match<(Arc<CommonSpecifier>, AccessControlPolicy)>>,
     pub policy_crypto_address_matcher: Arc<dyn Match<(Arc<AddressSpecifier>, AccessControlPolicy)>>,
 }
 
 #[async_trait]
-impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
-    async fn is_match(
-        &self,
-        v: (User, ResourceSpecifier, AccessModifier),
-    ) -> Result<bool, MatchError> {
-        let (caller, resource, required_access) = v;
-        let policies =
-            ACCESS_CONTROL_REPOSITORY.find_by_resource_and_access(&resource, &required_access);
-
-        if policies.is_empty() {
-            // If there is no policy for the given resource and access modifier, then the access is denied by default.
-            return Ok(false);
-        }
+impl Match<(User, ResourceSpecifier)> for AccessControlMatcher {
+    async fn is_match(&self, v: (User, ResourceSpecifier)) -> Result<bool, MatchError> {
+        let (caller, requested_resource) = v;
+        let policies = ACCESS_CONTROL_REPOSITORY.find_by_resource(&requested_resource);
 
         // Filter policies based on the resource specifier, e.g. if the resource is for account_id = 1, then only
         // policies that include account_id = 1 are kept in the list of policies.
-        let filtered_policies = match resource {
-            ResourceSpecifier::Account(account) => {
+        let filtered_policies = match requested_resource {
+            ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Read(account),
+            )
+            | ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Update(account),
+            )
+            | ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Delete(account),
+            ) => {
                 let requested_account = &Arc::new(account);
                 stream::iter(policies.iter())
                     .filter_map(|policy| async move {
@@ -266,7 +294,7 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
                             Ok(true) => Some(policy.to_owned()),
                             Ok(false) => None,
                             Err(e) => {
-                                print(&format!("Failed policy account matcher: {:?}", e));
+                                print(format!("Failed policy account matcher: {:?}", e));
 
                                 None
                             }
@@ -275,7 +303,9 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
                     .collect()
                     .await
             }
-            ResourceSpecifier::Transfer(account, address) => {
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(account, address))
+            | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(account, address))
+            | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(account, address)) => {
                 let requested_account = &Arc::new(account);
                 let filtered_policies: Vec<AccessControlPolicy> = stream::iter(policies.iter())
                     .filter_map(|policy| async move {
@@ -287,7 +317,7 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
                             Ok(true) => Some(policy.to_owned()),
                             Ok(false) => None,
                             Err(e) => {
-                                print(&format!("Failed policy account matcher: {:?}", e));
+                                print(format!("Failed policy account matcher: {:?}", e));
 
                                 None
                             }
@@ -307,7 +337,7 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
                             Ok(true) => Some(policy.to_owned()),
                             Ok(false) => None,
                             Err(e) => {
-                                print(&format!("Failed policy crypto address matcher: {:?}", e));
+                                print(format!("Failed policy crypto address matcher: {:?}", e));
 
                                 None
                             }
@@ -316,19 +346,21 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
                     .collect()
                     .await
             }
-            ResourceSpecifier::User(user) | ResourceSpecifier::UserStatus(user) => {
+            ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Read(user))
+            | ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Update(user))
+            | ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Delete(user)) => {
                 let requested_user = &Arc::new(user);
                 stream::iter(policies.iter())
                     .filter_map(|policy| async move {
                         match self
-                            .user_resource_matcher
+                            .policy_user_matcher
                             .is_match((requested_user.to_owned(), policy.to_owned()))
                             .await
                         {
                             Ok(true) => Some(policy.to_owned()),
                             Ok(false) => None,
                             Err(e) => {
-                                print(&format!("Failed user resource matcher: {:?}", e));
+                                print(format!("Failed user resource matcher: {:?}", e));
 
                                 None
                             }
@@ -342,7 +374,7 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
             _ => policies,
         };
 
-        let caller_arc = &Arc::new(caller);
+        let caller_arc: &Arc<User> = &Arc::new(caller);
         let is_match = stream::iter(filtered_policies.iter())
             .then(|policy| async move {
                 self.user_matcher
@@ -353,7 +385,7 @@ impl Match<(User, ResourceSpecifier, AccessModifier)> for AccessControlMatcher {
                 match result {
                     Ok(is_match) => Some(is_match),
                     Err(e) => {
-                        print(&format!(
+                        print(format!(
                             "Failed to match access control for caller: {:?}",
                             e
                         ));
@@ -385,7 +417,6 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
                         reason: "User not found".to_string(),
                     })?,
                 self.resource.to_owned(),
-                self.access_modifier.to_owned(),
             ))
             .await
             .map_err(|e| EvaluateError::UnexpectedError(e.into()))?;
@@ -400,10 +431,8 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
 pub async fn evaluate_caller_access(
     ctx: &CallContext,
     resource: &ResourceSpecifier,
-    access_modifier: &AccessModifier,
 ) -> Result<(), AccessControlError> {
-    let evaluator =
-        AccessControlEvaluator::new(ctx, resource.to_owned(), access_modifier.to_owned());
+    let evaluator = AccessControlEvaluator::new(ctx, resource.to_owned());
     let has_access = evaluator
         .evaluate()
         .await
@@ -411,8 +440,7 @@ pub async fn evaluate_caller_access(
 
     if !has_access {
         return Err(AccessControlError::Unauthorized {
-            resource: resource.to_string(),
-            access_modifier: access_modifier.to_string(),
+            resource: resource.to_key(),
         });
     }
 
@@ -423,7 +451,9 @@ pub async fn evaluate_caller_access(
 mod tests {
     use super::*;
     use crate::models::{
-        access_control::access_control_test_utils::mock_access_policy,
+        access_control::{
+            access_control_test_utils::mock_access_policy, AddressBookActionSpecifier,
+        },
         account_test_utils::{self},
         user_group_test_utils,
         user_test_utils::{self, mock_user},
@@ -464,22 +494,22 @@ mod tests {
         USER_REPOSITORY.insert(finance_user.to_key(), finance_user.to_owned());
         USER_REPOSITORY.insert(hr_user.to_key(), hr_user.to_owned());
 
-        let test_context = TestContext {
+        TestContext {
             admin_user_group,
             finance_user_group,
             finance_user,
             hr_user,
-        };
-
-        test_context
+        }
     }
 
     #[tokio::test]
     async fn fail_user_has_access_to_admin_resource() {
         let mut admin_access = mock_access_policy();
         admin_access.user = UserSpecifier::Group(vec![*ADMIN_GROUP_ID]);
-        admin_access.access = AccessModifier::All;
-        admin_access.resource = ResourceSpecifier::AddressBook;
+        admin_access.resource = ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        );
 
         ACCESS_CONTROL_REPOSITORY.insert(admin_access.id, admin_access.to_owned());
 
@@ -491,9 +521,14 @@ mod tests {
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
         let ctx = CallContext::new(caller);
-        let has_access =
-            evaluate_caller_access(&ctx, &ResourceSpecifier::AddressBook, &AccessModifier::All)
-                .await;
+        let has_access = evaluate_caller_access(
+            &ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            ),
+        )
+        .await;
 
         assert!(has_access.is_err());
     }
@@ -502,8 +537,10 @@ mod tests {
     async fn admin_user_has_access_to_admin_resource() {
         let mut admin_access = mock_access_policy();
         admin_access.user = UserSpecifier::Group(vec![*ADMIN_GROUP_ID]);
-        admin_access.access = AccessModifier::All;
-        admin_access.resource = ResourceSpecifier::AddressBook;
+        admin_access.resource = ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        );
 
         ACCESS_CONTROL_REPOSITORY.insert(admin_access.id, admin_access.to_owned());
 
@@ -515,9 +552,14 @@ mod tests {
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
         let ctx = CallContext::new(caller);
-        let has_access =
-            evaluate_caller_access(&ctx, &ResourceSpecifier::AddressBook, &AccessModifier::All)
-                .await;
+        let has_access = evaluate_caller_access(
+            &ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            ),
+        )
+        .await;
 
         assert!(has_access.is_ok());
     }
@@ -526,8 +568,10 @@ mod tests {
     async fn user_has_access_to_admin_resource() {
         let mut admin_access = mock_access_policy();
         admin_access.user = UserSpecifier::Group(vec![*ADMIN_GROUP_ID]);
-        admin_access.access = AccessModifier::All;
-        admin_access.resource = ResourceSpecifier::AddressBook;
+        admin_access.resource = ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        );
 
         ACCESS_CONTROL_REPOSITORY.insert(admin_access.id, admin_access.to_owned());
 
@@ -539,9 +583,14 @@ mod tests {
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
         let ctx = CallContext::new(caller);
-        let has_access =
-            evaluate_caller_access(&ctx, &ResourceSpecifier::AddressBook, &AccessModifier::All)
-                .await;
+        let has_access = evaluate_caller_access(
+            &ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            ),
+        )
+        .await;
 
         assert!(has_access.is_ok());
     }
@@ -554,36 +603,46 @@ mod tests {
         let mut policy = mock_access_policy();
         policy.id = [10; 16];
         policy.user = UserSpecifier::Group(vec![test_context.finance_user_group.id]);
-        policy.resource = ResourceSpecifier::AddressBook;
-        policy.access = AccessModifier::Read;
+        policy.resource = ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        );
 
         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
 
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::AddressBook,
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            )
         )
         .await
         .is_ok());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::AddressBook,
-            &AccessModifier::Update,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Update(CommonSpecifier::Any),
+            )
         )
         .await
         .is_err());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::AddressBook,
-            &AccessModifier::Delete,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Delete(CommonSpecifier::Any),
+            )
         )
         .await
         .is_err());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::AddressBook,
-            &AccessModifier::All,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Create,
+            )
         )
         .await
         .is_err());
@@ -597,8 +656,10 @@ mod tests {
         let mut policy = mock_access_policy();
         policy.id = [10; 16];
         policy.user = UserSpecifier::Group(vec![test_context.finance_user_group.id]);
-        policy.resource = ResourceSpecifier::Account(AccountSpecifier::Id(vec![[1; 16]]));
-        policy.access = AccessModifier::Read;
+        policy.resource = ResourceSpecifier::Common(
+            ResourceType::Account,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
+        );
 
         account_test_utils::add_account(&[1; 16]);
         account_test_utils::add_account(&[2; 16]);
@@ -607,22 +668,28 @@ mod tests {
 
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::Account(AccountSpecifier::Id(vec![[1; 16]])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16],])),
+            )
         )
         .await
         .is_ok());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::Account(AccountSpecifier::Id(vec![[2; 16]])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[2; 16],])),
+            )
         )
         .await
         .is_err());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.finance_user.identities[0]),
-            &ResourceSpecifier::Account(AccountSpecifier::Any),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            )
         )
         .await
         .is_err());
@@ -636,8 +703,10 @@ mod tests {
         let mut policy = mock_access_policy();
         policy.id = [10; 16];
         policy.user = UserSpecifier::Id(vec![test_context.hr_user.id]);
-        policy.resource = ResourceSpecifier::User(UserSpecifier::Id(vec![[1; 16]]));
-        policy.access = AccessModifier::Read;
+        policy.resource = ResourceSpecifier::Common(
+            ResourceType::User,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
+        );
 
         user_test_utils::add_user(&[1; 16]);
         user_test_utils::add_user(&[2; 16]);
@@ -646,22 +715,28 @@ mod tests {
 
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Id(vec![[1; 16]])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
+            )
         )
         .await
         .is_ok());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Id(vec![[2; 16]])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[2; 16]])),
+            )
         )
         .await
         .is_err());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Any),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            )
         )
         .await
         .is_err());
@@ -675,8 +750,10 @@ mod tests {
         let mut policy = mock_access_policy();
         policy.id = [10; 16];
         policy.user = UserSpecifier::Id(vec![test_context.hr_user.id]);
-        policy.resource = ResourceSpecifier::User(UserSpecifier::Any);
-        policy.access = AccessModifier::Read;
+        policy.resource = ResourceSpecifier::Common(
+            ResourceType::User,
+            AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+        );
 
         user_test_utils::add_user(&[1; 16]);
         user_test_utils::add_user(&[2; 16]);
@@ -685,29 +762,39 @@ mod tests {
 
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Id(vec![[1; 16]])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
+            )
         )
         .await
         .is_ok());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Id(vec![[2; 16]])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[2; 16]])),
+            )
         )
         .await
         .is_ok());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Group(vec![test_context.admin_user_group.id])),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Group(vec![
+                    test_context.admin_user_group.id
+                ])),
+            )
         )
         .await
         .is_ok());
         assert!(evaluate_caller_access(
             &CallContext::new(test_context.hr_user.identities[0]),
-            &ResourceSpecifier::User(UserSpecifier::Any),
-            &AccessModifier::Read,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            )
         )
         .await
         .is_ok());

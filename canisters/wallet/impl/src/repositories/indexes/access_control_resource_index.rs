@@ -41,12 +41,10 @@ impl IndexRepository<AccessControlPolicyResourceIndex, UUID>
         DB.with(|db| {
             let start_key = AccessControlPolicyResourceIndex {
                 resource: criteria.resource.to_owned(),
-                access: criteria.access.to_owned(),
                 policy_id: [u8::MIN; 16],
             };
             let end_key = AccessControlPolicyResourceIndex {
                 resource: criteria.resource.to_owned(),
-                access: criteria.access.to_owned(),
                 policy_id: [u8::MAX; 16],
             };
 
@@ -61,14 +59,20 @@ impl IndexRepository<AccessControlPolicyResourceIndex, UUID>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_control::{AccessModifier, ResourceSpecifier};
+    use crate::models::{
+        access_control::{AddressBookActionSpecifier, ResourceSpecifier, ResourceType},
+        specifier::CommonSpecifier,
+    };
 
     #[test]
     fn test_index_repository() {
         let repository = AccessControlPolicyResourceIndexRepository::default();
         let index = AccessControlPolicyResourceIndex {
-            resource: ResourceSpecifier::AddressBook.to_string(),
-            access: AccessModifier::Read,
+            resource: ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            )
+            .to_key(),
             policy_id: [1; 16],
         };
 
@@ -86,20 +90,34 @@ mod tests {
         let repository = AccessControlPolicyResourceIndexRepository::default();
         let generate_items_nr = 10;
         for i in 0..generate_items_nr {
-            let index = AccessControlPolicyResourceIndex {
-                resource: ResourceSpecifier::AddressBook.to_string(),
-                access: match i % 2 {
-                    0 => AccessModifier::Read,
-                    _ => AccessModifier::Delete,
-                },
-                policy_id: [i + generate_items_nr; 16],
+            let index = if i % 2 == 0 {
+                AccessControlPolicyResourceIndex {
+                    resource: ResourceSpecifier::Common(
+                        ResourceType::AddressBook,
+                        AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+                    )
+                    .to_key(),
+                    policy_id: [i; 16],
+                }
+            } else {
+                AccessControlPolicyResourceIndex {
+                    resource: ResourceSpecifier::Common(
+                        ResourceType::AddressBook,
+                        AddressBookActionSpecifier::Create,
+                    )
+                    .to_key(),
+                    policy_id: [i; 16],
+                }
             };
             repository.insert(index.clone());
         }
 
         let result = repository.find_by_criteria(AccessControlPolicyResourceIndexCriteria {
-            resource: ResourceSpecifier::AddressBook.to_string(),
-            access: AccessModifier::Delete,
+            resource: ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                AddressBookActionSpecifier::Read(CommonSpecifier::Any),
+            )
+            .to_key(),
         });
 
         assert_eq!(result.len(), 5);

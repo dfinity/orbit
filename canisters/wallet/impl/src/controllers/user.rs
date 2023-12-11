@@ -1,11 +1,10 @@
-use crate::core::middlewares::ResourceAccess;
-use crate::models::access_control::{AccessModifier};
 use crate::{
     core::{
         middlewares::{authorize, call_context},
         CallContext,
     },
     mappers::HelperMapper,
+    models::access_control::ResourceSpecifier,
     services::UserService,
 };
 use ic_canister_core::api::ApiResult;
@@ -45,8 +44,8 @@ impl UserController {
     }
 
     /// Confirms the user identity if the provided user has the caller identity as unconfirmed.
-    /// 
-    /// No authorization required since the user will be calling this 
+    ///
+    /// No authorization required since the user will be calling this
     /// with a new identity that is not yet confirmed.
     async fn confirm_user_identity(
         &self,
@@ -61,14 +60,12 @@ impl UserController {
         Ok(ConfirmUserIdentityResponse { user })
     }
 
-    // #[with_middleware(
-    //     guard = "authorize",
-    //     context = "call_context",
-    //     args = [
-    //         ResourceAccess(Resource::User, AccessModifier::Default)
-    //     ],
-    //     is_async = true
-    // )]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
         let ctx = call_context();
         let user = match input.user_id {

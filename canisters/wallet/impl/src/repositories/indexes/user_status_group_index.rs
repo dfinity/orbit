@@ -102,6 +102,6 @@ mod tests {
         });
 
         assert_eq!(result.len(), 1);
-        assert!(result.contains(&[0 + generate_items_nr; 16]));
+        assert!(result.contains(&[generate_items_nr; 16]));
     }
 }
