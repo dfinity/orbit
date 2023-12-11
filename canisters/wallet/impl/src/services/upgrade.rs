@@ -114,7 +114,7 @@ impl UpgradeService {
 
         let id = match cfg.upgrade_proposal {
             Some(id) => id,
-            None => return Ok(()),
+            None => return Err(ApiError::new("MISSING_UPGRADE_PROPOSAL".into(), None, None)),
         };
 
         let mut p = match PROPOSAL_REPOSITORY.get(&ProposalKey { id }) {

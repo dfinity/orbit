@@ -133,12 +133,21 @@ impl Execute for UpgradeProposalExecute<'_, '_> {
                     ..canister_config()
                 });
 
-                UPGRADE_SERVICE
+                let out = UPGRADE_SERVICE
                     .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {
                         reason: format!("failed to upgrade wallet: {}", err),
-                    })?;
+                    });
+
+                if out.is_err() {
+                    write_canister_config(CanisterConfig {
+                        upgrade_proposal: None,
+                        ..canister_config()
+                    });
+                }
+
+                out?;
 
                 Ok(ProposalExecuteStage::Processing(
                     self.proposal.operation.clone(),
