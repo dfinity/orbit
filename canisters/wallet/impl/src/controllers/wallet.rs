@@ -3,6 +3,7 @@ use crate::services::UpgradeService;
 use crate::{
     core::{
         canister_config_mut,
+        ic_cdk::api::print,
         middlewares::{authorize, call_context},
         CanisterConfig,
     },
@@ -75,7 +76,9 @@ impl WalletController {
             .register_canister_config(config, input, &call_context())
             .await;
 
-        let _ = self.upgrade_service.verify_upgrade().await;
+        if let Err(err) = self.upgrade_service.verify_upgrade().await {
+            print(format!("Error: verifying upgrade failed {err}"));
+        }
 
         register_jobs().await;
     }
