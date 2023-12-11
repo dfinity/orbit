@@ -1,10 +1,20 @@
 use candid::{CandidType, Principal};
-use ic_canister_core::api::{ApiError, ServiceResult};
+use ic_canister_core::{
+    api::{ApiError, ServiceResult},
+    cdk::api::time,
+    repository::Repository,
+};
 use ic_cdk::api::management_canister::{
     main::{self as mgmt, CanisterInstallMode, InstallCodeArgument},
     provisional::CanisterIdRecord,
 };
 use lazy_static::lazy_static;
+
+use crate::{
+    core::{canister_config_mut, write_canister_config, CanisterConfig},
+    models::{ProposalKey, ProposalStatus},
+    repositories::PROPOSAL_REPOSITORY,
+};
 
 lazy_static! {
     pub static ref UPGRADE_SERVICE: UpgradeService = UpgradeService::default();
@@ -96,5 +106,33 @@ impl UpgradeService {
         .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None))?;
 
         upgrade_result
+    }
+
+    /// Verify and mark an upgrade as being performed successfully.
+    pub async fn verify_upgrade(&self) -> ServiceResult<()> {
+        let cfg = canister_config_mut();
+
+        let id = match cfg.upgrade_proposal {
+            Some(id) => id,
+            None => return Ok(()),
+        };
+
+        let mut p = match PROPOSAL_REPOSITORY.get(&ProposalKey { id }) {
+            Some(p) => p,
+            None => return Err(ApiError::new("MISSING_UPGRADE_PROPOSAL".into(), None, None)),
+        };
+
+        p.status = ProposalStatus::Completed {
+            completed_at: time(),
+        };
+
+        PROPOSAL_REPOSITORY.insert(ProposalKey { id }, p);
+
+        write_canister_config(CanisterConfig {
+            upgrade_proposal: None,
+            ..cfg
+        });
+
+        Ok(())
     }
 }

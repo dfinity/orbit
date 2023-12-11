@@ -3,6 +3,7 @@ use ic_canister_core::types::UUID;
 use wallet_api::{CreateProposalInput, UpgradeOperationInput};
 
 use crate::{
+    core::{canister_config, canister_config_mut, write_canister_config, CanisterConfig},
     errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
     models::{
         EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation,
@@ -126,23 +127,36 @@ impl<'p, 'o> UpgradeProposalExecute<'p, 'o> {
 impl Execute for UpgradeProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         match self.operation.input.target {
-            UpgradeTarget::Wallet => UPGRADE_SERVICE
-                .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
-                .await
-                .map_err(|err| ProposalExecuteError::Failed {
-                    reason: format!("failed to upgrade wallet: {}", err),
-                }),
+            UpgradeTarget::Wallet => {
+                write_canister_config(CanisterConfig {
+                    upgrade_proposal: Some(self.proposal.id.to_owned()),
+                    ..canister_config()
+                });
 
-            UpgradeTarget::Upgrader => UPGRADE_SERVICE
-                .upgrade_upgrader(&self.operation.input.module)
-                .await
-                .map_err(|err| ProposalExecuteError::Failed {
-                    reason: format!("failed to upgrade upgrader: {}", err),
-                }),
-        }?;
+                UPGRADE_SERVICE
+                    .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
+                    .await
+                    .map_err(|err| ProposalExecuteError::Failed {
+                        reason: format!("failed to upgrade wallet: {}", err),
+                    })?;
 
-        Ok(ProposalExecuteStage::Completed(
-            self.proposal.operation.clone(),
-        ))
+                Ok(ProposalExecuteStage::Processing(
+                    self.proposal.operation.clone(),
+                ))
+            }
+
+            UpgradeTarget::Upgrader => {
+                UPGRADE_SERVICE
+                    .upgrade_upgrader(&self.operation.input.module)
+                    .await
+                    .map_err(|err| ProposalExecuteError::Failed {
+                        reason: format!("failed to upgrade upgrader: {}", err),
+                    })?;
+
+                Ok(ProposalExecuteStage::Completed(
+                    self.proposal.operation.clone(),
+                ))
+            }
+        }
     }
 }

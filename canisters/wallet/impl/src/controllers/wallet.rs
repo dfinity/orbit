@@ -1,4 +1,5 @@
 use crate::core::{PERMISSION_ADMIN, PERMISSION_READ_FEATURES};
+use crate::services::UpgradeService;
 use crate::{
     core::{
         canister_config_mut,
@@ -37,17 +38,22 @@ async fn wallet_settings() -> ApiResult<WalletSettingsResponse> {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: WalletController = WalletController::new(WalletService::default());
+    static ref CONTROLLER: WalletController =
+        WalletController::new(WalletService::default(), UpgradeService::default());
 }
 
 #[derive(Debug)]
 pub struct WalletController {
     wallet_service: WalletService,
+    upgrade_service: UpgradeService,
 }
 
 impl WalletController {
-    fn new(wallet_service: WalletService) -> Self {
-        Self { wallet_service }
+    fn new(wallet_service: WalletService, upgrade_service: UpgradeService) -> Self {
+        Self {
+            wallet_service,
+            upgrade_service,
+        }
     }
 
     async fn initialize(&self, input: Option<WalletCanisterInit>) {
@@ -68,6 +74,8 @@ impl WalletController {
         self.wallet_service
             .register_canister_config(config, input, &call_context())
             .await;
+
+        let _ = self.upgrade_service.verify_upgrade().await;
 
         register_jobs().await;
     }

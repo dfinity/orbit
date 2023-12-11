@@ -4,7 +4,7 @@ use crate::{
     models::{AccessRole, Blockchain, BlockchainStandard, WalletAsset},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-use ic_canister_core::types::Timestamp;
+use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::{
@@ -123,6 +123,8 @@ pub struct CanisterConfig {
     pub permissions: Vec<Permission>,
     /// The default users of the canister.
     pub owners: Vec<Principal>,
+    /// An optionally pending upgrade proposal.
+    pub upgrade_proposal: Option<UUID>,
 }
 
 impl Default for CanisterConfig {
@@ -132,6 +134,7 @@ impl Default for CanisterConfig {
             approval_threshold: 100u8,
             permissions: default_wallet_permissions(),
             owners: vec![],
+            upgrade_proposal: None,
         }
     }
 }
