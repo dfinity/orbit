@@ -1,7 +1,7 @@
 use super::access_control::{
-    AccessControlMatcher, AccessControlPolicyAccountMatcher,
-    AccessControlPolicyCryptoAddressMatcher, AccessControlPolicyUserMatcher,
-    AccessControlUserMatcher,
+    AccessControlOwnershipMatcher, AccessControlPolicyAccountMatcher,
+    AccessControlPolicyCryptoAddressMatcher, AccessControlPolicyMatcher,
+    AccessControlPolicyUserMatcher, AccessControlUserMatcher,
 };
 use crate::{
     errors::EvaluateError,
@@ -34,13 +34,15 @@ lazy_static! {
         Arc::new(AccessControlPolicyAccountMatcher);
     pub static ref ACCESS_CONTROL_POLICY_CRYPTO_ADDRESS_MATCHER: Arc<AccessControlPolicyCryptoAddressMatcher> =
         Arc::new(AccessControlPolicyCryptoAddressMatcher);
-    pub static ref ACCESS_CONTROL_MATCHER: Arc<AccessControlMatcher> =
-        Arc::new(AccessControlMatcher {
+    pub static ref ACCESS_CONTROL_MATCHER: Arc<AccessControlPolicyMatcher> =
+        Arc::new(AccessControlPolicyMatcher {
             user_matcher: ACCESS_CONTROL_USER_MATCHER.clone(),
             policy_user_matcher: ACCESS_CONTROL_POLICY_USER_MATCHER.clone(),
             policy_account_matcher: ACCESS_CONTROL_POLICY_ACCOUNT_MATCHER.clone(),
             policy_crypto_address_matcher: ACCESS_CONTROL_POLICY_CRYPTO_ADDRESS_MATCHER.clone(),
         });
+    pub static ref ACCESS_CONTROL_OWNER_MATCHER: Arc<AccessControlOwnershipMatcher> =
+        Arc::new(AccessControlOwnershipMatcher);
 }
 
 #[async_trait]

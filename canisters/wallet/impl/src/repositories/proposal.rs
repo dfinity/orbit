@@ -23,6 +23,7 @@ use ic_canister_core::{
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use lazy_static::lazy_static;
 use std::cell::RefCell;
 
 thread_local! {
@@ -31,6 +32,10 @@ thread_local! {
       StableBTreeMap::init(memory_manager.get(PROPOSAL_MEMORY_ID))
     )
   })
+}
+
+lazy_static! {
+    pub static ref PROPOSAL_REPOSITORY: ProposalRepository = ProposalRepository::default();
 }
 
 /// A repository that enables managing system proposals in stable memory.

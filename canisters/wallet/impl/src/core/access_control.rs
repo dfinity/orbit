@@ -1,5 +1,5 @@
 use super::{
-    evaluation::{Evaluate, ACCESS_CONTROL_MATCHER},
+    evaluation::{Evaluate, ACCESS_CONTROL_MATCHER, ACCESS_CONTROL_OWNER_MATCHER},
     CallContext,
 };
 use crate::{
@@ -7,14 +7,15 @@ use crate::{
     errors::{AccessControlError, EvaluateError, MatchError},
     models::{
         access_control::{
-            AccessControlPolicy, AccountSpecifier, CommonActionSpecifier, ResourceSpecifier,
-            ResourceType, TransferActionSpecifier, UserSpecifier,
+            AccessControlPolicy, AccountSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
+            ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier, Match},
-        Account, User,
+        Account, Proposal, User,
     },
     repositories::{
-        access_control::ACCESS_CONTROL_REPOSITORY, ACCOUNT_REPOSITORY, USER_REPOSITORY,
+        access_control::ACCESS_CONTROL_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
+        USER_REPOSITORY,
     },
 };
 use async_trait::async_trait;
@@ -100,8 +101,8 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlPolicyUse
         ) = access_policy.resource
         {
             let is_match = match policy_user {
-                CommonSpecifier::Any => true,
-                CommonSpecifier::Group(group_ids) => {
+                UserSpecifier::Any => true,
+                UserSpecifier::Group(group_ids) => {
                     if requested_user_group_ids.is_empty() && requested_users.is_empty() {
                         // If the requested users and groups are empty, then by default we filter out the policy,
                         // otherwise this would allow access when requested for an empty list of users and groups.
@@ -125,7 +126,7 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlPolicyUse
 
                     match_requested_groups && match_requested_users
                 }
-                CommonSpecifier::Id(user_ids) => match requested_users.is_empty() {
+                UserSpecifier::Id(user_ids) => match requested_users.is_empty() {
                     // If the requested users is empty, then by default we filter out the policy, otherwise this would
                     // allow access when requested for an empty list of users.
                     true => false,
@@ -184,8 +185,8 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
             access_policy.resource
         {
             let is_match = match policy_account {
-                CommonSpecifier::Any => true,
-                CommonSpecifier::Group(group_ids) => {
+                AccountSpecifier::Any => true,
+                AccountSpecifier::Group(group_ids) => {
                     if requested_account_group_ids.is_empty() && requested_accounts.is_empty() {
                         // If the requested accounts and groups are empty, then by default we filter out the policy,
                         // otherwise this would allow access when requested for an empty list of accounts and groups.
@@ -205,7 +206,7 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
 
                     match_requested_groups && match_requested_users
                 }
-                CommonSpecifier::Id(account_ids) => match requested_accounts.is_empty() {
+                AccountSpecifier::Id(account_ids) => match requested_accounts.is_empty() {
                     // If the requested accounts is empty, then by default we filter out the policy, otherwise this would
                     // allow access when requested for an empty list of accounts.
                     true => false,
@@ -255,7 +256,7 @@ impl Match<(Arc<AddressSpecifier>, AccessControlPolicy)>
 }
 
 /// A matcher that checks if the caller has access to the given resource and access modifier.
-pub struct AccessControlMatcher {
+pub struct AccessControlPolicyMatcher {
     pub user_matcher: Arc<dyn Match<(Arc<User>, AccessControlPolicy)>>,
     pub policy_user_matcher: Arc<dyn Match<(Arc<CommonSpecifier>, AccessControlPolicy)>>,
     pub policy_account_matcher: Arc<dyn Match<(Arc<CommonSpecifier>, AccessControlPolicy)>>,
@@ -263,7 +264,7 @@ pub struct AccessControlMatcher {
 }
 
 #[async_trait]
-impl Match<(User, ResourceSpecifier)> for AccessControlMatcher {
+impl Match<(User, ResourceSpecifier)> for AccessControlPolicyMatcher {
     async fn is_match(&self, v: (User, ResourceSpecifier)) -> Result<bool, MatchError> {
         let (caller, requested_resource) = v;
         let policies = ACCESS_CONTROL_REPOSITORY.find_by_resource(&requested_resource);
@@ -401,6 +402,77 @@ impl Match<(User, ResourceSpecifier)> for AccessControlMatcher {
     }
 }
 
+pub struct AccessControlOwnershipMatcher;
+
+#[async_trait]
+impl Match<(User, ResourceSpecifier)> for AccessControlOwnershipMatcher {
+    async fn is_match(&self, v: (User, ResourceSpecifier)) -> Result<bool, MatchError> {
+        let (caller, requested_resource) = v;
+
+        let is_match = match &requested_resource {
+            ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Id(
+                ids,
+            ))) => {
+                let proposals = ids
+                    .iter()
+                    .filter_map(|id| PROPOSAL_REPOSITORY.get(&Proposal::key(id.to_owned())))
+                    .collect::<Vec<_>>();
+
+                if proposals.len() != ids.len() {
+                    // If the number of proposals found is not equal to the number of requested proposals, then
+                    // the caller does not have access to all of them.
+                    return Ok(false);
+                }
+
+                // TODO: add check if the user can vote, because all voters should be able to read the proposal.
+                proposals.iter().all(|proposal| {
+                    proposal.proposed_by == caller.id
+                        || proposal.voters().iter().any(|owner| owner == &caller.id)
+                })
+            }
+            ResourceSpecifier::Common(
+                ResourceType::User,
+                CommonActionSpecifier::Read(CommonSpecifier::Id(ids)),
+            ) => {
+                let users = ids
+                    .iter()
+                    .filter_map(|id| USER_REPOSITORY.get(&User::key(id.to_owned())))
+                    .collect::<Vec<_>>();
+
+                if users.len() != ids.len() {
+                    // If the number of users found is not equal to the number of requested users, then
+                    // the caller does not have access to all of them.
+                    return Ok(false);
+                }
+
+                users.iter().all(|user| user.id == caller.id)
+            }
+            ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Read(CommonSpecifier::Id(ids)),
+            ) => {
+                let accounts = ids
+                    .iter()
+                    .filter_map(|id| ACCOUNT_REPOSITORY.get(&Account::key(id.to_owned())))
+                    .collect::<Vec<_>>();
+
+                if accounts.len() != ids.len() {
+                    // If the number of accounts found is not equal to the number of requested accounts, then
+                    // the caller does not have access to all of them.
+                    return Ok(false);
+                }
+
+                accounts
+                    .iter()
+                    .all(|account| account.owners.contains(&caller.id))
+            }
+            _ => false,
+        };
+
+        Ok(is_match)
+    }
+}
+
 #[async_trait]
 impl Evaluate<bool> for AccessControlEvaluator<'_> {
     async fn evaluate(&self) -> Result<bool, EvaluateError> {
@@ -409,15 +481,24 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
             return Ok(true);
         }
 
+        let user = USER_REPOSITORY
+            .find_by_identity(&self.call_context.caller())
+            .ok_or(EvaluateError::Failed {
+                reason: "User not found".to_string(),
+            })?;
+
+        let is_resource_owner = ACCESS_CONTROL_OWNER_MATCHER
+            .is_match((user.to_owned(), self.resource.to_owned()))
+            .await
+            .map_err(|e| EvaluateError::UnexpectedError(e.into()))?;
+
+        // If the user is the owner of the resource, then the access is granted by default.
+        if is_resource_owner {
+            return Ok(true);
+        }
+
         let is_match = ACCESS_CONTROL_MATCHER
-            .is_match((
-                USER_REPOSITORY
-                    .find_by_identity(&self.call_context.caller())
-                    .ok_or(EvaluateError::Failed {
-                        reason: "User not found".to_string(),
-                    })?,
-                self.resource.to_owned(),
-            ))
+            .is_match((user.to_owned(), self.resource.to_owned()))
             .await
             .map_err(|e| EvaluateError::UnexpectedError(e.into()))?;
 
