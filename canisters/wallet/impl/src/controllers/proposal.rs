@@ -84,10 +84,9 @@ impl ProposalController {
         is_async = true
     )]
     async fn get_proposal(&self, input: GetProposalInput) -> ApiResult<GetProposalResponse> {
-        let proposal = self.proposal_service.get_proposal(
-            HelperMapper::to_uuid(input.proposal_id)?.as_bytes(),
-            &call_context(),
-        )?;
+        let proposal = self
+            .proposal_service
+            .get_proposal(HelperMapper::to_uuid(input.proposal_id)?.as_bytes())?;
 
         Ok(GetProposalResponse {
             proposal: ProposalDTO::from(proposal),

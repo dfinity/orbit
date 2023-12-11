@@ -1,7 +1,10 @@
-use super::access_control::{
-    AccessControlDefaultAccessMatcher, AccessControlPolicyAccountMatcher,
-    AccessControlPolicyCryptoAddressMatcher, AccessControlPolicyMatcher,
-    AccessControlPolicyUserMatcher, AccessControlUserMatcher,
+use super::{
+    access_control::{
+        AccessControlDefaultAccessMatcher, AccessControlPolicyAccountMatcher,
+        AccessControlPolicyCryptoAddressMatcher, AccessControlPolicyMatcher,
+        AccessControlPolicyUserMatcher, AccessControlUserMatcher,
+    },
+    proposal::ProposalVoteRightsCriteriaEvaluator,
 };
 use crate::{
     errors::EvaluateError,
@@ -15,6 +18,7 @@ use lazy_static::lazy_static;
 use std::sync::Arc;
 
 lazy_static! {
+    // proposal evaluation
     pub static ref PROPOSAL_ACCOUNT_MATCHER: Arc<AccountMatcher> = Arc::new(AccountMatcher);
     pub static ref PROPOSAL_ADDRESS_MATCHER: Arc<AddressMatcher> = Arc::new(AddressMatcher);
     pub static ref PROPOSAL_USER_MATCHER: Arc<UserMatcher> = Arc::new(UserMatcher);
@@ -26,6 +30,10 @@ lazy_static! {
     pub static ref CRITERIA_EVALUATOR: Arc<CriteriaEvaluator> = Arc::new(CriteriaEvaluator {
         user_matcher: PROPOSAL_USER_MATCHER.clone(),
     });
+    pub static ref PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR: Arc<ProposalVoteRightsCriteriaEvaluator> = Arc::new(ProposalVoteRightsCriteriaEvaluator {
+        voter_matcher: PROPOSAL_USER_MATCHER.clone(),
+    });
+    // access control evaluation
     pub static ref ACCESS_CONTROL_USER_MATCHER: Arc<AccessControlUserMatcher> =
         Arc::new(AccessControlUserMatcher);
     pub static ref ACCESS_CONTROL_POLICY_USER_MATCHER: Arc<AccessControlPolicyUserMatcher> =

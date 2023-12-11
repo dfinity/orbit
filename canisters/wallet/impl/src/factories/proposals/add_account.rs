@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddAccountOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
@@ -56,35 +56,6 @@ impl<'p, 'o> AddAccountProposalCreateHook<'p, 'o> {
 impl CreateHook for AddAccountProposalCreateHook<'_, '_> {
     async fn on_created(&self) {
         // TODO: Add once policy design is ready
-    }
-}
-
-pub struct AddAccountProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o AddAccountOperation,
-}
-
-impl<'p, 'o> AddAccountProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for AddAccountProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add once final policy design is ready
-
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
     }
 }
 

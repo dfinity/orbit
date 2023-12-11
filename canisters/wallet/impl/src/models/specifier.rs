@@ -1,8 +1,9 @@
 use super::{Proposal, ProposalOperation, ProposalOperationType};
-use crate::errors::MatchError;
+use crate::models::user::User;
+use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::UUID;
+use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
 use std::sync::Arc;
 
@@ -99,18 +100,26 @@ impl Match<(Proposal, String, AddressSpecifier)> for AddressMatcher {
 #[derive(Clone)]
 pub struct UserMatcher;
 
+pub type VoterId = UUID;
+
 #[async_trait]
-impl Match<(Proposal, UUID, UserSpecifier)> for UserMatcher {
-    async fn is_match(&self, v: (Proposal, UUID, UserSpecifier)) -> Result<bool, MatchError> {
-        let (p, user_id, specifier) = v;
+impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
+    async fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
+        let (p, voter_id, specifier) = v;
 
         match specifier {
             UserSpecifier::Any => Ok(true),
-            UserSpecifier::Group(_ids) => todo!(),
-            UserSpecifier::Id(ids) => Ok(ids.contains(&user_id)),
+            UserSpecifier::Group(ids) => {
+                if let Some(user) = USER_REPOSITORY.get(&User::key(voter_id)) {
+                    return Ok(user.groups.iter().any(|g| ids.contains(g)));
+                }
+
+                Ok(false)
+            }
+            UserSpecifier::Id(ids) => Ok(ids.contains(&voter_id)),
             // TODO: Owner (most likely will require a MatchError::NotApplicable variant)
             UserSpecifier::Owner => todo!(),
-            UserSpecifier::Proposer => Ok(p.proposed_by == user_id),
+            UserSpecifier::Proposer => Ok(p.proposed_by == voter_id),
         }
     }
 }

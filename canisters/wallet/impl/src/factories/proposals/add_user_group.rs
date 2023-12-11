@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddUserGroupOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
@@ -53,34 +53,6 @@ impl<'p, 'o> AddUserGroupProposalCreateHook<'p, 'o> {
 impl CreateHook for AddUserGroupProposalCreateHook<'_, '_> {
     async fn on_created(&self) {
         // TODO: Add once policy design is ready
-    }
-}
-
-pub struct AddUserGroupProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o AddUserGroupOperation,
-}
-
-impl<'p, 'o> AddUserGroupProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-impl Validate for AddUserGroupProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add once policy design is ready
-
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
     }
 }
 

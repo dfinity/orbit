@@ -1,10 +1,8 @@
+use super::{criteria::Criteria, specifier::ProposalSpecifier};
+use crate::errors::MatchError;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
-
-use crate::errors::MatchError;
-
-use super::{criteria::Criteria, specifier::ProposalSpecifier};
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -55,6 +53,20 @@ impl From<MatchError> for EvaluateError {
     fn from(value: MatchError) -> Self {
         match value {
             MatchError::UnexpectedError(err) => EvaluateError::UnexpectedError(err),
+        }
+    }
+}
+
+#[cfg(test)]
+pub mod proposal_policy_test_utils {
+    use super::{EvaluationStatus, ProposalPolicy};
+    use crate::models::{criteria::Criteria, specifier::ProposalSpecifier};
+
+    pub fn mock_proposal_policy() -> ProposalPolicy {
+        ProposalPolicy {
+            id: [0; 16],
+            specifier: ProposalSpecifier::AddAccount,
+            criteria: Criteria::Auto(EvaluationStatus::Adopted),
         }
     }
 }

@@ -20,3 +20,6 @@ pub use proposal::*;
 
 mod wallet;
 pub use wallet::*;
+
+mod policy;
+pub use policy::*;

@@ -1,11 +1,11 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     core::ic_cdk::api::trap,
     errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Policy,
-        Proposal, ProposalExecutionPlan, ProposalOperation,
+        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Proposal,
+        ProposalExecutionPlan, ProposalOperation,
     },
     repositories::ACCOUNT_REPOSITORY,
     services::NotificationService,
@@ -120,46 +120,6 @@ impl CreateHook for EditAccountProposalCreateHook<'_, '_> {
                     .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
             }
         }
-    }
-}
-
-pub struct EditAccountProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    operation: &'o EditAccountOperation,
-}
-
-impl<'p, 'o> EditAccountProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditAccountOperation) -> Self {
-        Self {
-            proposal,
-            operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for EditAccountProposalValidate<'_, '_> {
-    fn can_vote(&self, user_id: &UUID) -> bool {
-        let account = ACCOUNT_REPOSITORY
-            .get(&Account::key(self.operation.input.account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(self.operation.input.account_id).hyphenated()
-                ))
-            });
-
-        let should_vote = account.policies.iter().any(|policy| match policy {
-            Policy::ApprovalThreshold(_) => true,
-        });
-
-        should_vote && account.owners.contains(user_id)
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
     }
 }
 

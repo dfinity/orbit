@@ -4,9 +4,8 @@ use crate::{
         middlewares::{authorize, call_context},
         CanisterConfig,
     },
-    jobs::register_jobs,
     models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
-    services::WalletService,
+    services::{InstallMode, WalletService},
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
@@ -52,24 +51,20 @@ impl WalletController {
 
     async fn initialize(&self, input: Option<WalletCanisterInit>) {
         let input = input.unwrap_or_default();
-        let config = CanisterConfig::default();
+        let mut config = CanisterConfig::default();
 
         self.wallet_service
-            .register_canister_config(config, input, &call_context())
+            .process_canister_install(&mut config, input, &call_context(), InstallMode::Init)
             .await;
-
-        register_jobs().await;
     }
 
     async fn post_upgrade(&self, input: Option<WalletCanisterInit>) {
         let input = input.unwrap_or_default();
-        let config = canister_config_mut();
+        let mut config = canister_config_mut();
 
         self.wallet_service
-            .register_canister_config(config, input, &call_context())
+            .process_canister_install(&mut config, input, &call_context(), InstallMode::Upgrade)
             .await;
-
-        register_jobs().await;
     }
 
     #[with_middleware(

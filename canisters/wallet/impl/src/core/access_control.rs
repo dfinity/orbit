@@ -3,12 +3,13 @@ use super::{
     CallContext,
 };
 use crate::{
-    core::ic_cdk::api::print,
+    core::ic_cdk::api::{print, trap},
     errors::{AccessControlError, EvaluateError, MatchError},
     models::{
         access_control::{
-            AccessControlPolicy, AccountSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
-            ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
+            AccessControlPolicy, AccountSpecifier, CanisterSettingsActionSpecifier,
+            CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
+            TransferActionSpecifier, UpgradeActionSpecifier, UserSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier, Match},
         Account, Proposal, User, ADMIN_GROUP_ID,
@@ -466,8 +467,31 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
                     .iter()
                     .all(|account| account.owners.contains(&caller.id))
             }
-            ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create) => {
-                // admins can propose new users by default, proposal policies still apply.
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(
+                CommonSpecifier::Id(account_ids),
+                _,
+            )) => {
+                let accounts = account_ids
+                    .iter()
+                    .map(|account_id| {
+                        ACCOUNT_REPOSITORY
+                            .get(&Account::key(*account_id))
+                            .unwrap_or_else(|| trap("Failed to get accounts"))
+                    })
+                    .collect::<Vec<Account>>();
+
+                accounts
+                    .iter()
+                    .all(|account| account.owners.contains(&caller.id))
+            }
+            ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create)
+            | ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create)
+            | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::Read)
+            | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)
+            | ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List)
+            | ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::Read(_))
+            | ResourceSpecifier::Common(ResourceType::Account, CommonActionSpecifier::List) => {
+                // admins have access to these resources by default
                 caller.groups.contains(ADMIN_GROUP_ID)
             }
             _ => false,

@@ -16,7 +16,7 @@ use super::{
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
-pub struct Ratio(f64);
+pub struct Ratio(pub f64);
 
 impl Eq for Ratio {}
 
@@ -63,9 +63,13 @@ impl From<ProposalVoteStatus> for EvaluationStatus {
 }
 
 #[async_trait]
-pub trait EvaluateCriteria: Sync + Send {
-    async fn evaluate(&self, p: &Proposal, c: &Criteria)
-        -> Result<EvaluationStatus, EvaluateError>;
+pub trait EvaluateCriteria<
+    Status = EvaluationStatus,
+    Context = (Arc<Proposal>, Arc<Criteria>),
+    Error = EvaluateError,
+>: Sync + Send
+{
+    async fn evaluate(&self, ctx: Context) -> Result<Status, Error>;
 }
 
 #[derive(Clone)]
@@ -77,10 +81,9 @@ pub struct CriteriaEvaluator {
 impl EvaluateCriteria for CriteriaEvaluator {
     async fn evaluate(
         &self,
-        p: &Proposal,
-        c: &Criteria,
+        (p, c): (Arc<Proposal>, Arc<Criteria>),
     ) -> Result<EvaluationStatus, EvaluateError> {
-        match c {
+        match c.as_ref() {
             // Approval Threshold
             Criteria::ApprovalThreshold(u, r) => {
                 // Existing Votes
@@ -90,7 +93,11 @@ impl EvaluateCriteria for CriteriaEvaluator {
                             Ok(
                                 match self
                                     .user_matcher
-                                    .is_match((p.to_owned(), v.user_id.to_owned(), u.to_owned()))
+                                    .is_match((
+                                        p.as_ref().to_owned(),
+                                        v.user_id.to_owned(),
+                                        u.to_owned(),
+                                    ))
                                     .await?
                                 {
                                     false => None,
@@ -107,7 +114,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                         Ok(
                             match self
                                 .user_matcher
-                                .is_match((p.to_owned(), uu.id.to_owned(), u.to_owned()))
+                                .is_match((p.as_ref().to_owned(), uu.id.to_owned(), u.to_owned()))
                                 .await?
                             {
                                 false => None,
@@ -148,7 +155,11 @@ impl EvaluateCriteria for CriteriaEvaluator {
                             Ok(
                                 match self
                                     .user_matcher
-                                    .is_match((p.to_owned(), v.user_id.to_owned(), u.to_owned()))
+                                    .is_match((
+                                        p.as_ref().to_owned(),
+                                        v.user_id.to_owned(),
+                                        u.to_owned(),
+                                    ))
                                     .await?
                                 {
                                     false => None,
@@ -165,7 +176,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                         Ok(
                             match self
                                 .user_matcher
-                                .is_match((p.to_owned(), uu.id.to_owned(), u.to_owned()))
+                                .is_match((p.as_ref().to_owned(), uu.id.to_owned(), u.to_owned()))
                                 .await?
                             {
                                 false => None,
@@ -205,7 +216,11 @@ impl EvaluateCriteria for CriteriaEvaluator {
                         ProposalVoteStatus::Accepted | ProposalVoteStatus::Rejected => {
                             if self
                                 .user_matcher
-                                .is_match((p.to_owned(), v.user_id.to_owned(), s.to_owned()))
+                                .is_match((
+                                    p.as_ref().to_owned(),
+                                    v.user_id.to_owned(),
+                                    s.to_owned(),
+                                ))
                                 .await?
                             {
                                 return Ok(v.status.clone().into());
@@ -222,9 +237,15 @@ impl EvaluateCriteria for CriteriaEvaluator {
 
             // And
             Criteria::And(cs) => {
+                let proposal = &p;
                 let evs: Vec<EvaluationStatus> =
                     stream::iter(cs.iter().map(Ok::<_, EvaluateError>))
-                        .try_filter_map(|c| async { Ok(Some(self.evaluate(p, c).await?)) })
+                        .try_filter_map(|c| async {
+                            Ok(Some(
+                                self.evaluate((proposal.to_owned(), Arc::new(c.to_owned())))
+                                    .await?,
+                            ))
+                        })
                         .try_collect()
                         .await?;
 
@@ -241,9 +262,15 @@ impl EvaluateCriteria for CriteriaEvaluator {
 
             // Or
             Criteria::Or(cs) => {
+                let proposal = &p;
                 let evs: Vec<EvaluationStatus> =
                     stream::iter(cs.iter().map(Ok::<_, EvaluateError>))
-                        .try_filter_map(|c| async { Ok(Some(self.evaluate(p, c).await?)) })
+                        .try_filter_map(|c| async {
+                            Ok(Some(
+                                self.evaluate((proposal.to_owned(), Arc::new(c.to_owned())))
+                                    .await?,
+                            ))
+                        })
                         .try_collect()
                         .await?;
 
@@ -259,11 +286,13 @@ impl EvaluateCriteria for CriteriaEvaluator {
             }
 
             // Not
-            Criteria::Not(c) => Ok(match self.evaluate(p, c).await? {
-                EvaluationStatus::Adopted => EvaluationStatus::Rejected,
-                EvaluationStatus::Pending => EvaluationStatus::Pending,
-                EvaluationStatus::Rejected => EvaluationStatus::Adopted,
-            }),
+            Criteria::Not(c) => Ok(
+                match self.evaluate((p, Arc::new(c.as_ref().to_owned()))).await? {
+                    EvaluationStatus::Adopted => EvaluationStatus::Rejected,
+                    EvaluationStatus::Pending => EvaluationStatus::Pending,
+                    EvaluationStatus::Rejected => EvaluationStatus::Adopted,
+                },
+            ),
         }
     }
 }

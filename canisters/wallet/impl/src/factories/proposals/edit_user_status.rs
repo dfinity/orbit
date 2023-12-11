@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{EditUserStatusOperation, Proposal},
@@ -37,34 +37,6 @@ impl<'p, 'o> EditUserStatusProposalCreateHook<'p, 'o> {
 impl CreateHook for EditUserStatusProposalCreateHook<'_, '_> {
     async fn on_created(&self) {
         // TODO: Add once policy design is ready
-    }
-}
-
-pub struct EditUserStatusProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o EditUserStatusOperation,
-}
-
-impl<'p, 'o> EditUserStatusProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditUserStatusOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for EditUserStatusProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add once policy design is ready
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
     }
 }
 

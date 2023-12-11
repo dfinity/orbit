@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     core::ic_cdk::api::id as self_canister_id,
     core::CallContext,
@@ -56,34 +56,6 @@ impl<'p, 'o> AddUserProposalCreateHook<'p, 'o> {
 impl CreateHook for AddUserProposalCreateHook<'_, '_> {
     async fn on_created(&self) {
         // TODO: Add once policy design is ready
-    }
-}
-
-pub struct AddUserProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o AddUserOperation,
-}
-
-impl<'p, 'o> AddUserProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddUserOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for AddUserProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add once policy design is ready
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
     }
 }
 

@@ -1,7 +1,6 @@
 use super::UserService;
-use crate::core::ic_cdk::api::time;
 use crate::{
-    core::{canister_config, write_canister_config, CallContext, CanisterConfig, WALLET_ASSETS},
+    core::{canister_config, CallContext, CanisterConfig, WALLET_ASSETS},
     models::{User, WalletFeatures, WalletSettings},
     repositories::UserRepository,
 };
@@ -13,6 +12,11 @@ use wallet_api::WalletCanisterInit;
 pub struct WalletService {
     user_repository: UserRepository,
     user_service: UserService,
+}
+
+pub enum InstallMode {
+    Init,
+    Upgrade,
 }
 
 impl WalletService {
@@ -50,51 +54,33 @@ impl WalletService {
     // WARNING: we do not perform locking, the canister might already receive calls before the timer is executed,
     // currently this is not a problem because the admins would simply get an access denied error but if more
     // complex/required business logic is added to the timer a locking mechanism should be added.
-    #[allow(unused_variables)]
-    fn register_canister_config_post_process(&self, owners: Vec<Principal>, ctx: CallContext) {
+    #[allow(unused_variables, unused_mut)]
+    fn register_canister_config_post_process(
+        &self,
+        mut config: CanisterConfig,
+        new_owners: Vec<Principal>,
+        ctx: CallContext,
+        mode: InstallMode,
+    ) {
         #[cfg(target_arch = "wasm32")]
-        ic_cdk_timers::set_timer(std::time::Duration::from_millis(100), move || {
-            use super::USER_SERVICE;
-            use crate::core::ic_cdk::{api::print, spawn};
-            use crate::models::{AddUserOperationInput, UserGroup, UserStatus, ADMIN_GROUP_ID};
-            use crate::repositories::USER_GROUP_REPOSITORY;
-            use ic_canister_core::repository::Repository;
-            use uuid::Uuid;
+        ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
+            use crate::core::ic_cdk::api::time;
+            use crate::core::ic_cdk::spawn;
+            use crate::core::write_canister_config;
+            use crate::jobs::register_jobs;
 
             spawn(async move {
-                if USER_GROUP_REPOSITORY.get(&ADMIN_GROUP_ID) == None {
-                    USER_GROUP_REPOSITORY.insert(
-                        ADMIN_GROUP_ID.to_owned(),
-                        UserGroup {
-                            id: ADMIN_GROUP_ID.to_owned(),
-                            name: "Admin".to_owned(),
-                            last_modification_timestamp: time(),
-                        },
-                    );
+                if let InstallMode::Init = mode {
+                    install_canister_handlers::init_post_process().await;
                 }
 
-                print(&format!("Registering {:?} admin users", owners.len()));
-                for admin in owners {
-                    let user = USER_SERVICE
-                        .add_user(
-                            AddUserOperationInput {
-                                identities: vec![admin.to_owned()],
-                                groups: vec![ADMIN_GROUP_ID.to_owned()],
-                                name: None,
-                                status: UserStatus::Active,
-                                unconfirmed_identities: vec![],
-                            },
-                            &ctx,
-                        )
-                        .await
-                        .expect("Failed to register admin user");
+                install_canister_handlers::add_new_owners(new_owners, &ctx).await;
 
-                    print(&format!(
-                        "Added admin user with principal {:?} and user id {:?}",
-                        admin.to_text(),
-                        Uuid::from_bytes(user.id).hyphenated().to_string()
-                    ));
-                }
+                config.last_upgrade_timestamp = time();
+                write_canister_config(config.to_owned());
+
+                // register the jobs after the canister is fully initialized
+                register_jobs().await;
             });
         });
     }
@@ -102,11 +88,12 @@ impl WalletService {
     /// Registers the canister config establishing the permissions, approval threshold and owners of the wallet.
     ///
     /// Should be called only on canister init and upgrade.
-    pub async fn register_canister_config(
+    pub async fn process_canister_install(
         &self,
-        mut config: CanisterConfig,
+        config: &mut CanisterConfig,
         init: WalletCanisterInit,
         ctx: &CallContext,
+        mode: InstallMode,
     ) {
         let mut new_owners: Vec<Principal> = vec![];
         let mut removed_owners = vec![];
@@ -128,19 +115,94 @@ impl WalletService {
                 .expect("Failed to unregister admin user");
         }
 
-        config.last_upgrade_timestamp = time();
         config.update_with(init.to_owned());
 
-        write_canister_config(config.to_owned());
+        self.register_canister_config_post_process(
+            config.to_owned(),
+            new_owners.to_owned(),
+            ctx.to_owned(),
+            mode,
+        );
+    }
+}
 
-        self.register_canister_config_post_process(new_owners.to_owned(), ctx.to_owned());
+#[cfg(target_arch = "wasm32")]
+mod install_canister_handlers {
+    use crate::core::ic_cdk::api::{print, time};
+    use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
+    use crate::core::CallContext;
+    use crate::models::{AddUserOperationInput, UserStatus};
+    use crate::services::{POLICY_SERVICE, USER_SERVICE};
+    use crate::{
+        models::{UserGroup, ADMIN_GROUP_ID},
+        repositories::USER_GROUP_REPOSITORY,
+    };
+    use candid::Principal;
+    use ic_canister_core::repository::Repository;
+    use uuid::Uuid;
+
+    /// Registers the default configurations for the canister.
+    ///
+    /// Is used for canister init, however, it's executed through a one-off timer to allow for inter canister calls.
+    pub async fn init_post_process() {
+        // adds the admin group, this is the only group that can't be removed
+        USER_GROUP_REPOSITORY.insert(
+            ADMIN_GROUP_ID.to_owned(),
+            UserGroup {
+                id: ADMIN_GROUP_ID.to_owned(),
+                name: "Admin".to_owned(),
+                last_modification_timestamp: time(),
+            },
+        );
+
+        // adds the default proposal policies which sets safe defaults for the canister
+        for policy in DEFAULT_PROPOSAL_POLICIES.iter() {
+            POLICY_SERVICE
+                .add_proposal_policy(policy.0.to_owned(), policy.1.to_owned())
+                .await
+                .expect("Failed to add default proposal policy");
+        }
+
+        // adds the default access control policies which sets safe defaults for the canister
+        for policy in DEFAULT_ACCESS_CONTROL_POLICIES.iter() {
+            POLICY_SERVICE
+                .add_access_policy(policy.0.to_owned(), policy.1.to_owned())
+                .await
+                .expect("Failed to add default access control policy");
+        }
+    }
+
+    /// Registers the newly added admins of the canister.
+    pub async fn add_new_owners(new_owners: Vec<Principal>, ctx: &CallContext) {
+        print(&format!("Registering {:?} admin users", new_owners.len()));
+        for admin in new_owners {
+            let user = USER_SERVICE
+                .add_user(
+                    AddUserOperationInput {
+                        identities: vec![admin.to_owned()],
+                        groups: vec![ADMIN_GROUP_ID.to_owned()],
+                        name: None,
+                        status: UserStatus::Active,
+                        unconfirmed_identities: vec![],
+                    },
+                    &ctx,
+                )
+                .await
+                .expect("Failed to register admin user");
+
+            print(&format!(
+                "Added admin user with principal {:?} and user id {:?}",
+                admin.to_text(),
+                Uuid::from_bytes(user.id).hyphenated().to_string()
+            ));
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils};
+    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils, write_canister_config};
     use candid::Principal;
 
     #[tokio::test]
@@ -157,7 +219,7 @@ mod tests {
         };
 
         wallet_service
-            .register_canister_config(config, init, &call_context)
+            .process_canister_install(&mut config, init, &call_context, InstallMode::Upgrade)
             .await;
 
         let canister_config = canister_config();

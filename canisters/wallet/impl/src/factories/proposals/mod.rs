@@ -21,44 +21,28 @@ mod upgrade;
 use self::{
     add_account::{
         AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalExecute,
-        AddAccountProposalValidate,
     },
-    add_user::{
-        AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute,
-        AddUserProposalValidate,
-    },
+    add_user::{AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute},
     add_user_group::{
         AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
-        AddUserGroupProposalValidate,
     },
     edit_account::{
         EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalExecute,
-        EditAccountProposalValidate,
     },
-    edit_user::{
-        EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute,
-        EditUserProposalValidate,
-    },
+    edit_user::{EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute},
     edit_user_group::{
         EditUserGroupProposalCreate, EditUserGroupProposalCreateHook, EditUserGroupProposalExecute,
-        EditUserGroupProposalValidate,
     },
     edit_user_status::{
         EditUserStatusProposalCreate, EditUserStatusProposalCreateHook,
-        EditUserStatusProposalExecute, EditUserStatusProposalValidate,
+        EditUserStatusProposalExecute,
     },
     remove_user_group::{
         RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
-        RemoveUserGroupProposalExecute, RemoveUserGroupProposalValidate,
+        RemoveUserGroupProposalExecute,
     },
-    transfer::{
-        TransferProposalCreate, TransferProposalCreateHook, TransferProposalExecute,
-        TransferProposalValidate,
-    },
-    upgrade::{
-        UpgradeProposalCreate, UpgradeProposalCreateHook, UpgradeProposalExecute,
-        UpgradeProposalValidate,
-    },
+    transfer::{TransferProposalCreate, TransferProposalCreateHook, TransferProposalExecute},
+    upgrade::{UpgradeProposalCreate, UpgradeProposalCreateHook, UpgradeProposalExecute},
 };
 
 #[derive(Debug)]
@@ -73,17 +57,6 @@ pub trait Execute: Send + Sync {
     ///
     /// The stage is used to indicate if the operation was completed or if it is still processing.
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
-}
-
-pub trait Validate: Send + Sync {
-    /// Returns true if the user can vote on the proposal.
-    ///
-    /// Votes are only allowed if the proposal is still open and has policies that
-    /// include voting such as approval threshold, minimun votes, veto votes, etc...
-    fn can_vote(&self, user_id: &UUID) -> bool;
-
-    /// Checks if the user has access to view the proposal details.
-    fn can_view(&self, user_id: &UUID) -> bool;
 }
 
 pub trait Create<T>: Send + Sync {
@@ -234,41 +207,6 @@ impl ProposalFactory {
             }
             ProposalOperation::Upgrade(operation) => {
                 Box::new(UpgradeProposalCreateHook::new(proposal, operation))
-            }
-        }
-    }
-
-    pub fn validator<'p>(proposal: &'p Proposal) -> Box<dyn Validate + 'p> {
-        match &proposal.operation {
-            ProposalOperation::Transfer(operation) => {
-                Box::new(TransferProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::AddAccount(operation) => {
-                Box::new(AddAccountProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditAccount(operation) => {
-                Box::new(EditAccountProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::AddUserGroup(operation) => {
-                Box::new(AddUserGroupProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserGroup(operation) => {
-                Box::new(EditUserGroupProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::RemoveUserGroup(operation) => {
-                Box::new(RemoveUserGroupProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::AddUser(operation) => {
-                Box::new(AddUserProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditUser(operation) => {
-                Box::new(EditUserProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserStatus(operation) => {
-                Box::new(EditUserStatusProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::Upgrade(operation) => {
-                Box::new(UpgradeProposalValidate::new(proposal, operation))
             }
         }
     }

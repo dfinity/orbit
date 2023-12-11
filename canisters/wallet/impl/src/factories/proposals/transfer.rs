@@ -1,12 +1,12 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
     errors::{ProposalError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, NotificationType, Policy, Proposal, ProposalExecutionPlan, ProposalOperation,
-        Transfer, TransferOperation, TransferOperationInput, TransferProposalCreatedNotification,
+        Account, NotificationType, Proposal, ProposalExecutionPlan, ProposalOperation, Transfer,
+        TransferOperation, TransferOperationInput, TransferProposalCreatedNotification,
     },
     repositories::{TransferRepository, ACCOUNT_REPOSITORY},
     services::NotificationService,
@@ -118,40 +118,6 @@ impl CreateHook for TransferProposalCreateHook<'_, '_> {
                     .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
             }
         }
-    }
-}
-
-pub struct TransferProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    operation: &'o TransferOperation,
-}
-
-impl<'p, 'o> TransferProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
-        Self {
-            proposal,
-            operation,
-        }
-    }
-}
-
-impl Validate for TransferProposalValidate<'_, '_> {
-    fn can_vote(&self, user_id: &UUID) -> bool {
-        let account = get_account(&self.operation.input.from_account_id);
-        let should_vote = account.policies.iter().any(|policy| match policy {
-            Policy::ApprovalThreshold(_) => true,
-        });
-
-        should_vote && account.owners.contains(user_id)
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        let account = get_account(&self.operation.input.from_account_id);
-
-        self.can_vote(user_id)
-            || account.owners.contains(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
     }
 }
 
