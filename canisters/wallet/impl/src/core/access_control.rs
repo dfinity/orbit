@@ -1,5 +1,5 @@
 use super::{
-    evaluation::{Evaluate, ACCESS_CONTROL_MATCHER, ACCESS_CONTROL_OWNER_MATCHER},
+    evaluation::{Evaluate, ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER, ACCESS_CONTROL_MATCHER},
     CallContext,
 };
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
             ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier, Match},
-        Account, Proposal, User,
+        Account, Proposal, User, ADMIN_GROUP_ID,
     },
     repositories::{
         access_control::ACCESS_CONTROL_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
@@ -402,10 +402,10 @@ impl Match<(User, ResourceSpecifier)> for AccessControlPolicyMatcher {
     }
 }
 
-pub struct AccessControlOwnershipMatcher;
+pub struct AccessControlDefaultAccessMatcher;
 
 #[async_trait]
-impl Match<(User, ResourceSpecifier)> for AccessControlOwnershipMatcher {
+impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
     async fn is_match(&self, v: (User, ResourceSpecifier)) -> Result<bool, MatchError> {
         let (caller, requested_resource) = v;
 
@@ -466,6 +466,10 @@ impl Match<(User, ResourceSpecifier)> for AccessControlOwnershipMatcher {
                     .iter()
                     .all(|account| account.owners.contains(&caller.id))
             }
+            ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create) => {
+                // admins can propose new users by default, proposal policies still apply.
+                caller.groups.contains(ADMIN_GROUP_ID)
+            }
             _ => false,
         };
 
@@ -487,7 +491,7 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
                 reason: "User not found".to_string(),
             })?;
 
-        let is_resource_owner = ACCESS_CONTROL_OWNER_MATCHER
+        let is_resource_owner = ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER
             .is_match((user.to_owned(), self.resource.to_owned()))
             .await
             .map_err(|e| EvaluateError::UnexpectedError(e.into()))?;

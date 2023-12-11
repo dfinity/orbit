@@ -1,5 +1,5 @@
 use super::access_control::{
-    AccessControlOwnershipMatcher, AccessControlPolicyAccountMatcher,
+    AccessControlDefaultAccessMatcher, AccessControlPolicyAccountMatcher,
     AccessControlPolicyCryptoAddressMatcher, AccessControlPolicyMatcher,
     AccessControlPolicyUserMatcher, AccessControlUserMatcher,
 };
@@ -41,8 +41,8 @@ lazy_static! {
             policy_account_matcher: ACCESS_CONTROL_POLICY_ACCOUNT_MATCHER.clone(),
             policy_crypto_address_matcher: ACCESS_CONTROL_POLICY_CRYPTO_ADDRESS_MATCHER.clone(),
         });
-    pub static ref ACCESS_CONTROL_OWNER_MATCHER: Arc<AccessControlOwnershipMatcher> =
-        Arc::new(AccessControlOwnershipMatcher);
+    pub static ref ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER: Arc<AccessControlDefaultAccessMatcher> =
+        Arc::new(AccessControlDefaultAccessMatcher);
 }
 
 #[async_trait]
