@@ -158,7 +158,7 @@ impl CriteriaEvaluator {
     where
         UserMatchReturn: Clone,
     {
-        let filtered_results = stream::iter(users.iter())
+        stream::iter(users.iter())
             .then(|(user_id, match_return)| {
                 let match_return = match_return.clone();
                 async move {
@@ -179,9 +179,7 @@ impl CriteriaEvaluator {
             })
             .try_filter_map(|result| async move { Ok(result) })
             .try_collect()
-            .await?;
-
-        Ok(filtered_results)
+            .await
     }
 }
 
