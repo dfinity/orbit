@@ -5,6 +5,10 @@ use crate::models::{
     UserGroup,
 };
 use uuid::Uuid;
+use wallet_api::UserGroupDTO;
+
+#[derive(Default, Clone, Debug)]
+pub struct UserGroupMapper;
 
 impl From<wallet_api::AddUserGroupOperationInput> for AddUserGroupOperationInput {
     fn from(input: wallet_api::AddUserGroupOperationInput) -> Self {
@@ -116,5 +120,24 @@ impl From<wallet_api::RemoveUserGroupOperationInput> for RemoveUserGroupOperatio
         Self {
             input: input.into(),
         }
+    }
+}
+
+impl UserGroupMapper {
+    pub fn to_dto(user_group: UserGroup) -> UserGroupDTO {
+        let id = Uuid::from_slice(&user_group.id)
+            .unwrap()
+            .hyphenated()
+            .to_string();
+
+        let name = user_group.name;
+
+        UserGroupDTO { id, name }
+    }
+}
+
+impl UserGroup {
+    pub fn to_dto(&self) -> UserGroupDTO {
+        UserGroupMapper::to_dto(self.clone())
     }
 }
