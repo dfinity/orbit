@@ -23,7 +23,6 @@ type ProposalPolicyCriteria = variant {
   Auto : EvaluationStatus;
   ApprovalThreshold : record { UserSpecifier; float64 };
   MinimumVotes : record { UserSpecifier; nat16 };
-  IsAddressKYC;
   Or : vec ProposalPolicyCriteria;
   And : vec ProposalPolicyCriteria;
   Not : ProposalPolicyCriteria;

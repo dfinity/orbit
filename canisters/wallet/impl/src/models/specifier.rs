@@ -1,5 +1,6 @@
 use super::{Account, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
+use crate::repositories::ACCOUNT_REPOSITORY;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
@@ -105,7 +106,7 @@ pub type VoterId = UUID;
 #[async_trait]
 impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
     async fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
-        let (p, voter_id, specifier) = v;
+        let (proposal, voter_id, specifier) = v;
 
         match specifier {
             UserSpecifier::Any => Ok(true),
@@ -118,17 +119,30 @@ impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
             }
             UserSpecifier::Id(ids) => Ok(ids.contains(&voter_id)),
             UserSpecifier::Owner => {
-                if let ProposalOperation::Transfer(op) = p.operation {
-                    if let Some(account) = crate::repositories::ACCOUNT_REPOSITORY
-                        .get(&Account::key(op.input.from_account_id))
-                    {
-                        return Ok(account.owners.contains(&voter_id));
+                match proposal.operation {
+                    ProposalOperation::Transfer(operation) => {
+                        if let Some(account) =
+                            ACCOUNT_REPOSITORY.get(&Account::key(operation.input.from_account_id))
+                        {
+                            return Ok(account.owners.contains(&voter_id));
+                        }
                     }
-                }
+                    ProposalOperation::EditUser(operation) => {
+                        return Ok(operation.input.user_id == voter_id);
+                    }
+                    ProposalOperation::EditAccount(operation) => {
+                        if let Some(account) =
+                            ACCOUNT_REPOSITORY.get(&Account::key(operation.input.account_id))
+                        {
+                            return Ok(account.owners.contains(&voter_id));
+                        }
+                    }
+                    _ => {}
+                };
 
                 Ok(false)
             }
-            UserSpecifier::Proposer => Ok(p.proposed_by == voter_id),
+            UserSpecifier::Proposer => Ok(proposal.proposed_by == voter_id),
         }
     }
 }
@@ -190,11 +204,6 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
-    use anyhow::{anyhow, Error};
-    use candid::Nat;
-
     use crate::models::{
         criteria::Criteria,
         proposal_test_utils::mock_proposal,
@@ -207,6 +216,9 @@ mod tests {
         EditUserOperation, EditUserOperationInput, EvaluationStatus, ProposalOperation,
         TransferOperation, TransferOperationInput, UserStatus,
     };
+    use anyhow::{anyhow, Error};
+    use candid::Nat;
+    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_proposal_matcher_empty_proposal() -> Result<(), Error> {

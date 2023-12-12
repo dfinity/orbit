@@ -101,8 +101,6 @@ pub enum Criteria {
     // Votes
     ApprovalThreshold(UserSpecifier, Ratio),
     MinimumVotes(UserSpecifier, u16),
-    // Metadata
-    IsAddressKYC,
     // Logical
     Or(Vec<Criteria>),
     And(Vec<Criteria>),
@@ -239,8 +237,6 @@ impl EvaluateCriteria for CriteriaEvaluator {
     ) -> Result<EvaluationStatus, EvaluateError> {
         match c.as_ref() {
             Criteria::Auto(status) => Ok(status.clone()),
-            // TODO: Add evaluation of KYC criteria once address book is implemented
-            Criteria::IsAddressKYC => todo!(),
             Criteria::ApprovalThreshold(user_specifier, ratio) => {
                 let votes = self.calculate_votes(&proposal, user_specifier).await?;
                 let min_votes = (ratio.0 * votes.total_possible_votes as f64).ceil() as usize;

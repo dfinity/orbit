@@ -21,7 +21,6 @@ impl From<Criteria> for CriteriaDTO {
             Criteria::MinimumVotes(specifier, votes) => {
                 CriteriaDTO::MinimumVotes(specifier.into(), votes)
             }
-            Criteria::IsAddressKYC => CriteriaDTO::IsAddressKYC,
             Criteria::Or(criterias) => {
                 CriteriaDTO::Or(criterias.into_iter().map(Into::into).collect())
             }
@@ -47,7 +46,6 @@ impl From<CriteriaDTO> for Criteria {
             CriteriaDTO::MinimumVotes(specifier, votes) => {
                 Criteria::MinimumVotes(specifier.into(), votes)
             }
-            CriteriaDTO::IsAddressKYC => Criteria::IsAddressKYC,
             CriteriaDTO::Or(criterias) => {
                 Criteria::Or(criterias.into_iter().map(Into::into).collect())
             }

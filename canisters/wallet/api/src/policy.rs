@@ -22,7 +22,6 @@ pub enum CriteriaDTO {
     Auto(EvaluationStatusDTO),
     ApprovalThreshold(UserSpecifierDTO, f64),
     MinimumVotes(UserSpecifierDTO, u16),
-    IsAddressKYC,
     Or(Vec<CriteriaDTO>),
     And(Vec<CriteriaDTO>),
     Not(Box<CriteriaDTO>),
