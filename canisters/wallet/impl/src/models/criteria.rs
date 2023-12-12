@@ -72,7 +72,32 @@ pub struct CriteriaEvaluator {
 struct ProposalVoteSummary {
     total_possible_votes: usize,
     adopted_votes: usize,
-    uncasted_votes: usize,
+    rejected_votes: usize,
+}
+
+impl ProposalVoteSummary {
+    /// Evaluates the proposal vote summary and returns the evaluation status based on the
+    /// minimum votes required.
+    ///
+    /// If the proposal does not yet have enough votes to meet the minimum votes required but has
+    /// enough uncasted votes that could be casted to meet the minimum votes required, then the evaluation
+    /// is kept in the `Pending` state.
+    fn evaluate(&self, min_votes: &usize) -> EvaluationStatus {
+        let uncasted_votes = self
+            .total_possible_votes
+            .saturating_sub(self.adopted_votes)
+            .saturating_sub(self.rejected_votes);
+
+        if self.adopted_votes >= *min_votes {
+            return EvaluationStatus::Adopted;
+        }
+
+        if self.adopted_votes.saturating_add(uncasted_votes) < *min_votes {
+            return EvaluationStatus::Rejected;
+        }
+
+        EvaluationStatus::Pending
+    }
 }
 
 impl CriteriaEvaluator {
@@ -161,7 +186,10 @@ impl CriteriaEvaluator {
                 .iter()
                 .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
                 .count(),
-            uncasted_votes: total_possible_votes.saturating_sub(casted_votes.len()),
+            rejected_votes: casted_votes
+                .iter()
+                .filter(|&v| matches!(v, ProposalVoteStatus::Rejected))
+                .count(),
         })
     }
 }
@@ -179,28 +207,13 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 let min_votes = ((*percentage as f64 / 100.0) * votes.total_possible_votes as f64)
                     .ceil() as usize;
 
-                if votes.adopted_votes >= min_votes {
-                    return Ok(EvaluationStatus::Adopted);
-                }
-
-                if votes.adopted_votes.saturating_add(votes.uncasted_votes) < min_votes {
-                    return Ok(EvaluationStatus::Rejected);
-                }
-
-                Ok(EvaluationStatus::Pending)
+                Ok(votes.evaluate(&min_votes))
             }
             Criteria::MinimumVotes(user_specifier, min_votes) => {
                 let votes = self.calculate_votes(&proposal, user_specifier).await?;
+                let min_votes = *min_votes as usize;
 
-                if votes.adopted_votes >= *min_votes as usize {
-                    return Ok(EvaluationStatus::Adopted);
-                }
-
-                if votes.adopted_votes.saturating_add(votes.uncasted_votes) < *min_votes as usize {
-                    return Ok(EvaluationStatus::Rejected);
-                }
-
-                Ok(EvaluationStatus::Pending)
+                Ok(votes.evaluate(&min_votes))
             }
             Criteria::And(criterias) => {
                 let evaluation_statuses = self.evaluate_criterias(&proposal, criterias).await?;
