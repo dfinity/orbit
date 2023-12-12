@@ -228,16 +228,16 @@ impl EvaluateCriteria for CriteriaEvaluator {
 
                 if evaluation_statuses
                     .iter()
-                    .any(|s| matches!(s, EvaluationStatus::Rejected))
+                    .any(|s| matches!(s, EvaluationStatus::Adopted))
                 {
-                    return Ok(EvaluationStatus::Rejected);
+                    return Ok(EvaluationStatus::Adopted);
                 }
 
                 if evaluation_statuses
                     .iter()
-                    .any(|s| matches!(s, EvaluationStatus::Adopted))
+                    .all(|s| matches!(s, EvaluationStatus::Rejected))
                 {
-                    return Ok(EvaluationStatus::Adopted);
+                    return Ok(EvaluationStatus::Rejected);
                 }
 
                 Ok(EvaluationStatus::Pending)
