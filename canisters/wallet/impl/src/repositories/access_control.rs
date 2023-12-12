@@ -13,7 +13,7 @@ use ic_canister_core::{
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<UUID, AccessControlPolicy, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -24,8 +24,8 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref ACCESS_CONTROL_REPOSITORY: AccessControlRepository =
-        AccessControlRepository::default();
+    pub static ref ACCESS_CONTROL_REPOSITORY: Arc<AccessControlRepository> =
+        Arc::new(AccessControlRepository::default());
 }
 
 /// A repository that enables managing access control policies in stable memory.

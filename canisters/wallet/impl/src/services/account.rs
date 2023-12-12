@@ -1,4 +1,3 @@
-use super::{PolicyService, UserService};
 use crate::{
     core::{generate_uuid_v4, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
     errors::AccountError,
@@ -8,36 +7,38 @@ use crate::{
         specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountId, AddAccountOperationInput, EditAccountOperationInput,
     },
-    repositories::AccountRepository,
+    repositories::{AccountRepository, ACCOUNT_REPOSITORY},
+    services::{PolicyService, UserService, POLICY_SERVICE, USER_SERVICE},
 };
 use candid::Principal;
 use ic_canister_core::{
     api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository,
 };
 use lazy_static::lazy_static;
+use std::sync::Arc;
 use uuid::Uuid;
 use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput};
 
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: AccountService = AccountService::new(
-        UserService::default(),
-        PolicyService::default(),
-        AccountRepository::default(),
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&POLICY_SERVICE),
+        Arc::clone(&ACCOUNT_REPOSITORY),
     );
 }
 
 #[derive(Default, Debug)]
 pub struct AccountService {
-    user_service: UserService,
-    policy_service: PolicyService,
-    account_repository: AccountRepository,
+    user_service: Arc<UserService>,
+    policy_service: Arc<PolicyService>,
+    account_repository: Arc<AccountRepository>,
 }
 
 impl AccountService {
     pub fn new(
-        user_service: UserService,
-        policy_service: PolicyService,
-        account_repository: AccountRepository,
+        user_service: Arc<UserService>,
+        policy_service: Arc<PolicyService>,
+        account_repository: Arc<AccountRepository>,
     ) -> Self {
         Self {
             user_service,
@@ -332,6 +333,31 @@ mod tests {
         let result = ctx.service.create_account(operation.input).await;
 
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn edit_account() {
+        let ctx = setup();
+        let mut account = mock_account();
+        account.owners.push(ctx.caller_user.id);
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: Some("test_edit".to_string()),
+            owners: Some(vec![ctx.caller_user.id]),
+            policies: None,
+        };
+
+        let result = ctx.service.edit_account(operation).await;
+
+        assert!(result.is_ok());
+
+        let updated_account = result.unwrap();
+
+        assert_eq!(updated_account.name, "test_edit");
+        assert_eq!(updated_account.owners, vec![ctx.caller_user.id]);
     }
 
     #[tokio::test]

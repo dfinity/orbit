@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     core::{generate_uuid_v4, CallContext},
     errors::UserError,
@@ -14,7 +16,8 @@ use uuid::Uuid;
 use wallet_api::ConfirmUserIdentityInput;
 
 lazy_static! {
-    pub static ref USER_SERVICE: UserService = UserService::default();
+    pub static ref USER_SERVICE: Arc<UserService> =
+        Arc::new(UserService::new(UserRepository::default()));
 }
 
 #[derive(Default, Debug)]
@@ -23,6 +26,10 @@ pub struct UserService {
 }
 
 impl UserService {
+    pub fn new(user_repository: UserRepository) -> Self {
+        Self { user_repository }
+    }
+
     /// Returns the user associated with the given user id.
     pub fn get_user(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<User> {
         let user =
