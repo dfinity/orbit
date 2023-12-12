@@ -272,7 +272,7 @@ mod tests {
         models::{
             account_test_utils::mock_account, criteria::Criteria, user_test_utils::mock_user,
             AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, Blockchain,
-            BlockchainStandard, EvaluationStatus, User,
+            BlockchainStandard, User,
         },
         repositories::UserRepository,
     };
@@ -324,8 +324,8 @@ mod tests {
                 standard: BlockchainStandard::Native,
                 metadata: vec![],
                 policies: AccountPoliciesInput {
-                    transfer: Some(Criteria::Auto(EvaluationStatus::Adopted)),
-                    edit: Some(Criteria::Auto(EvaluationStatus::Adopted)),
+                    transfer: Some(Criteria::AutoAdopted),
+                    edit: Some(Criteria::AutoAdopted),
                 },
             },
         };
@@ -372,8 +372,8 @@ mod tests {
                 standard: BlockchainStandard::ERC20,
                 metadata: vec![],
                 policies: AccountPoliciesInput {
-                    transfer: Some(Criteria::Auto(EvaluationStatus::Adopted)),
-                    edit: Some(Criteria::Auto(EvaluationStatus::Adopted)),
+                    transfer: Some(Criteria::AutoAdopted),
+                    edit: Some(Criteria::AutoAdopted),
                 },
             },
         };

@@ -137,16 +137,13 @@ impl PolicyService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{access_control::ProposalActionSpecifier, EvaluationStatus};
+    use crate::models::access_control::ProposalActionSpecifier;
 
     #[tokio::test]
     async fn test_proposal_policy_operations() {
         let service = POLICY_SERVICE.clone();
         let policy = service
-            .add_proposal_policy(
-                ProposalSpecifier::AddAccount,
-                Criteria::Auto(EvaluationStatus::Adopted),
-            )
+            .add_proposal_policy(ProposalSpecifier::AddAccount, Criteria::AutoAdopted)
             .await;
 
         assert!(policy.is_ok());
@@ -161,7 +158,7 @@ mod tests {
             .edit_proposal_policy(
                 &policy.id,
                 ProposalSpecifier::AddAccount,
-                Criteria::Auto(EvaluationStatus::Rejected),
+                Criteria::AutoAdopted,
             )
             .await;
 

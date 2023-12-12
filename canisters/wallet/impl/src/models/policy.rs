@@ -38,14 +38,14 @@ impl From<MatchError> for EvaluateError {
 
 #[cfg(test)]
 pub mod proposal_policy_test_utils {
-    use super::{EvaluationStatus, ProposalPolicy};
+    use super::ProposalPolicy;
     use crate::models::{criteria::Criteria, specifier::ProposalSpecifier};
 
     pub fn mock_proposal_policy() -> ProposalPolicy {
         ProposalPolicy {
             id: [0; 16],
             specifier: ProposalSpecifier::AddAccount,
-            criteria: Criteria::Auto(EvaluationStatus::Adopted),
+            criteria: Criteria::AutoAdopted,
         }
     }
 }

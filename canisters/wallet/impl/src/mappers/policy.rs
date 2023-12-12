@@ -2,19 +2,15 @@ use super::HelperMapper;
 use crate::models::{
     criteria::{Criteria, Ratio},
     specifier::UserSpecifier,
-    EvaluationStatus,
 };
 use uuid::Uuid;
-use wallet_api::{CriteriaDTO, EvaluationStatusDTO, UserSpecifierDTO};
+use wallet_api::{CriteriaDTO, UserSpecifierDTO};
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
         match criteria {
-            Criteria::Auto(status) => match status {
-                EvaluationStatus::Adopted => CriteriaDTO::Auto(EvaluationStatusDTO::Adopted),
-                EvaluationStatus::Pending => CriteriaDTO::Auto(EvaluationStatusDTO::Pending),
-                EvaluationStatus::Rejected => CriteriaDTO::Auto(EvaluationStatusDTO::Rejected),
-            },
+            Criteria::AutoAdopted => CriteriaDTO::AutoAdopted,
+            Criteria::AutoRejected => CriteriaDTO::AutoRejected,
             Criteria::ApprovalThreshold(specifier, threshold) => {
                 CriteriaDTO::ApprovalThreshold(specifier.into(), threshold.0)
             }
@@ -35,11 +31,8 @@ impl From<Criteria> for CriteriaDTO {
 impl From<CriteriaDTO> for Criteria {
     fn from(dto: CriteriaDTO) -> Self {
         match dto {
-            CriteriaDTO::Auto(status) => match status {
-                EvaluationStatusDTO::Adopted => Criteria::Auto(EvaluationStatus::Adopted),
-                EvaluationStatusDTO::Pending => Criteria::Auto(EvaluationStatus::Pending),
-                EvaluationStatusDTO::Rejected => Criteria::Auto(EvaluationStatus::Rejected),
-            },
+            CriteriaDTO::AutoAdopted => Criteria::AutoAdopted,
+            CriteriaDTO::AutoRejected => Criteria::AutoRejected,
             CriteriaDTO::ApprovalThreshold(specifier, threshold) => {
                 Criteria::ApprovalThreshold(specifier.into(), Ratio(threshold))
             }

@@ -2,13 +2,6 @@ use crate::UuidDTO;
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum EvaluationStatusDTO {
-    Adopted,
-    Pending,
-    Rejected,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum UserSpecifierDTO {
     Any,
     Group(Vec<UuidDTO>),
@@ -19,7 +12,8 @@ pub enum UserSpecifierDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CriteriaDTO {
-    Auto(EvaluationStatusDTO),
+    AutoAdopted,
+    AutoRejected,
     ApprovalThreshold(UserSpecifierDTO, f64),
     MinimumVotes(UserSpecifierDTO, u16),
     Or(Vec<CriteriaDTO>),

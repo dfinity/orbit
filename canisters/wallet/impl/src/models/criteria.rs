@@ -97,7 +97,8 @@ impl TryFrom<f64> for Ratio {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Criteria {
     // Auto
-    Auto(EvaluationStatus),
+    AutoAdopted,
+    AutoRejected,
     // Votes
     ApprovalThreshold(UserSpecifier, Ratio),
     MinimumVotes(UserSpecifier, u16),
@@ -236,7 +237,8 @@ impl EvaluateCriteria for CriteriaEvaluator {
         (proposal, c): (Arc<Proposal>, Arc<Criteria>),
     ) -> Result<EvaluationStatus, EvaluateError> {
         match c.as_ref() {
-            Criteria::Auto(status) => Ok(status.clone()),
+            Criteria::AutoAdopted => Ok(EvaluationStatus::Adopted),
+            Criteria::AutoRejected => Ok(EvaluationStatus::Rejected),
             Criteria::ApprovalThreshold(user_specifier, ratio) => {
                 let votes = self.calculate_votes(&proposal, user_specifier).await?;
                 let min_votes = (ratio.0 * votes.total_possible_votes as f64).ceil() as usize;

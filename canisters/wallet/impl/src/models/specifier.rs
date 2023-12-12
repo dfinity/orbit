@@ -213,8 +213,8 @@ mod tests {
         },
         AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
         AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
-        EditUserOperation, EditUserOperationInput, EvaluationStatus, ProposalOperation,
-        TransferOperation, TransferOperationInput, UserStatus,
+        EditUserOperation, EditUserOperationInput, ProposalOperation, TransferOperation,
+        TransferOperationInput, UserStatus,
     };
     use anyhow::{anyhow, Error};
     use candid::Nat;
@@ -239,8 +239,8 @@ mod tests {
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: vec![],
                         policies: AccountPoliciesInput {
-                            transfer: Some(Criteria::Auto(EvaluationStatus::Adopted)),
-                            edit: Some(Criteria::Auto(EvaluationStatus::Adopted)),
+                            transfer: Some(Criteria::AutoAdopted),
+                            edit: Some(Criteria::AutoAdopted),
                         },
                     },
                 }),
