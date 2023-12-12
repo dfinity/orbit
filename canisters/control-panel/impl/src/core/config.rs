@@ -1,17 +1,19 @@
-use super::{MAX_BYTE_SIZE_PRINCIPAL, WASM_PAGE_SIZE};
+use super::CANISTER_CONFIG_STATE_SIZE;
 use crate::core::ic_cdk::api::{time, trap};
-use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use candid::{CandidType, Decode, Deserialize, Encode};
 use ic_canister_core::types::Timestamp;
 use ic_canister_macros::stable_object;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::borrow::Cow;
 
-#[stable_object(size = WASM_PAGE_SIZE)]
+#[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
-    /// This is the shared wallet canister that is user by default for all
-    /// users that don't have a private wallet canister.
-    pub shared_wallet_canister: Principal,
+    /// The upgrader canister wasm module that will be used to upgrade the wallet canister.
+    pub upgrader_wasm_module: Vec<u8>,
+
+    /// The wallet canister wasm module that will be used to deploy new wallets.
+    pub wallet_wasm_module: Vec<u8>,
 
     /// Last time the canister was upgraded or initialized.
     pub last_upgrade_timestamp: Timestamp,
@@ -20,33 +22,21 @@ pub struct CanisterConfig {
 impl Default for CanisterConfig {
     fn default() -> Self {
         Self {
-            shared_wallet_canister: Principal::anonymous(),
+            upgrader_wasm_module: vec![],
+            wallet_wasm_module: vec![],
             last_upgrade_timestamp: time(),
         }
     }
 }
 
 impl CanisterConfig {
-    pub fn new(shared_wallet_canister: Principal, last_upgrade_timestamp: Timestamp) -> Self {
+    pub fn new(upgrader_wasm_module: Vec<u8>, wallet_wasm_module: Vec<u8>) -> Self {
         Self {
-            shared_wallet_canister,
-            last_upgrade_timestamp,
+            upgrader_wasm_module,
+            wallet_wasm_module,
+            last_upgrade_timestamp: time(),
         }
     }
-}
-
-impl CanisterConfig {
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_SHARED_WALLET_CANISTER: u32 = MAX_BYTE_SIZE_PRINCIPAL;
-    pub const MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
-
-    /// The maximum size of the CanisterConfig in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = WASM_PAGE_SIZE;
-
-    /// If this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE
-        - Self::MAX_BYTE_SIZE_SHARED_WALLET_CANISTER
-        - Self::MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP;
 }
 
 /// Configuration state of the canister.
@@ -81,7 +71,7 @@ impl Storable for CanisterState {
     }
 
     const BOUND: Bound = Bound::Bounded {
-        max_size: WASM_PAGE_SIZE,
+        max_size: CANISTER_CONFIG_STATE_SIZE,
         is_fixed_size: false,
     };
 }

@@ -1,5 +1,8 @@
 //! User services.
+use std::sync::Arc;
+
 use crate::core::middlewares::{call_context, log_call, log_call_result};
+use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
     DeleteUserResponse, GetUserResponse, ManageUserInput, ManageUserResponse, RegisterUserInput,
@@ -34,16 +37,16 @@ async fn delete_user() -> ApiResult<DeleteUserResponse> {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: UserController = UserController::new(UserService::default());
+    static ref CONTROLLER: UserController = UserController::new(Arc::clone(&USER_SERVICE));
 }
 
 #[derive(Debug)]
 pub struct UserController {
-    user_service: UserService,
+    user_service: Arc<UserService>,
 }
 
 impl UserController {
-    pub fn new(user_service: UserService) -> Self {
+    pub fn new(user_service: Arc<UserService>) -> Self {
         Self { user_service }
     }
 

@@ -4,7 +4,8 @@ use crate::{
 };
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use lazy_static::lazy_static;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<UserKey, User, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -12,6 +13,10 @@ thread_local! {
       StableBTreeMap::init(memory_manager.get(USER_MEMORY_ID))
     )
   })
+}
+
+lazy_static! {
+    pub static ref USER_REPOSITORY: Arc<UserRepository> = Arc::new(UserRepository {});
 }
 
 /// A repository that enables managing users in stable memory.

@@ -1,4 +1,4 @@
-use super::{CanisterConfig, CanisterState, MAX_WASM_PAGES};
+use super::{CanisterConfig, CanisterState, CANISTER_CONFIG_TOTAL_MEMORY_PAGES, MAX_WASM_PAGES};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     Cell, DefaultMemoryImpl, RestrictedMemory,
@@ -29,7 +29,10 @@ pub fn with_memory_manager<R>(f: impl FnOnce(&MemoryManager<Memory>) -> R) -> R 
 
 /// Reserve the first stable memory page for the configuration stable cell.
 pub fn config_memory() -> Memory {
-    RestrictedMemory::new(DefaultMemoryImpl::default(), 0..1)
+    RestrictedMemory::new(
+        DefaultMemoryImpl::default(),
+        0..CANISTER_CONFIG_TOTAL_MEMORY_PAGES as u64,
+    )
 }
 
 /// A helper function to access the canister configuration.
@@ -39,7 +42,10 @@ pub fn canister_config() -> CanisterConfig {
 
 /// All the memory after the initial config page is managed by the [MemoryManager].
 pub fn managed_memory() -> Memory {
-    RestrictedMemory::new(DefaultMemoryImpl::default(), 1..MAX_WASM_PAGES)
+    RestrictedMemory::new(
+        DefaultMemoryImpl::default(),
+        CANISTER_CONFIG_TOTAL_MEMORY_PAGES as u64..MAX_WASM_PAGES,
+    )
 }
 
 /// A helper function to write the canister configuration.
@@ -54,11 +60,10 @@ pub fn write_canister_config(config: CanisterConfig) {
 #[cfg(test)]
 pub mod test_utils {
     use super::write_canister_config;
-    use crate::core::{ic_cdk::api::time, CanisterConfig};
-    use candid::Principal;
+    use crate::core::CanisterConfig;
 
     pub fn init_canister_config() {
-        let config = CanisterConfig::new(Principal::anonymous(), time());
+        let config = CanisterConfig::new(Vec::new(), Vec::new());
         write_canister_config(config);
     }
 }

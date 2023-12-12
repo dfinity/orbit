@@ -37,6 +37,9 @@ pub enum UserError {
     /// The main wallet associated with the user was not found.
     #[error(r#"The main wallet associated with the user was not found."#)]
     MainWalletNotFound,
+    /// The deploy wallet quota was exceeded.
+    #[error(r#"Deploy wallet quota exceeded."#)]
+    DeployWalletQuotaExceeded,
 }
 
 impl DetailableError for UserError {

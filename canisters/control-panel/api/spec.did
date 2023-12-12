@@ -132,22 +132,41 @@ type RemoveUserResult = variant {
   Err : ApiError;
 };
 
-// The init configuration for the default wallet canister.
-type DefaultWalletInit = variant {
-  // Create a new shared wallet canister that the control panel can manage.
-  InitSharedWalletCanister;
-  // Use a specified wallet canister.
-  SpecifiedWalletCanister : WalletID;
+// The result of deploying a wallet canister for the caller.
+type DeployWalletResult = variant {
+  // Successfull operation result.
+  Ok : record {
+    // The wallet canister id.
+    canister_id : WalletID;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
 };
 
 // The init configuration for the control panel.
-type CanisterInit = record {
-  // How to initialize the default wallet canister.
-  default_wallet : DefaultWalletInit;
+type CanisterInit = variant {
+  // The upgrader wasm module to use for the wallet canister.
+  upgrader_wasm_module : blob;
+  // The wallet wasm module to use.
+  wallet_wasm_module : blob;
+};
+
+// The upgrade configuration for the control panel.
+type CanisterUpgrade = variant {
+  // The updated wasm canister module to use for the wallet canister.
+  upgrader_wasm_module : opt blob;
+  // The updated wasm canister module to use.
+  wallet_wasm_module : opt blob;
+};
+
+// The install configuration for the control panel.
+type CanisterInstall = variant {
+  Init : CanisterInit;
+  Upgrade : CanisterUpgrade;
 };
 
 // The control panel service definition.
-service : (opt CanisterInit) -> {
+service : (opt CanisterInstall) -> {
   // Get the user information for the caller.
   get_user : () -> (GetUserResult) query;
   // Manage the user associated with the caller.
@@ -160,4 +179,6 @@ service : (opt CanisterInit) -> {
   list_wallets : () -> (ListWalletsResult) query;
   // Get main wallet for the caller user.
   get_main_wallet : () -> (GetMainWalletResult) query;
+  // Deploys a new wallet canister for the caller.
+  deploy_wallet : () -> (DeployWalletResult);
 };

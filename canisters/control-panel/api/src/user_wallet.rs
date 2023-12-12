@@ -15,3 +15,8 @@ pub struct ListWalletsResponse {
 pub struct GetMainWalletResponse {
     pub wallet: Option<UserWalletDTO>,
 }
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct DeployWalletResponse {
+    pub canister_id: Principal,
+}

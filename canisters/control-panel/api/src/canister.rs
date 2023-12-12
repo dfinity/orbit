@@ -1,20 +1,19 @@
-use candid::{CandidType, Deserialize, Principal};
-
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum DefaultWalletInit {
-    InitSharedWalletCanister,
-    SpecifiedWalletCanister(Principal),
-}
+use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CanisterInit {
-    pub default_wallet: DefaultWalletInit,
+    pub upgrader_wasm_module: Vec<u8>,
+    pub wallet_wasm_module: Vec<u8>,
 }
 
-impl Default for CanisterInit {
-    fn default() -> Self {
-        Self {
-            default_wallet: DefaultWalletInit::InitSharedWalletCanister,
-        }
-    }
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct CanisterUpgrade {
+    pub upgrader_wasm_module: Option<Vec<u8>>,
+    pub wallet_wasm_module: Option<Vec<u8>>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum CanisterInstall {
+    Init(CanisterInit),
+    Upgrade(CanisterUpgrade),
 }
