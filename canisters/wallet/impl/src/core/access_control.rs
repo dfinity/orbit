@@ -110,19 +110,14 @@ impl Match<(Arc<UserSpecifier>, AccessControlPolicy)> for AccessControlPolicyUse
                         return Ok(false);
                     }
 
-                    let match_requested_groups = requested_user_group_ids.iter().all(|group_id| {
-                        group_ids
-                            .iter()
-                            .any(|policy_group_id| policy_group_id == group_id)
-                    });
+                    let match_requested_groups = requested_user_group_ids
+                        .iter()
+                        .all(|group_id| group_ids.contains(group_id));
 
                     let match_requested_users = requested_users.iter().all(|requested_user| {
-                        group_ids.iter().any(|group_id| {
-                            requested_user
-                                .groups
-                                .iter()
-                                .any(|requested_user_group_id| requested_user_group_id == group_id)
-                        })
+                        group_ids
+                            .iter()
+                            .any(|group_id| requested_user.groups.contains(group_id))
                     });
 
                     match_requested_groups && match_requested_users
