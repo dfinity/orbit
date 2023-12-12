@@ -234,7 +234,7 @@ type EditAccountOperationInput = record {
   owners : opt vec UserId;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
-  // The updated policies to use when interacting with the account.
+  // The updated policies applied to the account by the account owners.
   policies : opt AccountPolicies;
 };
 
@@ -255,7 +255,7 @@ type AddAccountOperationInput = record {
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
-  // The policies to use when interacting with the account.
+  // The policies applied to the account by the account owners.
   policies : AccountPolicies;
 };
 
@@ -785,7 +785,7 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
-// The policies to enforce when interacting with the account.
+// The policies applied to the account by the account owners.
 type AccountPolicies = record {
   // The criterias to use for withdrawing funds from the account.
   transfer : opt ProposalPolicyCriteria;
