@@ -56,15 +56,12 @@ impl From<&wallet_api::GetTransferInput> for ResourceSpecifier {
             .expect("Invalid transfer id")
             .as_bytes();
 
-        let account = match TRANSFER_REPOSITORY.get(&Transfer::key(transfer_id)) {
-            Some(transfer) => AccountSpecifier::Id([transfer.from_account].to_vec()),
-            // When the account is not found, we assume that the user is trying to read any account, this
-            // avoids leaking information about the existence of a transfer.
-            None => AccountSpecifier::Any,
-        };
+        let transfer = TRANSFER_REPOSITORY
+            .get(&Transfer::key(transfer_id))
+            .expect("Invalid transfer");
 
         ResourceSpecifier::Transfer(TransferActionSpecifier::Read(
-            account,
+            AccountSpecifier::Id([transfer.from_account].to_vec()),
             AddressSpecifier::Any,
         ))
     }
