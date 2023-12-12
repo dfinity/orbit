@@ -29,8 +29,6 @@ impl From<Criteria> for CriteriaDTO {
                 CriteriaDTO::And(criterias.into_iter().map(Into::into).collect())
             }
             Criteria::Not(criteria) => CriteriaDTO::Not(Box::new(Into::into(*criteria))),
-            // TODO: remove veto power from the criteria
-            _ => unimplemented!(),
         }
     }
 }
