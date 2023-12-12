@@ -1,6 +1,5 @@
 use super::evaluation::Evaluate;
 use crate::{
-    core::ic_cdk::api::print,
     errors::EvaluateError,
     models::{
         criteria::{Criteria, EvaluateCriteria},
@@ -11,7 +10,7 @@ use crate::{
 };
 use anyhow::Context;
 use async_trait::async_trait;
-use futures::{stream, StreamExt};
+use futures::{stream, StreamExt, TryStreamExt};
 use ic_canister_core::repository::Repository;
 use std::sync::Arc;
 
@@ -51,10 +50,6 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
         }
 
         if matching_policies.is_empty() {
-            print(format!(
-                "Proposal {:?} does not match any policy",
-                self.proposal.operation
-            ));
             // Since proposals handle security critical operations, we want to reject them by default if
             // they don't match any policy. Users need to explicitly add the necessary policies to evaluate them.
             return Ok(EvaluationStatus::Rejected);
@@ -63,10 +58,6 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
         let proposal = Arc::new(self.proposal.to_owned());
 
         for policy in matching_policies {
-            print(format!(
-                "Proposal {:?} is going to be evaluated by policy {:?}",
-                self.proposal.operation, policy.specifier
-            ));
             // Evaluate the criteria
             let evaluation_status = self
                 .criteria_evaluator
@@ -172,31 +163,19 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 let proposal = &proposal;
                 let voter_id = &voter_id;
-                let vote_evaluations = stream::iter(criterias)
-                    .filter_map(|criteria| async move {
-                        match self
-                            .evaluate((
-                                proposal.to_owned(),
-                                voter_id.to_owned(),
-                                Arc::new(criteria.to_owned()),
-                            ))
-                            .await
-                        {
-                            Ok(can_vote) => Some(can_vote),
-                            Err(e) => {
-                                print(format!(
-                                    "Failed evaluation of criteria vote rights: {:?}",
-                                    e
-                                ));
-
-                                None
-                            }
-                        }
+                let vote_evaluations = stream::iter(criterias.iter())
+                    .then(|criteria| async move {
+                        self.evaluate((
+                            proposal.to_owned(),
+                            voter_id.to_owned(),
+                            Arc::new(criteria.to_owned()),
+                        ))
+                        .await
                     })
-                    .collect::<Vec<bool>>()
-                    .await;
+                    .try_collect::<Vec<bool>>()
+                    .await?;
 
-                Ok(vote_evaluations.iter().any(|v| *v))
+                Ok(vote_evaluations.contains(&true))
             }
             Criteria::Not(criteria) => {
                 let can_vote = self
