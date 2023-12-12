@@ -46,13 +46,6 @@ impl Display for TransferStatus {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct PolicyRequirements {
-    /// The minimum number of approvals required for the transfer to be approved.
-    pub min_approvals: u8,
-}
-
 /// Represents a transfer in the system.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

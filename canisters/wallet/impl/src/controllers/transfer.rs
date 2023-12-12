@@ -96,9 +96,7 @@ impl TransferController {
         &self,
         input: ListAccountTransfersInput,
     ) -> ApiResult<ListAccountTransfersResponse> {
-        let transfers = self
-            .transfer_service
-            .list_account_transfers(input, &call_context())?;
+        let transfers = self.transfer_service.list_account_transfers(input)?;
 
         Ok(ListAccountTransfersResponse {
             transfers: transfers

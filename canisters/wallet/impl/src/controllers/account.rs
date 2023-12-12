@@ -55,10 +55,7 @@ impl AccountController {
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
         let account = self
             .account_service
-            .get_account(
-                HelperMapper::to_uuid(input.account_id)?.as_bytes(),
-                &call_context(),
-            )?
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?
             .to_dto();
 
         Ok(GetAccountResponse { account })
@@ -94,10 +91,7 @@ impl AccountController {
         &self,
         input: FetchAccountBalancesInput,
     ) -> ApiResult<FetchAccountBalancesResponse> {
-        let balances = self
-            .account_service
-            .fetch_account_balances(input, &call_context())
-            .await?;
+        let balances = self.account_service.fetch_account_balances(input).await?;
 
         Ok(FetchAccountBalancesResponse { balances })
     }

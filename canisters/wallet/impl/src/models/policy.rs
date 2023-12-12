@@ -13,7 +13,7 @@ pub enum EvaluationStatus {
 }
 
 #[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalPolicy {
     pub id: UUID,
     pub specifier: ProposalSpecifier,

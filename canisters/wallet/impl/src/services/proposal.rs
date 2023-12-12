@@ -59,11 +59,10 @@ impl ProposalService {
     pub fn list_account_proposals(
         &self,
         input: ListAccountProposalsInput,
-        ctx: &CallContext,
     ) -> ServiceResult<Vec<Proposal>> {
         let account = self
             .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes(), ctx)?;
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
 
         let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
 
@@ -93,9 +92,6 @@ impl ProposalService {
 
         // Different proposal types may have different validation rules.
         proposal.validate()?;
-
-        // Different proposal types may have different access rules.
-        // todo: add access validation
 
         if proposal.can_vote(&proposer.id).await {
             proposal.add_vote(

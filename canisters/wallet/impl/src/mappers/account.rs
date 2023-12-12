@@ -2,13 +2,14 @@ use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
     models::{
-        Account, AccountBalance, AccountId, AddAccountOperation, BlockchainStandard,
-        ACCOUNT_METADATA_SYMBOL_KEY,
+        Account, AccountBalance, AccountId, AccountPolicies, AddAccountOperationInput,
+        BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
     },
+    repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
-use ic_canister_core::{types::UUID, utils::timestamp_to_rfc3339};
+use ic_canister_core::{repository::Repository, types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
-use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO};
+use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CriteriaDTO};
 
 #[derive(Default, Clone, Debug)]
 pub struct AccountMapper {}
@@ -32,6 +33,7 @@ impl AccountMapper {
                 }),
                 None => None,
             },
+            policies: account.policies.into(),
             symbol: account.symbol,
             address: account.address,
             owners: account
@@ -47,26 +49,23 @@ impl AccountMapper {
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata,
-            transfer_criteria: None,
             last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
         }
     }
 
     pub fn from_create_input(
-        operation: AddAccountOperation,
+        input: AddAccountOperationInput,
         account_id: UUID,
         address: Option<String>,
     ) -> Result<Account, MapperError> {
-        if !operation
-            .input
+        if !input
             .blockchain
             .supported_standards()
-            .contains(&operation.input.standard)
+            .contains(&input.standard)
         {
             return Err(MapperError::UnsupportedBlockchainStandard {
-                blockchain: operation.input.blockchain.to_string(),
-                supported_standards: operation
-                    .input
+                blockchain: input.blockchain.to_string(),
+                supported_standards: input
                     .blockchain
                     .supported_standards()
                     .iter()
@@ -75,10 +74,9 @@ impl AccountMapper {
             });
         }
 
-        let symbol = match operation.input.standard {
+        let symbol = match input.standard {
             BlockchainStandard::Native => {
-                if operation
-                    .input
+                if input
                     .metadata
                     .iter()
                     .any(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY)
@@ -86,11 +84,10 @@ impl AccountMapper {
                     return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
                 }
 
-                operation.input.blockchain.native_symbol().to_string()
+                input.blockchain.native_symbol().to_string()
             }
             _ => {
-                let symbol = operation
-                    .input
+                let symbol = input
                     .metadata
                     .iter()
                     .find(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY);
@@ -105,15 +102,19 @@ impl AccountMapper {
 
         let new_account = Account {
             id: account_id,
-            blockchain: operation.input.blockchain,
-            standard: operation.input.standard,
-            name: operation.input.name,
+            blockchain: input.blockchain,
+            standard: input.standard,
+            name: input.name,
             address: address.unwrap_or("".to_string()),
-            owners: operation.input.owners.to_vec(),
+            owners: input.owners.to_vec(),
             decimals: 0,
             symbol,
+            policies: AccountPolicies {
+                transfer_policy_id: None,
+                edit_policy_id: None,
+            },
             balance: None,
-            metadata: operation.input.metadata,
+            metadata: input.metadata,
             last_modification_timestamp: time(),
         };
 
@@ -140,5 +141,22 @@ impl AccountMapper {
 impl Account {
     pub fn to_dto(&self) -> AccountDTO {
         AccountMapper::to_dto(self.clone())
+    }
+}
+
+impl From<AccountPolicies> for wallet_api::AccountPoliciesDTO {
+    fn from(policies: AccountPolicies) -> Self {
+        Self {
+            transfer: policies.transfer_policy_id.and_then(|policy_id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&policy_id)
+                    .map(|policy| CriteriaDTO::from(policy.criteria))
+            }),
+            edit: policies.edit_policy_id.and_then(|policy_id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&policy_id)
+                    .map(|policy| CriteriaDTO::from(policy.criteria))
+            }),
+        }
     }
 }

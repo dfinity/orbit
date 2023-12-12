@@ -35,6 +35,11 @@ pub struct Account {
     pub decimals: u32,
     /// The account name (e.g. `My Main Account`)
     pub name: String,
+    /// The account policies to enforce when interacting with the account.
+    ///
+    /// Policies here are non exaustive, this means that the account can have other policies that are enforced
+    /// by the system that are globally defined.
+    pub policies: AccountPolicies,
     /// The account owners, which are a list of user ids.
     ///
     /// If the account has no owners, it means that it is a system account and
@@ -48,6 +53,13 @@ pub struct Account {
     pub metadata: Vec<(String, String)>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AccountPolicies {
+    pub transfer_policy_id: Option<UUID>,
+    pub edit_policy_id: Option<UUID>,
 }
 
 #[stable_object]
@@ -348,6 +360,10 @@ pub mod account_test_utils {
             decimals: 0u32,
             name: "foo".to_string(),
             owners: vec![],
+            policies: AccountPolicies {
+                transfer_policy_id: None,
+                edit_policy_id: None,
+            },
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
             metadata: vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1],

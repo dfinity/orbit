@@ -31,7 +31,7 @@ impl Account {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Blockchain, BlockchainStandard};
+    use crate::models::{AccountPolicies, Blockchain, BlockchainStandard};
 
     #[test]
     fn test_account_to_user_association() {
@@ -41,6 +41,10 @@ mod tests {
             balance: None,
             blockchain: Blockchain::InternetComputer,
             decimals: 0u32,
+            policies: AccountPolicies {
+                transfer_policy_id: None,
+                edit_policy_id: None,
+            },
             name: "Private".to_string(),
             owners: vec![[1; 16], [2; 16]],
             standard: BlockchainStandard::Native,

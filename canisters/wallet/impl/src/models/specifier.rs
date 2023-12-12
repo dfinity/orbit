@@ -202,10 +202,10 @@ mod tests {
             AccountMatcher, AccountSpecifier, AddressMatcher, AddressSpecifier, Match,
             ProposalMatcher, ProposalSpecifier, UserMatcher, UserSpecifier,
         },
-        AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
-        Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
-        EditUserOperationInput, EvaluationStatus, ProposalOperation, TransferOperation,
-        TransferOperationInput, UserStatus,
+        AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
+        AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
+        EditUserOperation, EditUserOperationInput, EvaluationStatus, ProposalOperation,
+        TransferOperation, TransferOperationInput, UserStatus,
     };
 
     #[tokio::test]
@@ -226,7 +226,10 @@ mod tests {
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: vec![],
-                        transfer_criteria: Criteria::Auto(EvaluationStatus::Adopted),
+                        policies: AccountPoliciesInput {
+                            transfer: Some(Criteria::Auto(EvaluationStatus::Adopted)),
+                            edit: Some(Criteria::Auto(EvaluationStatus::Adopted)),
+                        },
                     },
                 }),
                 ProposalSpecifier::AddAccount,
@@ -249,7 +252,7 @@ mod tests {
                     input: EditAccountOperationInput {
                         account_id: [0; 16],
                         owners: None,
-                        transfer_criteria: None,
+                        policies: None,
                         name: None,
                     },
                 }),

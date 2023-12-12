@@ -19,14 +19,14 @@ type NotificationId = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
 
-type PolicyCriteria = variant {
+type ProposalPolicyCriteria = variant {
   Auto : EvaluationStatus;
   ApprovalThreshold : record { UserSpecifier; float64 };
   MinimumVotes : record { UserSpecifier; nat16 };
   IsAddressKYC;
-  Or : vec PolicyCriteria;
-  And : vec PolicyCriteria;
-  Not : PolicyCriteria;
+  Or : vec ProposalPolicyCriteria;
+  And : vec ProposalPolicyCriteria;
+  Not : ProposalPolicyCriteria;
 };
 
 type UserSpecifier = variant {
@@ -233,10 +233,10 @@ type EditAccountOperationInput = record {
   account_id : AccountId;
   // The updated list of owners of the account.
   owners : opt vec UserId;
-  // The updated criterias to use for withdrawing funds from the account.
-  transfer_criteria : opt PolicyCriteria;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
+  // The updated policies to use when interacting with the account.
+  policies : opt AccountPolicies;
 };
 
 type EditAccountOperation = record {
@@ -250,14 +250,14 @@ type AddAccountOperationInput = record {
   name : text;
   // The list of owners of the account.
   owners : vec UserId;
-  // The criterias to use for withdrawing funds from the account.
-  transfer_criteria : PolicyCriteria;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
+  // The policies to use when interacting with the account.
+  policies : AccountPolicies;
 };
 
 type AddAccountOperation = record {
@@ -786,6 +786,14 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
+// The policies to enforce when interacting with the account.
+type AccountPolicies = record {
+  // The criterias to use for withdrawing funds from the account.
+  transfer : opt ProposalPolicyCriteria;
+  // The criterias to use when editing the account.
+  edit : opt ProposalPolicyCriteria;
+};
+
 // A record type that can be used to represent a account in the canister.
 type Account = record {
   // The internal account id.
@@ -807,6 +815,8 @@ type Account = record {
   owners : vec UserId;
   // Account balance when available.
   balance : opt AccountBalanceInfo;
+  // The policies to enforce when interacting with the account.
+  policies : AccountPolicies;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").

@@ -38,6 +38,13 @@ pub struct TransferOperationInput {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AccountPoliciesInput {
+    pub transfer: Option<Criteria>,
+    pub edit: Option<Criteria>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperation {
     /// The account id is only available after the operation is executed.
     pub account_id: Option<AccountId>,
@@ -52,7 +59,7 @@ pub struct AddAccountOperationInput {
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
     pub metadata: Vec<(String, String)>,
-    pub transfer_criteria: Criteria,
+    pub policies: AccountPoliciesInput,
 }
 
 #[stable_object]
@@ -66,7 +73,7 @@ pub struct EditAccountOperation {
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
     pub owners: Option<Vec<UserId>>,
-    pub transfer_criteria: Option<Criteria>,
+    pub policies: Option<AccountPoliciesInput>,
     pub name: Option<String>,
 }
 

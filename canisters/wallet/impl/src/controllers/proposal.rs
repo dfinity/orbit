@@ -124,7 +124,7 @@ impl ProposalController {
     ) -> ApiResult<ListAccountProposalsResponse> {
         let proposals = self
             .proposal_service
-            .list_account_proposals(input, &call_context())?
+            .list_account_proposals(input)?
             .into_iter()
             .try_fold(Vec::new(), |mut acc, proposal| {
                 acc.push(ProposalDTO::from(proposal));

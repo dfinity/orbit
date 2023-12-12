@@ -80,7 +80,7 @@ impl Execute for AddAccountProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let account = self
             .account_service
-            .create_account(self.operation.clone())
+            .create_account(self.operation.input.to_owned())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to create account: {}", e),

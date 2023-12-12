@@ -1,9 +1,9 @@
 use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
-        Account, AddAccountOperation, AddUserOperation, EditAccountOperation, EditUserOperation,
-        EditUserStatusOperation, ProposalOperation, TransferOperation, UpgradeOperation,
-        UpgradeTarget, User,
+        Account, AccountPoliciesInput, AddAccountOperation, AddUserOperation, EditAccountOperation,
+        EditUserOperation, EditUserStatusOperation, ProposalOperation, TransferOperation,
+        UpgradeOperation, UpgradeTarget, User,
     },
     repositories::{AccountRepository, UserRepository, USER_GROUP_REPOSITORY},
 };
@@ -48,6 +48,24 @@ impl TransferOperation {
     }
 }
 
+impl From<AccountPoliciesInput> for wallet_api::AccountPoliciesDTO {
+    fn from(input: AccountPoliciesInput) -> wallet_api::AccountPoliciesDTO {
+        wallet_api::AccountPoliciesDTO {
+            transfer: input.transfer.map(|criteria| criteria.into()),
+            edit: input.edit.map(|criteria| criteria.into()),
+        }
+    }
+}
+
+impl From<wallet_api::AccountPoliciesDTO> for AccountPoliciesInput {
+    fn from(input: wallet_api::AccountPoliciesDTO) -> AccountPoliciesInput {
+        AccountPoliciesInput {
+            transfer: input.transfer.map(|criteria| criteria.into()),
+            edit: input.edit.map(|criteria| criteria.into()),
+        }
+    }
+}
+
 impl AddAccountOperation {
     pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
         AddAccountOperationDTO {
@@ -60,7 +78,7 @@ impl AddAccountOperation {
                     .iter()
                     .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
                     .collect(),
-                transfer_criteria: self.input.transfer_criteria.into(),
+                policies: self.input.policies.into(),
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
                 metadata: self.input.metadata,
@@ -95,7 +113,7 @@ impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput 
                         .as_bytes()
                 })
                 .collect(),
-            transfer_criteria: input.transfer_criteria.into(),
+            policies: input.policies.into(),
             blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
                 .expect("Invalid blockchain"),
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
@@ -119,10 +137,7 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                         .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
                         .collect()
                 }),
-                transfer_criteria: operation
-                    .input
-                    .transfer_criteria
-                    .map(|criteria| criteria.into()),
+                policies: operation.input.policies.map(|policies| policies.into()),
             },
         }
     }

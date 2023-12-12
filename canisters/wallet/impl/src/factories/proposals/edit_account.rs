@@ -8,10 +8,9 @@ use crate::{
         ProposalExecutionPlan, ProposalOperation,
     },
     repositories::ACCOUNT_REPOSITORY,
-    services::NotificationService,
+    services::{NotificationService, ACCOUNT_SERVICE},
 };
 use async_trait::async_trait;
-use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
 use uuid::Uuid;
@@ -53,7 +52,7 @@ impl Create<wallet_api::EditAccountOperationInput> for EditAccountProposalCreate
                         ),
                         None => None,
                     },
-                    transfer_criteria: operation_input.transfer_criteria.map(Into::into),
+                    policies: operation_input.policies.map(Into::into),
                     name: operation_input.name,
                 },
             }),
@@ -135,35 +134,12 @@ impl<'p, 'o> EditAccountProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for EditAccountProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let mut account = ACCOUNT_REPOSITORY
-            .get(&Account::key(self.operation.input.account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(self.operation.input.account_id).hyphenated()
-                ))
-            });
-
-        if let Some(name) = &self.operation.input.name {
-            account.name = name.clone();
-        }
-
-        if let Some(owners) = &self.operation.input.owners {
-            account.owners = owners.clone();
-        }
-
-        if let Some(_criteria) = &self.operation.input.transfer_criteria {
-            // TODO: Add edit of transfer criteria for account
-            todo!()
-        }
-
-        account
-            .validate()
+        ACCOUNT_SERVICE
+            .edit_account(self.operation.input.to_owned())
+            .await
             .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to validate account: {}", e),
+                reason: format!("Failed to update account: {}", e),
             })?;
-
-        ACCOUNT_REPOSITORY.insert(account.to_key(), account.to_owned());
 
         Ok(ProposalExecuteStage::Completed(
             self.proposal.operation.clone(),

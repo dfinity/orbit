@@ -14,17 +14,23 @@ pub struct AccountDTO {
     pub standard: String,
     pub symbol: String,
     pub decimals: u32,
+    pub policies: AccountPoliciesDTO,
     pub balance: Option<AccountBalanceInfoDTO>,
-    pub transfer_criteria: Option<CriteriaDTO>,
     pub metadata: Vec<(String, String)>,
     pub last_modification_timestamp: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountPoliciesDTO {
+    pub transfer: Option<CriteriaDTO>,
+    pub edit: Option<CriteriaDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationInput {
     pub account_id: AccountIdDTO,
     pub owners: Option<Vec<UserIdDTO>>,
-    pub transfer_criteria: Option<CriteriaDTO>,
+    pub policies: Option<AccountPoliciesDTO>,
     pub name: Option<String>,
 }
 
@@ -37,7 +43,7 @@ pub struct EditAccountOperationDTO {
 pub struct AddAccountOperationInput {
     pub name: String,
     pub owners: Vec<UserIdDTO>,
-    pub transfer_criteria: CriteriaDTO,
+    pub policies: AccountPoliciesDTO,
     pub blockchain: String,
     pub standard: String,
     pub metadata: Vec<(String, String)>,

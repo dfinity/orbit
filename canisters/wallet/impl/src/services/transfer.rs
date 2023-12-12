@@ -55,11 +55,10 @@ impl TransferService {
     pub fn list_account_transfers(
         &self,
         input: ListAccountTransfersInput,
-        ctx: &CallContext,
     ) -> ServiceResult<Vec<Transfer>> {
         let account = self
             .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes(), ctx)?;
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
 
         let transfers = self.transfer_repository.find_by_account(
             account.id,
