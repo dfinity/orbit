@@ -250,8 +250,10 @@ mod tests {
         let mut proposal_policy = mock_proposal_policy();
         proposal_policy.specifier =
             ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any);
-        proposal_policy.criteria =
-            Criteria::ApprovalThreshold(UserSpecifier::Id(vec![ctx.caller_user.id]), Percentage(100));
+        proposal_policy.criteria = Criteria::ApprovalThreshold(
+            UserSpecifier::Id(vec![ctx.caller_user.id]),
+            Percentage(100),
+        );
 
         ctx.account_repository
             .insert(account.to_key(), account.clone());
