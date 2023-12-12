@@ -134,6 +134,12 @@ pub struct CriteriaEvaluator {
     pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
 }
 
+struct ProposalVoteSummary {
+    total_possible_votes: usize,
+    adopted_votes: usize,
+    unvoted_votes: usize,
+}
+
 impl CriteriaEvaluator {
     async fn evaluate_criterias(
         &self,
@@ -181,6 +187,48 @@ impl CriteriaEvaluator {
             .try_collect()
             .await
     }
+
+    async fn calculate_votes(
+        &self,
+        proposal: &Arc<Proposal>,
+        user_specifier: &UserSpecifier,
+    ) -> Result<ProposalVoteSummary, MatchError> {
+        let casted_votes = self
+            .find_matching_users::<ProposalVoteStatus>(
+                proposal,
+                proposal
+                    .votes
+                    .iter()
+                    .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
+                    .collect::<Vec<(UserId, ProposalVoteStatus)>>()
+                    .as_slice(),
+                user_specifier,
+            )
+            .await?;
+
+        let total_possible_votes = self
+            .find_matching_users::<()>(
+                proposal,
+                USER_REPOSITORY
+                    .list()
+                    .iter()
+                    .map(|user| (user.id.to_owned(), ()))
+                    .collect::<Vec<(UserId, ())>>()
+                    .as_slice(),
+                user_specifier,
+            )
+            .await?
+            .len();
+
+        Ok(ProposalVoteSummary {
+            total_possible_votes,
+            adopted_votes: casted_votes
+                .iter()
+                .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
+                .count(),
+            unvoted_votes: total_possible_votes.saturating_sub(casted_votes.len()),
+        })
+    }
 }
 
 #[async_trait]
@@ -194,92 +242,27 @@ impl EvaluateCriteria for CriteriaEvaluator {
             // TODO: Add evaluation of KYC criteria once address book is implemented
             Criteria::IsAddressKYC => todo!(),
             Criteria::ApprovalThreshold(user_specifier, ratio) => {
-                let casted_votes = self
-                    .find_matching_users::<ProposalVoteStatus>(
-                        &proposal,
-                        proposal
-                            .votes
-                            .iter()
-                            .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
-                            .collect::<Vec<(UserId, ProposalVoteStatus)>>()
-                            .as_slice(),
-                        user_specifier,
-                    )
-                    .await?;
-                let total_possible_votes = self
-                    .find_matching_users::<()>(
-                        &proposal,
-                        USER_REPOSITORY
-                            .list()
-                            .iter()
-                            .map(|user| (user.id.to_owned(), ()))
-                            .collect::<Vec<(UserId, ())>>()
-                            .as_slice(),
-                        user_specifier,
-                    )
-                    .await?
-                    .len();
+                let votes = self.calculate_votes(&proposal, user_specifier).await?;
+                let min_votes = (ratio.0 * votes.total_possible_votes as f64).ceil() as usize;
 
-                // Evaluate Status
-                let v_adopt = casted_votes
-                    .iter()
-                    .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
-                    .count();
-                let v_adopt = v_adopt as f64;
-
-                let v_unvoted = total_possible_votes.saturating_sub(casted_votes.len());
-                let v_unvoted = v_unvoted as f64;
-
-                if (v_adopt / total_possible_votes as f64) >= ratio.0 {
+                if votes.adopted_votes >= min_votes {
                     return Ok(EvaluationStatus::Adopted);
                 }
 
-                if ((v_adopt + v_unvoted) / total_possible_votes as f64) < ratio.0 {
+                if votes.adopted_votes.saturating_add(votes.unvoted_votes) < min_votes {
                     return Ok(EvaluationStatus::Rejected);
                 }
 
                 Ok(EvaluationStatus::Pending)
             }
             Criteria::MinimumVotes(user_specifier, min_votes) => {
-                let casted_votes = self
-                    .find_matching_users::<ProposalVoteStatus>(
-                        &proposal,
-                        proposal
-                            .votes
-                            .iter()
-                            .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
-                            .collect::<Vec<(UserId, ProposalVoteStatus)>>()
-                            .as_slice(),
-                        user_specifier,
-                    )
-                    .await?;
-                let total_possible_votes = self
-                    .find_matching_users::<()>(
-                        &proposal,
-                        USER_REPOSITORY
-                            .list()
-                            .iter()
-                            .map(|user| (user.id.to_owned(), ()))
-                            .collect::<Vec<(UserId, ())>>()
-                            .as_slice(),
-                        user_specifier,
-                    )
-                    .await?
-                    .len();
+                let votes = self.calculate_votes(&proposal, user_specifier).await?;
 
-                // Evaluate Status
-                let v_adopt = casted_votes
-                    .iter()
-                    .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
-                    .count();
-
-                let v_unvoted = total_possible_votes.saturating_sub(casted_votes.len());
-
-                if v_adopt >= *min_votes as usize {
+                if votes.adopted_votes >= *min_votes as usize {
                     return Ok(EvaluationStatus::Adopted);
                 }
 
-                if (v_adopt + v_unvoted) < *min_votes as usize {
+                if votes.adopted_votes.saturating_add(votes.unvoted_votes) < *min_votes as usize {
                     return Ok(EvaluationStatus::Rejected);
                 }
 
