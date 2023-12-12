@@ -35,7 +35,6 @@ impl TryFrom<u16> for Percentage {
 pub enum Criteria {
     // Auto
     AutoAdopted,
-    AutoRejected,
     // Votes
     ApprovalThreshold(UserSpecifier, Percentage),
     MinimumVotes(UserSpecifier, u16),
@@ -73,7 +72,7 @@ pub struct CriteriaEvaluator {
 struct ProposalVoteSummary {
     total_possible_votes: usize,
     adopted_votes: usize,
-    unvoted_votes: usize,
+    uncasted_votes: usize,
 }
 
 impl CriteriaEvaluator {
@@ -162,7 +161,7 @@ impl CriteriaEvaluator {
                 .iter()
                 .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
                 .count(),
-            unvoted_votes: total_possible_votes.saturating_sub(casted_votes.len()),
+            uncasted_votes: total_possible_votes.saturating_sub(casted_votes.len()),
         })
     }
 }
@@ -175,7 +174,6 @@ impl EvaluateCriteria for CriteriaEvaluator {
     ) -> Result<EvaluationStatus, EvaluateError> {
         match c.as_ref() {
             Criteria::AutoAdopted => Ok(EvaluationStatus::Adopted),
-            Criteria::AutoRejected => Ok(EvaluationStatus::Rejected),
             Criteria::ApprovalThreshold(user_specifier, Percentage(percentage)) => {
                 let votes = self.calculate_votes(&proposal, user_specifier).await?;
                 let min_votes = ((*percentage as f64 / 100.0) * votes.total_possible_votes as f64)
@@ -185,7 +183,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                     return Ok(EvaluationStatus::Adopted);
                 }
 
-                if votes.adopted_votes.saturating_add(votes.unvoted_votes) < min_votes {
+                if votes.adopted_votes.saturating_add(votes.uncasted_votes) < min_votes {
                     return Ok(EvaluationStatus::Rejected);
                 }
 
@@ -198,7 +196,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                     return Ok(EvaluationStatus::Adopted);
                 }
 
-                if votes.adopted_votes.saturating_add(votes.unvoted_votes) < *min_votes as usize {
+                if votes.adopted_votes.saturating_add(votes.uncasted_votes) < *min_votes as usize {
                     return Ok(EvaluationStatus::Rejected);
                 }
 

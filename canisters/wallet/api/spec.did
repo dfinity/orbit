@@ -21,7 +21,6 @@ type TimestampRFC3339 = text;
 
 type ProposalPolicyCriteria = variant {
   AutoAdopted;
-  AutoRejected;
   ApprovalThreshold : record { UserSpecifier; nat16 };
   MinimumVotes : record { UserSpecifier; nat16 };
   Or : vec ProposalPolicyCriteria;

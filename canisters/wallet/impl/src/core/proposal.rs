@@ -56,6 +56,7 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
         }
 
         let proposal = Arc::new(self.proposal.to_owned());
+        let mut evaluation_statuses = Vec::new();
 
         for policy in matching_policies {
             // Evaluate the criteria
@@ -65,9 +66,20 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
                 .await
                 .context("failed to evaluate criteria")?;
 
-            if let EvaluationStatus::Adopted | EvaluationStatus::Rejected = evaluation_status {
+            evaluation_statuses.push(evaluation_status.to_owned());
+
+            if let EvaluationStatus::Adopted = evaluation_status {
                 return Ok(evaluation_status);
             }
+        }
+
+        // Only if all policies are rejected then the proposal is rejected,
+        // this applies an implicit `OR` between policies.
+        if evaluation_statuses
+            .iter()
+            .all(|status| *status == EvaluationStatus::Rejected)
+        {
+            return Ok(EvaluationStatus::Rejected);
         }
 
         // Since there are matching policies, but none of them adopted or rejected the proposal, we keep it in the

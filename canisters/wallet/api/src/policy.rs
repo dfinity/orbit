@@ -13,7 +13,6 @@ pub enum UserSpecifierDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CriteriaDTO {
     AutoAdopted,
-    AutoRejected,
     ApprovalThreshold(UserSpecifierDTO, u16),
     MinimumVotes(UserSpecifierDTO, u16),
     Or(Vec<CriteriaDTO>),

@@ -10,7 +10,6 @@ impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
         match criteria {
             Criteria::AutoAdopted => CriteriaDTO::AutoAdopted,
-            Criteria::AutoRejected => CriteriaDTO::AutoRejected,
             Criteria::ApprovalThreshold(specifier, threshold) => {
                 CriteriaDTO::ApprovalThreshold(specifier.into(), threshold.0)
             }
@@ -32,7 +31,6 @@ impl From<CriteriaDTO> for Criteria {
     fn from(dto: CriteriaDTO) -> Self {
         match dto {
             CriteriaDTO::AutoAdopted => Criteria::AutoAdopted,
-            CriteriaDTO::AutoRejected => Criteria::AutoRejected,
             CriteriaDTO::ApprovalThreshold(specifier, threshold) => {
                 Criteria::ApprovalThreshold(specifier.into(), Percentage(threshold))
             }
