@@ -44,14 +44,8 @@ fn make_transfer_successful() {
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
         policies: AccountPoliciesDTO {
-            transfer: Some(CriteriaDTO::ApprovalThreshold(
-                UserSpecifierDTO::Owner,
-                1f64,
-            )),
-            edit: Some(CriteriaDTO::ApprovalThreshold(
-                UserSpecifierDTO::Owner,
-                1f64,
-            )),
+            transfer: Some(CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 100)),
+            edit: Some(CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 100)),
         },
         metadata: vec![],
     };

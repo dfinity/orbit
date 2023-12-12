@@ -1,6 +1,6 @@
 use super::HelperMapper;
 use crate::models::{
-    criteria::{Criteria, Ratio},
+    criteria::{Criteria, Percentage},
     specifier::UserSpecifier,
 };
 use uuid::Uuid;
@@ -34,7 +34,7 @@ impl From<CriteriaDTO> for Criteria {
             CriteriaDTO::AutoAdopted => Criteria::AutoAdopted,
             CriteriaDTO::AutoRejected => Criteria::AutoRejected,
             CriteriaDTO::ApprovalThreshold(specifier, threshold) => {
-                Criteria::ApprovalThreshold(specifier.into(), Ratio(threshold))
+                Criteria::ApprovalThreshold(specifier.into(), Percentage(threshold))
             }
             CriteriaDTO::MinimumVotes(specifier, votes) => {
                 Criteria::MinimumVotes(specifier.into(), votes)

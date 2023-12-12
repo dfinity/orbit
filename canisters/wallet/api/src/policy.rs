@@ -14,7 +14,7 @@ pub enum UserSpecifierDTO {
 pub enum CriteriaDTO {
     AutoAdopted,
     AutoRejected,
-    ApprovalThreshold(UserSpecifierDTO, f64),
+    ApprovalThreshold(UserSpecifierDTO, u16),
     MinimumVotes(UserSpecifierDTO, u16),
     Or(Vec<CriteriaDTO>),
     And(Vec<CriteriaDTO>),

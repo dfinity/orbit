@@ -157,7 +157,7 @@ mod tests {
         core::test_utils,
         models::{
             account_test_utils::mock_account,
-            criteria::{Criteria, Ratio},
+            criteria::{Criteria, Percentage},
             proposal_policy_test_utils::mock_proposal_policy,
             proposal_test_utils::mock_proposal,
             specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier, UserSpecifier},
@@ -251,7 +251,7 @@ mod tests {
         proposal_policy.specifier =
             ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any);
         proposal_policy.criteria =
-            Criteria::ApprovalThreshold(UserSpecifier::Id(vec![ctx.caller_user.id]), Ratio(1f64));
+            Criteria::ApprovalThreshold(UserSpecifier::Id(vec![ctx.caller_user.id]), Percentage(100));
 
         ctx.account_repository
             .insert(account.to_key(), account.clone());

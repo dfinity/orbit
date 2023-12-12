@@ -1,6 +1,6 @@
 use crate::models::{
     access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType, UserSpecifier},
-    criteria::{Criteria, Ratio},
+    criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier as ProposalUserSpecifier},
     ADMIN_GROUP_ID,
 };
@@ -101,21 +101,21 @@ lazy_static! {
             ProposalSpecifier::AddAccount,
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Ratio(0.51)
+                Percentage(51)
             )])
         ),
         (
             ProposalSpecifier::AddUser,
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Ratio(0.51)
+                Percentage(51)
             )])
         ),
         (
             ProposalSpecifier::EditUser(ProposalUserSpecifier::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Ratio(0.51)
+                Percentage(51)
             )])
         )
     ];
