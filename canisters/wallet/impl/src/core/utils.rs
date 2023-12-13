@@ -1,5 +1,8 @@
 use crate::models::criteria::Percentage;
 
+/// Calculates the minimum threshold for a given percentage and total value.
+///
+/// This only works for percentages between 0 and 100 (inclusive).
 pub fn calculate_minimum_threshold(percentage: &Percentage, total_value: &usize) -> usize {
     let Percentage(percentage) = percentage;
     let percentage = *percentage as usize;
