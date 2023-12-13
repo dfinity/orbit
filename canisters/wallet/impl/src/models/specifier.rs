@@ -10,19 +10,13 @@ use std::sync::Arc;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AccountSpecifier {
-    Any,
-    Group(Vec<UUID>),
-    Id(Vec<UUID>),
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CommonSpecifier {
     Any,
     Group(Vec<UUID>),
     Id(Vec<UUID>),
 }
+
+pub type AccountSpecifier = CommonSpecifier;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

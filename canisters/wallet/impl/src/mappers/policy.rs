@@ -6,7 +6,8 @@ use crate::models::{
         UpgradeActionSpecifier,
     },
     criteria::{Criteria, Percentage},
-    specifier::{AddressSpecifier, CommonSpecifier, UserSpecifier},
+    specifier::{AddressSpecifier, CommonSpecifier, ProposalSpecifier, UserSpecifier},
+    ProposalPolicy,
 };
 use uuid::Uuid;
 use wallet_api::{
@@ -140,6 +141,7 @@ impl From<ResourceType> for wallet_api::ResourceTypeDTO {
             ResourceType::UserGroup => wallet_api::ResourceTypeDTO::UserGroup,
             ResourceType::AddressBook => wallet_api::ResourceTypeDTO::AddressBook,
             ResourceType::AccessPolicy => wallet_api::ResourceTypeDTO::AccessPolicy,
+            ResourceType::ProposalPolicy => wallet_api::ResourceTypeDTO::ProposalPolicy,
         }
     }
 }
@@ -240,6 +242,37 @@ impl From<CommonActionSpecifier> for wallet_api::CommonActionSpecifierDTO {
             }
             CommonActionSpecifier::Delete(common_specifier) => {
                 wallet_api::CommonActionSpecifierDTO::Delete(common_specifier.into())
+            }
+        }
+    }
+}
+
+impl From<ProposalPolicy> for wallet_api::ProposalPolicyDTO {
+    fn from(policy: ProposalPolicy) -> Self {
+        Self {
+            id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
+            specifier: policy.specifier.into(),
+            criteria: policy.criteria.into(),
+        }
+    }
+}
+
+impl From<ProposalSpecifier> for wallet_api::ProposalSpecifierDTO {
+    fn from(specifier: ProposalSpecifier) -> Self {
+        match specifier {
+            ProposalSpecifier::AddAccount => wallet_api::ProposalSpecifierDTO::AddAccount,
+            ProposalSpecifier::AddUser => wallet_api::ProposalSpecifierDTO::AddUser,
+            ProposalSpecifier::EditAccount(account) => {
+                wallet_api::ProposalSpecifierDTO::EditAccount(account.into())
+            }
+            ProposalSpecifier::EditUser(user) => {
+                wallet_api::ProposalSpecifierDTO::EditUser(user.into())
+            }
+            ProposalSpecifier::Transfer(account, address) => {
+                wallet_api::ProposalSpecifierDTO::Transfer(TransferSpecifierDTO {
+                    account: account.into(),
+                    address: address.into(),
+                })
             }
         }
     }

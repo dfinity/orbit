@@ -52,6 +52,7 @@ pub enum ResourceType {
     UserGroup,
     AddressBook,
     AccessPolicy,
+    ProposalPolicy,
 }
 
 pub type AccountSpecifier = CommonSpecifier;
@@ -65,6 +66,7 @@ impl Display for ResourceType {
             ResourceType::UserGroup => write!(f, "user_group"),
             ResourceType::AddressBook => write!(f, "address_book"),
             ResourceType::AccessPolicy => write!(f, "access_policy"),
+            ResourceType::ProposalPolicy => write!(f, "proposal_policy"),
         }
     }
 }
@@ -160,6 +162,7 @@ pub type AccountActionSpecifier = CommonActionSpecifier;
 pub type UserGroupActionSpecifier = CommonActionSpecifier;
 pub type AddressBookActionSpecifier = CommonActionSpecifier;
 pub type AccessPolicyActionSpecifier = CommonActionSpecifier;
+pub type ProposalPolicyActionSpecifier = CommonActionSpecifier;
 
 #[cfg(test)]
 mod tests {
@@ -372,6 +375,43 @@ mod tests {
             ResourceSpecifier::Common(ResourceType::AccessPolicy, UserGroupActionSpecifier::Create)
                 .to_key(),
             "access_policy_create"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(ResourceType::ProposalPolicy, UserGroupActionSpecifier::List)
+                .to_key(),
+            "proposal_policy_list"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                UserGroupActionSpecifier::Read(CommonSpecifier::Any)
+            )
+            .to_key(),
+            "proposal_policy_read"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                UserGroupActionSpecifier::Update(CommonSpecifier::Any)
+            )
+            .to_key(),
+            "proposal_policy_update"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                UserGroupActionSpecifier::Delete(CommonSpecifier::Any)
+            )
+            .to_key(),
+            "proposal_policy_delete"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                UserGroupActionSpecifier::Create
+            )
+            .to_key(),
+            "proposal_policy_create"
         );
     }
 }
