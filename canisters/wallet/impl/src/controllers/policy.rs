@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_control::ResourceSpecifier,
+    models::access_control::{AccessPolicyActionSpecifier, ResourceSpecifier, ResourceType},
     services::{PolicyService, POLICY_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
@@ -61,6 +61,12 @@ impl PolicyController {
         })
     }
 
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::Common(ResourceType::AccessPolicy, AccessPolicyActionSpecifier::List)],
+        is_async = true
+    )]
     async fn list_access_policies(
         &self,
         input: ListAccessPoliciesInput,
