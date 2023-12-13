@@ -17,14 +17,12 @@ async fn initialize(install: Option<CanisterInstall>) {
 
 #[post_upgrade]
 async fn post_upgrade(install: Option<CanisterInstall>) {
-    if let Some(CanisterInstall::Upgrade(input)) = &install {
-        CANISTER_SERVICE
+    match install {
+        Some(CanisterInstall::Upgrade(input)) => CANISTER_SERVICE
             .upgrade_canister(input.to_owned())
             .await
-            .expect("failed to upgrade canister");
-    }
-
-    if install.is_some() {
-        trap("wrong install mode for canister");
+            .expect("failed to upgrade canister"),
+        Some(_) => trap("wrong install mode for canister"),
+        None => {}
     }
 }
