@@ -60,6 +60,10 @@ lazy_static! {
         // access policies
         (
             UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(ResourceType::AccessPolicy, CommonActionSpecifier::List),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
             ResourceSpecifier::Common(
                 ResourceType::AccessPolicy,
                 CommonActionSpecifier::Create,
@@ -83,6 +87,39 @@ lazy_static! {
             UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
             ResourceSpecifier::Common(
                 ResourceType::AccessPolicy,
+                CommonActionSpecifier::Read(CommonSpecifier::Any)
+            ),
+        ),
+        // proposal policies
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(ResourceType::ProposalPolicy, CommonActionSpecifier::List),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                CommonActionSpecifier::Create,
+            ),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                CommonActionSpecifier::Delete(CommonSpecifier::Any)
+            ),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                CommonActionSpecifier::Update(CommonSpecifier::Any)
+            ),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
                 CommonActionSpecifier::Read(CommonSpecifier::Any)
             ),
         ),

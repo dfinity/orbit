@@ -20,7 +20,7 @@ use ic_canister_core::{api::ServiceResult, types::UUID};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
-use wallet_api::ListAccessPoliciesInput;
+use wallet_api::{ListAccessPoliciesInput, ListProposalPoliciesInput};
 
 lazy_static! {
     pub static ref POLICY_SERVICE: Arc<PolicyService> = Arc::new(PolicyService::new(
@@ -154,13 +154,29 @@ impl PolicyService {
 
         Ok(result)
     }
+
+    pub fn list_proposal_policies(
+        &self,
+        input: ListProposalPoliciesInput,
+    ) -> ServiceResult<PaginatedData<ProposalPolicy>> {
+        let result = paginated_items(PaginatedItemsArgs {
+            offset: input.offset,
+            limit: input.limit,
+            default_limit: Some(Self::DEFAULT_POLICIES_LIMIT),
+            max_limit: Some(Self::MAX_LIST_POLICIES_LIMIT),
+            items: Box::new(|| self.proposal_policy_repository.list()),
+        })?;
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_control::{
-        access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
+    use crate::models::{
+        access_control::{access_control_test_utils::mock_access_policy, ProposalActionSpecifier},
+        proposal_policy_test_utils::mock_proposal_policy,
     };
 
     #[tokio::test]
@@ -261,6 +277,25 @@ mod tests {
         };
 
         let result = POLICY_SERVICE.list_access_policies(input).unwrap();
+        assert_eq!(result.items.len(), 30);
+        assert_eq!(result.next_offset, Some(45));
+    }
+
+    #[test]
+    fn list_proposal_policies_should_use_offset_and_limit() {
+        for i in 0..50 {
+            let mut policy = mock_proposal_policy();
+            policy.id = [i; 16];
+            policy.specifier = ProposalSpecifier::AddAccount;
+            PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.to_owned());
+        }
+
+        let input = ListProposalPoliciesInput {
+            offset: Some(15),
+            limit: Some(30),
+        };
+
+        let result = POLICY_SERVICE.list_proposal_policies(input).unwrap();
         assert_eq!(result.items.len(), 30);
         assert_eq!(result.next_offset, Some(45));
     }

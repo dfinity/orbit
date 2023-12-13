@@ -1,5 +1,14 @@
-use crate::UuidDTO;
+use crate::{PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ProposalSpecifierDTO {
+    AddAccount,
+    AddUser,
+    EditAccount(AccountSpecifierDTO),
+    EditUser(UserSpecifierDTO),
+    Transfer(TransferSpecifierDTO),
+}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum UserSpecifierDTO {
@@ -28,6 +37,7 @@ pub enum CommonSpecifierDTO {
 }
 
 pub type AccessControlUserSpecifierDTO = CommonSpecifierDTO;
+pub type AccountSpecifierDTO = CommonSpecifierDTO;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CommonActionSpecifierDTO {
@@ -45,6 +55,7 @@ pub enum ResourceTypeDTO {
     UserGroup,
     AddressBook,
     AccessPolicy,
+    ProposalPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -104,11 +115,7 @@ pub struct AccessControlPolicyDTO {
     pub resource: ResourceSpecifierDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAccessPoliciesInput {
-    pub offset: Option<u64>,
-    pub limit: Option<u16>,
-}
+pub type ListAccessPoliciesInput = PaginationInput;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccessPoliciesResponse {
@@ -124,4 +131,29 @@ pub struct GetAccessPolicyInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyResponse {
     pub policy: AccessControlPolicyDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalPolicyDTO {
+    pub id: UuidDTO,
+    pub specifier: ProposalSpecifierDTO,
+    pub criteria: CriteriaDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetProposalPolicyInput {
+    pub id: UuidDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetProposalPolicyResponse {
+    pub policy: ProposalPolicyDTO,
+}
+
+pub type ListProposalPoliciesInput = PaginationInput;
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListProposalPoliciesResponse {
+    pub policies: Vec<ProposalPolicyDTO>,
+    pub next_offset: Option<u64>,
 }

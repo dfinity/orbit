@@ -252,6 +252,19 @@ impl From<&wallet_api::GetAccessPolicyInput> for ResourceSpecifier {
     }
 }
 
+impl From<&wallet_api::GetProposalPolicyInput> for ResourceSpecifier {
+    fn from(input: &wallet_api::GetProposalPolicyInput) -> Self {
+        let proposal_policy_id = *HelperMapper::to_uuid(input.id.to_owned())
+            .expect("Invalid proposal policy id")
+            .as_bytes();
+
+        ResourceSpecifier::Common(
+            ResourceType::ProposalPolicy,
+            AccountActionSpecifier::Read(CommonSpecifier::Id([proposal_policy_id].to_vec())),
+        )
+    }
+}
+
 impl From<&wallet_api::GetUserGroupInput> for ResourceSpecifier {
     fn from(input: &wallet_api::GetUserGroupInput) -> Self {
         let user_group_id = *HelperMapper::to_uuid(input.user_group_id.to_owned())

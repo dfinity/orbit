@@ -19,6 +19,32 @@ type NotificationId = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
 
+type PaginationInput = record {
+  // The offset to use for pagination.
+  offset : opt nat64;
+  // The maximum number of items to retrieve.
+  //
+  // If not set, the default limit will be used.
+  limit : opt nat16;
+};
+
+// Represents a proposal policy with the associated criteria.
+type ProposalPolicy = record {
+  id : UUID;
+  specifier : ProposalSpecifier;
+  criteria : ProposalPolicyCriteria;
+};
+
+// Defines the various types of proposals that can be created.
+type ProposalSpecifier = variant {
+  AddAccount;
+  AddUser;
+  EditAccount : AccountSpecifier;
+  EditUser : UserSpecifier;
+  Transfer : TransferSpecifier;
+};
+
+// Defines the various types criterias that can be used in a proposal evaluation.
 type ProposalPolicyCriteria = variant {
   AutoAdopted;
   ApprovalThreshold : record { UserSpecifier; nat16 };
@@ -28,19 +54,16 @@ type ProposalPolicyCriteria = variant {
   Not : ProposalPolicyCriteria;
 };
 
+// Defines a user in the context of a proposal.
 type UserSpecifier = variant {
   Any;
   Id : vec UserId;
-  Group : vec UUID;
+  Group : vec UserGroupId;
   Owner;
   Proposer;
 };
 
-type EvaluationStatus = variant {
-  Pending;
-  Adopted;
-  Rejected;
-};
+type AccountSpecifier = CommonSpecifier;
 
 // Defines the various states that a notification can be in.
 type NotificationStatus = variant {
@@ -948,14 +971,7 @@ type ConfirmUserIdentityResult = variant {
 };
 
 // Input type for listing users of the wallet.
-type ListUsersInput = record {
-  // The offset to use for pagination.
-  offset : opt nat64;
-  // The maximum number of users to retrieve.
-  //
-  // If not set, the default limit will be used.
-  limit : opt nat16;
-};
+type ListUsersInput = PaginationInput;
 
 // Result type for listing users of the wallet.
 type ListUsersResult = variant {
@@ -1000,6 +1016,7 @@ type ResourceType = variant {
   UserGroup;
   AddressBook;
   AccessPolicy;
+  ProposalPolicy;
 };
 
 // The actions that are available for upgrades.
@@ -1059,14 +1076,7 @@ type AccessControlPolicy = record {
 };
 
 // Input type for listing access policies with the given pagination parameters.
-type ListAccessPoliciesInput = record {
-  // The offset to use for pagination.
-  offset : opt nat64;
-  // The maximum number of access policies to retrieve.
-  //
-  // If not set, the default limit will be used.
-  limit : opt nat16;
-};
+type ListAccessPoliciesInput = PaginationInput;
 
 // Result type for listing access policies.
 type ListAccessPoliciesResult = variant {
@@ -1117,6 +1127,37 @@ type GetUserGroupResult = variant {
   Ok : record {
     // The group that was retrieved.
     user_group : UserGroup;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+type GetProposalPolicyInput = record {
+  // The id of the proposal policy to retrieve.
+  id : UUID;
+};
+
+type GetProposalPolicyResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The proposal policy that was retrieved.
+    policy : ProposalPolicy;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+// Input type for listing proposal policies with the given pagination parameters.
+type ListProposalPoliciesInput = PaginationInput;
+
+// Result type for listing proposal policies.
+type ListProposalPoliciesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of proposal policies.
+    policies : vec ProposalPolicy;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1189,6 +1230,10 @@ service : (opt WalletInit) -> {
   list_access_policies : (input : ListAccessPoliciesInput) -> (ListAccessPoliciesResult) query;
   // Get access control policy.
   get_access_policy : (input : GetAccessPolicyInput) -> (GetAccessPolicyResult) query;
+  // List add proposal policies.
+  list_proposal_policies : (input : ListProposalPoliciesInput) -> (ListProposalPoliciesResult) query;
+  // Get proposal policy by id.
+  get_proposal_policy : (input : GetProposalPolicyInput) -> (GetProposalPolicyResult) query;
   // Get a user group by id.
   //
   // If the caller does not have access to the user group, an error will be returned.
