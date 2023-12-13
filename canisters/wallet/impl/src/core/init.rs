@@ -57,6 +57,35 @@ lazy_static! {
                 CommonActionSpecifier::Update(CommonSpecifier::Any)
             ),
         ),
+        // access policies
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                CommonActionSpecifier::Create,
+            ),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                CommonActionSpecifier::Delete(CommonSpecifier::Any)
+            ),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                CommonActionSpecifier::Update(CommonSpecifier::Any)
+            ),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                CommonActionSpecifier::Read(CommonSpecifier::Any)
+            ),
+        ),
         // address book
         (
             UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),

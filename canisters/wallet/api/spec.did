@@ -999,6 +999,7 @@ type ResourceType = variant {
   User;
   UserGroup;
   AddressBook;
+  AccessPolicy;
 };
 
 // The actions that are available for upgrades.

@@ -1,8 +1,11 @@
 use crate::{
+    core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
+    models::access_control::ResourceSpecifier,
     services::{PolicyService, POLICY_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
+use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use std::sync::Arc;
@@ -39,6 +42,12 @@ impl PolicyController {
         Self { policy_service }
     }
 
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn get_access_policy(
         &self,
         input: GetAccessPolicyInput,

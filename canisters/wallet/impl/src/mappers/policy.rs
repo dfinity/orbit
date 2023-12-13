@@ -139,6 +139,7 @@ impl From<ResourceType> for wallet_api::ResourceTypeDTO {
             ResourceType::User => wallet_api::ResourceTypeDTO::User,
             ResourceType::UserGroup => wallet_api::ResourceTypeDTO::UserGroup,
             ResourceType::AddressBook => wallet_api::ResourceTypeDTO::AddressBook,
+            ResourceType::AccessPolicy => wallet_api::ResourceTypeDTO::AccessPolicy,
         }
     }
 }

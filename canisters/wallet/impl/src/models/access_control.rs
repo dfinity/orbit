@@ -51,6 +51,7 @@ pub enum ResourceType {
     User,
     UserGroup,
     AddressBook,
+    AccessPolicy,
 }
 
 pub type AccountSpecifier = CommonSpecifier;
@@ -63,6 +64,7 @@ impl Display for ResourceType {
             ResourceType::User => write!(f, "user"),
             ResourceType::UserGroup => write!(f, "user_group"),
             ResourceType::AddressBook => write!(f, "address_book"),
+            ResourceType::AccessPolicy => write!(f, "access_policy"),
         }
     }
 }
@@ -157,6 +159,7 @@ pub type UserActionSpecifier = CommonActionSpecifier;
 pub type AccountActionSpecifier = CommonActionSpecifier;
 pub type UserGroupActionSpecifier = CommonActionSpecifier;
 pub type AddressBookActionSpecifier = CommonActionSpecifier;
+pub type AccessPolicyActionSpecifier = CommonActionSpecifier;
 
 #[cfg(test)]
 mod tests {
@@ -335,6 +338,40 @@ mod tests {
         assert_eq!(
             ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create).to_key(),
             "upgrade_create"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(ResourceType::AccessPolicy, UserGroupActionSpecifier::List)
+                .to_key(),
+            "access_policy_list"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                UserGroupActionSpecifier::Read(CommonSpecifier::Any)
+            )
+            .to_key(),
+            "access_policy_read"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                UserGroupActionSpecifier::Update(CommonSpecifier::Any)
+            )
+            .to_key(),
+            "access_policy_update"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                UserGroupActionSpecifier::Delete(CommonSpecifier::Any)
+            )
+            .to_key(),
+            "access_policy_delete"
+        );
+        assert_eq!(
+            ResourceSpecifier::Common(ResourceType::AccessPolicy, UserGroupActionSpecifier::Create)
+                .to_key(),
+            "access_policy_create"
         );
     }
 }

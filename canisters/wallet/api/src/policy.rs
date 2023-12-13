@@ -44,6 +44,7 @@ pub enum ResourceTypeDTO {
     User,
     UserGroup,
     AddressBook,
+    AccessPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
