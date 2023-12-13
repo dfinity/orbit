@@ -4,7 +4,7 @@ use crate::{
         CallContext,
     },
     mappers::HelperMapper,
-    models::access_control::ResourceSpecifier,
+    models::access_control::{ResourceSpecifier, ResourceType, UserActionSpecifier},
     services::UserService,
 };
 use ic_canister_core::api::ApiResult;
@@ -13,6 +13,7 @@ use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
     ConfirmUserIdentityInput, ConfirmUserIdentityResponse, GetUserInput, GetUserResponse,
+    ListUsersInput, ListUsersResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -26,6 +27,11 @@ async fn confirm_user_identity(
 #[query(name = "get_user")]
 async fn get_user(input: GetUserInput) -> ApiResult<GetUserResponse> {
     CONTROLLER.get_user(input).await
+}
+
+#[query(name = "list_users")]
+async fn list_users(input: ListUsersInput) -> ApiResult<ListUsersResponse> {
+    CONTROLLER.list_users(input).await
 }
 
 // Controller initialization and implementation.
@@ -80,5 +86,20 @@ impl UserController {
         };
 
         Ok(GetUserResponse { user })
+    }
+
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::Common(ResourceType::User, UserActionSpecifier::List)],
+        is_async = true
+    )]
+    async fn list_users(&self, input: ListUsersInput) -> ApiResult<ListUsersResponse> {
+        let list = self.user_service.list_users(input)?;
+
+        Ok(ListUsersResponse {
+            users: list.users.into_iter().map(Into::into).collect(),
+            next_offset: list.next_offset,
+        })
     }
 }
