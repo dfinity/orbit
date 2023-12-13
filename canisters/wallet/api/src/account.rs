@@ -1,5 +1,5 @@
 use super::UserIdDTO;
-use crate::UuidDTO;
+use crate::{CriteriaDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 pub type AccountIdDTO = String;
@@ -14,17 +14,23 @@ pub struct AccountDTO {
     pub standard: String,
     pub symbol: String,
     pub decimals: u32,
+    pub policies: AccountPoliciesDTO,
     pub balance: Option<AccountBalanceInfoDTO>,
-    pub policies: Vec<PolicyDTO>,
     pub metadata: Vec<(String, String)>,
     pub last_modification_timestamp: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountPoliciesDTO {
+    pub transfer: Option<CriteriaDTO>,
+    pub edit: Option<CriteriaDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationInput {
     pub account_id: AccountIdDTO,
     pub owners: Option<Vec<UserIdDTO>>,
-    pub policies: Option<Vec<PolicyDTO>>,
+    pub policies: Option<AccountPoliciesDTO>,
     pub name: Option<String>,
 }
 
@@ -37,7 +43,7 @@ pub struct EditAccountOperationDTO {
 pub struct AddAccountOperationInput {
     pub name: String,
     pub owners: Vec<UserIdDTO>,
-    pub policies: Vec<PolicyDTO>,
+    pub policies: AccountPoliciesDTO,
     pub blockchain: String,
     pub standard: String,
     pub metadata: Vec<(String, String)>,
@@ -53,12 +59,6 @@ pub struct AddAccountOperationDTO {
 pub enum ApprovalThresholdPolicyDTO {
     VariableThreshold(u8),
     FixedThreshold(u8),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum PolicyDTO {
-    #[serde(rename = "approval_threshold")]
-    ApprovalThreshold(ApprovalThresholdPolicyDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

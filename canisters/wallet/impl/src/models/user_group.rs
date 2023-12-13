@@ -153,6 +153,7 @@ mod tests {
 #[cfg(test)]
 pub mod user_group_test_utils {
     use super::*;
+    use ic_canister_core::repository::Repository;
 
     pub fn mock_user_group() -> UserGroup {
         UserGroup {
@@ -160,5 +161,17 @@ pub mod user_group_test_utils {
             name: "test".to_string(),
             last_modification_timestamp: 0,
         }
+    }
+
+    pub fn add_group(name: &str) -> UserGroup {
+        let mut group = mock_user_group();
+        group.id = *Uuid::new_v4().as_bytes();
+        group.name = name.to_string();
+
+        group.validate().unwrap();
+
+        USER_GROUP_REPOSITORY.insert(group.id, group.clone());
+
+        group
     }
 }

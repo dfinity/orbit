@@ -10,7 +10,7 @@ use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   /// The memory reference to the Account repository.
@@ -22,7 +22,8 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref ACCOUNT_REPOSITORY: AccountRepository = AccountRepository::default();
+    pub static ref ACCOUNT_REPOSITORY: Arc<AccountRepository> =
+        Arc::new(AccountRepository::default());
 }
 
 /// A repository that enables managing accounts in stable memory.

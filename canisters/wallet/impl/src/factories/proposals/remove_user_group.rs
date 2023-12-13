@@ -1,10 +1,7 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{
-        EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
-        RemoveUserGroupOperation,
-    },
+    errors::{ProposalError, ProposalExecuteError},
+    models::{Proposal, ProposalExecutionPlan, ProposalOperation, RemoveUserGroupOperation},
     services::USER_GROUP_SERVICE,
 };
 use async_trait::async_trait;
@@ -56,57 +53,6 @@ impl<'p, 'o> RemoveUserGroupProposalCreateHook<'p, 'o> {
 impl CreateHook for RemoveUserGroupProposalCreateHook<'_, '_> {
     async fn on_created(&self) {
         // TODO: Add once policy design is ready
-    }
-}
-
-pub struct RemoveUserGroupProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o RemoveUserGroupOperation,
-}
-
-impl<'p, 'o> RemoveUserGroupProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-impl Validate for RemoveUserGroupProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add once policy design is ready
-
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct RemoveUserGroupProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o RemoveUserGroupOperation,
-}
-
-impl<'p, 'o> RemoveUserGroupProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for RemoveUserGroupProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
     }
 }
 

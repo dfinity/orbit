@@ -1,51 +1,45 @@
-use std::sync::Arc;
-
+use super::{
+    specifier::{Match, UserSpecifier},
+    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus, UserId,
+};
+use crate::{
+    core::utils::calculate_minimum_threshold, errors::MatchError, repositories::USER_REPOSITORY,
+};
 use anyhow::{anyhow, Error};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
 use futures::{stream, StreamExt, TryStreamExt};
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
-
-use crate::{errors::MatchError, repositories::USER_REPOSITORY};
-
-use super::{
-    specifier::{Match, UserSpecifier},
-    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus,
-};
+use std::hash::Hash;
+use std::sync::Arc;
 
 #[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
-pub struct Ratio(f64);
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Percentage(pub u16);
 
-impl Eq for Ratio {}
-
-impl TryFrom<f64> for Ratio {
+impl TryFrom<u16> for Percentage {
     type Error = Error;
 
-    fn try_from(value: f64) -> Result<Self, Self::Error> {
-        if value <= 0. || value > 1. {
-            return Err(anyhow!("invalid ratio value, must be between > 0 and <= 1"));
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        if value > 100 {
+            return Err(anyhow!(
+                "invalid percentage value, must be between >= 0 and <= 100"
+            ));
         }
 
-        Ok(Ratio(value))
+        Ok(Percentage(value))
     }
 }
 
 #[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Criteria {
     // Auto
-    Auto(EvaluationStatus),
-
+    AutoAdopted,
     // Votes
-    ApprovalThreshold(UserSpecifier, Ratio),
+    ApprovalThreshold(UserSpecifier, Percentage),
     MinimumVotes(UserSpecifier, u16),
-    VetoPower(UserSpecifier),
-
-    // Metadata
-    IsAddressKYC,
-
     // Logical
     Or(Vec<Criteria>),
     And(Vec<Criteria>),
@@ -63,206 +57,214 @@ impl From<ProposalVoteStatus> for EvaluationStatus {
 }
 
 #[async_trait]
-pub trait EvaluateCriteria: Sync + Send {
-    async fn evaluate(&self, p: &Proposal, c: &Criteria)
-        -> Result<EvaluationStatus, EvaluateError>;
+pub trait EvaluateCriteria<
+    Status = EvaluationStatus,
+    Context = (Arc<Proposal>, Arc<Criteria>),
+    Error = EvaluateError,
+>: Sync + Send
+{
+    async fn evaluate(&self, ctx: Context) -> Result<Status, Error>;
 }
 
+#[derive(Clone)]
 pub struct CriteriaEvaluator {
     pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
+}
+
+struct ProposalVoteSummary {
+    total_possible_votes: usize,
+    adopted_votes: usize,
+    rejected_votes: usize,
+}
+
+impl ProposalVoteSummary {
+    /// Evaluates the proposal vote summary and returns the evaluation status based on the
+    /// minimum votes required.
+    ///
+    /// If the proposal does not yet have enough votes to meet the minimum votes required but has
+    /// enough uncasted votes that could be casted to meet the minimum votes required, then the evaluation
+    /// is kept in the `Pending` state.
+    fn evaluate(&self, min_votes: &usize) -> EvaluationStatus {
+        let uncasted_votes = self
+            .total_possible_votes
+            .saturating_sub(self.adopted_votes)
+            .saturating_sub(self.rejected_votes);
+
+        if self.adopted_votes >= *min_votes {
+            return EvaluationStatus::Adopted;
+        }
+
+        if self.adopted_votes.saturating_add(uncasted_votes) < *min_votes {
+            return EvaluationStatus::Rejected;
+        }
+
+        EvaluationStatus::Pending
+    }
+}
+
+impl CriteriaEvaluator {
+    async fn evaluate_criterias(
+        &self,
+        proposal: &Arc<Proposal>,
+        criterias: &[Criteria],
+    ) -> Result<Vec<EvaluationStatus>, EvaluateError> {
+        stream::iter(criterias.iter())
+            .then(|criteria| async move {
+                self.evaluate((proposal.to_owned(), Arc::new(criteria.to_owned())))
+                    .await
+            })
+            .try_collect::<Vec<EvaluationStatus>>()
+            .await
+    }
+
+    async fn find_matching_users<UserMatchReturn>(
+        &self,
+        proposal: &Arc<Proposal>,
+        users: &[(UserId, UserMatchReturn)],
+        user_specifier: &UserSpecifier,
+    ) -> Result<Vec<UserMatchReturn>, MatchError>
+    where
+        UserMatchReturn: Clone,
+    {
+        stream::iter(users.iter())
+            .then(|(user_id, match_return)| {
+                let match_return = match_return.clone();
+                async move {
+                    match {
+                        self.user_matcher
+                            .is_match((
+                                proposal.as_ref().to_owned(),
+                                user_id.to_owned(),
+                                user_specifier.to_owned(),
+                            ))
+                            .await
+                    } {
+                        Ok(true) => Ok(Some(match_return)),
+                        Ok(false) => Ok(None),
+                        Err(e) => Err(e),
+                    }
+                }
+            })
+            .try_filter_map(|result| async move { Ok(result) })
+            .try_collect()
+            .await
+    }
+
+    async fn calculate_votes(
+        &self,
+        proposal: &Arc<Proposal>,
+        user_specifier: &UserSpecifier,
+    ) -> Result<ProposalVoteSummary, MatchError> {
+        let casted_votes = self
+            .find_matching_users::<ProposalVoteStatus>(
+                proposal,
+                proposal
+                    .votes
+                    .iter()
+                    .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
+                    .collect::<Vec<(UserId, ProposalVoteStatus)>>()
+                    .as_slice(),
+                user_specifier,
+            )
+            .await?;
+
+        let total_possible_votes = self
+            .find_matching_users::<()>(
+                proposal,
+                USER_REPOSITORY
+                    .list()
+                    .iter()
+                    .map(|user| (user.id.to_owned(), ()))
+                    .collect::<Vec<(UserId, ())>>()
+                    .as_slice(),
+                user_specifier,
+            )
+            .await?
+            .len();
+
+        Ok(ProposalVoteSummary {
+            total_possible_votes,
+            adopted_votes: casted_votes
+                .iter()
+                .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
+                .count(),
+            rejected_votes: casted_votes
+                .iter()
+                .filter(|&v| matches!(v, ProposalVoteStatus::Rejected))
+                .count(),
+        })
+    }
 }
 
 #[async_trait]
 impl EvaluateCriteria for CriteriaEvaluator {
     async fn evaluate(
         &self,
-        p: &Proposal,
-        c: &Criteria,
+        (proposal, c): (Arc<Proposal>, Arc<Criteria>),
     ) -> Result<EvaluationStatus, EvaluateError> {
-        match c {
-            // Approval Threshold
-            Criteria::ApprovalThreshold(u, r) => {
-                // Existing Votes
-                let vs: Vec<ProposalVoteStatus> =
-                    stream::iter(p.votes.iter().map(Ok::<_, MatchError>))
-                        .try_filter_map(|v| async {
-                            Ok(
-                                match self
-                                    .user_matcher
-                                    .is_match((p.to_owned(), v.user_id.to_owned(), u.to_owned()))
-                                    .await?
-                                {
-                                    false => None,
-                                    true => Some(v.status.clone()),
-                                },
-                            )
-                        })
-                        .try_collect()
-                        .await?;
+        match c.as_ref() {
+            Criteria::AutoAdopted => Ok(EvaluationStatus::Adopted),
+            Criteria::ApprovalThreshold(user_specifier, percentage) => {
+                let votes = self.calculate_votes(&proposal, user_specifier).await?;
+                let min_votes =
+                    calculate_minimum_threshold(percentage, &votes.total_possible_votes);
 
-                // Overall Voter Count
-                let vs_total = stream::iter(USER_REPOSITORY.list().iter().map(Ok::<_, MatchError>))
-                    .try_filter_map(|uu| async {
-                        Ok(
-                            match self
-                                .user_matcher
-                                .is_match((p.to_owned(), uu.id.to_owned(), u.to_owned()))
-                                .await?
-                            {
-                                false => None,
-                                true => Some(()),
-                            },
-                        )
-                    })
-                    .count()
-                    .await;
+                Ok(votes.evaluate(&min_votes))
+            }
+            Criteria::MinimumVotes(user_specifier, min_votes) => {
+                let votes = self.calculate_votes(&proposal, user_specifier).await?;
+                let min_votes = *min_votes as usize;
 
-                // Evaluate Status
-                let v_adopt = vs
+                Ok(votes.evaluate(&min_votes))
+            }
+            Criteria::And(criterias) => {
+                let evaluation_statuses = self.evaluate_criterias(&proposal, criterias).await?;
+
+                if evaluation_statuses
                     .iter()
-                    .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
-                    .count();
-                let v_adopt = v_adopt as f64;
-
-                let v_unvoted = vs_total - vs.len();
-                let v_unvoted = v_unvoted as f64;
-
-                if (v_adopt / vs_total as f64) >= r.0 {
-                    return Ok(EvaluationStatus::Adopted);
-                }
-
-                if ((v_adopt + v_unvoted) / vs_total as f64) < r.0 {
+                    .any(|s| matches!(s, EvaluationStatus::Rejected))
+                {
                     return Ok(EvaluationStatus::Rejected);
                 }
 
-                Ok(EvaluationStatus::Pending)
-            }
-
-            // Minimum Votes
-            Criteria::MinimumVotes(u, c) => {
-                // Existing Votes
-                let vs: Vec<ProposalVoteStatus> =
-                    stream::iter(p.votes.iter().map(Ok::<_, MatchError>))
-                        .try_filter_map(|v| async {
-                            Ok(
-                                match self
-                                    .user_matcher
-                                    .is_match((p.to_owned(), v.user_id.to_owned(), u.to_owned()))
-                                    .await?
-                                {
-                                    false => None,
-                                    true => Some(v.status.clone()),
-                                },
-                            )
-                        })
-                        .try_collect()
-                        .await?;
-
-                // Overall Voter Count
-                let vs_total = stream::iter(USER_REPOSITORY.list().iter().map(Ok::<_, MatchError>))
-                    .try_filter_map(|uu| async {
-                        Ok(
-                            match self
-                                .user_matcher
-                                .is_match((p.to_owned(), uu.id.to_owned(), u.to_owned()))
-                                .await?
-                            {
-                                false => None,
-                                true => Some(()),
-                            },
-                        )
-                    })
-                    .count()
-                    .await;
-
-                // Evaluate Status
-                let v_adopt = vs
+                if evaluation_statuses
                     .iter()
-                    .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
-                    .count();
-
-                let v_unvoted = vs_total - vs.len();
-
-                if v_adopt >= *c as usize {
-                    return Ok(EvaluationStatus::Adopted);
-                }
-
-                if (v_adopt + v_unvoted) < *c as usize {
-                    return Ok(EvaluationStatus::Rejected);
-                }
-
-                Ok(EvaluationStatus::Pending)
-            }
-
-            // Auto
-            Criteria::Auto(status) => Ok(status.clone()),
-
-            // Veto
-            Criteria::VetoPower(s) => {
-                for v in &p.votes {
-                    match v.status {
-                        ProposalVoteStatus::Accepted | ProposalVoteStatus::Rejected => {
-                            if self
-                                .user_matcher
-                                .is_match((p.to_owned(), v.user_id.to_owned(), s.to_owned()))
-                                .await?
-                            {
-                                return Ok(v.status.clone().into());
-                            }
-                        }
-                    }
-                }
-
-                Ok(EvaluationStatus::Pending)
-            }
-
-            // IsAddressKYC
-            Criteria::IsAddressKYC => todo!(),
-
-            // And
-            Criteria::And(cs) => {
-                let evs: Vec<EvaluationStatus> =
-                    stream::iter(cs.iter().map(Ok::<_, EvaluateError>))
-                        .try_filter_map(|c| async { Ok(Some(self.evaluate(p, c).await?)) })
-                        .try_collect()
-                        .await?;
-
-                if evs.iter().any(|s| matches!(s, EvaluationStatus::Rejected)) {
-                    return Ok(EvaluationStatus::Rejected);
-                }
-
-                if evs.iter().all(|s| matches!(s, EvaluationStatus::Adopted)) {
+                    .all(|s| matches!(s, EvaluationStatus::Adopted))
+                {
                     return Ok(EvaluationStatus::Adopted);
                 }
 
                 Ok(EvaluationStatus::Pending)
             }
+            Criteria::Or(criterias) => {
+                let evaluation_statuses = self.evaluate_criterias(&proposal, criterias).await?;
 
-            // Or
-            Criteria::Or(cs) => {
-                let evs: Vec<EvaluationStatus> =
-                    stream::iter(cs.iter().map(Ok::<_, EvaluateError>))
-                        .try_filter_map(|c| async { Ok(Some(self.evaluate(p, c).await?)) })
-                        .try_collect()
-                        .await?;
-
-                if evs.iter().any(|s| matches!(s, EvaluationStatus::Rejected)) {
-                    return Ok(EvaluationStatus::Rejected);
+                if evaluation_statuses
+                    .iter()
+                    .any(|s| matches!(s, EvaluationStatus::Adopted))
+                {
+                    return Ok(EvaluationStatus::Adopted);
                 }
 
-                if evs.iter().any(|s| matches!(s, EvaluationStatus::Adopted)) {
-                    return Ok(EvaluationStatus::Adopted);
+                if evaluation_statuses
+                    .iter()
+                    .all(|s| matches!(s, EvaluationStatus::Rejected))
+                {
+                    return Ok(EvaluationStatus::Rejected);
                 }
 
                 Ok(EvaluationStatus::Pending)
             }
-
-            // Not
-            Criteria::Not(c) => Ok(match self.evaluate(p, c).await? {
-                EvaluationStatus::Adopted => EvaluationStatus::Rejected,
-                EvaluationStatus::Pending => EvaluationStatus::Pending,
-                EvaluationStatus::Rejected => EvaluationStatus::Adopted,
-            }),
+            Criteria::Not(criteria) => Ok(
+                match self
+                    .evaluate((proposal, Arc::new(criteria.as_ref().to_owned())))
+                    .await?
+                {
+                    EvaluationStatus::Pending => EvaluationStatus::Pending,
+                    EvaluationStatus::Adopted => EvaluationStatus::Rejected,
+                    EvaluationStatus::Rejected => EvaluationStatus::Adopted,
+                },
+            ),
         }
     }
 }

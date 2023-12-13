@@ -40,6 +40,8 @@ pub fn stable_object(metadata: TokenStream, input: TokenStream) -> TokenStream {
 ///   to the middleware function. This function should return a context object.
 /// - `args`: (Optional) Additional arguments to be passed to the middleware function. These
 ///   should be specified as an array of strings (e.g., `args = ["read:user", "write:data"]`).
+/// - `is_async`: (Optional) Specifies whether the middleware function is asynchronous. Defaults to `false`
+///   if not specified.
 ///
 /// # Usage
 /// Annotate functions with `#[with_middleware]`, specifying the middleware function, the

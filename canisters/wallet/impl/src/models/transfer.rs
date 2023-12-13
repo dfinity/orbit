@@ -1,4 +1,4 @@
-use super::{Account, AccountId, ApprovalThresholdPolicy, Policy, UserId};
+use super::{AccountId, UserId};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use candid::{CandidType, Deserialize};
@@ -44,13 +44,6 @@ impl Display for TransferStatus {
             TransferStatus::Failed { .. } => write!(f, "failed"),
         }
     }
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct PolicyRequirements {
-    /// The minimum number of approvals required for the transfer to be approved.
-    pub min_approvals: u8,
 }
 
 /// Represents a transfer in the system.
@@ -111,28 +104,6 @@ impl Transfer {
             .iter()
             .map(|(key, value)| (key.to_owned(), value.to_owned()))
             .collect()
-    }
-
-    pub fn policy_requirements(&self, account: &Account) -> PolicyRequirements {
-        let mut requirements = PolicyRequirements { min_approvals: 1 };
-
-        for policy in account.policies.iter() {
-            match policy {
-                Policy::ApprovalThreshold(threshold) => match threshold {
-                    ApprovalThresholdPolicy::FixedThreshold(min_approvals) => {
-                        requirements.min_approvals = *min_approvals;
-                    }
-                    ApprovalThresholdPolicy::VariableThreshold(percentage) => {
-                        requirements.min_approvals = ((account.owners.len() as f64
-                            * (*percentage as f64 / 100.0))
-                            .ceil() as u8)
-                            .max(1);
-                    }
-                },
-            }
-        }
-
-        requirements
     }
 
     #[allow(clippy::too_many_arguments)]

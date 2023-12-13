@@ -1,8 +1,15 @@
 use super::{
     EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
-use crate::errors::{ProposalError, ProposalEvaluateError};
-use crate::{core::ic_cdk::api::time, factories::proposals::ProposalFactory};
+use crate::core::evaluation::{
+    Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER, PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR,
+};
+use crate::core::proposal::{ProposalEvaluator, ProposalVoteRightsEvaluator};
+use crate::errors::{EvaluateError, ProposalError};
+use crate::{
+    core::ic_cdk::api::{print, time},
+    factories::proposals::ProposalFactory,
+};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -157,16 +164,24 @@ impl Proposal {
         time() + time_in_ns
     }
 
-    pub fn can_vote(&self, user_id: &UUID) -> bool {
-        let validator = ProposalFactory::validator(self);
+    pub async fn can_vote(&self, user_id: &UUID) -> bool {
+        let validator = ProposalVoteRightsEvaluator {
+            proposal: self,
+            voter_id: *user_id,
+            vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
+        };
 
-        validator.can_vote(user_id)
-    }
+        match validator.evaluate().await {
+            Ok(can_vote) => can_vote,
+            Err(_) => {
+                print(format!(
+                    "Failed to evaluate voting rights for proposal: {:?}",
+                    self
+                ));
 
-    pub fn can_view(&self, user_id: &UUID) -> bool {
-        let validator = ProposalFactory::validator(self);
-
-        validator.can_view(user_id)
+                false
+            }
+        }
     }
 
     pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
@@ -184,12 +199,14 @@ impl Proposal {
         });
     }
 
-    pub async fn reevaluate(&mut self) -> Result<(), ProposalEvaluateError> {
-        let evaluator = ProposalFactory::evaluator(self);
-        let evaluation_status = evaluator.evaluate().await?;
+    pub async fn reevaluate(&mut self) -> Result<(), EvaluateError> {
+        let evaluator = ProposalEvaluator {
+            proposal: self.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
 
-        // must drop before updating the proposal due to it being borrowed by the evaluator
-        drop(evaluator);
+        let evaluation_status = evaluator.evaluate().await?;
 
         if evaluation_status == EvaluationStatus::Adopted {
             self.status = ProposalStatus::Adopted;

@@ -1,17 +1,16 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     core::ic_cdk::api::trap,
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
+    errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, EditAccountOperationInput, EvaluationStatus,
-        NotificationType, Policy, Proposal, ProposalExecutionPlan, ProposalOperation,
+        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Proposal,
+        ProposalExecutionPlan, ProposalOperation,
     },
     repositories::ACCOUNT_REPOSITORY,
-    services::NotificationService,
+    services::{NotificationService, ACCOUNT_SERVICE},
 };
 use async_trait::async_trait;
-use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
 use uuid::Uuid;
@@ -53,12 +52,7 @@ impl Create<wallet_api::EditAccountOperationInput> for EditAccountProposalCreate
                         ),
                         None => None,
                     },
-                    policies: operation_input.policies.map(|policies| {
-                        policies
-                            .iter()
-                            .map(|policy| policy.clone().into())
-                            .collect()
-                    }),
+                    policies: operation_input.policies.map(Into::into),
                     name: operation_input.name,
                 },
             }),
@@ -123,69 +117,6 @@ impl CreateHook for EditAccountProposalCreateHook<'_, '_> {
     }
 }
 
-pub struct EditAccountProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    operation: &'o EditAccountOperation,
-}
-
-impl<'p, 'o> EditAccountProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditAccountOperation) -> Self {
-        Self {
-            proposal,
-            operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for EditAccountProposalValidate<'_, '_> {
-    fn can_vote(&self, user_id: &UUID) -> bool {
-        let account = ACCOUNT_REPOSITORY
-            .get(&Account::key(self.operation.input.account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(self.operation.input.account_id).hyphenated()
-                ))
-            });
-
-        let should_vote = account.policies.iter().any(|policy| match policy {
-            Policy::ApprovalThreshold(_) => true,
-        });
-
-        should_vote && account.owners.contains(user_id)
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct EditAccountProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o EditAccountOperation,
-}
-
-impl<'p, 'o> EditAccountProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditAccountOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for EditAccountProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
-    }
-}
-
 pub struct EditAccountProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o EditAccountOperation,
@@ -203,34 +134,12 @@ impl<'p, 'o> EditAccountProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for EditAccountProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let mut account = ACCOUNT_REPOSITORY
-            .get(&Account::key(self.operation.input.account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(self.operation.input.account_id).hyphenated()
-                ))
-            });
-
-        if let Some(name) = &self.operation.input.name {
-            account.name = name.clone();
-        }
-
-        if let Some(owners) = &self.operation.input.owners {
-            account.owners = owners.clone();
-        }
-
-        if let Some(policies) = &self.operation.input.policies {
-            account.policies = policies.clone();
-        }
-
-        account
-            .validate()
+        ACCOUNT_SERVICE
+            .edit_account(self.operation.input.to_owned())
+            .await
             .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to validate account: {}", e),
+                reason: format!("Failed to update account: {}", e),
             })?;
-
-        ACCOUNT_REPOSITORY.insert(account.to_key(), account.to_owned());
 
         Ok(ProposalExecuteStage::Completed(
             self.proposal.operation.clone(),

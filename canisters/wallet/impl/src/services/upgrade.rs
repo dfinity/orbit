@@ -1,3 +1,8 @@
+use crate::{
+    core::{canister_config_mut, write_canister_config, CanisterConfig},
+    models::{ProposalKey, ProposalStatus},
+    repositories::PROPOSAL_REPOSITORY,
+};
 use candid::{CandidType, Principal};
 use ic_canister_core::{
     api::{ApiError, ServiceResult},
@@ -9,12 +14,6 @@ use ic_cdk::api::management_canister::{
     provisional::CanisterIdRecord,
 };
 use lazy_static::lazy_static;
-
-use crate::{
-    core::{canister_config_mut, write_canister_config, CanisterConfig},
-    models::{ProposalKey, ProposalStatus},
-    repositories::PROPOSAL_REPOSITORY,
-};
 
 lazy_static! {
     pub static ref UPGRADE_SERVICE: UpgradeService = UpgradeService::default();

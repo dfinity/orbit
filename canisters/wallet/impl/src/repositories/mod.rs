@@ -20,4 +20,6 @@ pub use proposal::*;
 
 pub mod policy;
 
+pub mod access_control;
+
 pub mod indexes;

@@ -8,9 +8,6 @@ pub use account::*;
 mod blockchain;
 pub use blockchain::*;
 
-mod access_role;
-pub use access_role::*;
-
 mod blockchain_standard;
 pub use blockchain_standard::*;
 
@@ -69,5 +66,9 @@ mod wallet_features;
 pub use wallet_features::*;
 
 pub mod criteria;
+
+pub mod access_control;
+
 pub mod indexes;
+
 pub mod specifier;

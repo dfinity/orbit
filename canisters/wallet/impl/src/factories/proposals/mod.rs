@@ -1,7 +1,7 @@
 use crate::{
     core::generate_uuid_v4,
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{EvaluationStatus, Proposal, ProposalOperation},
+    errors::{ProposalError, ProposalExecuteError},
+    models::{Proposal, ProposalOperation},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -20,47 +20,29 @@ mod upgrade;
 
 use self::{
     add_account::{
-        AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalEvaluate,
-        AddAccountProposalExecute, AddAccountProposalValidate,
+        AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalExecute,
     },
-    add_user::{
-        AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalEvaluate,
-        AddUserProposalExecute, AddUserProposalValidate,
-    },
+    add_user::{AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute},
     add_user_group::{
-        AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalEvaluate,
-        AddUserGroupProposalExecute, AddUserGroupProposalValidate,
+        AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
     },
     edit_account::{
-        EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalEvaluate,
-        EditAccountProposalExecute, EditAccountProposalValidate,
+        EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalExecute,
     },
-    edit_user::{
-        EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalEvaluate,
-        EditUserProposalExecute, EditUserProposalValidate,
-    },
+    edit_user::{EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute},
     edit_user_group::{
-        EditUserGroupProposalCreate, EditUserGroupProposalCreateHook,
-        EditUserGroupProposalEvaluate, EditUserGroupProposalExecute, EditUserGroupProposalValidate,
+        EditUserGroupProposalCreate, EditUserGroupProposalCreateHook, EditUserGroupProposalExecute,
     },
     edit_user_status::{
         EditUserStatusProposalCreate, EditUserStatusProposalCreateHook,
-        EditUserStatusProposalEvaluate, EditUserStatusProposalExecute,
-        EditUserStatusProposalValidate,
+        EditUserStatusProposalExecute,
     },
     remove_user_group::{
         RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
-        RemoveUserGroupProposalEvaluate, RemoveUserGroupProposalExecute,
-        RemoveUserGroupProposalValidate,
+        RemoveUserGroupProposalExecute,
     },
-    transfer::{
-        TransferProposalCreate, TransferProposalCreateHook, TransferProposalEvaluate,
-        TransferProposalExecute, TransferProposalValidate,
-    },
-    upgrade::{
-        UpgradeProposalCreate, UpgradeProposalCreateHook, UpgradeProposalEvaluate,
-        UpgradeProposalExecute, UpgradeProposalValidate,
-    },
+    transfer::{TransferProposalCreate, TransferProposalCreateHook, TransferProposalExecute},
+    upgrade::{UpgradeProposalCreate, UpgradeProposalCreateHook, UpgradeProposalExecute},
 };
 
 #[derive(Debug)]
@@ -75,23 +57,6 @@ pub trait Execute: Send + Sync {
     ///
     /// The stage is used to indicate if the operation was completed or if it is still processing.
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError>;
-}
-
-#[async_trait]
-pub trait Evaluate: Send + Sync {
-    /// Reevaluates the status of the associated policies.
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError>;
-}
-
-pub trait Validate: Send + Sync {
-    /// Returns true if the user can vote on the proposal.
-    ///
-    /// Votes are only allowed if the proposal is still open and has policies that
-    /// include voting such as approval threshold, minimun votes, veto votes, etc...
-    fn can_vote(&self, user_id: &UUID) -> bool;
-
-    /// Checks if the user has access to view the proposal details.
-    fn can_view(&self, user_id: &UUID) -> bool;
 }
 
 pub trait Create<T>: Send + Sync {
@@ -133,7 +98,6 @@ impl ProposalFactory {
         input: CreateProposalInput,
     ) -> Result<Proposal, ProposalError> {
         let id = *generate_uuid_v4().await.as_bytes();
-
         match &input.operation {
             ProposalOperationInput::Transfer(operation) => {
                 create_proposal::<wallet_api::TransferOperationInput, TransferProposalCreate>(
@@ -243,76 +207,6 @@ impl ProposalFactory {
             }
             ProposalOperation::Upgrade(operation) => {
                 Box::new(UpgradeProposalCreateHook::new(proposal, operation))
-            }
-        }
-    }
-
-    pub fn validator<'p>(proposal: &'p Proposal) -> Box<dyn Validate + 'p> {
-        match &proposal.operation {
-            ProposalOperation::Transfer(operation) => {
-                Box::new(TransferProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::AddAccount(operation) => {
-                Box::new(AddAccountProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditAccount(operation) => {
-                Box::new(EditAccountProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::AddUserGroup(operation) => {
-                Box::new(AddUserGroupProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserGroup(operation) => {
-                Box::new(EditUserGroupProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::RemoveUserGroup(operation) => {
-                Box::new(RemoveUserGroupProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::AddUser(operation) => {
-                Box::new(AddUserProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditUser(operation) => {
-                Box::new(EditUserProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserStatus(operation) => {
-                Box::new(EditUserStatusProposalValidate::new(proposal, operation))
-            }
-            ProposalOperation::Upgrade(operation) => {
-                Box::new(UpgradeProposalValidate::new(proposal, operation))
-            }
-        }
-    }
-
-    pub fn evaluator<'p>(proposal: &'p Proposal) -> Box<dyn Evaluate + 'p> {
-        match &proposal.operation {
-            ProposalOperation::Transfer(operation) => {
-                Box::new(TransferProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::AddAccount(operation) => {
-                Box::new(AddAccountProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditAccount(operation) => {
-                Box::new(EditAccountProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::AddUserGroup(operation) => {
-                Box::new(AddUserGroupProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserGroup(operation) => {
-                Box::new(EditUserGroupProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::RemoveUserGroup(operation) => {
-                Box::new(RemoveUserGroupProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::AddUser(operation) => {
-                Box::new(AddUserProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditUser(operation) => {
-                Box::new(EditUserProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::EditUserStatus(operation) => {
-                Box::new(EditUserStatusProposalEvaluate::new(proposal, operation))
-            }
-            ProposalOperation::Upgrade(operation) => {
-                Box::new(UpgradeProposalEvaluate::new(proposal, operation))
             }
         }
     }

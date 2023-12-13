@@ -239,6 +239,8 @@ mod tests {
 #[cfg(test)]
 pub mod user_test_utils {
     use super::*;
+    use crate::repositories::USER_REPOSITORY;
+    use ic_canister_core::repository::Repository;
 
     pub fn mock_user() -> User {
         User {
@@ -250,5 +252,13 @@ pub mod user_test_utils {
             status: UserStatus::Active,
             last_modification_timestamp: 0,
         }
+    }
+
+    pub fn add_user(id: &UUID) -> User {
+        let mut user = mock_user();
+        user.id = id.to_owned();
+        USER_REPOSITORY.insert(user.to_key(), user.to_owned());
+
+        user
     }
 }

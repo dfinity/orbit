@@ -1,17 +1,24 @@
-use std::sync::Arc;
-
+use super::{Account, Proposal, ProposalOperation, ProposalOperationType};
+use crate::models::user::User;
+use crate::repositories::ACCOUNT_REPOSITORY;
+use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::UUID;
+use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
-
-use crate::errors::MatchError;
-
-use super::{Proposal, ProposalOperation, ProposalOperationType};
+use std::sync::Arc;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AccountSpecifier {
+    Any,
+    Group(Vec<UUID>),
+    Id(Vec<UUID>),
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CommonSpecifier {
     Any,
     Group(Vec<UUID>),
     Id(Vec<UUID>),
@@ -60,26 +67,24 @@ pub trait Match<T>: Sync + Send {
     async fn is_match(&self, v: T) -> Result<bool, MatchError>;
 }
 
+#[derive(Clone)]
 pub struct AccountMatcher;
 
 #[async_trait]
 impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
     async fn is_match(&self, v: (Proposal, UUID, AccountSpecifier)) -> Result<bool, MatchError> {
-        let (_, id, s) = v;
+        let (_, account_id, specifier) = v;
 
-        match s {
-            // Any
+        match specifier {
             AccountSpecifier::Any => Ok(true),
-
-            // Group
+            // TODO: Add once account groups are implemented
             AccountSpecifier::Group(_ids) => todo!(),
-
-            // Id
-            AccountSpecifier::Id(ids) => Ok(ids.contains(&id)),
+            AccountSpecifier::Id(ids) => Ok(ids.contains(&account_id)),
         }
     }
 }
 
+#[derive(Clone)]
 pub struct AddressMatcher;
 
 #[async_trait]
@@ -93,36 +98,60 @@ impl Match<(Proposal, String, AddressSpecifier)> for AddressMatcher {
     }
 }
 
+#[derive(Clone)]
 pub struct UserMatcher;
 
+pub type VoterId = UUID;
+
 #[async_trait]
-impl Match<(Proposal, UUID, UserSpecifier)> for UserMatcher {
-    async fn is_match(&self, v: (Proposal, UUID, UserSpecifier)) -> Result<bool, MatchError> {
-        let (p, id, s) = v;
+impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
+    async fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
+        let (proposal, voter_id, specifier) = v;
 
-        match s {
-            // Any
+        match specifier {
             UserSpecifier::Any => Ok(true),
+            UserSpecifier::Group(ids) => {
+                if let Some(user) = USER_REPOSITORY.get(&User::key(voter_id)) {
+                    return Ok(user.groups.iter().any(|g| ids.contains(g)));
+                }
 
-            // Group
-            UserSpecifier::Group(_ids) => todo!(),
+                Ok(false)
+            }
+            UserSpecifier::Id(ids) => Ok(ids.contains(&voter_id)),
+            UserSpecifier::Owner => {
+                match proposal.operation {
+                    ProposalOperation::Transfer(operation) => {
+                        if let Some(account) =
+                            ACCOUNT_REPOSITORY.get(&Account::key(operation.input.from_account_id))
+                        {
+                            return Ok(account.owners.contains(&voter_id));
+                        }
+                    }
+                    ProposalOperation::EditUser(operation) => {
+                        return Ok(operation.input.user_id == voter_id);
+                    }
+                    ProposalOperation::EditAccount(operation) => {
+                        if let Some(account) =
+                            ACCOUNT_REPOSITORY.get(&Account::key(operation.input.account_id))
+                        {
+                            return Ok(account.owners.contains(&voter_id));
+                        }
+                    }
+                    _ => {}
+                };
 
-            // Id
-            UserSpecifier::Id(ids) => Ok(ids.contains(&id)),
-
-            // TODO: Owner (most likely will require a MatchError::NotApplicable variant)
-            UserSpecifier::Owner => todo!(),
-
-            // Proposer
-            UserSpecifier::Proposer => Ok(p.proposed_by == id),
+                Ok(false)
+            }
+            UserSpecifier::Proposer => Ok(proposal.proposed_by == voter_id),
         }
     }
 }
 
+#[derive(Clone)]
 pub struct ProposalMatcher {
-    account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
-    address_matcher: Arc<dyn Match<(Proposal, String, AddressSpecifier)>>,
-    user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
+    pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
+    pub address_matcher: Arc<dyn Match<(Proposal, String, AddressSpecifier)>>,
+    pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
 }
 
 #[async_trait]
@@ -175,22 +204,21 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
-    use anyhow::{anyhow, Error};
-    use candid::Nat;
-
     use crate::models::{
+        criteria::Criteria,
         proposal_test_utils::mock_proposal,
         specifier::{
             AccountMatcher, AccountSpecifier, AddressMatcher, AddressSpecifier, Match,
             ProposalMatcher, ProposalSpecifier, UserMatcher, UserSpecifier,
         },
-        AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
-        Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
-        EditUserOperationInput, ProposalOperation, TransferOperation, TransferOperationInput,
-        UserStatus,
+        AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
+        AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
+        EditUserOperation, EditUserOperationInput, ProposalOperation, TransferOperation,
+        TransferOperationInput, UserStatus,
     };
+    use anyhow::{anyhow, Error};
+    use candid::Nat;
+    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_proposal_matcher_empty_proposal() -> Result<(), Error> {
@@ -207,10 +235,13 @@ mod tests {
                     input: AddAccountOperationInput {
                         name: "account-1".into(),
                         owners: vec![],
-                        policies: vec![],
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: vec![],
+                        policies: AccountPoliciesInput {
+                            transfer: Some(Criteria::AutoAdopted),
+                            edit: Some(Criteria::AutoAdopted),
+                        },
                     },
                 }),
                 ProposalSpecifier::AddAccount,

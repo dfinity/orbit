@@ -1,9 +1,7 @@
-use crate::core::{
-    PERMISSION_CREATE_PROPOSAL, PERMISSION_READ_PROPOSAL, PERMISSION_VOTE_ON_PROPOSAL,
-};
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
+    models::access_control::{ProposalActionSpecifier, ResourceSpecifier},
     services::ProposalService,
 };
 use ic_canister_core::api::{ApiError, ApiResult};
@@ -59,7 +57,12 @@ impl ProposalController {
         Self { proposal_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_CREATE_PROPOSAL])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn create_proposal(
         &self,
         input: CreateProposalInput,
@@ -74,7 +77,28 @@ impl ProposalController {
         })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_PROPOSAL])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
+    async fn get_proposal(&self, input: GetProposalInput) -> ApiResult<GetProposalResponse> {
+        let proposal = self
+            .proposal_service
+            .get_proposal(HelperMapper::to_uuid(input.proposal_id)?.as_bytes())?;
+
+        Ok(GetProposalResponse {
+            proposal: ProposalDTO::from(proposal),
+        })
+    }
+
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::Proposal(ProposalActionSpecifier::List)],
+        is_async = true
+    )]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let proposals = self
             .proposal_service
@@ -88,14 +112,19 @@ impl ProposalController {
         Ok(ListProposalsResponse { proposals })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_PROPOSAL])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn list_account_proposals(
         &self,
         input: ListAccountProposalsInput,
     ) -> ApiResult<ListAccountProposalsResponse> {
         let proposals = self
             .proposal_service
-            .list_account_proposals(input, &call_context())?
+            .list_account_proposals(input)?
             .into_iter()
             .try_fold(Vec::new(), |mut acc, proposal| {
                 acc.push(ProposalDTO::from(proposal));
@@ -105,19 +134,9 @@ impl ProposalController {
         Ok(ListAccountProposalsResponse { proposals })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_PROPOSAL])]
-    async fn get_proposal(&self, input: GetProposalInput) -> ApiResult<GetProposalResponse> {
-        let proposal = self.proposal_service.get_proposal(
-            HelperMapper::to_uuid(input.proposal_id)?.as_bytes(),
-            &call_context(),
-        )?;
-
-        Ok(GetProposalResponse {
-            proposal: ProposalDTO::from(proposal),
-        })
-    }
-
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_VOTE_ON_PROPOSAL])]
+    /// Votes on a proposal if the caller has voting rights.
+    ///
+    /// No authorization required since only the users with voting rights can vote on a proposal.
     async fn vote_on_proposal(
         &self,
         input: VoteOnProposalInput,

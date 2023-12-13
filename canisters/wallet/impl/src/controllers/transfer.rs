@@ -1,7 +1,7 @@
-use crate::core::PERMISSION_READ_TRANSFER;
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
+    models::access_control::ResourceSpecifier,
     services::TransferService,
 };
 use ic_canister_core::api::{ApiError, ApiResult};
@@ -46,7 +46,12 @@ impl TransferController {
         Self { transfer_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_TRANSFER])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn get_transfer(&self, input: GetTransferInput) -> ApiResult<GetTransferResponse> {
         let transfer = self.transfer_service.get_transfer(
             HelperMapper::to_uuid(input.transfer_id)?.as_bytes(),
@@ -58,7 +63,12 @@ impl TransferController {
         })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_TRANSFER])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn get_transfers(&self, input: GetTransfersInput) -> ApiResult<GetTransfersResponse> {
         let ids: Vec<_> = input
             .transfer_ids
@@ -76,14 +86,17 @@ impl TransferController {
         })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_TRANSFER])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn list_account_transfers(
         &self,
         input: ListAccountTransfersInput,
     ) -> ApiResult<ListAccountTransfersResponse> {
-        let transfers = self
-            .transfer_service
-            .list_account_transfers(input, &call_context())?;
+        let transfers = self.transfer_service.list_account_transfers(input)?;
 
         Ok(ListAccountTransfersResponse {
             transfers: transfers

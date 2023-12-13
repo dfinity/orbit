@@ -19,6 +19,29 @@ type NotificationId = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
 
+type ProposalPolicyCriteria = variant {
+  AutoAdopted;
+  ApprovalThreshold : record { UserSpecifier; nat16 };
+  MinimumVotes : record { UserSpecifier; nat16 };
+  Or : vec ProposalPolicyCriteria;
+  And : vec ProposalPolicyCriteria;
+  Not : ProposalPolicyCriteria;
+};
+
+type UserSpecifier = variant {
+  Any;
+  Id : vec UserId;
+  Group : vec UUID;
+  Owner;
+  Proposer;
+};
+
+type EvaluationStatus = variant {
+  Pending;
+  Adopted;
+  Rejected;
+};
+
 // Defines the various states that a notification can be in.
 type NotificationStatus = variant {
   // The notification has been sent.
@@ -209,10 +232,10 @@ type EditAccountOperationInput = record {
   account_id : AccountId;
   // The updated list of owners of the account.
   owners : opt vec UserId;
-  // The updated list of policies that can be used to control the account.
-  policies : opt vec Policy;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
+  // The updated policies applied to the account by the account owners.
+  policies : opt AccountPolicies;
 };
 
 type EditAccountOperation = record {
@@ -226,14 +249,14 @@ type AddAccountOperationInput = record {
   name : text;
   // The list of owners of the account.
   owners : vec UserId;
-  // The list of policies that can be used to control the account.
-  policies : vec Policy;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
+  // The policies applied to the account by the account owners.
+  policies : AccountPolicies;
 };
 
 type AddAccountOperation = record {
@@ -621,16 +644,6 @@ type ListAccountTransfersResult = variant {
   Err : Error;
 };
 
-// The role of an user in the Wallet.
-type UserRole = variant {
-  // The user is an admin of the wallet.
-  Admin;
-  // Any authenticated user has this role.
-  User;
-  // The guest role is also used to allow access when the user does not have the user defined.
-  Guest;
-};
-
 // A record type that can be used to represent a user group in the wallet.
 type UserGroup = record {
   // The UUID of the group (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -664,14 +677,6 @@ type User = record {
   unconfirmed_identities : vec principal;
   // The time at which the user was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
-};
-
-// A record type that can be used to represent the wallet permissions.
-type WalletPermission = record {
-  // The permission identified (e.g. "create-account").
-  permission_id : text;
-  // The list of roles that have the permission.
-  access_roles : vec UserRole;
 };
 
 // The blockchain network to used in a transaction.
@@ -780,6 +785,14 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
+// The policies applied to the account by the account owners.
+type AccountPolicies = record {
+  // The criterias to use for withdrawing funds from the account.
+  transfer : opt ProposalPolicyCriteria;
+  // The criterias to use when editing the account.
+  edit : opt ProposalPolicyCriteria;
+};
+
 // A record type that can be used to represent a account in the canister.
 type Account = record {
   // The internal account id.
@@ -801,31 +814,13 @@ type Account = record {
   owners : vec UserId;
   // Account balance when available.
   balance : opt AccountBalanceInfo;
-  // The policies that can be used to control the account.
-  //
-  // If the list is empty but there are policies globally defined for the wallet,
-  // the global policies will be used.
-  policies : vec Policy;
+  // The policies to enforce when interacting with the account.
+  policies : AccountPolicies;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec record { text; text };
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
-
-type ApprovalThresholdPolicy = variant {
-  // The percentage of approvals required for a transaction to be executed.
-  //
-  // The value must be between 0 and 100.
-  VariableThreshold : nat8;
-
-  // The number of approvals required for a transaction to be executed.
-  //
-  // If there are less owners than the threshold, the number of owners will be used.
-  FixedThreshold : nat8;
-};
-
-// The policies that can be used to control the operation in the wallet.
-type Policy = variant { approval_threshold : ApprovalThresholdPolicy };
 
 // Input type for getting a account.
 type GetAccountInput = record {
@@ -912,15 +907,6 @@ type GetFeaturesResult = variant {
 type WalletSettings = record {
   // The list of admin users associated with the wallet.
   owners : vec User;
-  // The percentage of approvals required for a wallet proposal to be
-  // executed (e.g. upgrade the canister).
-  //
-  // Only admin users are considered for the approval threshold.
-  //
-  // The value must be between 0 and 100.
-  approval_threshold : nat8;
-  // The list of permissions that are applied to the wallet.
-  permissions : vec WalletPermission;
   // The time at which the wallet was last upgraded.
   last_upgrade_timestamp : TimestampRFC3339;
 };
@@ -974,95 +960,52 @@ type WalletSettingsResult = variant {
 type WalletInit = record {
   // The list of admin principals to be associated with the wallet.
   owners : opt vec principal;
-  // The percentage of approvals required for a wallet proposal to be
-  // executed (e.g. upgrade the canister).
-  //
-  // Only admin users are considered for the approval threshold.
-  //
-  // The value must be between 0 and 100.
-  approval_threshold : opt nat8;
-  // The list of permissions that are applied to the wallet.
-  permissions : opt vec WalletPermission;
 };
 
 // The Wallet service definition.
 service : (opt WalletInit) -> {
   // Get the wallet features (e.g. supported assets).
-  //
-  // Required permission: "read:features"
   features : () -> (GetFeaturesResult) query;
   // Get the list of notifications associated with the caller.
-  //
-  // Required permission: "read:notification"
   list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
   // Mark the notifications as read.
-  //
-  // Required permission: "write:notification"
   mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
   // Get a account by id.
   //
   // If the caller does not have access to the account, an error will be returned.
-  //
-  // Required permission: "read:account"
   get_account : (input : GetAccountInput) -> (GetAccountResult) query;
   // Get the account balance.
   //
   // If the caller does not have access to the account, an error will be returned.
-  //
-  // Required permission: "read:account"
   fetch_account_balances : (input : FetchAccountBalancesInput) -> (FetchAccountBalancesResult);
   // List all accounts that the caller has access to.
   //
   // If the caller is not the owner of any account, an error will be returned.
-  //
-  // Required permission: "read:account"
   list_accounts : () -> (ListAccountResult) query;
   // List all transfers from the requested account.
-  //
-  // Required permission: "read:transfer"
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
   // Get a transfer by id.
   //
   // If the caller does not have access to the transfer, an error will be returned.
-  //
-  // Required permission: "read:transfer"
   get_transfer : (input : GetTransferInput) -> (GetTransferResult) query;
   // Get transfers by their ids.
-  //
-  // Required permission: "read:transfer"
   get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
   // Create a new proposal.
   //
   // The proposal will be created and the caller will be added as the proposer.
-  //
-  // Required permission: "create-proposal"
   create_proposal : (input : CreateProposalInput) -> (CreateProposalResult);
   // Get the list of proposals.
-  //
-  // Required permission: "read:proposal"
   list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
   // Get the list of proposals for a given account.
-  //
-  // Required permission: "read:proposal"
   list_account_proposals : (input : ListAccountProposalsInput) -> (ListAccountProposalsResult) query;
   // Get the proposal by id.
-  //
-  // Required permission: "read:proposal"
   get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
   // Record the vote of the user on the proposal.
-  //
-  // Required permission: "write:proposal"
   vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
   // Confirm that the caller owns the user.
-  //
-  // Required permission: "write:register-user"
   confirm_user_identity : (input : ConfirmUserIdentityInput) -> (ConfirmUserIdentityResult);
   // Get the user associated with the caller or the user id provided.
-  //
-  // Required permission: "read:user"
   get_user : (input : GetUserInput) -> (GetUserResult) query;
   // Get the wallet settings.
-  //
-  // Required permission: "admin"
   wallet_settings : () -> (WalletSettingsResult) query;
 };

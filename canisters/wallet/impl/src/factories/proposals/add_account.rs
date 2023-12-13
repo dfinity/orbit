@@ -1,9 +1,7 @@
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{
-        AddAccountOperation, EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation,
-    },
+    errors::{ProposalError, ProposalExecuteError},
+    models::{AddAccountOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
     services::AccountService,
 };
 use async_trait::async_trait;
@@ -61,58 +59,6 @@ impl CreateHook for AddAccountProposalCreateHook<'_, '_> {
     }
 }
 
-pub struct AddAccountProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o AddAccountOperation,
-}
-
-impl<'p, 'o> AddAccountProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for AddAccountProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        // TODO: Add once final policy design is ready
-
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct AddAccountProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddAccountOperation,
-}
-
-impl<'p, 'o> AddAccountProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddAccountOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for AddAccountProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        // TODO: Add once final policy design is ready
-
-        Ok(EvaluationStatus::Adopted)
-    }
-}
-
 pub struct AddAccountProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o AddAccountOperation,
@@ -134,7 +80,7 @@ impl Execute for AddAccountProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let account = self
             .account_service
-            .create_account(self.operation.clone())
+            .create_account(self.operation.input.to_owned())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to create account: {}", e),

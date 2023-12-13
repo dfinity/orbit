@@ -1,10 +1,5 @@
-use crate::core::{PERMISSION_READ_NOTIFICATION, PERMISSION_WRITE_NOTIFICATION};
-use crate::{
-    core::middlewares::{authorize, call_context},
-    services::NotificationService,
-};
+use crate::{core::middlewares::call_context, services::NotificationService};
 use ic_canister_core::api::{ApiError, ApiResult};
-use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
@@ -40,7 +35,7 @@ impl NotificationController {
         }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_NOTIFICATION])]
+    /// No authorization required since the user will be calling this only for their own notifications.
     async fn list_notifications(
         &self,
         input: ListNotificationsInput,
@@ -57,7 +52,7 @@ impl NotificationController {
         Ok(ListNotificationsResponse { notifications })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_WRITE_NOTIFICATION])]
+    /// No authorization required since the user will be calling this only for their own notifications.
     async fn mark_notifications_read(&self, input: MarkNotificationsReadInput) -> ApiResult<()> {
         self.notification_service
             .mark_read(input, &call_context())

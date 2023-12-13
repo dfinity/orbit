@@ -1,4 +1,3 @@
-use crate::core::{PERMISSION_ADMIN, PERMISSION_READ_FEATURES};
 use crate::services::UpgradeService;
 use crate::{
     core::{
@@ -7,8 +6,8 @@ use crate::{
         middlewares::{authorize, call_context},
         CanisterConfig,
     },
-    jobs::register_jobs,
-    services::WalletService,
+    models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
+    services::{InstallMode, WalletService},
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
@@ -59,31 +58,32 @@ impl WalletController {
 
     async fn initialize(&self, input: Option<WalletCanisterInit>) {
         let input = input.unwrap_or_default();
-        let config = CanisterConfig::default();
+        let mut config = CanisterConfig::default();
 
         self.wallet_service
-            .register_canister_config(config, input, &call_context())
+            .process_canister_install(&mut config, input, &call_context(), InstallMode::Init)
             .await;
-
-        register_jobs().await;
     }
 
     async fn post_upgrade(&self, input: Option<WalletCanisterInit>) {
         let input = input.unwrap_or_default();
-        let config = canister_config_mut();
+        let mut config = canister_config_mut();
 
         self.wallet_service
-            .register_canister_config(config, input, &call_context())
+            .process_canister_install(&mut config, input, &call_context(), InstallMode::Upgrade)
             .await;
 
         if let Err(err) = self.upgrade_service.verify_upgrade().await {
             print(format!("Error: verifying upgrade failed {err}"));
         }
-
-        register_jobs().await;
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_FEATURES])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)],
+        is_async = true
+    )]
     async fn get_wallet_features(&self) -> ApiResult<WalletFeaturesResponse> {
         let features = self.wallet_service.get_features()?;
 
@@ -92,7 +92,12 @@ impl WalletController {
         })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_ADMIN])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::Read)],
+        is_async = true
+    )]
     async fn wallet_settings(&self) -> ApiResult<WalletSettingsResponse> {
         let settings = self.wallet_service.get_wallet_settings()?;
 

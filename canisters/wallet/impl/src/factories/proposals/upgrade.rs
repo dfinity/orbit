@@ -1,18 +1,13 @@
+use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use crate::{
+    core::{canister_config, write_canister_config, CanisterConfig},
+    errors::{ProposalError, ProposalExecuteError},
+    models::{Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation, UpgradeTarget},
+    services::UPGRADE_SERVICE,
+};
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
 use wallet_api::{CreateProposalInput, UpgradeOperationInput};
-
-use crate::{
-    core::{canister_config, canister_config_mut, write_canister_config, CanisterConfig},
-    errors::{ProposalError, ProposalEvaluateError, ProposalExecuteError},
-    models::{
-        EvaluationStatus, Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation,
-        UpgradeTarget,
-    },
-    services::UPGRADE_SERVICE,
-};
-
-use super::{Create, CreateHook, Evaluate, Execute, ProposalExecuteStage, Validate};
 
 pub struct UpgradeProposalCreate;
 
@@ -59,54 +54,6 @@ impl<'p, 'o> UpgradeProposalCreateHook<'p, 'o> {
 #[async_trait]
 impl CreateHook for UpgradeProposalCreateHook<'_, '_> {
     async fn on_created(&self) {}
-}
-
-pub struct UpgradeProposalValidate<'p, 'o> {
-    proposal: &'p Proposal,
-    _operation: &'o UpgradeOperation,
-}
-
-impl<'p, 'o> UpgradeProposalValidate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o UpgradeOperation) -> Self {
-        Self {
-            proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Validate for UpgradeProposalValidate<'_, '_> {
-    fn can_vote(&self, _user_id: &UUID) -> bool {
-        false
-    }
-
-    fn can_view(&self, user_id: &UUID) -> bool {
-        self.can_vote(user_id)
-            || self.proposal.voters().contains(user_id)
-            || self.proposal.proposed_by == *user_id
-    }
-}
-
-pub struct UpgradeProposalEvaluate<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o UpgradeOperation,
-}
-
-impl<'p, 'o> UpgradeProposalEvaluate<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o UpgradeOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl Evaluate for UpgradeProposalEvaluate<'_, '_> {
-    async fn evaluate(&self) -> Result<EvaluationStatus, ProposalEvaluateError> {
-        Ok(EvaluationStatus::Adopted)
-    }
 }
 
 pub struct UpgradeProposalExecute<'p, 'o> {

@@ -1,7 +1,7 @@
-use crate::core::PERMISSION_READ_ACCOUNT;
+use crate::mappers::HelperMapper;
+use crate::models::access_control::{AccountActionSpecifier, ResourceSpecifier, ResourceType};
 use crate::{
     core::middlewares::{authorize, call_context},
-    mappers::HelperMapper,
     services::AccountService,
 };
 use ic_canister_core::api::ApiResult;
@@ -46,20 +46,27 @@ impl AccountController {
         Self { account_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
         let account = self
             .account_service
-            .get_account(
-                HelperMapper::to_uuid(input.account_id)?.as_bytes(),
-                &call_context(),
-            )?
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?
             .to_dto();
 
         Ok(GetAccountResponse { account })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::Common(ResourceType::Account, AccountActionSpecifier::List)],
+        is_async = true
+    )]
     async fn list_accounts(&self) -> ApiResult<ListAccountResponse> {
         let ctx = call_context();
         let owner_identity = ctx.caller();
@@ -74,15 +81,17 @@ impl AccountController {
         Ok(ListAccountResponse { accounts })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_ACCOUNT])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,
     ) -> ApiResult<FetchAccountBalancesResponse> {
-        let balances = self
-            .account_service
-            .fetch_account_balances(input, &call_context())
-            .await?;
+        let balances = self.account_service.fetch_account_balances(input).await?;
 
         Ok(FetchAccountBalancesResponse { balances })
     }

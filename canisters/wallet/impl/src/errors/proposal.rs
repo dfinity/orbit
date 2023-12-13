@@ -29,6 +29,11 @@ pub enum ProposalError {
     /// Proposal can't be executed because it was not adopted.
     #[error(r#"Proposal can't be executed because it was not adopted."#)]
     ExecutionFailedNotAdopted,
+    #[error(r#"You don't have permission to create the requested proposal."#)]
+    Unauthorized,
+    /// Proposal policy not found for id `{id}`.
+    #[error(r#"Proposal policy not found for id `{id}`"#)]
+    PolicyNotFound { id: String },
 }
 
 impl DetailableError for ProposalError {
@@ -57,6 +62,10 @@ impl DetailableError for ProposalError {
             }
             ProposalError::ExecutionError { reason } => {
                 details.insert("reason".to_string(), reason.to_string());
+                Some(details)
+            }
+            ProposalError::PolicyNotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
             _ => None,
