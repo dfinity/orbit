@@ -37,11 +37,11 @@ impl UserGroupController {
     }
 
     #[with_middleware(
-    guard = "authorize",
-    context = "call_context",
-    args = [ResourceSpecifier::from(&input)],
-    is_async = true
-)]
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn get_user_group(&self, input: GetUserGroupInput) -> ApiResult<GetUserGroupResponse> {
         let user_group = self
             .user_group_service
