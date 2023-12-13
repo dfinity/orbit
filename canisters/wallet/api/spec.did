@@ -945,6 +945,29 @@ type ConfirmUserIdentityResult = variant {
   Err : Error;
 };
 
+// Input type for listing users of the wallet.
+type ListUsersInput = record {
+  // The offset to use for pagination.
+  offset : opt nat64;
+  // The maximum number of users to retrieve.
+  //
+  // If not set, the default limit will be used.
+  limit : opt nat16;
+};
+
+// Result type for listing users of the wallet.
+type ListUsersResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of users.
+    users : vec User;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error
+};
+
 // Result type for getting the wallet settings.
 type WalletSettingsResult = variant {
   // The result data for a successful execution.
@@ -1006,6 +1029,8 @@ service : (opt WalletInit) -> {
   confirm_user_identity : (input : ConfirmUserIdentityInput) -> (ConfirmUserIdentityResult);
   // Get the user associated with the caller or the user id provided.
   get_user : (input : GetUserInput) -> (GetUserResult) query;
+  // List all users of the wallet.
+  list_users : (input : ListUsersInput) -> (ListUsersResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
 };

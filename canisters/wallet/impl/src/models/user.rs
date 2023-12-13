@@ -32,6 +32,12 @@ pub struct User {
     pub last_modification_timestamp: Timestamp,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ListedUsers {
+    pub users: Vec<User>,
+    pub next_offset: Option<u64>,
+}
+
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserKey {

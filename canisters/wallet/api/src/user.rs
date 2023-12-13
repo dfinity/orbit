@@ -81,3 +81,15 @@ pub struct EditUserStatusOperationInput {
 pub struct EditUserStatusOperationDTO {
     pub input: EditUserStatusOperationInput,
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListUsersInput {
+    pub offset: Option<u64>,
+    pub limit: Option<u16>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListUsersResponse {
+    pub users: Vec<UserDTO>,
+    pub next_offset: Option<u64>,
+}
