@@ -3,8 +3,9 @@ use crate::{
     core::{ic_cdk::api::trap, CallContext},
     models::{
         access_control::{
-            AccountActionSpecifier, AccountSpecifier, ProposalActionSpecifier, ResourceSpecifier,
-            ResourceType, TransferActionSpecifier, UpgradeActionSpecifier,
+            AccountActionSpecifier, AccountSpecifier, CommonActionSpecifier,
+            ProposalActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
+            UpgradeActionSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier},
         Transfer,
@@ -235,5 +236,18 @@ impl From<&wallet_api::GetProposalInput> for ResourceSpecifier {
         ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Id(
             [proposal_id].to_vec(),
         )))
+    }
+}
+
+impl From<&wallet_api::GetUserGroupInput> for ResourceSpecifier {
+    fn from(input: &wallet_api::GetUserGroupInput) -> Self {
+        let user_group_id = *HelperMapper::to_uuid(input.user_group_id.to_owned())
+            .expect("Invalid user group id")
+            .as_bytes();
+
+        ResourceSpecifier::Common(
+            ResourceType::UserGroup,
+            CommonActionSpecifier::Read(CommonSpecifier::Id([user_group_id].to_vec())),
+        )
     }
 }

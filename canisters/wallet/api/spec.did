@@ -965,7 +965,33 @@ type ListUsersResult = variant {
     next_offset : opt nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error
+  Err : Error;
+};
+
+// Input type for getting a user group.
+type GetUserGroupInput = record {
+  // The group id to retrieve.
+  user_group_id : UUID;
+};
+
+// Result type for getting a user group.
+type GetUserGroupResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The group that was retrieved.
+    user_group : UserGroup;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+// Result type for listing all user groups.
+type ListUserGroupResult = variant {
+  Ok : record {
+    // The list of groups.
+    user_groups : vec UserGroup;
+  };
+  Err : Error;
 };
 
 // Result type for getting the wallet settings.
@@ -1031,6 +1057,18 @@ service : (opt WalletInit) -> {
   get_user : (input : GetUserInput) -> (GetUserResult) query;
   // List all users of the wallet.
   list_users : (input : ListUsersInput) -> (ListUsersResult) query;
+  // Get a user group by id.
+  //
+  // If the caller does not have access to the account, an error will be returned.
+  //
+  // Required permission: "read:user_group"
+  get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
+  // List all user groups that the caller has access to.
+  //
+  // If the caller is not the owner of any user groups, an error will be returned.
+  //
+  // Required permission: "read:user_group"
+  list_user_groups : () -> (ListUserGroupResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
 };
