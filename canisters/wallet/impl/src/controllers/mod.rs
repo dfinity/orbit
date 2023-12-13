@@ -21,6 +21,9 @@ pub use proposal::*;
 mod user;
 pub use user::*;
 
+mod policy;
+pub use policy::*;
+
 #[cfg(test)]
 mod tests {
     use ic_canister_core::api::ApiResult;

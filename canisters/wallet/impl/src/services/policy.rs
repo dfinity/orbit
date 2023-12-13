@@ -1,5 +1,8 @@
 use crate::{
-    core::generate_uuid_v4,
+    core::{
+        generate_uuid_v4,
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+    },
     errors::{AccessControlError, ProposalError},
     models::{
         access_control::{AccessControlPolicy, ResourceSpecifier, UserSpecifier},
@@ -17,6 +20,7 @@ use ic_canister_core::{api::ServiceResult, types::UUID};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
+use wallet_api::ListAccessPoliciesInput;
 
 lazy_static! {
     pub static ref POLICY_SERVICE: Arc<PolicyService> = Arc::new(PolicyService::new(
@@ -32,6 +36,9 @@ pub struct PolicyService {
 }
 
 impl PolicyService {
+    pub const DEFAULT_POLICIES_LIMIT: u16 = 100;
+    pub const MAX_LIST_POLICIES_LIMIT: u16 = 1000;
+
     pub fn new(
         access_control_policy_repository: Arc<AccessControlRepository>,
         proposal_policy_repository: Arc<ProposalPolicyRepository>,
@@ -132,12 +139,29 @@ impl PolicyService {
 
         Ok(policy)
     }
+
+    pub fn list_access_policies(
+        &self,
+        input: ListAccessPoliciesInput,
+    ) -> ServiceResult<PaginatedData<AccessControlPolicy>> {
+        let result = paginated_items(PaginatedItemsArgs {
+            offset: input.offset,
+            limit: input.limit,
+            default_limit: Some(Self::DEFAULT_POLICIES_LIMIT),
+            max_limit: Some(Self::MAX_LIST_POLICIES_LIMIT),
+            items: Box::new(|| self.access_control_policy_repository.list()),
+        })?;
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_control::ProposalActionSpecifier;
+    use crate::models::access_control::{
+        access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
+    };
 
     #[tokio::test]
     async fn test_proposal_policy_operations() {
@@ -220,5 +244,24 @@ mod tests {
         let result = service.get_access_policy(&[1; 16]);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn list_access_policies_should_use_offset_and_limit() {
+        for i in 0..50 {
+            let mut policy = mock_access_policy();
+            policy.id = [i; 16];
+            policy.user = UserSpecifier::Id(vec![[i; 16]]);
+            ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        }
+
+        let input = ListAccessPoliciesInput {
+            offset: Some(15),
+            limit: Some(30),
+        };
+
+        let result = POLICY_SERVICE.list_access_policies(input).unwrap();
+        assert_eq!(result.items.len(), 30);
+        assert_eq!(result.next_offset, Some(45));
     }
 }

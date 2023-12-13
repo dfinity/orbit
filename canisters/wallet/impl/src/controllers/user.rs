@@ -98,7 +98,7 @@ impl UserController {
         let list = self.user_service.list_users(input)?;
 
         Ok(ListUsersResponse {
-            users: list.users.into_iter().map(Into::into).collect(),
+            users: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
         })
     }
