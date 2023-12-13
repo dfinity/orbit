@@ -26,17 +26,8 @@ pub struct RegisterUserWalletSharedInput {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum RegisterUserWalletInput {
-    PrivateWallet {
-        id: Principal,
-        use_shared_wallet: Option<RegisterUserWalletSharedInput>,
-    },
-    SharedWallet,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegisterUserInput {
-    pub wallet: RegisterUserWalletInput,
+    pub wallet_id: Option<Principal>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

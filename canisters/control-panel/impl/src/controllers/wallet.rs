@@ -1,10 +1,15 @@
 //! Wallet services.
+use std::sync::Arc;
+
 use crate::core::middlewares::{call_context, log_call, log_call_result};
+use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
-use control_panel_api::{GetMainWalletResponse, ListWalletsResponse, UserWalletDTO};
+use control_panel_api::{
+    DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse, UserWalletDTO,
+};
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
-use ic_cdk_macros::query;
+use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 
 // Canister entrypoints for the controller.
@@ -18,19 +23,29 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
     CONTROLLER.get_main_wallet().await
 }
 
+#[update(name = "deploy_wallet")]
+async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
+    CONTROLLER.deploy_wallet().await
+}
+
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: WalletController = WalletController::new(UserService::default());
+    static ref CONTROLLER: WalletController =
+        WalletController::new(Arc::clone(&USER_SERVICE), Arc::clone(&DEPLOY_SERVICE));
 }
 
 #[derive(Debug)]
 pub struct WalletController {
-    user_service: UserService,
+    user_service: Arc<UserService>,
+    deploy_service: Arc<DeployService>,
 }
 
 impl WalletController {
-    fn new(user_service: UserService) -> Self {
-        Self { user_service }
+    fn new(user_service: Arc<UserService>, deploy_service: Arc<DeployService>) -> Self {
+        Self {
+            user_service,
+            deploy_service,
+        }
     }
 
     /// Returns list of wallets associated with the user.
@@ -55,6 +70,18 @@ impl WalletController {
 
         Ok(GetMainWalletResponse {
             wallet: main_wallet.map(UserWalletDTO::from),
+        })
+    }
+
+    /// Deploys a new wallet for the user and returns its id.
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    async fn deploy_wallet(&self) -> ApiResult<DeployWalletResponse> {
+        let ctx = CallContext::get();
+        let deployed_wallet_id = self.deploy_service.deploy_wallet(&ctx).await?;
+
+        Ok(DeployWalletResponse {
+            canister_id: deployed_wallet_id,
         })
     }
 }

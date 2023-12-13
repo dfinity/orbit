@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use crate::{
-    core::{canister_config, CallContext},
+    core::CallContext,
     errors::UserError,
     mappers::UserMapper,
     models::{User, UserKey, UserWallet},
-    repositories::UserRepository,
+    repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
 use control_panel_api::{ManageUserInput, RegisterUserInput};
@@ -12,13 +14,23 @@ use ic_canister_core::{
     api::{ApiError, ServiceResult},
     model::ModelValidator,
 };
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref USER_SERVICE: Arc<UserService> =
+        Arc::new(UserService::new(Arc::clone(&USER_REPOSITORY)));
+}
 
 #[derive(Default, Debug)]
 pub struct UserService {
-    user_repository: UserRepository,
+    user_repository: Arc<UserRepository>,
 }
 
 impl UserService {
+    pub fn new(user_repository: Arc<UserRepository>) -> Self {
+        Self { user_repository }
+    }
+
     /// Returns the user associated with the given user id.
     pub fn get_user(&self, user_id: &Principal, ctx: &CallContext) -> ServiceResult<User> {
         let user = self
@@ -59,11 +71,7 @@ impl UserService {
         self.assert_identity_is_unregistered(&ctx.caller())?;
 
         let user_id = ctx.caller();
-        let user = UserMapper::from_register_input(
-            input.clone(),
-            user_id,
-            canister_config().shared_wallet_canister,
-        );
+        let user = UserMapper::from_register_input(input.clone(), user_id);
 
         user.validate()?;
         self.user_repository.insert(UserKey(user.id), user.clone());
@@ -129,7 +137,6 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use control_panel_api::RegisterUserWalletInput;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -195,10 +202,7 @@ mod tests {
         let ctx = CallContext::default();
         let service = UserService::default();
         let input = RegisterUserInput {
-            wallet: RegisterUserWalletInput::PrivateWallet {
-                id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                use_shared_wallet: None,
-            },
+            wallet_id: Some(Principal::from_slice(&[2; 29])),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -212,18 +216,8 @@ mod tests {
 
         let ctx = CallContext::default();
         let service = UserService::default();
-        let input = RegisterUserInput {
-            wallet: RegisterUserWalletInput::PrivateWallet {
-                id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                use_shared_wallet: None,
-            },
-        };
-        let duplicated_user_input = RegisterUserInput {
-            wallet: RegisterUserWalletInput::PrivateWallet {
-                id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-                use_shared_wallet: None,
-            },
-        };
+        let input = RegisterUserInput { wallet_id: None };
+        let duplicated_user_input = RegisterUserInput { wallet_id: None };
 
         let result = service.register_user(input.clone(), &ctx).await;
         let duplicated_user_result = service

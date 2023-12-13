@@ -1,9 +1,7 @@
 use crate::setup::setup_new_env;
 use crate::utils::{update_candid_as, user_test_id};
 use crate::TestEnv;
-use control_panel_api::{
-    GetMainWalletResponse, RegisterUserInput, RegisterUserResponse, RegisterUserWalletInput,
-};
+use control_panel_api::{GetMainWalletResponse, RegisterUserInput, RegisterUserResponse};
 use ic_canister_core::api::ApiResult;
 
 #[test]
@@ -27,12 +25,8 @@ fn register_user_successful() {
     assert_eq!(err.code, "NOT_FOUND");
 
     // register user
-    let wallet_args = RegisterUserWalletInput::PrivateWallet {
-        id: canister_ids.wallet,
-        use_shared_wallet: None,
-    };
     let register_args = RegisterUserInput {
-        wallet: wallet_args,
+        wallet_id: Some(canister_ids.wallet),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,

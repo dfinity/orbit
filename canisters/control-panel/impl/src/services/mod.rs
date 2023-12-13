@@ -2,3 +2,9 @@
 
 mod user;
 pub use user::*;
+
+mod canister;
+pub use canister::*;
+
+mod deploy;
+pub use deploy::*;

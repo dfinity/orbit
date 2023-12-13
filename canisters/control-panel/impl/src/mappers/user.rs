@@ -4,41 +4,24 @@ use crate::{
     models::{User, UserWallet},
 };
 use candid::Principal;
-use control_panel_api::{
-    ManageUserInput, RegisterUserInput, RegisterUserWalletInput, UserDTO, UserWalletDTO,
-};
+use control_panel_api::{ManageUserInput, RegisterUserInput, UserDTO, UserWalletDTO};
 
 #[derive(Default)]
 pub struct UserMapper {}
 
 impl UserMapper {
     /// Maps the registration input to an user entity.
-    pub fn from_register_input(
-        input: RegisterUserInput,
-        user_id: Principal,
-        global_shared_wallet_canister_id: Principal,
-    ) -> User {
-        let wallets = match input.wallet {
-            RegisterUserWalletInput::PrivateWallet {
-                id,
-                use_shared_wallet,
-            } => match use_shared_wallet {
-                Some(shared_wallet) => {
-                    if shared_wallet.is_main {
-                        vec![global_shared_wallet_canister_id, id]
-                    } else {
-                        vec![id, global_shared_wallet_canister_id]
-                    }
-                }
-                None => vec![id],
-            },
-            RegisterUserWalletInput::SharedWallet => {
-                vec![global_shared_wallet_canister_id]
-            }
+    pub fn from_register_input(input: RegisterUserInput, user_id: Principal) -> User {
+        let wallets = match input.wallet_id {
+            Some(wallet_id) => vec![wallet_id],
+            None => vec![],
         };
         // The order of the wallets is important, the first wallet is the main wallet for the user at this stage
         // so that it can be used to the `main_wallet` field of the user entity.
-        let main_wallet = *wallets.first().unwrap();
+        let main_wallet = match wallets.is_empty() {
+            true => None,
+            false => Some(wallets[0]),
+        };
 
         User {
             id: user_id,
@@ -50,7 +33,7 @@ impl UserMapper {
                 })
                 .collect(),
             last_update_timestamp: time(),
-            main_wallet: Some(main_wallet),
+            main_wallet,
         }
     }
 }
@@ -84,78 +67,34 @@ impl User {
 
 #[cfg(test)]
 mod tests {
-    use control_panel_api::RegisterUserWalletSharedInput;
-
     use super::*;
 
     #[test]
-    fn mapped_user_registration_with_shared_wallet() {
+    fn mapped_user_registration_with_no_wallet() {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let global_shared_wallet_canister_id =
-            Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-        let input = RegisterUserInput {
-            wallet: RegisterUserWalletInput::SharedWallet,
-        };
+        let input = RegisterUserInput { wallet_id: None };
 
-        let user =
-            UserMapper::from_register_input(input, user_id, global_shared_wallet_canister_id);
+        let user = UserMapper::from_register_input(input, user_id);
 
         assert_eq!(user.id, user_id);
-        assert_eq!(user.main_wallet, Some(global_shared_wallet_canister_id));
-        assert_eq!(user.wallets.len(), 1);
-        assert_eq!(
-            user.wallets[0].canister_id,
-            global_shared_wallet_canister_id
-        );
-        assert_eq!(user.wallets[0].name, None);
+        assert_eq!(user.main_wallet, None);
+        assert!(user.wallets.is_empty());
     }
 
     #[test]
-    fn mapped_user_registration_with_private_wallet() {
+    fn mapped_user_registration_with_wallet() {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let global_shared_wallet_canister_id = Principal::anonymous();
-        let main_wallet = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let main_wallet = Principal::from_slice(&[2; 29]);
         let input = RegisterUserInput {
-            wallet: RegisterUserWalletInput::PrivateWallet {
-                id: main_wallet,
-                use_shared_wallet: None,
-            },
+            wallet_id: Some(main_wallet),
         };
 
-        let user =
-            UserMapper::from_register_input(input, user_id, global_shared_wallet_canister_id);
+        let user = UserMapper::from_register_input(input, user_id);
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.main_wallet, Some(main_wallet));
         assert_eq!(user.wallets.len(), 1);
         assert_eq!(user.wallets[0].canister_id, main_wallet);
         assert_eq!(user.wallets[0].name, None);
-    }
-
-    #[test]
-    fn mapped_user_registration_with_private_wallet_and_shared() {
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let global_shared_wallet_canister_id = Principal::anonymous();
-        let main_wallet = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-        let input = RegisterUserInput {
-            wallet: RegisterUserWalletInput::PrivateWallet {
-                id: main_wallet,
-                use_shared_wallet: Some(RegisterUserWalletSharedInput { is_main: false }),
-            },
-        };
-
-        let user =
-            UserMapper::from_register_input(input, user_id, global_shared_wallet_canister_id);
-
-        assert_eq!(user.id, user_id);
-        assert_eq!(user.main_wallet, Some(main_wallet));
-        assert_eq!(user.wallets.len(), 2);
-        assert_eq!(user.wallets[0].canister_id, main_wallet);
-        assert_eq!(user.wallets[0].name, None);
-        assert_eq!(
-            user.wallets[1].canister_id,
-            global_shared_wallet_canister_id
-        );
-        assert_eq!(user.wallets[1].name, None);
     }
 }
