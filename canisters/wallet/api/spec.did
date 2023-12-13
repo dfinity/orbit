@@ -966,7 +966,7 @@ type ListUsersResult = variant {
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
-}
+};
 
 // Input type for getting a user group.
 type GetUserGroupInput = record {

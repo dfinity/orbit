@@ -5,11 +5,9 @@ use lazy_static::lazy_static;
 use wallet_api::{GetUserGroupInput, GetUserGroupResponse, ListUserGroupResponse};
 
 use crate::{
-    core::{
-        middlewares::{authorize, call_context},
-        PERMISSION_READ_USER_GROUP,
-    },
+    core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
+    models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier},
     services::UserGroupService,
 };
 
@@ -38,7 +36,12 @@ impl UserGroupController {
         Self { user_group_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_USER_GROUP])]
+    #[with_middleware(
+    guard = "authorize",
+    context = "call_context",
+    args = [ResourceSpecifier::from(&input)],
+    is_async = true
+)]
     async fn get_user_group(&self, input: GetUserGroupInput) -> ApiResult<GetUserGroupResponse> {
         let user_group = self
             .user_group_service
@@ -48,7 +51,12 @@ impl UserGroupController {
         Ok(GetUserGroupResponse { user_group })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [PERMISSION_READ_USER_GROUP])]
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::Common(ResourceType::UserGroup, UserGroupActionSpecifier::List)],
+        is_async = true
+    )]
     async fn list_user_groups(&self) -> ApiResult<ListUserGroupResponse> {
         let user_groups = self
             .user_group_service
