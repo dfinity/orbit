@@ -34,6 +34,10 @@ impl UserGroupService {
         Ok(user_group)
     }
 
+    pub fn list(&self) -> ServiceResult<Vec<UserGroup>> {
+        Ok(self.user_group_repository.list())
+    }
+
     pub async fn create(&self, input: AddUserGroupOperationInput) -> ServiceResult<UserGroup> {
         let user_group_id = generate_uuid_v4().await;
         let user_group = UserGroup {

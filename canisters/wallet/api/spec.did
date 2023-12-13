@@ -1096,6 +1096,32 @@ type GetAccessPolicyResult = variant {
   Err : Error;
 };
 
+// Result type for listing all user groups.
+type ListUserGroupResult = variant {
+  Ok : record {
+    // The list of groups.
+    user_groups : vec UserGroup;
+  };
+  Err : Error;
+};
+
+// Input type for getting a user group.
+type GetUserGroupInput = record {
+  // The group id to retrieve.
+  user_group_id : UUID;
+};
+
+// Result type for getting a user group.
+type GetUserGroupResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The group that was retrieved.
+    user_group : UserGroup;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
 // Result type for getting the wallet settings.
 type WalletSettingsResult = variant {
   // The result data for a successful execution.
@@ -1163,6 +1189,12 @@ service : (opt WalletInit) -> {
   list_access_policies : (input : ListAccessPoliciesInput) -> (ListAccessPoliciesResult) query;
   // Get access control policy.
   get_access_policy : (input : GetAccessPolicyInput) -> (GetAccessPolicyResult) query;
+  // Get a user group by id.
+  //
+  // If the caller does not have access to the user group, an error will be returned.
+  get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
+  // List all user groups of the wallet.
+  list_user_groups : () -> (ListUserGroupResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
 };

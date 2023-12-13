@@ -24,6 +24,9 @@ pub use user::*;
 mod policy;
 pub use policy::*;
 
+mod user_group;
+pub use user_group::*;
+
 #[cfg(test)]
 mod tests {
     use ic_canister_core::api::ApiResult;

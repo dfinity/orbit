@@ -38,3 +38,18 @@ pub struct RemoveUserGroupOperationInput {
 pub struct RemoveUserGroupOperationDTO {
     pub input: RemoveUserGroupOperationInput,
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetUserGroupInput {
+    pub user_group_id: UuidDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetUserGroupResponse {
+    pub user_group: UserGroupDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListUserGroupResponse {
+    pub user_groups: Vec<UserGroupDTO>,
+}
