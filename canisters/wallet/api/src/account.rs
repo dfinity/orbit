@@ -1,12 +1,9 @@
-use super::UserIdDTO;
 use crate::{CriteriaDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
-pub type AccountIdDTO = String;
-
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
-    pub id: AccountIdDTO,
+    pub id: UuidDTO,
     pub owners: Vec<UuidDTO>,
     pub name: String,
     pub address: String,
@@ -28,8 +25,8 @@ pub struct AccountPoliciesDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationInput {
-    pub account_id: AccountIdDTO,
-    pub owners: Option<Vec<UserIdDTO>>,
+    pub account_id: UuidDTO,
+    pub owners: Option<Vec<UuidDTO>>,
     pub policies: Option<AccountPoliciesDTO>,
     pub name: Option<String>,
 }
@@ -42,7 +39,7 @@ pub struct EditAccountOperationDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    pub owners: Vec<UserIdDTO>,
+    pub owners: Vec<UuidDTO>,
     pub policies: AccountPoliciesDTO,
     pub blockchain: String,
     pub standard: String,
@@ -63,7 +60,7 @@ pub enum ApprovalThresholdPolicyDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccountInput {
-    pub account_id: AccountIdDTO,
+    pub account_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

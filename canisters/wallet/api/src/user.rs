@@ -1,9 +1,7 @@
-use crate::UserGroupDTO;
+use crate::{UserGroupDTO, UuidDTO};
 
 use super::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
-
-pub type UserIdDTO = String;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum UserStatusDTO {
@@ -13,7 +11,7 @@ pub enum UserStatusDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct UserDTO {
-    pub id: UserIdDTO,
+    pub id: UuidDTO,
     pub identities: Vec<Principal>,
     pub unconfirmed_identities: Vec<Principal>,
     pub groups: Vec<UserGroupDTO>,
@@ -24,7 +22,7 @@ pub struct UserDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetUserInput {
-    pub user_id: Option<UserIdDTO>,
+    pub user_id: Option<UuidDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -34,7 +32,7 @@ pub struct GetUserResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ConfirmUserIdentityInput {
-    pub user_id: UserIdDTO,
+    pub user_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -59,7 +57,7 @@ pub struct AddUserOperationDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditUserOperationInput {
-    pub id: UserIdDTO,
+    pub id: UuidDTO,
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
     pub unconfirmed_identities: Option<Vec<Principal>>,
@@ -73,7 +71,7 @@ pub struct EditUserOperationDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditUserStatusOperationInput {
-    pub id: UserIdDTO,
+    pub id: UuidDTO,
     pub status: UserStatusDTO,
 }
 
