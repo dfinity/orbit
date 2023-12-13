@@ -2,7 +2,9 @@ use super::{
     specifier::{Match, UserSpecifier},
     EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus, UserId,
 };
-use crate::{errors::MatchError, repositories::USER_REPOSITORY};
+use crate::{
+    core::utils::calculate_minimum_threshold, errors::MatchError, repositories::USER_REPOSITORY,
+};
 use anyhow::{anyhow, Error};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
@@ -202,10 +204,10 @@ impl EvaluateCriteria for CriteriaEvaluator {
     ) -> Result<EvaluationStatus, EvaluateError> {
         match c.as_ref() {
             Criteria::AutoAdopted => Ok(EvaluationStatus::Adopted),
-            Criteria::ApprovalThreshold(user_specifier, Percentage(percentage)) => {
+            Criteria::ApprovalThreshold(user_specifier, percentage) => {
                 let votes = self.calculate_votes(&proposal, user_specifier).await?;
-                let min_votes = ((*percentage as f64 / 100.0) * votes.total_possible_votes as f64)
-                    .ceil() as usize;
+                let min_votes =
+                    calculate_minimum_threshold(percentage, &votes.total_possible_votes);
 
                 Ok(votes.evaluate(&min_votes))
             }
