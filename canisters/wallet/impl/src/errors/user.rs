@@ -63,6 +63,9 @@ pub enum UserError {
     },
     #[error(r#"You're not authorized to perform this action."#)]
     Unauthorized,
+    /// Invalid user list limit.
+    #[error(r#"Invalid user list limit, it cannot be more than {max}."#)]
+    InvalidUserListLimit { max: u16 },
 }
 
 impl DetailableError for UserError {
@@ -99,6 +102,10 @@ impl DetailableError for UserError {
             }
             UserError::NameTooLong { max_length } => {
                 details.insert("max_length".to_string(), max_length.to_string());
+                Some(details)
+            }
+            UserError::InvalidUserListLimit { max } => {
+                details.insert("max".to_string(), max.to_string());
                 Some(details)
             }
             _ => None,
