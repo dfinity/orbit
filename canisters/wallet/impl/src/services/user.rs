@@ -1,10 +1,12 @@
 use crate::{
-    core::{generate_uuid_v4, CallContext},
+    core::{
+        generate_uuid_v4,
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        CallContext,
+    },
     errors::UserError,
     mappers::{HelperMapper, UserMapper},
-    models::{
-        AddUserOperationInput, EditUserOperationInput, ListedUsers, User, UserId, ADMIN_GROUP_ID,
-    },
+    models::{AddUserOperationInput, EditUserOperationInput, User, UserId, ADMIN_GROUP_ID},
     repositories::UserRepository,
 };
 use candid::Principal;
@@ -161,32 +163,16 @@ impl UserService {
     /// Returns the list of users from the given pagination parameters.
     ///
     /// The default limit is 100 and the maximum limit is 1000.
-    pub fn list_users(&self, input: ListUsersInput) -> ServiceResult<ListedUsers> {
-        let offset = input.offset.unwrap_or(0) as usize;
-        let limit = input.limit.unwrap_or(Self::DEFAULT_USER_LIST_LIMIT) as usize;
-        if limit > Self::MAX_USER_LIST_LIMIT as usize {
-            Err(UserError::InvalidUserListLimit {
-                max: Self::MAX_USER_LIST_LIMIT,
-            })?
-        }
+    pub fn list_users(&self, input: ListUsersInput) -> ServiceResult<PaginatedData<User>> {
+        let result = paginated_items(PaginatedItemsArgs {
+            offset: input.offset,
+            limit: input.limit,
+            default_limit: Some(Self::DEFAULT_USER_LIST_LIMIT),
+            max_limit: Some(Self::MAX_USER_LIST_LIMIT),
+            items: Box::new(|| self.user_repository.list()),
+        })?;
 
-        let users = self.user_repository.list();
-        let total_users = users.len() as u64;
-        let filtered_users = users
-            .into_iter()
-            .skip(offset)
-            .take(limit)
-            .collect::<Vec<_>>();
-
-        let next_offset = match (offset + limit) < total_users as usize {
-            true => Some((offset + limit) as u64),
-            false => None,
-        };
-
-        Ok(ListedUsers {
-            users: filtered_users,
-            next_offset,
-        })
+        Ok(result)
     }
 
     /// Asserts that the user exists from the given user id.
@@ -410,42 +396,7 @@ mod tests {
     }
 
     #[test]
-    fn list_users_should_fail_when_limit_is_greater_than_max() {
-        let ctx: TestContext = setup();
-        let input = ListUsersInput {
-            offset: None,
-            limit: Some(UserService::MAX_USER_LIST_LIMIT + 1),
-        };
-
-        let result = ctx.service.list_users(input);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn list_users_should_return_max_limit_by_default() {
-        let ctx: TestContext = setup();
-        for i in 0..200 {
-            let mut user = user_test_utils::mock_user();
-            user.id = [i; 16];
-            user.identities = vec![Principal::from_slice(&[i; 29])];
-            ctx.repository.insert(user.to_key(), user.clone());
-        }
-
-        let input = ListUsersInput {
-            offset: None,
-            limit: None,
-        };
-
-        let result = ctx.service.list_users(input);
-        assert!(result.is_ok());
-        assert_eq!(
-            result.unwrap().users.len(),
-            UserService::DEFAULT_USER_LIST_LIMIT as usize
-        );
-    }
-
-    #[test]
-    fn list_users_should_return_next_offset_when_there_are_more_users() {
+    fn list_users_should_use_offset_and_limit() {
         let ctx: TestContext = setup();
         for i in 0..50 {
             let mut user = user_test_utils::mock_user();
@@ -455,52 +406,12 @@ mod tests {
         }
 
         let input = ListUsersInput {
-            offset: None,
-            limit: Some(49),
+            offset: Some(15),
+            limit: Some(30),
         };
 
         let result = ctx.service.list_users(input).unwrap();
-        assert_eq!(result.users.len(), 49);
-        assert_eq!(result.next_offset, Some(49));
-    }
-
-    #[test]
-    fn list_users_should_filter_by_offset() {
-        let ctx: TestContext = setup();
-        for i in 0..50 {
-            let mut user = user_test_utils::mock_user();
-            user.id = [i; 16];
-            user.identities = vec![Principal::from_slice(&[i; 29])];
-            ctx.repository.insert(user.to_key(), user.clone());
-        }
-
-        let input = ListUsersInput {
-            offset: Some(10),
-            limit: Some(50),
-        };
-
-        let result = ctx.service.list_users(input).unwrap();
-        assert_eq!(result.users.len(), 40);
-        assert_eq!(result.next_offset, None);
-    }
-
-    #[test]
-    fn list_users_should_return_no_next_offset_when_there_are_no_more_users() {
-        let ctx: TestContext = setup();
-        for i in 0..50 {
-            let mut user = user_test_utils::mock_user();
-            user.id = [i; 16];
-            user.identities = vec![Principal::from_slice(&[i; 29])];
-            ctx.repository.insert(user.to_key(), user.clone());
-        }
-
-        let input = ListUsersInput {
-            offset: None,
-            limit: Some(50),
-        };
-
-        let result = ctx.service.list_users(input).unwrap();
-        assert_eq!(result.users.len(), 50);
-        assert_eq!(result.next_offset, None);
+        assert_eq!(result.items.len(), 30);
+        assert_eq!(result.next_offset, Some(45));
     }
 }

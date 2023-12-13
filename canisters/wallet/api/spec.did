@@ -644,10 +644,12 @@ type ListAccountTransfersResult = variant {
   Err : Error;
 };
 
+type UserGroupId = UUID;
+
 // A record type that can be used to represent a user group in the wallet.
 type UserGroup = record {
   // The UUID of the group (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-  id : UUID;
+  id : UserGroupId;
   // The name of the group (e.g. "Finance").
   name : text;
 };
@@ -968,6 +970,141 @@ type ListUsersResult = variant {
   Err : Error;
 };
 
+// The common specifier, used commonly by resources.
+//
+// Mostly let specify resources by their id or by their group (if applicable).
+type CommonSpecifier = variant {
+  Any;
+  Group : vec UUID;
+  Id : vec UUID;
+};
+
+// The access control user specifier, used to specify the user that has access to a resource.
+type AccessControlUserSpecifier = CommonSpecifier;
+
+// The common action specifier, used to specify the action that is performed on a resource.
+//
+// Common actions are actions that are supported by most resources (e.g. list, create, read, update, delete).
+type CommonActionSpecifier = variant {
+  List;
+  Create;
+  Read : CommonSpecifier;
+  Update : CommonSpecifier;
+  Delete : CommonSpecifier;
+};
+
+// The access control resource type, used to specify the type of the resource that is being accessed.
+type ResourceType = variant {
+  Account;
+  User;
+  UserGroup;
+  AddressBook;
+  AccessPolicy;
+};
+
+// The actions that are available for upgrades.
+type UpgradeActionSpecifier = variant {
+  Create;
+};
+
+// The actions that are available for proposals.
+type ProposalActionSpecifier = variant {
+  List;
+  Read : CommonSpecifier;
+};
+
+// The actions that are available for canister settings.
+type CanisterSettingsActionSpecifier = variant {
+  Read;
+  ReadFeatures;
+};
+
+// The specifier for transfers, used to specify the transfer in the context of an account.
+type TransferSpecifier = record {
+  // The account that will be used for the transfer.
+  account : CommonSpecifier;
+  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
+  address : variant {
+    Any;
+  };
+};
+
+// The actions that are available for transfers.
+type TransferActionSpecifier = variant {
+  Create : TransferSpecifier;
+  Read : TransferSpecifier;
+  Delete : TransferSpecifier;
+};
+
+// The access control resource specifier, used to specify the resource that is being accessed.
+type ResourceSpecifier = variant {
+  Transfer : TransferActionSpecifier;
+  Upgrade : UpgradeActionSpecifier;
+  CanisterSettings : CanisterSettingsActionSpecifier;
+  Proposal : ProposalActionSpecifier;
+  Common : record {
+    // The type of the resource.
+    resource_type : ResourceType;
+    // The action that is performed on the resource.
+    action : CommonActionSpecifier;
+  };
+};
+
+// The access control policy, used to specify the access control rules for
+// users when interacting with resources.
+type AccessControlPolicy = record {
+  id : UUID;
+  user : AccessControlUserSpecifier;
+  resource : ResourceSpecifier;
+};
+
+// Input type for listing access policies with the given pagination parameters.
+type ListAccessPoliciesInput = record {
+  // The offset to use for pagination.
+  offset : opt nat64;
+  // The maximum number of access policies to retrieve.
+  //
+  // If not set, the default limit will be used.
+  limit : opt nat16;
+};
+
+// Result type for listing access policies.
+type ListAccessPoliciesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of access policies.
+    policies : vec AccessControlPolicy;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+type GetAccessPolicyInput = record {
+  // The id of the access policy to retrieve.
+  id : UUID;
+};
+
+type GetAccessPolicyResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The access policy that was retrieved.
+    policy : AccessControlPolicy;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+// Result type for listing all user groups.
+type ListUserGroupResult = variant {
+  Ok : record {
+    // The list of groups.
+    user_groups : vec UserGroup;
+  };
+  Err : Error;
+};
+
 // Input type for getting a user group.
 type GetUserGroupInput = record {
   // The group id to retrieve.
@@ -982,15 +1119,6 @@ type GetUserGroupResult = variant {
     user_group : UserGroup;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
-};
-
-// Result type for listing all user groups.
-type ListUserGroupResult = variant {
-  Ok : record {
-    // The list of groups.
-    user_groups : vec UserGroup;
-  };
   Err : Error;
 };
 
@@ -1057,17 +1185,15 @@ service : (opt WalletInit) -> {
   get_user : (input : GetUserInput) -> (GetUserResult) query;
   // List all users of the wallet.
   list_users : (input : ListUsersInput) -> (ListUsersResult) query;
+  // List all access policies.
+  list_access_policies : (input : ListAccessPoliciesInput) -> (ListAccessPoliciesResult) query;
+  // Get access control policy.
+  get_access_policy : (input : GetAccessPolicyInput) -> (GetAccessPolicyResult) query;
   // Get a user group by id.
   //
-  // If the caller does not have access to the account, an error will be returned.
-  //
-  // Required permission: "read:user_group"
+  // If the caller does not have access to the user group, an error will be returned.
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
-  // List all user groups that the caller has access to.
-  //
-  // If the caller is not the owner of any user groups, an error will be returned.
-  //
-  // Required permission: "read:user_group"
+  // List all user groups of the wallet.
   list_user_groups : () -> (ListUserGroupResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
