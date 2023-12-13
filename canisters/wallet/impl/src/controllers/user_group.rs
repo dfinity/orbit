@@ -46,7 +46,7 @@ impl UserGroupController {
         let user_group = self
             .user_group_service
             .get(HelperMapper::to_uuid(input.user_group_id)?.as_bytes())?
-            .to_dto();
+            .into();
 
         Ok(GetUserGroupResponse { user_group })
     }
@@ -62,7 +62,7 @@ impl UserGroupController {
             .user_group_service
             .list()?
             .iter()
-            .map(|g| g.to_dto())
+            .map(|g| g.to_owned().into())
             .collect();
 
         Ok(ListUserGroupResponse { user_groups })
