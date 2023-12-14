@@ -5,10 +5,8 @@ use crate::{
     },
     errors::{AccessControlError, ProposalError},
     models::{
-        access_control::{AccessControlPolicy, ResourceSpecifier, UserSpecifier},
-        criteria::Criteria,
-        specifier::ProposalSpecifier,
-        ProposalPolicy,
+        access_control::AccessControlPolicy, criteria::Criteria, specifier::ProposalSpecifier,
+        AddAccessPolicyOperationInput, EditAccessPolicyOperationInput, ProposalPolicy,
     },
     repositories::{
         access_control::{AccessControlRepository, ACCESS_CONTROL_REPOSITORY},
@@ -107,14 +105,13 @@ impl PolicyService {
 
     pub async fn add_access_policy(
         &self,
-        specifier: UserSpecifier,
-        resource: ResourceSpecifier,
+        input: AddAccessPolicyOperationInput,
     ) -> ServiceResult<AccessControlPolicy> {
         let id: uuid::Uuid = generate_uuid_v4().await;
         let policy = AccessControlPolicy {
             id: *id.as_bytes(),
-            user: specifier,
-            resource,
+            user: input.user,
+            resource: input.resource,
         };
 
         self.access_control_policy_repository
@@ -123,16 +120,27 @@ impl PolicyService {
         Ok(policy)
     }
 
+    pub async fn remove_access_policy(&self, input: &UUID) -> ServiceResult<()> {
+        let policy = self.get_access_policy(input)?;
+
+        self.access_control_policy_repository.remove(&policy.id);
+
+        Ok(())
+    }
+
     pub async fn edit_access_policy(
         &self,
-        id: &UUID,
-        specifier: UserSpecifier,
-        resource: ResourceSpecifier,
+        input: EditAccessPolicyOperationInput,
     ) -> ServiceResult<AccessControlPolicy> {
-        let mut policy = self.get_access_policy(id)?;
+        let mut policy = self.get_access_policy(&input.policy_id)?;
 
-        policy.user = specifier;
-        policy.resource = resource;
+        if let Some(user) = input.user {
+            policy.user = user;
+        }
+
+        if let Some(resource) = input.resource {
+            policy.resource = resource;
+        }
 
         self.access_control_policy_repository
             .insert(policy.id, policy.to_owned());
@@ -175,7 +183,10 @@ impl PolicyService {
 mod tests {
     use super::*;
     use crate::models::{
-        access_control::{access_control_test_utils::mock_access_policy, ProposalActionSpecifier},
+        access_control::{
+            access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
+            ResourceSpecifier, UserSpecifier,
+        },
         proposal_policy_test_utils::mock_proposal_policy,
     };
 
@@ -215,10 +226,10 @@ mod tests {
     async fn test_access_policy_operations() {
         let service = POLICY_SERVICE.clone();
         let policy = service
-            .add_access_policy(
-                UserSpecifier::Any,
-                ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
-            )
+            .add_access_policy(AddAccessPolicyOperationInput {
+                user: UserSpecifier::Any,
+                resource: ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
+            })
             .await;
 
         assert!(policy.is_ok());
@@ -230,11 +241,11 @@ mod tests {
         assert_eq!(fetched_policy.resource, policy.resource);
 
         let policy = service
-            .edit_access_policy(
-                &policy.id,
-                UserSpecifier::Id(vec![[1; 16]]),
-                ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
-            )
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                policy_id: policy.id,
+                user: Some(UserSpecifier::Id(vec![[1; 16]])),
+                resource: Some(ResourceSpecifier::Proposal(ProposalActionSpecifier::List)),
+            })
             .await;
 
         assert!(policy.is_ok());
@@ -298,5 +309,23 @@ mod tests {
         let result = POLICY_SERVICE.list_proposal_policies(input).unwrap();
         assert_eq!(result.items.len(), 30);
         assert_eq!(result.next_offset, Some(45));
+    }
+
+    #[tokio::test]
+    async fn test_remove_access_policy() {
+        let service = POLICY_SERVICE.clone();
+        let policy = service
+            .add_access_policy(AddAccessPolicyOperationInput {
+                user: UserSpecifier::Any,
+                resource: ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
+            })
+            .await
+            .unwrap();
+
+        assert!(service.get_access_policy(&policy.id).is_ok());
+
+        service.remove_access_policy(&policy.id).await.unwrap();
+
+        assert!(service.get_access_policy(&policy.id).is_err());
     }
 }

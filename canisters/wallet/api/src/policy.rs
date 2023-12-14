@@ -8,6 +8,10 @@ pub enum ProposalSpecifierDTO {
     EditAccount(AccountSpecifierDTO),
     EditUser(UserSpecifierDTO),
     Transfer(TransferSpecifierDTO),
+    Upgrade,
+    AddAccessPolicy,
+    EditAccessPolicy(CommonSpecifierDTO),
+    RemoveAccessPolicy(CommonSpecifierDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -109,7 +113,7 @@ pub struct ResourceSpecifierCommonArgsDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccessControlPolicyDTO {
+pub struct AccessPolicyDTO {
     pub id: UuidDTO,
     pub user: AccessControlUserSpecifierDTO,
     pub resource: ResourceSpecifierDTO,
@@ -119,7 +123,7 @@ pub type ListAccessPoliciesInput = PaginationInput;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccessPoliciesResponse {
-    pub policies: Vec<AccessControlPolicyDTO>,
+    pub policies: Vec<AccessPolicyDTO>,
     pub next_offset: Option<u64>,
 }
 
@@ -130,7 +134,7 @@ pub struct GetAccessPolicyInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyResponse {
-    pub policy: AccessControlPolicyDTO,
+    pub policy: AccessPolicyDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -156,4 +160,38 @@ pub type ListProposalPoliciesInput = PaginationInput;
 pub struct ListProposalPoliciesResponse {
     pub policies: Vec<ProposalPolicyDTO>,
     pub next_offset: Option<u64>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddAccessPolicyOperationInput {
+    pub user: AccessControlUserSpecifierDTO,
+    pub resource: ResourceSpecifierDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddAccessPolicyOperationDTO {
+    pub policy: Option<AccessPolicyDTO>,
+    pub input: AddAccessPolicyOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditAccessPolicyOperationInput {
+    pub policy_id: UuidDTO,
+    pub user: Option<AccessControlUserSpecifierDTO>,
+    pub resource: Option<ResourceSpecifierDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditAccessPolicyOperationDTO {
+    pub input: EditAccessPolicyOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RemoveAccessPolicyOperationInput {
+    pub policy_id: UuidDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RemoveAccessPolicyOperationDTO {
+    pub input: RemoveAccessPolicyOperationInput,
 }

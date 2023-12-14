@@ -2,11 +2,13 @@ use super::{
     EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO, TransferOperationInput,
 };
 use crate::{
-    AddAccountOperationDTO, AddAccountOperationInput, AddUserGroupOperationDTO,
-    AddUserGroupOperationInput, AddUserOperationDTO, AddUserOperationInput,
-    EditAccountOperationDTO, EditUserGroupOperationDTO, EditUserGroupOperationInput,
-    EditUserOperationDTO, EditUserOperationInput, EditUserStatusOperationDTO,
-    EditUserStatusOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
+    AddAccessPolicyOperationDTO, AddAccessPolicyOperationInput, AddAccountOperationDTO,
+    AddAccountOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
+    AddUserOperationDTO, AddUserOperationInput, EditAccessPolicyOperationDTO,
+    EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
+    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
+    EditUserStatusOperationDTO, EditUserStatusOperationInput, RemoveAccessPolicyOperationDTO,
+    RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
     UpgradeOperationDTO, UpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
@@ -59,6 +61,9 @@ pub enum ProposalOperationDTO {
     EditUserGroup(Box<EditUserGroupOperationDTO>),
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
     Upgrade(Box<UpgradeOperationDTO>),
+    AddAccessPolicy(Box<AddAccessPolicyOperationDTO>),
+    EditAccessPolicy(Box<EditAccessPolicyOperationDTO>),
+    RemoveAccessPolicy(Box<RemoveAccessPolicyOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -73,6 +78,9 @@ pub enum ProposalOperationInput {
     EditUserGroup(EditUserGroupOperationInput),
     RemoveUserGroup(RemoveUserGroupOperationInput),
     Upgrade(UpgradeOperationInput),
+    AddAccessPolicy(AddAccessPolicyOperationInput),
+    EditAccessPolicy(EditAccessPolicyOperationInput),
+    RemoveAccessPolicy(RemoveAccessPolicyOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -87,6 +95,9 @@ pub enum ProposalOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     Upgrade,
+    AddAccessPolicy,
+    EditAccessPolicy,
+    RemoveAccessPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
