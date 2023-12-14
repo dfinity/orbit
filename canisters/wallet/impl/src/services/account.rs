@@ -1,5 +1,5 @@
 use crate::{
-    core::{generate_uuid_v4, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
+    core::{generate_uuid_v4, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{AccountMapper, HelperMapper},
@@ -63,17 +63,8 @@ impl AccountService {
     }
 
     /// Returns a list of all the accounts of the requested owner identity.
-    ///
-    /// If the caller has a different identity than the requested owner, then the call
-    /// will fail with a forbidden error if the user is not an admin.
-    pub fn list_accounts(
-        &self,
-        owner_identity: Principal,
-        ctx: &CallContext,
-    ) -> ServiceResult<Vec<Account>> {
-        let user = self
-            .user_service
-            .get_user_by_identity(&owner_identity, ctx)?;
+    pub fn list_accounts(&self, owner_identity: Principal) -> ServiceResult<Vec<Account>> {
+        let user = self.user_service.get_user_by_identity(&owner_identity)?;
 
         let accounts = self.account_repository.find_by_user_id(user.id);
 
@@ -86,7 +77,7 @@ impl AccountService {
     /// This operation will fail if an account owner does not have an associated user.
     pub async fn create_account(&self, input: AddAccountOperationInput) -> ServiceResult<Account> {
         for user_id in input.owners.iter() {
-            self.user_service.assert_user_exists(user_id)?;
+            self.user_service.get_user(user_id)?;
         }
 
         let uuid = generate_uuid_v4().await;
@@ -161,7 +152,7 @@ impl AccountService {
 
         if let Some(owners) = &input.owners {
             for user_id in owners.iter() {
-                self.user_service.assert_user_exists(user_id)?;
+                self.user_service.get_user(user_id)?;
             }
 
             account.owners = owners.to_owned();
@@ -300,7 +291,7 @@ impl AccountService {
 mod tests {
     use super::*;
     use crate::{
-        core::test_utils,
+        core::{test_utils, CallContext},
         models::{
             account_test_utils::mock_account, criteria::Criteria, user_test_utils::mock_user,
             AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, Blockchain,

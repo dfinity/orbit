@@ -9,9 +9,9 @@ use ic_ledger_types::AccountIdentifier;
 use std::time::Duration;
 use wallet_api::{
     AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, CreateProposalInput,
-    CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, GetUserInput,
-    GetUserResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput,
-    ProposalStatusDTO, TransferOperationInput, UserSpecifierDTO,
+    CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, MeResponse,
+    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
+    TransferOperationInput, UserSpecifierDTO,
 };
 
 #[test]
@@ -26,16 +26,9 @@ fn make_transfer_successful() {
     let beneficiary_id = user_test_id(1);
 
     // register user
-    let get_user_args = GetUserInput { user_id: None };
-    let res: (ApiResult<GetUserResponse>,) = update_candid_as(
-        &env,
-        canister_ids.wallet,
-        WALLET_ADMIN_USER,
-        "get_user",
-        (get_user_args,),
-    )
-    .unwrap();
-    let user_dto = res.0.unwrap().user;
+    let res: (ApiResult<MeResponse>,) =
+        update_candid_as(&env, canister_ids.wallet, WALLET_ADMIN_USER, "me", ()).unwrap();
+    let user_dto = res.0.unwrap().me;
 
     // create account
     let create_account_args = AddAccountOperationInput {

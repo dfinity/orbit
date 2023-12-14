@@ -71,7 +71,7 @@ impl TransferService {
     }
 
     fn assert_transfer_access(&self, transfer: &Transfer, ctx: &CallContext) -> ServiceResult<()> {
-        let caller_user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let caller_user = self.user_service.get_user_by_identity(&ctx.caller())?;
         let account_key = Account::key(transfer.from_account);
         let account = self.account_repository.get(&account_key).ok_or({
             AccountError::AccountNotFound {

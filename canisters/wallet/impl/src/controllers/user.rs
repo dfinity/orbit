@@ -1,8 +1,5 @@
 use crate::{
-    core::{
-        middlewares::{authorize, call_context},
-        CallContext,
-    },
+    core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
     models::access_control::{ResourceSpecifier, ResourceType, UserActionSpecifier},
     services::UserService,
@@ -13,7 +10,7 @@ use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
     ConfirmUserIdentityInput, ConfirmUserIdentityResponse, GetUserInput, GetUserResponse,
-    ListUsersInput, ListUsersResponse,
+    ListUsersInput, ListUsersResponse, MeResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -32,6 +29,11 @@ async fn get_user(input: GetUserInput) -> ApiResult<GetUserResponse> {
 #[query(name = "list_users")]
 async fn list_users(input: ListUsersInput) -> ApiResult<ListUsersResponse> {
     CONTROLLER.list_users(input).await
+}
+
+#[query(name = "me")]
+async fn me() -> ApiResult<MeResponse> {
+    CONTROLLER.me().await
 }
 
 // Controller initialization and implementation.
@@ -57,9 +59,10 @@ impl UserController {
         &self,
         input: ConfirmUserIdentityInput,
     ) -> ApiResult<ConfirmUserIdentityResponse> {
+        let ctx = call_context();
         let user = self
             .user_service
-            .confirm_user_identity(input, &call_context())
+            .confirm_user_identity(input, ctx.caller())
             .await?
             .into();
 
@@ -73,17 +76,10 @@ impl UserController {
         is_async = true
     )]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
-        let ctx = call_context();
-        let user = match input.user_id {
-            Some(user_id) => self
-                .user_service
-                .get_user(HelperMapper::to_uuid(user_id)?.as_bytes(), &ctx)?
-                .into(),
-            _ => self
-                .user_service
-                .get_user_by_identity(&CallContext::get().caller(), &ctx)?
-                .into(),
-        };
+        let user = self
+            .user_service
+            .get_user(HelperMapper::to_uuid(input.user_id)?.as_bytes())?
+            .into();
 
         Ok(GetUserResponse { user })
     }
@@ -100,6 +96,25 @@ impl UserController {
         Ok(ListUsersResponse {
             users: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
+        })
+    }
+
+    /// Returns the user that is calling this endpoint.
+    ///
+    /// No authorization required since this endpoint only exposes the user associated with the caller identity.
+    /// If the caller does not have a user associated with the identity, an error will be returned.
+    async fn me(&self) -> ApiResult<MeResponse> {
+        let ctx = call_context();
+        let user = self.user_service.get_user_by_identity(&ctx.caller())?;
+
+        let privileges = self
+            .user_service
+            .get_user_privileges_by_identity(&ctx.caller())
+            .await?;
+
+        Ok(MeResponse {
+            me: user.into(),
+            privileges,
         })
     }
 }

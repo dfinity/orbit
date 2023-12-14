@@ -73,7 +73,7 @@ impl AccountController {
 
         let accounts = self
             .account_service
-            .list_accounts(owner_identity, &ctx)?
+            .list_accounts(owner_identity)?
             .iter()
             .map(|account| account.to_dto())
             .collect();
