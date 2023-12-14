@@ -238,6 +238,34 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                     )),
                 )
             }
+            ProposalOperationInput::AddProposalPolicy(_) => ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                AccountActionSpecifier::Create,
+            ),
+            ProposalOperationInput::EditProposalPolicy(input) => {
+                let proposal_policy_id = *HelperMapper::to_uuid(input.policy_id.to_owned())
+                    .expect("Invalid proposal policy id")
+                    .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::ProposalPolicy,
+                    AccountActionSpecifier::Update(CommonSpecifier::Id(
+                        [proposal_policy_id].to_vec(),
+                    )),
+                )
+            }
+            ProposalOperationInput::RemoveProposalPolicy(input) => {
+                let proposal_policy_id = *HelperMapper::to_uuid(input.policy_id.to_owned())
+                    .expect("Invalid proposal policy id")
+                    .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::ProposalPolicy,
+                    AccountActionSpecifier::Delete(CommonSpecifier::Id(
+                        [proposal_policy_id].to_vec(),
+                    )),
+                )
+            }
         }
     }
 }
@@ -303,5 +331,17 @@ impl From<&wallet_api::GetUserGroupInput> for ResourceSpecifier {
             ResourceType::UserGroup,
             CommonActionSpecifier::Read(CommonSpecifier::Id([user_group_id].to_vec())),
         )
+    }
+}
+
+impl From<&wallet_api::VoteOnProposalInput> for ResourceSpecifier {
+    fn from(input: &wallet_api::VoteOnProposalInput) -> Self {
+        let proposal_id = *HelperMapper::to_uuid(input.proposal_id.to_owned())
+            .expect("Invalid proposal id")
+            .as_bytes();
+
+        ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Id(
+            [proposal_id].to_vec(),
+        )))
     }
 }

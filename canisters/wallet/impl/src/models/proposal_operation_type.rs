@@ -22,6 +22,9 @@ pub enum ProposalOperationType {
     AddAccessPolicy = 10,
     EditAccessPolicy = 11,
     RemoveAccessPolicy = 12,
+    AddProposalPolicy = 13,
+    EditProposalPolicy = 14,
+    RemoveProposalPolicy = 15,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -48,6 +51,9 @@ impl TryFrom<u8> for ProposalOperationType {
             10 => Ok(ProposalOperationType::AddAccessPolicy),
             11 => Ok(ProposalOperationType::EditAccessPolicy),
             12 => Ok(ProposalOperationType::RemoveAccessPolicy),
+            13 => Ok(ProposalOperationType::AddProposalPolicy),
+            14 => Ok(ProposalOperationType::EditProposalPolicy),
+            15 => Ok(ProposalOperationType::RemoveProposalPolicy),
             _ => Err(()),
         }
     }
@@ -71,6 +77,9 @@ impl FromStr for ProposalOperationType {
             "add_access_policy" => Ok(ProposalOperationType::AddAccessPolicy),
             "edit_access_policy" => Ok(ProposalOperationType::EditAccessPolicy),
             "remove_access_policy" => Ok(ProposalOperationType::RemoveAccessPolicy),
+            "add_proposal_policy" => Ok(ProposalOperationType::AddProposalPolicy),
+            "edit_proposal_policy" => Ok(ProposalOperationType::EditProposalPolicy),
+            "remove_proposal_policy" => Ok(ProposalOperationType::RemoveProposalPolicy),
             _ => Err(()),
         }
     }
@@ -92,6 +101,9 @@ impl Display for ProposalOperationType {
             ProposalOperationType::AddAccessPolicy => write!(f, "add_access_policy"),
             ProposalOperationType::EditAccessPolicy => write!(f, "edit_access_policy"),
             ProposalOperationType::RemoveAccessPolicy => write!(f, "remove_access_policy"),
+            ProposalOperationType::AddProposalPolicy => write!(f, "add_proposal_policy"),
+            ProposalOperationType::EditProposalPolicy => write!(f, "edit_proposal_policy"),
+            ProposalOperationType::RemoveProposalPolicy => write!(f, "remove_proposal_policy"),
         }
     }
 }
@@ -192,6 +204,18 @@ mod tests {
             ProposalOperationType::from_str("remove_access_policy").unwrap(),
             ProposalOperationType::RemoveAccessPolicy
         );
+        assert_eq!(
+            ProposalOperationType::from_str("add_proposal_policy").unwrap(),
+            ProposalOperationType::AddProposalPolicy
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("edit_proposal_policy").unwrap(),
+            ProposalOperationType::EditProposalPolicy
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("remove_proposal_policy").unwrap(),
+            ProposalOperationType::RemoveProposalPolicy
+        );
     }
 
     #[test]
@@ -260,6 +284,21 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(12).unwrap(),
             ProposalOperationType::RemoveAccessPolicy
+        );
+        assert_eq!(ProposalOperationType::AddProposalPolicy as u8, 13);
+        assert_eq!(
+            ProposalOperationType::try_from(13).unwrap(),
+            ProposalOperationType::AddProposalPolicy
+        );
+        assert_eq!(ProposalOperationType::EditProposalPolicy as u8, 14);
+        assert_eq!(
+            ProposalOperationType::try_from(14).unwrap(),
+            ProposalOperationType::EditProposalPolicy
+        );
+        assert_eq!(ProposalOperationType::RemoveProposalPolicy as u8, 15);
+        assert_eq!(
+            ProposalOperationType::try_from(15).unwrap(),
+            ProposalOperationType::RemoveProposalPolicy
         );
     }
 }

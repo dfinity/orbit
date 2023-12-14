@@ -12,6 +12,12 @@ pub enum ProposalSpecifierDTO {
     AddAccessPolicy,
     EditAccessPolicy(CommonSpecifierDTO),
     RemoveAccessPolicy(CommonSpecifierDTO),
+    AddProposalPolicy,
+    EditProposalPolicy(CommonSpecifierDTO),
+    RemoveProposalPolicy(CommonSpecifierDTO),
+    AddUserGroup,
+    EditUserGroup(CommonSpecifierDTO),
+    RemoveUserGroup(CommonSpecifierDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

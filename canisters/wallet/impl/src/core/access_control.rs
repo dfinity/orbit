@@ -1,5 +1,9 @@
 use super::{
-    evaluation::{Evaluate, ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER, ACCESS_CONTROL_MATCHER},
+    evaluation::{
+        Evaluate, ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER, ACCESS_CONTROL_MATCHER,
+        PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR,
+    },
+    proposal::ProposalVoteRightsEvaluator,
     CallContext,
 };
 use crate::{
@@ -20,7 +24,7 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use futures::{stream, StreamExt};
+use futures::{stream, StreamExt, TryStreamExt};
 use ic_canister_core::repository::Repository;
 use std::{collections::HashSet, sync::Arc};
 
@@ -420,11 +424,29 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
                     return Ok(false);
                 }
 
-                // TODO: add check if the user can vote, because all voters should be able to read the proposal.
-                proposals.iter().all(|proposal| {
-                    proposal.proposed_by == caller.id
-                        || proposal.voters().iter().any(|owner| owner == &caller.id)
-                })
+                let evaluations = stream::iter(proposals.iter())
+                    .then(|proposal| async move {
+                        // This is added to always allow view access to proposal voters.
+                        if proposal.proposed_by == caller.id
+                            || proposal.voters().iter().any(|owner| owner == &caller.id)
+                        {
+                            return Ok(true);
+                        }
+
+                        // This is added to always allow view access to anyone that has voting rights on the proposal.
+                        let validator = ProposalVoteRightsEvaluator {
+                            proposal,
+                            voter_id: caller.id,
+                            vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
+                        };
+
+                        validator.evaluate().await
+                    })
+                    .try_collect::<Vec<bool>>()
+                    .await
+                    .map_err(|e| MatchError::UnexpectedError(e.into()))?;
+
+                evaluations.iter().all(|evaluation| *evaluation)
             }
             ResourceSpecifier::Common(
                 ResourceType::User,

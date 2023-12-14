@@ -4,12 +4,13 @@ use super::{
 use crate::{
     AddAccessPolicyOperationDTO, AddAccessPolicyOperationInput, AddAccountOperationDTO,
     AddAccountOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
-    AddUserOperationDTO, AddUserOperationInput, EditAccessPolicyOperationDTO,
+    AddUserOperationDTO, AddUserOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
-    EditUserStatusOperationDTO, EditUserStatusOperationInput, RemoveAccessPolicyOperationDTO,
-    RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
-    UpgradeOperationDTO, UpgradeOperationInput, UuidDTO,
+    EditUserStatusOperationDTO, EditUserStatusOperationInput, ProposalPolicyDTO,
+    ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, UpgradeOperationDTO,
+    UpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -64,6 +65,9 @@ pub enum ProposalOperationDTO {
     AddAccessPolicy(Box<AddAccessPolicyOperationDTO>),
     EditAccessPolicy(Box<EditAccessPolicyOperationDTO>),
     RemoveAccessPolicy(Box<RemoveAccessPolicyOperationDTO>),
+    AddProposalPolicy(Box<AddProposalPolicyOperationDTO>),
+    EditProposalPolicy(Box<EditProposalPolicyOperationDTO>),
+    RemoveProposalPolicy(Box<RemoveProposalPolicyOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -81,6 +85,9 @@ pub enum ProposalOperationInput {
     AddAccessPolicy(AddAccessPolicyOperationInput),
     EditAccessPolicy(EditAccessPolicyOperationInput),
     RemoveAccessPolicy(RemoveAccessPolicyOperationInput),
+    AddProposalPolicy(AddProposalPolicyOperationInput),
+    EditProposalPolicy(EditProposalPolicyOperationInput),
+    RemoveProposalPolicy(RemoveProposalPolicyOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -98,6 +105,9 @@ pub enum ProposalOperationTypeDTO {
     AddAccessPolicy,
     EditAccessPolicy,
     RemoveAccessPolicy,
+    AddProposalPolicy,
+    EditProposalPolicy,
+    RemoveProposalPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -183,4 +193,38 @@ pub struct ListAccountProposalsResponse {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CreateProposalResponse {
     pub proposal: ProposalDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddProposalPolicyOperationInput {
+    pub specifier: ProposalSpecifierDTO,
+    pub criteria: CriteriaDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddProposalPolicyOperationDTO {
+    pub policy: Option<ProposalPolicyDTO>,
+    pub input: AddProposalPolicyOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditProposalPolicyOperationInput {
+    pub policy_id: UuidDTO,
+    pub specifier: Option<ProposalSpecifierDTO>,
+    pub criteria: Option<CriteriaDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct EditProposalPolicyOperationDTO {
+    pub input: EditProposalPolicyOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RemoveProposalPolicyOperationInput {
+    pub policy_id: UuidDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RemoveProposalPolicyOperationDTO {
+    pub input: RemoveProposalPolicyOperationInput,
 }

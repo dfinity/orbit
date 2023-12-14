@@ -1,10 +1,7 @@
 use crate::core::generate_uuid_v4;
 use crate::core::ic_cdk::api::time;
 use crate::errors::UserGroupError;
-use crate::models::{
-    AddUserGroupOperationInput, EditUserGroupOperationInput, RemoveUserGroupOperationInput,
-    UserGroup,
-};
+use crate::models::{AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup};
 use crate::repositories::UserGroupRepository;
 use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
@@ -68,8 +65,8 @@ impl UserGroupService {
         Ok(user_group)
     }
 
-    pub async fn remove(&self, input: RemoveUserGroupOperationInput) -> ServiceResult<()> {
-        let user_group = self.get(&input.user_group_id)?;
+    pub async fn remove(&self, id: &UUID) -> ServiceResult<()> {
+        let user_group = self.get(id)?;
 
         self.user_group_repository.remove(&user_group.id);
 

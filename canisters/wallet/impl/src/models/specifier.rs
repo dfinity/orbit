@@ -46,6 +46,12 @@ pub enum ProposalSpecifier {
     AddAccessPolicy,
     EditAccessPolicy(CommonSpecifier),
     RemoveAccessPolicy(CommonSpecifier),
+    AddProposalPolicy,
+    EditProposalPolicy(CommonSpecifier),
+    RemoveProposalPolicy(CommonSpecifier),
+    AddUserGroup,
+    EditUserGroup(CommonSpecifier),
+    RemoveUserGroup(CommonSpecifier),
 }
 
 impl From<&ProposalSpecifier> for ProposalOperationType {
@@ -60,6 +66,14 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
             ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
             ProposalSpecifier::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
             ProposalSpecifier::Upgrade => ProposalOperationType::Upgrade,
+            ProposalSpecifier::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
+            ProposalSpecifier::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
+            ProposalSpecifier::RemoveProposalPolicy(_) => {
+                ProposalOperationType::RemoveProposalPolicy
+            }
+            ProposalSpecifier::AddUserGroup => ProposalOperationType::AddUserGroup,
+            ProposalSpecifier::EditUserGroup(_) => ProposalOperationType::EditUserGroup,
+            ProposalSpecifier::RemoveUserGroup(_) => ProposalOperationType::RemoveUserGroup,
         }
     }
 }
@@ -82,6 +96,25 @@ impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
             // TODO: Add once account groups are implemented
             AccountSpecifier::Group(_ids) => todo!(),
             AccountSpecifier::Id(ids) => Ok(ids.contains(&account_id)),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct CommonIdMatcher;
+
+#[async_trait]
+impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
+    async fn is_match(&self, v: (Proposal, UUID, CommonSpecifier)) -> Result<bool, MatchError> {
+        let (_, entity_id, specifier) = v;
+
+        match specifier {
+            CommonSpecifier::Any => Ok(true),
+            CommonSpecifier::Id(ids) => Ok(ids.contains(&entity_id)),
+            CommonSpecifier::Group(_) => {
+                // Common id matcher does not support groups
+                Ok(false)
+            }
         }
     }
 }
@@ -154,6 +187,7 @@ pub struct ProposalMatcher {
     pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
     pub address_matcher: Arc<dyn Match<(Proposal, String, AddressSpecifier)>>,
     pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
+    pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, CommonSpecifier)>>,
 }
 
 #[async_trait]
@@ -162,43 +196,84 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
         let (p, s) = v;
 
         Ok(match (p.operation.to_owned(), s) {
-            // AddAccount
             (ProposalOperation::AddAccount(_), ProposalSpecifier::AddAccount) => true,
-
-            // AddUser
             (ProposalOperation::AddUser(_), ProposalSpecifier::AddUser) => true,
-
-            // EditAccount
             (ProposalOperation::EditAccount(params), ProposalSpecifier::EditAccount(account)) => {
                 self.account_matcher
                     .is_match((p, params.input.account_id, account))
                     .await?
             }
-
-            // EditUser
             (ProposalOperation::EditUser(params), ProposalSpecifier::EditUser(user)) => {
                 self.user_matcher
                     .is_match((p, params.input.user_id, user))
                     .await?
             }
-
-            // Transfer
             (
                 ProposalOperation::Transfer(params),
                 ProposalSpecifier::Transfer(account, address),
             ) => vec![
-                // Account
                 self.account_matcher
                     .is_match((p.clone(), params.input.from_account_id, account))
                     .await?,
-                // Address
                 self.address_matcher
                     .is_match((p.clone(), params.input.to, address))
                     .await?,
             ]
             .into_iter()
             .all(|v| v),
-
+            (ProposalOperation::Upgrade(_), ProposalSpecifier::Upgrade) => true,
+            (ProposalOperation::AddAccessPolicy(_), ProposalSpecifier::AddAccessPolicy) => true,
+            (ProposalOperation::AddUserGroup(_), ProposalSpecifier::AddUserGroup) => true,
+            (
+                ProposalOperation::EditAccessPolicy(operation),
+                ProposalSpecifier::EditAccessPolicy(specifier),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, operation.input.policy_id, specifier))
+                    .await?
+            }
+            (
+                ProposalOperation::RemoveAccessPolicy(operation),
+                ProposalSpecifier::RemoveAccessPolicy(specifier),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, operation.input.policy_id, specifier))
+                    .await?
+            }
+            (ProposalOperation::AddProposalPolicy(_), ProposalSpecifier::AddProposalPolicy) => true,
+            (
+                ProposalOperation::EditProposalPolicy(operation),
+                ProposalSpecifier::EditProposalPolicy(specifier),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, operation.input.policy_id, specifier))
+                    .await?
+            }
+            (
+                ProposalOperation::RemoveProposalPolicy(operation),
+                ProposalSpecifier::RemoveProposalPolicy(specifier),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, operation.input.policy_id, specifier))
+                    .await?
+            }
+            (
+                ProposalOperation::EditUserGroup(operation),
+                ProposalSpecifier::EditUserGroup(specifier),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, operation.input.user_group_id, specifier))
+                    .await?
+            }
+            (
+                ProposalOperation::RemoveUserGroup(operation),
+                ProposalSpecifier::RemoveUserGroup(specifier),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, operation.input.user_group_id, specifier))
+                    .await?
+            }
+            // TODO: Add missing match arms
             _ => false,
         })
     }
@@ -228,6 +303,7 @@ mod tests {
             account_matcher: Arc::new(AccountMatcher),
             address_matcher: Arc::new(AddressMatcher),
             user_matcher: Arc::new(UserMatcher),
+            common_id_matcher: Arc::new(AccountMatcher),
         };
 
         let tcs = vec![

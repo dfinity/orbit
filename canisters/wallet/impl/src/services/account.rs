@@ -5,7 +5,9 @@ use crate::{
     mappers::{AccountMapper, HelperMapper},
     models::{
         specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier},
-        Account, AccountBalance, AccountId, AddAccountOperationInput, EditAccountOperationInput,
+        Account, AccountBalance, AccountId, AddAccountOperationInput,
+        AddProposalPolicyOperationInput, EditAccountOperationInput,
+        EditProposalPolicyOperationInput,
     },
     repositories::{AccountRepository, ACCOUNT_REPOSITORY},
     services::{PolicyService, UserService, POLICY_SERVICE, USER_SERVICE},
@@ -112,13 +114,13 @@ impl AccountService {
         if let Some(transfer_criteria) = input.policies.transfer {
             let policy = self
                 .policy_service
-                .add_proposal_policy(
-                    ProposalSpecifier::Transfer(
+                .add_proposal_policy(AddProposalPolicyOperationInput {
+                    specifier: ProposalSpecifier::Transfer(
                         AccountSpecifier::Id(vec![*uuid.as_bytes()]),
                         AddressSpecifier::Any,
                     ),
-                    transfer_criteria.to_owned(),
-                )
+                    criteria: transfer_criteria.to_owned(),
+                })
                 .await?;
 
             new_account.policies.transfer_policy_id = Some(policy.id);
@@ -128,10 +130,12 @@ impl AccountService {
         if let Some(edit_criteria) = input.policies.edit {
             let policy = self
                 .policy_service
-                .add_proposal_policy(
-                    ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![*uuid.as_bytes()])),
-                    edit_criteria.to_owned(),
-                )
+                .add_proposal_policy(AddProposalPolicyOperationInput {
+                    specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                        *uuid.as_bytes()
+                    ])),
+                    criteria: edit_criteria.to_owned(),
+                })
                 .await?;
 
             new_account.policies.edit_policy_id = Some(policy.id);
@@ -167,29 +171,57 @@ impl AccountService {
             match (account.policies.transfer_policy_id, policies.transfer) {
                 (Some(id), Some(criteria)) => {
                     self.policy_service
-                        .edit_proposal_policy(
-                            &id,
-                            ProposalSpecifier::Transfer(
+                        .edit_proposal_policy(EditProposalPolicyOperationInput {
+                            policy_id: id,
+                            specifier: Some(ProposalSpecifier::Transfer(
                                 AccountSpecifier::Id(vec![account.id]),
                                 AddressSpecifier::Any,
-                            ),
-                            criteria.to_owned(),
-                        )
+                            )),
+                            criteria: Some(criteria.to_owned()),
+                        })
                         .await?;
                 }
                 (None, Some(criteria)) => {
                     let policy = self
                         .policy_service
-                        .add_proposal_policy(
-                            ProposalSpecifier::Transfer(
+                        .add_proposal_policy(AddProposalPolicyOperationInput {
+                            specifier: ProposalSpecifier::Transfer(
                                 AccountSpecifier::Id(vec![account.id]),
                                 AddressSpecifier::Any,
                             ),
-                            criteria.to_owned(),
-                        )
+                            criteria: criteria.to_owned(),
+                        })
                         .await?;
 
                     account.policies.transfer_policy_id = Some(policy.id);
+                }
+                _ => {}
+            }
+
+            match (account.policies.edit_policy_id, policies.edit) {
+                (Some(id), Some(criteria)) => {
+                    self.policy_service
+                        .edit_proposal_policy(EditProposalPolicyOperationInput {
+                            policy_id: id,
+                            specifier: Some(ProposalSpecifier::EditAccount(AccountSpecifier::Id(
+                                vec![account.id],
+                            ))),
+                            criteria: Some(criteria.to_owned()),
+                        })
+                        .await?;
+                }
+                (None, Some(criteria)) => {
+                    let policy = self
+                        .policy_service
+                        .add_proposal_policy(AddProposalPolicyOperationInput {
+                            specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                                account.id,
+                            ])),
+                            criteria: criteria.to_owned(),
+                        })
+                        .await?;
+
+                    account.policies.edit_policy_id = Some(policy.id);
                 }
                 _ => {}
             }

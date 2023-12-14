@@ -11,14 +11,17 @@ use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
 mod add_access_policy;
 mod add_account;
+mod add_proposal_policy;
 mod add_user;
 mod add_user_group;
 mod edit_access_policy;
 mod edit_account;
+mod edit_proposal_policy;
 mod edit_user;
 mod edit_user_group;
 mod edit_user_status;
 mod remove_access_policy;
+mod remove_proposal_policy;
 mod remove_user_group;
 mod transfer;
 mod upgrade;
@@ -31,6 +34,10 @@ use self::{
     add_account::{
         AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalExecute,
     },
+    add_proposal_policy::{
+        AddProposalPolicyProposalCreate, AddProposalPolicyProposalCreateHook,
+        AddProposalPolicyProposalExecute,
+    },
     add_user::{AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute},
     add_user_group::{
         AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
@@ -41,6 +48,10 @@ use self::{
     },
     edit_account::{
         EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalExecute,
+    },
+    edit_proposal_policy::{
+        EditProposalPolicyProposalCreate, EditProposalPolicyProposalCreateHook,
+        EditProposalPolicyProposalExecute,
     },
     edit_user::{EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute},
     edit_user_group::{
@@ -53,6 +64,10 @@ use self::{
     remove_access_policy::{
         RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalCreateHook,
         RemoveAccessPolicyProposalExecute,
+    },
+    remove_proposal_policy::{
+        RemoveProposalPolicyProposalCreate, RemoveProposalPolicyProposalCreateHook,
+        RemoveProposalPolicyProposalExecute,
     },
     remove_user_group::{
         RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
@@ -208,6 +223,24 @@ impl ProposalFactory {
                     RemoveAccessPolicyProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
+            ProposalOperationInput::AddProposalPolicy(operation) => {
+                create_proposal::<
+                    wallet_api::AddProposalPolicyOperationInput,
+                    AddProposalPolicyProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::EditProposalPolicy(operation) => {
+                create_proposal::<
+                    wallet_api::EditProposalPolicyOperationInput,
+                    EditProposalPolicyProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::RemoveProposalPolicy(operation) => {
+                create_proposal::<
+                    wallet_api::RemoveProposalPolicyOperationInput,
+                    RemoveProposalPolicyProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
         }
     }
 
@@ -251,6 +284,15 @@ impl ProposalFactory {
             }
             ProposalOperation::RemoveAccessPolicy(operation) => Box::new(
                 RemoveAccessPolicyProposalCreateHook::new(proposal, operation),
+            ),
+            ProposalOperation::AddProposalPolicy(operation) => Box::new(
+                AddProposalPolicyProposalCreateHook::new(proposal, operation),
+            ),
+            ProposalOperation::EditProposalPolicy(operation) => Box::new(
+                EditProposalPolicyProposalCreateHook::new(proposal, operation),
+            ),
+            ProposalOperation::RemoveProposalPolicy(operation) => Box::new(
+                RemoveProposalPolicyProposalCreateHook::new(proposal, operation),
             ),
         }
     }
@@ -303,6 +345,27 @@ impl ProposalFactory {
             }
             ProposalOperation::RemoveAccessPolicy(operation) => {
                 Box::new(RemoveAccessPolicyProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&POLICY_SERVICE),
+                ))
+            }
+            ProposalOperation::AddProposalPolicy(operation) => {
+                Box::new(AddProposalPolicyProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&POLICY_SERVICE),
+                ))
+            }
+            ProposalOperation::EditProposalPolicy(operation) => {
+                Box::new(EditProposalPolicyProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&POLICY_SERVICE),
+                ))
+            }
+            ProposalOperation::RemoveProposalPolicy(operation) => {
+                Box::new(RemoveProposalPolicyProposalExecute::new(
                     proposal,
                     operation,
                     Arc::clone(&POLICY_SERVICE),

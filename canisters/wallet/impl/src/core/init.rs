@@ -206,5 +206,57 @@ lazy_static! {
                 Percentage(51)
             )])
         ),
+        // proposal policies
+        (
+            ProposalSpecifier::AddProposalPolicy,
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::EditProposalPolicy(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::RemoveProposalPolicy(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        // user groups
+        (
+            ProposalSpecifier::AddUserGroup,
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::EditUserGroup(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::RemoveUserGroup(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        // upgrade
+        (
+            ProposalSpecifier::Upgrade,
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )]),
+        ),
     ];
 }

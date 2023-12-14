@@ -426,6 +426,67 @@ impl From<ProposalSpecifier> for wallet_api::ProposalSpecifierDTO {
             ProposalSpecifier::RemoveAccessPolicy(policy) => {
                 wallet_api::ProposalSpecifierDTO::RemoveAccessPolicy(policy.into())
             }
+            ProposalSpecifier::AddProposalPolicy => {
+                wallet_api::ProposalSpecifierDTO::AddProposalPolicy
+            }
+            ProposalSpecifier::EditProposalPolicy(policy) => {
+                wallet_api::ProposalSpecifierDTO::EditProposalPolicy(policy.into())
+            }
+            ProposalSpecifier::RemoveProposalPolicy(policy) => {
+                wallet_api::ProposalSpecifierDTO::RemoveProposalPolicy(policy.into())
+            }
+            ProposalSpecifier::AddUserGroup => wallet_api::ProposalSpecifierDTO::AddUserGroup,
+            ProposalSpecifier::EditUserGroup(group) => {
+                wallet_api::ProposalSpecifierDTO::EditUserGroup(group.into())
+            }
+            ProposalSpecifier::RemoveUserGroup(group) => {
+                wallet_api::ProposalSpecifierDTO::RemoveUserGroup(group.into())
+            }
+        }
+    }
+}
+
+impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
+    fn from(dto: wallet_api::ProposalSpecifierDTO) -> Self {
+        match dto {
+            wallet_api::ProposalSpecifierDTO::AddAccount => ProposalSpecifier::AddAccount,
+            wallet_api::ProposalSpecifierDTO::AddUser => ProposalSpecifier::AddUser,
+            wallet_api::ProposalSpecifierDTO::EditAccount(account) => {
+                ProposalSpecifier::EditAccount(account.into())
+            }
+            wallet_api::ProposalSpecifierDTO::EditUser(user) => {
+                ProposalSpecifier::EditUser(user.into())
+            }
+            wallet_api::ProposalSpecifierDTO::Transfer(transfer_specifier) => {
+                ProposalSpecifier::Transfer(
+                    transfer_specifier.account.into(),
+                    transfer_specifier.address.into(),
+                )
+            }
+            wallet_api::ProposalSpecifierDTO::Upgrade => ProposalSpecifier::Upgrade,
+            wallet_api::ProposalSpecifierDTO::AddAccessPolicy => ProposalSpecifier::AddAccessPolicy,
+            wallet_api::ProposalSpecifierDTO::EditAccessPolicy(policy) => {
+                ProposalSpecifier::EditAccessPolicy(policy.into())
+            }
+            wallet_api::ProposalSpecifierDTO::RemoveAccessPolicy(policy) => {
+                ProposalSpecifier::RemoveAccessPolicy(policy.into())
+            }
+            wallet_api::ProposalSpecifierDTO::AddProposalPolicy => {
+                ProposalSpecifier::AddProposalPolicy
+            }
+            wallet_api::ProposalSpecifierDTO::EditProposalPolicy(policy) => {
+                ProposalSpecifier::EditProposalPolicy(policy.into())
+            }
+            wallet_api::ProposalSpecifierDTO::RemoveProposalPolicy(policy) => {
+                ProposalSpecifier::RemoveProposalPolicy(policy.into())
+            }
+            wallet_api::ProposalSpecifierDTO::AddUserGroup => ProposalSpecifier::AddUserGroup,
+            wallet_api::ProposalSpecifierDTO::EditUserGroup(group) => {
+                ProposalSpecifier::EditUserGroup(group.into())
+            }
+            wallet_api::ProposalSpecifierDTO::RemoveUserGroup(group) => {
+                ProposalSpecifier::RemoveUserGroup(group.into())
+            }
         }
     }
 }
