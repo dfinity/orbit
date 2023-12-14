@@ -333,3 +333,15 @@ impl From<&wallet_api::GetUserGroupInput> for ResourceSpecifier {
         )
     }
 }
+
+impl From<&wallet_api::VoteOnProposalInput> for ResourceSpecifier {
+    fn from(input: &wallet_api::VoteOnProposalInput) -> Self {
+        let proposal_id = *HelperMapper::to_uuid(input.proposal_id.to_owned())
+            .expect("Invalid proposal id")
+            .as_bytes();
+
+        ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Id(
+            [proposal_id].to_vec(),
+        )))
+    }
+}

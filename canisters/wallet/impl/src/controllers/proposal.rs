@@ -134,9 +134,12 @@ impl ProposalController {
         Ok(ListAccountProposalsResponse { proposals })
     }
 
-    /// Votes on a proposal if the caller has voting rights.
-    ///
-    /// No authorization required since only the users with voting rights can vote on a proposal.
+    #[with_middleware(
+        guard = "authorize",
+        context = "call_context",
+        args = [ResourceSpecifier::from(&input)],
+        is_async = true
+    )]
     async fn vote_on_proposal(
         &self,
         input: VoteOnProposalInput,
