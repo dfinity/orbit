@@ -1,4 +1,5 @@
-use super::{AccountIdDTO, ProposalIdDTO, TimestampRfc3339, UserIdDTO};
+use super::TimestampRfc3339;
+use crate::UuidDTO;
 use candid::{CandidType, Deserialize};
 use std::fmt::{Display, Formatter};
 
@@ -6,8 +7,6 @@ pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
 pub const PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "proposal-created";
 pub const TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "transfer-proposal-created";
 pub const ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "account-proposal-created";
-
-pub type NotificationIdDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationStatusDTO {
@@ -25,19 +24,19 @@ pub enum NotificationTypeDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalCreatedNotificationDTO {
-    pub proposal_id: ProposalIdDTO,
+    pub proposal_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountProposalCreatedNotificationDTO {
-    pub proposal_id: ProposalIdDTO,
-    pub account_id: AccountIdDTO,
+    pub proposal_id: UuidDTO,
+    pub account_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferProposalCreatedNotificationDTO {
-    pub proposal_id: ProposalIdDTO,
-    pub account_id: AccountIdDTO,
+    pub proposal_id: UuidDTO,
+    pub account_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -75,10 +74,10 @@ pub struct NotificationLocalizedTextDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct NotificationDTO {
-    pub id: NotificationIdDTO,
+    pub id: UuidDTO,
     pub status: NotificationStatusDTO,
     pub notification_type: NotificationTypeDTO,
-    pub target_user_id: UserIdDTO,
+    pub target_user_id: UuidDTO,
     pub title: NotificationLocalizedTextDTO,
     pub message: NotificationLocalizedTextDTO,
     pub created_at: TimestampRfc3339,
@@ -99,6 +98,6 @@ pub struct ListNotificationsResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct MarkNotificationsReadInput {
-    pub notification_ids: Vec<NotificationIdDTO>,
+    pub notification_ids: Vec<UuidDTO>,
     pub read: bool,
 }

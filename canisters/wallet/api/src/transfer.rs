@@ -1,7 +1,7 @@
-use super::{AccountDTO, AccountIdDTO, TimestampRfc3339};
+use super::{AccountDTO, TimestampRfc3339};
+use crate::UuidDTO;
 use candid::{CandidType, Deserialize};
 
-pub type TransferIdDTO = String;
 pub type NetworkIdDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -18,7 +18,7 @@ pub struct NetworkDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferOperationInput {
-    pub from_account_id: AccountIdDTO,
+    pub from_account_id: UuidDTO,
     pub to: String,
     pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,
@@ -51,8 +51,8 @@ pub enum TransferStatusDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferDTO {
-    pub id: TransferIdDTO,
-    pub from_account_id: AccountIdDTO,
+    pub id: UuidDTO,
+    pub from_account_id: UuidDTO,
     pub to: String,
     pub fee: candid::Nat,
     pub amount: candid::Nat,
@@ -68,7 +68,7 @@ pub struct TransferResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetTransferInput {
-    pub transfer_id: TransferIdDTO,
+    pub transfer_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -78,7 +78,7 @@ pub struct GetTransferResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetTransfersInput {
-    pub transfer_ids: Vec<TransferIdDTO>,
+    pub transfer_ids: Vec<UuidDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -91,12 +91,12 @@ pub struct ListAccountTransfersInput {
     pub status: Option<String>,
     pub to_dt: Option<TimestampRfc3339>,
     pub from_dt: Option<TimestampRfc3339>,
-    pub account_id: AccountIdDTO,
+    pub account_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferListItemDTO {
-    pub transfer_id: TransferIdDTO,
+    pub transfer_id: UuidDTO,
     pub status: TransferStatusDTO,
     pub to: String,
     pub amount: candid::Nat,

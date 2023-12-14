@@ -1,19 +1,15 @@
+use super::{
+    EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO, TransferOperationInput,
+};
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserGroupOperationDTO,
     AddUserGroupOperationInput, AddUserOperationDTO, AddUserOperationInput,
     EditAccountOperationDTO, EditUserGroupOperationDTO, EditUserGroupOperationInput,
     EditUserOperationDTO, EditUserOperationInput, EditUserStatusOperationDTO,
     EditUserStatusOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
-    UpgradeOperationDTO, UpgradeOperationInput,
-};
-
-use super::{
-    AccountIdDTO, EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO,
-    TransferOperationInput, UserIdDTO,
+    UpgradeOperationDTO, UpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
-
-pub type ProposalIdDTO = String;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalStatusDTO {
@@ -95,7 +91,7 @@ pub enum ProposalOperationTypeDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalVoteDTO {
-    pub user_id: UserIdDTO,
+    pub user_id: UuidDTO,
     pub status: ProposalVoteStatusDTO,
     pub status_reason: Option<String>,
     pub decided_at: TimestampRfc3339,
@@ -103,11 +99,11 @@ pub struct ProposalVoteDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalDTO {
-    pub id: ProposalIdDTO,
+    pub id: UuidDTO,
     pub title: String,
     pub summary: Option<String>,
     pub operation: ProposalOperationDTO,
-    pub proposed_by: UserIdDTO,
+    pub proposed_by: UuidDTO,
     pub votes: Vec<ProposalVoteDTO>,
     pub created_at: TimestampRfc3339,
     pub status: ProposalStatusDTO,
@@ -127,7 +123,7 @@ pub struct CreateProposalInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct VoteOnProposalInput {
     pub approve: bool,
-    pub proposal_id: ProposalIdDTO,
+    pub proposal_id: UuidDTO,
     pub reason: Option<String>,
 }
 
@@ -138,7 +134,7 @@ pub struct VoteOnProposalResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetProposalInput {
-    pub proposal_id: ProposalIdDTO,
+    pub proposal_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -161,7 +157,7 @@ pub struct ListProposalsResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccountProposalsInput {
-    pub account_id: AccountIdDTO,
+    pub account_id: UuidDTO,
     pub status: Option<Vec<ProposalStatusCodeDTO>>,
     pub operation_type: Option<ProposalOperationTypeDTO>,
     pub from_dt: Option<TimestampRfc3339>,
