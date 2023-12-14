@@ -1,6 +1,6 @@
 use super::HelperMapper;
 use crate::{
-    core::{ic_cdk::api::trap, CallContext},
+    core::ic_cdk::api::trap,
     models::{
         access_control::{
             AccountActionSpecifier, AccountSpecifier, CommonActionSpecifier,
@@ -11,7 +11,6 @@ use crate::{
         Transfer,
     },
     repositories::TRANSFER_REPOSITORY,
-    services::USER_SERVICE,
 };
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
@@ -118,32 +117,14 @@ impl From<&wallet_api::ListAccountTransfersInput> for ResourceSpecifier {
 
 impl From<&wallet_api::GetUserInput> for ResourceSpecifier {
     fn from(input: &wallet_api::GetUserInput) -> Self {
-        match &input.user_id {
-            Some(user_id) => {
-                let user_id = *HelperMapper::to_uuid(user_id.to_owned())
-                    .expect("Invalid user id")
-                    .as_bytes();
+        let user_id = *HelperMapper::to_uuid(input.user_id.to_owned())
+            .expect("Invalid user id")
+            .as_bytes();
 
-                ResourceSpecifier::Common(
-                    ResourceType::User,
-                    AccountActionSpecifier::Read(CommonSpecifier::Id([user_id].to_vec())),
-                )
-            }
-            _ => {
-                let ctx = CallContext::get();
-                let user = USER_SERVICE.get_user_by_identity(&ctx.caller(), &ctx);
-                match user {
-                    Ok(user) => ResourceSpecifier::Common(
-                        ResourceType::User,
-                        AccountActionSpecifier::Read(CommonSpecifier::Id([user.id].to_vec())),
-                    ),
-                    Err(_) => ResourceSpecifier::Common(
-                        ResourceType::User,
-                        AccountActionSpecifier::Read(CommonSpecifier::Any),
-                    ),
-                }
-            }
-        }
+        ResourceSpecifier::Common(
+            ResourceType::User,
+            AccountActionSpecifier::Read(CommonSpecifier::Id([user_id].to_vec())),
+        )
     }
 }
 

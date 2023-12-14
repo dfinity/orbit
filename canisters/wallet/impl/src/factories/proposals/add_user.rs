@@ -1,7 +1,5 @@
 use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
-    core::ic_cdk::api::id as self_canister_id,
-    core::CallContext,
     errors::{ProposalError, ProposalExecuteError},
     models::{AddUserOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
     services::USER_SERVICE,
@@ -77,10 +75,7 @@ impl<'p, 'o> AddUserProposalExecute<'p, 'o> {
 impl Execute for AddUserProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let user = USER_SERVICE
-            .add_user(
-                self.operation.input.clone(),
-                &CallContext::new(self_canister_id()),
-            )
+            .add_user(self.operation.input.clone())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to create user: {}", e),

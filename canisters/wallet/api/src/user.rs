@@ -22,7 +22,7 @@ pub struct UserDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetUserInput {
-    pub user_id: Option<UuidDTO>,
+    pub user_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -90,4 +90,24 @@ pub struct ListUsersInput {
 pub struct ListUsersResponse {
     pub users: Vec<UserDTO>,
     pub next_offset: Option<u64>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum UserPrivilege {
+    ListAccounts,
+    AddAccount,
+    ListUsers,
+    AddUser,
+    ListUserGroups,
+    AddUserGroup,
+    ListAccessPolicies,
+    AddAccessPolicy,
+    ListProposalPolicies,
+    AddProposalPolicy,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct MeResponse {
+    pub me: UserDTO,
+    pub privileges: Vec<UserPrivilege>,
 }

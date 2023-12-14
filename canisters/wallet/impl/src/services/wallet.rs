@@ -59,7 +59,6 @@ impl WalletService {
         &self,
         mut config: CanisterConfig,
         new_owners: Vec<Principal>,
-        ctx: CallContext,
         mode: InstallMode,
     ) {
         #[cfg(target_arch = "wasm32")]
@@ -74,7 +73,7 @@ impl WalletService {
                     install_canister_handlers::init_post_process().await;
                 }
 
-                install_canister_handlers::add_new_owners(new_owners, &ctx).await;
+                install_canister_handlers::add_new_owners(new_owners).await;
 
                 config.last_upgrade_timestamp = time();
                 write_canister_config(config.to_owned());
@@ -117,12 +116,7 @@ impl WalletService {
 
         config.update_with(init.to_owned());
 
-        self.register_canister_config_post_process(
-            config.to_owned(),
-            new_owners.to_owned(),
-            ctx.to_owned(),
-            mode,
-        );
+        self.register_canister_config_post_process(config.to_owned(), new_owners.to_owned(), mode);
     }
 }
 
@@ -130,7 +124,6 @@ impl WalletService {
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{print, time};
     use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
-    use crate::core::CallContext;
     use crate::models::{
         AddAccessPolicyOperationInput, AddProposalPolicyOperationInput, AddUserOperationInput,
         UserStatus,
@@ -182,20 +175,17 @@ mod install_canister_handlers {
     }
 
     /// Registers the newly added admins of the canister.
-    pub async fn add_new_owners(new_owners: Vec<Principal>, ctx: &CallContext) {
+    pub async fn add_new_owners(new_owners: Vec<Principal>) {
         print(&format!("Registering {:?} admin users", new_owners.len()));
         for admin in new_owners {
             let user = USER_SERVICE
-                .add_user(
-                    AddUserOperationInput {
-                        identities: vec![admin.to_owned()],
-                        groups: vec![ADMIN_GROUP_ID.to_owned()],
-                        name: None,
-                        status: UserStatus::Active,
-                        unconfirmed_identities: vec![],
-                    },
-                    &ctx,
-                )
+                .add_user(AddUserOperationInput {
+                    identities: vec![admin.to_owned()],
+                    groups: vec![ADMIN_GROUP_ID.to_owned()],
+                    name: None,
+                    status: UserStatus::Active,
+                    unconfirmed_identities: vec![],
+                })
                 .await
                 .expect("Failed to register admin user");
 

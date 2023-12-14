@@ -39,7 +39,7 @@ impl ProposalService {
         input: ListProposalsInput,
         ctx: &CallContext,
     ) -> ServiceResult<Vec<Proposal>> {
-        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller())?;
 
         let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
 
@@ -87,7 +87,7 @@ impl ProposalService {
         input: CreateProposalInput,
         ctx: &CallContext,
     ) -> ServiceResult<Proposal> {
-        let proposer = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let proposer = self.user_service.get_user_by_identity(&ctx.caller())?;
         let mut proposal = ProposalFactory::create_proposal(proposer.id, input).await?;
 
         // Different proposal types may have different validation rules.
@@ -122,7 +122,7 @@ impl ProposalService {
         input: VoteOnProposalInput,
         ctx: &CallContext,
     ) -> ServiceResult<Proposal> {
-        let voter = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let voter = self.user_service.get_user_by_identity(&ctx.caller())?;
         let proposal_id = HelperMapper::to_uuid(input.proposal_id)?;
         let mut proposal = self.get_proposal(proposal_id.as_bytes())?;
 

@@ -1048,8 +1048,8 @@ type WalletSettings = record {
 
 // Input type for retrieving a user.
 type GetUserInput = record {
-  // The user id to retrieve, if not set the caller user will be used if available.
-  user_id : opt UUID;
+  // The user id to retrieve (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  user_id : UUID;
 };
 
 // Result type for retrieving a user.
@@ -1273,6 +1273,30 @@ type ListProposalPoliciesResult = variant {
   Err : Error;
 };
 
+// The top level privileges that the user has when making calls to the canister.
+type UserPrivilege = variant {
+  ListAccounts;
+  AddAccount;
+  ListUsers;
+  AddUser;
+  ListUserGroups;
+  AddUserGroup;
+  ListAccessPolicies;
+  AddAccessPolicy;
+  ListProposalPolicies;
+  AddProposalPolicy;
+};
+
+type MeResult = variant {
+  Ok : record {
+    // The user that is associated with the caller.
+    me : User;
+    // The list of privileges associated with the user.
+    privileges : vec UserPrivilege;
+  };
+  Err : Error;
+};
+
 // Result type for getting the wallet settings.
 type WalletSettingsResult = variant {
   // The result data for a successful execution.
@@ -1292,6 +1316,8 @@ type WalletInit = record {
 
 // The Wallet service definition.
 service : (opt WalletInit) -> {
+  // Get the authenticated user and its privileges from the caller.
+  me : () -> (MeResult) query;
   // Get the wallet features (e.g. supported assets).
   features : () -> (GetFeaturesResult) query;
   // Get the list of notifications associated with the caller.
@@ -1332,7 +1358,7 @@ service : (opt WalletInit) -> {
   vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
   // Confirm that the caller owns the user.
   confirm_user_identity : (input : ConfirmUserIdentityInput) -> (ConfirmUserIdentityResult);
-  // Get the user associated with the caller or the user id provided.
+  // Get the user associated with the user id provided.
   get_user : (input : GetUserInput) -> (GetUserResult) query;
   // List all users of the wallet.
   list_users : (input : ListUsersInput) -> (ListUsersResult) query;

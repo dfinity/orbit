@@ -41,7 +41,7 @@ impl NotificationService {
         input: ListNotificationsInput,
         ctx: &CallContext,
     ) -> ServiceResult<Vec<Notification>> {
-        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller())?;
 
         let filter_by_type = input.notification_type.map(|t| t.to_string());
 
@@ -145,7 +145,7 @@ impl NotificationService {
         notification: &Notification,
         ctx: &CallContext,
     ) -> ServiceResult<()> {
-        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller())?;
 
         if user.id != notification.target_user_id {
             Err(NotificationError::Forbidden {

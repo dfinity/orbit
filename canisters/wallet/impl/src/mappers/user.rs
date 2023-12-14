@@ -1,7 +1,10 @@
 use crate::{
     core::ic_cdk::api::time,
     errors::UserError,
-    models::{AddUserOperationInput, EditUserOperationInput, User},
+    models::{
+        access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType},
+        AddUserOperationInput, EditUserOperationInput, User,
+    },
     repositories::USER_GROUP_REPOSITORY,
 };
 use candid::Principal;
@@ -12,7 +15,7 @@ use ic_canister_core::{
 };
 use std::collections::HashSet;
 use uuid::Uuid;
-use wallet_api::UserDTO;
+use wallet_api::{UserDTO, UserPrivilege};
 
 use super::HelperMapper;
 
@@ -76,6 +79,55 @@ impl From<UserDTO> for User {
             last_modification_timestamp: rfc3339_to_timestamp(
                 user.last_modification_timestamp.as_str(),
             ),
+        }
+    }
+}
+
+pub const USER_PRIVILEGES: [UserPrivilege; 8] = [
+    UserPrivilege::ListUsers,
+    UserPrivilege::AddUser,
+    UserPrivilege::ListAccounts,
+    UserPrivilege::AddAccount,
+    UserPrivilege::ListAccessPolicies,
+    UserPrivilege::AddAccessPolicy,
+    UserPrivilege::ListProposalPolicies,
+    UserPrivilege::AddProposalPolicy,
+];
+
+impl From<UserPrivilege> for ResourceSpecifier {
+    fn from(privilege: UserPrivilege) -> Self {
+        match privilege {
+            UserPrivilege::ListUsers => {
+                ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::List)
+            }
+            UserPrivilege::AddUser => {
+                ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create)
+            }
+            UserPrivilege::ListAccounts => {
+                ResourceSpecifier::Common(ResourceType::Account, CommonActionSpecifier::List)
+            }
+            UserPrivilege::AddAccount => {
+                ResourceSpecifier::Common(ResourceType::Account, CommonActionSpecifier::Create)
+            }
+            UserPrivilege::ListAccessPolicies => {
+                ResourceSpecifier::Common(ResourceType::AccessPolicy, CommonActionSpecifier::List)
+            }
+            UserPrivilege::AddAccessPolicy => {
+                ResourceSpecifier::Common(ResourceType::AccessPolicy, CommonActionSpecifier::Create)
+            }
+            UserPrivilege::ListProposalPolicies => {
+                ResourceSpecifier::Common(ResourceType::ProposalPolicy, CommonActionSpecifier::List)
+            }
+            UserPrivilege::AddProposalPolicy => ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                CommonActionSpecifier::Create,
+            ),
+            UserPrivilege::ListUserGroups => {
+                ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List)
+            }
+            UserPrivilege::AddUserGroup => {
+                ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::Create)
+            }
         }
     }
 }
