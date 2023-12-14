@@ -42,6 +42,10 @@ pub enum ProposalSpecifier {
     EditAccount(AccountSpecifier),
     EditUser(UserSpecifier),
     Transfer(AccountSpecifier, AddressSpecifier),
+    Upgrade,
+    AddAccessPolicy,
+    EditAccessPolicy(CommonSpecifier),
+    RemoveAccessPolicy(CommonSpecifier),
 }
 
 impl From<&ProposalSpecifier> for ProposalOperationType {
@@ -52,6 +56,10 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
             ProposalSpecifier::EditAccount(_) => ProposalOperationType::EditAccount,
             ProposalSpecifier::EditUser(_) => ProposalOperationType::EditUser,
             ProposalSpecifier::Transfer(_, _) => ProposalOperationType::Transfer,
+            ProposalSpecifier::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
+            ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
+            ProposalSpecifier::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
+            ProposalSpecifier::Upgrade => ProposalOperationType::Upgrade,
         }
     }
 }

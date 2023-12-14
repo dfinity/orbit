@@ -1,11 +1,16 @@
 use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
-        Account, AccountPoliciesInput, AddAccountOperation, AddUserOperation, EditAccountOperation,
-        EditUserOperation, EditUserStatusOperation, ProposalOperation, TransferOperation,
-        UpgradeOperation, UpgradeTarget, User,
+        Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
+        AddAccountOperation, AddUserOperation, EditAccessPolicyOperation,
+        EditAccessPolicyOperationInput, EditAccountOperation, EditUserOperation,
+        EditUserStatusOperation, ProposalOperation, RemoveAccessPolicyOperation,
+        RemoveAccessPolicyOperationInput, TransferOperation, UpgradeOperation, UpgradeTarget, User,
     },
-    repositories::{AccountRepository, UserRepository, USER_GROUP_REPOSITORY},
+    repositories::{
+        access_control::ACCESS_CONTROL_REPOSITORY, AccountRepository, UserRepository,
+        USER_GROUP_REPOSITORY,
+    },
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
@@ -309,6 +314,98 @@ impl From<UpgradeOperation> for UpgradeOperationDTO {
     }
 }
 
+impl From<AddAccessPolicyOperationInput> for wallet_api::AddAccessPolicyOperationInput {
+    fn from(input: AddAccessPolicyOperationInput) -> wallet_api::AddAccessPolicyOperationInput {
+        wallet_api::AddAccessPolicyOperationInput {
+            user: input.user.into(),
+            resource: input.resource.into(),
+        }
+    }
+}
+
+impl From<wallet_api::AddAccessPolicyOperationInput> for AddAccessPolicyOperationInput {
+    fn from(input: wallet_api::AddAccessPolicyOperationInput) -> AddAccessPolicyOperationInput {
+        AddAccessPolicyOperationInput {
+            user: input.user.into(),
+            resource: input.resource.into(),
+        }
+    }
+}
+
+impl From<AddAccessPolicyOperation> for wallet_api::AddAccessPolicyOperationDTO {
+    fn from(operation: AddAccessPolicyOperation) -> wallet_api::AddAccessPolicyOperationDTO {
+        wallet_api::AddAccessPolicyOperationDTO {
+            policy: operation.policy_id.map(|id| {
+                ACCESS_CONTROL_REPOSITORY
+                    .get(&id)
+                    .expect("policy id not found")
+                    .into()
+            }),
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<EditAccessPolicyOperationInput> for wallet_api::EditAccessPolicyOperationInput {
+    fn from(input: EditAccessPolicyOperationInput) -> wallet_api::EditAccessPolicyOperationInput {
+        wallet_api::EditAccessPolicyOperationInput {
+            policy_id: Uuid::from_bytes(input.policy_id).hyphenated().to_string(),
+            user: input.user.map(|user| user.into()),
+            resource: input.resource.map(|resource| resource.into()),
+        }
+    }
+}
+
+impl From<wallet_api::EditAccessPolicyOperationInput> for EditAccessPolicyOperationInput {
+    fn from(input: wallet_api::EditAccessPolicyOperationInput) -> EditAccessPolicyOperationInput {
+        EditAccessPolicyOperationInput {
+            policy_id: *HelperMapper::to_uuid(input.policy_id)
+                .expect("Invalid policy id")
+                .as_bytes(),
+            user: input.user.map(|user| user.into()),
+            resource: input.resource.map(|resource| resource.into()),
+        }
+    }
+}
+
+impl From<EditAccessPolicyOperation> for wallet_api::EditAccessPolicyOperationDTO {
+    fn from(operation: EditAccessPolicyOperation) -> wallet_api::EditAccessPolicyOperationDTO {
+        wallet_api::EditAccessPolicyOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<RemoveAccessPolicyOperationInput> for wallet_api::RemoveAccessPolicyOperationInput {
+    fn from(
+        input: RemoveAccessPolicyOperationInput,
+    ) -> wallet_api::RemoveAccessPolicyOperationInput {
+        wallet_api::RemoveAccessPolicyOperationInput {
+            policy_id: Uuid::from_bytes(input.policy_id).hyphenated().to_string(),
+        }
+    }
+}
+
+impl From<wallet_api::RemoveAccessPolicyOperationInput> for RemoveAccessPolicyOperationInput {
+    fn from(
+        input: wallet_api::RemoveAccessPolicyOperationInput,
+    ) -> RemoveAccessPolicyOperationInput {
+        RemoveAccessPolicyOperationInput {
+            policy_id: *HelperMapper::to_uuid(input.policy_id)
+                .expect("Invalid policy id")
+                .as_bytes(),
+        }
+    }
+}
+
+impl From<RemoveAccessPolicyOperation> for wallet_api::RemoveAccessPolicyOperationDTO {
+    fn from(operation: RemoveAccessPolicyOperation) -> wallet_api::RemoveAccessPolicyOperationDTO {
+        wallet_api::RemoveAccessPolicyOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
 impl From<ProposalOperation> for ProposalOperationDTO {
     fn from(operation: ProposalOperation) -> ProposalOperationDTO {
         match operation {
@@ -363,6 +460,15 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::Upgrade(operation) => {
                 ProposalOperationDTO::Upgrade(Box::new(operation.into()))
+            }
+            ProposalOperation::AddAccessPolicy(operation) => {
+                ProposalOperationDTO::AddAccessPolicy(Box::new(operation.into()))
+            }
+            ProposalOperation::EditAccessPolicy(operation) => {
+                ProposalOperationDTO::EditAccessPolicy(Box::new(operation.into()))
+            }
+            ProposalOperation::RemoveAccessPolicy(operation) => {
+                ProposalOperationDTO::RemoveAccessPolicy(Box::new(operation.into()))
             }
         }
     }

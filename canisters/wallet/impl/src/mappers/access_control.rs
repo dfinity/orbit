@@ -210,6 +210,34 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
             ProposalOperationInput::Upgrade(_) => {
                 ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create)
             }
+            ProposalOperationInput::AddAccessPolicy(_) => ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                AccountActionSpecifier::Create,
+            ),
+            ProposalOperationInput::EditAccessPolicy(input) => {
+                let access_policy_id = *HelperMapper::to_uuid(input.policy_id.to_owned())
+                    .expect("Invalid access policy id")
+                    .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::AccessPolicy,
+                    AccountActionSpecifier::Update(CommonSpecifier::Id(
+                        [access_policy_id].to_vec(),
+                    )),
+                )
+            }
+            ProposalOperationInput::RemoveAccessPolicy(input) => {
+                let access_policy_id = *HelperMapper::to_uuid(input.policy_id.to_owned())
+                    .expect("Invalid access policy id")
+                    .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::AccessPolicy,
+                    AccountActionSpecifier::Delete(CommonSpecifier::Id(
+                        [access_policy_id].to_vec(),
+                    )),
+                )
+            }
         }
     }
 }

@@ -183,6 +183,28 @@ lazy_static! {
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
             )])
-        )
+        ),
+        // access policies
+        (
+            ProposalSpecifier::AddAccessPolicy,
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::EditAccessPolicy(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::RemoveAccessPolicy(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
     ];
 }

@@ -1,4 +1,8 @@
-use super::{criteria::Criteria, AccountId, Blockchain, BlockchainStandard, UserId, UserStatus};
+use super::{
+    access_control::{ResourceSpecifier, UserSpecifier},
+    criteria::Criteria,
+    AccountId, Blockchain, BlockchainStandard, UserId, UserStatus,
+};
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
@@ -11,6 +15,9 @@ pub enum ProposalOperation {
     EditAccount(EditAccountOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
+    AddAccessPolicy(AddAccessPolicyOperation),
+    EditAccessPolicy(EditAccessPolicyOperation),
+    RemoveAccessPolicy(RemoveAccessPolicyOperation),
     EditUserStatus(EditUserStatusOperation),
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
@@ -180,4 +187,44 @@ pub struct UpgradeOperationInput {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UpgradeOperation {
     pub input: UpgradeOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAccessPolicyOperationInput {
+    pub user: UserSpecifier,
+    pub resource: ResourceSpecifier,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAccessPolicyOperation {
+    pub policy_id: Option<UUID>,
+    pub input: AddAccessPolicyOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAccessPolicyOperationInput {
+    pub policy_id: UUID,
+    pub user: Option<UserSpecifier>,
+    pub resource: Option<ResourceSpecifier>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAccessPolicyOperation {
+    pub input: EditAccessPolicyOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveAccessPolicyOperationInput {
+    pub policy_id: UUID,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveAccessPolicyOperation {
+    pub input: RemoveAccessPolicyOperationInput,
 }

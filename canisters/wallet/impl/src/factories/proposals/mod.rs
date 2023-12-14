@@ -2,29 +2,42 @@ use crate::{
     core::generate_uuid_v4,
     errors::{ProposalError, ProposalExecuteError},
     models::{Proposal, ProposalOperation},
+    services::POLICY_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
+use std::sync::Arc;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
+mod add_access_policy;
 mod add_account;
 mod add_user;
 mod add_user_group;
+mod edit_access_policy;
 mod edit_account;
 mod edit_user;
 mod edit_user_group;
 mod edit_user_status;
+mod remove_access_policy;
 mod remove_user_group;
 mod transfer;
 mod upgrade;
 
 use self::{
+    add_access_policy::{
+        AddAccessPolicyProposalCreate, AddAccessPolicyProposalCreateHook,
+        AddAccessPolicyProposalExecute,
+    },
     add_account::{
         AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalExecute,
     },
     add_user::{AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute},
     add_user_group::{
         AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
+    },
+    edit_access_policy::{
+        EditAccessPolicyProposalCreate, EditAccessPolicyProposalCreateHook,
+        EditAccessPolicyProposalExecute,
     },
     edit_account::{
         EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalExecute,
@@ -36,6 +49,10 @@ use self::{
     edit_user_status::{
         EditUserStatusProposalCreate, EditUserStatusProposalCreateHook,
         EditUserStatusProposalExecute,
+    },
+    remove_access_policy::{
+        RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalCreateHook,
+        RemoveAccessPolicyProposalExecute,
     },
     remove_user_group::{
         RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
@@ -173,6 +190,24 @@ impl ProposalFactory {
                     operation.clone(),
                 )
             }
+            ProposalOperationInput::AddAccessPolicy(operation) => {
+                create_proposal::<
+                    wallet_api::AddAccessPolicyOperationInput,
+                    AddAccessPolicyProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::EditAccessPolicy(operation) => {
+                create_proposal::<
+                    wallet_api::EditAccessPolicyOperationInput,
+                    EditAccessPolicyProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::RemoveAccessPolicy(operation) => {
+                create_proposal::<
+                    wallet_api::RemoveAccessPolicyOperationInput,
+                    RemoveAccessPolicyProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
         }
     }
 
@@ -208,6 +243,15 @@ impl ProposalFactory {
             ProposalOperation::Upgrade(operation) => {
                 Box::new(UpgradeProposalCreateHook::new(proposal, operation))
             }
+            ProposalOperation::AddAccessPolicy(operation) => {
+                Box::new(AddAccessPolicyProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::EditAccessPolicy(operation) => {
+                Box::new(EditAccessPolicyProposalCreateHook::new(proposal, operation))
+            }
+            ProposalOperation::RemoveAccessPolicy(operation) => Box::new(
+                RemoveAccessPolicyProposalCreateHook::new(proposal, operation),
+            ),
         }
     }
 
@@ -242,6 +286,27 @@ impl ProposalFactory {
             }
             ProposalOperation::Upgrade(operation) => {
                 Box::new(UpgradeProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::AddAccessPolicy(operation) => {
+                Box::new(AddAccessPolicyProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&POLICY_SERVICE),
+                ))
+            }
+            ProposalOperation::EditAccessPolicy(operation) => {
+                Box::new(EditAccessPolicyProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&POLICY_SERVICE),
+                ))
+            }
+            ProposalOperation::RemoveAccessPolicy(operation) => {
+                Box::new(RemoveAccessPolicyProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&POLICY_SERVICE),
+                ))
             }
         }
     }

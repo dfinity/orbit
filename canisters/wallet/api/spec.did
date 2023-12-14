@@ -30,6 +30,10 @@ type ProposalSpecifier = variant {
   EditAccount : AccountSpecifier;
   EditUser : UserSpecifier;
   Transfer : TransferSpecifier;
+  Upgrade;
+  AddAccessPolicy;
+  EditAccessPolicy : CommonSpecifier;
+  RemoveAccessPolicy : CommonSpecifier;
 };
 
 // Defines the various types criterias that can be used in a proposal evaluation.
@@ -388,6 +392,44 @@ type UpgradeOperation = record {
   input : UpgradeOperationInput;
 };
 
+type AddAccessPolicyOperationInput = record {
+  // The user that will be allowed access to the resource.
+  user : AccessControlUserSpecifier;
+  // The resource that this policy will apply to.
+  resource : ResourceSpecifier;
+};
+
+type AddAccessPolicyOperation = record {
+  // The access policy that was created by the proposal (only available after the proposal is executed).
+  policy : opt AccessPolicy;
+  // The input to the proposal to add an access policy.
+  input : AddAccessPolicyOperationInput;
+};
+
+type EditAccessPolicyOperationInput = record {
+  // The access policy id that will be edited.
+  policy_id : UUID;
+  // The updated user selector that will be allowed access to the resource.
+  user : opt AccessControlUserSpecifier;
+  // The updated resource that this policy will apply to.
+  resource : opt ResourceSpecifier;
+};
+
+type EditAccessPolicyOperation = record {
+  // The input to the proposal to edit an access policy.
+  input : EditAccessPolicyOperationInput;
+};
+
+type RemoveAccessPolicyOperationInput = record {
+  // The access policy id that will be removed.
+  policy_id : UUID;
+};
+
+type RemoveAccessPolicyOperation = record {
+  // The input to the proposal to remove an access policy.
+  input : RemoveAccessPolicyOperationInput;
+};
+
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
@@ -409,6 +451,12 @@ type ProposalOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for upgrading a canister.
   Upgrade : UpgradeOperation;
+  // An operation for adding an access policy.
+  AddAccessPolicy : AddAccessPolicyOperation;
+  // An operation for editing an access policy.
+  EditAccessPolicy : EditAccessPolicyOperation;
+  // An operation for removing an access policy.
+  RemoveAccessPolicy : RemoveAccessPolicyOperation;
 };
 
 type ProposalOperationInput = variant {
@@ -432,6 +480,12 @@ type ProposalOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for upgrading a canister.
   Upgrade : UpgradeOperationInput;
+  // An operation for adding an access policy.
+  AddAccessPolicy : AddAccessPolicyOperationInput;
+  // An operation for editing an access policy.
+  EditAccessPolicy : EditAccessPolicyOperationInput;
+  // An operation for removing an access policy.
+  RemoveAccessPolicy : RemoveAccessPolicyOperationInput;
 };
 
 type ProposalOperationType = variant {
@@ -455,6 +509,12 @@ type ProposalOperationType = variant {
   RemoveUserGroup;
   // An operation for upgrading a canister.
   Upgrade;
+  // An operation for adding an access policy.
+  AddAccessPolicy;
+  // An operation for editing an access policy.
+  EditAccessPolicy;
+  // An operation for removing an access policy.
+  RemoveAccessPolicy;
 };
 
 // The schedule for executing a transaction of a given transfer.
@@ -1057,7 +1117,7 @@ type ResourceSpecifier = variant {
 
 // The access control policy, used to specify the access control rules for
 // users when interacting with resources.
-type AccessControlPolicy = record {
+type AccessPolicy = record {
   id : UUID;
   user : AccessControlUserSpecifier;
   resource : ResourceSpecifier;
@@ -1071,7 +1131,7 @@ type ListAccessPoliciesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The list of access policies.
-    policies : vec AccessControlPolicy;
+    policies : vec AccessPolicy;
     // The offset to use for the next page.
     next_offset : opt nat64;
   };
@@ -1088,7 +1148,7 @@ type GetAccessPolicyResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The access policy that was retrieved.
-    policy : AccessControlPolicy;
+    policy : AccessPolicy;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
