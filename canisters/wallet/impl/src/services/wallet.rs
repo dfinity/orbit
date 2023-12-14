@@ -124,7 +124,6 @@ impl WalletService {
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{print, time};
     use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
-    use crate::core::CallContext;
     use crate::models::{
         AddAccessPolicyOperationInput, AddProposalPolicyOperationInput, AddUserOperationInput,
         UserStatus,
