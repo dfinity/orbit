@@ -426,13 +426,14 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
 
                 let evaluations = stream::iter(proposals.iter())
                     .then(|proposal| async move {
+                        // This is added to always allow view access to proposal voters.
                         if proposal.proposed_by == caller.id
                             || proposal.voters().iter().any(|owner| owner == &caller.id)
                         {
                             return Ok(true);
                         }
 
-                        // This is added to always allow view access to proposal voters.
+                        // This is added to always allow view access to anyone that has voting rights on the proposal.
                         let validator = ProposalVoteRightsEvaluator {
                             proposal,
                             voter_id: caller.id,
