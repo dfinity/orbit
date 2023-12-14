@@ -10,7 +10,9 @@ use crate::{
     errors::EvaluateError,
     models::{
         criteria::CriteriaEvaluator,
-        specifier::{AccountMatcher, AddressMatcher, ProposalMatcher, UserMatcher},
+        specifier::{
+            AccountMatcher, AddressMatcher, CommonIdMatcher, ProposalMatcher, UserMatcher,
+        },
     },
 };
 use async_trait::async_trait;
@@ -22,10 +24,13 @@ lazy_static! {
     pub static ref PROPOSAL_ACCOUNT_MATCHER: Arc<AccountMatcher> = Arc::new(AccountMatcher);
     pub static ref PROPOSAL_ADDRESS_MATCHER: Arc<AddressMatcher> = Arc::new(AddressMatcher);
     pub static ref PROPOSAL_USER_MATCHER: Arc<UserMatcher> = Arc::new(UserMatcher);
+    pub static ref PROPOSAL_COMMON_ID_MATCHER: Arc<CommonIdMatcher> = Arc::new(CommonIdMatcher);
     pub static ref PROPOSAL_MATCHER: Arc<ProposalMatcher> = Arc::new(ProposalMatcher {
         account_matcher: PROPOSAL_ACCOUNT_MATCHER.clone(),
         address_matcher: PROPOSAL_ADDRESS_MATCHER.clone(),
         user_matcher: PROPOSAL_USER_MATCHER.clone(),
+        common_id_matcher: PROPOSAL_COMMON_ID_MATCHER.clone(),
+
     });
     pub static ref CRITERIA_EVALUATOR: Arc<CriteriaEvaluator> = Arc::new(CriteriaEvaluator {
         user_matcher: PROPOSAL_USER_MATCHER.clone(),

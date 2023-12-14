@@ -74,7 +74,7 @@ impl<'p, 'o> RemoveUserGroupProposalExecute<'p, 'o> {
 impl Execute for RemoveUserGroupProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         USER_GROUP_SERVICE
-            .remove(self.operation.input.clone())
+            .remove(&self.operation.input.user_group_id)
             .await
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to remove user group: {}", e),

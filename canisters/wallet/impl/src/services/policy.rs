@@ -5,8 +5,9 @@ use crate::{
     },
     errors::{AccessControlError, ProposalError},
     models::{
-        access_control::AccessControlPolicy, criteria::Criteria, specifier::ProposalSpecifier,
-        AddAccessPolicyOperationInput, EditAccessPolicyOperationInput, ProposalPolicy,
+        access_control::AccessControlPolicy, AddAccessPolicyOperationInput,
+        AddProposalPolicyOperationInput, EditAccessPolicyOperationInput,
+        EditProposalPolicyOperationInput, ProposalPolicy,
     },
     repositories::{
         access_control::{AccessControlRepository, ACCESS_CONTROL_REPOSITORY},
@@ -60,14 +61,13 @@ impl PolicyService {
 
     pub async fn add_proposal_policy(
         &self,
-        specifier: ProposalSpecifier,
-        criteria: Criteria,
+        input: AddProposalPolicyOperationInput,
     ) -> ServiceResult<ProposalPolicy> {
         let id: uuid::Uuid = generate_uuid_v4().await;
         let policy = ProposalPolicy {
             id: *id.as_bytes(),
-            specifier,
-            criteria,
+            specifier: input.specifier,
+            criteria: input.criteria,
         };
 
         self.proposal_policy_repository
@@ -78,19 +78,30 @@ impl PolicyService {
 
     pub async fn edit_proposal_policy(
         &self,
-        id: &UUID,
-        specifier: ProposalSpecifier,
-        criteria: Criteria,
+        input: EditProposalPolicyOperationInput,
     ) -> ServiceResult<ProposalPolicy> {
-        let mut policy = self.get_proposal_policy(id)?;
+        let mut policy = self.get_proposal_policy(&input.policy_id)?;
 
-        policy.specifier = specifier;
-        policy.criteria = criteria;
+        if let Some(specifier) = input.specifier {
+            policy.specifier = specifier;
+        }
+
+        if let Some(criteria) = input.criteria {
+            policy.criteria = criteria;
+        }
 
         self.proposal_policy_repository
             .insert(policy.id, policy.to_owned());
 
         Ok(policy)
+    }
+
+    pub async fn remove_proposal_policy(&self, id: &UUID) -> ServiceResult<()> {
+        let policy = self.get_proposal_policy(id)?;
+
+        self.proposal_policy_repository.remove(&policy.id);
+
+        Ok(())
     }
 
     pub fn get_access_policy(&self, id: &UUID) -> ServiceResult<AccessControlPolicy> {
@@ -120,8 +131,8 @@ impl PolicyService {
         Ok(policy)
     }
 
-    pub async fn remove_access_policy(&self, input: &UUID) -> ServiceResult<()> {
-        let policy = self.get_access_policy(input)?;
+    pub async fn remove_access_policy(&self, id: &UUID) -> ServiceResult<()> {
+        let policy = self.get_access_policy(id)?;
 
         self.access_control_policy_repository.remove(&policy.id);
 
@@ -187,14 +198,19 @@ mod tests {
             access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
             ResourceSpecifier, UserSpecifier,
         },
+        criteria::Criteria,
         proposal_policy_test_utils::mock_proposal_policy,
+        specifier::ProposalSpecifier,
     };
 
     #[tokio::test]
     async fn test_proposal_policy_operations() {
         let service = POLICY_SERVICE.clone();
         let policy = service
-            .add_proposal_policy(ProposalSpecifier::AddAccount, Criteria::AutoAdopted)
+            .add_proposal_policy(AddProposalPolicyOperationInput {
+                specifier: ProposalSpecifier::AddAccount,
+                criteria: Criteria::AutoAdopted,
+            })
             .await;
 
         assert!(policy.is_ok());
@@ -206,11 +222,11 @@ mod tests {
         assert_eq!(fetched_policy.criteria, policy.criteria);
 
         let policy = service
-            .edit_proposal_policy(
-                &policy.id,
-                ProposalSpecifier::AddAccount,
-                Criteria::AutoAdopted,
-            )
+            .edit_proposal_policy(EditProposalPolicyOperationInput {
+                policy_id: policy.id,
+                specifier: Some(ProposalSpecifier::AddAccount),
+                criteria: Some(Criteria::AutoAdopted),
+            })
             .await;
 
         assert!(policy.is_ok());
@@ -327,5 +343,23 @@ mod tests {
         service.remove_access_policy(&policy.id).await.unwrap();
 
         assert!(service.get_access_policy(&policy.id).is_err());
+    }
+
+    #[tokio::test]
+    async fn test_remove_proposal_policy() {
+        let service = POLICY_SERVICE.clone();
+        let policy = service
+            .add_proposal_policy(AddProposalPolicyOperationInput {
+                specifier: ProposalSpecifier::AddAccount,
+                criteria: Criteria::AutoAdopted,
+            })
+            .await
+            .unwrap();
+
+        assert!(service.get_proposal_policy(&policy.id).is_ok());
+
+        service.remove_proposal_policy(&policy.id).await.unwrap();
+
+        assert!(service.get_proposal_policy(&policy.id).is_err());
     }
 }

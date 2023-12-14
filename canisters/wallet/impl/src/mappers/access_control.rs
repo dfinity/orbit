@@ -238,6 +238,34 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                     )),
                 )
             }
+            ProposalOperationInput::AddProposalPolicy(_) => ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                AccountActionSpecifier::Create,
+            ),
+            ProposalOperationInput::EditProposalPolicy(input) => {
+                let proposal_policy_id = *HelperMapper::to_uuid(input.policy_id.to_owned())
+                    .expect("Invalid proposal policy id")
+                    .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::ProposalPolicy,
+                    AccountActionSpecifier::Update(CommonSpecifier::Id(
+                        [proposal_policy_id].to_vec(),
+                    )),
+                )
+            }
+            ProposalOperationInput::RemoveProposalPolicy(input) => {
+                let proposal_policy_id = *HelperMapper::to_uuid(input.policy_id.to_owned())
+                    .expect("Invalid proposal policy id")
+                    .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::ProposalPolicy,
+                    AccountActionSpecifier::Delete(CommonSpecifier::Id(
+                        [proposal_policy_id].to_vec(),
+                    )),
+                )
+            }
         }
     }
 }

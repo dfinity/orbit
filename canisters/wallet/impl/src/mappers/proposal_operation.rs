@@ -2,14 +2,17 @@ use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
-        AddAccountOperation, AddUserOperation, EditAccessPolicyOperation,
-        EditAccessPolicyOperationInput, EditAccountOperation, EditUserOperation,
-        EditUserStatusOperation, ProposalOperation, RemoveAccessPolicyOperation,
-        RemoveAccessPolicyOperationInput, TransferOperation, UpgradeOperation, UpgradeTarget, User,
+        AddAccountOperation, AddProposalPolicyOperation, AddProposalPolicyOperationInput,
+        AddUserOperation, EditAccessPolicyOperation, EditAccessPolicyOperationInput,
+        EditAccountOperation, EditProposalPolicyOperation, EditProposalPolicyOperationInput,
+        EditUserOperation, EditUserStatusOperation, ProposalOperation, RemoveAccessPolicyOperation,
+        RemoveAccessPolicyOperationInput, RemoveProposalPolicyOperation,
+        RemoveProposalPolicyOperationInput, TransferOperation, UpgradeOperation, UpgradeTarget,
+        User,
     },
     repositories::{
-        access_control::ACCESS_CONTROL_REPOSITORY, AccountRepository, UserRepository,
-        USER_GROUP_REPOSITORY,
+        access_control::ACCESS_CONTROL_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY,
+        AccountRepository, UserRepository, USER_GROUP_REPOSITORY,
     },
 };
 use ic_canister_core::repository::Repository;
@@ -406,6 +409,104 @@ impl From<RemoveAccessPolicyOperation> for wallet_api::RemoveAccessPolicyOperati
     }
 }
 
+impl From<AddProposalPolicyOperationInput> for wallet_api::AddProposalPolicyOperationInput {
+    fn from(input: AddProposalPolicyOperationInput) -> wallet_api::AddProposalPolicyOperationInput {
+        wallet_api::AddProposalPolicyOperationInput {
+            specifier: input.specifier.into(),
+            criteria: input.criteria.into(),
+        }
+    }
+}
+
+impl From<wallet_api::AddProposalPolicyOperationInput> for AddProposalPolicyOperationInput {
+    fn from(input: wallet_api::AddProposalPolicyOperationInput) -> AddProposalPolicyOperationInput {
+        AddProposalPolicyOperationInput {
+            specifier: input.specifier.into(),
+            criteria: input.criteria.into(),
+        }
+    }
+}
+
+impl From<AddProposalPolicyOperation> for wallet_api::AddProposalPolicyOperationDTO {
+    fn from(operation: AddProposalPolicyOperation) -> wallet_api::AddProposalPolicyOperationDTO {
+        wallet_api::AddProposalPolicyOperationDTO {
+            policy: operation.policy_id.map(|id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&id)
+                    .expect("policy id not found")
+                    .into()
+            }),
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<EditProposalPolicyOperationInput> for wallet_api::EditProposalPolicyOperationInput {
+    fn from(
+        input: EditProposalPolicyOperationInput,
+    ) -> wallet_api::EditProposalPolicyOperationInput {
+        wallet_api::EditProposalPolicyOperationInput {
+            policy_id: Uuid::from_bytes(input.policy_id).hyphenated().to_string(),
+            specifier: input.specifier.map(|specifier| specifier.into()),
+            criteria: input.criteria.map(|criteria| criteria.into()),
+        }
+    }
+}
+
+impl From<wallet_api::EditProposalPolicyOperationInput> for EditProposalPolicyOperationInput {
+    fn from(
+        input: wallet_api::EditProposalPolicyOperationInput,
+    ) -> EditProposalPolicyOperationInput {
+        EditProposalPolicyOperationInput {
+            policy_id: *HelperMapper::to_uuid(input.policy_id)
+                .expect("Invalid policy id")
+                .as_bytes(),
+            specifier: input.specifier.map(|specifier| specifier.into()),
+            criteria: input.criteria.map(|criteria| criteria.into()),
+        }
+    }
+}
+
+impl From<EditProposalPolicyOperation> for wallet_api::EditProposalPolicyOperationDTO {
+    fn from(operation: EditProposalPolicyOperation) -> wallet_api::EditProposalPolicyOperationDTO {
+        wallet_api::EditProposalPolicyOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<RemoveProposalPolicyOperationInput> for wallet_api::RemoveProposalPolicyOperationInput {
+    fn from(
+        input: RemoveProposalPolicyOperationInput,
+    ) -> wallet_api::RemoveProposalPolicyOperationInput {
+        wallet_api::RemoveProposalPolicyOperationInput {
+            policy_id: Uuid::from_bytes(input.policy_id).hyphenated().to_string(),
+        }
+    }
+}
+
+impl From<wallet_api::RemoveProposalPolicyOperationInput> for RemoveProposalPolicyOperationInput {
+    fn from(
+        input: wallet_api::RemoveProposalPolicyOperationInput,
+    ) -> RemoveProposalPolicyOperationInput {
+        RemoveProposalPolicyOperationInput {
+            policy_id: *HelperMapper::to_uuid(input.policy_id)
+                .expect("Invalid policy id")
+                .as_bytes(),
+        }
+    }
+}
+
+impl From<RemoveProposalPolicyOperation> for wallet_api::RemoveProposalPolicyOperationDTO {
+    fn from(
+        operation: RemoveProposalPolicyOperation,
+    ) -> wallet_api::RemoveProposalPolicyOperationDTO {
+        wallet_api::RemoveProposalPolicyOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
 impl From<ProposalOperation> for ProposalOperationDTO {
     fn from(operation: ProposalOperation) -> ProposalOperationDTO {
         match operation {
@@ -469,6 +570,15 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::RemoveAccessPolicy(operation) => {
                 ProposalOperationDTO::RemoveAccessPolicy(Box::new(operation.into()))
+            }
+            ProposalOperation::AddProposalPolicy(operation) => {
+                ProposalOperationDTO::AddProposalPolicy(Box::new(operation.into()))
+            }
+            ProposalOperation::EditProposalPolicy(operation) => {
+                ProposalOperationDTO::EditProposalPolicy(Box::new(operation.into()))
+            }
+            ProposalOperation::RemoveProposalPolicy(operation) => {
+                ProposalOperationDTO::RemoveProposalPolicy(Box::new(operation.into()))
             }
         }
     }

@@ -34,6 +34,12 @@ type ProposalSpecifier = variant {
   AddAccessPolicy;
   EditAccessPolicy : CommonSpecifier;
   RemoveAccessPolicy : CommonSpecifier;
+  AddProposalPolicy;
+  EditProposalPolicy : CommonSpecifier;
+  RemoveProposalPolicy : CommonSpecifier;
+  AddUserGroup;
+  EditUserGroup : CommonSpecifier;
+  RemoveUserGroup : CommonSpecifier;
 };
 
 // Defines the various types criterias that can be used in a proposal evaluation.
@@ -430,6 +436,44 @@ type RemoveAccessPolicyOperation = record {
   input : RemoveAccessPolicyOperationInput;
 };
 
+type AddProposalPolicyOperationInput = record {
+  // The proposal specifier that identifies the proposal to add a policy for.
+  specifier : ProposalSpecifier;
+  // The criteria to use for the proposal evaluation.
+  criteria : ProposalPolicyCriteria;
+};
+
+type AddProposalPolicyOperation = record {
+  // The proposal policy that was created by the proposal (only available after the proposal is executed).
+  policy : opt ProposalPolicy;
+  // The input to the proposal to add a proposal policy.
+  input : AddProposalPolicyOperationInput;
+};
+
+type EditProposalPolicyOperationInput = record {
+  // The proposal policy id that will be edited.
+  policy_id : UUID;
+  // The updated proposal specifier that identifies the proposal to add a policy for.
+  specifier : opt ProposalSpecifier;
+  // The updated criteria to use for the proposal evaluation.
+  criteria : opt ProposalPolicyCriteria;
+};
+
+type EditProposalPolicyOperation = record {
+  // The input to the proposal to edit a proposal policy.
+  input : EditProposalPolicyOperationInput;
+};
+
+type RemoveProposalPolicyOperationInput = record {
+  // The proposal policy id that will be removed.
+  policy_id : UUID;
+};
+
+type RemoveProposalPolicyOperation = record {
+  // The input to the proposal to remove a proposal policy.
+  input : RemoveProposalPolicyOperationInput;
+};
+
 type ProposalOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
@@ -457,6 +501,12 @@ type ProposalOperation = variant {
   EditAccessPolicy : EditAccessPolicyOperation;
   // An operation for removing an access policy.
   RemoveAccessPolicy : RemoveAccessPolicyOperation;
+  // An operation for adding a proposal policy.
+  AddProposalPolicy : AddProposalPolicyOperation;
+  // An operation for editing a proposal policy.
+  EditProposalPolicy : EditProposalPolicyOperation;
+  // An operation for removing a proposal policy.
+  RemoveProposalPolicy : RemoveProposalPolicyOperation;
 };
 
 type ProposalOperationInput = variant {
@@ -486,6 +536,12 @@ type ProposalOperationInput = variant {
   EditAccessPolicy : EditAccessPolicyOperationInput;
   // An operation for removing an access policy.
   RemoveAccessPolicy : RemoveAccessPolicyOperationInput;
+  // An operation for adding a proposal policy.
+  AddProposalPolicy : AddProposalPolicyOperationInput;
+  // An operation for editing a proposal policy.
+  EditProposalPolicy : EditProposalPolicyOperationInput;
+  // An operation for removing a proposal policy.
+  RemoveProposalPolicy : RemoveProposalPolicyOperationInput;
 };
 
 type ProposalOperationType = variant {
@@ -515,6 +571,12 @@ type ProposalOperationType = variant {
   EditAccessPolicy;
   // An operation for removing an access policy.
   RemoveAccessPolicy;
+  // An operation for adding a proposal policy.
+  AddProposalPolicy;
+  // An operation for editing a proposal policy.
+  EditProposalPolicy;
+  // An operation for removing a proposal policy.
+  RemoveProposalPolicy;
 };
 
 // The schedule for executing a transaction of a given transfer.

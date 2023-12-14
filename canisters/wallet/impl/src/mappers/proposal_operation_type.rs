@@ -19,6 +19,13 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::RemoveAccessPolicy => {
                 ProposalOperationType::RemoveAccessPolicy
             }
+            ProposalOperationTypeDTO::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
+            ProposalOperationTypeDTO::EditProposalPolicy => {
+                ProposalOperationType::EditProposalPolicy
+            }
+            ProposalOperationTypeDTO::RemoveProposalPolicy => {
+                ProposalOperationType::RemoveProposalPolicy
+            }
         }
     }
 }
@@ -39,6 +46,11 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::AddAccessPolicy(_) => ProposalOperationType::AddAccessPolicy,
             ProposalOperation::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
             ProposalOperation::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
+            ProposalOperation::AddProposalPolicy(_) => ProposalOperationType::AddProposalPolicy,
+            ProposalOperation::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
+            ProposalOperation::RemoveProposalPolicy(_) => {
+                ProposalOperationType::RemoveProposalPolicy
+            }
         }
     }
 }

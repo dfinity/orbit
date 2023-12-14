@@ -1,6 +1,7 @@
 use super::{
     access_control::{ResourceSpecifier, UserSpecifier},
     criteria::Criteria,
+    specifier::ProposalSpecifier,
     AccountId, Blockchain, BlockchainStandard, UserId, UserStatus,
 };
 use candid::{CandidType, Deserialize, Principal};
@@ -23,6 +24,9 @@ pub enum ProposalOperation {
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
     Upgrade(UpgradeOperation),
+    AddProposalPolicy(AddProposalPolicyOperation),
+    EditProposalPolicy(EditProposalPolicyOperation),
+    RemoveProposalPolicy(RemoveProposalPolicyOperation),
 }
 
 #[stable_object]
@@ -227,4 +231,44 @@ pub struct RemoveAccessPolicyOperationInput {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RemoveAccessPolicyOperation {
     pub input: RemoveAccessPolicyOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddProposalPolicyOperationInput {
+    pub specifier: ProposalSpecifier,
+    pub criteria: Criteria,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddProposalPolicyOperation {
+    pub policy_id: Option<UUID>,
+    pub input: AddProposalPolicyOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditProposalPolicyOperationInput {
+    pub policy_id: UUID,
+    pub specifier: Option<ProposalSpecifier>,
+    pub criteria: Option<Criteria>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditProposalPolicyOperation {
+    pub input: EditProposalPolicyOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveProposalPolicyOperationInput {
+    pub policy_id: UUID,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveProposalPolicyOperation {
+    pub input: RemoveProposalPolicyOperationInput,
 }
