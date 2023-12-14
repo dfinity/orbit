@@ -12,3 +12,4 @@ repository = "https://github.com/dfinity/orbit-wallet"
 [dependencies]
 candid = { workspace = true, features = ["parser"] }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
