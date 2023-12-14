@@ -131,7 +131,7 @@ mod install_canister_handlers {
     use crate::core::ic_cdk::api::{print, time};
     use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
     use crate::core::CallContext;
-    use crate::models::{AddUserOperationInput, UserStatus};
+    use crate::models::{AddAccessPolicyOperationInput, AddUserOperationInput, UserStatus};
     use crate::services::{POLICY_SERVICE, USER_SERVICE};
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
@@ -166,7 +166,10 @@ mod install_canister_handlers {
         // adds the default access control policies which sets safe defaults for the canister
         for policy in DEFAULT_ACCESS_CONTROL_POLICIES.iter() {
             POLICY_SERVICE
-                .add_access_policy(policy.0.to_owned(), policy.1.to_owned())
+                .add_access_policy(AddAccessPolicyOperationInput {
+                    user: policy.0.to_owned(),
+                    resource: policy.1.to_owned(),
+                })
                 .await
                 .expect("Failed to add default access control policy");
         }

@@ -121,7 +121,9 @@ impl PolicyService {
     }
 
     pub async fn remove_access_policy(&self, input: &UUID) -> ServiceResult<()> {
-        self.access_control_policy_repository.remove(input);
+        let policy = self.get_access_policy(input)?;
+
+        self.access_control_policy_repository.remove(&policy.id);
 
         Ok(())
     }
@@ -307,5 +309,23 @@ mod tests {
         let result = POLICY_SERVICE.list_proposal_policies(input).unwrap();
         assert_eq!(result.items.len(), 30);
         assert_eq!(result.next_offset, Some(45));
+    }
+
+    #[tokio::test]
+    async fn test_remove_access_policy() {
+        let service = POLICY_SERVICE.clone();
+        let policy = service
+            .add_access_policy(AddAccessPolicyOperationInput {
+                user: UserSpecifier::Any,
+                resource: ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
+            })
+            .await
+            .unwrap();
+
+        assert!(service.get_access_policy(&policy.id).is_ok());
+
+        service.remove_access_policy(&policy.id).await.unwrap();
+
+        assert!(service.get_access_policy(&policy.id).is_err());
     }
 }
