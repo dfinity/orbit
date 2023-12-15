@@ -19,7 +19,6 @@ pub enum ProposalOperation {
     AddAccessPolicy(AddAccessPolicyOperation),
     EditAccessPolicy(EditAccessPolicyOperation),
     RemoveAccessPolicy(RemoveAccessPolicyOperation),
-    EditUserStatus(EditUserStatusOperation),
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
@@ -119,19 +118,6 @@ pub struct EditUserOperationInput {
     pub identities: Option<Vec<Principal>>,
     pub unconfirmed_identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditUserStatusOperation {
-    pub input: EditUserStatusOperationInput,
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditUserStatusOperationInput {
-    pub user_id: UUID,
-    pub status: UserStatus,
 }
 
 #[stable_object]

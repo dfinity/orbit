@@ -331,20 +331,6 @@ type EditUserOperation = record {
   input : EditUserOperationInput;
 };
 
-type EditUserStatusOperationInput = record {
-  // The id of the user to edit.
-  id : UUID;
-  // The status of the user (e.g. `Active`).
-  //
-  // The user must be active to be able to practically use the wallet.
-  status : UserStatus;
-};
-
-type EditUserStatusOperation = record {
-  // The input to the proposal to edit the user.
-  input : EditUserStatusOperationInput;
-};
-
 type AddUserGroupOperationInput = record {
   // The name of the group.
   name : text;
@@ -485,8 +471,6 @@ type ProposalOperation = variant {
   AddUser : AddUserOperation;
   // An operation for editing an existing user.
   EditUser : EditUserOperation;
-  // An operation for editing the status of an existing user.
-  EditUserStatus : EditUserStatusOperation;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperation;
   // An operation for editing an existing user group.
@@ -520,8 +504,6 @@ type ProposalOperationInput = variant {
   AddUser : AddUserOperationInput;
   // An operation for editing an existing user.
   EditUser : EditUserOperationInput;
-  // An operation for editing the status of an existing user.
-  EditUserStatus : EditUserStatusOperationInput;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperationInput;
   // An operation for editing an existing user group.
@@ -555,8 +537,6 @@ type ProposalOperationType = variant {
   AddUser;
   // An operation for editing an existing user.
   EditUser;
-  // An operation for editing the status of an existing user.
-  EditUserStatus;
   // An operation for adding a new user group.
   AddUserGroup;
   // An operation for editing an existing user group.

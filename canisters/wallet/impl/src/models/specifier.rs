@@ -273,7 +273,6 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
                     .is_match((p, operation.input.user_group_id, specifier))
                     .await?
             }
-            // TODO: Add missing match arms
             _ => false,
         })
     }
