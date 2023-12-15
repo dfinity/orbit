@@ -1,6 +1,7 @@
 //! Wallet services.
 use std::sync::Arc;
 
+use crate::core::metrics::COUNTER_DEPLOY_WALLET_TOTAL;
 use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
@@ -11,6 +12,7 @@ use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
+use prometheus::labels;
 
 // Canister entrypoints for the controller.
 #[query(name = "list_wallets")]
@@ -25,7 +27,20 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
 
 #[update(name = "deploy_wallet")]
 async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
-    CONTROLLER.deploy_wallet().await
+    let out = CONTROLLER.deploy_wallet().await;
+
+    COUNTER_DEPLOY_WALLET_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
 }
 
 // Controller initialization and implementation.

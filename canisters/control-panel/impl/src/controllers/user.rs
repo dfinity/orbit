@@ -1,6 +1,9 @@
 //! User services.
 use std::sync::Arc;
 
+use crate::core::metrics::{
+    COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
+};
 use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
@@ -12,6 +15,7 @@ use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
+use prometheus::labels;
 
 // Canister entrypoints for the controller.
 
@@ -22,17 +26,56 @@ async fn get_user() -> ApiResult<GetUserResponse> {
 
 #[update(name = "register_user")]
 async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
-    CONTROLLER.register_user(input).await
+    let out = CONTROLLER.register_user(input).await;
+
+    COUNTER_REGISTER_USER_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
 }
 
 #[update(name = "manage_user")]
 async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
-    CONTROLLER.manage_user(input).await
+    let out = CONTROLLER.manage_user(input).await;
+
+    COUNTER_MANAGE_USER_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
 }
 
 #[update(name = "delete_user")]
 async fn delete_user() -> ApiResult<DeleteUserResponse> {
-    CONTROLLER.delete_user().await
+    let out = CONTROLLER.delete_user().await;
+
+    COUNTER_DELETE_USER_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
 }
 
 // Controller initialization and implementation.

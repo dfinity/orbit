@@ -4,7 +4,7 @@
 mod user;
 
 use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
-use ic_canister_core::cdk::api::trap;
+use ic_canister_core::{cdk::api::trap, repository::Repository};
 use ic_cdk_macros::query;
 use prometheus::{Encoder, TextEncoder};
 pub use user::*;
@@ -17,7 +17,10 @@ pub use canister::*;
 mod wallet;
 pub use wallet::*;
 
-use crate::core::metrics::{GAUGE_CANISTER_CYCLES_BALANCE, METRICS_REGISTRY};
+use crate::{
+    core::metrics::{GAUGE_CANISTER_CYCLES_BALANCE, GAUGE_USERS_TOTAL, METRICS_REGISTRY},
+    repositories::USER_REPOSITORY,
+};
 
 #[query(name = "http_request")]
 async fn http_request(request: HttpRequest) -> HttpResponse {
@@ -38,8 +41,19 @@ async fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     // Set Gauges
-    GAUGE_CANISTER_CYCLES_BALANCE
-        .with(|g| g.borrow_mut().set(ic_cdk::api::canister_balance() as f64));
+    GAUGE_USERS_TOTAL.with(|g| {
+        g.borrow_mut().set({
+            let v = USER_REPOSITORY.list().len();
+            v as f64
+        })
+    });
+
+    GAUGE_CANISTER_CYCLES_BALANCE.with(|g| {
+        g.borrow_mut().set({
+            let v = ic_cdk::api::canister_balance();
+            v as f64
+        })
+    });
 
     // Export metrics
     let bs = METRICS_REGISTRY.with(|r| {
