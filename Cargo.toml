@@ -1,15 +1,15 @@
 [workspace]
 resolver = "2"
 members = [
-  "canisters/integration-tests",
-  "canisters/control-panel/api",
-  "canisters/control-panel/impl",
-  "canisters/upgrader/api",
-  "canisters/upgrader/impl",
-  "canisters/wallet/api",
-  "canisters/wallet/impl",
-  "libs/ic-canister-core",
-  "libs/ic-canister-macros",
+    "canisters/integration-tests",
+    "canisters/control-panel/api",
+    "canisters/control-panel/impl",
+    "canisters/upgrader/api",
+    "canisters/upgrader/impl",
+    "canisters/wallet/api",
+    "canisters/wallet/impl",
+    "libs/ic-canister-core",
+    "libs/ic-canister-macros",
 ]
 
 [profile.release]
@@ -39,6 +39,7 @@ num-bigint = "0.4"
 num-traits = "0.2"
 pocket-ic = "2.0.1"
 proc-macro2 = "1.0"
+prometheus = "0.13.3"
 quote = "1.0"
 rand_chacha = "0.3.1"
 rstest = "0.18.2"
