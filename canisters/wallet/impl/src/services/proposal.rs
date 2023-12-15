@@ -240,8 +240,12 @@ mod tests {
             specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier, UserSpecifier},
             user_test_utils::mock_user,
             ProposalOperation, ProposalStatus, TransferOperation, TransferOperationInput, User,
+            UserStatus,
         },
-        repositories::{policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository},
+        repositories::{
+            policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository,
+            NOTIFICATION_REPOSITORY, USER_REPOSITORY,
+        },
     };
     use candid::Principal;
 
@@ -357,5 +361,71 @@ mod tests {
             result.unwrap().votes[0].status,
             ProposalVoteStatus::Rejected
         );
+    }
+
+    #[tokio::test]
+    async fn proposal_creation_triggers_notifications() {
+        let ctx = setup();
+        // creates other users
+        let mut related_user = mock_user();
+        related_user.identities = vec![Principal::from_slice(&[25; 29])];
+        related_user.id = [25; 16];
+        related_user.status = UserStatus::Active;
+
+        let mut unrelated_user = mock_user();
+        unrelated_user.identities = vec![Principal::from_slice(&[26; 29])];
+        unrelated_user.id = [26; 16];
+        unrelated_user.status = UserStatus::Active;
+
+        USER_REPOSITORY.insert(related_user.to_key(), related_user.clone());
+        USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
+
+        // creates the account for the transfer
+        let account_id = Uuid::new_v4();
+        let mut account = mock_account();
+        account.id = *account_id.as_bytes();
+        account.owners = vec![ctx.caller_user.id];
+
+        ctx.account_repository
+            .insert(account.to_key(), account.clone());
+
+        // creates a proposal policy that will match the new proposal
+        let mut proposal_policy = mock_proposal_policy();
+        proposal_policy.specifier =
+            ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any);
+        proposal_policy.criteria = Criteria::ApprovalThreshold(
+            UserSpecifier::Id(vec![ctx.caller_user.id, related_user.id]),
+            Percentage(100),
+        );
+        PROPOSAL_POLICY_REPOSITORY.insert(proposal_policy.id, proposal_policy.to_owned());
+
+        // creates the proposal
+        ctx.service
+            .create_proposal(
+                wallet_api::CreateProposalInput {
+                    operation: wallet_api::ProposalOperationInput::Transfer(
+                        wallet_api::TransferOperationInput {
+                            from_account_id: Uuid::from_bytes(account.id.to_owned())
+                                .hyphenated()
+                                .to_string(),
+                            amount: candid::Nat(100u32.into()),
+                            fee: None,
+                            metadata: vec![],
+                            network: None,
+                            to: "0x1234".to_string(),
+                        },
+                    ),
+                    title: None,
+                    summary: None,
+                    execution_plan: None,
+                },
+                &ctx.call_context,
+            )
+            .await
+            .unwrap();
+
+        let notifications = NOTIFICATION_REPOSITORY.list();
+        assert_eq!(notifications.len(), 1);
+        assert_eq!(notifications[0].target_user_id, related_user.id);
     }
 }
