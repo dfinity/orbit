@@ -4,7 +4,7 @@
 mod user;
 
 use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
-use ic_cdk::trap;
+use ic_canister_core::cdk::api::trap;
 use ic_cdk_macros::query;
 use prometheus::{Encoder, TextEncoder};
 pub use user::*;
