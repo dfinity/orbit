@@ -125,7 +125,8 @@ impl WalletService {
 
     /// Retains the new owners and removes the unassigned ones.
     ///
-    /// The config is updated with the new owners but is not persisted.
+    /// The config is updated with the new owners but is not added to stable memory yet, this is done
+    /// at a later stage in the post install process.
     async fn retain_new_owners(
         &self,
         config: &mut CanisterConfig,
