@@ -2,6 +2,7 @@
 //! with the clients of the wallet canister.
 
 mod wallet_details;
+use candid::{CandidType, Deserialize};
 pub use wallet_details::*;
 
 mod common;
@@ -33,3 +34,25 @@ pub use upgrade::*;
 
 mod policy;
 pub use policy::*;
+
+// Http Interface (for metrics)
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct HeaderField(pub String, pub String);
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct HttpRequest {
+    pub method: String,
+    pub url: String,
+    pub headers: Vec<HeaderField>,
+    #[serde(with = "serde_bytes")]
+    pub body: Vec<u8>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct HttpResponse {
+    pub status_code: u16,
+    pub headers: Vec<HeaderField>,
+    #[serde(with = "serde_bytes")]
+    pub body: Vec<u8>,
+}

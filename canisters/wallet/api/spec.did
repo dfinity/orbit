@@ -1337,6 +1337,21 @@ type HealthStatus = variant {
   Uninitialized;
 };
 
+type HeaderField = record { text; text; };
+
+type HttpRequest = record {
+  method: text;
+  url: text;
+  headers: vec HeaderField;
+  body: blob;
+};
+
+type HttpResponse = record {
+  status_code: nat16;
+  headers: vec HeaderField;
+  body: blob;
+};
+
 // The Wallet service definition.
 service : (opt WalletInstall) -> {
   // Check if the wallet is healthy and ready to be used.
@@ -1403,4 +1418,7 @@ service : (opt WalletInstall) -> {
   list_user_groups : () -> (ListUserGroupResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
+
+  // Metrics (Http Interface)
+  http_request: (HttpRequest) -> (HttpResponse) query;
 };
