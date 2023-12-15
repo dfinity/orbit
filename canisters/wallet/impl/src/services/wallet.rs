@@ -86,7 +86,7 @@ impl WalletService {
     ) {
         #[cfg(target_arch = "wasm32")]
         ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
-            use crate::core::ic_cdk::api::{id as self_canister_id, time};
+            use crate::core::ic_cdk::api::id as self_canister_id;
             use crate::core::ic_cdk::spawn;
             use crate::core::write_canister_config;
             use crate::core::NNS_ROOT_CANISTER_ID;
