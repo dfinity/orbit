@@ -2,12 +2,11 @@
 
 /// User entrypoints.
 mod user;
-use std::cell::RefCell;
 
 use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
 use ic_cdk::trap;
 use ic_cdk_macros::query;
-use prometheus::{Encoder, Gauge, Registry, TextEncoder};
+use prometheus::{Encoder, TextEncoder};
 pub use user::*;
 
 /// Canister lifecycle hooks.
@@ -18,27 +17,7 @@ pub use canister::*;
 mod wallet;
 pub use wallet::*;
 
-const SERVICE_NAME: &str = "control_panel";
-
-thread_local! {
-    static GAUGE_CANISTER_CYCLES_BALANCE: RefCell<Gauge> = RefCell::new({
-        Gauge::new(
-            format!("{SERVICE_NAME}_canister_cycles_balance"), // name
-            "cycles balance available to the canister", // help
-        ).unwrap()
-    });
-
-    static METRICS_REGISTRY: RefCell<Registry> = RefCell::new({
-        let r = Registry::new();
-
-        GAUGE_CANISTER_CYCLES_BALANCE.with(|g| {
-            let g = Box::new(g.borrow().to_owned());
-            r.register(g).unwrap();
-        });
-
-        r
-    });
-}
+use crate::core::metrics::{GAUGE_CANISTER_CYCLES_BALANCE, METRICS_REGISTRY};
 
 #[query(name = "http_request")]
 async fn http_request(request: HttpRequest) -> HttpResponse {
