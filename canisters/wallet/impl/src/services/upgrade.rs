@@ -7,7 +7,7 @@ use crate::{
 };
 use candid::CandidType;
 use candid::Encode;
-use ic_canister_core::{api::ServiceResult, cdk::api::time};
+use ic_canister_core::api::ServiceResult;
 use ic_cdk::api::management_canister::{
     main::{self as mgmt, CanisterInstallMode, InstallCodeArgument},
     provisional::CanisterIdRecord,
@@ -109,7 +109,10 @@ impl UpgradeService {
     }
 
     /// Verify and mark an upgrade as being performed successfully.
-    pub async fn verify_upgrade(&self) -> ServiceResult<()> {
+    pub async fn update_upgrade_proposal_status(
+        &self,
+        status: ProposalStatus,
+    ) -> ServiceResult<()> {
         let cfg = canister_config_mut();
         let proposal_id = cfg
             .upgrade_proposal
@@ -118,9 +121,7 @@ impl UpgradeService {
         self.proposal_service
             .edit_proposal(ProposalEditInput {
                 proposal_id,
-                status: Some(ProposalStatus::Completed {
-                    completed_at: time(),
-                }),
+                status: Some(status),
             })
             .await?;
 
