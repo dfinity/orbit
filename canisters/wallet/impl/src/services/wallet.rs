@@ -176,7 +176,7 @@ impl WalletService {
             .await?;
 
         // Handles the post init process in a one-off timer to allow for inter canister calls,
-        // this adds the default canisgter configurations, deploys the wallet upgrader and makes sure
+        // this adds the default canister configurations, deploys the wallet upgrader and makes sure
         // there are no unintended controllers of the canister.
         self.install_canister_post_process(config, wallet_owners, WalletInstall::Init(input));
 
