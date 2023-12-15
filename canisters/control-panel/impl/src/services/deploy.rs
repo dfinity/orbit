@@ -36,12 +36,7 @@ impl DeployService {
 
         // Creates the wallet canister with some initial cycles
         let (wallet_canister,) = mgmt::create_canister(
-            mgmt::CreateCanisterArgument {
-                settings: Some(mgmt::CanisterSettings {
-                    controllers: Some(vec![self_canister_id()]),
-                    ..Default::default()
-                }),
-            },
+            mgmt::CreateCanisterArgument { settings: None },
             INITIAL_WALLET_CYCLES,
         )
         .await

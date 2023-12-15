@@ -1,7 +1,11 @@
 use crate::{
-    core::{canister_config, ic_cdk::api::print, CallContext, CanisterConfig, WALLET_ASSETS},
+    core::{
+        canister_config,
+        ic_cdk::api::{print, time},
+        CallContext, CanisterConfig, WALLET_ASSETS,
+    },
     errors::InstallError,
-    models::{User, WalletFeatures, WalletSettings},
+    models::{ProposalStatus, User, WalletFeatures, WalletSettings},
     repositories::{UserRepository, USER_REPOSITORY},
     services::{UpgradeService, UserService, UPGRADE_SERVICE, USER_SERVICE},
 };
@@ -125,7 +129,8 @@ impl WalletService {
 
     /// Retains the new owners and removes the unassigned ones.
     ///
-    /// The config is updated with the new owners but is not persisted.
+    /// The config is updated with the new owners but is not added to stable memory yet, this is done
+    /// at a later stage in the post install process.
     async fn retain_new_owners(
         &self,
         config: &mut CanisterConfig,
@@ -176,7 +181,7 @@ impl WalletService {
             .await?;
 
         // Handles the post init process in a one-off timer to allow for inter canister calls,
-        // this adds the default canisgter configurations, deploys the wallet upgrader and makes sure
+        // this adds the default canister configurations, deploys the wallet upgrader and makes sure
         // there are no unintended controllers of the canister.
         self.install_canister_post_process(config, wallet_owners, WalletInstall::Init(input));
 
@@ -191,14 +196,6 @@ impl WalletService {
         input: Option<WalletUpgrade>,
         ctx: &CallContext,
     ) -> ServiceResult<()> {
-        // verifies that the upgrade proposal exists and marks it as completed
-        if let Err(err) = self.upgrade_service.verify_upgrade().await {
-            // Do not fail the upgrade if the proposal is not found, even though this should never happen
-            // it's not a critical error and failling the upgrade would leave the canister without being able to
-            // be upgraded again.
-            print(format!("Error: verifying upgrade failed {err}"));
-        }
-
         let mut config = canister_config();
         let input = match input {
             Some(input) => input,
@@ -209,6 +206,20 @@ impl WalletService {
         let new_wallet_owners = self
             .retain_new_owners(&mut config, &new_owners, ctx)
             .await?;
+
+        // verifies that the upgrade proposal exists and marks it as completed
+        if let Err(err) = self
+            .upgrade_service
+            .update_upgrade_proposal_status(ProposalStatus::Completed {
+                completed_at: time(),
+            })
+            .await
+        {
+            // Do not fail the upgrade if the proposal is not found, even though this should never happen
+            // it's not a critical error and failling the upgrade would leave the canister without being able to
+            // be upgraded again.
+            print(format!("Error: verifying upgrade failed {err}"));
+        }
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
         // this updates the list of admins of the canister.

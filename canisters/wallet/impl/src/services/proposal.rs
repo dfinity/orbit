@@ -105,9 +105,6 @@ impl ProposalService {
         // This is done because the proposal may be immediately rejected or adopted based on the policies.
         proposal.reevaluate().await?;
 
-        // Validate the proposal after the reevaluation.
-        proposal.validate()?;
-
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
 
@@ -140,9 +137,6 @@ impl ProposalService {
         // This is done because the proposal may be immediately rejected or adopted based on the policies.
         proposal.reevaluate().await?;
 
-        // Validate the proposal after the reevaluation.
-        proposal.validate()?;
-
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
 
@@ -174,9 +168,6 @@ impl ProposalService {
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
         proposal.reevaluate().await?;
-
-        // Validate the proposal after the reevaluation.
-        proposal.validate()?;
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());

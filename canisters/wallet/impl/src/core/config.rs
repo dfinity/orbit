@@ -46,7 +46,7 @@ impl Default for CanisterConfig {
             last_upgrade_timestamp: time(),
             owners: vec![],
             upgrade_proposal: None,
-            upgrader_canister_id: Principal::anonymous(),
+            upgrader_canister_id: Principal::management_canister(),
         }
     }
 }

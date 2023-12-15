@@ -22,7 +22,7 @@ use wallet_api::{
 async fn initialize(input: Option<WalletInstall>) {
     match input {
         Some(WalletInstall::Init(input)) => CONTROLLER.initialize(input).await,
-        _ => trap("Missing init args to install canister"),
+        _ => trap("Invalid init args to install canister"),
     }
 }
 
