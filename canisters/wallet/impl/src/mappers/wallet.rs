@@ -2,8 +2,9 @@ use crate::{
     core::{ic_cdk::api::time, CanisterConfig},
     models::{WalletFeatures, WalletSettings},
 };
+use candid::Principal;
 use ic_canister_core::utils::timestamp_to_rfc3339;
-use wallet_api::{WalletAssetDTO, WalletCanisterInit, WalletFeaturesDTO, WalletSettingsDTO};
+use wallet_api::{WalletAssetDTO, WalletFeaturesDTO, WalletSettingsDTO};
 
 impl From<WalletSettings> for WalletSettingsDTO {
     fn from(settings: WalletSettings) -> Self {
@@ -41,9 +42,9 @@ impl From<WalletFeatures> for WalletFeaturesDTO {
 }
 
 impl CanisterConfig {
-    pub fn update_with(&mut self, init: WalletCanisterInit) {
+    pub fn update_with(&mut self, owners: Option<Vec<Principal>>) {
         self.last_upgrade_timestamp = time();
 
-        self.owners = init.owners.unwrap_or(self.owners.to_owned());
+        self.owners = owners.unwrap_or(self.owners.to_owned());
     }
 }

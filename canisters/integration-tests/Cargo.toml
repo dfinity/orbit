@@ -13,3 +13,5 @@ serde = { workspace = true, features = ["derive"] }
 control_panel_api = { path = "../control-panel/api" }
 upgrader_api = { path = "../upgrader/api" }
 wallet_api = { path = "../wallet/api" }
+# version is pinned here to be compatible with the version of ic-cdk used by PocketIC
+ic-cdk = "0.10"

@@ -1,27 +1,28 @@
+use super::ProposalEditInput;
 use crate::{
-    core::{canister_config_mut, write_canister_config, CanisterConfig},
-    models::{ProposalKey, ProposalStatus},
-    repositories::PROPOSAL_REPOSITORY,
+    core::{canister_config_mut, upgrader_canister_id, write_canister_config, CanisterConfig},
+    errors::UpgradeError,
+    models::ProposalStatus,
+    services::{ProposalService, PROPOSAL_SERVICE},
 };
-use candid::{CandidType, Principal};
-use ic_canister_core::{
-    api::{ApiError, ServiceResult},
-    cdk::api::time,
-    repository::Repository,
-};
+use candid::CandidType;
+use candid::Encode;
+use ic_canister_core::{api::ServiceResult, cdk::api::time};
 use ic_cdk::api::management_canister::{
     main::{self as mgmt, CanisterInstallMode, InstallCodeArgument},
     provisional::CanisterIdRecord,
 };
 use lazy_static::lazy_static;
+use std::sync::Arc;
 
 lazy_static! {
-    pub static ref UPGRADE_SERVICE: UpgradeService = UpgradeService::default();
+    pub static ref UPGRADE_SERVICE: Arc<UpgradeService> =
+        Arc::new(UpgradeService::new(Arc::clone(&PROPOSAL_SERVICE)));
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct UpgradeService {
-    pub upgrader_canister_id: Option<Principal>,
+    proposal_service: Arc<ProposalService>,
 }
 
 #[derive(Clone, CandidType)]
@@ -31,48 +32,42 @@ struct UpgradeParams {
 }
 
 impl UpgradeService {
+    pub fn new(proposal_service: Arc<ProposalService>) -> Self {
+        Self { proposal_service }
+    }
+
     /// Execute an upgrade of the wallet by requesting the upgrader to perform it on our behalf.
     pub async fn upgrade_wallet(&self, module: &[u8], checksum: &[u8]) -> ServiceResult<()> {
-        let upgrader_canister_id = match self.upgrader_canister_id {
-            Some(id) => Ok(id.to_owned()),
-            None => Err(ApiError::new(
-                "UPGRADER_CANISTER_ID_NOT_SET".to_string(),
-                None,
-                None,
-            )),
-        }?;
+        let upgrader_canister_id = upgrader_canister_id();
 
-        let ps = UpgradeParams {
-            module: module.to_owned(),
-            checksum: checksum.to_owned(),
-        };
-
-        ic_cdk::call(upgrader_canister_id, "trigger_upgrade", (ps,))
-            .await
-            .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None))?;
+        ic_cdk::call(
+            upgrader_canister_id,
+            "trigger_upgrade",
+            (UpgradeParams {
+                module: module.to_owned(),
+                checksum: checksum.to_owned(),
+            },),
+        )
+        .await
+        .map_err(|(_, err)| UpgradeError::Failed {
+            reason: err.to_string(),
+        })?;
 
         Ok(())
     }
 
     /// Execute an upgrade of the upgrader canister.
-    pub async fn upgrade_upgrader(&self, module: &[u8]) -> ServiceResult<()> {
-        use candid::Encode;
-
-        let upgrader_canister_id = match self.upgrader_canister_id {
-            Some(id) => Ok(id.to_owned()),
-            None => Err(ApiError::new(
-                "UPGRADER_CANISTER_ID_NOT_SET".to_string(),
-                None,
-                None,
-            )),
-        }?;
+    pub async fn upgrade_upgrader(&self, module: &[u8]) -> ServiceResult<(), UpgradeError> {
+        let upgrader_canister_id = upgrader_canister_id();
 
         // Stop canister
         let stop_result = mgmt::stop_canister(CanisterIdRecord {
             canister_id: upgrader_canister_id.to_owned(),
         })
         .await
-        .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None));
+        .map_err(|(_, err)| UpgradeError::Failed {
+            reason: err.to_string(),
+        });
 
         if stop_result.is_err() {
             // Restart canister if the stop did not succeed (its possible the canister did stop running)
@@ -80,7 +75,9 @@ impl UpgradeService {
                 canister_id: upgrader_canister_id.to_owned(),
             })
             .await
-            .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None))?;
+            .map_err(|(_, err)| UpgradeError::Failed {
+                reason: err.to_string(),
+            })?;
 
             return stop_result;
         }
@@ -95,14 +92,18 @@ impl UpgradeService {
             arg,
         })
         .await
-        .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None));
+        .map_err(|(_, err)| UpgradeError::Failed {
+            reason: err.to_string(),
+        });
 
         // Restart canister (regardless of whether the upgrade succeeded or not)
         mgmt::start_canister(CanisterIdRecord {
             canister_id: upgrader_canister_id.to_owned(),
         })
         .await
-        .map_err(|(_, err)| ApiError::new("UPGRADE_FAILED".to_string(), Some(err), None))?;
+        .map_err(|(_, err)| UpgradeError::Failed {
+            reason: err.to_string(),
+        })?;
 
         upgrade_result
     }
@@ -110,22 +111,18 @@ impl UpgradeService {
     /// Verify and mark an upgrade as being performed successfully.
     pub async fn verify_upgrade(&self) -> ServiceResult<()> {
         let cfg = canister_config_mut();
+        let proposal_id = cfg
+            .upgrade_proposal
+            .ok_or(UpgradeError::MissingUpgradeProposal)?;
 
-        let id = match cfg.upgrade_proposal {
-            Some(id) => id,
-            None => return Err(ApiError::new("MISSING_UPGRADE_PROPOSAL".into(), None, None)),
-        };
-
-        let mut p = match PROPOSAL_REPOSITORY.get(&ProposalKey { id }) {
-            Some(p) => p,
-            None => return Err(ApiError::new("MISSING_UPGRADE_PROPOSAL".into(), None, None)),
-        };
-
-        p.status = ProposalStatus::Completed {
-            completed_at: time(),
-        };
-
-        PROPOSAL_REPOSITORY.insert(ProposalKey { id }, p);
+        self.proposal_service
+            .edit_proposal(ProposalEditInput {
+                proposal_id,
+                status: Some(ProposalStatus::Completed {
+                    completed_at: time(),
+                }),
+            })
+            .await?;
 
         write_canister_config(CanisterConfig {
             upgrade_proposal: None,

@@ -36,6 +36,8 @@ pub struct CanisterConfig {
     pub owners: Vec<Principal>,
     /// An optionally pending upgrade proposal.
     pub upgrade_proposal: Option<UUID>,
+    /// The upgrader canister id that is allowed to upgrade this canister.
+    pub upgrader_canister_id: Principal,
 }
 
 impl Default for CanisterConfig {
@@ -44,6 +46,7 @@ impl Default for CanisterConfig {
             last_upgrade_timestamp: time(),
             owners: vec![],
             upgrade_proposal: None,
+            upgrader_canister_id: Principal::anonymous(),
         }
     }
 }
@@ -71,6 +74,10 @@ impl CanisterState {
             CanisterState::Uninitialized => trap("canister not initialized"),
             CanisterState::Initialized(config) => config,
         }
+    }
+
+    pub fn is_initialized(&self) -> bool {
+        matches!(self, CanisterState::Initialized(_))
     }
 }
 

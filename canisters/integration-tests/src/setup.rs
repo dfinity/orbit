@@ -1,12 +1,13 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id};
+use crate::utils::{controller_test_id, minter_test_id, update_canister_settings};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use control_panel_api::{
     CanisterInit as ControlPanelInitArg, CanisterInstall as ControlPanelInstallArg,
 };
+use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use std::collections::{HashMap, HashSet};
@@ -14,9 +15,8 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime};
-use upgrader_api::InitArg as UpgraderInitArg;
-use wallet_api::WalletCanisterInit as WalletInitArg;
+use std::time::SystemTime;
+use wallet_api::{WalletInit as WalletInitArg, WalletInstall as WalletInstallArg};
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -116,8 +116,17 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     );
 
     let control_panel = create_canister(env, controller);
-    let upgrader = create_canister(env, controller);
     let wallet = create_canister(env, controller);
+
+    update_canister_settings(
+        env,
+        Some(controller),
+        wallet,
+        CanisterSettings {
+            controllers: Some(vec![controller, wallet]),
+            ..Default::default()
+        },
+    );
 
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let wallet_wasm = get_canister_wasm("wallet").to_vec();
@@ -134,31 +143,28 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Some(controller),
     );
 
-    let upgrader_init_args = UpgraderInitArg {
-        target_canister: wallet,
-    };
-    env.install_canister(
-        upgrader,
-        upgrader_wasm,
-        Encode!(&upgrader_init_args).unwrap(),
-        Some(controller),
-    );
-
-    let wallet_init_args = WalletInitArg {
+    let wallet_init_args = WalletInstallArg::Init(WalletInitArg {
         owners: Some(vec![WALLET_ADMIN_USER]),
-    };
+        upgrader_wasm_module: upgrader_wasm,
+    });
     env.install_canister(
         wallet,
         wallet_wasm,
         Encode!(&wallet_init_args).unwrap(),
         Some(controller),
     );
-    // required because the admin users of the wallet are added through a timer after the canister is installed
-    env.advance_time(Duration::from_secs(1));
-    // required because the wallet canister adds the admin users through a timer after it is installed
-    // which is required because it requires inter canister calls to initialize the UUIDs generator with a call
-    // to `raw_rand` which is not allowed in init calls
+    // required because the wallet canister performs post init tasks through a one off timer
     env.tick();
+    // required because it requires inter canister calls to initialize the UUIDs generator with a call
+    // to `raw_rand` which is not allowed in init calls,
+    env.tick();
+    env.tick();
+    // required because the wallet canister creates the upgrader canister
+    env.tick();
+    // required because the wallet canister installs the upgrader canister
+    env.tick();
+    env.tick();
+    // required because the wallet canister updates its own controllers
     env.tick();
     env.tick();
 
@@ -166,7 +172,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         icp_ledger: nns_ledger_canister_id,
         icp_index: nns_index_canister_id,
         control_panel,
-        upgrader,
         wallet,
     }
 }

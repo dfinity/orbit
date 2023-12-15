@@ -1,29 +1,46 @@
-use crate::services::UpgradeService;
 use crate::{
     core::{
-        canister_config_mut,
-        ic_cdk::api::print,
+        ic_cdk::api::trap,
+        is_canister_initialized,
         middlewares::{authorize, call_context},
-        CanisterConfig,
     },
     models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
-    services::{InstallMode, WalletService},
+    services::{WalletService, WALLET_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{init, post_upgrade, query};
 use lazy_static::lazy_static;
-use wallet_api::{WalletCanisterInit, WalletFeaturesResponse, WalletSettingsResponse};
+use std::sync::Arc;
+use wallet_api::{
+    HealthStatus, WalletFeaturesResponse, WalletInit, WalletInstall, WalletSettingsResponse,
+    WalletUpgrade,
+};
 
 // Canister entrypoints for the controller.
 #[init]
-async fn initialize(input: Option<WalletCanisterInit>) {
-    CONTROLLER.initialize(input).await
+async fn initialize(input: Option<WalletInstall>) {
+    match input {
+        Some(WalletInstall::Init(input)) => CONTROLLER.initialize(input).await,
+        _ => trap("Missing init args to install canister"),
+    }
 }
 
 #[post_upgrade]
-async fn post_upgrade(input: Option<WalletCanisterInit>) {
-    CONTROLLER.post_upgrade(input).await
+async fn post_upgrade(input: Option<WalletInstall>) {
+    match input {
+        None => CONTROLLER.post_upgrade(None).await,
+        Some(WalletInstall::Upgrade(input)) => CONTROLLER.post_upgrade(Some(input)).await,
+        _ => trap("Wrong upgrade args for canister upgrade"),
+    }
+}
+
+#[query(name = "health_status")]
+async fn health_status() -> HealthStatus {
+    match is_canister_initialized() {
+        true => HealthStatus::Healthy,
+        false => HealthStatus::Uninitialized,
+    }
 }
 
 #[query(name = "features")]
@@ -38,44 +55,37 @@ async fn wallet_settings() -> ApiResult<WalletSettingsResponse> {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: WalletController =
-        WalletController::new(WalletService::default(), UpgradeService::default());
+    static ref CONTROLLER: WalletController = WalletController::new(Arc::clone(&WALLET_SERVICE));
 }
 
 #[derive(Debug)]
 pub struct WalletController {
-    wallet_service: WalletService,
-    upgrade_service: UpgradeService,
+    wallet_service: Arc<WalletService>,
 }
 
 impl WalletController {
-    fn new(wallet_service: WalletService, upgrade_service: UpgradeService) -> Self {
-        Self {
-            wallet_service,
-            upgrade_service,
-        }
+    fn new(wallet_service: Arc<WalletService>) -> Self {
+        Self { wallet_service }
     }
 
-    async fn initialize(&self, input: Option<WalletCanisterInit>) {
-        let input = input.unwrap_or_default();
-        let mut config = CanisterConfig::default();
-
+    async fn initialize(&self, input: WalletInit) {
+        let ctx = &call_context();
         self.wallet_service
-            .process_canister_install(&mut config, input, &call_context(), InstallMode::Init)
-            .await;
+            .init_canister(input, ctx)
+            .await
+            .unwrap_or_else(|err| {
+                trap(&format!("Error: initializing canister failed {err}"));
+            });
     }
 
-    async fn post_upgrade(&self, input: Option<WalletCanisterInit>) {
-        let input = input.unwrap_or_default();
-        let mut config = canister_config_mut();
-
+    async fn post_upgrade(&self, input: Option<WalletUpgrade>) {
+        let ctx = &call_context();
         self.wallet_service
-            .process_canister_install(&mut config, input, &call_context(), InstallMode::Upgrade)
-            .await;
-
-        if let Err(err) = self.upgrade_service.verify_upgrade().await {
-            print(format!("Error: verifying upgrade failed {err}"));
-        }
+            .upgrade_canister(input, ctx)
+            .await
+            .unwrap_or_else(|err| {
+                trap(&format!("Error: upgrading canister failed {err}"));
+            });
     }
 
     #[with_middleware(

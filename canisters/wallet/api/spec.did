@@ -1311,11 +1311,36 @@ type WalletSettingsResult = variant {
 // The init configuration for the wallet.
 type WalletInit = record {
   // The list of admin principals to be associated with the wallet.
+  //
+  // When not specified, the caller will be added as the admin.
+  owners : opt vec principal;
+  // The wasm module of the wallet upgrader canister.
+  upgrader_wasm_module : blob;
+};
+
+// The upgrade configuration for the wallet.
+type WalletUpgrade = record {
+  // The updated list of admin principals to be associated with the wallet.
   owners : opt vec principal;
 };
 
+// The input type for the wallet canister install method (e.g. init or upgrade).
+type WalletInstall = variant {
+  // The configuration to use when initializing the wallet.
+  Init : WalletInit;
+  // The configuration to use when upgrading the wallet.
+  Upgrade : WalletUpgrade;
+};
+
+type HealthStatus = variant {
+  Healthy;
+  Uninitialized;
+};
+
 // The Wallet service definition.
-service : (opt WalletInit) -> {
+service : (opt WalletInstall) -> {
+  // Check if the wallet is healthy and ready to be used.
+  health_status : () -> (HealthStatus) query;
   // Get the authenticated user and its privileges from the caller.
   me : () -> (MeResult) query;
   // Get the wallet features (e.g. supported assets).
