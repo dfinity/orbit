@@ -195,7 +195,7 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
     async fn is_match(&self, v: (Proposal, ProposalSpecifier)) -> Result<bool, MatchError> {
         let (p, s) = v;
 
-        Ok(match (p.operation.to_owned(), s) {
+        Ok(match (p.operation.to_owned(), s.to_owned()) {
             (ProposalOperation::AddAccount(_), ProposalSpecifier::AddAccount) => true,
             (ProposalOperation::AddUser(_), ProposalSpecifier::AddUser) => true,
             (ProposalOperation::EditAccount(params), ProposalSpecifier::EditAccount(account)) => {
@@ -273,8 +273,22 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
                     .is_match((p, operation.input.user_group_id, specifier))
                     .await?
             }
-            // TODO: Add missing match arms
-            _ => false,
+            // this is here to make sure that new operations are not added without updating this
+            (ProposalOperation::AddAccount(_), _)
+            | (ProposalOperation::AddUser(_), _)
+            | (ProposalOperation::EditAccount(_), _)
+            | (ProposalOperation::EditUser(_), _)
+            | (ProposalOperation::Upgrade(_), _)
+            | (ProposalOperation::AddAccessPolicy(_), _)
+            | (ProposalOperation::AddProposalPolicy(_), _)
+            | (ProposalOperation::EditProposalPolicy(_), _)
+            | (ProposalOperation::EditAccessPolicy(_), _)
+            | (ProposalOperation::EditUserGroup(_), _)
+            | (ProposalOperation::RemoveUserGroup(_), _)
+            | (ProposalOperation::RemoveAccessPolicy(_), _)
+            | (ProposalOperation::RemoveProposalPolicy(_), _)
+            | (ProposalOperation::AddUserGroup(_), _)
+            | (ProposalOperation::Transfer(_), _) => false,
         })
     }
 }

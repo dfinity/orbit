@@ -5,7 +5,7 @@ use crate::{
         AddAccountOperation, AddProposalPolicyOperation, AddProposalPolicyOperationInput,
         AddUserOperation, EditAccessPolicyOperation, EditAccessPolicyOperationInput,
         EditAccountOperation, EditProposalPolicyOperation, EditProposalPolicyOperationInput,
-        EditUserOperation, EditUserStatusOperation, ProposalOperation, RemoveAccessPolicyOperation,
+        EditUserOperation, ProposalOperation, RemoveAccessPolicyOperation,
         RemoveAccessPolicyOperationInput, RemoveProposalPolicyOperation,
         RemoveProposalPolicyOperationInput, TransferOperation, UpgradeOperation, UpgradeTarget,
         User,
@@ -20,9 +20,9 @@ use uuid::Uuid;
 use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
     EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, EditUserStatusOperationDTO, EditUserStatusOperationInput, NetworkDTO,
-    ProposalOperationDTO, TransferMetadataDTO, TransferOperationDTO, TransferOperationInput,
-    UpgradeOperationDTO, UpgradeOperationInput, UpgradeTargetDTO,
+    EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
+    TransferOperationDTO, TransferOperationInput, UpgradeOperationDTO, UpgradeOperationInput,
+    UpgradeTargetDTO,
 };
 
 impl TransferOperation {
@@ -231,42 +231,6 @@ impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
                     })
                     .collect()
             }),
-        }
-    }
-}
-
-impl From<EditUserStatusOperationInput> for crate::models::EditUserStatusOperationInput {
-    fn from(input: EditUserStatusOperationInput) -> crate::models::EditUserStatusOperationInput {
-        crate::models::EditUserStatusOperationInput {
-            user_id: *HelperMapper::to_uuid(input.id)
-                .expect("Invalid user id")
-                .as_bytes(),
-            status: input.status.into(),
-        }
-    }
-}
-
-impl From<EditUserStatusOperationDTO> for EditUserStatusOperation {
-    fn from(operation: EditUserStatusOperationDTO) -> EditUserStatusOperation {
-        EditUserStatusOperation {
-            input: operation.input.into(),
-        }
-    }
-}
-
-impl From<EditUserStatusOperation> for EditUserStatusOperationDTO {
-    fn from(operation: EditUserStatusOperation) -> EditUserStatusOperationDTO {
-        EditUserStatusOperationDTO {
-            input: operation.input.into(),
-        }
-    }
-}
-
-impl From<crate::models::EditUserStatusOperationInput> for EditUserStatusOperationInput {
-    fn from(input: crate::models::EditUserStatusOperationInput) -> EditUserStatusOperationInput {
-        EditUserStatusOperationInput {
-            id: Uuid::from_bytes(input.user_id).hyphenated().to_string(),
-            status: input.status.into(),
         }
     }
 }
@@ -540,9 +504,6 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::EditUser(operation) => {
                 ProposalOperationDTO::EditUser(Box::new(operation.into()))
-            }
-            ProposalOperation::EditUserStatus(operation) => {
-                ProposalOperationDTO::EditUserStatus(Box::new(operation.into()))
             }
             ProposalOperation::AddUserGroup(operation) => {
                 let user_group = operation.user_group_id.map(|id| {

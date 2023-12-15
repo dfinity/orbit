@@ -167,16 +167,6 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                     AccountActionSpecifier::Update(CommonSpecifier::Id([user_id].to_vec())),
                 )
             }
-            ProposalOperationInput::EditUserStatus(input) => {
-                let user_id = *HelperMapper::to_uuid(input.id.to_owned())
-                    .expect("Invalid user id")
-                    .as_bytes();
-
-                ResourceSpecifier::Common(
-                    ResourceType::User,
-                    AccountActionSpecifier::Update(CommonSpecifier::Id([user_id].to_vec())),
-                )
-            }
             ProposalOperationInput::AddUserGroup(_) => {
                 ResourceSpecifier::Common(ResourceType::UserGroup, AccountActionSpecifier::Create)
             }

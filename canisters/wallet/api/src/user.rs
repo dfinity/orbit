@@ -70,17 +70,6 @@ pub struct EditUserOperationDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditUserStatusOperationInput {
-    pub id: UuidDTO,
-    pub status: UserStatusDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditUserStatusOperationDTO {
-    pub input: EditUserStatusOperationInput,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListUsersInput {
     pub offset: Option<u64>,
     pub limit: Option<u16>,

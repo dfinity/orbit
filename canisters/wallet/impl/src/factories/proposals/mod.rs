@@ -19,7 +19,6 @@ mod edit_account;
 mod edit_proposal_policy;
 mod edit_user;
 mod edit_user_group;
-mod edit_user_status;
 mod remove_access_policy;
 mod remove_proposal_policy;
 mod remove_user_group;
@@ -56,10 +55,6 @@ use self::{
     edit_user::{EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute},
     edit_user_group::{
         EditUserGroupProposalCreate, EditUserGroupProposalCreateHook, EditUserGroupProposalExecute,
-    },
-    edit_user_status::{
-        EditUserStatusProposalCreate, EditUserStatusProposalCreateHook,
-        EditUserStatusProposalExecute,
     },
     remove_access_policy::{
         RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalCreateHook,
@@ -191,12 +186,6 @@ impl ProposalFactory {
                     operation.clone(),
                 )
             }
-            ProposalOperationInput::EditUserStatus(operation) => {
-                create_proposal::<
-                    wallet_api::EditUserStatusOperationInput,
-                    EditUserStatusProposalCreate,
-                >(id, proposed_by_user, input.clone(), operation.clone())
-            }
             ProposalOperationInput::Upgrade(operation) => {
                 create_proposal::<wallet_api::UpgradeOperationInput, UpgradeProposalCreate>(
                     id,
@@ -270,9 +259,6 @@ impl ProposalFactory {
             ProposalOperation::EditUser(operation) => {
                 Box::new(EditUserProposalCreateHook::new(proposal, operation))
             }
-            ProposalOperation::EditUserStatus(operation) => {
-                Box::new(EditUserStatusProposalCreateHook::new(proposal, operation))
-            }
             ProposalOperation::Upgrade(operation) => {
                 Box::new(UpgradeProposalCreateHook::new(proposal, operation))
             }
@@ -322,9 +308,6 @@ impl ProposalFactory {
             }
             ProposalOperation::EditUser(operation) => {
                 Box::new(EditUserProposalExecute::new(proposal, operation))
-            }
-            ProposalOperation::EditUserStatus(operation) => {
-                Box::new(EditUserStatusProposalExecute::new(proposal, operation))
             }
             ProposalOperation::Upgrade(operation) => {
                 Box::new(UpgradeProposalExecute::new(proposal, operation))

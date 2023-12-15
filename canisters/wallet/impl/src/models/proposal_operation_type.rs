@@ -14,7 +14,6 @@ pub enum ProposalOperationType {
     EditAccount = 2,
     AddUser = 3,
     EditUser = 4,
-    EditUserStatus = 5,
     AddUserGroup = 6,
     EditUserGroup = 7,
     RemoveUserGroup = 8,
@@ -43,7 +42,6 @@ impl TryFrom<u8> for ProposalOperationType {
             2 => Ok(ProposalOperationType::EditAccount),
             3 => Ok(ProposalOperationType::AddUser),
             4 => Ok(ProposalOperationType::EditUser),
-            5 => Ok(ProposalOperationType::EditUserStatus),
             6 => Ok(ProposalOperationType::AddUserGroup),
             7 => Ok(ProposalOperationType::EditUserGroup),
             8 => Ok(ProposalOperationType::RemoveUserGroup),
@@ -69,7 +67,6 @@ impl FromStr for ProposalOperationType {
             "edit_account" => Ok(ProposalOperationType::EditAccount),
             "add_user" => Ok(ProposalOperationType::AddUser),
             "edit_user" => Ok(ProposalOperationType::EditUser),
-            "edit_user_status" => Ok(ProposalOperationType::EditUserStatus),
             "add_user_group" => Ok(ProposalOperationType::AddUserGroup),
             "edit_user_group" => Ok(ProposalOperationType::EditUserGroup),
             "remove_user_group" => Ok(ProposalOperationType::RemoveUserGroup),
@@ -93,7 +90,6 @@ impl Display for ProposalOperationType {
             ProposalOperationType::EditAccount => write!(f, "edit_account"),
             ProposalOperationType::AddUser => write!(f, "add_user"),
             ProposalOperationType::EditUser => write!(f, "edit_user"),
-            ProposalOperationType::EditUserStatus => write!(f, "edit_user_status"),
             ProposalOperationType::AddUserGroup => write!(f, "add_user_group"),
             ProposalOperationType::EditUserGroup => write!(f, "edit_user_group"),
             ProposalOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
@@ -155,14 +151,6 @@ mod tests {
         assert_eq!(
             ProposalOperationType::from_str("edit_user").unwrap(),
             ProposalOperationType::EditUser
-        );
-        assert_eq!(
-            ProposalOperationType::EditUserStatus.to_string(),
-            "edit_user_status"
-        );
-        assert_eq!(
-            ProposalOperationType::from_str("edit_user_status").unwrap(),
-            ProposalOperationType::EditUserStatus
         );
         assert_eq!(
             ProposalOperationType::AddUserGroup.to_string(),
@@ -244,11 +232,6 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(4).unwrap(),
             ProposalOperationType::EditUser
-        );
-        assert_eq!(ProposalOperationType::EditUserStatus as u8, 5);
-        assert_eq!(
-            ProposalOperationType::try_from(5).unwrap(),
-            ProposalOperationType::EditUserStatus
         );
         assert_eq!(ProposalOperationType::AddUserGroup as u8, 6);
         assert_eq!(
