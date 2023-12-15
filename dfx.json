@@ -47,7 +47,8 @@
         "output": "canisters/ui/src/generated/control-panel",
         "node_compatibility": true
       },
-      "optimize": "cycles"
+      "optimize": "cycles",
+      "gzip": true
     },
     "wallet": {
       "type": "rust",
@@ -57,7 +58,8 @@
         "output": "canisters/ui/src/generated/wallet",
         "node_compatibility": true
       },
-      "optimize": "cycles"
+      "optimize": "cycles",
+      "gzip": true
     },
     "ui": {
       "type": "assets",

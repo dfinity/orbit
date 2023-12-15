@@ -1,4 +1,5 @@
 use super::{CanisterConfig, CanisterState, MAX_WASM_PAGES};
+use candid::Principal;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     Cell, DefaultMemoryImpl, RestrictedMemory,
@@ -57,9 +58,18 @@ pub fn canister_config() -> CanisterConfig {
     CONFIG.with(|m| m.borrow().get().get().clone())
 }
 
+/// A helper function to check if the canister is initialized.
+pub fn is_canister_initialized() -> bool {
+    CONFIG.with(|m| m.borrow().get().is_initialized())
+}
+
 /// A helper function to access the canister configuration and mutate it.
 pub fn canister_config_mut() -> CanisterConfig {
     CONFIG.with(|m| m.borrow_mut().get().get().clone())
+}
+
+pub fn upgrader_canister_id() -> Principal {
+    canister_config().upgrader_canister_id
 }
 
 /// All the memory after the initial config page is managed by the [MemoryManager].

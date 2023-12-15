@@ -17,7 +17,7 @@ use ic_canister_core::repository::{IndexRepository, RefreshIndexMode};
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<UserKey, User, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -28,7 +28,7 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref USER_REPOSITORY: UserRepository = UserRepository::default();
+    pub static ref USER_REPOSITORY: Arc<UserRepository> = Arc::new(UserRepository::default());
 }
 
 /// A repository that enables managing users in stable memory.

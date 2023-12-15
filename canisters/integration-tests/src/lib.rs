@@ -22,6 +22,5 @@ pub struct CanisterIds {
     pub icp_ledger: Principal,
     pub icp_index: Principal,
     pub control_panel: Principal,
-    pub upgrader: Principal,
     pub wallet: Principal,
 }

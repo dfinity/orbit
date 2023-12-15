@@ -4,16 +4,22 @@ use crate::{
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
-    models::{Proposal, ProposalId, ProposalOperationType, ProposalVoteStatus},
+    models::{Proposal, ProposalOperationType, ProposalStatus, ProposalVoteStatus},
     repositories::{ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause},
 };
-use ic_canister_core::repository::Repository;
 use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
+use ic_canister_core::{repository::Repository, types::UUID};
+use lazy_static::lazy_static;
+use std::sync::Arc;
 use uuid::Uuid;
 use wallet_api::{
     CreateProposalInput, ListAccountProposalsInput, ListProposalsInput, VoteOnProposalInput,
 };
+
+lazy_static! {
+    pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::default());
+}
 
 #[derive(Default, Debug)]
 pub struct ProposalService {
@@ -22,8 +28,14 @@ pub struct ProposalService {
     proposal_repository: ProposalRepository,
 }
 
+#[derive(Debug)]
+pub struct ProposalEditInput {
+    pub proposal_id: UUID,
+    pub status: Option<ProposalStatus>,
+}
+
 impl ProposalService {
-    pub fn get_proposal(&self, id: &ProposalId) -> ServiceResult<Proposal> {
+    pub fn get_proposal(&self, id: &UUID) -> ServiceResult<Proposal> {
         let proposal =
             self.proposal_repository
                 .get(&Proposal::key(*id))
@@ -79,6 +91,26 @@ impl ProposalService {
         Ok(proposals)
     }
 
+    pub async fn edit_proposal(&self, input: ProposalEditInput) -> ServiceResult<Proposal> {
+        let mut proposal = self.get_proposal(&input.proposal_id)?;
+
+        if let Some(status) = input.status {
+            proposal.status = status;
+        }
+
+        // Different proposal types may have different validation rules.
+        proposal.validate()?;
+
+        // When a proposal is edited, it is immediately evaluated to determine its status.
+        // This is done because the proposal may be immediately rejected or adopted based on the policies.
+        proposal.reevaluate().await?;
+
+        self.proposal_repository
+            .insert(proposal.to_key(), proposal.to_owned());
+
+        Ok(proposal)
+    }
+
     /// Creates a new proposal adding the caller user as the proposer.
     ///
     /// By default the proposal has an expiration date of 7 days from the creation date.
@@ -104,9 +136,6 @@ impl ProposalService {
         // When a proposal is created, it is immediately evaluated to determine its status.
         // This is done because the proposal may be immediately rejected or adopted based on the policies.
         proposal.reevaluate().await?;
-
-        // Validate the proposal after the reevaluation.
-        proposal.validate()?;
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
@@ -139,9 +168,6 @@ impl ProposalService {
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
         proposal.reevaluate().await?;
-
-        // Validate the proposal after the reevaluation.
-        proposal.validate()?;
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
