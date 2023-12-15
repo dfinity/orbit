@@ -14,6 +14,8 @@ pub use config::*;
 
 pub mod middlewares;
 
+pub mod metrics;
+
 #[cfg(not(test))]
 pub use ic_canister_core::cdk as ic_cdk;
 #[cfg(test)]
