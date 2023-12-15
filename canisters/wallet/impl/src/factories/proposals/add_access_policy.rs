@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddAccessPolicyOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
@@ -8,6 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
+use std::sync::Arc;
 
 pub struct AddAccessPolicyProposalCreate {}
 
@@ -37,27 +36,6 @@ impl Create<wallet_api::AddAccessPolicyOperationInput> for AddAccessPolicyPropos
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct AddAccessPolicyProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddAccessPolicyOperation,
-}
-
-impl<'p, 'o> AddAccessPolicyProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddAccessPolicyOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for AddAccessPolicyProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

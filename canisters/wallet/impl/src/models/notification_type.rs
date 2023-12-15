@@ -2,20 +2,13 @@ use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 use std::fmt::{Display, Formatter};
-use wallet_api::{
-    ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE, PROPOSAL_CREATED_NOTIFICATION_TYPE,
-    SYSTEM_MESSAGE_NOTIFICATION_TYPE, TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE,
-};
-
-use super::{AccountId, ProposalId};
+use wallet_api::{PROPOSAL_CREATED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE};
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum NotificationType {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotification),
-    TransferProposalCreated(TransferProposalCreatedNotification),
-    AccountProposalCreated(ProposalId, AccountId),
 }
 
 #[stable_object]
@@ -35,14 +28,8 @@ impl Display for NotificationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             NotificationType::SystemMessage => write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE),
-            NotificationType::TransferProposalCreated(_) => {
-                write!(f, "{}", TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE)
-            }
             NotificationType::ProposalCreated(_) => {
                 write!(f, "{}", PROPOSAL_CREATED_NOTIFICATION_TYPE)
-            }
-            NotificationType::AccountProposalCreated(_, _) => {
-                write!(f, "{}", ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE)
             }
         }
     }
@@ -64,18 +51,6 @@ mod tests {
             })
             .to_string(),
             "proposal-created"
-        );
-        assert_eq!(
-            NotificationType::TransferProposalCreated(TransferProposalCreatedNotification {
-                proposal_id: [0; 16],
-                account_id: [1; 16],
-            })
-            .to_string(),
-            "transfer-proposal-created"
-        );
-        assert_eq!(
-            NotificationType::AccountProposalCreated([0; 16], [1; 16]).to_string(),
-            "account-proposal-created"
         );
     }
 }

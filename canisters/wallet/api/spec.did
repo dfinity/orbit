@@ -79,22 +79,14 @@ type NotificationType = variant {
   // Notification for the creation of a new proposal.
   // This should be used to alert users when a new proposal that requires their attention has been created.
   ProposalCreated : record {
-    // The proposal id.
+    // The proposal id that was created.
     proposal_id : UUID;
-  };
-  // Notification for the creation of a new transfer proposal.
-  // This should be used to alert users when a new transfer proposal that requires their attention has been created.
-  TransferProposalCreated : record {
-    proposal_id : UUID;
-    account_id : UUID;
-  };
-  // Notification for the creation of a new account related proposal.
-  //
-  // This should be used to alert users when a new account related proposal that requires
-  // their attention has been created.
-  AccountProposalCreated : record {
-    proposal_id : UUID;
-    account_id : UUID;
+    // The type of the proposal (e.g. "transfer").
+    operation_type : ProposalOperationType;
+    // Account id is availabe for relevant proposal types.
+    account_id : opt UUID;
+    // User id is availabe for relevant proposal types.
+    user_id : opt UUID;
   };
 };
 
@@ -115,20 +107,10 @@ type Notification = record {
   status : NotificationStatus;
   // The user that the notification is for.
   target_user_id : UUID;
-  // The notification title.
-  title : record {
-    // The notification title in the default locale.
-    body : text;
-    // The locale key that can be used to retrieve the title in the user locale.
-    locale_key : text;
-  };
-  // The notification message.
-  message : record {
-    // The notification message in the default locale.
-    body : text;
-    // The locale key that can be used to retrieve the message in the user locale.
-    locale_key : text;
-  };
+  // The notification title in a single locale.
+  title : opt text;
+  // The notification message in a single locale.
+  message : opt text;
   // The time at which the notification was created.
   created_at : TimestampRFC3339;
 };
@@ -1317,19 +1299,19 @@ type HealthStatus = variant {
   Uninitialized;
 };
 
-type HeaderField = record { text; text; };
+type HeaderField = record { text; text };
 
 type HttpRequest = record {
-  method: text;
-  url: text;
-  headers: vec HeaderField;
-  body: blob;
+  method : text;
+  url : text;
+  headers : vec HeaderField;
+  body : blob;
 };
 
 type HttpResponse = record {
-  status_code: nat16;
-  headers: vec HeaderField;
-  body: blob;
+  status_code : nat16;
+  headers : vec HeaderField;
+  body : blob;
 };
 
 // The Wallet service definition.
@@ -1400,5 +1382,5 @@ service : (opt WalletInstall) -> {
   wallet_settings : () -> (WalletSettingsResult) query;
 
   // Metrics (Http Interface)
-  http_request: (HttpRequest) -> (HttpResponse) query;
+  http_request : (HttpRequest) -> (HttpResponse) query;
 };

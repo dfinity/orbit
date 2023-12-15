@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddUserOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
@@ -33,27 +33,6 @@ impl Create<wallet_api::AddUserOperationInput> for AddUserProposalCreate {
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct AddUserProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddUserOperation,
-}
-
-impl<'p, 'o> AddUserProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddUserOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for AddUserProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

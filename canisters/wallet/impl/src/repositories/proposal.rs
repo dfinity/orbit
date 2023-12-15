@@ -24,7 +24,7 @@ use ic_canister_core::{
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -35,7 +35,8 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref PROPOSAL_REPOSITORY: ProposalRepository = ProposalRepository::default();
+    pub static ref PROPOSAL_REPOSITORY: Arc<ProposalRepository> =
+        Arc::new(ProposalRepository::default());
 }
 
 /// A repository that enables managing system proposals in stable memory.

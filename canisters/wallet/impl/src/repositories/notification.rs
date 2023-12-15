@@ -11,7 +11,8 @@ use ic_canister_core::{
     types::Timestamp,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use std::cell::RefCell;
+use lazy_static::lazy_static;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<NotificationKey, Notification, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -19,6 +20,11 @@ thread_local! {
       StableBTreeMap::init(memory_manager.get(NOTIFICATION_MEMORY_ID))
     )
   })
+}
+
+lazy_static! {
+    pub static ref NOTIFICATION_REPOSITORY: Arc<NotificationRepository> =
+        Arc::new(NotificationRepository::default());
 }
 
 /// A repository that enables managing notifications in stable memory.

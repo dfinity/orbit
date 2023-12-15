@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddUserGroupOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
@@ -32,27 +32,6 @@ impl Create<wallet_api::AddUserGroupOperationInput> for AddUserGroupProposalCrea
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct AddUserGroupProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddUserGroupOperation,
-}
-
-impl<'p, 'o> AddUserGroupProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddUserGroupOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for AddUserGroupProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

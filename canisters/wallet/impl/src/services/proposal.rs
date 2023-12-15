@@ -1,11 +1,19 @@
-use super::{AccountService, UserService};
 use crate::{
     core::CallContext,
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
-    models::{Proposal, ProposalOperationType, ProposalStatus, ProposalVoteStatus},
-    repositories::{ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause},
+    models::{
+        NotificationType, Proposal, ProposalCreatedNotification, ProposalOperationType,
+        ProposalStatus, ProposalVoteStatus,
+    },
+    repositories::{
+        ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY,
+    },
+    services::{
+        AccountService, NotificationService, UserService, ACCOUNT_SERVICE, NOTIFICATION_SERVICE,
+        USER_SERVICE,
+    },
 };
 use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
@@ -18,14 +26,20 @@ use wallet_api::{
 };
 
 lazy_static! {
-    pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::default());
+    pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::new(
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&ACCOUNT_SERVICE),
+        Arc::clone(&PROPOSAL_REPOSITORY),
+        Arc::clone(&NOTIFICATION_SERVICE),
+    ));
 }
 
 #[derive(Default, Debug)]
 pub struct ProposalService {
-    user_service: UserService,
-    account_service: AccountService,
-    proposal_repository: ProposalRepository,
+    user_service: Arc<UserService>,
+    account_service: Arc<AccountService>,
+    proposal_repository: Arc<ProposalRepository>,
+    notification_service: Arc<NotificationService>,
 }
 
 #[derive(Debug)]
@@ -35,6 +49,20 @@ pub struct ProposalEditInput {
 }
 
 impl ProposalService {
+    pub fn new(
+        user_service: Arc<UserService>,
+        account_service: Arc<AccountService>,
+        proposal_repository: Arc<ProposalRepository>,
+        notification_service: Arc<NotificationService>,
+    ) -> Self {
+        Self {
+            user_service,
+            account_service,
+            proposal_repository,
+            notification_service,
+        }
+    }
+
     pub fn get_proposal(&self, id: &UUID) -> ServiceResult<Proposal> {
         let proposal =
             self.proposal_repository
@@ -140,10 +168,33 @@ impl ProposalService {
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
 
-        // Handles post processing logic like sending notifications.
-        proposal.on_created().await;
+        self.created_proposal_hook(&proposal).await;
 
         Ok(proposal)
+    }
+
+    /// Handles post processing logic like sending notifications.
+    async fn created_proposal_hook(&self, proposal: &Proposal) {
+        let mut possible_voters = proposal
+            .find_all_possible_voters()
+            .await
+            .expect("Failed to find all possible voters");
+
+        possible_voters.remove(&proposal.proposed_by);
+
+        for voter in possible_voters {
+            self.notification_service
+                .send_notification(
+                    voter,
+                    NotificationType::ProposalCreated(ProposalCreatedNotification {
+                        proposal_id: proposal.id,
+                    }),
+                    proposal.title.to_owned(),
+                    None,
+                )
+                .await
+                .expect("Failed to send notification");
+        }
     }
 
     pub async fn vote_on_proposal(

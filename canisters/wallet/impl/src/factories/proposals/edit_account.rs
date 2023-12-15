@@ -1,19 +1,15 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
-    core::ic_cdk::api::trap,
     errors::{ProposalError, ProposalExecuteError},
     mappers::HelperMapper,
     models::{
-        Account, EditAccountOperation, EditAccountOperationInput, NotificationType, Proposal,
-        ProposalExecutionPlan, ProposalOperation,
+        EditAccountOperation, EditAccountOperationInput, Proposal, ProposalExecutionPlan,
+        ProposalOperation,
     },
-    repositories::ACCOUNT_REPOSITORY,
-    services::{NotificationService, ACCOUNT_SERVICE},
+    services::ACCOUNT_SERVICE,
 };
 use async_trait::async_trait;
-use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
-use uuid::Uuid;
 
 pub struct EditAccountProposalCreate {}
 
@@ -65,55 +61,6 @@ impl Create<wallet_api::EditAccountOperationInput> for EditAccountProposalCreate
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct EditAccountProposalCreateHook<'p, 'o> {
-    proposal: &'p Proposal,
-    operation: &'o EditAccountOperation,
-    notification_service: NotificationService,
-}
-
-impl<'p, 'o> EditAccountProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o EditAccountOperation) -> Self {
-        Self {
-            proposal,
-            operation,
-            notification_service: NotificationService::default(),
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for EditAccountProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        let account = ACCOUNT_REPOSITORY
-            .get(&Account::key(self.operation.input.account_id))
-            .unwrap_or_else(|| {
-                trap(&format!(
-                    "Account not found: {}",
-                    Uuid::from_bytes(self.operation.input.account_id).hyphenated()
-                ))
-            });
-
-        for owner in account.owners {
-            let should_send = self.proposal.proposed_by != owner;
-
-            if should_send {
-                self.notification_service
-                    .send_notification(
-                        owner,
-                        NotificationType::AccountProposalCreated(self.proposal.id, account.id),
-                        Some((
-                            "Account edit requested".to_string(),
-                            "notification_account_edit_proposed_title".to_string(),
-                        )),
-                        None,
-                    )
-                    .await
-                    .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
-            }
-        }
     }
 }
 

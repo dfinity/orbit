@@ -1,6 +1,6 @@
 use super::{
     evaluation::{
-        Evaluate, ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER, ACCESS_CONTROL_MATCHER,
+        Evaluate, ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER, ACCESS_CONTROL_MATCHER, PROPOSAL_MATCHER,
         PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR,
     },
     proposal::ProposalVoteRightsEvaluator,
@@ -437,6 +437,7 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
                         let validator = ProposalVoteRightsEvaluator {
                             proposal,
                             voter_id: caller.id,
+                            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
                             vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
                         };
 

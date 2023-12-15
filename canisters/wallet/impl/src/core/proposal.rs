@@ -4,15 +4,15 @@ use crate::{
     models::{
         criteria::{Criteria, EvaluateCriteria},
         specifier::{Match, ProposalSpecifier, UserSpecifier},
-        EvaluationStatus, Proposal, ProposalStatus, UserId,
+        Account, EvaluationStatus, Proposal, ProposalOperation, ProposalStatus, UserId, UserStatus,
     },
-    repositories::policy::PROPOSAL_POLICY_REPOSITORY,
+    repositories::{policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, USER_REPOSITORY},
 };
 use anyhow::Context;
 use async_trait::async_trait;
 use futures::{stream, StreamExt, TryStreamExt};
-use ic_canister_core::repository::Repository;
-use std::sync::Arc;
+use ic_canister_core::{repository::Repository, types::UUID};
+use std::{collections::HashSet, sync::Arc};
 
 pub struct ProposalEvaluator {
     pub proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
@@ -88,6 +88,200 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct PossibleVoters {
+    pub match_all: bool,
+    pub users: HashSet<UUID>,
+    pub groups: HashSet<UUID>,
+}
+
+/// Evaluates all possible voters for the proposal.
+///
+/// The possible voters are the users that match the proposal's policies.
+pub struct ProposalPossibleVotersFinder<'p> {
+    pub proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
+    pub possible_voters_criteria_evaluator:
+        Arc<dyn EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateError>>,
+    pub proposal: &'p Proposal,
+}
+
+impl<'p> ProposalPossibleVotersFinder<'p> {
+    pub fn new(
+        proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
+        possible_voters_criteria_evaluator: Arc<
+            dyn EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateError>,
+        >,
+        proposal: &'p Proposal,
+    ) -> Self {
+        Self {
+            proposal_matcher,
+            possible_voters_criteria_evaluator,
+            proposal,
+        }
+    }
+}
+
+#[async_trait]
+impl Evaluate<HashSet<UUID>> for ProposalPossibleVotersFinder<'_> {
+    async fn evaluate(&self) -> Result<HashSet<UUID>, EvaluateError> {
+        let mut possible_voters = HashSet::new();
+        let mut matching_groups = HashSet::new();
+        let mut matching_policies = Vec::new();
+        for policy in PROPOSAL_POLICY_REPOSITORY.list() {
+            if self
+                .proposal_matcher
+                .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
+                .await
+                .context("failed to match proposal")?
+            {
+                matching_policies.push(policy.to_owned());
+            }
+        }
+
+        for policy in matching_policies {
+            let result = self
+                .possible_voters_criteria_evaluator
+                .evaluate((
+                    Arc::new(self.proposal.to_owned()),
+                    Arc::new(policy.criteria.to_owned()),
+                ))
+                .await?;
+
+            if result.match_all {
+                return Ok(USER_REPOSITORY
+                    .list()
+                    .iter()
+                    .filter_map(|user| match user.status {
+                        UserStatus::Active => Some(user.id),
+                        _ => None,
+                    })
+                    .collect());
+            } else {
+                possible_voters.extend(result.users);
+                matching_groups.extend(result.groups);
+            }
+        }
+
+        for group_id in matching_groups.iter() {
+            let users = USER_REPOSITORY
+                .find_by_group_and_status(group_id, &UserStatus::Active)
+                .iter()
+                .map(|user| user.id)
+                .collect::<HashSet<UUID>>();
+
+            possible_voters.extend(users);
+        }
+
+        Ok(possible_voters)
+    }
+}
+
+pub struct ProposalPossibleVotersCriteriaEvaluator;
+
+#[async_trait]
+impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateError>
+    for ProposalPossibleVotersCriteriaEvaluator
+{
+    async fn evaluate(
+        &self,
+        (proposal, criteria): (Arc<Proposal>, Arc<Criteria>),
+    ) -> Result<PossibleVoters, EvaluateError> {
+        let mut possible_voters = PossibleVoters::default();
+        match criteria.as_ref() {
+            Criteria::ApprovalThreshold(voter_specifier, _)
+            | Criteria::MinimumVotes(voter_specifier, _) => {
+                match voter_specifier {
+                    UserSpecifier::Any => {
+                        possible_voters.match_all = true;
+
+                        return Ok(possible_voters);
+                    }
+                    UserSpecifier::Id(user_ids) => {
+                        possible_voters.users.extend(user_ids.to_owned());
+
+                        return Ok(possible_voters);
+                    }
+                    UserSpecifier::Group(group_ids) => {
+                        possible_voters.groups.extend(group_ids.to_owned());
+
+                        return Ok(possible_voters);
+                    }
+                    UserSpecifier::Proposer => {
+                        possible_voters
+                            .users
+                            .insert(proposal.proposed_by.to_owned());
+
+                        return Ok(possible_voters);
+                    }
+                    UserSpecifier::Owner => {
+                        match &proposal.operation {
+                            ProposalOperation::Transfer(operation) => {
+                                if let Some(account) = ACCOUNT_REPOSITORY
+                                    .get(&Account::key(operation.input.from_account_id))
+                                {
+                                    possible_voters.users.extend(account.owners.to_owned());
+                                }
+                            }
+                            ProposalOperation::EditUser(operation) => {
+                                possible_voters
+                                    .users
+                                    .insert(operation.input.user_id.to_owned());
+                            }
+                            ProposalOperation::EditAccount(operation) => {
+                                if let Some(account) = ACCOUNT_REPOSITORY
+                                    .get(&Account::key(operation.input.account_id))
+                                {
+                                    possible_voters.users.extend(account.owners.to_owned());
+                                }
+                            }
+                            _ => {}
+                        };
+
+                        return Ok(possible_voters);
+                    }
+                };
+            }
+            Criteria::And(criterias) | Criteria::Or(criterias) => {
+                for criteria in criterias.iter() {
+                    let result = self
+                        .evaluate((proposal.clone(), Arc::new(criteria.clone())))
+                        .await;
+
+                    match result {
+                        Ok(evaluated) => {
+                            if evaluated.match_all {
+                                possible_voters.match_all = true;
+                                break;
+                            }
+
+                            possible_voters.users.extend(evaluated.users);
+                            possible_voters.groups.extend(evaluated.groups);
+                        }
+                        Err(e) => return Err(e), // or handle the error as per your logic
+                    }
+                }
+
+                Ok(possible_voters)
+            }
+            Criteria::Not(criteria) => {
+                let result = self
+                    .evaluate((proposal.to_owned(), Arc::new(criteria.as_ref().to_owned())))
+                    .await?;
+
+                if result.match_all {
+                    possible_voters.match_all = true;
+                }
+
+                possible_voters.users.extend(result.users);
+                possible_voters.groups.extend(result.groups);
+
+                Ok(possible_voters)
+            }
+            Criteria::AutoAdopted => Ok(possible_voters),
+        }
+    }
+}
+
 /// Evaluates if the user has the right to vote on the proposal.
 ///
 /// The user has the right to vote if:
@@ -96,6 +290,7 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
 /// - There are matching policies for the proposal and the user is a part of the group that is allowed to vote
 /// - The user has not already voted on the proposal
 pub struct ProposalVoteRightsEvaluator<'p> {
+    pub proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
     pub vote_rights_evaluator: Arc<VoteRightsEvaluate>,
     pub voter_id: UserId,
     pub proposal: &'p Proposal,
@@ -106,11 +301,13 @@ pub type VoteRightsEvaluate =
 
 impl<'p> ProposalVoteRightsEvaluator<'p> {
     pub fn new(
+        proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
         vote_rights_evaluator: Arc<VoteRightsEvaluate>,
         voter_id: UserId,
         proposal: &'p Proposal,
     ) -> Self {
         Self {
+            proposal_matcher,
             vote_rights_evaluator,
             voter_id,
             proposal,
@@ -127,7 +324,19 @@ impl Evaluate<bool> for ProposalVoteRightsEvaluator<'_> {
             return Ok(false);
         }
 
+        let mut matching_policies = Vec::new();
         for policy in PROPOSAL_POLICY_REPOSITORY.list() {
+            if self
+                .proposal_matcher
+                .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
+                .await
+                .context("failed to match proposal")?
+            {
+                matching_policies.push(policy.to_owned());
+            }
+        }
+
+        for policy in matching_policies {
             if self
                 .vote_rights_evaluator
                 .evaluate((
@@ -200,7 +409,7 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
 
                 Ok(can_vote)
             }
-            _ => Ok(false),
+            Criteria::AutoAdopted => Ok(false),
         }
     }
 }
