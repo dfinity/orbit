@@ -85,7 +85,7 @@ type NotificationType = variant {
     operation_type : ProposalOperationType;
     // Account id is availabe for relevant proposal types.
     account_id : opt UUID;
-    // User id is availabe for relevant proposal types.
+    // User id is available for relevant proposal types.
     user_id : opt UUID;
   };
 };
