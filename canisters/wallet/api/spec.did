@@ -108,7 +108,7 @@ type Notification = record {
   // The user that the notification is for.
   target_user_id : UUID;
   // The notification title in a single locale.
-  title : opt text;
+  title : text;
   // The notification message in a single locale.
   message : opt text;
   // The time at which the notification was created.
