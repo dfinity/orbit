@@ -257,7 +257,7 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                             possible_voters.users.extend(evaluated.users);
                             possible_voters.groups.extend(evaluated.groups);
                         }
-                        Err(e) => return Err(e), // or handle the error as per your logic
+                        Err(e) => return Err(e),
                     }
                 }
 
