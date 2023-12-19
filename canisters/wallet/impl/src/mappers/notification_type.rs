@@ -25,12 +25,37 @@ impl From<NotificationType> for NotificationTypeDTO {
                 let account_id = match &proposal.operation {
                     ProposalOperation::Transfer(operation) => Some(operation.input.from_account_id),
                     ProposalOperation::EditAccount(operation) => Some(operation.input.account_id),
-                    _ => None,
+                    ProposalOperation::AddAccessPolicy(_)
+                    | ProposalOperation::AddAccount(_)
+                    | ProposalOperation::EditUser(_)
+                    | ProposalOperation::AddProposalPolicy(_)
+                    | ProposalOperation::AddUser(_)
+                    | ProposalOperation::AddUserGroup(_)
+                    | ProposalOperation::EditAccessPolicy(_)
+                    | ProposalOperation::EditProposalPolicy(_)
+                    | ProposalOperation::EditUserGroup(_)
+                    | ProposalOperation::RemoveAccessPolicy(_)
+                    | ProposalOperation::RemoveProposalPolicy(_)
+                    | ProposalOperation::RemoveUserGroup(_)
+                    | ProposalOperation::Upgrade(_) => None,
                 };
 
                 let user_id: Option<[u8; 16]> = match &proposal.operation {
                     ProposalOperation::EditUser(operation) => Some(operation.input.user_id),
-                    _ => None,
+                    ProposalOperation::AddAccessPolicy(_)
+                    | ProposalOperation::AddAccount(_)
+                    | ProposalOperation::AddProposalPolicy(_)
+                    | ProposalOperation::AddUser(_)
+                    | ProposalOperation::AddUserGroup(_)
+                    | ProposalOperation::EditAccessPolicy(_)
+                    | ProposalOperation::EditAccount(_)
+                    | ProposalOperation::EditProposalPolicy(_)
+                    | ProposalOperation::EditUserGroup(_)
+                    | ProposalOperation::RemoveAccessPolicy(_)
+                    | ProposalOperation::RemoveProposalPolicy(_)
+                    | ProposalOperation::RemoveUserGroup(_)
+                    | ProposalOperation::Transfer(_)
+                    | ProposalOperation::Upgrade(_) => None,
                 };
 
                 NotificationTypeDTO::ProposalCreated(ProposalCreatedNotificationDTO {
