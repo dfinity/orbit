@@ -4,7 +4,8 @@ use crate::{
     models::{
         criteria::{Criteria, EvaluateCriteria},
         specifier::{Match, ProposalSpecifier, UserSpecifier},
-        Account, EvaluationStatus, Proposal, ProposalOperation, ProposalStatus, UserId, UserStatus,
+        Account, EvaluationStatus, Proposal, ProposalOperation, ProposalStatus, User, UserId,
+        UserStatus,
     },
     repositories::{policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, USER_REPOSITORY},
 };
@@ -157,7 +158,21 @@ impl Evaluate<HashSet<UUID>> for ProposalPossibleVotersFinder<'_> {
                     })
                     .collect());
             } else {
-                possible_voters.extend(result.users);
+                possible_voters.extend(
+                    result
+                        .users
+                        .iter()
+                        .filter_map(|user_id| {
+                            USER_REPOSITORY.get(&User::key(*user_id)).map(|u| {
+                                if u.status == UserStatus::Active {
+                                    Some(u.id)
+                                } else {
+                                    None
+                                }
+                            })
+                        })
+                        .flatten(),
+                );
                 matching_groups.extend(result.groups);
             }
         }
