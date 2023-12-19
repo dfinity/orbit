@@ -1,4 +1,4 @@
-use crate::core::ic_cdk::api::trap;
+use crate::core::ic_cdk::api::{print, trap};
 use crate::models::{ProposalOperation, ProposalOperationType};
 use crate::{
     models::{NotificationType, Proposal},
@@ -16,10 +16,13 @@ impl From<NotificationType> for NotificationTypeDTO {
                 let proposal = PROPOSAL_REPOSITORY
                     .get(&Proposal::key(ctx.proposal_id))
                     .unwrap_or_else(|| {
-                        trap(&format!(
-                            "Proposal not found: {}",
+                        let err = format!(
+                            "Mapped proposal not found: {}",
                             Uuid::from_bytes(ctx.proposal_id).hyphenated()
-                        ))
+                        );
+
+                        print(&err);
+                        trap(&err)
                     });
 
                 let account_id = match &proposal.operation {
