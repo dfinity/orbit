@@ -190,7 +190,7 @@ impl ProposalService {
                         proposal_id: proposal.id,
                     }),
                     proposal.title.to_owned(),
-                    None,
+                    proposal.summary.to_owned(),
                 )
                 .await
                 .expect("Failed to send notification");
