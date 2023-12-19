@@ -234,7 +234,18 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                                     possible_voters.users.extend(account.owners.to_owned());
                                 }
                             }
-                            _ => {}
+                            ProposalOperation::AddAccount(_)
+                            | ProposalOperation::AddProposalPolicy(_)
+                            | ProposalOperation::AddAccessPolicy(_)
+                            | ProposalOperation::AddUser(_)
+                            | ProposalOperation::AddUserGroup(_)
+                            | ProposalOperation::EditAccessPolicy(_)
+                            | ProposalOperation::EditProposalPolicy(_)
+                            | ProposalOperation::EditUserGroup(_)
+                            | ProposalOperation::RemoveAccessPolicy(_)
+                            | ProposalOperation::RemoveProposalPolicy(_)
+                            | ProposalOperation::RemoveUserGroup(_)
+                            | ProposalOperation::Upgrade(_) => {}
                         };
 
                         return Ok(possible_voters);
