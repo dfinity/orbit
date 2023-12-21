@@ -9,7 +9,7 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use wallet_api::{
-    GetTransferResponse, GetTransfersInput, GetTransfersResponse, ListAccountTransfersInput,
+    GetTransfersInput, GetTransfersResponse, ListAccountTransfersInput,
     ListAccountTransfersResponse,
 };
 
