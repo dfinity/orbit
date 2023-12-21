@@ -108,9 +108,6 @@ export type GetFeaturesResult = { 'Ok' : { 'features' : WalletFeatures } } |
 export interface GetProposalInput { 'proposal_id' : ProposalId }
 export type GetProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
   { 'Err' : Error };
-export interface GetTransferInput { 'transfer_id' : TransferId }
-export type GetTransferResult = { 'Ok' : { 'transfer' : Transfer } } |
-  { 'Err' : Error };
 export interface GetTransfersInput { 'transfer_ids' : Array<TransferId> }
 export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
   { 'Err' : Error };
@@ -355,7 +352,6 @@ export interface _SERVICE {
   >,
   'get_account' : ActorMethod<[GetAccountInput], GetAccountResult>,
   'get_proposal' : ActorMethod<[GetProposalInput], GetProposalResult>,
-  'get_transfer' : ActorMethod<[GetTransferInput], GetTransferResult>,
   'get_transfers' : ActorMethod<[GetTransfersInput], GetTransfersResult>,
   'get_user' : ActorMethod<[GetUserInput], GetUserResult>,
   'list_account_proposals' : ActorMethod<

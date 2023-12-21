@@ -236,7 +236,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const TransferId = IDL.Text;
-  const GetTransferInput = IDL.Record({ 'transfer_id' : TransferId });
   const TransferStatus = IDL.Variant({
     'Failed' : IDL.Record({ 'reason' : IDL.Text }),
     'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
@@ -256,10 +255,6 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : Network,
     'amount' : IDL.Nat,
-  });
-  const GetTransferResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'transfer' : Transfer }),
-    'Err' : Error,
   });
   const GetTransfersInput = IDL.Record({
     'transfer_ids' : IDL.Vec(TransferId),
@@ -431,11 +426,6 @@ export const idlFactory = ({ IDL }) => {
     'get_proposal' : IDL.Func(
         [GetProposalInput],
         [GetProposalResult],
-        ['query'],
-      ),
-    'get_transfer' : IDL.Func(
-        [GetTransferInput],
-        [GetTransferResult],
         ['query'],
       ),
     'get_transfers' : IDL.Func(
