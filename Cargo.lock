@@ -885,6 +885,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "control_panel_api",
+ "hex",
  "ic-canister-core",
  "ic-cdk 0.10.0",
  "ic-ledger-types",

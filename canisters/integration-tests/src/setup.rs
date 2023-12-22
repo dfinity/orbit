@@ -62,7 +62,7 @@ pub fn setup_new_env() -> TestEnv {
     }
 }
 
-fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
+pub fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
     let canister_id = env.create_canister_with_settings(Some(controller), None);
     env.add_cycles(canister_id, 100_000_000_000_000_u128);
     canister_id

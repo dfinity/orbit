@@ -10,6 +10,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use wallet_api::{ChangeCanisterOperationInput, CreateProposalInput};
 
 pub struct ChangeCanisterProposalCreate;
@@ -106,10 +107,49 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
 
             ChangeCanisterTarget::UpgradeUpgrader => {
                 CHANGE_CANISTER_SERVICE
-                    .upgrade_upgrader(&self.operation.input.module)
+                    .upgrade_upgrader(
+                        &self.operation.input.module,
+                        self.operation.input.arg.clone(),
+                    )
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {
                         reason: format!("failed to upgrade upgrader: {}", err),
+                    })?;
+
+                Ok(ProposalExecuteStage::Completed(
+                    self.proposal.operation.clone(),
+                ))
+            }
+
+            ChangeCanisterTarget::InstallCanister(canister_id) => {
+                CHANGE_CANISTER_SERVICE
+                    .install_canister(
+                        canister_id,
+                        CanisterInstallMode::Install,
+                        &self.operation.input.module,
+                        self.operation.input.arg.clone(),
+                    )
+                    .await
+                    .map_err(|err| ProposalExecuteError::Failed {
+                        reason: format!("failed to install canister {}: {}", canister_id, err),
+                    })?;
+
+                Ok(ProposalExecuteStage::Completed(
+                    self.proposal.operation.clone(),
+                ))
+            }
+
+            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
+                CHANGE_CANISTER_SERVICE
+                    .install_canister(
+                        canister_id,
+                        CanisterInstallMode::Upgrade,
+                        &self.operation.input.module,
+                        self.operation.input.arg.clone(),
+                    )
+                    .await
+                    .map_err(|err| ProposalExecuteError::Failed {
+                        reason: format!("failed to upgrade canister {}: {}", canister_id, err),
                     })?;
 
                 Ok(ProposalExecuteStage::Completed(
