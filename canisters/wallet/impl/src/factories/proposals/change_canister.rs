@@ -2,12 +2,15 @@ use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     core::{canister_config, write_canister_config, CanisterConfig},
     errors::{ProposalError, ProposalExecuteError},
-    models::{Proposal, ProposalExecutionPlan, ProposalOperation, ChangeCanisterOperation, ChangeCanisterTarget},
+    models::{
+        ChangeCanisterOperation, ChangeCanisterTarget, Proposal, ProposalExecutionPlan,
+        ProposalOperation,
+    },
     services::CHANGE_CANISTER_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
-use wallet_api::{CreateProposalInput, ChangeCanisterOperationInput};
+use wallet_api::{ChangeCanisterOperationInput, CreateProposalInput};
 
 pub struct ChangeCanisterProposalCreate;
 

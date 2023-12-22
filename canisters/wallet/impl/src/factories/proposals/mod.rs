@@ -14,6 +14,7 @@ mod add_account;
 mod add_proposal_policy;
 mod add_user;
 mod add_user_group;
+mod change_canister;
 mod edit_access_policy;
 mod edit_account;
 mod edit_proposal_policy;
@@ -23,7 +24,6 @@ mod remove_access_policy;
 mod remove_proposal_policy;
 mod remove_user_group;
 mod transfer;
-mod change_canister;
 
 use self::{
     add_access_policy::{
@@ -40,6 +40,10 @@ use self::{
     add_user::{AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute},
     add_user_group::{
         AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
+    },
+    change_canister::{
+        ChangeCanisterProposalCreate, ChangeCanisterProposalCreateHook,
+        ChangeCanisterProposalExecute,
     },
     edit_access_policy::{
         EditAccessPolicyProposalCreate, EditAccessPolicyProposalCreateHook,
@@ -69,7 +73,6 @@ use self::{
         RemoveUserGroupProposalExecute,
     },
     transfer::{TransferProposalCreate, TransferProposalCreateHook, TransferProposalExecute},
-    change_canister::{ChangeCanisterProposalCreate, ChangeCanisterProposalCreateHook, ChangeCanisterProposalExecute},
 };
 
 #[derive(Debug)]
@@ -187,12 +190,10 @@ impl ProposalFactory {
                 )
             }
             ProposalOperationInput::ChangeCanister(operation) => {
-                create_proposal::<wallet_api::ChangeCanisterOperationInput, ChangeCanisterProposalCreate>(
-                    id,
-                    proposed_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
+                create_proposal::<
+                    wallet_api::ChangeCanisterOperationInput,
+                    ChangeCanisterProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
             }
             ProposalOperationInput::AddAccessPolicy(operation) => {
                 create_proposal::<

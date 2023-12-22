@@ -3,9 +3,9 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         access_control::{
-            AccountActionSpecifier, AccountSpecifier, CommonActionSpecifier,
-            ProposalActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
-            ChangeCanisterActionSpecifier,
+            AccountActionSpecifier, AccountSpecifier, ChangeCanisterActionSpecifier,
+            CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
+            TransferActionSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier},
         Transfer,

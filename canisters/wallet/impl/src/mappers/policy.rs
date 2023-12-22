@@ -1,9 +1,9 @@
 use super::HelperMapper;
 use crate::models::{
     access_control::{
-        AccessControlPolicy, CanisterSettingsActionSpecifier, CommonActionSpecifier,
-        ProposalActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
-        ChangeCanisterActionSpecifier,
+        AccessControlPolicy, CanisterSettingsActionSpecifier, ChangeCanisterActionSpecifier,
+        CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
+        TransferActionSpecifier,
     },
     criteria::{Criteria, Percentage},
     specifier::{AddressSpecifier, CommonSpecifier, ProposalSpecifier, UserSpecifier},
@@ -121,7 +121,9 @@ impl From<ResourceSpecifier> for wallet_api::ResourceSpecifierDTO {
                 )
             }
             ResourceSpecifier::ChangeCanister(change_canister_action_specifier) => {
-                wallet_api::ResourceSpecifierDTO::ChangeCanister(change_canister_action_specifier.into())
+                wallet_api::ResourceSpecifierDTO::ChangeCanister(
+                    change_canister_action_specifier.into(),
+                )
             }
             ResourceSpecifier::Common(resource, action) => {
                 wallet_api::ResourceSpecifierDTO::Common(ResourceSpecifierCommonArgsDTO {
@@ -342,7 +344,9 @@ impl From<wallet_api::CanisterSettingsActionSpecifierDTO> for CanisterSettingsAc
 impl From<ChangeCanisterActionSpecifier> for wallet_api::ChangeCanisterActionSpecifierDTO {
     fn from(specifier: ChangeCanisterActionSpecifier) -> Self {
         match specifier {
-            ChangeCanisterActionSpecifier::Create => wallet_api::ChangeCanisterActionSpecifierDTO::Create,
+            ChangeCanisterActionSpecifier::Create => {
+                wallet_api::ChangeCanisterActionSpecifierDTO::Create
+            }
         }
     }
 }
@@ -350,7 +354,9 @@ impl From<ChangeCanisterActionSpecifier> for wallet_api::ChangeCanisterActionSpe
 impl From<wallet_api::ChangeCanisterActionSpecifierDTO> for ChangeCanisterActionSpecifier {
     fn from(dto: wallet_api::ChangeCanisterActionSpecifierDTO) -> Self {
         match dto {
-            wallet_api::ChangeCanisterActionSpecifierDTO::Create => ChangeCanisterActionSpecifier::Create,
+            wallet_api::ChangeCanisterActionSpecifierDTO::Create => {
+                ChangeCanisterActionSpecifier::Create
+            }
         }
     }
 }

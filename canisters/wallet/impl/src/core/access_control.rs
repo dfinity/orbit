@@ -12,8 +12,8 @@ use crate::{
     models::{
         access_control::{
             AccessControlPolicy, AccountSpecifier, CanisterSettingsActionSpecifier,
-            CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
-            TransferActionSpecifier, ChangeCanisterActionSpecifier, UserSpecifier,
+            ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
+            ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier, Match},
         Account, Proposal, User, ADMIN_GROUP_ID,

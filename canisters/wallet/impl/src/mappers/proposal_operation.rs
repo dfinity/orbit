@@ -3,12 +3,11 @@ use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
         AddAccountOperation, AddProposalPolicyOperation, AddProposalPolicyOperationInput,
-        AddUserOperation, EditAccessPolicyOperation, EditAccessPolicyOperationInput,
-        EditAccountOperation, EditProposalPolicyOperation, EditProposalPolicyOperationInput,
-        EditUserOperation, ProposalOperation, RemoveAccessPolicyOperation,
-        RemoveAccessPolicyOperationInput, RemoveProposalPolicyOperation,
-        RemoveProposalPolicyOperationInput, TransferOperation, ChangeCanisterOperation, ChangeCanisterTarget,
-        User,
+        AddUserOperation, ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
+        EditAccessPolicyOperationInput, EditAccountOperation, EditProposalPolicyOperation,
+        EditProposalPolicyOperationInput, EditUserOperation, ProposalOperation,
+        RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
+        RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
         access_control::ACCESS_CONTROL_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY,
@@ -19,10 +18,10 @@ use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
+    ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
     EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
     EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
-    TransferOperationDTO, TransferOperationInput, ChangeCanisterOperationDTO, ChangeCanisterOperationInput,
-    ChangeCanisterTargetDTO,
+    TransferOperationDTO, TransferOperationInput,
 };
 
 impl TransferOperation {

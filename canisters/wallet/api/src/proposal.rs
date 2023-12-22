@@ -4,12 +4,12 @@ use super::{
 use crate::{
     AddAccessPolicyOperationDTO, AddAccessPolicyOperationInput, AddAccountOperationDTO,
     AddAccountOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
-    AddUserOperationDTO, AddUserOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
+    AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
+    ChangeCanisterOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, ProposalPolicyDTO,
     ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, ChangeCanisterOperationDTO,
-    ChangeCanisterOperationInput, UuidDTO,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
