@@ -7,7 +7,7 @@ use crate::{
     errors::InstallError,
     models::{ProposalStatus, User, WalletFeatures, WalletSettings},
     repositories::{UserRepository, USER_REPOSITORY},
-    services::{UpgradeService, UserService, UPGRADE_SERVICE, USER_SERVICE},
+    services::{ChangeCanisterService, UserService, CHANGE_CANISTER_SERVICE, USER_SERVICE},
 };
 use candid::Principal;
 use ic_canister_core::api::ServiceResult;
@@ -19,7 +19,7 @@ lazy_static! {
     pub static ref WALLET_SERVICE: Arc<WalletService> = Arc::new(WalletService::new(
         Arc::clone(&USER_REPOSITORY),
         Arc::clone(&USER_SERVICE),
-        Arc::clone(&UPGRADE_SERVICE),
+        Arc::clone(&CHANGE_CANISTER_SERVICE),
     ));
 }
 
@@ -27,19 +27,19 @@ lazy_static! {
 pub struct WalletService {
     user_repository: Arc<UserRepository>,
     user_service: Arc<UserService>,
-    upgrade_service: Arc<UpgradeService>,
+    change_canister_service: Arc<ChangeCanisterService>,
 }
 
 impl WalletService {
     pub fn new(
         user_repository: Arc<UserRepository>,
         user_service: Arc<UserService>,
-        upgrade_service: Arc<UpgradeService>,
+        change_canister_service: Arc<ChangeCanisterService>,
     ) -> Self {
         Self {
             user_repository,
             user_service,
-            upgrade_service,
+            change_canister_service,
         }
     }
 
@@ -209,8 +209,8 @@ impl WalletService {
 
         // verifies that the upgrade proposal exists and marks it as completed
         if let Err(err) = self
-            .upgrade_service
-            .update_upgrade_proposal_status(ProposalStatus::Completed {
+            .change_canister_service
+            .update_change_canister_proposal_status(ProposalStatus::Completed {
                 completed_at: time(),
             })
             .await

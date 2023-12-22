@@ -1,7 +1,7 @@
 use super::ProposalEditInput;
 use crate::{
     core::{canister_config_mut, upgrader_canister_id, write_canister_config, CanisterConfig},
-    errors::UpgradeError,
+    errors::ChangeCanisterError,
     models::ProposalStatus,
     services::{ProposalService, PROPOSAL_SERVICE},
 };
@@ -16,22 +16,22 @@ use lazy_static::lazy_static;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref UPGRADE_SERVICE: Arc<UpgradeService> =
-        Arc::new(UpgradeService::new(Arc::clone(&PROPOSAL_SERVICE)));
+    pub static ref CHANGE_CANISTER_SERVICE: Arc<ChangeCanisterService> =
+        Arc::new(ChangeCanisterService::new(Arc::clone(&PROPOSAL_SERVICE)));
 }
 
 #[derive(Debug)]
-pub struct UpgradeService {
+pub struct ChangeCanisterService {
     proposal_service: Arc<ProposalService>,
 }
 
 #[derive(Clone, CandidType)]
-struct UpgradeParams {
+struct ChangeCanisterParams {
     module: Vec<u8>,
     checksum: Vec<u8>,
 }
 
-impl UpgradeService {
+impl ChangeCanisterService {
     pub fn new(proposal_service: Arc<ProposalService>) -> Self {
         Self { proposal_service }
     }
@@ -43,13 +43,13 @@ impl UpgradeService {
         ic_cdk::call(
             upgrader_canister_id,
             "trigger_upgrade",
-            (UpgradeParams {
+            (ChangeCanisterParams {
                 module: module.to_owned(),
                 checksum: checksum.to_owned(),
             },),
         )
         .await
-        .map_err(|(_, err)| UpgradeError::Failed {
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
             reason: err.to_string(),
         })?;
 
@@ -57,7 +57,7 @@ impl UpgradeService {
     }
 
     /// Execute an upgrade of the upgrader canister.
-    pub async fn upgrade_upgrader(&self, module: &[u8]) -> ServiceResult<(), UpgradeError> {
+    pub async fn upgrade_upgrader(&self, module: &[u8]) -> ServiceResult<(), ChangeCanisterError> {
         let upgrader_canister_id = upgrader_canister_id();
 
         // Stop canister
@@ -65,7 +65,7 @@ impl UpgradeService {
             canister_id: upgrader_canister_id.to_owned(),
         })
         .await
-        .map_err(|(_, err)| UpgradeError::Failed {
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
             reason: err.to_string(),
         });
 
@@ -75,7 +75,7 @@ impl UpgradeService {
                 canister_id: upgrader_canister_id.to_owned(),
             })
             .await
-            .map_err(|(_, err)| UpgradeError::Failed {
+            .map_err(|(_, err)| ChangeCanisterError::Failed {
                 reason: err.to_string(),
             })?;
 
@@ -92,7 +92,7 @@ impl UpgradeService {
             arg,
         })
         .await
-        .map_err(|(_, err)| UpgradeError::Failed {
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
             reason: err.to_string(),
         });
 
@@ -101,7 +101,7 @@ impl UpgradeService {
             canister_id: upgrader_canister_id.to_owned(),
         })
         .await
-        .map_err(|(_, err)| UpgradeError::Failed {
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
             reason: err.to_string(),
         })?;
 
@@ -109,14 +109,14 @@ impl UpgradeService {
     }
 
     /// Verify and mark an upgrade as being performed successfully.
-    pub async fn update_upgrade_proposal_status(
+    pub async fn update_change_canister_proposal_status(
         &self,
         status: ProposalStatus,
     ) -> ServiceResult<()> {
         let cfg = canister_config_mut();
         let proposal_id = cfg
-            .upgrade_proposal
-            .ok_or(UpgradeError::MissingUpgradeProposal)?;
+            .change_canister_proposal
+            .ok_or(ChangeCanisterError::MissingChangeCanisterProposal)?;
 
         self.proposal_service
             .edit_proposal(ProposalEditInput {
@@ -126,7 +126,7 @@ impl UpgradeService {
             .await?;
 
         write_canister_config(CanisterConfig {
-            upgrade_proposal: None,
+            change_canister_proposal: None,
             ..cfg
         });
 

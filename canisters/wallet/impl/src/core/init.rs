@@ -250,9 +250,9 @@ lazy_static! {
                 Percentage(51)
             )])
         ),
-        // upgrade
+        // change canister
         (
-            ProposalSpecifier::Upgrade,
+            ProposalSpecifier::ChangeCanister,
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)

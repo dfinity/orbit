@@ -5,7 +5,7 @@ use crate::{
         access_control::{
             AccountActionSpecifier, AccountSpecifier, CommonActionSpecifier,
             ProposalActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
-            UpgradeActionSpecifier,
+            ChangeCanisterActionSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier},
         Transfer,
@@ -178,8 +178,8 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                 ResourceType::UserGroup,
                 AccountActionSpecifier::Delete(CommonSpecifier::Any),
             ),
-            ProposalOperationInput::Upgrade(_) => {
-                ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create)
+            ProposalOperationInput::ChangeCanister(_) => {
+                ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
             }
             ProposalOperationInput::AddAccessPolicy(_) => ResourceSpecifier::Common(
                 ResourceType::AccessPolicy,

@@ -2,34 +2,34 @@ use super::{Create, CreateHook, Execute, ProposalExecuteStage};
 use crate::{
     core::{canister_config, write_canister_config, CanisterConfig},
     errors::{ProposalError, ProposalExecuteError},
-    models::{Proposal, ProposalExecutionPlan, ProposalOperation, UpgradeOperation, UpgradeTarget},
-    services::UPGRADE_SERVICE,
+    models::{Proposal, ProposalExecutionPlan, ProposalOperation, ChangeCanisterOperation, ChangeCanisterTarget},
+    services::CHANGE_CANISTER_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
-use wallet_api::{CreateProposalInput, UpgradeOperationInput};
+use wallet_api::{CreateProposalInput, ChangeCanisterOperationInput};
 
-pub struct UpgradeProposalCreate;
+pub struct ChangeCanisterProposalCreate;
 
-impl Create<UpgradeOperationInput> for UpgradeProposalCreate {
+impl Create<ChangeCanisterOperationInput> for ChangeCanisterProposalCreate {
     fn create(
         proposal_id: UUID,
         proposed_by_user: UUID,
         input: CreateProposalInput,
-        operation_input: UpgradeOperationInput,
+        operation_input: ChangeCanisterOperationInput,
     ) -> Result<Proposal, ProposalError> {
         let proposal = Proposal::new(
             proposal_id,
             proposed_by_user,
             Proposal::default_expiration_dt_ns(),
-            ProposalOperation::Upgrade(UpgradeOperation {
+            ProposalOperation::ChangeCanister(ChangeCanisterOperation {
                 input: operation_input.into(),
             }),
             input
                 .execution_plan
                 .map(Into::into)
                 .unwrap_or(ProposalExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Upgrade".to_string()),
+            input.title.unwrap_or_else(|| "ChangeCanister".to_string()),
             input.summary,
         );
 
@@ -37,13 +37,13 @@ impl Create<UpgradeOperationInput> for UpgradeProposalCreate {
     }
 }
 
-pub struct UpgradeProposalCreateHook<'p, 'o> {
+pub struct ChangeCanisterProposalCreateHook<'p, 'o> {
     _proposal: &'p Proposal,
-    _operation: &'o UpgradeOperation,
+    _operation: &'o ChangeCanisterOperation,
 }
 
-impl<'p, 'o> UpgradeProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o UpgradeOperation) -> Self {
+impl<'p, 'o> ChangeCanisterProposalCreateHook<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o ChangeCanisterOperation) -> Self {
         Self {
             _proposal: proposal,
             _operation: operation,
@@ -52,17 +52,17 @@ impl<'p, 'o> UpgradeProposalCreateHook<'p, 'o> {
 }
 
 #[async_trait]
-impl CreateHook for UpgradeProposalCreateHook<'_, '_> {
+impl CreateHook for ChangeCanisterProposalCreateHook<'_, '_> {
     async fn on_created(&self) {}
 }
 
-pub struct UpgradeProposalExecute<'p, 'o> {
+pub struct ChangeCanisterProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
-    operation: &'o UpgradeOperation,
+    operation: &'o ChangeCanisterOperation,
 }
 
-impl<'p, 'o> UpgradeProposalExecute<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o UpgradeOperation) -> Self {
+impl<'p, 'o> ChangeCanisterProposalExecute<'p, 'o> {
+    pub fn new(proposal: &'p Proposal, operation: &'o ChangeCanisterOperation) -> Self {
         Self {
             proposal,
             operation,
@@ -71,16 +71,16 @@ impl<'p, 'o> UpgradeProposalExecute<'p, 'o> {
 }
 
 #[async_trait]
-impl Execute for UpgradeProposalExecute<'_, '_> {
+impl Execute for ChangeCanisterProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         match self.operation.input.target {
-            UpgradeTarget::Wallet => {
+            ChangeCanisterTarget::UpgradeWallet => {
                 write_canister_config(CanisterConfig {
-                    upgrade_proposal: Some(self.proposal.id.to_owned()),
+                    change_canister_proposal: Some(self.proposal.id.to_owned()),
                     ..canister_config()
                 });
 
-                let out = UPGRADE_SERVICE
+                let out = CHANGE_CANISTER_SERVICE
                     .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {
@@ -89,7 +89,7 @@ impl Execute for UpgradeProposalExecute<'_, '_> {
 
                 if out.is_err() {
                     write_canister_config(CanisterConfig {
-                        upgrade_proposal: None,
+                        change_canister_proposal: None,
                         ..canister_config()
                     });
                 }
@@ -101,8 +101,8 @@ impl Execute for UpgradeProposalExecute<'_, '_> {
                 ))
             }
 
-            UpgradeTarget::Upgrader => {
-                UPGRADE_SERVICE
+            ChangeCanisterTarget::UpgradeUpgrader => {
+                CHANGE_CANISTER_SERVICE
                     .upgrade_upgrader(&self.operation.input.module)
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {

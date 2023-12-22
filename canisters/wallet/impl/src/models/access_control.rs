@@ -16,7 +16,7 @@ pub struct AccessControlPolicy {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceSpecifier {
     Transfer(TransferActionSpecifier),
-    Upgrade(UpgradeActionSpecifier),
+    ChangeCanister(ChangeCanisterActionSpecifier),
     CanisterSettings(CanisterSettingsActionSpecifier),
     Proposal(ProposalActionSpecifier),
     Common(ResourceType, CommonActionSpecifier),
@@ -39,7 +39,7 @@ impl Display for ResourceSpecifier {
                 write!(f, "canister_settings_{}", action)
             }
             ResourceSpecifier::Proposal(action) => write!(f, "proposal_{}", action),
-            ResourceSpecifier::Upgrade(action) => write!(f, "upgrade_{}", action),
+            ResourceSpecifier::ChangeCanister(action) => write!(f, "change_canister_{}", action),
         }
     }
 }
@@ -111,14 +111,14 @@ impl Display for CanisterSettingsActionSpecifier {
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum UpgradeActionSpecifier {
+pub enum ChangeCanisterActionSpecifier {
     Create,
 }
 
-impl Display for UpgradeActionSpecifier {
+impl Display for ChangeCanisterActionSpecifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            UpgradeActionSpecifier::Create => write!(f, "create"),
+            ChangeCanisterActionSpecifier::Create => write!(f, "create"),
         }
     }
 }
@@ -339,8 +339,8 @@ mod tests {
             "proposal_read"
         );
         assert_eq!(
-            ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create).to_key(),
-            "upgrade_create"
+            ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create).to_key(),
+            "change_canister_create"
         );
         assert_eq!(
             ResourceSpecifier::Common(ResourceType::AccessPolicy, UserGroupActionSpecifier::List)

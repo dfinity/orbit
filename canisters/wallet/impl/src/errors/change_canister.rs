@@ -2,22 +2,22 @@ use ic_canister_core::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
-/// Container for upgrade errors.
+/// Container for canister change errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
-pub enum UpgradeError {
-    /// The upgrade of the canister failed.
-    #[error(r#"The upgrade of the canister failed due to {reason}"#)]
+pub enum ChangeCanisterError {
+    /// The canister change failed.
+    #[error(r#"The canister change failed due to {reason}"#)]
     Failed { reason: String },
     /// No pending proposal was found during the upgrade of the wallet
     #[error(r#"No pending proposal was found during the upgrade of the wallet."#)]
-    MissingUpgradeProposal,
+    MissingChangeCanisterProposal,
 }
 
-impl DetailableError for UpgradeError {
+impl DetailableError for ChangeCanisterError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
-            UpgradeError::Failed { reason } => {
+            ChangeCanisterError::Failed { reason } => {
                 details.insert("reason".to_string(), reason.to_string());
                 Some(details)
             }
