@@ -67,6 +67,10 @@ impl Repository<UUID, AccessControlPolicy> for AccessControlRepository {
             prev
         })
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 impl AccessControlRepository {
