@@ -80,6 +80,10 @@ impl Repository<AccountKey, Account> for AccountRepository {
             None => None,
         })
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 impl AccountRepository {
