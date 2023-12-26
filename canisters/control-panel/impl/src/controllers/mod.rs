@@ -43,7 +43,7 @@ async fn http_request(request: HttpRequest) -> HttpResponse {
     // Set Gauges
     GAUGE_USERS_TOTAL.with(|g| {
         g.borrow_mut().set({
-            let v = USER_REPOSITORY.list().len();
+            let v = USER_REPOSITORY.len();
             v as f64
         })
     });
