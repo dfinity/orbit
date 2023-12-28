@@ -89,6 +89,10 @@ impl Repository<UserKey, User> for UserRepository {
             prev
         })
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 impl UserRepository {
