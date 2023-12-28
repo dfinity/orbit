@@ -860,21 +860,6 @@ type Transfer = record {
   metadata : vec TransferMetadata;
 };
 
-type GetTransferInput = record {
-  // The transfer id to retrieve.
-  transfer_id : UUID;
-};
-
-type GetTransferResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The transfer that was retrieved.
-    transfer : Transfer;
-  };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
-};
-
 type GetTransfersInput = record {
   // The list of transfer ids to retrieve.
   transfer_ids : vec UUID;
@@ -1358,10 +1343,6 @@ service : (opt WalletInstall) -> {
   list_accounts : () -> (ListAccountResult) query;
   // List all transfers from the requested account.
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
-  // Get a transfer by id.
-  //
-  // If the caller does not have access to the transfer, an error will be returned.
-  get_transfer : (input : GetTransferInput) -> (GetTransferResult) query;
   // Get transfers by their ids.
   get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
   // Create a new proposal.

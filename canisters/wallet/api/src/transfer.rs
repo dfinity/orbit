@@ -67,16 +67,6 @@ pub struct TransferResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetTransferInput {
-    pub transfer_id: UuidDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetTransferResponse {
-    pub transfer: TransferDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetTransfersInput {
     pub transfer_ids: Vec<UuidDTO>,
 }
