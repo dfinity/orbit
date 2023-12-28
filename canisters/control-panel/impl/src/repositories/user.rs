@@ -39,6 +39,10 @@ impl Repository<UserKey, User> for UserRepository {
     fn remove(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| m.borrow_mut().remove(key))
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 #[cfg(test)]
