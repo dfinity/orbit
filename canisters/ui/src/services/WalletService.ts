@@ -12,7 +12,6 @@ import {
   FetchAccountBalancesInput,
   GetUserInput,
   GetProposalInput,
-  GetTransferInput,
   GetTransfersInput,
   GetAccountInput,
   Notification,
@@ -209,16 +208,6 @@ export class WalletService {
     }
 
     return result.Ok.transfers;
-  }
-
-  async getTransfer(input: GetTransferInput): Promise<Transfer> {
-    const result = await this.actor.get_transfer(input);
-
-    if ('Err' in result) {
-      throw result.Err;
-    }
-
-    return result.Ok.transfer;
   }
 
   async getTransfers(input: GetTransfersInput): Promise<Transfer[]> {

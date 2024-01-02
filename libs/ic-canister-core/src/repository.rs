@@ -14,6 +14,14 @@ pub trait Repository<Key, Value> {
     /// Removes a record from the repository and returns it if it exists.
     fn remove(&self, key: &Key) -> Option<Value>;
 
+    /// Returns the number of records stored in the repository.
+    fn len(&self) -> usize;
+
+    /// Returns whether the repository is empty or not.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     fn refresh_indexes(&self, _current: Value, _previous: Option<Value>) {
         // no-op
     }

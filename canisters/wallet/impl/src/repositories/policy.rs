@@ -42,4 +42,8 @@ impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
     fn remove(&self, key: &UUID) -> Option<ProposalPolicy> {
         DB.with(|m| m.borrow_mut().remove(key))
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
