@@ -72,7 +72,7 @@ impl ChangeCanisterService {
         .await
     }
 
-    /// Execute an upgrade of a canister.
+    /// Execute an install or upgrade of a canister.
     pub async fn install_canister(
         &self,
         canister_id: Principal,
@@ -102,8 +102,8 @@ impl ChangeCanisterService {
             return stop_result;
         }
 
-        // Upgrade canister
-        let upgrade_result = mgmt::install_code(InstallCodeArgument {
+        // Install or upgrade canister
+        let install_code_result = mgmt::install_code(InstallCodeArgument {
             mode,
             canister_id: canister_id.to_owned(),
             wasm_module: module.to_owned(),
@@ -123,7 +123,7 @@ impl ChangeCanisterService {
             reason: err.to_string(),
         })?;
 
-        upgrade_result
+        install_code_result
     }
 
     /// Verify and mark an upgrade as being performed successfully.
