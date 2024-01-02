@@ -65,6 +65,10 @@ impl Repository<NotificationKey, Notification> for NotificationRepository {
             None => None,
         })
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 impl NotificationRepository {

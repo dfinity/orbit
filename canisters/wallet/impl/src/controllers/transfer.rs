@@ -9,16 +9,11 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use wallet_api::{
-    GetTransferInput, GetTransferResponse, GetTransfersInput, GetTransfersResponse,
-    ListAccountTransfersInput, ListAccountTransfersResponse,
+    GetTransfersInput, GetTransfersResponse, ListAccountTransfersInput,
+    ListAccountTransfersResponse,
 };
 
 // Canister entrypoints for the controller.
-#[query(name = "get_transfer")]
-async fn get_transfer(input: GetTransferInput) -> ApiResult<GetTransferResponse> {
-    CONTROLLER.get_transfer(input).await
-}
-
 #[query(name = "get_transfers")]
 async fn get_transfers(input: GetTransfersInput) -> ApiResult<GetTransfersResponse> {
     CONTROLLER.get_transfers(input).await
@@ -44,23 +39,6 @@ pub struct TransferController {
 impl TransferController {
     fn new(transfer_service: TransferService) -> Self {
         Self { transfer_service }
-    }
-
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
-    async fn get_transfer(&self, input: GetTransferInput) -> ApiResult<GetTransferResponse> {
-        let transfer = self.transfer_service.get_transfer(
-            HelperMapper::to_uuid(input.transfer_id)?.as_bytes(),
-            &call_context(),
-        )?;
-
-        Ok(GetTransferResponse {
-            transfer: transfer.to_dto(),
-        })
     }
 
     #[with_middleware(
