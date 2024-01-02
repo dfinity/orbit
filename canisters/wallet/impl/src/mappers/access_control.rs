@@ -50,23 +50,6 @@ impl From<&wallet_api::FetchAccountBalancesInput> for ResourceSpecifier {
     }
 }
 
-impl From<&wallet_api::GetTransferInput> for ResourceSpecifier {
-    fn from(input: &wallet_api::GetTransferInput) -> Self {
-        let transfer_id = *HelperMapper::to_uuid(input.transfer_id.to_owned())
-            .expect("Invalid transfer id")
-            .as_bytes();
-
-        let transfer = TRANSFER_REPOSITORY
-            .get(&Transfer::key(transfer_id))
-            .expect("Invalid transfer");
-
-        ResourceSpecifier::Transfer(TransferActionSpecifier::Read(
-            AccountSpecifier::Id([transfer.from_account].to_vec()),
-            AddressSpecifier::Any,
-        ))
-    }
-}
-
 impl From<&wallet_api::GetTransfersInput> for ResourceSpecifier {
     fn from(input: &wallet_api::GetTransfersInput) -> Self {
         let transfer_ids = input

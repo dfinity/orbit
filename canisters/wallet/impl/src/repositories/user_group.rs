@@ -60,6 +60,10 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
             prev
         })
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 impl UserGroupRepository {
