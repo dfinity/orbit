@@ -1,7 +1,9 @@
 use candid::utils::{ArgumentDecoder, ArgumentEncoder};
 use candid::Principal;
 use ic_canister_core::cdk::api::management_canister::main::CanisterId;
-use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
+use ic_cdk::api::management_canister::main::{
+    CanisterIdRecord, CanisterSettings, CanisterStatusResponse, UpdateSettingsArgument,
+};
 use pocket_ic::{with_candid, CallError, PocketIc};
 
 pub fn controller_test_id() -> Principal {
@@ -23,6 +25,24 @@ pub fn user_test_id(n: u64) -> Principal {
     bytes.push(0xfe); // internal marker for user test ids
     bytes.push(0x01); // marker for opaque ids
     Principal::from_slice(&bytes)
+}
+
+pub fn canister_status(
+    env: &PocketIc,
+    sender: Option<Principal>,
+    canister_id: Principal,
+) -> CanisterStatusResponse {
+    let args = CanisterIdRecord { canister_id };
+
+    let res: (CanisterStatusResponse,) = update_candid_as(
+        env,
+        Principal::management_canister(),
+        sender.unwrap_or(Principal::anonymous()),
+        "canister_status",
+        (args,),
+    )
+    .unwrap();
+    res.0
 }
 
 pub fn update_canister_settings(
