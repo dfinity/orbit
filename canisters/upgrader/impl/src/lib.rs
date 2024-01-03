@@ -98,12 +98,12 @@ mod tests {
 
     #[test]
     fn check_candid_interface() {
-        use candid::utils::{service_compatible, CandidSource};
+        use candid::utils::{service_equal, CandidSource};
 
         candid::export_service!();
         let new_interface = __export_service();
 
-        service_compatible(
+        service_equal(
             CandidSource::Text(&new_interface),
             CandidSource::Text(include_str!("../../api/spec.did")),
         )

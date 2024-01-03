@@ -89,25 +89,10 @@ type GetUserResult = variant {
   Err : ApiError;
 };
 
-// The input for the main wallet when registering an user.
-type RegisterUserWalletInput = variant {
-  // Use a private wallet canister.
-  PrivateWallet : record {
-    // The id of the wallet canister to use.
-    id : WalletID;
-    // Whether or not it should also use a shared wallet for the user.
-    use_shared_wallet : opt record {
-      is_main : bool;
-    };
-  };
-  // Use a shared wallet canister.
-  SharedWallet;
-};
-
 // The input for registering an user.
 type RegisterUserInput = record {
   // A wallet canister to use for this user.
-  wallet : RegisterUserWalletInput;
+  wallet_id : opt principal;
 };
 
 // The result of registering an user.
@@ -144,7 +129,7 @@ type DeployWalletResult = variant {
 };
 
 // The init configuration for the control panel.
-type CanisterInit = variant {
+type CanisterInit = record {
   // The upgrader wasm module to use for the wallet canister.
   upgrader_wasm_module : blob;
   // The wallet wasm module to use.
@@ -152,7 +137,7 @@ type CanisterInit = variant {
 };
 
 // The upgrade configuration for the control panel.
-type CanisterUpgrade = variant {
+type CanisterUpgrade = record {
   // The updated wasm canister module to use for the wallet canister.
   upgrader_wasm_module : opt blob;
   // The updated wasm canister module to use.
