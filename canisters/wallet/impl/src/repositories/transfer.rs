@@ -82,6 +82,10 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
             prev
         })
     }
+
+    fn len(&self) -> usize {
+        DB.with(|m| m.borrow().len()) as usize
+    }
 }
 
 impl TransferRepository {
