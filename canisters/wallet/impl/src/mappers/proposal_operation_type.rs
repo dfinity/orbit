@@ -29,6 +29,34 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
     }
 }
 
+impl From<ProposalOperationType> for ProposalOperationTypeDTO {
+    fn from(operation_type: ProposalOperationType) -> Self {
+        match operation_type {
+            ProposalOperationType::Transfer => ProposalOperationTypeDTO::Transfer,
+            ProposalOperationType::AddAccount => ProposalOperationTypeDTO::AddAccount,
+            ProposalOperationType::EditAccount => ProposalOperationTypeDTO::EditAccount,
+            ProposalOperationType::AddUser => ProposalOperationTypeDTO::AddUser,
+            ProposalOperationType::EditUser => ProposalOperationTypeDTO::EditUser,
+            ProposalOperationType::AddUserGroup => ProposalOperationTypeDTO::AddUserGroup,
+            ProposalOperationType::EditUserGroup => ProposalOperationTypeDTO::EditUserGroup,
+            ProposalOperationType::RemoveUserGroup => ProposalOperationTypeDTO::RemoveUserGroup,
+            ProposalOperationType::ChangeCanister => ProposalOperationTypeDTO::ChangeCanister,
+            ProposalOperationType::AddAccessPolicy => ProposalOperationTypeDTO::AddAccessPolicy,
+            ProposalOperationType::EditAccessPolicy => ProposalOperationTypeDTO::EditAccessPolicy,
+            ProposalOperationType::RemoveAccessPolicy => {
+                ProposalOperationTypeDTO::RemoveAccessPolicy
+            }
+            ProposalOperationType::AddProposalPolicy => ProposalOperationTypeDTO::AddProposalPolicy,
+            ProposalOperationType::EditProposalPolicy => {
+                ProposalOperationTypeDTO::EditProposalPolicy
+            }
+            ProposalOperationType::RemoveProposalPolicy => {
+                ProposalOperationTypeDTO::RemoveProposalPolicy
+            }
+        }
+    }
+}
+
 impl From<ProposalOperation> for ProposalOperationType {
     fn from(operation: ProposalOperation) -> Self {
         match operation {

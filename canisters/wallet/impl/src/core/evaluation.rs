@@ -4,7 +4,7 @@ use super::{
         AccessControlPolicyCryptoAddressMatcher, AccessControlPolicyMatcher,
         AccessControlPolicyUserMatcher, AccessControlUserMatcher,
     },
-    proposal::ProposalVoteRightsCriteriaEvaluator,
+    proposal::{ProposalPossibleVotersCriteriaEvaluator, ProposalVoteRightsCriteriaEvaluator},
 };
 use crate::{
     errors::EvaluateError,
@@ -32,6 +32,7 @@ lazy_static! {
         common_id_matcher: PROPOSAL_COMMON_ID_MATCHER.clone(),
 
     });
+    pub static ref PROPOSAL_POSSIBLE_VOTERS_CRITERIA_EVALUATOR: Arc<ProposalPossibleVotersCriteriaEvaluator> = Arc::new(ProposalPossibleVotersCriteriaEvaluator);
     pub static ref CRITERIA_EVALUATOR: Arc<CriteriaEvaluator> = Arc::new(CriteriaEvaluator {
         user_matcher: PROPOSAL_USER_MATCHER.clone(),
     });

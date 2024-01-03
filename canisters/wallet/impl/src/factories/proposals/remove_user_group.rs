@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{Proposal, ProposalExecutionPlan, ProposalOperation, RemoveUserGroupOperation},
@@ -32,27 +32,6 @@ impl Create<wallet_api::RemoveUserGroupOperationInput> for RemoveUserGroupPropos
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct RemoveUserGroupProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o RemoveUserGroupOperation,
-}
-
-impl<'p, 'o> RemoveUserGroupProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o RemoveUserGroupOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for RemoveUserGroupProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

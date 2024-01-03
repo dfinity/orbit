@@ -1,4 +1,4 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     core::{canister_config, write_canister_config, CanisterConfig},
     errors::{ProposalError, ProposalExecuteError},
@@ -39,25 +39,6 @@ impl Create<ChangeCanisterOperationInput> for ChangeCanisterProposalCreate {
 
         Ok(proposal)
     }
-}
-
-pub struct ChangeCanisterProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o ChangeCanisterOperation,
-}
-
-impl<'p, 'o> ChangeCanisterProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o ChangeCanisterOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for ChangeCanisterProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {}
 }
 
 pub struct ChangeCanisterProposalExecute<'p, 'o> {

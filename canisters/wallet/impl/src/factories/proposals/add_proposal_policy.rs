@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddProposalPolicyOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
@@ -37,27 +37,6 @@ impl Create<wallet_api::AddProposalPolicyOperationInput> for AddProposalPolicyPr
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct AddProposalPolicyProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o AddProposalPolicyOperation,
-}
-
-impl<'p, 'o> AddProposalPolicyProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o AddProposalPolicyOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for AddProposalPolicyProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

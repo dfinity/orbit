@@ -1,15 +1,14 @@
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::trap},
     errors::{ProposalError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, NotificationType, Proposal, ProposalExecutionPlan, ProposalOperation, Transfer,
-        TransferOperation, TransferOperationInput, TransferProposalCreatedNotification,
+        Account, Proposal, ProposalExecutionPlan, ProposalOperation, Transfer, TransferOperation,
+        TransferOperationInput,
     },
     repositories::{TransferRepository, ACCOUNT_REPOSITORY},
-    services::NotificationService,
 };
 use async_trait::async_trait;
 use ic_canister_core::model::ModelValidator;
@@ -74,50 +73,6 @@ impl Create<wallet_api::TransferOperationInput> for TransferProposalCreate {
         proposal.validate()?;
 
         Ok(proposal)
-    }
-}
-
-pub struct TransferProposalCreateHook<'p, 'o> {
-    proposal: &'p Proposal,
-    operation: &'o TransferOperation,
-    notification_service: NotificationService,
-}
-
-impl<'p, 'o> TransferProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o TransferOperation) -> Self {
-        Self {
-            proposal,
-            operation,
-            notification_service: NotificationService::default(),
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for TransferProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        let account = get_account(&self.operation.input.from_account_id);
-
-        for owner in account.owners {
-            let should_send = self.proposal.proposed_by != owner;
-
-            if should_send {
-                self.notification_service
-                    .send_notification(
-                        owner,
-                        NotificationType::TransferProposalCreated(
-                            TransferProposalCreatedNotification {
-                                account_id: account.id,
-                                proposal_id: self.proposal.id,
-                            },
-                        ),
-                        None,
-                        None,
-                    )
-                    .await
-                    .unwrap_or_else(|e| trap(&format!("Failed to send notification: {:?}", e)));
-            }
-        }
     }
 }
 
