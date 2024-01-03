@@ -93,8 +93,6 @@ type NotificationType = variant {
 type NotificationTypeInput = variant {
   SystemMessage;
   ProposalCreated;
-  TransferProposalCreated;
-  AccountProposalCreated;
 };
 
 // A record type that can be used to represent a notification.

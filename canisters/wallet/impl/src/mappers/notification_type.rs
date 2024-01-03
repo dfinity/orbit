@@ -40,7 +40,7 @@ impl From<NotificationType> for NotificationTypeDTO {
                     | ProposalOperation::RemoveAccessPolicy(_)
                     | ProposalOperation::RemoveProposalPolicy(_)
                     | ProposalOperation::RemoveUserGroup(_)
-                    | ProposalOperation::Upgrade(_) => None,
+                    | ProposalOperation::ChangeCanister(_) => None,
                 };
 
                 let user_id: Option<[u8; 16]> = match &proposal.operation {
@@ -58,7 +58,7 @@ impl From<NotificationType> for NotificationTypeDTO {
                     | ProposalOperation::RemoveProposalPolicy(_)
                     | ProposalOperation::RemoveUserGroup(_)
                     | ProposalOperation::Transfer(_)
-                    | ProposalOperation::Upgrade(_) => None,
+                    | ProposalOperation::ChangeCanister(_) => None,
                 };
 
                 NotificationTypeDTO::ProposalCreated(ProposalCreatedNotificationDTO {

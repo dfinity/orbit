@@ -260,7 +260,7 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                             | ProposalOperation::RemoveAccessPolicy(_)
                             | ProposalOperation::RemoveProposalPolicy(_)
                             | ProposalOperation::RemoveUserGroup(_)
-                            | ProposalOperation::Upgrade(_) => {}
+                            | ProposalOperation::ChangeCanister(_) => {}
                         };
 
                         return Ok(possible_voters);

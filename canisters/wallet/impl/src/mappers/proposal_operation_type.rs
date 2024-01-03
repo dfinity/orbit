@@ -40,7 +40,7 @@ impl From<ProposalOperationType> for ProposalOperationTypeDTO {
             ProposalOperationType::AddUserGroup => ProposalOperationTypeDTO::AddUserGroup,
             ProposalOperationType::EditUserGroup => ProposalOperationTypeDTO::EditUserGroup,
             ProposalOperationType::RemoveUserGroup => ProposalOperationTypeDTO::RemoveUserGroup,
-            ProposalOperationType::Upgrade => ProposalOperationTypeDTO::Upgrade,
+            ProposalOperationType::ChangeCanister => ProposalOperationTypeDTO::ChangeCanister,
             ProposalOperationType::AddAccessPolicy => ProposalOperationTypeDTO::AddAccessPolicy,
             ProposalOperationType::EditAccessPolicy => ProposalOperationTypeDTO::EditAccessPolicy,
             ProposalOperationType::RemoveAccessPolicy => {

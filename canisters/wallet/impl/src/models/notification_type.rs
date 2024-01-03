@@ -17,13 +17,6 @@ pub struct ProposalCreatedNotification {
     pub proposal_id: UUID,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TransferProposalCreatedNotification {
-    pub proposal_id: UUID,
-    pub account_id: UUID,
-}
-
 impl Display for NotificationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
