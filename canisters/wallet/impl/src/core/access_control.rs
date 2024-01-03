@@ -12,8 +12,8 @@ use crate::{
     models::{
         access_control::{
             AccessControlPolicy, AccountSpecifier, CanisterSettingsActionSpecifier,
-            CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
-            TransferActionSpecifier, UpgradeActionSpecifier, UserSpecifier,
+            ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
+            ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier, Match},
         Account, Proposal, User, ADMIN_GROUP_ID,
@@ -502,7 +502,7 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
                     .iter()
                     .all(|account| account.owners.contains(&caller.id))
             }
-            ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create)
+            ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
             | ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create)
             | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::Read)
             | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)

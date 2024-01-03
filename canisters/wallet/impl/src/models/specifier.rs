@@ -42,7 +42,7 @@ pub enum ProposalSpecifier {
     EditAccount(AccountSpecifier),
     EditUser(UserSpecifier),
     Transfer(AccountSpecifier, AddressSpecifier),
-    Upgrade,
+    ChangeCanister,
     AddAccessPolicy,
     EditAccessPolicy(CommonSpecifier),
     RemoveAccessPolicy(CommonSpecifier),
@@ -65,7 +65,7 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
             ProposalSpecifier::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
             ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
             ProposalSpecifier::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
-            ProposalSpecifier::Upgrade => ProposalOperationType::Upgrade,
+            ProposalSpecifier::ChangeCanister => ProposalOperationType::ChangeCanister,
             ProposalSpecifier::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
             ProposalSpecifier::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
             ProposalSpecifier::RemoveProposalPolicy(_) => {
@@ -221,7 +221,7 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             ]
             .into_iter()
             .all(|v| v),
-            (ProposalOperation::Upgrade(_), ProposalSpecifier::Upgrade) => true,
+            (ProposalOperation::ChangeCanister(_), ProposalSpecifier::ChangeCanister) => true,
             (ProposalOperation::AddAccessPolicy(_), ProposalSpecifier::AddAccessPolicy) => true,
             (ProposalOperation::AddUserGroup(_), ProposalSpecifier::AddUserGroup) => true,
             (
@@ -278,7 +278,7 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             | (ProposalOperation::AddUser(_), _)
             | (ProposalOperation::EditAccount(_), _)
             | (ProposalOperation::EditUser(_), _)
-            | (ProposalOperation::Upgrade(_), _)
+            | (ProposalOperation::ChangeCanister(_), _)
             | (ProposalOperation::AddAccessPolicy(_), _)
             | (ProposalOperation::AddProposalPolicy(_), _)
             | (ProposalOperation::EditProposalPolicy(_), _)

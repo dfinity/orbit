@@ -30,7 +30,7 @@ type ProposalSpecifier = variant {
   EditAccount : AccountSpecifier;
   EditUser : UserSpecifier;
   Transfer : TransferSpecifier;
-  Upgrade;
+  ChangeCanister;
   AddAccessPolicy;
   EditAccessPolicy : CommonSpecifier;
   RemoveAccessPolicy : CommonSpecifier;
@@ -306,6 +306,8 @@ type EditUserOperationInput = record {
   // Users can be tagged with groups that can be used to control access to the wallet
   // (e.g. "UUID of the finance group").
   groups : opt vec UUID;
+  // The unconfirmed principals associated with the user.
+  unconfirmed_identities : opt vec principal;
 };
 
 type EditUserOperation = record {
@@ -347,23 +349,23 @@ type RemoveUserGroupOperation = record {
   input : RemoveUserGroupOperationInput;
 };
 
-type UpgradeTarget = variant {
-  Wallet;
-  Upgrader;
+type ChangeCanisterTarget = variant {
+  UpgradeWallet;
+  UpgradeUpgrader;
 };
 
-type UpgradeOperationInput = record {
-  // The target to upgrade.
-  target : UpgradeTarget;
-  // The wasm module to upgrade to.
+type ChangeCanisterOperationInput = record {
+  // The target to change.
+  target : ChangeCanisterTarget;
+  // The wasm module to install.
   module : blob;
   // The checksum of the wasm module.
   checksum : blob;
 };
 
-type UpgradeOperation = record {
-  // The input to the proposal to upgrade a canister.
-  input : UpgradeOperationInput;
+type ChangeCanisterOperation = record {
+  // The input to the proposal to change a canister.
+  input : ChangeCanisterOperationInput;
 };
 
 type AddAccessPolicyOperationInput = record {
@@ -459,8 +461,8 @@ type ProposalOperation = variant {
   EditUserGroup : EditUserGroupOperation;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperation;
-  // An operation for upgrading a canister.
-  Upgrade : UpgradeOperation;
+  // An operation for changing a canister.
+  ChangeCanister : ChangeCanisterOperation;
   // An operation for adding an access policy.
   AddAccessPolicy : AddAccessPolicyOperation;
   // An operation for editing an access policy.
@@ -492,8 +494,8 @@ type ProposalOperationInput = variant {
   EditUserGroup : EditUserGroupOperationInput;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperationInput;
-  // An operation for upgrading a canister.
-  Upgrade : UpgradeOperationInput;
+  // An operation for changing a canister.
+  ChangeCanister : ChangeCanisterOperationInput;
   // An operation for adding an access policy.
   AddAccessPolicy : AddAccessPolicyOperationInput;
   // An operation for editing an access policy.
@@ -525,8 +527,8 @@ type ProposalOperationType = variant {
   EditUserGroup;
   // An operation for removing an existing user group.
   RemoveUserGroup;
-  // An operation for upgrading a canister.
-  Upgrade;
+  // An operation for changing a canister.
+  ChangeCanister;
   // An operation for adding an access policy.
   AddAccessPolicy;
   // An operation for editing an access policy.
@@ -1076,8 +1078,8 @@ type ResourceType = variant {
   ProposalPolicy;
 };
 
-// The actions that are available for upgrades.
-type UpgradeActionSpecifier = variant {
+// The actions that are available for canister changes.
+type ChangeCanisterActionSpecifier = variant {
   Create;
 };
 
@@ -1113,7 +1115,7 @@ type TransferActionSpecifier = variant {
 // The access control resource specifier, used to specify the resource that is being accessed.
 type ResourceSpecifier = variant {
   Transfer : TransferActionSpecifier;
-  Upgrade : UpgradeActionSpecifier;
+  ChangeCanister : ChangeCanisterActionSpecifier;
   CanisterSettings : CanisterSettingsActionSpecifier;
   Proposal : ProposalActionSpecifier;
   Common : record {

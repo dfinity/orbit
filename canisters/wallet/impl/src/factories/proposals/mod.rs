@@ -14,6 +14,7 @@ mod add_account;
 mod add_proposal_policy;
 mod add_user;
 mod add_user_group;
+mod change_canister;
 mod edit_access_policy;
 mod edit_account;
 mod edit_proposal_policy;
@@ -23,7 +24,6 @@ mod remove_access_policy;
 mod remove_proposal_policy;
 mod remove_user_group;
 mod transfer;
-mod upgrade;
 
 use self::{
     add_access_policy::{AddAccessPolicyProposalCreate, AddAccessPolicyProposalExecute},
@@ -31,6 +31,7 @@ use self::{
     add_proposal_policy::{AddProposalPolicyProposalCreate, AddProposalPolicyProposalExecute},
     add_user::{AddUserProposalCreate, AddUserProposalExecute},
     add_user_group::{AddUserGroupProposalCreate, AddUserGroupProposalExecute},
+    change_canister::{ChangeCanisterProposalCreate, ChangeCanisterProposalExecute},
     edit_access_policy::{EditAccessPolicyProposalCreate, EditAccessPolicyProposalExecute},
     edit_account::{EditAccountProposalCreate, EditAccountProposalExecute},
     edit_proposal_policy::{EditProposalPolicyProposalCreate, EditProposalPolicyProposalExecute},
@@ -42,7 +43,6 @@ use self::{
     },
     remove_user_group::{RemoveUserGroupProposalCreate, RemoveUserGroupProposalExecute},
     transfer::{TransferProposalCreate, TransferProposalExecute},
-    upgrade::{UpgradeProposalCreate, UpgradeProposalExecute},
 };
 
 #[derive(Debug)]
@@ -150,13 +150,11 @@ impl ProposalFactory {
                     operation.clone(),
                 )
             }
-            ProposalOperationInput::Upgrade(operation) => {
-                create_proposal::<wallet_api::UpgradeOperationInput, UpgradeProposalCreate>(
-                    id,
-                    proposed_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
+            ProposalOperationInput::ChangeCanister(operation) => {
+                create_proposal::<
+                    wallet_api::ChangeCanisterOperationInput,
+                    ChangeCanisterProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
             }
             ProposalOperationInput::AddAccessPolicy(operation) => {
                 create_proposal::<
@@ -223,8 +221,8 @@ impl ProposalFactory {
             ProposalOperation::EditUser(operation) => {
                 Box::new(EditUserProposalExecute::new(proposal, operation))
             }
-            ProposalOperation::Upgrade(operation) => {
-                Box::new(UpgradeProposalExecute::new(proposal, operation))
+            ProposalOperation::ChangeCanister(operation) => {
+                Box::new(ChangeCanisterProposalExecute::new(proposal, operation))
             }
             ProposalOperation::AddAccessPolicy(operation) => {
                 Box::new(AddAccessPolicyProposalExecute::new(

@@ -50,5 +50,5 @@ pub use pagination::*;
 mod install;
 pub use install::*;
 
-mod upgrade;
-pub use upgrade::*;
+mod change_canister;
+pub use change_canister::*;

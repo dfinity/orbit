@@ -4,12 +4,12 @@ use super::{
 use crate::{
     AddAccessPolicyOperationDTO, AddAccessPolicyOperationInput, AddAccountOperationDTO,
     AddAccountOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
-    AddUserOperationDTO, AddUserOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
+    AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
+    ChangeCanisterOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, ProposalPolicyDTO,
     ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, UpgradeOperationDTO,
-    UpgradeOperationInput, UuidDTO,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -59,7 +59,7 @@ pub enum ProposalOperationDTO {
     AddUserGroup(Box<AddUserGroupOperationDTO>),
     EditUserGroup(Box<EditUserGroupOperationDTO>),
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
-    Upgrade(Box<UpgradeOperationDTO>),
+    ChangeCanister(Box<ChangeCanisterOperationDTO>),
     AddAccessPolicy(Box<AddAccessPolicyOperationDTO>),
     EditAccessPolicy(Box<EditAccessPolicyOperationDTO>),
     RemoveAccessPolicy(Box<RemoveAccessPolicyOperationDTO>),
@@ -78,7 +78,7 @@ pub enum ProposalOperationInput {
     AddUserGroup(AddUserGroupOperationInput),
     EditUserGroup(EditUserGroupOperationInput),
     RemoveUserGroup(RemoveUserGroupOperationInput),
-    Upgrade(UpgradeOperationInput),
+    ChangeCanister(ChangeCanisterOperationInput),
     AddAccessPolicy(AddAccessPolicyOperationInput),
     EditAccessPolicy(EditAccessPolicyOperationInput),
     RemoveAccessPolicy(RemoveAccessPolicyOperationInput),
@@ -97,7 +97,7 @@ pub enum ProposalOperationTypeDTO {
     AddUserGroup,
     EditUserGroup,
     RemoveUserGroup,
-    Upgrade,
+    ChangeCanister,
     AddAccessPolicy,
     EditAccessPolicy,
     RemoveAccessPolicy,

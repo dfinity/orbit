@@ -29,8 +29,8 @@ pub use user::*;
 mod user_group;
 pub use user_group::*;
 
-mod upgrade;
-pub use upgrade::*;
+mod change_canister;
+pub use change_canister::*;
 
 mod policy;
 pub use policy::*;

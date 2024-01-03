@@ -8,7 +8,7 @@ pub enum ProposalSpecifierDTO {
     EditAccount(AccountSpecifierDTO),
     EditUser(UserSpecifierDTO),
     Transfer(TransferSpecifierDTO),
-    Upgrade,
+    ChangeCanister,
     AddAccessPolicy,
     EditAccessPolicy(CommonSpecifierDTO),
     RemoveAccessPolicy(CommonSpecifierDTO),
@@ -69,7 +69,7 @@ pub enum ResourceTypeDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum UpgradeActionSpecifierDTO {
+pub enum ChangeCanisterActionSpecifierDTO {
     Create,
 }
 
@@ -106,7 +106,7 @@ pub enum TransferActionSpecifierDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceSpecifierDTO {
     Transfer(TransferActionSpecifierDTO),
-    Upgrade(UpgradeActionSpecifierDTO),
+    ChangeCanister(ChangeCanisterActionSpecifierDTO),
     CanisterSettings(CanisterSettingsActionSpecifierDTO),
     Proposal(ProposalActionSpecifierDTO),
     Common(ResourceSpecifierCommonArgsDTO),

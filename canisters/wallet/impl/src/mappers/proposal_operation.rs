@@ -3,12 +3,11 @@ use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
         AddAccountOperation, AddProposalPolicyOperation, AddProposalPolicyOperationInput,
-        AddUserOperation, EditAccessPolicyOperation, EditAccessPolicyOperationInput,
-        EditAccountOperation, EditProposalPolicyOperation, EditProposalPolicyOperationInput,
-        EditUserOperation, ProposalOperation, RemoveAccessPolicyOperation,
-        RemoveAccessPolicyOperationInput, RemoveProposalPolicyOperation,
-        RemoveProposalPolicyOperationInput, TransferOperation, UpgradeOperation, UpgradeTarget,
-        User,
+        AddUserOperation, ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
+        EditAccessPolicyOperationInput, EditAccountOperation, EditProposalPolicyOperation,
+        EditProposalPolicyOperationInput, EditUserOperation, ProposalOperation,
+        RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
+        RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
         access_control::ACCESS_CONTROL_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY,
@@ -19,10 +18,10 @@ use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
+    ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
     EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
     EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
-    TransferOperationDTO, TransferOperationInput, UpgradeOperationDTO, UpgradeOperationInput,
-    UpgradeTargetDTO,
+    TransferOperationDTO, TransferOperationInput,
 };
 
 impl TransferOperation {
@@ -235,27 +234,27 @@ impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
     }
 }
 
-impl From<UpgradeTarget> for UpgradeTargetDTO {
-    fn from(value: UpgradeTarget) -> Self {
+impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
+    fn from(value: ChangeCanisterTarget) -> Self {
         match value {
-            UpgradeTarget::Wallet => UpgradeTargetDTO::Wallet,
-            UpgradeTarget::Upgrader => UpgradeTargetDTO::Upgrader,
+            ChangeCanisterTarget::UpgradeWallet => ChangeCanisterTargetDTO::UpgradeWallet,
+            ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
         }
     }
 }
 
-impl From<UpgradeTargetDTO> for UpgradeTarget {
-    fn from(value: UpgradeTargetDTO) -> Self {
+impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
+    fn from(value: ChangeCanisterTargetDTO) -> Self {
         match value {
-            UpgradeTargetDTO::Wallet => UpgradeTarget::Wallet,
-            UpgradeTargetDTO::Upgrader => UpgradeTarget::Upgrader,
+            ChangeCanisterTargetDTO::UpgradeWallet => ChangeCanisterTarget::UpgradeWallet,
+            ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
         }
     }
 }
 
-impl From<crate::models::UpgradeOperationInput> for UpgradeOperationInput {
-    fn from(input: crate::models::UpgradeOperationInput) -> UpgradeOperationInput {
-        UpgradeOperationInput {
+impl From<crate::models::ChangeCanisterOperationInput> for ChangeCanisterOperationInput {
+    fn from(input: crate::models::ChangeCanisterOperationInput) -> ChangeCanisterOperationInput {
+        ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
             checksum: input.checksum,
@@ -263,9 +262,9 @@ impl From<crate::models::UpgradeOperationInput> for UpgradeOperationInput {
     }
 }
 
-impl From<UpgradeOperationInput> for crate::models::UpgradeOperationInput {
-    fn from(input: UpgradeOperationInput) -> crate::models::UpgradeOperationInput {
-        crate::models::UpgradeOperationInput {
+impl From<ChangeCanisterOperationInput> for crate::models::ChangeCanisterOperationInput {
+    fn from(input: ChangeCanisterOperationInput) -> crate::models::ChangeCanisterOperationInput {
+        crate::models::ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
             checksum: input.checksum,
@@ -273,9 +272,9 @@ impl From<UpgradeOperationInput> for crate::models::UpgradeOperationInput {
     }
 }
 
-impl From<UpgradeOperation> for UpgradeOperationDTO {
-    fn from(operation: UpgradeOperation) -> UpgradeOperationDTO {
-        UpgradeOperationDTO {
+impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
+    fn from(operation: ChangeCanisterOperation) -> ChangeCanisterOperationDTO {
+        ChangeCanisterOperationDTO {
             input: operation.input.into(),
         }
     }
@@ -520,8 +519,8 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             ProposalOperation::RemoveUserGroup(operation) => {
                 ProposalOperationDTO::RemoveUserGroup(Box::new(operation.into()))
             }
-            ProposalOperation::Upgrade(operation) => {
-                ProposalOperationDTO::Upgrade(Box::new(operation.into()))
+            ProposalOperation::ChangeCanister(operation) => {
+                ProposalOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
             ProposalOperation::AddAccessPolicy(operation) => {
                 ProposalOperationDTO::AddAccessPolicy(Box::new(operation.into()))

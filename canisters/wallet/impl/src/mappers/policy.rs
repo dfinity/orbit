@@ -1,9 +1,9 @@
 use super::HelperMapper;
 use crate::models::{
     access_control::{
-        AccessControlPolicy, CanisterSettingsActionSpecifier, CommonActionSpecifier,
-        ProposalActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
-        UpgradeActionSpecifier,
+        AccessControlPolicy, CanisterSettingsActionSpecifier, ChangeCanisterActionSpecifier,
+        CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
+        TransferActionSpecifier,
     },
     criteria::{Criteria, Percentage},
     specifier::{AddressSpecifier, CommonSpecifier, ProposalSpecifier, UserSpecifier},
@@ -120,8 +120,10 @@ impl From<ResourceSpecifier> for wallet_api::ResourceSpecifierDTO {
                     canister_settings_action_specifier.into(),
                 )
             }
-            ResourceSpecifier::Upgrade(upgrade_action_specifier) => {
-                wallet_api::ResourceSpecifierDTO::Upgrade(upgrade_action_specifier.into())
+            ResourceSpecifier::ChangeCanister(change_canister_action_specifier) => {
+                wallet_api::ResourceSpecifierDTO::ChangeCanister(
+                    change_canister_action_specifier.into(),
+                )
             }
             ResourceSpecifier::Common(resource, action) => {
                 wallet_api::ResourceSpecifierDTO::Common(ResourceSpecifierCommonArgsDTO {
@@ -145,8 +147,8 @@ impl From<wallet_api::ResourceSpecifierDTO> for ResourceSpecifier {
             wallet_api::ResourceSpecifierDTO::CanisterSettings(
                 canister_settings_action_specifier,
             ) => ResourceSpecifier::CanisterSettings(canister_settings_action_specifier.into()),
-            wallet_api::ResourceSpecifierDTO::Upgrade(upgrade_action_specifier) => {
-                ResourceSpecifier::Upgrade(upgrade_action_specifier.into())
+            wallet_api::ResourceSpecifierDTO::ChangeCanister(change_canister_action_specifier) => {
+                ResourceSpecifier::ChangeCanister(change_canister_action_specifier.into())
             }
             wallet_api::ResourceSpecifierDTO::Common(args) => {
                 ResourceSpecifier::Common(args.resource_type.into(), args.action.into())
@@ -339,18 +341,22 @@ impl From<wallet_api::CanisterSettingsActionSpecifierDTO> for CanisterSettingsAc
     }
 }
 
-impl From<UpgradeActionSpecifier> for wallet_api::UpgradeActionSpecifierDTO {
-    fn from(specifier: UpgradeActionSpecifier) -> Self {
+impl From<ChangeCanisterActionSpecifier> for wallet_api::ChangeCanisterActionSpecifierDTO {
+    fn from(specifier: ChangeCanisterActionSpecifier) -> Self {
         match specifier {
-            UpgradeActionSpecifier::Create => wallet_api::UpgradeActionSpecifierDTO::Create,
+            ChangeCanisterActionSpecifier::Create => {
+                wallet_api::ChangeCanisterActionSpecifierDTO::Create
+            }
         }
     }
 }
 
-impl From<wallet_api::UpgradeActionSpecifierDTO> for UpgradeActionSpecifier {
-    fn from(dto: wallet_api::UpgradeActionSpecifierDTO) -> Self {
+impl From<wallet_api::ChangeCanisterActionSpecifierDTO> for ChangeCanisterActionSpecifier {
+    fn from(dto: wallet_api::ChangeCanisterActionSpecifierDTO) -> Self {
         match dto {
-            wallet_api::UpgradeActionSpecifierDTO::Create => UpgradeActionSpecifier::Create,
+            wallet_api::ChangeCanisterActionSpecifierDTO::Create => {
+                ChangeCanisterActionSpecifier::Create
+            }
         }
     }
 }
@@ -418,7 +424,7 @@ impl From<ProposalSpecifier> for wallet_api::ProposalSpecifierDTO {
                     address: address.into(),
                 })
             }
-            ProposalSpecifier::Upgrade => wallet_api::ProposalSpecifierDTO::Upgrade,
+            ProposalSpecifier::ChangeCanister => wallet_api::ProposalSpecifierDTO::ChangeCanister,
             ProposalSpecifier::AddAccessPolicy => wallet_api::ProposalSpecifierDTO::AddAccessPolicy,
             ProposalSpecifier::EditAccessPolicy(policy) => {
                 wallet_api::ProposalSpecifierDTO::EditAccessPolicy(policy.into())
@@ -463,7 +469,7 @@ impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
                     transfer_specifier.address.into(),
                 )
             }
-            wallet_api::ProposalSpecifierDTO::Upgrade => ProposalSpecifier::Upgrade,
+            wallet_api::ProposalSpecifierDTO::ChangeCanister => ProposalSpecifier::ChangeCanister,
             wallet_api::ProposalSpecifierDTO::AddAccessPolicy => ProposalSpecifier::AddAccessPolicy,
             wallet_api::ProposalSpecifierDTO::EditAccessPolicy(policy) => {
                 ProposalSpecifier::EditAccessPolicy(policy.into())
