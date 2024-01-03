@@ -2,14 +2,14 @@ use super::{
     EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
 };
 use crate::core::evaluation::{
-    Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER, PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR,
+    Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER, PROPOSAL_POSSIBLE_VOTERS_CRITERIA_EVALUATOR,
+    PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR,
 };
-use crate::core::proposal::{ProposalEvaluator, ProposalVoteRightsEvaluator};
+use crate::core::ic_cdk::api::{print, time};
+use crate::core::proposal::{
+    ProposalEvaluator, ProposalPossibleVotersFinder, ProposalVoteRightsEvaluator,
+};
 use crate::errors::{EvaluateError, ProposalError};
-use crate::{
-    core::ic_cdk::api::{print, time},
-    factories::proposals::ProposalFactory,
-};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -168,6 +168,7 @@ impl Proposal {
         let validator = ProposalVoteRightsEvaluator {
             proposal: self,
             voter_id: *user_id,
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
             vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
         };
 
@@ -217,9 +218,15 @@ impl Proposal {
         Ok(())
     }
 
-    pub async fn on_created(&self) {
-        let create_hook = ProposalFactory::create_hook(self);
-        create_hook.on_created().await;
+    pub async fn find_all_possible_voters(&self) -> Result<HashSet<UUID>, EvaluateError> {
+        let evaluator = ProposalPossibleVotersFinder {
+            proposal: self,
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            possible_voters_criteria_evaluator: PROPOSAL_POSSIBLE_VOTERS_CRITERIA_EVALUATOR
+                .to_owned(),
+        };
+
+        evaluator.evaluate().await
     }
 }
 

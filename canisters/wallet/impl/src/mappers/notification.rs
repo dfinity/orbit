@@ -1,7 +1,7 @@
 use crate::models::Notification;
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
-use wallet_api::{NotificationDTO, NotificationLocalizedTextDTO};
+use wallet_api::NotificationDTO;
 
 impl From<Notification> for NotificationDTO {
     fn from(notification: Notification) -> NotificationDTO {
@@ -11,14 +11,8 @@ impl From<Notification> for NotificationDTO {
                 .hyphenated()
                 .to_string(),
             status: notification.status.into(),
-            title: NotificationLocalizedTextDTO {
-                body: notification.title.0,
-                locale_key: notification.title.1,
-            },
-            message: NotificationLocalizedTextDTO {
-                body: notification.message.0,
-                locale_key: notification.message.1,
-            },
+            title: notification.title,
+            message: notification.message,
             notification_type: notification.notification_type.into(),
             created_at: timestamp_to_rfc3339(&notification.created_timestamp),
         }

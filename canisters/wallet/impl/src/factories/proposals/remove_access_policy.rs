@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{Proposal, ProposalExecutionPlan, ProposalOperation, RemoveAccessPolicyOperation},
@@ -8,6 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
+use std::sync::Arc;
 
 pub struct RemoveAccessPolicyProposalCreate {}
 
@@ -36,27 +35,6 @@ impl Create<wallet_api::RemoveAccessPolicyOperationInput> for RemoveAccessPolicy
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct RemoveAccessPolicyProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o RemoveAccessPolicyOperation,
-}
-
-impl<'p, 'o> RemoveAccessPolicyProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o RemoveAccessPolicyOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for RemoveAccessPolicyProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

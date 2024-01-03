@@ -26,53 +26,23 @@ mod remove_user_group;
 mod transfer;
 
 use self::{
-    add_access_policy::{
-        AddAccessPolicyProposalCreate, AddAccessPolicyProposalCreateHook,
-        AddAccessPolicyProposalExecute,
-    },
-    add_account::{
-        AddAccountProposalCreate, AddAccountProposalCreateHook, AddAccountProposalExecute,
-    },
-    add_proposal_policy::{
-        AddProposalPolicyProposalCreate, AddProposalPolicyProposalCreateHook,
-        AddProposalPolicyProposalExecute,
-    },
-    add_user::{AddUserProposalCreate, AddUserProposalCreateHook, AddUserProposalExecute},
-    add_user_group::{
-        AddUserGroupProposalCreate, AddUserGroupProposalCreateHook, AddUserGroupProposalExecute,
-    },
-    change_canister::{
-        ChangeCanisterProposalCreate, ChangeCanisterProposalCreateHook,
-        ChangeCanisterProposalExecute,
-    },
-    edit_access_policy::{
-        EditAccessPolicyProposalCreate, EditAccessPolicyProposalCreateHook,
-        EditAccessPolicyProposalExecute,
-    },
-    edit_account::{
-        EditAccountProposalCreate, EditAccountProposalCreateHook, EditAccountProposalExecute,
-    },
-    edit_proposal_policy::{
-        EditProposalPolicyProposalCreate, EditProposalPolicyProposalCreateHook,
-        EditProposalPolicyProposalExecute,
-    },
-    edit_user::{EditUserProposalCreate, EditUserProposalCreateHook, EditUserProposalExecute},
-    edit_user_group::{
-        EditUserGroupProposalCreate, EditUserGroupProposalCreateHook, EditUserGroupProposalExecute,
-    },
-    remove_access_policy::{
-        RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalCreateHook,
-        RemoveAccessPolicyProposalExecute,
-    },
+    add_access_policy::{AddAccessPolicyProposalCreate, AddAccessPolicyProposalExecute},
+    add_account::{AddAccountProposalCreate, AddAccountProposalExecute},
+    add_proposal_policy::{AddProposalPolicyProposalCreate, AddProposalPolicyProposalExecute},
+    add_user::{AddUserProposalCreate, AddUserProposalExecute},
+    add_user_group::{AddUserGroupProposalCreate, AddUserGroupProposalExecute},
+    change_canister::{ChangeCanisterProposalCreate, ChangeCanisterProposalExecute},
+    edit_access_policy::{EditAccessPolicyProposalCreate, EditAccessPolicyProposalExecute},
+    edit_account::{EditAccountProposalCreate, EditAccountProposalExecute},
+    edit_proposal_policy::{EditProposalPolicyProposalCreate, EditProposalPolicyProposalExecute},
+    edit_user::{EditUserProposalCreate, EditUserProposalExecute},
+    edit_user_group::{EditUserGroupProposalCreate, EditUserGroupProposalExecute},
+    remove_access_policy::{RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalExecute},
     remove_proposal_policy::{
-        RemoveProposalPolicyProposalCreate, RemoveProposalPolicyProposalCreateHook,
-        RemoveProposalPolicyProposalExecute,
+        RemoveProposalPolicyProposalCreate, RemoveProposalPolicyProposalExecute,
     },
-    remove_user_group::{
-        RemoveUserGroupProposalCreate, RemoveUserGroupProposalCreateHook,
-        RemoveUserGroupProposalExecute,
-    },
-    transfer::{TransferProposalCreate, TransferProposalCreateHook, TransferProposalExecute},
+    remove_user_group::{RemoveUserGroupProposalCreate, RemoveUserGroupProposalExecute},
+    transfer::{TransferProposalCreate, TransferProposalExecute},
 };
 
 #[derive(Debug)]
@@ -99,15 +69,6 @@ pub trait Create<T>: Send + Sync {
     ) -> Result<Proposal, ProposalError>
     where
         Self: Sized;
-}
-
-#[async_trait]
-pub trait CreateHook: Send + Sync {
-    /// The post create hook is called after the proposal is created and can be used
-    /// for additional processing (e.g. sending notifications).
-    async fn on_created(&self) {
-        // noop by default
-    }
 }
 
 fn create_proposal<OperationInput, Creator: Create<OperationInput>>(
@@ -231,56 +192,6 @@ impl ProposalFactory {
                     RemoveProposalPolicyProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
-        }
-    }
-
-    pub fn create_hook<'p>(proposal: &'p Proposal) -> Box<dyn CreateHook + 'p> {
-        match &proposal.operation {
-            ProposalOperation::Transfer(operation) => {
-                Box::new(TransferProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::AddAccount(operation) => {
-                Box::new(AddAccountProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::EditAccount(operation) => {
-                Box::new(EditAccountProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::AddUserGroup(operation) => {
-                Box::new(AddUserGroupProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::EditUserGroup(operation) => {
-                Box::new(EditUserGroupProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::RemoveUserGroup(operation) => {
-                Box::new(RemoveUserGroupProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::AddUser(operation) => {
-                Box::new(AddUserProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::EditUser(operation) => {
-                Box::new(EditUserProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::ChangeCanister(operation) => {
-                Box::new(ChangeCanisterProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::AddAccessPolicy(operation) => {
-                Box::new(AddAccessPolicyProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::EditAccessPolicy(operation) => {
-                Box::new(EditAccessPolicyProposalCreateHook::new(proposal, operation))
-            }
-            ProposalOperation::RemoveAccessPolicy(operation) => Box::new(
-                RemoveAccessPolicyProposalCreateHook::new(proposal, operation),
-            ),
-            ProposalOperation::AddProposalPolicy(operation) => Box::new(
-                AddProposalPolicyProposalCreateHook::new(proposal, operation),
-            ),
-            ProposalOperation::EditProposalPolicy(operation) => Box::new(
-                EditProposalPolicyProposalCreateHook::new(proposal, operation),
-            ),
-            ProposalOperation::RemoveProposalPolicy(operation) => Box::new(
-                RemoveProposalPolicyProposalCreateHook::new(proposal, operation),
-            ),
         }
     }
 

@@ -1,12 +1,10 @@
 use super::TimestampRfc3339;
-use crate::UuidDTO;
+use crate::{ProposalOperationTypeDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 use std::fmt::{Display, Formatter};
 
 pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
 pub const PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "proposal-created";
-pub const TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "transfer-proposal-created";
-pub const ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "account-proposal-created";
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationStatusDTO {
@@ -18,33 +16,20 @@ pub enum NotificationStatusDTO {
 pub enum NotificationTypeDTO {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotificationDTO),
-    TransferProposalCreated(TransferProposalCreatedNotificationDTO),
-    AccountProposalCreated(AccountProposalCreatedNotificationDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalCreatedNotificationDTO {
     pub proposal_id: UuidDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccountProposalCreatedNotificationDTO {
-    pub proposal_id: UuidDTO,
-    pub account_id: UuidDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct TransferProposalCreatedNotificationDTO {
-    pub proposal_id: UuidDTO,
-    pub account_id: UuidDTO,
+    pub operation_type: ProposalOperationTypeDTO,
+    pub account_id: Option<UuidDTO>,
+    pub user_id: Option<UuidDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationTypeInput {
     SystemMessage,
     ProposalCreated,
-    TransferProposalCreated,
-    AccountProposalCreated,
 }
 
 impl Display for NotificationTypeInput {
@@ -53,23 +38,11 @@ impl Display for NotificationTypeInput {
             NotificationTypeInput::SystemMessage => {
                 write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE)
             }
-            NotificationTypeInput::TransferProposalCreated => {
-                write!(f, "{}", TRANSFER_PROPOSAL_CREATED_NOTIFICATION_TYPE)
-            }
             NotificationTypeInput::ProposalCreated => {
                 write!(f, "{}", PROPOSAL_CREATED_NOTIFICATION_TYPE)
             }
-            NotificationTypeInput::AccountProposalCreated => {
-                write!(f, "{}", ACCOUNT_PROPOSAL_CREATED_NOTIFICATION_TYPE)
-            }
         }
     }
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct NotificationLocalizedTextDTO {
-    pub locale_key: String,
-    pub body: String,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -78,8 +51,8 @@ pub struct NotificationDTO {
     pub status: NotificationStatusDTO,
     pub notification_type: NotificationTypeDTO,
     pub target_user_id: UuidDTO,
-    pub title: NotificationLocalizedTextDTO,
-    pub message: NotificationLocalizedTextDTO,
+    pub title: String,
+    pub message: Option<String>,
     pub created_at: TimestampRfc3339,
 }
 

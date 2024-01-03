@@ -1,24 +1,46 @@
-use super::UserService;
 use crate::{
     core::{generate_uuid_v4, ic_cdk::api::time, CallContext},
     errors::NotificationError,
     mappers::HelperMapper,
     models::{Notification, NotificationId, NotificationStatus, NotificationType, UserId},
-    repositories::{NotificationFindByUserWhereClause, NotificationRepository},
+    repositories::{
+        NotificationFindByUserWhereClause, NotificationRepository, NOTIFICATION_REPOSITORY,
+    },
+    services::{UserService, USER_SERVICE},
 };
 use ic_canister_core::repository::Repository;
 use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
+use lazy_static::lazy_static;
+use std::sync::Arc;
 use uuid::Uuid;
 use wallet_api::{ListNotificationsInput, MarkNotificationsReadInput};
 
+lazy_static! {
+    pub static ref NOTIFICATION_SERVICE: Arc<NotificationService> =
+        Arc::new(NotificationService::new(
+            Arc::clone(&USER_SERVICE),
+            Arc::clone(&NOTIFICATION_REPOSITORY),
+        ));
+}
+
 #[derive(Default, Debug)]
 pub struct NotificationService {
-    user_service: UserService,
-    notification_repository: NotificationRepository,
+    user_service: Arc<UserService>,
+    notification_repository: Arc<NotificationRepository>,
 }
 
 impl NotificationService {
+    pub fn new(
+        user_service: Arc<UserService>,
+        notification_repository: Arc<NotificationRepository>,
+    ) -> Self {
+        Self {
+            user_service,
+            notification_repository,
+        }
+    }
+
     pub fn get_notification(
         &self,
         id: &NotificationId,
@@ -88,45 +110,16 @@ impl NotificationService {
         &self,
         user_id: UserId,
         notification_type: NotificationType,
-        title: Option<(String, String)>,
-        message: Option<(String, String)>,
+        title: String,
+        message: Option<String>,
     ) -> ServiceResult<()> {
         let notification_id = generate_uuid_v4().await;
         let notification = Notification {
             id: *notification_id.as_bytes(),
             status: NotificationStatus::Sent,
             target_user_id: user_id,
-            title: match title {
-                Some(title) => title,
-                None => match &notification_type {
-                    NotificationType::SystemMessage => (
-                        "system_message_title".to_string(),
-                        "system_message_title".to_string(),
-                    ),
-                    NotificationType::ProposalCreated(_) => (
-                        "New proposal created".to_string(),
-                        "notification_proposal_created".to_string(),
-                    ),
-                    NotificationType::TransferProposalCreated(_) => (
-                        "New transfer requested".to_string(),
-                        "notification_transfer_proposal_created_title".to_string(),
-                    ),
-                    NotificationType::AccountProposalCreated(_, _) => (
-                        "New account action requested".to_string(),
-                        "notification_account_proposal_created_title".to_string(),
-                    ),
-                },
-            },
-            message: match message {
-                Some(message) => message,
-                None => match &notification_type {
-                    NotificationType::SystemMessage => ("".to_string(), "".to_string()),
-                    _ => (
-                        "Please review it and vote on the action to be taken.".to_string(),
-                        "notification_proposal_created".to_string(),
-                    ),
-                },
-            },
+            title,
+            message,
             notification_type,
             created_timestamp: time(),
             last_modification_timestamp: time(),

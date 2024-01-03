@@ -1,11 +1,19 @@
-use super::{AccountService, UserService};
 use crate::{
     core::CallContext,
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
-    models::{Proposal, ProposalOperationType, ProposalStatus, ProposalVoteStatus},
-    repositories::{ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause},
+    models::{
+        NotificationType, Proposal, ProposalCreatedNotification, ProposalOperationType,
+        ProposalStatus, ProposalVoteStatus,
+    },
+    repositories::{
+        ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY,
+    },
+    services::{
+        AccountService, NotificationService, UserService, ACCOUNT_SERVICE, NOTIFICATION_SERVICE,
+        USER_SERVICE,
+    },
 };
 use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
@@ -18,14 +26,20 @@ use wallet_api::{
 };
 
 lazy_static! {
-    pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::default());
+    pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::new(
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&ACCOUNT_SERVICE),
+        Arc::clone(&PROPOSAL_REPOSITORY),
+        Arc::clone(&NOTIFICATION_SERVICE),
+    ));
 }
 
 #[derive(Default, Debug)]
 pub struct ProposalService {
-    user_service: UserService,
-    account_service: AccountService,
-    proposal_repository: ProposalRepository,
+    user_service: Arc<UserService>,
+    account_service: Arc<AccountService>,
+    proposal_repository: Arc<ProposalRepository>,
+    notification_service: Arc<NotificationService>,
 }
 
 #[derive(Debug)]
@@ -35,6 +49,20 @@ pub struct ProposalEditInput {
 }
 
 impl ProposalService {
+    pub fn new(
+        user_service: Arc<UserService>,
+        account_service: Arc<AccountService>,
+        proposal_repository: Arc<ProposalRepository>,
+        notification_service: Arc<NotificationService>,
+    ) -> Self {
+        Self {
+            user_service,
+            account_service,
+            proposal_repository,
+            notification_service,
+        }
+    }
+
     pub fn get_proposal(&self, id: &UUID) -> ServiceResult<Proposal> {
         let proposal =
             self.proposal_repository
@@ -140,10 +168,33 @@ impl ProposalService {
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
 
-        // Handles post processing logic like sending notifications.
-        proposal.on_created().await;
+        self.created_proposal_hook(&proposal).await;
 
         Ok(proposal)
+    }
+
+    /// Handles post processing logic like sending notifications.
+    async fn created_proposal_hook(&self, proposal: &Proposal) {
+        let mut possible_voters = proposal
+            .find_all_possible_voters()
+            .await
+            .expect("Failed to find all possible voters");
+
+        possible_voters.remove(&proposal.proposed_by);
+
+        for voter in possible_voters {
+            self.notification_service
+                .send_notification(
+                    voter,
+                    NotificationType::ProposalCreated(ProposalCreatedNotification {
+                        proposal_id: proposal.id,
+                    }),
+                    proposal.title.to_owned(),
+                    proposal.summary.to_owned(),
+                )
+                .await
+                .expect("Failed to send notification");
+        }
     }
 
     pub async fn vote_on_proposal(
@@ -189,8 +240,12 @@ mod tests {
             specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier, UserSpecifier},
             user_test_utils::mock_user,
             ProposalOperation, ProposalStatus, TransferOperation, TransferOperationInput, User,
+            UserStatus,
         },
-        repositories::{policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository},
+        repositories::{
+            policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository,
+            NOTIFICATION_REPOSITORY, USER_REPOSITORY,
+        },
     };
     use candid::Principal;
 
@@ -306,5 +361,71 @@ mod tests {
             result.unwrap().votes[0].status,
             ProposalVoteStatus::Rejected
         );
+    }
+
+    #[tokio::test]
+    async fn proposal_creation_triggers_notifications() {
+        let ctx = setup();
+        // creates other users
+        let mut related_user = mock_user();
+        related_user.identities = vec![Principal::from_slice(&[25; 29])];
+        related_user.id = [25; 16];
+        related_user.status = UserStatus::Active;
+
+        let mut unrelated_user = mock_user();
+        unrelated_user.identities = vec![Principal::from_slice(&[26; 29])];
+        unrelated_user.id = [26; 16];
+        unrelated_user.status = UserStatus::Active;
+
+        USER_REPOSITORY.insert(related_user.to_key(), related_user.clone());
+        USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
+
+        // creates the account for the transfer
+        let account_id = Uuid::new_v4();
+        let mut account = mock_account();
+        account.id = *account_id.as_bytes();
+        account.owners = vec![ctx.caller_user.id];
+
+        ctx.account_repository
+            .insert(account.to_key(), account.clone());
+
+        // creates a proposal policy that will match the new proposal
+        let mut proposal_policy = mock_proposal_policy();
+        proposal_policy.specifier =
+            ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any);
+        proposal_policy.criteria = Criteria::ApprovalThreshold(
+            UserSpecifier::Id(vec![ctx.caller_user.id, related_user.id]),
+            Percentage(100),
+        );
+        PROPOSAL_POLICY_REPOSITORY.insert(proposal_policy.id, proposal_policy.to_owned());
+
+        // creates the proposal
+        ctx.service
+            .create_proposal(
+                wallet_api::CreateProposalInput {
+                    operation: wallet_api::ProposalOperationInput::Transfer(
+                        wallet_api::TransferOperationInput {
+                            from_account_id: Uuid::from_bytes(account.id.to_owned())
+                                .hyphenated()
+                                .to_string(),
+                            amount: candid::Nat(100u32.into()),
+                            fee: None,
+                            metadata: vec![],
+                            network: None,
+                            to: "0x1234".to_string(),
+                        },
+                    ),
+                    title: None,
+                    summary: None,
+                    execution_plan: None,
+                },
+                &ctx.call_context,
+            )
+            .await
+            .unwrap();
+
+        let notifications = NOTIFICATION_REPOSITORY.list();
+        assert_eq!(notifications.len(), 1);
+        assert_eq!(notifications[0].target_user_id, related_user.id);
     }
 }

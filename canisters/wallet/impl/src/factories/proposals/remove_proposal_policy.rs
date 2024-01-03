@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use super::{Create, CreateHook, Execute, ProposalExecuteStage};
+use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{
@@ -11,6 +9,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
+use std::sync::Arc;
 use uuid::Uuid;
 
 pub struct RemoveProposalPolicyProposalCreate {}
@@ -50,27 +49,6 @@ impl Create<wallet_api::RemoveProposalPolicyOperationInput> for RemoveProposalPo
         );
 
         Ok(proposal)
-    }
-}
-
-pub struct RemoveProposalPolicyProposalCreateHook<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o RemoveProposalPolicyOperation,
-}
-
-impl<'p, 'o> RemoveProposalPolicyProposalCreateHook<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o RemoveProposalPolicyOperation) -> Self {
-        Self {
-            _proposal: proposal,
-            _operation: operation,
-        }
-    }
-}
-
-#[async_trait]
-impl CreateHook for RemoveProposalPolicyProposalCreateHook<'_, '_> {
-    async fn on_created(&self) {
-        // TODO: Add once policy design is ready
     }
 }
 

@@ -22,11 +22,11 @@ use uuid::Uuid;
 use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput};
 
 lazy_static! {
-    pub static ref ACCOUNT_SERVICE: AccountService = AccountService::new(
+    pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
         Arc::clone(&USER_SERVICE),
         Arc::clone(&POLICY_SERVICE),
         Arc::clone(&ACCOUNT_REPOSITORY),
-    );
+    ));
 }
 
 #[derive(Default, Debug)]
