@@ -3,9 +3,9 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         access_control::{
-            AccountActionSpecifier, AccountSpecifier, CommonActionSpecifier,
-            ProposalActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
-            UpgradeActionSpecifier,
+            AccountActionSpecifier, AccountSpecifier, ChangeCanisterActionSpecifier,
+            CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
+            TransferActionSpecifier,
         },
         specifier::{AddressSpecifier, CommonSpecifier},
         Transfer,
@@ -161,8 +161,8 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                 ResourceType::UserGroup,
                 AccountActionSpecifier::Delete(CommonSpecifier::Any),
             ),
-            ProposalOperationInput::Upgrade(_) => {
-                ResourceSpecifier::Upgrade(UpgradeActionSpecifier::Create)
+            ProposalOperationInput::ChangeCanister(_) => {
+                ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
             }
             ProposalOperationInput::AddAccessPolicy(_) => ResourceSpecifier::Common(
                 ResourceType::AccessPolicy,

@@ -22,7 +22,7 @@ pub enum ProposalOperation {
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
-    Upgrade(UpgradeOperation),
+    ChangeCanister(ChangeCanisterOperation),
     AddProposalPolicy(AddProposalPolicyOperation),
     EditProposalPolicy(EditProposalPolicyOperation),
     RemoveProposalPolicy(RemoveProposalPolicyOperation),
@@ -160,23 +160,23 @@ pub struct RemoveUserGroupOperationInput {
 
 #[stable_object]
 #[derive(Debug, Clone, CandidType, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum UpgradeTarget {
-    Wallet,
-    Upgrader,
+pub enum ChangeCanisterTarget {
+    UpgradeWallet,
+    UpgradeUpgrader,
 }
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct UpgradeOperationInput {
-    pub target: UpgradeTarget,
+pub struct ChangeCanisterOperationInput {
+    pub target: ChangeCanisterTarget,
     pub module: Vec<u8>,
     pub checksum: Vec<u8>,
 }
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct UpgradeOperation {
-    pub input: UpgradeOperationInput,
+pub struct ChangeCanisterOperation {
+    pub input: ChangeCanisterOperationInput,
 }
 
 #[stable_object]

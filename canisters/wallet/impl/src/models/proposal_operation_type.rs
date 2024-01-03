@@ -17,7 +17,7 @@ pub enum ProposalOperationType {
     AddUserGroup = 6,
     EditUserGroup = 7,
     RemoveUserGroup = 8,
-    Upgrade = 9,
+    ChangeCanister = 9,
     AddAccessPolicy = 10,
     EditAccessPolicy = 11,
     RemoveAccessPolicy = 12,
@@ -45,7 +45,7 @@ impl TryFrom<u8> for ProposalOperationType {
             6 => Ok(ProposalOperationType::AddUserGroup),
             7 => Ok(ProposalOperationType::EditUserGroup),
             8 => Ok(ProposalOperationType::RemoveUserGroup),
-            9 => Ok(ProposalOperationType::Upgrade),
+            9 => Ok(ProposalOperationType::ChangeCanister),
             10 => Ok(ProposalOperationType::AddAccessPolicy),
             11 => Ok(ProposalOperationType::EditAccessPolicy),
             12 => Ok(ProposalOperationType::RemoveAccessPolicy),
@@ -70,7 +70,7 @@ impl FromStr for ProposalOperationType {
             "add_user_group" => Ok(ProposalOperationType::AddUserGroup),
             "edit_user_group" => Ok(ProposalOperationType::EditUserGroup),
             "remove_user_group" => Ok(ProposalOperationType::RemoveUserGroup),
-            "upgrade" => Ok(ProposalOperationType::Upgrade),
+            "change_canister" => Ok(ProposalOperationType::ChangeCanister),
             "add_access_policy" => Ok(ProposalOperationType::AddAccessPolicy),
             "edit_access_policy" => Ok(ProposalOperationType::EditAccessPolicy),
             "remove_access_policy" => Ok(ProposalOperationType::RemoveAccessPolicy),
@@ -93,7 +93,7 @@ impl Display for ProposalOperationType {
             ProposalOperationType::AddUserGroup => write!(f, "add_user_group"),
             ProposalOperationType::EditUserGroup => write!(f, "edit_user_group"),
             ProposalOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
-            ProposalOperationType::Upgrade => write!(f, "upgrade"),
+            ProposalOperationType::ChangeCanister => write!(f, "change_canister"),
             ProposalOperationType::AddAccessPolicy => write!(f, "add_access_policy"),
             ProposalOperationType::EditAccessPolicy => write!(f, "edit_access_policy"),
             ProposalOperationType::RemoveAccessPolicy => write!(f, "remove_access_policy"),
@@ -177,8 +177,8 @@ mod tests {
             ProposalOperationType::RemoveUserGroup
         );
         assert_eq!(
-            ProposalOperationType::from_str("upgrade").unwrap(),
-            ProposalOperationType::Upgrade
+            ProposalOperationType::from_str("change_canister").unwrap(),
+            ProposalOperationType::ChangeCanister
         );
         assert_eq!(
             ProposalOperationType::from_str("add_access_policy").unwrap(),
@@ -248,10 +248,10 @@ mod tests {
             ProposalOperationType::try_from(8).unwrap(),
             ProposalOperationType::RemoveUserGroup
         );
-        assert_eq!(ProposalOperationType::Upgrade as u8, 9);
+        assert_eq!(ProposalOperationType::ChangeCanister as u8, 9);
         assert_eq!(
             ProposalOperationType::try_from(9).unwrap(),
-            ProposalOperationType::Upgrade
+            ProposalOperationType::ChangeCanister
         );
         assert_eq!(ProposalOperationType::AddAccessPolicy as u8, 10);
         assert_eq!(

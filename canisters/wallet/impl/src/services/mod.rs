@@ -24,5 +24,5 @@ pub use wallet::*;
 mod policy;
 pub use policy::*;
 
-mod upgrade;
-pub use upgrade::*;
+mod change_canister;
+pub use change_canister::*;

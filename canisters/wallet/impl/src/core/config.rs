@@ -34,8 +34,8 @@ pub struct CanisterConfig {
     pub last_upgrade_timestamp: Timestamp,
     /// The default users of the canister.
     pub owners: Vec<Principal>,
-    /// An optionally pending upgrade proposal.
-    pub upgrade_proposal: Option<UUID>,
+    /// An optionally pending change canister proposal.
+    pub change_canister_proposal: Option<UUID>,
     /// The upgrader canister id that is allowed to upgrade this canister.
     pub upgrader_canister_id: Principal,
 }
@@ -45,7 +45,7 @@ impl Default for CanisterConfig {
         Self {
             last_upgrade_timestamp: time(),
             owners: vec![],
-            upgrade_proposal: None,
+            change_canister_proposal: None,
             upgrader_canister_id: Principal::management_canister(),
         }
     }
