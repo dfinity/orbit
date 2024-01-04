@@ -1,5 +1,5 @@
 //! Canister lifecycle hooks.
-use std::{sync::atomic::Ordering, time::Duration};
+use std::time::Duration;
 
 use crate::{core::ic_cdk::api::trap, services::CANISTER_SERVICE};
 use control_panel_api::CanisterInstall;
@@ -12,19 +12,18 @@ pub const MINUTE: u64 = 60;
 pub const HOUR: u64 = 60 * MINUTE;
 pub const DAY: u64 = 24 * HOUR;
 
-const USER_REGISTRATION_RATE: u32 = 100;
-const USER_REGISTRATION_LIMIT_PERIOD: Duration = Duration::from_secs(MINUTE);
+pub const USER_REGISTRATION_RATE: u32 = 100;
+pub const USER_REGISTRATION_LIMIT_PERIOD: Duration = Duration::from_secs(MINUTE);
 
 fn init_timers_fn() {
     set_timer_interval(
         USER_REGISTRATION_LIMIT_PERIOD / USER_REGISTRATION_RATE,
         || {
             AVAILABLE_TOKENS_USER_REGISTRATION.with(|ts| {
-                let ts = ts.borrow();
+                let mut ts = ts.borrow_mut();
 
-                let v = ts.load(Ordering::SeqCst);
-                if v < USER_REGISTRATION_RATE {
-                    ts.store(v + 1, Ordering::SeqCst);
+                if *ts < USER_REGISTRATION_RATE {
+                    *ts += 1;
                 }
             });
         },

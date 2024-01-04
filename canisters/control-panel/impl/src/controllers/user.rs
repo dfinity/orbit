@@ -1,8 +1,8 @@
 //! User services.
 use std::cell::RefCell;
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
+use crate::controllers::USER_REGISTRATION_RATE;
 use crate::core::metrics::{
     COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
 };
@@ -20,7 +20,7 @@ use lazy_static::lazy_static;
 use prometheus::labels;
 
 thread_local! {
-    pub static AVAILABLE_TOKENS_USER_REGISTRATION: RefCell<AtomicU32> = RefCell::new(AtomicU32::new(0));
+    pub static AVAILABLE_TOKENS_USER_REGISTRATION: RefCell<u32> = RefCell::new(USER_REGISTRATION_RATE);
 }
 
 // Canister entrypoints for the controller.
@@ -33,14 +33,13 @@ async fn get_user() -> ApiResult<GetUserResponse> {
 #[update(name = "register_user")]
 async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
     AVAILABLE_TOKENS_USER_REGISTRATION.with(|ts| {
-        let ts = ts.borrow();
+        let mut ts = ts.borrow_mut();
 
-        let v = ts.load(Ordering::SeqCst);
-        if v < 1 {
+        if *ts < 1 {
             return Err(ApiError::new("rate limited".into(), None, None));
         }
 
-        ts.store(v - 1, Ordering::SeqCst);
+        *ts -= 1;
 
         Ok(())
     })?;
