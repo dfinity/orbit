@@ -60,6 +60,21 @@ function exec_function() {
   echo -e "\e[1m$ COMPLETED:\e[0m $function_name"
 }
 
+# Builds the canister and generates the WASM file if it doesn't exist
+function build_wasm() {
+  local canister_name=$1
+  local force=${FORCE_BUILD_WASM:-false}
+
+  # Check if the force flag is set to true
+  if [[ "$force" == "true" ]]; then
+    echo "Force generating WASM file for $canister_name..."
+    ./scripts/generate-wasm.sh $canister_name
+  elif [ ! -f ./wasms/$canister_name.wasm.gz ]; then
+    echo "WASM file for $canister_name not found, generating..."
+    ./scripts/generate-wasm.sh $canister_name
+  fi
+}
+
 #############################################
 # SETUP                                     #
 #############################################
@@ -133,17 +148,22 @@ function setup_internet_identity() {
 }
 
 function uninstall_control_panel() {
+  dfx canister uninstall-code control_panel >/dev/null 2>&1 || true
   dfx canister delete control_panel -y >/dev/null 2>&1 || true
 }
 
 function install_control_panel() {
-  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel --argument "(
-  opt record {
-    default_wallet = variant {
-      SpecifiedWalletCanister = principal \"$CANISTER_ID_WALLET\"
-    };
-  })
-"
+  # Builds the dependencies and generates the WASM files
+  build_wasm upgrader
+  build_wasm wallet
+
+  # Read the WASM files and convert them to hex format
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
+  wallet_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/wallet.wasm.gz | sed 's/../\\&/g')
+
+  dfx canister create --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
+  dfx build control_panel
+  dfx canister install control_panel --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
 }
 
 function setup_control_panel() {
@@ -152,11 +172,20 @@ function setup_control_panel() {
 }
 
 function uninstall_wallet() {
+  dfx canister uninstall-code wallet >/dev/null 2>&1 || true
   dfx canister delete wallet -y >/dev/null 2>&1 || true
 }
 
 function install_wallet() {
-  dfx deploy --specified-id $CANISTER_ID_WALLET wallet
+  # Builds the dependencies and generates the WASM files
+  build_wasm upgrader
+
+  # Read the WASM files and convert them to hex format
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
+
+  dfx canister create --specified-id $CANISTER_ID_WALLET wallet
+  dfx build wallet
+  dfx canister install wallet --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; } })")
 }
 
 function setup_wallet() {
@@ -267,7 +296,7 @@ while [[ $# -gt 0 ]]; do
     echo "ERROR: unknown argument $1"
     usage
     echo
-    echo "Use 'dev --help' for more information"
+    echo "Use 'orbit --help' for more information"
     exit 1
     ;;
   esac

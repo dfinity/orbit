@@ -42,7 +42,6 @@
     "@rollup/plugin-inject": "5.0.3",
     "@types/validator": "13.11.2",
     "@vitejs/plugin-vue": "4.3.4",
-    "@vitest/coverage-v8": "0.34.4",
     "eslint-plugin-vue": "9.17.0",
     "happy-dom": "11.0.2",
     "sass": "1.66.1",
