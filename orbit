@@ -22,7 +22,7 @@ CANISTER_ID_WALLET="avqkn-guaaa-aaaaa-qaaea-cai"
 #############################################
 
 function title() {
-  echo "Orbit wallet development environment utils"
+  echo "Orbit development environment utils"
 }
 
 function usage() {
@@ -37,8 +37,7 @@ Options:
   --init-icp-index fresh installs the icp index canister, used to query the ledger transactions
   --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
   --init-internet-identity fresh installs the internet identity canister
-  --init-ui fresh installs the wallet canister
-  --init-wallet fresh installs the wallet canister
+  --init-ui fresh installs the ui canister
   --candid-generate generates the code for the candid specifications that the wallet uses
 EOF
 }
@@ -46,7 +45,7 @@ EOF
 function help() {
   cat <<EOF
 
-Helper script to setup the development environment for the Orbit wallet.
+Helper script to setup Orbit development environment.
 
 NOTE: This requires a working rust toolchain, dfx and nodejs to operate correctly.
 EOF
@@ -171,28 +170,6 @@ function setup_control_panel() {
   install_control_panel
 }
 
-function uninstall_wallet() {
-  dfx canister uninstall-code wallet >/dev/null 2>&1 || true
-  dfx canister delete wallet -y >/dev/null 2>&1 || true
-}
-
-function install_wallet() {
-  # Builds the dependencies and generates the WASM files
-  build_wasm upgrader
-
-  # Read the WASM files and convert them to hex format
-  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-
-  dfx canister create --specified-id $CANISTER_ID_WALLET wallet
-  dfx build wallet
-  dfx canister install wallet --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; } })")
-}
-
-function setup_wallet() {
-  uninstall_wallet
-  install_wallet
-}
-
 function uninstall_ui() {
   dfx canister delete ui -y >/dev/null 2>&1 || true
 }
@@ -251,7 +228,6 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_icp_ledger
     exec_function setup_icp_index
     exec_function setup_internet_identity
-    exec_function setup_wallet
     exec_function setup_control_panel
     exec_function setup_ui
     echo
@@ -266,12 +242,6 @@ while [[ $# -gt 0 ]]; do
     shift
     exec_function setup_devenv
     exec_function setup_icp_index
-    echo
-    ;;
-  --init-wallet)
-    shift
-    exec_function setup_devenv
-    exec_function setup_wallet
     echo
     ;;
   --init-control-panel)
