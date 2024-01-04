@@ -239,6 +239,9 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
         match value {
             ChangeCanisterTarget::UpgradeWallet => ChangeCanisterTargetDTO::UpgradeWallet,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
+            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
+                ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
+            }
         }
     }
 }
@@ -248,6 +251,9 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
         match value {
             ChangeCanisterTargetDTO::UpgradeWallet => ChangeCanisterTarget::UpgradeWallet,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
+            ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
+                ChangeCanisterTarget::UpgradeCanister(canister_id)
+            }
         }
     }
 }
@@ -257,6 +263,7 @@ impl From<crate::models::ChangeCanisterOperationInput> for ChangeCanisterOperati
         ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
+            arg: input.arg,
             checksum: input.checksum,
         }
     }
@@ -267,6 +274,7 @@ impl From<ChangeCanisterOperationInput> for crate::models::ChangeCanisterOperati
         crate::models::ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
+            arg: input.arg,
             checksum: input.checksum,
         }
     }

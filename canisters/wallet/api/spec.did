@@ -350,6 +350,7 @@ type RemoveUserGroupOperation = record {
 type ChangeCanisterTarget = variant {
   UpgradeWallet;
   UpgradeUpgrader;
+  UpgradeCanister : principal;
 };
 
 type ChangeCanisterOperationInput = record {
@@ -357,6 +358,8 @@ type ChangeCanisterOperationInput = record {
   target : ChangeCanisterTarget;
   // The wasm module to install.
   module : blob;
+  // The initial argument passed to the new wasm module.
+  arg : opt blob;
   // The checksum of the wasm module.
   checksum : blob;
 };
