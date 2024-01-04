@@ -1,7 +1,7 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, canister_status, execute_proposal, submit_proposal, user_test_id, vote_on_proposal,
-    wait_for_proposal_completed,
+    wait_for_proposal,
 };
 use crate::TestEnv;
 use wallet_api::{
@@ -65,7 +65,7 @@ fn successful_four_eyes_upgrade() {
         Some(canister_ids.wallet),
     );
 
-    // check canister status
+    // check canister status and ensure that the WASM matches the old canister module
     let status = canister_status(&env, Some(canister_ids.wallet), canister_id);
     assert_eq!(status.module_hash, Some(module_hash.clone()));
 
@@ -74,7 +74,7 @@ fn successful_four_eyes_upgrade() {
     let new_module_hash =
         hex::decode("d7f602df8d1cb581cc5c886a4ff8809793c50627e305ef45f6d770f27e0261cc").unwrap();
 
-    // make canister upgrade proposal
+    // submit canister upgrade proposal
     let change_canister_operation =
         ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
             target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
@@ -84,6 +84,17 @@ fn successful_four_eyes_upgrade() {
         });
     let change_canister_operation_proposal =
         submit_proposal(&env, user_a, canister_ids.wallet, change_canister_operation);
+
+    // the proposal should not be completed before the second user votes on it
+    assert!(wait_for_proposal(
+        &env,
+        user_a,
+        canister_ids.wallet,
+        change_canister_operation_proposal.clone(),
+    )
+    .is_none());
+
+    // the second user votes and then the proposal will eventually become completed
     vote_on_proposal(
         &env,
         user_b,
@@ -91,14 +102,15 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation_proposal.clone(),
         true,
     );
-    wait_for_proposal_completed(
+    wait_for_proposal(
         &env,
         user_a,
         canister_ids.wallet,
         change_canister_operation_proposal.clone(),
-    );
+    )
+    .unwrap();
 
-    // check canister status
+    // check canister status and ensure that the WASM matches the new canister module
     let status = canister_status(&env, Some(canister_ids.wallet), canister_id);
     assert_eq!(status.module_hash, Some(new_module_hash));
 }
