@@ -163,7 +163,6 @@ pub struct RemoveUserGroupOperationInput {
 pub enum ChangeCanisterTarget {
     UpgradeWallet,
     UpgradeUpgrader,
-    InstallCanister(Principal),
     UpgradeCanister(Principal),
 }
 

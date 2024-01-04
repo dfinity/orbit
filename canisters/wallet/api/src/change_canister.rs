@@ -4,7 +4,6 @@ use candid::{CandidType, Deserialize, Principal};
 pub enum ChangeCanisterTargetDTO {
     UpgradeWallet,
     UpgradeUpgrader,
-    InstallCanister(Principal),
     UpgradeCanister(Principal),
 }
 

@@ -350,7 +350,6 @@ type RemoveUserGroupOperation = record {
 type ChangeCanisterTarget = variant {
   UpgradeWallet;
   UpgradeUpgrader;
-  InstallCanister : principal;
   UpgradeCanister : principal;
 };
 

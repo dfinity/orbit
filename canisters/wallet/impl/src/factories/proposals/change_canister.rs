@@ -102,24 +102,6 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
                 ))
             }
 
-            ChangeCanisterTarget::InstallCanister(canister_id) => {
-                CHANGE_CANISTER_SERVICE
-                    .install_canister(
-                        canister_id,
-                        CanisterInstallMode::Install,
-                        &self.operation.input.module,
-                        self.operation.input.arg.clone(),
-                    )
-                    .await
-                    .map_err(|err| ProposalExecuteError::Failed {
-                        reason: format!("failed to install canister {}: {}", canister_id, err),
-                    })?;
-
-                Ok(ProposalExecuteStage::Completed(
-                    self.proposal.operation.clone(),
-                ))
-            }
-
             ChangeCanisterTarget::UpgradeCanister(canister_id) => {
                 CHANGE_CANISTER_SERVICE
                     .install_canister(

@@ -239,9 +239,6 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
         match value {
             ChangeCanisterTarget::UpgradeWallet => ChangeCanisterTargetDTO::UpgradeWallet,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
-            ChangeCanisterTarget::InstallCanister(canister_id) => {
-                ChangeCanisterTargetDTO::InstallCanister(canister_id)
-            }
             ChangeCanisterTarget::UpgradeCanister(canister_id) => {
                 ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
             }
@@ -254,9 +251,6 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
         match value {
             ChangeCanisterTargetDTO::UpgradeWallet => ChangeCanisterTarget::UpgradeWallet,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
-            ChangeCanisterTargetDTO::InstallCanister(canister_id) => {
-                ChangeCanisterTarget::InstallCanister(canister_id)
-            }
             ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
                 ChangeCanisterTarget::UpgradeCanister(canister_id)
             }

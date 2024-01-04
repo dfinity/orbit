@@ -105,12 +105,12 @@ impl ChangeCanisterService {
         }
 
         // Install or upgrade canister
-        let bytes = Encode!(&()).unwrap();
+        let default_bytes = Encode!(&()).unwrap();
         let install_code_result = mgmt::install_code(InstallCodeArgument {
             mode,
             canister_id: canister_id.to_owned(),
             wasm_module: module.to_owned(),
-            arg: arg.unwrap_or(bytes),
+            arg: arg.unwrap_or(default_bytes),
         })
         .await
         .map_err(|(_, err)| ChangeCanisterError::Failed {
