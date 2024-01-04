@@ -48,9 +48,9 @@ pub fn add_user(
         groups: group_ids,
         status: UserStatusDTO::Active,
     });
-    let add_user_proposal = submit_proposal(&env, WALLET_ADMIN_USER, wallet_canister_id, add_user);
+    let add_user_proposal = submit_proposal(env, WALLET_ADMIN_USER, wallet_canister_id, add_user);
     let new_proposal = wait_for_proposal_completed(
-        &env,
+        env,
         WALLET_ADMIN_USER,
         wallet_canister_id,
         add_user_proposal,
@@ -106,7 +106,7 @@ pub fn vote_on_proposal(
         reason: None,
     };
     let res: (Result<VoteOnProposalResponse, ApiErrorDTO>,) = update_candid_as(
-        &env,
+        env,
         wallet_canister_id,
         user_id,
         "vote_on_proposal",
@@ -129,7 +129,7 @@ pub fn submit_proposal(
         execution_plan: Some(ProposalExecutionScheduleDTO::Immediate),
     };
     let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
-        &env,
+        env,
         wallet_canister_id,
         user_id,
         "create_proposal",
@@ -149,7 +149,7 @@ pub fn get_proposal(
         proposal_id: proposal.id,
     };
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
-        &env,
+        env,
         wallet_canister_id,
         user_id,
         "get_proposal",
@@ -160,10 +160,7 @@ pub fn get_proposal(
 }
 
 fn is_proposal_completed(proposal: ProposalDTO) -> bool {
-    match proposal.status {
-        ProposalStatusDTO::Completed { .. } => true,
-        _ => false,
-    }
+    matches!(proposal.status, ProposalStatusDTO::Completed { .. })
 }
 
 pub fn canister_status(
