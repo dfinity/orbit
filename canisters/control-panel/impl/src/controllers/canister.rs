@@ -1,10 +1,40 @@
 //! Canister lifecycle hooks.
+use std::{sync::atomic::Ordering, time::Duration};
+
 use crate::{core::ic_cdk::api::trap, services::CANISTER_SERVICE};
 use control_panel_api::CanisterInstall;
 use ic_cdk_macros::{init, post_upgrade};
+use ic_cdk_timers::set_timer_interval;
+
+use super::AVAILABLE_TOKENS_USER_REGISTRATION;
+
+pub const MINUTE: u64 = 60;
+pub const HOUR: u64 = 60 * MINUTE;
+pub const DAY: u64 = 24 * HOUR;
+
+const USER_REGISTRATION_RATE: u32 = 100;
+const USER_REGISTRATION_LIMIT_PERIOD: Duration = Duration::from_secs(MINUTE);
+
+fn init_timers_fn() {
+    set_timer_interval(
+        USER_REGISTRATION_LIMIT_PERIOD / USER_REGISTRATION_RATE,
+        || {
+            AVAILABLE_TOKENS_USER_REGISTRATION.with(|ts| {
+                let ts = ts.borrow();
+
+                let v = ts.load(Ordering::SeqCst);
+                if v < USER_REGISTRATION_RATE {
+                    ts.store(v + 1, Ordering::SeqCst);
+                }
+            });
+        },
+    );
+}
 
 #[init]
 async fn initialize(install: Option<CanisterInstall>) {
+    init_timers_fn();
+
     if let Some(CanisterInstall::Init(input)) = install {
         return CANISTER_SERVICE
             .init_canister(input)
@@ -17,6 +47,8 @@ async fn initialize(install: Option<CanisterInstall>) {
 
 #[post_upgrade]
 async fn post_upgrade(install: Option<CanisterInstall>) {
+    init_timers_fn();
+
     match install {
         Some(CanisterInstall::Upgrade(input)) => CANISTER_SERVICE
             .upgrade_canister(input.to_owned())

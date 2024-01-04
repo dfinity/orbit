@@ -1,4 +1,6 @@
 //! User services.
+use std::cell::RefCell;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
 use crate::core::metrics::{
@@ -11,11 +13,15 @@ use control_panel_api::{
     DeleteUserResponse, GetUserResponse, ManageUserInput, ManageUserResponse, RegisterUserInput,
     RegisterUserResponse, UserDTO,
 };
-use ic_canister_core::api::ApiResult;
+use ic_canister_core::api::{ApiError, ApiResult};
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use prometheus::labels;
+
+thread_local! {
+    pub static AVAILABLE_TOKENS_USER_REGISTRATION: RefCell<AtomicU32> = RefCell::new(AtomicU32::new(0));
+}
 
 // Canister entrypoints for the controller.
 
@@ -26,6 +32,19 @@ async fn get_user() -> ApiResult<GetUserResponse> {
 
 #[update(name = "register_user")]
 async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
+    AVAILABLE_TOKENS_USER_REGISTRATION.with(|ts| {
+        let ts = ts.borrow();
+
+        let v = ts.load(Ordering::SeqCst);
+        if v < 1 {
+            return Err(ApiError::new("rate limited".into(), None, None));
+        }
+
+        ts.store(v - 1, Ordering::SeqCst);
+
+        Ok(())
+    })?;
+
     let out = CONTROLLER.register_user(input).await;
 
     COUNTER_REGISTER_USER_TOTAL.with(|c| {
