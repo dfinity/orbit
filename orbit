@@ -22,7 +22,7 @@ CANISTER_ID_WALLET="avqkn-guaaa-aaaaa-qaaea-cai"
 #############################################
 
 function title() {
-  echo "Orbit wallet development environment utils"
+  echo "Orbit development environment utils"
 }
 
 function usage() {
@@ -37,8 +37,7 @@ Options:
   --init-icp-index fresh installs the icp index canister, used to query the ledger transactions
   --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
   --init-internet-identity fresh installs the internet identity canister
-  --init-ui fresh installs the wallet canister
-  --init-wallet fresh installs the wallet canister
+  --init-ui fresh installs the ui canister
   --candid-generate generates the code for the candid specifications that the wallet uses
 EOF
 }
@@ -46,7 +45,7 @@ EOF
 function help() {
   cat <<EOF
 
-Helper script to setup the development environment for the Orbit wallet.
+Helper script to setup Orbit development environment.
 
 NOTE: This requires a working rust toolchain, dfx and nodejs to operate correctly.
 EOF
@@ -58,6 +57,21 @@ function exec_function() {
   echo -e "\e[1m$ START:\e[0m $function_name"
   $function_name
   echo -e "\e[1m$ COMPLETED:\e[0m $function_name"
+}
+
+# Builds the canister and generates the WASM file if it doesn't exist
+function build_wasm() {
+  local canister_name=$1
+  local force=${FORCE_BUILD_WASM:-false}
+
+  # Check if the force flag is set to true
+  if [[ "$force" == "true" ]]; then
+    echo "Force generating WASM file for $canister_name..."
+    ./scripts/generate-wasm.sh $canister_name
+  elif [ ! -f ./wasms/$canister_name.wasm.gz ]; then
+    echo "WASM file for $canister_name not found, generating..."
+    ./scripts/generate-wasm.sh $canister_name
+  fi
 }
 
 #############################################
@@ -133,35 +147,27 @@ function setup_internet_identity() {
 }
 
 function uninstall_control_panel() {
+  dfx canister stop control_panel >/dev/null 2>&1 || true
   dfx canister delete control_panel -y >/dev/null 2>&1 || true
 }
 
 function install_control_panel() {
-  dfx deploy --specified-id $CANISTER_ID_CONTROL_PANEL control_panel --argument "(
-  opt record {
-    default_wallet = variant {
-      SpecifiedWalletCanister = principal \"$CANISTER_ID_WALLET\"
-    };
-  })
-"
+  # Builds the dependencies and generates the WASM files
+  build_wasm upgrader
+  build_wasm wallet
+
+  # Read the WASM files and convert them to hex format
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
+  wallet_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/wallet.wasm.gz | sed 's/../\\&/g')
+
+  dfx canister create --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
+  dfx build control_panel
+  dfx canister install control_panel --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
 }
 
 function setup_control_panel() {
   uninstall_control_panel
   install_control_panel
-}
-
-function uninstall_wallet() {
-  dfx canister delete wallet -y >/dev/null 2>&1 || true
-}
-
-function install_wallet() {
-  dfx deploy --specified-id $CANISTER_ID_WALLET wallet
-}
-
-function setup_wallet() {
-  uninstall_wallet
-  install_wallet
 }
 
 function uninstall_ui() {
@@ -222,7 +228,6 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_icp_ledger
     exec_function setup_icp_index
     exec_function setup_internet_identity
-    exec_function setup_wallet
     exec_function setup_control_panel
     exec_function setup_ui
     echo
@@ -237,12 +242,6 @@ while [[ $# -gt 0 ]]; do
     shift
     exec_function setup_devenv
     exec_function setup_icp_index
-    echo
-    ;;
-  --init-wallet)
-    shift
-    exec_function setup_devenv
-    exec_function setup_wallet
     echo
     ;;
   --init-control-panel)
@@ -267,7 +266,7 @@ while [[ $# -gt 0 ]]; do
     echo "ERROR: unknown argument $1"
     usage
     echo
-    echo "Use 'dev --help' for more information"
+    echo "Use 'orbit --help' for more information"
     exit 1
     ;;
   esac

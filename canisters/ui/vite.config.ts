@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
 import vuetify from 'vite-plugin-vuetify';
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import dfxConfig from '../../dfx.json';
 
 const network = process.env.DFX_NETWORK ?? 'local';
