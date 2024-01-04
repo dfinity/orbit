@@ -147,7 +147,7 @@ function setup_internet_identity() {
 }
 
 function uninstall_control_panel() {
-  dfx canister uninstall-code control_panel >/dev/null 2>&1 || true
+  dfx canister stop control_panel >/dev/null 2>&1 || true
   dfx canister delete control_panel -y >/dev/null 2>&1 || true
 }
 
