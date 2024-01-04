@@ -60,7 +60,7 @@ impl ChangeCanisterService {
     pub async fn upgrade_upgrader(
         &self,
         module: &[u8],
-        arg: Vec<u8>,
+        arg: Option<Vec<u8>>,
     ) -> ServiceResult<(), ChangeCanisterError> {
         let upgrader_canister_id = upgrader_canister_id();
         self.install_canister(
@@ -78,8 +78,10 @@ impl ChangeCanisterService {
         canister_id: Principal,
         mode: CanisterInstallMode,
         module: &[u8],
-        arg: Vec<u8>,
+        arg: Option<Vec<u8>>,
     ) -> ServiceResult<(), ChangeCanisterError> {
+        use candid::Encode;
+
         // Stop canister
         let stop_result = mgmt::stop_canister(CanisterIdRecord {
             canister_id: canister_id.to_owned(),
@@ -103,11 +105,12 @@ impl ChangeCanisterService {
         }
 
         // Install or upgrade canister
+        let bytes = Encode!(&()).unwrap();
         let install_code_result = mgmt::install_code(InstallCodeArgument {
             mode,
             canister_id: canister_id.to_owned(),
             wasm_module: module.to_owned(),
-            arg,
+            arg: arg.unwrap_or(bytes),
         })
         .await
         .map_err(|(_, err)| ChangeCanisterError::Failed {

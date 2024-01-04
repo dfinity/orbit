@@ -29,7 +29,7 @@ fn make_install_successful() {
     let install_canister = ChangeCanisterOperationInput {
         target: ChangeCanisterTargetDTO::InstallCanister(canister_id),
         module: module_bytes,
-        arg: vec![],
+        arg: None,
         checksum: module_hash.clone(),
     };
     let change_canister_proposal = CreateProposalInput {
@@ -119,7 +119,7 @@ fn make_upgrade_successful() {
     let upgrade_canister = ChangeCanisterOperationInput {
         target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
         module: new_module_bytes,
-        arg: vec![],
+        arg: None,
         checksum: new_module_hash.clone(),
     };
     let change_canister_proposal = CreateProposalInput {

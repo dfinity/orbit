@@ -172,7 +172,7 @@ pub enum ChangeCanisterTarget {
 pub struct ChangeCanisterOperationInput {
     pub target: ChangeCanisterTarget,
     pub module: Vec<u8>,
-    pub arg: Vec<u8>,
+    pub arg: Option<Vec<u8>>,
     pub checksum: Vec<u8>,
 }
 
