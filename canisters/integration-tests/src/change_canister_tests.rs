@@ -1,20 +1,57 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{canister_status, update_candid_as};
+use crate::utils::{
+    add_user, canister_status, execute_proposal, submit_proposal, user_test_id, vote_on_proposal,
+    wait_for_proposal_completed,
+};
 use crate::TestEnv;
-use std::time::Duration;
 use wallet_api::{
-    ApiErrorDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO, CreateProposalInput,
-    CreateProposalResponse, GetProposalInput, GetProposalResponse, ProposalExecutionScheduleDTO,
-    ProposalOperationInput, ProposalStatusDTO,
+    AddAccessPolicyOperationInput, AddProposalPolicyOperationInput,
+    ChangeCanisterActionSpecifierDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
+    CommonSpecifierDTO, CriteriaDTO, ProposalOperationInput, ProposalSpecifierDTO,
+    ResourceSpecifierDTO, UserSpecifierDTO,
 };
 
 #[test]
-fn make_upgrade_successful() {
+fn successful_four_eyes_upgrade() {
     let TestEnv {
         mut env,
         canister_ids,
         ..
     } = setup_new_env();
+
+    // set four eyes principle for canister changes
+    let add_proposal_policy =
+        ProposalOperationInput::AddProposalPolicy(AddProposalPolicyOperationInput {
+            specifier: ProposalSpecifierDTO::ChangeCanister,
+            criteria: CriteriaDTO::MinimumVotes(UserSpecifierDTO::Any, 2),
+        });
+    execute_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        add_proposal_policy,
+    );
+
+    // allow anyone to create change canister proposals
+    let add_access_policy =
+        ProposalOperationInput::AddAccessPolicy(AddAccessPolicyOperationInput {
+            user: CommonSpecifierDTO::Any,
+            resource: ResourceSpecifierDTO::ChangeCanister(
+                ChangeCanisterActionSpecifierDTO::Create,
+            ),
+        });
+    execute_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        add_access_policy,
+    );
+
+    // create new user identities and add them to the wallet
+    let user_a = user_test_id(0);
+    add_user(&env, user_a, vec![], canister_ids.wallet);
+    let user_b = user_test_id(1);
+    add_user(&env, user_b, vec![], canister_ids.wallet);
 
     // create and install the canister to be upgraded by a proposal
     let canister_id = create_canister(&mut env, canister_ids.wallet);
@@ -27,71 +64,39 @@ fn make_upgrade_successful() {
         vec![],
         Some(canister_ids.wallet),
     );
+
     // check canister status
     let status = canister_status(&env, Some(canister_ids.wallet), canister_id);
     assert_eq!(status.module_hash, Some(module_hash.clone()));
 
+    // new canister WASM
     let new_module_bytes = hex::decode("0061736d010000000503010001").unwrap();
     let new_module_hash =
         hex::decode("d7f602df8d1cb581cc5c886a4ff8809793c50627e305ef45f6d770f27e0261cc").unwrap();
 
     // make canister upgrade proposal
-    let upgrade_canister = ChangeCanisterOperationInput {
-        target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
-        module: new_module_bytes,
-        arg: None,
-        checksum: new_module_hash.clone(),
-    };
-    let change_canister_proposal = CreateProposalInput {
-        operation: ProposalOperationInput::ChangeCanister(upgrade_canister),
-        title: None,
-        summary: None,
-        execution_plan: Some(ProposalExecutionScheduleDTO::Immediate),
-    };
-    let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
+    let change_canister_operation =
+        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+            target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
+            module: new_module_bytes,
+            arg: None,
+            checksum: new_module_hash.clone(),
+        });
+    let change_canister_operation_proposal =
+        submit_proposal(&env, user_a, canister_ids.wallet, change_canister_operation);
+    vote_on_proposal(
         &env,
+        user_b,
         canister_ids.wallet,
-        WALLET_ADMIN_USER,
-        "create_proposal",
-        (change_canister_proposal,),
-    )
-    .unwrap();
-    let proposal_dto = res.0.unwrap().proposal;
-
-    // wait for the proposal to be adopted (timer's period is 5 seconds)
-    env.advance_time(Duration::from_secs(5));
-    env.tick();
-    // wait for the proposal to be processing (timer's period is 5 seconds) and then completed
-    env.advance_time(Duration::from_secs(5));
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
-
-    // check upgrade proposal status
-    let get_proposal_args = GetProposalInput {
-        proposal_id: proposal_dto.id,
-    };
-    let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
+        change_canister_operation_proposal.clone(),
+        true,
+    );
+    wait_for_proposal_completed(
         &env,
+        user_a,
         canister_ids.wallet,
-        WALLET_ADMIN_USER,
-        "get_proposal",
-        (get_proposal_args,),
-    )
-    .unwrap();
-    let new_proposal_dto = res.0.unwrap().proposal;
-    match new_proposal_dto.status {
-        ProposalStatusDTO::Completed { .. } => {}
-        _ => {
-            panic!(
-                "proposal must be completed by now but instead is {:?}",
-                new_proposal_dto.status
-            );
-        }
-    };
+        change_canister_operation_proposal.clone(),
+    );
 
     // check canister status
     let status = canister_status(&env, Some(canister_ids.wallet), canister_id);
