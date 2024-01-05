@@ -79,7 +79,7 @@ impl AccountMapper {
                 if input
                     .metadata
                     .iter()
-                    .any(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY)
+                    .any(|metadata| metadata.key == ACCOUNT_METADATA_SYMBOL_KEY)
                 {
                     return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
                 }
@@ -90,13 +90,13 @@ impl AccountMapper {
                 let symbol = input
                     .metadata
                     .iter()
-                    .find(|metadata| metadata.0 == ACCOUNT_METADATA_SYMBOL_KEY);
+                    .find(|metadata| metadata.key == ACCOUNT_METADATA_SYMBOL_KEY);
 
                 if symbol.is_none() {
                     return Err(MapperError::NonNativeAccountSymbolRequired);
                 }
 
-                symbol.unwrap().0.to_owned()
+                symbol.unwrap().key.to_owned()
             }
         };
 

@@ -30,12 +30,12 @@ impl BlockchainTransactionFee {
 }
 
 #[derive(Clone, Debug, Hash)]
-pub struct BlockchainTransactioSubmitted {
+pub struct BlockchainTransactionSubmitted {
     /// Depending on the blockchain, it returns details of the submitted transaction (e.g. block_height).
     pub details: Vec<(String, String)>,
 }
 
-impl BlockchainTransactioSubmitted {
+impl BlockchainTransactionSubmitted {
     pub fn metadata_map(&self) -> HashMap<String, String> {
         self.details
             .iter()
@@ -71,7 +71,7 @@ pub trait BlockchainApi: Send + Sync {
         &self,
         account: &Account,
         transfer: &Transfer,
-    ) -> Result<BlockchainTransactioSubmitted, ApiError>;
+    ) -> Result<BlockchainTransactionSubmitted, ApiError>;
 }
 
 #[derive(Debug)]

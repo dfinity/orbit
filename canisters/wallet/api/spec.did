@@ -255,7 +255,7 @@ type AddAccountOperationInput = record {
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
-  metadata : vec record { text; text };
+  metadata : vec AccountMetadata;
   // The policies applied to the account by the account owners.
   policies : AccountPolicies;
 };
@@ -574,11 +574,6 @@ type Proposal = record {
   expiration_dt : TimestampRFC3339;
   // The time at which the proposal should be executed if adopted.
   execution_plan : ProposalExecutionSchedule;
-  // The metadata associated with the proposal.
-  //
-  // The metadata is a list of key-value pairs that can be used to store
-  // additional information about the proposal.
-  metadata : vec record { text; text };
 };
 
 // The input type for creating a proposal.
@@ -781,7 +776,7 @@ type Network = record {
   name : text;
 };
 
-// Tranders can have additional information attached to them,
+// Transfers can have additional information attached to them,
 // this type can be used to represent the additional info.
 type TransferMetadata = record {
   // The key of the additional info (e.g. "nonce",  "tag", "memo", etc...)
@@ -872,6 +867,15 @@ type AccountPolicies = record {
   edit : opt ProposalPolicyCriteria;
 };
 
+// Account can have additional information attached to them,
+// this type can be used to represent the additional info.
+type AccountMetadata = record {
+  // The key of the additional info (e.g. "contract")
+  key : text;
+  // The value of the additional info (e.g. "0x1234")
+  value : text;
+};
+
 // A record type that can be used to represent a account in the canister.
 type Account = record {
   // The internal account id.
@@ -896,7 +900,7 @@ type Account = record {
   // The policies to enforce when interacting with the account.
   policies : AccountPolicies;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
-  metadata : vec record { text; text };
+  metadata : vec AccountMetadata;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
@@ -946,6 +950,15 @@ type FetchAccountBalancesResult = variant {
   Err : Error;
 };
 
+// Assets can have additional information attached to them,
+// this type can be used to represent the additional info.
+type AssetMetadata = record {
+  // The key of the additional info (e.g. "logo")
+  key : text;
+  // The value of the additional info (e.g. "https://example.com/logo.png")
+  value : text;
+};
+
 // A record type that can be used to represent an asset in the wallet.
 type WalletAsset = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
@@ -962,7 +975,7 @@ type WalletAsset = record {
   // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
   // also, in the case of non-native assets, it can contain other required
   // information (e.g. `{"address": "0x1234"}`).
-  metadata : vec record { text; text };
+  metadata : vec AssetMetadata;
 };
 
 // A record type that can be used to represent the wallet features.

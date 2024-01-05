@@ -7,6 +7,7 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 use std::{collections::HashMap, hash::Hash};
+use wallet_api::AccountMetadataDTO;
 
 /// The account metadata key for the asset symbol;
 pub const ACCOUNT_METADATA_SYMBOL_KEY: &str = "symbol";
@@ -50,7 +51,7 @@ pub struct Account {
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<AccountMetadataDTO>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -69,7 +70,7 @@ pub struct AccountKey {
     pub id: AccountId,
 }
 
-fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<AccountError> {
+fn validate_metadata(metadata: &Vec<AccountMetadataDTO>) -> ModelValidatorResult<AccountError> {
     if metadata.len() > Account::MAX_METADATA as usize {
         return Err(AccountError::ValidationError {
             info: format!(
@@ -79,8 +80,8 @@ fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<A
         });
     }
 
-    for (key, value) in metadata.iter() {
-        if key.len() > Account::MAX_METADATA_KEY_LEN as usize {
+    for kv in metadata.iter() {
+        if kv.key.len() > Account::MAX_METADATA_KEY_LEN as usize {
             return Err(AccountError::ValidationError {
                 info: format!(
                     "Account metadata key length exceeds the maximum allowed: {}",
@@ -89,7 +90,7 @@ fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<A
             });
         }
 
-        if value.len() > Account::MAX_METADATA_VALUE_LEN as usize {
+        if kv.value.len() > Account::MAX_METADATA_VALUE_LEN as usize {
             return Err(AccountError::ValidationError {
                 info: format!(
                     "Account metadata value length exceeds the maximum allowed: {}",
@@ -176,7 +177,7 @@ impl Account {
     pub fn metadata_map(&self) -> HashMap<String, String> {
         self.metadata
             .iter()
-            .map(|(key, value)| (key.to_owned(), value.to_owned()))
+            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
             .collect()
     }
 }
@@ -189,8 +190,13 @@ mod tests {
     #[test]
     fn fail_metadata_validation_too_many() {
         let mut account = mock_account();
-        account.metadata =
-            vec![("a".repeat(25), "b".repeat(25)); Account::MAX_METADATA as usize + 1];
+        account.metadata = vec![
+            AccountMetadataDTO {
+                key: "a".repeat(25),
+                value: "b".repeat(25)
+            };
+            Account::MAX_METADATA as usize + 1
+        ];
 
         let result = validate_metadata(&account.metadata);
 
@@ -206,8 +212,13 @@ mod tests {
     #[test]
     fn test_metadata_validation() {
         let mut account = mock_account();
-        account.metadata =
-            vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1];
+        account.metadata = vec![
+            AccountMetadataDTO {
+                key: "a".repeat(24),
+                value: "b".repeat(24)
+            };
+            Account::MAX_METADATA as usize - 1
+        ];
 
         let result = validate_metadata(&account.metadata);
 
@@ -366,7 +377,13 @@ pub mod account_test_utils {
             },
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
-            metadata: vec![("a".repeat(24), "b".repeat(24)); Account::MAX_METADATA as usize - 1],
+            metadata: vec![
+                AccountMetadataDTO {
+                    key: "a".repeat(24),
+                    value: "b".repeat(24)
+                };
+                Account::MAX_METADATA as usize - 1
+            ],
             symbol: "ICP".to_string(),
         }
     }

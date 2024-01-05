@@ -1,6 +1,12 @@
 use crate::{CriteriaDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AccountMetadataDTO {
+    pub key: String,
+    pub value: String,
+}
+
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
     pub id: UuidDTO,
@@ -13,7 +19,7 @@ pub struct AccountDTO {
     pub decimals: u32,
     pub policies: AccountPoliciesDTO,
     pub balance: Option<AccountBalanceInfoDTO>,
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<AccountMetadataDTO>,
     pub last_modification_timestamp: String,
 }
 
@@ -43,7 +49,7 @@ pub struct AddAccountOperationInput {
     pub policies: AccountPoliciesDTO,
     pub blockchain: String,
     pub standard: String,
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<AccountMetadataDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

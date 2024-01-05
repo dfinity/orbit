@@ -17,7 +17,6 @@ impl From<Proposal> for ProposalDTO {
                 .hyphenated()
                 .to_string(),
             status: proposal.status.into(),
-            metadata: proposal.metadata,
             operation: proposal.operation.into(),
             title: proposal.title,
             summary: proposal.summary,
@@ -53,7 +52,6 @@ impl Proposal {
             expiration_dt,
             execution_plan,
             votes: vec![],
-            metadata: vec![],
             created_timestamp: time(),
             last_modification_timestamp: time(),
         }

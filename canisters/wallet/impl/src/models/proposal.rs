@@ -16,7 +16,7 @@ use ic_canister_core::{
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::stable_object;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 /// The proposal id, which is a UUID.
 pub type ProposalId = UUID;
@@ -50,8 +50,6 @@ pub struct Proposal {
     pub execution_plan: ProposalExecutionPlan,
     /// The votes that the proposal has received.
     pub votes: Vec<ProposalVote>,
-    /// The proposal metadata key-value pairs, where the key is unique and the first entry in the tuple.
-    pub metadata: Vec<(String, String)>,
     /// The timestamp of the proposal creation.
     pub created_timestamp: Timestamp,
     /// The last time the record was updated or created.
@@ -80,42 +78,8 @@ fn validate_votes(votes: &Vec<ProposalVote>) -> ModelValidatorResult<ProposalErr
     Ok(())
 }
 
-fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<ProposalError> {
-    if metadata.len() > Proposal::MAX_METADATA_ENTRIES as usize {
-        return Err(ProposalError::ValidationError {
-            info: format!(
-                "Proposal metadata count exceeds the maximum allowed: {}",
-                Proposal::MAX_METADATA_ENTRIES
-            ),
-        });
-    }
-
-    for (key, value) in metadata.iter() {
-        if key.len() > Proposal::MAX_METADATA_KEY_LEN as usize {
-            return Err(ProposalError::ValidationError {
-                info: format!(
-                    "Proposal metadata key length exceeds the maximum allowed: {}",
-                    Proposal::MAX_METADATA_KEY_LEN
-                ),
-            });
-        }
-
-        if value.len() > Proposal::MAX_METADATA_VALUE_LEN as usize {
-            return Err(ProposalError::ValidationError {
-                info: format!(
-                    "Proposal metadata value length exceeds the maximum allowed: {}",
-                    Proposal::MAX_METADATA_VALUE_LEN
-                ),
-            });
-        }
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<ProposalError> for Proposal {
     fn validate(&self) -> ModelValidatorResult<ProposalError> {
-        validate_metadata(&self.metadata)?;
         validate_votes(&self.votes)?;
 
         Ok(())
@@ -148,13 +112,6 @@ impl Proposal {
             });
 
         users
-    }
-
-    pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|(key, value)| (key.to_owned(), value.to_owned()))
-            .collect()
     }
 
     /// Gives the default expiration date for a proposal which is 7 days from the current time.
@@ -235,52 +192,6 @@ mod tests {
     use super::proposal_test_utils::mock_proposal;
     use super::*;
     use crate::models::ProposalVoteStatus;
-
-    #[test]
-    fn fail_proposal_metadata_too_many_entries() {
-        let mut proposal = mock_proposal();
-        proposal.metadata = vec![
-            ("foo".to_string(), "bar".to_string());
-            Proposal::MAX_METADATA_ENTRIES as usize + 1
-        ];
-
-        let result = validate_metadata(&proposal.metadata);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ProposalError::ValidationError {
-                info: "Proposal metadata count exceeds the maximum allowed: 10".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn test_proposal_metadata_validation() {
-        let mut proposal = mock_proposal();
-        proposal.metadata = vec![("a".repeat(24), "b".repeat(24)); 10];
-
-        let result = validate_metadata(&proposal.metadata);
-
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn fail_proposal_metadata_key_too_long() {
-        let mut proposal = mock_proposal();
-        proposal.metadata = vec![("a".repeat(25), "b".repeat(24))];
-
-        let result = validate_metadata(&proposal.metadata);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ProposalError::ValidationError {
-                info: "Proposal metadata key length exceeds the maximum allowed: 24".to_string()
-            }
-        );
-    }
-
     #[test]
     fn fail_proposal_votes_too_many_entries() {
         let mut proposal = mock_proposal();
@@ -360,7 +271,6 @@ pub mod proposal_test_utils {
                 decided_dt: 0,
                 last_modification_timestamp: 0,
             }],
-            metadata: vec![("foo".to_string(), "bar".to_string())],
             created_timestamp: 0,
             last_modification_timestamp: 0,
         }

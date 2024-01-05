@@ -12,6 +12,7 @@ use std::{
     fmt::{Display, Formatter},
     hash::Hash,
 };
+use wallet_api::TransferMetadataDTO;
 
 pub const METADATA_MEMO_KEY: &str = "memo";
 
@@ -69,7 +70,7 @@ pub struct Transfer {
     /// The blockchain network that the transfer will be executed on.
     pub blockchain_network: String,
     /// The transfer metadata (e.g. `memo`, `description`, etc.)
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<TransferMetadataDTO>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
     /// The creation timestamp of the transfer.
@@ -102,7 +103,7 @@ impl Transfer {
     pub fn metadata_map(&self) -> HashMap<String, String> {
         self.metadata
             .iter()
-            .map(|(key, value)| (key.to_owned(), value.to_owned()))
+            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
             .collect()
     }
 
@@ -113,7 +114,7 @@ impl Transfer {
         initiator_user: UUID,
         from_account: UUID,
         to_address: String,
-        metadata: Vec<(String, String)>,
+        metadata: Vec<TransferMetadataDTO>,
         amount: candid::Nat,
         fee: candid::Nat,
         blockchain_network: String,
@@ -135,7 +136,7 @@ impl Transfer {
     }
 }
 
-fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<TransferError> {
+fn validate_metadata(metadata: &Vec<TransferMetadataDTO>) -> ModelValidatorResult<TransferError> {
     if metadata.len() > Transfer::MAX_METADATA as usize {
         return Err(TransferError::ValidationError {
             info: format!(
@@ -145,8 +146,8 @@ fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<T
         });
     }
 
-    for (key, value) in metadata.iter() {
-        if key.len() > Transfer::MAX_METADATA_KEY_LEN as usize {
+    for kv in metadata.iter() {
+        if kv.key.len() > Transfer::MAX_METADATA_KEY_LEN as usize {
             return Err(TransferError::ValidationError {
                 info: format!(
                     "Transfer metadata key length exceeds the maximum allowed: {}",
@@ -155,7 +156,7 @@ fn validate_metadata(metadata: &Vec<(String, String)>) -> ModelValidatorResult<T
             });
         }
 
-        if value.len() > Transfer::MAX_METADATA_VALUE_LEN as usize {
+        if kv.value.len() > Transfer::MAX_METADATA_VALUE_LEN as usize {
             return Err(TransferError::ValidationError {
                 info: format!(
                     "Transfer metadata value length exceeds the maximum allowed: {}",
@@ -218,7 +219,10 @@ mod tests {
     #[test]
     fn test_metadata_validation() {
         let mut transfer = mock_transfer();
-        transfer.metadata = vec![("foo".to_string(), "bar".to_string())];
+        transfer.metadata = vec![TransferMetadataDTO {
+            key: "foo".to_string(),
+            value: "bar".to_string(),
+        }];
 
         let result = validate_metadata(&transfer.metadata);
 
@@ -228,8 +232,13 @@ mod tests {
     #[test]
     fn fail_operation_metadata_too_many_entries() {
         let mut transfer = mock_transfer();
-        transfer.metadata =
-            vec![("foo".to_string(), "bar".to_string()); Transfer::MAX_METADATA as usize + 1];
+        transfer.metadata = vec![
+            TransferMetadataDTO {
+                key: "foo".to_string(),
+                value: "bar".to_string()
+            };
+            Transfer::MAX_METADATA as usize + 1
+        ];
 
         let result = validate_metadata(&transfer.metadata);
 
