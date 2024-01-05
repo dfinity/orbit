@@ -14,11 +14,9 @@ export const idlFactory = ({ IDL }) => {
     'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
   const UserId = IDL.Text;
-  const ConfirmUserIdentityInput = IDL.Record({ 'user_id' : UserId });
   const TimestampRFC3339 = IDL.Text;
   const User = IDL.Record({
     'id' : UserId,
-    'unconfirmed_identities' : IDL.Vec(IDL.Principal),
     'access_roles' : IDL.Vec(UserRole),
     'last_modification_timestamp' : TimestampRFC3339,
     'identities' : IDL.Vec(IDL.Principal),
@@ -27,10 +25,6 @@ export const idlFactory = ({ IDL }) => {
     'code' : IDL.Text,
     'message' : IDL.Opt(IDL.Text),
     'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
-  });
-  const ConfirmUserIdentityResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'user' : User }),
-    'Err' : Error,
   });
   const ProposalExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
@@ -405,11 +399,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   return IDL.Service({
-    'confirm_user_identity' : IDL.Func(
-        [ConfirmUserIdentityInput],
-        [ConfirmUserIdentityResult],
-        [],
-      ),
     'create_proposal' : IDL.Func(
         [CreateProposalInput],
         [CreateProposalResult],

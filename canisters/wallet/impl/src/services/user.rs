@@ -7,7 +7,7 @@ use crate::{
         CallContext,
     },
     errors::{AccessControlError, UserError},
-    mappers::{HelperMapper, UserMapper, USER_PRIVILEGES},
+    mappers::{UserMapper, USER_PRIVILEGES},
     models::{AddUserOperationInput, EditUserOperationInput, User, UserId, ADMIN_GROUP_ID},
     repositories::UserRepository,
 };
@@ -18,7 +18,7 @@ use ic_canister_core::repository::Repository;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
-use wallet_api::{ConfirmUserIdentityInput, ListUsersInput, UserPrivilege};
+use wallet_api::{ListUsersInput, UserPrivilege};
 
 lazy_static! {
     pub static ref USER_SERVICE: Arc<UserService> =
@@ -103,33 +103,6 @@ impl UserService {
         let mut user = self.get_user(&input.user_id)?;
 
         user.update_with(input)?;
-        user.validate()?;
-
-        self.user_repository.insert(user.to_key(), user.to_owned());
-
-        Ok(user)
-    }
-
-    /// Confirms the identity associated with the given user id and returns the updated user.
-    pub async fn confirm_user_identity(
-        &self,
-        input: ConfirmUserIdentityInput,
-        caller_identity: Principal,
-    ) -> ServiceResult<User> {
-        self.assert_identity_has_no_associated_user(&caller_identity)?;
-
-        let user_id = HelperMapper::to_uuid(input.user_id)?;
-        let mut user = self.get_user(user_id.as_bytes())?;
-
-        if !user.unconfirmed_identities.contains(&caller_identity) {
-            Err(UserError::Forbidden {
-                user: Uuid::from_bytes(user.id).hyphenated().to_string(),
-            })?
-        }
-
-        user.unconfirmed_identities
-            .retain(|i| *i != caller_identity);
-        user.identities.push(caller_identity);
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.to_owned());
@@ -294,7 +267,6 @@ mod tests {
         let ctx: TestContext = setup();
         let input = AddUserOperationInput {
             identities: vec![Principal::from_slice(&[2; 29])],
-            unconfirmed_identities: vec![],
             groups: vec![*ADMIN_GROUP_ID],
             status: UserStatus::Active,
             name: None,
@@ -305,35 +277,7 @@ mod tests {
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
         assert_eq!(user.identities, vec![Principal::from_slice(&[2; 29])]);
-        assert_eq!(user.unconfirmed_identities, vec![]);
         assert_eq!(user.groups, vec![*ADMIN_GROUP_ID]);
-    }
-
-    #[tokio::test]
-    async fn confirm_user_identity() {
-        let ctx: TestContext = setup();
-        let mut user = user_test_utils::mock_user();
-        user.identities = vec![Principal::anonymous()];
-        user.unconfirmed_identities = vec![ctx.call_context.caller()];
-
-        ctx.repository.insert(user.to_key(), user.clone());
-
-        let input = ConfirmUserIdentityInput {
-            user_id: Uuid::from_bytes(user.id).hyphenated().to_string(),
-        };
-
-        let result = ctx
-            .service
-            .confirm_user_identity(input, ctx.call_context.caller())
-            .await;
-        assert!(result.is_ok());
-
-        let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-        assert_eq!(
-            user.identities,
-            vec![Principal::anonymous(), ctx.call_context.caller()]
-        );
-        assert!(user.unconfirmed_identities.is_empty());
     }
 
     #[tokio::test]
@@ -341,14 +285,12 @@ mod tests {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
         user.identities = vec![Principal::anonymous()];
-        user.unconfirmed_identities = vec![ctx.call_context.caller()];
 
         ctx.repository.insert(user.to_key(), user.clone());
 
         let input = EditUserOperationInput {
             user_id: user.id,
             identities: Some(vec![ctx.call_context.caller()]),
-            unconfirmed_identities: None,
             groups: None,
             name: None,
         };
@@ -358,7 +300,6 @@ mod tests {
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
         assert_eq!(user.identities, vec![ctx.call_context.caller()]);
-        assert!(user.unconfirmed_identities.is_empty());
     }
 
     #[test]

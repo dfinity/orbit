@@ -146,7 +146,6 @@ pub fn add_user(
     let add_user = ProposalOperationInput::AddUser(AddUserOperationInput {
         name: None,
         identities: vec![user_id],
-        unconfirmed_identities: vec![],
         groups: group_ids,
         status: UserStatusDTO::Active,
     });
