@@ -19,7 +19,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const User = IDL.Record({
     'id' : UserId,
-    'unconfirmed_identities' : IDL.Vec(UserIdentity),
     'name' : IDL.Opt(IDL.Text),
     'wallets' : IDL.Vec(UserWallet),
     'identities' : IDL.Vec(UserIdentity),

@@ -52,9 +52,6 @@ export interface AddUserOperationInput {
 export type ApprovalThresholdPolicy = { 'VariableThreshold' : number } |
   { 'FixedThreshold' : number };
 export type AssetSymbol = string;
-export interface ConfirmUserIdentityInput { 'user_id' : UserId }
-export type ConfirmUserIdentityResult = { 'Ok' : { 'user' : User } } |
-  { 'Err' : Error };
 export interface CreateProposalInput {
   'title' : [] | [string],
   'execution_plan' : [] | [ProposalExecutionSchedule],
@@ -295,7 +292,6 @@ export type TransferStatus = { 'Failed' : { 'reason' : string } } |
 export type UUID = string;
 export interface User {
   'id' : UserId,
-  'unconfirmed_identities' : Array<Principal>,
   'access_roles' : Array<UserRole>,
   'last_modification_timestamp' : TimestampRFC3339,
   'identities' : Array<Principal>,
@@ -339,10 +335,6 @@ export interface WalletSettings {
 export type WalletSettingsResult = { 'Ok' : { 'settings' : WalletSettings } } |
   { 'Err' : Error };
 export interface _SERVICE {
-  'confirm_user_identity' : ActorMethod<
-    [ConfirmUserIdentityInput],
-    ConfirmUserIdentityResult
-  >,
   'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,
   'edit_user' : ActorMethod<[EditUserInput], EditUserResult>,
   'features' : ActorMethod<[], GetFeaturesResult>,

@@ -6,21 +6,11 @@ use crate::{
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
-use ic_cdk_macros::{query, update};
+use ic_cdk_macros::query;
 use lazy_static::lazy_static;
-use wallet_api::{
-    ConfirmUserIdentityInput, ConfirmUserIdentityResponse, GetUserInput, GetUserResponse,
-    ListUsersInput, ListUsersResponse, MeResponse,
-};
+use wallet_api::{GetUserInput, GetUserResponse, ListUsersInput, ListUsersResponse, MeResponse};
 
 // Canister entrypoints for the controller.
-#[update(name = "confirm_user_identity")]
-async fn confirm_user_identity(
-    input: ConfirmUserIdentityInput,
-) -> ApiResult<ConfirmUserIdentityResponse> {
-    CONTROLLER.confirm_user_identity(input).await
-}
-
 #[query(name = "get_user")]
 async fn get_user(input: GetUserInput) -> ApiResult<GetUserResponse> {
     CONTROLLER.get_user(input).await
@@ -49,24 +39,6 @@ pub struct UserController {
 impl UserController {
     fn new(user_service: UserService) -> Self {
         Self { user_service }
-    }
-
-    /// Confirms the user identity if the provided user has the caller identity as unconfirmed.
-    ///
-    /// No authorization required since the user will be calling this
-    /// with a new identity that is not yet confirmed.
-    async fn confirm_user_identity(
-        &self,
-        input: ConfirmUserIdentityInput,
-    ) -> ApiResult<ConfirmUserIdentityResponse> {
-        let ctx = call_context();
-        let user = self
-            .user_service
-            .confirm_user_identity(input, ctx.caller())
-            .await?
-            .into();
-
-        Ok(ConfirmUserIdentityResponse { user })
     }
 
     #[with_middleware(

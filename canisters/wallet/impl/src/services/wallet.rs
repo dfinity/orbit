@@ -344,7 +344,6 @@ mod install_canister_handlers {
                     groups: vec![ADMIN_GROUP_ID.to_owned()],
                     name: None,
                     status: UserStatus::Active,
-                    unconfirmed_identities: vec![],
                 })
                 .await
                 .expect("Failed to register admin user");
