@@ -1,25 +1,25 @@
 <template>
   <VSelect
     v-model="selectedWallet"
-    :loading="activeWalletStore.loading"
+    :loading="session.loading"
     class="wallet-selector"
     variant="filled"
     hide-details
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
-    :items="walletStore.wallets"
+    :items="session.user?.wallets || []"
   >
     <template #item="{ props, item }">
       <VListItem
         v-bind="props"
-        :title="walletStore.computedWalletName(Principal.fromText(item.raw.canisterId))"
+        :title="session.computedWalletName(Principal.fromText(item.raw.canisterId))"
         :subtitle="item.raw.canisterId"
       />
     </template>
     <template #selection="{ item }">
       <VListItem
-        v-if="walletStore.hasWallets"
-        :title="walletStore.computedWalletName(Principal.fromText(item.raw.canisterId))"
+        v-if="session.hasWallets"
+        :title="session.computedWalletName(Principal.fromText(item.raw.canisterId))"
         :subtitle="item.raw.canisterId"
         :prepend-icon="mdiWallet"
       />
@@ -31,25 +31,21 @@
 import { computed } from 'vue';
 import { Principal } from '@dfinity/principal';
 import { mdiWallet } from '@mdi/js';
-import { useActiveWalletStore, useWalletStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores';
 
-const walletStore = useWalletStore();
-const activeWalletStore = useActiveWalletStore();
+const session = useSessionStore();
 
 const selectedWallet = computed({
   get(): string | null {
-    return activeWalletStore.hasUser ? activeWalletStore.walletId.toString() : null;
+    return session.selectedWallet ? session.selectedWallet.toText() : null;
   },
   set(newWalletId: string | null) {
     if (!newWalletId) {
-      walletStore._main = null;
-      activeWalletStore.reset();
+      session.unloadWallet();
       return;
     }
 
-    activeWalletStore.load(Principal.fromText(newWalletId)).then(() => {
-      walletStore._main = activeWalletStore.walletId.toString();
-    });
+    session.loadWallet(Principal.fromText(newWalletId));
   },
 });
 </script>

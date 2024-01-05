@@ -2,26 +2,21 @@ import { AnonymousIdentity, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { icAgent } from '~/core/IcAgent';
-import { Maybe } from '~/types';
+import { icAgent } from '~/core/ic-agent';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey, router, services } from '~/ui/modules';
-import { useActiveWalletStore, useWalletStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
 
 export interface AuthStoreState {
   initialized: boolean;
+  userId: Principal | null;
   identity: Identity | null;
-  _identities: string[];
-  userId: string | null;
-  userName: string | null;
 }
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthStoreState => ({
     initialized: false,
     identity: null,
-    _identities: [],
     userId: null,
-    userName: null,
   }),
   getters: {
     isAuthenticated(): boolean {
@@ -29,9 +24,6 @@ export const useAuthStore = defineStore('auth', {
     },
     principal(): string | undefined {
       return this.identity?.getPrincipal().toText();
-    },
-    identities(): Principal[] {
-      return this._identities.map(identity => Principal.fromText(identity));
     },
   },
   actions: {
@@ -42,6 +34,7 @@ export const useAuthStore = defineStore('auth', {
         }
         const authService = services().auth;
         const controlPanelService = services().controlPanel;
+        const sessionStore = useSessionStore();
         const cachedIdentity = await authService.identity();
 
         if (!cachedIdentity) {
@@ -53,63 +46,51 @@ export const useAuthStore = defineStore('auth', {
         icAgent.get().replaceIdentity(cachedIdentity);
         const user = await controlPanelService.getCurrentUser();
 
-        // loads information about the main wallet and the list of wallets for the user
-        await this.initWallets();
+        // loads information about the authenticated user
+        await sessionStore.load();
 
         this.identity = cachedIdentity;
-        this.userName = user.name.length ? user.name[0] : null;
         this.userId = user.id;
-        this._identities = user.identities.map(identity => identity.identity.toText());
       } catch (error) {
-        useWalletStore().reset();
-        this.resetIdentity();
+        this.reset();
 
         logger.error(`Application failed to initialize the state`, { error });
       } finally {
         this.initialized = true;
       }
     },
-    async initWallets(): Promise<void> {
-      const walletStore = useWalletStore();
-      // loads information about the main wallet and the list of wallets for the user
-      await walletStore.init();
-      if (walletStore.main !== null && !walletStore.main.isAnonymous()) {
-        // this does not need to be awaited, it will be loaded in the background making the initial load faster
-        await useActiveWalletStore().load(walletStore.main);
-      }
-    },
     async signIn(): Promise<void> {
       const authService = services().auth;
-
-      this.identity = await authService.login();
-      icAgent.get().replaceIdentity(this.identity);
+      const sessionStore = useSessionStore();
 
       try {
+        this.identity = await authService.login();
+        icAgent.get().replaceIdentity(this.identity);
+
         const controlPanelService = services().controlPanel;
         const isRegistered = await controlPanelService.hasRegistration();
 
         if (isRegistered) {
           const user = await controlPanelService.getCurrentUser();
-          // loads information about the main wallet and the list of wallets for the user
-          await this.initWallets();
 
-          this.userName = user.name.length ? user.name[0] : null;
+          // loads information about the authenticated user
+          await sessionStore.load();
+
           this.userId = user.id;
-          this._identities = user.identities.map(identity => identity.identity.toText());
           return;
         }
 
-        const user = await controlPanelService.registerWithSharedWallet();
+        const user = await controlPanelService.register({
+          // a new user is created with an empty list of wallets, they can add them later
+          wallet_id: [],
+        });
 
-        // loads information about the main wallet and the list of wallets for the user
-        await this.initWallets();
+        // loads information about the authenticated user
+        await sessionStore.load();
 
-        this.userName = user.name.length ? user.name[0] : null;
         this.userId = user.id;
-        this._identities = user.identities.map(identity => identity.identity.toText());
       } catch (error) {
-        useWalletStore().reset();
-        this.resetIdentity();
+        this.reset();
         throw error;
       }
     },
@@ -117,21 +98,15 @@ export const useAuthStore = defineStore('auth', {
       const authService = services().auth;
 
       await authService.logout();
-      this.resetIdentity();
-      useWalletStore().reset();
+
+      this.reset();
       this.redirectToLogin();
     },
-    editUser(user: { name?: Maybe<string> }): void {
-      if (user.name !== undefined) {
-        this.userName = user.name;
-      }
-    },
-    resetIdentity(): void {
+    reset(): void {
       this.identity = null;
-      this.userName = null;
       this.userId = null;
-      this._identities = [];
 
+      useSessionStore().reset();
       icAgent.get().invalidateIdentity();
     },
     redirectToLogin(): void {

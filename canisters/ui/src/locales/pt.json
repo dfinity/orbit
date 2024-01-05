@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "{app} {'{'}Carteira{'}'}"
+    "title": "{app} Carteira",
+    "session_load_error": "Erro ao inicializar a sessão, por favor, tente novamente."
   },
   "login": {
     "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto",
@@ -31,7 +32,7 @@
     }
   },
   "footer": {
-    "copyright": "© 2023-{year} - DFINITY Foundation",
+    "copyright": "© 2023 - DFINITY Foundation",
     "github": {
       "description": "Código-fonte"
     }

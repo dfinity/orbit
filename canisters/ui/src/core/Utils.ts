@@ -74,8 +74,8 @@ export const timer = (
     immediate: true,
   },
 ): NodeJS.Timeout => {
-  if (opts.immediate) {
-    setTimeout(() => cb(), 100);
+  if (opts.immediate && intervalMs > 1) {
+    cb();
   }
 
   return setInterval(cb, intervalMs);

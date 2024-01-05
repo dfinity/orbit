@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import { logger } from '~/core';
-import { icAgent } from '~/core/IcAgent';
+import { icAgent } from '~/core/ic-agent';
 import App from '~/ui/App.vue';
 import { i18n, navigation, pinia, router, serviceManager, vuetify } from '~/ui/modules';
 import './App.scss';

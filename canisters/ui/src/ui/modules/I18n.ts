@@ -4,8 +4,8 @@ import { en as vuetifyEn } from 'vuetify/locale';
 import { Locale, appInitConfig } from '~/configs';
 import en from '~/locales/en.json';
 import { AppTranslations } from '~/types';
-import { useSettingsStore } from '~/ui/stores';
-import { services } from './ServiceManager';
+import { useAppStore } from '~/ui/stores';
+import { services } from './services';
 
 // i18n is used for internationalization, please refer to the documentation at https://vue-i18n.intlify.dev/
 const i18n = createI18n({
@@ -24,17 +24,17 @@ const i18n = createI18n({
 
 const routeGuard: NavigationGuard = async (to, _from, next) => {
   const paramLocale = to.params.locale ? String(to.params.locale) : undefined;
-  const settings = useSettingsStore();
+  const app = useAppStore();
   if (!paramLocale) {
-    return next(`/${settings.locale}${to.path === '/' ? '' : to.path}`);
+    return next(`/${app.locale}${to.path === '/' ? '' : to.path}`);
   }
 
   if (services().locales.isSupportedLocale(paramLocale)) {
-    await settings.useLocale(paramLocale);
+    await app.useLocale(paramLocale);
   }
 
   if (!services().locales.isSupportedLocale(paramLocale)) {
-    return next(`/${settings.locale}`);
+    return next(`/${app.locale}`);
   }
 
   return next();

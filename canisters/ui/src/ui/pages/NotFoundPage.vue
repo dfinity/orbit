@@ -21,13 +21,13 @@ import { mdiLink } from '@mdi/js';
 import { computed } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { defaultHomeRoute } from '~/ui/modules';
-import { useAuthStore, useSettingsStore } from '~/ui/stores';
+import { useAuthStore, useAppStore } from '~/ui/stores';
 
 const auth = useAuthStore();
-const settings = useSettingsStore();
+const app = useAppStore();
 
 const hideSidebar = computed(() => {
-  if (settings.isMobile) {
+  if (app.isMobile) {
     return false;
   }
 

@@ -54,11 +54,11 @@ import { ref } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import SettingsForm from '~/ui/components/SettingsForm.vue';
 import ActiveWalletSettings from '~/ui/components/ActiveWalletSettings.vue';
-import { useActiveWalletStore, useSettingsFormStore } from '~/ui/stores';
+import { useWalletStore, useSettingsFormStore } from '~/ui/stores';
 
 const tab = ref<'settingsForm' | 'activeWallet'>('settingsForm');
 const settings = useSettingsFormStore();
-const activeWallet = useActiveWalletStore();
+const activeWallet = useWalletStore();
 </script>
 
 <style scoped lang="scss">

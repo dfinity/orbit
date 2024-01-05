@@ -1,6 +1,6 @@
 <template>
   <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
-    <VNavigationDrawer v-model="settings.showSidebar" class="sidebar" width="260" color="primary">
+    <VNavigationDrawer v-model="app.showSidebar" class="sidebar" width="260" color="primary">
       <div class="sidebar__header">
         <slot name="sidebar-header">
           <SidenavHeader v-if="auth.isAuthenticated" />
@@ -30,14 +30,14 @@
               <VBtn
                 v-if="auth.isAuthenticated"
                 :icon="mdiMenuOpen"
-                @click.prevent="settings.toogleSidebar"
+                @click.prevent="app.toogleSidebar"
               />
             </slot>
           </div>
           <VSpacer />
           <div class="toolbar__actions">
             <slot name="toolbar-actions">
-              <VBtn :icon="themeSwitcherIcon" @click.prevent="settings.toogleTheme" />
+              <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
               <LanguageSelector />
               <WalletSelector v-if="auth.isAuthenticated" />
             </slot>
@@ -117,10 +117,10 @@ import WalletSelector from '~/ui/components/WalletSelector.vue';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
-import { useAuthStore, useSettingsStore } from '~/ui/stores';
+import { useAuthStore, useAppStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
 
-const settings = useSettingsStore();
+const app = useAppStore();
 const auth = useAuthStore();
 
 const props = inject('pageLayoutProps', {
@@ -134,17 +134,17 @@ const props = inject('pageLayoutProps', {
 });
 
 const icLogoHorizontal = computed(() => {
-  return settings.isDarkTheme
+  return app.isDarkTheme
     ? '/images/internet-computer-horizontal-light.png'
     : '/images/internet-computer-horizontal-light.png';
 });
 
 const ghMarkImg = computed(() => {
-  return settings.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
+  return app.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
 });
 
 const themeSwitcherIcon = computed(() => {
-  return settings.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
+  return app.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
 });
 </script>
 

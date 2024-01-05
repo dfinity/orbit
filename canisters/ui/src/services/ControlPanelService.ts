@@ -1,6 +1,7 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { appInitConfig } from '~/configs';
-import { icAgent } from '~/core/IcAgent';
+import { icAgent } from '~/core/ic-agent';
 import { idlFactory } from '~/generated/control-panel';
 import {
   User,
@@ -34,15 +35,6 @@ export class ControlPanelService {
     return await this.getCurrentUser()
       .then(_ => true)
       .catch(() => false);
-  }
-
-  async registerWithSharedWallet(): Promise<User> {
-    return this.register({
-      wallet: {
-        SharedWallet: null,
-      },
-      name: [],
-    });
   }
 
   async register(input: RegisterUserInput): Promise<User> {
@@ -83,5 +75,15 @@ export class ControlPanelService {
     }
 
     return result.Ok.wallets;
+  }
+
+  async deployWallet(): Promise<Principal> {
+    const result = await this.actor.deploy_wallet();
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.canister_id;
   }
 }

@@ -1,9 +1,9 @@
 <template>
   <PageLayout :background-color="pageBackgroundColor" hide-toolbar-context>
-    <template v-if="!settings.isMobile" #sidebar-header>
-      <h1 class="signin__header__title">{{ $t('app.title', { app: settings.appName }) }}</h1>
+    <template v-if="!app.isMobile" #sidebar-header>
+      <h1 class="signin__header__title">{{ $t('app.title', { app: app.appName }) }}</h1>
     </template>
-    <template v-if="!settings.isMobile" #sidebar-nav>
+    <template v-if="!app.isMobile" #sidebar-nav>
       <div class="signin__action">
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}
@@ -39,7 +39,7 @@
 
     <template #main-body>
       <div class="main__body__content">
-        <VSheet :elevation="!settings.isMobile ? 1 : 0" class="main__body__content__card mb-4">
+        <VSheet :elevation="!app.isMobile ? 1 : 0" class="main__body__content__card mb-4">
           <VContainer fluid>
             <VRow>
               <VCol cols="2" class="main__body__content__card__icon">
@@ -59,7 +59,7 @@
             </VRow>
           </VContainer>
         </VSheet>
-        <VSheet :elevation="!settings.isMobile ? 1 : 0" class="main__body__content__card">
+        <VSheet :elevation="!app.isMobile ? 1 : 0" class="main__body__content__card">
           <VContainer fluid>
             <VRow>
               <VCol cols="2" class="main__body__content__card__icon">
@@ -79,7 +79,7 @@
             </VRow>
           </VContainer>
         </VSheet>
-        <div v-if="settings.isMobile" class="main__body__content__symbol">
+        <div v-if="app.isMobile" class="main__body__content__symbol">
           <VImg :src="appLogoImg"></VImg>
         </div>
       </div>
@@ -93,9 +93,9 @@ import { computed, ref } from 'vue';
 import { logger } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
-import { useAuthStore, useSettingsStore } from '~/ui/stores';
+import { useAuthStore, useAppStore } from '~/ui/stores';
 
-const settings = useSettingsStore();
+const app = useAppStore();
 const auth = useAuthStore();
 
 const isAuthenticating = ref(false);
@@ -108,10 +108,9 @@ const performLogin = async (): Promise<void> => {
     .catch((e: Error) => {
       logger.error(`Authentication failed`, e);
 
-      settings.setNotification({
+      app.sendNotification({
         message: i18n.global.t('login.auth_failed'),
         type: 'error',
-        show: true,
       });
     })
     .finally(() => {
@@ -120,11 +119,11 @@ const performLogin = async (): Promise<void> => {
 };
 
 const appLogoImg = computed(() => {
-  return settings.isDarkTheme ? '/images/app-logo-dark.png' : '/images/app-logo-light.png';
+  return app.isDarkTheme ? '/images/app-logo-dark.png' : '/images/app-logo-light.png';
 });
 
 const pageBackgroundColor = computed(() => {
-  return settings.isDarkTheme ? undefined : 'surface';
+  return app.isDarkTheme ? undefined : 'surface';
 });
 </script>
 

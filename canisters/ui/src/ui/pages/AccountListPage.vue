@@ -126,16 +126,15 @@ import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
-import { useActiveWalletStore, useSettingsStore } from '~/ui/stores';
+import { useWalletStore, useAppStore } from '~/ui/stores';
 
-const activeWallet = useActiveWalletStore();
-const settings = useSettingsStore();
+const activeWallet = useWalletStore();
+const app = useAppStore();
 
 const copyAddressToClipboard = (address: string) => {
   navigator.clipboard.writeText(address);
 
-  settings.setNotification({
-    show: true,
+  app.sendNotification({
     type: 'success',
     message: i18n.global.t('wallets.account_address_copied_to_clipboard'),
   });

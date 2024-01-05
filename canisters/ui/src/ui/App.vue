@@ -3,15 +3,17 @@
 </template>
 
 <script lang="ts" setup>
+import { onMounted } from 'vue';
 import { watch } from 'vue';
 import { useTheme } from 'vuetify';
-import { useSettingsStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores';
+import { initWorkers } from '~/ui/modules/workers';
 
-const settings = useSettingsStore();
+const app = useAppStore();
 const vuetifyTheme = useTheme();
 
 watch(
-  () => settings.theme,
+  () => app.theme,
   theme => {
     vuetifyTheme.global.name.value = theme;
   },
@@ -19,4 +21,6 @@ watch(
     immediate: true,
   },
 );
+
+onMounted(async () => await initWorkers());
 </script>

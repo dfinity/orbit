@@ -4,8 +4,8 @@ import HomePage from '~/ui/pages/HomePage.vue';
 import LoginPage from '~/ui/pages/LoginPage.vue';
 import NotFoundPage from '~/ui/pages/NotFoundPage.vue';
 import { AuthState } from '~/ui/types';
-import { i18nRouteGuard } from './I18n';
-import { services } from './ServiceManager';
+import { i18nRouteGuard } from './i18n';
+import { services } from './services';
 
 export const redirectToKey = 'redirectTo';
 export const defaultLoginRoute = 'Login';
@@ -85,6 +85,16 @@ const router = createRouter({
           path: 'settings',
           name: 'Settings',
           component: () => import('~/ui/pages/SettingsPage.vue'),
+          meta: {
+            auth: {
+              requireState: AuthState.Authenticated,
+            },
+          },
+        },
+        {
+          path: 'connect',
+          name: 'Connect',
+          component: () => import('~/ui/pages/ConnectPage.vue'),
           meta: {
             auth: {
               requireState: AuthState.Authenticated,

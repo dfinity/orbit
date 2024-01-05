@@ -1,4 +1,4 @@
-import { defaultLocale, supportedLocales } from '~/configs/I18n';
+import { defaultLocale, supportedLocales } from '~/configs/i18n';
 import { AppInitConfig } from '~/types';
 
 const appInitConfig: AppInitConfig = {

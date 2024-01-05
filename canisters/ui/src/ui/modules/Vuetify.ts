@@ -3,7 +3,7 @@ import { ThemeDefinition, createVuetify } from 'vuetify';
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg';
 import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n';
 import { Locale } from '~/configs';
-import { i18n } from './I18n';
+import { i18n } from './i18n';
 import { services } from '~/ui/modules';
 
 const light: ThemeDefinition = {

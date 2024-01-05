@@ -5,12 +5,12 @@
         <VRow>
           <VCol md="6" sm="12">
             <h1 class="text-h4">{{ $t('home.welcome_back') }}</h1>
-            <p v-if="activeWallet.hasUser" class="info-box">
+            <p v-if="wallet.hasUser" class="info-box">
               <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
               <span>
                 {{
-                  activeWallet.metrics.notifications > 0
-                    ? $t('home.notifications.some', { count: activeWallet.metrics.notifications })
+                  wallet.metrics.notifications > 0
+                    ? $t('home.notifications.some', { count: wallet.metrics.notifications })
                     : $t('home.notifications.none')
                 }}
               </span>
@@ -33,7 +33,7 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
-          <VCol v-if="!activeWallet.hasUser" cols="12" md="4">
+          <VCol v-if="!wallet.hasUser" cols="12" md="4">
             <VCard color="surface" height="100%">
               <VCardTitle>{{ $t('wallets.no_wallet_user') }}</VCardTitle>
               <VCardSubtitle>{{ $t('wallets.please_register_to_continue') }}</VCardSubtitle>
@@ -42,19 +42,19 @@
               </VCardText>
             </VCard>
           </VCol>
-          <VCol v-if="activeWallet.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="activeWallet.accounts.loading">
+          <VCol v-if="wallet.hasUser" cols="12" md="4">
+            <VCard color="surface" height="100%" :loading="wallet.accounts.loading">
               <VCardTitle>{{ $t('terms.accounts') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
-                {{ activeWallet.metrics.accounts }}
+                {{ wallet.metrics.accounts }}
               </VCardText>
             </VCard>
           </VCol>
-          <VCol v-if="activeWallet.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="activeWallet.notifications.loading">
+          <VCol v-if="wallet.hasUser" cols="12" md="4">
+            <VCard color="surface" height="100%" :loading="wallet.notifications.loading">
               <VCardTitle>{{ $t('wallets.pending_proposals') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
-                {{ activeWallet.metrics.notifications }}
+                {{ wallet.metrics.notifications }}
               </VCardText>
             </VCard>
           </VCol>
@@ -67,10 +67,10 @@
 <script lang="ts" setup>
 import { mdiWallet, mdiBellRing, mdiCogs } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { useActiveWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 
-const activeWallet = useActiveWalletStore();
+const wallet = useWalletStore();
 </script>
 
 <style scoped lang="scss">

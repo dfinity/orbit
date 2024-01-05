@@ -1,109 +1,302 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { PolicyType } from '~/types';
+import {
+  WalletAsset,
+  WalletFeatures,
+  Proposal,
+  Account,
+  Notification,
+  UUID,
+} from '~/generated/wallet/wallet.did';
+import { WalletService } from '~/services';
+import { AuthenticatedUser } from '~/types';
 import { i18n, services } from '~/ui/modules';
-import { useSettingsStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores';
+import { LoadableItem } from '~/ui/types';
+import { accountsWorker, notificationsWorker } from '~/workers';
 
-export interface WalletItem {
-  name: string | null;
-  canisterId: string;
+export interface WalletMetrics {
+  accounts: number;
+  transfers: {
+    completed: number;
+    pending: number;
+  };
+  notifications: number;
+}
+
+export interface PendingAccount {
+  name: string;
+  proposalId: string;
 }
 
 export interface WalletStoreState {
+  canisterId: Principal | null;
   loading: boolean;
-  initialized: boolean;
-  _main: string | null;
-  wallets: WalletItem[];
+  user: AuthenticatedUser | null;
+  features: {
+    loading: boolean;
+    details: WalletFeatures | null;
+  };
+  accounts: {
+    loading: boolean;
+    items: Account[];
+  };
+  pendingAccounts: {
+    loading: boolean;
+    items: PendingAccount[];
+  };
+  notifications: {
+    loading: boolean;
+    items: LoadableItem<Notification>[];
+  };
 }
 
 export const useWalletStore = defineStore('wallet', {
   state: (): WalletStoreState => {
     return {
+      canisterId: null,
       loading: false,
-      initialized: false,
-      _main: null,
-      wallets: [],
+      user: null,
+      features: {
+        loading: false,
+        details: null,
+      },
+      accounts: {
+        loading: false,
+        items: [],
+      },
+      pendingAccounts: {
+        loading: false,
+        items: [],
+      },
+      notifications: {
+        loading: false,
+        items: [],
+      },
     };
   },
   getters: {
-    hasWallets(): boolean {
-      return !!this.wallets.length;
+    hasUser(): boolean {
+      return !!this.user;
     },
-    main(): Principal | null {
-      return this._main ? Principal.fromText(this._main) : null;
+    currentUser(): AuthenticatedUser {
+      if (!this.user) {
+        throw new Error('User not loaded');
+      }
+
+      return this.user as AuthenticatedUser;
     },
-    policyTypes(): string[] {
-      return Object.values(PolicyType);
+    userDisplayName(): string | null {
+      return this.currentUser.me.name?.[0] ?? null;
+    },
+    sortedAccounts(): Account[] {
+      return this.accounts.items.sort((a, b) => {
+        const firstDt = new Date(a.last_modification_timestamp).getTime();
+        const secondDt = new Date(b.last_modification_timestamp).getTime();
+
+        return secondDt - firstDt;
+      });
+    },
+    sortedNotifications(): LoadableItem<Notification>[] {
+      return this.notifications.items.sort((a, b) => {
+        const firstDt = new Date(a.data.created_at);
+        const secondDt = new Date(b.data.created_at);
+
+        return secondDt.getTime() - firstDt.getTime();
+      });
+    },
+    hasNotifications(): boolean {
+      return this.notifications.items.length > 0;
+    },
+    metrics(): WalletMetrics {
+      return {
+        accounts: this.accounts.items.length,
+        transfers: {
+          completed: 0,
+          pending: 0,
+        },
+        notifications: this.notifications.items.length,
+      };
+    },
+    supportedAssets(): WalletAsset[] {
+      return this.features.details?.supported_assets ?? [];
+    },
+    activeCanisterId(): Principal {
+      if (!this.canisterId) {
+        throw new Error('Wallet canister not selected');
+      }
+
+      return this.canisterId as Principal;
+    },
+    service(): WalletService {
+      return services().wallet.withWalletId(this.activeCanisterId);
     },
   },
   actions: {
-    async init(): Promise<void> {
-      if (this.initialized) {
+    reset(): void {
+      // const session = useSessionStore();
+      // session.this._walletId = Principal.anonymous().toText();
+      this.canisterId = null;
+      this.user = null;
+      this.accounts.items = [];
+      this.features.details = null;
+      this.notifications.items = [];
+
+      accountsWorker?.postMessage({
+        type: 'stop',
+      });
+
+      notificationsWorker?.postMessage({
+        type: 'stop',
+      });
+    },
+    async markNotificationRead(notificationId: UUID, read: boolean): Promise<void> {
+      const app = useAppStore();
+      const notification = this.notifications.items.find(item => item.data.id === notificationId);
+      if (!notification) {
         return;
       }
 
-      await this.load().finally(() => {
-        this.initialized = true;
-      });
-    },
-    computedWalletName(canisterId: Principal, notFoundName = '-'): string {
-      const walletIdx = this.wallets.findIndex(wallet => wallet.canisterId === canisterId.toText());
-
-      if (walletIdx === -1) {
-        return notFoundName;
-      }
-
-      return (
-        this.wallets[walletIdx].name ??
-        i18n.global.t('wallets.wallet_nr_title', { nr: walletIdx + 1 })
-      );
-    },
-    reset(): void {
-      this.initialized = false;
-      this._main = null;
-      this.wallets = [];
-    },
-    useWallets(wallets: WalletItem[]): void {
-      this.wallets = wallets;
-      if (
-        this.main &&
-        !wallets.some(({ canisterId }) => canisterId == this._main) &&
-        wallets.length
-      ) {
-        this._main = wallets[0].canisterId;
-      }
-    },
-    async load(): Promise<void> {
-      this.loading = true;
-      const controlPanelService = services().controlPanel;
-      const settings = useSettingsStore();
-      await Promise.all([controlPanelService.getMainWallet(), controlPanelService.listWallets()])
-        .then(([mainWallet, wallets]) => {
-          const main = mainWallet ?? wallets?.[0];
-          const mainCanisterId = main?.canister_id ?? null;
-          if (
-            mainCanisterId &&
-            wallets.some(({ canister_id }) => canister_id.compareTo(mainCanisterId))
-          ) {
-            this._main = mainCanisterId.toText();
-          }
-          this.wallets = wallets.map(wallet => ({
-            canisterId: wallet.canister_id.toString(),
-            name: wallet.name?.[0] ?? null,
-          }));
-        })
-        .catch(err => {
-          logger.error(`Failed to load wallets`, { err });
-          settings.setNotification({
-            show: true,
-            type: 'error',
-            message: i18n.global.t('wallets.load_error'),
-          });
-        })
-        .finally(() => {
-          this.loading = false;
+      try {
+        notification.loading = true;
+        await this.service.markNotificationAsRead({
+          notification_ids: [notificationId],
+          read,
         });
+
+        if (read) {
+          this.notifications.items = this.notifications.items.filter(
+            item => item.data.id !== notificationId,
+          );
+        }
+      } catch (err) {
+        logger.error(`Failed to save notification`, { err });
+
+        app.sendNotification({
+          type: 'error',
+          message: i18n.global.t('wallets.notification_failed_to_save'),
+        });
+      } finally {
+        notification.loading = false;
+      }
+    },
+    async voteOnProposal(
+      proposalId: UUID,
+      decision: { approve: boolean; reason?: string },
+    ): Promise<Proposal | null> {
+      const app = useAppStore();
+
+      try {
+        return await this.service.voteOnProposal({
+          proposal_id: proposalId,
+          approve: decision.approve,
+          reason: decision.reason !== undefined ? [decision.reason] : [],
+        });
+      } catch (err) {
+        logger.error(`Failed to save proposal`, { err });
+
+        app.sendNotification({
+          type: 'error',
+          message: i18n.global.t('wallets.proposal_failed_to_save'),
+        });
+      }
+
+      return null;
+    },
+    async loadAccountList(): Promise<void> {
+      if (this.accounts.loading) {
+        return;
+      }
+      try {
+        this.accounts.loading = true;
+        this.accounts.items = await this.service.listAccounts();
+      } finally {
+        this.accounts.loading = false;
+      }
+    },
+    async loadPendingAccountList(): Promise<void> {
+      if (this.pendingAccounts.loading) {
+        return;
+      }
+      try {
+        this.pendingAccounts.loading = true;
+        const proposals = await this.service.listProposals({
+          operation_type: [{ AddAccount: null }],
+          status: [
+            [{ Created: null }, { Adopted: null }, { Processing: null }, { Scheduled: null }],
+          ],
+          from_dt: [],
+          to_dt: [],
+        });
+
+        this.pendingAccounts.items = proposals
+          .map(proposal => {
+            if ('AddAccount' in proposal.operation) {
+              return {
+                name: proposal.operation.AddAccount.input.name,
+                proposalId: proposal.id,
+              };
+            }
+
+            return null;
+          })
+          .filter(p => p !== null) as PendingAccount[];
+      } finally {
+        this.pendingAccounts.loading = false;
+      }
+    },
+    async loadWalletFeatures(): Promise<void> {
+      try {
+        this.features.loading = true;
+        this.features.details = await this.service.features();
+      } finally {
+        this.features.loading = false;
+      }
+    },
+    async load(walletId: Principal): Promise<void> {
+      const app = useAppStore();
+
+      try {
+        if (this.loading) {
+          return;
+        }
+        this.loading = true;
+        this.canisterId = walletId;
+        const user = await this.service.myUser();
+        if (!user) {
+          logger.warn(`User not registered in the selected wallet`);
+          return;
+        }
+
+        // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
+        this.loadAccountList();
+        this.loadPendingAccountList();
+        this.loadWalletFeatures();
+
+        accountsWorker?.postMessage({
+          type: 'start',
+          data: {
+            walletId,
+          },
+        });
+
+        notificationsWorker?.postMessage({
+          type: 'start',
+          data: {
+            walletId,
+          },
+        });
+      } catch (err) {
+        logger.error(`Failed to load user wallet`, { err });
+
+        app.sendNotification({
+          type: 'error',
+          message: i18n.global.t('wallets.user_load_error'),
+        });
+      } finally {
+        this.loading = false;
+      }
     },
   },
 });

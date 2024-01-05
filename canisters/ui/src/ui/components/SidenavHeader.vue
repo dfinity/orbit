@@ -13,7 +13,11 @@
         <div class="profile">
           <VAvatar color="primary-variant" size="64" image="/images/avatar.svg" />
           <VBtn class="profile__name" variant="text" :append-icon="mdiChevronDown" size="small">
-            <span>{{ auth.userName ? auth.userName : $t('terms.anonymous') }}</span>
+            <span>{{
+              session.hasConnectedWalletUser && session.connectedWalletUser.me.name
+                ? session.connectedWalletUser.me.name
+                : $t('terms.anonymous')
+            }}</span>
             <VMenu activator="parent">
               <VList density="compact">
                 <VListItem :exact="true" :to="`/${$route.params.locale}/settings`">
@@ -25,15 +29,15 @@
               </VList>
             </VMenu>
           </VBtn>
-          <p v-if="activeWallet.hasUser" class="profile__principal">
-            <span>{{ activeWallet.user.id }}</span>
+          <p v-if="session.hasConnectedWalletUser" class="profile__principal">
+            <span>{{ session.connectedWalletUser.me.id }}</span>
             <VBtn
               size="x-small"
               variant="text"
               :icon="mdiContentCopy"
               @click="
-                settings.copyToClipboard(
-                  activeWallet.user.id,
+                app.copyToClipboard(
+                  session.connectedWalletUser.me.id,
                   $t('wallets.user_copied_to_clipboard'),
                 )
               "
@@ -49,11 +53,11 @@
 import { mdiChevronDown, mdiContentCopy } from '@mdi/js';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
-import { useActiveWalletStore, useAuthStore, useSettingsStore } from '~/ui/stores';
+import { useAppStore, useAuthStore, useSessionStore } from '~/ui/stores';
 
 const auth = useAuthStore();
-const settings = useSettingsStore();
-const activeWallet = useActiveWalletStore();
+const app = useAppStore();
+const session = useSessionStore();
 </script>
 
 <style scoped lang="scss">

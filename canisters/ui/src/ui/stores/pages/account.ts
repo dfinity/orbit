@@ -6,13 +6,12 @@ import {
   ProposalStatusCode,
   TransferListItem,
   Account,
-  AccountId,
-  ProposalId,
+  UUID,
 } from '~/generated/wallet/wallet.did';
 import { WalletService, ChainApiFactory } from '~/services';
 import { ChainApi, AccountIncomingTransfer } from '~/types';
 import { i18n } from '~/ui/modules';
-import { useActiveWalletStore, useSettingsStore } from '~/ui/stores';
+import { useWalletStore, useAppStore } from '~/ui/stores';
 import { LoadableItem } from '~/ui/types';
 
 export interface AccountDetailsStoreState {
@@ -67,7 +66,7 @@ const initialState: AccountDetailsStoreState = {
   },
 };
 
-export const useAccountDetailsStore = defineStore('accountDetails', {
+export const useAccountPageStore = defineStore('accountPage', {
   state: (): AccountDetailsStoreState => {
     return JSON.parse(JSON.stringify(initialState));
   },
@@ -120,7 +119,7 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
       return this._account !== null;
     },
     walletService(): WalletService {
-      return useActiveWalletStore().service;
+      return useWalletStore().service;
     },
   },
   actions: {
@@ -159,10 +158,10 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
       this.deposits.items = transfers;
     },
     async voteOnProposal(
-      proposalId: ProposalId,
+      proposalId: UUID,
       decision: { approve: boolean; reason?: string },
     ): Promise<void> {
-      const activeWallet = useActiveWalletStore();
+      const activeWallet = useWalletStore();
       const item = this.proposals.items.find(item => item.data.id === proposalId);
       if (!item) {
         logger.warn('Decision not saved, proposal not found', { proposalId });
@@ -205,11 +204,10 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
           });
       } catch (e) {
         logger.error('Failed to load withdraw requests', { e });
-        const settings = useSettingsStore();
+        const app = useAppStore();
         this.proposals.items = [];
 
-        settings.setNotification({
-          show: true,
+        app.sendNotification({
           message: i18n.global.t('wallets.load_error_withdraw_requests'),
           type: 'error',
         });
@@ -228,11 +226,10 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         });
       } catch (e) {
         logger.error('Failed to load transfers', { e });
-        const settings = useSettingsStore();
+        const app = useAppStore();
         this.transfers.items = [];
 
-        settings.setNotification({
-          show: true,
+        app.sendNotification({
           message: i18n.global.t('wallets.load_error_withdrawal'),
           type: 'error',
         });
@@ -240,11 +237,11 @@ export const useAccountDetailsStore = defineStore('accountDetails', {
         this.transfers.loading = false;
       }
     },
-    async load(accountId: AccountId): Promise<void> {
+    async load(accountId: UUID): Promise<void> {
       try {
         this.reset();
         this.loading = true;
-        const activeWallet = useActiveWalletStore();
+        const activeWallet = useWalletStore();
 
         this._account = await this.walletService.getAccount({
           account_id: accountId,

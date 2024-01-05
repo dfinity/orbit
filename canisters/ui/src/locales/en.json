@@ -1,9 +1,10 @@
 {
   "app": {
-    "title": "{app} {'{'}Wallet{'}'}"
+    "title": "{app} Wallet",
+    "session_load_error": "Failed to load your session, please try again."
   },
   "login": {
-    "signin_slogan": "Securily connect to manage your crypto assets",
+    "signin_slogan": "Securely connect to manage your crypto assets",
     "auth_failed": "Authentication failed, please try again."
   },
   "not_found": {

@@ -2,35 +2,29 @@ import { defineStore } from 'pinia';
 import { useDisplay } from 'vuetify';
 import { en as designSystemFallbackMessages } from 'vuetify/locale';
 import { appInitConfig } from '~/configs';
-import { Locale } from '~/configs/I18n';
+import { Locale } from '~/configs/i18n';
 import { logger } from '~/core';
-import { SupportedTheme } from '~/types';
+import { PolicyType, SupportedTheme } from '~/types';
 import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
 import { GlobalNotification } from '~/ui/types';
 
-export interface SettingsStoreState {
+export interface AppStoreState {
   appName: string;
   theme: SupportedTheme;
   showSidebar: boolean;
   notification: GlobalNotification;
 }
 
-export const defaultNotification: GlobalNotification = {
-  show: false,
-  message: '',
-  type: 'info',
-};
-
-export const useSettingsStore = defineStore('settings', {
-  state: (): SettingsStoreState => {
+export const useAppStore = defineStore('app', {
+  state: (): AppStoreState => {
     return {
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),
       showSidebar: true,
       notification: {
         show: false,
-        message: defaultNotification.message,
-        type: defaultNotification.type,
+        message: '',
+        type: 'info',
       },
     };
   },
@@ -51,6 +45,9 @@ export const useSettingsStore = defineStore('settings', {
     },
     baseUrl(): string {
       return services().routes.baseUrl + this.locale;
+    },
+    policyTypes(): string[] {
+      return Object.values(PolicyType);
     },
   },
   actions: {
@@ -84,8 +81,7 @@ export const useSettingsStore = defineStore('settings', {
     copyToClipboard(text: string, notificationTitle: string): void {
       navigator.clipboard.writeText(text);
 
-      this.setNotification({
-        show: true,
+      this.sendNotification({
         type: 'success',
         message: notificationTitle,
       });
@@ -99,11 +95,17 @@ export const useSettingsStore = defineStore('settings', {
     toogleSidebar(): void {
       this.showSidebar = !this.showSidebar;
     },
-    setNotification(notification: GlobalNotification): void {
+    sendNotification({
+      message,
+      type,
+    }: {
+      message: GlobalNotification['message'];
+      type: GlobalNotification['type'];
+    }): void {
       this.notification = {
-        show: notification.show,
-        message: notification.message,
-        type: notification.type,
+        show: true,
+        message,
+        type,
       };
     },
   },

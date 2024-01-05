@@ -1,6 +1,6 @@
 <template>
   <VLayout class="page-layout" :class="`${layoutDeviceClass} ${themeClass}`" full-height>
-    <DesktopLayout v-if="!settings.isMobile">
+    <DesktopLayout v-if="!app.isMobile">
       <template v-for="slotName in slotNames" :key="slotName" #[slotName]>
         <slot :name="slotName"></slot>
       </template>
@@ -11,19 +11,19 @@
       </template>
     </MobileLayout>
     <VSnackbar
-      v-model="settings.notification.show"
+      v-model="app.notification.show"
       :absolute="true"
       :close-on-content-click="true"
-      :color="settings.notification.type"
+      :color="app.notification.type"
       style="opacity: 0.9"
       variant="elevated"
       :location="notificationPosition"
       timeout="4000"
       transition="slide-x-reverse-transition"
     >
-      {{ settings.notification.message }}
+      {{ app.notification.message }}
       <template #actions>
-        <v-btn variant="text" @click="settings.notification.show = false">
+        <v-btn variant="text" @click="app.notification.show = false">
           {{ $t('terms.close') }}
         </v-btn>
       </template>
@@ -34,11 +34,11 @@
 <script lang="ts" setup>
 import { computed, provide, watch } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useSettingsStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores';
 import DesktopLayout from './DesktopLayout.vue';
 import MobileLayout from './MobileLayout.vue';
 
-const settings = useSettingsStore();
+const app = useAppStore();
 const slotNames = [
   'sidebar',
   'sidebar-header',
@@ -82,20 +82,20 @@ const { mobile } = useDisplay();
 watch(
   () => mobile.value,
   isMobile => {
-    settings.showSidebar = !isMobile;
+    app.showSidebar = !isMobile;
   },
   { immediate: true },
 );
 
 const layoutDeviceClass = computed(() => {
-  return settings.isMobile ? 'page-layout--mobile' : 'page-layout--desktop';
+  return app.isMobile ? 'page-layout--mobile' : 'page-layout--desktop';
 });
 
 const themeClass = computed(() => {
-  return settings.isDarkTheme ? 'theme--dark' : 'theme--light';
+  return app.isDarkTheme ? 'theme--dark' : 'theme--light';
 });
 
 const notificationPosition = computed(() => {
-  return settings.isMobile ? 'bottom center' : 'top right';
+  return app.isMobile ? 'bottom center' : 'top right';
 });
 </script>

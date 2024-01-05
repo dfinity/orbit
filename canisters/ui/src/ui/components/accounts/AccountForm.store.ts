@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { UserId, Policy, Account, Proposal } from '~/generated/wallet/wallet.did';
+import { UUID, Policy, Account, Proposal } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/ui/modules';
-import { useActiveWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { maxLengthRule, requiredRule, validPrincipalRule, validUuidV4Rule } from '~/ui/utils';
 
 export interface AccountForm {
   name: string | null;
-  owners: Array<UserId | null>;
+  owners: Array<UUID | null>;
   blockchain: string | null;
   blockchainStandard: string | null;
   policies: Array<Policy | null>;
@@ -45,7 +45,7 @@ const createFormId = (account?: Account): string => {
 
 const initialStateForAccount = (account?: Account): AccountFormStoreState => {
   if (!account) {
-    const activeWallet = useActiveWalletStore();
+    const activeWallet = useWalletStore();
 
     return {
       loading: false,
@@ -121,7 +121,7 @@ export const useAccountForm = (account?: Account) =>
         };
       },
       supportedBlockchains(): Array<{ value: string; title: string }> {
-        const activeWallet = useActiveWalletStore();
+        const activeWallet = useWalletStore();
 
         return activeWallet.supportedAssets.map(asset => ({
           value: asset.blockchain,
@@ -145,7 +145,7 @@ export const useAccountForm = (account?: Account) =>
           message: null,
         };
       },
-      addOwner(owner: UserId | null): void {
+      addOwner(owner: UUID | null): void {
         this.form.owners.push(owner);
       },
       addNewPolicy(): void {
@@ -161,8 +161,8 @@ export const useAccountForm = (account?: Account) =>
 
         this.form.policies.push(null);
       },
-      isSelfOwnerEntry(ownerId: UserId | null): boolean {
-        const activeWallet = useActiveWalletStore();
+      isSelfOwnerEntry(ownerId: UUID | null): boolean {
+        const activeWallet = useWalletStore();
         if (ownerId === null) {
           return false;
         }
@@ -176,7 +176,7 @@ export const useAccountForm = (account?: Account) =>
         this.form.policies.splice(index, 1);
       },
       supportedBlockchainStandards(): string[] {
-        const activeWallet = useActiveWalletStore();
+        const activeWallet = useWalletStore();
         const supportedAsset = activeWallet.supportedAssets.find(
           asset => asset.blockchain === this.form.blockchain,
         );
@@ -191,7 +191,7 @@ export const useAccountForm = (account?: Account) =>
           this.clearAlert();
           this.loading = true;
 
-          const wallet = useActiveWalletStore().service;
+          const wallet = useWalletStore().service;
           const owners: string[] = this.form.owners.filter(id => id !== null) as string[];
           const policies = this.form.policies.filter(policy => policy !== null) as Policy[];
 

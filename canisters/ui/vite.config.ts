@@ -1,10 +1,10 @@
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
-import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vite';
+import vuetify from 'vite-plugin-vuetify';
 import dfxConfig from '../../dfx.json';
 
 const network = process.env.DFX_NETWORK ?? 'local';

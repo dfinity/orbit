@@ -1,3 +1,4 @@
-export * from './Logger';
-export * from './Utils';
-export * from './Constants';
+export * from './constants';
+export * from './ic-agent';
+export * from './logger';
+export * from './utils';

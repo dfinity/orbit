@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
 import { amountToBigInt, formatBalance, logger } from '~/core';
-import { Proposal, Account, AccountId } from '~/generated/wallet/wallet.did';
-import { useActiveWalletStore } from '~/ui/stores';
+import { Proposal, Account, UUID } from '~/generated/wallet/wallet.did';
+import { useWalletStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
 import { requiredRule, validTokenAmount } from '~/ui/utils';
 
 export interface TransferForm {
-  accountId: AccountId | null;
+  accountId: UUID | null;
   amount: string | null;
   to: string | null;
 }
@@ -59,7 +59,7 @@ export const useTransferFormStore = defineStore('transferForm', {
       return state.isValid && this.hasChanges;
     },
     selectedAccount(state): Account | null {
-      const activeWallet = useActiveWalletStore();
+      const activeWallet = useWalletStore();
 
       return (
         activeWallet.accounts.items.find(account => account.id === state.form.accountId) ?? null
@@ -73,7 +73,7 @@ export const useTransferFormStore = defineStore('transferForm', {
       };
     },
     accounts(state): Array<{ value: string; title: string; balance: string }> {
-      const activeWallet = useActiveWalletStore();
+      const activeWallet = useWalletStore();
 
       return activeWallet.accounts.items
         .filter(account => {
@@ -104,7 +104,7 @@ export const useTransferFormStore = defineStore('transferForm', {
       this.form = reset.form;
       this.alert = reset.alert;
     },
-    load(accountId?: AccountId): void {
+    load(accountId?: UUID): void {
       this.reset();
 
       if (accountId) {
@@ -127,7 +127,7 @@ export const useTransferFormStore = defineStore('transferForm', {
         this.clearAlert();
         this.loading = true;
 
-        const wallet = useActiveWalletStore().service;
+        const wallet = useWalletStore().service;
 
         return await wallet.createProposal({
           title: [],
