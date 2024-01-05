@@ -111,17 +111,6 @@ export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
 export interface GetUserInput { 'user_id' : [] | [UserId] }
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : Error };
-export interface ListAccountProposalsInput {
-  'account_id' : AccountId,
-  'status' : [] | [Array<ProposalStatusCode>],
-  'to_dt' : [] | [TimestampRFC3339],
-  'operation_type' : [] | [ProposalOperationType],
-  'from_dt' : [] | [TimestampRFC3339],
-}
-export type ListAccountProposalsResult = {
-    'Ok' : { 'proposals' : Array<Proposal> }
-  } |
-  { 'Err' : Error };
 export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
   { 'Err' : Error };
 export interface ListAccountTransfersInput {
@@ -346,10 +335,6 @@ export interface _SERVICE {
   'get_proposal' : ActorMethod<[GetProposalInput], GetProposalResult>,
   'get_transfers' : ActorMethod<[GetTransfersInput], GetTransfersResult>,
   'get_user' : ActorMethod<[GetUserInput], GetUserResult>,
-  'list_account_proposals' : ActorMethod<
-    [ListAccountProposalsInput],
-    ListAccountProposalsResult
-  >,
   'list_account_transfers' : ActorMethod<
     [ListAccountTransfersInput],
     ListAccountTransfersResult
