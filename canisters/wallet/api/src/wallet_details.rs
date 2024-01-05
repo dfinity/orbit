@@ -2,8 +2,8 @@ use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AssetMetadataDTO {
-    pub name: String,
     pub key: String,
+    pub value: String,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
