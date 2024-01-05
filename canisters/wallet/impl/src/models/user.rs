@@ -24,8 +24,6 @@ pub struct User {
     pub status: UserStatus,
     /// The identities associated with the user.
     pub identities: Vec<Principal>,
-    /// The unconfirmed identities associated with the user.
-    pub unconfirmed_identities: Vec<Principal>,
     /// The groups the user is a member of (e.g. Finance Team, Admin, etc.)
     pub groups: Vec<UUID>,
     /// The last time the record was updated or created.
@@ -41,7 +39,6 @@ pub struct UserKey {
 impl User {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const MAX_USER_GROUPS: u8 = 25;
-    pub const MAX_UNCONFIRMED_IDENTITIES: u8 = 9;
     pub const MAX_NAME_LENGTH: u8 = 50;
 
     /// Creates a new user key from the given key components.
@@ -78,18 +75,6 @@ fn validate_groups(access_roles: &Vec<UUID>) -> ModelValidatorResult<UserError> 
     Ok(())
 }
 
-fn validate_unconfirmed_identities(
-    unconfirmed_identities: &Vec<Principal>,
-) -> ModelValidatorResult<UserError> {
-    if unconfirmed_identities.len() > User::MAX_UNCONFIRMED_IDENTITIES as usize {
-        return Err(UserError::TooManyUnconfirmedIdentities {
-            max_identities: User::MAX_UNCONFIRMED_IDENTITIES,
-        });
-    }
-
-    Ok(())
-}
-
 fn validate_name(name: &Option<String>) -> ModelValidatorResult<UserError> {
     if let Some(name) = name {
         if name.len() > User::MAX_NAME_LENGTH as usize {
@@ -105,7 +90,6 @@ fn validate_name(name: &Option<String>) -> ModelValidatorResult<UserError> {
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
         validate_identities(&self.identities)?;
-        validate_unconfirmed_identities(&self.unconfirmed_identities)?;
         validate_groups(&self.groups)?;
         validate_name(&self.name)?;
 
@@ -151,34 +135,6 @@ mod tests {
         user.identities = vec![Principal::anonymous(); 5];
 
         let result = validate_identities(&user.identities);
-
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn fail_user_too_many_unconfirmed_identities() {
-        let mut user = mock_user();
-        user.unconfirmed_identities =
-            vec![Principal::anonymous(); User::MAX_UNCONFIRMED_IDENTITIES as usize + 1];
-
-        let result = validate_unconfirmed_identities(&user.unconfirmed_identities);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            UserError::TooManyUnconfirmedIdentities {
-                max_identities: User::MAX_UNCONFIRMED_IDENTITIES
-            }
-        );
-    }
-
-    #[test]
-    fn test_user_unconfirmed_identities_validation() {
-        let mut user = mock_user();
-        user.unconfirmed_identities =
-            vec![Principal::anonymous(); User::MAX_UNCONFIRMED_IDENTITIES as usize - 1];
-
-        let result = validate_unconfirmed_identities(&user.unconfirmed_identities);
 
         assert!(result.is_ok());
     }
@@ -246,7 +202,6 @@ pub mod user_test_utils {
         User {
             id: [0; 16],
             identities: vec![Principal::anonymous()],
-            unconfirmed_identities: vec![],
             groups: vec![],
             name: None,
             status: UserStatus::Active,

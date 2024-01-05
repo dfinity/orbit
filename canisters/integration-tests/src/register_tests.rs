@@ -22,7 +22,6 @@ fn register_user_successful() {
         identities: vec![user_id],
         groups: vec![],
         status: wallet_api::UserStatusDTO::Active,
-        unconfirmed_identities: vec![],
     };
     let add_user_proposal = CreateProposalInput {
         operation: ProposalOperationInput::AddUser(add_user),

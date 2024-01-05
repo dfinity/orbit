@@ -118,13 +118,6 @@ export const useSettingsFormStore = defineStore('settingsForm', {
           confirmed: true,
         });
       });
-      user.unconfirmed_identities.forEach(unconfirmed => {
-        this.form.identities.push({
-          name: unconfirmed.name?.[0] ?? null,
-          principal: unconfirmed.identity.toText(),
-          confirmed: false,
-        });
-      });
 
       this.unchangedVersion = JSON.stringify(this.form);
     },

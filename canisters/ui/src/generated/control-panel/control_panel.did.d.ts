@@ -44,7 +44,6 @@ export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
 export type UUID = string;
 export interface User {
   'id' : UserId,
-  'unconfirmed_identities' : Array<UserIdentity>,
   'name' : [] | [string],
   'wallets' : Array<UserWallet>,
   'identities' : Array<UserIdentity>,

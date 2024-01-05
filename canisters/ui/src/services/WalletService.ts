@@ -6,7 +6,6 @@ import {
   User,
   Error as ApiError,
   WalletFeatures,
-  ConfirmUserIdentityInput,
   EditUserInput,
   VoteOnProposalInput,
   FetchAccountBalancesInput,
@@ -228,15 +227,5 @@ export class WalletService {
     }
 
     return result.Ok.proposal;
-  }
-
-  async confirmUserIdentity(input: ConfirmUserIdentityInput): Promise<User> {
-    const result = await this.actor.confirm_user_identity(input);
-
-    if ('Err' in result) {
-      throw result.Err;
-    }
-
-    return result.Ok.user;
   }
 }
