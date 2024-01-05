@@ -7,6 +7,7 @@ use super::{
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
+use wallet_api::{AccountMetadataDTO, TransferMetadataDTO};
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -41,7 +42,7 @@ pub struct TransferOperationInput {
     pub from_account_id: AccountId,
     pub to: String,
     pub amount: candid::Nat,
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<TransferMetadataDTO>,
     pub network: String,
     pub fee: Option<candid::Nat>,
 }
@@ -68,7 +69,7 @@ pub struct AddAccountOperationInput {
     pub owners: Vec<UserId>,
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<AccountMetadataDTO>,
     pub policies: AccountPoliciesInput,
 }
 

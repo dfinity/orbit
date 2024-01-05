@@ -7,11 +7,7 @@ use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
 use ic_stable_structures::{storable::Bound, Storable};
-use std::{
-    borrow::Cow,
-    cell::RefCell,
-    collections::{HashMap, HashSet},
-};
+use std::{borrow::Cow, cell::RefCell, collections::HashSet};
 
 thread_local! {
   /// The list of assets that are supported by the wallet canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
@@ -22,7 +18,7 @@ thread_local! {
           standards: vec![BlockchainStandard::Native],
           symbol: "ICP".to_string(),
           name: "Internet Computer".to_string(),
-          metadata: HashMap::new(),
+          metadata: Vec::new(),
         },
       ].into_iter().collect());
 }

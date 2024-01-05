@@ -20,8 +20,8 @@ use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
     ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
     EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
-    TransferOperationDTO, TransferOperationInput,
+    EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferOperationDTO,
+    TransferOperationInput,
 };
 
 impl TransferOperation {
@@ -37,15 +37,7 @@ impl TransferOperation {
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
-                metadata: self
-                    .input
-                    .metadata
-                    .iter()
-                    .map(|(k, v)| TransferMetadataDTO {
-                        key: k.to_string(),
-                        value: v.to_string(),
-                    })
-                    .collect(),
+                metadata: self.input.metadata,
                 network: Some(NetworkDTO {
                     id: self.input.network.clone(),
                     name: self.input.network.clone(),
