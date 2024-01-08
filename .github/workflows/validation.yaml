@@ -59,6 +59,8 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
+      - name: 'Install DFX'
+        run: sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
       - name: 'Run dfx generate'
         run: dfx generate
       - name: 'Check that no file changed'
