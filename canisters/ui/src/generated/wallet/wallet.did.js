@@ -504,9 +504,15 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'proposals' : IDL.Vec(Proposal) }),
     'Err' : Error,
   });
+  const TransferStatusType = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Processing' : IDL.Null,
+    'Created' : IDL.Null,
+    'Completed' : IDL.Null,
+  });
   const ListAccountTransfersInput = IDL.Record({
     'account_id' : UUID,
-    'status' : IDL.Opt(IDL.Text),
+    'status' : IDL.Opt(TransferStatusType),
     'to_dt' : IDL.Opt(TimestampRFC3339),
     'from_dt' : IDL.Opt(TimestampRFC3339),
   });

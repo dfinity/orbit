@@ -218,7 +218,7 @@ export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
   { 'Err' : Error };
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
-  'status' : [] | [string],
+  'status' : [] | [TransferStatusType],
   'to_dt' : [] | [TimestampRFC3339],
   'from_dt' : [] | [TimestampRFC3339],
 }
@@ -488,6 +488,10 @@ export type TransferStatus = { 'Failed' : { 'reason' : string } } |
       'completed_at' : TimestampRFC3339,
     }
   };
+export type TransferStatusType = { 'Failed' : null } |
+  { 'Processing' : null } |
+  { 'Created' : null } |
+  { 'Completed' : null };
 export type UUID = string;
 export interface User {
   'id' : UUID,
