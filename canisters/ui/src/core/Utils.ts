@@ -105,3 +105,7 @@ export function nanoToJsDate(nanoTimestamp: bigint): Date {
   const jsDate = new Date(Number(milliTimestamp));
   return jsDate;
 }
+
+export const wait = (ms: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

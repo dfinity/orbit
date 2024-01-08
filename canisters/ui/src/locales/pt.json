@@ -1,7 +1,12 @@
 {
   "app": {
     "title": "{app} Carteira",
-    "session_load_error": "Erro ao inicializar a sessão, por favor, tente novamente."
+    "session_load_error": "Erro ao inicializar a sessão, por favor, tente novamente.",
+    "user_id": "ID do usuário",
+    "wallets": "Carteiras",
+    "confirm": "Confirmar",
+    "copied_to_clipboard": "Texto copiado para a área de transferência.",
+    "initial_account_name": "Principal"
   },
   "login": {
     "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto",
@@ -178,6 +183,14 @@
   "pages": {
     "overview": {
       "title": "{name} - Visão geral"
+    },
+    "user_settings": {
+      "title": "Informaçōes do usuário & Configuraçōes",
+      "subtitle": "Configure as preferências e gerencie a sua conta.",
+      "manage_associated_wallet": "Gerenciar carteira associada",
+      "manage_associated_wallet_hint": "Qualquer modificação apenas serão aplicadas a sua conta de usuário.",
+      "remove_associated_wallet": "Remover carteira associada",
+      "confirm_remove_associated_wallet": "Tem a certeza que pretende remover a carteira associada?"
     }
   }
 }

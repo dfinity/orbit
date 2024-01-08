@@ -82,9 +82,9 @@ const router = createRouter({
           },
         },
         {
-          path: 'settings',
-          name: 'Settings',
-          component: () => import('~/ui/pages/SettingsPage.vue'),
+          path: 'my-settings',
+          name: 'MySettings',
+          component: () => import('~/ui/pages/MySettingsPage.vue'),
           meta: {
             auth: {
               requireState: AuthState.Authenticated,

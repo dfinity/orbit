@@ -103,6 +103,7 @@ class NotificationsWorkerImpl {
   private async refreshNotifications(): Promise<void> {
     try {
       const identity = (await loadIdentity()) ?? new AnonymousIdentity();
+      await icAgent.init();
       icAgent.get().replaceIdentity(identity);
       if (identity.getPrincipal().isAnonymous()) {
         logger.warn('Using anonymous identity, make sure to sign in to the wallet');

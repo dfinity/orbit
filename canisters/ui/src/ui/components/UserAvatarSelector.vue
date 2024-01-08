@@ -16,7 +16,7 @@
           />
         </p>
       </VListSubheader>
-      <VListItem :exact="true" :to="`/${$route.params.locale}/me`">
+      <VListItem :exact="true" :to="`/${$route.params.locale}/my-settings`">
         <VListItemTitle>{{ $t('navigation.account_info_settings') }}</VListItemTitle>
       </VListItem>
       <VDivider />

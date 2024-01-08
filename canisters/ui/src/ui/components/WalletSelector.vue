@@ -13,14 +13,14 @@
     <template #item="{ props, item }">
       <VListItem
         v-bind="props"
-        :title="session.computedWalletName(Principal.fromText(item.raw.canisterId))"
+        :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :subtitle="item.raw.canisterId"
       />
     </template>
     <template #selection="{ item }">
       <VListItem
         v-if="session.hasWallets"
-        :title="session.computedWalletName(Principal.fromText(item.raw.canisterId))"
+        :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :prepend-icon="mdiWallet"
       />
       <VListItem v-else :title="$t('wallets.no_wallets')" :prepend-icon="mdiWallet" />
@@ -28,10 +28,11 @@
   </VSelect>
 </template>
 <script lang="ts" setup>
-import { computed } from 'vue';
 import { Principal } from '@dfinity/principal';
 import { mdiWallet } from '@mdi/js';
-import { useSessionStore, useAppStore } from '~/ui/stores';
+import { computed } from 'vue';
+import { useAppStore, useSessionStore } from '~/ui/stores';
+import { computedWalletName } from '~/ui/utils';
 
 const session = useSessionStore();
 const app = useAppStore();

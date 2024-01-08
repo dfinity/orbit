@@ -2,12 +2,12 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
 import {
-  WalletAsset,
-  WalletFeatures,
-  Proposal,
   Account,
   Notification,
+  Proposal,
   UUID,
+  WalletAsset,
+  WalletFeatures,
 } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
 import { AuthenticatedUser } from '~/types';
@@ -31,7 +31,7 @@ export interface PendingAccount {
 }
 
 export interface WalletStoreState {
-  canisterId: Principal | null;
+  canisterId: string | null;
   loading: boolean;
   name: string | null;
   user: AuthenticatedUser | null;
@@ -42,10 +42,6 @@ export interface WalletStoreState {
   accounts: {
     loading: boolean;
     items: Account[];
-  };
-  pendingAccounts: {
-    loading: boolean;
-    items: PendingAccount[];
   };
   notifications: {
     loading: boolean;
@@ -65,10 +61,6 @@ export const useWalletStore = defineStore('wallet', {
         details: null,
       },
       accounts: {
-        loading: false,
-        items: [],
-      },
-      pendingAccounts: {
         loading: false,
         items: [],
       },
@@ -129,7 +121,7 @@ export const useWalletStore = defineStore('wallet', {
         throw new Error('Wallet canister not selected');
       }
 
-      return this.canisterId as Principal;
+      return Principal.fromText(this.canisterId);
     },
     service(): WalletService {
       return services().wallet.withWalletId(this.activeCanisterId);
@@ -216,37 +208,6 @@ export const useWalletStore = defineStore('wallet', {
         this.accounts.loading = false;
       }
     },
-    async loadPendingAccountList(): Promise<void> {
-      if (this.pendingAccounts.loading) {
-        return;
-      }
-      try {
-        this.pendingAccounts.loading = true;
-        const proposals = await this.service.listProposals({
-          operation_type: [{ AddAccount: null }],
-          status: [
-            [{ Created: null }, { Adopted: null }, { Processing: null }, { Scheduled: null }],
-          ],
-          from_dt: [],
-          to_dt: [],
-        });
-
-        this.pendingAccounts.items = proposals
-          .map(proposal => {
-            if ('AddAccount' in proposal.operation) {
-              return {
-                name: proposal.operation.AddAccount.input.name,
-                proposalId: proposal.id,
-              };
-            }
-
-            return null;
-          })
-          .filter(p => p !== null) as PendingAccount[];
-      } finally {
-        this.pendingAccounts.loading = false;
-      }
-    },
     async loadWalletFeatures(): Promise<void> {
       try {
         this.features.loading = true;
@@ -266,7 +227,7 @@ export const useWalletStore = defineStore('wallet', {
 
         this.name = name;
         this.loading = true;
-        this.canisterId = walletId;
+        this.canisterId = walletId.toText();
         const user = await this.service.myUser();
         if (!user) {
           logger.warn(`User not registered in the selected wallet`);
@@ -277,7 +238,6 @@ export const useWalletStore = defineStore('wallet', {
 
         // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
         this.loadAccountList();
-        this.loadPendingAccountList();
         this.loadWalletFeatures();
 
         accountsWorker?.postMessage({

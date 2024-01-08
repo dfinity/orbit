@@ -1,7 +1,12 @@
 {
   "app": {
     "title": "{app} Wallet",
-    "session_load_error": "Failed to load your session, please try again."
+    "session_load_error": "Failed to load your session, please try again.",
+    "user_id": "User ID",
+    "wallets": "Wallets",
+    "confirm": "Confirm",
+    "copied_to_clipboard": "Value copied to clipboard.",
+    "initial_account_name": "Main"
   },
   "login": {
     "signin_slogan": "Securely connect to manage your crypto assets",
@@ -177,6 +182,14 @@
   "pages": {
     "overview": {
       "title": "{name} - Overview"
+    },
+    "user_settings": {
+      "title": "Account Info & Settings",
+      "subtitle": "Configure preferences and manage your user.",
+      "manage_associated_wallet": "Manage associated wallet",
+      "manage_associated_wallet_hint": "These settings only apply to your user and not to the wallet.",
+      "remove_associated_wallet": "Remove associated wallet",
+      "confirm_remove_associated_wallet": "This will remove the associated wallet from your user."
     }
   }
 }
