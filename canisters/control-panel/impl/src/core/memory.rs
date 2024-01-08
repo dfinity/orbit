@@ -3,10 +3,11 @@ use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     Cell, DefaultMemoryImpl, RestrictedMemory,
 };
-use std::cell::RefCell;
+use std::{cell::RefCell, thread::LocalKey};
 
 pub type Memory = RestrictedMemory<DefaultMemoryImpl>;
 pub type ConfigCell = Cell<CanisterState, Memory>;
+pub type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 
 pub const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
