@@ -159,29 +159,35 @@ pub struct GetProposalResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ListProposalsOperationTypeDTO {
+    Transfer(Option<String>),
+    AddAccount,
+    EditAccount,
+    AddUser,
+    EditUser,
+    AddUserGroup,
+    EditUserGroup,
+    RemoveUserGroup,
+    ChangeCanister,
+    AddAccessPolicy,
+    EditAccessPolicy,
+    RemoveAccessPolicy,
+    AddProposalPolicy,
+    EditProposalPolicy,
+    RemoveProposalPolicy,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsInput {
+    pub user_id: Option<UuidDTO>,
     pub status: Option<Vec<ProposalStatusCodeDTO>>,
-    pub operation_type: Option<ProposalOperationTypeDTO>,
+    pub operation_type: Option<ListProposalsOperationTypeDTO>,
     pub from_dt: Option<TimestampRfc3339>,
     pub to_dt: Option<TimestampRfc3339>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsResponse {
-    pub proposals: Vec<ProposalDTO>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAccountProposalsInput {
-    pub account_id: UuidDTO,
-    pub status: Option<Vec<ProposalStatusCodeDTO>>,
-    pub operation_type: Option<ProposalOperationTypeDTO>,
-    pub from_dt: Option<TimestampRfc3339>,
-    pub to_dt: Option<TimestampRfc3339>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAccountProposalsResponse {
     pub proposals: Vec<ProposalDTO>,
 }
 

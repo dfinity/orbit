@@ -224,19 +224,6 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
     }
 }
 
-impl From<&wallet_api::ListAccountProposalsInput> for ResourceSpecifier {
-    fn from(input: &wallet_api::ListAccountProposalsInput) -> Self {
-        let account_id = *HelperMapper::to_uuid(input.account_id.to_owned())
-            .expect("Invalid account id")
-            .as_bytes();
-
-        ResourceSpecifier::Common(
-            ResourceType::Account,
-            AccountActionSpecifier::Read(CommonSpecifier::Id([account_id].to_vec())),
-        )
-    }
-}
-
 impl From<&wallet_api::GetProposalInput> for ResourceSpecifier {
     fn from(input: &wallet_api::GetProposalInput) -> Self {
         let proposal_id = *HelperMapper::to_uuid(input.proposal_id.to_owned())

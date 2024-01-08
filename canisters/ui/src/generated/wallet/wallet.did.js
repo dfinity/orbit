@@ -280,17 +280,6 @@ export const idlFactory = ({ IDL }) => {
     'EditUserStatus' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
-  const ListAccountProposalsInput = IDL.Record({
-    'account_id' : AccountId,
-    'status' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
-    'to_dt' : IDL.Opt(TimestampRFC3339),
-    'operation_type' : IDL.Opt(ProposalOperationType),
-    'from_dt' : IDL.Opt(TimestampRFC3339),
-  });
-  const ListAccountProposalsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposals' : IDL.Vec(Proposal) }),
-    'Err' : Error,
-  });
   const ListAccountTransfersInput = IDL.Record({
     'account_id' : AccountId,
     'status' : IDL.Opt(IDL.Text),
@@ -423,11 +412,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_user' : IDL.Func([GetUserInput], [GetUserResult], ['query']),
-    'list_account_proposals' : IDL.Func(
-        [ListAccountProposalsInput],
-        [ListAccountProposalsResult],
-        ['query'],
-      ),
     'list_account_transfers' : IDL.Func(
         [ListAccountTransfersInput],
         [ListAccountTransfersResult],

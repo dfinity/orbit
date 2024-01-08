@@ -14,7 +14,6 @@ import {
   GetTransfersInput,
   GetAccountInput,
   Notification,
-  ListAccountProposalsInput,
   ListAccountTransfersInput,
   Proposal,
   RegisterUserInput,
@@ -112,16 +111,6 @@ export class WalletService {
     }
 
     return result.Ok.notifications;
-  }
-
-  async listAccountProposals(input: ListAccountProposalsInput): Promise<Proposal[]> {
-    const result = await this.actor.list_account_proposals(input);
-
-    if ('Err' in result) {
-      throw result.Err;
-    }
-
-    return result.Ok.proposals;
   }
 
   async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
