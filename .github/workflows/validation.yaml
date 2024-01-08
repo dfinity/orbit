@@ -53,6 +53,16 @@ jobs:
               echo "PR Title: ${{ github.event.pull_request.title }}"
               exit 1
           fi
+  validate-did-bindings:
+    name: 'validate-did-bindings:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Run dfx generate'
+        run: dfx generate
+      - name: 'Check that no file changed'
+        run: git diff --exit-code
   validate-rust:
     name: 'validate-rust:required'
     runs-on: ubuntu-latest
