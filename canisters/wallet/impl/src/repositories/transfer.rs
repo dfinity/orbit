@@ -19,6 +19,7 @@ use ic_canister_core::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::cell::RefCell;
+use wallet_api::TransferStatusTypeDTO;
 
 thread_local! {
   /// The memory reference to the Transfer repository.
@@ -94,7 +95,7 @@ impl TransferRepository {
         account_id: AccountId,
         created_dt_from: Option<Timestamp>,
         created_dt_to: Option<Timestamp>,
-        status: Option<String>,
+        status: Option<TransferStatusTypeDTO>,
     ) -> Vec<Transfer> {
         let transfers = self
             .account_index
@@ -108,11 +109,7 @@ impl TransferRepository {
             .iter()
             .filter_map(|id| match (self.get(&Transfer::key(*id)), status.clone()) {
                 (Some(transfer), Some(status)) => {
-                    if transfer
-                        .status
-                        .to_string()
-                        .eq_ignore_ascii_case(status.as_str())
-                    {
+                    if status == transfer.status.clone().into() {
                         Some(transfer)
                     } else {
                         None
