@@ -703,7 +703,7 @@ type ListAccountTransfersInput = record {
   // The account id to retrieve.
   account_id : UUID;
   // The transfer status in text format (e.g. "pending", "approved", etc.).
-  status : opt text;
+  status : opt TransferStatusType;
   // From which date to retrieve the transfers.
   from_dt : opt TimestampRFC3339;
   // Until which date to retrieve the transfers.
@@ -812,6 +812,14 @@ type TransferStatus = variant {
     // The base64 encoded value of the signed transaction, if available.
     signature : opt text;
   };
+};
+
+// Transfer status type for filtering on the transfer status.
+type TransferStatusType = variant {
+  Created;
+  Failed;
+  Processing;
+  Completed;
 };
 
 // A record type that can be used to represent a transfer in a given account.

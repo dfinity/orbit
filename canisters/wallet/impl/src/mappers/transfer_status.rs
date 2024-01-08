@@ -1,6 +1,6 @@
 use crate::models::TransferStatus;
 use ic_canister_core::utils::timestamp_to_rfc3339;
-use wallet_api::TransferStatusDTO;
+use wallet_api::{TransferStatusDTO, TransferStatusTypeDTO};
 
 impl From<TransferStatus> for TransferStatusDTO {
     fn from(status: TransferStatus) -> Self {
@@ -21,6 +21,17 @@ impl From<TransferStatus> for TransferStatusDTO {
             TransferStatus::Failed { reason } => TransferStatusDTO::Failed {
                 reason: reason.to_owned(),
             },
+        }
+    }
+}
+
+impl From<TransferStatus> for TransferStatusTypeDTO {
+    fn from(status: TransferStatus) -> Self {
+        match status {
+            TransferStatus::Processing { .. } => TransferStatusTypeDTO::Processing,
+            TransferStatus::Created => TransferStatusTypeDTO::Created,
+            TransferStatus::Completed { .. } => TransferStatusTypeDTO::Completed,
+            TransferStatus::Failed { .. } => TransferStatusTypeDTO::Failed,
         }
     }
 }

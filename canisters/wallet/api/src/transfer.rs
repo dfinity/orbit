@@ -49,6 +49,14 @@ pub enum TransferStatusDTO {
     },
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub enum TransferStatusTypeDTO {
+    Created,
+    Processing,
+    Completed,
+    Failed,
+}
+
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferDTO {
     pub id: UuidDTO,
@@ -78,7 +86,7 @@ pub struct GetTransfersResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccountTransfersInput {
-    pub status: Option<String>,
+    pub status: Option<TransferStatusTypeDTO>,
     pub to_dt: Option<TimestampRfc3339>,
     pub from_dt: Option<TimestampRfc3339>,
     pub account_id: UuidDTO,
