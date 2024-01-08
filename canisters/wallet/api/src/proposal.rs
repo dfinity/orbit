@@ -126,7 +126,6 @@ pub struct ProposalDTO {
     pub status: ProposalStatusDTO,
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: ProposalExecutionScheduleDTO,
-    pub metadata: Vec<(String, String)>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

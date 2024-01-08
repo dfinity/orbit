@@ -1,5 +1,5 @@
 use super::{
-    BlockchainApi, BlockchainApiResult, BlockchainTransactioSubmitted, BlockchainTransactionFee,
+    BlockchainApi, BlockchainApiResult, BlockchainTransactionFee, BlockchainTransactionSubmitted,
 };
 use crate::{
     core::ic_cdk::api::id as wallet_canister_self_id,
@@ -220,12 +220,12 @@ impl BlockchainApi for InternetComputer {
         &self,
         wallet_account: &Account,
         transfer: &Transfer,
-    ) -> BlockchainApiResult<BlockchainTransactioSubmitted> {
+    ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
         let block_height = self
             .submit_transfer(wallet_account.clone(), transfer.clone())
             .await?;
 
-        Ok(BlockchainTransactioSubmitted {
+        Ok(BlockchainTransactionSubmitted {
             details: vec![(
                 ICP_TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY.to_string(),
                 block_height.to_string(),

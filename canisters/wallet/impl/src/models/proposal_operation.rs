@@ -7,6 +7,7 @@ use super::{
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
+use wallet_api::{AccountMetadataDTO, TransferMetadataDTO};
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -41,7 +42,7 @@ pub struct TransferOperationInput {
     pub from_account_id: AccountId,
     pub to: String,
     pub amount: candid::Nat,
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<TransferMetadataDTO>,
     pub network: String,
     pub fee: Option<candid::Nat>,
 }
@@ -68,7 +69,7 @@ pub struct AddAccountOperationInput {
     pub owners: Vec<UserId>,
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Vec<AccountMetadataDTO>,
     pub policies: AccountPoliciesInput,
 }
 
@@ -99,7 +100,6 @@ pub struct AddUserOperation {
 pub struct AddUserOperationInput {
     pub name: Option<String>,
     pub identities: Vec<Principal>,
-    pub unconfirmed_identities: Vec<Principal>,
     pub groups: Vec<UUID>,
     pub status: UserStatus,
 }
@@ -116,7 +116,6 @@ pub struct EditUserOperationInput {
     pub user_id: UUID,
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
-    pub unconfirmed_identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
 }
 
@@ -163,6 +162,7 @@ pub struct RemoveUserGroupOperationInput {
 pub enum ChangeCanisterTarget {
     UpgradeWallet,
     UpgradeUpgrader,
+    UpgradeCanister(Principal),
 }
 
 #[stable_object]
@@ -170,6 +170,7 @@ pub enum ChangeCanisterTarget {
 pub struct ChangeCanisterOperationInput {
     pub target: ChangeCanisterTarget,
     pub module: Vec<u8>,
+    pub arg: Option<Vec<u8>>,
     pub checksum: Vec<u8>,
 }
 

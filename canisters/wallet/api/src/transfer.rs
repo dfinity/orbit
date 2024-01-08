@@ -4,7 +4,7 @@ use candid::{CandidType, Deserialize};
 
 pub type NetworkIdDTO = String;
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferMetadataDTO {
     pub key: String,
     pub value: String,

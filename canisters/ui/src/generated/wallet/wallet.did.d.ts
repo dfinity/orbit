@@ -12,7 +12,7 @@ export interface Account {
   'decimals' : number,
   'balance' : [] | [AccountBalanceInfo],
   'owners' : Array<UUID>,
-  'metadata' : Array<[string, string]>,
+  'metadata' : Array<AccountMetadata>,
   'name' : string,
   'blockchain' : string,
   'address' : string,
@@ -32,6 +32,7 @@ export interface AccountBalanceInfo {
   'balance' : bigint,
   'last_update_timestamp' : TimestampRFC3339,
 }
+export interface AccountMetadata { 'key' : string, 'value' : string }
 export interface AccountPolicies {
   'edit' : [] | [ProposalPolicyCriteria],
   'transfer' : [] | [ProposalPolicyCriteria],
@@ -51,7 +52,7 @@ export interface AddAccountOperation {
 }
 export interface AddAccountOperationInput {
   'owners' : Array<UUID>,
-  'metadata' : Array<[string, string]>,
+  'metadata' : Array<AccountMetadata>,
   'name' : string,
   'blockchain' : string,
   'standard' : string,
@@ -77,10 +78,10 @@ export interface AddUserOperation {
 export interface AddUserOperationInput {
   'status' : UserStatus,
   'groups' : Array<UUID>,
-  'unconfirmed_identities' : Array<Principal>,
   'name' : [] | [string],
   'identities' : Array<Principal>,
 }
+export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
 export type CanisterSettingsActionSpecifier = { 'ReadFeatures' : null } |
   { 'Read' : null };
@@ -89,11 +90,13 @@ export interface ChangeCanisterOperation {
   'input' : ChangeCanisterOperationInput,
 }
 export interface ChangeCanisterOperationInput {
+  'arg' : [] | [Uint8Array | number[]],
   'target' : ChangeCanisterTarget,
   'checksum' : Uint8Array | number[],
   'module' : Uint8Array | number[],
 }
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
+  { 'UpgradeCanister' : Principal } |
   { 'UpgradeWallet' : null };
 export type CommonActionSpecifier = { 'List' : null } |
   { 'Read' : CommonSpecifier } |
@@ -103,9 +106,6 @@ export type CommonActionSpecifier = { 'List' : null } |
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
-export interface ConfirmUserIdentityInput { 'user_id' : UUID }
-export type ConfirmUserIdentityResult = { 'Ok' : { 'user' : User } } |
-  { 'Err' : Error };
 export interface CreateProposalInput {
   'title' : [] | [string],
   'execution_plan' : [] | [ProposalExecutionSchedule],
@@ -148,7 +148,6 @@ export interface EditUserOperation { 'input' : EditUserOperationInput }
 export interface EditUserOperationInput {
   'id' : UUID,
   'groups' : [] | [Array<UUID>],
-  'unconfirmed_identities' : [] | [Array<Principal>],
   'name' : [] | [string],
   'identities' : [] | [Array<Principal>],
 }
@@ -304,7 +303,6 @@ export interface Proposal {
   'execution_plan' : ProposalExecutionSchedule,
   'expiration_dt' : TimestampRFC3339,
   'votes' : Array<ProposalVote>,
-  'metadata' : Array<[string, string]>,
   'created_at' : TimestampRFC3339,
   'summary' : [] | [string],
   'operation' : ProposalOperation,
@@ -495,7 +493,6 @@ export interface User {
   'id' : UUID,
   'status' : UserStatus,
   'groups' : Array<UserGroup>,
-  'unconfirmed_identities' : Array<Principal>,
   'name' : [] | [string],
   'last_modification_timestamp' : TimestampRFC3339,
   'identities' : Array<Principal>,
@@ -528,7 +525,7 @@ export type VoteOnProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
   { 'Err' : Error };
 export interface WalletAsset {
   'standards' : Array<string>,
-  'metadata' : Array<[string, string]>,
+  'metadata' : Array<AssetMetadata>,
   'name' : string,
   'blockchain' : string,
   'symbol' : AssetSymbol,
@@ -548,10 +545,6 @@ export type WalletSettingsResult = { 'Ok' : { 'settings' : WalletSettings } } |
   { 'Err' : Error };
 export interface WalletUpgrade { 'owners' : [] | [Array<Principal>] }
 export interface _SERVICE {
-  'confirm_user_identity' : ActorMethod<
-    [ConfirmUserIdentityInput],
-    ConfirmUserIdentityResult
-  >,
   'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,
   'features' : ActorMethod<[], GetFeaturesResult>,
   'fetch_account_balances' : ActorMethod<

@@ -20,8 +20,8 @@ use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
     ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
     EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferMetadataDTO,
-    TransferOperationDTO, TransferOperationInput,
+    EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferOperationDTO,
+    TransferOperationInput,
 };
 
 impl TransferOperation {
@@ -37,15 +37,7 @@ impl TransferOperation {
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
-                metadata: self
-                    .input
-                    .metadata
-                    .iter()
-                    .map(|(k, v)| TransferMetadataDTO {
-                        key: k.to_string(),
-                        value: v.to_string(),
-                    })
-                    .collect(),
+                metadata: self.input.metadata,
                 network: Some(NetworkDTO {
                     id: self.input.network.clone(),
                     name: self.input.network.clone(),
@@ -157,7 +149,6 @@ impl AddUserOperation {
             input: AddUserOperationInput {
                 name: self.input.name,
                 identities: self.input.identities,
-                unconfirmed_identities: self.input.unconfirmed_identities,
                 groups: self
                     .input
                     .groups
@@ -178,7 +169,6 @@ impl From<EditUserOperation> for EditUserOperationDTO {
                     .hyphenated()
                     .to_string(),
                 name: operation.input.name,
-                unconfirmed_identities: operation.input.unconfirmed_identities,
                 identities: operation.input.identities,
                 groups: operation.input.groups.map(|groups| {
                     groups
@@ -196,7 +186,6 @@ impl From<AddUserOperationInput> for crate::models::AddUserOperationInput {
         crate::models::AddUserOperationInput {
             name: input.name,
             identities: input.identities,
-            unconfirmed_identities: input.unconfirmed_identities,
             groups: input
                 .groups
                 .iter()
@@ -219,7 +208,6 @@ impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
                 .as_bytes(),
             name: input.name,
             identities: input.identities,
-            unconfirmed_identities: input.unconfirmed_identities,
             groups: input.groups.map(|groups| {
                 groups
                     .iter()
@@ -239,6 +227,9 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
         match value {
             ChangeCanisterTarget::UpgradeWallet => ChangeCanisterTargetDTO::UpgradeWallet,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
+            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
+                ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
+            }
         }
     }
 }
@@ -248,6 +239,9 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
         match value {
             ChangeCanisterTargetDTO::UpgradeWallet => ChangeCanisterTarget::UpgradeWallet,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
+            ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
+                ChangeCanisterTarget::UpgradeCanister(canister_id)
+            }
         }
     }
 }
@@ -257,6 +251,7 @@ impl From<crate::models::ChangeCanisterOperationInput> for ChangeCanisterOperati
         ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
+            arg: input.arg,
             checksum: input.checksum,
         }
     }
@@ -267,6 +262,7 @@ impl From<ChangeCanisterOperationInput> for crate::models::ChangeCanisterOperati
         crate::models::ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
+            arg: input.arg,
             checksum: input.checksum,
         }
     }

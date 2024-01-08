@@ -11,37 +11,12 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : WalletUpgrade,
     'Init' : WalletInit,
   });
-  const UUID = IDL.Text;
-  const ConfirmUserIdentityInput = IDL.Record({ 'user_id' : UUID });
-  const UserStatus = IDL.Variant({
-    'Inactive' : IDL.Null,
-    'Active' : IDL.Null,
-  });
-  const UserGroupId = UUID;
-  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
   const TimestampRFC3339 = IDL.Text;
-  const User = IDL.Record({
-    'id' : UUID,
-    'status' : UserStatus,
-    'groups' : IDL.Vec(UserGroup),
-    'unconfirmed_identities' : IDL.Vec(IDL.Principal),
-    'name' : IDL.Opt(IDL.Text),
-    'last_modification_timestamp' : TimestampRFC3339,
-    'identities' : IDL.Vec(IDL.Principal),
-  });
-  const Error = IDL.Record({
-    'code' : IDL.Text,
-    'message' : IDL.Opt(IDL.Text),
-    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
-  });
-  const ConfirmUserIdentityResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'user' : User }),
-    'Err' : Error,
-  });
   const ProposalExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
+  const UUID = IDL.Text;
   const CommonSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -98,10 +73,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
   const RemoveProposalPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
+  const UserStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+  });
   const AddUserOperationInput = IDL.Record({
     'status' : UserStatus,
     'groups' : IDL.Vec(UUID),
-    'unconfirmed_identities' : IDL.Vec(IDL.Principal),
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Vec(IDL.Principal),
   });
@@ -109,6 +87,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'user_group_id' : UUID,
   });
+  const UserGroupId = UUID;
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -150,9 +129,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
+    'UpgradeCanister' : IDL.Principal,
     'UpgradeWallet' : IDL.Null,
   });
   const ChangeCanisterOperationInput = IDL.Record({
+    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'target' : ChangeCanisterTarget,
     'checksum' : IDL.Vec(IDL.Nat8),
     'module' : IDL.Vec(IDL.Nat8),
@@ -165,7 +146,6 @@ export const idlFactory = ({ IDL }) => {
   const EditUserOperationInput = IDL.Record({
     'id' : UUID,
     'groups' : IDL.Opt(IDL.Vec(UUID)),
-    'unconfirmed_identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
@@ -196,9 +176,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemoveAccessPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
   const RemoveUserGroupOperationInput = IDL.Record({ 'user_group_id' : UUID });
+  const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AddAccountOperationInput = IDL.Record({
     'owners' : IDL.Vec(UUID),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
     'standard' : IDL.Text,
@@ -250,12 +231,21 @@ export const idlFactory = ({ IDL }) => {
   const EditAccessPolicyOperation = IDL.Record({
     'input' : EditAccessPolicyOperationInput,
   });
+  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
   const AddUserGroupOperation = IDL.Record({
     'user_group' : IDL.Opt(UserGroup),
     'input' : AddUserGroupOperationInput,
   });
   const RemoveProposalPolicyOperation = IDL.Record({
     'input' : RemoveProposalPolicyOperationInput,
+  });
+  const User = IDL.Record({
+    'id' : UUID,
+    'status' : UserStatus,
+    'groups' : IDL.Vec(UserGroup),
+    'name' : IDL.Opt(IDL.Text),
+    'last_modification_timestamp' : TimestampRFC3339,
+    'identities' : IDL.Vec(IDL.Principal),
   });
   const AddUserOperation = IDL.Record({
     'user' : IDL.Opt(User),
@@ -291,7 +281,7 @@ export const idlFactory = ({ IDL }) => {
     'decimals' : IDL.Nat32,
     'balance' : IDL.Opt(AccountBalanceInfo),
     'owners' : IDL.Vec(UUID),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
@@ -351,19 +341,24 @@ export const idlFactory = ({ IDL }) => {
     'execution_plan' : ProposalExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
     'votes' : IDL.Vec(ProposalVote),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
     'created_at' : TimestampRFC3339,
     'summary' : IDL.Opt(IDL.Text),
     'operation' : ProposalOperation,
     'proposed_by' : UUID,
   });
+  const Error = IDL.Record({
+    'code' : IDL.Text,
+    'message' : IDL.Opt(IDL.Text),
+    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
+  });
   const CreateProposalResult = IDL.Variant({
     'Ok' : IDL.Record({ 'proposal' : Proposal }),
     'Err' : Error,
   });
+  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const WalletAsset = IDL.Record({
     'standards' : IDL.Vec(IDL.Text),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
     'symbol' : AssetSymbol,
@@ -638,11 +633,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   return IDL.Service({
-    'confirm_user_identity' : IDL.Func(
-        [ConfirmUserIdentityInput],
-        [ConfirmUserIdentityResult],
-        [],
-      ),
     'create_proposal' : IDL.Func(
         [CreateProposalInput],
         [CreateProposalResult],

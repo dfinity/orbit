@@ -13,7 +13,6 @@ pub enum UserStatusDTO {
 pub struct UserDTO {
     pub id: UuidDTO,
     pub identities: Vec<Principal>,
-    pub unconfirmed_identities: Vec<Principal>,
     pub groups: Vec<UserGroupDTO>,
     pub status: UserStatusDTO,
     pub name: Option<String>,
@@ -31,20 +30,9 @@ pub struct GetUserResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ConfirmUserIdentityInput {
-    pub user_id: UuidDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ConfirmUserIdentityResponse {
-    pub user: UserDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddUserOperationInput {
     pub name: Option<String>,
     pub identities: Vec<Principal>,
-    pub unconfirmed_identities: Vec<Principal>,
     pub groups: Vec<String>,
     pub status: UserStatusDTO,
 }
@@ -60,7 +48,6 @@ pub struct EditUserOperationInput {
     pub id: UuidDTO,
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
-    pub unconfirmed_identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<String>>,
 }
 

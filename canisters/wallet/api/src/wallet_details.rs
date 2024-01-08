@@ -1,5 +1,10 @@
 use candid::{CandidType, Deserialize};
-use std::collections::HashMap;
+
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AssetMetadataDTO {
+    pub key: String,
+    pub value: String,
+}
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct WalletAssetDTO {
@@ -17,7 +22,7 @@ pub struct WalletAssetDTO {
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
     /// also, in the case of non-native assets, it can contain other required
     /// information (e.g. `{"address": "0x1234"}`).
-    pub metadata: HashMap<String, String>,
+    pub metadata: Vec<AssetMetadataDTO>,
 }
 
 /// Wallet features data transfer object (DTO).

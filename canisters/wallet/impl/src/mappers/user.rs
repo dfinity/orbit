@@ -7,13 +7,11 @@ use crate::{
     },
     repositories::USER_GROUP_REPOSITORY,
 };
-use candid::Principal;
 use ic_canister_core::{
     repository::Repository,
     types::UUID,
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
-use std::collections::HashSet;
 use uuid::Uuid;
 use wallet_api::{UserDTO, UserPrivilege};
 
@@ -27,7 +25,6 @@ impl UserMapper {
         User {
             id: new_user_id,
             identities: input.identities,
-            unconfirmed_identities: input.unconfirmed_identities,
             groups: input.groups,
             name: input.name,
             status: input.status,
@@ -41,7 +38,6 @@ impl From<User> for UserDTO {
         UserDTO {
             id: Uuid::from_bytes(user.id).hyphenated().to_string(),
             identities: user.identities,
-            unconfirmed_identities: user.unconfirmed_identities,
             name: user.name,
             status: user.status.into(),
             groups: user
@@ -64,7 +60,6 @@ impl From<UserDTO> for User {
         Self {
             id: *Uuid::parse_str(&user.id).expect("Invalid UUID").as_bytes(),
             identities: user.identities,
-            unconfirmed_identities: user.unconfirmed_identities,
             name: user.name,
             status: user.status.into(),
             groups: user
@@ -135,19 +130,7 @@ impl From<UserPrivilege> for ResourceSpecifier {
 impl User {
     pub fn update_with(&mut self, input: EditUserOperationInput) -> Result<(), UserError> {
         if let Some(new_identities) = &input.identities {
-            let mut unconfirmed_identities: HashSet<Principal> = self
-                .unconfirmed_identities
-                .iter()
-                .filter(|i| new_identities.contains(i))
-                .copied()
-                .collect();
-
-            for identity in new_identities {
-                unconfirmed_identities.retain(|i| *i != *identity);
-            }
-
             self.identities = new_identities.to_owned();
-            self.unconfirmed_identities = unconfirmed_identities.into_iter().collect();
         }
 
         if let Some(new_groups) = input.groups {

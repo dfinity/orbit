@@ -1,8 +1,6 @@
 use super::{Blockchain, BlockchainStandard};
-use std::{
-    collections::HashMap,
-    hash::{Hash, Hasher},
-};
+use std::hash::{Hash, Hasher};
+use wallet_api::AssetMetadataDTO;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WalletAsset {
@@ -20,7 +18,7 @@ pub struct WalletAsset {
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
     /// also, in the case of non-native assets, it can contain other required
     /// information (e.g. `{"address": "0x1234"}`).
-    pub metadata: HashMap<String, String>,
+    pub metadata: Vec<AssetMetadataDTO>,
 }
 
 impl Hash for WalletAsset {
@@ -31,7 +29,7 @@ impl Hash for WalletAsset {
         self.name.hash(state);
 
         // For HashMap we need to sort the keys first to ensure that the hash is stable.
-        let mut keys: Vec<&String> = self.metadata.keys().collect();
+        let mut keys: Vec<&String> = self.metadata.iter().map(|kv| &kv.key).collect();
         keys.sort();
         keys.hash(state);
     }
