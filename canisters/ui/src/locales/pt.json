@@ -106,6 +106,8 @@
     "cancelled": "Cancelado",
     "user": "Utilizador",
     "user_id": "Identificador de utilizador",
+    "login": "Entrar",
+    "logout": "Sair",
     "signin": "Entrar",
     "signout": "Sair",
     "scheduled": "Agendado",
@@ -159,26 +161,23 @@
       "validTokenAmount": "Este campo deve conter um valor de token válido."
     }
   },
+
   "navigation": {
-    "main": {
-      "name": "Menu",
-      "items": {
-        "home": "Início",
-        "accounts": "Contas",
-        "transfers": "Transferências",
-        "address_book": "Endereços"
-      }
-    },
-    "configuration": {
-      "name": "Configuração",
-      "items": {
-        "settings": "Sistema",
-        "logout": "Sair"
-      }
-    },
-    "profile": {
-      "profile": "Perfil",
-      "logout": "Sair"
+    "overview": "Visão geral",
+    "accounts_transfers": "Contas & Transferências",
+    "address_book": "Endereços",
+    "users": "Usuários",
+    "settings": "Configuraçōes",
+    "user_groups_permissions": "Grupos de usuários & Permissões",
+    "administration": "Administração",
+    "add_another_wallet": "Adicionar outra carteira",
+    "account_info_settings": "Informaçōes da conta & Configuraçōes",
+    "login": "Entrar",
+    "logout": "Sair"
+  },
+  "pages": {
+    "overview": {
+      "title": "{name} - Visão geral"
     }
   }
 }

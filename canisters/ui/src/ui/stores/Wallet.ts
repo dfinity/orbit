@@ -33,6 +33,7 @@ export interface PendingAccount {
 export interface WalletStoreState {
   canisterId: Principal | null;
   loading: boolean;
+  name: string | null;
   user: AuthenticatedUser | null;
   features: {
     loading: boolean;
@@ -57,6 +58,7 @@ export const useWalletStore = defineStore('wallet', {
     return {
       canisterId: null,
       loading: false,
+      name: null,
       user: null,
       features: {
         loading: false,
@@ -135,10 +137,9 @@ export const useWalletStore = defineStore('wallet', {
   },
   actions: {
     reset(): void {
-      // const session = useSessionStore();
-      // session.this._walletId = Principal.anonymous().toText();
       this.canisterId = null;
       this.user = null;
+      this.name = null;
       this.accounts.items = [];
       this.features.details = null;
       this.notifications.items = [];
@@ -254,13 +255,16 @@ export const useWalletStore = defineStore('wallet', {
         this.features.loading = false;
       }
     },
-    async load(walletId: Principal): Promise<void> {
+    async load(walletId: Principal, name: string): Promise<void> {
       const app = useAppStore();
 
       try {
         if (this.loading) {
+          logger.warn(`Wallet is already loading`);
           return;
         }
+
+        this.name = name;
         this.loading = true;
         this.canisterId = walletId;
         const user = await this.service.myUser();
@@ -268,6 +272,8 @@ export const useWalletStore = defineStore('wallet', {
           logger.warn(`User not registered in the selected wallet`);
           return;
         }
+
+        this.user = user;
 
         // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
         this.loadAccountList();

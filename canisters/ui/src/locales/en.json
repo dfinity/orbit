@@ -102,7 +102,9 @@
     "asset": "Asset",
     "user": "User",
     "unknown": "Unknown",
-    "user_id": "User Id",
+    "user_id": "User ID",
+    "login": "Login",
+    "logout": "Logout",
     "signin": "Sign In",
     "signout": "Sign Out",
     "anonymous": "Anonymous",
@@ -160,25 +162,21 @@
     "not_found_btn": "Go back to accounts"
   },
   "navigation": {
-    "main": {
-      "name": "Menu",
-      "items": {
-        "home": "Home",
-        "accounts": "Accounts",
-        "transfers": "Transfers",
-        "address_book": "Address Book"
-      }
-    },
-    "configuration": {
-      "name": "Configuration",
-      "items": {
-        "settings": "Settings",
-        "logout": "Logout"
-      }
-    },
-    "profile": {
-      "profile": "Profile",
-      "logout": "Logout"
+    "overview": "Overview",
+    "accounts_transfers": "Accounts & Transfers",
+    "address_book": "Address Book",
+    "users": "Users",
+    "settings": "Settings",
+    "user_groups_permissions": "User Groups & Permissions",
+    "administration": "Wallet Administration",
+    "add_another_wallet": "Add another wallet",
+    "account_info_settings": "Account Info & Settings",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "pages": {
+    "overview": {
+      "title": "{name} - Overview"
     }
   }
 }

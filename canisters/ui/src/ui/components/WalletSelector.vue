@@ -3,7 +3,8 @@
     v-model="selectedWallet"
     :loading="session.loading"
     class="wallet-selector"
-    variant="filled"
+    :variant="app.isMobile ? 'filled' : 'solo'"
+    density="compact"
     hide-details
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
@@ -20,7 +21,6 @@
       <VListItem
         v-if="session.hasWallets"
         :title="session.computedWalletName(Principal.fromText(item.raw.canisterId))"
-        :subtitle="item.raw.canisterId"
         :prepend-icon="mdiWallet"
       />
       <VListItem v-else :title="$t('wallets.no_wallets')" :prepend-icon="mdiWallet" />
@@ -31,9 +31,10 @@
 import { computed } from 'vue';
 import { Principal } from '@dfinity/principal';
 import { mdiWallet } from '@mdi/js';
-import { useSessionStore } from '~/ui/stores';
+import { useSessionStore, useAppStore } from '~/ui/stores';
 
 const session = useSessionStore();
+const app = useAppStore();
 
 const selectedWallet = computed({
   get(): string | null {

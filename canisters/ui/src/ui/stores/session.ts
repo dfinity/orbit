@@ -68,7 +68,7 @@ export const useSessionStore = defineStore('session', {
       this.selectedWallet = null;
       wallet.reset();
     },
-    loadWallet(walletId: Principal): void {
+    async loadWallet(walletId: Principal): Promise<void> {
       const wallet = useWalletStore();
 
       this.selectedWallet = walletId;
@@ -76,7 +76,9 @@ export const useSessionStore = defineStore('session', {
         wallet.reset();
       }
 
-      wallet.load(walletId);
+      const name = this.computedWalletName(walletId);
+
+      await wallet.load(walletId, name);
     },
     async load(): Promise<void> {
       this.loading = true;
@@ -100,7 +102,7 @@ export const useSessionStore = defineStore('session', {
         };
 
         if (mainWalletId) {
-          await this.loadMainWallet(mainWalletId);
+          await this.loadWallet(mainWalletId);
 
           this.environmentStatus = EnvironmentStatus.Ready;
         } else {
@@ -119,11 +121,6 @@ export const useSessionStore = defineStore('session', {
       } finally {
         this.loading = false;
       }
-    },
-    async loadMainWallet(walletId: Principal): Promise<void> {
-      this.selectedWallet = walletId;
-      const wallet = useWalletStore();
-      await wallet.load(walletId);
     },
     async deployInitialWallet(): Promise<void> {
       if (this.hasWallets) {
@@ -151,7 +148,7 @@ export const useSessionStore = defineStore('session', {
             })) ?? [],
         } as UserSession;
 
-        await this.loadMainWallet(walletId);
+        await this.loadWallet(walletId);
         this.environmentStatus = EnvironmentStatus.Ready;
       } catch (err) {
         logger.error('Failed to deploy initial wallet', { err });

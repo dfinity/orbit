@@ -39,7 +39,10 @@
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
               <LanguageSelector />
-              <WalletSelector v-if="auth.isAuthenticated" />
+              <template v-if="auth.isAuthenticated">
+                <NotificationsPanelToggle />
+                <UserAvatarSelector />
+              </template>
             </slot>
           </div>
         </VToolbar>
@@ -113,12 +116,13 @@
 import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
-import WalletSelector from '~/ui/components/WalletSelector.vue';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
 import { useAuthStore, useAppStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
+import UserAvatarSelector from '~/ui/components/UserAvatarSelector.vue';
+import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 
 const app = useAppStore();
 const auth = useAuthStore();

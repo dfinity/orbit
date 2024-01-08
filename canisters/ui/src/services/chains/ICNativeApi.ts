@@ -4,7 +4,7 @@ import { nanoToJsDate } from '~/core';
 import { Account } from '~/generated/wallet/wallet.did';
 import { idlFactory } from '~/generated/icp_index';
 import { _SERVICE } from '~/generated/icp_index/icp_index.did';
-import { FetchTransfersInput, ChainApi, AccountIncomingTransfer } from '~/types/Chain';
+import { FetchTransfersInput, ChainApi, AccountIncomingTransfer } from '~/types/chain';
 
 export class ICNativeApi implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;

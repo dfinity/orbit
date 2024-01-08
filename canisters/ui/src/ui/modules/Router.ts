@@ -1,6 +1,6 @@
 import { RouterView, createRouter, createWebHistory } from 'vue-router';
 import { initStateGuard, navigationGuard } from '~/ui/modules';
-import HomePage from '~/ui/pages/HomePage.vue';
+import OverviewPage from '~/ui/pages/OverviewPage.vue';
 import LoginPage from '~/ui/pages/LoginPage.vue';
 import NotFoundPage from '~/ui/pages/NotFoundPage.vue';
 import { AuthState } from '~/ui/types';
@@ -21,8 +21,8 @@ const router = createRouter({
         {
           path: '',
           name: defaultHomeRoute,
-          alias: ['home'],
-          component: HomePage,
+          alias: ['overview'],
+          component: OverviewPage,
           meta: {
             auth: {
               requireState: AuthState.Authenticated,

@@ -9,7 +9,7 @@
           {{ $t('login.signin_slogan') }}
         </section>
         <VBtn
-          color="primary-variant"
+          color="secondary"
           rounded
           width="300"
           :loading="isAuthenticating"
@@ -26,7 +26,7 @@
           {{ $t('login.signin_slogan') }}
         </section>
         <VBtn
-          color="primary-variant"
+          color="secondary"
           rounded
           width="300"
           :loading="isAuthenticating"

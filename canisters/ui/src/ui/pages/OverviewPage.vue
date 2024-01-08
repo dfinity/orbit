@@ -1,31 +1,10 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <VContainer class="pt-16 pb-16 pl-8 pr-8" fluid>
+      <VContainer class="pt-8 pb-8 pl-8 pr-8" fluid>
         <VRow>
-          <VCol md="6" sm="12">
-            <h1 class="text-h4">{{ $t('home.welcome_back') }}</h1>
-            <p v-if="wallet.hasUser" class="info-box">
-              <VIcon :icon="mdiBellRing" size="18" class="mr-1" />
-              <span>
-                {{
-                  wallet.metrics.notifications > 0
-                    ? $t('home.notifications.some', { count: wallet.metrics.notifications })
-                    : $t('home.notifications.none')
-                }}
-              </span>
-            </p>
-          </VCol>
-          <VCol md="6" sm="12" class="header-actions">
-            <NewTransferBtn />
-            <VBtn
-              rounded
-              color="primary-variant"
-              :prepend-icon="mdiCogs"
-              :to="`/${$route.params.locale}/settings`"
-            >
-              {{ $t('terms.settings') }}
-            </VBtn>
+          <VCol cols="12">
+            <h1 class="text-h4">{{ $t(`pages.overview.title`, { name: wallet.name }) }}</h1>
           </VCol>
         </VRow>
       </VContainer>
@@ -65,10 +44,9 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiWallet, mdiBellRing, mdiCogs } from '@mdi/js';
+import { mdiWallet } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { useWalletStore } from '~/ui/stores';
-import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 
 const wallet = useWalletStore();
 </script>

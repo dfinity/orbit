@@ -1,6 +1,7 @@
 import { RouteLocationNormalizedLoaded } from 'vue-router';
 
 export enum NavigationActionType {
+  None = 'none',
   Callback = 'callback',
   Href = 'href',
   To = 'to',
@@ -21,17 +22,16 @@ export type NavigationTo = {
   handle: (route: RouteLocationNormalizedLoaded) => string;
 };
 
-export type NavigationAction = NavigationTo | NavigationHref | NavigationCallback;
+export type NagivationNone = {
+  type: NavigationActionType.None;
+};
+
+export type NavigationAction = NavigationTo | NavigationHref | NavigationCallback | NagivationNone;
 
 export interface NavigationItem {
   name: string;
   localeKey: string;
-  icon: string;
+  icon?: string;
   action: NavigationAction;
-}
-
-export interface NavigationSection {
-  name: string;
-  localeKey: string;
-  items: NavigationItem[];
+  items?: NavigationItem[];
 }

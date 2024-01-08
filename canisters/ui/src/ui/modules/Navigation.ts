@@ -1,69 +1,97 @@
-import { mdiCogs, mdiHome, mdiLogoutVariant, mdiWalletBifold } from '@mdi/js';
+import { mdiCogs, mdiHome, mdiWalletBifold, mdiBookOpenVariant } from '@mdi/js';
 import { App } from 'vue';
 import { NavigationGuard } from 'vue-router';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey } from '~/ui/modules';
 import { useAuthStore } from '~/ui/stores';
-import { AuthState, NavigationActionType, NavigationSection } from '~/ui/types';
+import { AuthState, NavigationActionType, NavigationItem } from '~/ui/types';
 
-const mainNavigation: NavigationSection[] = [
+const mainNavigation: NavigationItem[] = [
   {
-    name: 'main',
-    localeKey: 'navigation.main.name',
+    name: 'settings',
+    localeKey: 'navigation.settings',
+    action: {
+      type: NavigationActionType.None,
+    },
+    icon: mdiCogs,
     items: [
       {
-        name: 'home',
-        localeKey: 'navigation.main.items.home',
+        name: 'administration',
+        localeKey: 'navigation.administration',
         action: {
           type: NavigationActionType.To,
-          handle: route => (route.params.locale ? `/${route.params.locale}/home` : '/home'),
+          handle: route =>
+            route.params.locale
+              ? `/${route.params.locale}/settings/administration`
+              : '/settings/administration',
         },
-        icon: mdiHome,
       },
       {
-        name: 'accounts',
-        localeKey: 'navigation.main.items.accounts',
+        name: 'user_groups_permissions',
+        localeKey: 'navigation.user_groups_permissions',
         action: {
           type: NavigationActionType.To,
-          handle: route => (route.params.locale ? `/${route.params.locale}/accounts` : '/accounts'),
+          handle: route =>
+            route.params.locale
+              ? `/${route.params.locale}/settings/permissions`
+              : '/settings/permissions',
         },
-        icon: mdiWalletBifold,
+      },
+      {
+        name: 'users',
+        localeKey: 'navigation.users',
+        action: {
+          type: NavigationActionType.To,
+          handle: route =>
+            route.params.locale ? `/${route.params.locale}/settings/users` : '/settings/users',
+        },
+      },
+      {
+        name: 'address_book',
+        localeKey: 'navigation.address_book',
+        action: {
+          type: NavigationActionType.To,
+          handle: route =>
+            route.params.locale
+              ? `/${route.params.locale}/settings/address-book`
+              : '/settings/address-book',
+        },
       },
     ],
   },
   {
-    name: 'configuration',
-    localeKey: 'navigation.configuration.name',
-    items: [
-      {
-        name: 'settings',
-        localeKey: 'navigation.configuration.items.settings',
-        action: {
-          type: NavigationActionType.To,
-          handle: route => (route.params.locale ? `/${route.params.locale}/settings` : '/settings'),
-        },
-        icon: mdiCogs,
-      },
-      {
-        name: 'logout',
-        localeKey: 'navigation.configuration.items.logout',
-        action: {
-          type: NavigationActionType.Callback,
-          handle: async () => {
-            const auth = useAuthStore();
-
-            await auth.signOut();
-          },
-        },
-        icon: mdiLogoutVariant,
-      },
-    ],
+    name: 'home',
+    localeKey: 'navigation.overview',
+    action: {
+      type: NavigationActionType.To,
+      handle: route => (route.params.locale ? `/${route.params.locale}/overview` : '/overview'),
+    },
+    icon: mdiHome,
+  },
+  {
+    name: 'accounts',
+    localeKey: 'navigation.accounts_transfers',
+    action: {
+      type: NavigationActionType.To,
+      handle: route => (route.params.locale ? `/${route.params.locale}/accounts` : '/accounts'),
+    },
+    icon: mdiWalletBifold,
+  },
+  {
+    name: 'address_book',
+    localeKey: 'navigation.address_book',
+    action: {
+      type: NavigationActionType.To,
+      handle: route =>
+        route.params.locale ? `/${route.params.locale}/address-book` : '/address-book',
+    },
+    icon: mdiBookOpenVariant,
   },
 ];
 
 class Navigation {
   constructor(
     private readonly navigation: {
-      main: NavigationSection[];
+      main: NavigationItem[];
     },
   ) {}
 
@@ -90,7 +118,7 @@ export const navigationGuard: NavigationGuard = async (to, _from, next) => {
 declare module 'vue' {
   interface ComponentCustomProperties {
     $navigation: {
-      main: NavigationSection[];
+      main: NavigationItem[];
     };
   }
 }
