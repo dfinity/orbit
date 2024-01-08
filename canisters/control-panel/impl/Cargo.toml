@@ -18,6 +18,7 @@ ic-canister-core = { workspace = true }
 ic-canister-macros = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 lazy_static = { workspace = true }
 prometheus = { workspace = true }
