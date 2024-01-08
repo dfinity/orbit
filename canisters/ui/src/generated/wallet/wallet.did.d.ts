@@ -203,17 +203,6 @@ export type ListAccessPoliciesResult = {
     'Ok' : { 'next_offset' : [] | [bigint], 'policies' : Array<AccessPolicy> }
   } |
   { 'Err' : Error };
-export interface ListAccountProposalsInput {
-  'account_id' : UUID,
-  'status' : [] | [Array<ProposalStatusCode>],
-  'to_dt' : [] | [TimestampRFC3339],
-  'operation_type' : [] | [ProposalOperationType],
-  'from_dt' : [] | [TimestampRFC3339],
-}
-export type ListAccountProposalsResult = {
-    'Ok' : { 'proposals' : Array<Proposal> }
-  } |
-  { 'Err' : Error };
 export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
   { 'Err' : Error };
 export interface ListAccountTransfersInput {
@@ -244,9 +233,25 @@ export type ListProposalPoliciesResult = {
 export interface ListProposalsInput {
   'status' : [] | [Array<ProposalStatusCode>],
   'to_dt' : [] | [TimestampRFC3339],
-  'operation_type' : [] | [ProposalOperationType],
+  'operation_type' : [] | [ListProposalsOperationType],
   'from_dt' : [] | [TimestampRFC3339],
+  'user_id' : [] | [UUID],
 }
+export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
+  { 'AddUserGroup' : null } |
+  { 'RemoveProposalPolicy' : null } |
+  { 'AddUser' : null } |
+  { 'EditUserGroup' : null } |
+  { 'AddProposalPolicy' : null } |
+  { 'ChangeCanister' : null } |
+  { 'EditProposalPolicy' : null } |
+  { 'EditUser' : null } |
+  { 'Transfer' : [] | [UUID] } |
+  { 'EditAccount' : null } |
+  { 'AddAccessPolicy' : null } |
+  { 'RemoveAccessPolicy' : null } |
+  { 'RemoveUserGroup' : null } |
+  { 'AddAccount' : null };
 export type ListProposalsResult = { 'Ok' : { 'proposals' : Array<Proposal> } } |
   { 'Err' : Error };
 export type ListUserGroupResult = {
@@ -573,10 +578,6 @@ export interface _SERVICE {
   'list_access_policies' : ActorMethod<
     [ListAccessPoliciesInput],
     ListAccessPoliciesResult
-  >,
-  'list_account_proposals' : ActorMethod<
-    [ListAccountProposalsInput],
-    ListAccountProposalsResult
   >,
   'list_account_transfers' : ActorMethod<
     [ListAccountTransfersInput],

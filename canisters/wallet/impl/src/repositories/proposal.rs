@@ -15,16 +15,17 @@ use crate::{
             proposal_status_index::ProposalStatusIndexCriteria,
             proposal_user_index::ProposalUserIndexCriteria,
         },
-        AccountId, Proposal, ProposalKey, ProposalOperationType, ProposalStatusCode, UserId,
+        AccountId, Proposal, ProposalKey, ProposalStatusCode, UserId,
     },
 };
 use ic_canister_core::{
     repository::{IndexRepository, RefreshIndexMode, Repository},
-    types::Timestamp,
+    types::{Timestamp, UUID},
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
+use wallet_api::ListProposalsOperationTypeDTO;
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -235,37 +236,21 @@ impl ProposalRepository {
         account_id: AccountId,
         condition: ProposalWhereClause,
     ) -> Vec<Proposal> {
-        self.find_by_account(
-            account_id,
-            condition.created_dt_from,
-            condition.created_dt_to,
-        )
-        .iter()
-        .filter(|proposal| {
-            let mut match_operation_type = true;
-            let mut match_status = true;
-
-            if let Some(operation_type) = &condition.operation_type {
-                match_operation_type =
-                    ProposalOperationType::from(proposal.operation.clone()) == *operation_type;
-            }
-
-            if let Some(status) = &condition.status {
-                match_status = status
-                    .iter()
-                    .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
-            }
-
-            match_operation_type && match_status
-        })
-        .map(|o| o.to_owned())
-        .collect::<Vec<_>>()
+        self.account_index
+            .find_by_criteria(ProposalAccountIndexCriteria {
+                account_id: account_id.to_owned(),
+                from_dt: condition.created_dt_from.to_owned(),
+                to_dt: condition.created_dt_to.to_owned(),
+            })
+            .iter()
+            .filter_map(|id| self.check_condition(*id, &condition))
+            .collect()
     }
 
     pub fn find_by_user_where(
         &self,
         user_id: UserId,
-        condition: ProposalFindByUserWhereClause,
+        condition: ProposalWhereClause,
     ) -> Vec<Proposal> {
         self.user_index
             .find_by_criteria(ProposalUserIndexCriteria {
@@ -274,47 +259,56 @@ impl ProposalRepository {
                 to_dt: condition.created_dt_to,
             })
             .iter()
-            .filter_map(|id| match self.get(&Proposal::key(*id)) {
-                Some(proposal) => {
-                    let mut match_operation_type = true;
-                    let mut match_status = true;
-
-                    if let Some(operation_type) = &condition.operation_type {
-                        match_operation_type =
-                            ProposalOperationType::from(proposal.operation.clone())
-                                == *operation_type;
-                    }
-
-                    if let Some(status) = &condition.status {
-                        match_status = status
-                            .iter()
-                            .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
-                    }
-
-                    match match_operation_type && match_status {
-                        true => Some(proposal),
-                        false => None,
-                    }
-                }
-                None => None,
-            })
+            .filter_map(|id| self.check_condition(*id, &condition))
             .collect()
+    }
+
+    pub fn find_where(&self, condition: ProposalWhereClause) -> Vec<Proposal> {
+        self.expiration_dt_index
+            .find_by_criteria(ProposalExpirationTimeIndexCriteria {
+                from_dt: None,
+                to_dt: None,
+            })
+            .iter()
+            .filter_map(|id| self.check_condition(*id, &condition))
+            .collect()
+    }
+
+    fn check_condition(
+        &self,
+        proposal_id: UUID,
+        condition: &ProposalWhereClause,
+    ) -> Option<Proposal> {
+        match self.get(&Proposal::key(proposal_id)) {
+            Some(proposal) => {
+                let mut match_operation_type = true;
+                let mut match_status = true;
+
+                if let Some(operation_type) = &condition.operation_type {
+                    match_operation_type = proposal.operation.is_of_type(operation_type);
+                }
+
+                if let Some(status) = &condition.status {
+                    match_status = status
+                        .iter()
+                        .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
+                }
+
+                match match_operation_type && match_status {
+                    true => Some(proposal),
+                    false => None,
+                }
+            }
+            None => None,
+        }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ProposalWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
-    pub operation_type: Option<ProposalOperationType>,
-    pub status: Option<Vec<ProposalStatusCode>>,
-}
-
-#[derive(Debug)]
-pub struct ProposalFindByUserWhereClause {
-    pub created_dt_from: Option<Timestamp>,
-    pub created_dt_to: Option<Timestamp>,
-    pub operation_type: Option<ProposalOperationType>,
+    pub operation_type: Option<ListProposalsOperationTypeDTO>,
     pub status: Option<Vec<ProposalStatusCode>>,
 }
 

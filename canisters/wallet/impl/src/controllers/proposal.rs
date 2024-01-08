@@ -10,21 +10,14 @@ use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
     CreateProposalInput, CreateProposalResponse, GetProposalInput, GetProposalResponse,
-    ListAccountProposalsInput, ListAccountProposalsResponse, ListProposalsInput,
-    ListProposalsResponse, ProposalDTO, VoteOnProposalInput, VoteOnProposalResponse,
+    ListProposalsInput, ListProposalsResponse, ProposalDTO, VoteOnProposalInput,
+    VoteOnProposalResponse,
 };
 
 // Canister entrypoints for the controller.
 #[query(name = "list_proposals")]
 async fn list_proposals(input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
     CONTROLLER.list_proposals(input).await
-}
-
-#[query(name = "list_account_proposals")]
-async fn list_account_proposals(
-    input: ListAccountProposalsInput,
-) -> ApiResult<ListAccountProposalsResponse> {
-    CONTROLLER.list_account_proposals(input).await
 }
 
 #[query(name = "get_proposal")]
@@ -102,7 +95,7 @@ impl ProposalController {
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let proposals = self
             .proposal_service
-            .list_proposals(input, &call_context())?
+            .list_proposals(input)?
             .into_iter()
             .try_fold(Vec::new(), |mut acc, proposal| {
                 acc.push(ProposalDTO::from(proposal));
@@ -110,28 +103,6 @@ impl ProposalController {
             })?;
 
         Ok(ListProposalsResponse { proposals })
-    }
-
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
-    async fn list_account_proposals(
-        &self,
-        input: ListAccountProposalsInput,
-    ) -> ApiResult<ListAccountProposalsResponse> {
-        let proposals = self
-            .proposal_service
-            .list_account_proposals(input)?
-            .into_iter()
-            .try_fold(Vec::new(), |mut acc, proposal| {
-                acc.push(ProposalDTO::from(proposal));
-                Ok::<Vec<_>, ApiError>(acc)
-            })?;
-
-        Ok(ListAccountProposalsResponse { proposals })
     }
 
     #[with_middleware(

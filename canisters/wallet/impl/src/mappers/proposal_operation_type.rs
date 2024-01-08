@@ -1,5 +1,6 @@
+use crate::mappers::HelperMapper;
 use crate::models::{ProposalOperation, ProposalOperationType};
-use wallet_api::ProposalOperationTypeDTO;
+use wallet_api::{ListProposalsOperationTypeDTO, ProposalOperationTypeDTO};
 
 impl From<ProposalOperationTypeDTO> for ProposalOperationType {
     fn from(dto: ProposalOperationTypeDTO) -> Self {
@@ -77,6 +78,67 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::RemoveProposalPolicy(_) => {
                 ProposalOperationType::RemoveProposalPolicy
             }
+        }
+    }
+}
+
+impl ProposalOperation {
+    pub fn is_of_type(&self, operation: &ListProposalsOperationTypeDTO) -> bool {
+        match (self, operation) {
+            (
+                ProposalOperation::Transfer(transfer_operation),
+                ListProposalsOperationTypeDTO::Transfer(from_account_id),
+            ) => {
+                if let Some(account_id) = from_account_id {
+                    HelperMapper::to_uuid(account_id.clone()).map(|uuid| *uuid.as_bytes())
+                        == Ok(transfer_operation.input.from_account_id)
+                } else {
+                    true
+                }
+            }
+            (ProposalOperation::AddAccount(_), ListProposalsOperationTypeDTO::AddAccount) => true,
+            (ProposalOperation::EditAccount(_), ListProposalsOperationTypeDTO::EditAccount) => true,
+            (ProposalOperation::AddUser(_), ListProposalsOperationTypeDTO::AddUser) => true,
+            (ProposalOperation::EditUser(_), ListProposalsOperationTypeDTO::EditUser) => true,
+            (ProposalOperation::AddUserGroup(_), ListProposalsOperationTypeDTO::AddUserGroup) => {
+                true
+            }
+            (ProposalOperation::EditUserGroup(_), ListProposalsOperationTypeDTO::EditUserGroup) => {
+                true
+            }
+            (
+                ProposalOperation::RemoveUserGroup(_),
+                ListProposalsOperationTypeDTO::RemoveUserGroup,
+            ) => true,
+            (
+                ProposalOperation::ChangeCanister(_),
+                ListProposalsOperationTypeDTO::ChangeCanister,
+            ) => true,
+            (
+                ProposalOperation::AddAccessPolicy(_),
+                ListProposalsOperationTypeDTO::AddAccessPolicy,
+            ) => true,
+            (
+                ProposalOperation::EditAccessPolicy(_),
+                ListProposalsOperationTypeDTO::EditAccessPolicy,
+            ) => true,
+            (
+                ProposalOperation::RemoveAccessPolicy(_),
+                ListProposalsOperationTypeDTO::RemoveAccessPolicy,
+            ) => true,
+            (
+                ProposalOperation::AddProposalPolicy(_),
+                ListProposalsOperationTypeDTO::AddProposalPolicy,
+            ) => true,
+            (
+                ProposalOperation::EditProposalPolicy(_),
+                ListProposalsOperationTypeDTO::EditProposalPolicy,
+            ) => true,
+            (
+                ProposalOperation::RemoveProposalPolicy(_),
+                ListProposalsOperationTypeDTO::RemoveProposalPolicy,
+            ) => true,
+            _ => false,
         }
     }
 }
