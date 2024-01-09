@@ -4,15 +4,20 @@
       <VBtn :icon="accountIcon" v-bind="menuProps"></VBtn>
     </template>
     <VList density="compact">
-      <VListSubheader v-if="wallet.user">
+      <VListSubheader v-if="session.isAuthenticated">
         {{ $t('terms.user_id') }}<br />
         <p>
-          <span>{{ wallet.user.me.id }}</span>
+          <span>{{ session.user.principal }}</span>
           <VBtn
             size="x-small"
             variant="text"
             :icon="mdiContentCopy"
-            @click="app.copyToClipboard(wallet.user.me.id, $t('wallets.user_copied_to_clipboard'))"
+            @click="
+              copyToClipboard({
+                textToCopy: session.user.principal,
+                sendNotification: true,
+              })
+            "
           />
         </p>
       </VListSubheader>
@@ -20,7 +25,7 @@
         <VListItemTitle>{{ $t('navigation.account_info_settings') }}</VListItemTitle>
       </VListItem>
       <VDivider />
-      <VListItem @click="auth.signOut">
+      <VListItem @click="session.signOut">
         <VListItemTitle>{{ $t('navigation.logout') }}</VListItemTitle>
       </VListItem>
     </VList>
@@ -30,11 +35,10 @@
 <script lang="ts" setup>
 import { mdiContentCopy, mdiAccountCircle, mdiAccountCircleOutline } from '@mdi/js';
 import { computed } from 'vue';
-import { useAppStore, useAuthStore, useWalletStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores';
+import { copyToClipboard } from '~/ui/utils';
 
-const auth = useAuthStore();
-const app = useAppStore();
-const wallet = useWalletStore();
+const session = useSessionStore();
 
 const props = withDefaults(
   defineProps<{

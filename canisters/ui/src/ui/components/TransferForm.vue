@@ -59,7 +59,7 @@
 <script lang="ts" setup>
 import { mdiWallet, mdiSend, mdiNumeric } from '@mdi/js';
 import { ref, computed, watch, onMounted } from 'vue';
-import { AccountId, Proposal } from '~/generated/wallet/wallet.did';
+import { UUID, Proposal } from '~/generated/wallet/wallet.did';
 import { useTransferFormStore } from '~/ui/stores/TransferForm';
 
 const transferStore = useTransferFormStore();
@@ -73,7 +73,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   modelValue: boolean;
-  accountId?: AccountId;
+  accountId?: UUID;
 }>();
 
 onMounted(() => {

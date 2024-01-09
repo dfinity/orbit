@@ -21,9 +21,9 @@ import { mdiLink } from '@mdi/js';
 import { computed } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { defaultHomeRoute } from '~/ui/modules';
-import { useAuthStore, useAppStore } from '~/ui/stores';
+import { useSessionStore, useAppStore } from '~/ui/stores';
 
-const auth = useAuthStore();
+const session = useSessionStore();
 const app = useAppStore();
 
 const hideSidebar = computed(() => {
@@ -31,7 +31,7 @@ const hideSidebar = computed(() => {
     return false;
   }
 
-  return !auth.isAuthenticated;
+  return !session.isAuthenticated;
 });
 </script>
 

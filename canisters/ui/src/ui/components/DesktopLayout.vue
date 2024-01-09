@@ -3,12 +3,12 @@
     <VNavigationDrawer v-model="app.showSidebar" class="sidebar" width="260" color="primary">
       <div class="sidebar__header">
         <slot name="sidebar-header">
-          <SidenavHeader v-if="auth.isAuthenticated" />
+          <SidenavHeader v-if="session.isAuthenticated" />
         </slot>
       </div>
       <div class="sidebar__nav">
         <slot name="sidebar-nav">
-          <SidenavMenu v-if="auth.isAuthenticated" />
+          <SidenavMenu v-if="session.isAuthenticated" />
         </slot>
       </div>
       <div class="sidebar__footer">
@@ -26,9 +26,9 @@
         <VToolbar density="compact" class="toolbar">
           <div v-if="!isSetAndNotFalse(props.hideToolbarContext)" class="toolbar__context">
             <slot name="toolbar-context">
-              <BrandLogo v-if="!auth.isAuthenticated" />
+              <BrandLogo v-if="!session.isAuthenticated" />
               <VBtn
-                v-if="auth.isAuthenticated"
+                v-if="session.isAuthenticated"
                 :icon="mdiMenuOpen"
                 @click.prevent="app.toogleSidebar"
               />
@@ -39,7 +39,7 @@
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
               <LanguageSelector />
-              <template v-if="auth.isAuthenticated">
+              <template v-if="session.isAuthenticated">
                 <NotificationsPanelToggle />
                 <UserAvatarSelector />
               </template>
@@ -119,13 +119,13 @@ import { isSetAndNotFalse } from '~/core';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
-import { useAuthStore, useAppStore } from '~/ui/stores';
+import { useAppStore, useSessionStore } from '~/ui/stores';
 import LanguageSelector from './LanguageSelector.vue';
 import UserAvatarSelector from '~/ui/components/UserAvatarSelector.vue';
 import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 
 const app = useAppStore();
-const auth = useAuthStore();
+const session = useSessionStore();
 
 const props = inject('pageLayoutProps', {
   backgroundColor: undefined,

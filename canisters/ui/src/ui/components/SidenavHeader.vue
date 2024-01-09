@@ -4,7 +4,7 @@
       <VCol cols="12">
         <BrandLogo variation="dark" />
       </VCol>
-      <VCol v-if="auth.isAuthenticated" cols="12">
+      <VCol v-if="session.isAuthenticated" cols="12">
         <WalletSelector />
       </VCol>
     </VRow>
@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import WalletSelector from '~/ui/components/WalletSelector.vue';
-import { useAuthStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores';
 
-const auth = useAuthStore();
+const session = useSessionStore();
 </script>

@@ -13,8 +13,8 @@
     <template #main-body>
       <VRow>
         <VCol cols="12">
-          <VCard variant="flat" class="mx-8" :loading="!session.user">
-            <VCardText v-if="session.user">
+          <VCard variant="flat" class="mx-8">
+            <VCardText>
               <VCol cols="12" class="pb-0">
                 <VTextField
                   v-model="session.user.principal"
@@ -36,7 +36,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(wallet, idx) of session.user?.wallets" :key="idx">
+                    <tr v-for="(wallet, idx) of session.user.wallets" :key="idx">
                       <td class="pl-0">{{ wallet.name ?? '-' }}</td>
                       <td>
                         {{ wallet.canisterId }}

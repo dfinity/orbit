@@ -1,11 +1,12 @@
+import { AnonymousIdentity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
-import { logger, wait } from '~/core';
+import { icAgent, logger, wait } from '~/core';
 import { UUID } from '~/generated/wallet/wallet.did';
 import { BlockchainStandard, BlockchainType } from '~/types';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore, useWalletStore } from '~/ui/stores';
-import { computedWalletName } from '~/ui/utils';
+import { computedWalletName, redirectToLogin } from '~/ui/utils';
 
 export interface WalletListItem {
   main: boolean;
@@ -14,7 +15,8 @@ export interface WalletListItem {
 }
 
 export interface UserSession {
-  principal: Principal;
+  principal: string;
+  isAuthenticated: boolean;
   mainWallet: string | null;
   wallets: WalletListItem[];
 }
@@ -27,10 +29,11 @@ export enum EnvironmentStatus {
 }
 
 export interface SessionStoreState {
+  initialized: boolean;
   loading: boolean;
   environmentStatus: EnvironmentStatus;
-  user: UserSession | null;
-  selectedWallet: Principal | null;
+  user: UserSession;
+  selectedWallet: string | null;
 }
 
 const deployInitialWallet = async (
@@ -61,7 +64,7 @@ const deployInitialWallet = async (
           canisterId: wallet.canister_id.toText(),
         })) ?? [],
     } as UserSession;
-    
+
     // wait for the wallet to be initialized, this requires one round of consensus
     await wait(6000);
 
@@ -107,13 +110,22 @@ const createInitialAccountForUser = async (
 export const useSessionStore = defineStore('session', {
   state: (): SessionStoreState => {
     return {
-      environmentStatus: EnvironmentStatus.Uninitialized,
+      initialized: false,
       loading: false,
-      user: null,
+      environmentStatus: EnvironmentStatus.Uninitialized,
+      user: {
+        isAuthenticated: false,
+        mainWallet: null,
+        principal: Principal.anonymous().toText(),
+        wallets: [],
+      },
       selectedWallet: null,
     };
   },
   getters: {
+    isAuthenticated(): boolean {
+      return this.user.isAuthenticated;
+    },
     hasUser(): boolean {
       return !!this.user;
     },
@@ -128,13 +140,78 @@ export const useSessionStore = defineStore('session', {
     },
   },
   actions: {
+    async initialize(): Promise<void> {
+      try {
+        if (this.initialized) {
+          return;
+        }
+        const authService = services().auth;
+        const cachedIdentity = await authService.identity();
+
+        if (!cachedIdentity) {
+          icAgent.get().replaceIdentity(new AnonymousIdentity());
+          this.initialized = true;
+          return;
+        }
+
+        icAgent.get().replaceIdentity(cachedIdentity);
+
+        await this.load();
+
+        this.initialized = true;
+      } catch (error) {
+        this.reset();
+
+        logger.error(`Application failed to initialize the state`, { error });
+      }
+    },
     reset(): void {
       const wallet = useWalletStore();
 
       this.loading = false;
-      this.user = null;
+      this.user = {
+        isAuthenticated: false,
+        mainWallet: null,
+        principal: Principal.anonymous().toText(),
+        wallets: [],
+      };
 
       wallet.reset();
+    },
+    async signIn(): Promise<void> {
+      const authService = services().auth;
+
+      try {
+        const identity = await authService.login();
+        icAgent.get().replaceIdentity(identity);
+
+        const controlPanelService = services().controlPanel;
+        const isRegistered = await controlPanelService.hasRegistration();
+
+        if (isRegistered) {
+          await this.load();
+          return;
+        }
+
+        await controlPanelService.register({
+          // a new user is created with an empty list of wallets, they can add them later
+          wallet_id: [],
+        });
+
+        // loads information about the authenticated user
+        await this.load();
+      } catch (error) {
+        this.reset();
+        throw error;
+      }
+    },
+    async signOut(): Promise<void> {
+      const authService = services().auth;
+
+      await authService.logout();
+
+      this.reset();
+      redirectToLogin();
     },
     unloadWallet(): void {
       const wallet = useWalletStore();
@@ -145,7 +222,7 @@ export const useSessionStore = defineStore('session', {
     async loadWallet(walletId: Principal): Promise<void> {
       const wallet = useWalletStore();
 
-      this.selectedWallet = walletId;
+      this.selectedWallet = walletId.toText();
       if (wallet.canisterId) {
         wallet.reset();
       }
@@ -162,7 +239,8 @@ export const useSessionStore = defineStore('session', {
         : controlPanelUser.wallets?.[0]?.canister_id;
 
       this.user = {
-        principal: controlPanelUser.id,
+        isAuthenticated: true,
+        principal: controlPanelUser.id.toText(),
         mainWallet: mainWalletId?.toText() ?? null,
         wallets:
           controlPanelUser.wallets?.map(wallet => ({

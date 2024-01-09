@@ -1,5 +1,5 @@
 import { Principal } from '@dfinity/principal';
-import { i18n } from '~/ui/modules';
+import { defaultHomeRoute, defaultLoginRoute, i18n, redirectToKey, router } from '~/ui/modules';
 import { useAppStore, useSessionStore } from '~/ui/stores';
 
 export const copyToClipboard = (
@@ -41,4 +41,19 @@ export const computedWalletName = (
     sessionStore.user?.wallets?.[walletIdx].name ??
     i18n.global.t('wallets.wallet_nr_title', { nr: walletIdx + 1 })
   );
+};
+
+export const redirectToLogin = (): void => {
+  router.push({ name: defaultLoginRoute });
+};
+
+export const afterLoginRedirect = (): void => {
+  const lastRequestedPage = window?.sessionStorage.getItem(redirectToKey);
+  if (lastRequestedPage) {
+    window?.sessionStorage.removeItem(redirectToKey);
+    router.push(lastRequestedPage);
+    return;
+  }
+
+  router.push({ name: defaultHomeRoute });
 };

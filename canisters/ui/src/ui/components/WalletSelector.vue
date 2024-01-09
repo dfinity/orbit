@@ -8,7 +8,7 @@
     hide-details
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
-    :items="session.user?.wallets || []"
+    :items="session.user.wallets"
   >
     <template #item="{ props, item }">
       <VListItem
@@ -39,7 +39,7 @@ const app = useAppStore();
 
 const selectedWallet = computed({
   get(): string | null {
-    return session.selectedWallet ? session.selectedWallet.toText() : null;
+    return session.selectedWallet?.length ? session.selectedWallet : null;
   },
   set(newWalletId: string | null) {
     if (!newWalletId) {

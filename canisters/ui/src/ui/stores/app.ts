@@ -6,9 +6,11 @@ import { Locale } from '~/configs/i18n';
 import { logger } from '~/core';
 import { PolicyType, SupportedTheme } from '~/types';
 import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
+import { useSessionStore } from '~/ui/stores';
 import { GlobalNotification } from '~/ui/types';
 
 export interface AppStoreState {
+  initialized: boolean;
   appName: string;
   theme: SupportedTheme;
   showSidebar: boolean;
@@ -18,6 +20,7 @@ export interface AppStoreState {
 export const useAppStore = defineStore('app', {
   state: (): AppStoreState => {
     return {
+      initialized: false,
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),
       showSidebar: true,
@@ -51,7 +54,16 @@ export const useAppStore = defineStore('app', {
     },
   },
   actions: {
-    async init(): Promise<void> {},
+    async initialize(): Promise<void> {
+      if (this.initialized) {
+        return;
+      }
+
+      const session = useSessionStore();
+      await session.initialize();
+
+      this.initialized = true;
+    },
     async useLocale(locale: Locale, persist = false): Promise<void> {
       const isLoadedLocale = i18n.global.availableLocales.includes(locale);
       if (isLoadedLocale && i18n.global.locale.value === locale) {
@@ -77,14 +89,6 @@ export const useAppStore = defineStore('app', {
       if (persist) {
         await services().locales.saveLocale(locale);
       }
-    },
-    copyToClipboard(text: string, notificationTitle: string): void {
-      navigator.clipboard.writeText(text);
-
-      this.sendNotification({
-        type: 'success',
-        message: notificationTitle,
-      });
     },
     async toogleTheme(): Promise<void> {
       const theme = this.isDarkTheme ? SupportedTheme.Light : SupportedTheme.Dark;

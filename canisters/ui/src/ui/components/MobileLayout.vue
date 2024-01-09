@@ -1,7 +1,7 @@
 <template>
   <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
     <VNavigationDrawer
-      v-if="auth.isAuthenticated"
+      v-if="session.isAuthenticated"
       v-model="app.showSidebar"
       class="sidebar"
       width="260"
@@ -40,11 +40,11 @@
           <div class="toolbar__actions">
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
-              <NotificationsPanelToggle v-if="auth.isAuthenticated" variant="outlined" />
-              <UserAvatarSelector v-if="auth.isAuthenticated" variant="outlined" />
+              <NotificationsPanelToggle v-if="session.isAuthenticated" variant="outlined" />
+              <UserAvatarSelector v-if="session.isAuthenticated" variant="outlined" />
               <LanguageSelector />
               <VBtn
-                v-if="auth.isAuthenticated"
+                v-if="session.isAuthenticated"
                 :icon="mdiMenuOpen"
                 @click.prevent="app.toogleSidebar"
               />
@@ -61,7 +61,7 @@
         "
       >
         <slot name="topnav">
-          <WalletSelector v-if="auth.isAuthenticated" />
+          <WalletSelector v-if="session.isAuthenticated" />
         </slot>
       </nav>
       <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
@@ -126,17 +126,17 @@
 import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
+import BrandLogo from '~/ui/components/BrandLogo.vue';
+import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
-import { useAuthStore, useAppStore } from '~/ui/stores';
-import LanguageSelector from './LanguageSelector.vue';
-import BrandLogo from '~/ui/components/BrandLogo.vue';
-import WalletSelector from '~/ui/components/WalletSelector.vue';
-import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 import UserAvatarSelector from '~/ui/components/UserAvatarSelector.vue';
+import WalletSelector from '~/ui/components/WalletSelector.vue';
+import { useAppStore, useSessionStore } from '~/ui/stores';
+import LanguageSelector from './LanguageSelector.vue';
 
 const app = useAppStore();
-const auth = useAuthStore();
+const session = useSessionStore();
 
 const props = inject('pageLayoutProps', {
   backgroundColor: undefined,

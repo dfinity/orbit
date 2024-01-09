@@ -106,12 +106,12 @@ export const useUserSettingsPage = defineStore('userSettingsPage', {
         const controlPanel = services().controlPanel;
 
         const updatedWallets: UserWallet[] =
-          session.user?.wallets
+          session.user.wallets
             .filter(wallet => wallet.canisterId !== this.removeWalletDialog.canisterId)
             .map(wallet => ({
               name: wallet.name ? [wallet.name] : [],
               canister_id: Principal.fromText(wallet.canisterId),
-            })) ?? [];
+            }));
 
         await controlPanel.editUser({
           main_wallet: [],
@@ -148,7 +148,7 @@ export const useUserSettingsPage = defineStore('userSettingsPage', {
           : session.mainWallet;
 
         const updatedWallets: UserWallet[] =
-          session.user?.wallets.map(wallet => {
+          session.user.wallets.map(wallet => {
             if (wallet.canisterId === this.walletEditDialog.fields.canisterId) {
               return {
                 name: this.walletEditDialog.fields.name ? [this.walletEditDialog.fields.name] : [],

@@ -93,18 +93,19 @@ import { computed, ref } from 'vue';
 import { logger } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
-import { useAuthStore, useAppStore } from '~/ui/stores';
+import { useSessionStore, useAppStore } from '~/ui/stores';
+import { afterLoginRedirect } from '~/ui/utils';
 
 const app = useAppStore();
-const auth = useAuthStore();
+const session = useSessionStore();
 
 const isAuthenticating = ref(false);
 
 const performLogin = async (): Promise<void> => {
   isAuthenticating.value = true;
-  await auth
+  await session
     .signIn()
-    .then(() => auth.afterLoginRedirect())
+    .then(() => afterLoginRedirect())
     .catch((e: Error) => {
       logger.error(`Authentication failed`, e);
 

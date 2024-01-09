@@ -2,7 +2,7 @@ import { mdiCogs, mdiHome, mdiWalletBifold, mdiBookOpenVariant } from '@mdi/js';
 import { App } from 'vue';
 import { NavigationGuard } from 'vue-router';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey } from '~/ui/modules';
-import { useAuthStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores';
 import { AuthState, NavigationActionType, NavigationItem } from '~/ui/types';
 
 const mainNavigation: NavigationItem[] = [
@@ -101,14 +101,14 @@ class Navigation {
 }
 
 export const navigationGuard: NavigationGuard = async (to, _from, next) => {
-  const auth = useAuthStore();
+  const session = useSessionStore();
 
-  if (to.meta.auth.requireState === AuthState.Authenticated && !auth.isAuthenticated) {
+  if (to.meta.auth.requireState === AuthState.Authenticated && !session.isAuthenticated) {
     window?.sessionStorage.setItem(redirectToKey, to.fullPath);
     return next({ name: defaultLoginRoute });
   }
 
-  if (to.meta.auth.requireState === AuthState.Guest && auth.isAuthenticated) {
+  if (to.meta.auth.requireState === AuthState.Guest && session.isAuthenticated) {
     return next({ name: defaultHomeRoute });
   }
 
