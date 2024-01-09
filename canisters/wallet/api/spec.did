@@ -597,12 +597,47 @@ type CreateProposalResult = variant {
   Err : Error;
 };
 
+type ListProposalsOperationType = variant {
+  // A new transfer of funds from a given account.
+  Transfer : opt UUID;
+  // An operation for updating information of an account.
+  EditAccount;
+  // An operation for creating a new account.
+  AddAccount;
+  // An operation for adding a new user.
+  AddUser;
+  // An operation for editing an existing user.
+  EditUser;
+  // An operation for adding a new user group.
+  AddUserGroup;
+  // An operation for editing an existing user group.
+  EditUserGroup;
+  // An operation for removing an existing user group.
+  RemoveUserGroup;
+  // An operation for changing a canister.
+  ChangeCanister;
+  // An operation for adding an access policy.
+  AddAccessPolicy;
+  // An operation for editing an access policy.
+  EditAccessPolicy;
+  // An operation for removing an access policy.
+  RemoveAccessPolicy;
+  // An operation for adding a proposal policy.
+  AddProposalPolicy;
+  // An operation for editing a proposal policy.
+  EditProposalPolicy;
+  // An operation for removing a proposal policy.
+  RemoveProposalPolicy;
+};
+
 // The input type for getting the list of proposals associated with the caller.
 type ListProposalsInput = record {
+  // Show only proposals proposed by or voted on by the given user.
+  user_id : opt UUID;
   // Show only proposals with the given status.
   status : opt vec ProposalStatusCode;
   // The type of the proposal (e.g. "transfer").
-  operation_type : opt ProposalOperationType;
+  operation_type : opt ListProposalsOperationType;
   // From which created time to retrieve the proposals.
   from_dt : opt TimestampRFC3339;
   // Until which created time to retrieve the proposals.
@@ -611,31 +646,6 @@ type ListProposalsInput = record {
 
 // The result type for getting the list of proposals.
 type ListProposalsResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The list of proposals.
-    proposals : vec Proposal;
-  };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
-  Err : Error;
-};
-
-// The input type for getting the list of proposals associated with the account.
-type ListAccountProposalsInput = record {
-  // The account id to retrieve the proposals from.
-  account_id : UUID;
-  // Show only proposals with the given status.
-  status : opt vec ProposalStatusCode;
-  // The type of the proposal (e.g. "transfer").
-  operation_type : opt ProposalOperationType;
-  // From which created time to retrieve them.
-  from_dt : opt TimestampRFC3339;
-  // Until which created time to retrieve them.
-  to_dt : opt TimestampRFC3339;
-};
-
-// The result type for getting the list of proposals for the given account.
-type ListAccountProposalsResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The list of proposals.
@@ -703,7 +713,7 @@ type ListAccountTransfersInput = record {
   // The account id to retrieve.
   account_id : UUID;
   // The transfer status in text format (e.g. "pending", "approved", etc.).
-  status : opt text;
+  status : opt TransferStatusType;
   // From which date to retrieve the transfers.
   from_dt : opt TimestampRFC3339;
   // Until which date to retrieve the transfers.
@@ -812,6 +822,14 @@ type TransferStatus = variant {
     // The base64 encoded value of the signed transaction, if available.
     signature : opt text;
   };
+};
+
+// Transfer status type for filtering on the transfer status.
+type TransferStatusType = variant {
+  Created;
+  Failed;
+  Processing;
+  Completed;
 };
 
 // A record type that can be used to represent a transfer in a given account.
@@ -1326,8 +1344,6 @@ service : (opt WalletInstall) -> {
   create_proposal : (input : CreateProposalInput) -> (CreateProposalResult);
   // Get the list of proposals.
   list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
-  // Get the list of proposals for a given account.
-  list_account_proposals : (input : ListAccountProposalsInput) -> (ListAccountProposalsResult) query;
   // Get the proposal by id.
   get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
   // Record the vote of the user on the proposal.

@@ -4,12 +4,9 @@ use crate::{
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
     models::{
-        NotificationType, Proposal, ProposalCreatedNotification, ProposalOperationType,
-        ProposalStatus, ProposalVoteStatus,
+        NotificationType, Proposal, ProposalCreatedNotification, ProposalStatus, ProposalVoteStatus,
     },
-    repositories::{
-        ProposalFindByUserWhereClause, ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY,
-    },
+    repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
     services::{
         AccountService, NotificationService, UserService, ACCOUNT_SERVICE, NOTIFICATION_SERVICE,
         USER_SERVICE,
@@ -19,10 +16,11 @@ use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
 use ic_canister_core::{repository::Repository, types::UUID};
 use lazy_static::lazy_static;
+use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 use wallet_api::{
-    CreateProposalInput, ListAccountProposalsInput, ListProposalsInput, VoteOnProposalInput,
+    CreateProposalInput, ListProposalsInput, ListProposalsOperationTypeDTO, VoteOnProposalInput,
 };
 
 lazy_static! {
@@ -74,49 +72,56 @@ impl ProposalService {
         Ok(proposal)
     }
 
-    pub fn list_proposals(
-        &self,
-        input: ListProposalsInput,
-        ctx: &CallContext,
-    ) -> ServiceResult<Vec<Proposal>> {
-        let user = self.user_service.get_user_by_identity(&ctx.caller())?;
+    pub fn list_proposals(&self, input: ListProposalsInput) -> ServiceResult<Vec<Proposal>> {
+        let proposal_where_clause = ProposalWhereClause {
+            created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+            created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
+            operation_type: input.operation_type.clone(),
+            status: input.status,
+        };
 
-        let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
+        let proposals_by_user = if let Some(user_id) = input.user_id {
+            let user = self
+                .user_service
+                .get_user(HelperMapper::to_uuid(user_id)?.as_bytes())?;
 
-        let proposals = self.proposal_repository.find_by_user_where(
-            user.id,
-            ProposalFindByUserWhereClause {
-                created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                operation_type: filter_by_operation_type,
-                status: input.status,
-            },
-        );
+            let proposals = self
+                .proposal_repository
+                .find_by_user_where(user.id, proposal_where_clause.clone());
 
-        Ok(proposals)
-    }
+            Some(proposals)
+        } else {
+            None
+        };
 
-    pub fn list_account_proposals(
-        &self,
-        input: ListAccountProposalsInput,
-    ) -> ServiceResult<Vec<Proposal>> {
-        let account = self
-            .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
+        let proposals_by_account = match input.operation_type {
+            Some(ListProposalsOperationTypeDTO::Transfer(Some(from_account_id))) => {
+                let account = self
+                    .account_service
+                    .get_account(HelperMapper::to_uuid(from_account_id)?.as_bytes())?;
 
-        let filter_by_operation_type = input.operation_type.map(ProposalOperationType::from);
+                let proposals = self
+                    .proposal_repository
+                    .find_by_account_where(account.id, proposal_where_clause.clone());
 
-        let proposals = self.proposal_repository.find_by_account_where(
-            account.id,
-            ProposalWhereClause {
-                created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                operation_type: filter_by_operation_type,
-                status: input.status,
-            },
-        );
+                Some(proposals)
+            }
+            _ => None,
+        };
 
-        Ok(proposals)
+        match (proposals_by_user, proposals_by_account) {
+            (None, None) => Ok(self.proposal_repository.find_where(proposal_where_clause)),
+            (Some(proposals), None) => Ok(proposals),
+            (None, Some(proposals)) => Ok(proposals),
+            (Some(proposals_by_user), Some(proposals_by_account)) => {
+                let proposals_by_user_ids: HashSet<UUID> =
+                    HashSet::from_iter(proposals_by_user.into_iter().map(|proposal| proposal.id));
+                Ok(proposals_by_account
+                    .into_iter()
+                    .filter(|proposal| proposals_by_user_ids.contains(&proposal.id))
+                    .collect())
+            }
+        }
     }
 
     pub async fn edit_proposal(&self, input: ProposalEditInput) -> ServiceResult<Proposal> {

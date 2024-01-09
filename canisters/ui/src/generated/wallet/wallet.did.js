@@ -466,47 +466,15 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const ProposalStatusCode = IDL.Variant({
+  const TransferStatusType = IDL.Variant({
     'Failed' : IDL.Null,
-    'Rejected' : IDL.Null,
-    'Scheduled' : IDL.Null,
-    'Adopted' : IDL.Null,
-    'Cancelled' : IDL.Null,
     'Processing' : IDL.Null,
     'Created' : IDL.Null,
     'Completed' : IDL.Null,
   });
-  const ProposalOperationType = IDL.Variant({
-    'EditAccessPolicy' : IDL.Null,
-    'AddUserGroup' : IDL.Null,
-    'RemoveProposalPolicy' : IDL.Null,
-    'AddUser' : IDL.Null,
-    'EditUserGroup' : IDL.Null,
-    'AddProposalPolicy' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
-    'EditProposalPolicy' : IDL.Null,
-    'EditUser' : IDL.Null,
-    'Transfer' : IDL.Null,
-    'EditAccount' : IDL.Null,
-    'AddAccessPolicy' : IDL.Null,
-    'RemoveAccessPolicy' : IDL.Null,
-    'RemoveUserGroup' : IDL.Null,
-    'AddAccount' : IDL.Null,
-  });
-  const ListAccountProposalsInput = IDL.Record({
-    'account_id' : UUID,
-    'status' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
-    'to_dt' : IDL.Opt(TimestampRFC3339),
-    'operation_type' : IDL.Opt(ProposalOperationType),
-    'from_dt' : IDL.Opt(TimestampRFC3339),
-  });
-  const ListAccountProposalsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposals' : IDL.Vec(Proposal) }),
-    'Err' : Error,
-  });
   const ListAccountTransfersInput = IDL.Record({
     'account_id' : UUID,
-    'status' : IDL.Opt(IDL.Text),
+    'status' : IDL.Opt(TransferStatusType),
     'to_dt' : IDL.Opt(TimestampRFC3339),
     'from_dt' : IDL.Opt(TimestampRFC3339),
   });
@@ -539,6 +507,23 @@ export const idlFactory = ({ IDL }) => {
     'from_dt' : IDL.Opt(TimestampRFC3339),
     'notification_type' : IDL.Opt(NotificationTypeInput),
   });
+  const ProposalOperationType = IDL.Variant({
+    'EditAccessPolicy' : IDL.Null,
+    'AddUserGroup' : IDL.Null,
+    'RemoveProposalPolicy' : IDL.Null,
+    'AddUser' : IDL.Null,
+    'EditUserGroup' : IDL.Null,
+    'AddProposalPolicy' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
+    'EditProposalPolicy' : IDL.Null,
+    'EditUser' : IDL.Null,
+    'Transfer' : IDL.Null,
+    'EditAccount' : IDL.Null,
+    'AddAccessPolicy' : IDL.Null,
+    'RemoveAccessPolicy' : IDL.Null,
+    'RemoveUserGroup' : IDL.Null,
+    'AddAccount' : IDL.Null,
+  });
   const NotificationType = IDL.Variant({
     'ProposalCreated' : IDL.Record({
       'account_id' : IDL.Opt(UUID),
@@ -569,11 +554,39 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const ProposalStatusCode = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Rejected' : IDL.Null,
+    'Scheduled' : IDL.Null,
+    'Adopted' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Processing' : IDL.Null,
+    'Created' : IDL.Null,
+    'Completed' : IDL.Null,
+  });
+  const ListProposalsOperationType = IDL.Variant({
+    'EditAccessPolicy' : IDL.Null,
+    'AddUserGroup' : IDL.Null,
+    'RemoveProposalPolicy' : IDL.Null,
+    'AddUser' : IDL.Null,
+    'EditUserGroup' : IDL.Null,
+    'AddProposalPolicy' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
+    'EditProposalPolicy' : IDL.Null,
+    'EditUser' : IDL.Null,
+    'Transfer' : IDL.Opt(UUID),
+    'EditAccount' : IDL.Null,
+    'AddAccessPolicy' : IDL.Null,
+    'RemoveAccessPolicy' : IDL.Null,
+    'RemoveUserGroup' : IDL.Null,
+    'AddAccount' : IDL.Null,
+  });
   const ListProposalsInput = IDL.Record({
     'status' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
     'to_dt' : IDL.Opt(TimestampRFC3339),
-    'operation_type' : IDL.Opt(ProposalOperationType),
+    'operation_type' : IDL.Opt(ListProposalsOperationType),
     'from_dt' : IDL.Opt(TimestampRFC3339),
+    'user_id' : IDL.Opt(UUID),
   });
   const ListProposalsResult = IDL.Variant({
     'Ok' : IDL.Record({ 'proposals' : IDL.Vec(Proposal) }),
@@ -676,11 +689,6 @@ export const idlFactory = ({ IDL }) => {
     'list_access_policies' : IDL.Func(
         [ListAccessPoliciesInput],
         [ListAccessPoliciesResult],
-        ['query'],
-      ),
-    'list_account_proposals' : IDL.Func(
-        [ListAccountProposalsInput],
-        [ListAccountProposalsResult],
         ['query'],
       ),
     'list_account_transfers' : IDL.Func(
