@@ -1,4 +1,4 @@
-use crate::{UuidDTO};
+use crate::UuidDTO;
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
