@@ -53,6 +53,21 @@ jobs:
               echo "PR Title: ${{ github.event.pull_request.title }}"
               exit 1
           fi
+  # TODO(SDK-1297): dfx generate fails with remote canisters
+  validate-did-bindings:
+    name: 'validate-did-bindings:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Install DFX'
+        run: sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+      - name: 'Run dfx generate'
+        run: |
+          dfx generate control_panel
+          dfx generate wallet
+      - name: 'Check that no file changed'
+        run: git diff --exit-code
   validate-rust:
     name: 'validate-rust:required'
     runs-on: ubuntu-latest
