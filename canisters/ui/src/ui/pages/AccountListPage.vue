@@ -1,9 +1,9 @@
 <template>
-  <PageLayout v-if="activeWallet.hasUser">
+  <PageLayout v-if="wallet.hasUser">
     <template #main-header>
-      <VContainer class="pt-16 pb-16 pl-8 pr-8" fluid>
+      <VContainer class="pa-8" fluid>
         <VRow>
-          <VCol md="6" sm="12">
+          <VCol cols="12" md="6">
             <h1 class="text-h4">{{ $t('terms.accounts') }}</h1>
           </VCol>
           <VCol md="6" sm="12" class="header-actions">
@@ -14,76 +14,38 @@
     </template>
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
-        <VRow
-          v-if="activeWallet.accounts.items.length"
-        >
-          <VCol v-for="(account, idx) in activeWallet.sortedAccounts" :key="idx" cols="12" md="6">
-            <VCard density="compact" variant="elevated" class="account-card">
-              <VCardTitle>
-                <VIcon :icon="mdiWallet" size="x-small" class="mr-2" />
-                {{ account.name }}
-              </VCardTitle>
-              <VCardSubtitle class="account-card__subtitle">
-                <span>{{ account.symbol }}</span>
-                <template v-if="account.address">
-                  <span>:&nbsp;</span>
-                  <span class="account-card__subtitle__address" :title="account.address">
-                    {{ account.address }}
-                  </span>
-                  <VBtn
-                    class="account-card__subtitle__copy"
-                    size="x-small"
-                    variant="text"
-                    :icon="mdiContentCopy"
-                    @click="copyAddressToClipboard(account.address)"
-                  />
-                </template>
-              </VCardSubtitle>
-              <VCardText class="pb-0">
-                <p>
-                  <span
-                    v-if="account.balance?.[0]"
-                    class="account-card__amount--available"
-                    :title="account.balance?.[0]?.last_update_timestamp"
-                  >
-                    {{ formatBalance(account.balance[0].balance, account.balance[0].decimals) }}
-                  </span>
-                  <span v-else class="account-card__amount account-card__amount--unavailable"
-                    >-</span
-                  >
-                  {{ account.symbol }}
-                </p>
-              </VCardText>
-              <VCardActions>
-                <VChip
-                  size="x-small"
-                  color="primary-variant"
-                  variant="tonal"
-                  :prepend-icon="account.owners.length > 1 ? mdiAccountGroup : mdiAccount"
-                >
-                  {{
-                    account.owners.length > 1
-                      ? $t('wallets.joint_account')
-                      : $t('wallets.private_account')
-                  }}
-                </VChip>
-                <VSpacer />
-                <VBtn
-                  size="small"
-                  variant="tonal"
-                  :append-icon="mdiOpenInApp"
-                  :to="{ name: 'Account', params: { id: account.id } }"
-                >
-                  {{ $t('terms.open') }}
-                </VBtn>
-              </VCardActions>
-            </VCard>
-          </VCol>
-        </VRow>
-        <VRow v-else>
-          <VCol cols="12">
-            <p class="text-h5">{{ $t('wallets.no_accounts') }}</p>
-          </VCol>
+        <VRow>
+          <VDataTable :headers="headers" :items="accounts" :items-per-page="-1" :hover="true">
+            <!-- eslint-disable-next-line vue/valid-v-slot -->
+            <template #item.actions="{ item }">
+              <VBtn
+                size="small"
+                variant="tonal"
+                :append-icon="mdiOpenInApp"
+                :to="{ name: 'Account', params: { id: item.id } }"
+              >
+                {{ $t('terms.open') }}
+              </VBtn>
+            </template>
+            <!-- eslint-disable-next-line vue/valid-v-slot -->
+            <template #item.address="{ item }">
+              <span>{{ item.address }}</span>
+              <VBtn
+                size="x-small"
+                variant="text"
+                :icon="mdiContentCopy"
+                @click="
+                  copyToClipboard({
+                    textToCopy: item.address,
+                    sendNotification: true,
+                  })
+                "
+              />
+            </template>
+            <template #bottom>
+              <!--this hides the footer as pagination is not required-->
+            </template>
+          </VDataTable>
         </VRow>
       </VContainer>
     </template>
@@ -103,24 +65,53 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiAccount, mdiAccountGroup, mdiContentCopy, mdiOpenInApp, mdiWallet } from '@mdi/js';
+import { mdiContentCopy, mdiOpenInApp } from '@mdi/js';
+import { computed, ref } from 'vue';
 import { formatBalance } from '~/core';
-import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import { i18n } from '~/ui/modules';
-import { useWalletStore, useAppStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores';
+import { copyToClipboard } from '~/ui/utils';
 
-const activeWallet = useWalletStore();
-const app = useAppStore();
+const wallet = useWalletStore();
 
-const copyAddressToClipboard = (address: string) => {
-  navigator.clipboard.writeText(address);
+const headers = ref<{ title: string; key: string }[]>([
+  {
+    title: i18n.global.t('terms.name'),
+    key: 'name',
+  },
+  {
+    title: i18n.global.t('terms.token'),
+    key: 'token',
+  },
+  {
+    title: i18n.global.t('terms.address'),
+    key: 'address',
+  },
+  {
+    title: i18n.global.t('terms.balance'),
+    key: 'balance',
+  },
+  { title: '', key: 'actions' },
+]);
 
-  app.sendNotification({
-    type: 'success',
-    message: i18n.global.t('wallets.account_address_copied_to_clipboard'),
+const accounts = computed(() => {
+  return wallet.accounts.items.map(account => {
+    return {
+      actions: null,
+      id: account.id,
+      name: account.name,
+      address: account.address,
+      token: account.symbol,
+      balance: account.balance?.[0]
+        ? `${formatBalance(account.balance[0].balance, account.balance[0].decimals)} ${
+            account.symbol
+          }`
+        : '-',
+    };
   });
-};
+});
 </script>
 
 <style scoped lang="scss">
@@ -129,34 +120,14 @@ const copyAddressToClipboard = (address: string) => {
   justify-content: end;
   align-items: center;
   gap: calc(var(--ds-bdu) * 2);
-
-  :deep(.v-btn) {
-    flex-grow: 1;
-  }
 }
 
 .page-layout--mobile {
   .header-actions {
     justify-content: center;
-  }
-}
 
-.account-card {
-  &__subtitle {
-    display: flex;
-    flex-direction: row;
-    overflow: visible;
-    width: 100%;
-
-    &__address {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: calc(100% - calc(var(--ds-bdu) * 6));
-    }
-
-    &__copy {
-      margin-top: -8px;
+    :deep(.v-btn) {
+      flex-grow: 1;
     }
   }
 }

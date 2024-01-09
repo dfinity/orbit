@@ -6,7 +6,12 @@
     "wallets": "Carteiras",
     "confirm": "Confirmar",
     "copied_to_clipboard": "Texto copiado para a área de transferência.",
-    "initial_account_name": "Principal"
+    "initial_account_name": "Principal",
+    "alpha_warning": "Descubra mais sobre esta versão alfa, por favor, utilize com cuidado.",
+    "wallet_info_card_title": "{name} Informaçōes",
+    "wallet_info_card_edit_btn": "Editar nome da carteira",
+    "manage_associated_wallet": "Gerenciar carteira associada",
+    "manage_associated_wallet_hint": "Qualquer modificação apenas serão aplicadas a sua conta de usuário."
   },
   "login": {
     "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto",
@@ -55,6 +60,7 @@
     "notification_failed_to_save": "Erro ao gravar a notificação.",
     "no_accounts": "Nenhuma conta disponível.",
     "pending_proposals": "Propostas pendentes",
+    "pending_requests": "Pedidos pendentes",
     "user_copied_to_clipboard": "Id de utilizador copiado.",
     "account_address_copied_to_clipboard": "Endereço da conta copiado.",
     "load_error": "Erro ao carregar as informaçōes das carteiras, por favor, tente novamente.",
@@ -97,6 +103,8 @@
     "reject": "Rejeitar",
     "rejected": "Rejeitado",
     "to": "Para",
+    "yes": "Sim",
+    "no": "Não",
     "edit": "Editar",
     "until": "Até",
     "from": "Desde",
@@ -119,9 +127,12 @@
     "processing": "Processando",
     "anonymous": "Anónimo",
     "accounts": "Contas",
-    "new_account": "Nova conta",
+    "token": "Token",
+    "new_account": "Criar conta",
     "edit_account": "Editar conta",
     "policies": "Regras",
+    "balance": "Saldo",
+    "address": "Endereço",
     "transfers": "Transferências",
     "withdrawals": "Withdrawals",
     "transactions": "Transaçōes",
@@ -186,11 +197,10 @@
     },
     "user_settings": {
       "title": "Informaçōes do usuário & Configuraçōes",
-      "subtitle": "Configure as preferências e gerencie a sua conta.",
-      "manage_associated_wallet": "Gerenciar carteira associada",
-      "manage_associated_wallet_hint": "Qualquer modificação apenas serão aplicadas a sua conta de usuário.",
-      "remove_associated_wallet": "Remover carteira associada",
-      "confirm_remove_associated_wallet": "Tem a certeza que pretende remover a carteira associada?"
+      "subtitle": "Configure as preferências e gerencie a sua conta."
+    },
+    "administration": {
+      "title": "Administração da carteira"
     }
   }
 }

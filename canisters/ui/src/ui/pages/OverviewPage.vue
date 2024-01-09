@@ -1,7 +1,7 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <VContainer class="pt-8 pb-8 pl-8 pr-8" fluid>
+      <VContainer class="pa-8" fluid>
         <VRow>
           <VCol cols="12">
             <h1 class="text-h4">{{ $t(`pages.overview.title`, { name: wallet.name }) }}</h1>
@@ -13,7 +13,7 @@
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
           <VCol v-if="!wallet.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%">
+            <VCard color="background" height="100%">
               <VCardTitle>{{ $t('wallets.no_wallet_user') }}</VCardTitle>
               <VCardSubtitle>{{ $t('wallets.please_register_to_continue') }}</VCardSubtitle>
               <VCardText class="text-center mt-6 mb-6">
@@ -22,7 +22,7 @@
             </VCard>
           </VCol>
           <VCol v-if="wallet.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="wallet.accounts.loading">
+            <VCard color="background" height="100%" :loading="wallet.accounts.loading">
               <VCardTitle>{{ $t('terms.accounts') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
                 {{ wallet.metrics.accounts }}
@@ -30,8 +30,8 @@
             </VCard>
           </VCol>
           <VCol v-if="wallet.hasUser" cols="12" md="4">
-            <VCard color="surface" height="100%" :loading="wallet.notifications.loading">
-              <VCardTitle>{{ $t('wallets.pending_proposals') }}</VCardTitle>
+            <VCard color="background" height="100%" :loading="wallet.notifications.loading">
+              <VCardTitle>{{ $t('wallets.pending_requests') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
                 {{ wallet.metrics.notifications }}
               </VCardText>

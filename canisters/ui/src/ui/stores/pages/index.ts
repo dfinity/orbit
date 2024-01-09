@@ -1,2 +1,1 @@
-export * from './account';
-export { useUserSettingsPage } from './user-settings';
+export { useAccountPageStore } from './account';

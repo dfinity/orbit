@@ -15,14 +15,14 @@ const mainNavigation: NavigationItem[] = [
     icon: mdiCogs,
     items: [
       {
-        name: 'administration',
+        name: 'system',
         localeKey: 'navigation.administration',
         action: {
           type: NavigationActionType.To,
           handle: route =>
             route.params.locale
-              ? `/${route.params.locale}/settings/administration`
-              : '/settings/administration',
+              ? `/${route.params.locale}/settings/system`
+              : '/settings/system',
         },
       },
       {

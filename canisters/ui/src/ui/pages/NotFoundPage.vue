@@ -41,7 +41,7 @@ const hideSidebar = computed(() => {
   margin-top: calc(var(--ds-bdu) * 10);
 
   &__title {
-    color: rgb(var(--ds-primary-variant));
+    color: rgb(var(--ds-on-surface));
   }
 }
 </style>

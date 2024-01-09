@@ -63,6 +63,11 @@
         <slot name="topnav">
           <WalletSelector v-if="session.isAuthenticated" />
         </slot>
+
+        <div class="alpha-warning">
+          <VIcon :icon="mdiAlertOutline" size="medium" />
+          {{ $t('app.alpha_warning') }}
+        </div>
       </nav>
       <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
         <slot name="main">
@@ -77,16 +82,6 @@
                 : undefined
             "
           >
-            <VAlert
-              class="my-4 mx-4"
-              type="warning"
-              variant="tonal"
-              density="compact"
-              title="Development Version 🚧"
-            >
-              This development version will be facing ongoing updates that may result in complete
-              loss of data and/or funds.
-            </VAlert>
             <slot name="main-body"></slot>
           </div>
         </slot>
@@ -94,7 +89,7 @@
       <VFooter
         v-if="!isSetAndNotFalse(props.hideFooter)"
         class="footer"
-        :color="props.backgroundColor ? props.backgroundColor : `background`"
+        :color="props.backgroundColor ? props.backgroundColor : `surface`"
       >
         <slot name="footer">
           <VContainer fluid>
@@ -123,7 +118,7 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
+import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny, mdiAlertOutline } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
@@ -201,7 +196,7 @@ const themeSwitcherIcon = computed(() => {
   .toolbar {
     display: flex;
     flex-direction: row;
-    background-color: rgb(var(--ds-surface));
+    background-color: rgb(var(--ds-background));
     color: rgb(var(--ds-on-surface));
 
     &__actions {

@@ -92,6 +92,28 @@ const router = createRouter({
           },
         },
         {
+          path: 'settings',
+          name: 'SettingsRouter',
+          component: RouterView,
+          meta: {
+            auth: {
+              requireState: AuthState.Authenticated,
+            },
+          },
+          children: [
+            {
+              path: 'system',
+              name: 'SystemSettings',
+              component: () => import('~/ui/pages/AdministrationPage.vue'),
+              meta: {
+                auth: {
+                  requireState: AuthState.Authenticated,
+                },
+              },
+            },
+          ],
+        },
+        {
           path: 'connect',
           name: 'Connect',
           component: () => import('~/ui/pages/ConnectPage.vue'),

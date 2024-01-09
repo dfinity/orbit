@@ -2,26 +2,40 @@
   <VListItem
     v-if="!isGroup"
     :exact="true"
-    :title="$t(props.item.localeKey)"
     :value="props.item.name"
     :to="isTo(props.item.action) ? props.item.action.handle($route) : undefined"
     :href="isHref(props.item.action) ? props.item.action.handle() : undefined"
-    :prepend-icon="props.item.icon ? props.item.icon : mdiCircleSmall"
     @click="isCallback(props.item.action) ? props.item.action.handle() : undefined"
-  />
+  >
+    <VListItemTitle>
+      <VIcon
+        :icon="props.item.icon ? props.item.icon : mdiCircleSmall"
+        color="secondary"
+        class="mr-2"
+      />
+      {{ $t(props.item.localeKey) }}
+    </VListItemTitle>
+  </VListItem>
   <template v-else>
     <VListGroup :value="props.item.name" fluid>
       <template #activator="{ props: listProps }">
         <VListItem
           v-bind="listProps"
           :exact="true"
-          :title="$t(props.item.localeKey)"
           :value="props.item.name"
           :to="isTo(props.item.action) ? props.item.action.handle($route) : undefined"
           :href="isHref(props.item.action) ? props.item.action.handle() : undefined"
-          :prepend-icon="props.item.icon ? props.item.icon : mdiCircleSmall"
           @click="isCallback(props.item.action) ? props.item.action.handle() : undefined"
-        />
+        >
+          <VListItemTitle>
+            <VIcon
+              :icon="props.item.icon ? props.item.icon : mdiCircleSmall"
+              color="secondary"
+              class="mr-2"
+            />
+            {{ $t(props.item.localeKey) }}
+          </VListItemTitle>
+        </VListItem>
       </template>
       <SidenavMenuItem v-for="(menuItem, idx) in props.item.items" :key="idx" :item="menuItem" />
     </VListGroup>

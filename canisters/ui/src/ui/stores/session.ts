@@ -249,6 +249,11 @@ export const useSessionStore = defineStore('session', {
             canisterId: wallet.canister_id.toText(),
           })) ?? [],
       };
+
+      const wallet = useWalletStore();
+      if (wallet.hasUser && this.selectedWallet) {
+        wallet.name = computedWalletName({ canisterId: Principal.fromText(this.selectedWallet) });
+      }
     },
     async load(): Promise<void> {
       this.loading = true;

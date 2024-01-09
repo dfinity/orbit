@@ -6,7 +6,12 @@
     "wallets": "Wallets",
     "confirm": "Confirm",
     "copied_to_clipboard": "Value copied to clipboard.",
-    "initial_account_name": "Main"
+    "initial_account_name": "Main",
+    "alpha_warning": "Learn more about this alpha version. Use with caution.",
+    "wallet_info_card_title": "{name} Info",
+    "wallet_info_card_edit_btn": "Edit wallet name",
+    "manage_associated_wallet": "Manage associated wallet",
+    "manage_associated_wallet_hint": "These settings only apply to your user and not to the wallet."
   },
   "login": {
     "signin_slogan": "Securely connect to manage your crypto assets",
@@ -55,6 +60,7 @@
     "notification_failed_to_save": "Notification failed to save.",
     "no_accounts": "No account available.",
     "pending_proposals": "Pending proposals",
+    "pending_requests": "Pending requests",
     "user_copied_to_clipboard": "Wallet user copied.",
     "account_address_copied_to_clipboard": "Account address copied.",
     "load_error": "Failed to load wallets information, please try again.",
@@ -93,10 +99,13 @@
     "withdraw_requests": "Withdraw Requests",
     "approved": "Approved",
     "reject": "Reject",
+    "balance": "Balance",
+    "address": "Address",
     "rejected": "Rejected",
     "edit": "Edit",
     "destination_address": "Destination address",
     "search": "Search",
+    "token": "Token",
     "until": "To",
     "to": "To",
     "from": "From",
@@ -104,6 +113,8 @@
     "amount": "Amount",
     "send": "Send",
     "open": "Open",
+    "yes": "Yes",
+    "no": "No",
     "asset": "Asset",
     "user": "User",
     "unknown": "Unknown",
@@ -113,7 +124,7 @@
     "signin": "Sign In",
     "signout": "Sign Out",
     "anonymous": "Anonymous",
-    "new_account": "New Account",
+    "new_account": "Create Account",
     "edit_account": "Edit Account",
     "accounts": "Accounts",
     "policies": "Policies",
@@ -185,11 +196,10 @@
     },
     "user_settings": {
       "title": "Account Info & Settings",
-      "subtitle": "Configure preferences and manage your user.",
-      "manage_associated_wallet": "Manage associated wallet",
-      "manage_associated_wallet_hint": "These settings only apply to your user and not to the wallet.",
-      "remove_associated_wallet": "Remove associated wallet",
-      "confirm_remove_associated_wallet": "This will remove the associated wallet from your user."
+      "subtitle": "Configure preferences and manage your user."
+    },
+    "administration": {
+      "title": "Wallet Administration"
     }
   }
 }
