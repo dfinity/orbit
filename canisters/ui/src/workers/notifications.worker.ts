@@ -75,7 +75,7 @@ class NotificationsWorkerImpl {
     if (this.timer) {
       this.stop();
     }
-    
+
     this.lastNotificationDate = null;
     this.lastNotificationId = null;
 

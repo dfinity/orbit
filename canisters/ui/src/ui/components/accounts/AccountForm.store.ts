@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { logger } from '~/core';
-import { UUID, Policy, Account, Proposal } from '~/generated/wallet/wallet.did';
+import { UUID, Account, Proposal, AccountPolicies } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores';
 import { FormValidationRules } from '~/ui/types';
@@ -11,7 +11,7 @@ export interface AccountForm {
   owners: Array<UUID | null>;
   blockchain: string | null;
   blockchainStandard: string | null;
-  policies: Array<Policy | null>;
+  policies: AccountPolicies;
 }
 
 export interface AccountFormStoreState {
@@ -59,10 +59,13 @@ const initialStateForAccount = (account?: Account): AccountFormStoreState => {
       },
       form: {
         name: null,
-        owners: [activeWallet.user.id],
+        owners: activeWallet.user ? [activeWallet.user.me.id] : [],
         blockchain: null,
         blockchainStandard: null,
-        policies: [],
+        policies: {
+          edit: [],
+          transfer: [],
+        },
       },
     };
   }
@@ -82,7 +85,10 @@ const initialStateForAccount = (account?: Account): AccountFormStoreState => {
       owners: account.owners,
       blockchain: account.blockchain,
       blockchainStandard: account.standard,
-      policies: account.policies,
+      policies: {
+        edit: [],
+        transfer: [],
+      },
     },
   };
 };
@@ -96,10 +102,6 @@ export const useAccountForm = (account?: Account) =>
       canAddOwner(state): boolean {
         // TODO: the length of the nr of max owners should be sent from the backend
         return state.form.owners.length < 10;
-      },
-      canAddPolicy(state): boolean {
-        // TODO: the length of the nr of max policies should be sent from the backend
-        return state.form.policies.length < 10;
       },
       nrOfOwners(state): number {
         return state.form.owners.filter(id => id !== null).length;
@@ -148,32 +150,16 @@ export const useAccountForm = (account?: Account) =>
       addOwner(owner: UUID | null): void {
         this.form.owners.push(owner);
       },
-      addNewPolicy(): void {
-        if (this.form.policies.length === 0) {
-          this.form.policies.push({
-            approval_threshold: {
-              FixedThreshold: 1,
-            },
-          });
-
-          return;
-        }
-
-        this.form.policies.push(null);
-      },
       isSelfOwnerEntry(ownerId: UUID | null): boolean {
         const activeWallet = useWalletStore();
         if (ownerId === null) {
           return false;
         }
 
-        return activeWallet.user.id === ownerId;
+        return activeWallet.user!.me.id === ownerId;
       },
       removeOwnerByIndex(index: number): void {
         this.form.owners.splice(index, 1);
-      },
-      removePolicyByIndex(index: number): void {
-        this.form.policies.splice(index, 1);
       },
       supportedBlockchainStandards(): string[] {
         const activeWallet = useWalletStore();
@@ -193,7 +179,6 @@ export const useAccountForm = (account?: Account) =>
 
           const wallet = useWalletStore().service;
           const owners: string[] = this.form.owners.filter(id => id !== null) as string[];
-          const policies = this.form.policies.filter(policy => policy !== null) as Policy[];
 
           if (account && account.id) {
             return wallet.createProposal({
@@ -204,7 +189,13 @@ export const useAccountForm = (account?: Account) =>
                   account_id: account.id,
                   name: this.form.name ? [this.form.name] : [],
                   owners: owners.length ? [owners] : [],
-                  policies: policies.length ? [policies] : [],
+                  policies: [
+                    {
+                      // TODO: add policies once we have the UI for it
+                      edit: [{ AutoAdopted: null }],
+                      transfer: [{ AutoAdopted: null }],
+                    },
+                  ],
                 },
               },
               execution_plan: [],
@@ -220,7 +211,11 @@ export const useAccountForm = (account?: Account) =>
                 owners: owners,
                 blockchain: `${this.form.blockchain}`,
                 standard: `${this.form.blockchainStandard ?? 'native'}`,
-                policies: policies,
+                policies: {
+                  // TODO: add policies once we have the UI for it
+                  edit: [{ AutoAdopted: null }],
+                  transfer: [{ AutoAdopted: null }],
+                },
                 metadata: [],
               },
             },

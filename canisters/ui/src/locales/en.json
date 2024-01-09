@@ -11,7 +11,9 @@
     "wallet_info_card_title": "{name} Info",
     "wallet_info_card_edit_btn": "Edit wallet name",
     "manage_associated_wallet": "Manage associated wallet",
-    "manage_associated_wallet_hint": "These settings only apply to your user and not to the wallet."
+    "manage_associated_wallet_hint": "These settings only apply to your user and not to the wallet.",
+    "user_activities_card_title": "User Activities",
+    "wallet_upgrades_card_title": "Wallet Upgrades"
   },
   "login": {
     "signin_slogan": "Securely connect to manage your crypto assets",
@@ -132,6 +134,7 @@
     "withdrawals": "Withdrawals",
     "transactions": "Transactions",
     "address_book": "Address Book",
+    "new_transfer": "New Transfer",
     "completed": "completed",
     "pending": "pending",
     "new_withdraw": "New withdraw",

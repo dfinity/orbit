@@ -74,7 +74,7 @@ class AccountsWorkerImpl {
     if (this.timer) {
       this.stop();
     }
-    
+
     this.walletService.withWalletId(data.walletId);
     const poolIntervalMs =
       data.poolIntervalMs && data.poolIntervalMs > 0

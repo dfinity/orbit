@@ -13,8 +13,8 @@
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
           <VCol cols="12" md="8">
-            <!-- todo: add missing cards for admin -->
-            under development
+            <UserActivitiesCard />
+            <WalletUpgradesCard class="mt-4" />
           </VCol>
           <VCol cols="12" md="4">
             <WalletInfoCard />
@@ -28,4 +28,6 @@
 <script lang="ts" setup>
 import PageLayout from '~/ui/components/PageLayout.vue';
 import WalletInfoCard from '~/ui/components/wallet-info-card/WalletInfoCard.vue';
+import UserActivitiesCard from '~/ui/components/user-activities-card/UserActivitiesCard.vue';
+import WalletUpgradesCard from '~/ui/components/wallet-upgrades-card/WalletUpgradesCard.vue';
 </script>

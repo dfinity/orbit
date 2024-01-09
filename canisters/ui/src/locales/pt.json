@@ -11,7 +11,9 @@
     "wallet_info_card_title": "{name} Informaçōes",
     "wallet_info_card_edit_btn": "Editar nome da carteira",
     "manage_associated_wallet": "Gerenciar carteira associada",
-    "manage_associated_wallet_hint": "Qualquer modificação apenas serão aplicadas a sua conta de usuário."
+    "manage_associated_wallet_hint": "Qualquer modificação apenas serão aplicadas a sua conta de usuário.",
+    "user_activities_card_title": "Atividades do usuário",
+    "wallet_upgrades_card_title": "Atualizaçōes de sistema"
   },
   "login": {
     "signin_slogan": "Conecte-se para gerir a sua carteira de ativos crypto",
@@ -123,6 +125,7 @@
     "logout": "Sair",
     "signin": "Entrar",
     "signout": "Sair",
+    "new_transfer": "Nova transferência",
     "scheduled": "Agendado",
     "processing": "Processando",
     "anonymous": "Anónimo",

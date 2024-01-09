@@ -20,9 +20,7 @@ const mainNavigation: NavigationItem[] = [
         action: {
           type: NavigationActionType.To,
           handle: route =>
-            route.params.locale
-              ? `/${route.params.locale}/settings/system`
-              : '/settings/system',
+            route.params.locale ? `/${route.params.locale}/settings/system` : '/settings/system',
         },
       },
       {
