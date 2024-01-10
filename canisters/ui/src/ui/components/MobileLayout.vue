@@ -1,8 +1,8 @@
 <template>
   <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
     <VNavigationDrawer
-      v-if="auth.isAuthenticated"
-      v-model="settings.showSidebar"
+      v-if="session.isAuthenticated"
+      v-model="app.showSidebar"
       class="sidebar"
       width="260"
       color="primary"
@@ -21,7 +21,7 @@
       <div class="sidebar__footer">
         <slot name="sidebar-footer">
           <a href="https://internetcomputer.org" target="_blank">
-            <img src="/images/internet-computer-horizontal-light.png" height="20" />
+            <img :src="icLogoHorizontal" height="20" />
           </a>
         </slot>
       </div>
@@ -39,13 +39,14 @@
           <VSpacer />
           <div class="toolbar__actions">
             <slot name="toolbar-actions">
-              <VBtn :icon="themeSwitcherIcon" @click.prevent="settings.toogleTheme" />
-              <NotificationsPanelToggle v-if="auth.isAuthenticated" variant="outlined" />
+              <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
+              <NotificationsPanelToggle v-if="session.isAuthenticated" variant="outlined" />
+              <UserAvatarSelector v-if="session.isAuthenticated" variant="outlined" />
               <LanguageSelector />
               <VBtn
-                v-if="auth.isAuthenticated"
+                v-if="session.isAuthenticated"
                 :icon="mdiMenuOpen"
-                @click.prevent="settings.toogleSidebar"
+                @click.prevent="app.toogleSidebar"
               />
             </slot>
           </div>
@@ -60,8 +61,13 @@
         "
       >
         <slot name="topnav">
-          <WalletSelector v-if="auth.isAuthenticated" />
+          <WalletSelector v-if="session.isAuthenticated" />
         </slot>
+
+        <div class="alpha-warning">
+          <VIcon :icon="mdiAlertOutline" size="medium" />
+          {{ $t('app.alpha_warning') }}
+        </div>
       </nav>
       <div v-if="!isSetAndNotFalse(props.hideMain)" class="main">
         <slot name="main">
@@ -76,16 +82,6 @@
                 : undefined
             "
           >
-            <VAlert
-              class="my-4 mx-4"
-              type="warning"
-              variant="tonal"
-              density="compact"
-              title="Development Version 🚧"
-            >
-              This development version will be facing ongoing updates that may result in complete
-              loss of data and/or funds.
-            </VAlert>
             <slot name="main-body"></slot>
           </div>
         </slot>
@@ -93,7 +89,7 @@
       <VFooter
         v-if="!isSetAndNotFalse(props.hideFooter)"
         class="footer"
-        :color="props.backgroundColor ? props.backgroundColor : `background`"
+        :color="props.backgroundColor ? props.backgroundColor : `surface`"
       >
         <slot name="footer">
           <VContainer fluid>
@@ -122,19 +118,22 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
+import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
+import BrandLogo from '~/ui/components/BrandLogo.vue';
+import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
-import { useAuthStore, useSettingsStore } from '~/ui/stores';
-import LanguageSelector from './LanguageSelector.vue';
-import BrandLogo from '~/ui/components/BrandLogo.vue';
+import UserAvatarSelector from '~/ui/components/UserAvatarSelector.vue';
 import WalletSelector from '~/ui/components/WalletSelector.vue';
-import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
+import LanguageSelector from './LanguageSelector.vue';
+import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 
-const settings = useSettingsStore();
-const auth = useAuthStore();
+const app = useAppStore();
+const session = useSessionStore();
 
 const props = inject('pageLayoutProps', {
   backgroundColor: undefined,
@@ -147,17 +146,17 @@ const props = inject('pageLayoutProps', {
 });
 
 const icLogoVertical = computed(() => {
-  return settings.isDarkTheme
+  return app.isDarkTheme
     ? '/images/internet-computer-vertical-dark.png'
     : '/images/internet-computer-vertical-light.png';
 });
 
 const ghMarkImg = computed(() => {
-  return settings.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
+  return app.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
 });
 
 const themeSwitcherIcon = computed(() => {
-  return settings.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
+  return app.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
 });
 </script>
 
@@ -199,7 +198,7 @@ const themeSwitcherIcon = computed(() => {
   .toolbar {
     display: flex;
     flex-direction: row;
-    background-color: rgb(var(--ds-surface));
+    background-color: rgb(var(--ds-background));
     color: rgb(var(--ds-on-surface));
 
     &__actions {

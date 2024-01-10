@@ -1,12 +1,10 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { icAgent } from '~/core/IcAgent';
+import { icAgent } from '~/core/ic-agent';
 import { idlFactory } from '~/generated/wallet';
 import {
   User,
-  Error as ApiError,
   WalletFeatures,
-  EditUserInput,
   VoteOnProposalInput,
   FetchAccountBalancesInput,
   GetUserInput,
@@ -16,7 +14,6 @@ import {
   Notification,
   ListAccountTransfersInput,
   Proposal,
-  RegisterUserInput,
   Transfer,
   CreateProposalInput,
   TransferListItem,
@@ -24,16 +21,17 @@ import {
   AccountBalance,
   _SERVICE,
   ListNotificationsInput,
-  NotificationId,
   MarkNotificationsReadInput,
   ListProposalsInput,
+  UUID,
 } from '~/generated/wallet/wallet.did';
-import { Maybe } from '~/types';
+import { AuthenticatedUser } from '~/types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;
 
   public static ERR_USER_IDENTITY_NOT_FOUND = 'NOT_FOUND_USER_IDENTITY';
+  public static ERR_USER_NOT_FOUND = 'NOT_FOUND';
 
   constructor(
     private agent: HttpAgent = icAgent.get(),
@@ -63,34 +61,20 @@ export class WalletService {
     return result.Ok.user;
   }
 
-  async myUser(): Promise<Maybe<User>> {
-    return this.getUser({ user_id: [] }).catch((err: ApiError) => {
-      if (err.code === WalletService.ERR_USER_IDENTITY_NOT_FOUND) {
+  async myUser(): Promise<AuthenticatedUser | null> {
+    const result = await this.actor.me();
+    if ('Err' in result) {
+      if (result.Err.code === WalletService.ERR_USER_NOT_FOUND) {
         return null;
       }
 
-      throw err;
-    });
-  }
-
-  async register(input: RegisterUserInput): Promise<User> {
-    const result = await this.actor.register_user(input);
-
-    if ('Err' in result) {
       throw result.Err;
     }
 
-    return result.Ok.user;
-  }
-
-  async editUser(input: EditUserInput): Promise<User> {
-    const result = await this.actor.edit_user(input);
-
-    if ('Err' in result) {
-      throw result.Err;
-    }
-
-    return result.Ok.user;
+    return {
+      me: result.Ok.me,
+      privileges: result.Ok.privileges,
+    };
   }
 
   async features(): Promise<WalletFeatures> {
@@ -123,7 +107,7 @@ export class WalletService {
     return result.Ok.proposals;
   }
 
-  async listUnreadNotifications(from_dt?: Date, last_id?: NotificationId): Promise<Notification[]> {
+  async listUnreadNotifications(from_dt?: Date, last_id?: UUID): Promise<Notification[]> {
     const notifications = await this.listNotifications({
       notification_type: [],
       status: [{ Sent: null }],

@@ -1,1 +1,2 @@
-export * from './FormRules';
+export * from './form-rules';
+export * from './common';

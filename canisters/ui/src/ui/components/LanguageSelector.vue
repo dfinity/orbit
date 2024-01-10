@@ -1,23 +1,23 @@
 <template>
   <VSelect
     v-model="activeLocale"
-    :items="settings.supportedLocales"
+    :items="app.supportedLocales"
     variant="solo-filled"
     hide-details
   />
 </template>
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { router } from '~/ui/modules/Router';
-import { useSettingsStore } from '~/ui/stores';
+import { router } from '~/ui/modules';
+import { useAppStore } from '~/ui/stores/app';
 
-const settings = useSettingsStore();
+const app = useAppStore();
 
 const activeLocale = computed({
-  get: () => settings.locale,
+  get: () => app.locale,
   set: value => {
     router.push({ params: { locale: value } });
-    settings.useLocale(value, true);
+    app.useLocale(value, true);
   },
 });
 </script>

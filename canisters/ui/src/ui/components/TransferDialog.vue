@@ -37,14 +37,14 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import { TransferId, AccountId } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/wallet/wallet.did';
 import { mdiClose } from '@mdi/js';
 import TransferForm from '~/ui/components/TransferForm.vue';
 
 const props = defineProps<{
   modelValue: boolean;
-  accountId?: AccountId;
-  transferId?: TransferId;
+  accountId?: UUID;
+  transferId?: UUID;
 }>();
 
 const emit = defineEmits<{

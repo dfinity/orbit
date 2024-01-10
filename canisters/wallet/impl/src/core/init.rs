@@ -1,5 +1,8 @@
 use crate::models::{
-    access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType, UserSpecifier},
+    access_control::{
+        CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
+        UserSpecifier,
+    },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier as ProposalUserSpecifier},
     ADMIN_GROUP_ID,
@@ -122,6 +125,15 @@ lazy_static! {
                 ResourceType::ProposalPolicy,
                 CommonActionSpecifier::Read(CommonSpecifier::Any)
             ),
+        ),
+        // proposals
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Any)),
         ),
         // address book
         (

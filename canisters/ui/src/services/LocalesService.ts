@@ -21,7 +21,7 @@ export class LocalesService {
   }
 
   async fetchLocaleMessages(locale: Locale): Promise<AppTranslations> {
-    const messages = await import(`~/locales/${locale}.json`);
+    const messages = await import(`~/locales/${locale}.ts`);
     return messages.default;
   }
 

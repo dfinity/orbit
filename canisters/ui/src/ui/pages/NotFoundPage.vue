@@ -21,17 +21,18 @@ import { mdiLink } from '@mdi/js';
 import { computed } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { defaultHomeRoute } from '~/ui/modules';
-import { useAuthStore, useSettingsStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
 
-const auth = useAuthStore();
-const settings = useSettingsStore();
+const session = useSessionStore();
+const app = useAppStore();
 
 const hideSidebar = computed(() => {
-  if (settings.isMobile) {
+  if (app.isMobile) {
     return false;
   }
 
-  return !auth.isAuthenticated;
+  return !session.isAuthenticated;
 });
 </script>
 
@@ -41,7 +42,7 @@ const hideSidebar = computed(() => {
   margin-top: calc(var(--ds-bdu) * 10);
 
   &__title {
-    color: rgb(var(--ds-primary-variant));
+    color: rgb(var(--ds-on-surface));
   }
 }
 </style>

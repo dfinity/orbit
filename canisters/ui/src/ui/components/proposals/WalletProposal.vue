@@ -66,9 +66,9 @@ import { i18n } from '~/ui/modules';
 import UnknownProposal from './UnknownProposal.vue';
 import { WalletProposalType } from '~/types';
 import TransferProposal from './TransferProposal.vue';
-import { useActiveWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 
-const activeWallet = useActiveWalletStore();
+const activeWallet = useWalletStore();
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
@@ -99,7 +99,7 @@ const canVote = computed(() => {
     return false;
   }
 
-  return !proposal.value.votes.find(d => d.user_id === activeWallet.user.id);
+  return !proposal.value.votes.find(d => d.user_id === activeWallet.user?.me.id);
 });
 
 const onApprove = () => {

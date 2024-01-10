@@ -2,7 +2,7 @@
   <VMenu v-if="!mobile" v-model="notificationsPopup" location="end" :close-on-content-click="false">
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
-        <VBadge dot :color="activeWallet.hasNotifications ? 'warning' : 'transparent'">
+        <VBadge dot :color="wallet.hasNotifications ? 'warning' : 'transparent'">
           <VIcon :icon="toggleIcon" size="small" />
         </VBadge>
       </VBtn>
@@ -20,7 +20,7 @@
   >
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
-        <VBadge dot :color="activeWallet.hasNotifications ? 'warning' : 'transparent'">
+        <VBadge dot :color="wallet.hasNotifications ? 'warning' : 'transparent'">
           <VIcon :icon="toggleIcon" size="small" />
         </VBadge>
       </VBtn>
@@ -33,7 +33,7 @@
 import { mdiBellRing, mdiBellRingOutline } from '@mdi/js';
 import { ref, computed } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useActiveWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 import NotificationsPanel from './NotificationsPanel.vue';
 
 const props = withDefaults(
@@ -51,5 +51,5 @@ const toggleIcon = computed(() =>
 
 const { mobile } = useDisplay();
 const notificationsPopup = ref(false);
-const activeWallet = useActiveWalletStore();
+const wallet = useWalletStore();
 </script>

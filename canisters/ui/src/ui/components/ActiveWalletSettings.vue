@@ -4,7 +4,7 @@
       <VCol cols="12 wallet-form__title">{{ $t('terms.general') }}</VCol>
       <VCol cols="12" class="py-0">
         <VTextField
-          v-model="activeWallet.user.id"
+          v-model="wallet.currentUser.me.id"
           :prepend-inner-icon="mdiIdentifier"
           variant="solo"
           density="compact"
@@ -17,9 +17,9 @@
 
 <script lang="ts" setup>
 import { mdiIdentifier } from '@mdi/js';
-import { useActiveWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 
-const activeWallet = useActiveWalletStore();
+const wallet = useWalletStore();
 </script>
 
 <style scoped lang="scss">

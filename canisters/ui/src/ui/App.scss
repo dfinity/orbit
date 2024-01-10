@@ -91,8 +91,8 @@ body,
   padding: 0;
   border: 0;
   vertical-align: baseline;
-  background: rgb(var(--ds-background));
-  color: rgb(var(--ds-on-background));
+  background: rgb(var(--ds-surface));
+  color: rgb(var(--ds-on-surface));
   font-size: var(--ds-font-size-md);
   overflow-x: hidden;
   overflow-y: auto;
@@ -100,4 +100,12 @@ body,
 
 a {
   color: inherit;
+}
+
+.alpha-warning {
+  color: rgb(var(--ds-on-surface));
+  font-size: var(--ds-font-size-xs);
+  font-weight: bold;
+  text-align: center;
+  padding: 0.5rem;
 }

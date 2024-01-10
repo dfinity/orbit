@@ -1,5 +1,5 @@
 <template>
-  <PageLayout v-if="activeWallet.hasUser" class="account">
+  <PageLayout v-if="wallet.hasUser" class="account">
     <template v-if="pageStore.hasLoaded" #main-header>
       <VContainer class="pt-16 pb-16 pl-8 pr-8 account__header" fluid>
         <div class="account__balance">
@@ -334,7 +334,6 @@ import {
   mdiAccountGroup,
   mdiCalendar,
   mdiContentCopy,
-  mdiLink as _mdiLink,
   mdiRefresh,
   mdiTransfer,
   mdiWallet,
@@ -344,17 +343,19 @@ import { useDisplay } from 'vuetify';
 import { formatBalance } from '~/core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import EditAccountBtn from '~/ui/components/accounts/EditAccountBtn.vue';
 import WalletProposal from '~/ui/components/proposals/WalletProposal.vue';
 import TransferStatusChip from '~/ui/components/transfers/TransferStatusChip.vue';
 import { i18n, router } from '~/ui/modules';
-import { useActiveWalletStore, useSettingsStore, useAccountDetailsStore } from '~/ui/stores';
-import EditAccountBtn from '~/ui/components/accounts/EditAccountBtn.vue';
+import { useAppStore } from '~/ui/stores/app';
+import { useAccountPageStore } from '~/ui/stores/pages/account';
+import { useWalletStore } from '~/ui/stores/wallet';
 
 const { mobile } = useDisplay();
 
-const activeWallet = useActiveWalletStore();
-const settings = useSettingsStore();
-const pageStore = useAccountDetailsStore();
+const wallet = useWalletStore();
+const app = useAppStore();
+const pageStore = useAccountPageStore();
 
 const tab = ref<'withdrawals' | 'proposals' | 'deposits'>('withdrawals');
 
@@ -363,7 +364,7 @@ onMounted(() => {
 });
 
 watch(
-  activeWallet.accounts,
+  wallet.accounts,
   accounts => {
     if (!pageStore.hasLoaded) {
       return;
@@ -382,8 +383,7 @@ watch(
 const copyAddressToClipboard = (address: string) => {
   navigator.clipboard.writeText(address);
 
-  settings.setNotification({
-    show: true,
+  app.sendNotification({
     type: 'success',
     message: i18n.global.t('wallets.account_address_copied_to_clipboard'),
   });

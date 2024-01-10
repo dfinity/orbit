@@ -2,16 +2,16 @@
   <div class="brand">
     <RouterLink to="/">
       <img :src="brandLogoImage" draggable="false" />
-      <span>{{ settings.appName }}</span>
+      <span>{{ app.appName }}</span>
     </RouterLink>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { useSettingsStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 
-const settings = useSettingsStore();
+const app = useAppStore();
 
 const props = withDefaults(
   defineProps<{
@@ -27,7 +27,7 @@ const brandLogoImage = computed(() => {
     return `/images/app-logo-dark.png`;
   }
 
-  return settings.isDarkTheme ? `/images/app-logo-dark.png` : `/images/app-logo-light.png`;
+  return app.isDarkTheme ? `/images/app-logo-dark.png` : `/images/app-logo-light.png`;
 });
 </script>
 

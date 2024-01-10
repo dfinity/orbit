@@ -1,26 +1,26 @@
 <template>
   <VSelect
     v-model="selectedWallet"
-    :loading="activeWalletStore.loading"
+    :loading="session.loading"
     class="wallet-selector"
-    variant="filled"
+    :variant="app.isMobile ? 'filled' : 'solo'"
+    density="compact"
     hide-details
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
-    :items="walletStore.wallets"
+    :items="session.user.wallets"
   >
     <template #item="{ props, item }">
       <VListItem
         v-bind="props"
-        :title="walletStore.computedWalletName(Principal.fromText(item.raw.canisterId))"
+        :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :subtitle="item.raw.canisterId"
       />
     </template>
     <template #selection="{ item }">
       <VListItem
-        v-if="walletStore.hasWallets"
-        :title="walletStore.computedWalletName(Principal.fromText(item.raw.canisterId))"
-        :subtitle="item.raw.canisterId"
+        v-if="session.hasWallets"
+        :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :prepend-icon="mdiWallet"
       />
       <VListItem v-else :title="$t('wallets.no_wallets')" :prepend-icon="mdiWallet" />
@@ -28,28 +28,27 @@
   </VSelect>
 </template>
 <script lang="ts" setup>
-import { computed } from 'vue';
 import { Principal } from '@dfinity/principal';
 import { mdiWallet } from '@mdi/js';
-import { useActiveWalletStore, useWalletStore } from '~/ui/stores';
+import { computed } from 'vue';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
+import { computedWalletName } from '~/ui/utils';
 
-const walletStore = useWalletStore();
-const activeWalletStore = useActiveWalletStore();
+const session = useSessionStore();
+const app = useAppStore();
 
 const selectedWallet = computed({
   get(): string | null {
-    return activeWalletStore.hasUser ? activeWalletStore.walletId.toString() : null;
+    return session.selectedWallet?.length ? session.selectedWallet : null;
   },
   set(newWalletId: string | null) {
     if (!newWalletId) {
-      walletStore._main = null;
-      activeWalletStore.reset();
+      session.unloadWallet();
       return;
     }
 
-    activeWalletStore.load(Principal.fromText(newWalletId)).then(() => {
-      walletStore._main = activeWalletStore.walletId.toString();
-    });
+    session.loadWallet(Principal.fromText(newWalletId));
   },
 });
 </script>

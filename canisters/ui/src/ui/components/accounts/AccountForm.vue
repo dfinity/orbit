@@ -105,39 +105,16 @@
             </VCard>
           </VCol>
           <VCol cols="12" class="account__title">{{ $t('terms.policies') }}</VCol>
-          <VCol v-for="(_, idx) in accountForm.form.policies" :key="idx" cols="12" md="4">
-            <AccountPolicyCard
-              v-model="accountForm.form.policies[idx]"
-              :owners="accountForm.nrOfOwners"
-              :mode="isViewMode ? 'view' : 'edit'"
-              @removed="accountForm.removePolicyByIndex(idx)"
-            />
-          </VCol>
-          <VCol v-if="accountForm.canAddPolicy && !isViewMode" cols="12" md="4">
-            <VCard density="compact" variant="plain" class="account__add">
-              <VCardText class="text-center">
-                <VIcon :icon="mdiCogs" size="64" />
-              </VCardText>
-              <VCardActions>
-                <VSpacer />
-                <VBtn color="success" variant="flat" block @click="accountForm.addNewPolicy">
-                  {{ $t('terms.add') }}
-                </VBtn>
-                <VSpacer />
-              </VCardActions>
-            </VCard>
-          </VCol>
         </template>
       </VRow>
     </VContainer>
   </VForm>
 </template>
 <script lang="ts" setup>
-import { mdiAccount, mdiAccountGroup, mdiKeyChainVariant, mdiWallet, mdiCogs } from '@mdi/js';
+import { mdiAccount, mdiAccountGroup, mdiKeyChainVariant, mdiWallet } from '@mdi/js';
 import { ref, computed, onMounted, watch } from 'vue';
 import { uniqueRule } from '~/ui/utils';
-import AccountPolicyCard from '~/ui/components/AccountPolicyCard.vue';
-import { Account, Policy, Proposal, UserId } from '~/generated/wallet/wallet.did';
+import { Account, Proposal, UUID } from '~/generated/wallet/wallet.did';
 import { useAccountForm } from '~/ui/components/accounts/AccountForm.store';
 
 const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null);
@@ -204,7 +181,7 @@ const submit = async () => {
 };
 
 accountForm.$subscribe((_, state) => {
-  const uniqOwners: Array<UserId | null> = [];
+  const uniqOwners: Array<UUID | null> = [];
   state.form.owners.forEach(ownerId => {
     if (!uniqOwners.find(id => id === ownerId)) {
       uniqOwners.push(ownerId);
@@ -213,15 +190,6 @@ accountForm.$subscribe((_, state) => {
 
   if (uniqOwners.length !== state.form.owners.length) {
     accountForm.form.owners = [...uniqOwners];
-  }
-
-  const uniqPolicies: Map<string, Policy | null> = new Map();
-  state.form.policies.forEach(entry => {
-    uniqPolicies.set(JSON.stringify(entry), entry);
-  });
-
-  if (uniqPolicies.size !== state.form.policies.length) {
-    accountForm.form.policies = [...uniqPolicies.values()];
   }
 });
 </script>

@@ -40,7 +40,7 @@ import { computed, ref } from 'vue';
 import AccountForm from './AccountForm.vue';
 import { mdiClose } from '@mdi/js';
 import { Account } from '~/generated/wallet/wallet.did';
-import { useSettingsStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 import { i18n } from '~/ui/modules';
 
 const props = withDefaults(
@@ -78,8 +78,7 @@ const onSave = (): void => {
   closeDialog();
   emit('saved');
 
-  useSettingsStore().setNotification({
-    show: true,
+  useAppStore().sendNotification({
     type: 'success',
     message:
       props.mode === 'add'

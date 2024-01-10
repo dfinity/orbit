@@ -1,2 +1,2 @@
-export * from './I18n';
-export * from './Init';
+export * from './i18n';
+export * from './init';

@@ -1,15 +1,16 @@
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
-import inject from '@rollup/plugin-inject';
 import vue from '@vitejs/plugin-vue';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
-import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vite';
-import dfxConfig from '../../dfx.json';
+import vuetify from 'vite-plugin-vuetify';
 
 const network = process.env.DFX_NETWORK ?? 'local';
 
 const resolveCanisterIds = (): Map<string, string> => {
+  const dfxConfig: {
+    canisters: Record<string, unknown>;
+  } = JSON.parse(readFileSync(resolve(__dirname, '../..', 'dfx.json'), 'utf-8'));
   const availableCanisters = new Map<string, string>();
   const canisters = Object.entries(dfxConfig.canisters);
   const canisterIdsFilePath =
@@ -26,6 +27,10 @@ const resolveCanisterIds = (): Map<string, string> => {
     readFileSync(canisterIdsFilePath, 'utf-8'),
   );
   for (const [canisterName] of canisters) {
+    if (canisterName === 'wallet') {
+      // The wallet canister is deployed with the control panel.
+      continue;
+    }
     const details = config[canisterName];
     if (!details?.[network]) {
       console.warn(`Canister ${canisterName} does not have a defined canister id for ${network}`);
@@ -47,7 +52,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = !isDevelopment;
   mode = isProduction ? 'production' : 'development';
   const localesPath = resolve(__dirname, 'src/locales');
-  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.json'));
+  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.ts'));
   const canisters = resolveCanisterIds();
 
   return {
@@ -78,7 +83,7 @@ export default defineConfig(({ mode }) => {
 
             if (
               folder.includes('/src/locales') &&
-              supportedLocales.some(locale => resolve(folder, `${locale}.json`) === id)
+              supportedLocales.some(locale => resolve(folder, `${locale}.ts`) === id)
             ) {
               const [localeName] = basename(id).split('.');
               return `locale-${localeName}`;
@@ -101,14 +106,7 @@ export default defineConfig(({ mode }) => {
             }
           },
         },
-        plugins: [
-          inject({
-            modules: {
-              // Polyfill Buffer for production build
-              Buffer: ['buffer', 'Buffer'],
-            },
-          }),
-        ],
+        plugins: [nodePolyfills()],
       },
     },
     optimizeDeps: {
@@ -116,17 +114,6 @@ export default defineConfig(({ mode }) => {
         define: {
           global: 'globalThis',
         },
-        plugins: [
-          NodeModulesPolyfillPlugin(),
-          {
-            name: 'fix-node-globals-polyfill',
-            setup(build) {
-              build.onResolve({ filter: /_virtual-process-polyfill_\.js/ }, ({ path }) => ({
-                path,
-              }));
-            },
-          },
-        ],
       },
     },
     worker: {
