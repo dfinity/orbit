@@ -5,6 +5,9 @@ mod wallet_details;
 use candid::{CandidType, Deserialize};
 pub use wallet_details::*;
 
+mod address_book;
+pub use address_book::*;
+
 mod common;
 pub use common::*;
 
