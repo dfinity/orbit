@@ -60,7 +60,7 @@
 import { mdiWallet, mdiSend, mdiNumeric } from '@mdi/js';
 import { ref, computed, watch, onMounted } from 'vue';
 import { UUID, Proposal } from '~/generated/wallet/wallet.did';
-import { useTransferFormStore } from '~/ui/stores/TransferForm';
+import { useTransferFormStore } from '~/ui/stores/transfer-form';
 
 const transferStore = useTransferFormStore();
 
@@ -122,3 +122,4 @@ const submit = async () => {
   height: 100%;
 }
 </style>
+~/ui/stores/transfer-form

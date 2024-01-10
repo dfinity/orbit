@@ -35,14 +35,14 @@
     "vue": "3.4.7",
     "vue-i18n": "9.9.0",
     "vue-router": "4.2.5",
-    "vuetify": "3.4.10"
+    "vuetify": "3.3.23"
   },
   "devDependencies": {
     "@types/validator": "13.11.7",
-    "@vitejs/plugin-vue": "5.0.2",
+    "@vitejs/plugin-vue": "4.6.2",
     "eslint-plugin-vue": "9.19.2",
     "happy-dom": "12.10.3",
     "sass": "1.69.7",
-    "vite-plugin-vuetify": "2.0.1"
+    "vite-plugin-vuetify": "1.0.2"
   }
 }
