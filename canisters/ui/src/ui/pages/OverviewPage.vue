@@ -46,7 +46,7 @@
 <script lang="ts" setup>
 import { mdiWallet } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 
 const wallet = useWalletStore();
 </script>

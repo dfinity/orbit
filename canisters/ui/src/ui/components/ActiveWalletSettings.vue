@@ -17,7 +17,7 @@
 
 <script lang="ts" setup>
 import { mdiIdentifier } from '@mdi/js';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 
 const wallet = useWalletStore();
 </script>

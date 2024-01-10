@@ -334,7 +334,6 @@ import {
   mdiAccountGroup,
   mdiCalendar,
   mdiContentCopy,
-  mdiLink as _mdiLink,
   mdiRefresh,
   mdiTransfer,
   mdiWallet,
@@ -344,11 +343,13 @@ import { useDisplay } from 'vuetify';
 import { formatBalance } from '~/core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import EditAccountBtn from '~/ui/components/accounts/EditAccountBtn.vue';
 import WalletProposal from '~/ui/components/proposals/WalletProposal.vue';
 import TransferStatusChip from '~/ui/components/transfers/TransferStatusChip.vue';
 import { i18n, router } from '~/ui/modules';
-import { useWalletStore, useAppStore, useAccountPageStore } from '~/ui/stores';
-import EditAccountBtn from '~/ui/components/accounts/EditAccountBtn.vue';
+import { useAppStore } from '~/ui/stores/app';
+import { useAccountPageStore } from '~/ui/stores/pages/account';
+import { useWalletStore } from '~/ui/stores/wallet';
 
 const { mobile } = useDisplay();
 

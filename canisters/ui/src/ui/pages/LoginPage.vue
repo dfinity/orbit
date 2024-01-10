@@ -93,7 +93,8 @@ import { computed, ref } from 'vue';
 import { logger } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
-import { useSessionStore, useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
 import { afterLoginRedirect } from '~/ui/utils';
 
 const app = useAppStore();

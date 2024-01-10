@@ -26,7 +26,7 @@
 
 <script lang="ts" setup>
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 
 const activeWallet = useWalletStore();
 </script>

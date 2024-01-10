@@ -34,7 +34,7 @@
 <script lang="ts" setup>
 import { computed, provide, watch } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 import DesktopLayout from './DesktopLayout.vue';
 import MobileLayout from './MobileLayout.vue';
 

@@ -33,7 +33,7 @@
 
 <script lang="ts" setup>
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { useSessionStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
 
 const session = useSessionStore();
 </script>

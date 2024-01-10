@@ -71,7 +71,7 @@ import { formatBalance } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import { i18n } from '~/ui/modules';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { copyToClipboard } from '~/ui/utils';
 
 const wallet = useWalletStore();

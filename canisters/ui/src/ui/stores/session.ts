@@ -5,7 +5,8 @@ import { icAgent, logger, wait } from '~/core';
 import { UUID } from '~/generated/wallet/wallet.did';
 import { BlockchainStandard, BlockchainType } from '~/types';
 import { i18n, services } from '~/ui/modules';
-import { useAppStore, useWalletStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { computedWalletName, redirectToLogin } from '~/ui/utils';
 
 export interface WalletListItem {

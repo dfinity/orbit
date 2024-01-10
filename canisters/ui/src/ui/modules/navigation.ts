@@ -2,7 +2,7 @@ import { mdiCogs, mdiHome, mdiWalletBifold, mdiBookOpenVariant } from '@mdi/js';
 import { App } from 'vue';
 import { NavigationGuard } from 'vue-router';
 import { defaultHomeRoute, defaultLoginRoute, redirectToKey } from '~/ui/modules';
-import { useSessionStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
 import { AuthState, NavigationActionType, NavigationItem } from '~/ui/types';
 
 const mainNavigation: NavigationItem[] = [

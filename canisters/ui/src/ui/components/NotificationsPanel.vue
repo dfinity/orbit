@@ -26,7 +26,7 @@
 
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { useDisplay } from 'vuetify';
 import NotificationListItem from '~/ui/components/NotificationListItem.vue';

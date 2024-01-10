@@ -194,6 +194,7 @@ function candid_generate() {
 }
 
 function setup_devenv() {
+  nvm install
   nvm use
 
   if ! command -v pnpm >/dev/null 2>&1; then

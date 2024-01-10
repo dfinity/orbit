@@ -1,6 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { defaultHomeRoute, defaultLoginRoute, i18n, redirectToKey, router } from '~/ui/modules';
-import { useAppStore, useSessionStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
 
 export const copyToClipboard = (
   args: {

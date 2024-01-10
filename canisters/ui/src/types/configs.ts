@@ -1,4 +1,4 @@
-import en from '~/locales/en.json';
+import en from '~/locales/en';
 
 export interface AppInitConfig {
   name: string;

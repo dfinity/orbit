@@ -107,16 +107,18 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny, mdiAlertOutline } from '@mdi/js';
+import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
+import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
-import { useAppStore, useSessionStore } from '~/ui/stores';
-import LanguageSelector from './LanguageSelector.vue';
 import UserAvatarSelector from '~/ui/components/UserAvatarSelector.vue';
-import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
+import LanguageSelector from './LanguageSelector.vue';
+import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 
 const app = useAppStore();
 const session = useSessionStore();
@@ -129,12 +131,6 @@ const props = inject('pageLayoutProps', {
   hideMainHeader: false,
   hideFooter: false,
   hideToolbarContext: false,
-});
-
-const icLogoHorizontal = computed(() => {
-  return app.isDarkTheme
-    ? '/images/internet-computer-horizontal-light.png'
-    : '/images/internet-computer-horizontal-light.png';
 });
 
 const ghMarkImg = computed(() => {

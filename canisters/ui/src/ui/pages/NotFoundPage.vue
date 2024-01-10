@@ -21,7 +21,8 @@ import { mdiLink } from '@mdi/js';
 import { computed } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { defaultHomeRoute } from '~/ui/modules';
-import { useSessionStore, useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
 
 const session = useSessionStore();
 const app = useAppStore();

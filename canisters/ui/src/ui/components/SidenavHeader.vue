@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import WalletSelector from '~/ui/components/WalletSelector.vue';
-import { useSessionStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
 
 const session = useSessionStore();
 </script>

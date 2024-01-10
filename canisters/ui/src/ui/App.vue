@@ -6,7 +6,7 @@
 import { onMounted } from 'vue';
 import { watch } from 'vue';
 import { useTheme } from 'vuetify';
-import { useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 import { initWorkers } from '~/ui/modules/workers';
 
 const app = useAppStore();

@@ -35,7 +35,7 @@
 <script lang="ts" setup>
 import { mdiContentCopy, mdiAccountCircle, mdiAccountCircleOutline } from '@mdi/js';
 import { computed } from 'vue';
-import { useSessionStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
 import { copyToClipboard } from '~/ui/utils';
 
 const session = useSessionStore();

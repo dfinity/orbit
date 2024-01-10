@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { logger } from '~/core';
 import { UserWallet } from '~/generated/control-panel/control_panel.did';
 import { i18n, services } from '~/ui/modules';
-import { useSessionStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
 import { FormValidationRules } from '~/ui/types';
 import { maxLengthRule } from '~/ui/utils';
 

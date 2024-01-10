@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { amountToBigInt, formatBalance, logger } from '~/core';
 import { Proposal, Account, UUID } from '~/generated/wallet/wallet.did';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { FormValidationRules } from '~/ui/types';
 import { requiredRule, validTokenAmount } from '~/ui/utils';
 

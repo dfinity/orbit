@@ -40,7 +40,7 @@ import { computed, ref } from 'vue';
 import AccountForm from './AccountForm.vue';
 import { mdiClose } from '@mdi/js';
 import { Account } from '~/generated/wallet/wallet.did';
-import { useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 import { i18n } from '~/ui/modules';
 
 const props = withDefaults(

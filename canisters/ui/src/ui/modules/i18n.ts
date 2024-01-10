@@ -2,9 +2,9 @@ import { LocaleMessages, createI18n } from 'vue-i18n';
 import { NavigationGuard } from 'vue-router';
 import { en as vuetifyEn } from 'vuetify/locale';
 import { Locale, appInitConfig } from '~/configs';
-import en from '~/locales/en.json';
+import en from '~/locales/en';
 import { AppTranslations } from '~/types';
-import { useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 import { services } from './services';
 
 // i18n is used for internationalization, please refer to the documentation at https://vue-i18n.intlify.dev/

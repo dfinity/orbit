@@ -9,7 +9,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { router } from '~/ui/modules';
-import { useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 
 const app = useAppStore();
 

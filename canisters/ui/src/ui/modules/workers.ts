@@ -1,5 +1,5 @@
 import { logger } from '~/core';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { accountsWorker, installWebWorkers, notificationsWorker } from '~/workers';
 
 const registerAccountWorkerEventListener = (): void => {

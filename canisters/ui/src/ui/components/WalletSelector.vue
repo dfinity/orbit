@@ -31,7 +31,8 @@
 import { Principal } from '@dfinity/principal';
 import { mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
-import { useAppStore, useSessionStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
 import { computedWalletName } from '~/ui/utils';
 
 const session = useSessionStore();

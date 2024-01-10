@@ -33,7 +33,7 @@
 import { mdiBellRing, mdiBellRingOutline } from '@mdi/js';
 import { ref, computed } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 import NotificationsPanel from './NotificationsPanel.vue';
 
 const props = withDefaults(

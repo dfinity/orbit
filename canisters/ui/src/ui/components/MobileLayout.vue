@@ -21,7 +21,7 @@
       <div class="sidebar__footer">
         <slot name="sidebar-footer">
           <a href="https://internetcomputer.org" target="_blank">
-            <img src="/images/internet-computer-horizontal-light.png" height="20" />
+            <img :src="icLogoHorizontal" height="20" />
           </a>
         </slot>
       </div>
@@ -118,7 +118,7 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny, mdiAlertOutline } from '@mdi/js';
+import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/core';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
@@ -127,8 +127,10 @@ import SidenavHeader from '~/ui/components/SidenavHeader.vue';
 import SidenavMenu from '~/ui/components/SidenavMenu.vue';
 import UserAvatarSelector from '~/ui/components/UserAvatarSelector.vue';
 import WalletSelector from '~/ui/components/WalletSelector.vue';
-import { useAppStore, useSessionStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
 import LanguageSelector from './LanguageSelector.vue';
+import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 
 const app = useAppStore();
 const session = useSessionStore();

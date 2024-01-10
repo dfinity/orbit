@@ -62,7 +62,8 @@
 import { Principal } from '@dfinity/principal';
 import { mdiContentCopy } from '@mdi/js';
 import { computed } from 'vue';
-import { useSessionStore, useWalletStore } from '~/ui/stores';
+import { useSessionStore } from '~/ui/stores/session';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { copyToClipboard } from '~/ui/utils';
 import WalletInfoEditDialog from './WalletInfoEditDialog.vue';
 import { useStore } from './store';

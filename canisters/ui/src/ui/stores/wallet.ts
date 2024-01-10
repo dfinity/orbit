@@ -12,7 +12,7 @@ import {
 import { WalletService } from '~/services';
 import { AuthenticatedUser } from '~/types';
 import { i18n, services } from '~/ui/modules';
-import { useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
 import { LoadableItem } from '~/ui/types';
 import { accountsWorker, notificationsWorker } from '~/workers';
 

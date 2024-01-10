@@ -66,7 +66,7 @@ import { i18n } from '~/ui/modules';
 import UnknownProposal from './UnknownProposal.vue';
 import { WalletProposalType } from '~/types';
 import TransferProposal from './TransferProposal.vue';
-import { useWalletStore } from '~/ui/stores';
+import { useWalletStore } from '~/ui/stores/wallet';
 
 const activeWallet = useWalletStore();
 const props = withDefaults(

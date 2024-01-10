@@ -9,7 +9,7 @@
     "directory": "canisters/wallet-ui"
   },
   "engines": {
-    "node": "^18",
+    "node": "^20",
     "pnpm": "^8",
     "npm": "please use pnpm",
     "yarn": "please use pnpm"
@@ -24,27 +24,25 @@
     "generate": "didc bind --target ts ../control-panel/spec.did"
   },
   "dependencies": {
-    "@dfinity/agent": "0.19.2",
-    "@dfinity/auth-client": "0.19.2",
-    "@dfinity/principal": "0.19.2",
-    "@mdi/js": "7.2.96",
+    "@dfinity/agent": "0.20.2",
+    "@dfinity/auth-client": "0.20.2",
+    "@dfinity/principal": "0.20.2",
+    "@mdi/js": "7.4.47",
     "buffer": "6.0.3",
-    "pinia": "2.1.6",
-    "pino": "8.15.1",
+    "pinia": "2.1.7",
+    "pino": "8.17.2",
     "validator": "13.11.0",
-    "vue": "3.3.4",
-    "vue-i18n": "9.3.0",
-    "vue-router": "4.2.4",
-    "vuetify": "3.4.9"
+    "vue": "3.4.7",
+    "vue-i18n": "9.9.0",
+    "vue-router": "4.2.5",
+    "vuetify": "3.4.10"
   },
   "devDependencies": {
-    "@esbuild-plugins/node-modules-polyfill": "0.2.2",
-    "@rollup/plugin-inject": "5.0.3",
-    "@types/validator": "13.11.2",
+    "@types/validator": "13.11.7",
     "@vitejs/plugin-vue": "5.0.2",
-    "eslint-plugin-vue": "9.17.0",
-    "happy-dom": "11.0.2",
-    "sass": "1.66.1",
+    "eslint-plugin-vue": "9.19.2",
+    "happy-dom": "12.10.3",
+    "sass": "1.69.7",
     "vite-plugin-vuetify": "2.0.1"
   }
 }

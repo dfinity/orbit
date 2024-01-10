@@ -11,7 +11,8 @@ import {
 import { WalletService, ChainApiFactory } from '~/services';
 import { ChainApi, AccountIncomingTransfer } from '~/types';
 import { i18n } from '~/ui/modules';
-import { useWalletStore, useAppStore } from '~/ui/stores';
+import { useAppStore } from '~/ui/stores/app';
+import { useWalletStore } from '~/ui/stores/wallet';
 import { LoadableItem } from '~/ui/types';
 
 export interface AccountDetailsStoreState {
