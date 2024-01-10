@@ -10,7 +10,7 @@ pub struct AddressBookMetadataDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddressBookEntryDTO {
     pub id: UuidDTO,
-    pub owner: Option<String>,
+    pub address_owner: String,
     pub address: String,
     pub blockchain: String,
     pub standard: String,
