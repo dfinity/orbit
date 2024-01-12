@@ -44,11 +44,11 @@ const selectedWallet = computed({
   },
   set(newWalletId: string | null) {
     if (!newWalletId) {
-      session.unloadWallet();
+      session.disconnectWallet();
       return;
     }
 
-    session.loadWallet(Principal.fromText(newWalletId));
+    session.connectWallet(Principal.fromText(newWalletId));
   },
 });
 </script>

@@ -16,6 +16,7 @@ import { BlockchainStandard, BlockchainType } from '~/types';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { LoadableItem } from '~/ui/types';
+import { computedWalletName } from '~/ui/utils';
 import { accountsWorker, notificationsWorker } from '~/workers';
 
 export interface WalletMetrics {
@@ -39,7 +40,6 @@ export interface WalletStoreState {
   connectionStatus: WalletConnectionStatus;
   canisterId: string;
   loading: boolean;
-  name: string;
   user: User;
   privileges: UserPrivilege[];
   features: {
@@ -85,7 +85,6 @@ const initialStoreState = (): WalletStoreState => {
     connectionStatus: WalletConnectionStatus.Disconnected,
     canisterId: Principal.anonymous().toText(),
     loading: false,
-    name: '',
     user: {
       id: '',
       name: [],
@@ -153,6 +152,9 @@ export const useWalletStore = defineStore('wallet', {
     service(): WalletService {
       return services().wallet.withWalletId(this.walletId);
     },
+    name(state): string {
+      return computedWalletName({ canisterId: Principal.fromText(state.canisterId) });
+    },
   },
   actions: {
     reset(): void {
@@ -160,7 +162,6 @@ export const useWalletStore = defineStore('wallet', {
 
       this.connectionStatus = initialState.connectionStatus;
       this.canisterId = initialState.canisterId;
-      this.name = initialState.name;
       this.accounts = initialState.accounts;
       this.features = initialState.features;
       this.notifications = initialState.notifications;
@@ -175,7 +176,7 @@ export const useWalletStore = defineStore('wallet', {
         type: 'stop',
       });
     },
-    async connectTo(walletId: Principal, name: string): Promise<WalletConnectionStatus> {
+    async connectTo(walletId: Principal): Promise<WalletConnectionStatus> {
       const app = useAppStore();
 
       try {
@@ -183,9 +184,13 @@ export const useWalletStore = defineStore('wallet', {
           logger.warn(`Wallet is already loading`);
           return this.connectionStatus;
         }
-        this.connectionStatus = WalletConnectionStatus.Connecting;
-        this.name = name;
+
+        // reset the store to the initial state before connecting to a new wallet, this makes sure that
+        // the store is in a consistent state and that the user is not seeing any stale data
+        this.reset();
+
         this.loading = true;
+        this.connectionStatus = WalletConnectionStatus.Connecting;
         this.canisterId = walletId.toText();
         const myUser = await this.service.myUser();
         if (!myUser) {

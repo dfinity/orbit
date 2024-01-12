@@ -44,7 +44,7 @@
               <UserAvatarSelector v-if="session.isAuthenticated" variant="outlined" />
               <LanguageSelector />
               <VBtn
-                v-if="session.isAuthenticated"
+                v-if="session.isAuthenticated && !isSetAndNotFalse(props.hideSidebar)"
                 :icon="mdiMenuOpen"
                 @click.prevent="app.toogleSidebar"
               />

@@ -192,9 +192,11 @@ export const useAccountPageStore = defineStore('accountPage', {
             status: status ? [[status]] : [],
             from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
             to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-            operation_type: [{
-              Transfer: [this.account.id],
-            }],
+            operation_type: [
+              {
+                Transfer: [this.account.id],
+              },
+            ],
             user_id: [],
           })
           .then(proposals => {

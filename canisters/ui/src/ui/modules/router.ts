@@ -23,6 +23,14 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
     return next({ name: defaultHomeRoute });
   }
 
+  if (to.name === Routes.Initialization && (!session.isAuthenticated || session.hasWallets)) {
+    return next({ name: defaultHomeRoute });
+  }
+
+  if (to.name !== Routes.Initialization && session.isAuthenticated && !session.hasWallets) {
+    return next({ name: Routes.Initialization });
+  }
+
   const matchesRequiredSession = hasRequiredSession(to.meta.auth.check.session);
   if (!matchesRequiredSession) {
     let redirectToRoute = defaultHomeRoute;

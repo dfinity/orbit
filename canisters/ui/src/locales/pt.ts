@@ -212,5 +212,14 @@ export default {
       btn_new_group: 'Criar grupo',
       btn_manage_permissions: 'Gerir permissōes',
     },
+    initialization: {
+      status_starting: 'Inicializando, por favor, aguarde ...',
+      status_deploying: 'Instalando a sua carteira no Internet Computer ...',
+      status_waiting_for_canister_initialization: 'Aguardando a instalação ser concluída ...',
+      status_creating_initial_account: 'Criando a sua primeira conta ...',
+      status_completed:
+        'A sua carteira foi instalada com sucesso, por favor, aguarde enquanto é redirecionado ...',
+      status_failed: 'Falha com a inicialização, por favor, tente novamente.',
+    },
   },
 };

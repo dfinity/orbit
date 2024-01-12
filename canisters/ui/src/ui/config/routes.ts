@@ -1,7 +1,8 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
 import { Privilege } from '~/types';
 import { services } from '~/ui/modules';
-import DisconnectedPageVue from '~/ui/pages/DisconnectedPage.vue';
+import DisconnectedPage from '~/ui/pages/DisconnectedPage.vue';
+import InitializationPage from '~/ui/pages/InitializationPage.vue';
 import LoginPageVue from '~/ui/pages/LoginPage.vue';
 import NotFoundPageVue from '~/ui/pages/NotFoundPage.vue';
 import OverviewPageVue from '~/ui/pages/OverviewPage.vue';
@@ -17,12 +18,12 @@ export enum Routes {
   MySettings = 'MySettings',
   UserGroups = 'UserGroups',
   SystemSettings = 'SystemSettings',
-  Connect = 'Connect',
   Disconnected = 'Disconnected',
   Unauthorized = 'Unauthorized',
   Users = 'Users',
   AddressBook = 'AddressBook',
   AddressBookSettings = 'AddressBookSettings',
+  Initialization = 'Initialization',
 }
 
 export const defaultLoginRoute = Routes.Login;
@@ -61,7 +62,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'disconnected',
         name: Routes.Disconnected,
-        component: DisconnectedPageVue,
+        component: DisconnectedPage,
         meta: {
           auth: {
             check: {
@@ -74,6 +75,18 @@ export const routes: RouteRecordRaw[] = [
         path: 'unauthorized',
         name: Routes.Unauthorized,
         component: UnauthorizedPageVue,
+        meta: {
+          auth: {
+            check: {
+              session: RequiredSessionState.Authenticated,
+            },
+          },
+        },
+      },
+      {
+        path: 'initialization',
+        name: Routes.Initialization,
+        component: InitializationPage,
         meta: {
           auth: {
             check: {
@@ -183,7 +196,7 @@ export const routes: RouteRecordRaw[] = [
             },
           },
           {
-            path: 'address-book-settings',
+            path: 'address-book',
             name: Routes.AddressBookSettings,
             component: () => import('~/ui/pages/AddressBookSettingsPage.vue'),
             meta: {
@@ -208,18 +221,6 @@ export const routes: RouteRecordRaw[] = [
               session: RequiredSessionState.ConnectedToWallet,
               // todo: add privilege to access address book when available
               privileges: [],
-            },
-          },
-        },
-      },
-      {
-        path: 'connect',
-        name: Routes.Connect,
-        component: () => import('~/ui/pages/ConnectPage.vue'),
-        meta: {
-          auth: {
-            check: {
-              session: RequiredSessionState.Authenticated,
             },
           },
         },

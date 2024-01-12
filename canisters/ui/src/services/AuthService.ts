@@ -50,7 +50,7 @@ export class AuthService {
     const client = await this.client();
 
     await client.logout();
-    
+
     this.invalidateAuthClient();
   }
 }

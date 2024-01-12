@@ -325,7 +325,7 @@ import {
   mdiRefresh,
   mdiTransfer,
   mdiWallet,
-  mdiLink as _mdiLink
+  mdiLink as _mdiLink,
 } from '@mdi/js';
 import { onMounted, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';
