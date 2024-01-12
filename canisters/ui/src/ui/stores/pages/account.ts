@@ -188,12 +188,14 @@ export const useAccountPageStore = defineStore('accountPage', {
       try {
         this.proposals.loading = true;
         this.proposals.items = await this.walletService
-          .listAccountProposals({
-            account_id: this.account.id,
+          .listProposals({
             status: status ? [[status]] : [],
             from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
             to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-            operation_type: [],
+            operation_type: [{
+              Transfer: [this.account.id],
+            }],
+            user_id: [],
           })
           .then(proposals => {
             return proposals.map(proposal => {
@@ -216,14 +218,15 @@ export const useAccountPageStore = defineStore('accountPage', {
         this.proposals.loading = false;
       }
     },
-    async loadSentTransfers(fromDt?: Date, toDt?: Date, status?: string): Promise<void> {
+    async loadSentTransfers(fromDt?: Date, toDt?: Date, _status?: string): Promise<void> {
       try {
         this.transfers.loading = true;
         this.transfers.items = await this.walletService.listAccountTransfers({
           account_id: this.account.id,
           from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
           to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-          status: status ? [status] : [],
+          // todo: update with the newly added enum for transfer status
+          status: [],
         });
       } catch (e) {
         logger.error('Failed to load transfers', { e });

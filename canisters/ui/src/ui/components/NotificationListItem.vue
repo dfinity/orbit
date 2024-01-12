@@ -10,9 +10,9 @@
       />
     </div>
     <div class="notification-item__code">
-      <div class="notification-item__code__title">{{ notification.title.body }}</div>
-      <div v-if="notification.message.body.length" class="notification-item__code__message">
-        {{ notification.message.body }}
+      <div class="notification-item__code__title">{{ notification.title }}</div>
+      <div v-if="notification.message.length" class="notification-item__code__message">
+        {{ notification.message }}
       </div>
       <div class="notification-item__code__time">
         <VChip size="x-small" :title="notification.created_at" variant="tonal">
@@ -25,13 +25,16 @@
       <VProgressCircular indeterminate color="primary" size="small" class="mx-4" />
     </div>
     <div
-      v-else-if="'TransferProposalCreated' in notification.notification_type"
+      v-else-if="
+        'ProposalCreated' in notification.notification_type &&
+        notification.notification_type.ProposalCreated.account_id
+      "
       class="notification-item__action"
     >
       <VBtn
         :to="{
-          name: 'Account',
-          params: { id: notification.notification_type.TransferProposalCreated.account_id },
+          name: Routes.Account,
+          params: { id: notification.notification_type.ProposalCreated.account_id },
         }"
         size="x-small"
         variant="tonal"
@@ -44,6 +47,7 @@
 import { mdiCheckCircleOutline, mdiCheckCircle, mdiClockOutline, mdiOpenInApp } from '@mdi/js';
 import { computed } from 'vue';
 import { Notification } from '~/generated/wallet/wallet.did';
+import { Routes } from '~/ui/config/routes';
 
 const props = withDefaults(
   defineProps<{

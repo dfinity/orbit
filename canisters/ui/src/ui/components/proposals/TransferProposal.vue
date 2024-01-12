@@ -12,7 +12,7 @@
     <VBtn
       v-if="injectedProps.outer"
       :prepend-icon="mdiWallet"
-      :to="{ name: 'Account', params: { id: operation.from_account.id } }"
+      :to="{ name: Routes.Account, params: { id: operation.from_account.id } }"
       size="x-small"
       variant="tonal"
       :append-icon="mdiOpenInApp"
@@ -33,6 +33,7 @@ import { mdiClockOutline, mdiWallet, mdiOpenInApp } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { formatBalance } from '~/core';
 import { Proposal, TransferOperation } from '~/generated/wallet/wallet.did';
+import { Routes } from '~/ui/config/routes';
 
 const props = defineProps<{
   modelValue: Proposal;

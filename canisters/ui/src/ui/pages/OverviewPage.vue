@@ -12,16 +12,7 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
-          <VCol v-if="!wallet.hasUser" cols="12" md="4">
-            <VCard color="background" height="100%">
-              <VCardTitle>{{ $t('wallets.no_wallet_user') }}</VCardTitle>
-              <VCardSubtitle>{{ $t('wallets.please_register_to_continue') }}</VCardSubtitle>
-              <VCardText class="text-center mt-6 mb-6">
-                <VIcon :icon="mdiWallet" size="64" />
-              </VCardText>
-            </VCard>
-          </VCol>
-          <VCol v-if="wallet.hasUser" cols="12" md="4">
+          <VCol cols="12" md="4">
             <VCard color="background" height="100%" :loading="wallet.accounts.loading">
               <VCardTitle>{{ $t('terms.accounts') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
@@ -29,7 +20,7 @@
               </VCardText>
             </VCard>
           </VCol>
-          <VCol v-if="wallet.hasUser" cols="12" md="4">
+          <VCol cols="12" md="4">
             <VCard color="background" height="100%" :loading="wallet.notifications.loading">
               <VCardTitle>{{ $t('wallets.pending_requests') }}</VCardTitle>
               <VCardText class="text-center text-h3 pt-8 pb-16">
@@ -44,7 +35,6 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiWallet } from '@mdi/js';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { useWalletStore } from '~/ui/stores/wallet';
 

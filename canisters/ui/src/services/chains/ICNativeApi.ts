@@ -1,6 +1,6 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { appInitConfig } from '~/configs';
-import { nanoToJsDate } from '~/core';
+import { icAgent, nanoToJsDate } from '~/core';
 import { Account } from '~/generated/wallet/wallet.did';
 import { idlFactory } from '~/generated/icp_index';
 import { _SERVICE } from '~/generated/icp_index/icp_index.did';
@@ -10,9 +10,12 @@ export class ICNativeApi implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;
   static PAGE_SIZE = 10;
 
-  constructor(private readonly account: Account) {
+  constructor(
+    private readonly account: Account,
+    agent: HttpAgent = icAgent.get(),
+  ) {
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {
-      agent: new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() }),
+      agent,
       canisterId: appInitConfig.canisters.icpIndex,
     });
   }

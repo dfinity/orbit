@@ -24,8 +24,8 @@ import {
   MarkNotificationsReadInput,
   ListProposalsInput,
   UUID,
+  UserPrivilege,
 } from '~/generated/wallet/wallet.did';
-import { AuthenticatedUser } from '~/types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;
@@ -61,7 +61,7 @@ export class WalletService {
     return result.Ok.user;
   }
 
-  async myUser(): Promise<AuthenticatedUser | null> {
+  async myUser(): Promise<{ me: User; privileges: UserPrivilege[] } | null> {
     const result = await this.actor.me();
     if ('Err' in result) {
       if (result.Err.code === WalletService.ERR_USER_NOT_FOUND) {

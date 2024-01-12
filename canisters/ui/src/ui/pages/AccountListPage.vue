@@ -1,5 +1,5 @@
 <template>
-  <PageLayout v-if="wallet.hasUser">
+  <PageLayout>
     <template #main-header>
       <VContainer class="pa-8" fluid>
         <VRow>
@@ -22,7 +22,7 @@
                 size="small"
                 variant="tonal"
                 :append-icon="mdiOpenInApp"
-                :to="{ name: 'Account', params: { id: item.id } }"
+                :to="{ name: Routes.Account, params: { id: item.id } }"
               >
                 {{ $t('terms.open') }}
               </VBtn>
@@ -50,18 +50,6 @@
       </VContainer>
     </template>
   </PageLayout>
-  <PageLayout v-else>
-    <template #main-header>
-      <VContainer class="pt-16 pb-16 pl-8 pr-8" fluid>
-        <VRow>
-          <VCol sm="12">
-            <h1 class="text-h4">{{ $t('wallets.no_wallet_user') }}</h1>
-            <p class="text-subtitle">{{ $t('wallets.please_register_to_continue') }}</p>
-          </VCol>
-        </VRow>
-      </VContainer>
-    </template>
-  </PageLayout>
 </template>
 
 <script lang="ts" setup>
@@ -73,6 +61,7 @@ import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { copyToClipboard } from '~/ui/utils';
+import { Routes } from '~/ui/config/routes';
 
 const wallet = useWalletStore();
 

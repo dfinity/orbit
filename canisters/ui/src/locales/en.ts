@@ -160,6 +160,7 @@ export default {
     confirmed: 'Confirmed',
     unconfirmed: 'Unconfirmed',
     main: 'Main',
+    user_group: 'User Group',
   },
   forms: {
     create: 'Create',
@@ -204,6 +205,11 @@ export default {
     },
     administration: {
       title: 'Wallet Administration',
+    },
+    user_group: {
+      title: 'User Groups',
+      btn_new_group: 'Create group',
+      btn_manage_permissions: 'Manage Permissions',
     },
   },
 };

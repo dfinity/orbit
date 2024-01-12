@@ -59,7 +59,7 @@ const initialStateForAccount = (account?: Account): AccountFormStoreState => {
       },
       form: {
         name: null,
-        owners: activeWallet.user ? [activeWallet.user.me.id] : [],
+        owners: activeWallet.user ? [activeWallet.user.id] : [],
         blockchain: null,
         blockchainStandard: null,
         policies: {
@@ -156,7 +156,7 @@ export const useAccountForm = (account?: Account) =>
           return false;
         }
 
-        return activeWallet.user!.me.id === ownerId;
+        return activeWallet.user.id === ownerId;
       },
       removeOwnerByIndex(index: number): void {
         this.form.owners.splice(index, 1);

@@ -32,14 +32,14 @@ export const computedWalletName = (
   sessionStore = useSessionStore(),
 ): string => {
   const walletIdx =
-    sessionStore.user?.wallets.findIndex(wallet => wallet.canisterId === canisterId.toText()) ?? -1;
+    sessionStore.data.wallets.findIndex(wallet => wallet.canisterId === canisterId.toText()) ?? -1;
 
   if (walletIdx === -1) {
     return notFoundName;
   }
 
   return (
-    sessionStore.user?.wallets?.[walletIdx].name ??
+    sessionStore.data.wallets?.[walletIdx].name ??
     i18n.global.t('wallets.wallet_nr_title', { nr: walletIdx + 1 })
   );
 };

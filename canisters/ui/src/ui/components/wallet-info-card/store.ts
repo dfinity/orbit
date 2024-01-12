@@ -86,7 +86,7 @@ export const useStore = (sectionId: string = 'main') =>
             : session.mainWallet;
 
           const updatedWallets: UserWallet[] =
-            session.user.wallets.map(wallet => {
+            session.data.wallets.map(wallet => {
               if (wallet.canisterId === this.$state.editDialog.canisterId) {
                 return {
                   name: this.$state.editDialog.form.name ? [this.$state.editDialog.form.name] : [],

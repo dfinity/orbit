@@ -72,5 +72,5 @@ const wallet = useWalletStore();
 const session = useSessionStore();
 const store = useStore();
 
-const isMainWallet = computed(() => wallet.canisterId === session.user.mainWallet);
+const isMainWallet = computed(() => wallet.canisterId === session.mainWallet?.toText());
 </script>

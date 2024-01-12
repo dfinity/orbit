@@ -17,7 +17,7 @@
             <VCardText>
               <VCol cols="12" class="pb-0">
                 <VTextField
-                  v-model="session.user.principal"
+                  v-model="session.principal"
                   :label="$t('app.user_id')"
                   variant="underlined"
                   readonly

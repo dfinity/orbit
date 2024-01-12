@@ -160,6 +160,7 @@ export default {
     confirmed: 'Confirmado',
     unconfirmed: 'Não confirmado',
     main: 'Principal',
+    user_group: 'Grupo de usuário',
   },
   account_page: {
     not_found_title: 'Conta não encontrada',
@@ -205,6 +206,11 @@ export default {
     },
     administration: {
       title: 'Administração da carteira',
+    },
+    user_group: {
+      title: 'Grupos de usuários',
+      btn_new_group: 'Criar grupo',
+      btn_manage_permissions: 'Gerir permissōes',
     },
   },
 };
