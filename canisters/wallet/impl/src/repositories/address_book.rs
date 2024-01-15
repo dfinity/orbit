@@ -62,7 +62,7 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
             let prev = m.borrow_mut().remove(key);
             self.index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().and_then(|prev| Some(prev.to_index())),
+                    current: prev.clone().map(|prev| prev.to_index()),
                 });
 
             prev
