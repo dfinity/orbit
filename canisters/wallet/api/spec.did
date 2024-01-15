@@ -1108,10 +1108,6 @@ type CanisterSettingsActionSpecifier = variant {
 type TransferSpecifier = record {
   // The account that will be used for the transfer.
   account : CommonSpecifier;
-  // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
-  address : variant {
-    Any;
-  };
 };
 
 // The actions that are available for transfers.

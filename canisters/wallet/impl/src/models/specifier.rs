@@ -20,12 +20,6 @@ pub type AccountSpecifier = CommonSpecifier;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AddressSpecifier {
-    Any,
-}
-
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum UserSpecifier {
     Any,
     Group(Vec<UUID>),
@@ -41,7 +35,7 @@ pub enum ProposalSpecifier {
     AddUser,
     EditAccount(AccountSpecifier),
     EditUser(UserSpecifier),
-    Transfer(AccountSpecifier, AddressSpecifier),
+    Transfer(AccountSpecifier),
     ChangeCanister,
     AddAccessPolicy,
     EditAccessPolicy(CommonSpecifier),
@@ -61,7 +55,7 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
             ProposalSpecifier::AddUser => ProposalOperationType::AddUser,
             ProposalSpecifier::EditAccount(_) => ProposalOperationType::EditAccount,
             ProposalSpecifier::EditUser(_) => ProposalOperationType::EditUser,
-            ProposalSpecifier::Transfer(_, _) => ProposalOperationType::Transfer,
+            ProposalSpecifier::Transfer(_) => ProposalOperationType::Transfer,
             ProposalSpecifier::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
             ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
             ProposalSpecifier::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
@@ -120,20 +114,6 @@ impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
 }
 
 #[derive(Clone)]
-pub struct AddressMatcher;
-
-#[async_trait]
-impl Match<(Proposal, String, AddressSpecifier)> for AddressMatcher {
-    async fn is_match(&self, v: (Proposal, String, AddressSpecifier)) -> Result<bool, MatchError> {
-        let (_, _, s) = v;
-
-        match s {
-            AddressSpecifier::Any => Ok(true),
-        }
-    }
-}
-
-#[derive(Clone)]
 pub struct UserMatcher;
 
 pub type VoterId = UUID;
@@ -185,7 +165,6 @@ impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
 #[derive(Clone)]
 pub struct ProposalMatcher {
     pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
-    pub address_matcher: Arc<dyn Match<(Proposal, String, AddressSpecifier)>>,
     pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
     pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, CommonSpecifier)>>,
 }
@@ -208,19 +187,11 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
                     .is_match((p, params.input.user_id, user))
                     .await?
             }
-            (
-                ProposalOperation::Transfer(params),
-                ProposalSpecifier::Transfer(account, address),
-            ) => vec![
+            (ProposalOperation::Transfer(params), ProposalSpecifier::Transfer(account)) => {
                 self.account_matcher
                     .is_match((p.clone(), params.input.from_account_id, account))
-                    .await?,
-                self.address_matcher
-                    .is_match((p.clone(), params.input.to, address))
-                    .await?,
-            ]
-            .into_iter()
-            .all(|v| v),
+                    .await?
+            }
             (ProposalOperation::ChangeCanister(_), ProposalSpecifier::ChangeCanister) => true,
             (ProposalOperation::AddAccessPolicy(_), ProposalSpecifier::AddAccessPolicy) => true,
             (ProposalOperation::AddUserGroup(_), ProposalSpecifier::AddUserGroup) => true,
@@ -299,8 +270,8 @@ mod tests {
         criteria::Criteria,
         proposal_test_utils::mock_proposal,
         specifier::{
-            AccountMatcher, AccountSpecifier, AddressMatcher, AddressSpecifier, Match,
-            ProposalMatcher, ProposalSpecifier, UserMatcher, UserSpecifier,
+            AccountMatcher, AccountSpecifier, Match, ProposalMatcher, ProposalSpecifier,
+            UserMatcher, UserSpecifier,
         },
         AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
         AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
@@ -315,7 +286,6 @@ mod tests {
     async fn test_proposal_matcher_empty_proposal() -> Result<(), Error> {
         let m = ProposalMatcher {
             account_matcher: Arc::new(AccountMatcher),
-            address_matcher: Arc::new(AddressMatcher),
             user_matcher: Arc::new(UserMatcher),
             common_id_matcher: Arc::new(AccountMatcher),
         };
@@ -384,7 +354,7 @@ mod tests {
                         fee: None,
                     },
                 }),
-                ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any),
+                ProposalSpecifier::Transfer(AccountSpecifier::Any),
             ),
         ];
 
