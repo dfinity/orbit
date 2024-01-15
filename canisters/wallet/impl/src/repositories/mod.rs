@@ -1,5 +1,8 @@
 //! Repositories for entities and related data, including indexes to facilitate data retrieval.
 
+mod address_book;
+pub use address_book::*;
+
 mod user;
 pub use user::*;
 
