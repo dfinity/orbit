@@ -6,8 +6,7 @@ use crate::{
         AddressBookEntryId, AddressBookEntryKey, Blockchain, BlockchainStandard,
     },
 };
-use ic_canister_core::repository::IndexRepository;
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{IndexRepository, RefreshIndexMode, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
@@ -46,34 +45,27 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
         key: AddressBookEntryKey,
         value: AddressBookEntry,
     ) -> Option<AddressBookEntry> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_index = prev.to_index();
-                let curr_index = value.to_index();
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+            self.index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index()),
+                    current: Some(value.to_index()),
+                });
 
-                if prev_index != curr_index {
-                    self.index.remove(&prev_index);
-                    self.index.insert(curr_index);
-                }
-
-                Some(prev)
-            }
-            None => {
-                self.index.insert(value.to_index());
-
-                None
-            }
+            prev
         })
     }
 
     fn remove(&self, key: &AddressBookEntryKey) -> Option<AddressBookEntry> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(address_book_entry) => {
-                self.index.remove(&address_book_entry.to_index());
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().and_then(|prev| Some(prev.to_index())),
+                });
 
-                Some(address_book_entry)
-            }
-            None => None,
+            prev
         })
     }
 
