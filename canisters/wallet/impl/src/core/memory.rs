@@ -30,6 +30,8 @@ pub const PROPOSAL_POLICIES_MEMORY_ID: MemoryId = MemoryId::new(18);
 pub const ACCESS_CONTROL_MEMORY_ID: MemoryId = MemoryId::new(19);
 pub const USER_STATUS_GROUP_INDEX_MEMORY_ID: MemoryId = MemoryId::new(20);
 pub const ACCESS_CONTROL_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(21);
+pub const ADDRESS_BOOK_MEMORY_ID: MemoryId = MemoryId::new(22);
+pub const ADDRESS_BOOK_INDEX_MEMORY_ID: MemoryId = MemoryId::new(23);
 
 thread_local! {
   /// Static configuration of the canister.
