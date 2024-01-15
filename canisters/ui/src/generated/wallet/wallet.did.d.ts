@@ -479,10 +479,7 @@ export interface TransferOperationInput {
   'network' : [] | [Network],
   'amount' : bigint,
 }
-export interface TransferSpecifier {
-  'address' : { 'Any' : null },
-  'account' : CommonSpecifier,
-}
+export interface TransferSpecifier { 'account' : CommonSpecifier }
 export type TransferStatus = { 'Failed' : { 'reason' : string } } |
   { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
   { 'Created' : null } |

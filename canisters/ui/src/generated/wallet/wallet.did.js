@@ -27,10 +27,7 @@ export const idlFactory = ({ IDL }) => {
     'Read' : CommonSpecifier,
   });
   const ChangeCanisterActionSpecifier = IDL.Variant({ 'Create' : IDL.Null });
-  const TransferSpecifier = IDL.Record({
-    'address' : IDL.Variant({ 'Any' : IDL.Null }),
-    'account' : CommonSpecifier,
-  });
+  const TransferSpecifier = IDL.Record({ 'account' : CommonSpecifier });
   const TransferActionSpecifier = IDL.Variant({
     'Read' : TransferSpecifier,
     'Delete' : TransferSpecifier,
