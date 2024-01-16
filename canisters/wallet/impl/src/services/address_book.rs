@@ -70,7 +70,11 @@ impl AddressBookService {
         let new_entry = AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes())?;
         new_entry.validate()?;
 
-        if let Some(v) = self.address_book_repository.get(&key) {
+        if let Some(v) = self.address_book_repository.find(
+            new_entry.address.clone(),
+            new_entry.blockchain.clone(),
+            new_entry.standard.clone(),
+        ) {
             return Err(AddressBookError::DuplicateAddress {
                 id: Uuid::from_bytes(v.id).hyphenated().to_string(),
             })?;
