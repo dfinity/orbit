@@ -114,7 +114,7 @@ fn validate_address(address: &String) -> ModelValidatorResult<AccountError> {
 
 impl ModelValidator<AccountError> for Account {
     fn validate(&self) -> ModelValidatorResult<AccountError> {
-        Metadata::validate(&self.metadata)?;
+        self.metadata.validate()?;
         validate_symbol(&self.symbol)?;
         validate_address(&self.address)?;
         validate_owners(&self.owners)?;

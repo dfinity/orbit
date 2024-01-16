@@ -69,7 +69,7 @@ impl ModelValidator<AddressBookError> for AddressBookEntry {
     fn validate(&self) -> ModelValidatorResult<AddressBookError> {
         validate_address_owner(&self.address_owner)?;
         validate_address(&self.address)?;
-        Metadata::validate(&self.metadata)?;
+        self.metadata.validate()?;
 
         Ok(())
     }

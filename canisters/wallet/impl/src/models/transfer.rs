@@ -164,7 +164,7 @@ fn validate_network(blockchain_network: &String) -> ModelValidatorResult<Transfe
 
 impl ModelValidator<TransferError> for Transfer {
     fn validate(&self) -> ModelValidatorResult<TransferError> {
-        Metadata::validate(&self.metadata)?;
+        self.metadata.validate()?;
         validate_to_address(&self.to_address)?;
         validate_network(&self.blockchain_network)?;
 
