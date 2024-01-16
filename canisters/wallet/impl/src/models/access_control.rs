@@ -1,4 +1,4 @@
-use super::specifier::{AddressSpecifier, CommonSpecifier};
+use super::specifier::CommonSpecifier;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
@@ -142,17 +142,17 @@ impl Display for ProposalActionSpecifier {
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferActionSpecifier {
-    Create(AccountSpecifier, AddressSpecifier),
-    Read(AccountSpecifier, AddressSpecifier),
-    Delete(AccountSpecifier, AddressSpecifier),
+    Create(AccountSpecifier),
+    Read(AccountSpecifier),
+    Delete(AccountSpecifier),
 }
 
 impl Display for TransferActionSpecifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TransferActionSpecifier::Create(_, _) => write!(f, "create"),
-            TransferActionSpecifier::Read(_, _) => write!(f, "read"),
-            TransferActionSpecifier::Delete(_, _) => write!(f, "delete"),
+            TransferActionSpecifier::Create(_) => write!(f, "create"),
+            TransferActionSpecifier::Read(_) => write!(f, "read"),
+            TransferActionSpecifier::Delete(_) => write!(f, "delete"),
         }
     }
 }
@@ -297,27 +297,18 @@ mod tests {
             "account_list"
         );
         assert_eq!(
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(
-                CommonSpecifier::Any,
-                AddressSpecifier::Any
-            ))
-            .to_key(),
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(CommonSpecifier::Any,))
+                .to_key(),
             "transfer_create"
         );
         assert_eq!(
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Read(
-                CommonSpecifier::Any,
-                AddressSpecifier::Any
-            ))
-            .to_key(),
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Read(CommonSpecifier::Any,))
+                .to_key(),
             "transfer_read"
         );
         assert_eq!(
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(
-                CommonSpecifier::Any,
-                AddressSpecifier::Any
-            ))
-            .to_key(),
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(CommonSpecifier::Any,))
+                .to_key(),
             "transfer_delete"
         );
         assert_eq!(

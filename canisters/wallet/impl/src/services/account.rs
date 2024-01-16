@@ -4,7 +4,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{AccountMapper, HelperMapper},
     models::{
-        specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier},
+        specifier::{AccountSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
         EditProposalPolicyOperationInput,
@@ -106,10 +106,9 @@ impl AccountService {
             let policy = self
                 .policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
-                    specifier: ProposalSpecifier::Transfer(
-                        AccountSpecifier::Id(vec![*uuid.as_bytes()]),
-                        AddressSpecifier::Any,
-                    ),
+                    specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
+                        *uuid.as_bytes()
+                    ])),
                     criteria: transfer_criteria.to_owned(),
                 })
                 .await?;
@@ -164,10 +163,9 @@ impl AccountService {
                     self.policy_service
                         .edit_proposal_policy(EditProposalPolicyOperationInput {
                             policy_id: id,
-                            specifier: Some(ProposalSpecifier::Transfer(
-                                AccountSpecifier::Id(vec![account.id]),
-                                AddressSpecifier::Any,
-                            )),
+                            specifier: Some(ProposalSpecifier::Transfer(AccountSpecifier::Id(
+                                vec![account.id],
+                            ))),
                             criteria: Some(criteria.to_owned()),
                         })
                         .await?;
@@ -176,10 +174,9 @@ impl AccountService {
                     let policy = self
                         .policy_service
                         .add_proposal_policy(AddProposalPolicyOperationInput {
-                            specifier: ProposalSpecifier::Transfer(
-                                AccountSpecifier::Id(vec![account.id]),
-                                AddressSpecifier::Any,
-                            ),
+                            specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
+                                account.id,
+                            ])),
                             criteria: criteria.to_owned(),
                         })
                         .await?;
