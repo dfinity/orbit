@@ -5,7 +5,7 @@ use crate::{
         AddAccountOperation, AddProposalPolicyOperation, AddProposalPolicyOperationInput,
         AddUserOperation, ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
         EditAccessPolicyOperationInput, EditAccountOperation, EditProposalPolicyOperation,
-        EditProposalPolicyOperationInput, EditUserOperation, Metadata, ProposalOperation,
+        EditProposalPolicyOperationInput, EditUserOperation, ProposalOperation,
         RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
         RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
@@ -37,7 +37,7 @@ impl TransferOperation {
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
-                metadata: Metadata::into_vec_dto(self.input.metadata),
+                metadata: self.input.metadata.into_vec_dto(),
                 network: Some(NetworkDTO {
                     id: self.input.network.clone(),
                     name: self.input.network.clone(),
@@ -80,7 +80,7 @@ impl AddAccountOperation {
                 policies: self.input.policies.into(),
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
-                metadata: Metadata::into_vec_dto(self.input.metadata),
+                metadata: self.input.metadata.into_vec_dto(),
             },
         }
     }

@@ -3,7 +3,7 @@ use crate::{
     errors::MapperError,
     models::{
         Account, AccountBalance, AccountId, AccountPolicies, AddAccountOperationInput,
-        BlockchainStandard, Metadata, ACCOUNT_METADATA_SYMBOL_KEY,
+        BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
@@ -48,7 +48,7 @@ impl AccountMapper {
                 .collect(),
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
-            metadata: Metadata::into_vec_dto(account.metadata),
+            metadata: account.metadata.into_vec_dto(),
             last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
         }
     }
