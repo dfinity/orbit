@@ -86,14 +86,8 @@ pub enum CanisterSettingsActionSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AddressSpecifierDTO {
-    Any,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferSpecifierDTO {
     pub account: CommonSpecifierDTO,
-    pub address: AddressSpecifierDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

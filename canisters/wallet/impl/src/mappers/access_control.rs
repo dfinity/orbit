@@ -7,7 +7,7 @@ use crate::{
             CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
             TransferActionSpecifier,
         },
-        specifier::{AddressSpecifier, CommonSpecifier},
+        specifier::CommonSpecifier,
         Transfer,
     },
     repositories::TRANSFER_REPOSITORY,
@@ -78,10 +78,9 @@ impl From<&wallet_api::GetTransfersInput> for ResourceSpecifier {
             .map(|transfer| transfer.from_account)
             .collect();
 
-        ResourceSpecifier::Transfer(TransferActionSpecifier::Read(
-            AccountSpecifier::Id(account_ids),
-            AddressSpecifier::Any,
-        ))
+        ResourceSpecifier::Transfer(TransferActionSpecifier::Read(AccountSpecifier::Id(
+            account_ids,
+        )))
     }
 }
 
@@ -91,10 +90,9 @@ impl From<&wallet_api::ListAccountTransfersInput> for ResourceSpecifier {
             .expect("Invalid account id")
             .as_bytes();
 
-        ResourceSpecifier::Transfer(TransferActionSpecifier::Read(
-            AccountSpecifier::Id([account_id].to_vec()),
-            AddressSpecifier::Any,
-        ))
+        ResourceSpecifier::Transfer(TransferActionSpecifier::Read(AccountSpecifier::Id(
+            [account_id].to_vec(),
+        )))
     }
 }
 
@@ -132,10 +130,9 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                     .expect("Invalid account id")
                     .as_bytes();
 
-                ResourceSpecifier::Transfer(TransferActionSpecifier::Create(
-                    AccountSpecifier::Id([account_id].to_vec()),
-                    AddressSpecifier::Any,
-                ))
+                ResourceSpecifier::Transfer(TransferActionSpecifier::Create(AccountSpecifier::Id(
+                    [account_id].to_vec(),
+                )))
             }
             ProposalOperationInput::AddUser(_) => {
                 ResourceSpecifier::Common(ResourceType::User, AccountActionSpecifier::Create)
