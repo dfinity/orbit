@@ -76,27 +76,20 @@ impl AccountMapper {
 
         let symbol = match input.standard {
             BlockchainStandard::Native => {
-                if input
-                    .metadata
-                    .iter()
-                    .any(|metadata| metadata.key == ACCOUNT_METADATA_SYMBOL_KEY)
-                {
+                if input.metadata.get(ACCOUNT_METADATA_SYMBOL_KEY).is_some() {
                     return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
                 }
 
                 input.blockchain.native_symbol().to_string()
             }
             _ => {
-                let symbol = input
-                    .metadata
-                    .iter()
-                    .find(|metadata| metadata.key == ACCOUNT_METADATA_SYMBOL_KEY);
+                let symbol = input.metadata.get(ACCOUNT_METADATA_SYMBOL_KEY);
 
                 if symbol.is_none() {
                     return Err(MapperError::NonNativeAccountSymbolRequired);
                 }
 
-                symbol.unwrap().key.to_owned()
+                symbol.unwrap()
             }
         };
 

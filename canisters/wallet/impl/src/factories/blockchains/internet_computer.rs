@@ -5,7 +5,9 @@ use crate::{
     core::ic_cdk::api::id as wallet_canister_self_id,
     errors::BlockchainApiError,
     mappers::HelperMapper,
-    models::{Account, AccountId, Blockchain, BlockchainStandard, Transfer, METADATA_MEMO_KEY},
+    models::{
+        Account, AccountId, Blockchain, BlockchainStandard, Metadata, Transfer, METADATA_MEMO_KEY,
+    },
 };
 use async_trait::async_trait;
 use byteorder::{BigEndian, ByteOrder};
@@ -208,7 +210,7 @@ impl BlockchainApi for InternetComputer {
     ) -> BlockchainApiResult<BlockchainTransactionFee> {
         Ok(BlockchainTransactionFee {
             fee: BigUint::from(self.transaction_fee()),
-            metadata: vec![],
+            metadata: Metadata::default(),
         })
     }
 

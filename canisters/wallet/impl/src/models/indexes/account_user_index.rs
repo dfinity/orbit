@@ -1,4 +1,4 @@
-use crate::models::{Account, AccountId, UserId};
+use crate::models::{Account, AccountId, Metadata, UserId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
@@ -49,7 +49,7 @@ mod tests {
             owners: vec![[1; 16], [2; 16]],
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
-            metadata: vec![],
+            metadata: Metadata::default(),
             symbol: "ICP".to_string(),
         };
 

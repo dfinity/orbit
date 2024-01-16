@@ -117,7 +117,7 @@ impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput 
                 .expect("Invalid blockchain"),
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
                 .expect("Invalid blockchain standard"),
-            metadata: Metadata::from_vec_dto(input.metadata),
+            metadata: input.metadata.into(),
         }
     }
 }

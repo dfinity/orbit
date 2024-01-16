@@ -70,7 +70,7 @@ pub struct Transfer {
     /// The blockchain network that the transfer will be executed on.
     pub blockchain_network: String,
     /// The transfer metadata (e.g. `memo`, `description`, etc.)
-    pub metadata: Vec<Metadata>,
+    pub metadata: Metadata,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
     /// The creation timestamp of the transfer.
@@ -98,10 +98,7 @@ impl Transfer {
     }
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
-            .collect()
+        self.metadata.map()
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -111,7 +108,7 @@ impl Transfer {
         initiator_user: UUID,
         from_account: UUID,
         to_address: String,
-        metadata: Vec<Metadata>,
+        metadata: Metadata,
         amount: candid::Nat,
         fee: candid::Nat,
         blockchain_network: String,
@@ -296,7 +293,7 @@ pub mod transfer_test_utils {
             amount: candid::Nat::from(100),
             fee: candid::Nat::from(0),
             blockchain_network: "a".repeat(50),
-            metadata: vec![],
+            metadata: Metadata::default(),
             last_modification_timestamp: time(),
             created_timestamp: time(),
         }

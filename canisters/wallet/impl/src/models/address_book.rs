@@ -27,7 +27,7 @@ pub struct AddressBookEntry {
     /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
     pub standard: BlockchainStandard,
     /// The address' metadata.
-    pub metadata: Vec<Metadata>,
+    pub metadata: Metadata,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -89,10 +89,7 @@ impl AddressBookEntry {
     }
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
-            .collect()
+        self.metadata.map()
     }
 }
 
@@ -193,13 +190,7 @@ pub mod address_book_entry_test_utils {
             address: "0x1234".to_string(),
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
-            metadata: vec![
-                Metadata {
-                    key: "a".repeat(Metadata::MAX_METADATA_KEY_LEN.into()),
-                    value: "b".repeat(Metadata::MAX_METADATA_VALUE_LEN.into())
-                };
-                Metadata::MAX_METADATA as usize
-            ],
+            metadata: Metadata::mock(),
             last_modification_timestamp: 0,
         }
     }

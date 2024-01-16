@@ -1,6 +1,6 @@
 use crate::{
     core::{ic_cdk::api::time, CanisterConfig},
-    models::{Metadata, WalletFeatures, WalletSettings},
+    models::{WalletFeatures, WalletSettings},
 };
 use candid::Principal;
 use ic_canister_core::utils::timestamp_to_rfc3339;
@@ -34,7 +34,7 @@ impl From<WalletFeatures> for WalletFeaturesDTO {
                         .map(|standard| standard.to_string())
                         .collect(),
                     name: asset.name,
-                    metadata: Metadata::into_vec_dto(asset.metadata),
+                    metadata: asset.metadata.into_vec_dto(),
                 })
                 .collect(),
         }

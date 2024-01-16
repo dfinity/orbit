@@ -51,7 +51,7 @@ pub struct Account {
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
-    pub metadata: Vec<Metadata>,
+    pub metadata: Metadata,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -139,10 +139,7 @@ impl Account {
     }
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
-            .collect()
+        self.metadata.map()
     }
 }
 
@@ -303,13 +300,7 @@ pub mod account_test_utils {
             },
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
-            metadata: vec![
-                Metadata {
-                    key: "a".repeat(24),
-                    value: "b".repeat(24)
-                };
-                Metadata::MAX_METADATA as usize - 1
-            ],
+            metadata: Metadata::mock(),
             symbol: "ICP".to_string(),
         }
     }

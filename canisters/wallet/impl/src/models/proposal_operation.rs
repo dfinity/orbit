@@ -42,7 +42,7 @@ pub struct TransferOperationInput {
     pub from_account_id: AccountId,
     pub to: String,
     pub amount: candid::Nat,
-    pub metadata: Vec<Metadata>,
+    pub metadata: Metadata,
     pub network: String,
     pub fee: Option<candid::Nat>,
 }
@@ -69,7 +69,7 @@ pub struct AddAccountOperationInput {
     pub owners: Vec<UserId>,
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
-    pub metadata: Vec<Metadata>,
+    pub metadata: Metadata,
     pub policies: AccountPoliciesInput,
 }
 
