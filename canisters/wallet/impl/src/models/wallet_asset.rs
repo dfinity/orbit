@@ -1,6 +1,6 @@
 use super::{Blockchain, BlockchainStandard};
+use crate::models::Metadata;
 use std::hash::{Hash, Hasher};
-use wallet_api::AssetMetadataDTO;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WalletAsset {
@@ -18,7 +18,7 @@ pub struct WalletAsset {
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
     /// also, in the case of non-native assets, it can contain other required
     /// information (e.g. `{"address": "0x1234"}`).
-    pub metadata: Vec<AssetMetadataDTO>,
+    pub metadata: Vec<Metadata>,
 }
 
 impl Hash for WalletAsset {

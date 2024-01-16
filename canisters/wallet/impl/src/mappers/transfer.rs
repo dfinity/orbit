@@ -1,4 +1,4 @@
-use crate::models::Transfer;
+use crate::models::{Metadata, Transfer};
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
 use wallet_api::{NetworkDTO, TransferDTO, TransferListItemDTO};
@@ -15,7 +15,7 @@ impl TransferMapper {
                 .to_string(),
             amount: transfer.amount,
             fee: transfer.fee,
-            metadata: transfer.metadata,
+            metadata: Metadata::into_vec_dto(transfer.metadata),
             network: NetworkDTO {
                 id: transfer.blockchain_network.to_owned(),
                 name: transfer.blockchain_network.to_owned(),

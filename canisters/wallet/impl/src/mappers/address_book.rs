@@ -1,4 +1,4 @@
-use crate::models::AddressBookEntry;
+use crate::models::{AddressBookEntry, Metadata};
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
 use wallet_api::AddressBookEntryDTO;
@@ -17,7 +17,7 @@ impl AddressBookEntryMapper {
             address: address_book_entry.address,
             standard: address_book_entry.standard.to_string(),
             blockchain: address_book_entry.blockchain.to_string(),
-            metadata: address_book_entry.metadata,
+            metadata: Metadata::into_vec_dto(address_book_entry.metadata),
             last_modification_timestamp: timestamp_to_rfc3339(
                 &address_book_entry.last_modification_timestamp,
             ),

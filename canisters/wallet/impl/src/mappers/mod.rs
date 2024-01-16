@@ -12,6 +12,9 @@ pub use address_book::*;
 mod blockchain;
 pub use blockchain::*;
 
+mod metadata;
+pub use metadata::*;
+
 mod policy;
 pub use policy::*;
 

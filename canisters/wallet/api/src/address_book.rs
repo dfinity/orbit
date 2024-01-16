@@ -1,11 +1,5 @@
-use crate::UuidDTO;
+use crate::{MetadataDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
-
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AddressBookMetadataDTO {
-    pub key: String,
-    pub value: String,
-}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddressBookEntryDTO {
@@ -14,6 +8,6 @@ pub struct AddressBookEntryDTO {
     pub address: String,
     pub blockchain: String,
     pub standard: String,
-    pub metadata: Vec<AddressBookMetadataDTO>,
+    pub metadata: Vec<MetadataDTO>,
     pub last_modification_timestamp: String,
 }

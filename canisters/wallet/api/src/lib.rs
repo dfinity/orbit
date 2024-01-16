@@ -14,6 +14,9 @@ pub use common::*;
 mod management;
 pub use management::*;
 
+mod metadata;
+pub use metadata::*;
+
 mod notification;
 pub use notification::*;
 
