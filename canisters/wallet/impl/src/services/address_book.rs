@@ -172,13 +172,19 @@ mod tests {
             },
         };
 
-        let result = ctx.service.create_entry(operation.input).await;
+        let result = ctx.service.create_entry(operation.input.clone()).await;
 
         let new_entry = result.unwrap();
 
         address_book_entry.id = new_entry.id;
 
         assert_eq!(new_entry, address_book_entry);
+
+        // adding a new entry for the same address should fail
+
+        let result = ctx.service.create_entry(operation.input).await;
+
+        result.unwrap_err();
     }
 
     #[tokio::test]
