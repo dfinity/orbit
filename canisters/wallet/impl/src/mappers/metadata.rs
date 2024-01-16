@@ -57,6 +57,7 @@ impl Metadata {
     pub(crate) fn into_vec_dto(metadata: Vec<Metadata>) -> Vec<MetadataDTO> {
         metadata.into_iter().map(|m| m.into()).collect()
     }
+
     pub(crate) fn validate(metadata: &Vec<Metadata>) -> ModelValidatorResult<MetadataError> {
         if metadata.len() > Self::MAX_METADATA as usize {
             return Err(MetadataError::ValidationError {
