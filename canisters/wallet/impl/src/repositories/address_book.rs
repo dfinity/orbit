@@ -80,7 +80,7 @@ impl AddressBookRepository {
         address: String,
         blockchain: Blockchain,
         standard: BlockchainStandard,
-    ) -> Vec<AddressBookEntry> {
+    ) -> Option<AddressBookEntry> {
         let address_book_entry_ids = self.index.find_by_criteria(AddressBookIndexCriteria {
             address,
             blockchain,
@@ -89,8 +89,7 @@ impl AddressBookRepository {
 
         address_book_entry_ids
             .iter()
-            .filter_map(|id| self.get(&AddressBookEntry::key(*id)))
-            .collect::<Vec<_>>()
+            .find_map(|id| self.get(&AddressBookEntry::key(*id)))
     }
 
     pub fn find_by_ids(&self, ids: Vec<AddressBookEntryId>) -> Vec<AddressBookEntry> {
@@ -132,7 +131,7 @@ mod tests {
                 Blockchain::InternetComputer,
                 BlockchainStandard::Native
             ),
-            vec![address_book_entry]
+            Some(address_book_entry)
         );
     }
 

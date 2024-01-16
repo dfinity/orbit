@@ -1,6 +1,6 @@
 use crate::{
     core::generate_uuid_v4,
-    errors::AccountError,
+    errors::AddressBookError,
     mappers::AddressBookMapper,
     models::{
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryId, Blockchain,
@@ -37,25 +37,26 @@ impl AddressBookService {
         let address_book_entry = self
             .address_book_repository
             .get(&address_book_entry_key)
-            .ok_or(AccountError::AccountNotFound {
+            .ok_or(AddressBookError::AddressBookEntryNotFound {
                 id: Uuid::from_bytes(*id).hyphenated().to_string(),
             })?;
 
         Ok(address_book_entry)
     }
 
-    /// Returns the address book entries associated with the given address.
-    pub fn get_entries(
+    /// Returns the address book entry associated with the given address.
+    pub fn get_entry(
         &self,
         address: String,
         blockchain: Blockchain,
         standard: BlockchainStandard,
-    ) -> ServiceResult<Vec<AddressBookEntry>> {
-        let entries = self
+    ) -> ServiceResult<AddressBookEntry> {
+        let entry = self
             .address_book_repository
-            .find(address, blockchain, standard);
+            .find(address.clone(), blockchain, standard)
+            .ok_or(AddressBookError::AddressNotFound { address })?;
 
-        Ok(entries)
+        Ok(entry)
     }
 
     /// Creates a new address book entry.
@@ -69,7 +70,13 @@ impl AddressBookService {
         let new_entry = AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes())?;
         new_entry.validate()?;
 
-        // Inserting the address book entryt into the repository and its associations is the last step of the address book entry creation
+        if let Some(v) = self.address_book_repository.get(&key) {
+            return Err(AddressBookError::DuplicateAddress {
+                id: Uuid::from_bytes(v.id).hyphenated().to_string(),
+            })?;
+        }
+
+        // Inserting the address book entry into the repository and its associations is the last step of the address book entry creation
         // process to avoid potential consistency issues due to the fact that some of the calls to create the address book entry
         // happen in an asynchronous way.
         self.address_book_repository.insert(key, new_entry.clone());
@@ -137,12 +144,12 @@ mod tests {
         let result = ctx.service.get_entry_by_id(&address_book_entry.id);
         assert_eq!(result, Ok(address_book_entry.clone()));
 
-        let result = ctx.service.get_entries(
+        let result = ctx.service.get_entry(
             address_book_entry.address.clone(),
             address_book_entry.blockchain.clone(),
             address_book_entry.standard.clone(),
         );
-        assert_eq!(result, Ok(vec![address_book_entry]));
+        assert_eq!(result, Ok(address_book_entry));
     }
 
     #[tokio::test]
