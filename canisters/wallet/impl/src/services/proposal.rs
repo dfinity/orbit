@@ -242,7 +242,7 @@ mod tests {
             criteria::{Criteria, Percentage},
             proposal_policy_test_utils::mock_proposal_policy,
             proposal_test_utils::mock_proposal,
-            specifier::{AccountSpecifier, AddressSpecifier, ProposalSpecifier, UserSpecifier},
+            specifier::{AccountSpecifier, ProposalSpecifier, UserSpecifier},
             user_test_utils::mock_user,
             ProposalOperation, ProposalStatus, TransferOperation, TransferOperationInput, User,
             UserStatus,
@@ -334,8 +334,7 @@ mod tests {
         });
         proposal.votes = vec![];
         let mut proposal_policy = mock_proposal_policy();
-        proposal_policy.specifier =
-            ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any);
+        proposal_policy.specifier = ProposalSpecifier::Transfer(AccountSpecifier::Any);
         proposal_policy.criteria = Criteria::ApprovalThreshold(
             UserSpecifier::Id(vec![ctx.caller_user.id]),
             Percentage(100),
@@ -396,8 +395,7 @@ mod tests {
 
         // creates a proposal policy that will match the new proposal
         let mut proposal_policy = mock_proposal_policy();
-        proposal_policy.specifier =
-            ProposalSpecifier::Transfer(AccountSpecifier::Any, AddressSpecifier::Any);
+        proposal_policy.specifier = ProposalSpecifier::Transfer(AccountSpecifier::Any);
         proposal_policy.criteria = Criteria::ApprovalThreshold(
             UserSpecifier::Id(vec![ctx.caller_user.id, related_user.id]),
             Percentage(100),

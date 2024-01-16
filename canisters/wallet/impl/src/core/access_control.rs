@@ -15,7 +15,7 @@ use crate::{
             ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
             ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
         },
-        specifier::{AddressSpecifier, CommonSpecifier, Match},
+        specifier::{CommonSpecifier, Match},
         Account, Proposal, User, ADMIN_GROUP_ID,
     },
     repositories::{
@@ -179,9 +179,9 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
             ResourceType::Account,
             CommonActionSpecifier::Delete(policy_account),
         )
-        | ResourceSpecifier::Transfer(TransferActionSpecifier::Create(policy_account, _))
-        | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(policy_account, _))
-        | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(policy_account, _)) =
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Create(policy_account))
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(policy_account))
+        | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(policy_account)) =
             access_policy.resource
         {
             let is_match = match policy_account {
@@ -225,42 +225,11 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
     }
 }
 
-/// A matcher that checks if the policy is applicable to the crypto address.
-pub struct AccessControlPolicyCryptoAddressMatcher;
-
-#[async_trait]
-impl Match<(Arc<AddressSpecifier>, AccessControlPolicy)>
-    for AccessControlPolicyCryptoAddressMatcher
-{
-    async fn is_match(
-        &self,
-        v: (Arc<AddressSpecifier>, AccessControlPolicy),
-    ) -> Result<bool, MatchError> {
-        let (_, access_policy) = v;
-
-        if let ResourceSpecifier::Transfer(TransferActionSpecifier::Create(_, policy_address))
-        | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(_, policy_address))
-        | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(_, policy_address)) =
-            access_policy.resource
-        {
-            let is_match = match policy_address {
-                AddressSpecifier::Any => true,
-                // TODO: Add support for address id's variant once added.
-            };
-
-            return Ok(is_match);
-        }
-
-        Ok(false)
-    }
-}
-
 /// A matcher that checks if the caller has access to the given resource and access modifier.
 pub struct AccessControlPolicyMatcher {
     pub user_matcher: Arc<dyn Match<(Arc<User>, AccessControlPolicy)>>,
     pub policy_user_matcher: Arc<dyn Match<(Arc<CommonSpecifier>, AccessControlPolicy)>>,
     pub policy_account_matcher: Arc<dyn Match<(Arc<CommonSpecifier>, AccessControlPolicy)>>,
-    pub policy_crypto_address_matcher: Arc<dyn Match<(Arc<AddressSpecifier>, AccessControlPolicy)>>,
 }
 
 #[async_trait]
@@ -304,11 +273,11 @@ impl Match<(User, ResourceSpecifier)> for AccessControlPolicyMatcher {
                     .collect()
                     .await
             }
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(account, address))
-            | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(account, address))
-            | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(account, address)) => {
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(account))
+            | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(account))
+            | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(account)) => {
                 let requested_account = &Arc::new(account);
-                let filtered_policies: Vec<AccessControlPolicy> = stream::iter(policies.iter())
+                stream::iter(policies.iter())
                     .filter_map(|policy| async move {
                         match self
                             .policy_account_matcher
@@ -319,26 +288,6 @@ impl Match<(User, ResourceSpecifier)> for AccessControlPolicyMatcher {
                             Ok(false) => None,
                             Err(e) => {
                                 print(format!("Failed policy account matcher: {:?}", e));
-
-                                None
-                            }
-                        }
-                    })
-                    .collect()
-                    .await;
-
-                let requested_address = &Arc::new(address);
-                stream::iter(filtered_policies.iter())
-                    .filter_map(|policy| async move {
-                        match self
-                            .policy_crypto_address_matcher
-                            .is_match((requested_address.to_owned(), policy.to_owned()))
-                            .await
-                        {
-                            Ok(true) => Some(policy.to_owned()),
-                            Ok(false) => None,
-                            Err(e) => {
-                                print(format!("Failed policy crypto address matcher: {:?}", e));
 
                                 None
                             }
@@ -485,10 +434,9 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
                     .iter()
                     .all(|account| account.owners.contains(&caller.id))
             }
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(
-                CommonSpecifier::Id(account_ids),
-                _,
-            )) => {
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(CommonSpecifier::Id(
+                account_ids,
+            ))) => {
                 let accounts = account_ids
                     .iter()
                     .map(|account_id| {
