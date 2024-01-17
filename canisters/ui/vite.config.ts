@@ -124,8 +124,13 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       globals: true,
-      environment: 'happy-dom',
-      setupFiles: ['./setupFiles/GlobalsConfiguration.ts'],
+      environment: 'jsdom',
+      setupFiles: ['./setup/globals.config.ts'],
+      server: {
+        deps: {
+          inline: ['vuetify'],
+        },
+      },
     },
     define: {
       // Vite env variable replacements for the runtime.
