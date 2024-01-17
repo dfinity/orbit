@@ -1,6 +1,6 @@
 use crate::errors::{AccountError, AddressBookError, MetadataError, TransferError};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::model::ModelValidatorResult;
+use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
 use std::collections::{BTreeMap, HashMap};
 use wallet_api::MetadataDTO;
 
@@ -61,7 +61,27 @@ impl Metadata {
             .collect()
     }
 
-    pub fn validate(&self) -> ModelValidatorResult<MetadataError> {
+    pub(crate) fn into_vec_dto(self) -> Vec<MetadataDTO> {
+        self.metadata
+            .into_iter()
+            .map(|(k, v)| MetadataDTO { key: k, value: v })
+            .collect()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn mock() -> Self {
+        (0..Self::MAX_METADATA)
+            .map(|i| MetadataDTO {
+                key: format!("{:0>24}", i),
+                value: "b".repeat(Self::MAX_METADATA_VALUE_LEN as usize),
+            })
+            .collect::<Vec<_>>()
+            .into()
+    }
+}
+
+impl ModelValidator<MetadataError> for Metadata {
+    fn validate(&self) -> ModelValidatorResult<MetadataError> {
         if self.metadata.len() > Self::MAX_METADATA as usize {
             return Err(MetadataError::ValidationError {
                 info: format!(
@@ -92,24 +112,6 @@ impl Metadata {
         }
 
         Ok(())
-    }
-
-    pub(crate) fn into_vec_dto(self) -> Vec<MetadataDTO> {
-        self.metadata
-            .into_iter()
-            .map(|(k, v)| MetadataDTO { key: k, value: v })
-            .collect()
-    }
-
-    #[cfg(test)]
-    pub(crate) fn mock() -> Self {
-        (0..Self::MAX_METADATA)
-            .map(|i| MetadataDTO {
-                key: format!("{:0>24}", i),
-                value: "b".repeat(Self::MAX_METADATA_VALUE_LEN as usize),
-            })
-            .collect::<Vec<_>>()
-            .into()
     }
 }
 
