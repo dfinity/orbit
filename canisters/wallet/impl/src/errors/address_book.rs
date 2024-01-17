@@ -5,6 +5,15 @@ use thiserror::Error;
 /// Container for address book errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum AddressBookError {
+    /// The requested address was not found.
+    #[error(r#"The requested address was not found."#)]
+    AddressNotFound { address: String },
+    /// The newly added address is already present in the address book.
+    #[error(r#"The newly added address is already present in the address book."#)]
+    DuplicateAddress { id: String },
+    /// The requested address book entry was not found.
+    #[error(r#"The requested address book entry was not found."#)]
+    AddressBookEntryNotFound { id: String },
     /// The given address owner length is out of range.
     #[error(
         r#"The adress owner length is out of range, it must be between {min_length} and {max_length}."#
@@ -30,6 +39,18 @@ impl DetailableError for AddressBookError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
+            AddressBookError::AddressNotFound { address } => {
+                details.insert("address".to_string(), address.to_string());
+                Some(details)
+            }
+            AddressBookError::DuplicateAddress { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            AddressBookError::AddressBookEntryNotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
             AddressBookError::InvalidAddressOwnerLength {
                 min_length,
                 max_length,
