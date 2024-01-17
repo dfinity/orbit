@@ -12,11 +12,11 @@
     <span v-if="props.text">{{ props.text }}</span>
   </VBtn>
 
-  <VDialog v-model="open" transition="dialog-bottom-transition" scrollable>
+  <VDialog v-model="open" :persistent="loading" transition="dialog-bottom-transition" scrollable>
     <VCard :loading="loading">
       <VToolbar dark color="primary">
         <VToolbarTitle> {{ props.title }} </VToolbarTitle>
-        <VBtn :icon="mdiClose" dark @click="close" />
+        <VBtn :disabled="loading" :icon="mdiClose" dark @click="close" />
       </VToolbar>
       <VCardText>
         <slot name="default" :model="{ value: intervalValue }" :loading="loading" :submit="submit">
