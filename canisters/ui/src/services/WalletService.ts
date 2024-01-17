@@ -22,6 +22,7 @@ import {
   TransferListItem,
   UUID,
   User,
+  UserGroup,
   UserPrivilege,
   VoteOnProposalInput,
   WalletFeatures,
@@ -76,6 +77,73 @@ export class WalletService {
       me: result.Ok.me,
       privileges: result.Ok.privileges,
     };
+  }
+
+  async listUserGroups(): Promise<UserGroup[]> {
+    const result = await this.actor.list_user_groups();
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.user_groups;
+  }
+
+  async removeUserGroup(id: UUID): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        RemoveUserGroup: {
+          user_group_id: id,
+        },
+      },
+    });
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addUserGroup(input: { name: string }): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        AddUserGroup: {
+          name: input.name,
+        },
+      },
+    });
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editUserGroup(id: UUID, input: { name: string }): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        EditUserGroup: {
+          user_group_id: id,
+          name: input.name,
+        },
+      },
+    });
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
   }
 
   async features(): Promise<WalletFeatures> {

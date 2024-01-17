@@ -16,7 +16,6 @@
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
           <VDataTable :headers="headers" :items="accounts" :items-per-page="-1" :hover="true">
-            <!-- eslint-disable-next-line vue/valid-v-slot -->
             <template #item.actions="{ item }">
               <VBtn
                 size="small"
@@ -27,7 +26,6 @@
                 {{ $t('terms.open') }}
               </VBtn>
             </template>
-            <!-- eslint-disable-next-line vue/valid-v-slot -->
             <template #item.address="{ item }">
               <span>{{ item.address }}</span>
               <VBtn
