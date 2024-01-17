@@ -275,7 +275,7 @@ mod tests {
         },
         AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
         AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
-        EditUserOperation, EditUserOperationInput, ProposalOperation, TransferOperation,
+        EditUserOperation, EditUserOperationInput, Metadata, ProposalOperation, TransferOperation,
         TransferOperationInput, UserStatus,
     };
     use anyhow::{anyhow, Error};
@@ -299,7 +299,7 @@ mod tests {
                         owners: vec![],
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
-                        metadata: vec![],
+                        metadata: Metadata::default(),
                         policies: AccountPoliciesInput {
                             transfer: Some(Criteria::AutoAdopted),
                             edit: Some(Criteria::AutoAdopted),
@@ -349,7 +349,7 @@ mod tests {
                         from_account_id: [0; 16],
                         to: "address-1".into(),
                         amount: Nat::from(1),
-                        metadata: vec![],
+                        metadata: Metadata::default(),
                         network: "network-1".into(),
                         fee: None,
                     },

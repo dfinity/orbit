@@ -317,8 +317,8 @@ mod tests {
     use super::*;
     use crate::models::{
         proposal_test_utils::{self, mock_proposal},
-        ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, TransferOperation,
-        TransferOperationInput,
+        Metadata, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus,
+        TransferOperation, TransferOperationInput,
     };
     use num_bigint::BigUint;
     use uuid::Uuid;
@@ -385,7 +385,7 @@ mod tests {
             input: TransferOperationInput {
                 amount: candid::Nat(BigUint::from(100u32)),
                 fee: None,
-                metadata: vec![],
+                metadata: Metadata::default(),
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
                 from_account_id: *account_id.as_bytes(),

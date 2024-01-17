@@ -14,6 +14,9 @@ pub use blockchain::*;
 mod blockchain_standard;
 pub use blockchain_standard::*;
 
+mod metadata;
+pub use metadata::*;
+
 mod user;
 pub use user::*;
 

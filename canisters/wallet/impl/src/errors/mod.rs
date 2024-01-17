@@ -8,6 +8,9 @@ pub use account::*;
 mod address_book;
 pub use address_book::*;
 
+mod metadata;
+pub use metadata::*;
+
 mod user;
 pub use user::*;
 

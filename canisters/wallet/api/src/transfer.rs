@@ -1,14 +1,8 @@
 use super::{AccountDTO, TimestampRfc3339};
-use crate::UuidDTO;
+use crate::{MetadataDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 pub type NetworkIdDTO = String;
-
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TransferMetadataDTO {
-    pub key: String,
-    pub value: String,
-}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct NetworkDTO {
@@ -22,7 +16,7 @@ pub struct TransferOperationInput {
     pub to: String,
     pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,
-    pub metadata: Vec<TransferMetadataDTO>,
+    pub metadata: Vec<MetadataDTO>,
     pub network: Option<NetworkDTO>,
 }
 
@@ -66,7 +60,7 @@ pub struct TransferDTO {
     pub amount: candid::Nat,
     pub status: TransferStatusDTO,
     pub network: NetworkDTO,
-    pub metadata: Vec<TransferMetadataDTO>,
+    pub metadata: Vec<MetadataDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
