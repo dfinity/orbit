@@ -163,6 +163,12 @@ export class WalletService {
     return result.Ok.account;
   }
 
+  async isHealthy(): Promise<boolean> {
+    const result = await this.actor.health_status();
+
+    return variantIs(result, 'Healthy');
+  }
+
   async fetchAccountBalances(input: FetchAccountBalancesInput): Promise<AccountBalance[]> {
     const result = await this.actor.fetch_account_balances(input);
 

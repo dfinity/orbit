@@ -16,6 +16,7 @@
 </template>
 
 <script lang="ts" setup>
+import { Principal } from '@dfinity/principal';
 import { onMounted, ref } from 'vue';
 import { logger, wait } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
@@ -36,6 +37,26 @@ const session = useSessionStore();
 const wallet = useWalletStore();
 const status = ref<InitializationStatus>(InitializationStatus.Starting);
 
+const waitUntilWalletIsInitialized = async (
+  walletId: Principal,
+  { retries, retryWaitMs }: { retries?: number; retryWaitMs?: number } = {},
+): Promise<void> => {
+  const walletService = services().wallet;
+  let maxRetries = retries ?? 30;
+  const waitBetweenTriesMs = retryWaitMs ?? 1000;
+
+  while (maxRetries > 0) {
+    if (await walletService.withWalletId(walletId).isHealthy()) {
+      return;
+    }
+
+    await wait(waitBetweenTriesMs);
+    --maxRetries;
+  }
+
+  throw new Error('Wallet did not initialize in time');
+};
+
 const deployInitialWallet = async (): Promise<void> => {
   try {
     const controlPanelService = services().controlPanel;
@@ -46,7 +67,8 @@ const deployInitialWallet = async (): Promise<void> => {
 
     // wait for the wallet to be initialized, this requires one round of consensus
     status.value = InitializationStatus.WaitingForCanisterInitialization;
-    await wait(6000);
+
+    await waitUntilWalletIsInitialized(walletId);
 
     session.populateUser(controlPanelUser);
 
@@ -59,6 +81,7 @@ const deployInitialWallet = async (): Promise<void> => {
 
     status.value = InitializationStatus.Completed;
 
+    // this wait is here to make sure the user has a chance to see the completed status
     await wait(2000);
 
     router.push({ name: defaultHomeRoute });
