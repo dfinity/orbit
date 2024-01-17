@@ -4,7 +4,7 @@
       <VCol cols="12 wallet-form__title">{{ $t('terms.general') }}</VCol>
       <VCol cols="12" class="py-0">
         <VTextField
-          v-model="wallet.currentUser.me.id"
+          v-model="wallet.user.id"
           :prepend-inner-icon="mdiIdentifier"
           variant="solo"
           density="compact"

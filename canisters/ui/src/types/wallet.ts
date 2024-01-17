@@ -1,5 +1,3 @@
-import { User, UserPrivilege } from '~/generated/wallet/wallet.did';
-
 export enum PolicyType {
   VariableApprovalThreshold = 'VariableApprovalThreshold',
   FixedApprovalThreshold = 'FixedApprovalThreshold',
@@ -19,7 +17,15 @@ export enum WalletProposalType {
   Unknown = 'Unknown',
 }
 
-export interface AuthenticatedUser {
-  me: User;
-  privileges: UserPrivilege[];
+export enum Privilege {
+  AddUserGroup = 'AddUserGroup',
+  ListUserGroups = 'ListUserGroups',
+  AddUser = 'AddUser',
+  ListUsers = 'ListUsers',
+  AddProposalPolicy = 'AddProposalPolicy',
+  ListProposalPolicies = 'ListProposalPolicies',
+  ListAccounts = 'ListAccounts',
+  ListAccessPolicies = 'ListAccessPolicies',
+  AddAccessPolicy = 'AddAccessPolicy',
+  AddAccount = 'AddAccount',
 }

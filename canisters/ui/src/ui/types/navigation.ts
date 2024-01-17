@@ -1,4 +1,6 @@
 import { RouteLocationNormalizedLoaded } from 'vue-router';
+import { Routes } from '~/ui/config/routes';
+import { AccessCriteria } from '~/ui/types/auth';
 
 export enum NavigationActionType {
   None = 'none',
@@ -28,10 +30,28 @@ export type NagivationNone = {
 
 export type NavigationAction = NavigationTo | NavigationHref | NavigationCallback | NagivationNone;
 
+export enum NavigastionAuthType {
+  Route = 'route',
+  Custom = 'custom',
+}
+
+export interface NavigationAuthRouteCheck {
+  type: NavigastionAuthType.Route;
+  route: Routes;
+}
+
+export interface NavigationAuthCustomCheck {
+  type: NavigastionAuthType.Custom;
+  criteria: AccessCriteria;
+}
+
+export type NavigastionAuth = NavigationAuthRouteCheck | NavigationAuthCustomCheck;
+
 export interface NavigationItem {
   name: string;
   localeKey: string;
   icon?: string;
   action: NavigationAction;
   items?: NavigationItem[];
+  auth: NavigastionAuth;
 }

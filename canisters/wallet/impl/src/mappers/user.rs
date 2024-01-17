@@ -78,7 +78,7 @@ impl From<UserDTO> for User {
     }
 }
 
-pub const USER_PRIVILEGES: [UserPrivilege; 8] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 10] = [
     UserPrivilege::ListUsers,
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
@@ -87,6 +87,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 8] = [
     UserPrivilege::AddAccessPolicy,
     UserPrivilege::ListProposalPolicies,
     UserPrivilege::AddProposalPolicy,
+    UserPrivilege::ListUserGroups,
+    UserPrivilege::AddUserGroup,
 ];
 
 impl From<UserPrivilege> for ResourceSpecifier {

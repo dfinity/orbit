@@ -8,6 +8,10 @@ export class AuthService {
 
   constructor(private authClient?: AuthClient) {}
 
+  invalidateAuthClient(): void {
+    this.authClient = undefined;
+  }
+
   async client(): Promise<AuthClient> {
     if (!this.authClient) {
       this.authClient = await AuthClient.create({
@@ -46,5 +50,7 @@ export class AuthService {
     const client = await this.client();
 
     await client.logout();
+
+    this.invalidateAuthClient();
   }
 }

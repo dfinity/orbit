@@ -7,14 +7,14 @@
       <VListSubheader v-if="session.isAuthenticated">
         {{ $t('terms.user_id') }}<br />
         <p>
-          <span>{{ session.user.principal }}</span>
+          <span>{{ session.principal }}</span>
           <VBtn
             size="x-small"
             variant="text"
             :icon="mdiContentCopy"
             @click="
               copyToClipboard({
-                textToCopy: session.user.principal,
+                textToCopy: session.principal,
                 sendNotification: true,
               })
             "

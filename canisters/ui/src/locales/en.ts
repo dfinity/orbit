@@ -160,6 +160,7 @@ export default {
     confirmed: 'Confirmed',
     unconfirmed: 'Unconfirmed',
     main: 'Main',
+    user_group: 'User Group',
   },
   forms: {
     create: 'Create',
@@ -204,6 +205,19 @@ export default {
     },
     administration: {
       title: 'Wallet Administration',
+    },
+    user_group: {
+      title: 'User Groups',
+      btn_new_group: 'Create group',
+      btn_manage_permissions: 'Manage Permissions',
+    },
+    initialization: {
+      status_starting: 'Initializing, please wait ...',
+      status_deploying: 'Deploying your wallet to the Internet Computer ...',
+      status_waiting_for_canister_initialization: 'Waiting for deployment to complete ...',
+      status_creating_initial_account: 'Creating your initial account ...',
+      status_completed: 'Your wallet has been successfully initialized, you`ll soon be redirected.',
+      status_failed: 'Failed to initialize, please try again.',
     },
   },
 };

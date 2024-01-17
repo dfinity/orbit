@@ -86,7 +86,7 @@ export const useStore = (sectionId: string = 'main') =>
             : session.mainWallet;
 
           const updatedWallets: UserWallet[] =
-            session.user.wallets.map(wallet => {
+            session.data.wallets.map(wallet => {
               if (wallet.canisterId === this.$state.editDialog.canisterId) {
                 return {
                   name: this.$state.editDialog.form.name ? [this.$state.editDialog.form.name] : [],
@@ -100,13 +100,13 @@ export const useStore = (sectionId: string = 'main') =>
               };
             }) ?? [];
 
-          await controlPanel.editUser({
+          const user = await controlPanel.editUser({
             main_wallet: mainWallet ? [mainWallet] : [],
             wallets: updatedWallets.length ? [updatedWallets] : [],
           });
 
-          // reloads the user to get the most recent data
-          await session.loadUser();
+          // uopdate the user to set the most recent data
+          session.populateUser(user);
 
           this.$state.editDialog.open = false;
         } catch (e) {

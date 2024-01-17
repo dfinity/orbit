@@ -1,31 +1,32 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
+import { variantIs } from '~/core';
 import { icAgent } from '~/core/ic-agent';
 import { idlFactory } from '~/generated/wallet';
 import {
-  User,
-  WalletFeatures,
-  VoteOnProposalInput,
-  FetchAccountBalancesInput,
-  GetUserInput,
-  GetProposalInput,
-  GetTransfersInput,
-  GetAccountInput,
-  Notification,
-  ListAccountTransfersInput,
-  Proposal,
-  Transfer,
-  CreateProposalInput,
-  TransferListItem,
   Account,
   AccountBalance,
-  _SERVICE,
+  CreateProposalInput,
+  FetchAccountBalancesInput,
+  GetAccountInput,
+  GetProposalInput,
+  GetTransfersInput,
+  GetUserInput,
+  ListAccountTransfersInput,
   ListNotificationsInput,
-  MarkNotificationsReadInput,
   ListProposalsInput,
+  MarkNotificationsReadInput,
+  Notification,
+  Proposal,
+  Transfer,
+  TransferListItem,
   UUID,
+  User,
+  UserPrivilege,
+  VoteOnProposalInput,
+  WalletFeatures,
+  _SERVICE,
 } from '~/generated/wallet/wallet.did';
-import { AuthenticatedUser } from '~/types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;
@@ -54,16 +55,16 @@ export class WalletService {
 
   async getUser(input: GetUserInput): Promise<User> {
     const result = await this.actor.get_user(input);
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
     return result.Ok.user;
   }
 
-  async myUser(): Promise<AuthenticatedUser | null> {
+  async myUser(): Promise<{ me: User; privileges: UserPrivilege[] } | null> {
     const result = await this.actor.me();
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       if (result.Err.code === WalletService.ERR_USER_NOT_FOUND) {
         return null;
       }
@@ -80,7 +81,7 @@ export class WalletService {
   async features(): Promise<WalletFeatures> {
     const result = await this.actor.features();
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -90,7 +91,7 @@ export class WalletService {
   async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {
     const result = await this.actor.list_notifications(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -100,7 +101,7 @@ export class WalletService {
   async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
     const result = await this.actor.list_proposals(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -125,7 +126,7 @@ export class WalletService {
   async voteOnProposal(input: VoteOnProposalInput): Promise<Proposal> {
     const result = await this.actor.vote_on_proposal(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -135,7 +136,7 @@ export class WalletService {
   async getProposal(input: GetProposalInput): Promise<Proposal> {
     const result = await this.actor.get_proposal(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -145,7 +146,7 @@ export class WalletService {
   async listAccounts(): Promise<Account[]> {
     const result = await this.actor.list_accounts();
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -155,17 +156,23 @@ export class WalletService {
   async getAccount(input: GetAccountInput): Promise<Account> {
     const result = await this.actor.get_account(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
     return result.Ok.account;
   }
 
+  async isHealthy(): Promise<boolean> {
+    const result = await this.actor.health_status();
+
+    return variantIs(result, 'Healthy');
+  }
+
   async fetchAccountBalances(input: FetchAccountBalancesInput): Promise<AccountBalance[]> {
     const result = await this.actor.fetch_account_balances(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -175,7 +182,7 @@ export class WalletService {
   async listAccountTransfers(input: ListAccountTransfersInput): Promise<TransferListItem[]> {
     const result = await this.actor.list_account_transfers(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -185,7 +192,7 @@ export class WalletService {
   async getTransfers(input: GetTransfersInput): Promise<Transfer[]> {
     const result = await this.actor.get_transfers(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -195,7 +202,7 @@ export class WalletService {
   async createProposal(input: CreateProposalInput): Promise<Proposal> {
     const result = await this.actor.create_proposal(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 

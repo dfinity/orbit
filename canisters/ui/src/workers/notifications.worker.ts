@@ -1,10 +1,8 @@
-import { AnonymousIdentity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { logger, timer } from '~/core';
 import { icAgent } from '~/core/ic-agent';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
-import { loadIdentity } from '~/workers/utils';
 
 const DEFAULT_POOL_INTERVAL_MS = 5000;
 
@@ -102,12 +100,7 @@ class NotificationsWorkerImpl {
 
   private async refreshNotifications(): Promise<void> {
     try {
-      const identity = (await loadIdentity()) ?? new AnonymousIdentity();
-      await icAgent.init();
-      icAgent.get().replaceIdentity(identity);
-      if (identity.getPrincipal().isAnonymous()) {
-        logger.warn('Using anonymous identity, make sure to sign in to the wallet');
-      }
+      await icAgent.loadIdentity();
 
       const notifications = await this.walletService.listUnreadNotifications(
         this.lastNotificationDate ?? undefined,

@@ -21,9 +21,9 @@ export const initializeApp = async (): Promise<void> => {
   app.use(pinia);
   app.use(vuetify);
   app.use(i18n);
+  app.use(serviceManager);
   app.use(router);
   app.use(navigation);
-  app.use(serviceManager);
 
   app.mount('#app');
 };

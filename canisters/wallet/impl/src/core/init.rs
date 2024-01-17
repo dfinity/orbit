@@ -44,6 +44,10 @@ lazy_static! {
         // user groups
         (
             UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List),
+        ),
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
             ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::Create),
         ),
         (

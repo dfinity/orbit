@@ -3,7 +3,7 @@
     <VRow>
       <VCol cols="12" class="menu">
         <section class="menu__main">
-          <template v-for="(menuItem, _idx) in $navigation.main" :key="_idx">
+          <template v-for="(menuItem, _idx) in $navigation.value.main" :key="_idx">
             <VList nav density="compact" class="ps-0 pe-0">
               <SidenavMenuItem :item="menuItem" />
             </VList>

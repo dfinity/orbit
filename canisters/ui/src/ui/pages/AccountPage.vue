@@ -1,5 +1,5 @@
 <template>
-  <PageLayout v-if="wallet.hasUser" class="account">
+  <PageLayout class="account">
     <template v-if="pageStore.hasLoaded" #main-header>
       <VContainer class="pt-16 pb-16 pl-8 pr-8 account__header" fluid>
         <div class="account__balance">
@@ -66,7 +66,7 @@
         <p class="text-h6">
           {{ $t('account_page.not_found_description') }}
         </p>
-        <VBtn color="primary-variant mt-8" :append-icon="_mdiLink" :to="{ name: 'AccountList' }">
+        <VBtn color="primary-variant mt-8" :append-icon="_mdiLink" :to="{ name: 'Accounts' }">
           {{ $t('account_page.not_found_btn') }}
         </VBtn>
       </div>
@@ -314,18 +314,6 @@
       </VRow>
     </template>
   </PageLayout>
-  <PageLayout v-else>
-    <template #main-header>
-      <VContainer class="pt-16 pb-16 pl-8 pr-8" fluid>
-        <VRow>
-          <VCol sm="12">
-            <h1 class="text-h4">{{ $t('wallets.no_wallet_user') }}</h1>
-            <p class="text-subtitle">{{ $t('wallets.please_register_to_continue') }}</p>
-          </VCol>
-        </VRow>
-      </VContainer>
-    </template>
-  </PageLayout>
 </template>
 
 <script lang="ts" setup>
@@ -337,6 +325,7 @@ import {
   mdiRefresh,
   mdiTransfer,
   mdiWallet,
+  mdiLink as _mdiLink,
 } from '@mdi/js';
 import { onMounted, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';

@@ -1,149 +1,71 @@
 import { AnonymousIdentity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
-import { icAgent, logger, wait } from '~/core';
-import { UUID } from '~/generated/wallet/wallet.did';
-import { BlockchainStandard, BlockchainType } from '~/types';
+import { icAgent, logger } from '~/core';
+import { User } from '~/generated/control-panel/control_panel.did';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
-import { useWalletStore } from '~/ui/stores/wallet';
-import { computedWalletName, redirectToLogin } from '~/ui/utils';
+import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
+import { redirectToLogin } from '~/ui/utils';
 
-export interface WalletListItem {
+export interface UserWallet {
   main: boolean;
   name: string | null;
   canisterId: string;
 }
 
-export interface UserSession {
-  principal: string;
-  isAuthenticated: boolean;
-  mainWallet: string | null;
-  wallets: WalletListItem[];
+export interface SelectedUserWallet {
+  canisterId: string | null;
+  hasAccess: boolean;
 }
 
-export enum EnvironmentStatus {
+export enum InitializationStatus {
   Uninitialized = 'uninitialized',
-  DeployingInitialWallet = 'deploying-initial-wallet',
+  Initialized = 'initialized',
   FailedInitialization = 'failed-initialization',
-  Ready = 'ready',
 }
 
 export interface SessionStoreState {
-  initialized: boolean;
+  initialized: InitializationStatus;
   loading: boolean;
-  environmentStatus: EnvironmentStatus;
-  user: UserSession;
-  selectedWallet: string | null;
+  principal: string;
+  isAuthenticated: boolean;
+  data: {
+    wallets: UserWallet[];
+    selectedWallet: SelectedUserWallet;
+  };
 }
-
-const deployInitialWallet = async (
-  self = useSessionStore(),
-  wallet = useWalletStore(),
-): Promise<void> => {
-  if (self.hasWallets) {
-    logger.warn('Cannot deploy initial wallet, user already has wallets');
-    return;
-  } else if (self.environmentStatus === EnvironmentStatus.DeployingInitialWallet) {
-    logger.warn('Cannot deploy initial wallet, already deploying');
-    return;
-  }
-
-  try {
-    self.environmentStatus = EnvironmentStatus.DeployingInitialWallet;
-    const controlPanelService = services().controlPanel;
-    const walletId = await controlPanelService.deployWallet();
-    const controlPanelUser = await controlPanelService.getCurrentUser();
-
-    self.user = {
-      ...self.user,
-      mainWallet: walletId.toText(),
-      wallets:
-        controlPanelUser.wallets?.map(wallet => ({
-          main: wallet.canister_id === walletId,
-          name: wallet.name?.[0] ?? null,
-          canisterId: wallet.canister_id.toText(),
-        })) ?? [],
-    } as UserSession;
-
-    // wait for the wallet to be initialized, this requires one round of consensus
-    await wait(6000);
-
-    await self.loadWallet(walletId);
-
-    if (wallet.user) {
-      await createInitialAccountForUser(wallet.user.me.id);
-    }
-
-    self.environmentStatus = EnvironmentStatus.Ready;
-  } catch (err) {
-    logger.error('Failed to deploy initial wallet', { err });
-    self.environmentStatus = EnvironmentStatus.FailedInitialization;
-  }
-};
-
-const createInitialAccountForUser = async (
-  ownerId: UUID,
-  wallet = useWalletStore(),
-): Promise<void> => {
-  const proposal = await wallet.service.createProposal({
-    title: [],
-    summary: [],
-    execution_plan: [{ Immediate: null }],
-    operation: {
-      AddAccount: {
-        name: i18n.global.t('app.initial_account_name'),
-        blockchain: BlockchainType.InternetComputer,
-        standard: BlockchainStandard.Native,
-        metadata: [],
-        owners: [ownerId],
-        policies: {
-          edit: [],
-          transfer: [],
-        },
-      },
-    },
-  });
-
-  console.log(proposal);
-};
 
 export const useSessionStore = defineStore('session', {
   state: (): SessionStoreState => {
     return {
-      initialized: false,
+      initialized: InitializationStatus.Uninitialized,
       loading: false,
-      environmentStatus: EnvironmentStatus.Uninitialized,
-      user: {
-        isAuthenticated: false,
-        mainWallet: null,
-        principal: Principal.anonymous().toText(),
+      principal: Principal.anonymous().toText(),
+      isAuthenticated: false,
+      data: {
         wallets: [],
+        selectedWallet: {
+          canisterId: null,
+          hasAccess: false,
+        },
       },
-      selectedWallet: null,
     };
   },
   getters: {
-    isAuthenticated(): boolean {
-      return this.user.isAuthenticated;
-    },
-    hasUser(): boolean {
-      return !!this.user;
-    },
     hasWallets(): boolean {
-      return !!this.user?.wallets.length;
+      return !!this.data.wallets.length;
     },
     mainWallet(): Principal | null {
-      return this.user?.mainWallet ? Principal.fromText(this.user.mainWallet) : null;
-    },
-    hasSelectedWallet(): boolean {
-      return !!this.selectedWallet;
+      const mainWallet = this.data.wallets.find(wallet => wallet.main);
+
+      return mainWallet ? Principal.fromText(mainWallet.canisterId) : null;
     },
   },
   actions: {
     async initialize(): Promise<void> {
       try {
-        if (this.initialized) {
+        if (this.initialized === InitializationStatus.Initialized) {
           return;
         }
         const authService = services().auth;
@@ -151,7 +73,7 @@ export const useSessionStore = defineStore('session', {
 
         if (!cachedIdentity) {
           icAgent.get().replaceIdentity(new AnonymousIdentity());
-          this.initialized = true;
+          this.initialized = InitializationStatus.Initialized;
           return;
         }
 
@@ -159,22 +81,27 @@ export const useSessionStore = defineStore('session', {
 
         await this.load();
 
-        this.initialized = true;
+        this.initialized = InitializationStatus.Initialized;
       } catch (error) {
         this.reset();
 
         logger.error(`Application failed to initialize the state`, { error });
+
+        this.initialized = InitializationStatus.FailedInitialization;
       }
     },
     reset(): void {
       const wallet = useWalletStore();
 
       this.loading = false;
-      this.user = {
-        isAuthenticated: false,
-        mainWallet: null,
-        principal: Principal.anonymous().toText(),
+      this.isAuthenticated = false;
+      this.principal = Principal.anonymous().toText();
+      this.data = {
         wallets: [],
+        selectedWallet: {
+          canisterId: null,
+          hasAccess: false,
+        },
       };
 
       wallet.reset();
@@ -214,66 +141,31 @@ export const useSessionStore = defineStore('session', {
       this.reset();
       redirectToLogin();
     },
-    unloadWallet(): void {
-      const wallet = useWalletStore();
-
-      this.selectedWallet = null;
-      wallet.reset();
-    },
-    async loadWallet(walletId: Principal): Promise<void> {
-      const wallet = useWalletStore();
-
-      this.selectedWallet = walletId.toText();
-      if (wallet.canisterId) {
-        wallet.reset();
-      }
-
-      const name = computedWalletName({ canisterId: walletId });
-
-      await wallet.load(walletId, name);
-    },
-    async loadUser(): Promise<void> {
-      const controlPanelService = services().controlPanel;
-      const controlPanelUser = await controlPanelService.getCurrentUser();
-      const mainWalletId = controlPanelUser.main_wallet?.[0]
-        ? controlPanelUser.main_wallet?.[0]
-        : controlPanelUser.wallets?.[0]?.canister_id;
-
-      this.user = {
-        isAuthenticated: true,
-        principal: controlPanelUser.id.toText(),
-        mainWallet: mainWalletId?.toText() ?? null,
-        wallets:
-          controlPanelUser.wallets?.map(wallet => ({
-            main: wallet.canister_id === mainWalletId,
-            name: wallet.name?.[0] ?? null,
-            canisterId: wallet.canister_id.toText(),
-          })) ?? [],
-      };
-
-      const wallet = useWalletStore();
-      if (wallet.hasUser && this.selectedWallet) {
-        wallet.name = computedWalletName({ canisterId: Principal.fromText(this.selectedWallet) });
-      }
-    },
     async load(): Promise<void> {
-      this.loading = true;
       const app = useAppStore();
+
       try {
-        await this.loadUser();
+        if (this.loading) {
+          logger.warn(`Session is already loading`);
+          return;
+        }
 
-        if (this.user?.mainWallet) {
-          await this.loadWallet(Principal.fromText(this.user.mainWallet));
+        this.loading = true;
+        const controlPanelService = services().controlPanel;
+        const controlPanelUser = await controlPanelService.getCurrentUser();
+        const mainWalletId = controlPanelUser.main_wallet?.[0]
+          ? controlPanelUser.main_wallet?.[0]
+          : controlPanelUser.wallets?.[0]?.canister_id;
+        const sameUser = this.isAuthenticated && this.principal === controlPanelUser.id.toText();
 
-          this.environmentStatus = EnvironmentStatus.Ready;
-        } else {
-          // this is not awaited so that the UI can load faster and show early feedback to the user
-          deployInitialWallet();
+        this.isAuthenticated = true;
+        this.populateUser(controlPanelUser);
+
+        if (!sameUser && mainWalletId) {
+          return this.connectWallet(mainWalletId);
         }
       } catch (err) {
         logger.error(`Failed to load user session`, { err });
-
-        this.environmentStatus = EnvironmentStatus.FailedInitialization;
 
         app.sendNotification({
           type: 'error',
@@ -281,6 +173,48 @@ export const useSessionStore = defineStore('session', {
         });
       } finally {
         this.loading = false;
+      }
+    },
+    populateUser(user: User): void {
+      const selectedWalletId = this.data.selectedWallet.canisterId;
+      const sameUser = this.isAuthenticated && this.principal === user.id.toText();
+      this.principal = user.id.toText();
+      this.data = {
+        selectedWallet: this.data.selectedWallet,
+        wallets: user.wallets.map(wallet => ({
+          main: wallet.canister_id.toText() === user.main_wallet?.[0]?.toText(),
+          name: wallet.name?.[0] ?? null,
+          canisterId: wallet.canister_id.toText(),
+        })),
+      };
+
+      const hasWallet = this.data.wallets.some(wallet => wallet.canisterId === selectedWalletId);
+      if (!sameUser || !hasWallet) {
+        this.disconnectWallet();
+      }
+    },
+    disconnectWallet(): void {
+      const wallet = useWalletStore();
+
+      this.data.selectedWallet = {
+        canisterId: null,
+        hasAccess: false,
+      };
+
+      wallet.reset();
+    },
+    async connectWallet(walletId: Principal): Promise<void> {
+      const wallet = useWalletStore();
+
+      this.data.selectedWallet = {
+        canisterId: walletId.toText(),
+        hasAccess: false,
+      };
+
+      const connectionStatus = await wallet.connectTo(walletId);
+
+      if (connectionStatus === WalletConnectionStatus.Connected) {
+        this.data.selectedWallet.hasAccess = true;
       }
     },
   },

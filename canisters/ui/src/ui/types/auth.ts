@@ -1,11 +1,19 @@
-export enum AuthState {
+import { Privilege } from '~/types';
+
+export enum RequiredSessionState {
   Authenticated = 'authenticated',
+  ConnectedToWallet = 'connected-to-wallet',
   Guest = 'guest',
   Any = 'any',
 }
 
+export interface AccessCriteria {
+  session: RequiredSessionState;
+  privileges?: Privilege[];
+}
+
 export interface AuthRouteMeta {
-  requireState: AuthState;
+  check: AccessCriteria;
 }
 
 declare module 'vue-router' {

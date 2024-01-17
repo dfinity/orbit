@@ -28,7 +28,7 @@
             <slot name="toolbar-context">
               <BrandLogo v-if="!session.isAuthenticated" />
               <VBtn
-                v-if="session.isAuthenticated"
+                v-if="session.isAuthenticated && !isSetAndNotFalse(props.hideSidebar)"
                 :icon="mdiMenuOpen"
                 @click.prevent="app.toogleSidebar"
               />

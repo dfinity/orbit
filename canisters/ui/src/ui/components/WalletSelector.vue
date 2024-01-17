@@ -8,7 +8,7 @@
     hide-details
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
-    :items="session.user.wallets"
+    :items="session.data.wallets"
   >
     <template #item="{ props, item }">
       <VListItem
@@ -19,7 +19,7 @@
     </template>
     <template #selection="{ item }">
       <VListItem
-        v-if="session.hasWallets"
+        v-if="session.data.wallets.length"
         :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :prepend-icon="mdiWallet"
       />
@@ -40,15 +40,15 @@ const app = useAppStore();
 
 const selectedWallet = computed({
   get(): string | null {
-    return session.selectedWallet?.length ? session.selectedWallet : null;
+    return session.data.selectedWallet.canisterId ? session.data.selectedWallet.canisterId : null;
   },
   set(newWalletId: string | null) {
     if (!newWalletId) {
-      session.unloadWallet();
+      session.disconnectWallet();
       return;
     }
 
-    session.loadWallet(Principal.fromText(newWalletId));
+    session.connectWallet(Principal.fromText(newWalletId));
   },
 });
 </script>

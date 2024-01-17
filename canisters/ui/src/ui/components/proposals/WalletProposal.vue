@@ -99,7 +99,7 @@ const canVote = computed(() => {
     return false;
   }
 
-  return !proposal.value.votes.find(d => d.user_id === activeWallet.user?.me.id);
+  return !proposal.value.votes.find(d => d.user_id === activeWallet.user.id);
 });
 
 const onApprove = () => {

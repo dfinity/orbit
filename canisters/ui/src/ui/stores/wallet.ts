@@ -6,14 +6,17 @@ import {
   Notification,
   Proposal,
   UUID,
+  User,
+  UserPrivilege,
   WalletAsset,
   WalletFeatures,
 } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
-import { AuthenticatedUser } from '~/types';
+import { BlockchainStandard, BlockchainType } from '~/types';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { LoadableItem } from '~/ui/types';
+import { computedWalletName } from '~/ui/utils';
 import { accountsWorker, notificationsWorker } from '~/workers';
 
 export interface WalletMetrics {
@@ -25,19 +28,23 @@ export interface WalletMetrics {
   notifications: number;
 }
 
-export interface PendingAccount {
-  name: string;
-  proposalId: string;
+export enum WalletConnectionStatus {
+  Disconnected = 'disconnected',
+  UnregisteredUser = 'unregistered-user',
+  Connecting = 'connecting',
+  Connected = 'connected',
+  Failed = 'failed',
 }
 
 export interface WalletStoreState {
-  canisterId: string | null;
+  connectionStatus: WalletConnectionStatus;
+  canisterId: string;
   loading: boolean;
-  name: string | null;
-  user: AuthenticatedUser | null;
+  user: User;
+  privileges: UserPrivilege[];
   features: {
     loading: boolean;
-    details: WalletFeatures | null;
+    details: WalletFeatures;
   };
   accounts: {
     loading: boolean;
@@ -49,41 +56,64 @@ export interface WalletStoreState {
   };
 }
 
-export const useWalletStore = defineStore('wallet', {
-  state: (): WalletStoreState => {
-    return {
-      canisterId: null,
-      loading: false,
-      name: null,
-      user: null,
-      features: {
-        loading: false,
-        details: null,
+export const createUserInitialAccount = async (
+  userId: UUID,
+  wallet = useWalletStore(),
+): Promise<void> => {
+  await wallet.service.createProposal({
+    title: [],
+    summary: [],
+    execution_plan: [{ Immediate: null }],
+    operation: {
+      AddAccount: {
+        name: i18n.global.t('app.initial_account_name'),
+        blockchain: BlockchainType.InternetComputer,
+        standard: BlockchainStandard.Native,
+        metadata: [],
+        owners: [userId],
+        policies: {
+          edit: [],
+          transfer: [],
+        },
       },
-      accounts: {
-        loading: false,
-        items: [],
-      },
-      notifications: {
-        loading: false,
-        items: [],
-      },
-    };
-  },
-  getters: {
-    hasUser(): boolean {
-      return !!this.user;
     },
-    currentUser(): AuthenticatedUser {
-      if (!this.user) {
-        throw new Error('User not loaded');
-      }
+  });
+};
 
-      return this.user as AuthenticatedUser;
+const initialStoreState = (): WalletStoreState => {
+  return {
+    connectionStatus: WalletConnectionStatus.Disconnected,
+    canisterId: Principal.anonymous().toText(),
+    loading: false,
+    user: {
+      id: '',
+      name: [],
+      status: { Inactive: null },
+      groups: [],
+      last_modification_timestamp: '',
+      identities: [],
     },
-    userDisplayName(): string | null {
-      return this.currentUser.me.name?.[0] ?? null;
+    privileges: [],
+    features: {
+      loading: false,
+      details: {
+        supported_assets: [],
+      },
     },
+    accounts: {
+      loading: false,
+      items: [],
+    },
+    notifications: {
+      loading: false,
+      items: [],
+    },
+  };
+};
+
+export const useWalletStore = defineStore('wallet', {
+  state: (): WalletStoreState => initialStoreState(),
+  getters: {
     sortedAccounts(): Account[] {
       return this.accounts.items.sort((a, b) => {
         const firstDt = new Date(a.last_modification_timestamp).getTime();
@@ -116,25 +146,27 @@ export const useWalletStore = defineStore('wallet', {
     supportedAssets(): WalletAsset[] {
       return this.features.details?.supported_assets ?? [];
     },
-    activeCanisterId(): Principal {
-      if (!this.canisterId) {
-        throw new Error('Wallet canister not selected');
-      }
-
+    walletId(): Principal {
       return Principal.fromText(this.canisterId);
     },
     service(): WalletService {
-      return services().wallet.withWalletId(this.activeCanisterId);
+      return services().wallet.withWalletId(this.walletId);
+    },
+    name(state): string {
+      return computedWalletName({ canisterId: Principal.fromText(state.canisterId) });
     },
   },
   actions: {
     reset(): void {
-      this.canisterId = null;
-      this.user = null;
-      this.name = null;
-      this.accounts.items = [];
-      this.features.details = null;
-      this.notifications.items = [];
+      const initialState = initialStoreState();
+
+      this.connectionStatus = initialState.connectionStatus;
+      this.canisterId = initialState.canisterId;
+      this.accounts = initialState.accounts;
+      this.features = initialState.features;
+      this.notifications = initialState.notifications;
+      this.user = initialState.user;
+      this.privileges = initialState.privileges;
 
       accountsWorker?.postMessage({
         type: 'stop',
@@ -143,6 +175,65 @@ export const useWalletStore = defineStore('wallet', {
       notificationsWorker?.postMessage({
         type: 'stop',
       });
+    },
+    async connectTo(walletId: Principal): Promise<WalletConnectionStatus> {
+      const app = useAppStore();
+
+      try {
+        if (this.loading) {
+          logger.warn(`Wallet is already loading`);
+          return this.connectionStatus;
+        }
+
+        // reset the store to the initial state before connecting to a new wallet, this makes sure that
+        // the store is in a consistent state and that the user is not seeing any stale data
+        this.reset();
+
+        this.loading = true;
+        this.connectionStatus = WalletConnectionStatus.Connecting;
+        this.canisterId = walletId.toText();
+        const myUser = await this.service.myUser();
+        if (!myUser) {
+          logger.warn(`User not registered in the selected wallet`);
+          this.connectionStatus = WalletConnectionStatus.UnregisteredUser;
+          return this.connectionStatus;
+        }
+
+        this.user = myUser.me;
+        this.privileges = myUser.privileges;
+
+        // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
+        this.loadAccountList();
+        this.loadWalletFeatures();
+
+        accountsWorker?.postMessage({
+          type: 'start',
+          data: {
+            walletId,
+          },
+        });
+
+        notificationsWorker?.postMessage({
+          type: 'start',
+          data: {
+            walletId,
+          },
+        });
+
+        this.connectionStatus = WalletConnectionStatus.Connected;
+      } catch (err) {
+        logger.error(`Failed to connect to wallet`, { err });
+        this.connectionStatus = WalletConnectionStatus.Failed;
+
+        app.sendNotification({
+          type: 'error',
+          message: i18n.global.t('wallets.user_load_error'),
+        });
+      } finally {
+        this.loading = false;
+      }
+
+      return this.connectionStatus;
     },
     async markNotificationRead(notificationId: UUID, read: boolean): Promise<void> {
       const app = useAppStore();
@@ -214,54 +305,6 @@ export const useWalletStore = defineStore('wallet', {
         this.features.details = await this.service.features();
       } finally {
         this.features.loading = false;
-      }
-    },
-    async load(walletId: Principal, name: string): Promise<void> {
-      const app = useAppStore();
-
-      try {
-        if (this.loading) {
-          logger.warn(`Wallet is already loading`);
-          return;
-        }
-
-        this.name = name;
-        this.loading = true;
-        this.canisterId = walletId.toText();
-        const user = await this.service.myUser();
-        if (!user) {
-          logger.warn(`User not registered in the selected wallet`);
-          return;
-        }
-
-        this.user = user;
-
-        // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
-        this.loadAccountList();
-        this.loadWalletFeatures();
-
-        accountsWorker?.postMessage({
-          type: 'start',
-          data: {
-            walletId,
-          },
-        });
-
-        notificationsWorker?.postMessage({
-          type: 'start',
-          data: {
-            walletId,
-          },
-        });
-      } catch (err) {
-        logger.error(`Failed to load user wallet`, { err });
-
-        app.sendNotification({
-          type: 'error',
-          message: i18n.global.t('wallets.user_load_error'),
-        });
-      } finally {
-        this.loading = false;
       }
     },
   },
