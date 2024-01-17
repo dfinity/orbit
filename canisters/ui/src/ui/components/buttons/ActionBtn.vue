@@ -12,7 +12,7 @@
     <span v-if="props.text">{{ props.text }}</span>
   </VBtn>
 
-  <VDialog v-model="open" :persistent="persist" transition="dialog-bottom-transition" scrollable>
+  <VDialog v-model="open" transition="dialog-bottom-transition" scrollable>
     <VCard :loading="loading">
       <VToolbar dark color="primary">
         <VToolbarTitle> {{ props.title }} </VToolbarTitle>
@@ -64,6 +64,7 @@ const props = withDefaults(
     modelValue?: M;
     submit?: (model: M) => Promise<T> | T;
     confirmCloseDelayMs?: number;
+    clone?: (model: M) => M;
   }>(),
   {
     text: undefined,
@@ -81,6 +82,11 @@ const props = withDefaults(
     modelValue: null as any,
     submit: undefined,
     confirmCloseDelayMs: 0,
+    clone: (model: M) => {
+      const cloned = JSON.parse(JSON.stringify({ modelValue: model }));
+
+      return cloned.modelValue;
+    },
   },
 );
 
@@ -96,7 +102,6 @@ const emit = defineEmits<{
 const intervalValue = ref<M>(props.modelValue as M) as Ref<M>;
 
 const open = ref<boolean>(false);
-const persist = ref<boolean>(false);
 const loading = ref<boolean>(false);
 const modelValue = computed({
   get: () => props.modelValue,
@@ -115,14 +120,13 @@ const setInternalValue = (value: M | undefined): void => {
     return;
   }
 
-  const cloned = JSON.parse(JSON.stringify({ modelValue: value }));
-  intervalValue.value = cloned.modelValue;
+  intervalValue.value = props.clone(value);
 };
 
 watch(
   () => modelValue.value,
   value => {
-    if (open.value || value === undefined) {
+    if (open.value || loading.value || value === undefined) {
       // when the dialog is open we don't want to update the intervalValue
       // since that would overwrite the user changes.
       return;
@@ -136,10 +140,7 @@ watch(
 watch(
   () => open.value,
   isOpen => {
-    if (!isOpen) {
-      persist.value = false;
-      loading.value = false;
-
+    if (!isOpen && !loading.value) {
       setInternalValue(props.modelValue);
       emit('closed');
     }
@@ -153,7 +154,6 @@ const close = (): void => {
 const submit = async (): Promise<void> => {
   try {
     loading.value = true;
-    persist.value = true;
 
     let result: T | undefined;
     if (props.submit) {
@@ -170,7 +170,6 @@ const submit = async (): Promise<void> => {
     emit('failed', error);
   } finally {
     loading.value = false;
-    persist.value = false;
   }
 };
 </script>
