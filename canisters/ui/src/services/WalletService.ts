@@ -6,7 +6,9 @@ import { idlFactory } from '~/generated/wallet';
 import {
   Account,
   AccountBalance,
+  AddUserGroupOperationInput,
   CreateProposalInput,
+  EditUserGroupOperationInput,
   FetchAccountBalancesInput,
   GetAccountInput,
   GetProposalInput,
@@ -18,10 +20,12 @@ import {
   MarkNotificationsReadInput,
   Notification,
   Proposal,
+  RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
   UUID,
   User,
+  UserGroup,
   UserPrivilege,
   VoteOnProposalInput,
   WalletFeatures,
@@ -76,6 +80,60 @@ export class WalletService {
       me: result.Ok.me,
       privileges: result.Ok.privileges,
     };
+  }
+
+  async listUserGroups(): Promise<UserGroup[]> {
+    const result = await this.actor.list_user_groups();
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.user_groups;
+  }
+
+  async removeUserGroup(input: RemoveUserGroupOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveUserGroup: input },
+    });
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addUserGroup(input: AddUserGroupOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddUserGroup: input },
+    });
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editUserGroup(input: EditUserGroupOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditUserGroup: input },
+    });
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
   }
 
   async features(): Promise<WalletFeatures> {

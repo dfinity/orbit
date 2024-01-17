@@ -15,6 +15,13 @@ export default {
       'Qualquer modificação apenas serão aplicadas a sua conta de usuário.',
     user_activities_card_title: 'Atividades do usuário',
     wallet_upgrades_card_title: 'Atualizaçōes de sistema',
+    data_load_error: 'Erro ao carregar os dados, por favor, tente novamente.',
+    dialog_confirmation_title: 'Confirmação',
+    dialog_confirmation_question: 'Tem a certeza que pretende continuar?',
+    request_failed_message: 'O pedido falhou, por favor, tente novamente.',
+    request_pending_message: 'O seu pedido foi criado e está pendente de aprovação.',
+    request_adopted_message: 'Este pedido foi aceite e está sendo processado.',
+    request_rejected_message: 'Este pedido foi rejeitado.',
   },
   login: {
     signin_slogan: 'Conecte-se para gerir a sua carteira de ativos crypto',
@@ -102,7 +109,11 @@ export default {
     proposals: 'Propostas',
     withdraw_requests: 'Pedidos de retirada',
     approve: 'Aprovar',
+    id: 'ID',
+    save: 'Salvar',
     approved: 'Aprovado',
+    confirm: 'Confirmar',
+    cancel: 'Cancelar',
     reject: 'Rejeitar',
     rejected: 'Rejeitado',
     to: 'Para',
@@ -125,6 +136,7 @@ export default {
     login: 'Entrar',
     logout: 'Sair',
     signin: 'Entrar',
+    create: 'Criar',
     signout: 'Sair',
     new_transfer: 'Nova transferência',
     scheduled: 'Agendado',
@@ -207,10 +219,14 @@ export default {
     administration: {
       title: 'Administração da carteira',
     },
-    user_group: {
+    user_groups: {
       title: 'Grupos de usuários',
       btn_new_group: 'Criar grupo',
       btn_manage_permissions: 'Gerir permissōes',
+      error_loading_user_groups:
+        'Erro ao carregar os grupos de usuários, por favor, tente novamente.',
+      btn_edit_title: 'Editar grupo de usuários',
+      create_new_group_title: 'Criar novo grupo de usuários',
     },
     initialization: {
       status_starting: 'Inicializando, por favor, aguarde ...',

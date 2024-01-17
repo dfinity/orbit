@@ -58,3 +58,11 @@ export const afterLoginRedirect = (): void => {
 
   router.push({ name: defaultHomeRoute });
 };
+
+export const assertAndReturn = <T>(value: T | undefined | null, name = 'Value'): T => {
+  if (value === undefined || value === null) {
+    throw new Error(`${name} is undefined or null.`);
+  }
+
+  return value;
+};
