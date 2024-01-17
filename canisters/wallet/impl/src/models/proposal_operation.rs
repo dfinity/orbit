@@ -2,12 +2,13 @@ use super::{
     access_control::{ResourceSpecifier, UserSpecifier},
     criteria::Criteria,
     specifier::ProposalSpecifier,
-    AccountId, Blockchain, BlockchainStandard, UserId, UserStatus,
+    AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, UserId, UserStatus,
 };
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
+use wallet_api::MetadataDTO;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -86,6 +87,38 @@ pub struct EditAccountOperationInput {
     pub owners: Option<Vec<UserId>>,
     pub policies: Option<AccountPoliciesInput>,
     pub name: Option<String>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAddressBookEntryOperation {
+    /// The address book entry id is only available after the operation is executed.
+    pub address_book_entry_id: Option<AddressBookEntryId>,
+    pub input: AddAddressBookEntryOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAddressBookEntryOperationInput {
+    pub address_owner: String,
+    pub address: String,
+    pub blockchain: Blockchain,
+    pub standard: BlockchainStandard,
+    pub metadata: Vec<MetadataDTO>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAddressBookEntryOperation {
+    pub input: EditAddressBookEntryOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAddressBookEntryOperationInput {
+    pub address_book_entry_id: AddressBookEntryId,
+    pub address_owner: Option<String>,
+    pub metadata: Option<Vec<MetadataDTO>>,
 }
 
 #[stable_object]
