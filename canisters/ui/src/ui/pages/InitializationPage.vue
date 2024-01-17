@@ -46,7 +46,16 @@ const waitUntilWalletIsInitialized = async (
   const waitBetweenTriesMs = retryWaitMs ?? 1000;
 
   while (maxRetries > 0) {
-    if (await walletService.withWalletId(walletId).isHealthy()) {
+    if (
+      await walletService
+        .withWalletId(walletId)
+        .isHealthy()
+        .catch(e => {
+          logger.error(`Failed to check wallet health, due to ${e}`);
+
+          return false;
+        })
+    ) {
       return;
     }
 
