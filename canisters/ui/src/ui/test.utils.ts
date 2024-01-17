@@ -13,6 +13,7 @@ export const mount = <T extends Component>(
   return componentMount(component, {
     ...options,
     global: {
+      ...options.global,
       plugins: [pinia, vuetify, i18n, serviceManager, navigation, ...plugins],
       mocks: {
         $router: {

@@ -1,5 +1,6 @@
 <template>
   <VBtn
+    data-testid="action-btn"
     :size="props.size"
     :icon="!props.text"
     :variant="props.variant"
@@ -12,10 +13,16 @@
     <span v-if="props.text">{{ props.text }}</span>
   </VBtn>
 
-  <VDialog v-model="open" :persistent="loading" transition="dialog-bottom-transition" scrollable>
+  <VDialog
+    v-model="open"
+    data-testid="action-btn-dialog"
+    :persistent="loading"
+    transition="dialog-bottom-transition"
+    scrollable
+  >
     <VCard :loading="loading">
       <VToolbar dark color="primary">
-        <VToolbarTitle> {{ props.title }} </VToolbarTitle>
+        <VToolbarTitle data-testid="action-btn-dialog-title"> {{ props.title }} </VToolbarTitle>
         <VBtn :disabled="loading" :icon="mdiClose" dark @click="close" />
       </VToolbar>
       <VCardText>
