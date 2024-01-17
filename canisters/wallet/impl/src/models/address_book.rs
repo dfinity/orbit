@@ -1,5 +1,6 @@
 use super::{Blockchain, BlockchainStandard};
 use crate::errors::AddressBookError;
+use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -7,7 +8,6 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 use std::{collections::HashMap, hash::Hash};
-use wallet_api::AddressBookMetadataDTO;
 
 /// The address book entry id, which is a UUID.
 pub type AddressBookEntryId = UUID;
@@ -27,7 +27,7 @@ pub struct AddressBookEntry {
     /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
     pub standard: BlockchainStandard,
     /// The address' metadata.
-    pub metadata: Vec<AddressBookMetadataDTO>,
+    pub metadata: Metadata,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -65,46 +65,11 @@ fn validate_address(address: &String) -> ModelValidatorResult<AddressBookError> 
     Ok(())
 }
 
-fn validate_metadata(
-    metadata: &Vec<AddressBookMetadataDTO>,
-) -> ModelValidatorResult<AddressBookError> {
-    if metadata.len() > AddressBookEntry::MAX_METADATA as usize {
-        return Err(AddressBookError::ValidationError {
-            info: format!(
-                "Address book entry metadata count exceeds the maximum allowed: {}",
-                AddressBookEntry::MAX_METADATA
-            ),
-        });
-    }
-
-    for kv in metadata.iter() {
-        if kv.key.len() > AddressBookEntry::MAX_METADATA_KEY_LEN as usize {
-            return Err(AddressBookError::ValidationError {
-                info: format!(
-                    "Address book entry metadata key length exceeds the maximum allowed: {}",
-                    AddressBookEntry::MAX_METADATA_KEY_LEN
-                ),
-            });
-        }
-
-        if kv.value.len() > AddressBookEntry::MAX_METADATA_VALUE_LEN as usize {
-            return Err(AddressBookError::ValidationError {
-                info: format!(
-                    "Address book entry metadata value length exceeds the maximum allowed: {}",
-                    AddressBookEntry::MAX_METADATA_VALUE_LEN
-                ),
-            });
-        }
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<AddressBookError> for AddressBookEntry {
     fn validate(&self) -> ModelValidatorResult<AddressBookError> {
         validate_address_owner(&self.address_owner)?;
         validate_address(&self.address)?;
-        validate_metadata(&self.metadata)?;
+        self.metadata.validate()?;
 
         Ok(())
     }
@@ -113,9 +78,6 @@ impl ModelValidator<AddressBookError> for AddressBookEntry {
 impl AddressBookEntry {
     pub const ADDRESS_RANGE: (u16, u16) = (1, 255);
     pub const ADDRESS_OWNER_RANGE: (u16, u16) = (1, 255);
-    pub const MAX_METADATA: u16 = 10;
-    pub const MAX_METADATA_KEY_LEN: u16 = 24;
-    pub const MAX_METADATA_VALUE_LEN: u16 = 255;
 
     /// Creates a new address_book_entry key from the given key components.
     pub fn key(id: AddressBookEntryId) -> AddressBookEntryKey {
@@ -127,10 +89,7 @@ impl AddressBookEntry {
     }
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
-            .collect()
+        self.metadata.map()
     }
 }
 
@@ -216,81 +175,6 @@ mod tests {
             }
         );
     }
-
-    #[test]
-    fn fail_metadata_validation_too_many() {
-        let mut address_book_entry = mock_address_book_entry();
-        address_book_entry.metadata = vec![
-            AddressBookMetadataDTO {
-                key: "a".repeat(AddressBookEntry::MAX_METADATA_KEY_LEN.into()),
-                value: "b".repeat(AddressBookEntry::MAX_METADATA_VALUE_LEN.into())
-            };
-            AddressBookEntry::MAX_METADATA as usize + 1
-        ];
-
-        let result = address_book_entry.validate();
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AddressBookError::ValidationError {
-                info: format!(
-                    "Address book entry metadata count exceeds the maximum allowed: {}",
-                    AddressBookEntry::MAX_METADATA
-                ),
-            }
-        );
-    }
-
-    #[test]
-    fn fail_metadata_validation_key_too_long() {
-        let mut address_book_entry = mock_address_book_entry();
-        address_book_entry.metadata = vec![
-            AddressBookMetadataDTO {
-                key: "a".repeat((AddressBookEntry::MAX_METADATA_KEY_LEN + 1).into()),
-                value: "b".repeat(AddressBookEntry::MAX_METADATA_VALUE_LEN.into())
-            };
-            AddressBookEntry::MAX_METADATA as usize
-        ];
-
-        let result = address_book_entry.validate();
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AddressBookError::ValidationError {
-                info: format!(
-                    "Address book entry metadata key length exceeds the maximum allowed: {}",
-                    AddressBookEntry::MAX_METADATA_KEY_LEN
-                ),
-            }
-        );
-    }
-
-    #[test]
-    fn fail_metadata_validation_value_too_long() {
-        let mut address_book_entry = mock_address_book_entry();
-        address_book_entry.metadata = vec![
-            AddressBookMetadataDTO {
-                key: "a".repeat(AddressBookEntry::MAX_METADATA_KEY_LEN.into()),
-                value: "b".repeat((AddressBookEntry::MAX_METADATA_VALUE_LEN + 1).into())
-            };
-            AddressBookEntry::MAX_METADATA as usize
-        ];
-
-        let result = address_book_entry.validate();
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AddressBookError::ValidationError {
-                info: format!(
-                    "Address book entry metadata value length exceeds the maximum allowed: {}",
-                    AddressBookEntry::MAX_METADATA_VALUE_LEN
-                ),
-            }
-        );
-    }
 }
 
 #[cfg(test)]
@@ -306,13 +190,7 @@ pub mod address_book_entry_test_utils {
             address: "0x1234".to_string(),
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
-            metadata: vec![
-                AddressBookMetadataDTO {
-                    key: "a".repeat(AddressBookEntry::MAX_METADATA_KEY_LEN.into()),
-                    value: "b".repeat(AddressBookEntry::MAX_METADATA_VALUE_LEN.into())
-                };
-                AddressBookEntry::MAX_METADATA as usize
-            ],
+            metadata: Metadata::mock(),
             last_modification_timestamp: 0,
         }
     }

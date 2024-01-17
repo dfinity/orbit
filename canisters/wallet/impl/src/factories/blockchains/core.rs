@@ -1,7 +1,7 @@
 use super::InternetComputer;
 use crate::{
     errors::FactoryError,
-    models::{Account, Blockchain, BlockchainStandard, Transfer},
+    models::{Account, Blockchain, BlockchainStandard, Metadata, Transfer},
 };
 use async_trait::async_trait;
 use ic_canister_core::api::ApiError;
@@ -17,15 +17,12 @@ pub struct BlockchainTransactionFee {
     /// Depending on the blockchain, the fee can have different structures and include more options.
     ///
     /// This field is used to store the fee metadata in a key-value format when needed.
-    pub metadata: Vec<(String, String)>,
+    pub metadata: Metadata,
 }
 
 impl BlockchainTransactionFee {
     pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|(key, value)| (key.to_owned(), value.to_owned()))
-            .collect()
+        self.metadata.map()
     }
 }
 

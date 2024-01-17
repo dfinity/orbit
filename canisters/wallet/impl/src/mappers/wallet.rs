@@ -34,7 +34,7 @@ impl From<WalletFeatures> for WalletFeaturesDTO {
                         .map(|standard| standard.to_string())
                         .collect(),
                     name: asset.name,
-                    metadata: asset.metadata,
+                    metadata: asset.metadata.into_vec_dto(),
                 })
                 .collect(),
         }

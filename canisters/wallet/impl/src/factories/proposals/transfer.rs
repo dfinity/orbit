@@ -5,8 +5,8 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, Proposal, ProposalExecutionPlan, ProposalOperation, Transfer, TransferOperation,
-        TransferOperationInput,
+        Account, Metadata, Proposal, ProposalExecutionPlan, ProposalOperation, Transfer,
+        TransferOperation, TransferOperationInput,
     },
     repositories::{TransferRepository, ACCOUNT_REPOSITORY},
 };
@@ -54,7 +54,7 @@ impl Create<wallet_api::TransferOperationInput> for TransferProposalCreate {
                     amount: operation_input.amount,
                     fee: operation_input.fee,
                     // todo: add metadata mapping
-                    metadata: vec![],
+                    metadata: Metadata::default(),
                     // todo: add network mapping
                     network: match operation_input.network {
                         Some(network) => network.id,

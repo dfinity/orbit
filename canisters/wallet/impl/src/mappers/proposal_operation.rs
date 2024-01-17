@@ -37,7 +37,7 @@ impl TransferOperation {
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
-                metadata: self.input.metadata,
+                metadata: self.input.metadata.into_vec_dto(),
                 network: Some(NetworkDTO {
                     id: self.input.network.clone(),
                     name: self.input.network.clone(),
@@ -80,7 +80,7 @@ impl AddAccountOperation {
                 policies: self.input.policies.into(),
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
-                metadata: self.input.metadata,
+                metadata: self.input.metadata.into_vec_dto(),
             },
         }
     }
@@ -117,7 +117,7 @@ impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput 
                 .expect("Invalid blockchain"),
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
                 .expect("Invalid blockchain standard"),
-            metadata: input.metadata,
+            metadata: input.metadata.into(),
         }
     }
 }

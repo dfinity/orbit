@@ -1,7 +1,7 @@
 use super::WASM_PAGE_SIZE;
 use crate::{
     core::ic_cdk::api::{time, trap},
-    models::{Blockchain, BlockchainStandard, WalletAsset},
+    models::{Blockchain, BlockchainStandard, Metadata, WalletAsset},
 };
 use candid::{CandidType, Decode, Deserialize, Encode, Principal};
 use ic_canister_core::types::{Timestamp, UUID};
@@ -18,7 +18,7 @@ thread_local! {
           standards: vec![BlockchainStandard::Native],
           symbol: "ICP".to_string(),
           name: "Internet Computer".to_string(),
-          metadata: Vec::new(),
+          metadata: Metadata::default(),
         },
       ].into_iter().collect());
 }
