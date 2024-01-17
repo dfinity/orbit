@@ -1,6 +1,7 @@
 <template>
   <VBtn
-    data-testid="action-btn"
+    v-bind="$attrs"
+    :data-test-id="props.dataTestId"
     :size="props.size"
     :icon="!props.text"
     :variant="props.variant"
@@ -15,14 +16,18 @@
 
   <VDialog
     v-model="open"
-    data-testid="action-btn-dialog"
+    :data-test-id="props.dataTestId ? `${props.dataTestId}-dialog` : undefined"
     :persistent="loading"
     transition="dialog-bottom-transition"
     scrollable
   >
     <VCard :loading="loading">
       <VToolbar dark color="primary">
-        <VToolbarTitle data-testid="action-btn-dialog-title"> {{ props.title }} </VToolbarTitle>
+        <VToolbarTitle
+          :data-test-id="props.dataTestId ? `${props.dataTestId}-dialog-title` : undefined"
+        >
+          {{ props.title }}
+        </VToolbarTitle>
         <VBtn :disabled="loading" :icon="mdiClose" dark @click="close" />
       </VToolbar>
       <VCardText>
@@ -72,6 +77,7 @@ const props = withDefaults(
     submit?: (model: M) => Promise<T> | T;
     confirmCloseDelayMs?: number;
     clone?: (model: M) => M;
+    dataTestId?: string;
   }>(),
   {
     text: undefined,
@@ -89,6 +95,7 @@ const props = withDefaults(
     modelValue: null as any,
     submit: undefined,
     confirmCloseDelayMs: 0,
+    dataTestId: undefined,
     clone: (model: M) => {
       const cloned = JSON.parse(JSON.stringify({ modelValue: model }));
 

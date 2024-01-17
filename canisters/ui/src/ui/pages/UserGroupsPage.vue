@@ -17,6 +17,7 @@
               color="primary-variant"
               size="default"
               variant="outlined"
+              data-test-id="create-user-group-btn"
               @failed="onFailedOperation"
               @submitted="onSuccessfulOperation"
             >
@@ -43,7 +44,12 @@
           </AuthCheck>
 
           <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
-            <VBtn color="primary-variant" variant="flat" class="ml-2">
+            <VBtn
+              color="primary-variant"
+              variant="flat"
+              class="ml-2"
+              data-test-id="manage-permissions-btn"
+            >
               {{ $t('pages.user_groups.btn_manage_permissions') }}
             </VBtn>
           </AuthCheck>
@@ -74,6 +80,7 @@
                     v-model="item.id"
                     :icon="mdiTrashCanOutline"
                     :submit="id => wallet.service.removeUserGroup({ user_group_id: id })"
+                    data-test-id="remove-user-group-btn"
                     @failed="onFailedOperation"
                     @submitted="onSuccessfulOperation"
                   />
@@ -89,6 +96,7 @@
                           name: changes.model.name.trim(),
                         })
                     "
+                    data-test-id="edit-user-group-btn"
                     @failed="onFailedOperation"
                     @submitted="onSuccessfulOperation"
                   >

@@ -14,20 +14,23 @@ describe('ActionBtn', () => {
       props: {
         title: 'Hello World',
       },
+      attrs: {
+        'data-test-id': 'action-btn',
+      },
       attachTo: document.body,
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(document.querySelector('[data-testid="action-btn-dialog"]')).toBeNull();
+    expect(document.querySelector('[data-test-id="action-btn-dialog"]')).toBeNull();
 
-    await wrapper.find('[data-testid="action-btn"]').trigger('click');
+    await wrapper.find('[data-test-id="action-btn"]').trigger('click');
 
     // VDialog is teleported to the body element, hence the need to use document here
-    const dialog = document.querySelector('[data-testid="action-btn-dialog"]');
+    const dialog = document.querySelector('[data-test-id="action-btn-dialog"]');
     expect(dialog).not.toBeNull();
 
     if (dialog) {
-      const title = dialog.querySelector('[data-testid="action-btn-dialog-title"]');
+      const title = dialog.querySelector('[data-test-id="action-btn-dialog-title"]');
       expect(title?.textContent).toEqual('Hello World');
     }
   });

@@ -17,7 +17,7 @@ describe('PageBody', () => {
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-body"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-body"]').text()).toBe('Hello World');
+    expect(wrapper.find('[data-test-id="page-body"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="page-body"]').text()).toBe('Hello World');
   });
 });

@@ -17,8 +17,8 @@ describe('PageHeader', () => {
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-header-title"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-header-title"]').text()).toEqual('Hello World');
+    expect(wrapper.find('[data-test-id="page-header-title"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="page-header-title"]').text()).toEqual('Hello World');
   });
 
   it('renders the title slot with slot replacement', () => {
@@ -29,8 +29,8 @@ describe('PageHeader', () => {
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-header-title"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-header-title"]').text()).toEqual('Hello World');
+    expect(wrapper.find('[data-test-id="page-header-title"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="page-header-title"]').text()).toEqual('Hello World');
   });
 
   it('renders the actions slot with slot replacement', () => {
@@ -41,7 +41,7 @@ describe('PageHeader', () => {
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-header-actions"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="page-header-actions"]').text()).toEqual('Hello World');
+    expect(wrapper.find('[data-test-id="page-header-actions"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="page-header-actions"]').text()).toEqual('Hello World');
   });
 });
