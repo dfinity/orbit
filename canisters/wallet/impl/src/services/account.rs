@@ -292,7 +292,7 @@ mod tests {
         models::{
             account_test_utils::mock_account, criteria::Criteria, user_test_utils::mock_user,
             AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, Blockchain,
-            BlockchainStandard, User,
+            BlockchainStandard, Metadata, User,
         },
         repositories::UserRepository,
     };
@@ -342,7 +342,7 @@ mod tests {
                 owners: vec![ctx.caller_user.id],
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
-                metadata: vec![],
+                metadata: Metadata::default(),
                 policies: AccountPoliciesInput {
                     transfer: Some(Criteria::AutoAdopted),
                     edit: Some(Criteria::AutoAdopted),
@@ -390,7 +390,7 @@ mod tests {
                 owners: vec![ctx.caller_user.id],
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::ERC20,
-                metadata: vec![],
+                metadata: Metadata::default(),
                 policies: AccountPoliciesInput {
                     transfer: Some(Criteria::AutoAdopted),
                     edit: Some(Criteria::AutoAdopted),

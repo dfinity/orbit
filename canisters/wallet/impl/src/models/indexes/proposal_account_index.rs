@@ -40,7 +40,7 @@ impl Proposal {
 mod tests {
     use super::*;
     use crate::models::{
-        proposal_test_utils::mock_proposal, TransferOperation, TransferOperationInput,
+        proposal_test_utils::mock_proposal, Metadata, TransferOperation, TransferOperationInput,
     };
     use ic_stable_structures::Storable;
     use num_bigint::BigUint;
@@ -70,7 +70,7 @@ mod tests {
             input: TransferOperationInput {
                 amount: candid::Nat(BigUint::from(100u32)),
                 fee: None,
-                metadata: vec![],
+                metadata: Metadata::default(),
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
                 from_account_id: [0; 16],

@@ -1,5 +1,6 @@
 use super::{AccountBalance, Blockchain, BlockchainStandard, UserId};
 use crate::errors::AccountError;
+use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -7,7 +8,6 @@ use ic_canister_core::{
 };
 use ic_canister_macros::stable_object;
 use std::{collections::HashMap, hash::Hash};
-use wallet_api::AccountMetadataDTO;
 
 /// The account metadata key for the asset symbol;
 pub const ACCOUNT_METADATA_SYMBOL_KEY: &str = "symbol";
@@ -51,7 +51,7 @@ pub struct Account {
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
-    pub metadata: Vec<AccountMetadataDTO>,
+    pub metadata: Metadata,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -68,39 +68,6 @@ pub struct AccountPolicies {
 pub struct AccountKey {
     /// The account id, which is a UUID.
     pub id: AccountId,
-}
-
-fn validate_metadata(metadata: &Vec<AccountMetadataDTO>) -> ModelValidatorResult<AccountError> {
-    if metadata.len() > Account::MAX_METADATA as usize {
-        return Err(AccountError::ValidationError {
-            info: format!(
-                "Account metadata count exceeds the maximum allowed: {}",
-                Account::MAX_METADATA
-            ),
-        });
-    }
-
-    for kv in metadata.iter() {
-        if kv.key.len() > Account::MAX_METADATA_KEY_LEN as usize {
-            return Err(AccountError::ValidationError {
-                info: format!(
-                    "Account metadata key length exceeds the maximum allowed: {}",
-                    Account::MAX_METADATA_KEY_LEN
-                ),
-            });
-        }
-
-        if kv.value.len() > Account::MAX_METADATA_VALUE_LEN as usize {
-            return Err(AccountError::ValidationError {
-                info: format!(
-                    "Account metadata value length exceeds the maximum allowed: {}",
-                    Account::MAX_METADATA_VALUE_LEN
-                ),
-            });
-        }
-    }
-
-    Ok(())
 }
 
 fn validate_symbol(symbol: &String) -> ModelValidatorResult<AccountError> {
@@ -147,7 +114,7 @@ fn validate_address(address: &String) -> ModelValidatorResult<AccountError> {
 
 impl ModelValidator<AccountError> for Account {
     fn validate(&self) -> ModelValidatorResult<AccountError> {
-        validate_metadata(&self.metadata)?;
+        self.metadata.validate()?;
         validate_symbol(&self.symbol)?;
         validate_address(&self.address)?;
         validate_owners(&self.owners)?;
@@ -161,9 +128,6 @@ impl Account {
     pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
     pub const SYMBOL_RANGE: (u8, u8) = (1, 8);
     pub const MAX_POLICIES: u8 = 10;
-    pub const MAX_METADATA: u8 = 10;
-    pub const MAX_METADATA_KEY_LEN: u8 = 24;
-    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
 
     /// Creates a new account key from the given key components.
     pub fn key(id: AccountId) -> AccountKey {
@@ -175,10 +139,7 @@ impl Account {
     }
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
-        self.metadata
-            .iter()
-            .map(|kv| (kv.key.to_owned(), kv.value.to_owned()))
-            .collect()
+        self.metadata.map()
     }
 }
 
@@ -186,44 +147,6 @@ impl Account {
 mod tests {
     use super::account_test_utils::mock_account;
     use super::*;
-
-    #[test]
-    fn fail_metadata_validation_too_many() {
-        let mut account = mock_account();
-        account.metadata = vec![
-            AccountMetadataDTO {
-                key: "a".repeat(25),
-                value: "b".repeat(25)
-            };
-            Account::MAX_METADATA as usize + 1
-        ];
-
-        let result = validate_metadata(&account.metadata);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AccountError::ValidationError {
-                info: "Account metadata count exceeds the maximum allowed: 10".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn test_metadata_validation() {
-        let mut account = mock_account();
-        account.metadata = vec![
-            AccountMetadataDTO {
-                key: "a".repeat(24),
-                value: "b".repeat(24)
-            };
-            Account::MAX_METADATA as usize - 1
-        ];
-
-        let result = validate_metadata(&account.metadata);
-
-        assert!(result.is_ok());
-    }
 
     #[test]
     fn fail_symbol_validation_too_short() {
@@ -377,13 +300,7 @@ pub mod account_test_utils {
             },
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
-            metadata: vec![
-                AccountMetadataDTO {
-                    key: "a".repeat(24),
-                    value: "b".repeat(24)
-                };
-                Account::MAX_METADATA as usize - 1
-            ],
+            metadata: Metadata::mock(),
             symbol: "ICP".to_string(),
         }
     }

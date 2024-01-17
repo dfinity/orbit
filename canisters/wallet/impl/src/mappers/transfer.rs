@@ -15,7 +15,7 @@ impl TransferMapper {
                 .to_string(),
             amount: transfer.amount,
             fee: transfer.fee,
-            metadata: transfer.metadata,
+            metadata: transfer.metadata.into_vec_dto(),
             network: NetworkDTO {
                 id: transfer.blockchain_network.to_owned(),
                 name: transfer.blockchain_network.to_owned(),

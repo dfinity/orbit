@@ -41,7 +41,7 @@ impl Transfer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::TransferStatus;
+    use crate::models::{Metadata, TransferStatus};
     use num_bigint::BigUint;
 
     #[test]
@@ -58,7 +58,7 @@ mod tests {
             status: TransferStatus::Created,
             initiator_user: [2; 16],
             last_modification_timestamp: 0,
-            metadata: vec![],
+            metadata: Metadata::default(),
         };
 
         let index = transfer.to_index_by_account();

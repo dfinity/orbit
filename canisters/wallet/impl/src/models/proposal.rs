@@ -10,6 +10,7 @@ use crate::core::proposal::{
     ProposalEvaluator, ProposalPossibleVotersFinder, ProposalVoteRightsEvaluator,
 };
 use crate::errors::{EvaluateError, ProposalError};
+use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -259,7 +260,7 @@ pub mod proposal_test_utils {
                     network: "mainnet".to_string(),
                     amount: candid::Nat(BigUint::from(100u32)),
                     fee: None,
-                    metadata: vec![],
+                    metadata: Metadata::default(),
                     to: "0x1234".to_string(),
                     from_account_id: [1; 16],
                 },
