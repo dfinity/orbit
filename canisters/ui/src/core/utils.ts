@@ -109,3 +109,7 @@ export function nanoToJsDate(nanoTimestamp: bigint): Date {
 export const wait = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
+
+export const unreachable = (input: never): never => {
+  throw new Error(`Unreachable, found: '${input}'`);
+};

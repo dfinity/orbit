@@ -1,3 +1,4 @@
+import { unreachable } from '~/core';
 import { Privilege } from '~/types/wallet';
 import { useSessionStore } from '~/ui/stores/session';
 import { useWalletStore } from '~/ui/stores/wallet';
@@ -17,7 +18,7 @@ export const hasRequiredSession = (
     case RequiredSessionState.Any:
       return true;
     default:
-      throw new Error(`Unknown session state variant: ${requiredSessionState}`);
+      throw unreachable(requiredSessionState);
   }
 };
 
