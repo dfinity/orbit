@@ -6,7 +6,9 @@ import { idlFactory } from '~/generated/wallet';
 import {
   Account,
   AccountBalance,
+  AddUserGroupOperationInput,
   CreateProposalInput,
+  EditUserGroupOperationInput,
   FetchAccountBalancesInput,
   GetAccountInput,
   GetProposalInput,
@@ -18,6 +20,7 @@ import {
   MarkNotificationsReadInput,
   Notification,
   Proposal,
+  RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
   UUID,
@@ -88,16 +91,12 @@ export class WalletService {
     return result.Ok.user_groups;
   }
 
-  async removeUserGroup(id: UUID): Promise<Proposal> {
+  async removeUserGroup(input: RemoveUserGroupOperationInput): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: {
-        RemoveUserGroup: {
-          user_group_id: id,
-        },
-      },
+      operation: { RemoveUserGroup: input },
     });
 
     if ('Err' in result) {
@@ -107,16 +106,12 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async addUserGroup(input: { name: string }): Promise<Proposal> {
+  async addUserGroup(input: AddUserGroupOperationInput): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: {
-        AddUserGroup: {
-          name: input.name,
-        },
-      },
+      operation: { AddUserGroup: input },
     });
 
     if ('Err' in result) {
@@ -126,17 +121,12 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async editUserGroup(id: UUID, input: { name: string }): Promise<Proposal> {
+  async editUserGroup(input: EditUserGroupOperationInput): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: {
-        EditUserGroup: {
-          user_group_id: id,
-          name: input.name,
-        },
-      },
+      operation: { EditUserGroup: input },
     });
 
     if ('Err' in result) {

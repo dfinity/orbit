@@ -12,7 +12,12 @@
                 v-model="createModel"
                 :text="$t('pages.user_groups.btn_new_group')"
                 :title="$t('pages.user_groups.create_new_group_title')"
-                :submit="changes => create(changes.model)"
+                :submit="
+                  ({ model }) =>
+                    wallet.service.addUserGroup({
+                      name: assertAndReturn(model.name).trim(),
+                    })
+                "
                 color="primary-variant"
                 size="default"
                 variant="outlined"
@@ -78,7 +83,7 @@
                       <ActionBtn
                         v-model="item.id"
                         :icon="mdiTrashCanOutline"
-                        :submit="remove"
+                        :submit="id => wallet.service.removeUserGroup({ user_group_id: id })"
                         @failed="onFailedOperation"
                         @submitted="onSuccessfulOperation"
                       />
@@ -87,7 +92,13 @@
                         v-model="item.edit"
                         :title="$t('pages.user_groups.btn_edit_title')"
                         :icon="mdiPencil"
-                        :submit="changes => edit(item.id, changes.model)"
+                        :submit="
+                          changes =>
+                            wallet.service.editUserGroup({
+                              user_group_id: item.id,
+                              name: changes.model.name.trim(),
+                            })
+                        "
                         @failed="onFailedOperation"
                         @submitted="onSuccessfulOperation"
                       >
@@ -126,7 +137,7 @@
 <script lang="ts" setup>
 import { mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { ref } from 'vue';
-import { Proposal, UUID, UserGroup } from '~/generated/wallet/wallet.did';
+import { Proposal, UserGroup } from '~/generated/wallet/wallet.did';
 import { Privilege } from '~/types';
 import AuthCheck from '~/ui/components/AuthCheck.vue';
 import DataLoader from '~/ui/components/DataLoader.vue';
@@ -156,18 +167,6 @@ const transformItems = (items: UserGroup[]) => {
       valid: false,
     },
   }));
-};
-
-const remove = async (id: UUID): Promise<Proposal> => {
-  return await wallet.service.removeUserGroup(id);
-};
-
-const edit = async (id: UUID, input: Partial<UserGroup>): Promise<Proposal> => {
-  return await wallet.service.editUserGroup(id, { name: assertAndReturn(input.name).trim() });
-};
-
-const create = async (input: Partial<UserGroup>): Promise<Proposal> => {
-  return await wallet.service.addUserGroup({ name: assertAndReturn(input.name).trim() });
 };
 
 const onFailedOperation = (): void => {
