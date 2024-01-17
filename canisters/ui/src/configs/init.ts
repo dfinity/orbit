@@ -16,11 +16,10 @@ const appInitConfig: AppInitConfig = {
     internetIdentity: import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY,
   },
   canisters: {
-    controlPanel: import.meta.env.APP_CANISTER_ID_CONTROL_PANEL || '65evf-oqaaa-aaaal-add6q-cai',
-    ui: import.meta.env.APP_CANISTER_ID_UI || '6uh6z-yyaaa-aaaal-add7a-cai',
-    internetIdentity:
-      import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY || 'rdmx6-jaaaa-aaaaa-aaadq-cai',
-    icpIndex: import.meta.env.APP_CANISTER_ID_ICP_INDEX || 'qhbym-qaaaa-aaaaa-aaafq-cai',
+    controlPanel: import.meta.env.APP_CANISTER_ID_CONTROL_PANEL,
+    ui: import.meta.env.APP_CANISTER_ID_UI,
+    internetIdentity: import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY,
+    icpIndex: import.meta.env.APP_CANISTER_ID_ICP_INDEX,
   },
 };
 
