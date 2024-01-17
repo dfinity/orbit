@@ -4,7 +4,7 @@ use crate::{
     mappers::AddressBookMapper,
     models::{
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryId, Blockchain,
-        BlockchainStandard, EditAddressBookEntryOperationInput,
+        BlockchainStandard, EditAddressBookEntryOperationInput, Metadata,
     },
     repositories::{AddressBookRepository, ADDRESS_BOOK_REPOSITORY},
 };
@@ -100,7 +100,7 @@ impl AddressBookService {
         }
 
         if let Some(metadata) = &input.metadata {
-            entry.metadata = metadata.to_owned();
+            entry.metadata = metadata.to_owned().into();
         }
 
         entry.validate()?;
@@ -168,7 +168,7 @@ mod tests {
                 address: "0x1234".to_string(),
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
-                metadata: address_book_entry.metadata.clone(),
+                metadata: address_book_entry.metadata.clone().into_vec_dto(),
             },
         };
 
@@ -208,7 +208,7 @@ mod tests {
         let updated_entry = result.unwrap();
 
         address_book_entry.address_owner = "test_edit".to_string();
-        address_book_entry.metadata = vec![];
+        address_book_entry.metadata = Metadata::default();
 
         assert_eq!(updated_entry, address_book_entry);
     }

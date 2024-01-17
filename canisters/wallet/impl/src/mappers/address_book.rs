@@ -53,7 +53,7 @@ impl AddressBookMapper {
             address: input.address,
             blockchain: input.blockchain,
             standard: input.standard,
-            metadata: input.metadata,
+            metadata: input.metadata.into(),
             last_modification_timestamp: time(),
         };
 
