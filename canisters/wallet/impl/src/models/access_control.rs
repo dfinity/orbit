@@ -97,14 +97,14 @@ impl Display for CommonActionSpecifier {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CanisterSettingsActionSpecifier {
     Read,
-    ReadFeatures,
+    ReadConfig,
 }
 
 impl Display for CanisterSettingsActionSpecifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             CanisterSettingsActionSpecifier::Read => write!(f, "read"),
-            CanisterSettingsActionSpecifier::ReadFeatures => write!(f, "read_features"),
+            CanisterSettingsActionSpecifier::ReadConfig => write!(f, "read_config"),
         }
     }
 }
@@ -316,9 +316,9 @@ mod tests {
             "canister_settings_read"
         );
         assert_eq!(
-            ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)
+            ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadConfig)
                 .to_key(),
-            "canister_settings_read_features"
+            "canister_settings_read_config"
         );
         assert_eq!(
             ResourceSpecifier::Proposal(ProposalActionSpecifier::List).to_key(),

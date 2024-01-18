@@ -83,8 +83,8 @@ export interface AddUserOperationInput {
 }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
-export type CanisterSettingsActionSpecifier = { 'ReadFeatures' : null } |
-  { 'Read' : null };
+export type CanisterSettingsActionSpecifier = { 'Read' : null } |
+  { 'ReadConfig' : null };
 export type ChangeCanisterActionSpecifier = { 'Create' : null };
 export interface ChangeCanisterOperation {
   'input' : ChangeCanisterOperationInput,
@@ -106,6 +106,10 @@ export type CommonActionSpecifier = { 'List' : null } |
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
+export interface Config {
+  'user_groups' : Array<UserGroup>,
+  'supported_assets' : Array<WalletAsset>,
+}
 export interface CreateProposalInput {
   'title' : [] | [string],
   'execution_plan' : [] | [ProposalExecutionSchedule],
@@ -167,7 +171,7 @@ export type GetAccessPolicyResult = { 'Ok' : { 'policy' : AccessPolicy } } |
 export interface GetAccountInput { 'account_id' : UUID }
 export type GetAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
-export type GetFeaturesResult = { 'Ok' : { 'features' : WalletFeatures } } |
+export type GetConfigResult = { 'Ok' : { 'config' : Config } } |
   { 'Err' : Error };
 export interface GetProposalInput { 'proposal_id' : UUID }
 export interface GetProposalPolicyInput { 'id' : UUID }
@@ -536,7 +540,6 @@ export interface WalletAsset {
   'blockchain' : string,
   'symbol' : AssetSymbol,
 }
-export interface WalletFeatures { 'supported_assets' : Array<WalletAsset> }
 export interface WalletInit {
   'owners' : [] | [Array<Principal>],
   'upgrader_wasm_module' : Uint8Array | number[],
@@ -551,8 +554,8 @@ export type WalletSettingsResult = { 'Ok' : { 'settings' : WalletSettings } } |
   { 'Err' : Error };
 export interface WalletUpgrade { 'owners' : [] | [Array<Principal>] }
 export interface _SERVICE {
+  'config' : ActorMethod<[], GetConfigResult>,
   'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,
-  'features' : ActorMethod<[], GetFeaturesResult>,
   'fetch_account_balances' : ActorMethod<
     [FetchAccountBalancesInput],
     FetchAccountBalancesResult

@@ -11,12 +11,36 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : WalletUpgrade,
     'Init' : WalletInit,
   });
+  const UUID = IDL.Text;
+  const UserGroupId = UUID;
+  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
+  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const AssetSymbol = IDL.Text;
+  const WalletAsset = IDL.Record({
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : AssetSymbol,
+  });
+  const Config = IDL.Record({
+    'user_groups' : IDL.Vec(UserGroup),
+    'supported_assets' : IDL.Vec(WalletAsset),
+  });
+  const Error = IDL.Record({
+    'code' : IDL.Text,
+    'message' : IDL.Opt(IDL.Text),
+    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
+  });
+  const GetConfigResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'config' : Config }),
+    'Err' : Error,
+  });
   const TimestampRFC3339 = IDL.Text;
   const ProposalExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
-  const UUID = IDL.Text;
   const CommonSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -34,8 +58,8 @@ export const idlFactory = ({ IDL }) => {
     'Create' : TransferSpecifier,
   });
   const CanisterSettingsActionSpecifier = IDL.Variant({
-    'ReadFeatures' : IDL.Null,
     'Read' : IDL.Null,
+    'ReadConfig' : IDL.Null,
   });
   const CommonActionSpecifier = IDL.Variant({
     'List' : IDL.Null,
@@ -84,7 +108,6 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'user_group_id' : UUID,
   });
-  const UserGroupId = UUID;
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -228,7 +251,6 @@ export const idlFactory = ({ IDL }) => {
   const EditAccessPolicyOperation = IDL.Record({
     'input' : EditAccessPolicyOperationInput,
   });
-  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
   const AddUserGroupOperation = IDL.Record({
     'user_group' : IDL.Opt(UserGroup),
     'input' : AddUserGroupOperationInput,
@@ -272,7 +294,6 @@ export const idlFactory = ({ IDL }) => {
     'balance' : IDL.Nat,
     'last_update_timestamp' : TimestampRFC3339,
   });
-  const AssetSymbol = IDL.Text;
   const Account = IDL.Record({
     'id' : UUID,
     'decimals' : IDL.Nat32,
@@ -343,28 +364,8 @@ export const idlFactory = ({ IDL }) => {
     'operation' : ProposalOperation,
     'proposed_by' : UUID,
   });
-  const Error = IDL.Record({
-    'code' : IDL.Text,
-    'message' : IDL.Opt(IDL.Text),
-    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
-  });
   const CreateProposalResult = IDL.Variant({
     'Ok' : IDL.Record({ 'proposal' : Proposal }),
-    'Err' : Error,
-  });
-  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
-  const WalletAsset = IDL.Record({
-    'standards' : IDL.Vec(IDL.Text),
-    'metadata' : IDL.Vec(AssetMetadata),
-    'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'symbol' : AssetSymbol,
-  });
-  const WalletFeatures = IDL.Record({
-    'supported_assets' : IDL.Vec(WalletAsset),
-  });
-  const GetFeaturesResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'features' : WalletFeatures }),
     'Err' : Error,
   });
   const FetchAccountBalancesInput = IDL.Record({
@@ -643,12 +644,12 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   return IDL.Service({
+    'config' : IDL.Func([], [GetConfigResult], ['query']),
     'create_proposal' : IDL.Func(
         [CreateProposalInput],
         [CreateProposalResult],
         [],
       ),
-    'features' : IDL.Func([], [GetFeaturesResult], ['query']),
     'fetch_account_balances' : IDL.Func(
         [FetchAccountBalancesInput],
         [FetchAccountBalancesResult],

@@ -1,7 +1,7 @@
 use crate::models::{
     access_control::{
-        CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
-        UserSpecifier,
+        CanisterSettingsActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
+        ResourceSpecifier, ResourceType, UserSpecifier,
     },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier as ProposalUserSpecifier},
@@ -11,6 +11,11 @@ use lazy_static::lazy_static;
 
 lazy_static! {
     pub static ref DEFAULT_ACCESS_CONTROL_POLICIES: Vec<(UserSpecifier, ResourceSpecifier)> = vec![
+        // config
+        (
+            UserSpecifier::Any,
+            ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadConfig),
+        ),
         // users
         (
             UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),

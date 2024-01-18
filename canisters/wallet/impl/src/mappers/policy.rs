@@ -293,8 +293,8 @@ impl From<CanisterSettingsActionSpecifier> for wallet_api::CanisterSettingsActio
             CanisterSettingsActionSpecifier::Read => {
                 wallet_api::CanisterSettingsActionSpecifierDTO::Read
             }
-            CanisterSettingsActionSpecifier::ReadFeatures => {
-                wallet_api::CanisterSettingsActionSpecifierDTO::ReadFeatures
+            CanisterSettingsActionSpecifier::ReadConfig => {
+                wallet_api::CanisterSettingsActionSpecifierDTO::ReadConfig
             }
         }
     }
@@ -306,8 +306,8 @@ impl From<wallet_api::CanisterSettingsActionSpecifierDTO> for CanisterSettingsAc
             wallet_api::CanisterSettingsActionSpecifierDTO::Read => {
                 CanisterSettingsActionSpecifier::Read
             }
-            wallet_api::CanisterSettingsActionSpecifierDTO::ReadFeatures => {
-                CanisterSettingsActionSpecifier::ReadFeatures
+            wallet_api::CanisterSettingsActionSpecifierDTO::ReadConfig => {
+                CanisterSettingsActionSpecifier::ReadConfig
             }
         }
     }

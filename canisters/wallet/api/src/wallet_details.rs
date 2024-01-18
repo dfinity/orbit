@@ -1,4 +1,4 @@
-use crate::MetadataDTO;
+use crate::{MetadataDTO, UserGroupDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -20,14 +20,16 @@ pub struct WalletAssetDTO {
     pub metadata: Vec<MetadataDTO>,
 }
 
-/// Wallet features data transfer object (DTO).
+/// Wallet configuration data transfer object (DTO).
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct WalletFeaturesDTO {
+pub struct ConfigDTO {
     /// The list of assets that are supported by the wallet canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
     pub supported_assets: Vec<WalletAssetDTO>,
+    /// The list of available user groups.
+    pub user_groups: Vec<UserGroupDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct WalletFeaturesResponse {
-    pub features: WalletFeaturesDTO,
+pub struct GetConfigResponse {
+    pub config: ConfigDTO,
 }

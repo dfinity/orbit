@@ -997,17 +997,19 @@ type WalletAsset = record {
 };
 
 // A record type that can be used to represent the wallet features.
-type WalletFeatures = record {
+type Config = record {
   // The list of supported assets.
   supported_assets : vec WalletAsset;
+  // The list of available user groups.
+  user_groups: vec UserGroup;
 };
 
-// Result type for getting the wallet feature details.
-type GetFeaturesResult = variant {
+// Result type for getting the current config.
+type GetConfigResult = variant {
   // The result data for a successful execution.
   Ok : record {
-    // The wallet features.
-    features : WalletFeatures;
+    // The config.
+    config : Config;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1101,7 +1103,7 @@ type ProposalActionSpecifier = variant {
 // The actions that are available for canister settings.
 type CanisterSettingsActionSpecifier = variant {
   Read;
-  ReadFeatures;
+  ReadConfig;
 };
 
 // The specifier for transfers, used to specify the transfer in the context of an account.
@@ -1312,8 +1314,8 @@ service : (opt WalletInstall) -> {
   health_status : () -> (HealthStatus) query;
   // Get the authenticated user and its privileges from the caller.
   me : () -> (MeResult) query;
-  // Get the wallet features (e.g. supported assets).
-  features : () -> (GetFeaturesResult) query;
+  // Get the wallet config (e.g. supported assets, user groups, ...).
+  config : () -> (GetConfigResult) query;
   // Get the list of notifications associated with the caller.
   list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
   // Mark the notifications as read.

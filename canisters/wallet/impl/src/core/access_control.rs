@@ -453,7 +453,7 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
             ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
             | ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create)
             | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::Read)
-            | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)
+            | ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadConfig)
             | ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List)
             | ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::Read(_))
             | ResourceSpecifier::Common(ResourceType::Account, CommonActionSpecifier::List) => {
