@@ -1,6 +1,6 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
 import { Privilege } from '~/types';
-import { services } from '~/ui/modules';
+import { services } from '~/ui/modules/services';
 import DisconnectedPage from '~/ui/pages/DisconnectedPage.vue';
 import InitializationPage from '~/ui/pages/InitializationPage.vue';
 import LoginPageVue from '~/ui/pages/LoginPage.vue';

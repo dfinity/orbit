@@ -6,12 +6,20 @@ import { defineConfig } from 'vite';
 import vuetify from 'vite-plugin-vuetify';
 
 const network = process.env.DFX_NETWORK ?? 'local';
+const defaultCanisterIds = {
+  internet_identity: 'rdmx6-jaaaa-aaaaa-aaadq-cai',
+  icp_index: 'qhbym-qaaaa-aaaaa-aaafq-cai',
+  control_panel: '65evf-oqaaa-aaaal-add6q-cai',
+  ui: '6uh6z-yyaaa-aaaal-add7a-cai',
+};
 
-const resolveCanisterIds = (): Map<string, string> => {
+const resolveCanisterIds = (
+  fallbackCanisterIds: typeof defaultCanisterIds = defaultCanisterIds,
+): typeof defaultCanisterIds => {
   const dfxConfig: {
     canisters: Record<string, unknown>;
   } = JSON.parse(readFileSync(resolve(__dirname, '../..', 'dfx.json'), 'utf-8'));
-  const availableCanisters = new Map<string, string>();
+  const availableCanisters = Object.assign({}, fallbackCanisterIds);
   const canisters = Object.entries(dfxConfig.canisters);
   const canisterIdsFilePath =
     network === 'local'
@@ -27,17 +35,18 @@ const resolveCanisterIds = (): Map<string, string> => {
     readFileSync(canisterIdsFilePath, 'utf-8'),
   );
   for (const [canisterName] of canisters) {
-    if (canisterName === 'wallet') {
-      // The wallet canister is deployed with the control panel.
+    const details = config[canisterName];
+    if (!availableCanisters[canisterName]) {
+      // only use the canister if explicitly defined
       continue;
     }
-    const details = config[canisterName];
+
     if (!details?.[network]) {
       console.warn(`Canister ${canisterName} does not have a defined canister id for ${network}`);
       continue;
     }
 
-    availableCanisters.set(canisterName, details[network]);
+    availableCanisters[canisterName] = details[network];
   }
 
   return availableCanisters;
@@ -124,8 +133,13 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       globals: true,
-      environment: 'happy-dom',
-      setupFiles: ['./setupFiles/GlobalsConfiguration.ts'],
+      environment: 'jsdom',
+      setupFiles: ['./setup/globals.config.ts'],
+      server: {
+        deps: {
+          inline: ['vuetify'],
+        },
+      },
     },
     define: {
       // Vite env variable replacements for the runtime.
@@ -134,18 +148,16 @@ export default defineConfig(({ mode }) => {
       // vite uses that during runtime to access the variables.
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
       'import.meta.env.APP_VERSION': JSON.stringify(`v${process.env.npm_package_version}`),
-      'import.meta.env.APP_CANISTER_ID_UI': JSON.stringify(canisters.get('wallet_ui')),
-      'import.meta.env.APP_CANISTER_ID_CONTROL_PANEL': JSON.stringify(
-        canisters.get('control_panel'),
-      ),
+      'import.meta.env.APP_CANISTER_ID_UI': JSON.stringify(canisters.ui),
+      'import.meta.env.APP_CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
       'import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(
-        canisters.get('internet_identity'),
+        canisters.internet_identity,
       ),
       'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction
         ? process.env.APP_PROVIDER_URL_INTERNET_IDENTITY
-        : JSON.stringify(`http://${canisters.get('internet_identity')}.localhost:4943`),
-      'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.get('control_panel')),
-      'process.env.CANISTER_ID_ICP_INDEX': JSON.stringify(canisters.get('icp_index')),
+        : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
+      'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
+      'process.env.CANISTER_ID_ICP_INDEX': JSON.stringify(canisters.icp_index),
     },
     resolve: {
       alias: {

@@ -40,8 +40,10 @@
   "devDependencies": {
     "@types/validator": "13.11.7",
     "@vitejs/plugin-vue": "4.6.2",
+    "@vue/test-utils": "2.4.3",
     "eslint-plugin-vue": "9.19.2",
-    "happy-dom": "12.10.3",
+    "jsdom": "23.2.0",
+    "resize-observer-polyfill": "1.5.1",
     "sass": "1.69.7",
     "vite-plugin-vuetify": "1.0.2"
   }
