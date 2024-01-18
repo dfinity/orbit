@@ -8,10 +8,12 @@ use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
 use lazy_static::lazy_static;
+use std::sync::Arc;
 use uuid::Uuid;
 
 lazy_static! {
-    pub static ref USER_GROUP_SERVICE: UserGroupService = UserGroupService::default();
+    pub static ref USER_GROUP_SERVICE: Arc<UserGroupService> =
+        Arc::new(UserGroupService::default());
 }
 
 #[derive(Default, Debug)]

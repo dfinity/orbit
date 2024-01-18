@@ -1,7 +1,8 @@
 use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
-    models::{EditUserOperation, Proposal},
+    models::{EditUserOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
+    services::USER_SERVICE,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -10,25 +11,40 @@ pub struct EditUserProposalCreate {}
 
 impl Create<wallet_api::EditUserOperationInput> for EditUserProposalCreate {
     fn create(
-        _proposal_id: UUID,
-        _proposed_by_user: UUID,
-        _input: wallet_api::CreateProposalInput,
-        _operation_input: wallet_api::EditUserOperationInput,
+        proposal_id: UUID,
+        proposed_by_user: UUID,
+        input: wallet_api::CreateProposalInput,
+        operation_input: wallet_api::EditUserOperationInput,
     ) -> Result<Proposal, ProposalError> {
-        todo!()
+        let proposal = Proposal::new(
+            proposal_id,
+            proposed_by_user,
+            Proposal::default_expiration_dt_ns(),
+            ProposalOperation::EditUser(EditUserOperation {
+                input: operation_input.into(),
+            }),
+            input
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(ProposalExecutionPlan::Immediate),
+            input.title.unwrap_or_else(|| "User edit".to_string()),
+            input.summary,
+        );
+
+        Ok(proposal)
     }
 }
 
 pub struct EditUserProposalExecute<'p, 'o> {
-    _proposal: &'p Proposal,
-    _operation: &'o EditUserOperation,
+    proposal: &'p Proposal,
+    operation: &'o EditUserOperation,
 }
 
 impl<'p, 'o> EditUserProposalExecute<'p, 'o> {
     pub fn new(proposal: &'p Proposal, operation: &'o EditUserOperation) -> Self {
         Self {
-            _proposal: proposal,
-            _operation: operation,
+            proposal,
+            operation,
         }
     }
 }
@@ -36,6 +52,15 @@ impl<'p, 'o> EditUserProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for EditUserProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        todo!()
+        USER_SERVICE
+            .edit_user(self.operation.input.clone())
+            .await
+            .map_err(|e| ProposalExecuteError::Failed {
+                reason: format!("Failed to edit user: {}", e),
+            })?;
+
+        Ok(ProposalExecuteStage::Completed(
+            self.proposal.operation.clone(),
+        ))
     }
 }

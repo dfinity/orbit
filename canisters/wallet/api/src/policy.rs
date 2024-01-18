@@ -82,7 +82,7 @@ pub enum ProposalActionSpecifierDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CanisterSettingsActionSpecifierDTO {
     Read,
-    ReadFeatures,
+    ReadConfig,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
