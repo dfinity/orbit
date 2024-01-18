@@ -23,6 +23,10 @@ export default {
     request_rejected_message: 'This request has been rejected.',
     user_status_active: 'Active',
     user_status_inactive: 'Inactive',
+    add_new_principal: 'Add new principal',
+    principal_already_added: 'Principal already added.',
+    user_associate_principal_warning:
+      'Use with caution. The principal will be able to login as the user and perform actions on their behalf.',
   },
   login: {
     signin_slogan: 'Securely connect to manage your crypto assets',

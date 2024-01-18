@@ -24,6 +24,10 @@ export default {
     request_rejected_message: 'Este pedido foi rejeitado.',
     user_status_active: 'Ativo',
     user_status_inactive: 'Inativo',
+    add_new_principal: 'Adicionar novo principal',
+    principal_already_added: 'Principal já adicionado.',
+    user_associate_principal_warning:
+      'Utilize com cuidado. O principal poderá aceder à sua conta e executar ações em seu nome.',
   },
   login: {
     signin_slogan: 'Conecte-se para gerir a sua carteira de ativos crypto',

@@ -19,6 +19,7 @@
       :label="$t('terms.status')"
       variant="underlined"
       :items="statusItems"
+      chips
     />
     <VAutocomplete
       v-model="modelValue.groups"
@@ -26,12 +27,79 @@
       variant="underlined"
       :rules="rules.groups"
       :items="userGroups"
+      chips
       multiple
     />
+    <VAutocomplete
+      v-model="modelValue.identities"
+      :label="$t('terms.principal')"
+      variant="underlined"
+      :rules="rules.principals"
+      :items="modelValue.identities ?? []"
+      chips
+      multiple
+    >
+      <template #append>
+        <ActionBtn
+          v-model="addNewPrincipalModel"
+          :title="$t('app.add_new_principal')"
+          :icon="mdiPlus"
+          color="primary"
+          :submit="
+            newPrincipal => {
+              if (newPrincipal.model) {
+                if (!modelValue.identities) {
+                  modelValue.identities = [];
+                }
+
+                if (modelValue.identities.includes(newPrincipal.model)) {
+                  app.sendNotification({
+                    type: 'warning',
+                    message: $t('app.principal_already_added'),
+                  });
+
+                  return;
+                }
+
+                modelValue.identities.push(newPrincipal.model);
+              }
+            }
+          "
+          data-testid="add-principal-btn"
+        >
+          <template #default="{ model: elem, submit: addNewPrincipal }">
+            <AddPrincipalForm
+              v-model="elem.value.model"
+              @valid="isValid => (elem.value.valid = isValid)"
+              @submit="addNewPrincipal"
+            >
+              <template #prepend>
+                <VAlert type="warning" variant="outlined" density="compact" class="mb-4">
+                  {{ $t('app.user_associate_principal_warning') }}
+                </VAlert>
+              </template>
+            </AddPrincipalForm>
+          </template>
+          <template #actions="{ submit: addNewPrincipal, loading: saving, model: elem }">
+            <VSpacer />
+            <VBtn
+              :loading="saving"
+              :disabled="!elem.value.valid"
+              color="primary"
+              variant="flat"
+              @click="addNewPrincipal"
+            >
+              {{ $t('terms.add') }}
+            </VBtn>
+          </template>
+        </ActionBtn>
+      </template>
+    </VAutocomplete>
   </VForm>
 </template>
 
 <script lang="ts" setup>
+import { mdiPlus } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { fromUserStatusVariantToEnum, fromUserStatusEnumToVariant } from '~/mappers/users.mapper';
 import { UserInput, UserStatusType } from '~/types';
@@ -39,16 +107,22 @@ import { i18n } from '~/ui/modules/i18n';
 import { FormValidationRules, VFormValidation } from '~/ui/types';
 import { maxLengthRule, requiredRule } from '~/ui/utils';
 import { useWalletStore } from '~/ui/stores/wallet';
+import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
+import AddPrincipalForm from '~/ui/components/forms/AddPrincipalForm.vue';
+import { useAppStore } from '~/ui/stores/app';
 
 const wallet = useWalletStore();
+const app = useAppStore();
 const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 const rules: {
   name: FormValidationRules;
   groups: FormValidationRules;
+  principals: FormValidationRules;
 } = {
   name: [maxLengthRule(100, i18n.global.t('terms.name'))],
   groups: [requiredRule],
+  principals: [requiredRule],
 };
 
 const props = withDefaults(
@@ -116,4 +190,12 @@ const submit = async () => {
     emit('submit', modelValue.value);
   }
 };
+
+const addNewPrincipalModel = ref<{
+  valid: boolean;
+  model: string | null;
+}>({
+  model: null,
+  valid: false,
+});
 </script>
