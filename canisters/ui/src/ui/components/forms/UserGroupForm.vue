@@ -63,7 +63,6 @@ watch(
   { deep: true },
 );
 
-
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
