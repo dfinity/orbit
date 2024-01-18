@@ -150,6 +150,7 @@ import { useWalletStore } from '~/ui/stores/wallet';
 import { assertAndReturn } from '~/ui/utils';
 import { fromUserToUserInput, fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
 import UserStatusChip from '~/ui/components/chips/UserStatusChip.vue';
+import { off } from 'process';
 
 const wallet = useWalletStore();
 const app = useAppStore();
@@ -164,15 +165,22 @@ const headers = ref<{ title: string; key: string; headerProps: { class: string }
 
 const fetchData = async (): Promise<{ users: User[] }> => {
   let limit = 100;
-  let offset = 0;
+  let nextOffset = 0;
   let users: User[] = [];
+  let maxOffsetFound = nextOffset;
 
   do {
-    const { users: usersChunk, next_offset } = await wallet.service.listUsers({ limit, offset });
+    // This is to avoid infinite loops in case the offset is not updated properly
+    maxOffsetFound = nextOffset;
+
+    const { users: usersChunk, next_offset } = await wallet.service.listUsers({
+      limit,
+      offset: nextOffset,
+    });
     users.push(...usersChunk);
 
-    offset = next_offset?.[0] !== undefined && next_offset[0] > 0 ? Number(next_offset[0]) : -1;
-  } while (offset !== -1);
+    nextOffset = next_offset?.[0] !== undefined && next_offset[0] > 0 ? Number(next_offset[0]) : -1;
+  } while (nextOffset > 0 && nextOffset > maxOffsetFound);
 
   return { users };
 };
