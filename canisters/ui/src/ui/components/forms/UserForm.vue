@@ -35,6 +35,7 @@
       multiple
     />
     <VAutocomplete
+      ref="identitiesInput"
       v-model="modelValue.identities"
       name="identities"
       :label="$t('terms.principal')"
@@ -67,6 +68,8 @@
                 }
 
                 modelValue.identities.push(newPrincipal.model);
+
+                identitiesInput?.validate();
               }
             }
           "
@@ -120,6 +123,8 @@ import { reactive } from 'vue';
 const wallet = useWalletStore();
 const app = useAppStore();
 const form = ref<VFormValidation | null>(null);
+const identitiesInput = ref<VFormValidation | null>(null);
+
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 const rules: {
   name: FormValidationRules;
