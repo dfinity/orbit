@@ -3,6 +3,7 @@
     <VTextField
       v-if="modelValue.id"
       v-model="modelValue.id"
+      name="id"
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
@@ -10,12 +11,14 @@
     />
     <VTextField
       v-model="modelValue.name"
+      name="name"
       :label="$t('terms.name')"
       variant="underlined"
       :rules="rules.name"
     />
     <VAutocomplete
       v-model="status"
+      name="status"
       :label="$t('terms.status')"
       variant="underlined"
       :items="statusItems"
@@ -23,6 +26,7 @@
     />
     <VAutocomplete
       v-model="modelValue.groups"
+      name="groups"
       :label="$t('terms.user_groups')"
       variant="underlined"
       :rules="rules.groups"
@@ -32,6 +36,7 @@
     />
     <VAutocomplete
       v-model="modelValue.identities"
+      name="identities"
       :label="$t('terms.principal')"
       variant="underlined"
       :rules="rules.principals"
@@ -110,6 +115,7 @@ import { useWalletStore } from '~/ui/stores/wallet';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import AddPrincipalForm from '~/ui/components/forms/AddPrincipalForm.vue';
 import { useAppStore } from '~/ui/stores/app';
+import { reactive } from 'vue';
 
 const wallet = useWalletStore();
 const app = useAppStore();
@@ -146,15 +152,18 @@ watch(
   isValid => emit('valid', isValid ?? false),
 );
 
-const modelValue = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
-});
+const modelValue = reactive({ ...props.modelValue });
+
+watch(
+  () => modelValue,
+  value => emit('update:modelValue', value),
+  { deep: true },
+);
 
 const status = computed({
-  get: () => fromUserStatusVariantToEnum(modelValue.value.status ?? { Inactive: null }),
+  get: () => fromUserStatusVariantToEnum(props.modelValue.status ?? { Inactive: null }),
   set: value => {
-    modelValue.value.status = fromUserStatusEnumToVariant(value);
+    modelValue.status = fromUserStatusEnumToVariant(value);
   },
 });
 
@@ -171,7 +180,7 @@ const userGroups = computed(() => {
     value: group.id,
   }));
 
-  modelValue.value.groups?.forEach(group => {
+  props.modelValue.groups?.forEach(group => {
     if (!groups.find(g => g.value === group)) {
       groups.push({
         title: group,
@@ -187,7 +196,7 @@ const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
   if (valid) {
-    emit('submit', modelValue.value);
+    emit('submit', modelValue);
   }
 };
 
