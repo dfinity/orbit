@@ -22,6 +22,8 @@ export default {
     request_pending_message: 'O seu pedido foi criado e está pendente de aprovação.',
     request_adopted_message: 'Este pedido foi aceite e está sendo processado.',
     request_rejected_message: 'Este pedido foi rejeitado.',
+    user_status_active: 'Ativo',
+    user_status_inactive: 'Inativo',
   },
   login: {
     signin_slogan: 'Conecte-se para gerir a sua carteira de ativos crypto',
@@ -168,11 +170,13 @@ export default {
     identity_name: 'Nome da identidade',
     canister_id: 'Canister ID',
     principal: 'Principal',
+    status: 'Estado',
     control_panel: 'Painel de controle',
     confirmed: 'Confirmado',
     unconfirmed: 'Não confirmado',
     main: 'Principal',
     user_group: 'Grupo de usuário',
+    user_groups: 'Grupos de usuários',
   },
   account_page: {
     not_found_title: 'Conta não encontrada',
@@ -227,6 +231,13 @@ export default {
         'Erro ao carregar os grupos de usuários, por favor, tente novamente.',
       btn_edit_title: 'Editar grupo de usuários',
       create_new_group_title: 'Criar novo grupo de usuários',
+    },
+    users: {
+      title: 'Usuários',
+      btn_new_user: 'Criar usuário',
+      create_new_user_title: 'Criar novo usuário',
+      btn_edit_title: 'Editar usuário',
+      error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
     },
     initialization: {
       status_starting: 'Inicializando, por favor, aguarde ...',

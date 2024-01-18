@@ -1,5 +1,5 @@
 <template>
-  <VForm ref="form" class="transfer-form" @submit.prevent="submit">
+  <VForm ref="form" @submit.prevent="submit">
     <VTextField
       v-if="modelValue.id"
       v-model="modelValue.id"
