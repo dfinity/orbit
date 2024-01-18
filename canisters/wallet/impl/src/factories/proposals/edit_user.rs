@@ -43,8 +43,8 @@ pub struct EditUserProposalExecute<'p, 'o> {
 impl<'p, 'o> EditUserProposalExecute<'p, 'o> {
     pub fn new(proposal: &'p Proposal, operation: &'o EditUserOperation) -> Self {
         Self {
-            proposal: proposal,
-            operation: operation,
+            proposal,
+            operation,
         }
     }
 }
