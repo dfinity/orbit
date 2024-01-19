@@ -9,7 +9,7 @@ import { services } from '~/ui/modules';
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#dfeaf9',
+    background: '#f6f6f6',
     'background-border': '#9f9f9f',
     surface: '#fefefe',
     primary: '#00183b',
@@ -26,17 +26,17 @@ const light: ThemeDefinition = {
 const dark: ThemeDefinition = {
   dark: true,
   colors: {
-    background: '#212121',
-    'background-border': '#9f9f9f',
-    surface: '#313131',
-    primary: '#040210',
-    'primary-variant': '#040210',
-    secondary: '#09f381',
-    'secondary-variant': '#053f36',
-    error: '#f44336',
-    info: '#2196F3',
-    success: '#4caf50',
-    warning: '#fb8c00',
+    background: '#2B2D42',
+    'background-border': '#424761',
+    surface: '#313449',
+    primary: '#325a9b',
+    'primary-variant': '#3071c8',
+    secondary: '#36d399',
+    'secondary-variant': '#2E665d',
+    error: '#cf6679',
+    info: '#64B5f6',
+    success: '#81c784',
+    warning: '#ffA726',
   },
 };
 
