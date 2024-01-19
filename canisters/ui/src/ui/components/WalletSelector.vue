@@ -6,6 +6,7 @@
     :variant="app.isMobile ? 'filled' : 'solo'"
     density="compact"
     hide-details
+    bg-color="background"
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
     :items="session.data.wallets"
@@ -72,7 +73,6 @@ const selectedWallet = computed({
 
     .v-list-item__content {
       text-overflow: ellipsis;
-      max-width: 260px;
     }
   }
 }
