@@ -20,7 +20,7 @@ const registerAuthWorkerEventListener = (): void => {
         sessionStore.setReauthenticated();
         break;
       case 'signedOut':
-        // sessionStore.signOut();
+        sessionStore.signOut();
         break;
       default:
         unreachable(msg);

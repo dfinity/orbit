@@ -252,15 +252,10 @@ export const useSessionStore = defineStore('session', {
     },
 
     async reauthenticate() {
-      const authService = services().auth;
-
-      authService.invalidateAuthClient();
       this.signIn();
     },
 
     async setReauthenticated() {
-      const authService = services().auth;
-      authService.invalidateAuthClient();
       this.reauthenticationNeeded = false;
       enableWalletWorkers();
     },
