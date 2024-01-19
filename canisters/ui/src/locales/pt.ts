@@ -240,7 +240,7 @@ export default {
   },
   session: {
     expired_dialog_title: 'Sua sessão expirou',
-    expired_dialog_content: ' Você deve se reautenticar para continuar.',
+    expired_dialog_content: 'Você deve se reautenticar para continuar.',
     expired_dialog_btn: 'Reautenticar',
   },
 };
