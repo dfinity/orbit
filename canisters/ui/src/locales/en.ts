@@ -21,6 +21,12 @@ export default {
     request_pending_message: 'Your request was created and is pending for approval.',
     request_adopted_message: 'This request has been accepted and is being processed.',
     request_rejected_message: 'This request has been rejected.',
+    user_status_active: 'Active',
+    user_status_inactive: 'Inactive',
+    add_new_principal: 'Add new principal',
+    principal_already_added: 'Principal already added.',
+    user_associate_principal_warning:
+      'Use with caution. The principal will be able to login as the user and perform actions on their behalf.',
   },
   login: {
     signin_slogan: 'Securely connect to manage your crypto assets',
@@ -168,11 +174,13 @@ export default {
     identity_name: 'Identity Name',
     canister_id: 'Canister ID',
     principal: 'Principal',
+    status: 'Status',
     control_panel: 'Control panel',
     confirmed: 'Confirmed',
     unconfirmed: 'Unconfirmed',
     main: 'Main',
     user_group: 'User Group',
+    user_groups: 'User Groups',
   },
   forms: {
     create: 'Create',
@@ -217,6 +225,13 @@ export default {
     },
     administration: {
       title: 'Wallet Administration',
+    },
+    users: {
+      title: 'Users',
+      btn_new_user: 'Create user',
+      create_new_user_title: 'Create new user',
+      btn_edit_title: 'Edit user',
+      error_fetching_users: 'Error fetching users, please try again.',
     },
     user_groups: {
       title: 'User Groups',
