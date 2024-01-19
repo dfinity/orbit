@@ -52,7 +52,7 @@
             </div>
           </VCol>
           <VCol cols="12" sm="4" class="header-actions">
-            <VSpacer v-if="!mobile" />
+            <VSpacer v-if="!app.isMobile" />
             <NewTransferBtn :account-id="pageStore.account.id" />
           </VCol>
         </VRow>
@@ -328,7 +328,6 @@ import {
   mdiLink as _mdiLink,
 } from '@mdi/js';
 import { onMounted, ref, watch } from 'vue';
-import { useDisplay } from 'vuetify';
 import { formatBalance } from '~/core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
@@ -339,8 +338,6 @@ import { i18n, router } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useAccountPageStore } from '~/ui/stores/pages/account';
 import { useWalletStore } from '~/ui/stores/wallet';
-
-const { mobile } = useDisplay();
 
 const wallet = useWalletStore();
 const app = useAppStore();
