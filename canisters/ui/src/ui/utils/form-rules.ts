@@ -7,6 +7,14 @@ export const requiredRule = (value: unknown): string | boolean => {
     return i18n.global.t('forms.rules.required');
   }
 
+  if (typeof value === 'string' && value.trim() === '') {
+    return i18n.global.t('forms.rules.required');
+  }
+
+  if (Array.isArray(value) && value.length === 0) {
+    return i18n.global.t('forms.rules.required');
+  }
+
   return true;
 };
 
