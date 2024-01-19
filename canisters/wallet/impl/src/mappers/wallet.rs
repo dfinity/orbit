@@ -1,10 +1,10 @@
 use crate::{
     core::{ic_cdk::api::time, CanisterConfig},
-    models::{WalletFeatures, WalletSettings},
+    models::{Configuration, WalletSettings},
 };
 use candid::Principal;
 use ic_canister_core::utils::timestamp_to_rfc3339;
-use wallet_api::{WalletAssetDTO, WalletFeaturesDTO, WalletSettingsDTO};
+use wallet_api::{ConfigDTO, WalletAssetDTO, WalletSettingsDTO};
 
 impl From<WalletSettings> for WalletSettingsDTO {
     fn from(settings: WalletSettings) -> Self {
@@ -19,10 +19,10 @@ impl From<WalletSettings> for WalletSettingsDTO {
     }
 }
 
-impl From<WalletFeatures> for WalletFeaturesDTO {
-    fn from(features: WalletFeatures) -> Self {
-        WalletFeaturesDTO {
-            supported_assets: features
+impl From<Configuration> for ConfigDTO {
+    fn from(config: Configuration) -> Self {
+        ConfigDTO {
+            supported_assets: config
                 .supported_assets
                 .into_iter()
                 .map(|asset| WalletAssetDTO {
@@ -36,6 +36,11 @@ impl From<WalletFeatures> for WalletFeaturesDTO {
                     name: asset.name,
                     metadata: asset.metadata.into_vec_dto(),
                 })
+                .collect(),
+            user_groups: config
+                .user_groups
+                .into_iter()
+                .map(|group| group.into())
                 .collect(),
         }
     }

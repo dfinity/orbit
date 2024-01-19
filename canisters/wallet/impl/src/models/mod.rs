@@ -68,8 +68,8 @@ pub use wallet_asset::*;
 mod wallet_settings;
 pub use wallet_settings::*;
 
-mod wallet_features;
-pub use wallet_features::*;
+mod configuration;
+pub use configuration::*;
 
 pub mod criteria;
 

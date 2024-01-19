@@ -1,10 +1,15 @@
 use crate::{
     core::{
+        access_control::AccessControlEvaluator,
+        evaluation::Evaluate,
         ic_cdk::api::trap,
         is_canister_initialized,
         middlewares::{authorize, call_context},
     },
-    models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
+    errors::AccessControlError,
+    models::access_control::{
+        CanisterSettingsActionSpecifier, CommonActionSpecifier, ResourceSpecifier, ResourceType,
+    },
     services::{WalletService, WALLET_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
@@ -13,7 +18,7 @@ use ic_cdk_macros::{init, post_upgrade, query};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use wallet_api::{
-    HealthStatus, WalletFeaturesResponse, WalletInit, WalletInstall, WalletSettingsResponse,
+    GetConfigResponse, HealthStatus, WalletInit, WalletInstall, WalletSettingsResponse,
     WalletUpgrade,
 };
 
@@ -43,9 +48,9 @@ async fn health_status() -> HealthStatus {
     }
 }
 
-#[query(name = "features")]
-async fn get_wallet_features() -> ApiResult<WalletFeaturesResponse> {
-    CONTROLLER.get_wallet_features().await
+#[query(name = "config")]
+async fn get_config() -> ApiResult<GetConfigResponse> {
+    CONTROLLER.get_config().await
 }
 
 #[query(name = "wallet_settings")]
@@ -91,14 +96,24 @@ impl WalletController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadFeatures)],
+        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadConfig)],
         is_async = true
     )]
-    async fn get_wallet_features(&self) -> ApiResult<WalletFeaturesResponse> {
-        let features = self.wallet_service.get_features()?;
+    async fn get_config(&self) -> ApiResult<GetConfigResponse> {
+        let ctx = &call_context();
+        let evaluator = AccessControlEvaluator::new(
+            ctx,
+            ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List),
+        );
+        let can_view_user_groups = evaluator
+            .evaluate()
+            .await
+            .map_err(|e| AccessControlError::UnexpectedError(e.into()))?;
 
-        Ok(WalletFeaturesResponse {
-            features: features.into(),
+        let config = self.wallet_service.get_config(can_view_user_groups)?;
+
+        Ok(GetConfigResponse {
+            config: config.into(),
         })
     }
 

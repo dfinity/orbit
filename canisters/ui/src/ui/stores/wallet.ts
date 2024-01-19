@@ -9,7 +9,7 @@ import {
   User,
   UserPrivilege,
   WalletAsset,
-  WalletFeatures,
+  Config,
 } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
 import { BlockchainStandard, BlockchainType } from '~/types';
@@ -41,9 +41,9 @@ export interface WalletStoreState {
   loading: boolean;
   user: User;
   privileges: UserPrivilege[];
-  features: {
+  configuration: {
     loading: boolean;
-    details: WalletFeatures;
+    details: Config;
   };
   accounts: {
     loading: boolean;
@@ -93,10 +93,11 @@ const initialStoreState = (): WalletStoreState => {
       identities: [],
     },
     privileges: [],
-    features: {
+    configuration: {
       loading: false,
       details: {
         supported_assets: [],
+        user_groups: [],
       },
     },
     accounts: {
@@ -143,7 +144,7 @@ export const useWalletStore = defineStore('wallet', {
       };
     },
     supportedAssets(): WalletAsset[] {
-      return this.features.details?.supported_assets ?? [];
+      return this.configuration.details?.supported_assets ?? [];
     },
     walletId(): Principal {
       return Principal.fromText(this.canisterId);
@@ -162,7 +163,7 @@ export const useWalletStore = defineStore('wallet', {
       this.connectionStatus = initialState.connectionStatus;
       this.canisterId = initialState.canisterId;
       this.accounts = initialState.accounts;
-      this.features = initialState.features;
+      this.configuration = initialState.configuration;
       this.notifications = initialState.notifications;
       this.user = initialState.user;
       this.privileges = initialState.privileges;
@@ -197,7 +198,7 @@ export const useWalletStore = defineStore('wallet', {
 
         // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
         this.loadAccountList();
-        this.loadWalletFeatures();
+        this.loadConfiguration();
 
         startWalletWorkers(walletId);
 
@@ -280,12 +281,12 @@ export const useWalletStore = defineStore('wallet', {
         this.accounts.loading = false;
       }
     },
-    async loadWalletFeatures(): Promise<void> {
+    async loadConfiguration(): Promise<void> {
       try {
-        this.features.loading = true;
-        this.features.details = await this.service.features();
+        this.configuration.loading = true;
+        this.configuration.details = await this.service.config();
       } finally {
-        this.features.loading = false;
+        this.configuration.loading = false;
       }
     },
   },

@@ -1,5 +1,10 @@
 <template>
-  <VMenu v-if="!mobile" v-model="notificationsPopup" location="end" :close-on-content-click="false">
+  <VMenu
+    v-if="!app.isMobile"
+    v-model="notificationsPopup"
+    location="end"
+    :close-on-content-click="false"
+  >
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
         <VBadge dot :color="wallet.hasNotifications ? 'warning' : 'transparent'">
@@ -31,8 +36,8 @@
 
 <script lang="ts" setup>
 import { mdiBellRing, mdiBellRingOutline } from '@mdi/js';
-import { ref, computed } from 'vue';
-import { useDisplay } from 'vuetify';
+import { computed, ref } from 'vue';
+import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
 import NotificationsPanel from './NotificationsPanel.vue';
 
@@ -49,7 +54,7 @@ const toggleIcon = computed(() =>
   props.variant === 'outlined' ? mdiBellRingOutline : mdiBellRing,
 );
 
-const { mobile } = useDisplay();
 const notificationsPopup = ref(false);
 const wallet = useWalletStore();
+const app = useAppStore();
 </script>

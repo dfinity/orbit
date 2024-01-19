@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import { useDisplay } from 'vuetify';
 import { en as designSystemFallbackMessages } from 'vuetify/locale';
 import { appInitConfig } from '~/configs';
 import { Locale } from '~/configs/i18n';
@@ -15,6 +14,7 @@ export interface AppStoreState {
   theme: SupportedTheme;
   showSidebar: boolean;
   notification: GlobalNotification;
+  isMobile: boolean;
 }
 
 export const useAppStore = defineStore('app', {
@@ -24,6 +24,7 @@ export const useAppStore = defineStore('app', {
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),
       showSidebar: true,
+      isMobile: false,
       notification: {
         show: false,
         message: '',
@@ -32,11 +33,6 @@ export const useAppStore = defineStore('app', {
     };
   },
   getters: {
-    isMobile(): boolean {
-      const { mobile } = useDisplay();
-
-      return mobile.value;
-    },
     isDarkTheme(): boolean {
       return this.theme === SupportedTheme.Dark;
     },
@@ -94,6 +90,10 @@ export const useAppStore = defineStore('app', {
       this.theme = theme;
 
       services().theme.updateUserTheme(theme);
+    },
+    setIsMobile(isMobile: boolean): void {
+      this.isMobile = isMobile;
+      this.showSidebar = !isMobile;
     },
     toogleSidebar(): void {
       this.showSidebar = !this.showSidebar;

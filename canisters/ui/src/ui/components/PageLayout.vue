@@ -83,9 +83,7 @@ const { mobile } = useDisplay();
 
 watch(
   () => mobile.value,
-  isMobile => {
-    app.showSidebar = !isMobile;
-  },
+  isMobile => app.setIsMobile(isMobile),
   { immediate: true },
 );
 

@@ -7,8 +7,10 @@ import {
   Account,
   AccountBalance,
   AddUserGroupOperationInput,
+  AddUserOperationInput,
   CreateProposalInput,
   EditUserGroupOperationInput,
+  EditUserOperationInput,
   FetchAccountBalancesInput,
   GetAccountInput,
   GetProposalInput,
@@ -17,6 +19,7 @@ import {
   ListAccountTransfersInput,
   ListNotificationsInput,
   ListProposalsInput,
+  ListUsersResult,
   MarkNotificationsReadInput,
   Notification,
   Proposal,
@@ -28,9 +31,10 @@ import {
   UserGroup,
   UserPrivilege,
   VoteOnProposalInput,
-  WalletFeatures,
+  Config,
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
+import { ExtractOk } from '~/types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;
@@ -136,14 +140,62 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async features(): Promise<WalletFeatures> {
-    const result = await this.actor.features();
+  async addUser(input: AddUserOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddUser: input },
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.features;
+    return result.Ok.proposal;
+  }
+
+  async editUser(input: EditUserOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditUser: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async listUsers({ limit, offset }: { limit?: number; offset?: number } = {}): Promise<
+    ExtractOk<ListUsersResult>
+  > {
+    const result = await this.actor.list_users({
+      limit: limit ? [limit] : [],
+      offset: offset ? [BigInt(offset)] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return {
+      users: result.Ok.users,
+      next_offset: result.Ok.next_offset,
+    };
+  }
+
+  async config(): Promise<Config> {
+    const result = await this.actor.config();
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.config;
   }
 
   async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {
