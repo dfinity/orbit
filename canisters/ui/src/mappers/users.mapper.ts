@@ -21,7 +21,7 @@ export const fromUserStatusVariantToEnum = (status: UserStatus): UserStatusType 
     return UserStatusType.Inactive;
   }
 
-  throw unreachable(status);
+  return unreachable(status);
 };
 
 export const fromUserStatusEnumToVariant = (status: UserStatusType): UserStatus => {
@@ -30,7 +30,7 @@ export const fromUserStatusEnumToVariant = (status: UserStatusType): UserStatus 
       return { Active: null };
     case UserStatusType.Inactive:
       return { Inactive: null };
-    default:
-      throw unreachable(status);
   }
+
+  unreachable(status);
 };
