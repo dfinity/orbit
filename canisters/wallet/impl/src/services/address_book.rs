@@ -99,8 +99,8 @@ impl AddressBookService {
             entry.address_owner = address_owner.to_owned();
         }
 
-        if let Some(metadata) = &input.metadata {
-            entry.metadata = metadata.to_owned().into();
+        if let Some(change_metadata) = input.change_metadata {
+            entry.metadata.change(change_metadata);
         }
 
         entry.validate()?;
@@ -122,6 +122,7 @@ mod tests {
             AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard,
         },
     };
+    use wallet_api::ChangeMetadataDTO;
 
     struct TestContext {
         repository: AddressBookRepository,
@@ -198,7 +199,7 @@ mod tests {
         let operation = EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id,
             address_owner: Some("test_edit".to_string()),
-            metadata: Some(vec![]),
+            change_metadata: Some(ChangeMetadataDTO::ReplaceAllBy(vec![])),
         };
 
         let result = ctx.service.edit_entry(operation).await;
