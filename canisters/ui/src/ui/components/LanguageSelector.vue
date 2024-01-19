@@ -7,7 +7,6 @@
     rounded
     hide-details
     flat
-    
   />
 </template>
 <script lang="ts" setup>
