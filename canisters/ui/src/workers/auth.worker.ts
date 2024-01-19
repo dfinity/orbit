@@ -119,10 +119,6 @@ export class AuthWorkerImpl {
       default:
         unreachable(delegationState);
     }
-
-    if (!delegationState) {
-    } else {
-    }
   }
 }
 

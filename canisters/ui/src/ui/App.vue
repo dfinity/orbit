@@ -19,5 +19,4 @@ watch(
     immediate: true,
   },
 );
-
 </script>
