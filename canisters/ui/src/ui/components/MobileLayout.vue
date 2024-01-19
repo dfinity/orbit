@@ -198,7 +198,7 @@ const themeSwitcherIcon = computed(() => {
   .toolbar {
     display: flex;
     flex-direction: row;
-    background-color: rgb(var(--ds-background));
+    background-color: rgb(var(--ds-surface));
     color: rgb(var(--ds-on-surface));
 
     &__actions {

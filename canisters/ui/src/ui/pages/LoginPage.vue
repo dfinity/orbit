@@ -20,7 +20,7 @@
       </div>
     </template>
     <template v-else #topnav>
-      <h1 class="signin__header__title">{{ $t('app.title', { app: settings.appName }) }}</h1>
+      <h1 class="signin__header__title">{{ $t('app.title', { app: app.appName }) }}</h1>
       <div class="signin__action">
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}

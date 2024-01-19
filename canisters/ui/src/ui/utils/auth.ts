@@ -17,9 +17,9 @@ export const hasRequiredSession = (
       return session.data.selectedWallet.hasAccess;
     case RequiredSessionState.Any:
       return true;
-    default:
-      throw unreachable(requiredSessionState);
   }
+
+  unreachable(requiredSessionState);
 };
 
 export const hasRequiredPrivilege = (

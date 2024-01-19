@@ -1,3 +1,5 @@
+import { UUID, UserStatus } from '~/generated/wallet/wallet.did';
+
 export enum PolicyType {
   VariableApprovalThreshold = 'VariableApprovalThreshold',
   FixedApprovalThreshold = 'FixedApprovalThreshold',
@@ -28,4 +30,17 @@ export enum Privilege {
   ListAccessPolicies = 'ListAccessPolicies',
   AddAccessPolicy = 'AddAccessPolicy',
   AddAccount = 'AddAccount',
+}
+
+export interface UserInput {
+  id?: UUID;
+  name?: string;
+  status: UserStatus;
+  groups: UUID[];
+  identities: string[];
+}
+
+export enum UserStatusType {
+  Active = 'Active',
+  Inactive = 'Inactive',
 }
