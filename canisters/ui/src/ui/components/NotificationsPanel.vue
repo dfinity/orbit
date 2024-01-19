@@ -1,5 +1,5 @@
 <template>
-  <VCard :width="mobile ? '100%' : '400px'">
+  <VCard :width="app.isMobile ? '100%' : '400px'">
     <VList density="compact">
       <VListItem density="compact" class="notifications-panel__title">
         {{ $t('wallets.pending_proposals') }}
@@ -26,12 +26,12 @@
 
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
-import { useWalletStore } from '~/ui/stores/wallet';
 import { Notification } from '~/generated/wallet/wallet.did';
-import { useDisplay } from 'vuetify';
 import NotificationListItem from '~/ui/components/NotificationListItem.vue';
+import { useAppStore } from '~/ui/stores/app';
+import { useWalletStore } from '~/ui/stores/wallet';
 
-const { mobile } = useDisplay();
+const app = useAppStore();
 const wallet = useWalletStore();
 
 const emit = defineEmits<{
