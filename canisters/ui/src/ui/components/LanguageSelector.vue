@@ -3,7 +3,10 @@
     v-model="activeLocale"
     :items="app.supportedLocales"
     variant="solo-filled"
+    density="compact"
+    rounded
     hide-details
+    flat
   />
 </template>
 <script lang="ts" setup>
