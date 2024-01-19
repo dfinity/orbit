@@ -1,8 +1,9 @@
 <template>
-  <VForm ref="form" class="transfer-form" @submit.prevent="submit">
+  <VForm ref="form" @submit.prevent="submit">
     <VTextField
       v-if="modelValue.id"
       v-model="modelValue.id"
+      name="id"
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
@@ -10,6 +11,7 @@
     />
     <VTextField
       v-model="modelValue.name"
+      name="name"
       :label="$t('terms.user_group')"
       variant="underlined"
       :rules="rules.name"
@@ -18,7 +20,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { UserGroup } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/ui/modules/i18n';
 import { FormValidationRules, VFormValidation } from '~/ui/types';
@@ -53,16 +55,19 @@ watch(
   isValid => emit('valid', isValid ?? false),
 );
 
-const modelValue = computed({
-  get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
-});
+const modelValue = reactive({ ...props.modelValue });
+
+watch(
+  () => modelValue,
+  value => emit('update:modelValue', value),
+  { deep: true },
+);
 
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
   if (valid) {
-    emit('submit', modelValue.value);
+    emit('submit', modelValue);
   }
 };
 </script>
