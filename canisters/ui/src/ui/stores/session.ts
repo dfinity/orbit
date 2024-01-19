@@ -3,7 +3,14 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { icAgent, logger } from '~/core';
 import { User } from '~/generated/control-panel/control_panel.did';
-import { i18n, services } from '~/ui/modules';
+import {
+  disableWalletWorkers,
+  enableWalletWorkers,
+  i18n,
+  services,
+  startAuthWorker,
+  stopAuthWorker,
+} from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
 import { redirectToLogin } from '~/ui/utils';
@@ -30,6 +37,7 @@ export interface SessionStoreState {
   loading: boolean;
   principal: string;
   isAuthenticated: boolean;
+  reauthenticationNeeded: boolean;
   data: {
     wallets: UserWallet[];
     selectedWallet: SelectedUserWallet;
@@ -43,6 +51,7 @@ export const useSessionStore = defineStore('session', {
       loading: false,
       principal: Principal.anonymous().toText(),
       isAuthenticated: false,
+      reauthenticationNeeded: false,
       data: {
         wallets: [],
         selectedWallet: {
@@ -77,6 +86,11 @@ export const useSessionStore = defineStore('session', {
           return;
         }
 
+        if (!cachedIdentity.getPrincipal().isAnonymous()) {
+          // if the user is already signed in with Internet Identity
+          this.startWatchSession();
+        }
+
         icAgent.get().replaceIdentity(cachedIdentity);
 
         await this.load();
@@ -96,6 +110,7 @@ export const useSessionStore = defineStore('session', {
       this.loading = false;
       this.isAuthenticated = false;
       this.principal = Principal.anonymous().toText();
+      this.reauthenticationNeeded = false;
       this.data = {
         wallets: [],
         selectedWallet: {
@@ -113,6 +128,9 @@ export const useSessionStore = defineStore('session', {
         const identity = await authService.login();
         icAgent.get().replaceIdentity(identity);
 
+        this.reauthenticationNeeded = false;
+        this.startWatchSession();
+
         const controlPanelService = services().controlPanel;
         const isRegistered = await controlPanelService.hasRegistration();
 
@@ -129,17 +147,27 @@ export const useSessionStore = defineStore('session', {
         // loads information about the authenticated user
         await this.load();
       } catch (error) {
+        this.stopWatchSession();
         this.reset();
         throw error;
       }
     },
     async signOut(): Promise<void> {
-      const authService = services().auth;
+      this.stopWatchSession();
 
+      const authService = services().auth;
       await authService.logout();
 
       this.reset();
       redirectToLogin();
+    },
+    startWatchSession() {
+      startAuthWorker();
+      enableWalletWorkers();
+    },
+    stopWatchSession() {
+      stopAuthWorker();
+      disableWalletWorkers();
     },
     async load(): Promise<void> {
       const app = useAppStore();
@@ -216,6 +244,25 @@ export const useSessionStore = defineStore('session', {
       if (connectionStatus === WalletConnectionStatus.Connected) {
         this.data.selectedWallet.hasAccess = true;
       }
+    },
+
+    requireReauthentication() {
+      this.reauthenticationNeeded = true;
+      disableWalletWorkers();
+    },
+
+    async reauthenticate() {
+      const authService = services().auth;
+
+      authService.invalidateAuthClient();
+      this.signIn();
+    },
+
+    async setReauthenticated() {
+      const authService = services().auth;
+      authService.invalidateAuthClient();
+      this.reauthenticationNeeded = false;
+      enableWalletWorkers();
     },
   },
 });

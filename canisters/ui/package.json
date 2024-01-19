@@ -26,6 +26,7 @@
   "dependencies": {
     "@dfinity/agent": "0.20.2",
     "@dfinity/auth-client": "0.20.2",
+    "@dfinity/identity": "0.20.2",
     "@dfinity/principal": "0.20.2",
     "@mdi/js": "7.4.47",
     "buffer": "6.0.3",

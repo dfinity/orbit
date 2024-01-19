@@ -238,4 +238,9 @@ export default {
       status_failed: 'Falha com a inicialização, por favor, tente novamente.',
     },
   },
+  session: {
+    expired_dialog_title: 'Sua sessão expirou',
+    expired_dialog_content: ' Você deve se reautenticar para continuar.',
+    expired_dialog_btn: 'Reautenticar',
+  },
 };

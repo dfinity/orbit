@@ -1,5 +1,5 @@
 import { Principal } from '@dfinity/principal';
-import { logger, timer } from '~/core';
+import { logger, timer, unreachable } from '~/core';
 import { icAgent } from '~/core/ic-agent';
 import { Account } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
@@ -28,6 +28,12 @@ export type AccountsWorkerIncomingMessage =
     }
   | {
       type: 'stop';
+    }
+  | {
+      type: 'enable';
+    }
+  | {
+      type: 'disable';
     };
 
 export interface AccountsWorkerErrorResponse {
@@ -46,6 +52,7 @@ export type AccountsWorkerResponseMessage =
 
 class AccountsWorkerImpl {
   private timer: NodeJS.Timeout | null = null;
+  private enabled: boolean = false;
 
   constructor(private walletService: WalletService = new WalletService()) {}
 
@@ -64,6 +71,16 @@ class AccountsWorkerImpl {
         case 'stop':
           worker.stop();
           break;
+        case 'enable':
+          logger.info('Enabling accounts worker');
+          worker.enabled = true;
+          break;
+        case 'disable':
+          logger.info('Disabling accounts worker');
+          worker.enabled = false;
+          break;
+        default:
+          unreachable(msg);
       }
     };
   }
@@ -72,6 +89,7 @@ class AccountsWorkerImpl {
     if (this.timer) {
       this.stop();
     }
+    this.enabled = true;
 
     this.walletService.withWalletId(data.walletId);
     const poolIntervalMs =
@@ -95,6 +113,11 @@ class AccountsWorkerImpl {
   }
 
   private async refreshAccounts(): Promise<void> {
+    if (!this.enabled) {
+      logger.info('Accounts worker disabled, skipping refresh');
+      return;
+    }
+
     try {
       await icAgent.loadIdentity();
 

@@ -28,6 +28,7 @@
         </v-btn>
       </template>
     </VSnackbar>
+    <SessionExpiredOverlay />
   </VLayout>
 </template>
 
@@ -37,6 +38,7 @@ import { useDisplay } from 'vuetify';
 import { useAppStore } from '~/ui/stores/app';
 import DesktopLayout from './DesktopLayout.vue';
 import MobileLayout from './MobileLayout.vue';
+import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
 
 const app = useAppStore();
 const slotNames = [

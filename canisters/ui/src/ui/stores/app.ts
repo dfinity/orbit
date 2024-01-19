@@ -5,7 +5,7 @@ import { appInitConfig } from '~/configs';
 import { Locale } from '~/configs/i18n';
 import { logger } from '~/core';
 import { SupportedTheme } from '~/types';
-import { fetchDesignSystemLocale, i18n, services } from '~/ui/modules';
+import { fetchDesignSystemLocale, i18n, initWorkers, services } from '~/ui/modules';
 import { useSessionStore } from '~/ui/stores/session';
 import { GlobalNotification } from '~/ui/types';
 
@@ -55,6 +55,8 @@ export const useAppStore = defineStore('app', {
       if (this.initialized) {
         return;
       }
+
+      await initWorkers();
 
       const session = useSessionStore();
       await session.initialize();
