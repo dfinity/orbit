@@ -237,7 +237,7 @@ export default {
   },
   session: {
     expired_dialog_title: 'Your session has expired',
-    expired_dialog_content: ' You must reauthenticate to continue.',
+    expired_dialog_content: 'You must reauthenticate to continue.',
     expired_dialog_btn: 'Reauthenticate',
   },
 };
