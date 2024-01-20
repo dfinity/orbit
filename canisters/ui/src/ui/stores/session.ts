@@ -3,17 +3,11 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { icAgent, logger } from '~/core';
 import { User } from '~/generated/control-panel/control_panel.did';
-import {
-  disableWalletWorkers,
-  enableWalletWorkers,
-  i18n,
-  services,
-  startAuthWorker,
-  stopAuthWorker,
-} from '~/ui/modules';
+import { disableWalletWorkers, enableWalletWorkers, i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
 import { redirectToLogin } from '~/ui/utils';
+import { AuthCheck } from '../modules/auth-check';
 
 export interface UserWallet {
   main: boolean;
@@ -38,6 +32,7 @@ export interface SessionStoreState {
   principal: string;
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
+  authChecker: AuthCheck | null;
   data: {
     wallets: UserWallet[];
     selectedWallet: SelectedUserWallet;
@@ -52,6 +47,7 @@ export const useSessionStore = defineStore('session', {
       principal: Principal.anonymous().toText(),
       isAuthenticated: false,
       reauthenticationNeeded: false,
+      authChecker: null,
       data: {
         wallets: [],
         selectedWallet: {
@@ -73,25 +69,46 @@ export const useSessionStore = defineStore('session', {
   },
   actions: {
     async initialize(): Promise<void> {
+      logger.info(`[call] initialize`);
       try {
         if (this.initialized === InitializationStatus.Initialized) {
           return;
         }
-        const authService = services().auth;
-        const cachedIdentity = await authService.identity();
 
-        if (!cachedIdentity) {
+        this.authChecker = new AuthCheck({
+          inactivityTimeoutMs: 1000 * 60 * 5,
+          onExpired: () => {
+            logger.info(`[call] onExpired`);
+            this.requireReauthentication();
+          },
+          onOtherTabReauthenticate: () => {
+            logger.info(`[call] onReauthenticated`);
+            this.setReauthenticated();
+          },
+          onInactive: () => {
+            logger.info(`[call] onInactive`);
+            this.requireReauthentication();
+          },
+          onOtherTabSignout: () => {
+            logger.info(`[call] onOtherTabSignout`);
+            this.signOut(false);
+          },
+        });
+
+        const authService = services().auth;
+        const cachedAuthenticatedIdentity = await authService.identity();
+
+        if (!cachedAuthenticatedIdentity) {
           icAgent.get().replaceIdentity(new AnonymousIdentity());
           this.initialized = InitializationStatus.Initialized;
           return;
         }
 
-        if (!cachedIdentity.getPrincipal().isAnonymous()) {
-          // if the user is already signed in with Internet Identity
-          this.startWatchSession();
-        }
+        this.authChecker.setSignedIn();
 
-        icAgent.get().replaceIdentity(cachedIdentity);
+        enableWalletWorkers();
+
+        icAgent.get().replaceIdentity(cachedAuthenticatedIdentity);
 
         await this.load();
 
@@ -105,6 +122,7 @@ export const useSessionStore = defineStore('session', {
       }
     },
     reset(): void {
+      logger.info(`[call] reset`);
       const wallet = useWalletStore();
 
       this.loading = false;
@@ -122,6 +140,7 @@ export const useSessionStore = defineStore('session', {
       wallet.reset();
     },
     async signIn(): Promise<void> {
+      logger.info(`[call] signIn`);
       const authService = services().auth;
 
       try {
@@ -129,7 +148,10 @@ export const useSessionStore = defineStore('session', {
         icAgent.get().replaceIdentity(identity);
 
         this.reauthenticationNeeded = false;
-        this.startWatchSession();
+        enableWalletWorkers();
+
+        this.authChecker?.setSignedIn();
+        this.authChecker?.notifySignedIn();
 
         const controlPanelService = services().controlPanel;
         const isRegistered = await controlPanelService.hasRegistration();
@@ -147,13 +169,20 @@ export const useSessionStore = defineStore('session', {
         // loads information about the authenticated user
         await this.load();
       } catch (error) {
-        this.stopWatchSession();
+        disableWalletWorkers();
         this.reset();
         throw error;
       }
     },
-    async signOut(): Promise<void> {
-      this.stopWatchSession();
+    async signOut(notifyOtherTabs = true): Promise<void> {
+      logger.info(`[call] signOut`);
+      disableWalletWorkers();
+
+      this.authChecker?.setSignedOut();
+
+      if (notifyOtherTabs) {
+        this.authChecker?.notifySignedOut();
+      }
 
       const authService = services().auth;
       await authService.logout();
@@ -161,14 +190,7 @@ export const useSessionStore = defineStore('session', {
       this.reset();
       redirectToLogin();
     },
-    startWatchSession() {
-      startAuthWorker();
-      enableWalletWorkers();
-    },
-    stopWatchSession() {
-      stopAuthWorker();
-      disableWalletWorkers();
-    },
+
     async load(): Promise<void> {
       const app = useAppStore();
 
@@ -247,16 +269,29 @@ export const useSessionStore = defineStore('session', {
     },
 
     requireReauthentication() {
+      logger.info(`[call] requireReauthentication`);
       this.reauthenticationNeeded = true;
       disableWalletWorkers();
     },
 
     async reauthenticate() {
+      logger.info(`[call] reauthenticate`);
       this.signIn();
     },
 
     async setReauthenticated() {
+      const authService = services().auth;
+      authService.invalidateAuthClient();
+      const maybeIdentity = await authService.identity();
+      if (!maybeIdentity) {
+        logger.error(`Reauthentication failed, no identity found`);
+        return;
+      }
+
+      logger.info(`[call] setReauthenticated`);
       this.reauthenticationNeeded = false;
+      icAgent.get().replaceIdentity(maybeIdentity);
+
       enableWalletWorkers();
     },
   },

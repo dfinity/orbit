@@ -1,19 +1,23 @@
 import { Identity } from '@dfinity/agent';
-import { AuthClient } from '@dfinity/auth-client';
+import { AuthClient, IdbStorage, KEY_STORAGE_DELEGATION } from '@dfinity/auth-client';
+import { DelegationChain } from '@dfinity/identity';
 import { appInitConfig } from '~/configs';
+import { logger } from '~/core';
 
 export class AuthService {
   // 1 hour in nanoseconds
-  static readonly maxAuthTTL = BigInt(60 * 60 * 1000 * 1000 * 1000);
+  static readonly maxAuthTTL = BigInt(15 * 1000 * 1000 * 1000);
 
   constructor(private authClient?: AuthClient) {}
 
   invalidateAuthClient(): void {
+    logger.info('!!! Invalidating auth client');
     this.authClient = undefined;
   }
 
   async client(): Promise<AuthClient> {
     if (!this.authClient) {
+      logger.info('!!! Creating new auth client');
       this.authClient = await AuthClient.create({
         idleOptions: {
           disableIdle: true,
@@ -52,5 +56,25 @@ export class AuthService {
     await client.logout();
 
     this.invalidateAuthClient();
+  }
+
+  async getRemainingSessionTimeMs(): Promise<number | null> {
+    const idbStorage: IdbStorage = new IdbStorage();
+    const delegationChain: string | null = await idbStorage.get(KEY_STORAGE_DELEGATION);
+    const maybeDelegation =
+      delegationChain !== null ? DelegationChain.fromJSON(delegationChain) : null;
+
+    if (maybeDelegation) {
+      const maybeExpirationTime: bigint | undefined =
+        maybeDelegation.delegations[0]?.delegation.expiration;
+
+      if (maybeExpirationTime) {
+        const remainingTimeMs = Number(maybeExpirationTime / 1_000_000n) - Date.now();
+
+        return remainingTimeMs;
+      }
+    }
+
+    return null;
   }
 }

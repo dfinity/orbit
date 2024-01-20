@@ -1,33 +1,7 @@
 import { logger, unreachable } from '~/core';
 import { useWalletStore } from '~/ui/stores/wallet';
-import { accountsWorker, authWorker, installWebWorkers, notificationsWorker } from '~/workers';
-import { useSessionStore } from '../stores/session';
+import { accountsWorker, installWebWorkers, notificationsWorker } from '~/workers';
 import { Principal } from '@dfinity/principal';
-
-const registerAuthWorkerEventListener = (): void => {
-  if (!authWorker) {
-    return;
-  }
-
-  const sessionStore = useSessionStore();
-
-  authWorker.onmessage = ({ data: msg }) => {
-    switch (msg.type) {
-      case 'sessionExpired':
-        sessionStore.requireReauthentication();
-        break;
-      case 'sessionValid':
-        sessionStore.setReauthenticated();
-        break;
-      case 'signedOut':
-        sessionStore.signOut();
-        break;
-      default:
-        unreachable(msg);
-        logger.warn('Unknown message received from accounts worker', { msg });
-    }
-  };
-};
 
 const registerAccountWorkerEventListener = (): void => {
   if (!accountsWorker) {
@@ -87,7 +61,6 @@ const registerNotificationsWorkerEventListener = (): void => {
 export const initWorkers = async (): Promise<void> => {
   await installWebWorkers();
 
-  registerAuthWorkerEventListener();
   registerAccountWorkerEventListener();
   registerNotificationsWorkerEventListener();
 };
@@ -130,16 +103,5 @@ export function disableWalletWorkers() {
   });
   notificationsWorker?.postMessage({
     type: 'disable',
-  });
-}
-
-export function startAuthWorker() {
-  authWorker?.postMessage({
-    type: 'start',
-  });
-}
-export function stopAuthWorker() {
-  authWorker?.postMessage({
-    type: 'stop',
   });
 }
