@@ -1,5 +1,4 @@
 import { logger, unreachable } from '~/core';
-import { services } from '.';
 
 type BroadcastChannelMessage =
   | {
@@ -12,98 +11,18 @@ type BroadcastChannelMessage =
       type: 'active';
     };
 
-export abstract class BroadcastChannellike<T> {
-  constructor(protected onMessage: (msg: T) => void) {}
-  abstract postMessage(msg: T): void;
-}
-
-export class BrowserBroadcastChannel<T> extends BroadcastChannellike<T> {
-  private channel: BroadcastChannel = new BroadcastChannel('session');
-  constructor(onMessage: (msg: T) => void) {
-    super(onMessage);
-    this.channel.onmessage = msg => onMessage(msg.data);
-  }
-
-  postMessage(msg: T): void {
-    this.channel.postMessage(msg);
-  }
-}
-
-export class AuthCheck {
-  inactiveTimeout: NodeJS.Timeout | null = null;
-  sessionExpirationTimeout: NodeJS.Timeout | null = null;
-
+export class SessionBroadcaseChannel {
+  private channel: BroadcastChannel;
   constructor(
     private config: {
-      inactivityTimeoutMs: number;
-      onExpired?: () => void;
-      onInactive?: () => void;
+      channel?: BroadcastChannel;
+      onOtherTabActive?: () => void;
       onOtherTabSignout?: () => void;
-      onOtherTabReauthenticate?: () => void;
+      onOtherTabSignin?: () => void;
     },
-    private broadcastChannel: BroadcastChannellike<BroadcastChannelMessage> = new BrowserBroadcastChannel(
-      msg => {
-        this.onMessage(msg);
-      },
-    ),
   ) {
-    this.resetInactiveTimeout();
-  }
-
-  public setActive() {
-    this.resetInactiveTimeout();
-  }
-
-  public notifyActive() {
-    this.broadcastChannel.postMessage({ type: 'active' });
-  }
-
-  public setSignedIn() {
-    this.setSessionExpiration();
-    this.resetInactiveTimeout();
-  }
-
-  public notifySignedIn() {
-    this.broadcastChannel.postMessage({ type: 'signin' });
-  }
-
-  public setSignedOut() {
-    if (this.sessionExpirationTimeout !== null) {
-      clearTimeout(this.sessionExpirationTimeout);
-      this.sessionExpirationTimeout = null;
-    }
-
-    if (this.inactiveTimeout !== null) {
-      clearTimeout(this.inactiveTimeout);
-      this.inactiveTimeout = null;
-    }
-  }
-  public notifySignedOut() {
-    this.broadcastChannel.postMessage({ type: 'signout' });
-  }
-
-  private async setSessionExpiration() {
-    if (this.sessionExpirationTimeout !== null) {
-      clearTimeout(this.sessionExpirationTimeout);
-    }
-
-    const authService = services().auth;
-    const maybeRemainingSessionTimeMs = await authService.getRemainingSessionTimeMs();
-    if (maybeRemainingSessionTimeMs !== null) {
-      this.sessionExpirationTimeout = setTimeout(() => {
-        this.config.onExpired?.();
-      }, maybeRemainingSessionTimeMs);
-    }
-  }
-
-  private resetInactiveTimeout() {
-    if (this.inactiveTimeout !== null) {
-      clearTimeout(this.inactiveTimeout);
-    }
-
-    this.inactiveTimeout = setTimeout(() => {
-      this.config.onInactive?.();
-    }, this.config.inactivityTimeoutMs);
+    this.channel = config.channel || new BroadcastChannel('session');
+    this.channel.onmessage = msg => this.onMessage(msg.data);
   }
 
   private onMessage(msg: BroadcastChannelMessage) {
@@ -111,18 +30,68 @@ export class AuthCheck {
 
     switch (msg.type) {
       case 'active':
-        this.resetInactiveTimeout();
+        this.config.onOtherTabActive?.();
         break;
       case 'signout':
         this.config.onOtherTabSignout?.();
-        this.setSignedOut();
         break;
       case 'signin':
-        this.config.onOtherTabReauthenticate?.();
-        this.setSessionExpiration();
+        this.config.onOtherTabSignin?.();
         break;
       default:
         unreachable(msg);
     }
+  }
+
+  private postMessage(msg: BroadcastChannelMessage): void {
+    this.channel.postMessage(msg);
+  }
+
+  public notifyActive() {
+    this.postMessage({ type: 'active' });
+  }
+
+  public notifySignedIn() {
+    this.postMessage({ type: 'signin' });
+  }
+
+  public notifySignedOut() {
+    this.postMessage({ type: 'signout' });
+  }
+}
+
+export class Timeout {
+  private timeout: NodeJS.Timeout | null = null;
+  constructor(private callback: () => void) {}
+
+  public reset(timeoutMs: number) {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+    }
+
+    this.timeout = setTimeout(() => {
+      this.callback();
+    }, timeoutMs);
+  }
+
+  public clear() {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+  }
+}
+
+export class FixedTimeout extends Timeout {
+  constructor(
+    callback: () => void,
+    private timeoutMs: number,
+  ) {
+    super(callback);
+    this.reset();
+  }
+
+  public reset() {
+    super.reset(this.timeoutMs);
   }
 }

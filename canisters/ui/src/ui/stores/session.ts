@@ -6,8 +6,11 @@ import { User } from '~/generated/control-panel/control_panel.did';
 import { disableWalletWorkers, enableWalletWorkers, i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
-import { redirectToLogin } from '~/ui/utils';
-import { AuthCheck } from '../modules/auth-check';
+import { afterLoginRedirect, redirectToLogin } from '~/ui/utils';
+import { SessionBroadcaseChannel, Timeout } from '../modules/auth-check';
+import { Identity } from '@dfinity/agent';
+
+const INACTIVITY_TIMEOUT_MS = 1000 * 60 * 5; // 5 minutes
 
 export interface UserWallet {
   main: boolean;
@@ -32,7 +35,9 @@ export interface SessionStoreState {
   principal: string;
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
-  authChecker: AuthCheck | null;
+  sessionBroadcastChannel: SessionBroadcaseChannel | null;
+  sessionTimeout: Timeout | null;
+  inactivityTimeout: Timeout | null;
   data: {
     wallets: UserWallet[];
     selectedWallet: SelectedUserWallet;
@@ -47,7 +52,9 @@ export const useSessionStore = defineStore('session', {
       principal: Principal.anonymous().toText(),
       isAuthenticated: false,
       reauthenticationNeeded: false,
-      authChecker: null,
+      sessionBroadcastChannel: null,
+      sessionTimeout: null,
+      inactivityTimeout: null,
       data: {
         wallets: [],
         selectedWallet: {
@@ -75,24 +82,33 @@ export const useSessionStore = defineStore('session', {
           return;
         }
 
-        this.authChecker = new AuthCheck({
-          inactivityTimeoutMs: 1000 * 60 * 5,
-          onExpired: () => {
-            logger.info(`[call] onExpired`);
-            this.requireReauthentication();
-          },
-          onOtherTabReauthenticate: () => {
-            logger.info(`[call] onReauthenticated`);
-            this.setReauthenticated();
-          },
-          onInactive: () => {
-            logger.info(`[call] onInactive`);
-            this.requireReauthentication();
+        this.sessionBroadcastChannel = new SessionBroadcaseChannel({
+          onOtherTabActive: () => {
+            logger.info(`[call] onOtherTabActive`);
+            this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
           },
           onOtherTabSignout: () => {
             logger.info(`[call] onOtherTabSignout`);
             this.signOut(false);
           },
+          onOtherTabSignin: async () => {
+            logger.info(`[call] onOtherTabSignin`);
+            const authService = services().auth;
+
+            const wasSignedIn = await (await authService.client()).isAuthenticated();
+            this.setReauthenticated(wasSignedIn);
+          },
+        });
+
+        this.sessionTimeout = new Timeout(() => {
+          logger.info(`[call] onExpired`);
+          this.requireReauthentication();
+        });
+
+        this.inactivityTimeout = new Timeout(() => {
+          logger.info(`[call] onInactive`);
+          // todo: clear session
+          this.requireReauthentication();
         });
 
         const authService = services().auth;
@@ -104,15 +120,7 @@ export const useSessionStore = defineStore('session', {
           return;
         }
 
-        this.authChecker.setSignedIn();
-
-        enableWalletWorkers();
-
-        icAgent.get().replaceIdentity(cachedAuthenticatedIdentity);
-
-        await this.load();
-
-        this.initialized = InitializationStatus.Initialized;
+        await this.initializeAuthenticated(cachedAuthenticatedIdentity);
       } catch (error) {
         this.reset();
 
@@ -145,29 +153,9 @@ export const useSessionStore = defineStore('session', {
 
       try {
         const identity = await authService.login();
-        icAgent.get().replaceIdentity(identity);
 
-        this.reauthenticationNeeded = false;
-        enableWalletWorkers();
-
-        this.authChecker?.setSignedIn();
-        this.authChecker?.notifySignedIn();
-
-        const controlPanelService = services().controlPanel;
-        const isRegistered = await controlPanelService.hasRegistration();
-
-        if (isRegistered) {
-          await this.load();
-          return;
-        }
-
-        await controlPanelService.register({
-          // a new user is created with an empty list of wallets, they can add them later
-          wallet_id: [],
-        });
-
-        // loads information about the authenticated user
-        await this.load();
+        this.sessionBroadcastChannel?.notifySignedIn();
+        await this.initializeAuthenticated(identity);
       } catch (error) {
         disableWalletWorkers();
         this.reset();
@@ -178,10 +166,11 @@ export const useSessionStore = defineStore('session', {
       logger.info(`[call] signOut`);
       disableWalletWorkers();
 
-      this.authChecker?.setSignedOut();
+      this.sessionTimeout?.clear();
+      this.inactivityTimeout?.clear();
 
       if (notifyOtherTabs) {
-        this.authChecker?.notifySignedOut();
+        this.sessionBroadcastChannel?.notifySignedOut();
       }
 
       const authService = services().auth;
@@ -274,12 +263,7 @@ export const useSessionStore = defineStore('session', {
       disableWalletWorkers();
     },
 
-    async reauthenticate() {
-      logger.info(`[call] reauthenticate`);
-      this.signIn();
-    },
-
-    async setReauthenticated() {
+    async setReauthenticated(wasSignedIn: boolean) {
       const authService = services().auth;
       authService.invalidateAuthClient();
       const maybeIdentity = await authService.identity();
@@ -288,11 +272,39 @@ export const useSessionStore = defineStore('session', {
         return;
       }
 
-      logger.info(`[call] setReauthenticated`);
-      this.reauthenticationNeeded = false;
-      icAgent.get().replaceIdentity(maybeIdentity);
+      await this.initializeAuthenticated(maybeIdentity);
 
+      if (!wasSignedIn) {
+        afterLoginRedirect();
+        return;
+      }
+    },
+
+    async initializeAuthenticated(newIdentity: Identity) {
+      const authService = services().auth;
+      icAgent.get().replaceIdentity(newIdentity);
+
+      this.reauthenticationNeeded = false;
       enableWalletWorkers();
+
+      const maybeSessionExpirationTimeMs = await authService.getRemainingSessionTimeMs();
+      if (maybeSessionExpirationTimeMs) {
+        this.sessionTimeout!.reset(maybeSessionExpirationTimeMs);
+      }
+      this.inactivityTimeout!.reset(INACTIVITY_TIMEOUT_MS);
+
+      const controlPanelService = services().controlPanel;
+      const isRegistered = await controlPanelService.hasRegistration();
+
+      if (!isRegistered) {
+        await controlPanelService.register({
+          // a new user is created with an empty list of wallets, they can add them later
+          wallet_id: [],
+        });
+      }
+
+      // loads information about the authenticated user
+      await this.load();
     },
   },
 });
