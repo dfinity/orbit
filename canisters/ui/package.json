@@ -39,6 +39,7 @@
     "vuetify": "3.4.10"
   },
   "devDependencies": {
+    "@pinia/testing": "0.1.3",
     "@types/validator": "13.11.7",
     "@vitejs/plugin-vue": "4.6.2",
     "@vue/test-utils": "2.4.3",

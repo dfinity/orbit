@@ -1,7 +1,8 @@
 import { mount as componentMount, ComponentMountingOptions } from '@vue/test-utils';
 import { vi } from 'vitest';
-import { Component } from 'vue';
-import { i18n, navigation, pinia, serviceManager, vuetify } from '~/ui/modules';
+import { Component, createApp } from 'vue';
+import { i18n, navigation, serviceManager, vuetify } from '~/ui/modules';
+import { createTestingPinia } from '@pinia/testing';
 
 export const mount = <T extends Component>(
   component: T,
@@ -14,7 +15,7 @@ export const mount = <T extends Component>(
     ...options,
     global: {
       ...options.global,
-      plugins: [pinia, vuetify, i18n, serviceManager, navigation, ...plugins],
+      plugins: [createTestingPinia(), vuetify, i18n, serviceManager, navigation, ...plugins],
       mocks: {
         $router: {
           push: vi.fn(),
@@ -24,3 +25,18 @@ export const mount = <T extends Component>(
     },
   });
 };
+
+export function loadComposable<T>(loader: () => T): [T, ReturnType<typeof createApp>] {
+  let result: T;
+
+  const app = createApp({
+    setup() {
+      result = loader();
+      return () => {};
+    },
+  });
+
+  app.mount(document.createElement('div'));
+
+  return [result!, app];
+}

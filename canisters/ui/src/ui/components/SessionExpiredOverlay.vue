@@ -15,34 +15,14 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted } from 'vue';
 import { VCardText, VDialog } from 'vuetify/components';
 import { useSessionStore } from '../stores/session';
-import { throttle } from '~/core/utils';
+import { useUserActivity } from '../modules/user-activity';
 
 const session = useSessionStore();
 
-const registerActivity = throttle(() => {
-  session.registerActivity();
-}, 1000);
-
-onMounted(() => {
-  window.addEventListener('mousemove', registerActivity);
-  window.addEventListener('mousedown', registerActivity);
-  window.addEventListener('keypress', registerActivity);
-  window.addEventListener('DOMMouseScroll', registerActivity);
-  window.addEventListener('mousewheel', registerActivity);
-  window.addEventListener('touchmove', registerActivity);
-  window.addEventListener('MSPointerMove', registerActivity);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('mousemove', registerActivity);
-  window.removeEventListener('mousedown', registerActivity);
-  window.removeEventListener('keypress', registerActivity);
-  window.removeEventListener('DOMMouseScroll', registerActivity);
-  window.removeEventListener('mousewheel', registerActivity);
-  window.removeEventListener('touchmove', registerActivity);
-  window.removeEventListener('MSPointerMove', registerActivity);
+useUserActivity({
+  onActive: () => session.registerActivity(),
+  throttleMs: 1000,
 });
 </script>
