@@ -81,17 +81,3 @@ export class Timeout {
     }
   }
 }
-
-export class FixedTimeout extends Timeout {
-  constructor(
-    callback: () => void,
-    private timeoutMs: number,
-  ) {
-    super(callback);
-    this.reset();
-  }
-
-  public reset() {
-    super.reset(this.timeoutMs);
-  }
-}
