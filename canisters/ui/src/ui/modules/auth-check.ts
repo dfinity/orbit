@@ -1,4 +1,4 @@
-import { logger, unreachable } from '~/core';
+import { unreachable } from '~/core';
 
 type BroadcastChannelMessage =
   | {
@@ -26,8 +26,6 @@ export class SessionBroadcastChannel {
   }
 
   private onMessage(msg: BroadcastChannelMessage) {
-    logger.info(`[BROADCASE] onMessage:`, msg);
-
     switch (msg.type) {
       case 'active':
         this.config.onOtherTabActive?.();

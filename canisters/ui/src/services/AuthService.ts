@@ -2,7 +2,6 @@ import { Identity } from '@dfinity/agent';
 import { AuthClient, IdbStorage, KEY_STORAGE_DELEGATION } from '@dfinity/auth-client';
 import { DelegationChain } from '@dfinity/identity';
 import { appInitConfig } from '~/configs';
-import { logger } from '~/core';
 
 export class AuthService {
   // 1 hour in nanoseconds
@@ -11,13 +10,11 @@ export class AuthService {
   constructor(private authClient?: AuthClient) {}
 
   invalidateAuthClient(): void {
-    logger.info('!!! Invalidating auth client');
     this.authClient = undefined;
   }
 
   async client(): Promise<AuthClient> {
     if (!this.authClient) {
-      logger.info('!!! Creating new auth client');
       this.authClient = await AuthClient.create({
         idleOptions: {
           disableIdle: true,

@@ -72,11 +72,9 @@ class AccountsWorkerImpl {
           worker.stop();
           break;
         case 'enable':
-          logger.info('Enabling accounts worker');
           worker.enabled = true;
           break;
         case 'disable':
-          logger.info('Disabling accounts worker');
           worker.enabled = false;
           break;
         default:
@@ -114,7 +112,6 @@ class AccountsWorkerImpl {
 
   private async refreshAccounts(): Promise<void> {
     if (!this.enabled) {
-      logger.info('Accounts worker disabled, skipping refresh');
       return;
     }
 

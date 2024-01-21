@@ -78,7 +78,6 @@ export const useSessionStore = defineStore('session', {
   },
   actions: {
     async initialize(): Promise<void> {
-      logger.info(`[call] initialize`);
       try {
         if (this.initialized === InitializationStatus.Initialized) {
           return;
@@ -86,26 +85,21 @@ export const useSessionStore = defineStore('session', {
 
         this.sessionBroadcastChannel = new SessionBroadcastChannel({
           onOtherTabActive: () => {
-            logger.info(`[call] onOtherTabActive`);
             this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
           },
           onOtherTabSignout: () => {
-            logger.info(`[call] onOtherTabSignout`);
             this.signOut(false);
           },
           onOtherTabSignin: async () => {
-            logger.info(`[call] onOtherTabSignin`);
             this.setReauthenticated();
           },
         });
 
         this.sessionTimeout = new Timeout(() => {
-          logger.info(`[call] onExpired`);
           this.requireReauthentication();
         });
 
         this.inactivityTimeout = new Timeout(() => {
-          logger.info(`[call] onInactive`);
           const authService = services().auth;
           authService.logout();
           this.requireReauthentication();
@@ -130,7 +124,6 @@ export const useSessionStore = defineStore('session', {
       }
     },
     reset(): void {
-      logger.info(`[call] reset`);
       const wallet = useWalletStore();
 
       this.loading = false;
@@ -148,7 +141,6 @@ export const useSessionStore = defineStore('session', {
       wallet.reset();
     },
     async signIn(): Promise<void> {
-      logger.info(`[call] signIn`);
       const authService = services().auth;
 
       try {
@@ -163,7 +155,6 @@ export const useSessionStore = defineStore('session', {
       }
     },
     async signOut(notifyOtherTabs = true): Promise<void> {
-      logger.info(`[call] signOut`);
       disableWalletWorkers();
 
       this.sessionTimeout?.clear();
@@ -258,7 +249,6 @@ export const useSessionStore = defineStore('session', {
     },
 
     requireReauthentication() {
-      logger.info(`[call] requireReauthentication`);
       this.reauthenticationNeeded = true;
       this.inactivityTimeout?.clear();
       this.sessionTimeout?.clear();
@@ -279,7 +269,6 @@ export const useSessionStore = defineStore('session', {
 
     registerActivity() {
       if (this.inactivityTimeout?.isActive()) {
-        logger.info(`[call] registerActivity`);
         this.sessionBroadcastChannel?.notifyActive();
         this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
       }
@@ -293,7 +282,6 @@ export const useSessionStore = defineStore('session', {
         this.lastLoginPrincipal !== null &&
         this.lastLoginPrincipal !== newIdentity.getPrincipal().toText()
       ) {
-        logger.info(`[call] NEW IDENTITY`);
         this.reset();
       }
 

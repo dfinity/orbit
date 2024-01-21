@@ -73,11 +73,9 @@ class NotificationsWorkerImpl {
           worker.stop();
           break;
         case 'enable':
-          logger.info('Enabling notifications worker');
           worker.enabled = true;
           break;
         case 'disable':
-          logger.info('Disabling notifications worker');
           worker.enabled = false;
           break;
         default:
@@ -119,7 +117,6 @@ class NotificationsWorkerImpl {
 
   private async refreshNotifications(): Promise<void> {
     if (!this.enabled) {
-      logger.info('Notifications worker disabled, skipping refresh');
       return;
     }
 
