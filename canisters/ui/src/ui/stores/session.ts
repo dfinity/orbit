@@ -10,7 +10,7 @@ import { afterLoginRedirect, redirectToLogin } from '~/ui/utils';
 import { SessionBroadcaseChannel, Timeout } from '../modules/auth-check';
 import { Identity } from '@dfinity/agent';
 
-const INACTIVITY_TIMEOUT_MS = 1000 * 60 * 5; // 5 minutes
+const INACTIVITY_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
 
 export interface UserWallet {
   main: boolean;
@@ -106,7 +106,8 @@ export const useSessionStore = defineStore('session', {
 
         this.inactivityTimeout = new Timeout(() => {
           logger.info(`[call] onInactive`);
-          // todo: clear session
+          const authService = services().auth;
+          authService.logout();
           this.requireReauthentication();
         });
 
@@ -259,6 +260,8 @@ export const useSessionStore = defineStore('session', {
     requireReauthentication() {
       logger.info(`[call] requireReauthentication`);
       this.reauthenticationNeeded = true;
+      this.inactivityTimeout?.clear();
+      this.sessionTimeout?.clear();
       disableWalletWorkers();
     },
 
@@ -272,6 +275,14 @@ export const useSessionStore = defineStore('session', {
       }
 
       await this.initializeAuthenticated(maybeIdentity);
+    },
+
+    registerActivity() {
+      if (this.inactivityTimeout?.isActive()) {
+        logger.info(`[call] registerActivity`);
+        this.sessionBroadcastChannel?.notifyActive();
+        this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
+      }
     },
 
     async initializeAuthenticated(newIdentity: Identity) {

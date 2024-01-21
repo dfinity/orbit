@@ -6,7 +6,7 @@ import { logger } from '~/core';
 
 export class AuthService {
   // 1 hour in nanoseconds
-  static readonly maxAuthTTL = BigInt(15 * 1000 * 1000 * 1000);
+  static readonly maxAuthTTL = BigInt(60 * 60 * 1000 * 1000 * 1000);
 
   constructor(private authClient?: AuthClient) {}
 

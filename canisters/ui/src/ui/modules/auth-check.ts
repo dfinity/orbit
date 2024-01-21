@@ -71,6 +71,7 @@ export class Timeout {
 
     this.timeout = setTimeout(() => {
       this.callback();
+      this.timeout = null;
     }, timeoutMs);
   }
 
@@ -79,5 +80,9 @@ export class Timeout {
       clearTimeout(this.timeout);
       this.timeout = null;
     }
+  }
+
+  public isActive(): boolean {
+    return this.timeout !== null;
   }
 }
