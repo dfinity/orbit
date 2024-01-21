@@ -45,6 +45,4 @@ onUnmounted(() => {
   window.removeEventListener('touchmove', registerActivity);
   window.removeEventListener('MSPointerMove', registerActivity);
 });
-
-
 </script>

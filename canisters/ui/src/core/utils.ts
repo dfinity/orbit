@@ -123,13 +123,11 @@ export const variantIs = <EnumType extends object, T extends EnumType>(
   return (key as string) in p;
 };
 
-export const throttle = (fn: Function, wait: number = 300) => {
+export const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, wait: number = 300) => {
   let inThrottle: boolean, lastFn: ReturnType<typeof setTimeout>, lastTime: number;
-  return function (this: any) {
-    const context = this,
-      args = arguments;
+  return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
     if (!inThrottle) {
-      fn.apply(context, args);
+      fn.apply(this, args);
       lastTime = Date.now();
       inThrottle = true;
     } else {
@@ -137,7 +135,7 @@ export const throttle = (fn: Function, wait: number = 300) => {
       lastFn = setTimeout(
         () => {
           if (Date.now() - lastTime >= wait) {
-            fn.apply(context, args);
+            fn.apply(this, args);
             lastTime = Date.now();
           }
         },
