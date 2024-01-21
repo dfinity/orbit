@@ -11,7 +11,7 @@ type BroadcastChannelMessage =
       type: 'active';
     };
 
-export class SessionBroadcaseChannel {
+export class SessionBroadcastChannel {
   private channel: BroadcastChannel;
   constructor(
     private config: {

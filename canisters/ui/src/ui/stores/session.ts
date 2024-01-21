@@ -7,7 +7,7 @@ import { disableWalletWorkers, enableWalletWorkers, i18n, services } from '~/ui/
 import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
 import { afterLoginRedirect, redirectToLogin } from '~/ui/utils';
-import { SessionBroadcaseChannel, Timeout } from '../modules/auth-check';
+import { SessionBroadcastChannel, Timeout } from '../modules/auth-check';
 import { Identity } from '@dfinity/agent';
 
 const INACTIVITY_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
@@ -36,7 +36,7 @@ export interface SessionStoreState {
   principal: string;
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
-  sessionBroadcastChannel: SessionBroadcaseChannel | null;
+  sessionBroadcastChannel: SessionBroadcastChannel | null;
   sessionTimeout: Timeout | null;
   inactivityTimeout: Timeout | null;
   data: {
@@ -84,7 +84,7 @@ export const useSessionStore = defineStore('session', {
           return;
         }
 
-        this.sessionBroadcastChannel = new SessionBroadcaseChannel({
+        this.sessionBroadcastChannel = new SessionBroadcastChannel({
           onOtherTabActive: () => {
             logger.info(`[call] onOtherTabActive`);
             this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
