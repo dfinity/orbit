@@ -6,7 +6,7 @@
       </VCardText>
       <VCardActions>
         <VSpacer />
-        <VBtn @click="session.reauthenticate">
+        <VBtn @click="session.signIn">
           {{ $t('session.expired_dialog_btn') }}
         </VBtn>
       </VCardActions>

@@ -32,6 +32,7 @@ export enum InitializationStatus {
 export interface SessionStoreState {
   initialized: InitializationStatus;
   loading: boolean;
+  lastLoginPrincipal: string | null;
   principal: string;
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
@@ -49,6 +50,7 @@ export const useSessionStore = defineStore('session', {
     return {
       initialized: InitializationStatus.Uninitialized,
       loading: false,
+      lastLoginPrincipal: null,
       principal: Principal.anonymous().toText(),
       isAuthenticated: false,
       reauthenticationNeeded: false,
@@ -93,10 +95,7 @@ export const useSessionStore = defineStore('session', {
           },
           onOtherTabSignin: async () => {
             logger.info(`[call] onOtherTabSignin`);
-            const authService = services().auth;
-
-            const wasSignedIn = await (await authService.client()).isAuthenticated();
-            this.setReauthenticated(wasSignedIn);
+            this.setReauthenticated();
           },
         });
 
@@ -263,7 +262,7 @@ export const useSessionStore = defineStore('session', {
       disableWalletWorkers();
     },
 
-    async setReauthenticated(wasSignedIn: boolean) {
+    async setReauthenticated() {
       const authService = services().auth;
       authService.invalidateAuthClient();
       const maybeIdentity = await authService.identity();
@@ -273,16 +272,19 @@ export const useSessionStore = defineStore('session', {
       }
 
       await this.initializeAuthenticated(maybeIdentity);
-
-      if (!wasSignedIn) {
-        afterLoginRedirect();
-        return;
-      }
     },
 
     async initializeAuthenticated(newIdentity: Identity) {
       const authService = services().auth;
       icAgent.get().replaceIdentity(newIdentity);
+
+      if (
+        this.lastLoginPrincipal !== null &&
+        this.lastLoginPrincipal !== newIdentity.getPrincipal().toText()
+      ) {
+        logger.info(`[call] NEW IDENTITY`);
+        this.reset();
+      }
 
       this.reauthenticationNeeded = false;
       enableWalletWorkers();
@@ -305,6 +307,13 @@ export const useSessionStore = defineStore('session', {
 
       // loads information about the authenticated user
       await this.load();
+
+      // if the user was not signed in before, or the user signed in with a different identity
+      if (this.lastLoginPrincipal !== newIdentity.getPrincipal().toText()) {
+        afterLoginRedirect();
+      }
+
+      this.lastLoginPrincipal = newIdentity.getPrincipal().toText();
     },
   },
 });
