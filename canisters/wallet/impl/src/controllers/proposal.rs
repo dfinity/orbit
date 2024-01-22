@@ -6,7 +6,7 @@ use crate::{
     models::access_control::{ProposalActionSpecifier, ResourceSpecifier},
     services::{ProposalService, PROPOSAL_SERVICE},
 };
-use ic_canister_core::api::{ApiError, ApiResult};
+use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -97,22 +97,15 @@ impl ProposalController {
     )]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let ctx = call_context();
-        let results = self
+        let list = self
             .proposal_service
             .list_proposals(input, Some(&ctx))
             .await?;
-        let pagination = results.1;
-        let proposals = results
-            .0
-            .into_iter()
-            .try_fold(Vec::new(), |mut acc, proposal| {
-                acc.push(ProposalDTO::from(proposal));
-                Ok::<Vec<_>, ApiError>(acc)
-            })?;
 
         Ok(ListProposalsResponse {
-            proposals,
-            pagination,
+            proposals: list.items.into_iter().map(Into::into).collect(),
+            next_offset: list.next_offset,
+            total: list.total,
         })
     }
 

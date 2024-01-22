@@ -1,5 +1,9 @@
 use crate::{
-    core::{access_control::evaluate_caller_access, CallContext},
+    core::{
+        access_control::evaluate_caller_access,
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        CallContext,
+    },
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
@@ -20,7 +24,7 @@ use ic_canister_core::{repository::Repository, types::UUID};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
-use wallet_api::{CreateProposalInput, ListProposalsInput, PaginationInfo, VoteOnProposalInput};
+use wallet_api::{CreateProposalInput, ListProposalsInput, VoteOnProposalInput};
 
 lazy_static! {
     pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::new(
@@ -45,6 +49,7 @@ pub struct ProposalEditInput {
 
 impl ProposalService {
     const DEFAULT_PROPOSAL_LIST_LIMIT: u16 = 100;
+    const MAX_PROPOSAL_LIST_LIMIT: u16 = 250;
 
     pub fn new(
         user_service: Arc<UserService>,
@@ -73,7 +78,7 @@ impl ProposalService {
         &self,
         input: ListProposalsInput,
         ctx: Option<&CallContext>,
-    ) -> ServiceResult<(Vec<Proposal>, PaginationInfo)> {
+    ) -> ServiceResult<PaginatedData<Proposal>> {
         let filter_by_proposers = input
             .proposer_ids
             .map(|ids| {
@@ -133,28 +138,15 @@ impl ProposalService {
                 .await
         }
 
-        let (limit, offset) = input
-            .paginate
-            .map(|p| {
-                (
-                    p.limit.unwrap_or(Self::DEFAULT_PROPOSAL_LIST_LIMIT),
-                    p.offset.unwrap_or(0),
-                )
-            })
-            .unwrap_or((Self::DEFAULT_PROPOSAL_LIST_LIMIT, 0));
-        let total_proposals = proposals.len() as u64;
+        let paginated_proposals = paginated_items(PaginatedItemsArgs {
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
+            default_limit: Some(Self::DEFAULT_PROPOSAL_LIST_LIMIT),
+            max_limit: Some(Self::MAX_PROPOSAL_LIST_LIMIT),
+            items: &proposals,
+        })?;
 
-        Ok((
-            proposals
-                .into_iter()
-                .skip(offset as usize)
-                .take(limit as usize)
-                .collect::<_>(),
-            PaginationInfo {
-                total: total_proposals,
-                next_offset: None,
-            },
-        ))
+        Ok(paginated_proposals)
     }
 
     pub async fn edit_proposal(&self, input: ProposalEditInput) -> ServiceResult<Proposal> {
@@ -530,6 +522,6 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap().0.len(), 1);
+        assert_eq!(result.unwrap().items.len(), 1);
     }
 }

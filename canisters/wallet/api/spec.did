@@ -16,13 +16,6 @@ type PaginationInput = record {
   limit : opt nat16;
 };
 
-type PaginationInfo = record {
-  // The offset to use for pagination on the next request.
-  next_offset : opt nat64;
-  // The total number of items available.
-  total : nat64;
-};
-
 // Represents a proposal policy with the associated criteria.
 type ProposalPolicy = record {
   id : UUID;
@@ -665,8 +658,10 @@ type ListProposalsResult = variant {
   Ok : record {
     // The list of proposals.
     proposals : vec Proposal;
-    // The pagination information.
-    pagination : PaginationInfo;
+    // The total number of proposals.
+    total : nat64;
+    // The next offset to use for pagination.
+    next_offset : opt nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1068,6 +1063,8 @@ type ListUsersResult = variant {
     users : vec User;
     // The offset to use for the next page.
     next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1169,6 +1166,8 @@ type ListAccessPoliciesResult = variant {
     policies : vec AccessPolicy;
     // The offset to use for the next page.
     next_offset : opt nat64;
+    // The total number of access policies.
+    total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1241,6 +1240,8 @@ type ListProposalPoliciesResult = variant {
     policies : vec ProposalPolicy;
     // The offset to use for the next page.
     next_offset : opt nat64;
+    // The total number of proposal policies.
+    total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;

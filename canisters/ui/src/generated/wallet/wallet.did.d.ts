@@ -204,7 +204,11 @@ export interface HttpResponse {
 }
 export type ListAccessPoliciesInput = PaginationInput;
 export type ListAccessPoliciesResult = {
-    'Ok' : { 'next_offset' : [] | [bigint], 'policies' : Array<AccessPolicy> }
+    'Ok' : {
+      'total' : bigint,
+      'next_offset' : [] | [bigint],
+      'policies' : Array<AccessPolicy>,
+    }
   } |
   { 'Err' : Error };
 export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
@@ -231,7 +235,11 @@ export type ListNotificationsResult = {
   { 'Err' : Error };
 export type ListProposalPoliciesInput = PaginationInput;
 export type ListProposalPoliciesResult = {
-    'Ok' : { 'next_offset' : [] | [bigint], 'policies' : Array<ProposalPolicy> }
+    'Ok' : {
+      'total' : bigint,
+      'next_offset' : [] | [bigint],
+      'policies' : Array<ProposalPolicy>,
+    }
   } |
   { 'Err' : Error };
 export interface ListProposalsInput {
@@ -261,7 +269,11 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
 export type ListProposalsResult = {
-    'Ok' : { 'pagination' : PaginationInfo, 'proposals' : Array<Proposal> }
+    'Ok' : {
+      'total' : bigint,
+      'proposals' : Array<Proposal>,
+      'next_offset' : [] | [bigint],
+    }
   } |
   { 'Err' : Error };
 export type ListUserGroupResult = {
@@ -270,7 +282,11 @@ export type ListUserGroupResult = {
   { 'Err' : Error };
 export type ListUsersInput = PaginationInput;
 export type ListUsersResult = {
-    'Ok' : { 'users' : Array<User>, 'next_offset' : [] | [bigint] }
+    'Ok' : {
+      'total' : bigint,
+      'users' : Array<User>,
+      'next_offset' : [] | [bigint],
+    }
   } |
   { 'Err' : Error };
 export type MarkNotificationReadResult = { 'Ok' : null } |
@@ -307,10 +323,6 @@ export type NotificationType = {
   { 'SystemMessage' : null };
 export type NotificationTypeInput = { 'ProposalCreated' : null } |
   { 'SystemMessage' : null };
-export interface PaginationInfo {
-  'total' : bigint,
-  'next_offset' : [] | [bigint],
-}
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],

@@ -20,9 +20,3 @@ pub struct PaginationInput {
     pub offset: Option<u64>,
     pub limit: Option<u16>,
 }
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct PaginationInfo {
-    pub next_offset: Option<u64>,
-    pub total: u64,
-}

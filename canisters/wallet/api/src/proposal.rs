@@ -7,8 +7,8 @@ use crate::{
     AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
     ChangeCanisterOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
-    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInfo,
-    PaginationInput, ProposalPolicyDTO, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
+    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInput,
+    ProposalPolicyDTO, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
     RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
     UuidDTO,
 };
@@ -194,7 +194,8 @@ pub struct ListProposalsInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsResponse {
     pub proposals: Vec<ProposalDTO>,
-    pub pagination: PaginationInfo,
+    pub next_offset: Option<u64>,
+    pub total: u64,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

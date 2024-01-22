@@ -459,6 +459,7 @@ export const idlFactory = ({ IDL }) => {
   const ListAccessPoliciesInput = PaginationInput;
   const ListAccessPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
       'next_offset' : IDL.Opt(IDL.Nat64),
       'policies' : IDL.Vec(AccessPolicy),
     }),
@@ -547,6 +548,7 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalPoliciesInput = PaginationInput;
   const ListProposalPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
       'next_offset' : IDL.Opt(IDL.Nat64),
       'policies' : IDL.Vec(ProposalPolicy),
     }),
@@ -590,14 +592,11 @@ export const idlFactory = ({ IDL }) => {
     'operation_types' : IDL.Opt(IDL.Vec(ListProposalsOperationType)),
     'created_from_dt' : IDL.Opt(TimestampRFC3339),
   });
-  const PaginationInfo = IDL.Record({
-    'total' : IDL.Nat64,
-    'next_offset' : IDL.Opt(IDL.Nat64),
-  });
   const ListProposalsResult = IDL.Variant({
     'Ok' : IDL.Record({
-      'pagination' : PaginationInfo,
+      'total' : IDL.Nat64,
       'proposals' : IDL.Vec(Proposal),
+      'next_offset' : IDL.Opt(IDL.Nat64),
     }),
     'Err' : Error,
   });
@@ -608,6 +607,7 @@ export const idlFactory = ({ IDL }) => {
   const ListUsersInput = PaginationInput;
   const ListUsersResult = IDL.Variant({
     'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
       'users' : IDL.Vec(User),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),

@@ -66,6 +66,7 @@ pub struct ListUsersInput {
 pub struct ListUsersResponse {
     pub users: Vec<UserDTO>,
     pub next_offset: Option<u64>,
+    pub total: u64,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
