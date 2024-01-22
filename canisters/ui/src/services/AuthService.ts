@@ -41,6 +41,7 @@ export class AuthService {
         .login({
           maxTimeToLive: AuthService.maxAuthTTL,
           onSuccess: () => resolve(client.getIdentity()),
+          onError: reject,
           identityProvider: appInitConfig.providers.internetIdentity,
         })
         .catch(reject);
