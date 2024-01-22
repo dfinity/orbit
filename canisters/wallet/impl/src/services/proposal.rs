@@ -478,26 +478,13 @@ mod tests {
         proposal.created_timestamp = 10;
         proposal.votes = vec![];
 
-        let mut proposal_without_access = mock_proposal();
-        proposal_without_access.id = [2; 16];
-        proposal_without_access.proposed_by = [8; 16];
-        proposal_without_access.status = ProposalStatus::Created;
-        proposal_without_access.operation = ProposalOperation::Transfer(TransferOperation {
-            transfer_id: None,
-            input: TransferOperationInput {
-                from_account_id: [9; 16],
-                amount: candid::Nat(100u32.into()),
-                fee: None,
-                metadata: Metadata::default(),
-                network: "mainnet".to_string(),
-                to: "0x1234".to_string(),
-            },
-        });
-        proposal_without_access.created_timestamp = 10;
-        proposal_without_access.votes = vec![];
-
         ctx.repository
             .insert(proposal.to_key(), proposal.to_owned());
+
+        let mut proposal_without_access = proposal;
+        proposal_without_access.id = [2; 16];
+        proposal_without_access.proposed_by = [8; 16];
+
         ctx.repository.insert(
             proposal_without_access.to_key(),
             proposal_without_access.to_owned(),
@@ -509,8 +496,8 @@ mod tests {
                 ListProposalsInput {
                     proposer_ids: None,
                     voter_ids: None,
-                    created_from_dt: Some("1969-12-31T19:00:00.000-05:00".to_string()),
-                    created_to_dt: Some("1969-12-31T19:00:00.020-05:00".to_string()),
+                    created_from_dt: None,
+                    created_to_dt: None,
                     expiration_from_dt: None,
                     expiration_to_dt: None,
                     operation_types: None,
