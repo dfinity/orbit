@@ -125,6 +125,7 @@ pub type ListAccessPoliciesInput = PaginationInput;
 pub struct ListAccessPoliciesResponse {
     pub policies: Vec<AccessPolicyDTO>,
     pub next_offset: Option<u64>,
+    pub total: u64,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -160,6 +161,7 @@ pub type ListProposalPoliciesInput = PaginationInput;
 pub struct ListProposalPoliciesResponse {
     pub policies: Vec<ProposalPolicyDTO>,
     pub next_offset: Option<u64>,
+    pub total: u64,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

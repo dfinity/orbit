@@ -10,7 +10,6 @@ use crate::core::proposal::{
     ProposalEvaluator, ProposalPossibleVotersFinder, ProposalVoteRightsEvaluator,
 };
 use crate::errors::{EvaluateError, ProposalError};
-use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -243,7 +242,7 @@ pub mod proposal_test_utils {
     use num_bigint::BigUint;
 
     use super::*;
-    use crate::models::{ProposalVoteStatus, TransferOperation, TransferOperationInput};
+    use crate::models::{Metadata, ProposalVoteStatus, TransferOperation, TransferOperationInput};
 
     pub fn mock_proposal() -> Proposal {
         Proposal {

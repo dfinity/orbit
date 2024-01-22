@@ -68,6 +68,7 @@ impl UserController {
         Ok(ListUsersResponse {
             users: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
+            total: list.total,
         })
     }
 

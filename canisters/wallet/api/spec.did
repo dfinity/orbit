@@ -220,7 +220,7 @@ type TransferOperationInput = record {
 // Input type for transferring funds.
 type TransferOperation = record {
   // The account to use for the transaction.
-  from_account : Account;
+  from_account : opt Account;
   // The network to use for the transaction.
   network : Network;
   // The input to the proposal to transfer funds.
@@ -630,18 +630,26 @@ type ListProposalsOperationType = variant {
   RemoveProposalPolicy;
 };
 
-// The input type for getting the list of proposals associated with the caller.
+// The input type for getting the list of proposals based on the given filters.
 type ListProposalsInput = record {
-  // Show only proposals proposed by or voted on by the given user.
-  user_id : opt UUID;
+  // Show only proposals proposed by the given users.
+  proposer_ids : opt vec UUID;
+  // Show only proposals that are voted on by the given users.
+  voter_ids : opt vec UUID;
   // Show only proposals with the given status.
-  status : opt vec ProposalStatusCode;
+  statuses : opt vec ProposalStatusCode;
   // The type of the proposal (e.g. "transfer").
-  operation_type : opt ListProposalsOperationType;
+  operation_types : opt vec ListProposalsOperationType;
+  // From which expiration time to retrieve the proposals.
+  expiration_from_dt : opt TimestampRFC3339;
+  // Until which expiration time to retrieve the proposals.
+  expiration_to_dt : opt TimestampRFC3339;
   // From which created time to retrieve the proposals.
-  from_dt : opt TimestampRFC3339;
+  created_from_dt : opt TimestampRFC3339;
   // Until which created time to retrieve the proposals.
-  to_dt : opt TimestampRFC3339;
+  created_to_dt : opt TimestampRFC3339;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
 };
 
 // The result type for getting the list of proposals.
@@ -650,6 +658,10 @@ type ListProposalsResult = variant {
   Ok : record {
     // The list of proposals.
     proposals : vec Proposal;
+    // The total number of proposals.
+    total : nat64;
+    // The next offset to use for pagination.
+    next_offset : opt nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1001,7 +1013,7 @@ type Config = record {
   // The list of supported assets.
   supported_assets : vec WalletAsset;
   // The list of available user groups.
-  user_groups: vec UserGroup;
+  user_groups : vec UserGroup;
 };
 
 // Result type for getting the current config.
@@ -1051,6 +1063,8 @@ type ListUsersResult = variant {
     users : vec User;
     // The offset to use for the next page.
     next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1152,6 +1166,8 @@ type ListAccessPoliciesResult = variant {
     policies : vec AccessPolicy;
     // The offset to use for the next page.
     next_offset : opt nat64;
+    // The total number of access policies.
+    total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1224,6 +1240,8 @@ type ListProposalPoliciesResult = variant {
     policies : vec ProposalPolicy;
     // The offset to use for the next page.
     next_offset : opt nat64;
+    // The total number of proposal policies.
+    total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1341,6 +1359,8 @@ service : (opt WalletInstall) -> {
   // The proposal will be created and the caller will be added as the proposer.
   create_proposal : (input : CreateProposalInput) -> (CreateProposalResult);
   // Get the list of proposals.
+  //
+  // Only proposals that the caller has access to will be returned.
   list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
   // Get the proposal by id.
   get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
@@ -1366,7 +1386,6 @@ service : (opt WalletInstall) -> {
   list_user_groups : () -> (ListUserGroupResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
-
   // Metrics (Http Interface)
   http_request : (HttpRequest) -> (HttpResponse) query;
 };

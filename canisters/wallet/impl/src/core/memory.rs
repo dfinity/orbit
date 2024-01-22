@@ -18,7 +18,7 @@ pub const PROPOSAL_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
 pub const TRANSFER_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(7);
 pub const PROPOSAL_MEMORY_ID: MemoryId = MemoryId::new(8);
 pub const PROPOSAL_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(9);
-pub const PROPOSAL_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
+pub const PROPOSAL_VOTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
 pub const PROPOSAL_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(11);
 pub const PROPOSAL_SCHEDULED_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(13);
@@ -32,6 +32,8 @@ pub const USER_STATUS_GROUP_INDEX_MEMORY_ID: MemoryId = MemoryId::new(20);
 pub const ACCESS_CONTROL_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(21);
 pub const ADDRESS_BOOK_MEMORY_ID: MemoryId = MemoryId::new(22);
 pub const ADDRESS_BOOK_INDEX_MEMORY_ID: MemoryId = MemoryId::new(23);
+pub const PROPOSAL_PROPOSER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(24);
+pub const PROPOSAL_CREATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(25);
 
 thread_local! {
   /// Static configuration of the canister.

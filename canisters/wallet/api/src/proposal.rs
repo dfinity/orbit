@@ -7,9 +7,10 @@ use crate::{
     AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
     ChangeCanisterOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
-    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, ProposalPolicyDTO,
-    ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, UuidDTO,
+    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInput,
+    ProposalPolicyDTO, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
+    RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
+    UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -25,7 +26,7 @@ pub enum ProposalStatusDTO {
     Failed { reason: Option<String> },
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ProposalStatusCodeDTO {
     Created,
     Adopted,
@@ -179,16 +180,22 @@ pub enum ListProposalsOperationTypeDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsInput {
-    pub user_id: Option<UuidDTO>,
-    pub status: Option<Vec<ProposalStatusCodeDTO>>,
-    pub operation_type: Option<ListProposalsOperationTypeDTO>,
-    pub from_dt: Option<TimestampRfc3339>,
-    pub to_dt: Option<TimestampRfc3339>,
+    pub voter_ids: Option<Vec<UuidDTO>>,
+    pub proposer_ids: Option<Vec<UuidDTO>>,
+    pub statuses: Option<Vec<ProposalStatusCodeDTO>>,
+    pub operation_types: Option<Vec<ListProposalsOperationTypeDTO>>,
+    pub expiration_from_dt: Option<TimestampRfc3339>,
+    pub expiration_to_dt: Option<TimestampRfc3339>,
+    pub created_from_dt: Option<TimestampRfc3339>,
+    pub created_to_dt: Option<TimestampRfc3339>,
+    pub paginate: Option<PaginationInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsResponse {
     pub proposals: Vec<ProposalDTO>,
+    pub next_offset: Option<u64>,
+    pub total: u64,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

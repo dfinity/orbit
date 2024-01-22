@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
     models::access_control::{ProposalActionSpecifier, ResourceSpecifier},
-    services::ProposalService,
+    services::{ProposalService, PROPOSAL_SERVICE},
 };
-use ic_canister_core::api::{ApiError, ApiResult};
+use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -37,16 +39,17 @@ async fn create_proposal(input: CreateProposalInput) -> ApiResult<CreateProposal
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: ProposalController = ProposalController::new(ProposalService::default());
+    static ref CONTROLLER: ProposalController =
+        ProposalController::new(Arc::clone(&PROPOSAL_SERVICE));
 }
 
 #[derive(Debug)]
 pub struct ProposalController {
-    proposal_service: ProposalService,
+    proposal_service: Arc<ProposalService>,
 }
 
 impl ProposalController {
-    fn new(proposal_service: ProposalService) -> Self {
+    fn new(proposal_service: Arc<ProposalService>) -> Self {
         Self { proposal_service }
     }
 
@@ -93,16 +96,17 @@ impl ProposalController {
         is_async = true
     )]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
-        let proposals = self
+        let ctx = call_context();
+        let list = self
             .proposal_service
-            .list_proposals(input)?
-            .into_iter()
-            .try_fold(Vec::new(), |mut acc, proposal| {
-                acc.push(ProposalDTO::from(proposal));
-                Ok::<Vec<_>, ApiError>(acc)
-            })?;
+            .list_proposals(input, Some(&ctx))
+            .await?;
 
-        Ok(ListProposalsResponse { proposals })
+        Ok(ListProposalsResponse {
+            proposals: list.items.into_iter().map(Into::into).collect(),
+            next_offset: list.next_offset,
+            total: list.total,
+        })
     }
 
     #[with_middleware(

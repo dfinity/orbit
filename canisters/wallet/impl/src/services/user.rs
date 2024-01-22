@@ -114,12 +114,13 @@ impl UserService {
     ///
     /// The default limit is 100 and the maximum limit is 1000.
     pub fn list_users(&self, input: ListUsersInput) -> ServiceResult<PaginatedData<User>> {
+        let users = self.user_repository.list();
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.offset,
             limit: input.limit,
             default_limit: Some(Self::DEFAULT_USER_LIST_LIMIT),
             max_limit: Some(Self::MAX_USER_LIST_LIMIT),
-            items: Box::new(|| self.user_repository.list()),
+            items: &users,
         })?;
 
         Ok(result)
