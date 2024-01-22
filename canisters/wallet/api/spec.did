@@ -1359,7 +1359,7 @@ service : (opt WalletInstall) -> {
   create_proposal : (input : CreateProposalInput) -> (CreateProposalResult);
   // Get the list of proposals.
   //
-  // Only proposals that the caller has access will be returned.
+  // Only proposals that the caller has access to will be returned.
   list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
   // Get the proposal by id.
   get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
