@@ -1,44 +1,34 @@
-use crate::models::{Proposal, ProposalId, UserId};
+use crate::models::Proposal;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::Timestamp;
+use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
-use std::collections::HashSet;
 
 /// Index of proposals by the user id.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ProposalUserIndex {
-    /// The user thgat is associated with this operation.
-    pub user_id: UserId,
-    /// The time when the operation was created.
+pub struct ProposalProposerIndex {
+    /// The user that is associated with this proposal.
+    pub user_id: UUID,
+    /// The time when the proposal was created.
     pub created_at: Timestamp,
     /// The proposal id, which is a UUID.
-    pub proposal_id: ProposalId,
+    pub proposal_id: UUID,
 }
 
 #[derive(Clone, Debug)]
-pub struct ProposalUserIndexCriteria {
-    pub user_id: UserId,
+pub struct ProposalProposerIndexCriteria {
+    pub user_id: UUID,
     pub from_dt: Option<Timestamp>,
     pub to_dt: Option<Timestamp>,
 }
 
 impl Proposal {
-    pub fn to_index_for_users(&self) -> Vec<ProposalUserIndex> {
-        let mut users = HashSet::<UserId>::new();
-        users.insert(self.proposed_by.to_owned());
-        self.votes.iter().for_each(|d| {
-            users.insert(d.user_id);
-        });
-
-        users
-            .iter()
-            .map(|user_id| ProposalUserIndex {
-                proposal_id: self.id.to_owned(),
-                created_at: self.created_timestamp.to_owned(),
-                user_id: user_id.to_owned(),
-            })
-            .collect()
+    pub fn to_index_for_proposer(&self) -> ProposalProposerIndex {
+        ProposalProposerIndex {
+            user_id: self.proposed_by.to_owned(),
+            proposal_id: self.id.to_owned(),
+            created_at: self.created_timestamp.to_owned(),
+        }
     }
 }
 
@@ -52,14 +42,14 @@ mod tests {
     fn valid_model_serialization() {
         let proposal_id = [1; 16];
         let user_id = [u8::MAX; 16];
-        let model = ProposalUserIndex {
+        let model = ProposalProposerIndex {
             proposal_id,
             user_id,
             created_at: 0,
         };
 
         let serialized_model = model.to_bytes();
-        let deserialized_model = ProposalUserIndex::from_bytes(serialized_model);
+        let deserialized_model = ProposalProposerIndex::from_bytes(serialized_model);
 
         assert_eq!(model.proposal_id, deserialized_model.proposal_id);
         assert_eq!(model.user_id, deserialized_model.user_id);
@@ -87,11 +77,9 @@ mod tests {
             },
         ];
 
-        let indexes = proposal.to_index_for_users();
+        let index = proposal.to_index_for_proposer();
 
-        assert_eq!(indexes.len(), 3);
-        assert!(indexes.iter().any(|i| i.user_id == proposal.proposed_by));
-        assert!(indexes.iter().any(|i| i.user_id == [1; 16]));
-        assert!(indexes.iter().any(|i| i.user_id == [2; 16]));
+        assert_eq!(index.created_at, proposal.created_timestamp);
+        assert_eq!(index.user_id, proposal.proposed_by);
     }
 }

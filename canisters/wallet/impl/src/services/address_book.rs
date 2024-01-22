@@ -4,7 +4,7 @@ use crate::{
     mappers::AddressBookMapper,
     models::{
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryId, Blockchain,
-        BlockchainStandard, EditAddressBookEntryOperationInput, Metadata,
+        BlockchainStandard, EditAddressBookEntryOperationInput,
     },
     repositories::{AddressBookRepository, ADDRESS_BOOK_REPOSITORY},
 };
@@ -119,7 +119,7 @@ mod tests {
         core::test_utils,
         models::{
             address_book_entry_test_utils::mock_address_book_entry, AddAddressBookEntryOperation,
-            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard,
+            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard, Metadata,
         },
     };
 
