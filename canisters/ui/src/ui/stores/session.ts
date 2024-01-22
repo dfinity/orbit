@@ -308,7 +308,10 @@ export const useSessionStore = defineStore('session', {
       await this.load();
 
       // if the user was not signed in before, or the user signed in with a different identity
-      if (this.lastLoginPrincipal !== newIdentity.getPrincipal().toText()) {
+      if (
+        this.lastLoginPrincipal !== null &&
+        this.lastLoginPrincipal !== newIdentity.getPrincipal().toText()
+      ) {
         afterLoginRedirect();
       }
 

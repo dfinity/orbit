@@ -3,9 +3,10 @@
 </template>
 
 <script lang="ts" setup>
-import { watch } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useTheme } from 'vuetify';
 import { useAppStore } from '~/ui/stores/app';
+import { initWorkers } from './modules';
 
 const app = useAppStore();
 const vuetifyTheme = useTheme();
@@ -19,4 +20,5 @@ watch(
     immediate: true,
   },
 );
+onMounted(async () => await initWorkers());
 </script>
