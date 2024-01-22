@@ -140,7 +140,7 @@ export const useSessionStore = defineStore('session', {
 
       wallet.reset();
     },
-    async signIn(): Promise<void> {
+    async signIn(resetOnError = false): Promise<void> {
       const authService = services().auth;
 
       try {
@@ -150,7 +150,9 @@ export const useSessionStore = defineStore('session', {
         await this.initializeAuthenticated(identity);
       } catch (error) {
         disableWalletWorkers();
-        this.reset();
+        if (resetOnError) {
+          this.reset();
+        }
         throw error;
       }
     },

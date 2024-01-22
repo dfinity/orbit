@@ -6,7 +6,7 @@
       </VCardText>
       <VCardActions>
         <VSpacer />
-        <VBtn @click="session.signIn">
+        <VBtn :loading="isReauthenticating" @click="reauthenticate">
           {{ $t('session.expired_dialog_btn') }}
         </VBtn>
       </VCardActions>
@@ -18,8 +18,18 @@
 import { VCardText, VDialog } from 'vuetify/components';
 import { useSessionStore } from '../stores/session';
 import { useUserActivity } from '../modules/user-activity';
+import { ref } from 'vue';
 
 const session = useSessionStore();
+
+const isReauthenticating = ref(false);
+
+function reauthenticate() {
+  isReauthenticating.value = true;
+  session.signIn(false).finally(() => {
+    isReauthenticating.value = false;
+  });
+}
 
 useUserActivity({
   onActive: () => session.registerActivity(),
