@@ -7,7 +7,7 @@ use ic_canister_macros::stable_object;
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalProposerIndex {
-    /// The user that is associated with this proposal.
+    /// The user who proposed this proposal.
     pub user_id: UUID,
     /// The time when the proposal was created.
     pub created_at: Timestamp,
