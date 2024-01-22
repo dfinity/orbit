@@ -260,7 +260,7 @@ impl ProposalRepository {
             .collect()
     }
 
-    pub fn find_by_user_where(
+    pub fn find_by_voter_where(
         &self,
         user_id: UserId,
         condition: ProposalWhereClause,
