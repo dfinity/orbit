@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize};
 use ic_canister_core::types::{Timestamp, UUID};
 use ic_canister_macros::stable_object;
 
-/// Index of proposals by the user id.
+/// Index of proposals by the proposer user id.
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalProposerIndex {
