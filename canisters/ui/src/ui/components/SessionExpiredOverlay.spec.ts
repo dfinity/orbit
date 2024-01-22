@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { VBtn, VCard } from 'vuetify/components';
+import { describe, expect, it, vi } from 'vitest';
+import { VBtn, VCard, VProgressCircular } from 'vuetify/components';
 import { mount } from '~/ui/test.utils';
 import { useSessionStore } from '../stores/session';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
@@ -28,6 +28,9 @@ describe('SessionExpiredOverlay', () => {
   it('calls signIn on reauthenticate button click', async () => {
     const wrapper = mount(SessionExpiredOverlay);
     const sessionStore = useSessionStore();
+
+    sessionStore.signIn = vi.fn(() => Promise.resolve());
+
     sessionStore.$patch({
       reauthenticationNeeded: true,
     });
@@ -40,9 +43,10 @@ describe('SessionExpiredOverlay', () => {
     expect(sessionStore.signIn).toHaveBeenCalled();
   });
 
-  it('calls signIn on reauthenticate button click', async () => {
+  it('shows a spinner while authenticating', async () => {
     const wrapper = mount(SessionExpiredOverlay);
     const sessionStore = useSessionStore();
+    sessionStore.signIn = vi.fn(() => Promise.resolve());
     sessionStore.$patch({
       reauthenticationNeeded: true,
     });
@@ -52,6 +56,10 @@ describe('SessionExpiredOverlay', () => {
 
     reauthenticateButton.trigger('click');
 
-    expect(sessionStore.signIn).toHaveBeenCalled();
+    await wrapper.vm.$nextTick();
+
+    const spinner = wrapper.findComponent(VProgressCircular);
+
+    expect(spinner.exists()).toBe(true);
   });
 });
