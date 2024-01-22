@@ -1,13 +1,13 @@
 import { AnonymousIdentity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
-import { icAgent, logger } from '~/core';
+import { ResettableTimeout, icAgent, logger } from '~/core';
 import { User } from '~/generated/control-panel/control_panel.did';
 import { disableWalletWorkers, enableWalletWorkers, i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
 import { afterLoginRedirect, redirectToLogin } from '~/ui/utils';
-import { SessionBroadcastChannel, Timeout } from '../modules/auth-check';
+import { SessionBroadcastChannel } from '../modules/auth-check';
 import { Identity } from '@dfinity/agent';
 
 const INACTIVITY_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
@@ -37,8 +37,8 @@ export interface SessionStoreState {
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
   sessionBroadcastChannel: SessionBroadcastChannel | null;
-  sessionTimeout: Timeout | null;
-  inactivityTimeout: Timeout | null;
+  sessionTimeout: ResettableTimeout | null;
+  inactivityTimeout: ResettableTimeout | null;
   data: {
     wallets: UserWallet[];
     selectedWallet: SelectedUserWallet;
@@ -95,11 +95,11 @@ export const useSessionStore = defineStore('session', {
           },
         });
 
-        this.sessionTimeout = new Timeout(() => {
+        this.sessionTimeout = new ResettableTimeout(() => {
           this.requireReauthentication();
         });
 
-        this.inactivityTimeout = new Timeout(() => {
+        this.inactivityTimeout = new ResettableTimeout(() => {
           const authService = services().auth;
           authService.logout();
           this.requireReauthentication();

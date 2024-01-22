@@ -144,3 +144,29 @@ export const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, wait:
     }
   };
 };
+export class ResettableTimeout {
+  private timeout: NodeJS.Timeout | null = null;
+  constructor(private callback: () => void) {}
+
+  public reset(timeoutMs: number) {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+    }
+
+    this.timeout = setTimeout(() => {
+      this.callback();
+      this.timeout = null;
+    }, timeoutMs);
+  }
+
+  public clear() {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+  }
+
+  public isActive(): boolean {
+    return this.timeout !== null;
+  }
+}
