@@ -111,7 +111,7 @@ impl ProposalService {
             statuses: input.statuses.unwrap_or_default(),
             proposers: filter_by_proposers.unwrap_or_default(),
             voters: filter_by_voters.unwrap_or_default(),
-        });
+        })?;
 
         // filter out proposals that the caller does not have access to read
         if let Some(ctx) = ctx {
@@ -141,7 +141,7 @@ impl ProposalService {
                     p.offset.unwrap_or(0),
                 )
             })
-            .unwrap_or_default();
+            .unwrap_or((Self::DEFAULT_PROPOSAL_LIST_LIMIT, 0));
         let total_proposals = proposals.len() as u64;
 
         Ok((
@@ -463,5 +463,73 @@ mod tests {
         let notifications = NOTIFICATION_REPOSITORY.list();
         assert_eq!(notifications.len(), 1);
         assert_eq!(notifications[0].target_user_id, related_user.id);
+    }
+
+    #[tokio::test]
+    async fn only_list_proposals_user_has_access() {
+        let ctx = setup();
+        let mut proposal = mock_proposal();
+        proposal.id = [1; 16];
+        proposal.proposed_by = ctx.caller_user.id;
+        proposal.status = ProposalStatus::Created;
+        proposal.operation = ProposalOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            input: TransferOperationInput {
+                from_account_id: [9; 16],
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
+        });
+        proposal.created_timestamp = 10;
+        proposal.votes = vec![];
+
+        let mut proposal_without_access = mock_proposal();
+        proposal_without_access.id = [2; 16];
+        proposal_without_access.proposed_by = [8; 16];
+        proposal_without_access.status = ProposalStatus::Created;
+        proposal_without_access.operation = ProposalOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            input: TransferOperationInput {
+                from_account_id: [9; 16],
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
+        });
+        proposal_without_access.created_timestamp = 10;
+        proposal_without_access.votes = vec![];
+
+        ctx.repository
+            .insert(proposal.to_key(), proposal.to_owned());
+        ctx.repository.insert(
+            proposal_without_access.to_key(),
+            proposal_without_access.to_owned(),
+        );
+
+        let result = ctx
+            .service
+            .list_proposals(
+                ListProposalsInput {
+                    proposer_ids: None,
+                    voter_ids: None,
+                    created_from_dt: Some("1969-12-31T19:00:00.000-05:00".to_string()),
+                    created_to_dt: Some("1969-12-31T19:00:00.020-05:00".to_string()),
+                    expiration_from_dt: None,
+                    expiration_to_dt: None,
+                    operation_types: None,
+                    statuses: None,
+                    paginate: None,
+                },
+                Some(&ctx.call_context),
+            )
+            .await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().0.len(), 1);
     }
 }

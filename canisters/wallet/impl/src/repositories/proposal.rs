@@ -9,7 +9,7 @@ use super::indexes::{
 };
 use crate::{
     core::{utils::match_date_range, with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
-    errors::MapperError,
+    errors::{MapperError, RepositoryError},
     mappers::{HelperMapper, ProposalStatusMapper},
     models::{
         indexes::{
@@ -276,21 +276,25 @@ impl ProposalRepository {
             .collect()
     }
 
-    pub fn find_where(&self, condition: ProposalWhereClause) -> Vec<Proposal> {
+    pub fn find_where(
+        &self,
+        condition: ProposalWhereClause,
+    ) -> Result<Vec<Proposal>, RepositoryError> {
         let strategy = self.pick_most_selective_where_filter(&condition);
-        let proposal_ids = self.find_with_strategy(strategy, &condition);
-
-        proposal_ids
+        let proposal_ids = self.find_with_strategy(strategy, &condition)?;
+        let proposals = proposal_ids
             .iter()
             .filter_map(|id| self.check_condition(*id, &condition))
-            .collect()
+            .collect::<Vec<Proposal>>();
+
+        Ok(proposals)
     }
 
     fn pick_most_selective_where_filter(
         &self,
         condition: &ProposalWhereClause,
     ) -> WhereSelectionStrategy {
-        let mut strategy = WhereSelectionStrategy::Account;
+        let mut strategy = WhereSelectionStrategy::CreationDt;
 
         if condition.expiration_dt_from.is_some() || condition.expiration_dt_to.is_some() {
             strategy = WhereSelectionStrategy::ExpirationDt;
@@ -302,6 +306,10 @@ impl ProposalRepository {
 
         if !condition.statuses.is_empty() {
             strategy = WhereSelectionStrategy::Status;
+        }
+
+        if !condition.account_ids().unwrap_or_default().is_empty() {
+            strategy = WhereSelectionStrategy::Account;
         }
 
         if !condition.voters.is_empty() {
@@ -319,11 +327,15 @@ impl ProposalRepository {
         &self,
         strategy: WhereSelectionStrategy,
         condition: &ProposalWhereClause,
-    ) -> HashSet<UUID> {
-        match strategy {
+    ) -> Result<HashSet<UUID>, RepositoryError> {
+        let ids = match strategy {
             WhereSelectionStrategy::Account => {
                 let mut proposal_ids = HashSet::<UUID>::new();
-                let account_ids = condition.account_ids().unwrap_or_default();
+                let account_ids = condition.account_ids().map_err(|e| {
+                    RepositoryError::CriteriaValidationError {
+                        reason: e.to_string(),
+                    }
+                })?;
 
                 for account_id in account_ids {
                     proposal_ids.extend(self.account_index.find_by_criteria(
@@ -403,7 +415,9 @@ impl ProposalRepository {
                         to_dt: condition.created_dt_to,
                     })
             }
-        }
+        };
+
+        Ok(ids)
     }
 
     fn check_condition(
@@ -497,7 +511,7 @@ impl ProposalWhereClause {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WhereSelectionStrategy {
     Account,
     Voter,
@@ -605,6 +619,139 @@ mod tests {
             None,
             proposal.status.to_string(),
         );
+
+        assert!(proposals.is_empty());
+    }
+
+    #[test]
+    fn pick_optmized_lookup_strategy() {
+        let mut condition = ProposalWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: Some(10),
+            expiration_dt_to: None,
+            operation_types: vec![],
+            statuses: vec![],
+            voters: vec![],
+            proposers: vec![],
+        };
+
+        assert_eq!(
+            WhereSelectionStrategy::ExpirationDt,
+            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
+        );
+
+        condition.created_dt_from = Some(10);
+
+        assert_eq!(
+            WhereSelectionStrategy::CreationDt,
+            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
+        );
+
+        condition.statuses = vec![ProposalStatusCode::Created];
+
+        assert_eq!(
+            WhereSelectionStrategy::Status,
+            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
+        );
+
+        condition.operation_types = vec![ListProposalsOperationTypeDTO::Transfer(Some(
+            Uuid::new_v4().to_string(),
+        ))];
+
+        assert_eq!(
+            WhereSelectionStrategy::Account,
+            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
+        );
+
+        condition.voters = vec![[0; 16]];
+
+        assert_eq!(
+            WhereSelectionStrategy::Voter,
+            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
+        );
+
+        condition.proposers = vec![[0; 16]];
+
+        assert_eq!(
+            WhereSelectionStrategy::Proposer,
+            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
+        );
+    }
+
+    #[test]
+    fn find_where_with_expiration_dt() {
+        let mut proposal = proposal_test_utils::mock_proposal();
+        proposal.id = *Uuid::new_v4().as_bytes();
+        proposal.created_timestamp = 5;
+        proposal.expiration_dt = 10;
+        proposal.status = ProposalStatus::Created;
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        let mut proposal_not_match = proposal_test_utils::mock_proposal();
+        proposal_not_match.id = *Uuid::new_v4().as_bytes();
+        proposal_not_match.created_timestamp = 5;
+        proposal_not_match.expiration_dt = 9;
+        proposal_not_match.status = ProposalStatus::Created;
+        PROPOSAL_REPOSITORY.insert(proposal_not_match.to_key(), proposal_not_match.clone());
+
+        let mut condition = ProposalWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: Some(10),
+            expiration_dt_to: None,
+            operation_types: vec![],
+            statuses: vec![],
+            voters: vec![],
+            proposers: vec![],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+
+        assert_eq!(proposals.len(), 1);
+        assert_eq!(proposals[0], proposal);
+
+        condition.expiration_dt_from = Some(11);
+
+        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+
+        assert!(proposals.is_empty());
+    }
+
+    #[test]
+    fn find_where_with_creation_dt() {
+        let mut proposal = proposal_test_utils::mock_proposal();
+        proposal.id = *Uuid::new_v4().as_bytes();
+        proposal.created_timestamp = 10;
+        proposal.status = ProposalStatus::Created;
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        let mut proposal_not_match = proposal_test_utils::mock_proposal();
+        proposal_not_match.id = *Uuid::new_v4().as_bytes();
+        proposal_not_match.created_timestamp = 12;
+        proposal_not_match.status = ProposalStatus::Created;
+        PROPOSAL_REPOSITORY.insert(proposal_not_match.to_key(), proposal_not_match.clone());
+
+        let mut condition = ProposalWhereClause {
+            created_dt_from: Some(9),
+            created_dt_to: Some(11),
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            statuses: vec![],
+            voters: vec![],
+            proposers: vec![],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+
+        assert_eq!(proposals.len(), 1);
+        assert_eq!(proposals[0], proposal);
+
+        condition.created_dt_from = Some(8);
+        condition.created_dt_to = Some(9);
+
+        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
 
         assert!(proposals.is_empty());
     }

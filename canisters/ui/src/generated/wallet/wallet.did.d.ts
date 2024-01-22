@@ -235,11 +235,15 @@ export type ListProposalPoliciesResult = {
   } |
   { 'Err' : Error };
 export interface ListProposalsInput {
-  'status' : [] | [Array<ProposalStatusCode>],
-  'to_dt' : [] | [TimestampRFC3339],
-  'operation_type' : [] | [ListProposalsOperationType],
-  'from_dt' : [] | [TimestampRFC3339],
-  'user_id' : [] | [UUID],
+  'voter_ids' : [] | [Array<UUID>],
+  'expiration_from_dt' : [] | [TimestampRFC3339],
+  'created_to_dt' : [] | [TimestampRFC3339],
+  'statuses' : [] | [Array<ProposalStatusCode>],
+  'proposer_ids' : [] | [Array<UUID>],
+  'expiration_to_dt' : [] | [TimestampRFC3339],
+  'paginate' : [] | [PaginationInput],
+  'operation_types' : [] | [Array<ListProposalsOperationType>],
+  'created_from_dt' : [] | [TimestampRFC3339],
 }
 export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'AddUserGroup' : null } |
@@ -256,7 +260,9 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
-export type ListProposalsResult = { 'Ok' : { 'proposals' : Array<Proposal> } } |
+export type ListProposalsResult = {
+    'Ok' : { 'pagination' : PaginationInfo, 'proposals' : Array<Proposal> }
+  } |
   { 'Err' : Error };
 export type ListUserGroupResult = {
     'Ok' : { 'user_groups' : Array<UserGroup> }
@@ -301,6 +307,10 @@ export type NotificationType = {
   { 'SystemMessage' : null };
 export type NotificationTypeInput = { 'ProposalCreated' : null } |
   { 'SystemMessage' : null };
+export interface PaginationInfo {
+  'total' : bigint,
+  'next_offset' : [] | [bigint],
+}
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
@@ -472,7 +482,7 @@ export interface TransferListItem {
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
   'network' : Network,
-  'from_account' : Account,
+  'from_account' : [] | [Account],
   'input' : TransferOperationInput,
 }
 export interface TransferOperationInput {

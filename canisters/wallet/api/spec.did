@@ -227,7 +227,7 @@ type TransferOperationInput = record {
 // Input type for transferring funds.
 type TransferOperation = record {
   // The account to use for the transaction.
-  from_account : Account;
+  from_account : opt Account;
   // The network to use for the transaction.
   network : Network;
   // The input to the proposal to transfer funds.
