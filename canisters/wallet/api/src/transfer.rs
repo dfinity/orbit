@@ -22,7 +22,7 @@ pub struct TransferOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferOperationDTO {
-    pub from_account: AccountDTO,
+    pub from_account: Option<AccountDTO>,
     pub network: NetworkDTO,
     pub input: TransferOperationInput,
 }

@@ -14,6 +14,9 @@ pub enum RepositoryError {
     /// The given criteria is out of range.
     #[error(r#"The given criteria is out of range."#)]
     CriteriaOutOfRange,
+    /// The criteria has failed validation.
+    #[error(r#"The given criteria is invalid."#)]
+    CriteriaValidationError { reason: String },
 }
 
 impl DetailableError for RepositoryError {
@@ -31,7 +34,12 @@ impl DetailableError for RepositoryError {
                 details.insert("entity_id".to_string(), entity_id.to_string());
                 Some(details)
             }
-            _ => None,
+            RepositoryError::CriteriaValidationError { reason } => {
+                let mut details = HashMap::new();
+                details.insert("reason".to_string(), reason.to_string());
+                Some(details)
+            }
+            RepositoryError::CriteriaOutOfRange => None,
         }
     }
 }

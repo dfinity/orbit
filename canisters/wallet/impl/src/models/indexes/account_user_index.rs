@@ -1,4 +1,4 @@
-use crate::models::{Account, AccountId, Metadata, UserId};
+use crate::models::{Account, AccountId, UserId};
 use candid::{CandidType, Deserialize};
 use ic_canister_macros::stable_object;
 
@@ -31,7 +31,7 @@ impl Account {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{AccountPolicies, Blockchain, BlockchainStandard};
+    use crate::models::{AccountPolicies, Blockchain, BlockchainStandard, Metadata};
 
     #[test]
     fn test_account_to_user_association() {

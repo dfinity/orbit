@@ -204,7 +204,11 @@ export interface HttpResponse {
 }
 export type ListAccessPoliciesInput = PaginationInput;
 export type ListAccessPoliciesResult = {
-    'Ok' : { 'next_offset' : [] | [bigint], 'policies' : Array<AccessPolicy> }
+    'Ok' : {
+      'total' : bigint,
+      'next_offset' : [] | [bigint],
+      'policies' : Array<AccessPolicy>,
+    }
   } |
   { 'Err' : Error };
 export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
@@ -231,15 +235,23 @@ export type ListNotificationsResult = {
   { 'Err' : Error };
 export type ListProposalPoliciesInput = PaginationInput;
 export type ListProposalPoliciesResult = {
-    'Ok' : { 'next_offset' : [] | [bigint], 'policies' : Array<ProposalPolicy> }
+    'Ok' : {
+      'total' : bigint,
+      'next_offset' : [] | [bigint],
+      'policies' : Array<ProposalPolicy>,
+    }
   } |
   { 'Err' : Error };
 export interface ListProposalsInput {
-  'status' : [] | [Array<ProposalStatusCode>],
-  'to_dt' : [] | [TimestampRFC3339],
-  'operation_type' : [] | [ListProposalsOperationType],
-  'from_dt' : [] | [TimestampRFC3339],
-  'user_id' : [] | [UUID],
+  'voter_ids' : [] | [Array<UUID>],
+  'expiration_from_dt' : [] | [TimestampRFC3339],
+  'created_to_dt' : [] | [TimestampRFC3339],
+  'statuses' : [] | [Array<ProposalStatusCode>],
+  'proposer_ids' : [] | [Array<UUID>],
+  'expiration_to_dt' : [] | [TimestampRFC3339],
+  'paginate' : [] | [PaginationInput],
+  'operation_types' : [] | [Array<ListProposalsOperationType>],
+  'created_from_dt' : [] | [TimestampRFC3339],
 }
 export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'AddUserGroup' : null } |
@@ -256,7 +268,13 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
-export type ListProposalsResult = { 'Ok' : { 'proposals' : Array<Proposal> } } |
+export type ListProposalsResult = {
+    'Ok' : {
+      'total' : bigint,
+      'proposals' : Array<Proposal>,
+      'next_offset' : [] | [bigint],
+    }
+  } |
   { 'Err' : Error };
 export type ListUserGroupResult = {
     'Ok' : { 'user_groups' : Array<UserGroup> }
@@ -264,7 +282,11 @@ export type ListUserGroupResult = {
   { 'Err' : Error };
 export type ListUsersInput = PaginationInput;
 export type ListUsersResult = {
-    'Ok' : { 'users' : Array<User>, 'next_offset' : [] | [bigint] }
+    'Ok' : {
+      'total' : bigint,
+      'users' : Array<User>,
+      'next_offset' : [] | [bigint],
+    }
   } |
   { 'Err' : Error };
 export type MarkNotificationReadResult = { 'Ok' : null } |
@@ -472,7 +494,7 @@ export interface TransferListItem {
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
   'network' : Network,
-  'from_account' : Account,
+  'from_account' : [] | [Account],
   'input' : TransferOperationInput,
 }
 export interface TransferOperationInput {
