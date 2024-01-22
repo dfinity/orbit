@@ -8,7 +8,7 @@ use std::collections::HashSet;
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalVoterIndex {
-    /// The user that is associated with this proposal.
+    /// The user that has voted on this proposal.
     pub user_id: UUID,
     /// The time when the proposal was created.
     pub created_at: Timestamp,
