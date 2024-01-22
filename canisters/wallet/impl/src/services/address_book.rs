@@ -99,8 +99,8 @@ impl AddressBookService {
             entry.address_owner = address_owner.to_owned();
         }
 
-        if let Some(metadata) = &input.metadata {
-            entry.metadata = metadata.to_owned().into();
+        if let Some(change_metadata) = input.change_metadata {
+            entry.metadata.change(change_metadata);
         }
 
         entry.validate()?;
@@ -122,6 +122,7 @@ mod tests {
             AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard, Metadata,
         },
     };
+    use wallet_api::{ChangeMetadataDTO, MetadataDTO};
 
     struct TestContext {
         repository: AddressBookRepository,
@@ -195,21 +196,77 @@ mod tests {
         ctx.repository
             .insert(address_book_entry.to_key(), address_book_entry.clone());
 
+        let metadata_dto = vec![
+            MetadataDTO {
+                key: "a".to_string(),
+                value: "b".to_string(),
+            },
+            MetadataDTO {
+                key: "b".to_string(),
+                value: "c".to_string(),
+            },
+        ];
         let operation = EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id,
             address_owner: Some("test_edit".to_string()),
-            metadata: Some(vec![]),
+            change_metadata: Some(ChangeMetadataDTO::ReplaceAllBy(metadata_dto.clone())),
         };
-
         let result = ctx.service.edit_entry(operation).await;
-
         assert!(result.is_ok());
-
         let updated_entry = result.unwrap();
-
         address_book_entry.address_owner = "test_edit".to_string();
-        address_book_entry.metadata = Metadata::default();
+        address_book_entry.metadata = metadata_dto.into();
+        assert_eq!(updated_entry, address_book_entry);
 
+        let diff_metadata_dto = vec![
+            MetadataDTO {
+                key: "a".to_string(),
+                value: "d".to_string(),
+            },
+            MetadataDTO {
+                key: "c".to_string(),
+                value: "e".to_string(),
+            },
+        ];
+        let new_metadata_dto = vec![
+            MetadataDTO {
+                key: "a".to_string(),
+                value: "d".to_string(),
+            },
+            MetadataDTO {
+                key: "b".to_string(),
+                value: "c".to_string(),
+            },
+            MetadataDTO {
+                key: "c".to_string(),
+                value: "e".to_string(),
+            },
+        ];
+        let operation = EditAddressBookEntryOperationInput {
+            address_book_entry_id: address_book_entry.id,
+            address_owner: None,
+            change_metadata: Some(ChangeMetadataDTO::OverrideSpecifiedBy(diff_metadata_dto)),
+        };
+        let result = ctx.service.edit_entry(operation).await;
+        assert!(result.is_ok());
+        let updated_entry = result.unwrap();
+        address_book_entry.metadata = new_metadata_dto.into();
+        assert_eq!(updated_entry, address_book_entry);
+
+        let remove_keys = vec!["a".to_string(), "c".to_string()];
+        let new_metadata_dto = vec![MetadataDTO {
+            key: "b".to_string(),
+            value: "c".to_string(),
+        }];
+        let operation = EditAddressBookEntryOperationInput {
+            address_book_entry_id: address_book_entry.id,
+            address_owner: None,
+            change_metadata: Some(ChangeMetadataDTO::RemoveKeys(remove_keys)),
+        };
+        let result = ctx.service.edit_entry(operation).await;
+        assert!(result.is_ok());
+        let updated_entry = result.unwrap();
+        address_book_entry.metadata = new_metadata_dto.into();
         assert_eq!(updated_entry, address_book_entry);
     }
 

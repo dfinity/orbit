@@ -2,7 +2,7 @@ use crate::errors::{AccountError, AddressBookError, MetadataError, TransferError
 use candid::{CandidType, Deserialize};
 use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
 use std::collections::{BTreeMap, HashMap};
-use wallet_api::MetadataDTO;
+use wallet_api::{ChangeMetadataDTO, MetadataDTO};
 
 #[derive(CandidType, Deserialize, Default, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Metadata {
@@ -59,6 +59,24 @@ impl Metadata {
             .iter()
             .map(|(k, v)| (k.to_owned(), v.to_owned()))
             .collect()
+    }
+
+    pub(crate) fn change(&mut self, change_metadata: ChangeMetadataDTO) {
+        match change_metadata {
+            ChangeMetadataDTO::ReplaceAllBy(metadata_dto) => {
+                self.metadata = metadata_dto.into_iter().map(|m| (m.key, m.value)).collect();
+            }
+            ChangeMetadataDTO::OverrideSpecifiedBy(metadata_dto) => {
+                for MetadataDTO { key, value } in metadata_dto {
+                    self.metadata.insert(key, value);
+                }
+            }
+            ChangeMetadataDTO::RemoveKeys(keys) => {
+                for k in keys {
+                    self.metadata.remove(&k);
+                }
+            }
+        }
     }
 
     pub(crate) fn into_vec_dto(self) -> Vec<MetadataDTO> {

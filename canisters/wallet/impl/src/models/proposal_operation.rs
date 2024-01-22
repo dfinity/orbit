@@ -8,7 +8,7 @@ use crate::models::Metadata;
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
-use wallet_api::MetadataDTO;
+use wallet_api::{ChangeMetadataDTO, MetadataDTO};
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -118,7 +118,7 @@ pub struct EditAddressBookEntryOperation {
 pub struct EditAddressBookEntryOperationInput {
     pub address_book_entry_id: AddressBookEntryId,
     pub address_owner: Option<String>,
-    pub metadata: Option<Vec<MetadataDTO>>,
+    pub change_metadata: Option<ChangeMetadataDTO>,
 }
 
 #[stable_object]
