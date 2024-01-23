@@ -99,24 +99,27 @@ impl ProposalService {
             })
             .transpose()?;
 
-        let mut proposals = self.proposal_repository.find_where(ProposalWhereClause {
-            created_dt_from: input
-                .created_from_dt
-                .map(|dt| rfc3339_to_timestamp(dt.as_str())),
-            created_dt_to: input
-                .created_to_dt
-                .map(|dt| rfc3339_to_timestamp(dt.as_str())),
-            expiration_dt_from: input
-                .expiration_from_dt
-                .map(|dt| rfc3339_to_timestamp(dt.as_str())),
-            expiration_dt_to: input
-                .expiration_to_dt
-                .map(|dt| rfc3339_to_timestamp(dt.as_str())),
-            operation_types: input.operation_types.unwrap_or_default(),
-            statuses: input.statuses.unwrap_or_default(),
-            proposers: filter_by_proposers.unwrap_or_default(),
-            voters: filter_by_voters.unwrap_or_default(),
-        })?;
+        let mut proposals = self.proposal_repository.find_where(
+            ProposalWhereClause {
+                created_dt_from: input
+                    .created_from_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                created_dt_to: input
+                    .created_to_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                expiration_dt_from: input
+                    .expiration_from_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                expiration_dt_to: input
+                    .expiration_to_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                operation_types: input.operation_types.unwrap_or_default(),
+                statuses: input.statuses.unwrap_or_default(),
+                proposers: filter_by_proposers.unwrap_or_default(),
+                voters: filter_by_voters.unwrap_or_default(),
+            },
+            input.sort_by,
+        )?;
 
         // filter out proposals that the caller does not have access to read
         if let Some(ctx) = ctx {
@@ -503,6 +506,7 @@ mod tests {
                     operation_types: None,
                     statuses: None,
                     paginate: None,
+                    sort_by: None,
                 },
                 Some(&ctx.call_context),
             )

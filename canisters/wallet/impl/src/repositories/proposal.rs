@@ -31,7 +31,7 @@ use ic_canister_core::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
-use wallet_api::ListProposalsOperationTypeDTO;
+use wallet_api::{ListProposalsOperationTypeDTO, ListProposalsSortBy};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -279,15 +279,51 @@ impl ProposalRepository {
     pub fn find_where(
         &self,
         condition: ProposalWhereClause,
+        sort_by: Option<ListProposalsSortBy>,
     ) -> Result<Vec<Proposal>, RepositoryError> {
         let strategy = self.pick_most_selective_where_filter(&condition);
         let proposal_ids = self.find_with_strategy(strategy, &condition)?;
-        let proposals = proposal_ids
+        let mut proposals = proposal_ids
             .iter()
             .filter_map(|id| self.check_condition(*id, &condition))
             .collect::<Vec<Proposal>>();
 
+        self.sort_proposals(&mut proposals, &sort_by);
+
         Ok(proposals)
+    }
+
+    fn sort_proposals(&self, proposals: &mut [Proposal], sort_by: &Option<ListProposalsSortBy>) {
+        match sort_by {
+            Some(wallet_api::ListProposalsSortBy::CreatedAt(direction)) => {
+                proposals.sort_by(|a, b| match direction {
+                    wallet_api::SortDirection::Asc => a.created_timestamp.cmp(&b.created_timestamp),
+                    wallet_api::SortDirection::Desc => {
+                        b.created_timestamp.cmp(&a.created_timestamp)
+                    }
+                });
+            }
+            Some(wallet_api::ListProposalsSortBy::ExpirationDt(direction)) => {
+                proposals.sort_by(|a, b| match direction {
+                    wallet_api::SortDirection::Asc => a.expiration_dt.cmp(&b.expiration_dt),
+                    wallet_api::SortDirection::Desc => b.expiration_dt.cmp(&a.expiration_dt),
+                });
+            }
+            Some(wallet_api::ListProposalsSortBy::LastModificationDt(direction)) => {
+                proposals.sort_by(|a, b| match direction {
+                    wallet_api::SortDirection::Asc => a
+                        .last_modification_timestamp
+                        .cmp(&b.last_modification_timestamp),
+                    wallet_api::SortDirection::Desc => b
+                        .last_modification_timestamp
+                        .cmp(&a.last_modification_timestamp),
+                });
+            }
+            None => {
+                // Default sort by created timestamp descending
+                proposals.sort_by(|a, b| b.created_timestamp.cmp(&a.created_timestamp));
+            }
+        }
     }
 
     fn pick_most_selective_where_filter(
@@ -706,14 +742,18 @@ mod tests {
             proposers: vec![],
         };
 
-        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+        let proposals = PROPOSAL_REPOSITORY
+            .find_where(condition.clone(), None)
+            .unwrap();
 
         assert_eq!(proposals.len(), 1);
         assert_eq!(proposals[0], proposal);
 
         condition.expiration_dt_from = Some(11);
 
-        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+        let proposals = PROPOSAL_REPOSITORY
+            .find_where(condition.clone(), None)
+            .unwrap();
 
         assert!(proposals.is_empty());
     }
@@ -743,7 +783,9 @@ mod tests {
             proposers: vec![],
         };
 
-        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+        let proposals = PROPOSAL_REPOSITORY
+            .find_where(condition.clone(), None)
+            .unwrap();
 
         assert_eq!(proposals.len(), 1);
         assert_eq!(proposals[0], proposal);
@@ -751,7 +793,9 @@ mod tests {
         condition.created_dt_from = Some(8);
         condition.created_dt_to = Some(9);
 
-        let proposals = PROPOSAL_REPOSITORY.find_where(condition.clone()).unwrap();
+        let proposals = PROPOSAL_REPOSITORY
+            .find_where(condition.clone(), None)
+            .unwrap();
 
         assert!(proposals.is_empty());
     }

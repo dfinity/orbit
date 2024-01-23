@@ -630,6 +630,24 @@ type ListProposalsOperationType = variant {
   RemoveProposalPolicy;
 };
 
+// The direction to use for sorting.
+type SortByDirection = variant {
+  // Sort in ascending order.
+  Asc;
+  // Sort in descending order.
+  Desc;
+};
+
+// The input type that can be used to sort the list of proposals by a given field.
+type ListProposalsSortBy = variant {
+  // Sort by the proposal creation time.
+  CreatedAt : SortByDirection;
+  // Sort by the proposal expiration time.
+  ExpirationDt : SortByDirection;
+  // Sort by the proposal last modification time.
+  LastModificationDt : SortByDirection;
+};
+
 // The input type for getting the list of proposals based on the given filters.
 type ListProposalsInput = record {
   // Show only proposals proposed by the given users.
@@ -650,6 +668,8 @@ type ListProposalsInput = record {
   created_to_dt : opt TimestampRFC3339;
   // The pagination parameters.
   paginate : opt PaginationInput;
+  // The sorting parameters.
+  sort_by : opt ListProposalsSortBy;
 };
 
 // The result type for getting the list of proposals.
