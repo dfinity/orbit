@@ -1,10 +1,16 @@
 use crate::core::ic_cdk::api::time;
 use crate::errors::MapperError;
-use crate::models::{AddAddressBookEntryOperationInput, AddressBookEntry};
+use crate::mappers::BlockchainMapper;
+use crate::models::{
+    AddAddressBookEntryOperationInput, AddressBookEntry, ListAddressBookEntriesInput,
+    ListAddressBookEntriesResponse,
+};
 use ic_canister_core::types::UUID;
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
-use wallet_api::AddressBookEntryDTO;
+use wallet_api::{
+    AddressBookEntryDTO, ListAddressBookEntriesInputDTO, ListAddressBookEntriesResponseDTO,
+};
 
 #[derive(Default, Clone, Debug)]
 pub struct AddressBookMapper {}
@@ -64,5 +70,30 @@ impl AddressBookMapper {
 impl AddressBookEntry {
     pub fn to_dto(&self) -> AddressBookEntryDTO {
         AddressBookMapper::to_dto(self.clone())
+    }
+}
+
+impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
+    fn from(input: ListAddressBookEntriesInputDTO) -> ListAddressBookEntriesInput {
+        ListAddressBookEntriesInput {
+            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
+                .expect("Invalid blockchain"),
+            standard: BlockchainMapper::to_blockchain_standard(input.standard)
+                .expect("Invalid blockchain standard"),
+        }
+    }
+}
+
+impl From<ListAddressBookEntriesResponse> for ListAddressBookEntriesResponseDTO {
+    fn from(input: ListAddressBookEntriesResponse) -> ListAddressBookEntriesResponseDTO {
+        ListAddressBookEntriesResponseDTO {
+            address_book_entries: input
+                .address_book_entries
+                .into_iter()
+                .map(|address_book_entry| address_book_entry.to_dto())
+                .collect(),
+            next_offset: input.next_offset,
+            total: input.total,
+        }
     }
 }

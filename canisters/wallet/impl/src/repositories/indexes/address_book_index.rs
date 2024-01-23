@@ -39,16 +39,16 @@ impl IndexRepository<AddressBookIndex, AddressBookEntryId> for AddressBookIndexR
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<AddressBookEntryId> {
         DB.with(|db| {
             let start_key = AddressBookIndex {
-                address: criteria.address.clone(),
                 blockchain: criteria.blockchain.clone(),
                 standard: criteria.standard.clone(),
                 address_book_entry_id: [u8::MIN; 16],
+                address: criteria.address.clone().unwrap_or_default(),
             };
             let end_key = AddressBookIndex {
-                address: criteria.address,
                 blockchain: criteria.blockchain,
                 standard: criteria.standard,
                 address_book_entry_id: [u8::MAX; 16],
+                address: criteria.address.clone().unwrap_or_default(),
             };
 
             db.borrow()
@@ -68,10 +68,10 @@ mod tests {
     fn test_repository_crud() {
         let repository = AddressBookIndexRepository::default();
         let index = AddressBookIndex {
-            address: "0x1234".to_string(),
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
             address_book_entry_id: [2; 16],
+            address: "0x1234".to_string(),
         };
 
         assert!(!repository.exists(&index));
@@ -87,23 +87,65 @@ mod tests {
     fn test_find_by_criteria() {
         let repository = AddressBookIndexRepository::default();
         let index = AddressBookIndex {
-            address: "0x1234".to_string(),
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
             address_book_entry_id: [2; 16],
+            address: "0x1234".to_string(),
         };
 
         repository.insert(index.clone());
 
         let criteria = AddressBookIndexCriteria {
-            address: "0x1234".to_string(),
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
+            address: Some("0x1234".to_string()),
         };
 
         let result = repository.find_by_criteria(criteria);
 
         assert_eq!(result.len(), 1);
         assert!(result.contains(&index.address_book_entry_id));
+    }
+
+    #[test]
+    fn test_find_by_blockchain_standard() {
+        let repository = AddressBookIndexRepository::default();
+
+        let index_0 = AddressBookIndex {
+            blockchain: Blockchain::InternetComputer,
+            standard: BlockchainStandard::Native,
+            address_book_entry_id: [0; 16],
+            address: "0".to_string(),
+        };
+        repository.insert(index_0.clone());
+
+        let index_1 = AddressBookIndex {
+            blockchain: Blockchain::InternetComputer,
+            standard: BlockchainStandard::ICRC1,
+            address_book_entry_id: [1; 16],
+            address: "1".to_string(),
+        };
+        repository.insert(index_1.clone());
+
+        let index_2 = AddressBookIndex {
+            blockchain: Blockchain::InternetComputer,
+            standard: BlockchainStandard::Native,
+            address_book_entry_id: [2; 16],
+            address: "2".to_string(),
+        };
+        repository.insert(index_2.clone());
+
+        let criteria = AddressBookIndexCriteria {
+            blockchain: Blockchain::InternetComputer,
+            standard: BlockchainStandard::Native,
+            address: None,
+        };
+
+        let result = repository.find_by_criteria(criteria);
+
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&index_0.address_book_entry_id));
+        assert!(!result.contains(&index_1.address_book_entry_id));
+        assert!(result.contains(&index_2.address_book_entry_id));
     }
 }

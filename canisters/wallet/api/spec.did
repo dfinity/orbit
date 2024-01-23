@@ -1000,6 +1000,78 @@ type FetchAccountBalancesResult = variant {
   Err : Error;
 };
 
+// Address book entries can have additional information attached to them,
+// this type can be used to represent the additional info.
+type AddressBookMetadata = record {
+  // The key of the additional info (e.g. "kyc")
+  key : text;
+  // The value of the additional info (e.g. "true")
+  value : text;
+};
+
+// A record type that can be used to represent an address book entry in the canister.
+type AddressBookEntry = record {
+  // The internal address book entry id.
+  id : UUID;
+  // The address owner.
+  address_owner : text;
+  // The actual address.
+  address : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  standard : text;
+  // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
+  metadata : vec AddressBookMetadata;
+  // The time at which the address book entry was created or last modified (e.g. "2021-01-01T00:00:00Z").
+  last_modification_timestamp : text;
+};
+
+// Input type for getting a single address book entry.
+type GetAddressBookEntryInput = record {
+  // The address book entry id to retrieve.
+  address_book_entry_id : UUID;
+};
+
+// Result type for getting an address book entry.
+type GetAddressBookEntryResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The address book entry that was retrieved.
+    address_book_entry : opt AddressBookEntry;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+
+// Input type for listing address book entries for a given blockchain standard.
+type ListAddressBookEntriesInput = record {
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+  // with spaces replaced with underscores.
+  standard : text;
+  // The pagination parameters.
+  paginate : PaginationInput;
+};
+
+// Result type for listing address book entries for a given blockchain standard.
+type ListAddressBookEntriesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of retrieved address book entries.
+    address_book_entries: vec AddressBookEntry;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
+  };
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
 // Assets can have additional information attached to them,
 // this type can be used to represent the additional info.
 type AssetMetadata = record {
@@ -1374,6 +1446,10 @@ service : (opt WalletInstall) -> {
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
   // Get transfers by their ids.
   get_transfers : (input : GetTransfersInput) -> (GetTransfersResult) query;
+  // If the caller does not have access to the address book entry, an error will be returned.
+  get_address_book_entry : (input : GetAddressBookEntryInput) -> (GetAddressBookEntryResult) query;
+  // List all address book entries for a given blockchain standard.
+  list_address_book_entries : (input : ListAddressBookEntriesInput) -> (ListAddressBookEntriesResult) query;
   // Create a new proposal.
   //
   // The proposal will be created and the caller will be added as the proposer.

@@ -77,19 +77,31 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
 impl AddressBookRepository {
     pub fn find(
         &self,
-        address: String,
         blockchain: Blockchain,
         standard: BlockchainStandard,
-    ) -> Option<AddressBookEntry> {
+        address: Option<String>,
+    ) -> Vec<AddressBookEntry> {
         let address_book_entry_ids = self.index.find_by_criteria(AddressBookIndexCriteria {
-            address,
             blockchain,
             standard,
+            address,
         });
 
         address_book_entry_ids
             .iter()
-            .find_map(|id| self.get(&AddressBookEntry::key(*id)))
+            .filter_map(|id| self.get(&AddressBookEntry::key(*id)))
+            .collect::<Vec<_>>()
+    }
+
+    pub fn find_address(
+        &self,
+        blockchain: Blockchain,
+        standard: BlockchainStandard,
+        address: String,
+    ) -> Option<AddressBookEntry> {
+        self.find(blockchain, standard, Some(address))
+            .into_iter()
+            .next()
     }
 
     pub fn find_by_ids(&self, ids: Vec<AddressBookEntryId>) -> Vec<AddressBookEntry> {
@@ -126,10 +138,10 @@ mod tests {
         repository.insert(address_book_entry.to_key(), address_book_entry.clone());
 
         assert_eq!(
-            repository.find(
-                "0x1234".to_string(),
+            repository.find_address(
                 Blockchain::InternetComputer,
-                BlockchainStandard::Native
+                BlockchainStandard::Native,
+                "0x1234".to_string(),
             ),
             Some(address_book_entry)
         );
