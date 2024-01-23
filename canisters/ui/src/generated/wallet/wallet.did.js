@@ -554,6 +554,12 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const ListProposalsSortBy = IDL.Variant({
+    'ExpirationDt' : SortByDirection,
+    'LastModificationDt' : SortByDirection,
+    'CreatedAt' : SortByDirection,
+  });
   const ProposalStatusCode = IDL.Variant({
     'Failed' : IDL.Null,
     'Rejected' : IDL.Null,
@@ -582,6 +588,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAccount' : IDL.Null,
   });
   const ListProposalsInput = IDL.Record({
+    'sort_by' : IDL.Opt(ListProposalsSortBy),
     'voter_ids' : IDL.Opt(IDL.Vec(UUID)),
     'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
     'created_to_dt' : IDL.Opt(TimestampRFC3339),
