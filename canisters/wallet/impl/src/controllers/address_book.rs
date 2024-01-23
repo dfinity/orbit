@@ -64,9 +64,7 @@ impl AddressBookController {
             .get_entry_by_id(address_book_entry_id.as_bytes())?
             .to_dto();
 
-        Ok(GetAddressBookEntryResponseDTO {
-            address_book_entry: address_book_entry.into(),
-        })
+        Ok(GetAddressBookEntryResponseDTO { address_book_entry })
     }
 
     #[with_middleware(

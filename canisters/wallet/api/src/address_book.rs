@@ -19,7 +19,7 @@ pub struct GetAddressBookEntryInputDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAddressBookEntryResponseDTO {
-    pub address_book_entry: Option<AddressBookEntryDTO>,
+    pub address_book_entry: AddressBookEntryDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

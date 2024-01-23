@@ -1039,7 +1039,7 @@ type GetAddressBookEntryResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The address book entry that was retrieved.
-    address_book_entry : opt AddressBookEntry;
+    address_book_entry : AddressBookEntry;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1065,7 +1065,7 @@ type ListAddressBookEntriesResult = variant {
     address_book_entries: vec AddressBookEntry;
     // The offset to use for the next page.
     next_offset : opt nat64;
-    // The total number of users.
+    // The total number of address book entries for the given blockchain standard.
     total : nat64;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
