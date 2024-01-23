@@ -243,6 +243,7 @@ export type ListProposalPoliciesResult = {
   } |
   { 'Err' : Error };
 export interface ListProposalsInput {
+  'sort_by' : [] | [ListProposalsSortBy],
   'voter_ids' : [] | [Array<UUID>],
   'expiration_from_dt' : [] | [TimestampRFC3339],
   'created_to_dt' : [] | [TimestampRFC3339],
@@ -276,6 +277,9 @@ export type ListProposalsResult = {
     }
   } |
   { 'Err' : Error };
+export type ListProposalsSortBy = { 'ExpirationDt' : SortByDirection } |
+  { 'LastModificationDt' : SortByDirection } |
+  { 'CreatedAt' : SortByDirection };
 export type ListUserGroupResult = {
     'Ok' : { 'user_groups' : Array<UserGroup> }
   } |
@@ -470,6 +474,8 @@ export type ResourceType = { 'User' : null } |
   { 'AddressBook' : null } |
   { 'AccessPolicy' : null } |
   { 'UserGroup' : null };
+export type SortByDirection = { 'Asc' : null } |
+  { 'Desc' : null };
 export type TimestampRFC3339 = string;
 export interface Transfer {
   'id' : UUID,

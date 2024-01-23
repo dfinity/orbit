@@ -119,7 +119,7 @@ mod tests {
         core::test_utils,
         models::{
             address_book_entry_test_utils::mock_address_book_entry, AddAddressBookEntryOperation,
-            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard, Metadata,
+            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard,
         },
     };
     use wallet_api::{ChangeMetadataDTO, MetadataDTO};

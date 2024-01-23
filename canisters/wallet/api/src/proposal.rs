@@ -10,7 +10,7 @@ use crate::{
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInput,
     ProposalPolicyDTO, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
     RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
-    UuidDTO,
+    SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -179,6 +179,13 @@ pub enum ListProposalsOperationTypeDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ListProposalsSortBy {
+    CreatedAt(SortDirection),
+    ExpirationDt(SortDirection),
+    LastModificationDt(SortDirection),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListProposalsInput {
     pub voter_ids: Option<Vec<UuidDTO>>,
     pub proposer_ids: Option<Vec<UuidDTO>>,
@@ -189,6 +196,7 @@ pub struct ListProposalsInput {
     pub created_from_dt: Option<TimestampRfc3339>,
     pub created_to_dt: Option<TimestampRfc3339>,
     pub paginate: Option<PaginationInput>,
+    pub sort_by: Option<ListProposalsSortBy>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
