@@ -20,9 +20,10 @@
     :persistent="loading"
     transition="dialog-bottom-transition"
     scrollable
+    :max-width="props.dialogMaxWidth"
   >
     <VCard :loading="loading">
-      <VToolbar dark color="primary">
+      <VToolbar dark :color="props.dialogToolbarColor">
         <VToolbarTitle
           :data-test-id="props.dataTestId ? `${props.dataTestId}-dialog-title` : undefined"
         >
@@ -74,6 +75,8 @@ const props = withDefaults(
     class?: string;
     rounded?: boolean;
     modelValue?: M;
+    dialogMaxWidth?: string | number;
+    dialogToolbarColor?: string;
     submit?: (model: M) => Promise<T> | T;
     confirmCloseDelayMs?: number;
     clone?: (model: M) => M;
@@ -91,6 +94,8 @@ const props = withDefaults(
     confirmText: i18n.global.t('terms.confirm'),
     class: undefined,
     rounded: false,
+    dialogMaxWidth: 800,
+    dialogToolbarColor: 'surface',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modelValue: null as any,
     submit: undefined,
@@ -108,6 +113,7 @@ const emit = defineEmits<{
   (event: 'failed', payload: unknown): void;
   (event: 'submitted', payload?: T): void;
   (event: 'closed'): void;
+  (event: 'opened'): void;
   (event: 'update:modelValue', payload: M): void;
 }>();
 
@@ -157,6 +163,11 @@ watch(
     if (!isOpen && !loading.value) {
       setInternalValue(props.modelValue);
       emit('closed');
+      return;
+    }
+
+    if (isOpen) {
+      emit('opened');
     }
   },
 );

@@ -189,15 +189,19 @@ export const useAccountPageStore = defineStore('accountPage', {
         this.proposals.loading = true;
         this.proposals.items = await this.walletService
           .listProposals({
-            status: status ? [[status]] : [],
-            from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
-            to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-            operation_type: [
+            statuses: status ? [status] : undefined,
+            created_dt:
+              fromDt || toDt
+                ? {
+                    fromDt: fromDt ? startOfDay(fromDt) : undefined,
+                    toDt: toDt ? endOfDay(toDt) : undefined,
+                  }
+                : undefined,
+            types: [
               {
                 Transfer: [this.account.id],
               },
             ],
-            user_id: [],
           })
           .then(proposals => {
             return proposals.map(proposal => {

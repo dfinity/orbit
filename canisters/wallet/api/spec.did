@@ -552,6 +552,14 @@ type ProposalExecutionSchedule = variant {
   };
 };
 
+// A record field that can be used to represent information about a proposal.
+type ProposalInfo = record {
+  // Wether or not the caller can vote on the proposal.
+  can_vote : bool;
+  // The proposer name (e.g. "John Doe").
+  proposer_name : opt text;
+};
+
 // A record type that can be used to represent a proposed operation in the wallet.
 type Proposal = record {
   // The proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
@@ -574,6 +582,8 @@ type Proposal = record {
   expiration_dt : TimestampRFC3339;
   // The time at which the proposal should be executed if adopted.
   execution_plan : ProposalExecutionSchedule;
+  // Information about the proposal that can be used to display additional information.
+  info : ProposalInfo;
 };
 
 // The input type for creating a proposal.

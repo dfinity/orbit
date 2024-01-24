@@ -116,6 +116,12 @@ pub struct ProposalVoteDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalInfoDTO {
+    pub can_vote: bool,
+    pub proposer_name: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalDTO {
     pub id: UuidDTO,
     pub title: String,
@@ -127,6 +133,7 @@ pub struct ProposalDTO {
     pub status: ProposalStatusDTO,
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: ProposalExecutionScheduleDTO,
+    pub info: ProposalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

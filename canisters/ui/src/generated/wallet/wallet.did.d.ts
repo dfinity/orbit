@@ -338,6 +338,7 @@ export interface Proposal {
   'execution_plan' : ProposalExecutionSchedule,
   'expiration_dt' : TimestampRFC3339,
   'votes' : Array<ProposalVote>,
+  'info' : ProposalInfo,
   'created_at' : TimestampRFC3339,
   'summary' : [] | [string],
   'operation' : ProposalOperation,
@@ -347,6 +348,10 @@ export type ProposalActionSpecifier = { 'List' : null } |
   { 'Read' : CommonSpecifier };
 export type ProposalExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
+export interface ProposalInfo {
+  'can_vote' : boolean,
+  'proposer_name' : [] | [string],
+}
 export type ProposalOperation = {
     'EditAccessPolicy' : EditAccessPolicyOperation
   } |
