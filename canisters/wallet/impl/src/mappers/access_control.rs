@@ -283,3 +283,16 @@ impl From<&wallet_api::VoteOnProposalInput> for ResourceSpecifier {
         )))
     }
 }
+
+impl From<&wallet_api::GetAddressBookEntryInputDTO> for ResourceSpecifier {
+    fn from(input: &wallet_api::GetAddressBookEntryInputDTO) -> Self {
+        let address_book_entry_id = *HelperMapper::to_uuid(input.address_book_entry_id.to_owned())
+            .expect("Invalid address book entry id")
+            .as_bytes();
+
+        ResourceSpecifier::Common(
+            ResourceType::AddressBook,
+            AccountActionSpecifier::Read(CommonSpecifier::Id([address_book_entry_id].to_vec())),
+        )
+    }
+}
