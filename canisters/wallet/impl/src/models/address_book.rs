@@ -93,6 +93,19 @@ impl AddressBookEntry {
     }
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListAddressBookEntriesInput {
+    pub blockchain: Blockchain,
+    pub standard: BlockchainStandard,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListAddressBookEntriesResponse {
+    pub address_book_entries: Vec<AddressBookEntry>,
+    pub next_offset: Option<u64>,
+    pub total: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::address_book_entry_test_utils::mock_address_book_entry;

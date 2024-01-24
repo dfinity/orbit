@@ -81,6 +81,16 @@ export interface AddUserOperationInput {
   'name' : [] | [string],
   'identities' : Array<Principal>,
 }
+export interface AddressBookEntry {
+  'id' : UUID,
+  'metadata' : Array<AddressBookMetadata>,
+  'blockchain' : string,
+  'address' : string,
+  'last_modification_timestamp' : string,
+  'address_owner' : string,
+  'standard' : string,
+}
+export interface AddressBookMetadata { 'key' : string, 'value' : string }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
 export type CanisterSettingsActionSpecifier = { 'Read' : null } |
@@ -171,6 +181,11 @@ export type GetAccessPolicyResult = { 'Ok' : { 'policy' : AccessPolicy } } |
 export interface GetAccountInput { 'account_id' : UUID }
 export type GetAccountResult = { 'Ok' : { 'account' : Account } } |
   { 'Err' : Error };
+export interface GetAddressBookEntryInput { 'address_book_entry_id' : UUID }
+export type GetAddressBookEntryResult = {
+    'Ok' : { 'address_book_entry' : AddressBookEntry }
+  } |
+  { 'Err' : Error };
 export type GetConfigResult = { 'Ok' : { 'config' : Config } } |
   { 'Err' : Error };
 export interface GetProposalInput { 'proposal_id' : UUID }
@@ -221,6 +236,19 @@ export interface ListAccountTransfersInput {
 }
 export type ListAccountTransfersResult = {
     'Ok' : { 'transfers' : Array<TransferListItem> }
+  } |
+  { 'Err' : Error };
+export interface ListAddressBookEntriesInput {
+  'blockchain' : string,
+  'paginate' : PaginationInput,
+  'standard' : string,
+}
+export type ListAddressBookEntriesResult = {
+    'Ok' : {
+      'total' : bigint,
+      'address_book_entries' : Array<AddressBookEntry>,
+      'next_offset' : [] | [bigint],
+    }
   } |
   { 'Err' : Error };
 export interface ListNotificationsInput {
@@ -593,6 +621,10 @@ export interface _SERVICE {
     GetAccessPolicyResult
   >,
   'get_account' : ActorMethod<[GetAccountInput], GetAccountResult>,
+  'get_address_book_entry' : ActorMethod<
+    [GetAddressBookEntryInput],
+    GetAddressBookEntryResult
+  >,
   'get_proposal' : ActorMethod<[GetProposalInput], GetProposalResult>,
   'get_proposal_policy' : ActorMethod<
     [GetProposalPolicyInput],
@@ -612,6 +644,10 @@ export interface _SERVICE {
     ListAccountTransfersResult
   >,
   'list_accounts' : ActorMethod<[], ListAccountResult>,
+  'list_address_book_entries' : ActorMethod<
+    [ListAddressBookEntriesInput],
+    ListAddressBookEntriesResult
+  >,
   'list_notifications' : ActorMethod<
     [ListNotificationsInput],
     ListNotificationsResult
