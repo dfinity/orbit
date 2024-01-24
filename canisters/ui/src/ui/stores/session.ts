@@ -144,6 +144,7 @@ export const useSessionStore = defineStore('session', {
       const authService = services().auth;
 
       try {
+        authService.invalidateAuthClient();
         const identity = await authService.login();
 
         this.sessionBroadcastChannel?.notifySignedIn();
