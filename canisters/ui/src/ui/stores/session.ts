@@ -110,6 +110,7 @@ export const useSessionStore = defineStore('session', {
 
         if (!cachedAuthenticatedIdentity) {
           icAgent.get().replaceIdentity(new AnonymousIdentity());
+          this.lastLoginPrincipal = Principal.anonymous().toText();
           this.initialized = InitializationStatus.Initialized;
           return;
         }
@@ -129,6 +130,7 @@ export const useSessionStore = defineStore('session', {
       this.loading = false;
       this.isAuthenticated = false;
       this.principal = Principal.anonymous().toText();
+      this.lastLoginPrincipal = Principal.anonymous().toText();
       this.reauthenticationNeeded = false;
       this.data = {
         wallets: [],
@@ -146,7 +148,6 @@ export const useSessionStore = defineStore('session', {
       try {
         authService.invalidateAuthClient();
         const identity = await authService.login();
-
         this.sessionBroadcastChannel?.notifySignedIn();
         await this.initializeAuthenticated(identity);
       } catch (error) {
