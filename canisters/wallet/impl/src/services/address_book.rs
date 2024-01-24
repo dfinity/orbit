@@ -49,21 +49,6 @@ impl AddressBookService {
         Ok(address_book_entry)
     }
 
-    /// Returns the address book entry associated with the given address.
-    pub fn get_entry(
-        &self,
-        blockchain: Blockchain,
-        standard: BlockchainStandard,
-        address: String,
-    ) -> ServiceResult<AddressBookEntry> {
-        let entry = self
-            .address_book_repository
-            .find_address(blockchain, standard, address.clone())
-            .ok_or(AddressBookError::AddressNotFound { address })?;
-
-        Ok(entry)
-    }
-
     /// Returns all address book entries for the given blockchain standard.
     pub fn get_entries_by_blockchain_standard(
         &self,
@@ -73,7 +58,7 @@ impl AddressBookService {
     ) -> ServiceResult<PaginatedData<AddressBookEntry>> {
         let mut entries = self
             .address_book_repository
-            .find(blockchain, standard, None);
+            .find_by_blockchain_standard(blockchain, standard);
         entries.sort();
         Ok(paginated_items(PaginatedItemsArgs {
             offset: paginate.offset,
@@ -95,7 +80,7 @@ impl AddressBookService {
         let new_entry = AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes())?;
         new_entry.validate()?;
 
-        if let Some(v) = self.address_book_repository.find_address(
+        if let Some(v) = self.address_book_repository.find_by_address(
             new_entry.blockchain.clone(),
             new_entry.standard.clone(),
             new_entry.address.clone(),
@@ -161,25 +146,6 @@ mod tests {
             repository: AddressBookRepository::default(),
             service: AddressBookService::default(),
         }
-    }
-
-    #[test]
-    fn get_entry() {
-        let ctx = setup();
-        let address_book_entry = mock_address_book_entry();
-
-        ctx.repository
-            .insert(address_book_entry.to_key(), address_book_entry.clone());
-
-        let result = ctx.service.get_entry_by_id(&address_book_entry.id);
-        assert_eq!(result, Ok(address_book_entry.clone()));
-
-        let result = ctx.service.get_entry(
-            address_book_entry.blockchain.clone(),
-            address_book_entry.standard.clone(),
-            address_book_entry.address.clone(),
-        );
-        assert_eq!(result, Ok(address_book_entry));
     }
 
     #[tokio::test]

@@ -1,8 +1,10 @@
 use super::indexes::address_book_index::AddressBookIndexRepository;
+use super::indexes::address_book_standard_index::AddressBookStandardIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, ADDRESS_BOOK_MEMORY_ID},
     models::{
-        indexes::address_book_index::AddressBookIndexCriteria, AddressBookEntry,
+        indexes::address_book_index::AddressBookIndexCriteria,
+        indexes::address_book_standard_index::AddressBookStandardIndexCriteria, AddressBookEntry,
         AddressBookEntryId, AddressBookEntryKey, Blockchain, BlockchainStandard,
     },
 };
@@ -29,6 +31,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct AddressBookRepository {
     index: AddressBookIndexRepository,
+    standard_index: AddressBookStandardIndexRepository,
 }
 
 impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository {
@@ -75,33 +78,37 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
 }
 
 impl AddressBookRepository {
-    pub fn find(
-        &self,
-        blockchain: Blockchain,
-        standard: BlockchainStandard,
-        address: Option<String>,
-    ) -> Vec<AddressBookEntry> {
-        let address_book_entry_ids = self.index.find_by_criteria(AddressBookIndexCriteria {
-            blockchain,
-            standard,
-            address,
-        });
-
-        address_book_entry_ids
-            .iter()
-            .filter_map(|id| self.get(&AddressBookEntry::key(*id)))
-            .collect::<Vec<_>>()
-    }
-
-    pub fn find_address(
+    pub fn find_by_address(
         &self,
         blockchain: Blockchain,
         standard: BlockchainStandard,
         address: String,
     ) -> Option<AddressBookEntry> {
-        self.find(blockchain, standard, Some(address))
-            .into_iter()
-            .next()
+        let ids = self.index.find_by_criteria(AddressBookIndexCriteria {
+            blockchain,
+            standard,
+            address,
+        });
+
+        ids.iter()
+            .find_map(|id| self.get(&AddressBookEntry::key(*id)))
+    }
+
+    pub fn find_by_blockchain_standard(
+        &self,
+        blockchain: Blockchain,
+        standard: BlockchainStandard,
+    ) -> Vec<AddressBookEntry> {
+        let ids = self
+            .standard_index
+            .find_by_criteria(AddressBookStandardIndexCriteria {
+                blockchain,
+                standard,
+            });
+
+        ids.iter()
+            .filter_map(|id| self.get(&AddressBookEntry::key(*id)))
+            .collect::<Vec<_>>()
     }
 
     pub fn find_by_ids(&self, ids: Vec<AddressBookEntryId>) -> Vec<AddressBookEntry> {
@@ -131,19 +138,28 @@ mod tests {
     }
 
     #[test]
-    fn test_find() {
+    fn test_find_by_blockchain_standard() {
         let repository = AddressBookRepository::default();
-        let address_book_entry = address_book_entry_test_utils::mock_address_book_entry();
 
-        repository.insert(address_book_entry.to_key(), address_book_entry.clone());
+        let address_book_entry_0 = address_book_entry_test_utils::mock_address_book_entry();
+        repository.insert(address_book_entry_0.to_key(), address_book_entry_0.clone());
+
+        let mut address_book_entry_1 = address_book_entry_test_utils::mock_address_book_entry();
+        address_book_entry_1.address = "0x5678".to_string();
+        address_book_entry_1.id = [42; 16];
+        repository.insert(address_book_entry_1.to_key(), address_book_entry_1.clone());
+
+        let mut address_book_entry_2 = address_book_entry_test_utils::mock_address_book_entry();
+        address_book_entry_2.standard = BlockchainStandard::ICRC1;
+        address_book_entry_2.id = [66; 16];
+        repository.insert(address_book_entry_2.to_key(), address_book_entry_2.clone());
 
         assert_eq!(
-            repository.find_address(
+            repository.find_by_blockchain_standard(
                 Blockchain::InternetComputer,
                 BlockchainStandard::Native,
-                "0x1234".to_string(),
             ),
-            Some(address_book_entry)
+            vec![address_book_entry_0, address_book_entry_1]
         );
     }
 
