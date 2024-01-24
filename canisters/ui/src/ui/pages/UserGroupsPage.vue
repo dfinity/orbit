@@ -44,11 +44,7 @@
           </AuthCheck>
 
           <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
-            <VBtn
-              color="primary-variant"
-              variant="flat"
-              data-test-id="manage-permissions-btn"
-            >
+            <VBtn color="primary-variant" variant="flat" data-test-id="manage-permissions-btn">
               {{ $t('pages.user_groups.btn_manage_permissions') }}
             </VBtn>
           </AuthCheck>
