@@ -1,5 +1,6 @@
 import { Identity } from '@dfinity/agent';
-import { AuthClient } from '@dfinity/auth-client';
+import { AuthClient, IdbStorage, KEY_STORAGE_DELEGATION } from '@dfinity/auth-client';
+import { DelegationChain } from '@dfinity/identity';
 import { appInitConfig } from '~/configs';
 
 export class AuthService {
@@ -40,6 +41,7 @@ export class AuthService {
         .login({
           maxTimeToLive: AuthService.maxAuthTTL,
           onSuccess: () => resolve(client.getIdentity()),
+          onError: reject,
           identityProvider: appInitConfig.providers.internetIdentity,
         })
         .catch(reject);
@@ -52,5 +54,25 @@ export class AuthService {
     await client.logout();
 
     this.invalidateAuthClient();
+  }
+
+  async getRemainingSessionTimeMs(): Promise<number | null> {
+    const idbStorage: IdbStorage = new IdbStorage();
+    const delegationChain: string | null = await idbStorage.get(KEY_STORAGE_DELEGATION);
+    const maybeDelegation =
+      delegationChain !== null ? DelegationChain.fromJSON(delegationChain) : null;
+
+    if (maybeDelegation) {
+      const maybeExpirationTime: bigint | undefined =
+        maybeDelegation.delegations[0]?.delegation.expiration;
+
+      if (maybeExpirationTime) {
+        const remainingTimeMs = Number(maybeExpirationTime / 1_000_000n) - Date.now();
+
+        return remainingTimeMs;
+      }
+    }
+
+    return null;
   }
 }

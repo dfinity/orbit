@@ -396,6 +396,26 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'account' : Account }),
     'Err' : Error,
   });
+  const GetAddressBookEntryInput = IDL.Record({
+    'address_book_entry_id' : UUID,
+  });
+  const AddressBookMetadata = IDL.Record({
+    'key' : IDL.Text,
+    'value' : IDL.Text,
+  });
+  const AddressBookEntry = IDL.Record({
+    'id' : UUID,
+    'metadata' : IDL.Vec(AddressBookMetadata),
+    'blockchain' : IDL.Text,
+    'address' : IDL.Text,
+    'last_modification_timestamp' : IDL.Text,
+    'address_owner' : IDL.Text,
+    'standard' : IDL.Text,
+  });
+  const GetAddressBookEntryResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'address_book_entry' : AddressBookEntry }),
+    'Err' : Error,
+  });
   const GetProposalInput = IDL.Record({ 'proposal_id' : UUID });
   const GetProposalResult = IDL.Variant({
     'Ok' : IDL.Record({ 'proposal' : Proposal }),
@@ -495,6 +515,19 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListAccountResult = IDL.Variant({
     'Ok' : IDL.Record({ 'accounts' : IDL.Vec(Account) }),
+    'Err' : Error,
+  });
+  const ListAddressBookEntriesInput = IDL.Record({
+    'blockchain' : IDL.Text,
+    'paginate' : PaginationInput,
+    'standard' : IDL.Text,
+  });
+  const ListAddressBookEntriesResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
+      'address_book_entries' : IDL.Vec(AddressBookEntry),
+      'next_offset' : IDL.Opt(IDL.Nat64),
+    }),
     'Err' : Error,
   });
   const NotificationStatus = IDL.Variant({
@@ -684,6 +717,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_account' : IDL.Func([GetAccountInput], [GetAccountResult], ['query']),
+    'get_address_book_entry' : IDL.Func(
+        [GetAddressBookEntryInput],
+        [GetAddressBookEntryResult],
+        ['query'],
+      ),
     'get_proposal' : IDL.Func(
         [GetProposalInput],
         [GetProposalResult],
@@ -718,6 +756,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'list_accounts' : IDL.Func([], [ListAccountResult], ['query']),
+    'list_address_book_entries' : IDL.Func(
+        [ListAddressBookEntriesInput],
+        [ListAddressBookEntriesResult],
+        ['query'],
+      ),
     'list_notifications' : IDL.Func(
         [ListNotificationsInput],
         [ListNotificationsResult],

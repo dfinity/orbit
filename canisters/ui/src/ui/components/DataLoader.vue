@@ -12,6 +12,7 @@ import { watch } from 'vue';
 import { onMounted, ref } from 'vue';
 import { logger } from '~/core/logger';
 import { i18n } from '~/ui/modules/i18n';
+import { useSessionStore } from '../stores/session';
 
 const loading = ref<boolean>(false);
 const failed = ref<boolean>(false);
@@ -51,6 +52,7 @@ watch(
     }
   },
 );
+const session = useSessionStore();
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -72,17 +74,27 @@ const fetchWithRetries = async (retries: number): Promise<T> => {
 
 const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): Promise<void> => {
   try {
-    if (loading.value || props.disableRefresh) {
+    if (
       // prevents multiple calls to fetchData at the same time
+      loading.value ||
+      // disables the refresh functionality if set by the parent component
+      props.disableRefresh ||
+      // prevents calls to fetchData while the user is locked out
+      session.reauthenticationNeeded
+    ) {
       return;
     }
 
     failed.value = false;
     loading.value = true;
 
-    data.value = await fetchWithRetries(props.retries);
+    const newData = await fetchWithRetries(props.retries);
 
-    emit('loaded', data.value);
+    if (!props.disableRefresh) {
+      data.value = newData;
+
+      emit('loaded', data.value);
+    }
   } catch (err) {
     logger.error(`Failed to load data: ${err}`);
 

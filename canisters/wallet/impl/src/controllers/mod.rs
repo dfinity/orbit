@@ -12,6 +12,9 @@ pub use wallet::*;
 mod account;
 pub use account::*;
 
+mod address_book;
+pub use address_book::*;
+
 mod notification;
 pub use notification::*;
 

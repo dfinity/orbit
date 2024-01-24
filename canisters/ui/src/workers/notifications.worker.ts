@@ -1,5 +1,5 @@
 import { Principal } from '@dfinity/principal';
-import { logger, timer } from '~/core';
+import { logger, timer, unreachable } from '~/core';
 import { icAgent } from '~/core/ic-agent';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
@@ -27,6 +27,12 @@ export type NotificationsWorkerIncomingMessage =
     }
   | {
       type: 'stop';
+    }
+  | {
+      type: 'enable';
+    }
+  | {
+      type: 'disable';
     };
 
 export interface NotificationsWorkerErrorResponse {
@@ -47,6 +53,7 @@ class NotificationsWorkerImpl {
   private timer: NodeJS.Timeout | null = null;
   private lastNotificationId: string | null = null;
   private lastNotificationDate: Date | null = null;
+  private enabled: boolean = false;
 
   constructor(private walletService: WalletService = new WalletService()) {}
 
@@ -65,6 +72,14 @@ class NotificationsWorkerImpl {
         case 'stop':
           worker.stop();
           break;
+        case 'enable':
+          worker.enabled = true;
+          break;
+        case 'disable':
+          worker.enabled = false;
+          break;
+        default:
+          unreachable(msg);
       }
     };
   }
@@ -73,6 +88,8 @@ class NotificationsWorkerImpl {
     if (this.timer) {
       this.stop();
     }
+
+    this.enabled = true;
 
     this.lastNotificationDate = null;
     this.lastNotificationId = null;
@@ -99,6 +116,10 @@ class NotificationsWorkerImpl {
   }
 
   private async refreshNotifications(): Promise<void> {
+    if (!this.enabled) {
+      return;
+    }
+
     try {
       await icAgent.loadIdentity();
 

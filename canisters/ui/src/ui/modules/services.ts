@@ -6,6 +6,7 @@ import {
   LocalesService,
   RoutesService,
   ThemeService,
+  SessionExpirationService,
 } from '~/services';
 
 class ServiceManager {
@@ -17,6 +18,7 @@ class ServiceManager {
       theme: ThemeService;
       controlPanel: ControlPanelService;
       wallet: WalletService;
+      sessionExpiration: SessionExpirationService;
     },
   ) {}
 
@@ -32,6 +34,7 @@ const serviceManager = new ServiceManager({
   theme: new ThemeService(),
   controlPanel: new ControlPanelService(),
   wallet: new WalletService(),
+  sessionExpiration: new SessionExpirationService(),
 });
 
 const services = (): ServiceManager['services'] => serviceManager.services;

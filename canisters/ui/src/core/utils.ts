@@ -122,3 +122,63 @@ export const variantIs = <EnumType extends object, T extends EnumType>(
 ): p is T => {
   return (key as string) in p;
 };
+
+export const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, wait: number = 300) => {
+  let inThrottle: boolean, lastFn: ReturnType<typeof setTimeout>, lastTime: number;
+  return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      fn.apply(this, args);
+      lastTime = Date.now();
+      inThrottle = true;
+    } else {
+      clearTimeout(lastFn);
+      lastFn = setTimeout(
+        () => {
+          if (Date.now() - lastTime >= wait) {
+            fn.apply(this, args);
+            lastTime = Date.now();
+          }
+        },
+        Math.max(wait - (Date.now() - lastTime), 0),
+      );
+    }
+  };
+};
+export class ResettableTimeout {
+  private timeout: NodeJS.Timeout | null = null;
+  private callbacks: (() => void)[] = [];
+
+  constructor() {}
+
+  public subscribe(callback: () => void) {
+    this.callbacks.push(callback);
+  }
+
+  public unsubscribe(callback: () => void) {
+    this.callbacks = this.callbacks.filter(cb => cb !== callback);
+  }
+
+  public reset(timeoutMs: number) {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+    }
+
+    this.timeout = setTimeout(() => {
+      for (const callback of this.callbacks) {
+        callback();
+      }
+      this.timeout = null;
+    }, timeoutMs);
+  }
+
+  public clear() {
+    if (this.timeout !== null) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+  }
+
+  public isActive(): boolean {
+    return this.timeout !== null;
+  }
+}

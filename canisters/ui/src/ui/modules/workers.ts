@@ -1,6 +1,7 @@
-import { logger } from '~/core';
+import { logger, unreachable } from '~/core';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { accountsWorker, installWebWorkers, notificationsWorker } from '~/workers';
+import { Principal } from '@dfinity/principal';
 
 const registerAccountWorkerEventListener = (): void => {
   if (!accountsWorker) {
@@ -47,8 +48,12 @@ const registerNotificationsWorkerEventListener = (): void => {
       case 'stopped':
         // do nothing on worker stop as this is expected
         break;
+      case 'error':
+        // do nothing on worker error
+        break;
       default:
         logger.warn('Unknown message received from notifications worker', { msg });
+        unreachable(msg);
     }
   };
 };
@@ -59,3 +64,44 @@ export const initWorkers = async (): Promise<void> => {
   registerAccountWorkerEventListener();
   registerNotificationsWorkerEventListener();
 };
+
+export function startWalletWorkers(walletId: Principal) {
+  accountsWorker?.postMessage({
+    type: 'start',
+    data: {
+      walletId,
+    },
+  });
+  notificationsWorker?.postMessage({
+    type: 'start',
+    data: {
+      walletId,
+    },
+  });
+}
+export function stopWalletWorkers() {
+  accountsWorker?.postMessage({
+    type: 'stop',
+  });
+  notificationsWorker?.postMessage({
+    type: 'stop',
+  });
+}
+
+export function enableWalletWorkers() {
+  accountsWorker?.postMessage({
+    type: 'enable',
+  });
+  notificationsWorker?.postMessage({
+    type: 'enable',
+  });
+}
+
+export function disableWalletWorkers() {
+  accountsWorker?.postMessage({
+    type: 'disable',
+  });
+  notificationsWorker?.postMessage({
+    type: 'disable',
+  });
+}

@@ -1,5 +1,6 @@
 use crate::{
     core::generate_uuid_v4,
+    core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
     errors::AddressBookError,
     mappers::AddressBookMapper,
     models::{
@@ -12,6 +13,7 @@ use ic_canister_core::{api::ServiceResult, model::ModelValidator, repository::Re
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
+use wallet_api::PaginationInput;
 
 lazy_static! {
     pub static ref ADDRESS_BOOK_SERVICE: Arc<AddressBookService> = Arc::new(
@@ -25,6 +27,9 @@ pub struct AddressBookService {
 }
 
 impl AddressBookService {
+    pub const DEFAULT_ENTRIES_LIMIT: u16 = 100;
+    pub const MAX_LIST_ENTRIES_LIMIT: u16 = 1000;
+
     pub fn new(address_book_repository: Arc<AddressBookRepository>) -> Self {
         Self {
             address_book_repository,
@@ -44,19 +49,24 @@ impl AddressBookService {
         Ok(address_book_entry)
     }
 
-    /// Returns the address book entry associated with the given address.
-    pub fn get_entry(
+    /// Returns all address book entries for the given blockchain standard.
+    pub fn get_entries_by_blockchain_standard(
         &self,
-        address: String,
         blockchain: Blockchain,
         standard: BlockchainStandard,
-    ) -> ServiceResult<AddressBookEntry> {
-        let entry = self
+        paginate: PaginationInput,
+    ) -> ServiceResult<PaginatedData<AddressBookEntry>> {
+        let mut entries = self
             .address_book_repository
-            .find(address.clone(), blockchain, standard)
-            .ok_or(AddressBookError::AddressNotFound { address })?;
-
-        Ok(entry)
+            .find_by_blockchain_standard(blockchain, standard);
+        entries.sort();
+        Ok(paginated_items(PaginatedItemsArgs {
+            offset: paginate.offset,
+            limit: paginate.limit,
+            default_limit: Some(Self::DEFAULT_ENTRIES_LIMIT),
+            max_limit: Some(Self::MAX_LIST_ENTRIES_LIMIT),
+            items: &entries,
+        })?)
     }
 
     /// Creates a new address book entry.
@@ -70,10 +80,10 @@ impl AddressBookService {
         let new_entry = AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes())?;
         new_entry.validate()?;
 
-        if let Some(v) = self.address_book_repository.find(
-            new_entry.address.clone(),
+        if let Some(v) = self.address_book_repository.find_by_address(
             new_entry.blockchain.clone(),
             new_entry.standard.clone(),
+            new_entry.address.clone(),
         ) {
             return Err(AddressBookError::DuplicateAddress {
                 id: Uuid::from_bytes(v.id).hyphenated().to_string(),
@@ -136,25 +146,6 @@ mod tests {
             repository: AddressBookRepository::default(),
             service: AddressBookService::default(),
         }
-    }
-
-    #[test]
-    fn get_entry() {
-        let ctx = setup();
-        let address_book_entry = mock_address_book_entry();
-
-        ctx.repository
-            .insert(address_book_entry.to_key(), address_book_entry.clone());
-
-        let result = ctx.service.get_entry_by_id(&address_book_entry.id);
-        assert_eq!(result, Ok(address_book_entry.clone()));
-
-        let result = ctx.service.get_entry(
-            address_book_entry.address.clone(),
-            address_book_entry.blockchain.clone(),
-            address_book_entry.standard.clone(),
-        );
-        assert_eq!(result, Ok(address_book_entry));
     }
 
     #[tokio::test]
