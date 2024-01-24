@@ -1,16 +1,13 @@
 import { AnonymousIdentity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
-import { ResettableTimeout, icAgent, logger } from '~/core';
+import { icAgent, logger, unreachable } from '~/core';
 import { User } from '~/generated/control-panel/control_panel.did';
 import { disableWalletWorkers, enableWalletWorkers, i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
 import { afterLoginRedirect, redirectToLogin } from '~/ui/utils';
-import { SessionBroadcastChannel } from '../modules/auth-check';
 import { Identity } from '@dfinity/agent';
-
-const INACTIVITY_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
 
 export interface UserWallet {
   main: boolean;
@@ -36,9 +33,6 @@ export interface SessionStoreState {
   principal: string;
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
-  sessionBroadcastChannel: SessionBroadcastChannel | null;
-  sessionTimeout: ResettableTimeout | null;
-  inactivityTimeout: ResettableTimeout | null;
   data: {
     wallets: UserWallet[];
     selectedWallet: SelectedUserWallet;
@@ -54,9 +48,6 @@ export const useSessionStore = defineStore('session', {
       principal: Principal.anonymous().toText(),
       isAuthenticated: false,
       reauthenticationNeeded: false,
-      sessionBroadcastChannel: null,
-      sessionTimeout: null,
-      inactivityTimeout: null,
       data: {
         wallets: [],
         selectedWallet: {
@@ -83,26 +74,31 @@ export const useSessionStore = defineStore('session', {
           return;
         }
 
-        this.sessionBroadcastChannel = new SessionBroadcastChannel({
-          onOtherTabActive: () => {
-            this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
-          },
-          onOtherTabSignout: () => {
-            this.signOut(false);
-          },
-          onOtherTabSignin: async () => {
-            this.setReauthenticated();
-          },
-        });
+        const sessionExpirationService = services().sessionExpiration;
 
-        this.sessionTimeout = new ResettableTimeout(() => {
-          this.requireReauthentication();
-        });
-
-        this.inactivityTimeout = new ResettableTimeout(() => {
-          const authService = services().auth;
-          authService.logout();
-          this.requireReauthentication();
+        sessionExpirationService.subscribe(msg => {
+          switch (msg) {
+            case 'otherTabActive':
+              sessionExpirationService.resetInactivityTimeout();
+              break;
+            case 'otherTabSignedIn':
+              this.setReauthenticated();
+              break;
+            case 'otherTabSignedOut':
+              this.signOut(false);
+              break;
+            case 'sessionExpired':
+              this.requireReauthentication();
+              break;
+            case 'userInactive': {
+              const authService = services().auth;
+              authService.logout();
+              this.requireReauthentication();
+              break;
+            }
+            default:
+              unreachable(msg);
+          }
         });
 
         const authService = services().auth;
@@ -144,11 +140,13 @@ export const useSessionStore = defineStore('session', {
     },
     async signIn(resetOnError = false): Promise<void> {
       const authService = services().auth;
+      const sessionExpirationService = services().sessionExpiration;
 
       try {
         authService.invalidateAuthClient();
         const identity = await authService.login();
-        this.sessionBroadcastChannel?.notifySignedIn();
+
+        sessionExpirationService.notifySignedIn();
         await this.initializeAuthenticated(identity);
       } catch (error) {
         disableWalletWorkers();
@@ -161,11 +159,13 @@ export const useSessionStore = defineStore('session', {
     async signOut(notifyOtherTabs = true): Promise<void> {
       disableWalletWorkers();
 
-      this.sessionTimeout?.clear();
-      this.inactivityTimeout?.clear();
+      const sessionExpirationService = services().sessionExpiration;
+
+      sessionExpirationService.clearInactivityTimer();
+      sessionExpirationService.clearSessionTimer();
 
       if (notifyOtherTabs) {
-        this.sessionBroadcastChannel?.notifySignedOut();
+        sessionExpirationService.notifySignedOut();
       }
 
       const authService = services().auth;
@@ -254,8 +254,11 @@ export const useSessionStore = defineStore('session', {
 
     requireReauthentication() {
       this.reauthenticationNeeded = true;
-      this.inactivityTimeout?.clear();
-      this.sessionTimeout?.clear();
+
+      const sessionExpirationService = services().sessionExpiration;
+      sessionExpirationService.clearInactivityTimer();
+      sessionExpirationService.clearSessionTimer();
+
       disableWalletWorkers();
     },
 
@@ -269,13 +272,6 @@ export const useSessionStore = defineStore('session', {
       }
 
       await this.initializeAuthenticated(maybeIdentity);
-    },
-
-    registerActivity() {
-      if (this.inactivityTimeout?.isActive()) {
-        this.sessionBroadcastChannel?.notifyActive();
-        this.inactivityTimeout?.reset(INACTIVITY_TIMEOUT_MS);
-      }
     },
 
     async initializeAuthenticated(newIdentity: Identity) {
@@ -292,11 +288,13 @@ export const useSessionStore = defineStore('session', {
       this.reauthenticationNeeded = false;
       enableWalletWorkers();
 
+      const sessionExpirationService = services().sessionExpiration;
+
       const maybeSessionExpirationTimeMs = await authService.getRemainingSessionTimeMs();
       if (maybeSessionExpirationTimeMs) {
-        this.sessionTimeout!.reset(maybeSessionExpirationTimeMs);
+        sessionExpirationService.resetSessionTimeout(maybeSessionExpirationTimeMs);
       }
-      this.inactivityTimeout!.reset(INACTIVITY_TIMEOUT_MS);
+      sessionExpirationService.resetInactivityTimeout();
 
       const controlPanelService = services().controlPanel;
       const isRegistered = await controlPanelService.hasRegistration();

@@ -146,7 +146,17 @@ export const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, wait:
 };
 export class ResettableTimeout {
   private timeout: NodeJS.Timeout | null = null;
-  constructor(private callback: () => void) {}
+  private callbacks: (() => void)[] = [];
+
+  constructor() {}
+
+  public subscribe(callback: () => void) {
+    this.callbacks.push(callback);
+  }
+
+  public unsubscribe(callback: () => void) {
+    this.callbacks = this.callbacks.filter(cb => cb !== callback);
+  }
 
   public reset(timeoutMs: number) {
     if (this.timeout !== null) {
@@ -154,7 +164,9 @@ export class ResettableTimeout {
     }
 
     this.timeout = setTimeout(() => {
-      this.callback();
+      for (const callback of this.callbacks) {
+        callback();
+      }
       this.timeout = null;
     }, timeoutMs);
   }

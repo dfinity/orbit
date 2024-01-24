@@ -19,6 +19,7 @@ import { VCardText, VDialog } from 'vuetify/components';
 import { useSessionStore } from '../stores/session';
 import { useUserActivity } from '../modules/user-activity';
 import { ref } from 'vue';
+import { services } from '../modules';
 
 const session = useSessionStore();
 
@@ -31,8 +32,12 @@ function reauthenticate() {
   });
 }
 
+const sessionExpirationService = services().sessionExpiration;
+
 useUserActivity({
-  onActive: () => session.registerActivity(),
+  onActive: () => {
+    sessionExpirationService.registerActivity();
+  },
   throttleMs: 1000,
 });
 </script>
