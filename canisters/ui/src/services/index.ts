@@ -5,3 +5,4 @@ export * from './LocalesService';
 export * from './RoutesService';
 export * from './ThemeService';
 export * from './chains';
+export * from './SessionExpirationService';

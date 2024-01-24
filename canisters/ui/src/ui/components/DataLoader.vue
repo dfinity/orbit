@@ -11,6 +11,7 @@ import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
 import { logger } from '~/core/logger';
 import { i18n } from '~/ui/modules/i18n';
+import { useSessionStore } from '../stores/session';
 
 const loading = ref<boolean>(false);
 const failed = ref<boolean>(false);
@@ -35,6 +36,8 @@ const emit = defineEmits<{
   (event: 'loaded', payload: T): void;
 }>();
 
+const session = useSessionStore();
+
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
 if (props.refreshIntervalMs) {
@@ -57,6 +60,11 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
   try {
     if (loading.value) {
       // prevents multiple calls to fetchData at the same time
+      return;
+    }
+
+    if (session.reauthenticationNeeded) {
+      // prevents calls to fetchData while the user is locked out
       return;
     }
 

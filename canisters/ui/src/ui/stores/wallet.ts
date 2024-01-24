@@ -13,11 +13,10 @@ import {
 } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services';
 import { BlockchainStandard, BlockchainType } from '~/types';
-import { i18n, services } from '~/ui/modules';
+import { i18n, services, startWalletWorkers, stopWalletWorkers } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { LoadableItem } from '~/ui/types';
 import { computedWalletName } from '~/ui/utils';
-import { accountsWorker, notificationsWorker } from '~/workers';
 
 export interface WalletMetrics {
   accounts: number;
@@ -169,13 +168,7 @@ export const useWalletStore = defineStore('wallet', {
       this.user = initialState.user;
       this.privileges = initialState.privileges;
 
-      accountsWorker?.postMessage({
-        type: 'stop',
-      });
-
-      notificationsWorker?.postMessage({
-        type: 'stop',
-      });
+      stopWalletWorkers();
     },
     async connectTo(walletId: Principal): Promise<WalletConnectionStatus> {
       const app = useAppStore();
@@ -207,19 +200,7 @@ export const useWalletStore = defineStore('wallet', {
         this.loadAccountList();
         this.loadConfiguration();
 
-        accountsWorker?.postMessage({
-          type: 'start',
-          data: {
-            walletId,
-          },
-        });
-
-        notificationsWorker?.postMessage({
-          type: 'start',
-          data: {
-            walletId,
-          },
-        });
+        startWalletWorkers(walletId);
 
         this.connectionStatus = WalletConnectionStatus.Connected;
       } catch (err) {
