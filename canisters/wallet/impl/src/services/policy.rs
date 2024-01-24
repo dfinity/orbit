@@ -163,12 +163,13 @@ impl PolicyService {
         &self,
         input: ListAccessPoliciesInput,
     ) -> ServiceResult<PaginatedData<AccessControlPolicy>> {
+        let policies = self.access_control_policy_repository.list();
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.offset,
             limit: input.limit,
             default_limit: Some(Self::DEFAULT_POLICIES_LIMIT),
             max_limit: Some(Self::MAX_LIST_POLICIES_LIMIT),
-            items: Box::new(|| self.access_control_policy_repository.list()),
+            items: &policies,
         })?;
 
         Ok(result)
@@ -178,12 +179,13 @@ impl PolicyService {
         &self,
         input: ListProposalPoliciesInput,
     ) -> ServiceResult<PaginatedData<ProposalPolicy>> {
+        let policies = self.proposal_policy_repository.list();
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.offset,
             limit: input.limit,
             default_limit: Some(Self::DEFAULT_POLICIES_LIMIT),
             max_limit: Some(Self::MAX_LIST_POLICIES_LIMIT),
-            items: Box::new(|| self.proposal_policy_repository.list()),
+            items: &policies,
         })?;
 
         Ok(result)

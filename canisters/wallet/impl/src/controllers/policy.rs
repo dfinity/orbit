@@ -93,6 +93,7 @@ impl PolicyController {
         Ok(ListAccessPoliciesResponse {
             policies: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
+            total: list.total,
         })
     }
 
@@ -130,6 +131,7 @@ impl PolicyController {
         Ok(ListProposalPoliciesResponse {
             policies: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
+            total: list.total,
         })
     }
 }

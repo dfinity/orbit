@@ -25,15 +25,17 @@ use wallet_api::{
 };
 
 impl TransferOperation {
-    pub fn to_dto(self, account: Account) -> TransferOperationDTO {
+    pub fn to_dto(self, account: Option<Account>) -> TransferOperationDTO {
         TransferOperationDTO {
-            from_account: account.to_dto(),
+            from_account: account.map(|account| account.to_dto()),
             network: NetworkDTO {
                 id: self.input.network.clone(),
                 name: self.input.network.clone(),
             },
             input: TransferOperationInput {
-                from_account_id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+                from_account_id: Uuid::from_bytes(self.input.from_account_id)
+                    .hyphenated()
+                    .to_string(),
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
@@ -297,11 +299,10 @@ impl From<wallet_api::AddAccessPolicyOperationInput> for AddAccessPolicyOperatio
 impl From<AddAccessPolicyOperation> for wallet_api::AddAccessPolicyOperationDTO {
     fn from(operation: AddAccessPolicyOperation) -> wallet_api::AddAccessPolicyOperationDTO {
         wallet_api::AddAccessPolicyOperationDTO {
-            policy: operation.policy_id.map(|id| {
+            policy: operation.policy_id.and_then(|id| {
                 ACCESS_CONTROL_REPOSITORY
                     .get(&id)
-                    .expect("policy id not found")
-                    .into()
+                    .map(|policy| policy.into())
             }),
             input: operation.input.into(),
         }
@@ -389,11 +390,10 @@ impl From<wallet_api::AddProposalPolicyOperationInput> for AddProposalPolicyOper
 impl From<AddProposalPolicyOperation> for wallet_api::AddProposalPolicyOperationDTO {
     fn from(operation: AddProposalPolicyOperation) -> wallet_api::AddProposalPolicyOperationDTO {
         wallet_api::AddProposalPolicyOperationDTO {
-            policy: operation.policy_id.map(|id| {
+            policy: operation.policy_id.and_then(|id| {
                 PROPOSAL_POLICY_REPOSITORY
                     .get(&id)
-                    .expect("policy id not found")
-                    .into()
+                    .map(|policy| policy.into())
             }),
             input: operation.input.into(),
         }
@@ -471,17 +471,14 @@ impl From<ProposalOperation> for ProposalOperationDTO {
         match operation {
             ProposalOperation::Transfer(operation) => {
                 let account = AccountRepository::default()
-                    .get(&Account::key(operation.input.from_account_id))
-                    .expect("Account not found");
+                    .get(&Account::key(operation.input.from_account_id));
 
                 ProposalOperationDTO::Transfer(Box::new(operation.to_dto(account)))
             }
             ProposalOperation::AddAccount(operation) => {
-                let account = operation.account_id.map(|id| {
-                    AccountRepository::default()
-                        .get(&Account::key(id))
-                        .expect("Account not found")
-                });
+                let account = operation
+                    .account_id
+                    .and_then(|id| AccountRepository::default().get(&Account::key(id)));
 
                 ProposalOperationDTO::AddAccount(Box::new(operation.to_dto(account)))
             }
@@ -489,11 +486,9 @@ impl From<ProposalOperation> for ProposalOperationDTO {
                 ProposalOperationDTO::EditAccount(Box::new(operation.into()))
             }
             ProposalOperation::AddUser(operation) => {
-                let user = operation.user_id.map(|id| {
-                    UserRepository::default()
-                        .get(&User::key(id))
-                        .expect("User not found")
-                });
+                let user = operation
+                    .user_id
+                    .and_then(|id| UserRepository::default().get(&User::key(id)));
 
                 ProposalOperationDTO::AddUser(Box::new(operation.to_dto(user)))
             }
@@ -501,11 +496,9 @@ impl From<ProposalOperation> for ProposalOperationDTO {
                 ProposalOperationDTO::EditUser(Box::new(operation.into()))
             }
             ProposalOperation::AddUserGroup(operation) => {
-                let user_group = operation.user_group_id.map(|id| {
-                    USER_GROUP_REPOSITORY
-                        .get(&id)
-                        .expect("User group not found")
-                });
+                let user_group = operation
+                    .user_group_id
+                    .and_then(|id| USER_GROUP_REPOSITORY.get(&id));
 
                 ProposalOperationDTO::AddUserGroup(Box::new(operation.to_dto(user_group)))
             }

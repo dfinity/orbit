@@ -6,6 +6,7 @@ pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
 pub struct PaginatedData<T> {
     pub items: Vec<T>,
     pub next_offset: Option<u64>,
+    pub total: u64,
 }
 
 pub struct PaginatedItemsArgs<'a, T> {
@@ -13,13 +14,16 @@ pub struct PaginatedItemsArgs<'a, T> {
     pub limit: Option<u16>,
     pub default_limit: Option<u16>,
     pub max_limit: Option<u16>,
-    pub items: Box<dyn Fn() -> Vec<T> + 'a>,
+    pub items: &'a [T],
 }
 
 /// Paginates a list of items based on limit and offset.
 pub fn paginated_items<T>(
     args: PaginatedItemsArgs<'_, T>,
-) -> Result<PaginatedData<T>, PaginationError> {
+) -> Result<PaginatedData<T>, PaginationError>
+where
+    T: Clone,
+{
     let offset = args.offset.unwrap_or(0) as usize;
 
     if let (Some(max_limit), Some(limit)) = (args.max_limit, args.limit) {
@@ -34,17 +38,24 @@ pub fn paginated_items<T>(
     });
     let limit = args.limit.unwrap_or(default_limit) as usize;
 
-    let items = (args.items)();
-    let total = items.len();
+    let total = args.items.len();
 
     let next_offset = match (offset + limit) < total {
         true => Some((offset + limit) as u64),
         false => None,
     };
 
-    let items = items.into_iter().skip(offset).take(limit).collect();
+    let items = args
+        .items
+        .get(offset..std::cmp::min(offset + limit, total))
+        .unwrap_or(&[])
+        .to_vec();
 
-    Ok(PaginatedData { items, next_offset })
+    Ok(PaginatedData {
+        items,
+        next_offset,
+        total: total as u64,
+    })
 }
 
 /// Calculates the minimum threshold for a given percentage and total value.
@@ -58,6 +69,18 @@ pub fn calculate_minimum_threshold(percentage: &Percentage, total_value: &usize)
     match scaled_total % 100 {
         0 => scaled_total / 100,
         _ => (scaled_total / 100) + 1,
+    }
+}
+
+/// Matches a date against a date range.
+///
+/// If the provided range is `None`, then the date is considered to be within the range.
+pub(crate) fn match_date_range(date: &u64, start_dt: &Option<u64>, to_dt: &Option<u64>) -> bool {
+    match (start_dt, to_dt) {
+        (Some(start_dt), Some(to_dt)) => date >= start_dt && date <= to_dt,
+        (Some(start_dt), None) => date >= start_dt,
+        (None, Some(to_dt)) => date <= to_dt,
+        (None, None) => true,
     }
 }
 
@@ -87,7 +110,7 @@ mod tests {
             limit: Some(10),
             default_limit: None,
             max_limit: Some(1),
-            items: Box::new(|| vec![1; 10]),
+            items: &[1; 10],
         });
 
         assert!(result.is_err());
@@ -100,7 +123,7 @@ mod tests {
             limit: None,
             default_limit: None,
             max_limit: Some(5),
-            items: Box::new(|| vec![1; 10]),
+            items: &[1; 10],
         });
 
         assert!(result.is_ok());
@@ -114,7 +137,7 @@ mod tests {
             limit: Some(5),
             default_limit: None,
             max_limit: None,
-            items: Box::new(|| vec![1; 10]),
+            items: &[1; 10],
         })
         .unwrap();
 
@@ -129,7 +152,7 @@ mod tests {
             limit: Some(5),
             default_limit: None,
             max_limit: None,
-            items: Box::new(|| vec![1; 10]),
+            items: &[1; 10],
         })
         .unwrap();
 

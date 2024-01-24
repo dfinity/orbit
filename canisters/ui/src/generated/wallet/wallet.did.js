@@ -310,7 +310,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransferOperation = IDL.Record({
     'network' : Network,
-    'from_account' : Account,
+    'from_account' : IDL.Opt(Account),
     'input' : TransferOperationInput,
   });
   const EditAccountOperation = IDL.Record({
@@ -459,6 +459,7 @@ export const idlFactory = ({ IDL }) => {
   const ListAccessPoliciesInput = PaginationInput;
   const ListAccessPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
       'next_offset' : IDL.Opt(IDL.Nat64),
       'policies' : IDL.Vec(AccessPolicy),
     }),
@@ -547,10 +548,17 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalPoliciesInput = PaginationInput;
   const ListProposalPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
       'next_offset' : IDL.Opt(IDL.Nat64),
       'policies' : IDL.Vec(ProposalPolicy),
     }),
     'Err' : Error,
+  });
+  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const ListProposalsSortBy = IDL.Variant({
+    'ExpirationDt' : SortByDirection,
+    'LastModificationDt' : SortByDirection,
+    'CreatedAt' : SortByDirection,
   });
   const ProposalStatusCode = IDL.Variant({
     'Failed' : IDL.Null,
@@ -580,14 +588,23 @@ export const idlFactory = ({ IDL }) => {
     'AddAccount' : IDL.Null,
   });
   const ListProposalsInput = IDL.Record({
-    'status' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
-    'to_dt' : IDL.Opt(TimestampRFC3339),
-    'operation_type' : IDL.Opt(ListProposalsOperationType),
-    'from_dt' : IDL.Opt(TimestampRFC3339),
-    'user_id' : IDL.Opt(UUID),
+    'sort_by' : IDL.Opt(ListProposalsSortBy),
+    'voter_ids' : IDL.Opt(IDL.Vec(UUID)),
+    'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
+    'created_to_dt' : IDL.Opt(TimestampRFC3339),
+    'statuses' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
+    'proposer_ids' : IDL.Opt(IDL.Vec(UUID)),
+    'expiration_to_dt' : IDL.Opt(TimestampRFC3339),
+    'paginate' : IDL.Opt(PaginationInput),
+    'operation_types' : IDL.Opt(IDL.Vec(ListProposalsOperationType)),
+    'created_from_dt' : IDL.Opt(TimestampRFC3339),
   });
   const ListProposalsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposals' : IDL.Vec(Proposal) }),
+    'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
+      'proposals' : IDL.Vec(Proposal),
+      'next_offset' : IDL.Opt(IDL.Nat64),
+    }),
     'Err' : Error,
   });
   const ListUserGroupResult = IDL.Variant({
@@ -597,6 +614,7 @@ export const idlFactory = ({ IDL }) => {
   const ListUsersInput = PaginationInput;
   const ListUsersResult = IDL.Variant({
     'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
       'users' : IDL.Vec(User),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),

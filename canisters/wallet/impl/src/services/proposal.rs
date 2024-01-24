@@ -1,32 +1,34 @@
 use crate::{
-    core::CallContext,
+    core::{
+        access_control::evaluate_caller_access,
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        CallContext,
+    },
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
     models::{
-        NotificationType, Proposal, ProposalCreatedNotification, ProposalStatus, ProposalVoteStatus,
+        access_control::{ProposalActionSpecifier, ResourceSpecifier},
+        specifier::CommonSpecifier,
+        NotificationType, Proposal, ProposalCreatedNotification, ProposalStatus,
+        ProposalVoteStatus,
     },
     repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
-    services::{
-        AccountService, NotificationService, UserService, ACCOUNT_SERVICE, NOTIFICATION_SERVICE,
-        USER_SERVICE,
-    },
+    services::{NotificationService, UserService, NOTIFICATION_SERVICE, USER_SERVICE},
 };
+use futures::stream;
+use futures::StreamExt;
 use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
 use ic_canister_core::{repository::Repository, types::UUID};
 use lazy_static::lazy_static;
-use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
-use wallet_api::{
-    CreateProposalInput, ListProposalsInput, ListProposalsOperationTypeDTO, VoteOnProposalInput,
-};
+use wallet_api::{CreateProposalInput, ListProposalsInput, VoteOnProposalInput};
 
 lazy_static! {
     pub static ref PROPOSAL_SERVICE: Arc<ProposalService> = Arc::new(ProposalService::new(
         Arc::clone(&USER_SERVICE),
-        Arc::clone(&ACCOUNT_SERVICE),
         Arc::clone(&PROPOSAL_REPOSITORY),
         Arc::clone(&NOTIFICATION_SERVICE),
     ));
@@ -35,7 +37,6 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct ProposalService {
     user_service: Arc<UserService>,
-    account_service: Arc<AccountService>,
     proposal_repository: Arc<ProposalRepository>,
     notification_service: Arc<NotificationService>,
 }
@@ -47,15 +48,16 @@ pub struct ProposalEditInput {
 }
 
 impl ProposalService {
+    const DEFAULT_PROPOSAL_LIST_LIMIT: u16 = 100;
+    const MAX_PROPOSAL_LIST_LIMIT: u16 = 250;
+
     pub fn new(
         user_service: Arc<UserService>,
-        account_service: Arc<AccountService>,
         proposal_repository: Arc<ProposalRepository>,
         notification_service: Arc<NotificationService>,
     ) -> Self {
         Self {
             user_service,
-            account_service,
             proposal_repository,
             notification_service,
         }
@@ -72,56 +74,82 @@ impl ProposalService {
         Ok(proposal)
     }
 
-    pub fn list_proposals(&self, input: ListProposalsInput) -> ServiceResult<Vec<Proposal>> {
-        let proposal_where_clause = ProposalWhereClause {
-            created_dt_from: input.from_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-            created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
-            operation_type: input.operation_type.clone(),
-            status: input.status,
-        };
+    pub async fn list_proposals(
+        &self,
+        input: ListProposalsInput,
+        ctx: Option<&CallContext>,
+    ) -> ServiceResult<PaginatedData<Proposal>> {
+        let filter_by_proposers = input
+            .proposer_ids
+            .map(|ids| {
+                ids.into_iter()
+                    .map(HelperMapper::to_uuid)
+                    .map(|res| res.map(|uuid| *uuid.as_bytes()))
+                    .collect::<Result<Vec<UUID>, _>>() // Convert to Result<Vec<UUID>, Error>
+            })
+            .transpose()?;
 
-        let proposals_by_user = if let Some(user_id) = input.user_id {
-            let user = self
-                .user_service
-                .get_user(HelperMapper::to_uuid(user_id)?.as_bytes())?;
+        let filter_by_voters = input
+            .voter_ids
+            .map(|ids| {
+                ids.into_iter()
+                    .map(HelperMapper::to_uuid)
+                    .map(|res| res.map(|uuid| *uuid.as_bytes()))
+                    .collect::<Result<Vec<UUID>, _>>() // Convert to Result<Vec<UUID>, Error>
+            })
+            .transpose()?;
 
-            let proposals = self
-                .proposal_repository
-                .find_by_user_where(user.id, proposal_where_clause.clone());
+        let mut proposals = self.proposal_repository.find_where(
+            ProposalWhereClause {
+                created_dt_from: input
+                    .created_from_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                created_dt_to: input
+                    .created_to_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                expiration_dt_from: input
+                    .expiration_from_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                expiration_dt_to: input
+                    .expiration_to_dt
+                    .map(|dt| rfc3339_to_timestamp(dt.as_str())),
+                operation_types: input.operation_types.unwrap_or_default(),
+                statuses: input.statuses.unwrap_or_default(),
+                proposers: filter_by_proposers.unwrap_or_default(),
+                voters: filter_by_voters.unwrap_or_default(),
+            },
+            input.sort_by,
+        )?;
 
-            Some(proposals)
-        } else {
-            None
-        };
-
-        let proposals_by_account = match input.operation_type {
-            Some(ListProposalsOperationTypeDTO::Transfer(Some(from_account_id))) => {
-                let account = self
-                    .account_service
-                    .get_account(HelperMapper::to_uuid(from_account_id)?.as_bytes())?;
-
-                let proposals = self
-                    .proposal_repository
-                    .find_by_account_where(account.id, proposal_where_clause.clone());
-
-                Some(proposals)
-            }
-            _ => None,
-        };
-
-        match (proposals_by_user, proposals_by_account) {
-            (None, None) => Ok(self.proposal_repository.find_where(proposal_where_clause)),
-            (Some(proposals), None) => Ok(proposals),
-            (None, Some(proposals)) => Ok(proposals),
-            (Some(proposals_by_user), Some(proposals_by_account)) => {
-                let proposals_by_user_ids: HashSet<UUID> =
-                    HashSet::from_iter(proposals_by_user.into_iter().map(|proposal| proposal.id));
-                Ok(proposals_by_account
-                    .into_iter()
-                    .filter(|proposal| proposals_by_user_ids.contains(&proposal.id))
-                    .collect())
-            }
+        // filter out proposals that the caller does not have access to read
+        if let Some(ctx) = ctx {
+            proposals = stream::iter(proposals.iter())
+                .filter_map(|proposal| async move {
+                    match evaluate_caller_access(
+                        ctx,
+                        &ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(
+                            CommonSpecifier::Id(vec![proposal.id.to_owned()]),
+                        )),
+                    )
+                    .await
+                    {
+                        Ok(_) => Some(proposal.to_owned()),
+                        Err(_) => None,
+                    }
+                })
+                .collect()
+                .await
         }
+
+        let paginated_proposals = paginated_items(PaginatedItemsArgs {
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
+            default_limit: Some(Self::DEFAULT_PROPOSAL_LIST_LIMIT),
+            max_limit: Some(Self::MAX_PROPOSAL_LIST_LIMIT),
+            items: &proposals,
+        })?;
+
+        Ok(paginated_proposals)
     }
 
     pub async fn edit_proposal(&self, input: ProposalEditInput) -> ServiceResult<Proposal> {
@@ -430,5 +458,61 @@ mod tests {
         let notifications = NOTIFICATION_REPOSITORY.list();
         assert_eq!(notifications.len(), 1);
         assert_eq!(notifications[0].target_user_id, related_user.id);
+    }
+
+    #[tokio::test]
+    async fn only_list_proposals_user_has_access() {
+        let ctx = setup();
+        let mut proposal = mock_proposal();
+        proposal.id = [1; 16];
+        proposal.proposed_by = ctx.caller_user.id;
+        proposal.status = ProposalStatus::Created;
+        proposal.operation = ProposalOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            input: TransferOperationInput {
+                from_account_id: [9; 16],
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
+        });
+        proposal.created_timestamp = 10;
+        proposal.votes = vec![];
+
+        ctx.repository
+            .insert(proposal.to_key(), proposal.to_owned());
+
+        let mut proposal_without_access = proposal;
+        proposal_without_access.id = [2; 16];
+        proposal_without_access.proposed_by = [8; 16];
+
+        ctx.repository.insert(
+            proposal_without_access.to_key(),
+            proposal_without_access.to_owned(),
+        );
+
+        let result = ctx
+            .service
+            .list_proposals(
+                ListProposalsInput {
+                    proposer_ids: None,
+                    voter_ids: None,
+                    created_from_dt: None,
+                    created_to_dt: None,
+                    expiration_from_dt: None,
+                    expiration_to_dt: None,
+                    operation_types: None,
+                    statuses: None,
+                    paginate: None,
+                    sort_by: None,
+                },
+                Some(&ctx.call_context),
+            )
+            .await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().items.len(), 1);
     }
 }

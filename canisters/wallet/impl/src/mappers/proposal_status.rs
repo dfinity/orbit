@@ -58,3 +58,21 @@ impl From<ProposalStatusDTO> for ProposalStatus {
         }
     }
 }
+
+#[derive(Debug)]
+pub struct ProposalStatusMapper;
+
+impl ProposalStatusMapper {
+    pub fn from_status_code_dto(status: &ProposalStatusCodeDTO) -> &str {
+        match status {
+            ProposalStatusCodeDTO::Created => "created",
+            ProposalStatusCodeDTO::Adopted => "adopted",
+            ProposalStatusCodeDTO::Rejected => "rejected",
+            ProposalStatusCodeDTO::Completed => "completed",
+            ProposalStatusCodeDTO::Failed => "failed",
+            ProposalStatusCodeDTO::Processing => "processing",
+            ProposalStatusCodeDTO::Scheduled => "scheduled",
+            ProposalStatusCodeDTO::Cancelled => "cancelled",
+        }
+    }
+}
