@@ -8,6 +8,7 @@
 </template>
 <script lang="ts" setup generic="T">
 import { onUnmounted } from 'vue';
+import { watch } from 'vue';
 import { onMounted, ref } from 'vue';
 import { logger } from '~/core/logger';
 import { i18n } from '~/ui/modules/i18n';
@@ -23,19 +24,34 @@ const props = withDefaults(
     retries?: number;
     refreshIntervalMs?: number;
     errorMsg?: string;
+    forceReload?: boolean;
+    disableRefresh?: boolean;
   }>(),
   {
     errorMsg: i18n.global.t('app.data_load_error'),
     refreshIntervalMs: undefined,
     retries: 0,
+    forceReload: false,
+    disableRefresh: false,
   },
 );
 
 const emit = defineEmits<{
   (event: 'failed', payload: unknown): void;
   (event: 'loaded', payload: T): void;
+  (event: 'update:forceReload', payload: boolean): void;
 }>();
 
+watch(
+  () => props.forceReload,
+  forceReload => {
+    if (forceReload) {
+      emit('update:forceReload', false);
+
+      fetchData({ cleanupOnFail: false });
+    }
+  },
+);
 const session = useSessionStore();
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
@@ -58,22 +74,27 @@ const fetchWithRetries = async (retries: number): Promise<T> => {
 
 const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): Promise<void> => {
   try {
-    if (loading.value) {
+    if (
       // prevents multiple calls to fetchData at the same time
-      return;
-    }
-
-    if (session.reauthenticationNeeded) {
+      loading.value ||
+      // disables the refresh functionality if set by the parent component
+      props.disableRefresh ||
       // prevents calls to fetchData while the user is locked out
+      session.reauthenticationNeeded
+    ) {
       return;
     }
 
     failed.value = false;
     loading.value = true;
 
-    data.value = await fetchWithRetries(props.retries);
+    const newData = await fetchWithRetries(props.retries);
 
-    emit('loaded', data.value);
+    if (!props.disableRefresh) {
+      data.value = newData;
+
+      emit('loaded', data.value);
+    }
   } catch (err) {
     logger.error(`Failed to load data: ${err}`);
 

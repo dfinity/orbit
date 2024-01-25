@@ -8,6 +8,7 @@ import {
   AccountBalance,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  Config,
   CreateProposalInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
@@ -19,9 +20,11 @@ import {
   ListAccountTransfersInput,
   ListNotificationsInput,
   ListProposalsInput,
+  ListProposalsResult,
   ListUsersResult,
   MarkNotificationsReadInput,
   Notification,
+  PaginationInput,
   Proposal,
   RemoveUserGroupOperationInput,
   Transfer,
@@ -31,10 +34,9 @@ import {
   UserGroup,
   UserPrivilege,
   VoteOnProposalInput,
-  Config,
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
-import { ExtractOk } from '~/types';
+import { ExtractOk, ListProposalsArgs } from '~/types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;
@@ -185,6 +187,7 @@ export class WalletService {
     return {
       users: result.Ok.users,
       next_offset: result.Ok.next_offset,
+      total: result.Ok.total,
     };
   }
 
@@ -208,14 +211,55 @@ export class WalletService {
     return result.Ok.notifications;
   }
 
-  async listProposals(input: ListProposalsInput): Promise<Proposal[]> {
-    const result = await this.actor.list_proposals(input);
+  async listProposals({
+    created_dt,
+    expiration_dt,
+    limit,
+    offset,
+    proposerIds,
+    statuses,
+    types,
+    voterIds,
+    sortBy,
+  }: ListProposalsArgs = {}): Promise<ExtractOk<ListProposalsResult>> {
+    const paginate: PaginationInput = {
+      limit: limit ? [limit] : [],
+      offset: offset ? [BigInt(offset)] : [],
+    };
+
+    let sortingCriteria: ListProposalsInput['sort_by'] | [] = [];
+    if (sortBy && variantIs(sortBy, 'createdAt')) {
+      sortingCriteria = [
+        { CreatedAt: sortBy.createdAt === 'asc' ? { Asc: null } : { Desc: null } },
+      ];
+    } else if (sortBy && variantIs(sortBy, 'expirationDt')) {
+      sortingCriteria = [
+        { ExpirationDt: sortBy.expirationDt === 'asc' ? { Asc: null } : { Desc: null } },
+      ];
+    } else if (sortBy && variantIs(sortBy, 'lastModified')) {
+      sortingCriteria = [
+        { LastModificationDt: sortBy.lastModified === 'asc' ? { Asc: null } : { Desc: null } },
+      ];
+    }
+
+    const result = await this.actor.list_proposals({
+      statuses: statuses ? [statuses] : [],
+      created_from_dt: created_dt?.fromDt ? [created_dt.fromDt.toISOString()] : [],
+      created_to_dt: created_dt?.toDt ? [created_dt.toDt.toISOString()] : [],
+      expiration_from_dt: expiration_dt?.fromDt ? [expiration_dt.fromDt.toISOString()] : [],
+      expiration_to_dt: expiration_dt?.toDt ? [expiration_dt.toDt.toISOString()] : [],
+      operation_types: types ? [types] : [],
+      proposer_ids: proposerIds ? [proposerIds] : [],
+      voter_ids: voterIds ? [voterIds] : [],
+      paginate: [paginate],
+      sort_by: sortingCriteria,
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposals;
+    return result.Ok;
   }
 
   async listUnreadNotifications(from_dt?: Date, last_id?: UUID): Promise<Notification[]> {

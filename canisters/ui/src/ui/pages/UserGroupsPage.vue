@@ -44,12 +44,7 @@
           </AuthCheck>
 
           <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
-            <VBtn
-              color="primary-variant"
-              variant="flat"
-              class="ml-2"
-              data-test-id="manage-permissions-btn"
-            >
+            <VBtn color="primary-variant" variant="flat" data-test-id="manage-permissions-btn">
               {{ $t('pages.user_groups.btn_manage_permissions') }}
             </VBtn>
           </AuthCheck>
@@ -58,6 +53,9 @@
     </template>
     <template #main-body>
       <PageBody>
+        <RecentProposals
+          :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
+        />
         <DataLoader
           :load="() => wallet.service.listUserGroups()"
           :error-msg="$t('pages.user_groups.error_loading_user_groups')"
@@ -139,9 +137,10 @@ import AuthCheck from '~/ui/components/AuthCheck.vue';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
+import RecentProposals from '~/ui/components/proposals/RecentProposals.vue';
 import UserGroupForm from '~/ui/components/forms/UserGroupForm.vue';
-import PageHeader from '~/ui/components/layouts/PageHeader.vue';
 import PageBody from '~/ui/components/layouts/PageBody.vue';
+import PageHeader from '~/ui/components/layouts/PageHeader.vue';
 import { i18n } from '~/ui/modules/i18n';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';

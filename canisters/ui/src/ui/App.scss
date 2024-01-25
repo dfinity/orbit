@@ -109,3 +109,10 @@ a {
   text-align: center;
   padding: 0.5rem;
 }
+
+// Extends spacing utility classes
+@media (min-width: variables.$device-md) {
+  .w-md-auto {
+    width: auto !important;
+  }
+}
