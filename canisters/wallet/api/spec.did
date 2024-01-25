@@ -276,7 +276,7 @@ type AddAddressBookEntryOperation = record {
   input : AddAddressBookEntryOperationInput;
 };
 
-// Input type for adding an address book entry through a proposal.
+// Input type for creating a new address book entry through a proposal.
 type AddAddressBookEntryOperationInput = record {
   // The owner of the address.
   address_owner : text;
@@ -302,11 +302,11 @@ type ChangeAddressBookMetadata = variant {
   // Override values of existing metadata with the specified keys
   // and add new metadata if no metadata can be found with the specified keys.
   OverrideSpecifiedBy : vec AddressBookMetadata;
-  // Remove metadata with specified keys.
+  // Remove metadata with the specified keys.
   RemoveKeys : vec text;
 };
 
-// Input type for editing an address book entry through a proposal.
+// Input type for updating an address book entry through a proposal.
 type EditAddressBookEntryOperationInput = record {
   // The id of the address book entry.
   address_book_entry_id : UUID;
@@ -503,7 +503,7 @@ type ProposalOperation = variant {
   EditUser : EditUserOperation;
   // An operation for creating a new address book entry.
   AddAddressBookEntry : AddAddressBookEntryOperation;
-  // An operation for editing an existing address book entry.
+  // An operation for updating an existing address book entry.
   EditAddressBookEntry : EditAddressBookEntryOperation;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperation;
@@ -538,9 +538,9 @@ type ProposalOperationInput = variant {
   AddUser : AddUserOperationInput;
   // An operation for editing an existing user.
   EditUser : EditUserOperationInput;
-  // An operation for adding an address book entry.
+  // An operation for creating a new address book entry.
   AddAddressBookEntry : AddAddressBookEntryOperationInput;
-  // An operation for updating information of an address book entry.
+  // An operation for updating an address book entry.
   EditAddressBookEntry : EditAddressBookEntryOperationInput;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperationInput;
@@ -573,7 +573,7 @@ type ProposalOperationType = variant {
   AddAccount;
   // An operation for creating a new address book entry.
   AddAddressBookEntry;
-  // An operation for updating information of an address book entry.
+  // An operation for updating an address book entry.
   EditAddressBookEntry;
   // An operation for adding a new user.
   AddUser;
@@ -671,7 +671,7 @@ type ListProposalsOperationType = variant {
   EditUser;
   // An operation for creating a new address book entry.
   AddAddressBookEntry;
-  // An operation for updating information of an address book entry.
+  // An operation for updating an address book entry.
   EditAddressBookEntry;
   // An operation for adding a new user group.
   AddUserGroup;

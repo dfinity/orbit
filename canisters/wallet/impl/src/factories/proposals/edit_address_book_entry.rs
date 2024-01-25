@@ -42,7 +42,7 @@ impl Create<wallet_api::EditAddressBookEntryOperationInput> for EditAddressBookE
                 .unwrap_or(ProposalExecutionPlan::Immediate),
             input
                 .title
-                .unwrap_or_else(|| "Address book entry edit".to_string()),
+                .unwrap_or_else(|| "Address book entry update".to_string()),
             input.summary,
         );
 
