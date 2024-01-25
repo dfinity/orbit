@@ -1,5 +1,5 @@
 <template>
-  <VTable hover class="bg-transparent" density="compact">
+  <VTable v-if="!app.isMobile" hover class="bg-transparent" density="compact">
     <thead v-if="!props.hideHeaders">
       <tr>
         <th class="font-weight-bold">{{ $t('terms.type') }}</th>
@@ -15,16 +15,33 @@
         class="px-1"
         lines="one"
         hide-column-borders
+        mode="table"
         @voted="$emit('voted', proposal)"
         @opened="$emit('opened', proposal)"
         @closed="$emit('closed', proposal)"
       />
     </tbody>
   </VTable>
+  <VList v-else bg-color="transparent">
+    <ProposalListItem
+      v-for="proposal in props.proposals"
+      :key="proposal.id"
+      :proposal="proposal"
+      class="px-1"
+      lines="one"
+      mode="list"
+      @voted="$emit('voted', proposal)"
+      @opened="$emit('opened', proposal)"
+      @closed="$emit('closed', proposal)"
+    />
+  </VList>
 </template>
 <script setup lang="ts">
 import { Proposal } from '~/generated/wallet/wallet.did';
 import ProposalListItem from './ProposalListItem.vue';
+import { useAppStore } from '~/ui/stores/app';
+
+const app = useAppStore();
 
 const props = withDefaults(
   defineProps<{

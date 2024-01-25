@@ -1,5 +1,5 @@
 <template>
-  <tr>
+  <tr v-if="props.mode === 'table'">
     <td class="text-body-2 w-25" :class="{ 'bb-none': props.hideColumnBorders }">
       {{ $t(`proposals.types.${proposalType}.short_title`) }}
     </td>
@@ -19,6 +19,26 @@
       />
     </td>
   </tr>
+  <VListItem v-else>
+    <VListItemTitle class="text-body-2 font-weight-bold">
+      {{ $t(`proposals.types.${proposalType}.short_title`) }}
+    </VListItemTitle>
+    <VListItemSubtitle>
+      <component
+        :is="listItemProposalComponent"
+        v-if="listItemProposalComponent"
+        :proposal="proposal"
+      />
+    </VListItemSubtitle>
+    <template #append>
+      <ReviewProposalBtn
+        :proposal="proposal"
+        @voted="$emit('voted')"
+        @opened="$emit('opened')"
+        @closed="$emit('closed')"
+      />
+    </template>
+  </VListItem>
 </template>
 
 <script setup lang="ts">
@@ -34,9 +54,11 @@ const props = withDefaults(
   defineProps<{
     proposal: Proposal;
     hideColumnBorders?: boolean;
+    mode?: 'list' | 'table';
   }>(),
   {
     hideColumnBorders: false,
+    mode: 'table',
   },
 );
 

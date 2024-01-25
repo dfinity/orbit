@@ -7,6 +7,7 @@
           v-bind="tooltipProps"
           :prepend-icon="mdiAccountCircle"
           class="flex-grow-1"
+          data-testid="proposed_by"
         >
           <span class="text-no-wrap text-truncate" style="max-width: 80px">
             {{
@@ -36,6 +37,7 @@
           v-bind="tooltipProps"
           :prepend-icon="mdiClockPlusOutline"
           class="flex-grow-1"
+          data-testid="creation-dt"
         >
           {{ createdAt.toLocaleDateString() }}
         </VChip>
@@ -53,6 +55,7 @@
           :prepend-icon="mdiClockTimeFourOutline"
           color="error"
           class="flex-grow-1"
+          data-testid="expiration-dt"
         >
           {{ $t('terms.expires_at') }}
           {{ expiredAt.toLocaleDateString() }}
