@@ -248,6 +248,10 @@ export const idlFactory = ({ IDL }) => {
     'status_reason' : IDL.Opt(IDL.Text),
     'decided_at' : TimestampRFC3339,
   });
+  const ProposalInfo = IDL.Record({
+    'can_vote' : IDL.Bool,
+    'proposer_name' : IDL.Opt(IDL.Text),
+  });
   const EditAccessPolicyOperation = IDL.Record({
     'input' : EditAccessPolicyOperationInput,
   });
@@ -359,6 +363,7 @@ export const idlFactory = ({ IDL }) => {
     'execution_plan' : ProposalExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
     'votes' : IDL.Vec(ProposalVote),
+    'info' : ProposalInfo,
     'created_at' : TimestampRFC3339,
     'summary' : IDL.Opt(IDL.Text),
     'operation' : ProposalOperation,

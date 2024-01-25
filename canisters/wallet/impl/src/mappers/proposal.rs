@@ -7,30 +7,9 @@ use ic_canister_core::{
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
 use uuid::Uuid;
-use wallet_api::{ProposalDTO, ProposalExecutionScheduleDTO};
+use wallet_api::{ProposalDTO, ProposalExecutionScheduleDTO, ProposalInfoDTO};
 
-impl From<Proposal> for ProposalDTO {
-    fn from(proposal: Proposal) -> ProposalDTO {
-        ProposalDTO {
-            id: Uuid::from_bytes(proposal.id).hyphenated().to_string(),
-            proposed_by: Uuid::from_bytes(proposal.proposed_by)
-                .hyphenated()
-                .to_string(),
-            status: proposal.status.into(),
-            operation: proposal.operation.into(),
-            title: proposal.title,
-            summary: proposal.summary,
-            expiration_dt: timestamp_to_rfc3339(&proposal.expiration_dt),
-            execution_plan: proposal.execution_plan.into(),
-            created_at: timestamp_to_rfc3339(&proposal.created_timestamp),
-            votes: proposal
-                .votes
-                .iter()
-                .map(|vote| vote.to_owned().into())
-                .collect(),
-        }
-    }
-}
+pub type ProposalInfo = ProposalInfoDTO;
 
 impl Proposal {
     pub fn new(
@@ -54,6 +33,26 @@ impl Proposal {
             votes: vec![],
             created_timestamp: time(),
             last_modification_timestamp: time(),
+        }
+    }
+
+    pub fn to_dto(self, info: ProposalInfoDTO) -> ProposalDTO {
+        ProposalDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            proposed_by: Uuid::from_bytes(self.proposed_by).hyphenated().to_string(),
+            status: self.status.into(),
+            operation: self.operation.into(),
+            title: self.title,
+            summary: self.summary,
+            expiration_dt: timestamp_to_rfc3339(&self.expiration_dt),
+            execution_plan: self.execution_plan.into(),
+            created_at: timestamp_to_rfc3339(&self.created_timestamp),
+            votes: self
+                .votes
+                .iter()
+                .map(|vote| vote.to_owned().into())
+                .collect(),
+            info,
         }
     }
 }
