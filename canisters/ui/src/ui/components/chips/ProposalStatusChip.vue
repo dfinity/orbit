@@ -5,7 +5,7 @@
     :class="props.class"
     :color="status.color"
     variant="flat"
-    data-testid="proposal-status-chip"
+    data-test-id="proposal-status-chip"
   >
     <slot>
       {{ $t(`proposals.status.${status.name}`) }}

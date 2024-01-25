@@ -35,7 +35,7 @@ describe('ProposalMetadata', () => {
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="expiration-dt"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="expiration-dt"]').exists()).toBe(true);
   });
 
   it('hides the expiration_dt when not pending', () => {
@@ -53,6 +53,6 @@ describe('ProposalMetadata', () => {
     });
 
     expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('[data-testid="expiration-dt"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test-id="expiration-dt"]').exists()).toBe(false);
   });
 });

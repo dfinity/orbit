@@ -73,7 +73,7 @@
               }
             }
           "
-          data-testid="add-principal-btn"
+          data-test-id="add-principal-btn"
         >
           <template #default="{ model: elem, submit: addNewPrincipal }">
             <AddPrincipalForm
