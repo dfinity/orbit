@@ -1,25 +1,24 @@
 <template>
-  <VListItem>
-    <VListItemTitle class="text-body-2 font-weight-bold">
+  <tr>
+    <td class="text-body-2 w-25" :class="{ 'bb-none': props.hideColumnBorders }">
       {{ $t(`proposals.types.${proposalType}.short_title`) }}
-    </VListItemTitle>
-    <VListItemSubtitle>
+    </td>
+    <td class="w-75" :class="{ 'bb-none': props.hideColumnBorders }">
       <component
         :is="listItemProposalComponent"
         v-if="listItemProposalComponent"
         :proposal="proposal"
       />
-    </VListItemSubtitle>
-
-    <template #append>
+    </td>
+    <td class="d-flex justify-end align-center" :class="{ 'bb-none': props.hideColumnBorders }">
       <ReviewProposalBtn
         :proposal="proposal"
         @voted="$emit('voted')"
         @opened="$emit('opened')"
         @closed="$emit('closed')"
       />
-    </template>
-  </VListItem>
+    </td>
+  </tr>
 </template>
 
 <script setup lang="ts">
@@ -31,9 +30,15 @@ import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
 import ReviewProposalBtn from '~/ui/components/proposals/ReviewProposalBtn.vue';
 
-const props = defineProps<{
-  proposal: Proposal;
-}>();
+const props = withDefaults(
+  defineProps<{
+    proposal: Proposal;
+    hideColumnBorders?: boolean;
+  }>(),
+  {
+    hideColumnBorders: false,
+  },
+);
 
 const componentsMap: {
   [key in KeysOfUnion<ProposalOperation>]: Component;

@@ -39,12 +39,10 @@
               class="mb-2 border-opacity-50"
               thickness="1"
             />
-            <ProposalListItem
-              v-for="proposal in data?.proposals || []"
-              :key="proposal.id"
-              :proposal="proposal"
-              class="px-1"
-              lines="one"
+            <ProposalList
+              v-if="data"
+              :proposals="data.proposals"
+              hide-headers
               @voted="forceReload = true"
               @opened="disablePolling = true"
               @closed="disablePolling = false"
@@ -60,10 +58,10 @@
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
 import { ListProposalsArgs } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';
-import ProposalListItem from '~/ui/components/proposals/ProposalListItem.vue';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { ref } from 'vue';
+import ProposalList from './ProposalList.vue';
 
 const props = withDefaults(
   defineProps<{
