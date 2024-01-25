@@ -30,6 +30,8 @@ impl From<NotificationType> for NotificationTypeDTO {
                     ProposalOperation::EditAccount(operation) => Some(operation.input.account_id),
                     ProposalOperation::AddAccessPolicy(_)
                     | ProposalOperation::AddAccount(_)
+                    | ProposalOperation::AddAddressBookEntry(_)
+                    | ProposalOperation::EditAddressBookEntry(_)
                     | ProposalOperation::EditUser(_)
                     | ProposalOperation::AddProposalPolicy(_)
                     | ProposalOperation::AddUser(_)
@@ -47,11 +49,13 @@ impl From<NotificationType> for NotificationTypeDTO {
                     ProposalOperation::EditUser(operation) => Some(operation.input.user_id),
                     ProposalOperation::AddAccessPolicy(_)
                     | ProposalOperation::AddAccount(_)
+                    | ProposalOperation::AddAddressBookEntry(_)
                     | ProposalOperation::AddProposalPolicy(_)
                     | ProposalOperation::AddUser(_)
                     | ProposalOperation::AddUserGroup(_)
                     | ProposalOperation::EditAccessPolicy(_)
                     | ProposalOperation::EditAccount(_)
+                    | ProposalOperation::EditAddressBookEntry(_)
                     | ProposalOperation::EditProposalPolicy(_)
                     | ProposalOperation::EditUserGroup(_)
                     | ProposalOperation::RemoveAccessPolicy(_)

@@ -2,26 +2,28 @@ use super::{BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
-        AddAccountOperation, AddProposalPolicyOperation, AddProposalPolicyOperationInput,
-        AddUserOperation, ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
-        EditAccessPolicyOperationInput, EditAccountOperation, EditProposalPolicyOperation,
-        EditProposalPolicyOperationInput, EditUserOperation, ProposalOperation,
-        RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
+        AddAccountOperation, AddAddressBookEntryOperation, AddProposalPolicyOperation,
+        AddProposalPolicyOperationInput, AddUserOperation, AddressBookEntry,
+        ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
+        EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
+        EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserOperation,
+        ProposalOperation, RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
         RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
         access_control::ACCESS_CONTROL_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY,
-        AccountRepository, UserRepository, USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
     },
 };
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
-    AddAccountOperationDTO, AddAccountOperationInput, AddUserOperationDTO, AddUserOperationInput,
+    AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
+    AddAddressBookEntryOperationInput, AddUserOperationDTO, AddUserOperationInput,
     ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    EditAccountOperationDTO, EditAccountOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, NetworkDTO, ProposalOperationDTO, TransferOperationDTO,
-    TransferOperationInput,
+    EditAccountOperationDTO, EditAccountOperationInput, EditAddressBookEntryOperationDTO,
+    EditAddressBookEntryOperationInput, EditUserOperationDTO, EditUserOperationInput, NetworkDTO,
+    ProposalOperationDTO, TransferOperationDTO, TransferOperationInput,
 };
 
 impl TransferOperation {
@@ -139,6 +141,55 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                         .collect()
                 }),
                 policies: operation.input.policies.map(|policies| policies.into()),
+            },
+        }
+    }
+}
+
+impl AddAddressBookEntryOperation {
+    pub fn to_dto(
+        self,
+        address_book_entry: Option<AddressBookEntry>,
+    ) -> AddAddressBookEntryOperationDTO {
+        AddAddressBookEntryOperationDTO {
+            address_book_entry: address_book_entry
+                .map(|address_book_entry| address_book_entry.to_dto()),
+            input: AddAddressBookEntryOperationInput {
+                address_owner: self.input.address_owner,
+                address: self.input.address,
+                blockchain: self.input.blockchain.to_string(),
+                standard: self.input.standard.to_string(),
+                metadata: self.input.metadata,
+            },
+        }
+    }
+}
+
+impl From<AddAddressBookEntryOperationInput> for crate::models::AddAddressBookEntryOperationInput {
+    fn from(
+        input: AddAddressBookEntryOperationInput,
+    ) -> crate::models::AddAddressBookEntryOperationInput {
+        crate::models::AddAddressBookEntryOperationInput {
+            address_owner: input.address_owner,
+            address: input.address,
+            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
+                .expect("Invalid blockchain"),
+            standard: BlockchainMapper::to_blockchain_standard(input.standard)
+                .expect("Invalid blockchain standard"),
+            metadata: input.metadata,
+        }
+    }
+}
+
+impl From<EditAddressBookEntryOperation> for EditAddressBookEntryOperationDTO {
+    fn from(operation: EditAddressBookEntryOperation) -> EditAddressBookEntryOperationDTO {
+        EditAddressBookEntryOperationDTO {
+            input: EditAddressBookEntryOperationInput {
+                address_book_entry_id: Uuid::from_bytes(operation.input.address_book_entry_id)
+                    .hyphenated()
+                    .to_string(),
+                address_owner: operation.input.address_owner,
+                change_metadata: operation.input.change_metadata,
             },
         }
     }
@@ -484,6 +535,18 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::EditAccount(operation) => {
                 ProposalOperationDTO::EditAccount(Box::new(operation.into()))
+            }
+            ProposalOperation::AddAddressBookEntry(operation) => {
+                let address_book_entry = operation.address_book_entry_id.and_then(|id| {
+                    AddressBookRepository::default().get(&AddressBookEntry::key(id))
+                });
+
+                ProposalOperationDTO::AddAddressBookEntry(Box::new(
+                    operation.to_dto(address_book_entry),
+                ))
+            }
+            ProposalOperation::EditAddressBookEntry(operation) => {
+                ProposalOperationDTO::EditAddressBookEntry(Box::new(operation.into()))
             }
             ProposalOperation::AddUser(operation) => {
                 let user = operation
