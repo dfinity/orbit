@@ -1,4 +1,4 @@
-import { mdiBookOpenVariant, mdiCogs, mdiHome, mdiWalletBifold } from '@mdi/js';
+import { mdiBookOpenVariant, mdiCogs, mdiHome, mdiWalletBifold, mdiFormatListText } from '@mdi/js';
 import { App, Ref, computed, ref, watch } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { logger } from '~/core';
@@ -105,6 +105,19 @@ const sections = (): NavigationSections => ({
         route: Routes.Accounts,
       },
       icon: mdiWalletBifold,
+    },
+    {
+      name: 'proposals',
+      localeKey: 'navigation.proposals',
+      action: {
+        type: NavigationActionType.To,
+        handle: route => (route.params.locale ? `/${route.params.locale}/requests` : '/requests'),
+      },
+      auth: {
+        type: NavigastionAuthType.Route,
+        route: Routes.Proposals,
+      },
+      icon: mdiFormatListText,
     },
     {
       name: 'address_book',

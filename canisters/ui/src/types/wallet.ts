@@ -24,6 +24,16 @@ export enum WalletProposalType {
   Unknown = 'Unknown',
 }
 
+export enum ProposalStatusEnum {
+  Created = 'Created',
+  Adopted = 'Adopted',
+  Rejected = 'Rejected',
+  Completed = 'Completed',
+  Failed = 'Failed',
+  Scheduled = 'Scheduled',
+  Processing = 'Processing',
+}
+
 export enum Privilege {
   AddUserGroup = 'AddUserGroup',
   ListUserGroups = 'ListUserGroups',

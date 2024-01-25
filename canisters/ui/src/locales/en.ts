@@ -29,11 +29,14 @@ export default {
     principal_already_added: 'Principal already added.',
     user_associate_principal_warning:
       'Use with caution. The principal will be able to login as the user and perform actions on their behalf.',
+    export_csv: 'Export CSV',
+    params_parse_error: 'Failed to parse parameters, please try again.',
   },
   proposals: {
     proposed_by: 'Proposed by {name}',
     proposer_id: 'Proposer ID: {id}',
     title_info_message: 'The title set by the proposer.',
+    no_results_found: 'No requests found.',
     status: {
       created: 'Pending',
       cancelled: 'Cancelled',
@@ -50,6 +53,13 @@ export default {
     processing_scheduled_at: 'Processing scheduled at {dt}',
     no_cancelled_reason: 'No reason specified.',
     no_failed_reason: 'No reason specified.',
+    domains: {
+      accounts: 'Accounts',
+      address_book: 'Address book',
+      system: 'System',
+      transfers: 'Transfers',
+      users: 'Users',
+    },
     types: {
       addusergroup: {
         short_title: 'Add user group',
@@ -146,6 +156,7 @@ export default {
     approve: 'Approve',
     create: 'Create',
     review: 'Review',
+    type: 'Type',
     summary: 'Summary',
     view: 'View',
     requested: 'Requested',
@@ -165,14 +176,19 @@ export default {
     edit: 'Edit',
     destination_address: 'Destination address',
     search: 'Search',
+    filters: 'Filters',
+    statuses: 'Statuses',
     token: 'Token',
     until: 'To',
+    clear: 'Clear',
     to: 'To',
     from: 'From',
     account: 'Account',
     amount: 'Amount',
     send: 'Send',
     open: 'Open',
+    created: 'Created',
+    expires: 'Expires',
     created_at: 'Created at',
     expires_at: 'Expires at',
     yes: 'Yes',
@@ -207,7 +223,6 @@ export default {
     owners: 'Owners',
     name: 'Name',
     processing: 'Processing',
-    created: 'Created',
     cancelled: 'Cancelled',
     user_name: 'User Name',
     scheduled: 'Scheduled',
@@ -255,6 +270,7 @@ export default {
     account_info_settings: 'Account Info & Settings',
     login: 'Login',
     logout: 'Logout',
+    proposals: 'Requests',
   },
   pages: {
     overview: {
@@ -289,6 +305,9 @@ export default {
       status_creating_initial_account: 'Creating your initial account ...',
       status_completed: 'Your wallet has been successfully initialized, you`ll soon be redirected.',
       status_failed: 'Failed to initialize, please try again.',
+    },
+    proposals: {
+      title: 'Requests',
     },
   },
   session: {

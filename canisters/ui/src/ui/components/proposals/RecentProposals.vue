@@ -29,7 +29,14 @@
                 />
               </VListItemTitle>
               <template #append>
-                <VBtn variant="tonal" size="small">
+                <VBtn
+                  variant="tonal"
+                  size="small"
+                  :to="{
+                    name: Routes.Proposals,
+                    query: { group_by: props.domain },
+                  }"
+                >
                   {{ $t('terms.see_all') }}
                 </VBtn>
               </template>
@@ -62,6 +69,7 @@ import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { ref } from 'vue';
 import ProposalList from './ProposalList.vue';
+import { Routes } from '~/ui/config/routes';
 
 const props = withDefaults(
   defineProps<{
@@ -69,6 +77,7 @@ const props = withDefaults(
     title?: string;
     limit?: number;
     sortBy?: ListProposalsArgs['sortBy'];
+    domain?: string;
     refreshIntervalMs?: number;
     loadErrorMsg?: string;
   }>(),
@@ -79,6 +88,7 @@ const props = withDefaults(
       expirationDt: 'asc',
     }),
     refreshIntervalMs: 5000,
+    domain: undefined,
     loadErrorMsg: i18n.global.t('app.data_load_error'),
   },
 );

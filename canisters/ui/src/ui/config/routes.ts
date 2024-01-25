@@ -16,6 +16,7 @@ export enum Routes {
   Accounts = 'Accounts',
   Account = 'Account',
   MySettings = 'MySettings',
+  Proposals = 'Proposals',
   UserGroups = 'UserGroups',
   SystemSettings = 'SystemSettings',
   Disconnected = 'Disconnected',
@@ -91,6 +92,18 @@ export const routes: RouteRecordRaw[] = [
           auth: {
             check: {
               session: RequiredSessionState.Authenticated,
+            },
+          },
+        },
+      },
+      {
+        path: 'requests',
+        name: Routes.Proposals,
+        component: () => import('~/ui/pages/ProposalsPage.vue'),
+        meta: {
+          auth: {
+            check: {
+              session: RequiredSessionState.ConnectedToWallet,
             },
           },
         },

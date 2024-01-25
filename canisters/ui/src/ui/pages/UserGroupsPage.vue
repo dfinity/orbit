@@ -54,6 +54,7 @@
     <template #main-body>
       <PageBody>
         <RecentProposals
+          domain="system"
           :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
         />
         <DataLoader

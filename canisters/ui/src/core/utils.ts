@@ -182,3 +182,13 @@ export class ResettableTimeout {
     return this.timeout !== null;
   }
 }
+
+export const parseDate = (raw: string): Date => {
+  const date = Date.parse(raw);
+
+  if (isNaN(date)) {
+    throw new Error(`Invalid date: ${date}`);
+  }
+
+  return new Date(date);
+};

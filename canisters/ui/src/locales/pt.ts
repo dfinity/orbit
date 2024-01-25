@@ -30,6 +30,8 @@ export default {
     principal_already_added: 'Principal já adicionado.',
     user_associate_principal_warning:
       'Utilize com cuidado. O principal poderá aceder à sua conta e executar ações em seu nome.',
+    export_csv: 'Exportar CSV',
+    params_parse_error: 'Erro ao analisar os parâmetros, por favor, tente novamente.',
   },
   proposals: {
     title_info_message: 'O título definido pelo requerente.',
@@ -46,11 +48,19 @@ export default {
       scheduled: 'Agendado',
       unknown: 'Desconhecido',
     },
+    no_results_found: 'Nenhum resultado encontrado.',
     processing_started_at: 'Processamento iniciado em {dt}',
     processing_completed_at: 'Processamento concluído em {dt}',
     processing_scheduled_at: 'Processamento agendado para {dt}',
     no_cancelled_reason: 'Nenhuma razão especificada.',
     no_failed_reason: 'Nenhuma razão especificada.',
+    domains: {
+      accounts: 'Contas',
+      address_book: 'Livro de endereços',
+      system: 'Sistema',
+      transfers: 'Transferências',
+      users: 'Usuários',
+    },
     types: {
       addusergroup: {
         short_title: 'Adicionar grupo de usuários',
@@ -150,13 +160,21 @@ export default {
     approve: 'Aprovar',
     id: 'ID',
     save: 'Salvar',
+    type: 'Tipo',
     view: 'Ver',
+    from: 'De',
+    clear: 'Limpar',
+    filters: 'Filtros',
+    until: 'Até',
     approved: 'Aprovado',
     confirm: 'Confirmar',
     cancel: 'Cancelar',
     see_all: 'Ver todos',
     requests: 'Pedidos',
     reject: 'Rejeitar',
+    statuses: 'Estados',
+    created: 'Criado',
+    expires: 'Expira',
     rejected: 'Rejeitado',
     to: 'Para',
     requested: 'Requerido',
@@ -165,8 +183,6 @@ export default {
     yes: 'Sim',
     no: 'Não',
     edit: 'Editar',
-    until: 'Até',
-    from: 'Desde',
     amount: 'Valor',
     account: 'Conta',
     send: 'Enviar',
@@ -174,7 +190,6 @@ export default {
     open: 'Abrir',
     created_at: 'Criado em',
     expires_at: 'Expira em',
-    created: 'Criado',
     asset: 'Ativo',
     failed: 'Erro',
     cancelled: 'Cancelado',
@@ -243,7 +258,6 @@ export default {
       validTokenAmount: 'Este campo deve conter um valor de token válido.',
     },
   },
-
   navigation: {
     overview: 'Visão geral',
     accounts_transfers: 'Contas & Transferências',
@@ -256,6 +270,7 @@ export default {
     account_info_settings: 'Informaçōes da conta & Configuraçōes',
     login: 'Entrar',
     logout: 'Sair',
+    proposals: 'Pedidos',
   },
   pages: {
     overview: {
@@ -292,6 +307,9 @@ export default {
       status_completed:
         'A sua carteira foi instalada com sucesso, por favor, aguarde enquanto é redirecionado ...',
       status_failed: 'Falha com a inicialização, por favor, tente novamente.',
+    },
+    proposals: {
+      title: 'Pedidos',
     },
   },
   session: {
