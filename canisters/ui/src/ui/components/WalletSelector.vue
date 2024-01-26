@@ -15,7 +15,7 @@
     <template #item="{ props, item }">
       <VListItem
         v-bind="props"
-        :title="item.raw.name || item.raw.canisterId"
+        :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :subtitle="item.raw.canisterId"
       />
     </template>
