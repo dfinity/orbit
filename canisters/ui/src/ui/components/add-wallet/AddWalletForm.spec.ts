@@ -104,7 +104,7 @@ describe('AddWalletForm', () => {
   it('will show a spinner during submission', async () => {
     services().controlPanel.editUser = vi.fn(
       // make sure the editUser call never resolves so we can test the spinner
-      async () => new Promise<User>(()=>{}),
+      async () => new Promise<User>(() => {}),
     );
 
     const wrapper = mount(AddWalletForm);

@@ -1,5 +1,6 @@
 <template>
   <VSelect
+    :key="allWallets.length"
     v-model="selectedWallet"
     :loading="session.loading"
     class="wallet-selector"
@@ -11,7 +12,6 @@
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
     :items="allWallets"
-    :key="allWallets.length"
   >
     <template #item="{ props, item }">
       <VListItem
@@ -46,7 +46,7 @@ import { mdiWallet } from '@mdi/js';
 const session = useSessionStore();
 const app = useAppStore();
 
-const allWallets = computed(()=>session.data.wallets);
+const allWallets = computed(() => session.data.wallets);
 
 const selectedWallet = computed({
   get(): string | null {
