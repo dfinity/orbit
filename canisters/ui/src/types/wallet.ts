@@ -87,3 +87,11 @@ export interface ListProposalsArgs {
         lastModified: SortDirection;
       };
 }
+
+export enum ProposalDomains {
+  Accounts = 'accounts',
+  AddressBook = 'address_book',
+  Transfers = 'transfers',
+  Users = 'users',
+  System = 'system',
+}

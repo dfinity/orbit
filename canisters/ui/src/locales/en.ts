@@ -177,6 +177,7 @@ export default {
     destination_address: 'Destination address',
     search: 'Search',
     filters: 'Filters',
+    reset: 'Reset',
     statuses: 'Statuses',
     token: 'Token',
     until: 'To',

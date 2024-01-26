@@ -17,6 +17,7 @@
           v-model:force-reload="forceReload"
           :load="fetchProposals"
           :disable-refresh="disableRefresh"
+          :refresh-interval-ms="5000"
         >
           <template #default="{ data, loading }">
             <VContainer class="pa-0" fluid>
@@ -85,6 +86,18 @@
                         :items="statuses"
                         :prepend-icon="mdiCog"
                       />
+                      <VDivider thickness="2" class="my-2" />
+                      <VBtn
+                        density="comfortable"
+                        block
+                        color="primary-variant"
+                        flat
+                        size="small"
+                        variant="tonal"
+                        @click="filters = getDefaultFilters()"
+                      >
+                        {{ $t('terms.reset') }}
+                      </VBtn>
                     </VCardText>
                   </VCard>
                 </VCol>
@@ -103,7 +116,7 @@ import { computed, ref, watch } from 'vue';
 import { logger } from '~/core';
 import { parseDate, throttle } from '~/core/utils';
 import { ListProposalsOperationType, ProposalStatusCode } from '~/generated/wallet/wallet.did';
-import { ProposalStatusEnum } from '~/types';
+import { Privilege, ProposalDomains, ProposalStatusEnum } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import BtnSelect from '~/ui/components/inputs/BtnSelect.vue';
@@ -114,43 +127,7 @@ import ProposalList from '~/ui/components/proposals/ProposalList.vue';
 import { i18n, router } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
-
-const app = useAppStore();
-const wallet = useWalletStore();
-
-const availableFilterGroups = ref<
-  {
-    id: string;
-    types: ListProposalsOperationType[];
-  }[]
->([
-  { id: 'accounts', types: [{ AddAccount: null }, { EditAccount: null }] },
-  { id: 'address_book', types: [] },
-  { id: 'transfers', types: [{ Transfer: [] }] },
-  { id: 'users', types: [{ AddUser: null }, { EditUser: null }] },
-  {
-    id: 'system',
-    types: [
-      { AddAccessPolicy: null },
-      { EditAccessPolicy: null },
-      { RemoveAccessPolicy: null },
-      { AddProposalPolicy: null },
-      { EditProposalPolicy: null },
-      { RemoveProposalPolicy: null },
-      { ChangeCanister: null },
-      { AddUserGroup: null },
-      { EditUserGroup: null },
-      { RemoveUserGroup: null },
-    ],
-  },
-]);
-
-const statuses = computed<{ key: ProposalStatusEnum; text: string }[]>(() =>
-  Object.values(ProposalStatusEnum).map(status => ({
-    key: status,
-    text: i18n.global.t(`proposals.status.${status.toLowerCase()}`),
-  })),
-);
+import { hasRequiredPrivilege } from '~/ui/utils/auth';
 
 type Filters = {
   groupBy: number;
@@ -167,6 +144,68 @@ type StorableFilters = {
   expires_to?: string;
   statuses?: ProposalStatusEnum[];
 };
+
+type AvailableDomain = {
+  id: ProposalDomains;
+  types: ListProposalsOperationType[];
+};
+
+const app = useAppStore();
+const wallet = useWalletStore();
+
+const getAvailableDomains = (): AvailableDomain[] => {
+  const domains: AvailableDomain[] = [];
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListAccounts] })) {
+    domains.push({
+      id: ProposalDomains.Accounts,
+      types: [{ AddAccount: null }, { EditAccount: null }],
+    });
+
+    domains.push({
+      id: ProposalDomains.Transfers,
+      types: [{ Transfer: [] }],
+    });
+  }
+
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListUsers] })) {
+    domains.push({
+      id: ProposalDomains.Users,
+      types: [{ AddUser: null }, { EditUser: null }],
+    });
+  }
+
+  domains.push({
+    id: ProposalDomains.AddressBook,
+    types: [],
+  });
+
+  domains.push({
+    id: ProposalDomains.System,
+    types: [
+      { AddAccessPolicy: null },
+      { EditAccessPolicy: null },
+      { RemoveAccessPolicy: null },
+      { AddProposalPolicy: null },
+      { EditProposalPolicy: null },
+      { RemoveProposalPolicy: null },
+      { ChangeCanister: null },
+      { AddUserGroup: null },
+      { EditUserGroup: null },
+      { RemoveUserGroup: null },
+    ],
+  });
+
+  return domains;
+};
+
+const availableFilterGroups = ref<AvailableDomain[]>(getAvailableDomains());
+
+const statuses = computed<{ key: ProposalStatusEnum; text: string }[]>(() =>
+  Object.values(ProposalStatusEnum).map(status => ({
+    key: status,
+    text: i18n.global.t(`proposals.status.${status.toLowerCase()}`),
+  })),
+);
 
 const getDefaultFilters = (): Filters => ({
   groupBy: 0,

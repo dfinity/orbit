@@ -54,7 +54,7 @@
     <template #main-body>
       <PageBody>
         <RecentProposals
-          domain="system"
+          :domain="ProposalDomains.System"
           :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
         />
         <DataLoader
@@ -133,15 +133,15 @@
 import { mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { ref } from 'vue';
 import { Proposal, UserGroup } from '~/generated/wallet/wallet.did';
-import { Privilege } from '~/types';
+import { Privilege, ProposalDomains } from '~/types';
 import AuthCheck from '~/ui/components/AuthCheck.vue';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
-import RecentProposals from '~/ui/components/proposals/RecentProposals.vue';
 import UserGroupForm from '~/ui/components/forms/UserGroupForm.vue';
 import PageBody from '~/ui/components/layouts/PageBody.vue';
 import PageHeader from '~/ui/components/layouts/PageHeader.vue';
+import RecentProposals from '~/ui/components/proposals/RecentProposals.vue';
 import { i18n } from '~/ui/modules/i18n';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';

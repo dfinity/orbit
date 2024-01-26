@@ -4,7 +4,7 @@
       {{ props.errorMsg }}
     </VAlert>
   </slot>
-  <slot v-else name="default" :loading="loading" :data="data"></slot>
+  <slot v-else name="default" :loading="loading" :reloading="reloading" :data="data"></slot>
 </template>
 <script lang="ts" setup generic="T">
 import { onUnmounted } from 'vue';
@@ -13,10 +13,12 @@ import { onMounted, ref } from 'vue';
 import { logger } from '~/core/logger';
 import { i18n } from '~/ui/modules/i18n';
 import { useSessionStore } from '../stores/session';
+import { computed } from 'vue';
 
 const loading = ref<boolean>(false);
 const failed = ref<boolean>(false);
 const data = ref<T | undefined>();
+const reloading = ref<boolean>(false);
 
 const props = withDefaults(
   defineProps<{
@@ -48,6 +50,8 @@ watch(
     if (forceReload) {
       emit('update:forceReload', false);
 
+      data.value = undefined;
+
       fetchData({ cleanupOnFail: false });
     }
   },
@@ -72,11 +76,22 @@ const fetchWithRetries = async (retries: number): Promise<T> => {
   }
 };
 
+const working = computed({
+  get: () => loading.value || reloading.value,
+  set: (value: boolean) => {
+    if (data.value === undefined) {
+      loading.value = value;
+    } else {
+      reloading.value = value;
+    }
+  },
+});
+
 const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): Promise<void> => {
   try {
     if (
       // prevents multiple calls to fetchData at the same time
-      loading.value ||
+      working.value ||
       // disables the refresh functionality if set by the parent component
       props.disableRefresh ||
       // prevents calls to fetchData while the user is locked out
@@ -86,13 +101,14 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
     }
 
     failed.value = false;
-    loading.value = true;
+    working.value = true;
 
     const newData = await fetchWithRetries(props.retries);
 
+    working.value = false;
+
     if (!props.disableRefresh) {
       data.value = newData;
-
       emit('loaded', data.value);
     }
   } catch (err) {
@@ -108,7 +124,7 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
 
     emit('failed', err);
   } finally {
-    loading.value = false;
+    working.value = false;
   }
 };
 

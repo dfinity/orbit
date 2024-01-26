@@ -181,6 +181,7 @@ export default {
     summary: 'Resumo',
     review: 'Validar',
     yes: 'Sim',
+    reset: 'Reiniciar',
     no: 'Não',
     edit: 'Editar',
     amount: 'Valor',

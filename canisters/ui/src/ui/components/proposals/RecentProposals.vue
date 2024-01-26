@@ -63,7 +63,7 @@
 
 <script lang="ts" setup>
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
-import { ListProposalsArgs } from '~/types';
+import { ListProposalsArgs, ProposalDomains } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores/wallet';
@@ -77,7 +77,7 @@ const props = withDefaults(
     title?: string;
     limit?: number;
     sortBy?: ListProposalsArgs['sortBy'];
-    domain?: string;
+    domain?: ProposalDomains;
     refreshIntervalMs?: number;
     loadErrorMsg?: string;
   }>(),
