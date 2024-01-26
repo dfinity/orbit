@@ -59,6 +59,13 @@ fn is_proposal_completed(proposal: ProposalDTO) -> bool {
     matches!(proposal.status, ProposalStatusDTO::Completed { .. })
 }
 
+fn is_proposal_failed(proposal: ProposalDTO) -> Option<Option<String>> {
+    match proposal.status {
+        ProposalStatusDTO::Failed { reason } => Some(reason),
+        _ => None,
+    }
+}
+
 pub fn submit_proposal(
     env: &PocketIc,
     user_id: Principal,
@@ -87,7 +94,7 @@ pub fn wait_for_proposal(
     user_id: Principal,
     wallet_canister_id: CanisterId,
     proposal: ProposalDTO,
-) -> Option<ProposalDTO> {
+) -> Result<ProposalDTO, Option<String>> {
     // wait for the proposal to be adopted (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
@@ -98,10 +105,13 @@ pub fn wait_for_proposal(
     for _ in 0..100 {
         let new_proposal = get_proposal(env, user_id, wallet_canister_id, proposal.clone());
         if is_proposal_completed(new_proposal.clone()) {
-            return Some(new_proposal);
+            return Ok(new_proposal);
+        }
+        if let Some(reason) = is_proposal_failed(new_proposal) {
+            return Err(reason);
         }
     }
-    None
+    Err(None)
 }
 
 pub fn execute_proposal(
@@ -109,9 +119,9 @@ pub fn execute_proposal(
     user_id: Principal,
     wallet_canister_id: CanisterId,
     proposal_operation_input: ProposalOperationInput,
-) -> ProposalDTO {
+) -> Result<ProposalDTO, Option<String>> {
     let proposal = submit_proposal(env, user_id, wallet_canister_id, proposal_operation_input);
-    wait_for_proposal(env, user_id, wallet_canister_id, proposal).unwrap()
+    wait_for_proposal(env, user_id, wallet_canister_id, proposal)
 }
 
 pub fn vote_on_proposal(
