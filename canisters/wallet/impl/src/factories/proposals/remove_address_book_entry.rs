@@ -42,7 +42,7 @@ impl Create<wallet_api::RemoveAddressBookEntryOperationInput>
                 .unwrap_or(ProposalExecutionPlan::Immediate),
             input
                 .title
-                .unwrap_or_else(|| "Address book entry update".to_string()),
+                .unwrap_or_else(|| "Address book entry removal".to_string()),
             input.summary,
         );
 
@@ -71,7 +71,7 @@ impl Execute for RemoveAddressBookEntryProposalExecute<'_, '_> {
             .remove_entry(self.operation.input.to_owned())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to update address book entry: {}", e),
+                reason: format!("Failed to remove address book entry: {}", e),
             })?;
 
         Ok(ProposalExecuteStage::Completed(
