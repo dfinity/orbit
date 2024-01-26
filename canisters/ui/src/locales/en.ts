@@ -54,6 +54,7 @@ export default {
     no_cancelled_reason: 'No reason specified.',
     no_failed_reason: 'No reason specified.',
     domains: {
+      all: 'All',
       accounts: 'Accounts',
       address_book: 'Address book',
       system: 'System',

@@ -84,8 +84,8 @@ import { computed, ref } from 'vue';
 import { VListItem } from 'vuetify/components';
 import { KeysOfUnion } from '~/core';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
-import ProposalStatusChip from '~/ui/components/chips/ProposalStatusChip.vue';
 import ProposalMetadata from '~/ui/components/proposals/ProposalMetadata.vue';
+import ProposalStatusChip from '~/ui/components/proposals/ProposalStatusChip.vue';
 import ReviewAddUserGroup from '~/ui/components/proposals/user-groups/ReviewAddUserGroup.vue';
 
 const props = withDefaults(

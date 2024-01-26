@@ -25,7 +25,7 @@
                 <VCol cols="12">
                   <VSlideGroup v-model="filters.groupBy" show-arrows>
                     <VSlideGroupItem
-                      v-for="(filterGroup, idx) in availableFilterGroups"
+                      v-for="(domain, idx) in availableDomains"
                       :key="idx"
                       v-slot="{ isSelected, toggle }"
                     >
@@ -36,7 +36,7 @@
                         class="mr-2"
                         @click="toggle"
                       >
-                        {{ $t(`proposals.domains.${filterGroup.id}`) }}
+                        {{ $t(`proposals.domains.${domain.id}`) }}
                       </VBtn>
                     </VSlideGroupItem>
                   </VSlideGroup>
@@ -94,7 +94,7 @@
                         flat
                         size="small"
                         variant="tonal"
-                        @click="filters = getDefaultFilters()"
+                        @click="filters = filterUtils.getDefaultFilters()"
                       >
                         {{ $t('terms.reset') }}
                       </VBtn>
@@ -112,176 +112,38 @@
 
 <script lang="ts" setup>
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
-import { computed, ref, watch } from 'vue';
-import { logger } from '~/core';
-import { parseDate, throttle } from '~/core/utils';
-import { ListProposalsOperationType, ProposalStatusCode } from '~/generated/wallet/wallet.did';
-import { Privilege, ProposalDomains, ProposalStatusEnum } from '~/types';
+import { ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { throttle } from '~/core/utils';
+import { ProposalStatusCode } from '~/generated/wallet/wallet.did';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import BtnSelect from '~/ui/components/inputs/BtnSelect.vue';
-import DateRange, { DateRangeModel } from '~/ui/components/inputs/DateRange.vue';
+import DateRange from '~/ui/components/inputs/DateRange.vue';
 import PageBody from '~/ui/components/layouts/PageBody.vue';
 import PageHeader from '~/ui/components/layouts/PageHeader.vue';
 import ProposalList from '~/ui/components/proposals/ProposalList.vue';
-import { i18n, router } from '~/ui/modules';
+import {
+  useAvailableDomains,
+  useFilterUtils,
+  useProposalStatusItems,
+  useSavedFilters,
+} from '~/ui/composables/proposal.composable';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
-import { hasRequiredPrivilege } from '~/ui/utils/auth';
-
-type Filters = {
-  groupBy: number;
-  created: DateRangeModel;
-  expires: DateRangeModel;
-  statuses: ProposalStatusEnum[];
-};
-
-type StorableFilters = {
-  group_by?: string;
-  created_from?: string;
-  created_to?: string;
-  expires_from?: string;
-  expires_to?: string;
-  statuses?: ProposalStatusEnum[];
-};
-
-type AvailableDomain = {
-  id: ProposalDomains;
-  types: ListProposalsOperationType[];
-};
 
 const app = useAppStore();
 const wallet = useWalletStore();
-
-const getAvailableDomains = (): AvailableDomain[] => {
-  const domains: AvailableDomain[] = [];
-  if (hasRequiredPrivilege({ anyOf: [Privilege.ListAccounts] })) {
-    domains.push({
-      id: ProposalDomains.Accounts,
-      types: [{ AddAccount: null }, { EditAccount: null }],
-    });
-
-    domains.push({
-      id: ProposalDomains.Transfers,
-      types: [{ Transfer: [] }],
-    });
-  }
-
-  if (hasRequiredPrivilege({ anyOf: [Privilege.ListUsers] })) {
-    domains.push({
-      id: ProposalDomains.Users,
-      types: [{ AddUser: null }, { EditUser: null }],
-    });
-  }
-
-  domains.push({
-    id: ProposalDomains.AddressBook,
-    types: [],
-  });
-
-  domains.push({
-    id: ProposalDomains.System,
-    types: [
-      { AddAccessPolicy: null },
-      { EditAccessPolicy: null },
-      { RemoveAccessPolicy: null },
-      { AddProposalPolicy: null },
-      { EditProposalPolicy: null },
-      { RemoveProposalPolicy: null },
-      { ChangeCanister: null },
-      { AddUserGroup: null },
-      { EditUserGroup: null },
-      { RemoveUserGroup: null },
-    ],
-  });
-
-  return domains;
-};
-
-const availableFilterGroups = ref<AvailableDomain[]>(getAvailableDomains());
-
-const statuses = computed<{ key: ProposalStatusEnum; text: string }[]>(() =>
-  Object.values(ProposalStatusEnum).map(status => ({
-    key: status,
-    text: i18n.global.t(`proposals.status.${status.toLowerCase()}`),
-  })),
-);
-
-const getDefaultFilters = (): Filters => ({
-  groupBy: 0,
-  created: {
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
-    to: new Date(),
-  },
-  expires: {
-    from: undefined,
-    to: undefined,
-  },
-  statuses: [ProposalStatusEnum.Created],
-});
-
-const getSavedFilters = (): Filters => {
-  const defaultFilters = getDefaultFilters();
-
-  try {
-    const query = router.currentRoute.value.query as StorableFilters;
-    const createdDt: DateRangeModel = {
-      from: query?.created_from ? parseDate(query.created_from) : defaultFilters.created.from,
-      to: query?.created_to ? parseDate(query.created_to) : defaultFilters.created.to,
-    };
-
-    createdDt.from = createdDt.from! > createdDt.to! ? createdDt.to : createdDt.from;
-    createdDt.to = createdDt.to! < createdDt.from! ? createdDt.from : createdDt.to;
-
-    const expiresDt: DateRangeModel = {
-      from: query?.expires_from ? parseDate(query.expires_from) : defaultFilters.expires.from,
-      to: query?.expires_to ? parseDate(query.expires_to) : defaultFilters.expires.to,
-    };
-
-    expiresDt.from = expiresDt.from! > expiresDt.to! ? expiresDt.to : expiresDt.from;
-    expiresDt.to = expiresDt.to! < expiresDt.from! ? expiresDt.from : expiresDt.to;
-
-    let statuses = query?.statuses ?? defaultFilters.statuses;
-    if (!Array.isArray(statuses)) {
-      statuses = [statuses];
-    }
-
-    return {
-      groupBy: query?.group_by
-        ? availableFilterGroups.value.findIndex(group => group.id === query.group_by)
-        : defaultFilters.groupBy,
-      created: createdDt,
-      expires: expiresDt,
-      statuses: Object.values(ProposalStatusEnum).filter(status => statuses.includes(status)),
-    };
-  } catch (e) {
-    logger.error('Failed to parse filters from query', e);
-
-    app.sendNotification({
-      type: 'error',
-      message: i18n.global.t('app.params_parse_error'),
-    });
-
-    return defaultFilters;
-  }
-};
-
+const availableDomains = useAvailableDomains();
+const statuses = useProposalStatusItems();
+const filters = useSavedFilters();
+const filterUtils = useFilterUtils();
 const disableRefresh = ref(false);
 const forceReload = ref(false);
-const filters = ref<Filters>(getSavedFilters());
+const router = useRouter();
 
 const saveFilters = (): void => {
-  const { groupBy, created, expires, statuses } = filters.value;
-  const storableFilters: StorableFilters = {
-    created_from: created.from?.toISOString(),
-    created_to: created.to?.toISOString(),
-    expires_from: expires.from?.toISOString(),
-    expires_to: expires.to?.toISOString(),
-    group_by: availableFilterGroups.value.find((_, idx) => idx === groupBy)?.id,
-    statuses: statuses,
-  };
-
-  router.replace({ query: storableFilters });
+  router.replace({ query: filterUtils.getQuery(filters.value) });
 };
 
 const pagination = ref<{
@@ -316,11 +178,11 @@ watch(
   { deep: true },
 );
 
-const fetchProposals = async () => {
+const fetchProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
   const nextOffset =
     pagination.value.selectedPage * pagination.value.limit - pagination.value.limit;
   const result = await wallet.service.listProposals({
-    types: availableFilterGroups.value.find((_, idx) => idx === filters.value.groupBy)?.types,
+    types: availableDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
     created_dt: { fromDt: filters.value.created.from, toDt: filters.value.created.to },
     expiration_dt: { fromDt: filters.value.expires.from, toDt: filters.value.expires.to },
     statuses: filters.value.statuses.map(status => ({ [status]: null })) as ProposalStatusCode[],

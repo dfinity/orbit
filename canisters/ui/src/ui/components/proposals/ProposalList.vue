@@ -11,7 +11,7 @@
       <template v-if="props.loading">
         <tr>
           <td colspan="3" class="bb-none">
-            <VProgressLinear indeterminate color="primary" />
+            <VProgressLinear indeterminate color="primary" data-test-id="loading" />
           </td>
         </tr>
       </template>
@@ -29,12 +29,14 @@
           @closed="$emit('closed', proposal)"
         />
         <tr v-if="!props.proposals.length">
-          <td colspan="3" class="bb-none">{{ props.notFoundText }}</td>
+          <td colspan="3" class="bb-none" data-test-id="proposals-empty-list">
+            {{ props.notFoundText }}
+          </td>
         </tr>
       </template>
     </tbody>
   </VTable>
-  <VProgressLinear v-else-if="props.loading" indeterminate color="primary" />
+  <VProgressLinear v-else-if="props.loading" indeterminate color="primary" data-test-id="loading" />
   <VList v-else bg-color="transparent">
     <ProposalListItem
       v-for="proposal in props.proposals"

@@ -89,6 +89,7 @@ export interface ListProposalsArgs {
 }
 
 export enum ProposalDomains {
+  All = 'all',
   Accounts = 'accounts',
   AddressBook = 'address_book',
   Transfers = 'transfers',

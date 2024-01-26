@@ -55,6 +55,7 @@ export default {
     no_cancelled_reason: 'Nenhuma razão especificada.',
     no_failed_reason: 'Nenhuma razão especificada.',
     domains: {
+      all: 'Todos',
       accounts: 'Contas',
       address_book: 'Livro de endereços',
       system: 'Sistema',
