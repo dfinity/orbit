@@ -3,6 +3,7 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
 
+mod address_book;
 mod change_canister_tests;
 mod control_panel_tests;
 mod interfaces;
