@@ -58,6 +58,17 @@ export interface AddAccountOperationInput {
   'standard' : string,
   'policies' : AccountPolicies,
 }
+export interface AddAddressBookEntryOperation {
+  'address_book_entry' : [] | [AddressBookEntry],
+  'input' : AddAddressBookEntryOperationInput,
+}
+export interface AddAddressBookEntryOperationInput {
+  'metadata' : Array<AddressBookMetadata>,
+  'blockchain' : string,
+  'address' : string,
+  'address_owner' : string,
+  'standard' : string,
+}
 export interface AddProposalPolicyOperation {
   'input' : AddProposalPolicyOperationInput,
   'policy' : [] | [ProposalPolicy],
@@ -95,6 +106,11 @@ export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
 export type CanisterSettingsActionSpecifier = { 'Read' : null } |
   { 'ReadConfig' : null };
+export type ChangeAddressBookMetadata = {
+    'OverrideSpecifiedBy' : Array<AddressBookMetadata>
+  } |
+  { 'RemoveKeys' : Array<string> } |
+  { 'ReplaceAllBy' : Array<AddressBookMetadata> };
 export type ChangeCanisterActionSpecifier = { 'Create' : null };
 export interface ChangeCanisterOperation {
   'input' : ChangeCanisterOperationInput,
@@ -142,6 +158,14 @@ export interface EditAccountOperationInput {
   'owners' : [] | [Array<UUID>],
   'name' : [] | [string],
   'policies' : [] | [AccountPolicies],
+}
+export interface EditAddressBookEntryOperation {
+  'input' : EditAddressBookEntryOperationInput,
+}
+export interface EditAddressBookEntryOperationInput {
+  'change_metadata' : [] | [ChangeAddressBookMetadata],
+  'address_book_entry_id' : UUID,
+  'address_owner' : [] | [string],
 }
 export interface EditProposalPolicyOperation {
   'input' : EditProposalPolicyOperationInput,
@@ -287,12 +311,15 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'RemoveAddressBookEntry' : null } |
+  { 'EditAddressBookEntry' : null } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
   { 'EditProposalPolicy' : null } |
   { 'EditUser' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
+  { 'AddAddressBookEntry' : null } |
   { 'AddAccessPolicy' : null } |
   { 'RemoveAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
@@ -387,12 +414,15 @@ export type ProposalOperation = {
   { 'RemoveProposalPolicy' : RemoveProposalPolicyOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
+  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
+  { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'AddProposalPolicy' : AddProposalPolicyOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditProposalPolicy' : EditProposalPolicyOperation } |
   { 'EditUser' : EditUserOperation } |
   { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
+  { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
   { 'AddAccessPolicy' : AddAccessPolicyOperation } |
   { 'RemoveAccessPolicy' : RemoveAccessPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
@@ -404,12 +434,15 @@ export type ProposalOperationInput = {
   { 'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
+  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
+  { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'AddProposalPolicy' : AddProposalPolicyOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditProposalPolicy' : EditProposalPolicyOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
   { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
+  { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
   { 'AddAccessPolicy' : AddAccessPolicyOperationInput } |
   { 'RemoveAccessPolicy' : RemoveAccessPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
@@ -419,12 +452,15 @@ export type ProposalOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'RemoveAddressBookEntry' : null } |
+  { 'EditAddressBookEntry' : null } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
   { 'EditProposalPolicy' : null } |
   { 'EditUser' : null } |
   { 'Transfer' : null } |
   { 'EditAccount' : null } |
+  { 'AddAddressBookEntry' : null } |
   { 'AddAccessPolicy' : null } |
   { 'RemoveAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
@@ -445,12 +481,15 @@ export type ProposalSpecifier = { 'EditAccessPolicy' : CommonSpecifier } |
   { 'RemoveProposalPolicy' : CommonSpecifier } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : CommonSpecifier } |
+  { 'RemoveAddressBookEntry' : CommonSpecifier } |
+  { 'EditAddressBookEntry' : CommonSpecifier } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
   { 'EditProposalPolicy' : CommonSpecifier } |
   { 'EditUser' : UserSpecifier } |
   { 'Transfer' : TransferSpecifier } |
   { 'EditAccount' : AccountSpecifier } |
+  { 'AddAddressBookEntry' : null } |
   { 'AddAccessPolicy' : null } |
   { 'RemoveAccessPolicy' : CommonSpecifier } |
   { 'RemoveUserGroup' : CommonSpecifier } |
@@ -483,6 +522,12 @@ export interface RemoveAccessPolicyOperation {
   'input' : RemoveAccessPolicyOperationInput,
 }
 export interface RemoveAccessPolicyOperationInput { 'policy_id' : UUID }
+export interface RemoveAddressBookEntryOperation {
+  'input' : RemoveAddressBookEntryOperationInput,
+}
+export interface RemoveAddressBookEntryOperationInput {
+  'address_book_entry_id' : UUID,
+}
 export interface RemoveProposalPolicyOperation {
   'input' : RemoveProposalPolicyOperationInput,
 }

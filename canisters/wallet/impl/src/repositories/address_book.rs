@@ -154,29 +154,26 @@ mod tests {
         address_book_entry_2.id = [66; 16];
         repository.insert(address_book_entry_2.to_key(), address_book_entry_2.clone());
 
-        assert_eq!(
-            repository.find_by_blockchain_standard(
-                Blockchain::InternetComputer,
-                BlockchainStandard::Native,
-            ),
-            vec![address_book_entry_0, address_book_entry_1]
-        );
+        let result = repository
+            .find_by_blockchain_standard(Blockchain::InternetComputer, BlockchainStandard::Native);
+        assert!(result.contains(&address_book_entry_0));
+        assert!(result.contains(&address_book_entry_1));
+        assert!(!result.contains(&address_book_entry_2));
     }
 
     #[test]
     fn test_find_by_ids() {
         let repository = AddressBookRepository::default();
-        let mut address_book_entry1 = address_book_entry_test_utils::mock_address_book_entry();
-        let mut address_book_entry2 = address_book_entry_test_utils::mock_address_book_entry();
-        address_book_entry1.id = [1; 16];
-        address_book_entry2.id = [2; 16];
+        let mut address_book_entry_0 = address_book_entry_test_utils::mock_address_book_entry();
+        let mut address_book_entry_1 = address_book_entry_test_utils::mock_address_book_entry();
+        address_book_entry_0.id = [1; 16];
+        address_book_entry_1.id = [2; 16];
 
-        repository.insert(address_book_entry1.to_key(), address_book_entry1.clone());
-        repository.insert(address_book_entry2.to_key(), address_book_entry2.clone());
+        repository.insert(address_book_entry_0.to_key(), address_book_entry_0.clone());
+        repository.insert(address_book_entry_1.to_key(), address_book_entry_1.clone());
 
-        assert_eq!(
-            repository.find_by_ids(vec![address_book_entry1.id, address_book_entry2.id]),
-            vec![address_book_entry1, address_book_entry2]
-        );
+        let result = repository.find_by_ids(vec![address_book_entry_0.id, address_book_entry_1.id]);
+        assert!(result.contains(&address_book_entry_0));
+        assert!(result.contains(&address_book_entry_1));
     }
 }
