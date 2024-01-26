@@ -83,6 +83,7 @@ const sections = (): NavigationSections => ({
     {
       name: 'home',
       localeKey: 'navigation.overview',
+      exact: true,
       action: {
         type: NavigationActionType.To,
         handle: route => (route.params.locale ? `/${route.params.locale}/overview` : '/overview'),
