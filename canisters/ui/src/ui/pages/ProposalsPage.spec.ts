@@ -1,12 +1,27 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { ListProposalsResult } from '~/generated/wallet/wallet.did';
+import { WalletService } from '~/services';
 import { ExtractOk } from '~/types';
 import { serviceManager } from '~/ui/modules/services';
 import { mount } from '~/ui/test.utils';
 import ProposalsPage from './ProposalsPage.vue';
 
-vi.spyOn(serviceManager.services.wallet, 'listProposals').mockReturnValue(
+vi.mock('~/services/WalletService', () => {
+  const mock: Partial<WalletService> = {
+    withWalletId: vi.fn().mockReturnThis(),
+    listProposals: vi.fn().mockReturnThis(),
+  };
+
+  return {
+    WalletService: vi.fn(() => mock),
+  };
+});
+
+const mockedWalletService = new WalletService();
+serviceManager.services.wallet = mockedWalletService;
+
+vi.spyOn(mockedWalletService, 'listProposals').mockReturnValue(
   Promise.resolve({
     proposals: [],
     next_offset: [],
@@ -37,7 +52,7 @@ describe('ProposalsPage', () => {
   });
 
   it('renders with proposal list', async () => {
-    vi.spyOn(serviceManager.services.wallet, 'listProposals').mockReturnValue(
+    vi.spyOn(mockedWalletService, 'listProposals').mockReturnValue(
       Promise.resolve({
         proposals: [
           {
