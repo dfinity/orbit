@@ -54,19 +54,15 @@ describe('AddWalletForm', () => {
     await flushPromises();
     expect(wrapper.emitted('submitted')).toBeUndefined();
 
-    const name = wrapper.find('[data-test-id="add-wallet-form-name"] input');
     const canisterId = wrapper.find('[data-test-id="add-wallet-form-canister-id"] input');
 
-    expect(wrapper.find('[data-test-id="add-wallet-form-name"]').classes()).toContain(
-      'v-input--error',
-    );
-    expect(wrapper.find('[data-test-id="add-wallet-form-canister-id"]').classes()).toContain(
-      'v-input--error',
-    );
-
-    await name.setValue('test');
-
+    // name is optional
     expect(wrapper.find('[data-test-id="add-wallet-form-name"]').classes()).not.toContain(
+      'v-input--error',
+    );
+
+    // canister id is required
+    expect(wrapper.find('[data-test-id="add-wallet-form-canister-id"]').classes()).toContain(
       'v-input--error',
     );
 
