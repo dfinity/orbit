@@ -101,7 +101,12 @@ describe('AddWalletForm', () => {
     vi.resetAllMocks();
   });
 
-  it.todo('will show a spinner during submission', async () => {
+  it('will show a spinner during submission', async () => {
+    services().controlPanel.editUser = vi.fn(
+      // make sure the editUser call never resolves so we can test the spinner
+      async () => new Promise<User>(()=>{}),
+    );
+
     const wrapper = mount(AddWalletForm);
 
     const name = wrapper.find('[data-test-id="add-wallet-form-name"] input');
@@ -112,7 +117,6 @@ describe('AddWalletForm', () => {
 
     await wrapper.findComponent({ ref: 'form' }).trigger('submit');
 
-    // this doesn't work by the time this is called the spinner is removed
     await vi.waitFor(() => expect(services().controlPanel.editUser).toHaveBeenCalled());
 
     expect(wrapper.find('button[type="submit"]').classes()).toContain('v-btn--loading');
