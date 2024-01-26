@@ -62,6 +62,23 @@ export const validPrincipalRule = (value: unknown): string | boolean => {
   }
 };
 
+export const validCanisterId = (value: unknown): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    return i18n.global.t('forms.rules.validCanisterId');
+  }
+
+  return (
+    /^[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}-[a-zA-Z0-9]{3}$/.test(value) ||
+    i18n.global.t('forms.rules.validCanisterId')
+  );
+};
+
 export const validUuidV4Rule = (value: unknown): string | boolean => {
   const hasValue = !!value;
   if (!hasValue) {

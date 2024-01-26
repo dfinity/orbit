@@ -1,0 +1,122 @@
+<template>
+  <VForm ref="form" @submit.prevent="addNewWallet">
+    <VCard>
+      <VCardItem>
+        <VCardTitle>{{ $t('wallets.add_wallet_dialog_title') }}</VCardTitle>
+      </VCardItem>
+      <VCardText>
+        <VTextField
+          v-model="name"
+          :rules="[requiredRule]"
+          :label="$t('terms.name')"
+          data-test-id="add-wallet-form-name"
+        />
+        <VTextField
+          v-model="canisterId"
+          :rules="[requiredRule, validCanisterId]"
+          :label="$t('terms.canister_id')"
+          data-test-id="add-wallet-form-canister-id"
+        />
+      </VCardText>
+
+      <VCardActions>
+        <VSpacer />
+        <VBtn data-test-id="cancel-button" @click="emit('cancelled')">{{
+          $t('terms.cancel')
+        }}</VBtn>
+        <VBtn
+          type="submit"
+          data-test-id="submit-button"
+          :disabled="!isFormValid"
+          :loading="working"
+        >
+          {{ $t('terms.submit') }}</VBtn
+        >
+      </VCardActions>
+    </VCard>
+  </VForm>
+</template>
+
+<script setup lang="ts">
+import { Principal } from '@dfinity/principal';
+import { computed } from 'vue';
+import { ref } from 'vue';
+import { i18n, services } from '~/ui/modules';
+import { useAppStore } from '~/ui/stores/app';
+import { useSessionStore } from '~/ui/stores/session';
+import { VFormValidation } from '~/ui/types';
+import { requiredRule, validCanisterId } from '~/ui/utils';
+import { isApiError } from '~/core/utils';
+
+const form = ref<VFormValidation | null>(null);
+
+const session = useSessionStore();
+const app = useAppStore();
+
+const working = ref(false);
+const canisterId = ref('');
+const name = ref('');
+
+const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+
+const controlPanelService = services().controlPanel;
+
+const emit = defineEmits<{
+  (event: 'submitted'): void;
+  (event: 'cancelled'): void;
+  (event: 'working', value: boolean): void;
+}>();
+
+function reset() {
+  canisterId.value = '';
+  name.value = '';
+}
+
+defineExpose({
+  reset,
+});
+
+function toWallet(canisterId: string, name: string | null) {
+  return {
+    canister_id: Principal.fromText(canisterId),
+    name: (name ? [name] : []) satisfies [] | [string],
+  };
+}
+
+async function addNewWallet() {
+  const { valid } = form.value ? await form.value.validate() : { valid: false };
+
+  if (valid) {
+    emit('working', true);
+    working.value = true;
+
+    try {
+      const user = await controlPanelService.editUser({
+        main_wallet: session.mainWallet ? [session.mainWallet] : [],
+        wallets: [
+          [
+            ...session.data.wallets.map(wallet => toWallet(wallet.canisterId, wallet.name)),
+            toWallet(canisterId.value, name.value),
+          ],
+        ],
+      });
+
+      session.populateUser(user);
+
+      emit('submitted');
+    } catch (e: unknown) {
+      let message = i18n.global.t('app.request_failed_message');
+
+      if (isApiError(e)) {
+        message = e.message[0] || message;
+      }
+      app.sendNotification({
+        type: 'error',
+        message,
+      });
+    }
+    emit('working', false);
+    working.value = false;
+  }
+}
+</script>
