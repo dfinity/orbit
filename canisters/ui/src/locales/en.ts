@@ -107,6 +107,7 @@ export default {
     no_withdraw_request_found_search: 'No withdraw request found for the search criteria.',
     add_wallet_list_item: 'Add existing wallet',
     add_wallet_dialog_title: 'Join existing wallet',
+    add_wallet_dialog_already_added: 'This wallet is already added.',
   },
   terms: {
     deposits: 'Deposits',

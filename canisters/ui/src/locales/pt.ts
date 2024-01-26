@@ -107,6 +107,7 @@ export default {
     no_withdraw_request_found_search: 'Nenhum pedido de retirada encontrado para a pesquisa.',
     add_wallet_list_item: 'Adicionar carteira existente',
     add_wallet_dialog_title: 'Adicionar carteira',
+    add_wallet_dialog_already_added: 'Esta carteira já foi adicionada.',
   },
   terms: {
     deposits: 'Depósitos',

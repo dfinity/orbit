@@ -13,7 +13,7 @@
         />
         <VTextField
           v-model="canisterId"
-          :rules="[requiredRule, validCanisterId]"
+          :rules="[requiredRule, uniqueRule(existingWallets, $t('wallets.add_wallet_dialog_already_added')), validCanisterId]"
           :label="$t('terms.canister_id')"
           data-test-id="add-wallet-form-canister-id"
         />
@@ -41,12 +41,12 @@
 import { Principal } from '@dfinity/principal';
 import { computed } from 'vue';
 import { ref } from 'vue';
+import { isApiError } from '~/core';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
 import { VFormValidation } from '~/ui/types';
-import { requiredRule, validCanisterId } from '~/ui/utils';
-import { isApiError } from '~/core/utils';
+import { requiredRule, uniqueRule, validCanisterId } from '~/ui/utils';
 
 const form = ref<VFormValidation | null>(null);
 
@@ -58,6 +58,8 @@ const canisterId = ref('');
 const name = ref('');
 
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+
+const existingWallets = computed(() => session.data.wallets.map(wallet => wallet.canisterId));
 
 const controlPanelService = services().controlPanel;
 
@@ -107,8 +109,10 @@ async function addNewWallet() {
     } catch (e: unknown) {
       let message = i18n.global.t('app.request_failed_message');
 
-      if (isApiError(e)) {
-        message = e.message[0] || message;
+      if (isApiError(e) && e.message.length > 0) {
+        message = `${message}: ${e.message[0]}`;
+      } else if (e instanceof Error) {
+        message = `${message}: ${e.message}`;
       }
       app.sendNotification({
         type: 'error',
