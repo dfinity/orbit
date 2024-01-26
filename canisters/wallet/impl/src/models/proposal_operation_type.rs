@@ -24,6 +24,8 @@ pub enum ProposalOperationType {
     AddProposalPolicy = 13,
     EditProposalPolicy = 14,
     RemoveProposalPolicy = 15,
+    AddAddressBookEntry = 16,
+    EditAddressBookEntry = 17,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -52,6 +54,8 @@ impl TryFrom<u8> for ProposalOperationType {
             13 => Ok(ProposalOperationType::AddProposalPolicy),
             14 => Ok(ProposalOperationType::EditProposalPolicy),
             15 => Ok(ProposalOperationType::RemoveProposalPolicy),
+            16 => Ok(ProposalOperationType::AddAddressBookEntry),
+            17 => Ok(ProposalOperationType::EditAddressBookEntry),
             _ => Err(()),
         }
     }
@@ -65,6 +69,8 @@ impl FromStr for ProposalOperationType {
             "transfer" => Ok(ProposalOperationType::Transfer),
             "add_account" => Ok(ProposalOperationType::AddAccount),
             "edit_account" => Ok(ProposalOperationType::EditAccount),
+            "add_address_book_entry" => Ok(ProposalOperationType::AddAddressBookEntry),
+            "edit_address_book_entry" => Ok(ProposalOperationType::EditAddressBookEntry),
             "add_user" => Ok(ProposalOperationType::AddUser),
             "edit_user" => Ok(ProposalOperationType::EditUser),
             "add_user_group" => Ok(ProposalOperationType::AddUserGroup),
@@ -88,6 +94,8 @@ impl Display for ProposalOperationType {
             ProposalOperationType::Transfer => write!(f, "transfer"),
             ProposalOperationType::AddAccount => write!(f, "add_account"),
             ProposalOperationType::EditAccount => write!(f, "edit_account"),
+            ProposalOperationType::AddAddressBookEntry => write!(f, "add_address_book_entry"),
+            ProposalOperationType::EditAddressBookEntry => write!(f, "edit_address_book_entry"),
             ProposalOperationType::AddUser => write!(f, "add_user"),
             ProposalOperationType::EditUser => write!(f, "edit_user"),
             ProposalOperationType::AddUserGroup => write!(f, "add_user_group"),
@@ -141,6 +149,22 @@ mod tests {
         assert_eq!(
             ProposalOperationType::from_str("add_account").unwrap(),
             ProposalOperationType::AddAccount
+        );
+        assert_eq!(
+            ProposalOperationType::AddAddressBookEntry.to_string(),
+            "add_address_book_entry"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("add_address_book_entry").unwrap(),
+            ProposalOperationType::AddAddressBookEntry
+        );
+        assert_eq!(
+            ProposalOperationType::EditAddressBookEntry.to_string(),
+            "edit_address_book_entry"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("edit_address_book_entry").unwrap(),
+            ProposalOperationType::EditAddressBookEntry
         );
         assert_eq!(ProposalOperationType::AddUser.to_string(), "add_user");
         assert_eq!(
@@ -282,6 +306,16 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(15).unwrap(),
             ProposalOperationType::RemoveProposalPolicy
+        );
+        assert_eq!(ProposalOperationType::AddAddressBookEntry as u8, 16);
+        assert_eq!(
+            ProposalOperationType::try_from(16).unwrap(),
+            ProposalOperationType::AddAddressBookEntry
+        );
+        assert_eq!(ProposalOperationType::EditAddressBookEntry as u8, 17);
+        assert_eq!(
+            ProposalOperationType::try_from(17).unwrap(),
+            ProposalOperationType::EditAddressBookEntry
         );
     }
 }

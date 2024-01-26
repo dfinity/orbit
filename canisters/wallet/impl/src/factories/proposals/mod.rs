@@ -11,12 +11,14 @@ use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
 mod add_access_policy;
 mod add_account;
+mod add_address_book_entry;
 mod add_proposal_policy;
 mod add_user;
 mod add_user_group;
 mod change_canister;
 mod edit_access_policy;
 mod edit_account;
+mod edit_address_book_entry;
 mod edit_proposal_policy;
 mod edit_user;
 mod edit_user_group;
@@ -28,12 +30,18 @@ mod transfer;
 use self::{
     add_access_policy::{AddAccessPolicyProposalCreate, AddAccessPolicyProposalExecute},
     add_account::{AddAccountProposalCreate, AddAccountProposalExecute},
+    add_address_book_entry::{
+        AddAddressBookEntryProposalCreate, AddAddressBookEntryProposalExecute,
+    },
     add_proposal_policy::{AddProposalPolicyProposalCreate, AddProposalPolicyProposalExecute},
     add_user::{AddUserProposalCreate, AddUserProposalExecute},
     add_user_group::{AddUserGroupProposalCreate, AddUserGroupProposalExecute},
     change_canister::{ChangeCanisterProposalCreate, ChangeCanisterProposalExecute},
     edit_access_policy::{EditAccessPolicyProposalCreate, EditAccessPolicyProposalExecute},
     edit_account::{EditAccountProposalCreate, EditAccountProposalExecute},
+    edit_address_book_entry::{
+        EditAddressBookEntryProposalCreate, EditAddressBookEntryProposalExecute,
+    },
     edit_proposal_policy::{EditProposalPolicyProposalCreate, EditProposalPolicyProposalExecute},
     edit_user::{EditUserProposalCreate, EditUserProposalExecute},
     edit_user_group::{EditUserGroupProposalCreate, EditUserGroupProposalExecute},
@@ -113,6 +121,18 @@ impl ProposalFactory {
                     input.clone(),
                     operation.clone(),
                 )
+            }
+            ProposalOperationInput::AddAddressBookEntry(operation) => {
+                create_proposal::<
+                    wallet_api::AddAddressBookEntryOperationInput,
+                    AddAddressBookEntryProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::EditAddressBookEntry(operation) => {
+                create_proposal::<
+                    wallet_api::EditAddressBookEntryOperationInput,
+                    EditAddressBookEntryProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
             }
             ProposalOperationInput::AddUserGroup(operation) => {
                 create_proposal::<wallet_api::AddUserGroupOperationInput, AddUserGroupProposalCreate>(
@@ -206,6 +226,12 @@ impl ProposalFactory {
             ProposalOperation::EditAccount(operation) => {
                 Box::new(EditAccountProposalExecute::new(proposal, operation))
             }
+            ProposalOperation::AddAddressBookEntry(operation) => {
+                Box::new(AddAddressBookEntryProposalExecute::new(proposal, operation))
+            }
+            ProposalOperation::EditAddressBookEntry(operation) => Box::new(
+                EditAddressBookEntryProposalExecute::new(proposal, operation),
+            ),
             ProposalOperation::AddUserGroup(operation) => {
                 Box::new(AddUserGroupProposalExecute::new(proposal, operation))
             }

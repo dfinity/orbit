@@ -30,6 +30,8 @@ type ProposalSpecifier = variant {
   EditAccount : AccountSpecifier;
   EditUser : UserSpecifier;
   Transfer : TransferSpecifier;
+  AddAddressBookEntry;
+  EditAddressBookEntry : CommonSpecifier;
   ChangeCanister;
   AddAccessPolicy;
   EditAccessPolicy : CommonSpecifier;
@@ -267,6 +269,53 @@ type AddAccountOperation = record {
   input : AddAccountOperationInput;
 };
 
+type AddAddressBookEntryOperation = record {
+  // The address book entry, only available after the proposal is executed.
+  address_book_entry : opt AddressBookEntry;
+  // The input to the proposal to add the address book entry.
+  input : AddAddressBookEntryOperationInput;
+};
+
+// Input type for creating a new address book entry through a proposal.
+type AddAddressBookEntryOperationInput = record {
+  // The owner of the address.
+  address_owner : text;
+  // The actual address.
+  address : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The blockchain standard of the address (e.g. `native`, `erc20`, etc.).
+  standard : text;
+  // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
+  metadata : vec AddressBookMetadata;
+};
+
+type EditAddressBookEntryOperation = record {
+  // The input to the proposal to edit the address book entry.
+  input : EditAddressBookEntryOperationInput;
+};
+
+// Type for instructions to update the address book entry's metadata.
+type ChangeAddressBookMetadata = variant {
+  // Replace all existing metadata by the specified metadata.
+  ReplaceAllBy : vec AddressBookMetadata;
+  // Override values of existing metadata with the specified keys
+  // and add new metadata if no metadata can be found with the specified keys.
+  OverrideSpecifiedBy : vec AddressBookMetadata;
+  // Remove metadata with the specified keys.
+  RemoveKeys : vec text;
+};
+
+// Input type for updating an address book entry through a proposal.
+type EditAddressBookEntryOperationInput = record {
+  // The id of the address book entry.
+  address_book_entry_id : UUID;
+  // The new owner of the address.
+  address_owner : opt text;
+  // Instructions to update the address book entry's metadata.
+  change_metadata : opt ChangeAddressBookMetadata;
+};
+
 type AddUserOperationInput = record {
   // The user name (e.g. "John Doe").
   name : opt text;
@@ -452,6 +501,10 @@ type ProposalOperation = variant {
   AddUser : AddUserOperation;
   // An operation for editing an existing user.
   EditUser : EditUserOperation;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry : AddAddressBookEntryOperation;
+  // An operation for updating an existing address book entry.
+  EditAddressBookEntry : EditAddressBookEntryOperation;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperation;
   // An operation for editing an existing user group.
@@ -485,6 +538,10 @@ type ProposalOperationInput = variant {
   AddUser : AddUserOperationInput;
   // An operation for editing an existing user.
   EditUser : EditUserOperationInput;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry : AddAddressBookEntryOperationInput;
+  // An operation for updating an address book entry.
+  EditAddressBookEntry : EditAddressBookEntryOperationInput;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperationInput;
   // An operation for editing an existing user group.
@@ -514,6 +571,10 @@ type ProposalOperationType = variant {
   EditAccount;
   // An operation for creating a new account.
   AddAccount;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry;
+  // An operation for updating an address book entry.
+  EditAddressBookEntry;
   // An operation for adding a new user.
   AddUser;
   // An operation for editing an existing user.
@@ -618,6 +679,10 @@ type ListProposalsOperationType = variant {
   AddUser;
   // An operation for editing an existing user.
   EditUser;
+  // An operation for creating a new address book entry.
+  AddAddressBookEntry;
+  // An operation for updating an address book entry.
+  EditAddressBookEntry;
   // An operation for adding a new user group.
   AddUserGroup;
   // An operation for editing an existing user group.

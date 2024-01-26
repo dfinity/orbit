@@ -16,6 +16,8 @@ pub enum ProposalOperation {
     Transfer(TransferOperation),
     AddAccount(AddAccountOperation),
     EditAccount(EditAccountOperation),
+    AddAddressBookEntry(AddAddressBookEntryOperation),
+    EditAddressBookEntry(EditAddressBookEntryOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
     AddAccessPolicy(AddAccessPolicyOperation),
