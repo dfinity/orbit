@@ -11,6 +11,7 @@
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
     :items="allWallets"
+    :key="allWallets.length"
   >
     <template #item="{ props, item }">
       <VListItem
@@ -41,21 +42,11 @@ import { useSessionStore } from '~/ui/stores/session';
 import { computedWalletName } from '~/ui/utils';
 import AddWalletListItem from './add-wallet/AddWalletListItem.vue';
 import { mdiWallet } from '@mdi/js';
-import { watch } from 'vue';
-import { ref } from 'vue';
 
 const session = useSessionStore();
 const app = useAppStore();
 
-const allWallets = ref(session.data.wallets);
-
-watch(
-  () => session.data.wallets,
-  newList => {
-    allWallets.value = newList;
-  },
-  { deep: true },
-);
+const allWallets = computed(()=>session.data.wallets);
 
 const selectedWallet = computed({
   get(): string | null {
