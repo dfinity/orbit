@@ -205,6 +205,21 @@ lazy_static! {
                 Percentage(51)
             )])
         ),
+        // address book
+        (
+            ProposalSpecifier::AddAddressBookEntry,
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
+        (
+            ProposalSpecifier::EditAddressBookEntry(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
         // access policies
         (
             ProposalSpecifier::AddAccessPolicy,

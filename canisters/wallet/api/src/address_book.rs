@@ -1,7 +1,7 @@
 use crate::{ChangeMetadataDTO, MetadataDTO, PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct AddressBookEntryDTO {
     pub id: UuidDTO,
     pub address_owner: String,

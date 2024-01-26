@@ -30,7 +30,8 @@ fn successful_four_eyes_upgrade() {
         WALLET_ADMIN_USER,
         canister_ids.wallet,
         add_proposal_policy,
-    );
+    )
+    .unwrap();
 
     // allow anyone to create change canister proposals
     let add_access_policy =
@@ -45,7 +46,8 @@ fn successful_four_eyes_upgrade() {
         WALLET_ADMIN_USER,
         canister_ids.wallet,
         add_access_policy,
-    );
+    )
+    .unwrap();
 
     // create new user identities and add them to the wallet
     let user_a = user_test_id(0);
@@ -92,7 +94,7 @@ fn successful_four_eyes_upgrade() {
         canister_ids.wallet,
         change_canister_operation_proposal.clone(),
     )
-    .is_none());
+    .is_err());
 
     // the second user votes and then the proposal will eventually become completed
     vote_on_proposal(
