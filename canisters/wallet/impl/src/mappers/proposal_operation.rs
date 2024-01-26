@@ -8,7 +8,8 @@ use crate::{
         EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
         EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserOperation,
         ProposalOperation, RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
-        RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput, TransferOperation, User,
+        RemoveAddressBookEntryOperation, RemoveProposalPolicyOperation,
+        RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
         access_control::ACCESS_CONTROL_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY,
@@ -23,7 +24,8 @@ use wallet_api::{
     ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
     EditAccountOperationDTO, EditAccountOperationInput, EditAddressBookEntryOperationDTO,
     EditAddressBookEntryOperationInput, EditUserOperationDTO, EditUserOperationInput, NetworkDTO,
-    ProposalOperationDTO, TransferOperationDTO, TransferOperationInput,
+    ProposalOperationDTO, RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    TransferOperationDTO, TransferOperationInput,
 };
 
 impl TransferOperation {
@@ -190,6 +192,18 @@ impl From<EditAddressBookEntryOperation> for EditAddressBookEntryOperationDTO {
                     .to_string(),
                 address_owner: operation.input.address_owner,
                 change_metadata: operation.input.change_metadata,
+            },
+        }
+    }
+}
+
+impl From<RemoveAddressBookEntryOperation> for RemoveAddressBookEntryOperationDTO {
+    fn from(operation: RemoveAddressBookEntryOperation) -> RemoveAddressBookEntryOperationDTO {
+        RemoveAddressBookEntryOperationDTO {
+            input: RemoveAddressBookEntryOperationInput {
+                address_book_entry_id: Uuid::from_bytes(operation.input.address_book_entry_id)
+                    .hyphenated()
+                    .to_string(),
             },
         }
     }
@@ -547,6 +561,9 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::EditAddressBookEntry(operation) => {
                 ProposalOperationDTO::EditAddressBookEntry(Box::new(operation.into()))
+            }
+            ProposalOperation::RemoveAddressBookEntry(operation) => {
+                ProposalOperationDTO::RemoveAddressBookEntry(Box::new(operation.into()))
             }
             ProposalOperation::AddUser(operation) => {
                 let user = operation

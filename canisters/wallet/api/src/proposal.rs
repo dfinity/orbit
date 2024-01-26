@@ -10,8 +10,9 @@ use crate::{
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
     EditUserOperationInput, PaginationInput, ProposalPolicyDTO, ProposalSpecifierDTO,
-    RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO,
-    RemoveUserGroupOperationInput, SortDirection, UuidDTO,
+    RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
+    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -58,6 +59,7 @@ pub enum ProposalOperationDTO {
     EditAccount(Box<EditAccountOperationDTO>),
     AddAddressBookEntry(Box<AddAddressBookEntryOperationDTO>),
     EditAddressBookEntry(Box<EditAddressBookEntryOperationDTO>),
+    RemoveAddressBookEntry(Box<RemoveAddressBookEntryOperationDTO>),
     AddUser(Box<AddUserOperationDTO>),
     EditUser(Box<EditUserOperationDTO>),
     AddUserGroup(Box<AddUserGroupOperationDTO>),
@@ -79,6 +81,7 @@ pub enum ProposalOperationInput {
     EditAccount(EditAccountOperationInput),
     AddAddressBookEntry(AddAddressBookEntryOperationInput),
     EditAddressBookEntry(EditAddressBookEntryOperationInput),
+    RemoveAddressBookEntry(RemoveAddressBookEntryOperationInput),
     AddUser(AddUserOperationInput),
     EditUser(EditUserOperationInput),
     AddUserGroup(AddUserGroupOperationInput),
@@ -100,6 +103,7 @@ pub enum ProposalOperationTypeDTO {
     EditAccount,
     AddAddressBookEntry,
     EditAddressBookEntry,
+    RemoveAddressBookEntry,
     AddUser,
     EditUser,
     AddUserGroup,
@@ -180,6 +184,7 @@ pub enum ListProposalsOperationTypeDTO {
     EditAccount,
     AddAddressBookEntry,
     EditAddressBookEntry,
+    RemoveAddressBookEntry,
     AddUser,
     EditUser,
     AddUserGroup,

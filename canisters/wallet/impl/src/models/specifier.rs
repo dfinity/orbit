@@ -37,6 +37,7 @@ pub enum ProposalSpecifier {
     EditUser(UserSpecifier),
     AddAddressBookEntry,
     EditAddressBookEntry(CommonSpecifier),
+    RemoveAddressBookEntry(CommonSpecifier),
     Transfer(AccountSpecifier),
     ChangeCanister,
     AddAccessPolicy,
@@ -60,6 +61,9 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
             ProposalSpecifier::AddAddressBookEntry => ProposalOperationType::AddAddressBookEntry,
             ProposalSpecifier::EditAddressBookEntry(_) => {
                 ProposalOperationType::EditAddressBookEntry
+            }
+            ProposalSpecifier::RemoveAddressBookEntry(_) => {
+                ProposalOperationType::RemoveAddressBookEntry
             }
             ProposalSpecifier::Transfer(_) => ProposalOperationType::Transfer,
             ProposalSpecifier::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
@@ -204,6 +208,14 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
                     .is_match((p, params.input.address_book_entry_id, address_book_entry))
                     .await?
             }
+            (
+                ProposalOperation::RemoveAddressBookEntry(params),
+                ProposalSpecifier::RemoveAddressBookEntry(address_book_entry),
+            ) => {
+                self.common_id_matcher
+                    .is_match((p, params.input.address_book_entry_id, address_book_entry))
+                    .await?
+            }
             (ProposalOperation::Transfer(params), ProposalSpecifier::Transfer(account)) => {
                 self.account_matcher
                     .is_match((p.clone(), params.input.from_account_id, account))
@@ -268,6 +280,7 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             | (ProposalOperation::EditUser(_), _)
             | (ProposalOperation::AddAddressBookEntry(_), _)
             | (ProposalOperation::EditAddressBookEntry(_), _)
+            | (ProposalOperation::RemoveAddressBookEntry(_), _)
             | (ProposalOperation::ChangeCanister(_), _)
             | (ProposalOperation::AddAccessPolicy(_), _)
             | (ProposalOperation::AddProposalPolicy(_), _)

@@ -256,6 +256,7 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                             | ProposalOperation::AddUser(_)
                             | ProposalOperation::AddUserGroup(_)
                             | ProposalOperation::EditAddressBookEntry(_)
+                            | ProposalOperation::RemoveAddressBookEntry(_)
                             | ProposalOperation::EditAccessPolicy(_)
                             | ProposalOperation::EditProposalPolicy(_)
                             | ProposalOperation::EditUserGroup(_)
