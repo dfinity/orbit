@@ -160,9 +160,11 @@ describe('AddWalletForm', () => {
     expect(services().controlPanel.editUser).toHaveBeenCalled();
 
     // partial match because `message` can be arbitrary
-    expect(app.sendNotification).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'error',
-    }));
+    expect(app.sendNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+      }),
+    );
 
     expect(wrapper.emitted('submitted')).toBeFalsy();
 

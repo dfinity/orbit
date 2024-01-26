@@ -13,7 +13,11 @@
         />
         <VTextField
           v-model="canisterId"
-          :rules="[requiredRule, uniqueRule(existingWallets, $t('wallets.add_wallet_dialog_already_added')), validCanisterId]"
+          :rules="[
+            requiredRule,
+            uniqueRule(existingWallets, $t('wallets.add_wallet_dialog_already_added')),
+            validCanisterId,
+          ]"
           :label="$t('terms.canister_id')"
           data-test-id="add-wallet-form-canister-id"
         />

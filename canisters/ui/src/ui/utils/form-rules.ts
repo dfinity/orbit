@@ -34,7 +34,10 @@ export const maxLengthRule = (max: number, field: string) => {
   };
 };
 
-export const uniqueRule = (existing: unknown[], errorMessage: string = i18n.global.t('forms.rules.duplicate')) => {
+export const uniqueRule = (
+  existing: unknown[],
+  errorMessage: string = i18n.global.t('forms.rules.duplicate'),
+) => {
   return (value: unknown): string | boolean => {
     const hasValue = !!value;
     if (!hasValue) {

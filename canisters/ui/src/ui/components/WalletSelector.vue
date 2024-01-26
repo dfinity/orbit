@@ -51,10 +51,10 @@ const allWallets = ref(session.data.wallets);
 
 watch(
   () => session.data.wallets,
-  (newList) => {
+  newList => {
     allWallets.value = newList;
   },
-  {deep: true}
+  { deep: true },
 );
 
 const selectedWallet = computed({
