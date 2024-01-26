@@ -311,6 +311,7 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'RemoveAddressBookEntry' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
@@ -413,6 +414,7 @@ export type ProposalOperation = {
   { 'RemoveProposalPolicy' : RemoveProposalPolicyOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
+  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'AddProposalPolicy' : AddProposalPolicyOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
@@ -432,6 +434,7 @@ export type ProposalOperationInput = {
   { 'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
+  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'AddProposalPolicy' : AddProposalPolicyOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
@@ -449,6 +452,7 @@ export type ProposalOperationType = { 'EditAccessPolicy' : null } |
   { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'RemoveAddressBookEntry' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
@@ -477,6 +481,7 @@ export type ProposalSpecifier = { 'EditAccessPolicy' : CommonSpecifier } |
   { 'RemoveProposalPolicy' : CommonSpecifier } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : CommonSpecifier } |
+  { 'RemoveAddressBookEntry' : CommonSpecifier } |
   { 'EditAddressBookEntry' : CommonSpecifier } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
@@ -517,6 +522,12 @@ export interface RemoveAccessPolicyOperation {
   'input' : RemoveAccessPolicyOperationInput,
 }
 export interface RemoveAccessPolicyOperationInput { 'policy_id' : UUID }
+export interface RemoveAddressBookEntryOperation {
+  'input' : RemoveAddressBookEntryOperationInput,
+}
+export interface RemoveAddressBookEntryOperationInput {
+  'address_book_entry_id' : UUID,
+}
 export interface RemoveProposalPolicyOperation {
   'input' : RemoveProposalPolicyOperationInput,
 }

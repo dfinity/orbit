@@ -26,6 +26,7 @@ pub enum ProposalOperationType {
     RemoveProposalPolicy = 15,
     AddAddressBookEntry = 16,
     EditAddressBookEntry = 17,
+    RemoveAddressBookEntry = 18,
 }
 
 impl From<ProposalOperationType> for u8 {
@@ -56,6 +57,7 @@ impl TryFrom<u8> for ProposalOperationType {
             15 => Ok(ProposalOperationType::RemoveProposalPolicy),
             16 => Ok(ProposalOperationType::AddAddressBookEntry),
             17 => Ok(ProposalOperationType::EditAddressBookEntry),
+            18 => Ok(ProposalOperationType::RemoveAddressBookEntry),
             _ => Err(()),
         }
     }
@@ -71,6 +73,7 @@ impl FromStr for ProposalOperationType {
             "edit_account" => Ok(ProposalOperationType::EditAccount),
             "add_address_book_entry" => Ok(ProposalOperationType::AddAddressBookEntry),
             "edit_address_book_entry" => Ok(ProposalOperationType::EditAddressBookEntry),
+            "remove_address_book_entry" => Ok(ProposalOperationType::RemoveAddressBookEntry),
             "add_user" => Ok(ProposalOperationType::AddUser),
             "edit_user" => Ok(ProposalOperationType::EditUser),
             "add_user_group" => Ok(ProposalOperationType::AddUserGroup),
@@ -96,6 +99,7 @@ impl Display for ProposalOperationType {
             ProposalOperationType::EditAccount => write!(f, "edit_account"),
             ProposalOperationType::AddAddressBookEntry => write!(f, "add_address_book_entry"),
             ProposalOperationType::EditAddressBookEntry => write!(f, "edit_address_book_entry"),
+            ProposalOperationType::RemoveAddressBookEntry => write!(f, "remove_address_book_entry"),
             ProposalOperationType::AddUser => write!(f, "add_user"),
             ProposalOperationType::EditUser => write!(f, "edit_user"),
             ProposalOperationType::AddUserGroup => write!(f, "add_user_group"),
@@ -165,6 +169,14 @@ mod tests {
         assert_eq!(
             ProposalOperationType::from_str("edit_address_book_entry").unwrap(),
             ProposalOperationType::EditAddressBookEntry
+        );
+        assert_eq!(
+            ProposalOperationType::RemoveAddressBookEntry.to_string(),
+            "remove_address_book_entry"
+        );
+        assert_eq!(
+            ProposalOperationType::from_str("remove_address_book_entry").unwrap(),
+            ProposalOperationType::RemoveAddressBookEntry
         );
         assert_eq!(ProposalOperationType::AddUser.to_string(), "add_user");
         assert_eq!(
@@ -316,6 +328,11 @@ mod tests {
         assert_eq!(
             ProposalOperationType::try_from(17).unwrap(),
             ProposalOperationType::EditAddressBookEntry
+        );
+        assert_eq!(ProposalOperationType::RemoveAddressBookEntry as u8, 18);
+        assert_eq!(
+            ProposalOperationType::try_from(18).unwrap(),
+            ProposalOperationType::RemoveAddressBookEntry
         );
     }
 }

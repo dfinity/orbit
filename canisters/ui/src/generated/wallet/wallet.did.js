@@ -108,6 +108,9 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'user_group_id' : UUID,
   });
+  const RemoveAddressBookEntryOperationInput = IDL.Record({
+    'address_book_entry_id' : UUID,
+  });
   const AddressBookMetadata = IDL.Record({
     'key' : IDL.Text,
     'value' : IDL.Text,
@@ -136,6 +139,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : CommonSpecifier,
     'AddUser' : IDL.Null,
     'EditUserGroup' : CommonSpecifier,
+    'RemoveAddressBookEntry' : CommonSpecifier,
     'EditAddressBookEntry' : CommonSpecifier,
     'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
@@ -234,6 +238,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput,
     'AddUser' : AddUserOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
+    'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'AddProposalPolicy' : AddProposalPolicyOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
@@ -301,6 +306,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
+  });
+  const RemoveAddressBookEntryOperation = IDL.Record({
+    'input' : RemoveAddressBookEntryOperationInput,
   });
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
@@ -386,6 +394,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : RemoveProposalPolicyOperation,
     'AddUser' : AddUserOperation,
     'EditUserGroup' : EditUserGroupOperation,
+    'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'AddProposalPolicy' : AddProposalPolicyOperation,
     'ChangeCanister' : ChangeCanisterOperation,
@@ -580,6 +589,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'RemoveAddressBookEntry' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
@@ -646,6 +656,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'RemoveAddressBookEntry' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,

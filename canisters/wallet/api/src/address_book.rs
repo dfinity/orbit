@@ -40,6 +40,16 @@ pub struct EditAddressBookEntryOperationInput {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RemoveAddressBookEntryOperationDTO {
+    pub input: RemoveAddressBookEntryOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RemoveAddressBookEntryOperationInput {
+    pub address_book_entry_id: UuidDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAddressBookEntryInputDTO {
     pub address_book_entry_id: UuidDTO,
 }
