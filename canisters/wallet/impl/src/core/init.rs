@@ -220,6 +220,13 @@ lazy_static! {
                 Percentage(51)
             )])
         ),
+        (
+            ProposalSpecifier::RemoveAddressBookEntry(CommonSpecifier::Any),
+            Criteria::And(vec![Criteria::ApprovalThreshold(
+                ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )])
+        ),
         // access policies
         (
             ProposalSpecifier::AddAccessPolicy,

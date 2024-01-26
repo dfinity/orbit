@@ -7,7 +7,7 @@ use wallet_api::{
     EditAddressBookEntryOperationInput, GetAddressBookEntryInputDTO,
     GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
     ListAddressBookEntriesResponseDTO, MetadataDTO, PaginationInput, ProposalOperationDTO,
-    ProposalOperationInput,
+    ProposalOperationInput, RemoveAddressBookEntryOperationInput,
 };
 
 #[test]
@@ -53,7 +53,7 @@ fn address_book_entry_lifecycle() {
         }]
     );
 
-    // create address book entry with duplicate address
+    // creating address book entry with duplicate address should fail
     let add_address_book_entry =
         ProposalOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "Max Mustermann".to_string(),
@@ -130,11 +130,13 @@ fn address_book_entry_lifecycle() {
         (list_address_book_entries_args,),
     )
     .unwrap();
-    let list_address_book_entries = res.0.unwrap().address_book_entries;
-    assert_eq!(
-        list_address_book_entries,
-        vec![address_book_entry.clone(), next_address_book_entry.clone()]
-    );
+    let list_res = res.0.unwrap();
+    assert_eq!(list_res.total, 2);
+    assert_eq!(list_res.next_offset, None);
+    let list_address_book_entries = list_res.address_book_entries;
+    assert_eq!(list_address_book_entries.len(), 2);
+    assert!(list_address_book_entries.contains(&address_book_entry));
+    assert!(list_address_book_entries.contains(&next_address_book_entry));
 
     // update the address book entry for John Doe setting "kyc" to "true"
     let edit_address_book_entry =
@@ -167,7 +169,46 @@ fn address_book_entry_lifecycle() {
     )
     .unwrap();
     let get_address_book_entry = res.0.unwrap().address_book_entry;
-    let mut old_address_book_entry = address_book_entry;
+    let mut old_address_book_entry = address_book_entry.clone();
     old_address_book_entry.metadata[0].value = "true".to_string();
     assert_eq!(get_address_book_entry, old_address_book_entry);
+
+    // remove the address book entry for John Doe
+    let remove_address_book_entry =
+        ProposalOperationInput::RemoveAddressBookEntry(RemoveAddressBookEntryOperationInput {
+            address_book_entry_id: address_book_entry.id.clone(),
+        });
+    execute_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        remove_address_book_entry,
+    )
+    .unwrap();
+
+    // list address book entries and check that the address book entry for John Doe is indeed deleted
+    let list_address_book_entries_args = ListAddressBookEntriesInputDTO {
+        blockchain: "icp".to_string(),
+        standard: "native".to_string(),
+        paginate: PaginationInput {
+            offset: None,
+            limit: None,
+        },
+    };
+    let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
+        &env,
+        canister_ids.wallet,
+        WALLET_ADMIN_USER,
+        "list_address_book_entries",
+        (list_address_book_entries_args,),
+    )
+    .unwrap();
+    let list_res = res.0.unwrap();
+    assert_eq!(list_res.total, 1);
+    assert_eq!(list_res.next_offset, None);
+    let list_address_book_entries = list_res.address_book_entries;
+    assert_eq!(
+        list_address_book_entries,
+        vec![next_address_book_entry.clone()]
+    );
 }
