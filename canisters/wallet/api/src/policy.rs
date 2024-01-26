@@ -9,6 +9,7 @@ pub enum ProposalSpecifierDTO {
     EditUser(UserSpecifierDTO),
     AddAddressBookEntry,
     EditAddressBookEntry(CommonSpecifierDTO),
+    RemoveAddressBookEntry(CommonSpecifierDTO),
     Transfer(TransferSpecifierDTO),
     ChangeCanister,
     AddAccessPolicy,

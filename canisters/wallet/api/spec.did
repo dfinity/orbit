@@ -32,6 +32,7 @@ type ProposalSpecifier = variant {
   Transfer : TransferSpecifier;
   AddAddressBookEntry;
   EditAddressBookEntry : CommonSpecifier;
+  RemoveAddressBookEntry : CommonSpecifier;
   ChangeCanister;
   AddAccessPolicy;
   EditAccessPolicy : CommonSpecifier;
@@ -316,6 +317,17 @@ type EditAddressBookEntryOperationInput = record {
   change_metadata : opt ChangeAddressBookMetadata;
 };
 
+type RemoveAddressBookEntryOperation = record {
+  // The input to the proposal to remove the address book entry.
+  input : RemoveAddressBookEntryOperationInput;
+};
+
+// Input type for removing an address book entry through a proposal.
+type RemoveAddressBookEntryOperationInput = record {
+  // The id of the address book entry.
+  address_book_entry_id : UUID;
+};
+
 type AddUserOperationInput = record {
   // The user name (e.g. "John Doe").
   name : opt text;
@@ -505,6 +517,8 @@ type ProposalOperation = variant {
   AddAddressBookEntry : AddAddressBookEntryOperation;
   // An operation for updating an existing address book entry.
   EditAddressBookEntry : EditAddressBookEntryOperation;
+  // An operation for removing an existing address book entry.
+  RemoveAddressBookEntry : RemoveAddressBookEntryOperation;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperation;
   // An operation for editing an existing user group.
@@ -542,6 +556,8 @@ type ProposalOperationInput = variant {
   AddAddressBookEntry : AddAddressBookEntryOperationInput;
   // An operation for updating an address book entry.
   EditAddressBookEntry : EditAddressBookEntryOperationInput;
+  // An operation for removing an address book entry.
+  RemoveAddressBookEntry : RemoveAddressBookEntryOperationInput;
   // An operation for adding a new user group.
   AddUserGroup : AddUserGroupOperationInput;
   // An operation for editing an existing user group.
@@ -575,6 +591,8 @@ type ProposalOperationType = variant {
   AddAddressBookEntry;
   // An operation for updating an address book entry.
   EditAddressBookEntry;
+  // An operation for removing an address book entry.
+  RemoveAddressBookEntry;
   // An operation for adding a new user.
   AddUser;
   // An operation for editing an existing user.
@@ -683,6 +701,8 @@ type ListProposalsOperationType = variant {
   AddAddressBookEntry;
   // An operation for updating an address book entry.
   EditAddressBookEntry;
+  // An operation for removing an address book entry.
+  RemoveAddressBookEntry;
   // An operation for adding a new user group.
   AddUserGroup;
   // An operation for editing an existing user group.

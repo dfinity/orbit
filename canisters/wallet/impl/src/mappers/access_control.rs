@@ -141,6 +141,19 @@ impl From<&wallet_api::CreateProposalInput> for ResourceSpecifier {
                     )),
                 )
             }
+            ProposalOperationInput::RemoveAddressBookEntry(input) => {
+                let address_book_entry_id =
+                    *HelperMapper::to_uuid(input.address_book_entry_id.to_owned())
+                        .expect("Invalid address book entry id")
+                        .as_bytes();
+
+                ResourceSpecifier::Common(
+                    ResourceType::AddressBook,
+                    CommonActionSpecifier::Delete(CommonSpecifier::Id(
+                        [address_book_entry_id].to_vec(),
+                    )),
+                )
+            }
             ProposalOperationInput::Transfer(input) => {
                 let account_id = *HelperMapper::to_uuid(input.from_account_id.to_owned())
                     .expect("Invalid account id")

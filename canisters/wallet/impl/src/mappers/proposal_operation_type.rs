@@ -14,6 +14,9 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::EditAddressBookEntry => {
                 ProposalOperationType::EditAddressBookEntry
             }
+            ProposalOperationTypeDTO::RemoveAddressBookEntry => {
+                ProposalOperationType::RemoveAddressBookEntry
+            }
             ProposalOperationTypeDTO::AddUser => ProposalOperationType::AddUser,
             ProposalOperationTypeDTO::EditUser => ProposalOperationType::EditUser,
             ProposalOperationTypeDTO::AddUserGroup => ProposalOperationType::AddUserGroup,
@@ -48,6 +51,9 @@ impl From<ProposalOperationType> for ProposalOperationTypeDTO {
             ProposalOperationType::EditAddressBookEntry => {
                 ProposalOperationTypeDTO::EditAddressBookEntry
             }
+            ProposalOperationType::RemoveAddressBookEntry => {
+                ProposalOperationTypeDTO::RemoveAddressBookEntry
+            }
             ProposalOperationType::AddUser => ProposalOperationTypeDTO::AddUser,
             ProposalOperationType::EditUser => ProposalOperationTypeDTO::EditUser,
             ProposalOperationType::AddUserGroup => ProposalOperationTypeDTO::AddUserGroup,
@@ -79,6 +85,9 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::AddAddressBookEntry(_) => ProposalOperationType::AddAddressBookEntry,
             ProposalOperation::EditAddressBookEntry(_) => {
                 ProposalOperationType::EditAddressBookEntry
+            }
+            ProposalOperation::RemoveAddressBookEntry(_) => {
+                ProposalOperationType::RemoveAddressBookEntry
             }
             ProposalOperation::AddUser(_) => ProposalOperationType::AddUser,
             ProposalOperation::EditUser(_) => ProposalOperationType::EditUser,
@@ -121,6 +130,10 @@ impl ProposalOperation {
             (
                 ProposalOperation::EditAddressBookEntry(_),
                 ListProposalsOperationTypeDTO::EditAddressBookEntry,
+            ) => true,
+            (
+                ProposalOperation::RemoveAddressBookEntry(_),
+                ListProposalsOperationTypeDTO::RemoveAddressBookEntry,
             ) => true,
             (ProposalOperation::AddUser(_), ListProposalsOperationTypeDTO::AddUser) => true,
             (ProposalOperation::EditUser(_), ListProposalsOperationTypeDTO::EditUser) => true,

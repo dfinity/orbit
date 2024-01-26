@@ -23,6 +23,7 @@ mod edit_proposal_policy;
 mod edit_user;
 mod edit_user_group;
 mod remove_access_policy;
+mod remove_address_book_entry;
 mod remove_proposal_policy;
 mod remove_user_group;
 mod transfer;
@@ -46,6 +47,9 @@ use self::{
     edit_user::{EditUserProposalCreate, EditUserProposalExecute},
     edit_user_group::{EditUserGroupProposalCreate, EditUserGroupProposalExecute},
     remove_access_policy::{RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalExecute},
+    remove_address_book_entry::{
+        RemoveAddressBookEntryProposalCreate, RemoveAddressBookEntryProposalExecute,
+    },
     remove_proposal_policy::{
         RemoveProposalPolicyProposalCreate, RemoveProposalPolicyProposalExecute,
     },
@@ -132,6 +136,12 @@ impl ProposalFactory {
                 create_proposal::<
                     wallet_api::EditAddressBookEntryOperationInput,
                     EditAddressBookEntryProposalCreate,
+                >(id, proposed_by_user, input.clone(), operation.clone())
+            }
+            ProposalOperationInput::RemoveAddressBookEntry(operation) => {
+                create_proposal::<
+                    wallet_api::RemoveAddressBookEntryOperationInput,
+                    RemoveAddressBookEntryProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
             ProposalOperationInput::AddUserGroup(operation) => {
@@ -231,6 +241,9 @@ impl ProposalFactory {
             }
             ProposalOperation::EditAddressBookEntry(operation) => Box::new(
                 EditAddressBookEntryProposalExecute::new(proposal, operation),
+            ),
+            ProposalOperation::RemoveAddressBookEntry(operation) => Box::new(
+                RemoveAddressBookEntryProposalExecute::new(proposal, operation),
             ),
             ProposalOperation::AddUserGroup(operation) => {
                 Box::new(AddUserGroupProposalExecute::new(proposal, operation))

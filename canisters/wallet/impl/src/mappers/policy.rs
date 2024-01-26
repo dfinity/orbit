@@ -396,6 +396,9 @@ impl From<ProposalSpecifier> for wallet_api::ProposalSpecifierDTO {
             ProposalSpecifier::EditAddressBookEntry(address_book_entry) => {
                 wallet_api::ProposalSpecifierDTO::EditAddressBookEntry(address_book_entry.into())
             }
+            ProposalSpecifier::RemoveAddressBookEntry(address_book_entry) => {
+                wallet_api::ProposalSpecifierDTO::RemoveAddressBookEntry(address_book_entry.into())
+            }
             ProposalSpecifier::Transfer(account) => {
                 wallet_api::ProposalSpecifierDTO::Transfer(TransferSpecifierDTO {
                     account: account.into(),
@@ -445,6 +448,9 @@ impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
             }
             wallet_api::ProposalSpecifierDTO::EditAddressBookEntry(address_book_entry) => {
                 ProposalSpecifier::EditAddressBookEntry(address_book_entry.into())
+            }
+            wallet_api::ProposalSpecifierDTO::RemoveAddressBookEntry(address_book_entry) => {
+                ProposalSpecifier::RemoveAddressBookEntry(address_book_entry.into())
             }
             wallet_api::ProposalSpecifierDTO::Transfer(transfer_specifier) => {
                 ProposalSpecifier::Transfer(transfer_specifier.account.into())
