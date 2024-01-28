@@ -63,12 +63,76 @@ export default {
     },
     types: {
       addusergroup: {
-        short_title: 'Add user group',
-        title: 'Add user group request',
+        title: 'Add user group',
+        request_title: 'Add user group request',
+      },
+      addaccount: {
+        title: 'Add account',
+        request_title: 'Add account request',
+      },
+      adduser: {
+        title: 'Add user',
+        request_title: 'Add user request',
+      },
+      addaccesspolicy: {
+        title: 'Add access policy',
+        request_title: 'Add access policy request',
+      },
+      addaddressbookentry: {
+        title: 'Add address book entry',
+        request_title: 'Add address book entry request',
+      },
+      addproposalpolicy: {
+        title: 'Add approval policy',
+        request_title: 'Add approval policy request',
+      },
+      removeproposalpolicy: {
+        title: 'Remove approval policy',
+        request_title: 'Remove approval policy request',
+      },
+      removeaccesspolicy: {
+        title: 'Remove access policy',
+        request_title: 'Remove access policy request',
+      },
+      removeusergroup: {
+        title: 'Remove user group',
+        request_title: 'Remove user group request',
+      },
+      removeaddressbookentry: {
+        title: 'Remove address book entry',
+        request_title: 'Remove address book entry request',
+      },
+      changecanister: {
+        title: 'Change canister',
+        request_title: 'Change canister request',
+      },
+      editusergroup: {
+        title: 'Edit user group',
+        request_title: 'Edit user group request',
+      },
+      edituser: {
+        title: 'Edit user',
+        request_title: 'Edit user request',
+      },
+      editaccount: {
+        title: 'Edit account',
+        request_title: 'Edit account request',
+      },
+      editaddressbookentry: {
+        title: 'Edit address book entry',
+        request_title: 'Edit address book entry request',
+      },
+      transfer: {
+        title: 'Transfer',
+        request_title: 'Transfer request',
+      },
+      editproposalpolicy: {
+        title: 'Edit approval policy',
+        request_title: 'Edit approval policy request',
       },
       unknown: {
-        short_title: 'Unknown',
-        title: 'Unknown request',
+        title: 'Unknown',
+        request_title: 'Unknown request',
       },
     },
   },
@@ -261,7 +325,7 @@ export default {
     not_found_btn: 'Go back to accounts',
   },
   navigation: {
-    accounts_transfers: 'Accounts & Transfers',
+    accounts: 'Accounts',
     address_book: 'Address Book',
     users: 'Users',
     settings: 'Settings',
@@ -272,6 +336,7 @@ export default {
     login: 'Login',
     logout: 'Logout',
     proposals: 'Requests',
+    transfer_proposals: 'Transfer Requests',
   },
   pages: {
     user_settings: {
@@ -306,6 +371,7 @@ export default {
     },
     proposals: {
       title: 'Requests',
+      transfer_title: 'Transfer Requests',
     },
   },
   session: {

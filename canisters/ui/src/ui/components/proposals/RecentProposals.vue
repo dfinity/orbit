@@ -28,15 +28,8 @@
                   color="secondary"
                 />
               </VListItemTitle>
-              <template #append>
-                <VBtn
-                  variant="tonal"
-                  size="small"
-                  :to="{
-                    name: Routes.Proposals,
-                    query: { group_by: props.domain },
-                  }"
-                >
+              <template v-if="props.seeAllLink" #append>
+                <VBtn variant="tonal" size="small" :to="props.seeAllLink">
                   {{ $t('terms.see_all') }}
                 </VBtn>
               </template>
@@ -62,14 +55,14 @@
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue';
+import { RouteLocationRaw } from 'vue-router';
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
-import { ListProposalsArgs, ProposalDomains } from '~/types';
+import { ListProposalsArgs } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores/wallet';
-import { ref } from 'vue';
 import ProposalList from './ProposalList.vue';
-import { Routes } from '~/ui/config/routes';
 
 const props = withDefaults(
   defineProps<{
@@ -77,7 +70,7 @@ const props = withDefaults(
     title?: string;
     limit?: number;
     sortBy?: ListProposalsArgs['sortBy'];
-    domain?: ProposalDomains;
+    seeAllLink?: RouteLocationRaw;
     refreshIntervalMs?: number;
     loadErrorMsg?: string;
   }>(),
@@ -88,7 +81,7 @@ const props = withDefaults(
       expirationDt: 'asc',
     }),
     refreshIntervalMs: 5000,
-    domain: undefined,
+    seeAllLink: undefined,
     loadErrorMsg: i18n.global.t('app.data_load_error'),
   },
 );
@@ -99,7 +92,7 @@ const disablePolling = ref(false);
 
 const fetchRecentProposals = async () => {
   const result = await wallet.service.listProposals({
-    types: [{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }],
+    types: props.types,
     statuses: [{ Created: null }],
     limit: props.limit,
     sortBy: props.sortBy,

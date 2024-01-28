@@ -124,9 +124,8 @@ export const useFilterUtils = (): FilterUtils => {
   };
 };
 
-export const useSavedFilters = (): Ref<Filters> => {
+export const useSavedFilters = (availableDomains: AvailableDomain[]): Ref<Filters> => {
   const defaultFilters = useFilterUtils().getDefaultFilters();
-  const availableDomains = useAvailableDomains();
   const app = useAppStore();
   const router = useRouter();
 
@@ -154,11 +153,8 @@ export const useSavedFilters = (): Ref<Filters> => {
     }
 
     let groupBy = defaultFilters.groupBy;
-    if (
-      query?.group_by &&
-      availableDomains.value.findIndex(group => group.id === query.group_by) > -1
-    ) {
-      groupBy = availableDomains.value.findIndex(group => group.id === query.group_by);
+    if (query?.group_by && availableDomains.findIndex(group => group.id === query.group_by) > -1) {
+      groupBy = availableDomains.findIndex(group => group.id === query.group_by);
     }
 
     return ref({

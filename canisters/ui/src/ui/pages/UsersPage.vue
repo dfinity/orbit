@@ -52,6 +52,13 @@
     </template>
     <template #main-body>
       <PageBody>
+        <RecentProposals
+          :see-all-link="{
+            name: Routes.Proposals,
+            query: { group_by: ProposalDomains.Users },
+          }"
+          :types="[{ AddUser: null }, { EditUser: null }]"
+        />
         <DataLoader
           :load="fetchData"
           :error-msg="$t('pages.users.error_fetching_users')"
@@ -137,7 +144,7 @@ import { mdiPencil } from '@mdi/js';
 import { ref } from 'vue';
 import { Proposal, User } from '~/generated/wallet/wallet.did';
 import { fromUserStatusVariantToEnum, fromUserToUserInput } from '~/mappers/users.mapper';
-import { Privilege, UserInput } from '~/types';
+import { Privilege, ProposalDomains, UserInput } from '~/types';
 import AuthCheck from '~/ui/components/AuthCheck.vue';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
@@ -146,6 +153,8 @@ import UserStatusChip from '~/ui/components/chips/UserStatusChip.vue';
 import UserForm from '~/ui/components/forms/UserForm.vue';
 import PageBody from '~/ui/components/layouts/PageBody.vue';
 import PageHeader from '~/ui/components/layouts/PageHeader.vue';
+import RecentProposals from '~/ui/components/proposals/RecentProposals.vue';
+import { Routes } from '~/ui/config/routes';
 import { i18n } from '~/ui/modules/i18n';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';

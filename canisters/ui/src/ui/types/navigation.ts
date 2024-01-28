@@ -1,4 +1,4 @@
-import { RouteLocationNormalizedLoaded } from 'vue-router';
+import { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
 import { Routes } from '~/ui/config/routes';
 import { AccessCriteria } from '~/ui/types/auth';
 
@@ -55,4 +55,10 @@ export interface NavigationItem {
   action: NavigationAction;
   items?: NavigationItem[];
   auth: NavigastionAuth;
+}
+
+export interface BreadCrumbItem {
+  title: string;
+  disabled?: boolean;
+  to?: RouteLocationRaw;
 }

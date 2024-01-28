@@ -54,7 +54,10 @@
     <template #main-body>
       <PageBody>
         <RecentProposals
-          :domain="ProposalDomains.System"
+          :see-all-link="{
+            name: Routes.Proposals,
+            query: { group_by: ProposalDomains.System },
+          }"
           :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
         />
         <DataLoader
@@ -142,6 +145,7 @@ import UserGroupForm from '~/ui/components/forms/UserGroupForm.vue';
 import PageBody from '~/ui/components/layouts/PageBody.vue';
 import PageHeader from '~/ui/components/layouts/PageHeader.vue';
 import RecentProposals from '~/ui/components/proposals/RecentProposals.vue';
+import { Routes } from '~/ui/config/routes';
 import { i18n } from '~/ui/modules/i18n';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';

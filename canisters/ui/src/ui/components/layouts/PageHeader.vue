@@ -1,6 +1,13 @@
 <template>
   <VContainer class="pt-8 pb-0 pl-8 pr-8" fluid :data-test-id="$props.dataTestId">
     <VRow>
+      <VCol v-if="breadcrumbs.length" cols="12" class="pa-0">
+        <VBreadcrumbs :items="breadcrumbs" density="comfortable">
+          <template #divider>
+            <VIcon :icon="mdiChevronRight" size="small" />
+          </template>
+        </VBreadcrumbs>
+      </VCol>
       <VCol cols="12" :md="hasActions ? 6 : 12">
         <h1
           class="text-h4"
@@ -27,15 +34,19 @@
 
 <script lang="ts" setup>
 import { useSlots, computed } from 'vue';
+import { mdiChevronRight } from '@mdi/js';
+import { BreadCrumbItem } from '~/ui/types/navigation';
 
 withDefaults(
   defineProps<{
     title?: string;
     dataTestId?: string;
+    breadcrumbs?: BreadCrumbItem[];
   }>(),
   {
     title: undefined,
     dataTestId: 'page-header',
+    breadcrumbs: () => [],
   },
 );
 

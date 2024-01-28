@@ -63,11 +63,26 @@ const sections = (): NavigationSections => ({
             route: Routes.Users,
           },
         },
+        {
+          name: 'proposals',
+          localeKey: 'navigation.proposals',
+          action: {
+            type: NavigationActionType.To,
+            handle: route =>
+              route.params.locale
+                ? `/${route.params.locale}/settings/requests`
+                : '/settings/requests',
+          },
+          auth: {
+            type: NavigastionAuthType.Route,
+            route: Routes.Proposals,
+          },
+        },
       ],
     },
     {
       name: 'accounts',
-      localeKey: 'navigation.accounts_transfers',
+      localeKey: 'navigation.accounts',
       action: {
         type: NavigationActionType.To,
         handle: route => (route.params.locale ? `/${route.params.locale}/accounts` : '/accounts'),
@@ -79,15 +94,16 @@ const sections = (): NavigationSections => ({
       icon: mdiWalletBifold,
     },
     {
-      name: 'proposals',
-      localeKey: 'navigation.proposals',
+      name: 'transfer_proposals',
+      localeKey: 'navigation.transfer_proposals',
       action: {
         type: NavigationActionType.To,
-        handle: route => (route.params.locale ? `/${route.params.locale}/requests` : '/requests'),
+        handle: route =>
+          route.params.locale ? `/${route.params.locale}/transfer-requests` : '/transfer-requests',
       },
       auth: {
         type: NavigastionAuthType.Route,
-        route: Routes.Proposals,
+        route: Routes.TransferProposals,
       },
       icon: mdiFormatListText,
     },
