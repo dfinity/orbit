@@ -14,23 +14,23 @@
             flat
             v-bind="menuProps"
             :label="$t('terms.from')"
-            :model-value="modelValue.from?.toLocaleDateString()"
+            :model-value="modelValue.from ? modelValue.from.toLocaleDateString() : undefined"
           />
         </template>
         <VDialog v-if="app.isMobile" v-model="openFromDateSelector" fullscreen>
           <DateSelector
-            v-model="modelValue.from"
+            :model-value="modelValue.from"
             :max="modelValue.to"
             @close="openFromDateSelector = false"
-            @update:model-value="updateDateRange({ keep: 'from' })"
+            @update:model-value="updateDateFrom"
           />
         </VDialog>
         <DateSelector
           v-else
-          v-model="modelValue.from"
+          :model-value="modelValue.from"
           :max="modelValue.to"
           @close="openFromDateSelector = false"
-          @update:model-value="updateDateRange({ keep: 'from' })"
+          @update:model-value="updateDateFrom"
         />
       </VMenu>
       <VMenu v-model="openToDateSelector" :close-on-content-click="false" location="end">
@@ -42,23 +42,23 @@
             flat
             v-bind="menuProps"
             :label="$t('terms.until')"
-            :model-value="modelValue.to?.toLocaleDateString()"
+            :model-value="modelValue.to ? modelValue.to.toLocaleDateString() : undefined"
           />
         </template>
         <VDialog v-if="app.isMobile" v-model="openToDateSelector" fullscreen>
           <DateSelector
-            v-model="modelValue.to"
+            :model-value="modelValue.to"
             :min="modelValue.from"
             @close="openToDateSelector = false"
-            @update:model-value="updateDateRange({ keep: 'to' })"
+            @update:model-value="updateDateTo"
           />
         </VDialog>
         <DateSelector
           v-else
-          v-model="modelValue.to"
+          :model-value="modelValue.to"
           :min="modelValue.from"
           @close="openToDateSelector = false"
-          @update:model-value="updateDateRange({ keep: 'to' })"
+          @update:model-value="updateDateTo"
         />
       </VMenu>
     </div>
@@ -66,10 +66,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { computed } from 'vue';
-import DateSelector from './DateSelector.vue';
+import { computed, ref } from 'vue';
 import { useAppStore } from '~/ui/stores/app';
+import { endOfDay, startOfDay } from '~/utils/date.utils';
+import DateSelector from './DateSelector.vue';
 
 export type DateRangeModel = { from?: Date; to?: Date };
 
@@ -102,6 +102,28 @@ const modelValue = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const updateDateFrom = (date?: Date): void => {
+  if (!date) {
+    modelValue.value.from = undefined;
+    return;
+  }
+
+  modelValue.value.from = date;
+
+  updateDateRange({ keep: 'from' });
+};
+
+const updateDateTo = (date?: Date): void => {
+  if (!date) {
+    modelValue.value.to = undefined;
+    return;
+  }
+
+  modelValue.value.to = date;
+
+  updateDateRange({ keep: 'to' });
+};
+
 const updateDateRange = ({ keep }: { keep: 'from' | 'to' }) => {
   if (!modelValue.value.from || !modelValue.value.to) {
     return;
@@ -110,12 +132,12 @@ const updateDateRange = ({ keep }: { keep: 'from' | 'to' }) => {
   switch (keep) {
     case 'from':
       if (modelValue.value.from > modelValue.value.to) {
-        modelValue.value = { ...modelValue.value, to: modelValue.value.from };
+        modelValue.value = { ...modelValue.value, to: endOfDay(modelValue.value.from) };
       }
       break;
     case 'to':
       if (modelValue.value.to < modelValue.value.from) {
-        modelValue.value = { ...modelValue.value, from: modelValue.value.to };
+        modelValue.value = { ...modelValue.value, from: startOfDay(modelValue.value.to) };
       }
       break;
   }

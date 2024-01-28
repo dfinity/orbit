@@ -718,9 +718,11 @@ export const idlFactory = ({ IDL }) => {
     'ListUsers' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
     'ListProposalPolicies' : IDL.Null,
+    'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
     'ListAccessPolicies' : IDL.Null,
     'AddAccessPolicy' : IDL.Null,
+    'ListAddressBookEntries' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const MeResult = IDL.Variant({

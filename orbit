@@ -59,14 +59,14 @@ function exec_function() {
   echo -e "\e[1m$ COMPLETED:\e[0m $function_name"
 }
 
-# Builds the canister and generates the WASM file if it doesn't exist
+# Builds the canister and generates the WASM file
 function build_wasm() {
   local canister_name=$1
-  local force=${FORCE_BUILD_WASM:-false}
+  local force=${USE_CACHED_WASMS:-false}
 
   # Check if the force flag is set to true
-  if [[ "$force" == "true" ]]; then
-    echo "Force generating WASM file for $canister_name..."
+  if [[ "$force" == "false" ]]; then
+    echo "Generating WASM file for $canister_name..."
     ./scripts/generate-wasm.sh $canister_name
   elif [ ! -f ./wasms/$canister_name.wasm.gz ]; then
     echo "WASM file for $canister_name not found, generating..."

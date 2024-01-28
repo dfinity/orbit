@@ -112,7 +112,6 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
       emit('loaded', data.value);
     }
   } catch (err) {
-    console.log(err);
     logger.error(`Failed to load data: ${err}`);
 
     if (cleanupOnFail) {

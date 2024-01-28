@@ -39,10 +39,16 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     });
   }
 
-  domains.push({
-    id: ProposalDomains.AddressBook,
-    types: [],
-  });
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListAddressBookEntries] })) {
+    domains.push({
+      id: ProposalDomains.AddressBook,
+      types: [
+        { AddAddressBookEntry: null },
+        { EditAddressBookEntry: null },
+        { RemoveAddressBookEntry: null },
+      ],
+    });
+  }
 
   domains.push({
     id: ProposalDomains.System,

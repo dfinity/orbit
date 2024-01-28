@@ -57,7 +57,7 @@ describe('Proposal Composables', () => {
       return { filters: useSavedFilters() };
     });
 
-    expect(vm.filters.groupBy).toEqual(2);
+    expect(vm.filters.groupBy).toEqual(1);
     expect(vm.filters.created.from).toEqual(new Date('2020-01-01'));
     expect(vm.filters.created.to).toEqual(new Date('2021-02-01'));
     expect(vm.filters.expires.from).toEqual(new Date('2020-01-01'));

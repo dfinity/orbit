@@ -1,6 +1,6 @@
 import { Principal } from '@dfinity/principal';
-import { useRouter } from 'vue-router';
-import { defaultHomeRoute, defaultLoginRoute, i18n, redirectToKey } from '~/ui/modules';
+import { defaultHomeRoute, defaultLoginRoute } from '~/ui/config/routes';
+import { i18n, redirectToKey, router } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
 
@@ -46,14 +46,10 @@ export const computedWalletName = (
 };
 
 export const redirectToLogin = (): void => {
-  const router = useRouter();
-
   router.push({ name: defaultLoginRoute });
 };
 
 export const afterLoginRedirect = (): void => {
-  const router = useRouter();
-
   const lastRequestedPage = window?.sessionStorage.getItem(redirectToKey);
   if (lastRequestedPage) {
     window?.sessionStorage.removeItem(redirectToKey);

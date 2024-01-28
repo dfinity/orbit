@@ -261,7 +261,6 @@ export default {
     },
   },
   navigation: {
-    overview: 'Visão geral',
     accounts_transfers: 'Contas & Transferências',
     address_book: 'Endereços',
     users: 'Usuários',
@@ -275,9 +274,6 @@ export default {
     proposals: 'Pedidos',
   },
   pages: {
-    overview: {
-      title: '{name} - Visão geral',
-    },
     user_settings: {
       title: 'Informaçōes do usuário & Configuraçōes',
       subtitle: 'Configure as preferências e gerencie a sua conta.',

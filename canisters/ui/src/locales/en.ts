@@ -261,7 +261,6 @@ export default {
     not_found_btn: 'Go back to accounts',
   },
   navigation: {
-    overview: 'Overview',
     accounts_transfers: 'Accounts & Transfers',
     address_book: 'Address Book',
     users: 'Users',
@@ -275,9 +274,6 @@ export default {
     proposals: 'Requests',
   },
   pages: {
-    overview: {
-      title: '{name} - Overview',
-    },
     user_settings: {
       title: 'Account Info & Settings',
       subtitle: 'Configure preferences and manage your user.',

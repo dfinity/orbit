@@ -45,6 +45,8 @@ export enum Privilege {
   ListAccessPolicies = 'ListAccessPolicies',
   AddAccessPolicy = 'AddAccessPolicy',
   AddAccount = 'AddAccount',
+  ListAddressBookEntries = 'ListAddressBookEntries',
+  AddAddressBookEntry = 'AddAddressBookEntry',
 }
 
 export interface UserInput {

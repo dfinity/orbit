@@ -131,6 +131,7 @@ import {
 } from '~/ui/composables/proposal.composable';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
+import { convertDate } from '~/utils/date.utils';
 
 const app = useAppStore();
 const wallet = useWalletStore();
@@ -181,10 +182,29 @@ watch(
 const fetchProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
   const nextOffset =
     pagination.value.selectedPage * pagination.value.limit - pagination.value.limit;
+
   const result = await wallet.service.listProposals({
     types: availableDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
-    created_dt: { fromDt: filters.value.created.from, toDt: filters.value.created.to },
-    expiration_dt: { fromDt: filters.value.expires.from, toDt: filters.value.expires.to },
+    created_dt: {
+      fromDt: convertDate(filters.value.created.from, {
+        time: 'start-of-day',
+        tz: 'local',
+      }),
+      toDt: convertDate(filters.value.created.to, {
+        time: 'end-of-day',
+        tz: 'local',
+      }),
+    },
+    expiration_dt: {
+      fromDt: convertDate(filters.value.expires.from, {
+        time: 'start-of-day',
+        tz: 'local',
+      }),
+      toDt: convertDate(filters.value.expires.to, {
+        time: 'end-of-day',
+        tz: 'local',
+      }),
+    },
     statuses: filters.value.statuses.map(status => ({ [status]: null })) as ProposalStatusCode[],
     limit: pagination.value.limit,
     offset: nextOffset,
