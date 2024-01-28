@@ -17,6 +17,7 @@ import {
   GetProposalInput,
   GetTransfersInput,
   GetUserInput,
+  ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListNotificationsInput,
   ListProposalsInput,
@@ -361,5 +362,15 @@ export class WalletService {
     }
 
     return result.Ok.proposal;
+  }
+
+  async listAccessPolicies(input: PaginationInput): Promise<ExtractOk<ListAccessPoliciesResult>> {
+    const result = await this.actor.list_access_policies(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 }

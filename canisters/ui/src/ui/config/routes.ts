@@ -22,6 +22,7 @@ export enum Routes {
   Users = 'Users',
   AddressBook = 'AddressBook',
   Initialization = 'Initialization',
+  Permissions = 'Permissions',
   // Proposal Pages
   Proposals = 'Proposals',
   TransferProposals = 'TransferProposals',
@@ -202,16 +203,62 @@ export const routes: RouteRecordRaw[] = [
           },
           {
             path: 'user-groups',
-            name: Routes.UserGroups,
-            component: () => import('~/ui/pages/UserGroupsPage.vue'),
+            component: RouterView,
             meta: {
               auth: {
                 check: {
                   session: RequiredSessionState.ConnectedToWallet,
-                  privileges: [Privilege.ListUserGroups],
+                  privileges: [Privilege.ListUserGroups, Privilege.ListAccessPolicies],
                 },
               },
             },
+            children: [
+              {
+                path: '',
+                name: Routes.UserGroups,
+                component: () => import('~/ui/pages/UserGroupsPage.vue'),
+                meta: {
+                  auth: {
+                    check: {
+                      session: RequiredSessionState.ConnectedToWallet,
+                      privileges: [Privilege.ListUserGroups],
+                    },
+                  },
+                },
+              },
+              {
+                path: 'permissions',
+                name: Routes.Permissions,
+                component: () => import('~/ui/pages/PermissionsPage.vue'),
+                props: () => {
+                  return {
+                    breadcrumbs: [
+                      {
+                        title: i18n.global.t('navigation.settings'),
+                        disabled: true,
+                      },
+                      {
+                        title: i18n.global.t('terms.user_groups'),
+                        disabled: false,
+                        to: { name: Routes.UserGroups },
+                      },
+                      {
+                        title: i18n.global.t('navigation.permissions'),
+                        disabled: true,
+                      },
+                    ],
+                  };
+                },
+                meta: {
+                  auth: {
+                    check: {
+                      session: RequiredSessionState.ConnectedToWallet,
+                      privileges: [Privilege.ListAccessPolicies],
+                    },
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'users',

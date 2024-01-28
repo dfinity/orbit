@@ -11,7 +11,7 @@ export default {
     initial_account_name: 'Main',
     alpha_warning: 'Learn more about this alpha version. Use with caution.',
     wallet_info_card_title: '{name} Info',
-    wallet_info_card_edit_btn: 'Edit wallet name',
+    wallet_info_card_edit_btn: 'Edit wallet',
     manage_associated_wallet: 'Manage associated wallet',
     manage_associated_wallet_hint: 'These settings only apply to your user and not to the wallet.',
     user_activities_card_title: 'User Activities',
@@ -23,6 +23,7 @@ export default {
     request_pending_message: 'Your request was created and is pending for approval.',
     request_adopted_message: 'This request has been accepted and is being processed.',
     request_rejected_message: 'This request has been rejected.',
+    request_completed_message: 'This request has been completed.',
     user_status_active: 'Active',
     user_status_inactive: 'Inactive',
     add_new_principal: 'Add new principal',
@@ -337,6 +338,7 @@ export default {
     logout: 'Logout',
     proposals: 'Requests',
     transfer_proposals: 'Transfer Requests',
+    permissions: 'Permissions',
   },
   pages: {
     user_settings: {
@@ -372,6 +374,9 @@ export default {
     proposals: {
       title: 'Requests',
       transfer_title: 'Transfer Requests',
+    },
+    permissions: {
+      title: 'Permissions',
     },
   },
   session: {

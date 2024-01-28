@@ -11,7 +11,7 @@ export default {
     initial_account_name: 'Principal',
     alpha_warning: 'Descubra mais sobre esta versão alfa, por favor, utilize com cuidado.',
     wallet_info_card_title: '{name} Informaçōes',
-    wallet_info_card_edit_btn: 'Editar nome da carteira',
+    wallet_info_card_edit_btn: 'Editar carteira',
     manage_associated_wallet: 'Gerenciar carteira associada',
     manage_associated_wallet_hint:
       'Qualquer modificação apenas serão aplicadas a sua conta de usuário.',
@@ -337,6 +337,7 @@ export default {
     logout: 'Sair',
     proposals: 'Pedidos',
     transfer_proposals: 'Pedidos de transferência',
+    permissions: 'Permissões',
   },
   pages: {
     user_settings: {
@@ -374,6 +375,9 @@ export default {
     proposals: {
       title: 'Pedidos',
       transfer_title: 'Pedidos de transferência',
+    },
+    permissions: {
+      title: 'Permissões',
     },
   },
   session: {
