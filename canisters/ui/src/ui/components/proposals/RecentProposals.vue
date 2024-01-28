@@ -12,15 +12,13 @@
         flat
         :loading="data && data.proposals.length > 0 ? false : loading"
         rounded
+        v-bind="$attrs"
       >
-        <VCardTitle v-if="title && title.length" class="text-h6">
-          {{ props.title }}
-        </VCardTitle>
         <VCardText class="py-0">
           <VList bg-color="transparent">
             <VListItem class="px-1">
               <VListItemTitle class="text-body-2 font-weight-bold">
-                {{ $t('terms.requests') }}
+                {{ title && title.length ? title : $t('terms.requests') }}
                 <VBadge
                   v-if="data && Number(data.total) - data.proposals.length > 0"
                   :content="`+ ${Number(data.total) - data.proposals.length}`"
