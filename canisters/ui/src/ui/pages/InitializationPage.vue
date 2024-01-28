@@ -20,7 +20,8 @@ import { Principal } from '@dfinity/principal';
 import { onMounted, ref } from 'vue';
 import { logger, wait } from '~/core';
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { defaultHomeRoute, router, services } from '~/ui/modules';
+import { defaultHomeRoute } from '~/ui/config/routes';
+import { router, services } from '~/ui/modules';
 import { useSessionStore } from '~/ui/stores/session';
 import { createUserInitialAccount, useWalletStore } from '~/ui/stores/wallet';
 

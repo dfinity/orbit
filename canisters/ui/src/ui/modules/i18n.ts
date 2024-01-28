@@ -26,7 +26,11 @@ const routeGuard: NavigationGuard = async (to, _from, next) => {
   const paramLocale = to.params.locale ? String(to.params.locale) : undefined;
   const app = useAppStore();
   if (!paramLocale) {
-    return next(`/${app.locale}${to.path === '/' ? '' : to.path}`);
+    return next({
+      path: `/${app.locale}${to.path === '/' ? '' : to.path}`,
+      query: to.query,
+      hash: to.hash,
+    });
   }
 
   if (services().locales.isSupportedLocale(paramLocale)) {
@@ -34,7 +38,11 @@ const routeGuard: NavigationGuard = async (to, _from, next) => {
   }
 
   if (!services().locales.isSupportedLocale(paramLocale)) {
-    return next(`/${app.locale}`);
+    return next({
+      path: `/${app.locale}`,
+      query: to.query,
+      hash: to.hash,
+    });
   }
 
   return next();

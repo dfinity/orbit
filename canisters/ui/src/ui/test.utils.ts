@@ -1,8 +1,21 @@
-import { mount as componentMount, ComponentMountingOptions } from '@vue/test-utils';
-import { vi } from 'vitest';
-import { Component, createApp } from 'vue';
-import { i18n, navigation, serviceManager, vuetify } from '~/ui/modules';
+/* eslint-disable vue/one-component-per-file */
 import { createTestingPinia } from '@pinia/testing';
+import { mount as componentMount, ComponentMountingOptions } from '@vue/test-utils';
+import { Component, ComponentPublicInstance, createApp, defineComponent } from 'vue';
+import { createMemoryHistory, createRouter } from 'vue-router';
+import { i18n, navigation, serviceManager, vuetify } from '~/ui/modules';
+
+const mockRouter = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    {
+      path: '/:pathMatch(.*)*',
+      component: defineComponent({
+        template: '<div><slot></slot></div>',
+      }),
+    },
+  ],
+});
 
 export const mount = <T extends Component>(
   component: T,
@@ -15,28 +28,38 @@ export const mount = <T extends Component>(
     ...options,
     global: {
       ...options.global,
-      plugins: [createTestingPinia(), vuetify, i18n, serviceManager, navigation, ...plugins],
+      plugins: [
+        createTestingPinia(),
+        vuetify,
+        i18n,
+        serviceManager,
+        navigation,
+        mockRouter,
+        ...plugins,
+      ],
       mocks: {
-        $router: {
-          push: vi.fn(),
-        },
         ...mocks,
       },
     },
   });
 };
 
-export function loadComposable<T>(loader: () => T): [T, ReturnType<typeof createApp>] {
-  let result: T;
-
+export const setupComponent = <Props, RawBindings>(
+  setupFunction: () => RawBindings,
+): ComponentPublicInstance<Props, RawBindings> => {
   const app = createApp({
-    setup() {
-      result = loader();
-      return () => {};
-    },
+    setup: setupFunction,
+    template: '<div></div>',
   });
 
-  app.mount(document.createElement('div'));
+  app.use(createTestingPinia());
+  app.use(mockRouter);
+  app.use(vuetify);
+  app.use(i18n);
+  app.use(serviceManager);
+  app.use(navigation);
 
-  return [result!, app];
-}
+  const container = document.createElement('div');
+
+  return app.mount(container) as ComponentPublicInstance<Props, RawBindings>;
+};

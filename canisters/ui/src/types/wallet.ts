@@ -24,6 +24,16 @@ export enum WalletProposalType {
   Unknown = 'Unknown',
 }
 
+export enum ProposalStatusEnum {
+  Created = 'Created',
+  Adopted = 'Adopted',
+  Rejected = 'Rejected',
+  Completed = 'Completed',
+  Failed = 'Failed',
+  Scheduled = 'Scheduled',
+  Processing = 'Processing',
+}
+
 export enum Privilege {
   AddUserGroup = 'AddUserGroup',
   ListUserGroups = 'ListUserGroups',
@@ -35,6 +45,8 @@ export enum Privilege {
   ListAccessPolicies = 'ListAccessPolicies',
   AddAccessPolicy = 'AddAccessPolicy',
   AddAccount = 'AddAccount',
+  ListAddressBookEntries = 'ListAddressBookEntries',
+  AddAddressBookEntry = 'AddAddressBookEntry',
 }
 
 export interface UserInput {
@@ -76,4 +88,13 @@ export interface ListProposalsArgs {
     | {
         lastModified: SortDirection;
       };
+}
+
+export enum ProposalDomains {
+  All = 'all',
+  Accounts = 'accounts',
+  AddressBook = 'address_book',
+  Transfers = 'transfers',
+  Users = 'users',
+  System = 'system',
 }

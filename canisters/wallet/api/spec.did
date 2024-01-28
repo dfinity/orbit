@@ -1446,6 +1446,8 @@ type UserPrivilege = variant {
   AddAccessPolicy;
   ListProposalPolicies;
   AddProposalPolicy;
+  ListAddressBookEntries;
+  AddAddressBookEntry;
 };
 
 type MeResult = variant {

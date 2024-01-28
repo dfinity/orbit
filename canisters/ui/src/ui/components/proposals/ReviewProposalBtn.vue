@@ -37,6 +37,7 @@ import { useWalletStore } from '~/ui/stores/wallet';
 import { logger } from '~/core';
 import { useAppStore } from '~/ui/stores/app';
 import { i18n } from '~/ui/modules';
+import { watch } from 'vue';
 
 const wallet = useWalletStore();
 const app = useAppStore();
@@ -61,6 +62,17 @@ const emit = defineEmits<{
 }>();
 
 const open = ref(false);
+
+watch(
+  () => open.value,
+  open => {
+    if (open) {
+      emit('opened');
+    } else {
+      emit('closed');
+    }
+  },
+);
 
 const onVote = async (approve: boolean, reason?: string): Promise<void> => {
   voting.value = true;

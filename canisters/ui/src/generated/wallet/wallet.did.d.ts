@@ -621,9 +621,11 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUsers' : null } |
   { 'AddProposalPolicy' : null } |
   { 'ListProposalPolicies' : null } |
+  { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
   { 'ListAccessPolicies' : null } |
   { 'AddAccessPolicy' : null } |
+  { 'ListAddressBookEntries' : null } |
   { 'AddAccount' : null };
 export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
