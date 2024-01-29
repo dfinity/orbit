@@ -536,22 +536,16 @@ export interface RemoveUserGroupOperation {
   'input' : RemoveUserGroupOperationInput,
 }
 export interface RemoveUserGroupOperationInput { 'user_group_id' : UUID }
-export type ResourceSpecifier = { 'Proposal' : ProposalActionSpecifier } |
+export type ResourceSpecifier = { 'User' : CommonActionSpecifier } |
+  { 'ProposalPolicy' : CommonActionSpecifier } |
+  { 'Account' : CommonActionSpecifier } |
+  { 'AddressBook' : CommonActionSpecifier } |
+  { 'Proposal' : ProposalActionSpecifier } |
   { 'ChangeCanister' : ChangeCanisterActionSpecifier } |
+  { 'AccessPolicy' : CommonActionSpecifier } |
   { 'Transfer' : TransferActionSpecifier } |
-  { 'CanisterSettings' : CanisterSettingsActionSpecifier } |
-  {
-    'Common' : {
-      'action' : CommonActionSpecifier,
-      'resource_type' : ResourceType,
-    }
-  };
-export type ResourceType = { 'User' : null } |
-  { 'ProposalPolicy' : null } |
-  { 'Account' : null } |
-  { 'AddressBook' : null } |
-  { 'AccessPolicy' : null } |
-  { 'UserGroup' : null };
+  { 'UserGroup' : CommonActionSpecifier } |
+  { 'CanisterSettings' : CanisterSettingsActionSpecifier };
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export type TimestampRFC3339 = string;

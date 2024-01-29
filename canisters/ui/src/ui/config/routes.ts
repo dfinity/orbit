@@ -147,12 +147,10 @@ export const routes: RouteRecordRaw[] = [
             breadcrumbs: [
               {
                 title: i18n.global.t('navigation.proposals'),
-                disabled: false,
                 to: { name: Routes.Proposals },
               },
               {
                 title: i18n.global.t('navigation.transfer_proposals'),
-                disabled: true,
               },
             ],
           };
@@ -235,16 +233,13 @@ export const routes: RouteRecordRaw[] = [
                     breadcrumbs: [
                       {
                         title: i18n.global.t('navigation.settings'),
-                        disabled: true,
                       },
                       {
                         title: i18n.global.t('terms.user_groups'),
-                        disabled: false,
                         to: { name: Routes.UserGroups },
                       },
                       {
                         title: i18n.global.t('navigation.permissions'),
-                        disabled: true,
                       },
                     ],
                   };
@@ -283,11 +278,9 @@ export const routes: RouteRecordRaw[] = [
                 breadcrumbs: [
                   {
                     title: i18n.global.t('navigation.settings'),
-                    disabled: true,
                   },
                   {
                     title: i18n.global.t('navigation.proposals'),
-                    disabled: true,
                   },
                 ],
               };

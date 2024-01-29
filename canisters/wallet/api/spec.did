@@ -1280,16 +1280,6 @@ type CommonActionSpecifier = variant {
   Delete : CommonSpecifier;
 };
 
-// The access control resource type, used to specify the type of the resource that is being accessed.
-type ResourceType = variant {
-  Account;
-  User;
-  UserGroup;
-  AddressBook;
-  AccessPolicy;
-  ProposalPolicy;
-};
-
 // The actions that are available for canister changes.
 type ChangeCanisterActionSpecifier = variant {
   Create;
@@ -1326,12 +1316,12 @@ type ResourceSpecifier = variant {
   ChangeCanister : ChangeCanisterActionSpecifier;
   CanisterSettings : CanisterSettingsActionSpecifier;
   Proposal : ProposalActionSpecifier;
-  Common : record {
-    // The type of the resource.
-    resource_type : ResourceType;
-    // The action that is performed on the resource.
-    action : CommonActionSpecifier;
-  };
+  Account : CommonActionSpecifier ;
+  User : CommonActionSpecifier;
+  UserGroup : CommonActionSpecifier;
+  AddressBook : CommonActionSpecifier;
+  AccessPolicy : CommonActionSpecifier;
+  ProposalPolicy : CommonActionSpecifier;
 };
 
 // The access control policy, used to specify the access control rules for

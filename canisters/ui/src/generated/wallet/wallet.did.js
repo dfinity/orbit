@@ -46,6 +46,13 @@ export const idlFactory = ({ IDL }) => {
     'Any' : IDL.Null,
     'Group' : IDL.Vec(UUID),
   });
+  const CommonActionSpecifier = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : CommonSpecifier,
+    'Delete' : CommonSpecifier,
+    'Create' : IDL.Null,
+    'Update' : CommonSpecifier,
+  });
   const ProposalActionSpecifier = IDL.Variant({
     'List' : IDL.Null,
     'Read' : CommonSpecifier,
@@ -61,30 +68,17 @@ export const idlFactory = ({ IDL }) => {
     'Read' : IDL.Null,
     'ReadConfig' : IDL.Null,
   });
-  const CommonActionSpecifier = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : CommonSpecifier,
-    'Delete' : CommonSpecifier,
-    'Create' : IDL.Null,
-    'Update' : CommonSpecifier,
-  });
-  const ResourceType = IDL.Variant({
-    'User' : IDL.Null,
-    'ProposalPolicy' : IDL.Null,
-    'Account' : IDL.Null,
-    'AddressBook' : IDL.Null,
-    'AccessPolicy' : IDL.Null,
-    'UserGroup' : IDL.Null,
-  });
   const ResourceSpecifier = IDL.Variant({
+    'User' : CommonActionSpecifier,
+    'ProposalPolicy' : CommonActionSpecifier,
+    'Account' : CommonActionSpecifier,
+    'AddressBook' : CommonActionSpecifier,
     'Proposal' : ProposalActionSpecifier,
     'ChangeCanister' : ChangeCanisterActionSpecifier,
+    'AccessPolicy' : CommonActionSpecifier,
     'Transfer' : TransferActionSpecifier,
+    'UserGroup' : CommonActionSpecifier,
     'CanisterSettings' : CanisterSettingsActionSpecifier,
-    'Common' : IDL.Record({
-      'action' : CommonActionSpecifier,
-      'resource_type' : ResourceType,
-    }),
   });
   const AccessControlUserSpecifier = CommonSpecifier;
   const EditAccessPolicyOperationInput = IDL.Record({

@@ -143,6 +143,12 @@ export const useWalletStore = defineStore('wallet', {
         notifications: this.notifications.items.length,
       };
     },
+    userGroup: (state): ((id: UUID) => string) => {
+      return (id: UUID): string => {
+        const group = state.configuration.details.user_groups.find(group => group.id === id);
+        return group ? group.name : '-';
+      };
+    },
     supportedAssets(): WalletAsset[] {
       return this.configuration.details?.supported_assets ?? [];
     },

@@ -385,4 +385,22 @@ export default {
     expired_dialog_content: 'Você deve se reautenticar para continuar.',
     expired_dialog_btn: 'Reautenticar',
   },
+  permissions: {
+    resource_title: 'Recurso',
+    group_members_title: 'Membros do grupo',
+    specific_users_title: 'Usuários específicos',
+    everyone_title: 'Todos',
+    resources: {
+      account: 'Conta',
+      user: 'Usuário',
+      usergroup: 'Grupo de usuários',
+    },
+    actions: {
+      list: 'Listar',
+      create: 'Criar',
+      read: 'Ler',
+      update: 'Atualizar',
+      delete: 'Remover',
+    },
+  },
 };

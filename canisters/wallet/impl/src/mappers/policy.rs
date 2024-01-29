@@ -10,9 +10,7 @@ use crate::models::{
     ProposalPolicy,
 };
 use uuid::Uuid;
-use wallet_api::{
-    CriteriaDTO, ResourceSpecifierCommonArgsDTO, TransferSpecifierDTO, UserSpecifierDTO,
-};
+use wallet_api::{CriteriaDTO, TransferSpecifierDTO, UserSpecifierDTO};
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
@@ -109,28 +107,34 @@ impl From<AccessControlPolicy> for wallet_api::AccessPolicyDTO {
 impl From<ResourceSpecifier> for wallet_api::ResourceSpecifierDTO {
     fn from(specifier: ResourceSpecifier) -> Self {
         match specifier {
-            ResourceSpecifier::Transfer(transfer_action_specifier) => {
-                wallet_api::ResourceSpecifierDTO::Transfer(transfer_action_specifier.into())
+            ResourceSpecifier::Transfer(action) => {
+                wallet_api::ResourceSpecifierDTO::Transfer(action.into())
             }
-            ResourceSpecifier::Proposal(proposal_action_specifier) => {
-                wallet_api::ResourceSpecifierDTO::Proposal(proposal_action_specifier.into())
+            ResourceSpecifier::Proposal(action) => {
+                wallet_api::ResourceSpecifierDTO::Proposal(action.into())
             }
-            ResourceSpecifier::CanisterSettings(canister_settings_action_specifier) => {
-                wallet_api::ResourceSpecifierDTO::CanisterSettings(
-                    canister_settings_action_specifier.into(),
-                )
+            ResourceSpecifier::CanisterSettings(action) => {
+                wallet_api::ResourceSpecifierDTO::CanisterSettings(action.into())
             }
-            ResourceSpecifier::ChangeCanister(change_canister_action_specifier) => {
-                wallet_api::ResourceSpecifierDTO::ChangeCanister(
-                    change_canister_action_specifier.into(),
-                )
+            ResourceSpecifier::ChangeCanister(action) => {
+                wallet_api::ResourceSpecifierDTO::ChangeCanister(action.into())
             }
-            ResourceSpecifier::Common(resource, action) => {
-                wallet_api::ResourceSpecifierDTO::Common(ResourceSpecifierCommonArgsDTO {
-                    resource_type: resource.into(),
-                    action: action.into(),
-                })
-            }
+            ResourceSpecifier::Common(resource, action) => match resource {
+                ResourceType::Account => wallet_api::ResourceSpecifierDTO::Account(action.into()),
+                ResourceType::User => wallet_api::ResourceSpecifierDTO::User(action.into()),
+                ResourceType::UserGroup => {
+                    wallet_api::ResourceSpecifierDTO::UserGroup(action.into())
+                }
+                ResourceType::AddressBook => {
+                    wallet_api::ResourceSpecifierDTO::AddressBook(action.into())
+                }
+                ResourceType::AccessPolicy => {
+                    wallet_api::ResourceSpecifierDTO::AccessPolicy(action.into())
+                }
+                ResourceType::ProposalPolicy => {
+                    wallet_api::ResourceSpecifierDTO::ProposalPolicy(action.into())
+                }
+            },
         }
     }
 }
@@ -138,20 +142,35 @@ impl From<ResourceSpecifier> for wallet_api::ResourceSpecifierDTO {
 impl From<wallet_api::ResourceSpecifierDTO> for ResourceSpecifier {
     fn from(dto: wallet_api::ResourceSpecifierDTO) -> Self {
         match dto {
-            wallet_api::ResourceSpecifierDTO::Transfer(transfer_action_specifier) => {
-                ResourceSpecifier::Transfer(transfer_action_specifier.into())
+            wallet_api::ResourceSpecifierDTO::Transfer(action) => {
+                ResourceSpecifier::Transfer(action.into())
             }
-            wallet_api::ResourceSpecifierDTO::Proposal(proposal_action_specifier) => {
-                ResourceSpecifier::Proposal(proposal_action_specifier.into())
+            wallet_api::ResourceSpecifierDTO::Proposal(action) => {
+                ResourceSpecifier::Proposal(action.into())
             }
-            wallet_api::ResourceSpecifierDTO::CanisterSettings(
-                canister_settings_action_specifier,
-            ) => ResourceSpecifier::CanisterSettings(canister_settings_action_specifier.into()),
-            wallet_api::ResourceSpecifierDTO::ChangeCanister(change_canister_action_specifier) => {
-                ResourceSpecifier::ChangeCanister(change_canister_action_specifier.into())
+            wallet_api::ResourceSpecifierDTO::CanisterSettings(action) => {
+                ResourceSpecifier::CanisterSettings(action.into())
             }
-            wallet_api::ResourceSpecifierDTO::Common(args) => {
-                ResourceSpecifier::Common(args.resource_type.into(), args.action.into())
+            wallet_api::ResourceSpecifierDTO::ChangeCanister(action) => {
+                ResourceSpecifier::ChangeCanister(action.into())
+            }
+            wallet_api::ResourceSpecifierDTO::Account(action) => {
+                ResourceSpecifier::Common(ResourceType::Account, action.into())
+            }
+            wallet_api::ResourceSpecifierDTO::User(action) => {
+                ResourceSpecifier::Common(ResourceType::User, action.into())
+            }
+            wallet_api::ResourceSpecifierDTO::UserGroup(action) => {
+                ResourceSpecifier::Common(ResourceType::UserGroup, action.into())
+            }
+            wallet_api::ResourceSpecifierDTO::AddressBook(action) => {
+                ResourceSpecifier::Common(ResourceType::AddressBook, action.into())
+            }
+            wallet_api::ResourceSpecifierDTO::AccessPolicy(action) => {
+                ResourceSpecifier::Common(ResourceType::AccessPolicy, action.into())
+            }
+            wallet_api::ResourceSpecifierDTO::ProposalPolicy(action) => {
+                ResourceSpecifier::Common(ResourceType::ProposalPolicy, action.into())
             }
         }
     }

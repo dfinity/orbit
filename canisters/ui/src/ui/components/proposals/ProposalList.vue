@@ -28,7 +28,7 @@
           @opened="$emit('opened', proposal)"
           @closed="$emit('closed', proposal)"
         />
-        <tr v-if="!props.proposals.length">
+        <tr v-if="!props.proposals.length && !props.hideNotFound">
           <td colspan="3" class="bb-none" data-test-id="proposals-empty-list">
             {{ props.notFoundText }}
           </td>
@@ -49,7 +49,7 @@
       @opened="$emit('opened', proposal)"
       @closed="$emit('closed', proposal)"
     />
-    <VListItem v-if="!props.proposals.length">
+    <VListItem v-if="!props.proposals.length && !props.hideNotFound">
       {{ props.notFoundText }}
     </VListItem>
   </VList>
@@ -68,11 +68,13 @@ const props = withDefaults(
     hideHeaders?: boolean;
     notFoundText?: string;
     loading?: boolean;
+    hideNotFound?: boolean;
   }>(),
   {
     hideHeaders: false,
     notFoundText: i18n.global.t('proposals.no_results_found'),
     loading: false,
+    hideNotFound: false,
   },
 );
 

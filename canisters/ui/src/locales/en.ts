@@ -384,4 +384,22 @@ export default {
     expired_dialog_content: 'You must reauthenticate to continue.',
     expired_dialog_btn: 'Reauthenticate',
   },
+  permissions: {
+    resource_title: 'Resource',
+    group_members_title: 'Members of groups',
+    specific_users_title: 'Specific users',
+    everyone_title: 'Everyone',
+    resources: {
+      account: 'Account',
+      user: 'User',
+      usergroup: 'User Group',
+    },
+    actions: {
+      list: 'List',
+      create: 'Create',
+      read: 'Read',
+      update: 'Update',
+      delete: 'Delete',
+    },
+  },
 };
