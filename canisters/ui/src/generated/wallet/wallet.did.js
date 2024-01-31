@@ -108,6 +108,23 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'user_group_id' : UUID,
   });
+  const RemoveAddressBookEntryOperationInput = IDL.Record({
+    'address_book_entry_id' : UUID,
+  });
+  const AddressBookMetadata = IDL.Record({
+    'key' : IDL.Text,
+    'value' : IDL.Text,
+  });
+  const ChangeAddressBookMetadata = IDL.Variant({
+    'OverrideSpecifiedBy' : IDL.Vec(AddressBookMetadata),
+    'RemoveKeys' : IDL.Vec(IDL.Text),
+    'ReplaceAllBy' : IDL.Vec(AddressBookMetadata),
+  });
+  const EditAddressBookEntryOperationInput = IDL.Record({
+    'change_metadata' : IDL.Opt(ChangeAddressBookMetadata),
+    'address_book_entry_id' : UUID,
+    'address_owner' : IDL.Opt(IDL.Text),
+  });
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -122,12 +139,15 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : CommonSpecifier,
     'AddUser' : IDL.Null,
     'EditUserGroup' : CommonSpecifier,
+    'RemoveAddressBookEntry' : CommonSpecifier,
+    'EditAddressBookEntry' : CommonSpecifier,
     'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditProposalPolicy' : CommonSpecifier,
     'EditUser' : UserSpecifier,
     'Transfer' : TransferSpecifier,
     'EditAccount' : AccountSpecifier,
+    'AddAddressBookEntry' : IDL.Null,
     'AddAccessPolicy' : IDL.Null,
     'RemoveAccessPolicy' : CommonSpecifier,
     'RemoveUserGroup' : CommonSpecifier,
@@ -190,6 +210,13 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'policies' : IDL.Opt(AccountPolicies),
   });
+  const AddAddressBookEntryOperationInput = IDL.Record({
+    'metadata' : IDL.Vec(AddressBookMetadata),
+    'blockchain' : IDL.Text,
+    'address' : IDL.Text,
+    'address_owner' : IDL.Text,
+    'standard' : IDL.Text,
+  });
   const AddAccessPolicyOperationInput = IDL.Record({
     'resource' : ResourceSpecifier,
     'user' : AccessControlUserSpecifier,
@@ -211,12 +238,15 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput,
     'AddUser' : AddUserOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
+    'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
+    'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'AddProposalPolicy' : AddProposalPolicyOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
     'EditProposalPolicy' : EditProposalPolicyOperationInput,
     'EditUser' : EditUserOperationInput,
     'Transfer' : TransferOperationInput,
     'EditAccount' : EditAccountOperationInput,
+    'AddAddressBookEntry' : AddAddressBookEntryOperationInput,
     'AddAccessPolicy' : AddAccessPolicyOperationInput,
     'RemoveAccessPolicy' : RemoveAccessPolicyOperationInput,
     'RemoveUserGroup' : RemoveUserGroupOperationInput,
@@ -248,6 +278,10 @@ export const idlFactory = ({ IDL }) => {
     'status_reason' : IDL.Opt(IDL.Text),
     'decided_at' : TimestampRFC3339,
   });
+  const ProposalInfo = IDL.Record({
+    'can_vote' : IDL.Bool,
+    'proposer_name' : IDL.Opt(IDL.Text),
+  });
   const EditAccessPolicyOperation = IDL.Record({
     'input' : EditAccessPolicyOperationInput,
   });
@@ -272,6 +306,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
+  });
+  const RemoveAddressBookEntryOperation = IDL.Record({
+    'input' : RemoveAddressBookEntryOperationInput,
+  });
+  const EditAddressBookEntryOperation = IDL.Record({
+    'input' : EditAddressBookEntryOperationInput,
   });
   const ProposalPolicy = IDL.Record({
     'id' : UUID,
@@ -316,6 +356,19 @@ export const idlFactory = ({ IDL }) => {
   const EditAccountOperation = IDL.Record({
     'input' : EditAccountOperationInput,
   });
+  const AddressBookEntry = IDL.Record({
+    'id' : UUID,
+    'metadata' : IDL.Vec(AddressBookMetadata),
+    'blockchain' : IDL.Text,
+    'address' : IDL.Text,
+    'last_modification_timestamp' : IDL.Text,
+    'address_owner' : IDL.Text,
+    'standard' : IDL.Text,
+  });
+  const AddAddressBookEntryOperation = IDL.Record({
+    'address_book_entry' : IDL.Opt(AddressBookEntry),
+    'input' : AddAddressBookEntryOperationInput,
+  });
   const AccessPolicy = IDL.Record({
     'id' : UUID,
     'resource' : ResourceSpecifier,
@@ -341,12 +394,15 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : RemoveProposalPolicyOperation,
     'AddUser' : AddUserOperation,
     'EditUserGroup' : EditUserGroupOperation,
+    'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
+    'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'AddProposalPolicy' : AddProposalPolicyOperation,
     'ChangeCanister' : ChangeCanisterOperation,
     'EditProposalPolicy' : EditProposalPolicyOperation,
     'EditUser' : EditUserOperation,
     'Transfer' : TransferOperation,
     'EditAccount' : EditAccountOperation,
+    'AddAddressBookEntry' : AddAddressBookEntryOperation,
     'AddAccessPolicy' : AddAccessPolicyOperation,
     'RemoveAccessPolicy' : RemoveAccessPolicyOperation,
     'RemoveUserGroup' : RemoveUserGroupOperation,
@@ -359,6 +415,7 @@ export const idlFactory = ({ IDL }) => {
     'execution_plan' : ProposalExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
     'votes' : IDL.Vec(ProposalVote),
+    'info' : ProposalInfo,
     'created_at' : TimestampRFC3339,
     'summary' : IDL.Opt(IDL.Text),
     'operation' : ProposalOperation,
@@ -393,19 +450,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetAddressBookEntryInput = IDL.Record({
     'address_book_entry_id' : UUID,
-  });
-  const AddressBookMetadata = IDL.Record({
-    'key' : IDL.Text,
-    'value' : IDL.Text,
-  });
-  const AddressBookEntry = IDL.Record({
-    'id' : UUID,
-    'metadata' : IDL.Vec(AddressBookMetadata),
-    'blockchain' : IDL.Text,
-    'address' : IDL.Text,
-    'last_modification_timestamp' : IDL.Text,
-    'address_owner' : IDL.Text,
-    'standard' : IDL.Text,
   });
   const GetAddressBookEntryResult = IDL.Variant({
     'Ok' : IDL.Record({ 'address_book_entry' : AddressBookEntry }),
@@ -545,12 +589,15 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'RemoveAddressBookEntry' : IDL.Null,
+    'EditAddressBookEntry' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditProposalPolicy' : IDL.Null,
     'EditUser' : IDL.Null,
     'Transfer' : IDL.Null,
     'EditAccount' : IDL.Null,
+    'AddAddressBookEntry' : IDL.Null,
     'AddAccessPolicy' : IDL.Null,
     'RemoveAccessPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
@@ -609,12 +656,15 @@ export const idlFactory = ({ IDL }) => {
     'RemoveProposalPolicy' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'RemoveAddressBookEntry' : IDL.Null,
+    'EditAddressBookEntry' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditProposalPolicy' : IDL.Null,
     'EditUser' : IDL.Null,
     'Transfer' : IDL.Opt(UUID),
     'EditAccount' : IDL.Null,
+    'AddAddressBookEntry' : IDL.Null,
     'AddAccessPolicy' : IDL.Null,
     'RemoveAccessPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
@@ -668,9 +718,11 @@ export const idlFactory = ({ IDL }) => {
     'ListUsers' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
     'ListProposalPolicies' : IDL.Null,
+    'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
     'ListAccessPolicies' : IDL.Null,
     'AddAccessPolicy' : IDL.Null,
+    'ListAddressBookEntries' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const MeResult = IDL.Variant({

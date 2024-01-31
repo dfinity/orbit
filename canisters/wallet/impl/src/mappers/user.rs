@@ -78,7 +78,7 @@ impl From<UserDTO> for User {
     }
 }
 
-pub const USER_PRIVILEGES: [UserPrivilege; 10] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 12] = [
     UserPrivilege::ListUsers,
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
@@ -89,6 +89,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 10] = [
     UserPrivilege::AddProposalPolicy,
     UserPrivilege::ListUserGroups,
     UserPrivilege::AddUserGroup,
+    UserPrivilege::ListAddressBookEntries,
+    UserPrivilege::AddAddressBookEntry,
 ];
 
 impl From<UserPrivilege> for ResourceSpecifier {
@@ -124,6 +126,12 @@ impl From<UserPrivilege> for ResourceSpecifier {
             }
             UserPrivilege::AddUserGroup => {
                 ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::Create)
+            }
+            UserPrivilege::ListAddressBookEntries => {
+                ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::List)
+            }
+            UserPrivilege::AddAddressBookEntry => {
+                ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::Create)
             }
         }
     }

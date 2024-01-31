@@ -1,6 +1,6 @@
 import { NavigationGuard, createRouter, createWebHistory } from 'vue-router';
-import { routes, Routes } from '~/ui/config/routes';
-import { initStateGuard } from '~/ui/modules';
+import { routes, Routes, defaultLoginRoute, defaultHomeRoute } from '~/ui/config/routes';
+import { initStateGuard } from '~/ui/modules/pinia';
 import { useSessionStore } from '~/ui/stores/session';
 import { RequiredSessionState } from '~/ui/types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/ui/utils/auth';
@@ -8,8 +8,6 @@ import { i18nRouteGuard } from './i18n';
 import { services } from './services';
 
 export const redirectToKey = 'redirectTo';
-export const defaultLoginRoute = Routes.Login;
-export const defaultHomeRoute = Routes.Overview;
 
 const router = createRouter({
   history: createWebHistory(services().routes.baseUrl),

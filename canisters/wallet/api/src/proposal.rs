@@ -3,14 +3,16 @@ use super::{
 };
 use crate::{
     AddAccessPolicyOperationDTO, AddAccessPolicyOperationInput, AddAccountOperationDTO,
-    AddAccountOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
-    AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
-    ChangeCanisterOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
-    EditAccessPolicyOperationInput, EditAccountOperationDTO, EditUserGroupOperationDTO,
-    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInput,
-    ProposalPolicyDTO, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
-    RemoveAccessPolicyOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
-    SortDirection, UuidDTO,
+    AddAccountOperationInput, AddAddressBookEntryOperationDTO, AddAddressBookEntryOperationInput,
+    AddUserGroupOperationDTO, AddUserGroupOperationInput, AddUserOperationDTO,
+    AddUserOperationInput, ChangeCanisterOperationDTO, ChangeCanisterOperationInput, CriteriaDTO,
+    EditAccessPolicyOperationDTO, EditAccessPolicyOperationInput, EditAccountOperationDTO,
+    EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
+    EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
+    EditUserOperationInput, PaginationInput, ProposalPolicyDTO, ProposalSpecifierDTO,
+    RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
+    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -55,6 +57,9 @@ pub enum ProposalOperationDTO {
     Transfer(Box<TransferOperationDTO>),
     AddAccount(Box<AddAccountOperationDTO>),
     EditAccount(Box<EditAccountOperationDTO>),
+    AddAddressBookEntry(Box<AddAddressBookEntryOperationDTO>),
+    EditAddressBookEntry(Box<EditAddressBookEntryOperationDTO>),
+    RemoveAddressBookEntry(Box<RemoveAddressBookEntryOperationDTO>),
     AddUser(Box<AddUserOperationDTO>),
     EditUser(Box<EditUserOperationDTO>),
     AddUserGroup(Box<AddUserGroupOperationDTO>),
@@ -74,6 +79,9 @@ pub enum ProposalOperationInput {
     Transfer(TransferOperationInput),
     AddAccount(AddAccountOperationInput),
     EditAccount(EditAccountOperationInput),
+    AddAddressBookEntry(AddAddressBookEntryOperationInput),
+    EditAddressBookEntry(EditAddressBookEntryOperationInput),
+    RemoveAddressBookEntry(RemoveAddressBookEntryOperationInput),
     AddUser(AddUserOperationInput),
     EditUser(EditUserOperationInput),
     AddUserGroup(AddUserGroupOperationInput),
@@ -93,6 +101,9 @@ pub enum ProposalOperationTypeDTO {
     Transfer,
     AddAccount,
     EditAccount,
+    AddAddressBookEntry,
+    EditAddressBookEntry,
+    RemoveAddressBookEntry,
     AddUser,
     EditUser,
     AddUserGroup,
@@ -116,6 +127,12 @@ pub struct ProposalVoteDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalInfoDTO {
+    pub can_vote: bool,
+    pub proposer_name: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalDTO {
     pub id: UuidDTO,
     pub title: String,
@@ -127,6 +144,7 @@ pub struct ProposalDTO {
     pub status: ProposalStatusDTO,
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: ProposalExecutionScheduleDTO,
+    pub info: ProposalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -164,6 +182,9 @@ pub enum ListProposalsOperationTypeDTO {
     Transfer(Option<String>),
     AddAccount,
     EditAccount,
+    AddAddressBookEntry,
+    EditAddressBookEntry,
+    RemoveAddressBookEntry,
     AddUser,
     EditUser,
     AddUserGroup,

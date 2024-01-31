@@ -11,10 +11,11 @@
 </template>
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { router } from '~/ui/modules';
+import { useRouter } from 'vue-router';
 import { useAppStore } from '~/ui/stores/app';
 
 const app = useAppStore();
+const router = useRouter();
 
 const activeLocale = computed({
   get: () => app.locale,

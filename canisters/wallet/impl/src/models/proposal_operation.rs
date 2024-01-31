@@ -16,6 +16,9 @@ pub enum ProposalOperation {
     Transfer(TransferOperation),
     AddAccount(AddAccountOperation),
     EditAccount(EditAccountOperation),
+    AddAddressBookEntry(AddAddressBookEntryOperation),
+    EditAddressBookEntry(EditAddressBookEntryOperation),
+    RemoveAddressBookEntry(RemoveAddressBookEntryOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
     AddAccessPolicy(AddAccessPolicyOperation),
@@ -119,6 +122,18 @@ pub struct EditAddressBookEntryOperationInput {
     pub address_book_entry_id: AddressBookEntryId,
     pub address_owner: Option<String>,
     pub change_metadata: Option<ChangeMetadataDTO>,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveAddressBookEntryOperation {
+    pub input: RemoveAddressBookEntryOperationInput,
+}
+
+#[stable_object]
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveAddressBookEntryOperationInput {
+    pub address_book_entry_id: AddressBookEntryId,
 }
 
 #[stable_object]

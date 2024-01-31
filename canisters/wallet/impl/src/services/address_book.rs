@@ -6,6 +6,7 @@ use crate::{
     models::{
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryId, Blockchain,
         BlockchainStandard, EditAddressBookEntryOperationInput,
+        RemoveAddressBookEntryOperationInput,
     },
     repositories::{AddressBookRepository, ADDRESS_BOOK_REPOSITORY},
 };
@@ -117,6 +118,18 @@ impl AddressBookService {
 
         self.address_book_repository
             .insert(entry.to_key(), entry.to_owned());
+
+        Ok(entry)
+    }
+
+    /// Removes an existing address book entry.
+    pub async fn remove_entry(
+        &self,
+        input: RemoveAddressBookEntryOperationInput,
+    ) -> ServiceResult<AddressBookEntry> {
+        let entry = self.get_entry_by_id(&input.address_book_entry_id)?;
+
+        self.address_book_repository.remove(&entry.to_key());
 
         Ok(entry)
     }
@@ -259,6 +272,27 @@ mod tests {
         let updated_entry = result.unwrap();
         address_book_entry.metadata = new_metadata_dto.into();
         assert_eq!(updated_entry, address_book_entry);
+    }
+
+    #[tokio::test]
+    async fn remove_entry() {
+        let ctx = setup();
+        let address_book_entry = mock_address_book_entry();
+
+        ctx.repository
+            .insert(address_book_entry.to_key(), address_book_entry.clone());
+
+        ctx.service.get_entry_by_id(&address_book_entry.id).unwrap();
+
+        let operation = RemoveAddressBookEntryOperationInput {
+            address_book_entry_id: address_book_entry.id,
+        };
+
+        ctx.service.remove_entry(operation).await.unwrap();
+
+        ctx.service
+            .get_entry_by_id(&address_book_entry.id)
+            .unwrap_err();
     }
 
     #[tokio::test]

@@ -16,7 +16,7 @@ use crate::{
             ResourceSpecifier, ResourceType, TransferActionSpecifier, UserSpecifier,
         },
         specifier::{CommonSpecifier, Match},
-        Account, Proposal, User, ADMIN_GROUP_ID,
+        Account, Proposal, User, UserStatus, ADMIN_GROUP_ID,
     },
     repositories::{
         access_control::ACCESS_CONTROL_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
@@ -481,6 +481,11 @@ impl Evaluate<bool> for AccessControlEvaluator<'_> {
                 reason: "User not found".to_string(),
             })?;
 
+        let is_user_active = user.status == UserStatus::Active;
+        if !is_user_active {
+            return Ok(false);
+        }
+
         let is_resource_owner = ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER
             .is_match((user.to_owned(), self.resource.to_owned()))
             .await
@@ -575,6 +580,49 @@ mod tests {
             finance_user,
             hr_user,
         }
+    }
+
+    #[tokio::test]
+    async fn inactive_user_has_no_access() {
+        let mut test_context = setup();
+        let mut policy = mock_access_policy();
+        policy.id = [10; 16];
+        policy.user = UserSpecifier::Id(vec![test_context.finance_user.id]);
+        policy.resource = ResourceSpecifier::Common(
+            ResourceType::Account,
+            CommonActionSpecifier::Read(CommonSpecifier::Any),
+        );
+
+        ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+
+        let ctx = CallContext::new(test_context.finance_user.identities[0]);
+
+        assert!(evaluate_caller_access(
+            &ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Read(CommonSpecifier::Any),
+            ),
+        )
+        .await
+        .is_ok());
+
+        test_context.finance_user.status = UserStatus::Inactive;
+
+        USER_REPOSITORY.insert(
+            test_context.finance_user.to_key(),
+            test_context.finance_user.clone(),
+        );
+
+        assert!(evaluate_caller_access(
+            &ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Read(CommonSpecifier::Any),
+            ),
+        )
+        .await
+        .is_err());
     }
 
     #[tokio::test]

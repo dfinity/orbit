@@ -1,19 +1,20 @@
 import { defineStore } from 'pinia';
-import { endOfDay, logger, startOfDay } from '~/core';
+import { logger } from '~/core';
 import {
+  Account,
   Error as ApiError,
   Proposal,
   ProposalStatusCode,
   TransferListItem,
-  Account,
   UUID,
 } from '~/generated/wallet/wallet.did';
-import { WalletService, ChainApiFactory } from '~/services';
-import { ChainApi, AccountIncomingTransfer } from '~/types';
+import { ChainApiFactory, WalletService } from '~/services';
+import { AccountIncomingTransfer, ChainApi } from '~/types';
 import { i18n } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { LoadableItem } from '~/ui/types';
+import { endOfDay, startOfDay } from '~/utils/date.utils';
 
 export interface AccountDetailsStoreState {
   notification: {
@@ -189,15 +190,19 @@ export const useAccountPageStore = defineStore('accountPage', {
         this.proposals.loading = true;
         this.proposals.items = await this.walletService
           .listProposals({
-            status: status ? [[status]] : [],
-            from_dt: fromDt ? [startOfDay(fromDt).toISOString()] : [],
-            to_dt: toDt ? [endOfDay(toDt).toISOString()] : [],
-            operation_type: [
+            statuses: status ? [status] : undefined,
+            created_dt:
+              fromDt || toDt
+                ? {
+                    fromDt: fromDt ? startOfDay(fromDt) : undefined,
+                    toDt: toDt ? endOfDay(toDt) : undefined,
+                  }
+                : undefined,
+            types: [
               {
                 Transfer: [this.account.id],
               },
             ],
-            user_id: [],
           })
           .then(proposals => {
             return proposals.map(proposal => {
