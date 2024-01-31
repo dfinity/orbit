@@ -1,15 +1,17 @@
 <template>
   <VSelect
+    :key="allWallets.length"
     v-model="selectedWallet"
     :loading="session.loading"
     class="wallet-selector"
+    eager
     :variant="app.isMobile ? 'filled' : 'solo'"
     density="compact"
     hide-details
     bg-color="background"
     item-value="canisterId"
     :no-data-text="$t('wallets.no_wallets')"
-    :items="session.data.wallets"
+    :items="allWallets"
   >
     <template #item="{ props, item }">
       <VListItem
@@ -20,24 +22,31 @@
     </template>
     <template #selection="{ item }">
       <VListItem
-        v-if="session.data.wallets.length"
+        v-if="allWallets.length"
         :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :prepend-icon="mdiWallet"
       />
       <VListItem v-else :title="$t('wallets.no_wallets')" :prepend-icon="mdiWallet" />
     </template>
+
+    <template #append-item>
+      <AddWalletListItem />
+    </template>
   </VSelect>
 </template>
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
-import { mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
 import { computedWalletName } from '~/ui/utils';
+import AddWalletListItem from './add-wallet/AddWalletListItem.vue';
+import { mdiWallet } from '@mdi/js';
 
 const session = useSessionStore();
 const app = useAppStore();
+
+const allWallets = computed(() => session.data.wallets);
 
 const selectedWallet = computed({
   get(): string | null {
