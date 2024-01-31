@@ -170,7 +170,6 @@ export class ResettableTimeout {
   }
 }
 
-
 // To be used in catch blocks to determine if the error is an ApiError
 export function isApiError(e: unknown): e is ApiError {
   return typeof e === 'object' && e !== null && 'code' in e && 'message' in e && 'details' in e;
