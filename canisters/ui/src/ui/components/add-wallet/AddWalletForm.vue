@@ -7,7 +7,6 @@
       <VCardText>
         <VTextField
           v-model.trim="name"
-          :rules="[]"
           :label="$t('terms.name')"
           data-test-id="add-wallet-form-name"
         />
