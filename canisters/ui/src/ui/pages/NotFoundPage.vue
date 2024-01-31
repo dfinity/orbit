@@ -20,7 +20,7 @@
 import { mdiLink } from '@mdi/js';
 import { computed } from 'vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
-import { defaultHomeRoute } from '~/ui/modules';
+import { defaultHomeRoute } from '~/ui/config/routes';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
 

@@ -51,6 +51,7 @@ export interface NavigationItem {
   name: string;
   localeKey: string;
   icon?: string;
+  exact?: boolean;
   action: NavigationAction;
   items?: NavigationItem[];
   auth: NavigastionAuth;

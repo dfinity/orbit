@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
@@ -10,10 +8,10 @@ use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
+use std::sync::Arc;
 use wallet_api::{
     CreateProposalInput, CreateProposalResponse, GetProposalInput, GetProposalResponse,
-    ListProposalsInput, ListProposalsResponse, ProposalDTO, VoteOnProposalInput,
-    VoteOnProposalResponse,
+    ListProposalsInput, ListProposalsResponse, VoteOnProposalInput, VoteOnProposalResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -63,13 +61,15 @@ impl ProposalController {
         &self,
         input: CreateProposalInput,
     ) -> ApiResult<CreateProposalResponse> {
-        let proposal = self
+        let ctx = &call_context();
+        let proposal = self.proposal_service.create_proposal(input, ctx).await?;
+        let info = self
             .proposal_service
-            .create_proposal(input, &call_context())
+            .get_proposal_info(&proposal, ctx)
             .await?;
 
         Ok(CreateProposalResponse {
-            proposal: ProposalDTO::from(proposal),
+            proposal: proposal.to_dto(info),
         })
     }
 
@@ -80,12 +80,17 @@ impl ProposalController {
         is_async = true
     )]
     async fn get_proposal(&self, input: GetProposalInput) -> ApiResult<GetProposalResponse> {
+        let ctx = &call_context();
         let proposal = self
             .proposal_service
             .get_proposal(HelperMapper::to_uuid(input.proposal_id)?.as_bytes())?;
+        let info = self
+            .proposal_service
+            .get_proposal_info(&proposal, ctx)
+            .await?;
 
         Ok(GetProposalResponse {
-            proposal: ProposalDTO::from(proposal),
+            proposal: proposal.to_dto(info),
         })
     }
 
@@ -101,9 +106,18 @@ impl ProposalController {
             .proposal_service
             .list_proposals(input, Some(&ctx))
             .await?;
+        let mut items = Vec::new();
+        for proposal in list.items {
+            let info = self
+                .proposal_service
+                .get_proposal_info(&proposal, &ctx)
+                .await?;
+
+            items.push(proposal.to_dto(info));
+        }
 
         Ok(ListProposalsResponse {
-            proposals: list.items.into_iter().map(Into::into).collect(),
+            proposals: items,
             next_offset: list.next_offset,
             total: list.total,
         })
@@ -119,13 +133,15 @@ impl ProposalController {
         &self,
         input: VoteOnProposalInput,
     ) -> ApiResult<VoteOnProposalResponse> {
-        let proposal = self
+        let ctx = &call_context();
+        let proposal = self.proposal_service.vote_on_proposal(input, ctx).await?;
+        let info = self
             .proposal_service
-            .vote_on_proposal(input, &call_context())
+            .get_proposal_info(&proposal, ctx)
             .await?;
 
         Ok(VoteOnProposalResponse {
-            proposal: ProposalDTO::from(proposal),
+            proposal: proposal.to_dto(info),
         })
     }
 }

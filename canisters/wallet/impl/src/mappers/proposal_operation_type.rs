@@ -8,6 +8,15 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::Transfer => ProposalOperationType::Transfer,
             ProposalOperationTypeDTO::AddAccount => ProposalOperationType::AddAccount,
             ProposalOperationTypeDTO::EditAccount => ProposalOperationType::EditAccount,
+            ProposalOperationTypeDTO::AddAddressBookEntry => {
+                ProposalOperationType::AddAddressBookEntry
+            }
+            ProposalOperationTypeDTO::EditAddressBookEntry => {
+                ProposalOperationType::EditAddressBookEntry
+            }
+            ProposalOperationTypeDTO::RemoveAddressBookEntry => {
+                ProposalOperationType::RemoveAddressBookEntry
+            }
             ProposalOperationTypeDTO::AddUser => ProposalOperationType::AddUser,
             ProposalOperationTypeDTO::EditUser => ProposalOperationType::EditUser,
             ProposalOperationTypeDTO::AddUserGroup => ProposalOperationType::AddUserGroup,
@@ -36,6 +45,15 @@ impl From<ProposalOperationType> for ProposalOperationTypeDTO {
             ProposalOperationType::Transfer => ProposalOperationTypeDTO::Transfer,
             ProposalOperationType::AddAccount => ProposalOperationTypeDTO::AddAccount,
             ProposalOperationType::EditAccount => ProposalOperationTypeDTO::EditAccount,
+            ProposalOperationType::AddAddressBookEntry => {
+                ProposalOperationTypeDTO::AddAddressBookEntry
+            }
+            ProposalOperationType::EditAddressBookEntry => {
+                ProposalOperationTypeDTO::EditAddressBookEntry
+            }
+            ProposalOperationType::RemoveAddressBookEntry => {
+                ProposalOperationTypeDTO::RemoveAddressBookEntry
+            }
             ProposalOperationType::AddUser => ProposalOperationTypeDTO::AddUser,
             ProposalOperationType::EditUser => ProposalOperationTypeDTO::EditUser,
             ProposalOperationType::AddUserGroup => ProposalOperationTypeDTO::AddUserGroup,
@@ -64,6 +82,13 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::Transfer(_) => ProposalOperationType::Transfer,
             ProposalOperation::AddAccount(_) => ProposalOperationType::AddAccount,
             ProposalOperation::EditAccount(_) => ProposalOperationType::EditAccount,
+            ProposalOperation::AddAddressBookEntry(_) => ProposalOperationType::AddAddressBookEntry,
+            ProposalOperation::EditAddressBookEntry(_) => {
+                ProposalOperationType::EditAddressBookEntry
+            }
+            ProposalOperation::RemoveAddressBookEntry(_) => {
+                ProposalOperationType::RemoveAddressBookEntry
+            }
             ProposalOperation::AddUser(_) => ProposalOperationType::AddUser,
             ProposalOperation::EditUser(_) => ProposalOperationType::EditUser,
             ProposalOperation::AddUserGroup(_) => ProposalOperationType::AddUserGroup,
@@ -98,6 +123,18 @@ impl ProposalOperation {
             }
             (ProposalOperation::AddAccount(_), ListProposalsOperationTypeDTO::AddAccount) => true,
             (ProposalOperation::EditAccount(_), ListProposalsOperationTypeDTO::EditAccount) => true,
+            (
+                ProposalOperation::AddAddressBookEntry(_),
+                ListProposalsOperationTypeDTO::AddAddressBookEntry,
+            ) => true,
+            (
+                ProposalOperation::EditAddressBookEntry(_),
+                ListProposalsOperationTypeDTO::EditAddressBookEntry,
+            ) => true,
+            (
+                ProposalOperation::RemoveAddressBookEntry(_),
+                ListProposalsOperationTypeDTO::RemoveAddressBookEntry,
+            ) => true,
             (ProposalOperation::AddUser(_), ListProposalsOperationTypeDTO::AddUser) => true,
             (ProposalOperation::EditUser(_), ListProposalsOperationTypeDTO::EditUser) => true,
             (ProposalOperation::AddUserGroup(_), ListProposalsOperationTypeDTO::AddUserGroup) => {

@@ -13,8 +13,9 @@
       v-model="modelValue.name"
       name="name"
       :label="$t('terms.user_group')"
-      variant="underlined"
+      :variant="isViewMode ? 'plain' : 'underlined'"
       :rules="rules.name"
+      :readonly="isViewMode"
     />
   </VForm>
 </template>
@@ -38,9 +39,11 @@ const props = withDefaults(
   defineProps<{
     modelValue: Partial<UserGroup>;
     valid?: boolean;
+    mode?: 'view' | 'edit';
   }>(),
   {
     valid: true,
+    mode: 'edit',
   },
 );
 
@@ -62,6 +65,8 @@ watch(
   value => emit('update:modelValue', value),
   { deep: true },
 );
+
+const isViewMode = computed(() => props.mode === 'view');
 
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };

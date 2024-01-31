@@ -4,18 +4,21 @@
       {{ props.errorMsg }}
     </VAlert>
   </slot>
-  <slot v-else name="default" :loading="loading" :data="data"></slot>
+  <slot v-else name="default" :loading="loading" :reloading="reloading" :data="data"></slot>
 </template>
 <script lang="ts" setup generic="T">
 import { onUnmounted } from 'vue';
+import { watch } from 'vue';
 import { onMounted, ref } from 'vue';
 import { logger } from '~/core/logger';
 import { i18n } from '~/ui/modules/i18n';
 import { useSessionStore } from '../stores/session';
+import { computed } from 'vue';
 
 const loading = ref<boolean>(false);
 const failed = ref<boolean>(false);
 const data = ref<T | undefined>();
+const reloading = ref<boolean>(false);
 
 const props = withDefaults(
   defineProps<{
@@ -23,19 +26,36 @@ const props = withDefaults(
     retries?: number;
     refreshIntervalMs?: number;
     errorMsg?: string;
+    forceReload?: boolean;
+    disableRefresh?: boolean;
   }>(),
   {
     errorMsg: i18n.global.t('app.data_load_error'),
     refreshIntervalMs: undefined,
     retries: 0,
+    forceReload: false,
+    disableRefresh: false,
   },
 );
 
 const emit = defineEmits<{
   (event: 'failed', payload: unknown): void;
   (event: 'loaded', payload: T): void;
+  (event: 'update:forceReload', payload: boolean): void;
 }>();
 
+watch(
+  () => props.forceReload,
+  forceReload => {
+    if (forceReload) {
+      emit('update:forceReload', false);
+
+      data.value = undefined;
+
+      fetchData({ cleanupOnFail: false });
+    }
+  },
+);
 const session = useSessionStore();
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
@@ -56,24 +76,41 @@ const fetchWithRetries = async (retries: number): Promise<T> => {
   }
 };
 
+const working = computed({
+  get: () => loading.value || reloading.value,
+  set: (value: boolean) => {
+    if (data.value === undefined) {
+      loading.value = value;
+    } else {
+      reloading.value = value;
+    }
+  },
+});
+
 const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): Promise<void> => {
   try {
-    if (loading.value) {
+    if (
       // prevents multiple calls to fetchData at the same time
-      return;
-    }
-
-    if (session.reauthenticationNeeded) {
+      working.value ||
+      // disables the refresh functionality if set by the parent component
+      props.disableRefresh ||
       // prevents calls to fetchData while the user is locked out
+      session.reauthenticationNeeded
+    ) {
       return;
     }
 
     failed.value = false;
-    loading.value = true;
+    working.value = true;
 
-    data.value = await fetchWithRetries(props.retries);
+    const newData = await fetchWithRetries(props.retries);
 
-    emit('loaded', data.value);
+    working.value = false;
+
+    if (!props.disableRefresh) {
+      data.value = newData;
+      emit('loaded', data.value);
+    }
   } catch (err) {
     logger.error(`Failed to load data: ${err}`);
 
@@ -87,7 +124,7 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
 
     emit('failed', err);
   } finally {
-    loading.value = false;
+    working.value = false;
   }
 };
 

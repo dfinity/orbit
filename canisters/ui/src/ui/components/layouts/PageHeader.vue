@@ -13,7 +13,7 @@
         v-if="hasActions"
         cols="12"
         md="6"
-        class="d-flex justify-end"
+        class="d-flex justify-end flex-column flex-md-row ga-2"
         :data-test-id="$props.dataTestId ? `${$props.dataTestId}-actions` : undefined"
       >
         <slot name="actions"></slot>

@@ -1,7 +1,7 @@
 <template>
   <VListItem
     v-if="!isGroup"
-    :exact="true"
+    :exact="props.item.exact === undefined ? false : props.item.exact"
     :value="props.item.name"
     :to="isTo(props.item.action) ? props.item.action.handle($route) : undefined"
     :href="isHref(props.item.action) ? props.item.action.handle() : undefined"
@@ -21,7 +21,7 @@
       <template #activator="{ props: listProps }">
         <VListItem
           v-bind="listProps"
-          :exact="true"
+          :exact="props.item.exact === undefined ? false : props.item.exact"
           :value="props.item.name"
           :to="isTo(props.item.action) ? props.item.action.handle($route) : undefined"
           :href="isHref(props.item.action) ? props.item.action.handle() : undefined"

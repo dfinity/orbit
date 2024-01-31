@@ -6,7 +6,7 @@ use crate::{
     },
     errors::ProposalError,
     factories::proposals::ProposalFactory,
-    mappers::HelperMapper,
+    mappers::{HelperMapper, ProposalInfo},
     models::{
         access_control::{ProposalActionSpecifier, ResourceSpecifier},
         specifier::CommonSpecifier,
@@ -72,6 +72,25 @@ impl ProposalService {
                 })?;
 
         Ok(proposal)
+    }
+
+    pub async fn get_proposal_info(
+        &self,
+        proposal: &Proposal,
+        ctx: &CallContext,
+    ) -> ServiceResult<ProposalInfo> {
+        let voter = self.user_service.get_user_by_identity(&ctx.caller())?;
+        let can_vote = proposal.can_vote(&voter.id).await;
+        let proposer = self
+            .user_service
+            .get_user(&proposal.proposed_by)
+            .map(|user| user.name)
+            .unwrap_or(None);
+
+        Ok(ProposalInfo {
+            can_vote,
+            proposer_name: proposer,
+        })
     }
 
     pub async fn list_proposals(
