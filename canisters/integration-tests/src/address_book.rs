@@ -1,13 +1,16 @@
+use crate::interfaces::{default_account, get_icp_balance, send_icp_to_account, ICP, ICP_FEE};
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{execute_proposal, update_candid_as};
+use crate::utils::{execute_proposal, get_user, update_candid_as, user_test_id};
 use crate::TestEnv;
+use ic_ledger_types::AccountIdentifier;
 
 use wallet_api::{
-    AddAddressBookEntryOperationInput, ApiErrorDTO, ChangeMetadataDTO,
-    EditAddressBookEntryOperationInput, GetAddressBookEntryInputDTO,
-    GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
+    AccountPoliciesDTO, AddAccountOperationInput, AddAddressBookEntryOperationInput, ApiErrorDTO,
+    ChangeMetadataDTO, CriteriaDTO, EditAddressBookEntryOperationInput,
+    GetAddressBookEntryInputDTO, GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
     ListAddressBookEntriesResponseDTO, MetadataDTO, PaginationInput, ProposalOperationDTO,
-    ProposalOperationInput, RemoveAddressBookEntryOperationInput,
+    ProposalOperationInput, ProposalStatusDTO, RemoveAddressBookEntryOperationInput,
+    TransferOperationInput,
 };
 
 #[test]
@@ -211,4 +214,123 @@ fn address_book_entry_lifecycle() {
         list_address_book_entries,
         vec![next_address_book_entry.clone()]
     );
+}
+
+#[test]
+fn check_address_book_for_transfer() {
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = setup_new_env();
+
+    // create address book entry for John Doe
+    let john_doe_id = user_test_id(1);
+    let john_doe_account = default_account(john_doe_id);
+    let add_address_book_entry =
+        ProposalOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
+            address_owner: "John Doe".to_string(),
+            address: john_doe_account.clone(),
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            metadata: vec![MetadataDTO {
+                key: "kyc".to_string(),
+                value: "false".to_string(),
+            }],
+        });
+    let add_address_book_entry_proposal = execute_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        add_address_book_entry,
+    )
+    .unwrap();
+    let address_book_entry = match add_address_book_entry_proposal.operation {
+        ProposalOperationDTO::AddAddressBookEntry(operation) => {
+            operation.address_book_entry.unwrap()
+        }
+        _ => panic!("unexpected proposal operation"),
+    };
+
+    // get admin user
+    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+
+    // create account for admin user
+    let add_account = ProposalOperationInput::AddAccount(AddAccountOperationInput {
+        owners: vec![admin_user.id],
+        name: "admin".to_string(),
+        blockchain: "icp".to_string(),
+        standard: "native".to_string(),
+        policies: AccountPoliciesDTO {
+            transfer: Some(CriteriaDTO::HasAddressBookMetadata(MetadataDTO {
+                key: "kyc".to_string(),
+                value: "true".to_string(),
+            })),
+            edit: None,
+        },
+        metadata: vec![],
+    });
+    let add_account_proposal =
+        execute_proposal(&env, WALLET_ADMIN_USER, canister_ids.wallet, add_account).unwrap();
+    let admin_account = match add_account_proposal.operation {
+        ProposalOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
+        _ => panic!("unexpected proposal operation"),
+    };
+
+    // send ICP to admin user's wallet account
+    let admin_account_address = AccountIdentifier::from_hex(&admin_account.address).unwrap();
+    send_icp_to_account(&env, controller, admin_account_address, ICP + ICP_FEE, 0).unwrap();
+
+    // try transfer from admin account to John Doe
+    // and check that transfer proposal gets rejected
+    let transfer = ProposalOperationInput::Transfer(TransferOperationInput {
+        from_account_id: admin_account.id,
+        to: john_doe_account,
+        amount: ICP.into(),
+        fee: None,
+        metadata: vec![],
+        network: None,
+    });
+    let transfer_error = execute_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        transfer.clone(),
+    )
+    .unwrap_err();
+    match transfer_error {
+        Some(ProposalStatusDTO::Rejected { .. }) => (),
+        _ => panic!("unexpected transfer status"),
+    };
+
+    // check John Doe's balance
+    let new_balance = get_icp_balance(&env, john_doe_id);
+    assert_eq!(new_balance, 0);
+
+    // update the address book entry for John Doe setting "kyc" to "true"
+    let edit_address_book_entry =
+        ProposalOperationInput::EditAddressBookEntry(EditAddressBookEntryOperationInput {
+            address_book_entry_id: address_book_entry.id.clone(),
+            address_owner: None,
+            change_metadata: Some(ChangeMetadataDTO::OverrideSpecifiedBy(vec![MetadataDTO {
+                key: "kyc".to_string(),
+                value: "true".to_string(),
+            }])),
+        });
+    execute_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        edit_address_book_entry,
+    )
+    .unwrap();
+
+    // try transfer from admin account to John Doe again
+    // and check that transfer proposal succeeds
+    execute_proposal(&env, WALLET_ADMIN_USER, canister_ids.wallet, transfer).unwrap();
+
+    // check John Doe's balance
+    let new_balance = get_icp_balance(&env, john_doe_id);
+    assert_eq!(new_balance, ICP);
 }
