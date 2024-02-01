@@ -34,7 +34,10 @@ export const maxLengthRule = (max: number, field: string) => {
   };
 };
 
-export const uniqueRule = (existing: unknown[]) => {
+export const uniqueRule = (
+  existing: unknown[],
+  errorMessage: string = i18n.global.t('forms.rules.duplicate'),
+) => {
   return (value: unknown): string | boolean => {
     const hasValue = !!value;
     if (!hasValue) {
@@ -42,7 +45,7 @@ export const uniqueRule = (existing: unknown[]) => {
       return true;
     }
 
-    return !existing.includes(value) ? true : i18n.global.t('forms.rules.duplicate');
+    return !existing.includes(value) ? true : errorMessage;
   };
 };
 
@@ -59,6 +62,30 @@ export const validPrincipalRule = (value: unknown): string | boolean => {
     return true;
   } catch (e) {
     return i18n.global.t('forms.rules.validPrincipal');
+  }
+};
+
+export const validCanisterId = (value: unknown): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    return i18n.global.t('forms.rules.validCanisterId');
+  }
+
+  if (!/^[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}-[a-zA-Z0-9]{5}-[a-zA-Z0-9]{3}$/.test(value)) {
+    return i18n.global.t('forms.rules.validCanisterId');
+  }
+
+  try {
+    // parsing the principal will throw if it is invalid
+    Principal.fromText(value as string);
+    return true;
+  } catch (e) {
+    return i18n.global.t('forms.rules.validCanisterId');
   }
 };
 
