@@ -305,8 +305,8 @@ fn check_address_book_for_transfer() {
     };
 
     // check John Doe's balance
-    let new_balance = get_icp_balance(&env, john_doe_id);
-    assert_eq!(new_balance, 0);
+    let old_balance = get_icp_balance(&env, john_doe_id);
+    assert_eq!(old_balance, 0);
 
     // update the address book entry for John Doe setting "kyc" to "true"
     let edit_address_book_entry =
