@@ -80,7 +80,7 @@ import WalletInfoEditDialog from './WalletInfoEditDialog.vue';
 import { useStore } from './store';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import { services } from '~/ui/modules';
-import { sessionUserWalletToUserWallet } from '~/mappers/wallet.mapper';
+import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
 
 const wallet = useWalletStore();
 const session = useSessionStore();
