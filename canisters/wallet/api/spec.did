@@ -50,6 +50,7 @@ type ProposalPolicyCriteria = variant {
   AutoAdopted;
   ApprovalThreshold : record { UserSpecifier; nat16 };
   MinimumVotes : record { UserSpecifier; nat16 };
+  HasAddressBookMetadata : AddressBookMetadata;
   Or : vec ProposalPolicyCriteria;
   And : vec ProposalPolicyCriteria;
   Not : ProposalPolicyCriteria;

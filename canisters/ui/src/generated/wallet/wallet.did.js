@@ -152,6 +152,7 @@ export const idlFactory = ({ IDL }) => {
       'Or' : IDL.Vec(ProposalPolicyCriteria),
       'And' : IDL.Vec(ProposalPolicyCriteria),
       'Not' : ProposalPolicyCriteria,
+      'HasAddressBookMetadata' : AddressBookMetadata,
       'MinimumVotes' : IDL.Tuple(UserSpecifier, IDL.Nat16),
       'ApprovalThreshold' : IDL.Tuple(UserSpecifier, IDL.Nat16),
       'AutoAdopted' : IDL.Null,

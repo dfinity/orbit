@@ -270,6 +270,7 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                     }
                 };
             }
+            Criteria::HasAddressBookMetadata(_) => Ok(possible_voters),
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 for criteria in criterias.iter() {
                     let result = self
@@ -410,6 +411,7 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
 
                 Ok(can_vote)
             }
+            Criteria::HasAddressBookMetadata(_) => Ok(false),
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 let proposal = &proposal;
                 let voter_id = &voter_id;

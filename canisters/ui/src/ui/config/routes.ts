@@ -194,7 +194,7 @@ export const routes: RouteRecordRaw[] = [
             meta: {
               auth: {
                 check: {
-                  session: RequiredSessionState.ConnectedToWallet,
+                  session: RequiredSessionState.Authenticated,
                 },
               },
             },

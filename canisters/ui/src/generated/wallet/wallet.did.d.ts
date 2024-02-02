@@ -473,6 +473,7 @@ export interface ProposalPolicy {
 export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'And' : Array<ProposalPolicyCriteria> } |
   { 'Not' : ProposalPolicyCriteria } |
+  { 'HasAddressBookMetadata' : AddressBookMetadata } |
   { 'MinimumVotes' : [UserSpecifier, number] } |
   { 'ApprovalThreshold' : [UserSpecifier, number] } |
   { 'AutoAdopted' : null };

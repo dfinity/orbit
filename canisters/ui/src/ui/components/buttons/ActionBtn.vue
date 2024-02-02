@@ -9,6 +9,7 @@
     :rounded="props.rounded"
     :color="props.color"
     :class="props.class"
+    :disabled="props.disabled"
     @click="open = true"
   >
     <VIcon v-if="props.icon && typeof props.icon === 'string'" :icon="props.icon" />
@@ -47,7 +48,13 @@
         >
           <VSpacer />
           <VBtn variant="text" @click="close">{{ props.cancelText }}</VBtn>
-          <VBtn :loading="loading" color="primary" variant="flat" @click="submit">
+          <VBtn
+            :loading="loading"
+            color="primary"
+            variant="flat"
+            data-test-id="action-btn-default-submit-btn"
+            @click="submit"
+          >
             {{ props.confirmText }}
           </VBtn>
         </slot>
@@ -76,6 +83,7 @@ const props = withDefaults(
     confirmText?: string;
     class?: string;
     rounded?: boolean;
+    disabled?: boolean;
     modelValue?: M;
     dialogMaxWidth?: string | number;
     dialogToolbarColor?: string;
@@ -97,6 +105,7 @@ const props = withDefaults(
     confirmText: i18n.global.t('terms.confirm'),
     class: undefined,
     rounded: false,
+    disabled: false,
     dialogMaxWidth: 800,
     dialogToolbarColor: 'surface',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

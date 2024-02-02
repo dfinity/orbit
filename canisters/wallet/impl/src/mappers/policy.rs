@@ -22,6 +22,9 @@ impl From<Criteria> for CriteriaDTO {
             Criteria::MinimumVotes(specifier, votes) => {
                 CriteriaDTO::MinimumVotes(specifier.into(), votes)
             }
+            Criteria::HasAddressBookMetadata(metadata) => {
+                CriteriaDTO::HasAddressBookMetadata(metadata)
+            }
             Criteria::Or(criterias) => {
                 CriteriaDTO::Or(criterias.into_iter().map(Into::into).collect())
             }
@@ -42,6 +45,9 @@ impl From<CriteriaDTO> for Criteria {
             }
             CriteriaDTO::MinimumVotes(specifier, votes) => {
                 Criteria::MinimumVotes(specifier.into(), votes)
+            }
+            CriteriaDTO::HasAddressBookMetadata(metadata) => {
+                Criteria::HasAddressBookMetadata(metadata)
             }
             CriteriaDTO::Or(criterias) => {
                 Criteria::Or(criterias.into_iter().map(Into::into).collect())
