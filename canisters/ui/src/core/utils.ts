@@ -1,4 +1,5 @@
-import { ApiError } from '~/generated/control-panel/control_panel.did';
+import { Principal } from '@dfinity/principal';
+import { ApiError, UserWallet } from '~/generated/control-panel/control_panel.did';
 import { TransferStatus } from '~/generated/wallet/wallet.did';
 import { AccountTransferStatus } from '~/types';
 
@@ -184,3 +185,10 @@ export const parseDate = (raw: string): Date => {
 
   return new Date(date);
 };
+
+export function makeUserWallet(canisterId: string, name: string | null): UserWallet {
+  return {
+    canister_id: Principal.fromText(canisterId),
+    name: name ? [name] : [],
+  };
+}

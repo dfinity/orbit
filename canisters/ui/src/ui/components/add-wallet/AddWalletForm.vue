@@ -41,10 +41,9 @@
 </template>
 
 <script setup lang="ts">
-import { Principal } from '@dfinity/principal';
 import { computed } from 'vue';
 import { ref } from 'vue';
-import { isApiError } from '~/core';
+import { isApiError, makeUserWallet } from '~/core';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
@@ -81,13 +80,6 @@ defineExpose({
   reset,
 });
 
-function toWallet(canisterId: string, name: string | null) {
-  return {
-    canister_id: Principal.fromText(canisterId),
-    name: (name ? [name] : []) satisfies [] | [string],
-  };
-}
-
 async function addNewWallet() {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
@@ -100,8 +92,8 @@ async function addNewWallet() {
         main_wallet: session.mainWallet ? [session.mainWallet] : [],
         wallets: [
           [
-            ...session.data.wallets.map(wallet => toWallet(wallet.canisterId, wallet.name)),
-            toWallet(canisterId.value, name.value),
+            ...session.data.wallets.map(wallet => makeUserWallet(wallet.canisterId, wallet.name)),
+            makeUserWallet(canisterId.value, name.value),
           ],
         ],
       });
