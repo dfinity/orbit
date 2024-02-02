@@ -1,7 +1,7 @@
 <template>
   <tr v-if="props.mode === 'table'">
     <td class="text-body-2 w-25" :class="{ 'bb-none': props.hideColumnBorders }">
-      {{ $t(`proposals.types.${proposalType}.short_title`) }}
+      {{ $t(`proposals.types.${proposalType}.title`) }}
     </td>
     <td class="w-75" :class="{ 'bb-none': props.hideColumnBorders }">
       <component
@@ -21,7 +21,7 @@
   </tr>
   <VListItem v-else>
     <VListItemTitle class="text-body-2 font-weight-bold">
-      {{ $t(`proposals.types.${proposalType}.short_title`) }}
+      {{ $t(`proposals.types.${proposalType}.title`) }}
     </VListItemTitle>
     <VListItemSubtitle>
       <component
@@ -80,6 +80,9 @@ const componentsMap: {
   RemoveProposalPolicy: VListItem,
   Transfer: VListItem,
   ChangeCanister: VListItem,
+  AddAddressBookEntry: VListItem,
+  EditAddressBookEntry: VListItem,
+  RemoveAddressBookEntry: VListItem,
 };
 
 defineEmits<{

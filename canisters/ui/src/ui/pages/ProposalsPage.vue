@@ -1,7 +1,7 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <PageHeader :title="$t('pages.proposals.title')">
+      <PageHeader :title="props.title" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <!--todo: add export to csv functionality-->
           <VBtn color="primary-variant" variant="flat" disabled>
@@ -21,11 +21,11 @@
         >
           <template #default="{ data, loading }">
             <VContainer class="pa-0" fluid>
-              <VRow>
+              <VRow v-if="shownProposalDomains.length > 1">
                 <VCol cols="12">
                   <VSlideGroup v-model="filters.groupBy" show-arrows>
                     <VSlideGroupItem
-                      v-for="(domain, idx) in availableDomains"
+                      v-for="(domain, idx) in shownProposalDomains"
                       :key="idx"
                       v-slot="{ isSelected, toggle }"
                     >
@@ -112,10 +112,11 @@
 
 <script lang="ts" setup>
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { throttle } from '~/core/utils';
 import { ProposalStatusCode } from '~/generated/wallet/wallet.did';
+import { ProposalDomains } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import BtnSelect from '~/ui/components/inputs/BtnSelect.vue';
@@ -129,19 +130,45 @@ import {
   useProposalStatusItems,
   useSavedFilters,
 } from '~/ui/composables/proposal.composable';
+import { i18n } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
+import { BreadCrumbItem } from '~/ui/types/navigation';
 import { convertDate } from '~/utils/date.utils';
 
 const app = useAppStore();
 const wallet = useWalletStore();
 const availableDomains = useAvailableDomains();
 const statuses = useProposalStatusItems();
-const filters = useSavedFilters();
 const filterUtils = useFilterUtils();
 const disableRefresh = ref(false);
 const forceReload = ref(false);
 const router = useRouter();
+
+const props = withDefaults(
+  defineProps<{
+    title?: string;
+    domains?: ProposalDomains[];
+    breadcrumbs?: BreadCrumbItem[];
+  }>(),
+  {
+    title: i18n.global.t('pages.proposals.title'),
+    domains: () => [],
+    breadcrumbs: () => [],
+  },
+);
+
+const shownProposalDomains = computed(() => {
+  if (props.domains !== undefined && props.domains.length > 0) {
+    const domains = props.domains;
+
+    return availableDomains.value.filter(domain => domains.includes(domain.id));
+  }
+
+  return availableDomains.value;
+});
+
+const filters = useSavedFilters(shownProposalDomains.value);
 
 const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
@@ -184,7 +211,7 @@ const fetchProposals = async (): ReturnType<typeof wallet.service.listProposals>
     pagination.value.selectedPage * pagination.value.limit - pagination.value.limit;
 
   const result = await wallet.service.listProposals({
-    types: availableDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
+    types: shownProposalDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
     created_dt: {
       fromDt: convertDate(filters.value.created.from, {
         time: 'start-of-day',

@@ -66,12 +66,76 @@ export default {
     },
     types: {
       addusergroup: {
-        short_title: 'Adicionar grupo de usuários',
-        title: 'Pedido de adição de grupo de usuários',
+        title: 'Adicionar grupo de usuários',
+        request_title: 'Pedido de adição de grupo de usuários',
+      },
+      addaccount: {
+        title: 'Adicionar conta',
+        request_title: 'Pedido de adição de conta',
+      },
+      adduser: {
+        title: 'Adicionar usuário',
+        request_title: 'Pedido de adição de usuário',
+      },
+      addaccesspolicy: {
+        title: 'Adicionar regra de acesso',
+        request_title: 'Pedido de adição de regra de acesso',
+      },
+      addaddressbookentry: {
+        title: 'Adicionar novo endereço',
+        request_title: 'Pedido de adição de endereço',
+      },
+      addproposalpolicy: {
+        title: 'Adicionar regra de aprovação',
+        request_title: 'Pedido de adição de regra de aprovação',
+      },
+      removeproposalpolicy: {
+        title: 'Remover regra de aprovação',
+        request_title: 'Pedido de remoção de regra de aprovação',
+      },
+      removeaccesspolicy: {
+        title: 'Remover regra de acesso',
+        request_title: 'Pedido de remoção de regra de acesso',
+      },
+      removeusergroup: {
+        title: 'Remover grupo de usuários',
+        request_title: 'Pedido de remoção de grupo de usuários',
+      },
+      removeaddressbookentry: {
+        title: 'Remover endereço',
+        request_title: 'Pedido de remoção de endereço',
+      },
+      changecanister: {
+        title: 'Alterar canister',
+        request_title: 'Pedido de alteração de canister',
+      },
+      editusergroup: {
+        title: 'Editar grupo de usuários',
+        request_title: 'Pedido de edição de grupo de usuários',
+      },
+      edituser: {
+        title: 'Editar usuário',
+        request_title: 'Pedido de edição de usuário',
+      },
+      editaccount: {
+        title: 'Editar conta',
+        request_title: 'Pedido de edição de conta',
+      },
+      editaddressbookentry: {
+        title: 'Editar endereço',
+        request_title: 'Pedido de edição de endereço',
+      },
+      transfer: {
+        title: 'Transferir',
+        request_title: 'Pedido de transferência',
+      },
+      editproposalpolicy: {
+        title: 'Editar regra de aprovação',
+        request_title: 'Pedido de edição de regra de aprovação',
       },
       unknown: {
-        short_title: 'Desconhecido',
-        title: 'Pedido desconhecido',
+        title: 'Desconhecido',
+        request_title: 'Pedido desconhecido',
       },
     },
   },
@@ -268,7 +332,7 @@ export default {
     },
   },
   navigation: {
-    accounts_transfers: 'Contas & Transferências',
+    accounts: 'Contas',
     address_book: 'Endereços',
     users: 'Usuários',
     settings: 'Configuraçōes',
@@ -279,6 +343,7 @@ export default {
     login: 'Entrar',
     logout: 'Sair',
     proposals: 'Pedidos',
+    transfer_proposals: 'Pedidos de transferência',
   },
   pages: {
     user_settings: {
@@ -315,6 +380,7 @@ export default {
     },
     proposals: {
       title: 'Pedidos',
+      transfer_title: 'Pedidos de transferência',
     },
   },
   session: {

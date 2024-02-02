@@ -1,5 +1,6 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
-import { Privilege } from '~/types';
+import { Privilege, ProposalDomains } from '~/types';
+import { i18n } from '~/ui/modules';
 import { services } from '~/ui/modules/services';
 import DisconnectedPage from '~/ui/pages/DisconnectedPage.vue';
 import InitializationPage from '~/ui/pages/InitializationPage.vue';
@@ -14,7 +15,6 @@ export enum Routes {
   Accounts = 'Accounts',
   Account = 'Account',
   MySettings = 'MySettings',
-  Proposals = 'Proposals',
   UserGroups = 'UserGroups',
   SystemSettings = 'SystemSettings',
   Disconnected = 'Disconnected',
@@ -22,6 +22,9 @@ export enum Routes {
   Users = 'Users',
   AddressBook = 'AddressBook',
   Initialization = 'Initialization',
+  // Proposal Pages
+  Proposals = 'Proposals',
+  TransferProposals = 'TransferProposals',
 }
 
 export const defaultLoginRoute = Routes.Login;
@@ -133,13 +136,31 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'requests',
-        name: Routes.Proposals,
+        path: 'transfer-requests',
+        name: Routes.TransferProposals,
         component: () => import('~/ui/pages/ProposalsPage.vue'),
+        props: () => {
+          return {
+            title: i18n.global.t('pages.proposals.transfer_title'),
+            domains: [ProposalDomains.Transfers],
+            breadcrumbs: [
+              {
+                title: i18n.global.t('navigation.proposals'),
+                disabled: false,
+                to: { name: Routes.Proposals },
+              },
+              {
+                title: i18n.global.t('navigation.transfer_proposals'),
+                disabled: true,
+              },
+            ],
+          };
+        },
         meta: {
           auth: {
             check: {
               session: RequiredSessionState.ConnectedToWallet,
+              privileges: [Privilege.ListAccounts],
             },
           },
         },
@@ -201,6 +222,33 @@ export const routes: RouteRecordRaw[] = [
                 check: {
                   session: RequiredSessionState.ConnectedToWallet,
                   privileges: [Privilege.ListUsers],
+                },
+              },
+            },
+          },
+          {
+            path: 'requests',
+            name: Routes.Proposals,
+            component: () => import('~/ui/pages/ProposalsPage.vue'),
+            props: () => {
+              return {
+                title: i18n.global.t('pages.proposals.title'),
+                breadcrumbs: [
+                  {
+                    title: i18n.global.t('navigation.settings'),
+                    disabled: true,
+                  },
+                  {
+                    title: i18n.global.t('navigation.proposals'),
+                    disabled: true,
+                  },
+                ],
+              };
+            },
+            meta: {
+              auth: {
+                check: {
+                  session: RequiredSessionState.ConnectedToWallet,
                 },
               },
             },

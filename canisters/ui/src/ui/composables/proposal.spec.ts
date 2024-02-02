@@ -44,6 +44,7 @@ describe('Proposal Composables', () => {
   it('should fill filters with router query params', () => {
     const vm = setupComponent(() => {
       const router = useRouter();
+      const domains = useAvailableDomains();
 
       router.currentRoute.value.query = {
         group_by: ProposalDomains.System,
@@ -54,7 +55,7 @@ describe('Proposal Composables', () => {
         statuses: [ProposalStatusEnum.Completed],
       } as StorableFilters;
 
-      return { filters: useSavedFilters() };
+      return { filters: useSavedFilters(domains.value) };
     });
 
     expect(vm.filters.groupBy).toEqual(1);

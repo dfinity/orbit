@@ -3,7 +3,7 @@
     <VToolbar color="transparent">
       <VToolbarTitle>
         <span class="text-body-2 font-weight-light">
-          {{ $t(`proposals.types.${proposalType}.title`) }}
+          {{ $t(`proposals.types.${proposalType}.request_title`) }}
         </span>
         <br />
         <span v-if="props.proposal.title">
@@ -118,6 +118,9 @@ const componentsMap: {
   RemoveProposalPolicy: VListItem,
   Transfer: VListItem,
   ChangeCanister: VListItem,
+  AddAddressBookEntry: VListItem,
+  EditAddressBookEntry: VListItem,
+  RemoveAddressBookEntry: VListItem,
 };
 
 defineEmits<{

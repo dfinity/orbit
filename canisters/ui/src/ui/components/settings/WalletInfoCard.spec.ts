@@ -1,23 +1,23 @@
 import { Principal } from '@dfinity/principal';
 import { describe, expect, it, vi } from 'vitest';
-import { User } from '~/generated/wallet/wallet.did';
+import { ControlPanelService } from '~/services';
 import { services } from '~/ui/modules';
 import { useSessionStore } from '~/ui/stores/session';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { mount } from '~/ui/test.utils';
-import WalletInfoVue from './WalletInfo.vue';
+import WalletInfoCard from './WalletInfoCard.vue';
 
-vi.mock('../../../services/ControlPanelService', () => ({
-  ControlPanelService: vi.fn().mockImplementation(() => {
-    return {
-      editUser: vi.fn(() => {
-        return Promise.resolve({} as User);
-      }),
-    };
-  }),
-}));
+vi.mock('~/services/ControlPanelService', () => {
+  const mock: Partial<ControlPanelService> = {
+    editUser: vi.fn().mockReturnThis(),
+  };
 
-describe('WalletInfo', () => {
+  return {
+    ControlPanelService: vi.fn(() => mock),
+  };
+});
+
+describe('WalletInfoCard', () => {
   function initWallet(principal: Principal, isMain: boolean, name: string | null) {
     const walletStore = useWalletStore();
     const sessionStore = useSessionStore();
@@ -57,18 +57,38 @@ describe('WalletInfo', () => {
   const walletCanisterId2 = Principal.fromUint8Array(new Uint8Array([1, 2, 4]));
 
   it('renders properly', () => {
-    const wrapper = mount(WalletInfoVue);
+    const wrapper = mount(WalletInfoCard);
 
     expect(wrapper.exists()).toBe(true);
   });
 
+  it('renders the wallet name', async () => {
+    const wrapper = mount(WalletInfoCard);
+
+    const session = useSessionStore();
+    session.data.wallets = [
+      {
+        canisterId: Principal.anonymous().toText(),
+        main: true,
+        name: 'Personal',
+      },
+    ];
+
+    await wrapper.vm.$nextTick();
+
+    const nameLine = wrapper.find('[data-test-id="wallet-name"]');
+
+    expect(nameLine.exists()).toBeTruthy();
+    expect(nameLine.text()).toContain('Personal');
+  });
+
   it('shows a remove wallet button', () => {
-    const wrapper = mount(WalletInfoVue);
+    const wrapper = mount(WalletInfoCard);
     expect(wrapper.find('[data-test-id="remove-wallet-btn"]').exists()).toBe(true);
   });
 
   it('is disabled if the wallet is the main wallet', async () => {
-    const wrapper = mount(WalletInfoVue);
+    const wrapper = mount(WalletInfoCard);
     initWallet(walletCanisterId1, true, 'TEST WALLET');
     await wrapper.vm.$nextTick();
     const button = wrapper.find('[data-test-id="remove-wallet-btn"]');
@@ -76,7 +96,7 @@ describe('WalletInfo', () => {
   });
 
   it('is disabled if the wallet is the only wallet', async () => {
-    const wrapper = mount(WalletInfoVue);
+    const wrapper = mount(WalletInfoCard);
     initWallet(walletCanisterId1, false, 'TEST WALLET');
     await wrapper.vm.$nextTick();
     const button = wrapper.find('[data-test-id="remove-wallet-btn"]');
@@ -84,7 +104,7 @@ describe('WalletInfo', () => {
   });
 
   it('is not disabled if the wallet is the only wallet', async () => {
-    const wrapper = mount(WalletInfoVue);
+    const wrapper = mount(WalletInfoCard);
 
     initWallet(walletCanisterId1, true, 'TEST WALLET');
     addWallet(walletCanisterId2, false, 'TEST WALLET 2');
@@ -97,7 +117,7 @@ describe('WalletInfo', () => {
   });
 
   it('calls editUser without the removed wallet when the dialog is confirmed', async () => {
-    const wrapper = mount(WalletInfoVue);
+    const wrapper = mount(WalletInfoCard);
 
     initWallet(walletCanisterId1, true, 'TEST WALLET');
     addWallet(walletCanisterId2, false, 'TEST WALLET 2');
