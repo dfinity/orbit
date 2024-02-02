@@ -80,7 +80,7 @@ import WalletInfoEditDialog from './WalletInfoEditDialog.vue';
 import { useStore } from './store';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import { services } from '~/ui/modules';
-import { makeUserWallet } from '~/core';
+import { sessionUserWalletToUserWallet } from '~/mappers/wallet.mapper';
 
 const wallet = useWalletStore();
 const session = useSessionStore();
@@ -99,7 +99,7 @@ async function removeWallet() {
     wallets: [
       session.data.wallets
         .filter(w => w.canisterId !== wallet.canisterId)
-        .map(w => makeUserWallet(w.canisterId, w.name)),
+        .map(w => sessionUserWalletToUserWallet(w)),
     ],
   });
 

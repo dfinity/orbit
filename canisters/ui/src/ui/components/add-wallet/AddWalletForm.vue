@@ -44,7 +44,8 @@
 import { Principal } from '@dfinity/principal';
 import { computed } from 'vue';
 import { ref } from 'vue';
-import { isApiError, makeUserWallet } from '~/core';
+import { isApiError } from '~/core';
+import { sessionUserWalletToUserWallet } from '~/mappers/wallet.mapper';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
@@ -93,8 +94,11 @@ async function addNewWallet() {
         main_wallet: session.mainWallet ? [session.mainWallet] : [],
         wallets: [
           [
-            ...session.data.wallets.map(wallet => makeUserWallet(wallet.canisterId, wallet.name)),
-            makeUserWallet(canisterId.value, name.value),
+            ...session.data.wallets.map(wallet => sessionUserWalletToUserWallet(wallet)),
+            sessionUserWalletToUserWallet({
+              canisterId: canisterId.value,
+              name: name.value,
+            }),
           ],
         ],
       });
