@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import { Principal } from '@dfinity/principal';
 import { computed } from 'vue';
 import { ref } from 'vue';
 import { isApiError, makeUserWallet } from '~/core';
@@ -99,6 +100,8 @@ async function addNewWallet() {
       });
 
       session.populateUser(user);
+
+      await session.connectWallet(Principal.fromText(canisterId.value));
 
       emit('submitted');
     } catch (e: unknown) {
