@@ -1,5 +1,5 @@
 import { Principal } from '@dfinity/principal';
-import { defaultHomeRoute, defaultLoginRoute } from '~/ui/config/routes';
+import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/ui/config/routes';
 import { i18n, redirectToKey, router } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
@@ -58,6 +58,10 @@ export const afterLoginRedirect = (): void => {
   }
 
   router.push({ name: defaultHomeRoute });
+};
+
+export const redirectToWalletSettings = (): void => {
+  router.push({ name: Routes.SystemSettings });
 };
 
 export const assertAndReturn = <T>(value: T | undefined | null, name = 'Value'): T => {
