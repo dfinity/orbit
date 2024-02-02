@@ -1,12 +1,14 @@
 use super::{Account, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
-use crate::repositories::ACCOUNT_REPOSITORY;
+use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};
+use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
 use std::sync::Arc;
+use wallet_api::MetadataDTO;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -292,6 +294,35 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             | (ProposalOperation::RemoveProposalPolicy(_), _)
             | (ProposalOperation::AddUserGroup(_), _)
             | (ProposalOperation::Transfer(_), _) => false,
+        })
+    }
+}
+
+#[derive(Clone)]
+pub struct AddressBookMetadataMatcher;
+
+#[async_trait]
+impl Match<(Proposal, MetadataDTO)> for AddressBookMetadataMatcher {
+    async fn is_match(&self, v: (Proposal, MetadataDTO)) -> Result<bool, MatchError> {
+        let (proposal, metadata) = v;
+
+        Ok(match proposal.operation.to_owned() {
+            ProposalOperation::Transfer(transfer) => {
+                if let Ok(account) = ACCOUNT_SERVICE.get_account(&transfer.input.from_account_id) {
+                    if let Some(address_book_entry) = ADDRESS_BOOK_REPOSITORY.find_by_address(
+                        account.blockchain,
+                        account.standard,
+                        transfer.input.to,
+                    ) {
+                        address_book_entry.metadata.contains(metadata)
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+            _ => false,
         })
     }
 }

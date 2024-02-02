@@ -13,6 +13,7 @@ use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
 use std::hash::Hash;
 use std::sync::Arc;
+use wallet_api::MetadataDTO;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -40,6 +41,7 @@ pub enum Criteria {
     // Votes
     ApprovalThreshold(UserSpecifier, Percentage),
     MinimumVotes(UserSpecifier, u16),
+    HasAddressBookMetadata(MetadataDTO),
     // Logical
     Or(Vec<Criteria>),
     And(Vec<Criteria>),
@@ -69,6 +71,7 @@ pub trait EvaluateCriteria<
 #[derive(Clone)]
 pub struct CriteriaEvaluator {
     pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
+    pub address_book_metadata_matcher: Arc<dyn Match<(Proposal, MetadataDTO)>>,
 }
 
 struct ProposalVoteSummary {
@@ -216,6 +219,17 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 let min_votes = *min_votes as usize;
 
                 Ok(votes.evaluate(&min_votes))
+            }
+            Criteria::HasAddressBookMetadata(metadata) => {
+                let is_match = self
+                    .address_book_metadata_matcher
+                    .is_match((proposal.as_ref().to_owned(), metadata.clone()))
+                    .await?;
+                if is_match {
+                    Ok(EvaluationStatus::Adopted)
+                } else {
+                    Ok(EvaluationStatus::Rejected)
+                }
             }
             Criteria::And(criterias) => {
                 let evaluation_statuses = self.evaluate_criterias(&proposal, criterias).await?;

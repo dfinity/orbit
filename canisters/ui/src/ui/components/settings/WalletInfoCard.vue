@@ -69,6 +69,16 @@
           </VBtn>
         </template>
       </ActionBtn>
+      <ActionBtn
+        data-test-id="remove-wallet-btn"
+        :text="$t(`app.wallet_info_card_remove_btn`)"
+        :title="$t(`app.wallet_info_card_remove_btn`)"
+        :content="$t(`app.wallet_info_card_remove_btn_confirm`)"
+        variant="text"
+        :submit="removeWallet"
+        :disabled="!isWalletRemovable"
+      >
+      </ActionBtn>
     </VCardActions>
   </VCard>
 </template>
@@ -78,6 +88,7 @@ import { Principal } from '@dfinity/principal';
 import { mdiContentCopy } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { UserWallet } from '~/generated/control-panel/control_panel.did';
+import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import WalletInfoForm, { WalletInfoModel } from '~/ui/components/forms/WalletInfoForm.vue';
 import { i18n, services } from '~/ui/modules';
@@ -90,7 +101,36 @@ const wallet = useWalletStore();
 const session = useSessionStore();
 const app = useAppStore();
 const isMainWallet = computed(() => wallet.canisterId === session.mainWallet?.toText());
+const isWalletRemovable = computed(() => !isMainWallet.value && session.data.wallets.length > 1);
 const controlPanelService = services().controlPanel;
+
+async function removeWallet(): Promise<void> {
+  if (!isWalletRemovable.value) {
+    return;
+  }
+
+  const updatedUser = await services().controlPanel.editUser({
+    main_wallet: [], // do not change the main wallet
+    wallets: [
+      session.data.wallets
+        .filter(w => w.canisterId !== wallet.canisterId)
+        .map(w => sessionUserWalletToUserWallet(w)),
+    ],
+  });
+
+  session.populateUser(updatedUser);
+
+  let maybeWalletToRedirect = session.mainWallet;
+  if (!maybeWalletToRedirect && session.data.wallets[0]?.canisterId) {
+    maybeWalletToRedirect = Principal.fromText(session.data.wallets[0].canisterId);
+  }
+
+  if (maybeWalletToRedirect) {
+    await session.connectWallet(maybeWalletToRedirect);
+  } else {
+    session.disconnectWallet();
+  }
+}
 
 const onFailedOperation = (): void => {
   app.sendNotification({

@@ -54,6 +54,13 @@ impl Metadata {
         self.metadata.keys().collect()
     }
 
+    pub fn contains(&self, dto: MetadataDTO) -> bool {
+        self.metadata
+            .get(&dto.key)
+            .map(|v| v.clone() == dto.value)
+            .unwrap_or_default()
+    }
+
     pub fn map(&self) -> HashMap<String, String> {
         self.metadata
             .iter()

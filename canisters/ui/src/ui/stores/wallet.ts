@@ -16,7 +16,7 @@ import { BlockchainStandard, BlockchainType } from '~/types';
 import { i18n, services, startWalletWorkers, stopWalletWorkers } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { LoadableItem } from '~/ui/types';
-import { computedWalletName } from '~/ui/utils';
+import { computedWalletName, redirectToWalletSettings } from '~/ui/utils';
 
 export interface WalletMetrics {
   accounts: number;
@@ -211,6 +211,8 @@ export const useWalletStore = defineStore('wallet', {
           type: 'error',
           message: i18n.global.t('wallets.user_load_error'),
         });
+
+        redirectToWalletSettings();
       } finally {
         this.loading = false;
       }

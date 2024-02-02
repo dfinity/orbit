@@ -1,6 +1,7 @@
 use crate::setup::WALLET_ADMIN_USER;
 use candid::utils::{ArgumentDecoder, ArgumentEncoder};
 use candid::Principal;
+use ic_canister_core::api::ApiResult;
 use ic_canister_core::cdk::api::management_canister::main::CanisterId;
 use ic_cdk::api::management_canister::main::{
     CanisterIdRecord, CanisterSettings, CanisterStatusResponse, UpdateSettingsArgument,
@@ -9,7 +10,7 @@ use pocket_ic::{with_candid, CallError, PocketIc};
 use std::time::Duration;
 use wallet_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
-    GetProposalInput, GetProposalResponse, ProposalDTO, ProposalExecutionScheduleDTO,
+    GetProposalInput, GetProposalResponse, MeResponse, ProposalDTO, ProposalExecutionScheduleDTO,
     ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO, UserDTO, UserStatusDTO,
     VoteOnProposalInput, VoteOnProposalResponse,
 };
@@ -56,13 +57,28 @@ pub fn get_proposal(
 }
 
 fn is_proposal_completed(proposal: ProposalDTO) -> bool {
-    matches!(proposal.status, ProposalStatusDTO::Completed { .. })
+    match proposal.status {
+        ProposalStatusDTO::Completed { .. } => true,
+        ProposalStatusDTO::Rejected { .. }
+        | ProposalStatusDTO::Cancelled { .. }
+        | ProposalStatusDTO::Failed { .. }
+        | ProposalStatusDTO::Created
+        | ProposalStatusDTO::Adopted
+        | ProposalStatusDTO::Scheduled { .. }
+        | ProposalStatusDTO::Processing { .. } => false,
+    }
 }
 
-fn is_proposal_failed(proposal: ProposalDTO) -> Option<Option<String>> {
+fn is_proposal_evaluated(proposal: ProposalDTO) -> bool {
     match proposal.status {
-        ProposalStatusDTO::Failed { reason } => Some(reason),
-        _ => None,
+        ProposalStatusDTO::Completed { .. }
+        | ProposalStatusDTO::Rejected { .. }
+        | ProposalStatusDTO::Cancelled { .. }
+        | ProposalStatusDTO::Failed { .. } => true,
+        ProposalStatusDTO::Created
+        | ProposalStatusDTO::Adopted
+        | ProposalStatusDTO::Scheduled { .. }
+        | ProposalStatusDTO::Processing { .. } => false,
     }
 }
 
@@ -94,7 +110,7 @@ pub fn wait_for_proposal(
     user_id: Principal,
     wallet_canister_id: CanisterId,
     proposal: ProposalDTO,
-) -> Result<ProposalDTO, Option<String>> {
+) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
     // wait for the proposal to be adopted (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
@@ -107,8 +123,8 @@ pub fn wait_for_proposal(
         if is_proposal_completed(new_proposal.clone()) {
             return Ok(new_proposal);
         }
-        if let Some(reason) = is_proposal_failed(new_proposal) {
-            return Err(reason);
+        if is_proposal_evaluated(new_proposal.clone()) {
+            return Err(Some(new_proposal.status));
         }
     }
     Err(None)
@@ -119,7 +135,7 @@ pub fn execute_proposal(
     user_id: Principal,
     wallet_canister_id: CanisterId,
     proposal_operation_input: ProposalOperationInput,
-) -> Result<ProposalDTO, Option<String>> {
+) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
     let proposal = submit_proposal(env, user_id, wallet_canister_id, proposal_operation_input);
     wait_for_proposal(env, user_id, wallet_canister_id, proposal)
 }
@@ -171,6 +187,12 @@ pub fn add_user(
         ProposalOperationDTO::AddUser(add_user) => add_user.user.unwrap(),
         _ => panic!("invalid proposal operation"),
     }
+}
+
+pub fn get_user(env: &PocketIc, user_id: Principal, wallet_canister_id: Principal) -> UserDTO {
+    let res: (ApiResult<MeResponse>,) =
+        update_candid_as(env, wallet_canister_id, user_id, "me", ()).unwrap();
+    res.0.unwrap().me
 }
 
 pub fn canister_status(
