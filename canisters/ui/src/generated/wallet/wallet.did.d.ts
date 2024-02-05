@@ -104,6 +104,11 @@ export interface AddressBookEntry {
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
+export interface BasicUser {
+  'id' : UUID,
+  'status' : UserStatus,
+  'name' : string,
+}
 export type CanisterSettingsActionSpecifier = { 'Read' : null } |
   { 'ReadConfig' : null };
 export type ChangeAddressBookMetadata = {
@@ -245,6 +250,8 @@ export type ListAccessPoliciesInput = PaginationInput;
 export type ListAccessPoliciesResult = {
     'Ok' : {
       'total' : bigint,
+      'user_groups' : Array<UserGroup>,
+      'users' : Array<BasicUser>,
       'next_offset' : [] | [bigint],
       'policies' : Array<AccessPolicy>,
     }
@@ -537,16 +544,16 @@ export interface RemoveUserGroupOperation {
   'input' : RemoveUserGroupOperationInput,
 }
 export interface RemoveUserGroupOperationInput { 'user_group_id' : UUID }
-export type ResourceSpecifier = { 'Proposal' : ProposalActionSpecifier } |
+export type ResourceSpecifier = { 'User' : CommonActionSpecifier } |
+  { 'ProposalPolicy' : CommonActionSpecifier } |
+  { 'Account' : CommonActionSpecifier } |
+  { 'AddressBook' : CommonActionSpecifier } |
+  { 'Proposal' : ProposalActionSpecifier } |
   { 'ChangeCanister' : ChangeCanisterActionSpecifier } |
+  { 'AccessPolicy' : CommonActionSpecifier } |
   { 'Transfer' : TransferActionSpecifier } |
-  { 'CanisterSettings' : CanisterSettingsActionSpecifier } |
-  {
-    'Common' : {
-      'action' : CommonActionSpecifier,
-      'resource_type' : ResourceType,
-    }
-  };
+  { 'UserGroup' : CommonActionSpecifier } |
+  { 'CanisterSettings' : CanisterSettingsActionSpecifier };
 export type ResourceType = { 'User' : null } |
   { 'ProposalPolicy' : null } |
   { 'Account' : null } |
