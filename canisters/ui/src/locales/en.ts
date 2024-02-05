@@ -12,7 +12,6 @@ export default {
     alpha_warning: 'Learn more about this alpha version. Use with caution.',
     wallet_info_card_title: '{name} Info',
     wallet_info_card_edit_btn: 'Edit wallet',
-    wallet_info_card_edit_btn: 'Edit name',
     wallet_info_card_remove_btn: 'Remove wallet',
     wallet_info_card_remove_btn_confirm: 'Are you sure you want to remove this wallet?',
     manage_associated_wallet: 'Manage associated wallet',
