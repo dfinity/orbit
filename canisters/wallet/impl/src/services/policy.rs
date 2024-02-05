@@ -5,19 +5,22 @@ use crate::{
     },
     errors::{AccessControlError, ProposalError},
     models::{
-        access_control::AccessControlPolicy, AddAccessPolicyOperationInput,
-        AddProposalPolicyOperationInput, EditAccessPolicyOperationInput,
-        EditProposalPolicyOperationInput, ProposalPolicy,
+        access_control::{AccessControlPolicy, UserSpecifier},
+        AddAccessPolicyOperationInput, AddProposalPolicyOperationInput,
+        EditAccessPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy, User,
+        UserGroup,
     },
     repositories::{
         access_control::{AccessControlRepository, ACCESS_CONTROL_REPOSITORY},
         policy::{ProposalPolicyRepository, PROPOSAL_POLICY_REPOSITORY},
     },
+    services::{UserGroupService, UserService, USER_GROUP_SERVICE, USER_SERVICE},
 };
+use candid::CandidType;
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, types::UUID};
 use lazy_static::lazy_static;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 use uuid::Uuid;
 use wallet_api::{ListAccessPoliciesInput, ListProposalPoliciesInput};
 
@@ -25,13 +28,23 @@ lazy_static! {
     pub static ref POLICY_SERVICE: Arc<PolicyService> = Arc::new(PolicyService::new(
         Arc::clone(&ACCESS_CONTROL_REPOSITORY),
         Arc::clone(&PROPOSAL_POLICY_REPOSITORY),
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&USER_GROUP_SERVICE)
     ));
+}
+
+#[derive(Clone, CandidType)]
+pub struct AccessPolicyDependenciesResponse {
+    pub groups: Vec<UserGroup>,
+    pub users: Vec<User>,
 }
 
 #[derive(Default, Debug)]
 pub struct PolicyService {
     access_control_policy_repository: Arc<AccessControlRepository>,
     proposal_policy_repository: Arc<ProposalPolicyRepository>,
+    user_service: Arc<UserService>,
+    user_group_service: Arc<UserGroupService>,
 }
 
 impl PolicyService {
@@ -41,10 +54,14 @@ impl PolicyService {
     pub fn new(
         access_control_policy_repository: Arc<AccessControlRepository>,
         proposal_policy_repository: Arc<ProposalPolicyRepository>,
+        user_service: Arc<UserService>,
+        user_group_service: Arc<UserGroupService>,
     ) -> Self {
         Self {
             access_control_policy_repository,
             proposal_policy_repository,
+            user_service,
+            user_group_service,
         }
     }
 
@@ -175,6 +192,37 @@ impl PolicyService {
         Ok(result)
     }
 
+    pub fn get_access_policies_dependencies(
+        &self,
+        policies: &Vec<AccessControlPolicy>,
+    ) -> ServiceResult<AccessPolicyDependenciesResponse> {
+        let mut user_ids = HashSet::new();
+        let mut group_ids = HashSet::new();
+        for policy in policies {
+            match &policy.user {
+                UserSpecifier::Id(ids) => user_ids.extend(ids),
+                UserSpecifier::Group(ids) => group_ids.extend(ids),
+                UserSpecifier::Any => {}
+            }
+        }
+
+        let mut groups = Vec::new();
+        group_ids.iter().for_each(|id| {
+            if let Ok(user_group) = self.user_group_service.get(id) {
+                groups.push(user_group);
+            }
+        });
+
+        let mut users = Vec::new();
+        user_ids.iter().for_each(|id| {
+            if let Ok(user) = self.user_service.get_user(id) {
+                users.push(user);
+            }
+        });
+
+        Ok(AccessPolicyDependenciesResponse { groups, users })
+    }
+
     pub fn list_proposal_policies(
         &self,
         input: ListProposalPoliciesInput,
@@ -195,14 +243,19 @@ impl PolicyService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{
-        access_control::{
-            access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
-            ResourceSpecifier, UserSpecifier,
+    use crate::{
+        models::{
+            access_control::{
+                access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
+                ResourceSpecifier, UserSpecifier,
+            },
+            criteria::Criteria,
+            proposal_policy_test_utils::mock_proposal_policy,
+            specifier::ProposalSpecifier,
+            user_group_test_utils::mock_user_group,
+            user_test_utils::mock_user,
         },
-        criteria::Criteria,
-        proposal_policy_test_utils::mock_proposal_policy,
-        specifier::ProposalSpecifier,
+        repositories::{USER_GROUP_REPOSITORY, USER_REPOSITORY},
     };
 
     #[tokio::test]
@@ -289,6 +342,42 @@ mod tests {
         let result = service.get_access_policy(&[1; 16]);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn get_access_policy_dependencies_finds_users() {
+        let service = POLICY_SERVICE.clone();
+        let mut policy = mock_access_policy();
+        policy.user = UserSpecifier::Id(vec![[1; 16]]);
+        ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        let mut user = mock_user();
+        user.id = [1; 16];
+        USER_REPOSITORY.insert(user.to_key(), user.to_owned());
+
+        let result = service
+            .get_access_policies_dependencies(&vec![policy.to_owned()])
+            .unwrap();
+
+        assert_eq!(result.users.len(), 1);
+        assert_eq!(result.groups.len(), 0);
+    }
+
+    #[test]
+    fn get_access_policy_dependencies_finds_groups() {
+        let service = POLICY_SERVICE.clone();
+        let mut policy = mock_access_policy();
+        policy.user = UserSpecifier::Group(vec![[1; 16]]);
+        ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        let mut group = mock_user_group();
+        group.id = [1; 16];
+        USER_GROUP_REPOSITORY.insert(group.id, group.to_owned());
+
+        let result = service
+            .get_access_policies_dependencies(&vec![policy.to_owned()])
+            .unwrap();
+
+        assert_eq!(result.users.len(), 0);
+        assert_eq!(result.groups.len(), 1);
     }
 
     #[test]

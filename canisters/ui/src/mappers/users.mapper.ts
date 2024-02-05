@@ -9,6 +9,7 @@ export const fromUserToUserInput = (user: Partial<User> = {}): UserInput => {
     status: user.status ? user.status : { Inactive: null },
     groups: user.groups?.map(g => g.id) ?? [],
     identities: user.identities?.map(i => i.toText()) ?? [],
+    prefilledGroups: user.groups ?? [],
   };
 };
 

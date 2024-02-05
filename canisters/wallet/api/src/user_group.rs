@@ -1,4 +1,4 @@
-use crate::UuidDTO;
+use crate::{PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -50,6 +50,14 @@ pub struct GetUserGroupResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListUserGroupResponse {
+pub struct ListUserGroupsInput {
+    pub search_term: Option<String>,
+    pub paginate: Option<PaginationInput>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListUserGroupsResponse {
     pub user_groups: Vec<UserGroupDTO>,
+    pub next_offset: Option<u64>,
+    pub total: u64,
 }

@@ -1,15 +1,10 @@
 use crate::{
     core::{
-        access_control::AccessControlEvaluator,
-        evaluation::Evaluate,
         ic_cdk::api::trap,
         is_canister_initialized,
         middlewares::{authorize, call_context},
     },
-    errors::AccessControlError,
-    models::access_control::{
-        CanisterSettingsActionSpecifier, CommonActionSpecifier, ResourceSpecifier, ResourceType,
-    },
+    models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
     services::{WalletService, WALLET_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
@@ -100,17 +95,7 @@ impl WalletController {
         is_async = true
     )]
     async fn get_config(&self) -> ApiResult<GetConfigResponse> {
-        let ctx = &call_context();
-        let evaluator = AccessControlEvaluator::new(
-            ctx,
-            ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List),
-        );
-        let can_view_user_groups = evaluator
-            .evaluate()
-            .await
-            .map_err(|e| AccessControlError::UnexpectedError(e.into()))?;
-
-        let config = self.wallet_service.get_config(can_view_user_groups)?;
+        let config = self.wallet_service.get_config()?;
 
         Ok(GetConfigResponse {
             config: config.into(),

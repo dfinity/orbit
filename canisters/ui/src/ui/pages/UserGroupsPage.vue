@@ -61,7 +61,8 @@
           :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
         />
         <DataLoader
-          :load="() => wallet.service.listUserGroups()"
+          v-model:force-reload="forceReload"
+          :load="fetchUserGroups"
           :error-msg="$t('pages.user_groups.error_loading_user_groups')"
           :refresh-interval-ms="5000"
         >
@@ -125,6 +126,13 @@
                 </div>
               </template>
             </VDataTable>
+            <VPagination
+              v-model="pagination.selectedPage"
+              :length="pagination.totalPages"
+              rounded
+              density="comfortable"
+              @update:model-value="triggerSearch"
+            />
           </template>
         </DataLoader>
       </PageBody>
@@ -150,6 +158,7 @@ import { i18n } from '~/ui/modules/i18n';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { assertAndReturn } from '~/ui/utils';
+import { throttle } from '~/core/utils';
 
 const wallet = useWalletStore();
 const app = useAppStore();
@@ -159,6 +168,34 @@ const headers = ref<{ title: string; key: string; headerProps: { class: string }
   { title: i18n.global.t('terms.user_group'), key: 'name', headerProps },
   { title: '', key: 'actions', headerProps },
 ]);
+
+const forceReload = ref(false);
+const pagination = ref<{
+  limit: number;
+  totalPages: number;
+  selectedPage: number;
+}>({
+  limit: 25,
+  totalPages: 1,
+  selectedPage: 1,
+});
+
+const triggerSearch = throttle(() => {
+  forceReload.value = true;
+}, 500);
+
+const fetchUserGroups = async (): Promise<UserGroup[]> => {
+  const { limit, selectedPage } = pagination.value;
+  const offset = (selectedPage - 1) * limit;
+  const { user_groups, total } = await wallet.service.listUserGroups({ limit, offset });
+
+  pagination.value = {
+    ...pagination.value,
+    totalPages: Math.ceil(Number(total) / limit),
+  };
+
+  return user_groups;
+};
 
 const transformItems = (items: UserGroup[]) => {
   return items.map(item => ({

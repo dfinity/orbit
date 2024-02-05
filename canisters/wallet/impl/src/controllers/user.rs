@@ -63,7 +63,8 @@ impl UserController {
         is_async = true
     )]
     async fn list_users(&self, input: ListUsersInput) -> ApiResult<ListUsersResponse> {
-        let list = self.user_service.list_users(input)?;
+        let ctx = call_context();
+        let list = self.user_service.list_users(input, Some(&ctx)).await?;
 
         Ok(ListUsersResponse {
             users: list.items.into_iter().map(Into::into).collect(),

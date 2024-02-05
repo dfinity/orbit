@@ -82,6 +82,28 @@ impl UserGroupRepository {
 
         self.get(user_group_id)
     }
+
+    pub fn find_where(&self, where_clause: UseGroupWhereClause) -> Vec<UserGroup> {
+        let mut user_groups = self.list();
+
+        if let Some(search_term) = where_clause.search_term {
+            user_groups.retain(|user_group| {
+                user_group
+                    .name
+                    .to_lowercase()
+                    .contains(&search_term.to_lowercase())
+            });
+        }
+
+        user_groups.sort();
+
+        user_groups
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UseGroupWhereClause {
+    pub search_term: Option<String>,
 }
 
 #[cfg(test)]

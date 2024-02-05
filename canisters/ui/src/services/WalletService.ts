@@ -18,9 +18,11 @@ import {
   GetTransfersInput,
   GetUserInput,
   ListAccountTransfersInput,
+  ListAccountsResult,
   ListNotificationsInput,
   ListProposalsInput,
   ListProposalsResult,
+  ListUserGroupsResult,
   ListUsersResult,
   MarkNotificationsReadInput,
   Notification,
@@ -31,12 +33,12 @@ import {
   TransferListItem,
   UUID,
   User,
-  UserGroup,
   UserPrivilege,
+  UserStatus,
   VoteOnProposalInput,
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
-import { ExtractOk, ListProposalsArgs } from '~/types';
+import { ExtractOk, ListAccountsArgs, ListProposalsArgs } from '~/types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;
@@ -88,13 +90,33 @@ export class WalletService {
     };
   }
 
-  async listUserGroups(): Promise<UserGroup[]> {
-    const result = await this.actor.list_user_groups();
-    if ('Err' in result) {
+  async listUserGroups({
+    limit,
+    offset,
+    searchTerm,
+  }: {
+    limit?: number;
+    offset?: number;
+    searchTerm?: string;
+  } = {}): Promise<ExtractOk<ListUserGroupsResult>> {
+    const result = await this.actor.list_user_groups({
+      search_term: searchTerm ? [searchTerm] : [],
+      paginate:
+        limit || offset
+          ? [
+              {
+                limit: limit !== undefined ? [limit] : [],
+                offset: offset !== undefined ? [BigInt(offset)] : [],
+              },
+            ]
+          : [],
+    });
+
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.user_groups;
+    return result.Ok;
   }
 
   async removeUserGroup(input: RemoveUserGroupOperationInput): Promise<Proposal> {
@@ -172,12 +194,29 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async listUsers({ limit, offset }: { limit?: number; offset?: number } = {}): Promise<
-    ExtractOk<ListUsersResult>
-  > {
+  async listUsers({
+    limit,
+    offset,
+    searchTerm,
+    statuses,
+  }: {
+    limit?: number;
+    offset?: number;
+    searchTerm?: string;
+    statuses?: UserStatus[];
+  } = {}): Promise<ExtractOk<ListUsersResult>> {
     const result = await this.actor.list_users({
-      limit: limit ? [limit] : [],
-      offset: offset ? [BigInt(offset)] : [],
+      paginate:
+        limit || offset
+          ? [
+              {
+                limit: limit ? [limit] : [],
+                offset: offset ? [BigInt(offset)] : [],
+              },
+            ]
+          : [],
+      statuses: statuses ? [statuses] : [],
+      search_term: searchTerm ? [searchTerm] : [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -297,14 +336,24 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async listAccounts(): Promise<Account[]> {
-    const result = await this.actor.list_accounts();
+  async listAccounts({ limit, offset, searchTerm }: ListAccountsArgs = {}): Promise<
+    ExtractOk<ListAccountsResult>
+  > {
+    const result = await this.actor.list_accounts({
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+      search_term: searchTerm ? [searchTerm] : [],
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.accounts;
+    return result.Ok;
   }
 
   async getAccount(input: GetAccountInput): Promise<Account> {
