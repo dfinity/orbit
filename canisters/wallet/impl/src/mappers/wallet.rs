@@ -37,11 +37,6 @@ impl From<Configuration> for ConfigDTO {
                     metadata: asset.metadata.into_vec_dto(),
                 })
                 .collect(),
-            user_groups: config
-                .user_groups
-                .into_iter()
-                .map(|group| group.into())
-                .collect(),
         }
     }
 }

@@ -8,10 +8,15 @@ use crate::{
     },
     errors::{AccessControlError, UserError},
     mappers::{UserMapper, USER_PRIVILEGES},
-    models::{AddUserOperationInput, EditUserOperationInput, User, UserId, ADMIN_GROUP_ID},
-    repositories::UserRepository,
+    models::{
+        access_control::{ResourceSpecifier, ResourceType, UserActionSpecifier},
+        specifier::CommonSpecifier,
+        AddUserOperationInput, EditUserOperationInput, User, UserId, ADMIN_GROUP_ID,
+    },
+    repositories::{UserRepository, UserWhereClause},
 };
 use candid::Principal;
+use futures::{stream, StreamExt};
 use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
@@ -113,11 +118,44 @@ impl UserService {
     /// Returns the list of users from the given pagination parameters.
     ///
     /// The default limit is 100 and the maximum limit is 1000.
-    pub fn list_users(&self, input: ListUsersInput) -> ServiceResult<PaginatedData<User>> {
-        let users = self.user_repository.list();
+    pub async fn list_users(
+        &self,
+        input: ListUsersInput,
+        ctx: Option<&CallContext>,
+    ) -> ServiceResult<PaginatedData<User>> {
+        let mut users = self.user_repository.find_where(UserWhereClause {
+            search_term: input.search_term,
+            statuses: input
+                .statuses
+                .map(|statuses| statuses.into_iter().map(Into::into).collect()),
+        });
+
+        // filter out users that the caller does not have access to read
+        if let Some(ctx) = ctx {
+            users = stream::iter(users.iter())
+                .filter_map(|user| async move {
+                    match evaluate_caller_access(
+                        ctx,
+                        &ResourceSpecifier::Common(
+                            ResourceType::User,
+                            UserActionSpecifier::Read(CommonSpecifier::Id(vec![user
+                                .id
+                                .to_owned()])),
+                        ),
+                    )
+                    .await
+                    {
+                        Ok(_) => Some(user.to_owned()),
+                        Err(_) => None,
+                    }
+                })
+                .collect()
+                .await
+        }
+
         let result = paginated_items(PaginatedItemsArgs {
-            offset: input.offset,
-            limit: input.limit,
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
             default_limit: Some(Self::DEFAULT_USER_LIST_LIMIT),
             max_limit: Some(Self::MAX_USER_LIST_LIMIT),
             items: &users,
@@ -170,6 +208,8 @@ impl UserService {
 
 #[cfg(test)]
 mod tests {
+    use wallet_api::PaginationInput;
+
     use super::*;
     use crate::{
         core::test_utils,
@@ -303,8 +343,8 @@ mod tests {
         assert_eq!(user.identities, vec![ctx.call_context.caller()]);
     }
 
-    #[test]
-    fn list_users_should_use_offset_and_limit() {
+    #[tokio::test]
+    async fn list_users_should_use_offset_and_limit() {
         let ctx: TestContext = setup();
         for i in 0..50 {
             let mut user = user_test_utils::mock_user();
@@ -314,13 +354,17 @@ mod tests {
         }
 
         let input = ListUsersInput {
-            offset: Some(15),
-            limit: Some(30),
+            search_term: None,
+            statuses: None,
+            paginate: Some(PaginationInput {
+                offset: Some(10),
+                limit: Some(30),
+            }),
         };
 
-        let result = ctx.service.list_users(input).unwrap();
+        let result = ctx.service.list_users(input, None).await.unwrap();
         assert_eq!(result.items.len(), 30);
-        assert_eq!(result.next_offset, Some(45));
+        assert_eq!(result.next_offset, Some(40));
     }
 
     #[tokio::test]

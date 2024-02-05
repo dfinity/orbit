@@ -1,25 +1,31 @@
 use crate::{
-    core::{generate_uuid_v4, ACCOUNT_BALANCE_FRESHNESS_IN_MS},
+    core::{
+        access_control::evaluate_caller_access,
+        generate_uuid_v4,
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
+    },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{AccountMapper, HelperMapper},
     models::{
-        specifier::{AccountSpecifier, ProposalSpecifier},
+        access_control::{AccountActionSpecifier, ResourceSpecifier, ResourceType},
+        specifier::{AccountSpecifier, CommonSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
         EditProposalPolicyOperationInput,
     },
-    repositories::{AccountRepository, ACCOUNT_REPOSITORY},
+    repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
     services::{PolicyService, UserService, POLICY_SERVICE, USER_SERVICE},
 };
-use candid::Principal;
+use futures::{stream, StreamExt};
 use ic_canister_core::{
     api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository,
 };
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
-use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput};
+use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
 
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
@@ -37,6 +43,9 @@ pub struct AccountService {
 }
 
 impl AccountService {
+    const DEFAULT_ACCOUNT_LIST_LIMIT: u16 = 50;
+    const MAX_ACCOUNT_LIST_LIMIT: u16 = 1000;
+
     pub fn new(
         user_service: Arc<UserService>,
         policy_service: Arc<PolicyService>,
@@ -63,12 +72,57 @@ impl AccountService {
     }
 
     /// Returns a list of all the accounts of the requested owner identity.
-    pub fn list_accounts(&self, owner_identity: Principal) -> ServiceResult<Vec<Account>> {
-        let user = self.user_service.get_user_by_identity(&owner_identity)?;
+    pub async fn list_accounts(
+        &self,
+        input: ListAccountsInput,
+        ctx: Option<&CallContext>,
+    ) -> ServiceResult<PaginatedData<Account>> {
+        let owner_ids = match ctx {
+            Some(context) => Some(vec![
+                self.user_service
+                    .get_user_by_identity(&context.caller())?
+                    .id,
+            ]),
+            None => None,
+        };
 
-        let accounts = self.account_repository.find_by_user_id(user.id);
+        let mut accounts = self.account_repository.find_where(AccountWhereClause {
+            owner_user_ids: owner_ids,
+            search_term: None,
+        });
 
-        Ok(accounts)
+        // filter out accounts that the caller does not have access to read
+        if let Some(ctx) = ctx {
+            accounts = stream::iter(accounts.iter())
+                .filter_map(|account| async move {
+                    match evaluate_caller_access(
+                        ctx,
+                        &ResourceSpecifier::Common(
+                            ResourceType::Account,
+                            AccountActionSpecifier::Read(CommonSpecifier::Id(vec![account
+                                .id
+                                .to_owned()])),
+                        ),
+                    )
+                    .await
+                    {
+                        Ok(_) => Some(account.to_owned()),
+                        Err(_) => None,
+                    }
+                })
+                .collect()
+                .await
+        }
+
+        let result = paginated_items(PaginatedItemsArgs {
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
+            default_limit: Some(Self::DEFAULT_ACCOUNT_LIST_LIMIT),
+            max_limit: Some(Self::MAX_ACCOUNT_LIST_LIMIT),
+            items: &accounts,
+        })?;
+
+        Ok(result)
     }
 
     /// Creates a new account, if the caller has not added itself as one of the owners of the account,
@@ -286,6 +340,8 @@ impl AccountService {
 
 #[cfg(test)]
 mod tests {
+    use candid::Principal;
+
     use super::*;
     use crate::{
         core::{test_utils, CallContext},

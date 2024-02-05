@@ -117,6 +117,33 @@ impl UserRepository {
             .filter_map(|user_id| self.get(&User::key(*user_id)))
             .collect()
     }
+
+    /// Returns the users that match the given filters.
+    pub fn find_where(&self, filters: UserWhereClause) -> Vec<User> {
+        let mut users = self.list();
+
+        if let Some(search_term) = filters.search_term {
+            users.retain(|user| {
+                user.name
+                    .as_ref()
+                    .map_or(false, |name| name.starts_with(&search_term))
+            });
+        }
+
+        if let Some(statuses) = filters.statuses {
+            users.retain(|user| statuses.contains(&user.status));
+        }
+
+        users.sort();
+
+        users
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UserWhereClause {
+    pub search_term: Option<String>,
+    pub statuses: Option<Vec<UserStatus>>,
 }
 
 #[cfg(test)]

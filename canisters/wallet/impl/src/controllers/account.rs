@@ -10,7 +10,7 @@ use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
     FetchAccountBalancesInput, FetchAccountBalancesResponse, GetAccountInput, GetAccountResponse,
-    ListAccountResponse,
+    ListAccountsInput, ListAccountsResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -20,8 +20,8 @@ async fn get_account(input: GetAccountInput) -> ApiResult<GetAccountResponse> {
 }
 
 #[query(name = "list_accounts")]
-async fn list_accounts() -> ApiResult<ListAccountResponse> {
-    CONTROLLER.list_accounts().await
+async fn list_accounts(input: ListAccountsInput) -> ApiResult<ListAccountsResponse> {
+    CONTROLLER.list_accounts(input).await
 }
 
 #[update(name = "fetch_account_balances")]
@@ -67,18 +67,23 @@ impl AccountController {
         args = [ResourceSpecifier::Common(ResourceType::Account, AccountActionSpecifier::List)],
         is_async = true
     )]
-    async fn list_accounts(&self) -> ApiResult<ListAccountResponse> {
+    async fn list_accounts(&self, input: ListAccountsInput) -> ApiResult<ListAccountsResponse> {
         let ctx = call_context();
-        let owner_identity = ctx.caller();
 
-        let accounts = self
+        let result = self
             .account_service
-            .list_accounts(owner_identity)?
-            .iter()
-            .map(|account| account.to_dto())
-            .collect();
+            .list_accounts(input, Some(&ctx))
+            .await?;
 
-        Ok(ListAccountResponse { accounts })
+        Ok(ListAccountsResponse {
+            accounts: result
+                .items
+                .into_iter()
+                .map(|account| account.to_dto())
+                .collect(),
+            next_offset: result.next_offset,
+            total: result.total,
+        })
     }
 
     #[with_middleware(

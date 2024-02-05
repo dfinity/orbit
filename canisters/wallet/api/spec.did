@@ -828,11 +828,23 @@ type AccountBalanceInfo = record {
   last_update_timestamp : TimestampRFC3339;
 };
 
+// A record type that can be used search for accounts.
+type ListAccountsInput = record {
+  // The name of the account to search for.
+  search_term : opt text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
 // Result type for listing all accounts.
-type ListAccountResult = variant {
+type ListAccountsResult = variant {
   Ok : record {
     // The list of accounts.
     accounts : vec Account;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
   };
   Err : Error;
 };
@@ -1199,8 +1211,6 @@ type WalletAsset = record {
 type Config = record {
   // The list of supported assets.
   supported_assets : vec WalletAsset;
-  // The list of available user groups.
-  user_groups : vec UserGroup;
 };
 
 // Result type for getting the current config.
@@ -1240,7 +1250,14 @@ type GetUserResult = variant {
 };
 
 // Input type for listing users of the wallet.
-type ListUsersInput = PaginationInput;
+type ListUsersInput = record {
+  // The search term to use for filtering the users.
+  search_term : opt text;
+  // The statuses to use for filtering the users.
+  statuses : opt vec UserStatus;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
 
 // Result type for listing users of the wallet.
 type ListUsersResult = variant {
@@ -1389,11 +1406,20 @@ type GetAccessPolicyResult = variant {
   Err : Error;
 };
 
+type ListUserGroupsInput = record {
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
 // Result type for listing all user groups.
-type ListUserGroupResult = variant {
+type ListUserGroupsResult = variant {
   Ok : record {
     // The list of groups.
     user_groups : vec UserGroup;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of user groups.
+    total : nat64;
   };
   Err : Error;
 };
@@ -1552,7 +1578,7 @@ service : (opt WalletInstall) -> {
   // List all accounts that the caller has access to.
   //
   // If the caller is not the owner of any account, an error will be returned.
-  list_accounts : () -> (ListAccountResult) query;
+  list_accounts : (input : ListAccountsInput) -> (ListAccountsResult) query;
   // List all transfers from the requested account.
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
   // Get transfers by their ids.
@@ -1590,7 +1616,7 @@ service : (opt WalletInstall) -> {
   // If the caller does not have access to the user group, an error will be returned.
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
   // List all user groups of the wallet.
-  list_user_groups : () -> (ListUserGroupResult) query;
+  list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
   // Metrics (Http Interface)
