@@ -40,8 +40,9 @@ export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) 
 export const useUserGroupsAutocomplete = () => {
   const wallet = useWalletStore();
 
-  const autocomplete = useAutocomplete<UserGroup>(async _search => {
+  const autocomplete = useAutocomplete<UserGroup>(async term => {
     const groups = await wallet.service.listUserGroups({
+      searchTerm: term.trim().length > 0 ? term.trim() : undefined,
       limit: 100,
       offset: 0,
     });

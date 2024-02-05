@@ -699,6 +699,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListUserGroupsInput = IDL.Record({
     'paginate' : IDL.Opt(PaginationInput),
+    'search_term' : IDL.Opt(IDL.Text),
   });
   const ListUserGroupsResult = IDL.Variant({
     'Ok' : IDL.Record({

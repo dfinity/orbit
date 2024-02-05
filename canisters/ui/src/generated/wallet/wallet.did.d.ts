@@ -349,7 +349,10 @@ export type ListProposalsResult = {
 export type ListProposalsSortBy = { 'ExpirationDt' : SortByDirection } |
   { 'LastModificationDt' : SortByDirection } |
   { 'CreatedAt' : SortByDirection };
-export interface ListUserGroupsInput { 'paginate' : [] | [PaginationInput] }
+export interface ListUserGroupsInput {
+  'paginate' : [] | [PaginationInput],
+  'search_term' : [] | [string],
+}
 export type ListUserGroupsResult = {
     'Ok' : {
       'total' : bigint,

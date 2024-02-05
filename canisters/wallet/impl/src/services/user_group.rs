@@ -6,7 +6,7 @@ use crate::errors::UserGroupError;
 use crate::models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier};
 use crate::models::specifier::CommonSpecifier;
 use crate::models::{AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup};
-use crate::repositories::UserGroupRepository;
+use crate::repositories::{UseGroupWhereClause, UserGroupRepository};
 use futures::{stream, StreamExt};
 use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
@@ -47,8 +47,9 @@ impl UserGroupService {
         input: ListUserGroupsInput,
         ctx: Option<&CallContext>,
     ) -> ServiceResult<PaginatedData<UserGroup>> {
-        let mut user_groups = self.user_group_repository.list();
-        user_groups.sort();
+        let mut user_groups = self.user_group_repository.find_where(UseGroupWhereClause {
+            search_term: input.search_term.to_owned(),
+        });
 
         // filter out user groups that the caller does not have access to read
         if let Some(ctx) = ctx {

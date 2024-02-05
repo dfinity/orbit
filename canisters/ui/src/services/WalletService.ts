@@ -93,11 +93,14 @@ export class WalletService {
   async listUserGroups({
     limit,
     offset,
+    searchTerm,
   }: {
     limit?: number;
     offset?: number;
+    searchTerm?: string;
   } = {}): Promise<ExtractOk<ListUserGroupsResult>> {
     const result = await this.actor.list_user_groups({
+      search_term: searchTerm ? [searchTerm] : [],
       paginate:
         limit || offset
           ? [

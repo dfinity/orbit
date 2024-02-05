@@ -1407,6 +1407,8 @@ type GetAccessPolicyResult = variant {
 };
 
 type ListUserGroupsInput = record {
+  // The term to use for filtering the user groups.
+  search_term : opt text;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };

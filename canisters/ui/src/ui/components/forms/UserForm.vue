@@ -121,11 +121,16 @@ import AddPrincipalForm from '~/ui/components/forms/AddPrincipalForm.vue';
 import { useAppStore } from '~/ui/stores/app';
 import { reactive } from 'vue';
 import { useUserGroupsAutocomplete } from '~/ui/composables/autocomplete.composable';
+import { onMounted } from 'vue';
 
 const app = useAppStore();
 const form = ref<VFormValidation | null>(null);
 const identitiesInput = ref<VFormValidation | null>(null);
 const userGroupsAutocomplete = useUserGroupsAutocomplete();
+
+onMounted(() => {
+  userGroupsAutocomplete.searchItems();
+});
 
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 const rules: {

@@ -51,6 +51,7 @@ pub struct GetUserGroupResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListUserGroupsInput {
+    pub search_term: Option<String>,
     pub paginate: Option<PaginationInput>,
 }
 
