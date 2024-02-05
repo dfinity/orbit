@@ -156,11 +156,8 @@ pub mod add_access_policy_test_utils {
 
     pub fn mock_add_access_policy_api_input() -> wallet_api::AddAccessPolicyOperationInput {
         wallet_api::AddAccessPolicyOperationInput {
-            resource: wallet_api::ResourceSpecifierDTO::Common(
-                wallet_api::ResourceSpecifierCommonArgsDTO {
-                    resource_type: wallet_api::ResourceTypeDTO::AccessPolicy,
-                    action: wallet_api::CommonActionSpecifierDTO::Create,
-                },
+            resource: wallet_api::ResourceSpecifierDTO::AccessPolicy(
+                wallet_api::CommonActionSpecifierDTO::Create,
             ),
             user: wallet_api::AccessControlUserSpecifierDTO::Id(vec![Uuid::from_bytes([1u8; 16])
                 .hyphenated()
