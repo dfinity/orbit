@@ -6,8 +6,8 @@ use crate::{
         UserId,
     },
 };
-use ic_canister_core::repository::IndexRepository;
 use ic_canister_core::repository::Repository;
+use ic_canister_core::{repository::IndexRepository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
@@ -103,6 +103,38 @@ impl AccountRepository {
             .filter_map(|id| self.get(&Account::key(*id)))
             .collect::<Vec<_>>()
     }
+
+    pub fn find_where(&self, where_clause: AccountWhereClause) -> Vec<Account> {
+        let mut accounts = self.list();
+
+        if let Some(search_term) = where_clause.search_term {
+            accounts.retain(|account| {
+                account
+                    .name
+                    .to_lowercase()
+                    .contains(&search_term.to_lowercase())
+            });
+        }
+
+        if let Some(owner_user_ids) = where_clause.owner_user_ids {
+            accounts.retain(|account| {
+                account
+                    .owners
+                    .iter()
+                    .any(|owner| owner_user_ids.contains(owner))
+            });
+        }
+
+        accounts.sort();
+
+        accounts
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AccountWhereClause {
+    pub search_term: Option<String>,
+    pub owner_user_ids: Option<Vec<UUID>>,
 }
 
 #[cfg(test)]

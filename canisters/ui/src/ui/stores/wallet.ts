@@ -97,7 +97,6 @@ const initialStoreState = (): WalletStoreState => {
       loading: false,
       details: {
         supported_assets: [],
-        user_groups: [],
       },
     },
     accounts: {
@@ -278,7 +277,8 @@ export const useWalletStore = defineStore('wallet', {
       }
       try {
         this.accounts.loading = true;
-        this.accounts.items = await this.service.listAccounts();
+        // todo: add pagination support
+        this.accounts.items = (await this.service.listAccounts()).accounts;
       } finally {
         this.accounts.loading = false;
       }

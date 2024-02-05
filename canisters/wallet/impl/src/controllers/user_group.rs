@@ -2,7 +2,9 @@ use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
-use wallet_api::{GetUserGroupInput, GetUserGroupResponse, ListUserGroupResponse};
+use wallet_api::{
+    GetUserGroupInput, GetUserGroupResponse, ListUserGroupsInput, ListUserGroupsResponse,
+};
 
 use crate::{
     core::middlewares::{authorize, call_context},
@@ -17,8 +19,8 @@ async fn get_user_group(input: GetUserGroupInput) -> ApiResult<GetUserGroupRespo
 }
 
 #[query(name = "list_user_groups")]
-async fn list_user_groups() -> ApiResult<ListUserGroupResponse> {
-    CONTROLLER.list_user_groups().await
+async fn list_user_groups(input: ListUserGroupsInput) -> ApiResult<ListUserGroupsResponse> {
+    CONTROLLER.list_user_groups(input).await
 }
 
 lazy_static! {
@@ -57,14 +59,17 @@ impl UserGroupController {
         args = [ResourceSpecifier::Common(ResourceType::UserGroup, UserGroupActionSpecifier::List)],
         is_async = true
     )]
-    async fn list_user_groups(&self) -> ApiResult<ListUserGroupResponse> {
-        let user_groups = self
-            .user_group_service
-            .list()?
-            .iter()
-            .map(|g| g.to_owned().into())
-            .collect();
+    async fn list_user_groups(
+        &self,
+        input: ListUserGroupsInput,
+    ) -> ApiResult<ListUserGroupsResponse> {
+        let ctx = call_context();
+        let result = self.user_group_service.list(input, Some(&ctx)).await?;
 
-        Ok(ListUserGroupResponse { user_groups })
+        Ok(ListUserGroupsResponse {
+            user_groups: result.items.into_iter().map(Into::into).collect(),
+            next_offset: result.next_offset,
+            total: result.total,
+        })
     }
 }

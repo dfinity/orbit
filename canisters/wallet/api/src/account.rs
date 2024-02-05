@@ -1,4 +1,4 @@
-use crate::{CriteriaDTO, MetadataDTO, UuidDTO};
+use crate::{CriteriaDTO, MetadataDTO, PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -94,6 +94,14 @@ pub struct FetchAccountBalancesResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAccountResponse {
+pub struct ListAccountsInput {
+    pub search_term: Option<String>,
+    pub paginate: Option<PaginationInput>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListAccountsResponse {
     pub accounts: Vec<AccountDTO>,
+    pub next_offset: Option<u64>,
+    pub total: u64,
 }

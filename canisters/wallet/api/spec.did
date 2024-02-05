@@ -828,11 +828,23 @@ type AccountBalanceInfo = record {
   last_update_timestamp : TimestampRFC3339;
 };
 
+// A record type that can be used search for accounts.
+type ListAccountsInput = record {
+  // The name of the account to search for.
+  search_term : opt text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
 // Result type for listing all accounts.
-type ListAccountResult = variant {
+type ListAccountsResult = variant {
   Ok : record {
     // The list of accounts.
     accounts : vec Account;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of users.
+    total : nat64;
   };
   Err : Error;
 };
@@ -1141,7 +1153,6 @@ type GetAddressBookEntryResult = variant {
   Err : Error;
 };
 
-
 // Input type for listing address book entries for a given blockchain standard.
 type ListAddressBookEntriesInput = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
@@ -1158,7 +1169,7 @@ type ListAddressBookEntriesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The list of retrieved address book entries.
-    address_book_entries: vec AddressBookEntry;
+    address_book_entries : vec AddressBookEntry;
     // The offset to use for the next page.
     next_offset : opt nat64;
     // The total number of address book entries for the given blockchain standard.
@@ -1200,8 +1211,6 @@ type WalletAsset = record {
 type Config = record {
   // The list of supported assets.
   supported_assets : vec WalletAsset;
-  // The list of available user groups.
-  user_groups : vec UserGroup;
 };
 
 // Result type for getting the current config.
@@ -1241,7 +1250,14 @@ type GetUserResult = variant {
 };
 
 // Input type for listing users of the wallet.
-type ListUsersInput = PaginationInput;
+type ListUsersInput = record {
+  // The search term to use for filtering the users.
+  search_term : opt text;
+  // The statuses to use for filtering the users.
+  statuses : opt vec UserStatus;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
 
 // Result type for listing users of the wallet.
 type ListUsersResult = variant {
@@ -1327,12 +1343,12 @@ type ResourceSpecifier = variant {
   ChangeCanister : ChangeCanisterActionSpecifier;
   CanisterSettings : CanisterSettingsActionSpecifier;
   Proposal : ProposalActionSpecifier;
-  Common : record {
-    // The type of the resource.
-    resource_type : ResourceType;
-    // The action that is performed on the resource.
-    action : CommonActionSpecifier;
-  };
+  Account : CommonActionSpecifier;
+  User : CommonActionSpecifier;
+  UserGroup : CommonActionSpecifier;
+  AddressBook : CommonActionSpecifier;
+  AccessPolicy : CommonActionSpecifier;
+  ProposalPolicy : CommonActionSpecifier;
 };
 
 // The access control policy, used to specify the access control rules for
@@ -1346,12 +1362,26 @@ type AccessPolicy = record {
 // Input type for listing access policies with the given pagination parameters.
 type ListAccessPoliciesInput = PaginationInput;
 
+// A basic user record that can be used to represent a user in the wallet.
+type BasicUser = record {
+  // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : text;
+  // The status of the user (e.g. `Active`).
+  status : UserStatus;
+};
+
 // Result type for listing access policies.
 type ListAccessPoliciesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The list of access policies.
     policies : vec AccessPolicy;
+    // The user groups that are associated with returned access policies.
+    user_groups : vec UserGroup;
+    // The users that are associated with returned access policies.
+    users : vec BasicUser;
     // The offset to use for the next page.
     next_offset : opt nat64;
     // The total number of access policies.
@@ -1376,11 +1406,22 @@ type GetAccessPolicyResult = variant {
   Err : Error;
 };
 
+type ListUserGroupsInput = record {
+  // The term to use for filtering the user groups.
+  search_term : opt text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
 // Result type for listing all user groups.
-type ListUserGroupResult = variant {
+type ListUserGroupsResult = variant {
   Ok : record {
     // The list of groups.
     user_groups : vec UserGroup;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of user groups.
+    total : nat64;
   };
   Err : Error;
 };
@@ -1539,7 +1580,7 @@ service : (opt WalletInstall) -> {
   // List all accounts that the caller has access to.
   //
   // If the caller is not the owner of any account, an error will be returned.
-  list_accounts : () -> (ListAccountResult) query;
+  list_accounts : (input : ListAccountsInput) -> (ListAccountsResult) query;
   // List all transfers from the requested account.
   list_account_transfers : (input : ListAccountTransfersInput) -> (ListAccountTransfersResult) query;
   // Get transfers by their ids.
@@ -1577,7 +1618,7 @@ service : (opt WalletInstall) -> {
   // If the caller does not have access to the user group, an error will be returned.
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
   // List all user groups of the wallet.
-  list_user_groups : () -> (ListUserGroupResult) query;
+  list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // Get the wallet settings.
   wallet_settings : () -> (WalletSettingsResult) query;
   // Metrics (Http Interface)

@@ -118,7 +118,9 @@ class AccountsWorkerImpl {
     try {
       await icAgent.loadIdentity();
 
-      const accounts = await this.walletService.listAccounts();
+      const result = await this.walletService.listAccounts();
+      const accounts = result.accounts;
+
       const balancesOutdatedAccounts = accounts.filter(account => {
         if (!account.balance?.[0]) {
           return true;
