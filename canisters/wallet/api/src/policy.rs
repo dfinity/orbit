@@ -107,13 +107,12 @@ pub enum ResourceSpecifierDTO {
     ChangeCanister(ChangeCanisterActionSpecifierDTO),
     CanisterSettings(CanisterSettingsActionSpecifierDTO),
     Proposal(ProposalActionSpecifierDTO),
-    Common(ResourceSpecifierCommonArgsDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ResourceSpecifierCommonArgsDTO {
-    pub resource_type: ResourceTypeDTO,
-    pub action: CommonActionSpecifierDTO,
+    Account(CommonActionSpecifierDTO),
+    User(CommonActionSpecifierDTO),
+    UserGroup(CommonActionSpecifierDTO),
+    AddressBook(CommonActionSpecifierDTO),
+    AccessPolicy(CommonActionSpecifierDTO),
+    ProposalPolicy(CommonActionSpecifierDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
