@@ -89,9 +89,12 @@ impl PolicyController {
         input: ListAccessPoliciesInput,
     ) -> ApiResult<ListAccessPoliciesResponse> {
         let list = self.policy_service.list_access_policies(input)?;
+        let deps = self.policy_service.get_access_policies_dependencies(&list.items)?;
 
         Ok(ListAccessPoliciesResponse {
             policies: list.items.into_iter().map(Into::into).collect(),
+            user_groups: deps.groups.into_iter().map(Into::into).collect(),
+            users: deps.users.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
             total: list.total,
         })

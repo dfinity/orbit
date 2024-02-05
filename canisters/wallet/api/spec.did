@@ -1141,7 +1141,6 @@ type GetAddressBookEntryResult = variant {
   Err : Error;
 };
 
-
 // Input type for listing address book entries for a given blockchain standard.
 type ListAddressBookEntriesInput = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
@@ -1158,7 +1157,7 @@ type ListAddressBookEntriesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The list of retrieved address book entries.
-    address_book_entries: vec AddressBookEntry;
+    address_book_entries : vec AddressBookEntry;
     // The offset to use for the next page.
     next_offset : opt nat64;
     // The total number of address book entries for the given blockchain standard.
@@ -1327,12 +1326,21 @@ type ResourceSpecifier = variant {
   ChangeCanister : ChangeCanisterActionSpecifier;
   CanisterSettings : CanisterSettingsActionSpecifier;
   Proposal : ProposalActionSpecifier;
+<<<<<<< Updated upstream
   Common : record {
     // The type of the resource.
     resource_type : ResourceType;
     // The action that is performed on the resource.
     action : CommonActionSpecifier;
   };
+=======
+  Account : CommonActionSpecifier;
+  User : CommonActionSpecifier;
+  UserGroup : CommonActionSpecifier;
+  AddressBook : CommonActionSpecifier;
+  AccessPolicy : CommonActionSpecifier;
+  ProposalPolicy : CommonActionSpecifier;
+>>>>>>> Stashed changes
 };
 
 // The access control policy, used to specify the access control rules for
@@ -1346,12 +1354,26 @@ type AccessPolicy = record {
 // Input type for listing access policies with the given pagination parameters.
 type ListAccessPoliciesInput = PaginationInput;
 
+// A basic user record that can be used to represent a user in the wallet.
+type BasicUser = record {
+  // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : text;
+  // The status of the user (e.g. `Active`).
+  status : UserStatus;
+};
+
 // Result type for listing access policies.
 type ListAccessPoliciesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The list of access policies.
     policies : vec AccessPolicy;
+    // The user groups that are associated with returned access policies.
+    user_groups : vec UserGroup;
+    // The users that are associated with returned access policies.
+    users : vec BasicUser;
     // The offset to use for the next page.
     next_offset : opt nat64;
     // The total number of access policies.

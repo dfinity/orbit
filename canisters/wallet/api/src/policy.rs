@@ -1,4 +1,4 @@
-use crate::{MetadataDTO, PaginationInput, UuidDTO};
+use crate::{BasicUserDTO, MetadataDTO, PaginationInput, UserGroupDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -128,6 +128,8 @@ pub type ListAccessPoliciesInput = PaginationInput;
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccessPoliciesResponse {
     pub policies: Vec<AccessPolicyDTO>,
+    pub user_groups: Vec<UserGroupDTO>,
+    pub users: Vec<BasicUserDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
 }
