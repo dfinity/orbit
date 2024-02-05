@@ -2,6 +2,7 @@ import {
   ListProposalsOperationType,
   ProposalStatusCode,
   UUID,
+  UserGroup,
   UserStatus,
 } from '~/generated/wallet/wallet.did';
 
@@ -55,6 +56,7 @@ export interface UserInput {
   status: UserStatus;
   groups: UUID[];
   identities: string[];
+  prefilledGroups: UserGroup[];
 }
 
 export enum UserStatusType {
@@ -97,4 +99,10 @@ export enum ProposalDomains {
   Transfers = 'transfers',
   Users = 'users',
   System = 'system',
+}
+
+export interface ListAccountsArgs {
+  limit?: number;
+  offset?: number;
+  searchTerm?: string;
 }

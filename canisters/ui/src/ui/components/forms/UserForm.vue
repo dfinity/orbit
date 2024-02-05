@@ -28,11 +28,13 @@
       v-model="modelValue.groups"
       name="groups"
       :label="$t('terms.user_groups')"
+      :loading="userGroupsAutocomplete.loading.value"
       variant="underlined"
       :rules="rules.groups"
       :items="userGroups"
       chips
       multiple
+      @update:search="userGroupsAutocomplete.searchItems"
     />
     <VAutocomplete
       ref="identitiesInput"
@@ -114,16 +116,16 @@ import { UserInput, UserStatusType } from '~/types';
 import { i18n } from '~/ui/modules/i18n';
 import { FormValidationRules, VFormValidation } from '~/ui/types';
 import { maxLengthRule, requiredRule } from '~/ui/utils';
-import { useWalletStore } from '~/ui/stores/wallet';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import AddPrincipalForm from '~/ui/components/forms/AddPrincipalForm.vue';
 import { useAppStore } from '~/ui/stores/app';
 import { reactive } from 'vue';
+import { useUserGroupsAutocomplete } from '~/ui/composables/autocomplete.composable';
 
-const wallet = useWalletStore();
 const app = useAppStore();
 const form = ref<VFormValidation | null>(null);
 const identitiesInput = ref<VFormValidation | null>(null);
+const userGroupsAutocomplete = useUserGroupsAutocomplete();
 
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 const rules: {
@@ -180,10 +182,19 @@ const statusItems = computed(() =>
 );
 
 const userGroups = computed(() => {
-  const groups = wallet.configuration.details.user_groups.map(group => ({
+  const groups = userGroupsAutocomplete.results.value.map(group => ({
     title: group.name,
     value: group.id,
   }));
+
+  (modelValue.prefilledGroups ?? []).forEach(group => {
+    if (!groups.find(g => g.value === group.id)) {
+      groups.push({
+        title: group.name,
+        value: group.id,
+      });
+    }
+  });
 
   props.modelValue.groups?.forEach(group => {
     if (!groups.find(g => g.value === group)) {
