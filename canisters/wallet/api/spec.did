@@ -1326,21 +1326,12 @@ type ResourceSpecifier = variant {
   ChangeCanister : ChangeCanisterActionSpecifier;
   CanisterSettings : CanisterSettingsActionSpecifier;
   Proposal : ProposalActionSpecifier;
-<<<<<<< Updated upstream
-  Common : record {
-    // The type of the resource.
-    resource_type : ResourceType;
-    // The action that is performed on the resource.
-    action : CommonActionSpecifier;
-  };
-=======
   Account : CommonActionSpecifier;
   User : CommonActionSpecifier;
   UserGroup : CommonActionSpecifier;
   AddressBook : CommonActionSpecifier;
   AccessPolicy : CommonActionSpecifier;
   ProposalPolicy : CommonActionSpecifier;
->>>>>>> Stashed changes
 };
 
 // The access control policy, used to specify the access control rules for
