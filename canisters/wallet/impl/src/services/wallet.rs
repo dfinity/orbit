@@ -7,10 +7,7 @@ use crate::{
     errors::InstallError,
     models::{Configuration, ProposalStatus, User, WalletSettings},
     repositories::{UserRepository, USER_REPOSITORY},
-    services::{
-        ChangeCanisterService, UserGroupService, UserService, CHANGE_CANISTER_SERVICE,
-        USER_GROUP_SERVICE, USER_SERVICE,
-    },
+    services::{ChangeCanisterService, UserService, CHANGE_CANISTER_SERVICE, USER_SERVICE},
 };
 use candid::Principal;
 use ic_canister_core::api::ServiceResult;
@@ -23,7 +20,6 @@ lazy_static! {
         Arc::clone(&USER_REPOSITORY),
         Arc::clone(&USER_SERVICE),
         Arc::clone(&CHANGE_CANISTER_SERVICE),
-        Arc::clone(&USER_GROUP_SERVICE),
     ));
 }
 
@@ -32,7 +28,6 @@ pub struct WalletService {
     user_repository: Arc<UserRepository>,
     user_service: Arc<UserService>,
     change_canister_service: Arc<ChangeCanisterService>,
-    user_group_service: Arc<UserGroupService>,
 }
 
 impl WalletService {
@@ -40,26 +35,19 @@ impl WalletService {
         user_repository: Arc<UserRepository>,
         user_service: Arc<UserService>,
         change_canister_service: Arc<ChangeCanisterService>,
-        user_group_service: Arc<UserGroupService>,
     ) -> Self {
         Self {
             user_repository,
             user_service,
             change_canister_service,
-            user_group_service,
         }
     }
 
-    pub fn get_config(&self, with_user_groups: bool) -> ServiceResult<Configuration> {
+    pub fn get_config(&self) -> ServiceResult<Configuration> {
         let assets = WALLET_ASSETS.with(|wallet_assets| wallet_assets.borrow().clone());
-        let user_groups = match with_user_groups {
-            true => self.user_group_service.list()?,
-            false => vec![],
-        };
 
         Ok(Configuration {
             supported_assets: assets.into_iter().collect::<Vec<_>>(),
-            user_groups,
         })
     }
 

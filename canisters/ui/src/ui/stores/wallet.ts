@@ -97,7 +97,6 @@ const initialStoreState = (): WalletStoreState => {
       loading: false,
       details: {
         supported_assets: [],
-        user_groups: [],
       },
     },
     accounts: {
@@ -141,12 +140,6 @@ export const useWalletStore = defineStore('wallet', {
           pending: 0,
         },
         notifications: this.notifications.items.length,
-      };
-    },
-    userGroup: (state): ((id: UUID) => string) => {
-      return (id: UUID): string => {
-        const group = state.configuration.details.user_groups.find(group => group.id === id);
-        return group ? group.name : '-';
       };
     },
     supportedAssets(): WalletAsset[] {
@@ -284,7 +277,8 @@ export const useWalletStore = defineStore('wallet', {
       }
       try {
         this.accounts.loading = true;
-        this.accounts.items = await this.service.listAccounts();
+        // todo: add pagination support
+        this.accounts.items = (await this.service.listAccounts()).accounts;
       } finally {
         this.accounts.loading = false;
       }

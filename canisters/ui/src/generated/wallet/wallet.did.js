@@ -11,9 +11,6 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : WalletUpgrade,
     'Init' : WalletInit,
   });
-  const UUID = IDL.Text;
-  const UserGroupId = UUID;
-  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const WalletAsset = IDL.Record({
@@ -23,10 +20,7 @@ export const idlFactory = ({ IDL }) => {
     'blockchain' : IDL.Text,
     'symbol' : AssetSymbol,
   });
-  const Config = IDL.Record({
-    'user_groups' : IDL.Vec(UserGroup),
-    'supported_assets' : IDL.Vec(WalletAsset),
-  });
+  const Config = IDL.Record({ 'supported_assets' : IDL.Vec(WalletAsset) });
   const Error = IDL.Record({
     'code' : IDL.Text,
     'message' : IDL.Opt(IDL.Text),
@@ -41,6 +35,7 @@ export const idlFactory = ({ IDL }) => {
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
+  const UUID = IDL.Text;
   const CommonSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -119,6 +114,7 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
   });
+  const UserGroupId = UUID;
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -280,6 +276,7 @@ export const idlFactory = ({ IDL }) => {
   const EditAccessPolicyOperation = IDL.Record({
     'input' : EditAccessPolicyOperationInput,
   });
+  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
   const AddUserGroupOperation = IDL.Record({
     'user_group' : IDL.Opt(UserGroup),
     'input' : AddUserGroupOperationInput,
@@ -516,9 +513,16 @@ export const idlFactory = ({ IDL }) => {
     'limit' : IDL.Opt(IDL.Nat16),
   });
   const ListAccessPoliciesInput = PaginationInput;
+  const BasicUser = IDL.Record({
+    'id' : UUID,
+    'status' : UserStatus,
+    'name' : IDL.Text,
+  });
   const ListAccessPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'user_groups' : IDL.Vec(UserGroup),
+      'users' : IDL.Vec(BasicUser),
       'next_offset' : IDL.Opt(IDL.Nat64),
       'policies' : IDL.Vec(AccessPolicy),
     }),
@@ -547,8 +551,16 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'transfers' : IDL.Vec(TransferListItem) }),
     'Err' : Error,
   });
-  const ListAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'accounts' : IDL.Vec(Account) }),
+  const ListAccountsInput = IDL.Record({
+    'paginate' : IDL.Opt(PaginationInput),
+    'search_term' : IDL.Opt(IDL.Text),
+  });
+  const ListAccountsResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
+      'accounts' : IDL.Vec(Account),
+      'next_offset' : IDL.Opt(IDL.Nat64),
+    }),
     'Err' : Error,
   });
   const ListAddressBookEntriesInput = IDL.Record({
@@ -685,11 +697,23 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const ListUserGroupResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'user_groups' : IDL.Vec(UserGroup) }),
+  const ListUserGroupsInput = IDL.Record({
+    'paginate' : IDL.Opt(PaginationInput),
+    'search_term' : IDL.Opt(IDL.Text),
+  });
+  const ListUserGroupsResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
+      'user_groups' : IDL.Vec(UserGroup),
+      'next_offset' : IDL.Opt(IDL.Nat64),
+    }),
     'Err' : Error,
   });
-  const ListUsersInput = PaginationInput;
+  const ListUsersInput = IDL.Record({
+    'statuses' : IDL.Opt(IDL.Vec(UserStatus)),
+    'paginate' : IDL.Opt(PaginationInput),
+    'search_term' : IDL.Opt(IDL.Text),
+  });
   const ListUsersResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
@@ -797,7 +821,11 @@ export const idlFactory = ({ IDL }) => {
         [ListAccountTransfersResult],
         ['query'],
       ),
-    'list_accounts' : IDL.Func([], [ListAccountResult], ['query']),
+    'list_accounts' : IDL.Func(
+        [ListAccountsInput],
+        [ListAccountsResult],
+        ['query'],
+      ),
     'list_address_book_entries' : IDL.Func(
         [ListAddressBookEntriesInput],
         [ListAddressBookEntriesResult],
@@ -818,7 +846,11 @@ export const idlFactory = ({ IDL }) => {
         [ListProposalsResult],
         ['query'],
       ),
-    'list_user_groups' : IDL.Func([], [ListUserGroupResult], ['query']),
+    'list_user_groups' : IDL.Func(
+        [ListUserGroupsInput],
+        [ListUserGroupsResult],
+        ['query'],
+      ),
     'list_users' : IDL.Func([ListUsersInput], [ListUsersResult], ['query']),
     'mark_notifications_read' : IDL.Func(
         [MarkNotificationsReadInput],

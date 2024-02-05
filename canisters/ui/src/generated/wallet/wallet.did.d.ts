@@ -104,6 +104,11 @@ export interface AddressBookEntry {
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
+export interface BasicUser {
+  'id' : UUID,
+  'status' : UserStatus,
+  'name' : string,
+}
 export type CanisterSettingsActionSpecifier = { 'Read' : null } |
   { 'ReadConfig' : null };
 export type ChangeAddressBookMetadata = {
@@ -132,10 +137,7 @@ export type CommonActionSpecifier = { 'List' : null } |
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
-export interface Config {
-  'user_groups' : Array<UserGroup>,
-  'supported_assets' : Array<WalletAsset>,
-}
+export interface Config { 'supported_assets' : Array<WalletAsset> }
 export interface CreateProposalInput {
   'title' : [] | [string],
   'execution_plan' : [] | [ProposalExecutionSchedule],
@@ -245,12 +247,12 @@ export type ListAccessPoliciesInput = PaginationInput;
 export type ListAccessPoliciesResult = {
     'Ok' : {
       'total' : bigint,
+      'user_groups' : Array<UserGroup>,
+      'users' : Array<BasicUser>,
       'next_offset' : [] | [bigint],
       'policies' : Array<AccessPolicy>,
     }
   } |
-  { 'Err' : Error };
-export type ListAccountResult = { 'Ok' : { 'accounts' : Array<Account> } } |
   { 'Err' : Error };
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
@@ -260,6 +262,18 @@ export interface ListAccountTransfersInput {
 }
 export type ListAccountTransfersResult = {
     'Ok' : { 'transfers' : Array<TransferListItem> }
+  } |
+  { 'Err' : Error };
+export interface ListAccountsInput {
+  'paginate' : [] | [PaginationInput],
+  'search_term' : [] | [string],
+}
+export type ListAccountsResult = {
+    'Ok' : {
+      'total' : bigint,
+      'accounts' : Array<Account>,
+      'next_offset' : [] | [bigint],
+    }
   } |
   { 'Err' : Error };
 export interface ListAddressBookEntriesInput {
@@ -335,11 +349,23 @@ export type ListProposalsResult = {
 export type ListProposalsSortBy = { 'ExpirationDt' : SortByDirection } |
   { 'LastModificationDt' : SortByDirection } |
   { 'CreatedAt' : SortByDirection };
-export type ListUserGroupResult = {
-    'Ok' : { 'user_groups' : Array<UserGroup> }
+export interface ListUserGroupsInput {
+  'paginate' : [] | [PaginationInput],
+  'search_term' : [] | [string],
+}
+export type ListUserGroupsResult = {
+    'Ok' : {
+      'total' : bigint,
+      'user_groups' : Array<UserGroup>,
+      'next_offset' : [] | [bigint],
+    }
   } |
   { 'Err' : Error };
-export type ListUsersInput = PaginationInput;
+export interface ListUsersInput {
+  'statuses' : [] | [Array<UserStatus>],
+  'paginate' : [] | [PaginationInput],
+  'search_term' : [] | [string],
+}
 export type ListUsersResult = {
     'Ok' : {
       'total' : bigint,
@@ -690,7 +716,7 @@ export interface _SERVICE {
     [ListAccountTransfersInput],
     ListAccountTransfersResult
   >,
-  'list_accounts' : ActorMethod<[], ListAccountResult>,
+  'list_accounts' : ActorMethod<[ListAccountsInput], ListAccountsResult>,
   'list_address_book_entries' : ActorMethod<
     [ListAddressBookEntriesInput],
     ListAddressBookEntriesResult
@@ -704,7 +730,7 @@ export interface _SERVICE {
     ListProposalPoliciesResult
   >,
   'list_proposals' : ActorMethod<[ListProposalsInput], ListProposalsResult>,
-  'list_user_groups' : ActorMethod<[], ListUserGroupResult>,
+  'list_user_groups' : ActorMethod<[ListUserGroupsInput], ListUserGroupsResult>,
   'list_users' : ActorMethod<[ListUsersInput], ListUsersResult>,
   'mark_notifications_read' : ActorMethod<
     [MarkNotificationsReadInput],

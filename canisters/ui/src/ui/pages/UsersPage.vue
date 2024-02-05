@@ -58,6 +58,7 @@
             query: { group_by: ProposalDomains.Users },
           }"
           :types="[{ AddUser: null }, { EditUser: null }]"
+          hide-not-found
         />
         <DataLoader
           :load="fetchData"

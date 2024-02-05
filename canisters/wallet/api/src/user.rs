@@ -1,4 +1,4 @@
-use crate::{UserGroupDTO, UuidDTO};
+use crate::{PaginationInput, UserGroupDTO, UuidDTO};
 
 use super::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
@@ -17,6 +17,13 @@ pub struct UserDTO {
     pub status: UserStatusDTO,
     pub name: Option<String>,
     pub last_modification_timestamp: TimestampRfc3339,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct BasicUserDTO {
+    pub id: UuidDTO,
+    pub name: String,
+    pub status: UserStatusDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -58,8 +65,9 @@ pub struct EditUserOperationDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListUsersInput {
-    pub offset: Option<u64>,
-    pub limit: Option<u16>,
+    pub search_term: Option<String>,
+    pub statuses: Option<Vec<UserStatusDTO>>,
+    pub paginate: Option<PaginationInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
