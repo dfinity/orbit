@@ -124,9 +124,9 @@ impl UserRepository {
 
         if let Some(search_term) = filters.search_term {
             users.retain(|user| {
-                user.name
-                    .as_ref()
-                    .map_or(false, |name| name.starts_with(&search_term))
+                user.name.as_ref().map_or(false, |name| {
+                    name.to_lowercase().starts_with(&search_term.to_lowercase())
+                })
             });
         }
 
