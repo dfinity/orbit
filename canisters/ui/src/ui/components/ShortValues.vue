@@ -18,7 +18,7 @@ const props = withDefaults(
   }>(),
   {
     max: 3,
-    empty: '-',
+    empty: '',
     size: 'x-small',
   },
 );

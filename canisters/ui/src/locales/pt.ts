@@ -298,6 +298,7 @@ export default {
     remove: 'Remover',
     owners: 'Proprietários',
     user_name: 'Nome de utilizador',
+    users: 'Usuários',
     wallet_name: 'Nome da carteira',
     identity_name: 'Nome da identidade',
     canister_id: 'Canister ID',
@@ -385,6 +386,7 @@ export default {
     },
     permissions: {
       title: 'Permissões',
+      update_dialog_title: 'Atualizar permissões',
     },
   },
   session: {
@@ -401,6 +403,13 @@ export default {
       account: 'Conta',
       user: 'Usuário',
       usergroup: 'Grupo de usuários',
+      accesspolicy: 'Regra de acesso',
+      proposalpolicy: 'Regra para pedidos',
+      canistersettings: 'Configuraçōes do canister',
+      changecanister: 'Alterar canister',
+      transfer: 'Transfência',
+      proposal: 'Pedido',
+      addressbook: 'Livro de endereços',
     },
     actions: {
       list: 'Listar',
@@ -408,6 +417,8 @@ export default {
       read: 'Ler',
       update: 'Atualizar',
       delete: 'Remover',
+      readpublicconfig: 'Ler configuração pública',
+      readsensitiveconfig: 'Ler configuração sensível',
     },
   },
 };

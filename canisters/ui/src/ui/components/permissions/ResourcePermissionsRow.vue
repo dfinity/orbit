@@ -1,28 +1,104 @@
 <template>
   <tr>
     <td colspan="4" class="bb-none font-weight-bold pt-4 pb-1">
-      {{ $t(`permissions.resources.${resource.resourceType.toLowerCase()}`) }}
+      {{ $t(`permissions.resources.${props.resource.resourceType.toLowerCase()}`) }}
     </td>
   </tr>
-  <tr v-for="(permission, idx) in permissions" :key="idx">
+  <tr v-for="(specifier, idx) in props.resource.specifiers" :key="idx">
     <td class="bb-none">
-      {{ $t(`permissions.actions.${permission.action.toLowerCase()}`) }}
+      {{ $t(`permissions.actions.${specifier.action.toLowerCase()}`) }}
     </td>
     <td class="bb-none cursor-pointer">
       <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
-        <ShortValues :values="permission.user.groups.ids.map(id => wallet.userGroup(id))" />
+        <ActionBtn
+          :model-value="getMembersOfGroupForm(idx, specifier)"
+          :title="$t('pages.permissions.update_dialog_title')"
+          size="small"
+          density="comfortable"
+          :icon="mdiPencil"
+          :submit="form => onMembersOfGroupFormSubmit(specifier.specifier, form)"
+          @update:model-value="model => updateMembersOfGroupModel(idx, model)"
+          @opened="emit('editing', true)"
+          @closed="emit('editing', false)"
+          @failed="useOnFailedOperation"
+          @submitted="useOnSuccessfulOperation"
+        >
+          <template #default="{ model: elem, submit }">
+            <MembersOfGroupForm
+              v-model="elem.value.modelValue"
+              @valid="isValid => (elem.value.valid = isValid)"
+              @submit="submit"
+            />
+          </template>
+          <template #actions="{ submit, loading: saving, model: elem }">
+            <VSpacer />
+            <VBtn
+              :loading="saving"
+              :disabled="!elem.value.valid"
+              color="primary"
+              variant="flat"
+              @click="submit"
+            >
+              {{ $t('terms.edit') }}
+            </VBtn>
+          </template>
+        </ActionBtn>
+        <ShortValues
+          :values="Object.values(specifier.users.membersOfGroup.groups).map(g => g.name)"
+        />
 
         <template #unauthorized>
-          <ShortValues :values="permission.user.groups.ids.map(id => wallet.userGroup(id))" />
+          <ShortValues
+            :values="Object.values(specifier.users.membersOfGroup.groups).map(g => g.name)"
+            empty="-"
+          />
         </template>
       </AuthCheck>
     </td>
     <td class="bb-none cursor-pointer">
       <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
-        <ShortValues :values="permission.user.users.ids" />
+        <ActionBtn
+          :model-value="getSpecificUsersForm(idx, specifier)"
+          :title="$t('pages.permissions.update_dialog_title')"
+          size="small"
+          density="comfortable"
+          :icon="mdiPencil"
+          :submit="form => onSpecificUsersFormSubmit(specifier.specifier, form)"
+          @update:model-value="model => updateSpecificUsersModel(idx, model)"
+          @opened="emit('editing', true)"
+          @closed="emit('editing', false)"
+          @failed="useOnFailedOperation"
+          @submitted="useOnSuccessfulOperation"
+        >
+          <template #default="{ model: elem, submit }">
+            <SpecificUsersForm
+              v-model="elem.value.modelValue"
+              @valid="isValid => (elem.value.valid = isValid)"
+              @submit="submit"
+            />
+          </template>
+          <template #actions="{ submit, loading: saving, model: elem }">
+            <VSpacer />
+            <VBtn
+              :loading="saving"
+              :disabled="!elem.value.valid"
+              color="primary"
+              variant="flat"
+              @click="submit"
+            >
+              {{ $t('terms.edit') }}
+            </VBtn>
+          </template>
+        </ActionBtn>
+        <ShortValues
+          :values="Object.values(specifier.users.specificUsers.users).map(u => u.name)"
+        />
 
         <template #unauthorized>
-          <ShortValues :values="permission.user.users.ids" />
+          <ShortValues
+            :values="Object.values(specifier.users.specificUsers.users).map(u => u.name)"
+            empty="-"
+          />
         </template>
       </AuthCheck>
     </td>
@@ -31,9 +107,12 @@
         <ActionBtn
           size="default"
           density="comfortable"
-          :model-value="{ specifier: permission.specifier, everyone: permission.user.everyone }"
+          :model-value="{
+            specifier: specifier.specifier,
+            everyone: { policyId: specifier.users.allUsers.policyId },
+          }"
           :icon="
-            permission.user.everyone.value ? mdiCheckboxMarkedOutline : mdiCheckboxBlankOutline
+            specifier.users.allUsers.policyId ? mdiCheckboxMarkedOutline : mdiCheckboxBlankOutline
           "
           :submit="
             ({ specifier, everyone }) => {
@@ -55,7 +134,7 @@
             hide-details
             density="comfortable"
             disabled
-            :value="permission.user.everyone.value"
+            :value="specifier.users.allUsers.policyId ? true : false"
           />
         </template>
       </AuthCheck>
@@ -64,80 +143,126 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiCheckboxBlankOutline, mdiCheckboxMarkedOutline } from '@mdi/js';
-import { computed } from 'vue';
+import { mdiCheckboxBlankOutline, mdiCheckboxMarkedOutline, mdiPencil } from '@mdi/js';
 import { ResourcePermissions } from '~/configs/permissions.config';
-import { variantIs } from '~/core';
-import { AccessPolicy, ResourceSpecifier, UUID } from '~/generated/wallet/wallet.did';
 import { Privilege } from '~/types';
-import { ResourceActionEnum } from '~/types/permissions.types';
 import AuthCheck from '~/ui/components/AuthCheck.vue';
 import ShortValues from '~/ui/components/ShortValues.vue';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
+import MembersOfGroupForm, {
+  MembersOfGroupFormProps,
+} from '~/ui/components/permissions/MembersOfGroupForm.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/ui/composables/notifications.composable';
 import { useWalletStore } from '~/ui/stores/wallet';
+import { ResourcePermissionsSpecifier } from '~/configs/permissions.config';
+import { ref } from 'vue';
+import { Proposal, ResourceSpecifier } from '~/generated/wallet/wallet.did';
+import SpecificUsersForm, {
+  SpecificUsersFormProps,
+} from '~/ui/components/permissions/SpecificUsersForm.vue';
 
 const wallet = useWalletStore();
 
-const props = withDefaults(
-  defineProps<{
-    resource: ResourcePermissions;
-    policies: AccessPolicy[];
-  }>(),
-  {
-    policies: () => [],
-  },
-);
+const membersOfGroupModels = ref<Record<number, MembersOfGroupFormProps>>({});
+const updateMembersOfGroupModel = (idx: number, model: MembersOfGroupFormProps) => {
+  membersOfGroupModels.value[idx] = model;
+};
+
+const getMembersOfGroupForm = (
+  idx: number,
+  specifier: ResourcePermissionsSpecifier,
+): MembersOfGroupFormProps => {
+  if (membersOfGroupModels.value[idx]) {
+    return membersOfGroupModels.value[idx];
+  }
+
+  const groups = Object.values(specifier.users.membersOfGroup.groups);
+  return {
+    valid: true,
+    modelValue: {
+      policyId: specifier.users.membersOfGroup.policyId,
+      groupIds: groups.map(g => g.id),
+      prefilledGroups: groups,
+    },
+  };
+};
+
+const onMembersOfGroupFormSubmit = (
+  resource: ResourceSpecifier,
+  form: MembersOfGroupFormProps,
+): Promise<Proposal> => {
+  if (form.modelValue.policyId === undefined) {
+    return wallet.service.addAccessPolicy({
+      user: { Group: form.modelValue.groupIds },
+      resource,
+    });
+  }
+
+  if (form.modelValue.groupIds.length === 0) {
+    return wallet.service.removeAccessPolicy({ policy_id: form.modelValue.policyId });
+  }
+
+  return wallet.service.editAccessPolicy({
+    policy_id: form.modelValue.policyId,
+    user: [{ Group: form.modelValue.groupIds }],
+    resource: [],
+  });
+};
+
+const specificUsersModels = ref<Record<number, SpecificUsersFormProps>>({});
+const updateSpecificUsersModel = (idx: number, model: SpecificUsersFormProps) => {
+  specificUsersModels.value[idx] = model;
+};
+
+const getSpecificUsersForm = (
+  idx: number,
+  specifier: ResourcePermissionsSpecifier,
+): SpecificUsersFormProps => {
+  if (specificUsersModels.value[idx]) {
+    return specificUsersModels.value[idx];
+  }
+
+  const users = Object.values(specifier.users.specificUsers.users);
+  return {
+    valid: true,
+    modelValue: {
+      policyId: specifier.users.specificUsers.policyId,
+      userIds: users.map(g => g.id),
+      prefilledUsers: users,
+    },
+  };
+};
+
+const onSpecificUsersFormSubmit = (
+  resource: ResourceSpecifier,
+  form: SpecificUsersFormProps,
+): Promise<Proposal> => {
+  if (form.modelValue.policyId === undefined) {
+    return wallet.service.addAccessPolicy({
+      user: { Id: form.modelValue.userIds },
+      resource,
+    });
+  }
+
+  if (form.modelValue.userIds.length === 0) {
+    return wallet.service.removeAccessPolicy({ policy_id: form.modelValue.policyId });
+  }
+
+  return wallet.service.editAccessPolicy({
+    policy_id: form.modelValue.policyId,
+    user: [{ Id: form.modelValue.userIds }],
+    resource: [],
+  });
+};
+
+const props = defineProps<{
+  resource: ResourcePermissions;
+}>();
 
 const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
 }>();
-
-type ResourcePermissionsView = {
-  action: ResourceActionEnum;
-  specifier: ResourceSpecifier;
-  user: UserAccessInfo;
-};
-
-type UserAccessInfo = {
-  groups: { policyId?: UUID; ids: UUID[] };
-  users: { policyId?: UUID; ids: UUID[] };
-  everyone: { policyId?: UUID; value: boolean };
-};
-
-const permissions = computed<ResourcePermissionsView[]>(() => {
-  return props.resource.specifiers.map(specifier => {
-    const user: UserAccessInfo = {
-      groups: { ids: [] },
-      users: { ids: [] },
-      everyone: { value: false },
-    };
-
-    const policies = props.policies.filter(policy =>
-      props.resource.match(specifier.specifier, policy),
-    );
-
-    for (const policy of policies) {
-      if (variantIs(policy.user, 'Any')) {
-        user.everyone.policyId = policy.id;
-        user.everyone.value = true;
-      } else if (variantIs(policy.user, 'Id')) {
-        user.users.policyId = policy.id;
-        user.users.ids = user.users.ids.concat(policy.user.Id);
-      } else if (variantIs(policy.user, 'Group')) {
-        user.groups.policyId = policy.id;
-        user.groups.ids = user.groups.ids.concat(policy.user.Group);
-      }
-    }
-
-    return {
-      action: specifier.action,
-      specifier: specifier.specifier,
-      user,
-    };
-  });
-});
 </script>

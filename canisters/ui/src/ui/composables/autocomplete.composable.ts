@@ -52,3 +52,19 @@ export const useUserGroupsAutocomplete = () => {
 
   return autocomplete;
 };
+
+export const useUsersAutocomplete = () => {
+  const wallet = useWalletStore();
+
+  const autocomplete = useAutocomplete(async term => {
+    const users = await wallet.service.listUsers({
+      searchTerm: term.trim().length > 0 ? term.trim() : undefined,
+      limit: 100,
+      offset: 0,
+    });
+
+    return users.users;
+  });
+
+  return autocomplete;
+};

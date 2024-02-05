@@ -300,6 +300,7 @@ export default {
     user_name: 'User Name',
     scheduled: 'Scheduled',
     wallet_name: 'Wallet Name',
+    users: 'Users',
     identity_name: 'Identity Name',
     canister_id: 'Canister ID',
     principal: 'Principal',
@@ -384,6 +385,7 @@ export default {
     },
     permissions: {
       title: 'Permissions',
+      update_dialog_title: 'Update Permissions',
     },
   },
   session: {
@@ -400,6 +402,13 @@ export default {
       account: 'Account',
       user: 'User',
       usergroup: 'User Group',
+      accesspolicy: 'Access Policy',
+      proposalpolicy: 'Proposal Policy',
+      canistersettings: 'Canister Settings',
+      changecanister: 'Change Canister',
+      transfer: 'Transfer',
+      proposal: 'Request',
+      addressbook: 'Address Book',
     },
     actions: {
       list: 'List',
@@ -407,6 +416,8 @@ export default {
       read: 'Read',
       update: 'Update',
       delete: 'Delete',
+      readpublicconfig: 'Read public configuration',
+      readsensitiveconfig: 'Read sensitive configuration',
     },
   },
 };

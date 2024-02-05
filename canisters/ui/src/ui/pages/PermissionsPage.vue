@@ -21,13 +21,17 @@
         />
 
         <DataLoader
-          v-slot="{ data }"
+          v-slot="{ data, loading }"
           :load="fetchAccessPolicies"
           :refresh-interval-ms="5000"
           :disable-refresh="disableRefresh"
         >
           <AccessPolicyList
-            :access-policies="data ? data : []"
+            :loading="loading"
+            :resources="resources"
+            :access-policies="data ? data.policies : []"
+            :preload-user-groups="data ? data.userGroups : []"
+            :preload-users="data ? data.users : []"
             @editing="disableRefresh = $event"
           />
         </DataLoader>
@@ -38,7 +42,8 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { AccessPolicy } from '~/generated/wallet/wallet.did';
+import { globalResourcePermissions } from '~/configs/permissions.config';
+import { AccessPolicy, BasicUser, UserGroup } from '~/generated/wallet/wallet.did';
 import { ProposalDomains } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
@@ -64,8 +69,15 @@ const props = withDefaults(
 
 const wallet = useWalletStore();
 const disableRefresh = ref(false);
+const resources = globalResourcePermissions();
 
-const fetchAccessPolicies = async (): Promise<AccessPolicy[]> => {
+const fetchAccessPolicies = async (): Promise<{
+  policies: AccessPolicy[];
+  userGroups: UserGroup[];
+  users: BasicUser[];
+}> => {
+  const userGroups: UserGroup[] = [];
+  const users: BasicUser[] = [];
   let policies: AccessPolicy[] = [];
   let limit = 500;
   let nextOffset = BigInt(0);
@@ -80,6 +92,9 @@ const fetchAccessPolicies = async (): Promise<AccessPolicy[]> => {
       offset: [nextOffset],
     });
 
+    userGroups.push(...result.user_groups);
+    users.push(...result.users);
+
     policies = policies.concat(result.policies);
     nextOffset =
       result.next_offset?.[0] !== undefined && result.next_offset[0] > 0
@@ -87,6 +102,6 @@ const fetchAccessPolicies = async (): Promise<AccessPolicy[]> => {
         : BigInt(-1);
   } while (nextOffset > 0 && nextOffset > maxOffsetFound);
 
-  return policies;
+  return { policies, userGroups, users };
 };
 </script>
