@@ -24,17 +24,17 @@ export enum ResourceActionEnum {
 }
 
 export interface AccessPolicyForMembersOfGroup {
-  policyId?: UUID;
-  groups: Record<UUID, UserGroup>;
+  policyId: UUID | null;
+  groups: UserGroup[];
 }
 
 export interface AccessPolicyForSpecificUsers {
-  policyId?: UUID;
-  users: Record<UUID, BasicUser>;
+  policyId: UUID | null;
+  users: BasicUser[];
 }
 
 export interface AccessPolicyForAllUsers {
-  policyId?: UUID;
+  policyId: UUID | null;
 }
 
 export interface ResourceAccessUserSpecifiers {

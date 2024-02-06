@@ -1,6 +1,6 @@
 <template>
-  <VContainer>
-    <VRow fluid>
+  <VContainer fluid>
+    <VRow>
       <VCol cols="12" class="px-0 pt-0">
         <VTable density="compact" hover>
           <thead>
@@ -20,7 +20,7 @@
             <ResourcePermissionsRow
               v-for="(resource, idx) in resourcePermissions"
               v-else
-              :key="idx + updatedResourceListKey"
+              :key="idx"
               :resource="resource"
               @editing="emit('editing', $event)"
             />
@@ -32,11 +32,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { ResourcePermissions } from '~/configs/permissions.config';
 import { logger, variantIs } from '~/core';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import ResourcePermissionsRow from './ResourcePermissionsRow.vue';
+import { toRefs } from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -53,26 +54,30 @@ const props = withDefaults(
   },
 );
 
+const { preloadUserGroups, preloadUsers, accessPolicies, resources } = toRefs(props);
+
 const userGroups = computed<Record<UUID, UserGroup>>(() => {
-  return props.preloadUserGroups.reduce<Record<UUID, UserGroup>>((acc, group) => {
+  return preloadUserGroups.value.reduce<Record<UUID, UserGroup>>((acc, group) => {
     acc[group.id] = group;
     return acc;
   }, {});
 });
 
 const users = computed<Record<UUID, BasicUser>>(() => {
-  return props.preloadUsers.reduce<Record<UUID, BasicUser>>((acc, user) => {
+  return preloadUsers.value.reduce<Record<UUID, BasicUser>>((acc, user) => {
     acc[user.id] = user;
     return acc;
   }, {});
 });
 
-const updatedResourceListKey = ref(0);
-const resourcePermissions = ref<ResourcePermissions[]>([]);
+const resourcePermissions = computed<ResourcePermissions[]>(() => {
+  const resourceAccessPolicies = resources.value.map(resource => ({
+    match: resource.match,
+    resourceType: resource.resourceType,
+    specifiers: [...resource.specifiers],
+  }));
 
-const updateResourceList = (): void => {
-  const resourceAccessPolicies = props.resources;
-  for (const policy of props.accessPolicies) {
+  for (const policy of accessPolicies.value) {
     for (const resource of resourceAccessPolicies) {
       for (const resourceSpecifier of resource.specifiers) {
         if (resource.match(resourceSpecifier.specifier, policy)) {
@@ -80,56 +85,34 @@ const updateResourceList = (): void => {
             resourceSpecifier.users.allUsers.policyId = policy.id;
           } else if (variantIs(policy.user, 'Id')) {
             resourceSpecifier.users.specificUsers.policyId = policy.id;
-            resourceSpecifier.users.specificUsers.users = policy.user.Id.reduce<
-              Record<UUID, BasicUser>
-            >((acc, id) => {
-              let user = users.value[id];
+            resourceSpecifier.users.specificUsers.users = policy.user.Id.map(id => {
+              const user = users.value[id];
               if (!user) {
-                user = { id, name: '-', status: { Active: null } };
-
                 logger.warn(
                   `User with id ${id} not found in preload data. This should not happen.`,
                 );
               }
-
-              acc[id] = user;
-              return acc;
-            }, {});
+              return user;
+            });
           } else if (variantIs(policy.user, 'Group')) {
             resourceSpecifier.users.membersOfGroup.policyId = policy.id;
-            resourceSpecifier.users.membersOfGroup.groups = policy.user.Group.reduce<
-              Record<UUID, UserGroup>
-            >((acc, id) => {
-              let group = userGroups.value[id];
+            resourceSpecifier.users.membersOfGroup.groups = policy.user.Group.map(id => {
+              const group = userGroups.value[id];
               if (!group) {
-                group = { id, name: '-' };
-
                 logger.warn(
                   `Group with id ${id} not found in preload data. This should not happen.`,
                 );
               }
-
-              acc[id] = group;
-              return acc;
-            }, {});
+              return group;
+            });
           }
         }
       }
     }
   }
 
-  resourcePermissions.value = resourceAccessPolicies;
-};
-
-watch(
-  () => props.accessPolicies,
-  () => {
-    updateResourceList();
-
-    updatedResourceListKey.value++;
-  },
-  { deep: true },
-);
+  return resourceAccessPolicies;
+});
 
 const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;

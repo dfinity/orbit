@@ -398,6 +398,8 @@ export default {
     group_members_title: 'Members of groups',
     specific_users_title: 'Specific users',
     everyone_title: 'Everyone',
+    individual_resources_title: 'Individual resource access',
+    select_resource: 'Resource Type',
     resources: {
       account: 'Account',
       user: 'User',

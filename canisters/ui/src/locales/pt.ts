@@ -399,6 +399,8 @@ export default {
     group_members_title: 'Membros do grupo',
     specific_users_title: 'Usuários específicos',
     everyone_title: 'Todos',
+    individual_resources_title: 'Acesso aos recursos individuais',
+    select_resource: 'Selecione o tipo de recurso',
     resources: {
       account: 'Conta',
       user: 'Usuário',

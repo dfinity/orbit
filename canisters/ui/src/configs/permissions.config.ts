@@ -1,5 +1,5 @@
 import { variantIs } from '~/core';
-import { AccessPolicy, ResourceSpecifier } from '~/generated/wallet/wallet.did';
+import { AccessPolicy, ResourceSpecifier, UUID } from '~/generated/wallet/wallet.did';
 import {
   ResourceAccessUserSpecifiers,
   ResourceActionEnum,
@@ -26,9 +26,9 @@ export interface ResourcePermissions {
 }
 
 const defaultUserSpecifiers = () => ({
-  allUsers: {},
-  membersOfGroup: { groups: {} },
-  specificUsers: { users: {} },
+  allUsers: { policyId: null },
+  membersOfGroup: { policyId: null, groups: [] },
+  specificUsers: { policyId: null, users: [] },
 });
 
 export const globalResourcePermissions = (): ResourcePermissions[] => [
@@ -264,12 +264,12 @@ export const globalResourcePermissions = (): ResourcePermissions[] => [
     resourceType: ResourceTypeEnum.CanisterSettings,
     specifiers: [
       {
-        action: ResourceActionEnum.ReadPublicConfig,
+        action: ResourceActionEnum.ReadSensitiveConfig,
         specifier: { CanisterSettings: { Read: null } },
         users: defaultUserSpecifiers(),
       },
       {
-        action: ResourceActionEnum.ReadSensitiveConfig,
+        action: ResourceActionEnum.ReadPublicConfig,
         specifier: { CanisterSettings: { ReadConfig: null } },
         users: defaultUserSpecifiers(),
       },
@@ -358,3 +358,126 @@ export const globalResourcePermissions = (): ResourcePermissions[] => [
     },
   },
 ];
+
+export const getAccountResourcePermissions = (accountId: UUID): ResourcePermissions[] => {
+  return [
+    {
+      resourceType: ResourceTypeEnum.Account,
+      specifiers: [
+        {
+          action: ResourceActionEnum.Read,
+          specifier: { Account: { Read: { Id: [accountId] } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Update,
+          specifier: { Account: { Update: { Id: [accountId] } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Delete,
+          specifier: { Account: { Delete: { Id: [accountId] } } },
+          users: defaultUserSpecifiers(),
+        },
+      ],
+      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
+        if (variantIs(specifier, 'Account') && variantIs(policy.resource, 'Account')) {
+          return isCommonActionSpecifierContained(specifier.Account, policy.resource.Account);
+        }
+
+        return false;
+      },
+    },
+    {
+      resourceType: ResourceTypeEnum.Transfer,
+      specifiers: [
+        {
+          action: ResourceActionEnum.Create,
+          specifier: { Transfer: { Create: { account: { Id: [accountId] } } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Read,
+          specifier: { Transfer: { Read: { account: { Id: [accountId] } } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Delete,
+          specifier: { Transfer: { Delete: { account: { Id: [accountId] } } } },
+          users: defaultUserSpecifiers(),
+        },
+      ],
+      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
+        if (variantIs(specifier, 'Transfer') && variantIs(policy.resource, 'Transfer')) {
+          return isTransferActionSpecifier(specifier.Transfer, policy.resource.Transfer);
+        }
+
+        return false;
+      },
+    },
+  ];
+};
+
+export const getUserResourcePermissions = (userId: UUID): ResourcePermissions[] => {
+  return [
+    {
+      resourceType: ResourceTypeEnum.User,
+      specifiers: [
+        {
+          action: ResourceActionEnum.Read,
+          specifier: { User: { Read: { Id: [userId] } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Update,
+          specifier: { User: { Update: { Id: [userId] } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Delete,
+          specifier: { User: { Delete: { Id: [userId] } } },
+          users: defaultUserSpecifiers(),
+        },
+      ],
+      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
+        if (variantIs(specifier, 'User') && variantIs(policy.resource, 'User')) {
+          return isCommonActionSpecifierContained(specifier.User, policy.resource.User);
+        }
+
+        return false;
+      },
+    },
+  ];
+};
+
+export const getUserGroupResourcePermissions = (groupId: UUID): ResourcePermissions[] => {
+  return [
+    {
+      resourceType: ResourceTypeEnum.UserGroup,
+      specifiers: [
+        {
+          action: ResourceActionEnum.Read,
+          specifier: { UserGroup: { Read: { Id: [groupId] } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Update,
+          specifier: { UserGroup: { Update: { Id: [groupId] } } },
+          users: defaultUserSpecifiers(),
+        },
+        {
+          action: ResourceActionEnum.Delete,
+          specifier: { UserGroup: { Delete: { Id: [groupId] } } },
+          users: defaultUserSpecifiers(),
+        },
+      ],
+      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
+        if (variantIs(specifier, 'UserGroup') && variantIs(policy.resource, 'UserGroup')) {
+          return isCommonActionSpecifierContained(specifier.UserGroup, policy.resource.UserGroup);
+        }
+
+        return false;
+      },
+    },
+  ];
+};

@@ -17,11 +17,11 @@ import {
  */
 export const isCommonSpecifierContained = (a: CommonSpecifier, b: CommonSpecifier) => {
   if (variantIs(a, 'Id') && variantIs(b, 'Id')) {
-    return a.Id.every(b.Id.includes);
+    return a.Id.every(id => b.Id.includes(id));
   }
 
   if (variantIs(a, 'Group') && variantIs(b, 'Group')) {
-    return a.Group.every(b.Group.includes);
+    return a.Group.every(id => b.Group.includes(id));
   }
 
   return variantIs(a, 'Any') && variantIs(b, 'Any');

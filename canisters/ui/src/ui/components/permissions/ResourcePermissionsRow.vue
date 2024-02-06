@@ -1,10 +1,10 @@
 <template>
   <tr>
     <td colspan="4" class="bb-none font-weight-bold pt-4 pb-1">
-      {{ $t(`permissions.resources.${props.resource.resourceType.toLowerCase()}`) }}
+      {{ $t(`permissions.resources.${resource.resourceType.toLowerCase()}`) }}
     </td>
   </tr>
-  <tr v-for="(specifier, idx) in props.resource.specifiers" :key="idx">
+  <tr v-for="(specifier, idx) in resource.specifiers" :key="idx">
     <td class="bb-none">
       {{ $t(`permissions.actions.${specifier.action.toLowerCase()}`) }}
     </td>
@@ -43,15 +43,10 @@
             </VBtn>
           </template>
         </ActionBtn>
-        <ShortValues
-          :values="Object.values(specifier.users.membersOfGroup.groups).map(g => g.name)"
-        />
+        <ShortValues :values="specifier.users.membersOfGroup.groups.map(g => g.name)" />
 
         <template #unauthorized>
-          <ShortValues
-            :values="Object.values(specifier.users.membersOfGroup.groups).map(g => g.name)"
-            empty="-"
-          />
+          <ShortValues :values="specifier.users.membersOfGroup.groups.map(g => g.name)" empty="-" />
         </template>
       </AuthCheck>
     </td>
@@ -90,15 +85,10 @@
             </VBtn>
           </template>
         </ActionBtn>
-        <ShortValues
-          :values="Object.values(specifier.users.specificUsers.users).map(u => u.name)"
-        />
+        <ShortValues :values="specifier.users.specificUsers.users.map(u => u.name)" />
 
         <template #unauthorized>
-          <ShortValues
-            :values="Object.values(specifier.users.specificUsers.users).map(u => u.name)"
-            empty="-"
-          />
+          <ShortValues :values="specifier.users.specificUsers.users.map(u => u.name)" empty="-" />
         </template>
       </AuthCheck>
     </td>
@@ -163,8 +153,30 @@ import { Proposal, ResourceSpecifier } from '~/generated/wallet/wallet.did';
 import SpecificUsersForm, {
   SpecificUsersFormProps,
 } from '~/ui/components/permissions/SpecificUsersForm.vue';
+import { toRefs, watch } from 'vue';
 
 const wallet = useWalletStore();
+
+const props = defineProps<{
+  resource: ResourcePermissions;
+}>();
+
+const { resource } = toRefs(props);
+
+const emit = defineEmits<{
+  (event: 'editing', payload: boolean): void;
+}>();
+
+watch(
+  () => resource.value,
+  () => {
+    membersOfGroupModels.value = {};
+    specificUsersModels.value = {};
+  },
+  {
+    deep: true,
+  },
+);
 
 const membersOfGroupModels = ref<Record<number, MembersOfGroupFormProps>>({});
 const updateMembersOfGroupModel = (idx: number, model: MembersOfGroupFormProps) => {
@@ -179,7 +191,7 @@ const getMembersOfGroupForm = (
     return membersOfGroupModels.value[idx];
   }
 
-  const groups = Object.values(specifier.users.membersOfGroup.groups);
+  const groups = [...specifier.users.membersOfGroup.groups];
   return {
     valid: true,
     modelValue: {
@@ -194,7 +206,7 @@ const onMembersOfGroupFormSubmit = (
   resource: ResourceSpecifier,
   form: MembersOfGroupFormProps,
 ): Promise<Proposal> => {
-  if (form.modelValue.policyId === undefined) {
+  if (form.modelValue.policyId === null) {
     return wallet.service.addAccessPolicy({
       user: { Group: form.modelValue.groupIds },
       resource,
@@ -202,7 +214,9 @@ const onMembersOfGroupFormSubmit = (
   }
 
   if (form.modelValue.groupIds.length === 0) {
-    return wallet.service.removeAccessPolicy({ policy_id: form.modelValue.policyId });
+    return wallet.service.removeAccessPolicy({
+      policy_id: form.modelValue.policyId,
+    });
   }
 
   return wallet.service.editAccessPolicy({
@@ -225,7 +239,7 @@ const getSpecificUsersForm = (
     return specificUsersModels.value[idx];
   }
 
-  const users = Object.values(specifier.users.specificUsers.users);
+  const users = [...specifier.users.specificUsers.users];
   return {
     valid: true,
     modelValue: {
@@ -240,7 +254,7 @@ const onSpecificUsersFormSubmit = (
   resource: ResourceSpecifier,
   form: SpecificUsersFormProps,
 ): Promise<Proposal> => {
-  if (form.modelValue.policyId === undefined) {
+  if (form.modelValue.policyId === null) {
     return wallet.service.addAccessPolicy({
       user: { Id: form.modelValue.userIds },
       resource,
@@ -257,12 +271,4 @@ const onSpecificUsersFormSubmit = (
     resource: [],
   });
 };
-
-const props = defineProps<{
-  resource: ResourcePermissions;
-}>();
-
-const emit = defineEmits<{
-  (event: 'editing', payload: boolean): void;
-}>();
 </script>

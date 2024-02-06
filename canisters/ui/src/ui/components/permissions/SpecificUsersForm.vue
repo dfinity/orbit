@@ -11,11 +11,11 @@
     />
     <VAutocomplete
       v-model="modelValue.userIds"
-      name="groups"
+      name="users"
       :label="$t('terms.users')"
       :loading="usersAutocomplete.loading.value"
       variant="underlined"
-      :items="userGroups"
+      :items="userList"
       chips
       multiple
       clearable
@@ -42,7 +42,7 @@ onMounted(() => {
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 export type SpecificUsersFormProps = {
-  modelValue: { policyId?: UUID; userIds: UUID[]; prefilledUsers?: BasicUser[] };
+  modelValue: { policyId: UUID | null; userIds: UUID[]; prefilledUsers?: BasicUser[] };
   valid?: boolean;
 };
 
@@ -69,7 +69,7 @@ watch(
   { deep: true },
 );
 
-const userGroups = computed(() => {
+const userList = computed(() => {
   const users = usersAutocomplete.results.value.map(user => ({
     title: user.name?.[0] ? user.name[0] : user.id,
     value: user.id,

@@ -42,7 +42,7 @@ onMounted(() => {
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 export type MembersOfGroupFormProps = {
-  modelValue: { policyId?: UUID; groupIds: UUID[]; prefilledGroups?: UserGroup[] };
+  modelValue: { policyId: UUID | null; groupIds: UUID[]; prefilledGroups?: UserGroup[] };
   valid?: boolean;
 };
 
