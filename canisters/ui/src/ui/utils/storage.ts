@@ -23,7 +23,7 @@ export function useStorage<T>({
   const valueIsStored = storedValue !== null;
 
   let initialValue: T;
-  
+
   if (valueIsStored) {
     try {
       initialValue = deserialize(storedValue);
@@ -34,7 +34,7 @@ export function useStorage<T>({
   } else {
     initialValue = initial();
   }
-  
+
   const data = ref(initialValue) as Ref<T>;
 
   if (!valueIsStored) {
