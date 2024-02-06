@@ -1,4 +1,5 @@
 import { Ref, ref, watch } from 'vue';
+import { logger } from '~/core';
 
 export const objectSerialize = <T>(value: T): string => JSON.stringify(value);
 export const objectDeserialize = <T>(value: string): T => JSON.parse(value);
@@ -20,7 +21,20 @@ export function useStorage<T>({
 }): Ref<T> {
   const storedValue: string | null = storage.getItem(key);
   const valueIsStored = storedValue !== null;
-  const initialValue: T = valueIsStored ? deserialize(storedValue) : initial();
+
+  let initialValue: T;
+  
+  if (valueIsStored) {
+    try {
+      initialValue = deserialize(storedValue);
+    } catch (error) {
+      logger.warn(`Failed to deserialize value for key ${key}: ${storedValue}`, error);
+      initialValue = initial();
+    }
+  } else {
+    initialValue = initial();
+  }
+  
   const data = ref(initialValue) as Ref<T>;
 
   if (!valueIsStored) {
