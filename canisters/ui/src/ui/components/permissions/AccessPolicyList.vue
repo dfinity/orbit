@@ -5,10 +5,10 @@
         <VTable density="compact" hover>
           <thead>
             <tr>
-              <th class="w-50">{{ $t(`permissions.resource_title`) }}</th>
-              <th>{{ $t(`permissions.group_members_title`) }}</th>
-              <th>{{ $t(`permissions.specific_users_title`) }}</th>
-              <th>{{ $t(`permissions.everyone_title`) }}</th>
+              <th :class="{ 'w-50': !app.isMobile }">{{ $t(`permissions.resource_title`) }}</th>
+              <th v-if="!app.isMobile">{{ $t(`permissions.group_members_title`) }}</th>
+              <th v-if="!app.isMobile">{{ $t(`permissions.specific_users_title`) }}</th>
+              <th v-if="!app.isMobile">{{ $t(`permissions.everyone_title`) }}</th>
             </tr>
           </thead>
           <tbody>
@@ -17,7 +17,7 @@
                 <VProgressCircular indeterminate color="primary" />
               </td>
             </tr>
-            <ResourcePermissionsRow
+            <AccessPolicyListItem
               v-for="(resource, idx) in resourcePermissions"
               v-else
               :key="idx"
@@ -32,12 +32,14 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, toRefs } from 'vue';
 import { ResourcePermissions, defaultUserSpecifiers } from '~/configs/permissions.config';
 import { logger, variantIs } from '~/core';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
-import ResourcePermissionsRow from './ResourcePermissionsRow.vue';
-import { toRefs } from 'vue';
+import AccessPolicyListItem from '~/ui/components/permissions/AccessPolicyListItem.vue';
+import { useAppStore } from '~/ui/stores/app';
+
+const app = useAppStore();
 
 const props = withDefaults(
   defineProps<{
