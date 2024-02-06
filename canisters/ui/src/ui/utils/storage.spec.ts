@@ -55,6 +55,21 @@ describe('storage', () => {
     expect(component.useStorage).toEqual({ key: 'stored-value' });
   });
 
+  it(`should fall back to the initial value if deserialization fails`, () => {
+    global.localStorage.setItem('test', 'invalid-json');
+
+    const component = setupComponent(() => ({
+      useStorage: useStorage({
+        initial: () => ({ key: 'initial-value' }),
+        key: 'test',
+        storage: global.localStorage,
+        serialize: objectSerialize,
+        deserialize: objectDeserialize,
+      }),
+    }));
+    expect(component.useStorage).toEqual({ key: 'initial-value' });
+  });
+
   it(`should persist the initial value to the storage`, () => {
     expect(global.localStorage.getItem('test')).toBeNull();
     setupComponent(() => ({
