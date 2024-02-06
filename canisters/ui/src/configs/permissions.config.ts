@@ -25,7 +25,7 @@ export interface ResourcePermissions {
   match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean;
 }
 
-const defaultUserSpecifiers = () => ({
+export const defaultUserSpecifiers = (): ResourceAccessUserSpecifiers => ({
   allUsers: { policyId: null },
   membersOfGroup: { policyId: null, groups: [] },
   specificUsers: { policyId: null, users: [] },

@@ -33,7 +33,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { ResourcePermissions } from '~/configs/permissions.config';
+import { ResourcePermissions, defaultUserSpecifiers } from '~/configs/permissions.config';
 import { logger, variantIs } from '~/core';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import ResourcePermissionsRow from './ResourcePermissionsRow.vue';
@@ -74,7 +74,10 @@ const resourcePermissions = computed<ResourcePermissions[]>(() => {
   const resourceAccessPolicies = resources.value.map(resource => ({
     match: resource.match,
     resourceType: resource.resourceType,
-    specifiers: [...resource.specifiers],
+    specifiers: resource.specifiers.map(specifier => ({
+      ...specifier,
+      users: defaultUserSpecifiers(),
+    })),
   }));
 
   for (const policy of accessPolicies.value) {
