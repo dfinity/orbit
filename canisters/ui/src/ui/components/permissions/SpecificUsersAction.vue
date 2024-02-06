@@ -1,8 +1,13 @@
 <template>
-  <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
+  <ShortValues
+    v-if="!showActionBtn"
+    :values="specifier.users.specificUsers.users.map(u => u.name)"
+    empty="-"
+  />
+  <template v-else>
     <ActionBtn
       v-model="modelValue"
-      :title="$t('pages.permissions.update_dialog_title')"
+      :title="$t('pages.access_policies.update_dialog_title')"
       size="small"
       density="comfortable"
       :icon="mdiPencil"
@@ -23,7 +28,7 @@
         <VSpacer />
         <VBtn
           :loading="saving"
-          :disabled="!elem.value.valid"
+          :disabled="shouldDisableSubmitBtn(elem.value)"
           color="primary"
           variant="flat"
           @click="submit"
@@ -33,11 +38,7 @@
       </template>
     </ActionBtn>
     <ShortValues :values="specifier.users.specificUsers.users.map(u => u.name)" />
-
-    <template #unauthorized>
-      <ShortValues :values="specifier.users.specificUsers.users.map(u => u.name)" empty="-" />
-    </template>
-  </AuthCheck>
+  </template>
 </template>
 
 <script lang="ts" setup>
@@ -46,7 +47,6 @@ import { computed, toRefs } from 'vue';
 import { ResourcePermissionsSpecifier } from '~/configs/permissions.config';
 import { Proposal } from '~/generated/wallet/wallet.did';
 import { Privilege } from '~/types';
-import AuthCheck from '~/ui/components/AuthCheck.vue';
 import ShortValues from '~/ui/components/ShortValues.vue';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import SpecificUsersForm, {
@@ -56,6 +56,7 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/ui/composables/notifications.composable';
+import { hasRequiredPrivilege } from '~/ui/utils/auth';
 
 const props = defineProps<{
   specifier: ResourcePermissionsSpecifier;
@@ -74,4 +75,34 @@ const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
   (event: 'update:modelValue', payload: SpecificUsersFormProps): void;
 }>();
+
+const canAdd = computed(
+  () =>
+    hasRequiredPrivilege({
+      anyOf: [Privilege.AddAccessPolicy],
+    }) && !specifier.value.users.specificUsers.policy.id,
+);
+const canEdit = computed(
+  () =>
+    !!specifier.value.users.specificUsers.policy.id &&
+    specifier.value.users.specificUsers.policy.canEdit,
+);
+const canRemove = computed(
+  () =>
+    !!specifier.value.users.specificUsers.policy.id &&
+    specifier.value.users.specificUsers.policy.canRemove,
+);
+const showActionBtn = computed(() => canAdd.value || canEdit.value || canRemove.value);
+
+const shouldDisableSubmitBtn = (elem: SpecificUsersFormProps) => {
+  if (!elem.modelValue.userIds?.length && !canRemove.value) {
+    return true;
+  }
+
+  if (!!elem.modelValue.policyId && elem.modelValue.userIds?.length && !canEdit.value) {
+    return true;
+  }
+
+  return !elem.valid;
+};
 </script>

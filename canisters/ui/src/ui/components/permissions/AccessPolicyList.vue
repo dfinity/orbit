@@ -5,10 +5,10 @@
         <VTable density="compact" hover>
           <thead>
             <tr>
-              <th :class="{ 'w-50': !app.isMobile }">{{ $t(`permissions.resource_title`) }}</th>
-              <th v-if="!app.isMobile">{{ $t(`permissions.group_members_title`) }}</th>
-              <th v-if="!app.isMobile">{{ $t(`permissions.specific_users_title`) }}</th>
-              <th v-if="!app.isMobile">{{ $t(`permissions.everyone_title`) }}</th>
+              <th :class="{ 'w-50': !app.isMobile }">{{ $t(`access_policies.resource_title`) }}</th>
+              <th v-if="!app.isMobile">{{ $t(`access_policies.group_members_title`) }}</th>
+              <th v-if="!app.isMobile">{{ $t(`access_policies.specific_users_title`) }}</th>
+              <th v-if="!app.isMobile">{{ $t(`access_policies.everyone_title`) }}</th>
             </tr>
           </thead>
           <tbody>
@@ -87,9 +87,13 @@ const resourcePermissions = computed<ResourcePermissions[]>(() => {
       for (const resourceSpecifier of resource.specifiers) {
         if (resource.match(resourceSpecifier.specifier, policy)) {
           if (variantIs(policy.user, 'Any')) {
-            resourceSpecifier.users.allUsers.policyId = policy.id;
+            resourceSpecifier.users.allUsers.policy.id = policy.id;
+            resourceSpecifier.users.allUsers.policy.canEdit = policy.info.can_edit;
+            resourceSpecifier.users.allUsers.policy.canRemove = policy.info.can_delete;
           } else if (variantIs(policy.user, 'Id')) {
-            resourceSpecifier.users.specificUsers.policyId = policy.id;
+            resourceSpecifier.users.specificUsers.policy.id = policy.id;
+            resourceSpecifier.users.specificUsers.policy.canEdit = policy.info.can_edit;
+            resourceSpecifier.users.specificUsers.policy.canRemove = policy.info.can_delete;
             resourceSpecifier.users.specificUsers.users = policy.user.Id.map(id => {
               const user = users.value[id];
               if (!user) {
@@ -100,7 +104,9 @@ const resourcePermissions = computed<ResourcePermissions[]>(() => {
               return user;
             });
           } else if (variantIs(policy.user, 'Group')) {
-            resourceSpecifier.users.membersOfGroup.policyId = policy.id;
+            resourceSpecifier.users.membersOfGroup.policy.id = policy.id;
+            resourceSpecifier.users.membersOfGroup.policy.canEdit = policy.info.can_edit;
+            resourceSpecifier.users.membersOfGroup.policy.canRemove = policy.info.can_delete;
             resourceSpecifier.users.membersOfGroup.groups = policy.user.Group.map(id => {
               const group = userGroups.value[id];
               if (!group) {

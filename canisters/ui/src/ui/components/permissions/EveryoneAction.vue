@@ -5,9 +5,10 @@
       density="comfortable"
       :model-value="{
         specifier: specifier.specifier,
-        everyone: { policyId: specifier.users.allUsers.policyId },
+        everyone: { policyId: specifier.users.allUsers.policy.id },
       }"
-      :icon="specifier.users.allUsers.policyId ? mdiCheckboxMarkedOutline : mdiCheckboxBlankOutline"
+      :disabled="isEnabled && !specifier.users.allUsers.policy.canRemove"
+      :icon="isEnabled ? mdiCheckboxMarkedOutline : mdiCheckboxBlankOutline"
       :submit="
         ({ specifier, everyone }) => {
           if (everyone.policyId) {
@@ -29,18 +30,14 @@
     />
 
     <template #unauthorized>
-      <VCheckbox
-        hide-details
-        density="comfortable"
-        disabled
-        :value="specifier.users.allUsers.policyId ? true : false"
-      />
+      <VCheckbox hide-details density="comfortable" disabled :value="isEnabled" />
     </template>
   </AuthCheck>
 </template>
 
 <script lang="ts" setup>
 import { mdiCheckboxBlankOutline, mdiCheckboxMarkedOutline } from '@mdi/js';
+import { computed } from 'vue';
 import { toRefs } from 'vue';
 import { ResourcePermissionsSpecifier } from '~/configs/permissions.config';
 import { Privilege } from '~/types';
@@ -63,4 +60,6 @@ const { specifier } = toRefs(props);
 const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
 }>();
+
+const isEnabled = computed(() => !!specifier.value.users.allUsers.policy.id);
 </script>

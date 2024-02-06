@@ -1,4 +1,9 @@
+use super::CallContext;
+use crate::errors::AccessControlError;
 use crate::{errors::PaginationError, models::criteria::Percentage};
+use futures::StreamExt;
+use futures::{stream, Future};
+use std::pin::Pin;
 
 pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
 
@@ -82,6 +87,30 @@ pub(crate) fn match_date_range(date: &u64, start_dt: &Option<u64>, to_dt: &Optio
         (None, Some(to_dt)) => date <= to_dt,
         (None, None) => true,
     }
+}
+
+pub(crate) async fn filter_accessible_resources<T, F>(
+    ctx: &CallContext,
+    items: &[T],
+    evaluate_access: F,
+) -> Vec<T>
+where
+    T: Clone + Send + 'static,
+    F: Fn(&CallContext, &T) -> Pin<Box<dyn Future<Output = Result<(), AccessControlError>> + Send>>
+        + Copy,
+{
+    stream::iter(items.iter())
+        .filter_map(move |item| {
+            let access_future = evaluate_access(ctx, item);
+            async move {
+                match access_future.await {
+                    Ok(_) => Some(item.clone()),
+                    Err(_) => None,
+                }
+            }
+        })
+        .collect()
+        .await
 }
 
 #[cfg(test)]

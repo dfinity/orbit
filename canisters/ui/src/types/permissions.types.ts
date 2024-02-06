@@ -23,18 +23,24 @@ export enum ResourceActionEnum {
   ReadPublicConfig = 'ReadPublicConfig',
 }
 
+export interface AccessPolicyItemInfo {
+  id: UUID | null;
+  canEdit: boolean;
+  canRemove: boolean;
+}
+
 export interface AccessPolicyForMembersOfGroup {
-  policyId: UUID | null;
+  policy: AccessPolicyItemInfo;
   groups: UserGroup[];
 }
 
 export interface AccessPolicyForSpecificUsers {
-  policyId: UUID | null;
+  policy: AccessPolicyItemInfo;
   users: BasicUser[];
 }
 
 export interface AccessPolicyForAllUsers {
-  policyId: UUID | null;
+  policy: AccessPolicyItemInfo;
 }
 
 export interface ResourceAccessUserSpecifiers {

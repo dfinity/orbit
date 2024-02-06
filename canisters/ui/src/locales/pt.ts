@@ -384,7 +384,7 @@ export default {
       title: 'Pedidos',
       transfer_title: 'Pedidos de transferência',
     },
-    permissions: {
+    access_policies: {
       title: 'Permissões',
       update_dialog_title: 'Atualizar permissões',
     },
@@ -394,7 +394,7 @@ export default {
     expired_dialog_content: 'Você deve se reautenticar para continuar.',
     expired_dialog_btn: 'Reautenticar',
   },
-  permissions: {
+  access_policies: {
     resource_title: 'Recurso',
     group_members_title: 'Membros do grupo',
     specific_users_title: 'Usuários específicos',

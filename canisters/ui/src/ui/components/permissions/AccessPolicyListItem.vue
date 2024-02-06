@@ -1,17 +1,17 @@
 <template>
   <tr v-if="app.isMobile">
     <div class="text-body-2 font-weight-bold pl-4 pt-2">
-      {{ $t(`permissions.resources.${resource.resourceType.toLowerCase()}`) }}
+      {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
     </div>
     <VCard v-for="(specifier, idx) in resource.specifiers" :key="idx" variant="text" class="mb-1">
       <VCardTitle class="text-body-1 py-0">
-        {{ $t(`permissions.actions.${specifier.action.toLowerCase()}`) }}
+        {{ $t(`access_policies.actions.${specifier.action.toLowerCase()}`) }}
       </VCardTitle>
       <VCardText>
         <VList>
           <VListItem class="px-0 pt-0">
             <VListItemTitle class="text-body-2">
-              {{ $t(`permissions.group_members_title`) }}
+              {{ $t(`access_policies.group_members_title`) }}
             </VListItemTitle>
             <VListItemSubtitle>
               <MembersOfGroupAction
@@ -25,7 +25,7 @@
           </VListItem>
           <VListItem class="px-0">
             <VListItemTitle class="text-body-2">
-              {{ $t(`permissions.specific_users_title`) }}
+              {{ $t(`access_policies.specific_users_title`) }}
             </VListItemTitle>
             <VListItemSubtitle>
               <SpecificUsersAction
@@ -39,7 +39,7 @@
           </VListItem>
           <VListItem class="px-0">
             <VListItemTitle class="text-body-2">
-              {{ $t(`permissions.everyone_title`) }}
+              {{ $t(`access_policies.everyone_title`) }}
             </VListItemTitle>
             <VListItemSubtitle>
               <EveryoneAction :specifier="specifier" @editing="emit('editing', $event)" />
@@ -53,12 +53,12 @@
   <template v-else>
     <tr v-bind="$attrs">
       <td colspan="4" class="bb-none font-weight-bold pt-4 pb-1">
-        {{ $t(`permissions.resources.${resource.resourceType.toLowerCase()}`) }}
+        {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
       </td>
     </tr>
     <tr v-for="(specifier, idx) in resource.specifiers" :key="idx">
       <td class="bb-none">
-        {{ $t(`permissions.actions.${specifier.action.toLowerCase()}`) }}
+        {{ $t(`access_policies.actions.${specifier.action.toLowerCase()}`) }}
       </td>
       <td class="bb-none cursor-pointer">
         <MembersOfGroupAction
@@ -138,7 +138,7 @@ const getMembersOfGroupForm = (
   return {
     valid: true,
     modelValue: {
-      policyId: specifier.users.membersOfGroup.policyId,
+      policyId: specifier.users.membersOfGroup.policy.id,
       groupIds: groups.map(g => g.id),
       prefilledGroups: groups,
     },
@@ -186,7 +186,7 @@ const getSpecificUsersForm = (
   return {
     valid: true,
     modelValue: {
-      policyId: specifier.users.specificUsers.policyId,
+      policyId: specifier.users.specificUsers.policy.id,
       userIds: users.map(g => g.id),
       prefilledUsers: users,
     },

@@ -26,9 +26,9 @@ export interface ResourcePermissions {
 }
 
 export const defaultUserSpecifiers = (): ResourceAccessUserSpecifiers => ({
-  allUsers: { policyId: null },
-  membersOfGroup: { policyId: null, groups: [] },
-  specificUsers: { policyId: null, users: [] },
+  allUsers: { policy: { id: null, canEdit: false, canRemove: false } },
+  membersOfGroup: { policy: { id: null, canEdit: false, canRemove: false }, groups: [] },
+  specificUsers: { policy: { id: null, canEdit: false, canRemove: false }, users: [] },
 });
 
 export const globalResourcePermissions = (): ResourcePermissions[] => [

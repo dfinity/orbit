@@ -383,7 +383,7 @@ export default {
       title: 'Requests',
       transfer_title: 'Transfer Requests',
     },
-    permissions: {
+    access_policies: {
       title: 'Permissions',
       update_dialog_title: 'Update Permissions',
     },
@@ -393,7 +393,7 @@ export default {
     expired_dialog_content: 'You must reauthenticate to continue.',
     expired_dialog_btn: 'Reauthenticate',
   },
-  permissions: {
+  access_policies: {
     resource_title: 'Resource',
     group_members_title: 'Members of groups',
     specific_users_title: 'Specific users',

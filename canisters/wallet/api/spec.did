@@ -436,7 +436,7 @@ type AddAccessPolicyOperationInput = record {
 
 type AddAccessPolicyOperation = record {
   // The access policy that was created by the proposal (only available after the proposal is executed).
-  policy : opt AccessPolicy;
+  policy_id : opt UUID;
   // The input to the proposal to add an access policy.
   input : AddAccessPolicyOperationInput;
 };
@@ -1341,12 +1341,21 @@ type ResourceSpecifier = variant {
   ProposalPolicy : CommonActionSpecifier;
 };
 
+// The access control policy information, used to specify useful information about the access policy.
+type AccessPolicyInfo = record {
+  // Wether or not the user can edit the resource.
+  can_edit : bool;
+  // Wether or not the user can delete the resource.
+  can_delete : bool;
+};
+
 // The access control policy, used to specify the access control rules for
 // users when interacting with resources.
 type AccessPolicy = record {
   id : UUID;
   user : AccessControlUserSpecifier;
   resource : ResourceSpecifier;
+  info : AccessPolicyInfo;
 };
 
 // Input type for listing access policies with the given pagination parameters.

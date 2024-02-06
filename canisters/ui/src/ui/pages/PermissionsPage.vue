@@ -8,7 +8,7 @@
       <PageBody>
         <VContainer fluid class="px-0">
           <VRow>
-            <VCol cols="12" class="w-100">
+            <VCol cols="12">
               <RecentProposals
                 class="mb-4"
                 :see-all-link="{
@@ -23,7 +23,7 @@
                 hide-not-found
               />
             </VCol>
-            <VCol cols="12" class="w-100">
+            <VCol cols="12">
               <DataLoader
                 v-slot="{ data, loading }"
                 :load="fetchAccessPolicies"
@@ -41,7 +41,7 @@
               </DataLoader>
             </VCol>
             <VCol cols="12">
-              <div class="text-h6 px-2">{{ $t('permissions.individual_resources_title') }}</div>
+              <div class="text-h6 px-2">{{ $t('access_policies.individual_resources_title') }}</div>
 
               <VAutocomplete
                 v-model="individualResourceSelected"
@@ -49,7 +49,7 @@
                 :items="individualResources"
                 density="comfortable"
                 variant="underlined"
-                :label="$t('permissions.select_resource')"
+                :label="$t('access_policies.select_resource')"
                 hide-details
               />
 
@@ -106,7 +106,7 @@ const props = withDefaults(
 );
 
 const title = computed(() => {
-  return props.title || i18n.global.t('pages.permissions.title');
+  return props.title || i18n.global.t('pages.access_policies.title');
 });
 
 const wallet = useWalletStore();
@@ -122,7 +122,7 @@ const individualResourceKeys = ref<ResourceTypeEnum[]>([
 const individualResources = computed(() => {
   return individualResourceKeys.value.map(key => ({
     value: key,
-    title: i18n.global.t(`permissions.resources.${key.toLowerCase()}`),
+    title: i18n.global.t(`access_policies.resources.${key.toLowerCase()}`),
   }));
 });
 
