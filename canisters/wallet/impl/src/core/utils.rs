@@ -89,6 +89,10 @@ pub(crate) fn match_date_range(date: &u64, start_dt: &Option<u64>, to_dt: &Optio
     }
 }
 
+/// Filters a list of items based on the result of an access control evaluation.
+/// 
+/// This function will evaluate the access control for each item in the list and return 
+/// only the items for which the evaluation was successful.
 pub(crate) async fn filter_accessible_resources<T, F>(
     ctx: &CallContext,
     items: &[T],
