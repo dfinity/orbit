@@ -1,3 +1,6 @@
+use super::access_control::evaluate_caller_access;
+use super::CallContext;
+use crate::models::access_control::ResourceSpecifier;
 use crate::{errors::PaginationError, models::criteria::Percentage};
 
 pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
@@ -81,6 +84,33 @@ pub(crate) fn match_date_range(date: &u64, start_dt: &Option<u64>, to_dt: &Optio
         (Some(start_dt), None) => date >= start_dt,
         (None, Some(to_dt)) => date <= to_dt,
         (None, None) => true,
+    }
+}
+
+/// Retains items based on the result of an access control evaluation.
+///
+/// This function will evaluate the access control for each item in the list and retain only the
+/// items for which the access control evaluation is successful.
+pub(crate) async fn retain_accessible_resources<T, F>(
+    ctx: &CallContext,
+    items: &mut Vec<T>,
+    to_resource_specifier: F,
+) where
+    T: Clone,
+    F: Fn(&T) -> ResourceSpecifier,
+{
+    let mut i = 0;
+    while i < items.len() {
+        let item = &items[i];
+        let resource_specifier = to_resource_specifier(item);
+        let result = evaluate_caller_access(ctx, &resource_specifier).await;
+
+        match result {
+            Ok(_) => i += 1,
+            Err(_) => {
+                items.remove(i);
+            }
+        }
     }
 }
 

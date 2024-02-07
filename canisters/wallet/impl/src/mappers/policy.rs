@@ -10,7 +10,9 @@ use crate::models::{
     ProposalPolicy,
 };
 use uuid::Uuid;
-use wallet_api::{CriteriaDTO, TransferSpecifierDTO, UserSpecifierDTO};
+use wallet_api::{AccessPolicyInfoDTO, CriteriaDTO, TransferSpecifierDTO, UserSpecifierDTO};
+
+pub type AccessPolicyInfo = AccessPolicyInfoDTO;
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
@@ -100,12 +102,13 @@ impl From<UserSpecifier> for UserSpecifierDTO {
     }
 }
 
-impl From<AccessControlPolicy> for wallet_api::AccessPolicyDTO {
-    fn from(policy: AccessControlPolicy) -> Self {
-        Self {
-            id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
-            user: policy.user.into(),
-            resource: policy.resource.into(),
+impl AccessControlPolicy {
+    pub fn to_dto(self, info: AccessPolicyInfo) -> wallet_api::AccessPolicyDTO {
+        wallet_api::AccessPolicyDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            user: self.user.into(),
+            resource: self.resource.into(),
+            info,
         }
     }
 }

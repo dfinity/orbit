@@ -1,7 +1,8 @@
 /* eslint-disable vue/one-component-per-file */
 import { createTestingPinia } from '@pinia/testing';
 import { mount as componentMount, ComponentMountingOptions } from '@vue/test-utils';
-import { Component, ComponentPublicInstance, createApp, defineComponent } from 'vue';
+import { StateTree } from 'pinia';
+import { Component, ComponentPublicInstance, createApp, defineComponent, Ref } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import { i18n, navigation, serviceManager, vuetify } from '~/ui/modules';
 
@@ -20,6 +21,7 @@ const mockRouter = createRouter({
 export const mount = <T extends Component>(
   component: T,
   options: ComponentMountingOptions<T> = {},
+  { initialPiniaState }: { initialPiniaState?: StateTree } = {},
 ) => {
   const mocks = options.global?.mocks || {};
   const plugins = options.global?.plugins || [];
@@ -29,7 +31,9 @@ export const mount = <T extends Component>(
     global: {
       ...options.global,
       plugins: [
-        createTestingPinia(),
+        createTestingPinia({
+          initialState: initialPiniaState,
+        }),
         vuetify,
         i18n,
         serviceManager,
@@ -63,3 +67,7 @@ export const setupComponent = <Props, RawBindings>(
 
   return app.mount(container) as ComponentPublicInstance<Props, RawBindings>;
 };
+
+export function createMockRef<T>(value: T): Ref<T> {
+  return { value } as Ref<T>;
+}

@@ -40,6 +40,7 @@
             <ProposalList
               v-if="data"
               :proposals="data.proposals"
+              :hide-not-found="props.hideNotFound"
               hide-headers
               @voted="forceReload = true"
               @opened="disablePolling = true"
@@ -71,6 +72,7 @@ const props = withDefaults(
     seeAllLink?: RouteLocationRaw;
     refreshIntervalMs?: number;
     loadErrorMsg?: string;
+    hideNotFound?: boolean;
   }>(),
   {
     title: undefined,
@@ -81,6 +83,7 @@ const props = withDefaults(
     refreshIntervalMs: 5000,
     seeAllLink: undefined,
     loadErrorMsg: i18n.global.t('app.data_load_error'),
+    hideNotFound: false,
   },
 );
 

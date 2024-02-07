@@ -43,8 +43,13 @@
             </ActionBtn>
           </AuthCheck>
 
-          <AuthCheck :privileges="[Privilege.AddAccessPolicy]">
-            <VBtn color="primary-variant" variant="flat" data-test-id="manage-permissions-btn">
+          <AuthCheck :privileges="[Privilege.ListAccessPolicies]">
+            <VBtn
+              color="primary-variant"
+              variant="flat"
+              data-test-id="manage-permissions-btn"
+              :to="{ name: Routes.AccessPolicies }"
+            >
               {{ $t('pages.user_groups.btn_manage_permissions') }}
             </VBtn>
           </AuthCheck>
@@ -59,6 +64,7 @@
             query: { group_by: ProposalDomains.System },
           }"
           :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
+          hide-not-found
         />
         <DataLoader
           v-model:force-reload="forceReload"

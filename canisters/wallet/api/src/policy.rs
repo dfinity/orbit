@@ -116,10 +116,17 @@ pub enum ResourceSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccessPolicyInfoDTO {
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccessPolicyDTO {
     pub id: UuidDTO,
     pub user: AccessControlUserSpecifierDTO,
     pub resource: ResourceSpecifierDTO,
+    pub info: AccessPolicyInfoDTO,
 }
 
 pub type ListAccessPoliciesInput = PaginationInput;
@@ -177,7 +184,7 @@ pub struct AddAccessPolicyOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddAccessPolicyOperationDTO {
-    pub policy: Option<AccessPolicyDTO>,
+    pub policy_id: Option<UuidDTO>,
     pub input: AddAccessPolicyOperationInput,
 }
 
