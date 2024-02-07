@@ -164,7 +164,7 @@ import { i18n } from '~/ui/modules/i18n';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { assertAndReturn } from '~/ui/utils';
-import { throttle } from '~/core/utils';
+import { throttle } from '~/core/utils.core';
 
 const wallet = useWalletStore();
 const app = useAppStore();

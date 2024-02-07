@@ -66,7 +66,8 @@
 <script lang="ts" setup generic="T, M">
 import { mdiClose } from '@mdi/js';
 import { Ref, computed, ref, watch } from 'vue';
-import { logger, wait } from '~/core';
+import { logger } from '~/core/logger.core';
+import { wait } from '~/core/utils.core';
 import { i18n } from '~/ui/modules/i18n';
 
 const props = withDefaults(

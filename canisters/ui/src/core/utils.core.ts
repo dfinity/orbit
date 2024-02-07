@@ -1,6 +1,6 @@
 import { ApiError } from '~/generated/control-panel/control_panel.did';
 import { TransferStatus } from '~/generated/wallet/wallet.did';
-import { AccountTransferStatus } from '~/types';
+import { AccountTransferStatus } from '~/types/wallet.types';
 
 export const isSetAndNotFalse = (value: unknown) => {
   if (value === 'false' || value === false || value === undefined || value === null) {

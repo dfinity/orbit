@@ -1,4 +1,5 @@
-import { logger, unreachable } from '~/core';
+import { logger } from '~/core/logger.core';
+import { unreachable } from '~/core/utils.core';
 import { useWalletStore } from '~/ui/stores/wallet';
 import { accountsWorker, installWebWorkers, notificationsWorker } from '~/workers';
 import { Principal } from '@dfinity/principal';

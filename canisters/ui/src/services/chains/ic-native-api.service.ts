@@ -1,10 +1,11 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
-import { appInitConfig } from '~/configs';
-import { icAgent, nanoToJsDate } from '~/core';
+import { appInitConfig } from '~/configs/init.config';
+import { icAgent } from '~/core/ic-agent.core';
+import { nanoToJsDate } from '~/core/utils.core';
 import { Account } from '~/generated/wallet/wallet.did';
 import { idlFactory } from '~/generated/icp_index';
 import { _SERVICE } from '~/generated/icp_index/icp_index.did';
-import { FetchTransfersInput, ChainApi, AccountIncomingTransfer } from '~/types/chain';
+import { FetchTransfersInput, ChainApi, AccountIncomingTransfer } from '~/types/chain.types';
 
 export class ICNativeApi implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;

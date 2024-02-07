@@ -1,7 +1,7 @@
 import { mdiBookOpenVariant, mdiCogs, mdiFormatListText, mdiWalletBifold } from '@mdi/js';
 import { App, Ref, computed, ref, watch } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
-import { logger } from '~/core';
+import { logger } from '~/core/logger.core';
 import { Routes, routes } from '~/ui/config/routes';
 import { useSessionStore } from '~/ui/stores/session';
 import { useWalletStore } from '~/ui/stores/wallet';

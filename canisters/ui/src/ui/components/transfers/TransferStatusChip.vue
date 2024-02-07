@@ -3,7 +3,7 @@
 </template>
 <script lang="ts" setup>
 import { TransferStatus } from '~/generated/wallet/wallet.did';
-import { extractTransferStatus } from '~/core';
+import { extractTransferStatus } from '~/core/utils.core';
 import { AccountTransferStatus } from '~/types';
 import { computed } from 'vue';
 

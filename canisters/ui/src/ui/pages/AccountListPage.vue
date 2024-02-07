@@ -53,7 +53,7 @@
 <script lang="ts" setup>
 import { mdiContentCopy, mdiOpenInApp } from '@mdi/js';
 import { computed, ref } from 'vue';
-import { formatBalance } from '~/core';
+import { formatBalance } from '~/core/utils.core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import AddAccountBtn from '~/ui/components/accounts/AddAccountBtn.vue';
 import { i18n } from '~/ui/modules';

@@ -1,7 +1,8 @@
 import { LocaleMessages, createI18n } from 'vue-i18n';
 import { NavigationGuard } from 'vue-router';
 import { en as vuetifyEn } from 'vuetify/locale';
-import { Locale, appInitConfig } from '~/configs';
+import { appInitConfig } from '~/configs/init.config';
+import { Locale } from '~/configs/i18n.config';
 import en from '~/locales/en';
 import { AppTranslations } from '~/types';
 import { useAppStore } from '~/ui/stores/app';

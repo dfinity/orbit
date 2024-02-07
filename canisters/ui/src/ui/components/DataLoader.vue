@@ -10,7 +10,7 @@
 import { onUnmounted } from 'vue';
 import { watch } from 'vue';
 import { onMounted, ref } from 'vue';
-import { logger } from '~/core/logger';
+import { logger } from '~/core/logger.core';
 import { i18n } from '~/ui/modules/i18n';
 import { useSessionStore } from '../stores/session';
 import { computed } from 'vue';

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { throttle } from '.';
+import { throttle } from './utils.core';
 
 describe('Core utils', () => {
   describe('throttle', () => {

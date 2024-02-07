@@ -1,4 +1,4 @@
-import { variantIs } from '~/core';
+import { variantIs } from '~/core/utils.core';
 import { AccessPolicy, ResourceSpecifier, UUID } from '~/generated/wallet/wallet.did';
 import {
   AggregatedResouceAccessPolicies,

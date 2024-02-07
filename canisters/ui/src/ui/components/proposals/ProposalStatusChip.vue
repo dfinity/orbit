@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { mdiInformationOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
-import { variantIs } from '~/core';
+import { variantIs } from '~/core/utils.core';
 import { ProposalStatus } from '~/generated/wallet/wallet.did';
 
 const props = withDefaults(

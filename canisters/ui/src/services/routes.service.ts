@@ -1,4 +1,4 @@
-import { appInitConfig } from '~/configs';
+import { appInitConfig } from '~/configs/init.config';
 
 export class RoutesService {
   get baseUrl(): string {

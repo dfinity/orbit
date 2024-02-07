@@ -90,7 +90,7 @@
 <script lang="ts" setup>
 import { mdiAccountGroupOutline, mdiShieldLockOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
-import { logger } from '~/core';
+import { logger } from '~/core/logger.core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { i18n } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';

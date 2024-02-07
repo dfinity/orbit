@@ -37,7 +37,8 @@
 <script lang="ts" setup>
 import { computed, toRefs } from 'vue';
 import { defaultUserSpecifiers } from '~/configs/access-policies.config';
-import { logger, variantIs } from '~/core';
+import { logger } from '~/core/logger.core';
+import { variantIs } from '~/core/utils.core';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/ui/stores/app';

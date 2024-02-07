@@ -1,4 +1,4 @@
-import en from '~/locales/en';
+import en from '~/locales/en.locale';
 
 export interface AppInitConfig {
   name: string;
@@ -28,3 +28,9 @@ export enum SupportedTheme {
 }
 
 export type AppTranslations = typeof en;
+
+export interface GlobalNotification {
+  show: boolean;
+  message: string;
+  type: 'error' | 'success' | 'info' | 'warning';
+}

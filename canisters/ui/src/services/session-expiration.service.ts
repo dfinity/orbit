@@ -1,4 +1,4 @@
-import { ResettableTimeout, unreachable } from '~/core';
+import { ResettableTimeout, unreachable } from '~/core/utils.core';
 
 export type SessionExpirationMessage =
   | 'otherTabSignedIn'

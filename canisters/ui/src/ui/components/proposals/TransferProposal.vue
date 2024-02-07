@@ -3,8 +3,8 @@
     {{ $t(`wallets.proposals.transfer.title`) }}
     <span>
       <small>
-        | {{ operation.from_account.symbol }}:
-        {{ formatBalance(operation.input.amount, operation.from_account.decimals) }}
+        | {{ operation.from_account?.[0]?.symbol }}:
+        {{ formatBalance(operation.input.amount, operation.from_account?.[0]?.decimals ?? 0) }}
       </small>
     </span>
   </div>
@@ -12,12 +12,12 @@
     <VBtn
       v-if="injectedProps.outer"
       :prepend-icon="mdiWallet"
-      :to="{ name: Routes.Account, params: { id: operation.from_account.id } }"
+      :to="{ name: Routes.Account, params: { id: operation.from_account?.[0]?.id } }"
       size="x-small"
       variant="tonal"
       :append-icon="mdiOpenInApp"
     >
-      {{ operation.from_account.name }}
+      {{ operation.from_account?.[0]?.name }}
     </VBtn>
     <VChip size="x-small" :title="proposal.created_at" variant="tonal">
       <VIcon :icon="mdiClockOutline" size="x-small" />&nbsp;
@@ -31,7 +31,7 @@
 <script lang="ts" setup>
 import { mdiClockOutline, mdiWallet, mdiOpenInApp } from '@mdi/js';
 import { computed, inject } from 'vue';
-import { formatBalance } from '~/core';
+import { formatBalance } from '~/core/utils.core';
 import { Proposal, TransferOperation } from '~/generated/wallet/wallet.did';
 import { Routes } from '~/ui/config/routes';
 

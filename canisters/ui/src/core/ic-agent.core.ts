@@ -1,6 +1,6 @@
 import { AnonymousIdentity, HttpAgent } from '@dfinity/agent';
-import { appInitConfig } from '~/configs';
-import { logger } from '~/core';
+import { appInitConfig } from '~/configs/init.config';
+import { logger } from './logger.core';
 import { loadIdentity } from '~/workers/utils';
 
 class IcAgent {

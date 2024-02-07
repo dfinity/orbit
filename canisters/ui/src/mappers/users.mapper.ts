@@ -1,6 +1,6 @@
-import { unreachable, variantIs } from '~/core';
+import { unreachable, variantIs } from '~/core/utils.core';
 import { User, UserStatus } from '~/generated/wallet/wallet.did';
-import { UserInput, UserStatusType } from '~/types';
+import { UserInput, UserStatusType } from '~/types/wallet.types';
 
 export const fromUserToUserInput = (user: Partial<User> = {}): UserInput => {
   return {

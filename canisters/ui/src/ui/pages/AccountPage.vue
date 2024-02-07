@@ -328,7 +328,7 @@ import {
   mdiLink as _mdiLink,
 } from '@mdi/js';
 import { onMounted, ref, watch } from 'vue';
-import { formatBalance } from '~/core';
+import { formatBalance } from '~/core/utils.core';
 import NewTransferBtn from '~/ui/components/NewTransferBtn.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import EditAccountBtn from '~/ui/components/accounts/EditAccountBtn.vue';

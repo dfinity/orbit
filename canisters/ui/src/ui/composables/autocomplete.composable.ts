@@ -1,5 +1,6 @@
 import { Ref, ref } from 'vue';
-import { logger, throttle } from '~/core';
+import { logger } from '~/core/logger.core';
+import { throttle } from '~/core/utils.core';
 import { UserGroup } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/ui/stores/wallet';
 

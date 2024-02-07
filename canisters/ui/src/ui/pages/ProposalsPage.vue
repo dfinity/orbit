@@ -114,7 +114,7 @@
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { throttle } from '~/core/utils';
+import { throttle } from '~/core/utils.core';
 import { ProposalStatusCode } from '~/generated/wallet/wallet.did';
 import { ProposalDomains } from '~/types';
 import DataLoader from '~/ui/components/DataLoader.vue';

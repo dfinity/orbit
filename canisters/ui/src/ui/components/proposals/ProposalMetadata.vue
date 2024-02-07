@@ -71,7 +71,7 @@
 <script setup lang="ts">
 import { mdiClockPlusOutline, mdiClockTimeFourOutline, mdiAccountCircle } from '@mdi/js';
 import { computed } from 'vue';
-import { variantIs } from '~/core';
+import { variantIs } from '~/core/utils.core';
 import { Proposal } from '~/generated/wallet/wallet.did';
 
 const props = defineProps<{

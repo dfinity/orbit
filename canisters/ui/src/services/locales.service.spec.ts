@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Locale } from '~/configs';
-import { LocalesService } from './LocalesService';
+import { Locale } from '~/configs/i18n.config';
+import { LocalesService } from './locales.service';
 
 describe('LocalesService', async () => {
   it.each([

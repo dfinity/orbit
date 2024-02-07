@@ -34,7 +34,7 @@ import { Proposal } from '~/generated/wallet/wallet.did';
 import ProposalDetailView from './ProposalDetailView.vue';
 import { ref } from 'vue';
 import { useWalletStore } from '~/ui/stores/wallet';
-import { logger } from '~/core';
+import { logger } from '~/core/logger.core';
 import { useAppStore } from '~/ui/stores/app';
 import { i18n } from '~/ui/modules';
 import { watch } from 'vue';

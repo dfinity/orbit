@@ -1,7 +1,7 @@
 import { Identity } from '@dfinity/agent';
 import { AuthClient, IdbStorage, KEY_STORAGE_DELEGATION } from '@dfinity/auth-client';
 import { DelegationChain } from '@dfinity/identity';
-import { appInitConfig } from '~/configs';
+import { appInitConfig } from '~/configs/init.config';
 
 export class AuthService {
   // 1 hour in nanoseconds

@@ -1,5 +1,6 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
-import { Privilege, ProposalDomains } from '~/types';
+import { Privilege, RequiredSessionState } from '~/types/auth.types';
+import { ProposalDomains } from '~/types/wallet.types';
 import { i18n } from '~/ui/modules';
 import { services } from '~/ui/modules/services';
 import DisconnectedPage from '~/ui/pages/DisconnectedPage.vue';
@@ -7,7 +8,6 @@ import InitializationPage from '~/ui/pages/InitializationPage.vue';
 import LoginPageVue from '~/ui/pages/LoginPage.vue';
 import NotFoundPageVue from '~/ui/pages/NotFoundPage.vue';
 import UnauthorizedPageVue from '~/ui/pages/UnauthorizedPage.vue';
-import { RequiredSessionState } from '~/ui/types';
 
 export enum Routes {
   Login = 'Login',

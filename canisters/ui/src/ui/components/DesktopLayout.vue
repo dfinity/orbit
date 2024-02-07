@@ -109,7 +109,7 @@
 <script lang="ts" setup>
 import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
-import { isSetAndNotFalse } from '~/core';
+import { isSetAndNotFalse } from '~/core/utils.core';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';

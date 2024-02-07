@@ -120,7 +120,8 @@
 <script lang="ts" setup>
 import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
-import { isSetAndNotFalse } from '~/core';
+import { isSetAndNotFalse } from '~/core/utils.core';
+import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 import BrandLogo from '~/ui/components/BrandLogo.vue';
 import NotificationsPanelToggle from '~/ui/components/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/ui/components/SidenavHeader.vue';
@@ -130,7 +131,6 @@ import WalletSelector from '~/ui/components/WalletSelector.vue';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
 import LanguageSelector from './LanguageSelector.vue';
-import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 
 const app = useAppStore();
 const session = useSessionStore();

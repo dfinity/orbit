@@ -1,5 +1,5 @@
 import { onMounted, onUnmounted } from 'vue';
-import { throttle } from '~/core';
+import { throttle } from '~/core/utils.core';
 
 export function useUserActivity({
   onActive,

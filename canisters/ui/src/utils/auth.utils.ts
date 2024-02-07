@@ -1,8 +1,7 @@
-import { unreachable } from '~/core';
-import { Privilege } from '~/types/wallet';
+import { unreachable } from '~/core/utils.core';
+import { Privilege, RequiredSessionState } from '~/types/auth.types';
 import { useSessionStore } from '~/ui/stores/session';
 import { useWalletStore } from '~/ui/stores/wallet';
-import { RequiredSessionState } from '~/ui/types/auth';
 
 export const hasRequiredSession = (
   requiredSessionState: RequiredSessionState,

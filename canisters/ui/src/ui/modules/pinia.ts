@@ -1,6 +1,6 @@
 import { createPinia } from 'pinia';
 import { NavigationGuard } from 'vue-router';
-import { logger } from '~/core';
+import { logger } from '~/core/logger.core';
 import { useAppStore } from '~/ui/stores/app';
 
 const pinia = createPinia();

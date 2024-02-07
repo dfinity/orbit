@@ -1,5 +1,6 @@
-import { Locale, appInitConfig, supportedLocales } from '~/configs';
-import { AppTranslations } from '~/types';
+import { Locale, supportedLocales } from '~/configs/i18n.config';
+import { appInitConfig } from '~/configs/init.config';
+import { AppTranslations } from '~/types/app.types';
 
 export class LocalesService {
   static readonly localeStorageKey = 'locale';
@@ -21,7 +22,7 @@ export class LocalesService {
   }
 
   async fetchLocaleMessages(locale: Locale): Promise<AppTranslations> {
-    const messages = await import(`~/locales/${locale}.ts`);
+    const messages = await import(`~/locales/${locale}.locale.ts`);
     return messages.default;
   }
 

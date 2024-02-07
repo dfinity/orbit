@@ -35,21 +35,6 @@ export enum ProposalStatusEnum {
   Processing = 'Processing',
 }
 
-export enum Privilege {
-  AddUserGroup = 'AddUserGroup',
-  ListUserGroups = 'ListUserGroups',
-  AddUser = 'AddUser',
-  ListUsers = 'ListUsers',
-  AddProposalPolicy = 'AddProposalPolicy',
-  ListProposalPolicies = 'ListProposalPolicies',
-  ListAccounts = 'ListAccounts',
-  ListAccessPolicies = 'ListAccessPolicies',
-  AddAccessPolicy = 'AddAccessPolicy',
-  AddAccount = 'AddAccount',
-  ListAddressBookEntries = 'ListAddressBookEntries',
-  AddAddressBookEntry = 'AddAddressBookEntry',
-}
-
 export interface UserInput {
   id?: UUID;
   name?: string;

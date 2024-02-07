@@ -18,7 +18,8 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import { onMounted, ref } from 'vue';
-import { logger, wait } from '~/core';
+import { logger } from '~/core/logger.core';
+import { wait } from '~/core/utils.core';
 import PageLayout from '~/ui/components/PageLayout.vue';
 import { defaultHomeRoute } from '~/ui/config/routes';
 import { router, services } from '~/ui/modules';

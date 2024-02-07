@@ -1,7 +1,7 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { appInitConfig } from '~/configs';
-import { icAgent } from '~/core/ic-agent';
+import { appInitConfig } from '~/configs/init.config';
+import { icAgent } from '~/core/ic-agent.core';
 import { idlFactory } from '~/generated/control-panel';
 import {
   User,

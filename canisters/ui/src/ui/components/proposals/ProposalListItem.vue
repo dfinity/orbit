@@ -45,7 +45,7 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
 import { VListItem } from 'vuetify/components';
-import { KeysOfUnion } from '~/core';
+import { KeysOfUnion } from '~/core/utils.core';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
 import ReviewProposalBtn from '~/ui/components/proposals/ReviewProposalBtn.vue';

@@ -1,6 +1,7 @@
 import { ComputedRef, Ref, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { logger, parseDate } from '~/core';
+import { logger } from '~/core/logger.core';
+import { parseDate } from '~/core/utils.core';
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
 import { Privilege, ProposalDomains, ProposalStatusEnum } from '~/types';
 import { DateRangeModel } from '~/ui/components/inputs/DateRange.vue';

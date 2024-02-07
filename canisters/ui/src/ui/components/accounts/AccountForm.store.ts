@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { logger } from '~/core';
+import { logger } from '~/core/logger.core';
 import { UUID, Account, Proposal, AccountPolicies } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/ui/modules';
 import { useWalletStore } from '~/ui/stores/wallet';

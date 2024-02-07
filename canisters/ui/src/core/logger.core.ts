@@ -1,5 +1,5 @@
 import pino, { Level, LogEvent } from 'pino';
-import { appInitConfig } from '~/configs';
+import { appInitConfig } from '~/configs/init.config';
 
 // Takes the log message, parses it through an annonymizer, and sends it to a log collector
 const annonymizedSend = async (_level: Level, _logEvent: LogEvent): Promise<void> => {

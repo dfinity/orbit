@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
 
             if (
               folder.includes('/src/locales') &&
-              supportedLocales.some(locale => resolve(folder, `${locale}.ts`) === id)
+              supportedLocales.some(locale => resolve(folder, `${locale}.locale.ts`) === id)
             ) {
               const [localeName] = basename(id).split('.');
               return `locale-${localeName}`;

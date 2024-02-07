@@ -82,7 +82,7 @@ import { mdiInformationOutline } from '@mdi/js';
 import type { Component } from 'vue';
 import { computed, ref } from 'vue';
 import { VListItem } from 'vuetify/components';
-import { KeysOfUnion } from '~/core';
+import { KeysOfUnion } from '~/core/utils.core';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import ProposalMetadata from '~/ui/components/proposals/ProposalMetadata.vue';
 import ProposalStatusChip from '~/ui/components/proposals/ProposalStatusChip.vue';

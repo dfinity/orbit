@@ -1,8 +1,9 @@
 import { Principal } from '@dfinity/principal';
-import { logger, timer, unreachable } from '~/core';
-import { icAgent } from '~/core/ic-agent';
+import { icAgent } from '~/core/ic-agent.core';
+import { logger } from '~/core/logger.core';
+import { timer, unreachable } from '~/core/utils.core';
 import { Account } from '~/generated/wallet/wallet.did';
-import { WalletService } from '~/services';
+import { WalletService } from '~/services/wallet.service';
 
 const DEFAULT_POOL_INTERVAL_MS = 5000;
 const BALANCES_OUTDATED_THRESHOLD_MS = 15000;

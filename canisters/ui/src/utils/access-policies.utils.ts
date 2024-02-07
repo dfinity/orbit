@@ -1,4 +1,4 @@
-import { variantIs } from '~/core';
+import { variantIs } from '~/core/utils.core';
 import {
   CanisterSettingsActionSpecifier,
   ChangeCanisterActionSpecifier,

@@ -1,7 +1,7 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { variantIs } from '~/core';
-import { icAgent } from '~/core/ic-agent';
+import { icAgent } from '~/core/ic-agent.core';
+import { variantIs } from '~/core/utils.core';
 import { idlFactory } from '~/generated/wallet';
 import {
   Account,
@@ -42,7 +42,8 @@ import {
   VoteOnProposalInput,
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
-import { ExtractOk, ListAccountsArgs, ListProposalsArgs } from '~/types';
+import { ExtractOk } from '~/types/utils.types';
+import { ListAccountsArgs, ListProposalsArgs } from '~/types/wallet.types';
 
 export class WalletService {
   private actor: ActorSubclass<_SERVICE>;

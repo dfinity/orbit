@@ -44,7 +44,7 @@
 import { Principal } from '@dfinity/principal';
 import { computed } from 'vue';
 import { ref } from 'vue';
-import { isApiError } from '~/core';
+import { isApiError } from '~/core/utils.core';
 import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
 import { i18n, services } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
