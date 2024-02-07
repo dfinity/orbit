@@ -1,8 +1,10 @@
 import { Principal } from '@dfinity/principal';
 import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
-import { i18n, redirectToKey, router } from '~/ui/modules';
-import { useAppStore } from '~/ui/stores/app';
-import { useSessionStore } from '~/ui/stores/session';
+import { ApiError } from '~/generated/control-panel/control_panel.did';
+import { i18n } from '~/modules/i18n.module';
+import { redirectToKey, router } from '~/modules/router.module';
+import { useAppStore } from '~/stores/app.store';
+import { useSessionStore } from '~/stores/session.store';
 
 export const copyToClipboard = (
   args: {
@@ -64,10 +66,7 @@ export const redirectToWalletSettings = (): void => {
   router.push({ name: Routes.SystemSettings });
 };
 
-export const assertAndReturn = <T>(value: T | undefined | null, name = 'Value'): T => {
-  if (value === undefined || value === null) {
-    throw new Error(`${name} is undefined or null.`);
-  }
-
-  return value;
-};
+// To be used in catch blocks to determine if the error is an ApiError
+export function isApiError(e: unknown): e is ApiError {
+  return typeof e === 'object' && e !== null && 'code' in e && 'message' in e && 'details' in e;
+}

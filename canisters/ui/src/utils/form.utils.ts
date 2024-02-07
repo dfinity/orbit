@@ -1,6 +1,6 @@
 import { Principal } from '@dfinity/principal';
-import { i18n } from '~/ui/modules';
 import isUUID from 'validator/es/lib/isUUID';
+import { i18n } from '~/modules/i18n.module';
 
 export const requiredRule = (value: unknown): string | boolean => {
   if (value === null || value === undefined || value === '') {

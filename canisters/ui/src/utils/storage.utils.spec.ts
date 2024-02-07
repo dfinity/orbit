@@ -1,6 +1,6 @@
 import { describe } from 'node:test';
 import { afterEach, expect, it, vi } from 'vitest';
-import { setupComponent } from '~/ui/test.utils';
+import { setupComponent } from '~/test.utils';
 import { objectDeserialize, objectSerialize, useStorage } from './storage.utils';
 
 const setItem = vi.spyOn(Storage.prototype, 'setItem');

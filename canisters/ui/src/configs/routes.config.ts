@@ -1,13 +1,13 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
+import { i18n } from '~/modules/i18n.module';
+import { services } from '~/modules/services.module';
+import DisconnectedPage from '~/pages/DisconnectedPage.vue';
+import InitializationPage from '~/pages/InitializationPage.vue';
+import LoginPageVue from '~/pages/LoginPage.vue';
+import NotFoundPageVue from '~/pages/NotFoundPage.vue';
+import UnauthorizedPageVue from '~/pages/UnauthorizedPage.vue';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
 import { ProposalDomains } from '~/types/wallet.types';
-import { i18n } from '~/ui/modules';
-import { services } from '~/ui/modules/services';
-import DisconnectedPage from '~/ui/pages/DisconnectedPage.vue';
-import InitializationPage from '~/ui/pages/InitializationPage.vue';
-import LoginPageVue from '~/ui/pages/LoginPage.vue';
-import NotFoundPageVue from '~/ui/pages/NotFoundPage.vue';
-import UnauthorizedPageVue from '~/ui/pages/UnauthorizedPage.vue';
 
 export enum Routes {
   Login = 'Login',
@@ -75,7 +75,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: '',
             name: Routes.Accounts,
-            component: () => import('~/ui/pages/AccountListPage.vue'),
+            component: () => import('~/pages/AccountListPage.vue'),
             meta: {
               auth: {
                 check: {
@@ -88,7 +88,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: ':id',
             name: Routes.Account,
-            component: () => import('~/ui/pages/AccountPage.vue'),
+            component: () => import('~/pages/AccountPage.vue'),
             meta: {
               auth: {
                 check: {
@@ -139,7 +139,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'transfer-requests',
         name: Routes.TransferProposals,
-        component: () => import('~/ui/pages/ProposalsPage.vue'),
+        component: () => import('~/pages/ProposalsPage.vue'),
         props: () => {
           return {
             title: i18n.global.t('pages.proposals.transfer_title'),
@@ -167,7 +167,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'my-settings',
         name: Routes.MySettings,
-        component: () => import('~/ui/pages/MySettingsPage.vue'),
+        component: () => import('~/pages/MySettingsPage.vue'),
         meta: {
           auth: {
             check: {
@@ -190,7 +190,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'system',
             name: Routes.SystemSettings,
-            component: () => import('~/ui/pages/AdministrationPage.vue'),
+            component: () => import('~/pages/AdministrationPage.vue'),
             meta: {
               auth: {
                 check: {
@@ -214,7 +214,7 @@ export const routes: RouteRecordRaw[] = [
               {
                 path: '',
                 name: Routes.UserGroups,
-                component: () => import('~/ui/pages/UserGroupsPage.vue'),
+                component: () => import('~/pages/UserGroupsPage.vue'),
                 meta: {
                   auth: {
                     check: {
@@ -227,7 +227,7 @@ export const routes: RouteRecordRaw[] = [
               {
                 path: 'permissions',
                 name: Routes.AccessPolicies,
-                component: () => import('~/ui/pages/AccessPoliciesPage.vue'),
+                component: () => import('~/pages/AccessPoliciesPage.vue'),
                 props: () => {
                   return {
                     breadcrumbs: [
@@ -258,7 +258,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'users',
             name: Routes.Users,
-            component: () => import('~/ui/pages/UsersPage.vue'),
+            component: () => import('~/pages/UsersPage.vue'),
             meta: {
               auth: {
                 check: {
@@ -271,7 +271,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: 'requests',
             name: Routes.Proposals,
-            component: () => import('~/ui/pages/ProposalsPage.vue'),
+            component: () => import('~/pages/ProposalsPage.vue'),
             props: () => {
               return {
                 title: i18n.global.t('pages.proposals.title'),
@@ -298,7 +298,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'address-book',
         name: Routes.AddressBook,
-        component: () => import('~/ui/pages/AddressBookPage.vue'),
+        component: () => import('~/pages/AddressBookPage.vue'),
         meta: {
           auth: {
             check: {

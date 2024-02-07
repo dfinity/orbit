@@ -1,9 +1,9 @@
 import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
-import { timer, unreachable } from '~/core/utils.core';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services/wallet.service';
+import { timer, unreachable } from '~/utils/helper.utils';
 
 const DEFAULT_POOL_INTERVAL_MS = 5000;
 

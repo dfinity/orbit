@@ -4,13 +4,13 @@ import { appInitConfig } from '~/configs/init.config';
 import { icAgent } from '~/core/ic-agent.core';
 import { idlFactory } from '~/generated/control-panel';
 import {
-  User,
-  UserWallet,
   ManageUserInput,
   RegisterUserInput,
+  User,
+  UserWallet,
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
-import { Maybe } from '~/types';
+import { Maybe } from '~/types/utils.types';
 
 export class ControlPanelService {
   private actor: ActorSubclass<_SERVICE>;

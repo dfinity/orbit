@@ -1,4 +1,4 @@
-import { SupportedTheme } from '~/types';
+import { SupportedTheme } from '~/types/app.types';
 
 export class ThemeService {
   static readonly storageKey = 'theme';

@@ -1,5 +1,5 @@
-import { defaultLocale, supportedLocales } from './i18n.config';
 import { AppInitConfig } from '~/types/app.types';
+import { defaultLocale, supportedLocales } from './i18n.config';
 
 const appInitConfig: AppInitConfig = {
   name: import.meta.env.APP_TITLE || 'App',

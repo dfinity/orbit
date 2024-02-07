@@ -1,5 +1,5 @@
 import { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
-import { Routes } from '~/ui/config/routes';
+import { Routes } from '~/configs/routes.config';
 import { AccessCriteria } from './auth.types';
 
 export enum NavigationActionType {
