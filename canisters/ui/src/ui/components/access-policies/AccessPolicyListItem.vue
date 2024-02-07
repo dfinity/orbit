@@ -1,5 +1,5 @@
 <template>
-  <tr v-if="app.isMobile">
+  <tr v-if="app.isMobile" data-test-id="mobile-list-view">
     <div class="text-body-2 font-weight-bold pl-4 pt-2">
       {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
     </div>
@@ -218,4 +218,3 @@ const onSpecificUsersFormSubmit = (
   });
 };
 </script>
-~/configs/access-policies.config

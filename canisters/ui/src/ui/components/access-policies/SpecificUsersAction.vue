@@ -6,12 +6,13 @@
   />
   <template v-else>
     <ActionBtn
-      v-model="modelValue"
+      v-model="model"
       :title="$t('pages.access_policies.update_dialog_title')"
       size="small"
       density="comfortable"
       :icon="mdiPencil"
       :submit="submitCb"
+      data-test-id="specific-users-action-btn"
       @opened="emit('editing', true)"
       @closed="emit('editing', false)"
       @failed="useOnFailedOperation"
@@ -62,10 +63,10 @@ const props = defineProps<{
   submitCb: (form: SpecificUsersFormProps) => Promise<Proposal>;
 }>();
 
-const { specifier, submitCb } = toRefs(props);
+const { specifier, submitCb, modelValue: reactivePropModel } = toRefs(props);
 
-const modelValue = computed<SpecificUsersFormProps>({
-  get: () => props.modelValue,
+const model = computed<SpecificUsersFormProps>({
+  get: () => reactivePropModel.value,
   set: value => emit('update:modelValue', value),
 });
 
@@ -104,4 +105,3 @@ const shouldDisableSubmitBtn = (elem: SpecificUsersFormProps) => {
   return !elem.valid;
 };
 </script>
-~/configs/access-policies.config

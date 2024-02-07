@@ -82,4 +82,3 @@ watch(
   },
 );
 </script>
-~/configs/access-policies.config

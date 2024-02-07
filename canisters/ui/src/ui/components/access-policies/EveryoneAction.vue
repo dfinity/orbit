@@ -3,6 +3,7 @@
     <ActionBtn
       size="default"
       density="comfortable"
+      data-test-id="everyone-action-btn"
       :model-value="{
         specifier: specifier.specifier,
         everyone: { policyId: specifier.users.allUsers.policy.id },
@@ -62,4 +63,3 @@ const emit = defineEmits<{
 
 const isEnabled = computed(() => !!specifier.value.users.allUsers.policy.id);
 </script>
-~/configs/access-policies.config

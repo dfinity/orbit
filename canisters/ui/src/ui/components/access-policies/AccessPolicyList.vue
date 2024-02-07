@@ -1,14 +1,17 @@
 <template>
-  <VContainer fluid>
+  <VContainer fluid data-test-id="access-policy-list">
     <VRow>
       <VCol cols="12" class="px-0 pt-0">
         <VTable density="compact" hover>
           <thead>
-            <tr>
-              <th :class="{ 'w-50': !app.isMobile }">{{ $t(`access_policies.resource_title`) }}</th>
-              <th v-if="!app.isMobile">{{ $t(`access_policies.group_members_title`) }}</th>
-              <th v-if="!app.isMobile">{{ $t(`access_policies.specific_users_title`) }}</th>
-              <th v-if="!app.isMobile">{{ $t(`access_policies.everyone_title`) }}</th>
+            <tr v-if="!app.isMobile">
+              <th class="w-50">{{ $t(`access_policies.resource_title`) }}</th>
+              <th>{{ $t(`access_policies.group_members_title`) }}</th>
+              <th>{{ $t(`access_policies.specific_users_title`) }}</th>
+              <th>{{ $t(`access_policies.everyone_title`) }}</th>
+            </tr>
+            <tr v-else data-test-id="mobile-table-headers">
+              <th>{{ $t(`access_policies.resource_title`) }}</th>
             </tr>
           </thead>
           <tbody>
@@ -130,4 +133,3 @@ const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
 }>();
 </script>
-~/configs/access-policies.config

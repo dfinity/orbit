@@ -1,8 +1,8 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <VTextField
-      v-if="modelValue.policyId"
-      v-model="modelValue.policyId"
+      v-if="model.policyId"
+      v-model="model.policyId"
       name="id"
       :label="$t('terms.id')"
       variant="plain"
@@ -10,8 +10,8 @@
       readonly
     />
     <VAutocomplete
-      v-model="modelValue.groupIds"
-      name="groups"
+      v-model="model.groupIds"
+      name="group_ids"
       :label="$t('terms.user_groups')"
       :loading="userGroupsAutocomplete.loading.value"
       variant="underlined"
@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import { useUserGroupsAutocomplete } from '~/ui/composables/autocomplete.composable';
 import { VFormValidation } from '~/ui/types';
@@ -59,13 +59,12 @@ watch(
   isValid => emit('valid', isValid ?? false),
 );
 
-const modelValue = reactive({ ...props.modelValue });
+const reactiveProps = toRefs(props);
 
-watch(
-  () => modelValue,
-  value => emit('update:modelValue', value),
-  { deep: true },
-);
+const model = computed({
+  get: () => reactiveProps.modelValue.value,
+  set: value => emit('update:modelValue', value),
+});
 
 const userGroups = computed(() => {
   const groups = userGroupsAutocomplete.results.value.map(group => ({
@@ -73,7 +72,7 @@ const userGroups = computed(() => {
     value: group.id,
   }));
 
-  (modelValue.prefilledGroups ?? []).forEach(group => {
+  (model.value.prefilledGroups ?? []).forEach(group => {
     if (!groups.find(g => g.value === group.id)) {
       groups.push({
         title: group.name,
@@ -82,7 +81,7 @@ const userGroups = computed(() => {
     }
   });
 
-  props.modelValue.groupIds?.forEach(group => {
+  model.value.groupIds?.forEach(group => {
     if (!groups.find(g => g.value === group)) {
       groups.push({
         title: group,
@@ -98,7 +97,7 @@ const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
   if (valid) {
-    emit('submit', modelValue);
+    emit('submit', model.value);
   }
 };
 </script>

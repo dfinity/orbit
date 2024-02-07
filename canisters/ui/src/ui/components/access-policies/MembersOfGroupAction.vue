@@ -12,6 +12,7 @@
       density="comfortable"
       :icon="mdiPencil"
       :submit="submitCb"
+      data-test-id="members-of-group-action-btn"
       @opened="emit('editing', true)"
       @closed="emit('editing', false)"
       @failed="useOnFailedOperation"
@@ -104,4 +105,3 @@ const shouldDisableSubmitBtn = (elem: MembersOfGroupFormProps) => {
   return !elem.valid;
 };
 </script>
-~/configs/access-policies.config

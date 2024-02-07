@@ -1,8 +1,8 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <VTextField
-      v-if="modelValue.policyId"
-      v-model="modelValue.policyId"
+      v-if="model.policyId"
+      v-model="model.policyId"
       name="id"
       :label="$t('terms.id')"
       variant="plain"
@@ -10,8 +10,8 @@
       readonly
     />
     <VAutocomplete
-      v-model="modelValue.userIds"
-      name="users"
+      v-model="model.userIds"
+      name="user_ids"
       :label="$t('terms.users')"
       :loading="usersAutocomplete.loading.value"
       variant="underlined"
@@ -25,7 +25,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { toRefs } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { BasicUser, UUID } from '~/generated/wallet/wallet.did';
 import { useUsersAutocomplete } from '~/ui/composables/autocomplete.composable';
 import { VFormValidation } from '~/ui/types';
@@ -48,6 +49,8 @@ const props = withDefaults(defineProps<SpecificUsersFormProps>(), {
   valid: true,
 });
 
+const reactiveProps = toRefs(props);
+
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: SpecificUsersFormProps['modelValue']): void;
   (event: 'valid', payload: boolean): void;
@@ -59,13 +62,10 @@ watch(
   isValid => emit('valid', isValid ?? false),
 );
 
-const modelValue = reactive({ ...props.modelValue });
-
-watch(
-  () => modelValue,
-  value => emit('update:modelValue', value),
-  { deep: true },
-);
+const model = computed({
+  get: () => reactiveProps.modelValue.value,
+  set: value => emit('update:modelValue', value),
+});
 
 const userList = computed(() => {
   const users = usersAutocomplete.results.value.map(user => ({
@@ -73,7 +73,7 @@ const userList = computed(() => {
     value: user.id,
   }));
 
-  (modelValue.prefilledUsers ?? []).forEach(user => {
+  (model.value.prefilledUsers ?? []).forEach(user => {
     if (!users.find(g => g.value === user.id)) {
       users.push({
         title: user.name?.[0] ? user.name[0] : user.id,
@@ -82,7 +82,7 @@ const userList = computed(() => {
     }
   });
 
-  props.modelValue.userIds?.forEach(userId => {
+  model.value.userIds?.forEach(userId => {
     if (!users.find(g => g.value === userId)) {
       users.push({
         title: userId,
@@ -98,7 +98,7 @@ const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
   if (valid) {
-    emit('submit', modelValue);
+    emit('submit', model.value);
   }
 };
 </script>
