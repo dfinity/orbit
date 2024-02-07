@@ -1,5 +1,5 @@
 import { Principal } from '@dfinity/principal';
-import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/ui/config/routes';
+import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
 import { i18n, redirectToKey, router } from '~/ui/modules';
 import { useAppStore } from '~/ui/stores/app';
 import { useSessionStore } from '~/ui/stores/session';
