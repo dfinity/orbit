@@ -72,9 +72,13 @@ impl PolicyController {
         let access_policy = self
             .policy_service
             .get_access_policy(HelperMapper::to_uuid(input.id)?.as_bytes())?;
+        let info = self
+            .policy_service
+            .get_access_policy_info(&access_policy, &call_context())
+            .await?;
 
         Ok(GetAccessPolicyResponse {
-            policy: access_policy.into(),
+            policy: access_policy.to_dto(info),
         })
     }
 
@@ -88,13 +92,24 @@ impl PolicyController {
         &self,
         input: ListAccessPoliciesInput,
     ) -> ApiResult<ListAccessPoliciesResponse> {
-        let list = self.policy_service.list_access_policies(input)?;
+        let ctx = &call_context();
+        let list = self.policy_service.list_access_policies(input, ctx).await?;
         let deps = self
             .policy_service
             .get_access_policies_dependencies(&list.items)?;
 
+        let mut policies = Vec::new();
+        for policy in list.items {
+            let info = self
+                .policy_service
+                .get_access_policy_info(&policy, &call_context())
+                .await?;
+
+            policies.push(policy.to_dto(info));
+        }
+
         Ok(ListAccessPoliciesResponse {
-            policies: list.items.into_iter().map(Into::into).collect(),
+            policies,
             user_groups: deps.groups.into_iter().map(Into::into).collect(),
             users: deps.users.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,

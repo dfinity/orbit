@@ -361,14 +361,9 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry' : IDL.Opt(AddressBookEntry),
     'input' : AddAddressBookEntryOperationInput,
   });
-  const AccessPolicy = IDL.Record({
-    'id' : UUID,
-    'resource' : ResourceSpecifier,
-    'user' : AccessControlUserSpecifier,
-  });
   const AddAccessPolicyOperation = IDL.Record({
     'input' : AddAccessPolicyOperationInput,
-    'policy' : IDL.Opt(AccessPolicy),
+    'policy_id' : IDL.Opt(UUID),
   });
   const RemoveAccessPolicyOperation = IDL.Record({
     'input' : RemoveAccessPolicyOperationInput,
@@ -431,6 +426,16 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const GetAccessPolicyInput = IDL.Record({ 'id' : UUID });
+  const AccessPolicyInfo = IDL.Record({
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
+  const AccessPolicy = IDL.Record({
+    'id' : UUID,
+    'resource' : ResourceSpecifier,
+    'info' : AccessPolicyInfo,
+    'user' : AccessControlUserSpecifier,
+  });
   const GetAccessPolicyResult = IDL.Variant({
     'Ok' : IDL.Record({ 'policy' : AccessPolicy }),
     'Err' : Error,

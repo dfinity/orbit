@@ -5,6 +5,7 @@
     :size="props.size"
     :icon="!props.text"
     :variant="props.variant"
+    :density="props.density"
     :rounded="props.rounded"
     :color="props.color"
     :class="props.class"
@@ -74,6 +75,7 @@ const props = withDefaults(
     icon?: string | boolean;
     size?: 'x-small' | 'small' | 'default' | 'large' | 'x-large';
     variant?: 'text' | 'flat' | 'elevated' | 'tonal' | 'outlined' | 'plain';
+    density?: 'comfortable' | 'default' | 'compact';
     color?: string;
     title?: string;
     content?: string;
@@ -96,6 +98,7 @@ const props = withDefaults(
     size: 'small',
     variant: 'flat',
     color: 'default',
+    density: undefined,
     title: i18n.global.t('app.dialog_confirmation_title'),
     content: i18n.global.t('app.dialog_confirmation_question'),
     cancelText: i18n.global.t('terms.cancel'),

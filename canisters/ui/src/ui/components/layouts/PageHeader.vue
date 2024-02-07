@@ -6,6 +6,11 @@
           <template #divider>
             <VIcon :icon="mdiChevronRight" size="small" />
           </template>
+          <template #title="{ item }">
+            <span class="text-body-2" :class="{ 'text-decoration-underline': item.to }">
+              {{ item.title }}
+            </span>
+          </template>
         </VBreadcrumbs>
       </VCol>
       <VCol cols="12" :md="hasActions ? 6 : 12">
@@ -37,7 +42,7 @@ import { useSlots, computed } from 'vue';
 import { mdiChevronRight } from '@mdi/js';
 import { BreadCrumbItem } from '~/ui/types/navigation';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     title?: string;
     dataTestId?: string;
@@ -53,4 +58,10 @@ withDefaults(
 const slots = useSlots();
 
 const hasActions = computed(() => !!slots.actions);
+const breadcrumbs = computed(() =>
+  props.breadcrumbs.map(item => ({
+    ...item,
+    disabled: item.disabled !== undefined ? item.disabled : false,
+  })),
+);
 </script>

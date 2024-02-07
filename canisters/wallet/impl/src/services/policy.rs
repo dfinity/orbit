@@ -1,11 +1,18 @@
 use crate::{
     core::{
+        access_control::evaluate_caller_access,
         generate_uuid_v4,
-        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
+        CallContext,
     },
     errors::{AccessControlError, ProposalError},
+    mappers::AccessPolicyInfo,
     models::{
-        access_control::{AccessControlPolicy, UserSpecifier},
+        access_control::{
+            AccessControlPolicy, AccessPolicyActionSpecifier, CommonActionSpecifier,
+            ResourceSpecifier, ResourceType, UserSpecifier,
+        },
+        specifier::CommonSpecifier,
         AddAccessPolicyOperationInput, AddProposalPolicyOperationInput,
         EditAccessPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy, User,
         UserGroup,
@@ -176,11 +183,21 @@ impl PolicyService {
         Ok(policy)
     }
 
-    pub fn list_access_policies(
+    pub async fn list_access_policies(
         &self,
         input: ListAccessPoliciesInput,
+        ctx: &CallContext,
     ) -> ServiceResult<PaginatedData<AccessControlPolicy>> {
-        let policies = self.access_control_policy_repository.list();
+        let mut policies = self.access_control_policy_repository.list();
+
+        retain_accessible_resources(ctx, &mut policies, |policy| {
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                AccessPolicyActionSpecifier::Read(CommonSpecifier::Id(vec![policy.id])),
+            )
+        })
+        .await;
+
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.offset,
             limit: input.limit,
@@ -190,6 +207,37 @@ impl PolicyService {
         })?;
 
         Ok(result)
+    }
+
+    pub async fn get_access_policy_info(
+        &self,
+        policy: &AccessControlPolicy,
+        ctx: &CallContext,
+    ) -> ServiceResult<AccessPolicyInfo> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                CommonActionSpecifier::Update(CommonSpecifier::Id(vec![policy.id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![policy.id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        Ok(AccessPolicyInfo {
+            can_edit,
+            can_delete,
+        })
     }
 
     pub fn get_access_policies_dependencies(
@@ -244,6 +292,7 @@ impl PolicyService {
 mod tests {
     use super::*;
     use crate::{
+        core::ic_cdk::api::id as self_canister_id,
         models::{
             access_control::{
                 access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
@@ -380,8 +429,8 @@ mod tests {
         assert_eq!(result.groups.len(), 1);
     }
 
-    #[test]
-    fn list_access_policies_should_use_offset_and_limit() {
+    #[tokio::test]
+    async fn list_access_policies_should_use_offset_and_limit() {
         for i in 0..50 {
             let mut policy = mock_access_policy();
             policy.id = [i; 16];
@@ -394,7 +443,10 @@ mod tests {
             limit: Some(30),
         };
 
-        let result = POLICY_SERVICE.list_access_policies(input).unwrap();
+        let result = POLICY_SERVICE
+            .list_access_policies(input, &CallContext::new(self_canister_id()))
+            .await
+            .unwrap();
         assert_eq!(result.items.len(), 30);
         assert_eq!(result.next_offset, Some(45));
     }

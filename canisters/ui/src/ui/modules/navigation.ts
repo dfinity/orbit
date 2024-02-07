@@ -1,4 +1,4 @@
-import { mdiBookOpenVariant, mdiCogs, mdiWalletBifold, mdiFormatListText } from '@mdi/js';
+import { mdiBookOpenVariant, mdiCogs, mdiFormatListText, mdiWalletBifold } from '@mdi/js';
 import { App, Ref, computed, ref, watch } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { logger } from '~/core';

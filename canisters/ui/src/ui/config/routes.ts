@@ -22,6 +22,7 @@ export enum Routes {
   Users = 'Users',
   AddressBook = 'AddressBook',
   Initialization = 'Initialization',
+  AccessPolicies = 'AccessPolicies',
   // Proposal Pages
   Proposals = 'Proposals',
   TransferProposals = 'TransferProposals',
@@ -146,12 +147,10 @@ export const routes: RouteRecordRaw[] = [
             breadcrumbs: [
               {
                 title: i18n.global.t('navigation.proposals'),
-                disabled: false,
                 to: { name: Routes.Proposals },
               },
               {
                 title: i18n.global.t('navigation.transfer_proposals'),
-                disabled: true,
               },
             ],
           };
@@ -202,16 +201,59 @@ export const routes: RouteRecordRaw[] = [
           },
           {
             path: 'user-groups',
-            name: Routes.UserGroups,
-            component: () => import('~/ui/pages/UserGroupsPage.vue'),
+            component: RouterView,
             meta: {
               auth: {
                 check: {
                   session: RequiredSessionState.ConnectedToWallet,
-                  privileges: [Privilege.ListUserGroups],
+                  privileges: [Privilege.ListUserGroups, Privilege.ListAccessPolicies],
                 },
               },
             },
+            children: [
+              {
+                path: '',
+                name: Routes.UserGroups,
+                component: () => import('~/ui/pages/UserGroupsPage.vue'),
+                meta: {
+                  auth: {
+                    check: {
+                      session: RequiredSessionState.ConnectedToWallet,
+                      privileges: [Privilege.ListUserGroups],
+                    },
+                  },
+                },
+              },
+              {
+                path: 'permissions',
+                name: Routes.AccessPolicies,
+                component: () => import('~/ui/pages/AccessPoliciesPage.vue'),
+                props: () => {
+                  return {
+                    breadcrumbs: [
+                      {
+                        title: i18n.global.t('navigation.settings'),
+                      },
+                      {
+                        title: i18n.global.t('terms.user_groups'),
+                        to: { name: Routes.UserGroups },
+                      },
+                      {
+                        title: i18n.global.t('navigation.access_policies'),
+                      },
+                    ],
+                  };
+                },
+                meta: {
+                  auth: {
+                    check: {
+                      session: RequiredSessionState.ConnectedToWallet,
+                      privileges: [Privilege.ListAccessPolicies],
+                    },
+                  },
+                },
+              },
+            ],
           },
           {
             path: 'users',
@@ -236,11 +278,9 @@ export const routes: RouteRecordRaw[] = [
                 breadcrumbs: [
                   {
                     title: i18n.global.t('navigation.settings'),
-                    disabled: true,
                   },
                   {
                     title: i18n.global.t('navigation.proposals'),
-                    disabled: true,
                   },
                 ],
               };

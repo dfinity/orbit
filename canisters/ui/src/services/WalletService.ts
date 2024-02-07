@@ -6,10 +6,12 @@ import { idlFactory } from '~/generated/wallet';
 import {
   Account,
   AccountBalance,
+  AddAccessPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
   Config,
   CreateProposalInput,
+  EditAccessPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
@@ -17,6 +19,7 @@ import {
   GetProposalInput,
   GetTransfersInput,
   GetUserInput,
+  ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListAccountsResult,
   ListNotificationsInput,
@@ -28,6 +31,7 @@ import {
   Notification,
   PaginationInput,
   Proposal,
+  RemoveAccessPolicyOperationInput,
   RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
@@ -404,6 +408,61 @@ export class WalletService {
 
   async createProposal(input: CreateProposalInput): Promise<Proposal> {
     const result = await this.actor.create_proposal(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async listAccessPolicies(input: PaginationInput): Promise<ExtractOk<ListAccessPoliciesResult>> {
+    const result = await this.actor.list_access_policies(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async addAccessPolicy(input: AddAccessPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAccessPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async removeAccessPolicy(input: RemoveAccessPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveAccessPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editAccessPolicy(input: EditAccessPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAccessPolicy: input },
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

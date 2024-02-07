@@ -5,7 +5,12 @@ export type AccessControlUserSpecifier = CommonSpecifier;
 export interface AccessPolicy {
   'id' : UUID,
   'resource' : ResourceSpecifier,
+  'info' : AccessPolicyInfo,
   'user' : AccessControlUserSpecifier,
+}
+export interface AccessPolicyInfo {
+  'can_delete' : boolean,
+  'can_edit' : boolean,
 }
 export interface Account {
   'id' : UUID,
@@ -40,7 +45,7 @@ export interface AccountPolicies {
 export type AccountSpecifier = CommonSpecifier;
 export interface AddAccessPolicyOperation {
   'input' : AddAccessPolicyOperationInput,
-  'policy' : [] | [AccessPolicy],
+  'policy_id' : [] | [UUID],
 }
 export interface AddAccessPolicyOperationInput {
   'resource' : ResourceSpecifier,
@@ -573,12 +578,6 @@ export type ResourceSpecifier = { 'User' : CommonActionSpecifier } |
   { 'Transfer' : TransferActionSpecifier } |
   { 'UserGroup' : CommonActionSpecifier } |
   { 'CanisterSettings' : CanisterSettingsActionSpecifier };
-export type ResourceType = { 'User' : null } |
-  { 'ProposalPolicy' : null } |
-  { 'Account' : null } |
-  { 'AddressBook' : null } |
-  { 'AccessPolicy' : null } |
-  { 'UserGroup' : null };
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export type TimestampRFC3339 = string;
