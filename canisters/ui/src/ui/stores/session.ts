@@ -8,6 +8,8 @@ import { useAppStore } from '~/ui/stores/app';
 import { WalletConnectionStatus, useWalletStore } from '~/ui/stores/wallet';
 import { afterLoginRedirect, redirectToLogin } from '~/ui/utils';
 import { Identity } from '@dfinity/agent';
+import { objectDeserialize, objectSerialize, useStorage } from '../utils/storage';
+import { Ref } from 'vue';
 
 export interface UserWallet {
   main: boolean;
@@ -16,7 +18,7 @@ export interface UserWallet {
 }
 
 export interface SelectedUserWallet {
-  canisterId: string | null;
+  canisterId: Ref<string | null>;
   hasAccess: boolean;
 }
 
@@ -51,7 +53,14 @@ export const useSessionStore = defineStore('session', {
       data: {
         wallets: [],
         selectedWallet: {
-          canisterId: null,
+          canisterId: useStorage({
+            deserialize: objectDeserialize,
+            serialize: objectSerialize,
+            key: 'selected-wallet',
+            storage: sessionStorage,
+            deepWatch: true,
+            initial: () => null,
+          }),
           hasAccess: false,
         },
       },
@@ -128,14 +137,9 @@ export const useSessionStore = defineStore('session', {
       this.principal = Principal.anonymous().toText();
       this.lastLoginPrincipal = Principal.anonymous().toText();
       this.reauthenticationNeeded = false;
-      this.data = {
-        wallets: [],
-        selectedWallet: {
-          canisterId: null,
-          hasAccess: false,
-        },
-      };
-
+      this.data.wallets = [];
+      this.data.selectedWallet.canisterId = null;
+      this.data.selectedWallet.hasAccess = false;
       wallet.reset();
     },
     async signIn(resetOnError = false): Promise<void> {
@@ -187,16 +191,23 @@ export const useSessionStore = defineStore('session', {
         this.loading = true;
         const controlPanelService = services().controlPanel;
         const controlPanelUser = await controlPanelService.getCurrentUser();
-        const mainWalletId = controlPanelUser.main_wallet?.[0]
-          ? controlPanelUser.main_wallet?.[0]
-          : controlPanelUser.wallets?.[0]?.canister_id;
+
+        let initialWalletId = null;
+
+        if (this.data.selectedWallet.canisterId) {
+          initialWalletId = Principal.fromText(this.data.selectedWallet.canisterId);
+        } else {
+          initialWalletId = controlPanelUser.main_wallet?.[0]
+            ? controlPanelUser.main_wallet?.[0]
+            : controlPanelUser.wallets?.[0]?.canister_id;
+        }
         const sameUser = this.isAuthenticated && this.principal === controlPanelUser.id.toText();
 
         this.isAuthenticated = true;
         this.populateUser(controlPanelUser);
 
-        if (!sameUser && mainWalletId) {
-          return this.connectWallet(mainWalletId);
+        if (!sameUser && initialWalletId) {
+          return this.connectWallet(initialWalletId);
         }
       } catch (err) {
         logger.error(`Failed to load user session`, { err });
@@ -213,14 +224,11 @@ export const useSessionStore = defineStore('session', {
       const selectedWalletId = this.data.selectedWallet.canisterId;
       const sameUser = this.isAuthenticated && this.principal === user.id.toText();
       this.principal = user.id.toText();
-      this.data = {
-        selectedWallet: this.data.selectedWallet,
-        wallets: user.wallets.map(wallet => ({
-          main: wallet.canister_id.toText() === user.main_wallet?.[0]?.toText(),
-          name: wallet.name?.[0] ?? null,
-          canisterId: wallet.canister_id.toText(),
-        })),
-      };
+      this.data.wallets = user.wallets.map(wallet => ({
+        main: wallet.canister_id.toText() === user.main_wallet?.[0]?.toText(),
+        name: wallet.name?.[0] ?? null,
+        canisterId: wallet.canister_id.toText(),
+      }));
 
       const hasWallet = this.data.wallets.some(wallet => wallet.canisterId === selectedWalletId);
       if (!sameUser || !hasWallet) {
@@ -230,21 +238,16 @@ export const useSessionStore = defineStore('session', {
     disconnectWallet(): void {
       const wallet = useWalletStore();
 
-      this.data.selectedWallet = {
-        canisterId: null,
-        hasAccess: false,
-      };
+      this.data.selectedWallet.hasAccess = false;
+      this.data.selectedWallet.canisterId = null;
 
       wallet.reset();
     },
     async connectWallet(walletId: Principal): Promise<void> {
       const wallet = useWalletStore();
 
-      this.data.selectedWallet = {
-        canisterId: walletId.toText(),
-        hasAccess: false,
-      };
-
+      this.data.selectedWallet.canisterId = walletId.toText();
+      this.data.selectedWallet.hasAccess = false;
       const connectionStatus = await wallet.connectTo(walletId);
 
       if (connectionStatus === WalletConnectionStatus.Connected) {
