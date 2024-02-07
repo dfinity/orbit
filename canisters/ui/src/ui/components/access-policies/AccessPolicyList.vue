@@ -18,10 +18,10 @@
               </td>
             </tr>
             <AccessPolicyListItem
-              v-for="(resource, idx) in resourcePermissions"
+              v-for="(resourcePolicies, idx) in resourceAccessPolicies"
               v-else
               :key="idx"
-              :resource="resource"
+              :resource="resourcePolicies"
               @editing="emit('editing', $event)"
             />
           </tbody>
@@ -33,17 +33,18 @@
 
 <script lang="ts" setup>
 import { computed, toRefs } from 'vue';
-import { ResourcePermissions, defaultUserSpecifiers } from '~/configs/permissions.config';
+import { defaultUserSpecifiers } from '~/configs/access-policies.config';
 import { logger, variantIs } from '~/core';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
-import AccessPolicyListItem from '~/ui/components/permissions/AccessPolicyListItem.vue';
+import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/ui/stores/app';
+import AccessPolicyListItem from './AccessPolicyListItem.vue';
 
 const app = useAppStore();
 
 const props = withDefaults(
   defineProps<{
-    resources: ResourcePermissions[];
+    resources: AggregatedResouceAccessPolicies[];
     accessPolicies: AccessPolicy[];
     preloadUserGroups?: UserGroup[];
     preloadUsers?: BasicUser[];
@@ -72,7 +73,7 @@ const users = computed<Record<UUID, BasicUser>>(() => {
   }, {});
 });
 
-const resourcePermissions = computed<ResourcePermissions[]>(() => {
+const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
   const resourceAccessPolicies = resources.value.map(resource => ({
     match: resource.match,
     resourceType: resource.resourceType,
@@ -129,3 +130,4 @@ const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
 }>();
 </script>
+~/configs/access-policies.config

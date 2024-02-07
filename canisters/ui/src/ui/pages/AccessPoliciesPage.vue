@@ -32,7 +32,7 @@
               >
                 <AccessPolicyList
                   :loading="loading"
-                  :resources="resources"
+                  :resources="resourceAccessPolicies"
                   :access-policies="data ? data.policies : []"
                   :preload-user-groups="data ? data.userGroups : []"
                   :preload-users="data ? data.users : []"
@@ -53,15 +53,15 @@
                 hide-details
               />
 
-              <IndividualAccountPermissions
+              <IndividualAccountAccessPolicies
                 v-if="individualResourceSelected === ResourceTypeEnum.Account"
                 :fetch-policies="fetchAccessPolicies"
               />
-              <IndividualUserPermissions
+              <IndividualUserAccessPolicies
                 v-else-if="individualResourceSelected === ResourceTypeEnum.User"
                 :fetch-policies="fetchAccessPolicies"
               />
-              <IndividualUserGroupPermissions
+              <IndividualUserGroupAccessPolicies
                 v-else-if="individualResourceSelected === ResourceTypeEnum.UserGroup"
                 :fetch-policies="fetchAccessPolicies"
               />
@@ -74,20 +74,19 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { ref } from 'vue';
-import { globalResourcePermissions } from '~/configs/permissions.config';
+import { computed, ref } from 'vue';
+import { globalAccessPolicies } from '~/configs/access-policies.config';
 import { AccessPolicy, BasicUser, UserGroup } from '~/generated/wallet/wallet.did';
 import { ProposalDomains } from '~/types';
-import { ResourceTypeEnum } from '~/types/permissions.types';
+import { ResourceTypeEnum } from '~/types/access-policies.types';
 import DataLoader from '~/ui/components/DataLoader.vue';
 import PageLayout from '~/ui/components/PageLayout.vue';
+import AccessPolicyList from '~/ui/components/access-policies/AccessPolicyList.vue';
+import IndividualAccountAccessPolicies from '~/ui/components/access-policies/IndividualAccountAccessPolicies.vue';
+import IndividualUserAccessPolicies from '~/ui/components/access-policies/IndividualUserAccessPolicies.vue';
+import IndividualUserGroupAccessPolicies from '~/ui/components/access-policies/IndividualUserGroupAccessPolicies.vue';
 import PageBody from '~/ui/components/layouts/PageBody.vue';
 import PageHeader from '~/ui/components/layouts/PageHeader.vue';
-import AccessPolicyList from '~/ui/components/permissions/AccessPolicyList.vue';
-import IndividualAccountPermissions from '~/ui/components/permissions/IndividualAccountPermissions.vue';
-import IndividualUserGroupPermissions from '~/ui/components/permissions/IndividualUserGroupPermissions.vue';
-import IndividualUserPermissions from '~/ui/components/permissions/IndividualUserPermissions.vue';
 import RecentProposals from '~/ui/components/proposals/RecentProposals.vue';
 import { Routes } from '~/ui/config/routes';
 import { i18n } from '~/ui/modules';
@@ -111,7 +110,7 @@ const title = computed(() => {
 
 const wallet = useWalletStore();
 const disableRefresh = ref(false);
-const resources = globalResourcePermissions();
+const resourceAccessPolicies = globalAccessPolicies();
 const individualResourceSelected = ref<ResourceTypeEnum | null>(null);
 const individualResourceKeys = ref<ResourceTypeEnum[]>([
   ResourceTypeEnum.Account,

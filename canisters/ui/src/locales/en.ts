@@ -346,7 +346,7 @@ export default {
     logout: 'Logout',
     proposals: 'Requests',
     transfer_proposals: 'Transfer Requests',
-    permissions: 'Permissions',
+    access_policies: 'Permissions',
   },
   pages: {
     user_settings: {

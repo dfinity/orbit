@@ -22,7 +22,7 @@ export enum Routes {
   Users = 'Users',
   AddressBook = 'AddressBook',
   Initialization = 'Initialization',
-  Permissions = 'Permissions',
+  AccessPolicies = 'AccessPolicies',
   // Proposal Pages
   Proposals = 'Proposals',
   TransferProposals = 'TransferProposals',
@@ -226,8 +226,8 @@ export const routes: RouteRecordRaw[] = [
               },
               {
                 path: 'permissions',
-                name: Routes.Permissions,
-                component: () => import('~/ui/pages/PermissionsPage.vue'),
+                name: Routes.AccessPolicies,
+                component: () => import('~/ui/pages/AccessPoliciesPage.vue'),
                 props: () => {
                   return {
                     breadcrumbs: [
@@ -239,7 +239,7 @@ export const routes: RouteRecordRaw[] = [
                         to: { name: Routes.UserGroups },
                       },
                       {
-                        title: i18n.global.t('navigation.permissions'),
+                        title: i18n.global.t('navigation.access_policies'),
                       },
                     ],
                   };

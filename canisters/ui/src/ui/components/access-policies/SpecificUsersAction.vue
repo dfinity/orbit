@@ -1,7 +1,7 @@
 <template>
   <ShortValues
     v-if="!showActionBtn"
-    :values="specifier.users.membersOfGroup.groups.map(g => g.name)"
+    :values="specifier.users.specificUsers.users.map(u => u.name)"
     empty="-"
   />
   <template v-else>
@@ -18,7 +18,7 @@
       @submitted="useOnSuccessfulOperation"
     >
       <template #default="{ model: elem, submit }">
-        <MembersOfGroupForm
+        <SpecificUsersForm
           v-model="elem.value.modelValue"
           @valid="isValid => (elem.value.valid = isValid)"
           @submit="submit"
@@ -37,72 +37,71 @@
         </VBtn>
       </template>
     </ActionBtn>
-    <ShortValues :values="specifier.users.membersOfGroup.groups.map(g => g.name)" />
+    <ShortValues :values="specifier.users.specificUsers.users.map(u => u.name)" />
   </template>
 </template>
 
 <script lang="ts" setup>
 import { mdiPencil } from '@mdi/js';
 import { computed, toRefs } from 'vue';
-import { ResourcePermissionsSpecifier } from '~/configs/permissions.config';
 import { Proposal } from '~/generated/wallet/wallet.did';
 import { Privilege } from '~/types';
+import { ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
 import ShortValues from '~/ui/components/ShortValues.vue';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
-import MembersOfGroupForm, {
-  MembersOfGroupFormProps,
-} from '~/ui/components/permissions/MembersOfGroupForm.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/ui/composables/notifications.composable';
 import { hasRequiredPrivilege } from '~/ui/utils/auth';
+import SpecificUsersForm, { SpecificUsersFormProps } from './SpecificUsersForm.vue';
 
 const props = defineProps<{
-  specifier: ResourcePermissionsSpecifier;
-  modelValue: MembersOfGroupFormProps;
-  submitCb: (form: MembersOfGroupFormProps) => Promise<Proposal>;
+  specifier: ResourceAccessPolicySpecifier;
+  modelValue: SpecificUsersFormProps;
+  submitCb: (form: SpecificUsersFormProps) => Promise<Proposal>;
 }>();
 
 const { specifier, submitCb } = toRefs(props);
 
-const modelValue = computed<MembersOfGroupFormProps>({
+const modelValue = computed<SpecificUsersFormProps>({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
 
 const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
-  (event: 'update:modelValue', payload: MembersOfGroupFormProps): void;
+  (event: 'update:modelValue', payload: SpecificUsersFormProps): void;
 }>();
 
 const canAdd = computed(
   () =>
     hasRequiredPrivilege({
       anyOf: [Privilege.AddAccessPolicy],
-    }) && !specifier.value.users.membersOfGroup.policy.id,
+    }) && !specifier.value.users.specificUsers.policy.id,
 );
 const canEdit = computed(
   () =>
-    !!specifier.value.users.membersOfGroup.policy.id &&
-    specifier.value.users.membersOfGroup.policy.canEdit,
+    !!specifier.value.users.specificUsers.policy.id &&
+    specifier.value.users.specificUsers.policy.canEdit,
 );
 const canRemove = computed(
   () =>
-    !!specifier.value.users.membersOfGroup.policy.id &&
-    specifier.value.users.membersOfGroup.policy.canRemove,
+    !!specifier.value.users.specificUsers.policy.id &&
+    specifier.value.users.specificUsers.policy.canRemove,
 );
 const showActionBtn = computed(() => canAdd.value || canEdit.value || canRemove.value);
 
-const shouldDisableSubmitBtn = (elem: MembersOfGroupFormProps) => {
-  if (!elem.modelValue.groupIds?.length && !canRemove.value) {
+const shouldDisableSubmitBtn = (elem: SpecificUsersFormProps) => {
+  if (!elem.modelValue.userIds?.length && !canRemove.value) {
     return true;
   }
 
-  if (!!elem.modelValue.policyId && elem.modelValue.groupIds?.length && !canEdit.value) {
+  if (!!elem.modelValue.policyId && elem.modelValue.userIds?.length && !canEdit.value) {
     return true;
   }
 
   return !elem.valid;
 };
 </script>
+~/configs/access-policies.config

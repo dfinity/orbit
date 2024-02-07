@@ -345,7 +345,7 @@ export default {
     logout: 'Sair',
     proposals: 'Pedidos',
     transfer_proposals: 'Pedidos de transferência',
-    permissions: 'Permissões',
+    access_policies: 'Permissões',
   },
   pages: {
     user_settings: {

@@ -1,29 +1,18 @@
 import { variantIs } from '~/core';
 import { AccessPolicy, ResourceSpecifier, UUID } from '~/generated/wallet/wallet.did';
 import {
+  AggregatedResouceAccessPolicies,
   ResourceAccessUserSpecifiers,
   ResourceActionEnum,
   ResourceTypeEnum,
-} from '~/types/permissions.types';
+} from '~/types/access-policies.types';
 import {
   isCanisterSettingsActionSpecifier,
   isChangeCanisterActionSpecifier,
   isCommonActionSpecifierContained,
   isProposalActionSpecifier,
   isTransferActionSpecifier,
-} from '~/utils/permissions.utils';
-
-export interface ResourcePermissionsSpecifier {
-  action: ResourceActionEnum;
-  specifier: ResourceSpecifier;
-  users: ResourceAccessUserSpecifiers;
-}
-
-export interface ResourcePermissions {
-  resourceType: ResourceTypeEnum;
-  specifiers: ResourcePermissionsSpecifier[];
-  match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean;
-}
+} from '~/utils/access-policies.utils';
 
 export const defaultUserSpecifiers = (): ResourceAccessUserSpecifiers => ({
   allUsers: { policy: { id: null, canEdit: false, canRemove: false } },
@@ -31,7 +20,7 @@ export const defaultUserSpecifiers = (): ResourceAccessUserSpecifiers => ({
   specificUsers: { policy: { id: null, canEdit: false, canRemove: false }, users: [] },
 });
 
-export const globalResourcePermissions = (): ResourcePermissions[] => [
+export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   {
     resourceType: ResourceTypeEnum.User,
     specifiers: [
@@ -359,7 +348,7 @@ export const globalResourcePermissions = (): ResourcePermissions[] => [
   },
 ];
 
-export const getAccountResourcePermissions = (accountId: UUID): ResourcePermissions[] => {
+export const getAccountAccessPolicies = (accountId: UUID): AggregatedResouceAccessPolicies[] => {
   return [
     {
       resourceType: ResourceTypeEnum.Account,
@@ -418,7 +407,7 @@ export const getAccountResourcePermissions = (accountId: UUID): ResourcePermissi
   ];
 };
 
-export const getUserResourcePermissions = (userId: UUID): ResourcePermissions[] => {
+export const getUserAccessPolicies = (userId: UUID): AggregatedResouceAccessPolicies[] => {
   return [
     {
       resourceType: ResourceTypeEnum.User,
@@ -450,7 +439,7 @@ export const getUserResourcePermissions = (userId: UUID): ResourcePermissions[] 
   ];
 };
 
-export const getUserGroupResourcePermissions = (groupId: UUID): ResourcePermissions[] => {
+export const getUserGroupAccessPolicies = (groupId: UUID): AggregatedResouceAccessPolicies[] => {
   return [
     {
       resourceType: ResourceTypeEnum.UserGroup,

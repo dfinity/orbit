@@ -37,10 +37,9 @@
 
 <script lang="ts" setup>
 import { mdiCheckboxBlankOutline, mdiCheckboxMarkedOutline } from '@mdi/js';
-import { computed } from 'vue';
-import { toRefs } from 'vue';
-import { ResourcePermissionsSpecifier } from '~/configs/permissions.config';
+import { computed, toRefs } from 'vue';
 import { Privilege } from '~/types';
+import { ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
 import AuthCheck from '~/ui/components/AuthCheck.vue';
 import ActionBtn from '~/ui/components/buttons/ActionBtn.vue';
 import {
@@ -52,7 +51,7 @@ import { useWalletStore } from '~/ui/stores/wallet';
 const wallet = useWalletStore();
 
 const props = defineProps<{
-  specifier: ResourcePermissionsSpecifier;
+  specifier: ResourceAccessPolicySpecifier;
 }>();
 
 const { specifier } = toRefs(props);
@@ -63,3 +62,4 @@ const emit = defineEmits<{
 
 const isEnabled = computed(() => !!specifier.value.users.allUsers.policy.id);
 </script>
+~/configs/access-policies.config

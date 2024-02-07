@@ -87,21 +87,24 @@
 
 <script lang="ts" setup>
 import { ref, toRefs, watch } from 'vue';
-import { ResourcePermissions, ResourcePermissionsSpecifier } from '~/configs/permissions.config';
 import { Proposal, ResourceSpecifier } from '~/generated/wallet/wallet.did';
-import EveryoneAction from '~/ui/components/permissions/EveryoneAction.vue';
-import MembersOfGroupAction from '~/ui/components/permissions/MembersOfGroupAction.vue';
-import { MembersOfGroupFormProps } from '~/ui/components/permissions/MembersOfGroupForm.vue';
-import SpecificUsersAction from '~/ui/components/permissions/SpecificUsersAction.vue';
-import { SpecificUsersFormProps } from '~/ui/components/permissions/SpecificUsersForm.vue';
+import {
+  AggregatedResouceAccessPolicies,
+  ResourceAccessPolicySpecifier,
+} from '~/types/access-policies.types';
 import { useAppStore } from '~/ui/stores/app';
 import { useWalletStore } from '~/ui/stores/wallet';
+import EveryoneAction from './EveryoneAction.vue';
+import MembersOfGroupAction from './MembersOfGroupAction.vue';
+import { MembersOfGroupFormProps } from './MembersOfGroupForm.vue';
+import SpecificUsersAction from './SpecificUsersAction.vue';
+import { SpecificUsersFormProps } from './SpecificUsersForm.vue';
 
 const wallet = useWalletStore();
 const app = useAppStore();
 
 const props = defineProps<{
-  resource: ResourcePermissions;
+  resource: AggregatedResouceAccessPolicies;
 }>();
 
 const { resource } = toRefs(props);
@@ -128,7 +131,7 @@ const updateMembersOfGroupModel = (idx: number, model: MembersOfGroupFormProps) 
 
 const getMembersOfGroupForm = (
   idx: number,
-  specifier: ResourcePermissionsSpecifier,
+  specifier: ResourceAccessPolicySpecifier,
 ): MembersOfGroupFormProps => {
   if (membersOfGroupModels.value[idx]) {
     return membersOfGroupModels.value[idx];
@@ -176,7 +179,7 @@ const updateSpecificUsersModel = (idx: number, model: SpecificUsersFormProps) =>
 
 const getSpecificUsersForm = (
   idx: number,
-  specifier: ResourcePermissionsSpecifier,
+  specifier: ResourceAccessPolicySpecifier,
 ): SpecificUsersFormProps => {
   if (specificUsersModels.value[idx]) {
     return specificUsersModels.value[idx];
@@ -215,3 +218,4 @@ const onSpecificUsersFormSubmit = (
   });
 };
 </script>
+~/configs/access-policies.config

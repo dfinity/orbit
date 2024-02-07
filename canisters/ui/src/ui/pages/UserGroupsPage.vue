@@ -48,7 +48,7 @@
               color="primary-variant"
               variant="flat"
               data-test-id="manage-permissions-btn"
-              :to="{ name: Routes.Permissions }"
+              :to="{ name: Routes.AccessPolicies }"
             >
               {{ $t('pages.user_groups.btn_manage_permissions') }}
             </VBtn>

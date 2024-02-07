@@ -31,15 +31,16 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
-import { ResourcePermissions, getUserGroupResourcePermissions } from '~/configs/permissions.config';
+import { getUserGroupAccessPolicies } from '~/configs/access-policies.config';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
+import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import DataLoader from '~/ui/components/DataLoader.vue';
-import AccessPolicyList from '~/ui/components/permissions/AccessPolicyList.vue';
 import { useUserGroupsAutocomplete } from '~/ui/composables/autocomplete.composable';
+import AccessPolicyList from './AccessPolicyList.vue';
 
 const autocomplete = useUserGroupsAutocomplete();
 const selectedUserGroupId = ref<UUID | null>(null);
-const resources = ref<ResourcePermissions[]>([]);
+const resources = ref<AggregatedResouceAccessPolicies[]>([]);
 const disableRefresh = ref(false);
 
 onMounted(() => {
@@ -74,10 +75,11 @@ watch(
   () => selectedUserGroupId.value,
   () => {
     if (selectedUserGroupId.value) {
-      resources.value = getUserGroupResourcePermissions(selectedUserGroupId.value);
+      resources.value = getUserGroupAccessPolicies(selectedUserGroupId.value);
     } else {
       resources.value = [];
     }
   },
 );
 </script>
+~/configs/access-policies.config

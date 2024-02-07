@@ -1,18 +1,18 @@
 <template>
   <VAutocomplete
-    v-model="selectedAccountId"
+    v-model="selectedUserId"
     class="mt-2 px-2"
-    name="account_id"
-    :label="$t('terms.account')"
+    name="user_id"
+    :label="$t('terms.user')"
     :loading="autocomplete.loading.value"
     variant="underlined"
-    :items="groupList"
+    :items="userList"
     chips
     clearable
     @update:search="autocomplete.searchItems"
   />
   <DataLoader
-    v-if="selectedAccountId"
+    v-if="selectedUserId"
     v-slot="{ data, loading }"
     :load="fetchPolicies"
     :refresh-interval-ms="5000"
@@ -31,15 +31,16 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
-import { ResourcePermissions, getAccountResourcePermissions } from '~/configs/permissions.config';
+import { getUserAccessPolicies } from '~/configs/access-policies.config';
 import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
+import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import DataLoader from '~/ui/components/DataLoader.vue';
-import AccessPolicyList from '~/ui/components/permissions/AccessPolicyList.vue';
-import { useAccountsAutocomplete } from '~/ui/composables/autocomplete.composable';
+import { useUsersAutocomplete } from '~/ui/composables/autocomplete.composable';
+import AccessPolicyList from './AccessPolicyList.vue';
 
-const autocomplete = useAccountsAutocomplete();
-const selectedAccountId = ref<UUID | null>(null);
-const resources = ref<ResourcePermissions[]>([]);
+const autocomplete = useUsersAutocomplete();
+const selectedUserId = ref<UUID | null>(null);
+const resources = ref<AggregatedResouceAccessPolicies[]>([]);
 const disableRefresh = ref(false);
 
 onMounted(() => {
@@ -61,23 +62,24 @@ const props = withDefaults(
 
 const { fetchPolicies } = toRefs(props);
 
-const groupList = computed(() => {
-  const groups = autocomplete.results.value.map(group => ({
-    title: group.name,
-    value: group.id,
+const userList = computed(() => {
+  const users = autocomplete.results.value.map(user => ({
+    title: user.name?.[0] ? user.name[0] : user.id,
+    value: user.id,
   }));
 
-  return groups;
+  return users;
 });
 
 watch(
-  () => selectedAccountId.value,
+  () => selectedUserId.value,
   () => {
-    if (selectedAccountId.value) {
-      resources.value = getAccountResourcePermissions(selectedAccountId.value);
+    if (selectedUserId.value) {
+      resources.value = getUserAccessPolicies(selectedUserId.value);
     } else {
       resources.value = [];
     }
   },
 );
 </script>
+~/configs/access-policies.config

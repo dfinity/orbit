@@ -25,12 +25,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import { VFormValidation } from '~/ui/types';
-import { reactive } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import { useUserGroupsAutocomplete } from '~/ui/composables/autocomplete.composable';
-import { onMounted } from 'vue';
-import { UserGroup, UUID } from '~/generated/wallet/wallet.did';
+import { VFormValidation } from '~/ui/types';
 
 const form = ref<VFormValidation | null>(null);
 const userGroupsAutocomplete = useUserGroupsAutocomplete();
