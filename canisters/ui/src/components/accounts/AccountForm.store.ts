@@ -4,7 +4,12 @@ import { Account, AccountPolicies, Proposal, UUID } from '~/generated/wallet/wal
 import { i18n } from '~/modules/i18n.module';
 import { useWalletStore } from '~/stores/wallet.store';
 import { FormValidationRules } from '~/types/utils.types';
-import { maxLengthRule, requiredRule, validPrincipalRule, validUuidV4Rule } from '~/utils/form.utils';
+import {
+  maxLengthRule,
+  requiredRule,
+  validPrincipalRule,
+  validUuidV4Rule,
+} from '~/utils/form.utils';
 
 export interface AccountForm {
   name: string | null;
