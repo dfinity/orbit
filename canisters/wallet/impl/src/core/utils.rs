@@ -1,9 +1,7 @@
+use super::access_control::evaluate_caller_access;
 use super::CallContext;
-use crate::errors::AccessControlError;
+use crate::models::access_control::ResourceSpecifier;
 use crate::{errors::PaginationError, models::criteria::Percentage};
-use futures::StreamExt;
-use futures::{stream, Future};
-use std::pin::Pin;
 
 pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
 
@@ -89,32 +87,31 @@ pub(crate) fn match_date_range(date: &u64, start_dt: &Option<u64>, to_dt: &Optio
     }
 }
 
-/// Filters a list of items based on the result of an access control evaluation.
+/// Retains items based on the result of an access control evaluation.
 ///
-/// This function will evaluate the access control for each item in the list and return
-/// only the items for which the evaluation was successful.
-pub(crate) async fn filter_accessible_resources<T, F>(
+/// This function will evaluate the access control for each item in the list and retain only the
+/// items for which the access control evaluation is successful.
+pub(crate) async fn retain_accessible_resources<T, F>(
     ctx: &CallContext,
-    items: &[T],
-    evaluate_access: F,
-) -> Vec<T>
-where
-    T: Clone + Send + 'static,
-    F: Fn(&CallContext, &T) -> Pin<Box<dyn Future<Output = Result<(), AccessControlError>> + Send>>
-        + Copy,
+    items: &mut Vec<T>,
+    to_resource_specifier: F,
+) where
+    T: Clone,
+    F: Fn(&T) -> ResourceSpecifier,
 {
-    stream::iter(items.iter())
-        .filter_map(move |item| {
-            let access_future = evaluate_access(ctx, item);
-            async move {
-                match access_future.await {
-                    Ok(_) => Some(item.clone()),
-                    Err(_) => None,
-                }
+    let mut i = 0;
+    while i < items.len() {
+        let item = &items[i];
+        let resource_specifier = to_resource_specifier(item);
+        let result = evaluate_caller_access(ctx, &resource_specifier).await;
+
+        match result {
+            Ok(_) => i += 1,
+            Err(_) => {
+                items.remove(i);
             }
-        })
-        .collect()
-        .await
+        }
+    }
 }
 
 #[cfg(test)]

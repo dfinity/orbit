@@ -2,7 +2,7 @@ use crate::{
     core::{
         access_control::evaluate_caller_access,
         generate_uuid_v4,
-        utils::{filter_accessible_resources, paginated_items, PaginatedData, PaginatedItemsArgs},
+        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
     errors::{AccessControlError, ProposalError},
@@ -190,20 +190,11 @@ impl PolicyService {
     ) -> ServiceResult<PaginatedData<AccessControlPolicy>> {
         let mut policies = self.access_control_policy_repository.list();
 
-        policies = filter_accessible_resources(ctx, &policies, |ctx, policy| {
-            let policy_id = policy.id;
-            let ctx = ctx.clone();
-
-            Box::pin(async move {
-                evaluate_caller_access(
-                    &ctx,
-                    &ResourceSpecifier::Common(
-                        ResourceType::AccessPolicy,
-                        AccessPolicyActionSpecifier::Read(CommonSpecifier::Id(vec![policy_id])),
-                    ),
-                )
-                .await
-            })
+        retain_accessible_resources(ctx, &mut policies, |policy| {
+            ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                AccessPolicyActionSpecifier::Read(CommonSpecifier::Id(vec![policy.id])),
+            )
         })
         .await;
 
