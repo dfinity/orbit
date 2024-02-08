@@ -1,7 +1,6 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { appInitConfig } from '~/configs/init.config';
-import { icAgent } from '~/core/ic-agent.core';
 import { idlFactory } from '~/generated/control-panel';
 import {
   ManageUserInput,
@@ -15,7 +14,7 @@ import { Maybe } from '~/types/helper.types';
 export class ControlPanelService {
   private actor: ActorSubclass<_SERVICE>;
 
-  constructor(agent: HttpAgent = icAgent.get()) {
+  constructor(agent: HttpAgent) {
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {
       agent,
       canisterId: appInitConfig.canisters.controlPanel,

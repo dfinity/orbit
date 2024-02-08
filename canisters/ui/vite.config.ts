@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = !isDevelopment;
   mode = isProduction ? 'production' : 'development';
   const localesPath = resolve(__dirname, 'src/locales');
-  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.ts'));
+  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.locale.ts'));
   const canisters = resolveCanisterIds();
 
   return {

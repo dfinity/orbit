@@ -23,8 +23,11 @@ const initializeApp = async (): Promise<void> => {
 
   await icAgent.init();
 
+  // updates the icAgent that is used in the services
+  serviceManager.setContext(icAgent.get());
+
   app.use(pinia);
-  app.use(vuetify);
+  app.use(vuetify(serviceManager.services.theme.resolveTheme()));
   app.use(i18n);
   app.use(serviceManager);
   app.use(router);

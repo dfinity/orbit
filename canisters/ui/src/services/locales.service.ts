@@ -18,7 +18,7 @@ export class LocalesService {
   }
 
   async saveLocale(locale: Locale): Promise<void> {
-    localStorage.setItem(LocalesService.localeStorageKey, locale);
+    window.localStorage.setItem(LocalesService.localeStorageKey, locale);
   }
 
   async fetchLocaleMessages(locale: Locale): Promise<AppTranslations> {
@@ -42,7 +42,7 @@ export class LocalesService {
 
   resolveUserLocale(): Locale {
     const locale =
-      localStorage.getItem(LocalesService.localeStorageKey) ||
+      window.localStorage.getItem(LocalesService.localeStorageKey) ||
       this.maybeResolveLocationLocale() ||
       window.navigator.language ||
       this.defaultLocale;

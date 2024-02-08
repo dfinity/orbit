@@ -44,7 +44,7 @@ export const useAppStore = defineStore('app', {
       return i18n.global.locale.value as Locale;
     },
     baseUrl(): string {
-      return services().routes.baseUrl + this.locale;
+      return appInitConfig.baseUrl + this.locale;
     },
   },
   actions: {

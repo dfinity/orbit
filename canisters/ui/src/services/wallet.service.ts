@@ -1,6 +1,5 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { icAgent } from '~/core/ic-agent.core';
 import { idlFactory } from '~/generated/wallet';
 import {
   Account,
@@ -52,7 +51,7 @@ export class WalletService {
   public static ERR_USER_NOT_FOUND = 'NOT_FOUND';
 
   constructor(
-    private agent: HttpAgent = icAgent.get(),
+    private agent: HttpAgent,
     walletId: Principal = Principal.anonymous(),
   ) {
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {

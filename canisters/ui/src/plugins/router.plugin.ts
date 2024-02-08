@@ -1,5 +1,7 @@
 import { NavigationGuard, createRouter, createWebHistory } from 'vue-router';
+import { appInitConfig } from '~/configs/init.config';
 import { Routes, defaultHomeRoute, defaultLoginRoute, routes } from '~/configs/routes.config';
+import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { RequiredSessionState } from '~/types/auth.types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
@@ -10,7 +12,7 @@ import { services } from './services.plugin';
 export const redirectToKey = 'redirectTo';
 
 const router = createRouter({
-  history: createWebHistory(services().routes.baseUrl),
+  history: createWebHistory(appInitConfig.baseUrl),
   routes,
 });
 
@@ -54,7 +56,7 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
 };
 
 router.beforeEach(initStateGuard);
-router.beforeEach(i18nRouteGuard);
+router.beforeEach(i18nRouteGuard(services(), () => useAppStore()));
 router.beforeEach(routeAccessGuard);
 
 export { router };

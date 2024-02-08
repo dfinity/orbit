@@ -18,10 +18,10 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import PageLayout from '~/components/PageLayout.vue';
 import { defaultHomeRoute } from '~/configs/routes.config';
 import { logger } from '~/core/logger.core';
-import { router } from '~/plugins/router.plugin';
 import { services } from '~/plugins/services.plugin';
 import { useSessionStore } from '~/stores/session.store';
 import { createUserInitialAccount, useWalletStore } from '~/stores/wallet.store';
@@ -36,6 +36,7 @@ enum InitializationStatus {
   Failed = 'failed',
 }
 
+const router = useRouter();
 const session = useSessionStore();
 const wallet = useWalletStore();
 const status = ref<InitializationStatus>(InitializationStatus.Starting);

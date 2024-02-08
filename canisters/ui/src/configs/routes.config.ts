@@ -1,11 +1,8 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
-import { i18n } from '~/plugins/i18n.plugin';
-import { services } from '~/plugins/services.plugin';
-import DisconnectedPage from '~/pages/DisconnectedPage.vue';
-import InitializationPage from '~/pages/InitializationPage.vue';
+import { supportedLocales } from '~/configs/i18n.config';
 import LoginPageVue from '~/pages/LoginPage.vue';
 import NotFoundPageVue from '~/pages/NotFoundPage.vue';
-import UnauthorizedPageVue from '~/pages/UnauthorizedPage.vue';
+import { i18n } from '~/plugins/i18n.plugin';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
 import { ProposalDomains } from '~/types/wallet.types';
 
@@ -33,7 +30,7 @@ export const defaultHomeRoute = Routes.Accounts;
 
 export const routes: RouteRecordRaw[] = [
   {
-    path: `/:locale(${services().locales.supportedLocales.join('|')})?`,
+    path: `/:locale(${supportedLocales.join('|')})?`,
     component: RouterView,
     children: [
       {
@@ -103,7 +100,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'disconnected',
         name: Routes.Disconnected,
-        component: DisconnectedPage,
+        component: import('~/pages/DisconnectedPage.vue'),
         meta: {
           auth: {
             check: {
@@ -115,7 +112,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'unauthorized',
         name: Routes.Unauthorized,
-        component: UnauthorizedPageVue,
+        component: import('~/pages/UnauthorizedPage.vue'),
         meta: {
           auth: {
             check: {
@@ -127,7 +124,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'initialization',
         name: Routes.Initialization,
-        component: InitializationPage,
+        component: import('~/pages/InitializationPage.vue'),
         meta: {
           auth: {
             check: {

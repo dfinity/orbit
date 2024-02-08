@@ -37,7 +37,7 @@ export const mount = <T extends Component>(
         createTestingPinia({
           initialState: initialPiniaState,
         }),
-        vuetify,
+        vuetify(),
         i18n,
         serviceManager,
         navigation,
@@ -61,7 +61,7 @@ export const setupComponent = <Props, RawBindings>(
 
   app.use(createTestingPinia());
   app.use(mockRouter);
-  app.use(vuetify);
+  app.use(vuetify());
   app.use(i18n);
   app.use(serviceManager);
   app.use(navigation);

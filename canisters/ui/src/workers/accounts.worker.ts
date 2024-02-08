@@ -55,7 +55,7 @@ class AccountsWorkerImpl {
   private timer: NodeJS.Timeout | null = null;
   private enabled: boolean = false;
 
-  constructor(private walletService: WalletService = new WalletService()) {}
+  constructor(private walletService: WalletService = new WalletService(icAgent.get())) {}
 
   static register(): void {
     if (typeof navigator === 'undefined') {

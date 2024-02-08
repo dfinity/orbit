@@ -3,8 +3,8 @@ import { ThemeDefinition, createVuetify } from 'vuetify';
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg';
 import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n';
 import { Locale } from '~/configs/i18n.config';
+import { SupportedTheme } from '~/types/app.types';
 import { i18n } from './i18n.plugin';
-import { services } from './services.plugin';
 
 const light: ThemeDefinition = {
   dark: false,
@@ -42,42 +42,43 @@ const dark: ThemeDefinition = {
 
 // Vuetify is the default UI framework used within this application,
 // please refer to the documentation for more information at https://vuetifyjs.com/
-const vuetify = createVuetify({
-  ssr: false,
-  theme: {
-    defaultTheme: services().theme.resolveTheme(),
-    variations: {
-      colors: ['primary', 'primary-variant', 'secondary', 'secondary-variant'],
-      darken: 2,
-      lighten: 2,
+const vuetify = (theme: SupportedTheme = SupportedTheme.Light) =>
+  createVuetify({
+    ssr: false,
+    theme: {
+      defaultTheme: theme,
+      variations: {
+        colors: ['primary', 'primary-variant', 'secondary', 'secondary-variant'],
+        darken: 2,
+        lighten: 2,
+      },
+      themes: {
+        light,
+        dark,
+      },
     },
-    themes: {
-      light,
-      dark,
+    icons: {
+      defaultSet: 'mdi',
+      aliases,
+      sets: {
+        mdi,
+      },
     },
-  },
-  icons: {
-    defaultSet: 'mdi',
-    aliases,
-    sets: {
-      mdi,
+    locale: {
+      adapter: createVueI18nAdapter({ i18n, useI18n }),
     },
-  },
-  locale: {
-    adapter: createVueI18nAdapter({ i18n, useI18n }),
-  },
-  display: {
-    mobileBreakpoint: 'md',
-    thresholds: {
-      xs: 0,
-      sm: 600,
-      md: 960,
-      lg: 1280,
-      xl: 1920,
-      xxl: 2560,
+    display: {
+      mobileBreakpoint: 'md',
+      thresholds: {
+        xs: 0,
+        sm: 600,
+        md: 960,
+        lg: 1280,
+        xl: 1920,
+        xxl: 2560,
+      },
     },
-  },
-});
+  });
 
 export const fetchDesignSystemLocale = async (locale: Locale): Promise<unknown> => {
   const vuetifyLocale = await import(`../../node_modules/vuetify/lib/locale/${locale}.mjs`);

@@ -6,7 +6,7 @@ import { appInitConfig } from '~/configs/init.config';
 import en from '~/locales/en.locale';
 import { useAppStore } from '~/stores/app.store';
 import { AppTranslations } from '~/types/app.types';
-import { services } from './services.plugin';
+import { services, type Services } from './services.plugin';
 
 // i18n is used for internationalization, please refer to the documentation at https://vue-i18n.intlify.dev/
 const i18n = createI18n({
@@ -23,30 +23,31 @@ const i18n = createI18n({
   } as LocaleMessages<AppTranslations>,
 });
 
-const routeGuard: NavigationGuard = async (to, _from, next) => {
-  const paramLocale = to.params.locale ? String(to.params.locale) : undefined;
-  const app = useAppStore();
-  if (!paramLocale) {
-    return next({
-      path: `/${app.locale}${to.path === '/' ? '' : to.path}`,
-      query: to.query,
-      hash: to.hash,
-    });
-  }
+const routeGuard =
+  (services: Services, app: () => ReturnType<typeof useAppStore>): NavigationGuard =>
+  async (to, _from, next) => {
+    const paramLocale = to.params.locale ? String(to.params.locale) : undefined;
+    if (!paramLocale) {
+      return next({
+        path: `/${app().locale}${to.path === '/' ? '' : to.path}`,
+        query: to.query,
+        hash: to.hash,
+      });
+    }
 
-  if (services().locales.isSupportedLocale(paramLocale)) {
-    await app.useLocale(paramLocale);
-  }
+    if (services.locales.isSupportedLocale(paramLocale)) {
+      await app().useLocale(paramLocale);
+    }
 
-  if (!services().locales.isSupportedLocale(paramLocale)) {
-    return next({
-      path: `/${app.locale}`,
-      query: to.query,
-      hash: to.hash,
-    });
-  }
+    if (!services.locales.isSupportedLocale(paramLocale)) {
+      return next({
+        path: `/${app().locale}`,
+        query: to.query,
+        hash: to.hash,
+      });
+    }
 
-  return next();
-};
+    return next();
+  };
 
 export { i18n, routeGuard as i18nRouteGuard };
