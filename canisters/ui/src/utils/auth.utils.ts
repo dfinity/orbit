@@ -1,5 +1,3 @@
-import { Identity } from '@dfinity/agent';
-import { AuthService } from '~/services/auth.service';
 import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
@@ -44,10 +42,4 @@ export const hasRequiredPrivilege = (
   }
 
   return anyOf.some(requiredPrivilege => userPrivileges.has(requiredPrivilege));
-};
-
-export const loadIdentity = async (): Promise<Identity | null> => {
-  const authService = new AuthService();
-
-  return authService.identity();
 };

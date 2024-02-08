@@ -1,7 +1,7 @@
 import { mdiBookOpenVariant, mdiCogs, mdiFormatListText, mdiWalletBifold } from '@mdi/js';
 import { App, Ref, computed, ref, watch } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
-import { Routes, routes } from '~/configs/routes.config';
+import { Routes } from '~/configs/routes.config';
 import { logger } from '~/core/logger.core';
 import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore } from '~/stores/wallet.store';
@@ -133,7 +133,15 @@ export interface NavigationSections {
 }
 
 class Navigation {
-  constructor(public readonly sections: () => NavigationSections) {}
+  constructor(
+    public readonly sections: () => NavigationSections,
+    public routes: RouteRecordRaw[] = [],
+  ) {}
+
+  withRoutes(routes: RouteRecordRaw[]): Navigation {
+    this.routes = routes;
+    return this;
+  }
 
   install(app: App): void {
     const { sections } = this;
@@ -152,7 +160,7 @@ class Navigation {
       () => {
         const full = sections();
         navigation.value = {
-          main: Navigation.retainAuthorizedNavigation(full.main),
+          main: this.retainAuthorizedNavigation(full.main),
         };
       },
       { deep: true },
@@ -161,12 +169,12 @@ class Navigation {
     app.config.globalProperties.$navigation = navigation;
   }
 
-  private static retainAuthorizedNavigation = (items: NavigationItem[]): NavigationItem[] => {
+  private retainAuthorizedNavigation = (items: NavigationItem[]): NavigationItem[] => {
     return items.filter(item => {
       item.items = this.retainAuthorizedNavigation(item.items || []);
 
       if (item.auth.type === NavigastionAuthType.Route) {
-        const route = this.findRouteByName(item.auth.route);
+        const route = this.findRouteByName(item.auth.route, this.routes);
 
         if (!route) {
           logger.warn(`Route '${item.auth.route}' not found for navigation item`);
@@ -199,11 +207,11 @@ class Navigation {
     });
   };
 
-  private static findRouteByName = (
+  private findRouteByName = (
     name: Routes,
-    routeItems: RouteRecordRaw[] = routes,
+    routes: RouteRecordRaw[],
   ): RouteRecordRaw | undefined => {
-    for (const route of routeItems) {
+    for (const route of routes) {
       if (route.name === name) {
         return route;
       }

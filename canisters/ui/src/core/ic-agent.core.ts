@@ -1,7 +1,7 @@
 import { AnonymousIdentity, HttpAgent } from '@dfinity/agent';
 import { appInitConfig } from '~/configs/init.config';
-import { loadIdentity } from '~/utils/auth.utils';
 import { logger } from './logger.core';
+import { AuthService } from '~/services/auth.service';
 
 class IcAgent {
   private isReady = false;
@@ -29,7 +29,8 @@ class IcAgent {
   }
 
   async loadIdentity(): Promise<void> {
-    const identity = (await loadIdentity()) ?? new AnonymousIdentity();
+    const authService = new AuthService();
+    const identity = (await authService.identity()) ?? new AnonymousIdentity();
 
     await this.init();
 

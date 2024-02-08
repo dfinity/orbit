@@ -21,7 +21,9 @@ const getDefauultServices = (): Services => ({
   locales: new LocalesService(),
   auth: new AuthService(),
   theme: new ThemeService(),
-  controlPanel: new ControlPanelService(new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() })),
+  controlPanel: new ControlPanelService(
+    new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() }),
+  ),
   wallet: new WalletService(new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() })),
   sessionExpiration: new SessionExpirationService(),
 });
@@ -29,9 +31,11 @@ const getDefauultServices = (): Services => ({
 class ServiceManager {
   constructor(public services: Services = getDefauultServices()) {}
 
-  setContext(icAgent: HttpAgent): void {
+  withAgent(icAgent: HttpAgent): ServiceManager {
     this.services.controlPanel = new ControlPanelService(icAgent);
     this.services.wallet = new WalletService(icAgent);
+
+    return this;
   }
 
   install(app: App): void {
