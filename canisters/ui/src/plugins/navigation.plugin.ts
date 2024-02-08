@@ -134,9 +134,14 @@ export interface NavigationSections {
 
 class Navigation {
   constructor(
-    public readonly sections: () => NavigationSections,
+    public sections: () => NavigationSections,
     public routes: RouteRecordRaw[] = [],
   ) {}
+
+  withSections(sections: NavigationSections): Navigation {
+    this.sections = () => sections;
+    return this;
+  }
 
   withRoutes(routes: RouteRecordRaw[]): Navigation {
     this.routes = routes;

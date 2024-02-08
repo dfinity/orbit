@@ -56,7 +56,7 @@ class NotificationsWorkerImpl {
   private lastNotificationDate: Date | null = null;
   private enabled: boolean = false;
 
-  constructor(private walletService: WalletService = new WalletService()) {}
+  constructor(private walletService: WalletService = new WalletService(icAgent.get())) {}
 
   static register(): void {
     if (typeof navigator === 'undefined') {

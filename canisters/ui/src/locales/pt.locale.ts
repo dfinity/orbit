@@ -9,7 +9,7 @@ export default {
     confirm: 'Confirmar',
     copied_to_clipboard: 'Texto copiado para a área de transferência.',
     initial_account_name: 'Principal',
-    alpha_warning: 'Descubra mais sobre esta versão alfa, por favor, utilize com cuidado.',
+    alpha_warning: 'Esta é uma versão alfa. Utilize com cuidado.',
     wallet_info_card_title: '{name} Informaçōes',
     wallet_info_card_edit_btn: 'Editar carteira',
     wallet_info_card_remove_btn: 'Remover carteira',

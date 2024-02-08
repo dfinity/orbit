@@ -2,6 +2,7 @@ import { describe } from 'node:test';
 import { afterEach, expect, it, vi } from 'vitest';
 import { setupComponent } from '~/test.utils';
 import { objectDeserialize, objectSerialize, useStorage } from './storage.utils';
+import logger from '~/core/logger.core';
 
 const setItem = vi.spyOn(Storage.prototype, 'setItem');
 const getItem = vi.spyOn(Storage.prototype, 'getItem');
@@ -57,6 +58,9 @@ describe('storage', () => {
 
   it(`should fall back to the initial value if deserialization fails`, () => {
     global.localStorage.setItem('test', 'invalid-json');
+
+    // this is to suppress the warning in the console output when the test runs
+    vi.spyOn(logger, 'warn').mockImplementation(() => {});
 
     const component = setupComponent(() => ({
       useStorage: useStorage({

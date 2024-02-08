@@ -9,7 +9,7 @@ export default {
     confirm: 'Confirm',
     copied_to_clipboard: 'Value copied to clipboard.',
     initial_account_name: 'Main',
-    alpha_warning: 'Learn more about this alpha version. Use with caution.',
+    alpha_warning: 'This is an alpha version. Use with caution.',
     wallet_info_card_title: '{name} Info',
     wallet_info_card_edit_btn: 'Edit wallet',
     wallet_info_card_remove_btn: 'Remove wallet',

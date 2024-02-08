@@ -40,7 +40,7 @@ export const mount = <T extends Component>(
         vuetify(),
         i18n,
         serviceManager,
-        navigation,
+        navigation.withSections({ main: [] }),
         mockRouter,
         ...plugins,
       ],
@@ -64,7 +64,7 @@ export const setupComponent = <Props, RawBindings>(
   app.use(vuetify());
   app.use(i18n);
   app.use(serviceManager);
-  app.use(navigation);
+  app.use(navigation.withSections({ main: [] }));
 
   const container = document.createElement('div');
 

@@ -37,7 +37,7 @@ describe('AddWalletForm', () => {
     expect(submit.exists()).toBe(true);
   });
 
-  it('wont submit the form if its invalid', async () => {
+  it('wont submit empty form which is invalid', async () => {
     const wrapper = mount(AddWalletForm);
 
     const submit = wrapper.find('button[type="submit"]');
