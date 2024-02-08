@@ -41,7 +41,7 @@ import {
   VoteOnProposalInput,
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
-import { ExtractOk } from '~/types/utils.types';
+import { ExtractOk } from '~/types/helper.types';
 import { ListAccountsArgs, ListProposalsArgs } from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 

@@ -146,7 +146,7 @@ import { ref } from 'vue';
 import { Routes } from '~/configs/routes.config';
 import { Proposal, User } from '~/generated/wallet/wallet.did';
 import { fromUserStatusVariantToEnum, fromUserToUserInput } from '~/mappers/users.mapper';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { Privilege } from '~/types/auth.types';

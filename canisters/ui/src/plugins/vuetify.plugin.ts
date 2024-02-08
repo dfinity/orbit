@@ -3,8 +3,8 @@ import { ThemeDefinition, createVuetify } from 'vuetify';
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg';
 import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n';
 import { Locale } from '~/configs/i18n.config';
-import { services } from '~/modules/services.module';
-import { i18n } from './i18n.module';
+import { i18n } from './i18n.plugin';
+import { services } from './services.plugin';
 
 const light: ThemeDefinition = {
   dark: false,
@@ -80,7 +80,7 @@ const vuetify = createVuetify({
 });
 
 export const fetchDesignSystemLocale = async (locale: Locale): Promise<unknown> => {
-  const vuetifyLocale = await import(`../../../node_modules/vuetify/lib/locale/${locale}.mjs`);
+  const vuetifyLocale = await import(`../../node_modules/vuetify/lib/locale/${locale}.mjs`);
 
   return vuetifyLocale.default;
 };

@@ -44,11 +44,11 @@
 import { Principal } from '@dfinity/principal';
 import { computed, ref } from 'vue';
 import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
-import { i18n } from '~/modules/i18n.module';
-import { services } from '~/modules/services.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
-import { VFormValidation } from '~/types/utils.types';
+import { VFormValidation } from '~/types/helper.types';
 import { isApiError } from '~/utils/app.utils';
 import { requiredRule, uniqueRule, validCanisterId } from '~/utils/form.utils';
 

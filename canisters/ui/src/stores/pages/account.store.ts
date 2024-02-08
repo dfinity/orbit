@@ -8,13 +8,13 @@ import {
   TransferListItem,
   UUID,
 } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { ChainApiFactory } from '~/services/chains';
 import { WalletService } from '~/services/wallet.service';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { AccountIncomingTransfer, ChainApi } from '~/types/chain.types';
-import { LoadableItem } from '~/types/utils.types';
+import { LoadableItem } from '~/types/helper.types';
 import { endOfDay, startOfDay } from '~/utils/date.utils';
 
 export interface AccountDetailsStoreState {

@@ -56,7 +56,7 @@
 </template>
 <script setup lang="ts">
 import { Proposal } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import ProposalListItem from './ProposalListItem.vue';
 

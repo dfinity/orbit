@@ -1,6 +1,6 @@
 import { RouteRecordRaw, RouterView } from 'vue-router';
-import { i18n } from '~/modules/i18n.module';
-import { services } from '~/modules/services.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { services } from '~/plugins/services.plugin';
 import DisconnectedPage from '~/pages/DisconnectedPage.vue';
 import InitializationPage from '~/pages/InitializationPage.vue';
 import LoginPageVue from '~/pages/LoginPage.vue';

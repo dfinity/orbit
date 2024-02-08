@@ -87,7 +87,7 @@ import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { globalAccessPolicies } from '~/configs/access-policies.config';
 import { Routes } from '~/configs/routes.config';
 import { AccessPolicy, BasicUser, UserGroup } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useWalletStore } from '~/stores/wallet.store';
 import { ResourceTypeEnum } from '~/types/access-policies.types';
 import { BreadCrumbItem } from '~/types/navigation.types';

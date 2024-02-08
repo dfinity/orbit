@@ -57,7 +57,7 @@
 import { ref } from 'vue';
 import { RouteLocationRaw } from 'vue-router';
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useWalletStore } from '~/stores/wallet.store';
 import { ListProposalsArgs } from '~/types/wallet.types';
 import DataLoader from '~/components/DataLoader.vue';

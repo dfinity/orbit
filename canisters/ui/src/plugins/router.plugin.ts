@@ -1,11 +1,11 @@
 import { NavigationGuard, createRouter, createWebHistory } from 'vue-router';
 import { Routes, defaultHomeRoute, defaultLoginRoute, routes } from '~/configs/routes.config';
-import { initStateGuard } from '~/modules/pinia.module';
 import { useSessionStore } from '~/stores/session.store';
 import { RequiredSessionState } from '~/types/auth.types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
-import { i18nRouteGuard } from './i18n.module';
-import { services } from './services.module';
+import { i18nRouteGuard } from './i18n.plugin';
+import { initStateGuard } from './pinia.plugin';
+import { services } from './services.plugin';
 
 export const redirectToKey = 'redirectTo';
 

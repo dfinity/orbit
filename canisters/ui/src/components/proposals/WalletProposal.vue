@@ -62,7 +62,7 @@
 import { mdiCheck, mdiClose, mdiCog, mdiCogs, mdiHelp } from '@mdi/js';
 import { computed, provide } from 'vue';
 import { Proposal } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useWalletStore } from '~/stores/wallet.store';
 import { WalletProposalType } from '~/types/wallet.types';
 import TransferProposal from './TransferProposal.vue';

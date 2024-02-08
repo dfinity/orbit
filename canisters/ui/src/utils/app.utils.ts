@@ -1,8 +1,8 @@
 import { Principal } from '@dfinity/principal';
 import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
 import { ApiError } from '~/generated/control-panel/control_panel.did';
-import { i18n } from '~/modules/i18n.module';
-import { redirectToKey, router } from '~/modules/router.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { redirectToKey, router } from '~/plugins/router.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 

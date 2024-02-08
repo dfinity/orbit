@@ -4,10 +4,10 @@ import { mount as componentMount, ComponentMountingOptions } from '@vue/test-uti
 import { StateTree } from 'pinia';
 import { Component, ComponentPublicInstance, createApp, defineComponent, Ref } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import { i18n } from '~/modules/i18n.module';
-import { navigation } from '~/modules/navigation.module';
-import { serviceManager } from '~/modules/services.module';
-import { vuetify } from '~/modules/vuetify.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { navigation } from '~/plugins/navigation.plugin';
+import { serviceManager } from '~/plugins/services.plugin';
+import { vuetify } from '~/plugins/vuetify.plugin';
 
 const mockRouter = createRouter({
   history: createMemoryHistory(),

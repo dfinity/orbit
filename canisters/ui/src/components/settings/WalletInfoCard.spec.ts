@@ -1,13 +1,13 @@
 import { Principal } from '@dfinity/principal';
 import { describe, expect, it, vi } from 'vitest';
-import { services } from '~/modules/services.module';
+import { services } from '~/plugins/services.plugin';
 import { ControlPanelService } from '~/services/control-panel.service';
 import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { mount } from '~/test.utils';
 import WalletInfoCard from './WalletInfoCard.vue';
 
-vi.mock('~/services/ControlPanelService', () => {
+vi.mock('~/services/control-panel.service', () => {
   const mock: Partial<ControlPanelService> = {
     editUser: vi.fn().mockReturnThis(),
   };

@@ -33,7 +33,7 @@ import { mdiClose } from '@mdi/js';
 import { ref, watch } from 'vue';
 import { logger } from '~/core/logger.core';
 import { Proposal } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import ProposalDetailView from './ProposalDetailView.vue';

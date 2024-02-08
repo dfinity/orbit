@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { logger } from '~/core/logger.core';
 import { Account, Proposal, UUID } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
-import { FormValidationRules } from '~/types/utils.types';
+import { FormValidationRules } from '~/types/helper.types';
 import { requiredRule, validTokenAmount } from '~/utils/form.utils';
 import { amountToBigInt, formatBalance } from '~/utils/helper.utils';
 

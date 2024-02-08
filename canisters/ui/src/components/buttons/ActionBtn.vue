@@ -68,7 +68,7 @@ import { mdiClose } from '@mdi/js';
 import { Ref, computed, ref, watch } from 'vue';
 import { logger } from '~/core/logger.core';
 import { wait } from '~/utils/helper.utils';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 
 const props = withDefaults(
   defineProps<{

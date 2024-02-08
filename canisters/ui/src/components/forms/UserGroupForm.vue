@@ -23,8 +23,8 @@
 <script lang="ts" setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { UserGroup } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
-import { FormValidationRules, VFormValidation } from '~/types/utils.types';
+import { i18n } from '~/plugins/i18n.plugin';
+import { FormValidationRules, VFormValidation } from '~/types/helper.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 
 const form = ref<VFormValidation | null>(null);

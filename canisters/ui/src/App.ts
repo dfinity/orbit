@@ -1,12 +1,12 @@
 import { createApp } from 'vue';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
-import { i18n } from '~/modules/i18n.module';
-import { navigation } from '~/modules/navigation.module';
-import { pinia } from '~/modules/pinia.module';
-import { router } from '~/modules/router.module';
-import { serviceManager } from '~/modules/services.module';
-import { vuetify } from '~/modules/vuetify.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { navigation } from '~/plugins/navigation.plugin';
+import { pinia } from '~/plugins/pinia.plugin';
+import { router } from '~/plugins/router.plugin';
+import { serviceManager } from '~/plugins/services.plugin';
+import { vuetify } from '~/plugins/vuetify.plugin';
 import './App.scss';
 import App from './App.vue';
 

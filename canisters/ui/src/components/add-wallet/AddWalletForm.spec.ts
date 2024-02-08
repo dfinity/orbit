@@ -3,7 +3,7 @@ import { mount } from '~/test.utils';
 import AddWalletForm from './AddWalletForm.vue';
 import { flushPromises } from '@vue/test-utils';
 import { User } from '~/generated/control-panel/control_panel.did';
-import { services } from '~/modules/services.module';
+import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 

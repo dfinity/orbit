@@ -92,7 +92,7 @@ import { mdiAccountGroupOutline, mdiShieldLockOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import PageLayout from '~/components/PageLayout.vue';
 import { logger } from '~/core/logger.core';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { afterLoginRedirect } from '~/utils/app.utils';

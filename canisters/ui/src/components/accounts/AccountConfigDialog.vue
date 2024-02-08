@@ -39,7 +39,7 @@
 import { mdiClose } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { Account } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import AccountForm from './AccountForm.vue';
 

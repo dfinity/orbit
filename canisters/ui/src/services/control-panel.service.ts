@@ -10,7 +10,7 @@ import {
   UserWallet,
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
-import { Maybe } from '~/types/utils.types';
+import { Maybe } from '~/types/helper.types';
 
 export class ControlPanelService {
   private actor: ActorSubclass<_SERVICE>;

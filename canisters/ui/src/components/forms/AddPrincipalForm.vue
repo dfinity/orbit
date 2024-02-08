@@ -13,7 +13,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import { VFormValidation } from '~/types/utils.types';
+import { VFormValidation } from '~/types/helper.types';
 import { requiredRule, validPrincipalRule } from '~/utils/form.utils';
 
 const form = ref<VFormValidation | null>(null);

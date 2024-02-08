@@ -3,9 +3,9 @@ import { en as designSystemFallbackMessages } from 'vuetify/locale';
 import { Locale } from '~/configs/i18n.config';
 import { appInitConfig } from '~/configs/init.config';
 import { logger } from '~/core/logger.core';
-import { i18n } from '~/modules/i18n.module';
-import { services } from '~/modules/services.module';
-import { fetchDesignSystemLocale } from '~/modules/vuetify.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { services } from '~/plugins/services.plugin';
+import { fetchDesignSystemLocale } from '~/plugins/vuetify.plugin';
 import { useSessionStore } from '~/stores/session.store';
 import { GlobalNotification, SupportedTheme } from '~/types/app.types';
 

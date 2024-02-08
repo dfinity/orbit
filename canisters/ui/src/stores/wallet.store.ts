@@ -11,12 +11,12 @@ import {
   UserPrivilege,
   WalletAsset,
 } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
-import { services } from '~/modules/services.module';
+import { i18n } from '~/plugins/i18n.plugin';
+import { services } from '~/plugins/services.plugin';
 import { WalletService } from '~/services/wallet.service';
 import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
-import { LoadableItem } from '~/types/utils.types';
+import { LoadableItem } from '~/types/helper.types';
 import { computedWalletName, redirectToWalletSettings } from '~/utils/app.utils';
 import { startWalletWorkers, stopWalletWorkers } from '~/workers';
 

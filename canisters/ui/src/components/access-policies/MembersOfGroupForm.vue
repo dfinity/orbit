@@ -28,7 +28,7 @@
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
-import { VFormValidation } from '~/types/utils.types';
+import { VFormValidation } from '~/types/helper.types';
 
 const form = ref<VFormValidation | null>(null);
 const userGroupsAutocomplete = useUserGroupsAutocomplete();

@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { logger } from '~/core/logger.core';
 import { Account, AccountPolicies, Proposal, UUID } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useWalletStore } from '~/stores/wallet.store';
-import { FormValidationRules } from '~/types/utils.types';
+import { FormValidationRules } from '~/types/helper.types';
 import {
   maxLengthRule,
   requiredRule,

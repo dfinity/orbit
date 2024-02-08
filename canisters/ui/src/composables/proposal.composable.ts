@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import { logger } from '~/core/logger.core';
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { Privilege } from '~/types/auth.types';
 import { ProposalDomains, ProposalStatusEnum } from '~/types/wallet.types';

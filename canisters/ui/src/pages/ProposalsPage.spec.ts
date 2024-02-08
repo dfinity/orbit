@@ -1,13 +1,13 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { ListProposalsResult } from '~/generated/wallet/wallet.did';
-import { serviceManager } from '~/modules/services.module';
+import { serviceManager } from '~/plugins/services.plugin';
 import { WalletService } from '~/services/wallet.service';
 import { mount } from '~/test.utils';
-import { ExtractOk } from '~/types/utils.types';
+import { ExtractOk } from '~/types/helper.types';
 import ProposalsPage from './ProposalsPage.vue';
 
-vi.mock('~/services/WalletService', () => {
+vi.mock('~/services/wallet.service', () => {
   const mock: Partial<WalletService> = {
     withWalletId: vi.fn().mockReturnThis(),
     listProposals: vi.fn().mockReturnThis(),

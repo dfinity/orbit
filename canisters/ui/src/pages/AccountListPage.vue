@@ -56,7 +56,7 @@ import { computed, ref } from 'vue';
 import PageLayout from '~/components/PageLayout.vue';
 import AddAccountBtn from '~/components/accounts/AddAccountBtn.vue';
 import { Routes } from '~/configs/routes.config';
-import { i18n } from '~/modules/i18n.module';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useWalletStore } from '~/stores/wallet.store';
 import { copyToClipboard } from '~/utils/app.utils';
 import { formatBalance } from '~/utils/helper.utils';

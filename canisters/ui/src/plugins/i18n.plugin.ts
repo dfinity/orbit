@@ -6,7 +6,7 @@ import { appInitConfig } from '~/configs/init.config';
 import en from '~/locales/en.locale';
 import { useAppStore } from '~/stores/app.store';
 import { AppTranslations } from '~/types/app.types';
-import { services } from './services.module';
+import { services } from './services.plugin';
 
 // i18n is used for internationalization, please refer to the documentation at https://vue-i18n.intlify.dev/
 const i18n = createI18n({

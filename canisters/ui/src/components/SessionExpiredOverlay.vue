@@ -18,7 +18,7 @@
 import { ref } from 'vue';
 import { VCardText, VDialog } from 'vuetify/components';
 import { useUserActivity } from '~/composables/user-activity.composable';
-import { services } from '~/modules/services.module';
+import { services } from '~/plugins/services.plugin';
 import { useSessionStore } from '~/stores/session.store';
 
 const session = useSessionStore();
