@@ -19,4 +19,3 @@ export enum Routes {
 
 export const defaultLoginRoute = Routes.Login;
 export const defaultHomeRoute = Routes.Accounts;
-
