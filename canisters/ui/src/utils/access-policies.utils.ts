@@ -1,4 +1,3 @@
-import { variantIs } from '~/core';
 import {
   CanisterSettingsActionSpecifier,
   ChangeCanisterActionSpecifier,
@@ -7,6 +6,7 @@ import {
   ProposalActionSpecifier,
   TransferActionSpecifier,
 } from '~/generated/wallet/wallet.did';
+import { variantIs } from '~/utils/helper.utils';
 
 /**
  * Checks if `a` is contained in `b`

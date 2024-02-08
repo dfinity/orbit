@@ -20,8 +20,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "lint": "concurrently -n prettier,eslint \"prettier --ignore-path ../../.prettierignore --check .\" \"eslint --ext .js,.vue,.ts,.cjs .\"",
-    "format": "concurrently -n prettier,eslint \"prettier --ignore-path ../../.prettierignore --write .\" \"eslint --ext .js,.vue,.ts,.cjs --fix .\"",
-    "generate": "didc bind --target ts ../control-panel/spec.did"
+    "format": "concurrently -n prettier,eslint \"prettier --ignore-path ../../.prettierignore --write .\" \"eslint --ext .js,.vue,.ts,.cjs --fix .\""
   },
   "dependencies": {
     "@dfinity/agent": "0.20.2",

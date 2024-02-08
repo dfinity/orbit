@@ -1,8 +1,9 @@
 import { Principal } from '@dfinity/principal';
-import { logger, timer, unreachable } from '~/core';
-import { icAgent } from '~/core/ic-agent';
+import { icAgent } from '~/core/ic-agent.core';
+import { logger } from '~/core/logger.core';
 import { Account } from '~/generated/wallet/wallet.did';
-import { WalletService } from '~/services';
+import { WalletService } from '~/services/wallet.service';
+import { timer, unreachable } from '~/utils/helper.utils';
 
 const DEFAULT_POOL_INTERVAL_MS = 5000;
 const BALANCES_OUTDATED_THRESHOLD_MS = 15000;
@@ -54,7 +55,7 @@ class AccountsWorkerImpl {
   private timer: NodeJS.Timeout | null = null;
   private enabled: boolean = false;
 
-  constructor(private walletService: WalletService = new WalletService()) {}
+  constructor(private walletService: WalletService = new WalletService(icAgent.get())) {}
 
   static register(): void {
     if (typeof navigator === 'undefined') {

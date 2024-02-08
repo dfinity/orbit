@@ -1,4 +1,3 @@
-import { variantIs } from '~/core';
 import { AccessPolicy, ResourceSpecifier, UUID } from '~/generated/wallet/wallet.did';
 import {
   AggregatedResouceAccessPolicies,
@@ -13,6 +12,7 @@ import {
   isProposalActionSpecifier,
   isTransferActionSpecifier,
 } from '~/utils/access-policies.utils';
+import { variantIs } from '~/utils/helper.utils';
 
 export const defaultUserSpecifiers = (): ResourceAccessUserSpecifiers => ({
   allUsers: { policy: { id: null, canEdit: false, canRemove: false } },

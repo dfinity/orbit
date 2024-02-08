@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = !isDevelopment;
   mode = isProduction ? 'production' : 'development';
   const localesPath = resolve(__dirname, 'src/locales');
-  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.ts'));
+  const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.locale.ts'));
   const canisters = resolveCanisterIds();
 
   return {
@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
 
             if (
               folder.includes('/src/locales') &&
-              supportedLocales.some(locale => resolve(folder, `${locale}.ts`) === id)
+              supportedLocales.some(locale => resolve(folder, `${locale}.locale.ts`) === id)
             ) {
               const [localeName] = basename(id).split('.');
               return `locale-${localeName}`;

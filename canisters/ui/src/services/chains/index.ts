@@ -1,6 +1,6 @@
 import { Account } from '~/generated/wallet/wallet.did';
-import { ICNativeApi } from './ICNativeApi';
-import { BlockchainStandard, BlockchainType, ChainApi } from '~/types/chain';
+import { BlockchainStandard, BlockchainType, ChainApi } from '~/types/chain.types';
+import { ICNativeApi } from './ic-native-api.service';
 
 export class ChainApiFactory {
   static create(account: Account): ChainApi {

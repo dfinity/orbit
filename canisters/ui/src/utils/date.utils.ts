@@ -47,3 +47,22 @@ export function convertDate(
 
   return tz === 'local' ? new Date(dt.getTime() + dt.getTimezoneOffset() * 60000) : dt;
 }
+
+export const parseDate = (raw: string): Date => {
+  const date = Date.parse(raw);
+
+  if (isNaN(date)) {
+    throw new Error(`Invalid date: ${date}`);
+  }
+
+  return new Date(date);
+};
+
+export function nanoToJsDate(nanoTimestamp: bigint): Date {
+  // Convert BigInt to milliseconds by dividing by 1 million
+  const milliTimestamp = nanoTimestamp / BigInt(1000000);
+
+  // Convert to number type as JavaScript's Date constructor expects a number for milliseconds
+  const jsDate = new Date(Number(milliTimestamp));
+  return jsDate;
+}
