@@ -13,7 +13,7 @@ const i18n = createI18n({
   // Vuetify does not support legacy mode of vue i18n
   legacy: false,
   locale: services().locales.resolveUserLocale(),
-  fallbackLocale: appInitConfig.locale.default,
+  fallbackLocale: appInitConfig.locale.default || Locale.EN,
   globalInjection: true,
   messages: {
     [Locale.EN]: {

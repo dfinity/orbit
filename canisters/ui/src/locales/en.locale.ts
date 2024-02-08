@@ -192,7 +192,7 @@ export default {
     load_error: 'Failed to load wallets information, please try again.',
     load_error_withdraw_requests: 'Failed to load withdraw requests.',
     wallet_nr_title: '#{nr} Wallet',
-    no_wallets: 'No wallets avalable.',
+    no_wallets: 'No wallets available.',
     user_load_error: 'Failed to load your wallet user.',
     no_wallet_user: 'No wallet user',
     please_register_to_continue: 'Please register with a wallet to continue',

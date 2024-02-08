@@ -10,7 +10,6 @@
     hide-details
     bg-color="background"
     item-value="canisterId"
-    :no-data-text="$t('wallets.no_wallets')"
     :items="allWallets"
   >
     <template #item="{ props, item }">
@@ -26,7 +25,7 @@
         :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :prepend-icon="mdiWallet"
       />
-      <VListItem v-else :title="$t('wallets.no_wallets')" :prepend-icon="mdiWallet" />
+      <VListItem v-else :title="noWalletSelectedText" :prepend-icon="mdiWallet" />
     </template>
 
     <template #append-item>
@@ -38,6 +37,7 @@
 import { Principal } from '@dfinity/principal';
 import { mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { computedWalletName } from '~/utils/app.utils';
@@ -45,8 +45,11 @@ import AddWalletListItem from './add-wallet/AddWalletListItem.vue';
 
 const session = useSessionStore();
 const app = useAppStore();
+const i18n = useI18n();
 
 const allWallets = computed(() => session.data.wallets);
+
+const noWalletSelectedText = computed(() => i18n.t('wallets.no_wallets'));
 
 const selectedWallet = computed({
   get(): string | null {
