@@ -59,5 +59,4 @@ import WalletInfoCard from '~/components/settings/WalletInfoCard.vue';
 import { Routes } from '~/configs/routes.config';
 import { Privilege } from '~/types/auth.types';
 import { ProposalDomains } from '~/types/wallet.types';
-import { hasRequiredPrivilege } from '~/utils/auth.utils';
 </script>

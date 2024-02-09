@@ -115,8 +115,6 @@ impl WalletService {
                         NNS_ROOT_CANISTER_ID,
                     ])
                     .await;
-
-                    config.upgrader_canister_id = upgrader_canister_id;
                 }
 
                 install_canister_handlers::add_new_owners(new_owners).await;
@@ -214,7 +212,7 @@ impl WalletService {
         if let Err(err) = self
             .change_canister_service
             .update_change_canister_proposal_status(
-                &mut config,
+                &config,
                 ProposalStatus::Completed {
                     completed_at: time(),
                 },
