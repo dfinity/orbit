@@ -17,5 +17,7 @@ pub struct ChangeCanisterOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ChangeCanisterOperationDTO {
-    pub input: ChangeCanisterOperationInput,
+    pub target: ChangeCanisterTargetDTO,
+    pub checksum: Vec<u8>,
+    pub arg: Option<Vec<u8>>,
 }

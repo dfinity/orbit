@@ -12,6 +12,7 @@ use async_trait::async_trait;
 use candid::Encode;
 use ic_canister_core::types::UUID;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use sha2::{Digest, Sha256};
 use wallet_api::{ChangeCanisterOperationInput, CreateProposalInput};
 
 pub struct ChangeCanisterProposalCreate;
@@ -28,6 +29,11 @@ impl Create<ChangeCanisterOperationInput> for ChangeCanisterProposalCreate {
             proposed_by_user,
             Proposal::default_expiration_dt_ns(),
             ProposalOperation::ChangeCanister(ChangeCanisterOperation {
+                arg_checksum: operation_input.arg.as_ref().map(|arg| {
+                    let mut hasher = Sha256::new();
+                    hasher.update(arg);
+                    hasher.finalize().to_vec()
+                }),
                 input: operation_input.into(),
             }),
             input

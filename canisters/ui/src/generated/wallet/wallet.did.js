@@ -315,7 +315,9 @@ export const idlFactory = ({ IDL }) => {
     'policy' : IDL.Opt(ProposalPolicy),
   });
   const ChangeCanisterOperation = IDL.Record({
-    'input' : ChangeCanisterOperationInput,
+    'target' : ChangeCanisterTarget,
+    'arg_checksum' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'checksum' : IDL.Vec(IDL.Nat8),
   });
   const EditProposalPolicyOperation = IDL.Record({
     'input' : EditProposalPolicyOperationInput,

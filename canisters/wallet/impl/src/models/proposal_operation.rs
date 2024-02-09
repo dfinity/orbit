@@ -225,6 +225,7 @@ pub struct ChangeCanisterOperationInput {
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ChangeCanisterOperation {
+    pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeCanisterOperationInput,
 }
 
