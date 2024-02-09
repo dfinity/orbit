@@ -5,6 +5,7 @@ use ic_canister_macros::stable_object;
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct UpgradeParams {
     pub module: Vec<u8>,
+    pub arg: Vec<u8>,
     pub checksum: Vec<u8>,
 }
 

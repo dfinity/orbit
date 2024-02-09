@@ -28,6 +28,7 @@ pub struct ChangeCanisterService {
 #[derive(Clone, CandidType)]
 struct ChangeCanisterParams {
     module: Vec<u8>,
+    arg: Vec<u8>,
     checksum: Vec<u8>,
 }
 
@@ -37,7 +38,12 @@ impl ChangeCanisterService {
     }
 
     /// Execute an upgrade of the wallet by requesting the upgrader to perform it on our behalf.
-    pub async fn upgrade_wallet(&self, module: &[u8], checksum: &[u8]) -> ServiceResult<()> {
+    pub async fn upgrade_wallet(
+        &self,
+        module: &[u8],
+        arg: &[u8],
+        checksum: &[u8],
+    ) -> ServiceResult<()> {
         let upgrader_canister_id = upgrader_canister_id();
 
         ic_cdk::call(
@@ -45,6 +51,7 @@ impl ChangeCanisterService {
             "trigger_upgrade",
             (ChangeCanisterParams {
                 module: module.to_owned(),
+                arg: arg.to_owned(),
                 checksum: checksum.to_owned(),
             },),
         )
