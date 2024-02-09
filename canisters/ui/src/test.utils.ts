@@ -74,3 +74,30 @@ export const setupComponent = <Props, RawBindings>(
 export function createMockRef<T>(value: T): Ref<T> {
   return { value } as Ref<T>;
 }
+
+export function mockFileReader(result: ArrayBuffer, errorOut: boolean = false): typeof FileReader {
+  return class MockFileReader {
+    result?: ArrayBuffer = result;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onload: any = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onerror: any | null = null;
+
+    readAsArrayBuffer(_file: File): void {
+      this.result = result;
+
+      if (errorOut) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTimeout(() => this.onerror?.(new ProgressEvent('error')));
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTimeout(() => this.onload?.(new ProgressEvent('load', { target: this } as any)));
+      }
+    }
+
+    // Mimicking static properties of the FileReader
+    static EMPTY = 0;
+    static LOADING = 1;
+    static DONE = 2;
+  } as unknown as typeof FileReader;
+}

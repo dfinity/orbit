@@ -15,7 +15,7 @@
   >
     <template #default="{ model: elem, submit }">
       <ChangeCanisterForm
-        :model-value="(elem.value.modelValue as ChangeCanisterFormProps['modelValue'])"
+        :model-value="elem.value.modelValue as ChangeCanisterFormProps['modelValue']"
         @update:model-value="elem.value.modelValue = $event"
         @valid="elem.value.valid = $event"
         @submit="submit"
@@ -48,6 +48,8 @@ import {
 } from '~/composables/notifications.composable';
 import { Proposal } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
+import { hexStringToArrayBuffer } from '~/utils/crypto.utils';
+import { readFileAsArrayBuffer } from '~/utils/file.utils';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const wallet = useWalletStore();
@@ -56,19 +58,21 @@ const upgradeModel = ref<ChangeCanisterFormProps>({
   modelValue: {
     target: null,
     wasmModule: undefined,
-    canister: null,
     arg: null,
   },
   valid: false,
 });
 
 const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Proposal> => {
-  const canister = assertAndReturn(model.canister, 'model.canister');
+  const wasmModule = assertAndReturn(model.wasmModule?.[0], 'model.wasmModule is required');
+  const fileBuffer = await readFileAsArrayBuffer(wasmModule);
+  const checksum = await crypto.subtle.digest('SHA-256', fileBuffer);
 
   return wallet.service.changeCanister({
-    arg: canister.args ? [canister.args] : [],
-    checksum: canister.hash.byteArray,
-    module: canister.wasm,
+    arg:
+      model.arg && model.arg.length > 0 ? [new Uint8Array(hexStringToArrayBuffer(model.arg))] : [],
+    checksum: new Uint8Array(checksum),
+    module: new Uint8Array(fileBuffer),
     target: assertAndReturn(model.target),
   });
 };

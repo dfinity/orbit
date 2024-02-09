@@ -2,6 +2,7 @@
   <VForm ref="form" @submit.prevent="submit">
     <VSelect
       v-model="upgradeTarget"
+      name="target"
       :items="upgradeTargetItems"
       :label="$t('app.canister_upgrade_target')"
       :prepend-icon="mdiTarget"
@@ -10,18 +11,20 @@
 
     <VFileInput
       v-model="modelValue.wasmModule"
+      name="wasm"
       :label="$t('app.canister_wasm_module')"
       :rules="[requiredRule]"
       :prepend-icon="mdiCube"
       variant="underlined"
     >
-      <template v-if="modelValue.canister" #counter>
-        {{ $t('terms.checksum') }}: {{ modelValue.canister.hash.hex }}
+      <template v-if="moduleChecksum" #counter>
+        {{ $t('terms.checksum') }}: {{ moduleChecksum }}
       </template>
     </VFileInput>
 
     <VTextarea
       v-model="modelValue.arg"
+      name="arg"
       :label="$t(`app.canister_upgrade_args_input`)"
       :prepend-icon="mdiMessageText"
       :hint="$t(`app.canister_upgrade_args_input_hint`)"
@@ -31,22 +34,20 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import { VFormValidation } from '~/types/helper.types';
-import { requiredRule } from '~/utils/form.utils';
-import { readFileAsArrayBuffer } from '~/utils/file.utils';
-import { arrayBufferToHashHex, hexStringToArrayBuffer } from '~/utils/crypto.utils';
-import { CanisterModule } from '~/types/ic.types';
-import { ChangeCanisterTarget } from '~/generated/wallet/wallet.did';
 import { mdiCube, mdiMessageText, mdiTarget } from '@mdi/js';
-import { ChangeCanisterTargetType } from '~/types/wallet.types';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { ChangeCanisterTarget } from '~/generated/wallet/wallet.did';
+import { VFormValidation } from '~/types/helper.types';
+import { ChangeCanisterTargetType } from '~/types/wallet.types';
+import { arrayBufferToHashHex } from '~/utils/crypto.utils';
+import { readFileAsArrayBuffer } from '~/utils/file.utils';
+import { requiredRule } from '~/utils/form.utils';
 
 export type ChangeCanisterFormProps = {
   modelValue: {
     target: ChangeCanisterTarget | null;
     wasmModule: File[] | undefined;
-    canister: CanisterModule | null;
     arg: string | null;
   };
   valid?: boolean;
@@ -68,6 +69,7 @@ const upgradeTargetItems = computed(() => [
 
 const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+const moduleChecksum = ref<string | null>(null);
 
 const props = withDefaults(defineProps<ChangeCanisterFormProps>(), {
   valid: true,
@@ -122,30 +124,19 @@ const updateComputedCanisterModule = async (): Promise<void> => {
     const file = modelValue.value.wasmModule[0];
     const fileBuffer = await readFileAsArrayBuffer(file);
     const hash = await crypto.subtle.digest('SHA-256', fileBuffer);
-    const hashHex = await arrayBufferToHashHex(fileBuffer);
+    const hashHex = await arrayBufferToHashHex(hash);
 
-    modelValue.value.canister = {
-      wasm: new Uint8Array(fileBuffer),
-      hash: {
-        byteArray: new Uint8Array(hash),
-        hex: hashHex,
-      },
-      args:
-        modelValue.value.arg && modelValue.value.arg.length > 0
-          ? new Uint8Array(hexStringToArrayBuffer(modelValue.value.arg))
-          : undefined,
-    };
-
+    moduleChecksum.value = hashHex;
     return;
   }
 
-  modelValue.value.canister = null;
+  moduleChecksum.value = null;
 };
 
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
-  if (valid && modelValue.value.canister) {
+  if (valid) {
     emit('submit', modelValue.value);
   }
 };

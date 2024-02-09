@@ -20,7 +20,9 @@
                   :types="[{ ChangeCanister: null }]"
                 >
                   <template #top-actions>
-                    <ChangeCanisterActionBtn class="mr-2" />
+                    <AuthCheck :privileges="[Privilege.UpgradeCanister]">
+                      <ChangeCanisterActionBtn class="mr-2" />
+                    </AuthCheck>
                     <VBtn
                       variant="tonal"
                       size="small"
