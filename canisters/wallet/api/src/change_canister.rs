@@ -19,5 +19,5 @@ pub struct ChangeCanisterOperationInput {
 pub struct ChangeCanisterOperationDTO {
     pub target: ChangeCanisterTargetDTO,
     pub checksum: Vec<u8>,
-    pub arg: Option<Vec<u8>>,
+    pub arg_checksum: Option<Vec<u8>>,
 }

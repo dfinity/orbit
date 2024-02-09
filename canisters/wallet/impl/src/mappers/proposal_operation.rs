@@ -340,7 +340,7 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
         ChangeCanisterOperationDTO {
             target: operation.input.target.into(),
             checksum: operation.input.checksum,
-            arg: operation.arg_checksum,
+            arg_checksum: operation.arg_checksum,
         }
     }
 }
