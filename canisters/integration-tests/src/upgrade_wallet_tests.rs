@@ -66,9 +66,9 @@ fn successful_wallet_upgrade() {
     let wallet_upgrade_operation =
         ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
             target: ChangeCanisterTargetDTO::UpgradeWallet,
-            module: wallet_wasm,
+            module: wallet_wasm.clone(),
             arg: Some(wallet_init_arg_bytes),
-            checksum: wallet_wasm_hash,
+            checksum: wallet_wasm_hash.clone(),
         });
     let wallet_upgrade_proposal = submit_proposal(
         &env,
@@ -98,4 +98,34 @@ fn successful_wallet_upgrade() {
     let new_wallet_owners = get_wallet_owners(&env, WALLET_ADMIN_USER, canister_ids.wallet);
     assert_eq!(new_wallet_owners.len(), 1);
     assert!(new_wallet_owners.contains(&WALLET_ADMIN_USER));
+
+    // submit one more wallet upgrade proposal with no changes
+    let wallet_upgrade_operation =
+        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+            target: ChangeCanisterTargetDTO::UpgradeWallet,
+            module: wallet_wasm,
+            arg: None,
+            checksum: wallet_wasm_hash,
+        });
+    let wallet_upgrade_proposal = submit_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        wallet_upgrade_operation,
+    );
+    // extra ticks are necessary to prevent polling on the proposal status
+    // before the wallet canister is upgraded and running
+    wait_for_proposal_with_extra_ticks(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        wallet_upgrade_proposal,
+        10,
+    )
+    .unwrap();
+
+    // check the wallet owners remain the same
+    let same_wallet_owners = get_wallet_owners(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    assert_eq!(same_wallet_owners.len(), 1);
+    assert!(same_wallet_owners.contains(&WALLET_ADMIN_USER));
 }
