@@ -1493,7 +1493,7 @@ type UserPrivilege = variant {
   AddProposalPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
-  UpgradeCanister;
+  ChangeCanister;
   ListProposals;
 };
 

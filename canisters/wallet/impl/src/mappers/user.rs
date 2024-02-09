@@ -104,7 +104,7 @@ pub const USER_PRIVILEGES: [UserPrivilege; 14] = [
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
-    UserPrivilege::UpgradeCanister,
+    UserPrivilege::ChangeCanister,
     UserPrivilege::ListProposals,
 ];
 
@@ -148,7 +148,7 @@ impl From<UserPrivilege> for ResourceSpecifier {
             UserPrivilege::AddAddressBookEntry => {
                 ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::Create)
             }
-            UserPrivilege::UpgradeCanister => {
+            UserPrivilege::ChangeCanister => {
                 ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
             }
             UserPrivilege::ListProposals => {

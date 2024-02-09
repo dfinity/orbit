@@ -91,7 +91,7 @@ pub enum UserPrivilege {
     AddProposalPolicy,
     ListAddressBookEntries,
     AddAddressBookEntry,
-    UpgradeCanister,
+    ChangeCanister,
     ListProposals,
 }
 
