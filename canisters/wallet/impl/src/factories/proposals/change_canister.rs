@@ -9,6 +9,7 @@ use crate::{
     services::CHANGE_CANISTER_SERVICE,
 };
 use async_trait::async_trait;
+use candid::Encode;
 use ic_canister_core::types::UUID;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use wallet_api::{ChangeCanisterOperationInput, CreateProposalInput};
@@ -65,8 +66,14 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
                     ..canister_config()
                 });
 
+                let default_arg = Encode!(&()).unwrap();
+                let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
                 let out = CHANGE_CANISTER_SERVICE
-                    .upgrade_wallet(&self.operation.input.module, &self.operation.input.checksum)
+                    .upgrade_wallet(
+                        &self.operation.input.module,
+                        arg,
+                        &self.operation.input.checksum,
+                    )
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {
                         reason: format!("failed to upgrade wallet: {}", err),
