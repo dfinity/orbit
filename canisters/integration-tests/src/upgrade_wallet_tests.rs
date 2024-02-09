@@ -1,5 +1,8 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{execute_proposal_with_extra_ticks, get_wallet_owners, user_test_id};
+use crate::utils::{
+    execute_proposal_with_extra_ticks, get_wallet_owners, submit_proposal, user_test_id,
+    vote_on_proposal, wait_for_proposal_with_extra_ticks,
+};
 use crate::TestEnv;
 use candid::Encode;
 use sha2::{Digest, Sha256};
@@ -25,7 +28,7 @@ fn successful_wallet_upgrade() {
     assert_eq!(wallet_owners.len(), 1);
     assert!(wallet_owners.contains(&WALLET_ADMIN_USER));
 
-    // submit wallet upgrade proposal settings a new wallet owner
+    // submit wallet upgrade proposal setting a new wallet owner
     let user_id = user_test_id(0);
     let wallet_init_arg = WalletInstall::Upgrade(WalletUpgrade {
         owners: Some(vec![WALLET_ADMIN_USER, user_id]),
@@ -34,9 +37,9 @@ fn successful_wallet_upgrade() {
     let wallet_upgrade_operation =
         ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
             target: ChangeCanisterTargetDTO::UpgradeWallet,
-            module: wallet_wasm,
+            module: wallet_wasm.clone(),
             arg: Some(wallet_init_arg_bytes),
-            checksum: wallet_wasm_hash,
+            checksum: wallet_wasm_hash.clone(),
         });
     // extra ticks are necessary to prevent polling on the proposal status
     // before the wallet canister is upgraded and running
@@ -54,4 +57,45 @@ fn successful_wallet_upgrade() {
     assert_eq!(new_wallet_owners.len(), 2);
     assert!(new_wallet_owners.contains(&WALLET_ADMIN_USER));
     assert!(new_wallet_owners.contains(&user_id));
+
+    // submit one more wallet upgrade proposal unsetting the new wallet owner
+    let wallet_init_arg = WalletInstall::Upgrade(WalletUpgrade {
+        owners: Some(vec![WALLET_ADMIN_USER]),
+    });
+    let wallet_init_arg_bytes = Encode!(&wallet_init_arg).unwrap();
+    let wallet_upgrade_operation =
+        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+            target: ChangeCanisterTargetDTO::UpgradeWallet,
+            module: wallet_wasm,
+            arg: Some(wallet_init_arg_bytes),
+            checksum: wallet_wasm_hash,
+        });
+    let wallet_upgrade_proposal = submit_proposal(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        wallet_upgrade_operation,
+    );
+    vote_on_proposal(
+        &env,
+        user_id,
+        canister_ids.wallet,
+        wallet_upgrade_proposal.clone(),
+        true,
+    );
+    // extra ticks are necessary to prevent polling on the proposal status
+    // before the wallet canister is upgraded and running
+    wait_for_proposal_with_extra_ticks(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        wallet_upgrade_proposal,
+        10,
+    )
+    .unwrap();
+
+    // check the new wallet owners
+    let new_wallet_owners = get_wallet_owners(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    assert_eq!(new_wallet_owners.len(), 1);
+    assert!(new_wallet_owners.contains(&WALLET_ADMIN_USER));
 }
