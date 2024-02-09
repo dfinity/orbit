@@ -744,7 +744,7 @@ export const idlFactory = ({ IDL }) => {
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
-    'UpgradeCanister' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
     'ListProposalPolicies' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,

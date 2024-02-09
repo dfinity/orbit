@@ -12,7 +12,7 @@ export enum Privilege {
   ListAddressBookEntries = 'ListAddressBookEntries',
   AddAddressBookEntry = 'AddAddressBookEntry',
   ListProposals = 'ListProposals',
-  UpgradeCanister = 'UpgradeCanister',
+  ChangeCanister = 'ChangeCanister',
 }
 
 export enum RequiredSessionState {

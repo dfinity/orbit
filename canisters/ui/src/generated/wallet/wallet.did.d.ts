@@ -649,7 +649,7 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
   { 'AddProposalPolicy' : null } |
-  { 'UpgradeCanister' : null } |
+  { 'ChangeCanister' : null } |
   { 'ListProposalPolicies' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
