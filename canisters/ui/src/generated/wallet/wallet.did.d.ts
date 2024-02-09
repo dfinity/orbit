@@ -642,10 +642,12 @@ export interface User {
 export interface UserGroup { 'id' : UserGroupId, 'name' : string }
 export type UserGroupId = UUID;
 export type UserPrivilege = { 'AddUserGroup' : null } |
+  { 'ListProposals' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
   { 'AddProposalPolicy' : null } |
+  { 'UpgradeCanister' : null } |
   { 'ListProposalPolicies' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |

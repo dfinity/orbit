@@ -1,7 +1,7 @@
 use crate::models::{
     access_control::{
-        CanisterSettingsActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
-        ResourceSpecifier, ResourceType, UserSpecifier,
+        CanisterSettingsActionSpecifier, ChangeCanisterActionSpecifier, CommonActionSpecifier,
+        ProposalActionSpecifier, ResourceSpecifier, ResourceType, UserSpecifier,
     },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier as ProposalUserSpecifier},
@@ -182,8 +182,14 @@ lazy_static! {
                 CommonActionSpecifier::Create,
             ),
         ),
+        // change canister
+        (
+            UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+            ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create),
+        ),
     ];
     pub static ref DEFAULT_PROPOSAL_POLICIES: Vec<(ProposalSpecifier, Criteria)> = vec![
+        // accounts
         (
             ProposalSpecifier::AddAccount,
             Criteria::And(vec![Criteria::ApprovalThreshold(
@@ -191,6 +197,7 @@ lazy_static! {
                 Percentage(51)
             )])
         ),
+        // users
         (
             ProposalSpecifier::AddUser,
             Criteria::And(vec![Criteria::ApprovalThreshold(

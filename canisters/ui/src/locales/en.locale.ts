@@ -34,6 +34,17 @@ export default {
       'Use with caution. The principal will be able to login as the user and perform actions on their behalf.',
     export_csv: 'Export CSV',
     params_parse_error: 'Failed to parse parameters, please try again.',
+    submit_upgrade: 'Submit upgrade',
+    canister_upgrade_target: 'Upgrade Target',
+    canister_wasm_module: 'Canister Wasm Module',
+    canister_upgrade_args_input: 'Upgrade arguments (optional)',
+    canister_upgrade_args_input_hint: 'Only hex encoded arguments are accepted',
+  },
+  change_canister: {
+    targets: {
+      upgradewallet: 'Wallet',
+      upgradeupgrader: 'Upgrader',
+    },
   },
   proposals: {
     proposed_by: 'Proposed by {name}',
@@ -244,6 +255,7 @@ export default {
     see_all: 'See All',
     requests: 'Requests',
     cancel: 'Cancel',
+    checksum: 'Checksum',
     rejected: 'Rejected',
     edit: 'Edit',
     destination_address: 'Destination address',

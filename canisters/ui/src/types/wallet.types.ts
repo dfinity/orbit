@@ -91,3 +91,8 @@ export interface ListAccountsArgs {
   offset?: number;
   searchTerm?: string;
 }
+
+export enum ChangeCanisterTargetType {
+  UpgradeWallet = 'UpgradeWallet',
+  UpgradeUpgrader = 'UpgradeUpgrader',
+}

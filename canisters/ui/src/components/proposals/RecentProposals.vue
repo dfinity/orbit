@@ -26,10 +26,12 @@
                   color="secondary"
                 />
               </VListItemTitle>
-              <template v-if="props.seeAllLink" #append>
-                <VBtn variant="tonal" size="small" :to="props.seeAllLink">
-                  {{ $t('terms.see_all') }}
-                </VBtn>
+              <template #append>
+                <slot name="top-actions">
+                  <VBtn v-if="props.seeAllLink" variant="tonal" size="small" :to="props.seeAllLink">
+                    {{ $t('terms.see_all') }}
+                  </VBtn>
+                </slot>
               </template>
             </VListItem>
             <VDivider

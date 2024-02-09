@@ -737,10 +737,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserPrivilege = IDL.Variant({
     'AddUserGroup' : IDL.Null,
+    'ListProposals' : IDL.Null,
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
+    'UpgradeCanister' : IDL.Null,
     'ListProposalPolicies' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,

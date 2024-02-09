@@ -12,29 +12,27 @@
     <template #main-body>
       <VContainer class="pl-8 pr-8" fluid>
         <VRow>
-          <AuthCheck :privileges="[Privilege.ListUsers]">
+          <AuthCheck :privileges="[Privilege.ListProposals]">
             <template #default>
               <VCol cols="12" md="8">
-                <AuthCheck :privileges="[Privilege.ListUsers]">
-                  <RecentProposals
-                    :title="$t(`app.user_activities_card_title`)"
-                    :see-all-link="{
-                      name: Routes.Proposals,
-                      query: { group_by: ProposalDomains.Users },
-                    }"
-                    :types="[{ AddUser: null }, { EditUser: null }]"
-                  />
-                </AuthCheck>
-
                 <RecentProposals
                   :title="$t(`app.wallet_upgrades_card_title`)"
-                  :see-all-link="{
-                    name: Routes.Proposals,
-                    query: { group_by: ProposalDomains.System },
-                  }"
                   :types="[{ ChangeCanister: null }]"
-                  class="mt-4"
-                />
+                >
+                  <template #top-actions>
+                    <ChangeCanisterActionBtn class="mr-2" />
+                    <VBtn
+                      variant="tonal"
+                      size="small"
+                      :to="{
+                        name: Routes.Proposals,
+                        query: { group_by: ProposalDomains.System },
+                      }"
+                    >
+                      {{ $t('terms.see_all') }}
+                    </VBtn>
+                  </template>
+                </RecentProposals>
               </VCol>
               <VCol cols="12" md="4">
                 <WalletInfoCard />
@@ -55,9 +53,11 @@
 <script lang="ts" setup>
 import AuthCheck from '~/components/AuthCheck.vue';
 import PageLayout from '~/components/PageLayout.vue';
+import ChangeCanisterActionBtn from '~/components/change-canister/ChangeCanisterActionBtn.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import WalletInfoCard from '~/components/settings/WalletInfoCard.vue';
 import { Routes } from '~/configs/routes.config';
 import { Privilege } from '~/types/auth.types';
 import { ProposalDomains } from '~/types/wallet.types';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
 </script>

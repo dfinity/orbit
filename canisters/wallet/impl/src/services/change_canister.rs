@@ -1,6 +1,6 @@
 use super::ProposalEditInput;
 use crate::{
-    core::{canister_config_mut, upgrader_canister_id, write_canister_config, CanisterConfig},
+    core::{upgrader_canister_id, CanisterConfig},
     errors::ChangeCanisterError,
     models::ProposalStatus,
     services::{ProposalService, PROPOSAL_SERVICE},
@@ -132,9 +132,9 @@ impl ChangeCanisterService {
     /// Verify and mark an upgrade as being performed successfully.
     pub async fn update_change_canister_proposal_status(
         &self,
+        cfg: &CanisterConfig,
         status: ProposalStatus,
     ) -> ServiceResult<()> {
-        let cfg = canister_config_mut();
         let proposal_id = cfg
             .change_canister_proposal
             .ok_or(ChangeCanisterError::MissingChangeCanisterProposal)?;
@@ -145,11 +145,6 @@ impl ChangeCanisterService {
                 status: Some(status),
             })
             .await?;
-
-        write_canister_config(CanisterConfig {
-            change_canister_proposal: None,
-            ..cfg
-        });
 
         Ok(())
     }

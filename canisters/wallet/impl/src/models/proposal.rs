@@ -158,18 +158,20 @@ impl Proposal {
     }
 
     pub async fn reevaluate(&mut self) -> Result<(), EvaluateError> {
-        let evaluator = ProposalEvaluator {
-            proposal: self.to_owned(),
-            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
-            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
-        };
+        if let ProposalStatus::Created = self.status {
+            let evaluator = ProposalEvaluator {
+                proposal: self.to_owned(),
+                proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+                criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+            };
 
-        let evaluation_status = evaluator.evaluate().await?;
+            let evaluation_status = evaluator.evaluate().await?;
 
-        if evaluation_status == EvaluationStatus::Adopted {
-            self.status = ProposalStatus::Adopted;
-        } else if evaluation_status == EvaluationStatus::Rejected {
-            self.status = ProposalStatus::Rejected;
+            if evaluation_status == EvaluationStatus::Adopted {
+                self.status = ProposalStatus::Adopted;
+            } else if evaluation_status == EvaluationStatus::Rejected {
+                self.status = ProposalStatus::Rejected;
+            }
         }
 
         Ok(())

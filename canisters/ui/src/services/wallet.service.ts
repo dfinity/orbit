@@ -7,6 +7,7 @@ import {
   AddAccessPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  ChangeCanisterOperationInput,
   Config,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
@@ -462,6 +463,21 @@ export class WalletService {
       title: [],
       summary: [],
       operation: { EditAccessPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async changeCanister(input: ChangeCanisterOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { ChangeCanister: input },
     });
 
     if (variantIs(result, 'Err')) {
