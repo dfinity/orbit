@@ -4,6 +4,7 @@ type InitArg = record {
 
 type UpgradeParams = record {
   module: blob;
+  arg: blob;
   checksum: blob;
 };
 

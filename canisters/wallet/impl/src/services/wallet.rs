@@ -106,6 +106,7 @@ impl WalletService {
                         vec![wallet_canister_id, NNS_ROOT_CANISTER_ID],
                     )
                     .await;
+                    config.upgrader_canister_id = upgrader_canister_id;
 
                     // sets the upgrader as a controller of the wallet canister
                     print("Updating canister settings to set the upgrader as the controller");

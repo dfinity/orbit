@@ -12,7 +12,7 @@ use wallet_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
     GetProposalInput, GetProposalResponse, MeResponse, ProposalDTO, ProposalExecutionScheduleDTO,
     ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO, UserDTO, UserStatusDTO,
-    VoteOnProposalInput, VoteOnProposalResponse,
+    VoteOnProposalInput, VoteOnProposalResponse, WalletSettingsResponse,
 };
 
 pub fn controller_test_id() -> Principal {
@@ -111,12 +111,25 @@ pub fn wait_for_proposal(
     wallet_canister_id: CanisterId,
     proposal: ProposalDTO,
 ) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
+    wait_for_proposal_with_extra_ticks(env, user_id, wallet_canister_id, proposal, 0)
+}
+
+pub fn wait_for_proposal_with_extra_ticks(
+    env: &PocketIc,
+    user_id: Principal,
+    wallet_canister_id: CanisterId,
+    proposal: ProposalDTO,
+    extra_ticks: u64,
+) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
     // wait for the proposal to be adopted (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
     // wait for the proposal to be processing (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
+    for _ in 0..extra_ticks {
+        env.tick();
+    }
     // wait for the proposal to be completed
     for _ in 0..100 {
         let new_proposal = get_proposal(env, user_id, wallet_canister_id, proposal.clone());
@@ -136,8 +149,24 @@ pub fn execute_proposal(
     wallet_canister_id: CanisterId,
     proposal_operation_input: ProposalOperationInput,
 ) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
+    execute_proposal_with_extra_ticks(
+        env,
+        user_id,
+        wallet_canister_id,
+        proposal_operation_input,
+        0,
+    )
+}
+
+pub fn execute_proposal_with_extra_ticks(
+    env: &PocketIc,
+    user_id: Principal,
+    wallet_canister_id: CanisterId,
+    proposal_operation_input: ProposalOperationInput,
+    extra_ticks: u64,
+) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
     let proposal = submit_proposal(env, user_id, wallet_canister_id, proposal_operation_input);
-    wait_for_proposal(env, user_id, wallet_canister_id, proposal)
+    wait_for_proposal_with_extra_ticks(env, user_id, wallet_canister_id, proposal, extra_ticks)
 }
 
 pub fn vote_on_proposal(
@@ -233,6 +262,21 @@ pub fn update_canister_settings(
         (args,),
     )
     .unwrap();
+}
+
+pub fn get_wallet_owners(
+    env: &PocketIc,
+    user_id: Principal,
+    wallet_canister_id: Principal,
+) -> Vec<Principal> {
+    let res: (ApiResult<WalletSettingsResponse>,) =
+        update_candid_as(env, wallet_canister_id, user_id, "wallet_settings", ((),)).unwrap();
+    let wallet_settings = res.0.unwrap().settings;
+    wallet_settings
+        .owners
+        .into_iter()
+        .flat_map(|u| u.identities)
+        .collect()
 }
 
 /// Call a canister candid update method, authenticated. The sender can be impersonated (i.e., the

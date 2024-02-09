@@ -10,6 +10,7 @@ mod interfaces;
 mod register_tests;
 mod setup;
 mod transfer_tests;
+mod upgrade_wallet_tests;
 mod utils;
 
 pub struct TestEnv {

@@ -176,7 +176,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     }
 }
 
-fn get_canister_wasm(canister_name: &str) -> Vec<u8> {
+pub(crate) fn get_canister_wasm(canister_name: &str) -> Vec<u8> {
     read_file_from_local_bin(&format!("{canister_name}.wasm.gz"))
 }
 

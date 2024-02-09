@@ -893,6 +893,7 @@ dependencies = [
  "lazy_static",
  "pocket-ic",
  "serde",
+ "sha2",
  "upgrader_api",
  "wallet_api",
 ]
