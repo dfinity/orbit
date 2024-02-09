@@ -38,6 +38,8 @@ fn successful_wallet_upgrade() {
             arg: Some(wallet_init_arg_bytes),
             checksum: wallet_wasm_hash,
         });
+    // extra ticks are necessary to prevent polling on the proposal status
+    // before the wallet canister is upgraded and running
     execute_proposal_with_extra_ticks(
         &env,
         WALLET_ADMIN_USER,
