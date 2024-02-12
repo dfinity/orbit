@@ -284,9 +284,10 @@ export type ListAccountsResult = {
   } |
   { 'Err' : Error };
 export interface ListAddressBookEntriesInput {
-  'blockchain' : string,
-  'paginate' : PaginationInput,
-  'standard' : string,
+  'ids' : [] | [Array<UUID>],
+  'addresses' : [] | [Array<string>],
+  'paginate' : [] | [PaginationInput],
+  'address_chain' : [] | [{ 'blockchain' : string, 'standard' : string }],
 }
 export type ListAddressBookEntriesResult = {
     'Ok' : {

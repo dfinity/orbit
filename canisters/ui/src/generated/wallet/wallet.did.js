@@ -571,9 +571,12 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ListAddressBookEntriesInput = IDL.Record({
-    'blockchain' : IDL.Text,
-    'paginate' : PaginationInput,
-    'standard' : IDL.Text,
+    'ids' : IDL.Opt(IDL.Vec(UUID)),
+    'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'paginate' : IDL.Opt(PaginationInput),
+    'address_chain' : IDL.Opt(
+      IDL.Record({ 'blockchain' : IDL.Text, 'standard' : IDL.Text })
+    ),
   });
   const ListAddressBookEntriesResult = IDL.Variant({
     'Ok' : IDL.Record({
