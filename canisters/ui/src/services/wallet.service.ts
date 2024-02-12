@@ -16,6 +16,7 @@ import {
   FetchAccountBalancesInput,
   GetAccountInput,
   GetProposalInput,
+  GetProposalPolicyResult,
   GetTransfersInput,
   GetUserInput,
   ListAccessPoliciesResult,
@@ -501,5 +502,30 @@ export class WalletService {
     }
 
     return result.Ok;
+  }
+
+  async getProposalPolicy(id: UUID): Promise<ExtractOk<GetProposalPolicyResult>> {
+    const result = await this.actor.get_proposal_policy({ id });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async removeProposalPolicy(id: UUID): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveProposalPolicy: { policy_id: id } },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
   }
 }

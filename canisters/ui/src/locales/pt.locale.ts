@@ -245,6 +245,7 @@ export default {
     type: 'Tipo',
     view: 'Ver',
     from: 'De',
+    specifier: 'Especificador',
     clear: 'Limpar',
     filters: 'Filtros',
     until: 'Até',
@@ -404,6 +405,7 @@ export default {
     proposal_policies: {
       title: 'Regras',
       create_label: 'Criar Regra',
+      dialog_title: 'Regra',
     },
   },
   session: {

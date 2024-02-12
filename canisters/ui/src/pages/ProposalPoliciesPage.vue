@@ -4,9 +4,10 @@
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs.value">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddProposalPolicy]">
-            <VBtn color="primary-variant" variant="outlined">
-              {{ $t('pages.proposal_policies.create_label') }}
-            </VBtn>
+            <ProposalPolicyOpenBtn
+              :text="$t('pages.proposal_policies.create_label')"
+              variant="outlined"
+            />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -30,6 +31,7 @@
           v-model:force-reload="forceReload"
           :load="fetchPolicies"
           :refresh-interval-ms="5000"
+          :disable-refresh="disableRefresh"
         >
           <template #default="{ data, loading }">
             <VDataTable
@@ -50,8 +52,22 @@
               </template>
               <template #item.actions="{ item }">
                 <div class="d-flex ga-0">
-                  <VBtn :icon="mdiTrashCanOutline" :data-id="item.id" variant="flat" size="small" />
-                  <VBtn :icon="mdiPencil" :data-id="item.id" variant="flat" size="small" />
+                  <ActionBtn
+                    v-model="item.id"
+                    :icon="mdiTrashCanOutline"
+                    :submit="id => wallet.service.removeProposalPolicy(id)"
+                    data-test-id="remove-proposal-policy-btn"
+                    @failed="useOnFailedOperation"
+                    @submitted="useOnSuccessfulOperation"
+                  />
+                  <ProposalPolicyOpenBtn
+                    :policy-id="item.id"
+                    :icon="mdiPencil"
+                    variant="flat"
+                    color="default"
+                    size="small"
+                    @opened="disableRefresh = $event"
+                  />
                 </div>
               </template>
               <template #bottom>
@@ -73,23 +89,29 @@
 </template>
 
 <script lang="ts" setup>
+import { mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
+import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
+import ProposalPolicyOpenBtn from '~/components/proposal-policies/ProposalPolicyOpenBtn.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
 import { ProposalPolicy } from '~/generated/wallet/wallet.did';
 import { mapProposalSpecifierToEnum } from '~/mappers/specifiers.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
+import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { ProposalDomains } from '~/types/wallet.types';
 import { throttle } from '~/utils/helper.utils';
-import { mdiPencil, mdiTrashCanOutline } from '@mdi/js';
-import AuthCheck from '~/components/AuthCheck.vue';
-import { Privilege } from '~/types/auth.types';
 
 const input = withDefaults(
   defineProps<{
@@ -106,6 +128,7 @@ const i18n = useI18n();
 const pageTitle = computed(() => props.title.value ?? i18n.t('pages.proposal_policies.title'));
 const wallet = useWalletStore();
 const forceReload = ref(false);
+const disableRefresh = ref(false);
 const pagination = ref<{
   limit: number;
   totalPages: number;
@@ -117,7 +140,11 @@ const pagination = ref<{
 });
 
 const headers = ref<{ title: string; key: string; headerProps: { class: string } }[]>([
-  { title: i18n.t('terms.type'), key: 'name', headerProps: { class: 'font-weight-bold w-100' } },
+  {
+    title: i18n.t('terms.specifier'),
+    key: 'name',
+    headerProps: { class: 'font-weight-bold w-100' },
+  },
   { title: '', key: 'actions', headerProps: { class: 'font-weight-bold' } },
 ]);
 

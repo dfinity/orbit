@@ -243,6 +243,7 @@ export default {
     view: 'View',
     requested: 'Requested',
     proposals: 'Proposals',
+    specifier: 'Specifier',
     withdraw_requests: 'Withdraw Requests',
     approved: 'Approved',
     reject: 'Reject',
@@ -403,6 +404,7 @@ export default {
     proposal_policies: {
       title: 'Policies',
       create_label: 'Add Policy',
+      dialog_title: 'Policy',
     },
   },
   session: {
