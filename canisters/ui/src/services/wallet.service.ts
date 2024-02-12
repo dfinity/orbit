@@ -22,6 +22,7 @@ import {
   ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListAccountsResult,
+  ListAddressBookEntriesResult,
   ListNotificationsInput,
   ListProposalPoliciesResult,
   ListProposalsInput,
@@ -44,7 +45,7 @@ import {
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
 import { ExtractOk } from '~/types/helper.types';
-import { ListAccountsArgs, ListProposalsArgs } from '~/types/wallet.types';
+import { ListAccountsArgs, ListAddressBookEntriesArgs, ListProposalsArgs } from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 
 export class WalletService {
@@ -354,6 +355,26 @@ export class WalletService {
         },
       ],
       search_term: searchTerm ? [searchTerm] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  // todo: adjust args once api is updated
+  async listAddressBook({ limit, offset, blockchain, standard }: ListAddressBookEntriesArgs = {}): Promise<
+    ExtractOk<ListAddressBookEntriesResult>
+  > {
+    const result = await this.actor.list_address_book_entries({
+      paginate: {
+        limit: limit !== undefined ? [limit] : [],
+        offset: offset !== undefined ? [BigInt(offset)] : [],
+      },
+      blockchain: blockchain ? blockchain : '',
+      standard: standard ? standard : '',
     });
 
     if (variantIs(result, 'Err')) {

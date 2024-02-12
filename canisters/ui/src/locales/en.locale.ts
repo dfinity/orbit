@@ -39,6 +39,7 @@ export default {
     canister_wasm_module: 'Canister Wasm Module',
     canister_upgrade_args_input: 'Upgrade arguments (optional)',
     canister_upgrade_args_input_hint: 'Only hex encoded arguments are accepted',
+    search_items: 'Search items',
   },
   change_canister: {
     targets: {
@@ -324,6 +325,8 @@ export default {
     main: 'Main',
     user_group: 'User Group',
     user_groups: 'User Groups',
+    all: 'All',
+    subset: 'Subset',
   },
   forms: {
     create: 'Create',

@@ -2,7 +2,7 @@ use crate::core::ic_cdk::api::time;
 use crate::errors::MapperError;
 use crate::mappers::BlockchainMapper;
 use crate::models::{
-    AddAddressBookEntryOperationInput, AddressBookEntry, ListAddressBookEntriesInput,
+    AddAddressBookEntryOperationInput, AddressBookEntry, AddressChain, ListAddressBookEntriesInput,
     ListAddressBookEntriesResponse,
 };
 use ic_canister_core::types::UUID;
@@ -11,6 +11,8 @@ use uuid::Uuid;
 use wallet_api::{
     AddressBookEntryDTO, ListAddressBookEntriesInputDTO, ListAddressBookEntriesResponseDTO,
 };
+
+use super::HelperMapper;
 
 #[derive(Default, Clone, Debug)]
 pub struct AddressBookMapper {}
@@ -76,10 +78,22 @@ impl AddressBookEntry {
 impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
     fn from(input: ListAddressBookEntriesInputDTO) -> ListAddressBookEntriesInput {
         ListAddressBookEntriesInput {
-            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
-                .expect("Invalid blockchain"),
-            standard: BlockchainMapper::to_blockchain_standard(input.standard)
-                .expect("Invalid blockchain standard"),
+            address_chain: input.address_chain.map(|address_chain| AddressChain {
+                blockchain: BlockchainMapper::to_blockchain(address_chain.blockchain)
+                    .expect("Invalid blockchain"),
+                standard: BlockchainMapper::to_blockchain_standard(address_chain.standard)
+                    .expect("Invalid blockchain standard"),
+            }),
+            addresses: input.addresses,
+            ids: input.ids.map(|ids| {
+                ids.into_iter()
+                    .map(|id| {
+                        HelperMapper::to_uuid(id)
+                            .expect("Invalid UUID")
+                            .into_bytes()
+                    })
+                    .collect()
+            }),
         }
     }
 }

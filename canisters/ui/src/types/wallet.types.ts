@@ -117,3 +117,12 @@ export enum ProposalSpecifierEnum {
   RemoveUserGroup = 'RemoveUserGroup',
   AddAccount = 'AddAccount',
 }
+
+export interface ListAddressBookEntriesArgs {
+  limit?: number;
+  offset?: number;
+  addressOwner?: string;
+  blockchain?: string;
+  standard?: string;
+  ids?: UUID[];
+}

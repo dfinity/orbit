@@ -1159,13 +1159,20 @@ type GetAddressBookEntryResult = variant {
 
 // Input type for listing address book entries for a given blockchain standard.
 type ListAddressBookEntriesInput = record {
-  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-  blockchain : text;
-  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
-  // with spaces replaced with underscores.
-  standard : text;
+  // The address boo entry ids to retrieve.
+  ids : opt vec UUID;
+  // The address to search for.
+  addresses : opt vec text;
+  // The blockchain and standard to use for filtering the address book entries.
+  address_chain : opt record {
+    // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+    blockchain : text;
+    // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
+    // with spaces replaced with underscores.
+    standard : text;
+  };
   // The pagination parameters.
-  paginate : PaginationInput;
+  paginate : opt PaginationInput;
 };
 
 // Result type for listing address book entries for a given blockchain standard.

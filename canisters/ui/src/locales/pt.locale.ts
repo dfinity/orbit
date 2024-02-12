@@ -39,6 +39,7 @@ export default {
     canister_wasm_module: 'Módulo WASM do canister',
     canister_upgrade_args_input: 'Argumentos de atualização do canister (opcional)',
     canister_upgrade_args_input_hint: 'Apenas aceite no formato hexadecimal.',
+    search_items: 'Procurar items',
   },
   change_canister: {
     targets: {
@@ -323,6 +324,8 @@ export default {
     main: 'Principal',
     user_group: 'Grupo de usuário',
     user_groups: 'Grupos de usuários',
+    all: 'Todos',
+    subset: 'Subconjunto',
   },
   account_page: {
     not_found_title: 'Conta não encontrada',

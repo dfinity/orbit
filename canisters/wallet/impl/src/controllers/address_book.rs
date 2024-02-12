@@ -80,9 +80,7 @@ impl AddressBookController {
         let paginate = input_dto.paginate.clone();
         let input: ListAddressBookEntriesInput = input_dto.into();
 
-        let result = self
-            .address_book_service
-            .get_entries_by_blockchain_standard(input.blockchain, input.standard, paginate)?;
+        let result = self.address_book_service.search_entries(input, paginate)?;
 
         Ok(ListAddressBookEntriesResponseDTO {
             address_book_entries: result
