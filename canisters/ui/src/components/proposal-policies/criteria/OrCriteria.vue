@@ -2,7 +2,7 @@
   <VDivider />
   <VCard variant="text" density="comfortable" v-bind="$attrs">
     <VCardTitle class="px-2">
-      {{ $t('proposal_policies.criteria.and') }}
+      {{ $t('proposal_policies.criteria.or') }}
       <VBtn
         :icon="mdiTrashCanOutline"
         variant="flat"

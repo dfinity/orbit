@@ -3,6 +3,7 @@
     v-if="variantIs(model, 'And')"
     v-model="model.And"
     :specifier="props.specifier.value"
+    @remove="emit('remove')"
   />
   <AutoAdoptedCriteria v-else-if="variantIs(model, 'AutoAdopted')" @remove="emit('remove')" />
   <MinimumVotesCriteria
@@ -21,6 +22,12 @@
     :specifier="props.specifier.value"
     @remove="emit('remove')"
   />
+  <OrCriteria
+    v-else-if="variantIs(model, 'Or')"
+    v-model="model.Or"
+    :specifier="props.specifier.value"
+    @remove="emit('remove')"
+  />
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
@@ -31,6 +38,7 @@ import ApprovalThresholdCriteria from './ApprovalThresholdCriteria.vue';
 import AutoAdoptedCriteria from './AutoAdoptedCriteria.vue';
 import MinimumVotesCriteria from './MinimumVotesCriteria.vue';
 import NotCriteria from './NotCriteria.vue';
+import OrCriteria from './OrCriteria.vue';
 
 const input = withDefaults(
   defineProps<{

@@ -20,7 +20,7 @@
         :step="1"
         class="w-25"
         thumb-label="always"
-        thumb-size="24"
+        thumb-size="12"
         hide-details
       />
       <span class="text-body-1">{{ $t('terms.of') }}</span>
