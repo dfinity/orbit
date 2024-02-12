@@ -83,7 +83,7 @@ impl UserController {
 
         let privileges = self
             .user_service
-            .get_user_privileges_by_identity(&ctx.caller())
+            .get_caller_privileges(&ctx)
             .await?;
 
         Ok(MeResponse {
