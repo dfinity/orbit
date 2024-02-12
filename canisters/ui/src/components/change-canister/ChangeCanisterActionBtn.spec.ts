@@ -17,8 +17,6 @@ describe('ChangeCanisterActionBtn', () => {
 
     await btn.trigger('click');
 
-    console.log(wrapper.emitted());
-
     expect(wrapper.emitted('editing')).toBeTruthy();
   });
 });
