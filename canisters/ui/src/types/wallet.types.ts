@@ -96,3 +96,24 @@ export enum ChangeCanisterTargetType {
   UpgradeWallet = 'UpgradeWallet',
   UpgradeUpgrader = 'UpgradeUpgrader',
 }
+
+export enum ProposalSpecifierEnum {
+  EditAccessPolicy = 'EditAccessPolicy',
+  AddUserGroup = 'AddUserGroup',
+  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  AddUser = 'AddUser',
+  EditUserGroup = 'EditUserGroup',
+  RemoveAddressBookEntry = 'RemoveAddressBookEntry',
+  EditAddressBookEntry = 'EditAddressBookEntry',
+  AddProposalPolicy = 'AddProposalPolicy',
+  ChangeCanister = 'ChangeCanister',
+  EditProposalPolicy = 'EditProposalPolicy',
+  EditUser = 'EditUser',
+  Transfer = 'Transfer',
+  EditAccount = 'EditAccount',
+  AddAddressBookEntry = 'AddAddressBookEntry',
+  AddAccessPolicy = 'AddAccessPolicy',
+  RemoveAccessPolicy = 'RemoveAccessPolicy',
+  RemoveUserGroup = 'RemoveUserGroup',
+  AddAccount = 'AddAccount',
+}

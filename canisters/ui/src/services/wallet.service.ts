@@ -22,6 +22,7 @@ import {
   ListAccountTransfersInput,
   ListAccountsResult,
   ListNotificationsInput,
+  ListProposalPoliciesResult,
   ListProposalsInput,
   ListProposalsResult,
   ListUserGroupsResult,
@@ -485,5 +486,20 @@ export class WalletService {
     }
 
     return result.Ok.proposal;
+  }
+
+  async listProposalPolicies({ limit, offset }: { limit?: number; offset?: number } = {}): Promise<
+    ExtractOk<ListProposalPoliciesResult>
+  > {
+    const result = await this.actor.list_proposal_policies({
+      limit: limit ? [limit] : [],
+      offset: offset ? [BigInt(offset)] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 }

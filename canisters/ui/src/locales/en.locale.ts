@@ -359,6 +359,7 @@ export default {
     proposals: 'Requests',
     transfer_proposals: 'Transfer Requests',
     access_policies: 'Permissions',
+    proposal_policies: 'Policies',
   },
   pages: {
     user_settings: {
@@ -399,6 +400,10 @@ export default {
       title: 'Permissions',
       update_dialog_title: 'Update Permissions',
     },
+    proposal_policies: {
+      title: 'Policies',
+      create_label: 'Add Policy',
+    },
   },
   session: {
     expired_dialog_title: 'Your session has expired',
@@ -432,6 +437,28 @@ export default {
       delete: 'Delete',
       readpublicconfig: 'Read public configuration',
       readsensitiveconfig: 'Read sensitive configuration',
+    },
+  },
+  proposal_policies: {
+    specifier: {
+      editaccesspolicy: 'Edit permission',
+      addusergroup: 'Add user group',
+      removeproposalpolicy: 'Remove request policy',
+      adduser: 'Add user',
+      editusergroup: 'Edit user group',
+      removeaddressbookentry: 'Remove address book entry',
+      editaddressbookentry: 'Edit address book entry',
+      addproposalpolicy: 'Add request policy',
+      changecanister: 'Change canister',
+      editproposalpolicy: 'Edit request policy',
+      edituser: 'Edit user',
+      transfer: 'Transfer',
+      editaccount: 'Edit account',
+      addaddressbookentry: 'Add address book entry',
+      addaccesspolicy: 'Add permission',
+      removeaccesspolicy: 'Remove permission',
+      removeusergroup: 'Remove user group',
+      addaccount: 'Add account',
     },
   },
 };

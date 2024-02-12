@@ -358,6 +358,7 @@ export default {
     proposals: 'Pedidos',
     transfer_proposals: 'Pedidos de transferência',
     access_policies: 'Permissões',
+    proposal_policies: 'Regras',
   },
   pages: {
     user_settings: {
@@ -400,6 +401,10 @@ export default {
       title: 'Permissões',
       update_dialog_title: 'Atualizar permissões',
     },
+    proposal_policies: {
+      title: 'Regras',
+      create_label: 'Criar Regra',
+    },
   },
   session: {
     expired_dialog_title: 'Sua sessão expirou',
@@ -433,6 +438,28 @@ export default {
       delete: 'Remover',
       readpublicconfig: 'Ler configuração pública',
       readsensitiveconfig: 'Ler configuração sensível',
+    },
+  },
+  proposal_policies: {
+    specifier: {
+      editaccesspolicy: 'Editar permissão',
+      addusergroup: 'Adicionar grupo de usuários',
+      removeproposalpolicy: 'Remover regra',
+      adduser: 'Adicionar usuário',
+      editusergroup: 'Editar grupo de usuários',
+      removeaddressbookentry: 'Remover entrada do livro de endereços',
+      editaddressbookentry: 'Editar entrada do livro de endereços',
+      addproposalpolicy: 'Adicionar regra',
+      changecanister: 'Alterar canister',
+      editproposalpolicy: 'Editar permissão',
+      edituser: 'Editar usuário',
+      transfer: 'Transferência',
+      editaccount: 'Editar conta',
+      addaddressbookentry: 'Adicionar entrada no livro de endereços',
+      addaccesspolicy: 'Adicionar permissão',
+      removeaccesspolicy: 'Remover permissão',
+      removeusergroup: 'Remove grupo de usuários',
+      addaccount: 'Adicionar conta',
     },
   },
 };

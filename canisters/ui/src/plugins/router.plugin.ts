@@ -279,6 +279,31 @@ const router = createRouter({
                 },
               },
             },
+            {
+              path: 'policies',
+              name: Routes.ProposalPolicies,
+              component: () => import('~/pages/ProposalPoliciesPage.vue'),
+              props: () => {
+                return {
+                  title: i18n.global.t('pages.proposal_policies.title'),
+                  breadcrumbs: [
+                    {
+                      title: i18n.global.t('navigation.settings'),
+                    },
+                    {
+                      title: i18n.global.t('navigation.proposal_policies'),
+                    },
+                  ],
+                };
+              },
+              meta: {
+                auth: {
+                  check: {
+                    session: RequiredSessionState.ConnectedToWallet,
+                  },
+                },
+              },
+            },
           ],
         },
         {
