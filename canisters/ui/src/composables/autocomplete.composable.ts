@@ -86,13 +86,12 @@ export const useAccountsAutocomplete = () => {
   return autocomplete;
 };
 
-
 export const useAddressBookAutocomplete = () => {
   const wallet = useWalletStore();
 
   const autocomplete = useAutocomplete(async term => {
     const results = await wallet.service.listAddressBook({
-      addressOwner: term.trim().length > 0 ? term.trim() : undefined,
+      addresses: term.trim().length > 0 ? [term.trim()] : undefined,
       limit: 100,
       offset: 0,
     });

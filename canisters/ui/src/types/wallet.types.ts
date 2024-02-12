@@ -118,10 +118,28 @@ export enum ProposalSpecifierEnum {
   AddAccount = 'AddAccount',
 }
 
+export enum ProposalCriteriaEnum {
+  AutoAdopted = 'AutoAdopted',
+  HasAddressBookMetadata = 'HasAddressBookMetadata',
+  MinimumVotes = 'MinimumVotes',
+  ApprovalThreshold = 'ApprovalThreshold',
+  And = 'And',
+  Or = 'Or',
+  Not = 'Not',
+}
+
+export enum ProposalCriteriaUserSpecifierEnum {
+  Owner = 'Owner',
+  Proposer = 'Proposer',
+  Any = 'Any',
+  Group = 'Group',
+  Id = 'Id',
+}
+
 export interface ListAddressBookEntriesArgs {
   limit?: number;
   offset?: number;
-  addressOwner?: string;
+  addresses?: string[];
   blockchain?: string;
   standard?: string;
   ids?: UUID[];

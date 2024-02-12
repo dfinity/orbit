@@ -10,8 +10,10 @@
       readonly
     />
 
-    <SpecifierSelector v-model="model.specifier" />
-    <CriteriaBuilder v-model="model.criteria" />
+    <SpecifierSelector v-model="model.specifier" @changed-variant="onChangedVariant" />
+
+    <div class="mt-4 mb-2 text-body-2">Criteria</div>
+    <CriteriaBuilder v-if="model.specifier" v-model="model.criteria" :specifier="model.specifier" />
   </VForm>
 </template>
 
@@ -52,6 +54,16 @@ const model = computed({
   get: () => props.modelValue.value,
   set: value => emit('update:modelValue', value),
 });
+
+const onChangedVariant = (): void => {
+  model.value.criteria = {
+    And: [
+      {
+        AutoAdopted: null,
+      },
+    ],
+  };
+};
 
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };

@@ -45,7 +45,11 @@ import {
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
 import { ExtractOk } from '~/types/helper.types';
-import { ListAccountsArgs, ListAddressBookEntriesArgs, ListProposalsArgs } from '~/types/wallet.types';
+import {
+  ListAccountsArgs,
+  ListAddressBookEntriesArgs,
+  ListProposalsArgs,
+} from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 
 export class WalletService {
@@ -364,17 +368,32 @@ export class WalletService {
     return result.Ok;
   }
 
-  // todo: adjust args once api is updated
-  async listAddressBook({ limit, offset, blockchain, standard }: ListAddressBookEntriesArgs = {}): Promise<
-    ExtractOk<ListAddressBookEntriesResult>
-  > {
+  async listAddressBook({
+    limit,
+    offset,
+    blockchain,
+    standard,
+    ids,
+    addresses,
+  }: ListAddressBookEntriesArgs = {}): Promise<ExtractOk<ListAddressBookEntriesResult>> {
     const result = await this.actor.list_address_book_entries({
-      paginate: {
-        limit: limit !== undefined ? [limit] : [],
-        offset: offset !== undefined ? [BigInt(offset)] : [],
-      },
-      blockchain: blockchain ? blockchain : '',
-      standard: standard ? standard : '',
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+      address_chain:
+        blockchain && standard
+          ? [
+              {
+                blockchain: blockchain,
+                standard: standard,
+              },
+            ]
+          : [],
+      addresses: addresses ? [addresses] : [],
+      ids: ids ? [ids] : [],
     });
 
     if (variantIs(result, 'Err')) {

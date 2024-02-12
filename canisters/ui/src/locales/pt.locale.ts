@@ -265,6 +265,7 @@ export default {
     requested: 'Requerido',
     summary: 'Resumo',
     review: 'Validar',
+    of: 'de',
     yes: 'Sim',
     reset: 'Reiniciar',
     no: 'Não',
@@ -446,6 +447,24 @@ export default {
     },
   },
   proposal_policies: {
+    user_type_select: 'Tipo de usuário',
+    add_criteria_label: 'Adicionar critério +',
+    criteria_user_specifier: {
+      owner: 'Proprietário',
+      proposer: 'Requerente',
+      any: 'Qualquer usuário',
+      group: 'Grupo de usuários',
+      id: 'Usuário específico',
+    },
+    criteria: {
+      and: 'todos',
+      or: 'qualquer',
+      not: 'nenhum',
+      autoadopted: 'Adotar automaticamente',
+      minimumvotes: 'Mínimo de votos',
+      approvalthreshold: 'Aprovação por porcentagem',
+      hasaddressbookmetadata: 'Tem metadados no livro de endereços',
+    },
     specifier: {
       editaccesspolicy: 'Editar permissão',
       addusergroup: 'Adicionar grupo de usuários',

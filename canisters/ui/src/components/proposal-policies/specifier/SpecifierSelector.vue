@@ -3,8 +3,8 @@
     v-model="specifier"
     :items="availableSpecifiers"
     :label="$t('terms.specifier')"
-    item-value="id"
-    item-title="name"
+    item-value="value"
+    item-title="text"
     variant="underlined"
     density="comfortable"
   />
@@ -36,6 +36,7 @@ const specifier = ref<ProposalSpecifierEnum | null>(null);
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload?: ProposalSpecifier): void;
+  (event: 'changedVariant', payload: void): void;
 }>();
 
 const model = computed({
@@ -111,6 +112,8 @@ watch(
     if (model.value && variantIs(model.value, specifier.value)) {
       return;
     }
+
+    emit('changedVariant');
 
     switch (specifier.value) {
       case ProposalSpecifierEnum.AddUserGroup:

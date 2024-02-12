@@ -191,16 +191,16 @@ export const useProposalStatusItems = (): ComputedRef<ProposalStatusSelectItem[]
 
 export const useAvailableOProposalSpecifiers = (): SelectItem[] => {
   const i18n = useI18n();
-  const items: SelectItem[] = [];
+  const items: SelectItem<string>[] = [];
 
   for (const specifier in ProposalSpecifierEnum) {
     items.push({
-      id: specifier,
-      name: i18n.t(`proposal_policies.specifier.${specifier.toLowerCase()}`),
+      value: specifier,
+      text: i18n.t(`proposal_policies.specifier.${specifier.toLowerCase()}`),
     });
   }
 
-  items.sort((a, b) => a.name?.localeCompare(b.name ?? '') ?? 0);
+  items.sort((a, b) => a.text.localeCompare(b.text));
 
   return items;
 };

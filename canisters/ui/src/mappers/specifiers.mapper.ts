@@ -1,5 +1,5 @@
-import { ProposalSpecifier } from '~/generated/wallet/wallet.did';
-import { ProposalSpecifierEnum } from '~/types/wallet.types';
+import { ProposalSpecifier, UserSpecifier } from '~/generated/wallet/wallet.did';
+import { ProposalCriteriaUserSpecifierEnum, ProposalSpecifierEnum } from '~/types/wallet.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapProposalSpecifierToEnum = (specifier: ProposalSpecifier): ProposalSpecifierEnum => {
@@ -76,4 +76,47 @@ export const mapProposalSpecifierToEnum = (specifier: ProposalSpecifier): Propos
   }
 
   return unreachable(specifier);
+};
+
+export const mapProposalCriteriaUserSpecifierToEnum = (
+  specifier: UserSpecifier,
+): ProposalCriteriaUserSpecifierEnum => {
+  if (variantIs(specifier, 'Owner')) {
+    return ProposalCriteriaUserSpecifierEnum.Owner;
+  }
+
+  if (variantIs(specifier, 'Proposer')) {
+    return ProposalCriteriaUserSpecifierEnum.Proposer;
+  }
+
+  if (variantIs(specifier, 'Any')) {
+    return ProposalCriteriaUserSpecifierEnum.Any;
+  }
+
+  if (variantIs(specifier, 'Group')) {
+    return ProposalCriteriaUserSpecifierEnum.Group;
+  }
+
+  if (variantIs(specifier, 'Id')) {
+    return ProposalCriteriaUserSpecifierEnum.Id;
+  }
+
+  return unreachable(specifier);
+};
+
+export const mapProposalCriteriaUserSpecifierEnumToVariant = (
+  specifier: ProposalCriteriaUserSpecifierEnum,
+): UserSpecifier => {
+  switch (specifier) {
+    case ProposalCriteriaUserSpecifierEnum.Owner:
+      return { Owner: null };
+    case ProposalCriteriaUserSpecifierEnum.Proposer:
+      return { Proposer: null };
+    case ProposalCriteriaUserSpecifierEnum.Any:
+      return { Any: null };
+    case ProposalCriteriaUserSpecifierEnum.Group:
+      return { Group: [] };
+    case ProposalCriteriaUserSpecifierEnum.Id:
+      return { Id: [] };
+  }
 };

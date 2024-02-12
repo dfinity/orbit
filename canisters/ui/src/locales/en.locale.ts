@@ -309,6 +309,7 @@ export default {
     failed: 'Failed',
     owners: 'Owners',
     name: 'Name',
+    of: 'of',
     processing: 'Processing',
     cancelled: 'Cancelled',
     user_name: 'User Name',
@@ -445,6 +446,24 @@ export default {
     },
   },
   proposal_policies: {
+    user_type_select: 'User type',
+    add_criteria_label: 'Add criteria +',
+    criteria_user_specifier: {
+      owner: 'Owner',
+      proposer: 'Proposer',
+      any: 'Any user',
+      group: 'Member of group',
+      id: 'Specific user',
+    },
+    criteria: {
+      and: 'all of',
+      or: 'any of',
+      not: 'none of',
+      autoadopted: 'Auto-adopted',
+      minimumvotes: 'Minimum votes',
+      approvalthreshold: 'Approval threshold',
+      hasaddressbookmetadata: 'Has address book metadata',
+    },
     specifier: {
       editaccesspolicy: 'Edit permission',
       addusergroup: 'Add user group',
