@@ -423,8 +423,12 @@ type ChangeCanisterOperationInput = record {
 };
 
 type ChangeCanisterOperation = record {
-  // The input to the proposal to change a canister.
-  input : ChangeCanisterOperationInput;
+  // The target to change.
+  target : ChangeCanisterTarget;
+  // The checksum of the wasm module.
+  checksum : blob;
+  // The checksum of the arg blob.
+  arg_checksum : opt blob;
 };
 
 type AddAccessPolicyOperationInput = record {
@@ -1489,6 +1493,8 @@ type UserPrivilege = variant {
   AddProposalPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
+  ChangeCanister;
+  ListProposals;
 };
 
 type MeResult = variant {

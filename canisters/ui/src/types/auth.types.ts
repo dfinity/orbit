@@ -11,6 +11,8 @@ export enum Privilege {
   AddAccount = 'AddAccount',
   ListAddressBookEntries = 'ListAddressBookEntries',
   AddAddressBookEntry = 'AddAddressBookEntry',
+  ListProposals = 'ListProposals',
+  ChangeCanister = 'ChangeCanister',
 }
 
 export enum RequiredSessionState {

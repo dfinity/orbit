@@ -211,9 +211,12 @@ impl WalletService {
         // verifies that the upgrade proposal exists and marks it as completed
         if let Err(err) = self
             .change_canister_service
-            .update_change_canister_proposal_status(ProposalStatus::Completed {
-                completed_at: time(),
-            })
+            .update_change_canister_proposal_status(
+                &config,
+                ProposalStatus::Completed {
+                    completed_at: time(),
+                },
+            )
             .await
         {
             // Do not fail the upgrade if the proposal is not found, even though this should never happen
@@ -221,6 +224,9 @@ impl WalletService {
             // be upgraded again.
             print(format!("Error: verifying upgrade failed {err}"));
         }
+
+        // clears the change canister proposal from the config to avoid it being used again
+        config.change_canister_proposal = None;
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
         // this updates the list of admins of the canister.

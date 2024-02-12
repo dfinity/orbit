@@ -338,7 +338,9 @@ impl From<ChangeCanisterOperationInput> for crate::models::ChangeCanisterOperati
 impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     fn from(operation: ChangeCanisterOperation) -> ChangeCanisterOperationDTO {
         ChangeCanisterOperationDTO {
-            input: operation.input.into(),
+            target: operation.input.target.into(),
+            checksum: operation.input.checksum,
+            arg_checksum: operation.arg_checksum,
         }
     }
 }

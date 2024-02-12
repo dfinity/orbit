@@ -2,7 +2,10 @@ use crate::{
     core::ic_cdk::api::time,
     errors::UserError,
     models::{
-        access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType},
+        access_control::{
+            ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
+            ResourceSpecifier, ResourceType,
+        },
         AddUserOperationInput, EditUserOperationInput, User,
     },
     repositories::USER_GROUP_REPOSITORY,
@@ -88,7 +91,7 @@ impl From<UserDTO> for User {
     }
 }
 
-pub const USER_PRIVILEGES: [UserPrivilege; 12] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 14] = [
     UserPrivilege::ListUsers,
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
@@ -101,6 +104,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 12] = [
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
+    UserPrivilege::ChangeCanister,
+    UserPrivilege::ListProposals,
 ];
 
 impl From<UserPrivilege> for ResourceSpecifier {
@@ -142,6 +147,12 @@ impl From<UserPrivilege> for ResourceSpecifier {
             }
             UserPrivilege::AddAddressBookEntry => {
                 ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::Create)
+            }
+            UserPrivilege::ChangeCanister => {
+                ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
+            }
+            UserPrivilege::ListProposals => {
+                ResourceSpecifier::Proposal(ProposalActionSpecifier::List)
             }
         }
     }

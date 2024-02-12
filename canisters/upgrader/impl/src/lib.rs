@@ -1,5 +1,10 @@
-use std::{cell::RefCell, sync::Arc, thread::LocalKey};
-
+use crate::{
+    hash::{Hash, Sha256Hasher},
+    upgrade::{
+        CheckController, Upgrade, Upgrader, VerifyChecksum, WithAuthorization, WithBackground,
+        WithLogs, WithStart, WithStop,
+    },
+};
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_macros::stable_object;
 use ic_cdk::{init, update};
@@ -8,15 +13,8 @@ use ic_stable_structures::{
     DefaultMemoryImpl, StableBTreeMap,
 };
 use lazy_static::lazy_static;
+use std::{cell::RefCell, sync::Arc, thread::LocalKey};
 use upgrade::UpgradeError;
-
-use crate::{
-    hash::{Hash, Sha256Hasher},
-    upgrade::{
-        CheckController, Upgrade, Upgrader, VerifyChecksum, WithAuthorization, WithBackground,
-        WithLogs, WithStart, WithStop,
-    },
-};
 use upgrader_api::{InitArg, TriggerUpgradeError, TriggerUpgradeResponse, UpgradeParams};
 
 mod hash;

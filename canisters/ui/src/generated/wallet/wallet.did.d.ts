@@ -123,7 +123,9 @@ export type ChangeAddressBookMetadata = {
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
 export type ChangeCanisterActionSpecifier = { 'Create' : null };
 export interface ChangeCanisterOperation {
-  'input' : ChangeCanisterOperationInput,
+  'target' : ChangeCanisterTarget,
+  'arg_checksum' : [] | [Uint8Array | number[]],
+  'checksum' : Uint8Array | number[],
 }
 export interface ChangeCanisterOperationInput {
   'arg' : [] | [Uint8Array | number[]],
@@ -642,10 +644,12 @@ export interface User {
 export interface UserGroup { 'id' : UserGroupId, 'name' : string }
 export type UserGroupId = UUID;
 export type UserPrivilege = { 'AddUserGroup' : null } |
+  { 'ListProposals' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
   { 'AddProposalPolicy' : null } |
+  { 'ChangeCanister' : null } |
   { 'ListProposalPolicies' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |

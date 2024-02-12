@@ -1,13 +1,11 @@
-use std::sync::Arc;
-
+use crate::{hash::Hash, LocalRef, StableValue, StorablePrincipal};
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
 use mockall::automock;
-
-use crate::{hash::Hash, LocalRef, StableValue, StorablePrincipal};
+use std::sync::Arc;
 use upgrader_api::UpgradeParams;
 
 #[derive(Debug, thiserror::Error)]

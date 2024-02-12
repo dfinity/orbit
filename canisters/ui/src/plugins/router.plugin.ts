@@ -89,7 +89,7 @@ const router = createRouter({
         {
           path: 'disconnected',
           name: Routes.Disconnected,
-          component: import('~/pages/DisconnectedPage.vue'),
+          component: () => import('~/pages/DisconnectedPage.vue'),
           meta: {
             auth: {
               check: {
@@ -101,7 +101,7 @@ const router = createRouter({
         {
           path: 'unauthorized',
           name: Routes.Unauthorized,
-          component: import('~/pages/UnauthorizedPage.vue'),
+          component: () => import('~/pages/UnauthorizedPage.vue'),
           meta: {
             auth: {
               check: {
@@ -113,7 +113,7 @@ const router = createRouter({
         {
           path: 'initialization',
           name: Routes.Initialization,
-          component: import('~/pages/InitializationPage.vue'),
+          component: () => import('~/pages/InitializationPage.vue'),
           meta: {
             auth: {
               check: {

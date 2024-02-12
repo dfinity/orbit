@@ -91,6 +91,8 @@ pub enum UserPrivilege {
     AddProposalPolicy,
     ListAddressBookEntries,
     AddAddressBookEntry,
+    ChangeCanister,
+    ListProposals,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

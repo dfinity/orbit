@@ -34,6 +34,17 @@ export default {
       'Utilize com cuidado. O principal poderá aceder à sua conta e executar ações em seu nome.',
     export_csv: 'Exportar CSV',
     params_parse_error: 'Erro ao analisar os parâmetros, por favor, tente novamente.',
+    submit_upgrade: 'Submeter atualização',
+    canister_upgrade_target: 'Canister de destino',
+    canister_wasm_module: 'Módulo WASM do canister',
+    canister_upgrade_args_input: 'Argumentos de atualização do canister (opcional)',
+    canister_upgrade_args_input_hint: 'Apenas aceite no formato hexadecimal.',
+  },
+  change_canister: {
+    targets: {
+      upgradewallet: 'Carteira',
+      upgradeupgrader: 'Atualizador',
+    },
   },
   proposals: {
     title_info_message: 'O título definido pelo requerente.',
@@ -242,6 +253,7 @@ export default {
     cancel: 'Cancelar',
     see_all: 'Ver todos',
     requests: 'Pedidos',
+    checksum: 'Checksum',
     reject: 'Rejeitar',
     statuses: 'Estados',
     created: 'Criado',

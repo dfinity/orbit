@@ -315,7 +315,9 @@ export const idlFactory = ({ IDL }) => {
     'policy' : IDL.Opt(ProposalPolicy),
   });
   const ChangeCanisterOperation = IDL.Record({
-    'input' : ChangeCanisterOperationInput,
+    'target' : ChangeCanisterTarget,
+    'arg_checksum' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'checksum' : IDL.Vec(IDL.Nat8),
   });
   const EditProposalPolicyOperation = IDL.Record({
     'input' : EditProposalPolicyOperationInput,
@@ -737,10 +739,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserPrivilege = IDL.Variant({
     'AddUserGroup' : IDL.Null,
+    'ListProposals' : IDL.Null,
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
     'AddProposalPolicy' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
     'ListProposalPolicies' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
