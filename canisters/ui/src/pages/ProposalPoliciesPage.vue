@@ -16,6 +16,7 @@
     <template #main-body>
       <PageBody>
         <RecentProposals
+          class="mb-2"
           :see-all-link="{
             name: Routes.Proposals,
             query: { group_by: ProposalDomains.System },
@@ -80,6 +81,7 @@
         </DataLoader>
         <VPagination
           v-model="pagination.selectedPage"
+          class="mt-2"
           :length="pagination.totalPages"
           rounded
           density="comfortable"
