@@ -59,10 +59,10 @@ import AddCriteriaSelect from './AddCriteriaSelect.vue';
 import AndCriteria from './AndCriteria.vue';
 import ApprovalThresholdCriteria from './ApprovalThresholdCriteria.vue';
 import AutoAdoptedCriteria from './AutoAdoptedCriteria.vue';
+import HasAddressBookMetadataCriteria from './HasAddressBookMetadataCriteria.vue';
 import MinimumVotesCriteria from './MinimumVotesCriteria.vue';
 import NotCriteria from './NotCriteria.vue';
 import OrCriteria from './OrCriteria.vue';
-import HasAddressBookMetadataCriteria from '~/components/proposal-policies/criteria/HasAddressBookMetadataCriteria.vue';
 
 const input = withDefaults(
   defineProps<{
