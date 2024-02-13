@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex ga-4 flex-column">
-    <div class="d-flex ga-2">
+    <div v-if="!props.readonly.value" class="d-flex ga-2">
       <VBtn
         :active="isAny"
         :disabled="props.disabled.value"
@@ -23,7 +23,7 @@
     <AccountAutocomplete
       v-if="isId"
       v-model="idsModel"
-      :label="$t('app.search_accounts')"
+      :label="$t('terms.accounts')"
       variant="underlined"
       density="comfortable"
       multiple
@@ -41,10 +41,12 @@ const input = withDefaults(
   defineProps<{
     modelValue?: TransferSpecifier;
     disabled?: boolean;
+    readonly?: boolean;
   }>(),
   {
     modelValue: () => ({ account: { Any: null } }),
     disabled: false,
+    readonly: false,
   },
 );
 

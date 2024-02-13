@@ -43,13 +43,7 @@
               :items-per-page="-1"
             >
               <template #item.name="{ item }">
-                {{
-                  $t(
-                    `proposal_policies.specifier.${mapProposalSpecifierToEnum(
-                      item.specifier,
-                    ).toLowerCase()}`,
-                  )
-                }}
+                <SpecifierSelector v-if="item.info.can_edit" v-model="item.specifier" readonly />
               </template>
               <template #item.actions="{ item }">
                 <div class="d-flex ga-0">
@@ -93,7 +87,7 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiPencil, mdiEye, mdiTrashCanOutline } from '@mdi/js';
+import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AuthCheck from '~/components/AuthCheck.vue';
@@ -103,6 +97,7 @@ import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import ProposalPolicyOpenBtn from '~/components/proposal-policies/ProposalPolicyOpenBtn.vue';
+import SpecifierSelector from '~/components/proposal-policies/specifier/SpecifierSelector.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import {
   useOnFailedOperation,
@@ -110,7 +105,6 @@ import {
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
 import { ProposalPolicy } from '~/generated/wallet/wallet.did';
-import { mapProposalSpecifierToEnum } from '~/mappers/specifiers.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
 import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';

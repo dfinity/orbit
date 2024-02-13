@@ -298,6 +298,7 @@ export default {
     new_account: 'Create Account',
     edit_account: 'Edit Account',
     accounts: 'Accounts',
+    addresses: 'Addresses',
     policies: 'Policies',
     transfers: 'Transfers',
     withdrawals: 'Withdrawals',

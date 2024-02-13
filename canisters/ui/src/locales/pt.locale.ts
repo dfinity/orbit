@@ -298,6 +298,7 @@ export default {
     processing: 'Processando',
     anonymous: 'Anónimo',
     accounts: 'Contas',
+    addresses: 'Endereços',
     token: 'Token',
     new_account: 'Criar conta',
     edit_account: 'Editar conta',

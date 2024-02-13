@@ -1,5 +1,6 @@
 <template>
   <VAutocomplete
+    v-if="!props.readonly.value"
     v-model="specifier"
     :items="availableSpecifiers"
     :label="$t('terms.specifier')"
@@ -10,11 +11,16 @@
     :disabled="props.disabled.value"
   />
 
+  <div v-else class="py-2">
+    {{ specifierText }}
+  </div>
+
   <component
     :is="selectedSpecifier?.component"
     v-if="selectedSpecifier"
     :model-value="selectedSpecifier.model"
     :disabled="props.disabled.value"
+    :readonly="props.readonly.value"
     @update:model-value="updateSpecifierModelValue"
   />
 </template>
@@ -36,10 +42,12 @@ const input = withDefaults(
   defineProps<{
     modelValue?: ProposalSpecifier;
     disabled?: boolean;
+    readonly?: boolean;
   }>(),
   {
     modelValue: undefined,
     disabled: false,
+    readonly: false,
   },
 );
 
@@ -123,6 +131,14 @@ const updateSpecifierModelValue = (updated: ProposalSpecifier[keyof ProposalSpec
     }
   }
 };
+
+const specifierText = computed(() => {
+  if (!specifier.value) {
+    return '-';
+  }
+
+  return availableSpecifiers.value.find(s => s.value === specifier.value)?.text || '-';
+});
 
 watch(
   () => model.value,

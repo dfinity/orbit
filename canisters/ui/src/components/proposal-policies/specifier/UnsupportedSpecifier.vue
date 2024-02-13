@@ -14,10 +14,12 @@ const input = withDefaults(
   defineProps<{
     modelValue?: CommonSpecifier;
     disabled?: boolean;
+    readonly?: boolean;
   }>(),
   {
     modelValue: () => ({ Any: null }),
     disabled: false,
+    readonly: false,
   },
 );
 
