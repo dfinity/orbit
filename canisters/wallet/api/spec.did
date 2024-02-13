@@ -16,11 +16,20 @@ type PaginationInput = record {
   limit : opt nat16;
 };
 
+// The proposal policy information, used to specify additional information about the policy.
+type ProposalPolicyInfo = record {
+  // Wether or not the user can edit the resource.
+  can_edit : bool;
+  // Wether or not the user can delete the resource.
+  can_delete : bool;
+};
+
 // Represents a proposal policy with the associated criteria.
 type ProposalPolicy = record {
   id : UUID;
   specifier : ProposalSpecifier;
   criteria : ProposalPolicyCriteria;
+  info: ProposalPolicyInfo;
 };
 
 // Defines the various types of proposals that can be created.
@@ -478,7 +487,7 @@ type AddProposalPolicyOperationInput = record {
 
 type AddProposalPolicyOperation = record {
   // The proposal policy that was created by the proposal (only available after the proposal is executed).
-  policy : opt ProposalPolicy;
+  policy_id : opt UUID;
   // The input to the proposal to add a proposal policy.
   input : AddProposalPolicyOperationInput;
 };

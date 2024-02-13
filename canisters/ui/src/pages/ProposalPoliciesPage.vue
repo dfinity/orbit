@@ -53,7 +53,7 @@
               <template #item.actions="{ item }">
                 <div class="d-flex ga-0">
                   <ActionBtn
-                    v-if="true"
+                    v-if="item.info.can_delete"
                     v-model="item.id"
                     :icon="mdiTrashCanOutline"
                     :submit="id => wallet.service.removeProposalPolicy(id)"
@@ -63,8 +63,8 @@
                   />
                   <ProposalPolicyOpenBtn
                     :policy-id="item.id"
-                    :icon="true ? mdiPencil : mdiEye"
-                    :readonly="false"
+                    :icon="item.info.can_edit ? mdiPencil : mdiEye"
+                    :readonly="!item.info.can_edit"
                     variant="flat"
                     color="default"
                     size="small"

@@ -76,7 +76,7 @@ export interface AddAddressBookEntryOperationInput {
 }
 export interface AddProposalPolicyOperation {
   'input' : AddProposalPolicyOperationInput,
-  'policy' : [] | [ProposalPolicy],
+  'policy_id' : [] | [UUID],
 }
 export interface AddProposalPolicyOperationInput {
   'specifier' : ProposalSpecifier,
@@ -501,6 +501,7 @@ export type ProposalOperationType = { 'EditAccessPolicy' : null } |
   { 'AddAccount' : null };
 export interface ProposalPolicy {
   'id' : UUID,
+  'info' : ProposalPolicyInfo,
   'specifier' : ProposalSpecifier,
   'criteria' : ProposalPolicyCriteria,
 }
@@ -511,6 +512,10 @@ export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'MinimumVotes' : [UserSpecifier, number] } |
   { 'ApprovalThreshold' : [UserSpecifier, number] } |
   { 'AutoAdopted' : null };
+export interface ProposalPolicyInfo {
+  'can_delete' : boolean,
+  'can_edit' : boolean,
+}
 export type ProposalSpecifier = { 'EditAccessPolicy' : CommonSpecifier } |
   { 'AddUserGroup' : null } |
   { 'RemoveProposalPolicy' : CommonSpecifier } |

@@ -305,14 +305,9 @@ export const idlFactory = ({ IDL }) => {
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
   });
-  const ProposalPolicy = IDL.Record({
-    'id' : UUID,
-    'specifier' : ProposalSpecifier,
-    'criteria' : ProposalPolicyCriteria,
-  });
   const AddProposalPolicyOperation = IDL.Record({
     'input' : AddProposalPolicyOperationInput,
-    'policy' : IDL.Opt(ProposalPolicy),
+    'policy_id' : IDL.Opt(UUID),
   });
   const ChangeCanisterOperation = IDL.Record({
     'target' : ChangeCanisterTarget,
@@ -460,6 +455,16 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const GetProposalPolicyInput = IDL.Record({ 'id' : UUID });
+  const ProposalPolicyInfo = IDL.Record({
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
+  const ProposalPolicy = IDL.Record({
+    'id' : UUID,
+    'info' : ProposalPolicyInfo,
+    'specifier' : ProposalSpecifier,
+    'criteria' : ProposalPolicyCriteria,
+  });
   const GetProposalPolicyResult = IDL.Variant({
     'Ok' : IDL.Record({ 'policy' : ProposalPolicy }),
     'Err' : Error,

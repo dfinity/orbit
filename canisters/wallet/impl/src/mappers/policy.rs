@@ -10,9 +10,10 @@ use crate::models::{
     ProposalPolicy,
 };
 use uuid::Uuid;
-use wallet_api::{AccessPolicyInfoDTO, CriteriaDTO, TransferSpecifierDTO, UserSpecifierDTO};
+use wallet_api::{AccessPolicyInfoDTO, CriteriaDTO, ProposalPolicyInfoDTO, TransferSpecifierDTO, UserSpecifierDTO};
 
 pub type AccessPolicyInfo = AccessPolicyInfoDTO;
+pub type ProposalPolicyInfo = ProposalPolicyInfoDTO;
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
@@ -397,12 +398,13 @@ impl From<wallet_api::CommonActionSpecifierDTO> for CommonActionSpecifier {
     }
 }
 
-impl From<ProposalPolicy> for wallet_api::ProposalPolicyDTO {
-    fn from(policy: ProposalPolicy) -> Self {
-        Self {
-            id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
-            specifier: policy.specifier.into(),
-            criteria: policy.criteria.into(),
+impl ProposalPolicy {
+    pub fn to_dto(self, info: ProposalPolicyInfo) -> wallet_api::ProposalPolicyDTO {
+        wallet_api::ProposalPolicyDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            specifier: self.specifier.into(),
+            criteria: self.criteria.into(),
+            info,
         }
     }
 }

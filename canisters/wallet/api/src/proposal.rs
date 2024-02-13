@@ -9,7 +9,7 @@ use crate::{
     EditAccessPolicyOperationDTO, EditAccessPolicyOperationInput, EditAccountOperationDTO,
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, PaginationInput, ProposalPolicyDTO, ProposalSpecifierDTO,
+    EditUserOperationInput, PaginationInput, ProposalSpecifierDTO,
     RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
     RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, SortDirection, UuidDTO,
@@ -240,7 +240,7 @@ pub struct AddProposalPolicyOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddProposalPolicyOperationDTO {
-    pub policy: Option<ProposalPolicyDTO>,
+    pub policy_id: Option<UuidDTO>,
     pub input: AddProposalPolicyOperationInput,
 }
 
