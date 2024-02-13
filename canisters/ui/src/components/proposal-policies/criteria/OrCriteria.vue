@@ -22,29 +22,18 @@
       />
     </VCardText>
     <VCardActions class="px-2">
-      <VSelect
-        v-model="selectedAddCriteria"
-        :label="$t('proposal_policies.add_criteria_label')"
-        :items="availableCriterias"
-        item-value="value"
-        item-title="text"
-        density="comfortable"
-        @update:model-value="onAddCriteria"
-      />
+      <AddCriteriaSelect :specifier="props.specifier.value" @add="model.push($event)" />
     </VCardActions>
   </VCard>
   <VDivider />
 </template>
 
 <script setup lang="ts">
+import { mdiTrashCanOutline } from '@mdi/js';
 import { computed, toRefs } from 'vue';
 import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/wallet/wallet.did';
+import AddCriteriaSelect from './AddCriteriaSelect.vue';
 import CriteriaBuilder from './CriteriaBuilder.vue';
-import { useProposalSpecifierCriterias } from '~/composables/proposal-policies.composable';
-import { ProposalCriteriaEnum } from '~/types/wallet.types';
-import { unreachable } from '~/utils/helper.utils';
-import { ref } from 'vue';
-import { mdiTrashCanOutline } from '@mdi/js';
 
 const input = withDefaults(
   defineProps<{
@@ -71,41 +60,4 @@ const model = computed({
 const removeEntry = (idx: number): void => {
   model.value.splice(idx, 1);
 };
-
-const selectedAddCriteria = ref<ProposalCriteriaEnum | null>(null);
-
-const onAddCriteria = (value: ProposalCriteriaEnum | null): void => {
-  if (value === null) {
-    return;
-  }
-
-  selectedAddCriteria.value = null;
-  switch (value) {
-    case ProposalCriteriaEnum.And:
-      model.value.push({ And: [] });
-      break;
-    case ProposalCriteriaEnum.Or:
-      model.value.push({ Or: [] });
-      break;
-    case ProposalCriteriaEnum.Not:
-      model.value.push({ Not: { And: [] } });
-      break;
-    case ProposalCriteriaEnum.AutoAdopted:
-      model.value.push({ AutoAdopted: null });
-      break;
-    case ProposalCriteriaEnum.MinimumVotes:
-      model.value.push({ MinimumVotes: [{ Any: null }, 0] });
-      break;
-    case ProposalCriteriaEnum.ApprovalThreshold:
-      model.value.push({ ApprovalThreshold: [{ Any: null }, 0] });
-      break;
-    case ProposalCriteriaEnum.HasAddressBookMetadata:
-      model.value.push({ HasAddressBookMetadata: { key: '', value: '' } });
-      break;
-    default:
-      unreachable(value);
-  }
-};
-
-const availableCriterias = useProposalSpecifierCriterias(props.specifier.value);
 </script>

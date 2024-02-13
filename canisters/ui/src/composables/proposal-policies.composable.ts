@@ -1,4 +1,4 @@
-import { ComputedRef, Ref, computed, ref, watch } from 'vue';
+import { ComputedRef, Ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { proposalSpecifiersIncludedCriterias } from '~/configs/proposal-policies.config';
 import { ProposalSpecifier } from '~/generated/wallet/wallet.did';
@@ -6,30 +6,27 @@ import { mapProposalSpecifierToEnum } from '~/mappers/specifiers.mapper';
 import { SelectItem } from '~/types/helper.types';
 import { ProposalCriteriaUserSpecifierEnum } from '~/types/wallet.types';
 
-export const useProposalSpecifierCriterias = (specifier: ProposalSpecifier): Ref<SelectItem[]> => {
+export const useProposalSpecifierCriterias = (
+  specifier: Ref<ProposalSpecifier>,
+): ComputedRef<SelectItem[]> => {
   const allSpecifierCriterias = proposalSpecifiersIncludedCriterias();
-  const items = ref<SelectItem[]>([]);
-  const specifierEnum = mapProposalSpecifierToEnum(specifier);
   const i18n = useI18n();
 
-  watch(
-    () => specifier,
-    () => {
-      items.value = [];
+  return computed(() => {
+    const items: SelectItem[] = [];
+    const specifierEnum = mapProposalSpecifierToEnum(specifier.value);
 
-      if (allSpecifierCriterias[specifierEnum]) {
-        allSpecifierCriterias[specifierEnum].forEach(criteria => {
-          items.value.push({
-            value: criteria,
-            text: i18n.t(`proposal_policies.criteria.${criteria.toLowerCase()}`),
-          });
+    if (allSpecifierCriterias[specifierEnum]) {
+      allSpecifierCriterias[specifierEnum].forEach(criteria => {
+        items.push({
+          value: criteria,
+          text: i18n.t(`proposal_policies.criteria.${criteria.toLowerCase()}`),
         });
-      }
-    },
-    { immediate: true },
-  );
+      });
+    }
 
-  return items;
+    return items;
+  });
 };
 
 export const useUserSpecifierSelectorItems = (): ComputedRef<SelectItem[]> => {

@@ -14,8 +14,8 @@ export const proposalSpecifiersIncludedCriterias = (): Record<
   ProposalCriteriaEnum[]
 > => ({
   [ProposalSpecifierEnum.Transfer]: [
-    ...defaultCriterias,
     ProposalCriteriaEnum.HasAddressBookMetadata,
+    ...defaultCriterias,
   ],
   [ProposalSpecifierEnum.AddAccessPolicy]: [...defaultCriterias],
   [ProposalSpecifierEnum.EditAccessPolicy]: [...defaultCriterias],

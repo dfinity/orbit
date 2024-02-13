@@ -12,45 +12,50 @@
         @click="emit('remove')"
       />
     </div>
-    <div class="d-flex flex-row ga-4 align-center">
+    <div class="d-flex flex-column flex-md-row ga-4 align-center">
       <VSlider
         v-model="model[1]"
         :min="0"
         :max="100"
         :step="1"
-        class="w-25"
+        class="w-md-50 w-100"
         thumb-label="always"
         thumb-size="12"
         hide-details
+        :disabled="disabledSlider"
       />
       <span class="text-body-1">{{ $t('terms.of') }}</span>
-      <VAutocomplete
-        v-model="userTypeModel"
-        :label="$t('proposal_policies.user_type_select')"
-        :items="userSelectorItems"
-        item-value="value"
-        item-title="text"
-        variant="underlined"
-        density="comfortable"
-      />
-      <UserGroupsAutocomplete
-        v-if="variantIs(model[0], 'Group')"
-        v-model="model[0].Group"
-        :label="$t('proposal_policies.criteria_user_specifier.group')"
-        multiple
-      />
-      <UsersAutocomplete
-        v-else-if="variantIs(model[0], 'Id')"
-        v-model="model[0].Id"
-        :label="$t('proposal_policies.criteria_user_specifier.id')"
-        multiple
-      />
+      <div class="d-flex flex-row ga-4 w-md-50 w-100">
+        <VAutocomplete
+          v-model="userTypeModel"
+          :label="$t('proposal_policies.user_type_select')"
+          :items="userSelectorItems"
+          item-value="value"
+          item-title="text"
+          variant="underlined"
+          density="comfortable"
+        />
+        <UserGroupsAutocomplete
+          v-if="variantIs(model[0], 'Group')"
+          v-model="model[0].Group"
+          :label="$t('proposal_policies.criteria_user_specifier.group')"
+          multiple
+        />
+        <UsersAutocomplete
+          v-else-if="variantIs(model[0], 'Id')"
+          v-model="model[0].Id"
+          :label="$t('proposal_policies.criteria_user_specifier.id')"
+          multiple
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { mdiTrashCanOutline } from '@mdi/js';
+import { ref } from 'vue';
+import { watch } from 'vue';
 import { computed, toRefs } from 'vue';
 import UserGroupsAutocomplete from '~/components/inputs/UserGroupsAutocomplete.vue';
 import UsersAutocomplete from '~/components/inputs/UsersAutocomplete.vue';
@@ -60,6 +65,7 @@ import {
   mapProposalCriteriaUserSpecifierEnumToVariant,
   mapProposalCriteriaUserSpecifierToEnum,
 } from '~/mappers/specifiers.mapper';
+import { ProposalCriteriaUserSpecifierEnum } from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -89,4 +95,22 @@ const userTypeModel = computed({
 });
 
 const userSelectorItems = useUserSpecifierSelectorItems();
+const disabledSlider = ref(false);
+
+watch(
+  () => userTypeModel.value,
+  userType => {
+    switch (userType) {
+      case ProposalCriteriaUserSpecifierEnum.Proposer:
+      case ProposalCriteriaUserSpecifierEnum.Owner:
+        model.value[1] = 100;
+        disabledSlider.value = true;
+        break;
+      default:
+        disabledSlider.value = false;
+        break;
+    }
+  },
+  { immediate: true },
+);
 </script>

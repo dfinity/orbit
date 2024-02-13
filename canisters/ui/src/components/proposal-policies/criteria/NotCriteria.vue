@@ -12,7 +12,8 @@
         @click="emit('remove')"
       />
     </div>
-    <CriteriaBuilder v-model="model" :specifier="props.specifier.value" @remove="emit('remove')" />
+    <AddCriteriaSelect v-if="isEmpty" :specifier="props.specifier.value" @add="model = $event" />
+    <CriteriaBuilder v-else v-model="model" :specifier="props.specifier.value" @remove="onRemove" />
   </div>
 </template>
 
@@ -21,6 +22,7 @@ import { mdiTrashCanOutline } from '@mdi/js';
 import { computed, toRefs } from 'vue';
 import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/wallet/wallet.did';
 import CriteriaBuilder from './CriteriaBuilder.vue';
+import AddCriteriaSelect from '~/components/proposal-policies/criteria/AddCriteriaSelect.vue';
 
 const input = withDefaults(
   defineProps<{
@@ -41,4 +43,10 @@ const model = computed({
   get: () => props.modelValue.value,
   set: value => emit('update:modelValue', value),
 });
+
+const isEmpty = computed(() => !Object.keys(model.value).length);
+
+const onRemove = (): void => {
+  model.value = {} as ProposalPolicyCriteria;
+};
 </script>
