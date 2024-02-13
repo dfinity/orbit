@@ -63,34 +63,46 @@ pub struct ProposalKey {
     pub id: ProposalId,
 }
 
-fn validate_votes(votes: &Vec<ProposalVote>) -> ModelValidatorResult<ProposalError> {
-    if votes.len() > Proposal::MAX_VOTES_ENTRIES as usize {
+fn validate_title(title: &str) -> ModelValidatorResult<ProposalError> {
+    if title.len() > Proposal::MAX_TITLE_LEN as usize {
         return Err(ProposalError::ValidationError {
             info: format!(
-                "Proposal vote count exceeds the maximum allowed: {}",
-                Proposal::MAX_VOTES_ENTRIES
+                "Proposal title length exceeds the maximum allowed: {}",
+                Proposal::MAX_TITLE_LEN
             ),
         });
     }
 
-    votes.iter().try_for_each(|decision| decision.validate())?;
+    Ok(())
+}
+
+fn validate_summary(summary: &Option<String>) -> ModelValidatorResult<ProposalError> {
+    if let Some(summary) = summary {
+        if summary.len() > Proposal::MAX_SUMMARY_LEN as usize {
+            return Err(ProposalError::ValidationError {
+                info: format!(
+                    "Proposal summary length exceeds the maximum allowed: {}",
+                    Proposal::MAX_SUMMARY_LEN
+                ),
+            });
+        }
+    }
 
     Ok(())
 }
 
 impl ModelValidator<ProposalError> for Proposal {
     fn validate(&self) -> ModelValidatorResult<ProposalError> {
-        validate_votes(&self.votes)?;
+        validate_title(&self.title)?;
+        validate_summary(&self.summary)?;
 
         Ok(())
     }
 }
 
 impl Proposal {
-    pub const MAX_METADATA_KEY_LEN: u8 = 24;
-    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
-    pub const MAX_METADATA_ENTRIES: u8 = 10;
-    pub const MAX_VOTES_ENTRIES: u8 = 10;
+    pub const MAX_TITLE_LEN: u8 = 255;
+    pub const MAX_SUMMARY_LEN: u16 = 1000;
 
     /// Creates a new proposal key from the given key components.
     pub fn key(proposal_id: ProposalId) -> ProposalKey {
@@ -193,47 +205,43 @@ impl Proposal {
 mod tests {
     use super::proposal_test_utils::mock_proposal;
     use super::*;
-    use crate::models::ProposalVoteStatus;
-    #[test]
-    fn fail_proposal_votes_too_many_entries() {
-        let mut proposal = mock_proposal();
-        proposal.votes = vec![
-            ProposalVote {
-                user_id: [0; 16],
-                status: ProposalVoteStatus::Rejected,
-                status_reason: None,
-                decided_dt: 0,
-                last_modification_timestamp: 0,
-            };
-            Proposal::MAX_VOTES_ENTRIES as usize + 1
-        ];
 
-        let result = validate_votes(&proposal.votes);
+    #[test]
+    fn fail_proposal_title_too_big() {
+        let mut proposal = mock_proposal();
+        proposal.title = "a".repeat(Proposal::MAX_TITLE_LEN as usize + 1);
+
+        let result = validate_title(&proposal.title);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ProposalError::ValidationError {
-                info: "Proposal vote count exceeds the maximum allowed: 10".to_string()
-            }
-        );
     }
 
     #[test]
-    fn test_proposal_votes_validation() {
+    fn test_proposal_title_is_valid() {
         let mut proposal = mock_proposal();
-        proposal.votes = vec![
-            ProposalVote {
-                user_id: [0; 16],
-                status: ProposalVoteStatus::Rejected,
-                status_reason: None,
-                decided_dt: 0,
-                last_modification_timestamp: 0,
-            };
-            Proposal::MAX_VOTES_ENTRIES as usize - 1
-        ];
+        proposal.title = "a".repeat(Proposal::MAX_TITLE_LEN as usize);
 
-        let result = validate_votes(&proposal.votes);
+        let result = validate_title(&proposal.title);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_proposal_summary_too_big() {
+        let mut proposal = mock_proposal();
+        proposal.summary = Some("a".repeat(Proposal::MAX_SUMMARY_LEN as usize + 1));
+
+        let result = validate_summary(&proposal.summary);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_proposal_summary_is_valid() {
+        let mut proposal = mock_proposal();
+        proposal.summary = Some("a".repeat(Proposal::MAX_SUMMARY_LEN as usize));
+
+        let result = validate_summary(&proposal.summary);
 
         assert!(result.is_ok());
     }
