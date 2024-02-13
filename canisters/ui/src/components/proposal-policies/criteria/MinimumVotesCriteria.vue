@@ -16,7 +16,7 @@
     <div class="d-flex flex-column flex-md-row ga-4 align-center">
       <div class="w-md-50 w-100">
         <VTextField
-          v-model="model[1]"
+          v-model="model.minimum"
           :label="$t('terms.min')"
           type="number"
           :rules="rules.min"
@@ -38,15 +38,15 @@
           density="comfortable"
         />
         <UserGroupAutocomplete
-          v-if="variantIs(model[0], 'Group')"
-          v-model="model[0].Group"
+          v-if="variantIs(model.voters, 'Group')"
+          v-model="model.voters.Group"
           :label="$t('proposal_policies.criteria_user_specifier.group')"
           multiple
           :disabled="props.disabled.value"
         />
         <UserAutocomplete
-          v-else-if="variantIs(model[0], 'Id')"
-          v-model="model[0].Id"
+          v-else-if="variantIs(model.voters, 'Id')"
+          v-model="model.voters.Id"
           :label="$t('proposal_policies.criteria_user_specifier.id')"
           multiple
           :disabled="props.disabled.value"
@@ -63,7 +63,7 @@ import { useI18n } from 'vue-i18n';
 import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { useUserSpecifierSelectorItems } from '~/composables/proposal-policies.composable';
-import { UserSpecifier } from '~/generated/wallet/wallet.did';
+import { MinimumVotes } from '~/generated/wallet/wallet.did';
 import {
   mapProposalCriteriaUserSpecifierEnumToVariant,
   mapProposalCriteriaUserSpecifierToEnum,
@@ -75,7 +75,7 @@ import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
-    modelValue: [UserSpecifier, number];
+    modelValue: MinimumVotes;
     disabled?: boolean;
   }>(),
   {
@@ -86,7 +86,7 @@ const input = withDefaults(
 const props = toRefs(input);
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: [UserSpecifier, number]): void;
+  (event: 'update:modelValue', payload: MinimumVotes): void;
   (event: 'remove', payload: void): void;
 }>();
 
@@ -96,9 +96,9 @@ const model = computed({
 });
 
 const userTypeModel = computed({
-  get: () => mapProposalCriteriaUserSpecifierToEnum(model.value[0]),
+  get: () => mapProposalCriteriaUserSpecifierToEnum(model.value.voters),
   set: value => {
-    model.value[0] = mapProposalCriteriaUserSpecifierEnumToVariant(value);
+    model.value.voters = mapProposalCriteriaUserSpecifierEnumToVariant(value);
   },
 });
 
@@ -119,7 +119,7 @@ watch(
     switch (userType) {
       case ProposalCriteriaUserSpecifierEnum.Proposer:
       case ProposalCriteriaUserSpecifierEnum.Owner:
-        model.value[1] = 1;
+        model.value.minimum = 1;
         disabledInput.value = true;
         break;
       default:

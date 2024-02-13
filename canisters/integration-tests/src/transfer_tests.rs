@@ -8,10 +8,10 @@ use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
 use std::time::Duration;
 use wallet_api::{
-    AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, CreateProposalInput,
-    CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, MeResponse,
-    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
-    TransferOperationInput, UserSpecifierDTO,
+    AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, ApprovalThresholdDTO,
+    CreateProposalInput, CreateProposalResponse, CriteriaDTO, GetProposalInput,
+    GetProposalResponse, MeResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO,
+    ProposalOperationInput, ProposalStatusDTO, TransferOperationInput, UserSpecifierDTO,
 };
 
 #[test]
@@ -37,8 +37,14 @@ fn make_transfer_successful() {
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
         policies: AccountPoliciesDTO {
-            transfer: Some(CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 100)),
-            edit: Some(CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 100)),
+            transfer: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                voters: UserSpecifierDTO::Owner,
+                threshold: 100,
+            })),
+            edit: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                voters: UserSpecifierDTO::Owner,
+                threshold: 100,
+            })),
         },
         metadata: vec![],
     };

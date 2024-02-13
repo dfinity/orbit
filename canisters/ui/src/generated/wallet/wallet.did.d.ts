@@ -107,6 +107,10 @@ export interface AddressBookEntry {
   'standard' : string,
 }
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
+export interface ApprovalThreshold {
+  'threshold' : number,
+  'voters' : UserSpecifier,
+}
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
 export interface BasicUser {
@@ -392,6 +396,7 @@ export type MeResult = {
     'Ok' : { 'me' : User, 'privileges' : Array<UserPrivilege> }
   } |
   { 'Err' : Error };
+export interface MinimumVotes { 'minimum' : number, 'voters' : UserSpecifier }
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;
 export interface Notification {
@@ -509,8 +514,8 @@ export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'And' : Array<ProposalPolicyCriteria> } |
   { 'Not' : ProposalPolicyCriteria } |
   { 'HasAddressBookMetadata' : AddressBookMetadata } |
-  { 'MinimumVotes' : [UserSpecifier, number] } |
-  { 'ApprovalThreshold' : [UserSpecifier, number] } |
+  { 'MinimumVotes' : MinimumVotes } |
+  { 'ApprovalThreshold' : ApprovalThreshold } |
   { 'AutoAdopted' : null };
 export interface ProposalPolicyInfo {
   'can_delete' : boolean,

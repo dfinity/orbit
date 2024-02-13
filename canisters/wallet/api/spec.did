@@ -29,7 +29,7 @@ type ProposalPolicy = record {
   id : UUID;
   specifier : ProposalSpecifier;
   criteria : ProposalPolicyCriteria;
-  info: ProposalPolicyInfo;
+  info : ProposalPolicyInfo;
 };
 
 // Defines the various types of proposals that can be created.
@@ -54,11 +54,27 @@ type ProposalSpecifier = variant {
   RemoveUserGroup : CommonSpecifier;
 };
 
+// A record type that can be used to represent an approval threshold.
+type ApprovalThreshold = record {
+  // The voters that are required to vote on the proposal.
+  voters : UserSpecifier;
+  // The required vote threshold for the criteria to be adopted.
+  threshold : nat16;
+};
+
+// A record type that can be used to represent the minimum votes.
+type MinimumVotes = record {
+  // The voters that are required to vote on the proposal.
+  voters : UserSpecifier;
+  // The minimum number of votes required for the criteria to be adopted.
+  minimum : nat16;
+};
+
 // Defines the various types criterias that can be used in a proposal evaluation.
 type ProposalPolicyCriteria = variant {
   AutoAdopted;
-  ApprovalThreshold : record { UserSpecifier; nat16 };
-  MinimumVotes : record { UserSpecifier; nat16 };
+  ApprovalThreshold : ApprovalThreshold;
+  MinimumVotes : MinimumVotes;
   HasAddressBookMetadata : AddressBookMetadata;
   Or : vec ProposalPolicyCriteria;
   And : vec ProposalPolicyCriteria;

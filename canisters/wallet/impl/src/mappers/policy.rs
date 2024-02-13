@@ -11,7 +11,8 @@ use crate::models::{
 };
 use uuid::Uuid;
 use wallet_api::{
-    AccessPolicyInfoDTO, CriteriaDTO, ProposalPolicyInfoDTO, TransferSpecifierDTO, UserSpecifierDTO,
+    AccessPolicyInfoDTO, ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, ProposalPolicyInfoDTO,
+    TransferSpecifierDTO, UserSpecifierDTO,
 };
 
 pub type AccessPolicyInfo = AccessPolicyInfoDTO;
@@ -22,10 +23,16 @@ impl From<Criteria> for CriteriaDTO {
         match criteria {
             Criteria::AutoAdopted => CriteriaDTO::AutoAdopted,
             Criteria::ApprovalThreshold(specifier, threshold) => {
-                CriteriaDTO::ApprovalThreshold(specifier.into(), threshold.0)
+                CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                    voters: specifier.into(),
+                    threshold: threshold.0,
+                })
             }
             Criteria::MinimumVotes(specifier, votes) => {
-                CriteriaDTO::MinimumVotes(specifier.into(), votes)
+                CriteriaDTO::MinimumVotes(MinimumVotesDTO {
+                    voters: specifier.into(),
+                    minimum: votes,
+                })
             }
             Criteria::HasAddressBookMetadata(metadata) => {
                 CriteriaDTO::HasAddressBookMetadata(metadata)
@@ -45,11 +52,11 @@ impl From<CriteriaDTO> for Criteria {
     fn from(dto: CriteriaDTO) -> Self {
         match dto {
             CriteriaDTO::AutoAdopted => Criteria::AutoAdopted,
-            CriteriaDTO::ApprovalThreshold(specifier, threshold) => {
-                Criteria::ApprovalThreshold(specifier.into(), Percentage(threshold))
+            CriteriaDTO::ApprovalThreshold(config) => {
+                Criteria::ApprovalThreshold(config.voters.into(), Percentage(config.threshold))
             }
-            CriteriaDTO::MinimumVotes(specifier, votes) => {
-                Criteria::MinimumVotes(specifier.into(), votes)
+            CriteriaDTO::MinimumVotes(config) => {
+                Criteria::MinimumVotes(config.voters.into(), config.minimum)
             }
             CriteriaDTO::HasAddressBookMetadata(metadata) => {
                 Criteria::HasAddressBookMetadata(metadata)

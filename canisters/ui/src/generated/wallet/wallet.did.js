@@ -143,14 +143,22 @@ export const idlFactory = ({ IDL }) => {
     'RemoveUserGroup' : CommonSpecifier,
     'AddAccount' : IDL.Null,
   });
+  const MinimumVotes = IDL.Record({
+    'minimum' : IDL.Nat16,
+    'voters' : UserSpecifier,
+  });
+  const ApprovalThreshold = IDL.Record({
+    'threshold' : IDL.Nat16,
+    'voters' : UserSpecifier,
+  });
   ProposalPolicyCriteria.fill(
     IDL.Variant({
       'Or' : IDL.Vec(ProposalPolicyCriteria),
       'And' : IDL.Vec(ProposalPolicyCriteria),
       'Not' : ProposalPolicyCriteria,
       'HasAddressBookMetadata' : AddressBookMetadata,
-      'MinimumVotes' : IDL.Tuple(UserSpecifier, IDL.Nat16),
-      'ApprovalThreshold' : IDL.Tuple(UserSpecifier, IDL.Nat16),
+      'MinimumVotes' : MinimumVotes,
+      'ApprovalThreshold' : ApprovalThreshold,
       'AutoAdopted' : IDL.Null,
     })
   );
