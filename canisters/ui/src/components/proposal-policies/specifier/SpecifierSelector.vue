@@ -9,17 +9,25 @@
     density="comfortable"
   />
 
-  <component :is="specifierSelector" v-model="model" />
+  <component
+    :is="selectedSpecifier?.component"
+    v-if="selectedSpecifier"
+    :model-value="selectedSpecifier.model"
+    @update:model-value="updateSpecifierModelValue"
+  />
 </template>
 <script setup lang="ts">
+import type { Component } from 'vue';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useAvailableOProposalSpecifiers } from '~/composables/proposal.composable';
 import { ProposalSpecifier } from '~/generated/wallet/wallet.did';
 import { ProposalSpecifierEnum } from '~/types/wallet.types';
 import { KeysOfUnion, unreachable, variantIs } from '~/utils/helper.utils';
-import EditAddressBookEntrySpecifier from './EditAddressBookEntrySpecifier.vue';
-import RemoveAddressBookEntrySpecifier from './RemoveAddressBookEntrySpecifier.vue';
-import type { Component } from 'vue';
+import AccountSpecifier from './AccountSpecifier.vue';
+import AddressBookEntrySpecifier from './AddressBookEntrySpecifier.vue';
+import TransferSpecifier from './TransferSpecifier.vue';
+import UserGroupSpecifier from './UserGroupSpecifier.vue';
+import UserSpecifier from './UserSpecifier.vue';
 
 const input = withDefaults(
   defineProps<{
@@ -47,40 +55,69 @@ const model = computed({
 const componentsMap: {
   [key in KeysOfUnion<ProposalSpecifier>]: Component | null;
 } = {
-  AddUserGroup: null,
-  RemoveUserGroup: null,
-  EditUserGroup: null,
   AddUser: null,
-  EditUser: null,
-  AddAccount: null,
-  EditAccount: null,
+  AddUserGroup: null,
   AddAccessPolicy: null,
-  RemoveAccessPolicy: null,
-  EditAccessPolicy: null,
+  AddAccount: null,
   AddProposalPolicy: null,
+  AddAddressBookEntry: null,
+  ChangeCanister: null,
+  // requires special handling
+  EditAccessPolicy: null,
+  RemoveAccessPolicy: null,
   EditProposalPolicy: null,
   RemoveProposalPolicy: null,
-  Transfer: null,
-  ChangeCanister: null,
-  AddAddressBookEntry: null,
-  EditAddressBookEntry: EditAddressBookEntrySpecifier,
-  RemoveAddressBookEntry: RemoveAddressBookEntrySpecifier,
+  Transfer: TransferSpecifier,
+  EditAccount: AccountSpecifier,
+  EditUserGroup: UserGroupSpecifier,
+  RemoveUserGroup: UserGroupSpecifier,
+  EditUser: UserSpecifier,
+  EditAddressBookEntry: AddressBookEntrySpecifier,
+  RemoveAddressBookEntry: AddressBookEntrySpecifier,
 };
 
-const specifierSelector = computed(() => {
-  const keys = Object.keys(componentsMap) as KeysOfUnion<ProposalSpecifier>[];
+function isKeyOfProposalSpecifier(key: string): key is keyof ProposalSpecifier {
+  return key in componentsMap;
+}
+
+const selectedSpecifier = computed<{
+  component: Component;
+  model: ProposalSpecifier[keyof ProposalSpecifier];
+} | null>(() => {
+  const keys = Object.keys(componentsMap) as Array<keyof ProposalSpecifier>;
   if (!model.value) {
     return null;
   }
 
   for (const key of keys) {
-    if (key in model.value && key in componentsMap) {
-      return componentsMap[key];
+    if (key in model.value && isKeyOfProposalSpecifier(key)) {
+      return {
+        component: componentsMap[key],
+        model: model.value[key],
+      };
     }
   }
 
   return null;
 });
+
+const updateSpecifierModelValue = (updated: ProposalSpecifier[keyof ProposalSpecifier]): void => {
+  if (!updated) {
+    model.value = undefined;
+    return;
+  }
+
+  if (!model.value) {
+    return;
+  }
+
+  for (const key of Object.values(ProposalSpecifierEnum)) {
+    if (isKeyOfProposalSpecifier(key) && key in model.value) {
+      model.value[key] = updated;
+      return;
+    }
+  }
+};
 
 watch(
   () => model.value,
