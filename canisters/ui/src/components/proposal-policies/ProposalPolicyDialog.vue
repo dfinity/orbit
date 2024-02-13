@@ -1,23 +1,33 @@
 <template>
   <VDialog
     v-model="openModel"
-    :persistent="loading"
+    :persistent="loading || saving"
     transition="dialog-bottom-transition"
     scrollable
     :max-width="props.dialogMaxWidth.value"
   >
-    <DataLoader v-slot="{ data }" :load="loadPolicy" @loading="loading = $event">
+    <DataLoader
+      v-slot="{ data }"
+      :load="loadPolicy"
+      @loading="loading = $event"
+      @loaded="proposalPolicy = $event.policy"
+    >
       <VCard :loading="loading">
         <VToolbar dark color="surface">
           <VToolbarTitle>{{ $t('pages.proposal_policies.dialog_title') }}</VToolbarTitle>
-          <VBtn :disabled="loading" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
         </VToolbar>
         <VCardText>
-          <ProposalPolicyForm v-if="data" v-model="data.policy" />
+          <ProposalPolicyForm
+            v-if="data"
+            v-model="proposalPolicy"
+            @submit="save"
+            @valid="valid = $event"
+          />
         </VCardText>
         <VCardActions class="pa-3">
           <VSpacer />
-          <VBtn>{{ $t('terms.save') }}</VBtn>
+          <VBtn :disabled="!canSave" :loading="saving" @click="save">{{ $t('terms.save') }}</VBtn>
         </VCardActions>
       </VCard>
     </DataLoader>
@@ -25,11 +35,17 @@
 </template>
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
-import { computed, toRefs, ref } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
 import ProposalPolicyForm from '~/components/proposal-policies/ProposalPolicyForm.vue';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable';
+import logger from '~/core/logger.core';
 import { ProposalPolicy, UUID } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
+import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
@@ -49,8 +65,10 @@ const emit = defineEmits<{
 }>();
 
 const props = toRefs(input);
-
+const valid = ref(true);
 const loading = ref(false);
+const saving = ref(false);
+const proposalPolicy = ref<Partial<ProposalPolicy>>({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
@@ -71,5 +89,51 @@ const loadPolicy = async (): Promise<{
 
   const result = await wallet.service.getProposalPolicy(props.policyId.value);
   return result;
+};
+
+const canSave = computed(() => {
+  return (
+    valid.value &&
+    !loading.value &&
+    !!proposalPolicy.value?.criteria &&
+    !!proposalPolicy.value?.specifier
+  );
+});
+
+const save = async (): Promise<void> => {
+  if (!canSave.value) {
+    return;
+  }
+
+  try {
+    saving.value = true;
+    if (proposalPolicy.value.id) {
+      const proposal = await wallet.service.editProposalPolicy({
+        policy_id: proposalPolicy.value.id,
+        specifier: [assertAndReturn(proposalPolicy.value.specifier)],
+        criteria: [assertAndReturn(proposalPolicy.value.criteria)],
+      });
+
+      useOnSuccessfulOperation(proposal);
+
+      openModel.value = false;
+      return;
+    }
+
+    const proposal = await wallet.service.addProposalPolicy({
+      specifier: assertAndReturn(proposalPolicy.value.specifier),
+      criteria: assertAndReturn(proposalPolicy.value.criteria),
+    });
+
+    useOnSuccessfulOperation(proposal);
+
+    openModel.value = false;
+  } catch (error) {
+    logger.error(`Failed to save proposal policy ${error}`);
+
+    useOnFailedOperation();
+  } finally {
+    saving.value = false;
+  }
 };
 </script>

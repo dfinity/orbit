@@ -40,6 +40,9 @@ export default {
     canister_upgrade_args_input: 'Argumentos de atualização do canister (opcional)',
     canister_upgrade_args_input_hint: 'Apenas aceite no formato hexadecimal.',
     search_items: 'Procurar items',
+    search_users: 'Procurar usuários',
+    search_user_groups: 'Procurar grupos de usuários',
+    search_accounts: 'Procurar contas',
   },
   change_canister: {
     targets: {

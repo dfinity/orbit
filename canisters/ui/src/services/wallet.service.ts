@@ -5,12 +5,14 @@ import {
   Account,
   AccountBalance,
   AddAccessPolicyOperationInput,
+  AddProposalPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
   ChangeCanisterOperationInput,
   Config,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
+  EditProposalPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
@@ -505,6 +507,36 @@ export class WalletService {
       title: [],
       summary: [],
       operation: { EditAccessPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editProposalPolicy(input: EditProposalPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditProposalPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addProposalPolicy(input: AddProposalPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddProposalPolicy: input },
     });
 
     if (variantIs(result, 'Err')) {

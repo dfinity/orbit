@@ -11,7 +11,7 @@
     <UserGroupsAutocomplete
       v-if="isId"
       v-model="idsModel"
-      :label="$t('app.search_items')"
+      :label="$t('app.search_user_groups')"
       variant="underlined"
       density="comfortable"
     />

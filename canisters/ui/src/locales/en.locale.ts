@@ -40,6 +40,9 @@ export default {
     canister_upgrade_args_input: 'Upgrade arguments (optional)',
     canister_upgrade_args_input_hint: 'Only hex encoded arguments are accepted',
     search_items: 'Search items',
+    search_users: 'Search users',
+    search_user_groups: 'Search user groups',
+    search_accounts: 'Search accounts',
   },
   change_canister: {
     targets: {
