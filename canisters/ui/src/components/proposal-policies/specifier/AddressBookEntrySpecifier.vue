@@ -14,6 +14,7 @@
       :label="$t('app.search_items')"
       variant="underlined"
       density="comfortable"
+      multiple
     />
   </div>
 </template>

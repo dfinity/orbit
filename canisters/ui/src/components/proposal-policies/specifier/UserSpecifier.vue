@@ -14,6 +14,7 @@
       :label="$t('app.search_users')"
       variant="underlined"
       density="comfortable"
+      multiple
     />
   </div>
 </template>
