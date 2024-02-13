@@ -3,6 +3,7 @@
     <div>
       {{ $t('proposal_policies.criteria.not') }}
       <VBtn
+        v-if="!props.disabled.value"
         :icon="mdiTrashCanOutline"
         variant="flat"
         size="small"
@@ -12,8 +13,18 @@
         @click="emit('remove')"
       />
     </div>
-    <AddCriteriaSelect v-if="isEmpty" :specifier="props.specifier.value" @add="model = $event" />
-    <CriteriaBuilder v-else v-model="model" :specifier="props.specifier.value" @remove="onRemove" />
+    <AddCriteriaSelect
+      v-if="isEmpty && !props.disabled.value"
+      :specifier="props.specifier.value"
+      @add="model = $event"
+    />
+    <CriteriaBuilder
+      v-else
+      v-model="model"
+      :specifier="props.specifier.value"
+      :disabled="props.disabled.value"
+      @remove="onRemove"
+    />
   </div>
 </template>
 
@@ -28,8 +39,11 @@ const input = withDefaults(
   defineProps<{
     modelValue: ProposalPolicyCriteria;
     specifier: ProposalSpecifier;
+    disabled?: boolean;
   }>(),
-  {},
+  {
+    disabled: false,
+  },
 );
 
 const props = toRefs(input);

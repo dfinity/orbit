@@ -13,6 +13,7 @@
   <ProposalPolicyDialog
     :open="open"
     :policy-id="props.policyId.value"
+    :readonly="props.readonly.value"
     @update:open="
       openEvent => {
         open = openEvent;
@@ -35,6 +36,7 @@ const input = withDefaults(
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
     variant?: 'flat' | 'text' | 'outlined';
     color?: string;
+    readonly?: boolean;
   }>(),
   {
     policyId: undefined,
@@ -43,6 +45,7 @@ const input = withDefaults(
     size: 'default',
     variant: 'flat',
     color: 'primary-variant',
+    readonly: false,
   },
 );
 

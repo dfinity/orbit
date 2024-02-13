@@ -53,6 +53,7 @@
               <template #item.actions="{ item }">
                 <div class="d-flex ga-0">
                   <ActionBtn
+                    v-if="true"
                     v-model="item.id"
                     :icon="mdiTrashCanOutline"
                     :submit="id => wallet.service.removeProposalPolicy(id)"
@@ -62,7 +63,8 @@
                   />
                   <ProposalPolicyOpenBtn
                     :policy-id="item.id"
-                    :icon="mdiPencil"
+                    :icon="true ? mdiPencil : mdiEye"
+                    :readonly="false"
                     variant="flat"
                     color="default"
                     size="small"
@@ -89,7 +91,7 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiPencil, mdiTrashCanOutline } from '@mdi/js';
+import { mdiPencil, mdiEye, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AuthCheck from '~/components/AuthCheck.vue';
@@ -139,13 +141,16 @@ const pagination = ref<{
   selectedPage: 1,
 });
 
-const headers = ref<{ title: string; key: string; headerProps: { class: string } }[]>([
+const headers = ref<
+  { title: string; key: string; sortable?: boolean; headerProps: { class: string } }[]
+>([
   {
     title: i18n.t('terms.specifier'),
     key: 'name',
     headerProps: { class: 'font-weight-bold w-100' },
+    sortable: false,
   },
-  { title: '', key: 'actions', headerProps: { class: 'font-weight-bold' } },
+  { title: '', key: 'actions', headerProps: { class: 'font-weight-bold' }, sortable: false },
 ]);
 
 const triggerSearch = throttle(() => {

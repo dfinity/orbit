@@ -3,6 +3,7 @@
     <div>
       {{ $t('proposal_policies.criteria.minimumvotes') }}
       <VBtn
+        v-if="!props.disabled.value"
         :icon="mdiTrashCanOutline"
         variant="flat"
         size="small"
@@ -19,7 +20,7 @@
           :label="$t('terms.min')"
           type="number"
           :rules="rules.min"
-          :disabled="disabledInput"
+          :disabled="disabledInput || props.disabled.value"
           density="comfortable"
           variant="underlined"
         />
@@ -32,6 +33,7 @@
           :items="userSelectorItems"
           item-value="value"
           item-title="text"
+          :disabled="props.disabled.value"
           variant="underlined"
           density="comfortable"
         />
@@ -40,12 +42,14 @@
           v-model="model[0].Group"
           :label="$t('proposal_policies.criteria_user_specifier.group')"
           multiple
+          :disabled="props.disabled.value"
         />
         <UserAutocomplete
           v-else-if="variantIs(model[0], 'Id')"
           v-model="model[0].Id"
           :label="$t('proposal_policies.criteria_user_specifier.id')"
           multiple
+          :disabled="props.disabled.value"
         />
       </div>
     </div>
@@ -72,8 +76,11 @@ import { variantIs } from '~/utils/helper.utils';
 const input = withDefaults(
   defineProps<{
     modelValue: [UserSpecifier, number];
+    disabled?: boolean;
   }>(),
-  {},
+  {
+    disabled: false,
+  },
 );
 
 const props = toRefs(input);

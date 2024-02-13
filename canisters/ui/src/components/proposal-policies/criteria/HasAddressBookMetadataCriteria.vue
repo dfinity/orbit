@@ -2,6 +2,7 @@
   <div class="d-flex align-center justify-start">
     {{ $t('proposal_policies.criteria.hasaddressbookmetadata') }}
     <VBtn
+      v-if="!props.disabled.value"
       :icon="mdiTrashCanOutline"
       variant="flat"
       size="small"
@@ -18,12 +19,14 @@
       :rules="[requiredRule]"
       variant="underlined"
       density="comfortable"
+      :disabled="props.disabled.value"
     />
     <VTextField
       v-model="model.value"
       :label="$t('terms.value')"
       variant="underlined"
       density="comfortable"
+      :disabled="props.disabled.value"
     />
   </div>
 </template>
@@ -38,8 +41,11 @@ import { requiredRule } from '~/utils/form.utils';
 const input = withDefaults(
   defineProps<{
     modelValue: AddressBookMetadata;
+    disabled?: boolean;
   }>(),
-  {},
+  {
+    disabled: false,
+  },
 );
 
 const props = toRefs(input);

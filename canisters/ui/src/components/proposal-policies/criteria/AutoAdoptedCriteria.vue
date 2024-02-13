@@ -2,6 +2,7 @@
   <div class="d-flex align-center justify-start">
     {{ $t('proposal_policies.criteria.autoadopted') }}
     <VBtn
+      v-if="!props.disabled.value"
       :icon="mdiTrashCanOutline"
       variant="flat"
       size="small"
@@ -15,6 +16,18 @@
 
 <script setup lang="ts">
 import { mdiTrashCanOutline } from '@mdi/js';
+import { toRefs } from 'vue';
+
+const input = withDefaults(
+  defineProps<{
+    disabled?: boolean;
+  }>(),
+  {
+    disabled: false,
+  },
+);
+
+const props = toRefs(input);
 
 const emit = defineEmits<{
   (event: 'remove', payload: void): void;

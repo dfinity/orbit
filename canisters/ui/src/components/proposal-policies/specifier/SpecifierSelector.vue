@@ -7,12 +7,14 @@
     item-title="text"
     variant="underlined"
     density="comfortable"
+    :disabled="props.disabled.value"
   />
 
   <component
     :is="selectedSpecifier?.component"
     v-if="selectedSpecifier"
     :model-value="selectedSpecifier.model"
+    :disabled="props.disabled.value"
     @update:model-value="updateSpecifierModelValue"
   />
 </template>
@@ -28,13 +30,16 @@ import AddressBookEntrySpecifier from './AddressBookEntrySpecifier.vue';
 import TransferSpecifier from './TransferSpecifier.vue';
 import UserGroupSpecifier from './UserGroupSpecifier.vue';
 import UserSpecifier from './UserSpecifier.vue';
+import UnsupportedSpecifier from './UnsupportedSpecifier.vue';
 
 const input = withDefaults(
   defineProps<{
     modelValue?: ProposalSpecifier;
+    disabled?: boolean;
   }>(),
   {
     modelValue: undefined,
+    disabled: false,
   },
 );
 
@@ -63,10 +68,10 @@ const componentsMap: {
   AddAddressBookEntry: null,
   ChangeCanister: null,
   // below variants require more specific specifier model
-  EditAccessPolicy: null,
-  RemoveAccessPolicy: null,
-  EditProposalPolicy: null,
-  RemoveProposalPolicy: null,
+  EditAccessPolicy: UnsupportedSpecifier,
+  RemoveAccessPolicy: UnsupportedSpecifier,
+  EditProposalPolicy: UnsupportedSpecifier,
+  RemoveProposalPolicy: UnsupportedSpecifier,
   Transfer: TransferSpecifier,
   EditAccount: AccountSpecifier,
   EditUserGroup: UserGroupSpecifier,

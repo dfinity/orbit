@@ -10,15 +10,24 @@
       readonly
     />
 
-    <SpecifierSelector v-model="model.specifier" @changed-variant="onChangedVariant" />
+    <SpecifierSelector
+      v-model="model.specifier"
+      :disabled="props.disabled.value"
+      @changed-variant="onChangedVariant"
+    />
 
     <template v-if="model.specifier">
       <div class="mt-4 mb-2 text-body-2">{{ $t('terms.criteria') }}</div>
       <CriteriaBuilder
         v-model="model.criteria"
         :specifier="model.specifier"
+        :disabled="props.disabled.value"
         @remove="model.criteria = undefined"
       />
+
+      <span v-if="!model.criteria && props.disabled.value">
+        {{ $t('terms.none') }}
+      </span>
     </template>
   </VForm>
 </template>
@@ -33,6 +42,7 @@ import { VFormValidation } from '~/types/helper.types';
 export type ProposalPolicyFormProps = {
   modelValue: Partial<ProposalPolicy>;
   valid?: boolean;
+  disabled?: boolean;
   display?: {
     id?: boolean;
     specifier?: boolean;
@@ -47,6 +57,7 @@ const p = withDefaults(defineProps<ProposalPolicyFormProps>(), {
     id: true,
     specifier: true,
   }),
+  disabled: false,
 });
 const props = toRefs(p);
 

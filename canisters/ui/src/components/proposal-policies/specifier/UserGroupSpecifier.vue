@@ -1,10 +1,22 @@
 <template>
   <div class="d-flex ga-4 flex-column">
     <div class="d-flex ga-2">
-      <VBtn :active="isAny" variant="outlined" size="small" @click="setSelectionMode('Any')">
+      <VBtn
+        :active="isAny"
+        :disabled="props.disabled.value"
+        variant="outlined"
+        size="small"
+        @click="setSelectionMode('Any')"
+      >
         {{ $t('terms.all') }}
       </VBtn>
-      <VBtn :active="isId" variant="outlined" size="small" @click="setSelectionMode('Id')">
+      <VBtn
+        :active="isId"
+        :disabled="props.disabled.value"
+        variant="outlined"
+        size="small"
+        @click="setSelectionMode('Id')"
+      >
         {{ $t('terms.subset') }}
       </VBtn>
     </div>
@@ -15,6 +27,7 @@
       variant="underlined"
       density="comfortable"
       multiple
+      :disabled="props.disabled.value"
     />
   </div>
 </template>
@@ -27,9 +40,11 @@ import { variantIs } from '~/utils/helper.utils';
 const input = withDefaults(
   defineProps<{
     modelValue?: CommonSpecifier;
+    disabled?: boolean;
   }>(),
   {
     modelValue: () => ({ Any: null }),
+    disabled: false,
   },
 );
 

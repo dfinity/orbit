@@ -3,6 +3,7 @@
     <div>
       {{ $t('proposal_policies.criteria.approvalthreshold') }}
       <VBtn
+        v-if="!props.disabled.value"
         :icon="mdiTrashCanOutline"
         variant="flat"
         size="small"
@@ -22,7 +23,7 @@
         thumb-label="always"
         thumb-size="12"
         hide-details
-        :disabled="disabledSlider"
+        :disabled="disabledSlider || props.disabled.value"
       />
       <span class="text-body-1">{{ $t('terms.of') }}</span>
       <div class="d-flex flex-row ga-4 w-md-50 w-100">
@@ -34,18 +35,21 @@
           item-title="text"
           variant="underlined"
           density="comfortable"
+          :disabled="props.disabled.value"
         />
         <UserGroupAutocomplete
           v-if="variantIs(model[0], 'Group')"
           v-model="model[0].Group"
           :label="$t('proposal_policies.criteria_user_specifier.group')"
           multiple
+          :disabled="props.disabled.value"
         />
         <UserAutocomplete
           v-else-if="variantIs(model[0], 'Id')"
           v-model="model[0].Id"
           :label="$t('proposal_policies.criteria_user_specifier.id')"
           multiple
+          :disabled="props.disabled.value"
         />
       </div>
     </div>
@@ -69,8 +73,11 @@ import { variantIs } from '~/utils/helper.utils';
 const input = withDefaults(
   defineProps<{
     modelValue: [UserSpecifier, number];
+    disabled?: boolean;
   }>(),
-  {},
+  {
+    disabled: false,
+  },
 );
 
 const props = toRefs(input);

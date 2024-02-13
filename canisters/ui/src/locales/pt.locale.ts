@@ -262,6 +262,7 @@ export default {
     criteria: 'Critério',
     checksum: 'Checksum',
     reject: 'Rejeitar',
+    none: 'Nenhum',
     statuses: 'Estados',
     created: 'Criado',
     expires: 'Expira',
@@ -458,6 +459,7 @@ export default {
   proposal_policies: {
     user_type_select: 'Tipo de usuário',
     add_criteria_label: 'Adicionar critério +',
+    unsupported_specifier: 'Especificador não suportado',
     criteria_user_specifier: {
       owner: 'Proprietário',
       proposer: 'Requerente',

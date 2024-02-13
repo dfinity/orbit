@@ -21,13 +21,16 @@
           <ProposalPolicyForm
             v-if="data"
             v-model="proposalPolicy"
+            :disabled="props.readonly.value"
             @submit="save"
             @valid="valid = $event"
           />
         </VCardText>
         <VCardActions class="pa-3">
           <VSpacer />
-          <VBtn :disabled="!canSave" :loading="saving" @click="save">{{ $t('terms.save') }}</VBtn>
+          <VBtn v-if="!props.readonly.value" :disabled="!canSave" :loading="saving" @click="save">
+            {{ $t('terms.save') }}
+          </VBtn>
         </VCardActions>
       </VCard>
     </DataLoader>
@@ -52,11 +55,13 @@ const input = withDefaults(
     policyId?: UUID;
     open?: boolean;
     dialogMaxWidth?: number;
+    readonly?: boolean;
   }>(),
   {
     policyId: undefined,
     open: false,
     dialogMaxWidth: 800,
+    readonly: false,
   },
 );
 

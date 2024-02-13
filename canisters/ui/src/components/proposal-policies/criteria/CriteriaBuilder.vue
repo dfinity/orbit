@@ -1,42 +1,52 @@
 <template>
   <AddCriteriaSelect
-    v-if="model === null"
+    v-if="model === null && !props.disabled.value"
     :specifier="props.specifier.value"
     @add="model = $event"
   />
-  <template v-else>
+  <template v-else-if="model !== null">
     <AndCriteria
       v-if="variantIs(model, 'And')"
       v-model="model.And"
       :specifier="props.specifier.value"
+      :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
-    <AutoAdoptedCriteria v-else-if="variantIs(model, 'AutoAdopted')" @remove="emit('remove')" />
+    <AutoAdoptedCriteria
+      v-else-if="variantIs(model, 'AutoAdopted')"
+      :disabled="props.disabled.value"
+      @remove="emit('remove')"
+    />
     <MinimumVotesCriteria
       v-else-if="variantIs(model, 'MinimumVotes')"
       v-model="model.MinimumVotes"
+      :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
     <ApprovalThresholdCriteria
       v-else-if="variantIs(model, 'ApprovalThreshold')"
       v-model="model.ApprovalThreshold"
+      :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
     <NotCriteria
       v-else-if="variantIs(model, 'Not')"
       v-model="model.Not"
       :specifier="props.specifier.value"
+      :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
     <OrCriteria
       v-else-if="variantIs(model, 'Or')"
       v-model="model.Or"
       :specifier="props.specifier.value"
+      :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
     <HasAddressBookMetadataCriteria
       v-else-if="variantIs(model, 'HasAddressBookMetadata')"
       v-model="model.HasAddressBookMetadata"
+      :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
   </template>
@@ -58,9 +68,11 @@ const input = withDefaults(
   defineProps<{
     modelValue?: ProposalPolicyCriteria | null;
     specifier: ProposalSpecifier;
+    disabled?: boolean;
   }>(),
   {
     modelValue: null,
+    disabled: false,
   },
 );
 

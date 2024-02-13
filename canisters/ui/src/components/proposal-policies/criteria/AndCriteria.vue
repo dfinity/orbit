@@ -4,6 +4,7 @@
     <VCardTitle class="px-2">
       {{ $t('proposal_policies.criteria.and') }}
       <VBtn
+        v-if="!props.disabled.value"
         :icon="mdiTrashCanOutline"
         variant="flat"
         size="small"
@@ -18,11 +19,16 @@
         :key="idx"
         v-model="model[idx]"
         :specifier="props.specifier.value"
+        :disabled="props.disabled.value"
         @remove="removeEntry(idx)"
       />
     </VCardText>
     <VCardActions class="px-2">
-      <AddCriteriaSelect :specifier="props.specifier.value" @add="model.push($event)" />
+      <AddCriteriaSelect
+        v-if="!props.disabled.value"
+        :specifier="props.specifier.value"
+        @add="model.push($event)"
+      />
     </VCardActions>
   </VCard>
   <VDivider />
@@ -39,9 +45,11 @@ const input = withDefaults(
   defineProps<{
     modelValue?: ProposalPolicyCriteria[];
     specifier: ProposalSpecifier;
+    disabled?: boolean;
   }>(),
   {
     modelValue: () => [],
+    disabled: false,
   },
 );
 

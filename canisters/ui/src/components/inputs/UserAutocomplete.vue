@@ -8,6 +8,8 @@
     :items="items"
     :variant="props.variant.value"
     :density="props.density.value"
+    :readonly="props.readonly.value"
+    :disabled="props.disabled.value"
     @update:search="autocomplete.search"
   />
 </template>
@@ -24,6 +26,8 @@ const input = withDefaults(
     variant?: 'underlined' | 'outlined';
     density?: 'comfortable' | 'compact';
     multiple?: boolean;
+    readonly?: boolean;
+    disabled?: boolean;
   }>(),
   {
     modelValue: () => [],
@@ -31,6 +35,8 @@ const input = withDefaults(
     variant: 'underlined',
     density: 'comfortable',
     multiple: false,
+    readonly: false,
+    disabled: false,
   },
 );
 

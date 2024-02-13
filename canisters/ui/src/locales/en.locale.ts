@@ -258,6 +258,7 @@ export default {
     confirm: 'Confirm',
     id: 'ID',
     submit: 'Submit',
+    none: 'None',
     save: 'Save',
     see_all: 'See All',
     requests: 'Requests',
@@ -457,6 +458,7 @@ export default {
   proposal_policies: {
     user_type_select: 'User type',
     add_criteria_label: 'Add criteria +',
+    unsupported_specifier: 'Unsupported specifier definition',
     criteria_user_specifier: {
       owner: 'Owner',
       proposer: 'Proposer',
