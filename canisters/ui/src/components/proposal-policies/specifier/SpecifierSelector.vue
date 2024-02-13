@@ -62,7 +62,7 @@ const componentsMap: {
   AddProposalPolicy: null,
   AddAddressBookEntry: null,
   ChangeCanister: null,
-  // requires special handling
+  // below variants require more specific specifier model
   EditAccessPolicy: null,
   RemoveAccessPolicy: null,
   EditProposalPolicy: null,

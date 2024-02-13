@@ -12,13 +12,14 @@
 
     <SpecifierSelector v-model="model.specifier" @changed-variant="onChangedVariant" />
 
-    <div class="mt-4 mb-2 text-body-2">{{ $t('terms.criteria') }}</div>
-    <CriteriaBuilder
-      v-if="model.specifier"
-      v-model="model.criteria"
-      :specifier="model.specifier"
-      @remove="model.criteria = undefined"
-    />
+    <template v-if="model.specifier">
+      <div class="mt-4 mb-2 text-body-2">{{ $t('terms.criteria') }}</div>
+      <CriteriaBuilder
+        v-model="model.criteria"
+        :specifier="model.specifier"
+        @remove="model.criteria = undefined"
+      />
+    </template>
   </VForm>
 </template>
 
