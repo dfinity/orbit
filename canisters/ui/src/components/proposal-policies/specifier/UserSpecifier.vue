@@ -8,7 +8,7 @@
         {{ $t('terms.subset') }}
       </VBtn>
     </div>
-    <UsersAutocomplete
+    <UserAutocomplete
       v-if="isId"
       v-model="idsModel"
       :label="$t('app.search_users')"
@@ -20,7 +20,7 @@
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import UsersAutocomplete from '~/components/inputs/UsersAutocomplete.vue';
+import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import { CommonSpecifier } from '~/generated/wallet/wallet.did';
 import { variantIs } from '~/utils/helper.utils';
 

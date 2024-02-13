@@ -35,13 +35,13 @@
           variant="underlined"
           density="comfortable"
         />
-        <UserGroupsAutocomplete
+        <UserGroupAutocomplete
           v-if="variantIs(model[0], 'Group')"
           v-model="model[0].Group"
           :label="$t('proposal_policies.criteria_user_specifier.group')"
           multiple
         />
-        <UsersAutocomplete
+        <UserAutocomplete
           v-else-if="variantIs(model[0], 'Id')"
           v-model="model[0].Id"
           :label="$t('proposal_policies.criteria_user_specifier.id')"
@@ -54,11 +54,9 @@
 
 <script setup lang="ts">
 import { mdiTrashCanOutline } from '@mdi/js';
-import { ref } from 'vue';
-import { watch } from 'vue';
-import { computed, toRefs } from 'vue';
-import UserGroupsAutocomplete from '~/components/inputs/UserGroupsAutocomplete.vue';
-import UsersAutocomplete from '~/components/inputs/UsersAutocomplete.vue';
+import { computed, ref, toRefs, watch } from 'vue';
+import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
+import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { useUserSpecifierSelectorItems } from '~/composables/proposal-policies.composable';
 import { UserSpecifier } from '~/generated/wallet/wallet.did';
 import {

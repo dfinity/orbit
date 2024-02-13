@@ -8,7 +8,7 @@
         {{ $t('terms.subset') }}
       </VBtn>
     </div>
-    <UserGroupsAutocomplete
+    <UserGroupAutocomplete
       v-if="isId"
       v-model="idsModel"
       :label="$t('app.search_user_groups')"
@@ -20,7 +20,7 @@
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import UserGroupsAutocomplete from '~/components/inputs/UserGroupsAutocomplete.vue';
+import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { CommonSpecifier } from '~/generated/wallet/wallet.did';
 import { variantIs } from '~/utils/helper.utils';
 
