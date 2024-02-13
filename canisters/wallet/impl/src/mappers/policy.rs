@@ -10,7 +10,9 @@ use crate::models::{
     ProposalPolicy,
 };
 use uuid::Uuid;
-use wallet_api::{AccessPolicyInfoDTO, CriteriaDTO, ProposalPolicyInfoDTO, TransferSpecifierDTO, UserSpecifierDTO};
+use wallet_api::{
+    AccessPolicyInfoDTO, CriteriaDTO, ProposalPolicyInfoDTO, TransferSpecifierDTO, UserSpecifierDTO,
+};
 
 pub type AccessPolicyInfo = AccessPolicyInfoDTO;
 pub type ProposalPolicyInfo = ProposalPolicyInfoDTO;
