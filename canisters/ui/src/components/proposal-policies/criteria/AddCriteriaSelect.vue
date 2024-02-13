@@ -54,10 +54,20 @@ const onAddCriteria = (value: ProposalCriteriaEnum | null): void => {
       emit('add', { AutoAdopted: null });
       break;
     case ProposalCriteriaEnum.MinimumVotes:
-      emit('add', { MinimumVotes: [{ Any: null }, 1] });
+      emit('add', {
+        MinimumVotes: {
+          voters: { Any: null },
+          minimum: 1,
+        },
+      });
       break;
     case ProposalCriteriaEnum.ApprovalThreshold:
-      emit('add', { ApprovalThreshold: [{ Any: null }, 100] });
+      emit('add', {
+        ApprovalThreshold: {
+          voters: { Any: null },
+          threshold: 100,
+        },
+      });
       break;
     case ProposalCriteriaEnum.HasAddressBookMetadata:
       emit('add', { HasAddressBookMetadata: { key: '', value: '' } });
