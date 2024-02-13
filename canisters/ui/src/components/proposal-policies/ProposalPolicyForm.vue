@@ -73,7 +73,7 @@ const model = computed({
 });
 
 const onChangedVariant = (): void => {
-  model.value.criteria = { AutoAdopted: null };
+  model.value.criteria = undefined;
 };
 
 const submit = async () => {
