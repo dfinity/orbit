@@ -96,3 +96,51 @@ export enum ChangeCanisterTargetType {
   UpgradeWallet = 'UpgradeWallet',
   UpgradeUpgrader = 'UpgradeUpgrader',
 }
+
+export enum ProposalSpecifierEnum {
+  EditAccessPolicy = 'EditAccessPolicy',
+  AddUserGroup = 'AddUserGroup',
+  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  AddUser = 'AddUser',
+  EditUserGroup = 'EditUserGroup',
+  RemoveAddressBookEntry = 'RemoveAddressBookEntry',
+  EditAddressBookEntry = 'EditAddressBookEntry',
+  AddProposalPolicy = 'AddProposalPolicy',
+  ChangeCanister = 'ChangeCanister',
+  EditProposalPolicy = 'EditProposalPolicy',
+  EditUser = 'EditUser',
+  Transfer = 'Transfer',
+  EditAccount = 'EditAccount',
+  AddAddressBookEntry = 'AddAddressBookEntry',
+  AddAccessPolicy = 'AddAccessPolicy',
+  RemoveAccessPolicy = 'RemoveAccessPolicy',
+  RemoveUserGroup = 'RemoveUserGroup',
+  AddAccount = 'AddAccount',
+}
+
+export enum ProposalCriteriaEnum {
+  AutoAdopted = 'AutoAdopted',
+  HasAddressBookMetadata = 'HasAddressBookMetadata',
+  MinimumVotes = 'MinimumVotes',
+  ApprovalThreshold = 'ApprovalThreshold',
+  And = 'And',
+  Or = 'Or',
+  Not = 'Not',
+}
+
+export enum ProposalCriteriaUserSpecifierEnum {
+  Owner = 'Owner',
+  Proposer = 'Proposer',
+  Any = 'Any',
+  Group = 'Group',
+  Id = 'Id',
+}
+
+export interface ListAddressBookEntriesArgs {
+  limit?: number;
+  offset?: number;
+  addresses?: string[];
+  blockchain?: string;
+  standard?: string;
+  ids?: UUID[];
+}

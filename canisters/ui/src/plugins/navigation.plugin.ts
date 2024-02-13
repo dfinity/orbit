@@ -82,6 +82,21 @@ const sections = (): NavigationSections => ({
             route: Routes.Proposals,
           },
         },
+        {
+          name: 'proposal_policies',
+          localeKey: 'navigation.proposal_policies',
+          action: {
+            type: NavigationActionType.To,
+            handle: route =>
+              route.params.locale
+                ? `/${route.params.locale}/settings/policies`
+                : '/settings/policies',
+          },
+          auth: {
+            type: NavigastionAuthType.Route,
+            route: Routes.ProposalPolicies,
+          },
+        },
       ],
     },
     {

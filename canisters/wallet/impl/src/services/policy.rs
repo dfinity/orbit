@@ -6,7 +6,7 @@ use crate::{
         CallContext,
     },
     errors::{AccessControlError, ProposalError},
-    mappers::AccessPolicyInfo,
+    mappers::{AccessPolicyInfo, ProposalPolicyInfo},
     models::{
         access_control::{
             AccessControlPolicy, AccessPolicyActionSpecifier, CommonActionSpecifier,
@@ -271,11 +271,52 @@ impl PolicyService {
         Ok(AccessPolicyDependenciesResponse { groups, users })
     }
 
-    pub fn list_proposal_policies(
+    pub async fn get_proposal_policy_info(
+        &self,
+        policy: &ProposalPolicy,
+        ctx: &CallContext,
+    ) -> ServiceResult<ProposalPolicyInfo> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                CommonActionSpecifier::Read(CommonSpecifier::Id(vec![policy.id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![policy.id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        Ok(ProposalPolicyInfo {
+            can_edit,
+            can_delete,
+        })
+    }
+
+    pub async fn list_proposal_policies(
         &self,
         input: ListProposalPoliciesInput,
+        ctx: &CallContext,
     ) -> ServiceResult<PaginatedData<ProposalPolicy>> {
-        let policies = self.proposal_policy_repository.list();
+        let mut policies = self.proposal_policy_repository.list();
+
+        retain_accessible_resources(ctx, &mut policies, |policy| {
+            ResourceSpecifier::Common(
+                ResourceType::ProposalPolicy,
+                AccessPolicyActionSpecifier::Read(CommonSpecifier::Id(vec![policy.id])),
+            )
+        })
+        .await;
+
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.offset,
             limit: input.limit,
@@ -451,8 +492,8 @@ mod tests {
         assert_eq!(result.next_offset, Some(45));
     }
 
-    #[test]
-    fn list_proposal_policies_should_use_offset_and_limit() {
+    #[tokio::test]
+    async fn list_proposal_policies_should_use_offset_and_limit() {
         for i in 0..50 {
             let mut policy = mock_proposal_policy();
             policy.id = [i; 16];
@@ -465,7 +506,10 @@ mod tests {
             limit: Some(30),
         };
 
-        let result = POLICY_SERVICE.list_proposal_policies(input).unwrap();
+        let result = POLICY_SERVICE
+            .list_proposal_policies(input, &CallContext::new(self_canister_id()))
+            .await
+            .unwrap();
         assert_eq!(result.items.len(), 30);
         assert_eq!(result.next_offset, Some(45));
     }

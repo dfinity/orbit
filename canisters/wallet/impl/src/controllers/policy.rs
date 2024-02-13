@@ -131,8 +131,13 @@ impl PolicyController {
             .policy_service
             .get_proposal_policy(HelperMapper::to_uuid(input.id)?.as_bytes())?;
 
+        let info = self
+            .policy_service
+            .get_proposal_policy_info(&proposal_policy, &call_context())
+            .await?;
+
         Ok(GetProposalPolicyResponse {
-            policy: proposal_policy.into(),
+            policy: proposal_policy.to_dto(info),
         })
     }
 
@@ -146,10 +151,24 @@ impl PolicyController {
         &self,
         input: ListProposalPoliciesInput,
     ) -> ApiResult<ListProposalPoliciesResponse> {
-        let list = self.policy_service.list_proposal_policies(input)?;
+        let ctx = call_context();
+        let list = self
+            .policy_service
+            .list_proposal_policies(input, &ctx)
+            .await?;
+
+        let mut policies = Vec::new();
+        for policy in list.items {
+            let info = self
+                .policy_service
+                .get_proposal_policy_info(&policy, &ctx)
+                .await?;
+
+            policies.push(policy.to_dto(info));
+        }
 
         Ok(ListProposalPoliciesResponse {
-            policies: list.items.into_iter().map(Into::into).collect(),
+            policies: policies.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
             total: list.total,
         })

@@ -53,12 +53,6 @@ pub struct AddAccountOperationDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ApprovalThresholdPolicyDTO {
-    VariableThreshold(u8),
-    FixedThreshold(u8),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccountInput {
     pub account_id: UuidDTO,
 }

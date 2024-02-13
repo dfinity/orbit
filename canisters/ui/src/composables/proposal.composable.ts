@@ -1,4 +1,5 @@
 import { ComputedRef, Ref, computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import { logger } from '~/core/logger.core';
@@ -6,7 +7,8 @@ import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains, ProposalStatusEnum } from '~/types/wallet.types';
+import { SelectItem } from '~/types/helper.types';
+import { ProposalDomains, ProposalSpecifierEnum, ProposalStatusEnum } from '~/types/wallet.types';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { parseDate } from '~/utils/date.utils';
 
@@ -186,3 +188,19 @@ export const useProposalStatusItems = (): ComputedRef<ProposalStatusSelectItem[]
       text: i18n.global.t(`proposals.status.${status.toLowerCase()}`),
     })),
   );
+
+export const useAvailableOProposalSpecifiers = (): SelectItem[] => {
+  const i18n = useI18n();
+  const items: SelectItem<string>[] = [];
+
+  for (const specifier in ProposalSpecifierEnum) {
+    items.push({
+      value: specifier,
+      text: i18n.t(`proposal_policies.specifier.${specifier.toLowerCase()}`),
+    });
+  }
+
+  items.sort((a, b) => a.text.localeCompare(b.text));
+
+  return items;
+};

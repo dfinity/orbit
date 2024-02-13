@@ -1,5 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import { icAgent } from '~/core/ic-agent.core';
 import { ListProposalsResult } from '~/generated/wallet/wallet.did';
 import { serviceManager } from '~/plugins/services.plugin';
 import { WalletService } from '~/services/wallet.service';
@@ -18,7 +19,7 @@ vi.mock('~/services/wallet.service', () => {
   };
 });
 
-const mockedWalletService = new WalletService();
+const mockedWalletService = new WalletService(icAgent.get());
 serviceManager.services.wallet = mockedWalletService;
 
 vi.spyOn(mockedWalletService, 'listProposals').mockReturnValue(

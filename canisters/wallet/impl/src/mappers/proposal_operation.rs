@@ -12,8 +12,7 @@ use crate::{
         RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
-        policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, AddressBookRepository,
-        UserRepository, USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
     },
 };
 use ic_canister_core::repository::Repository;
@@ -455,11 +454,9 @@ impl From<wallet_api::AddProposalPolicyOperationInput> for AddProposalPolicyOper
 impl From<AddProposalPolicyOperation> for wallet_api::AddProposalPolicyOperationDTO {
     fn from(operation: AddProposalPolicyOperation) -> wallet_api::AddProposalPolicyOperationDTO {
         wallet_api::AddProposalPolicyOperationDTO {
-            policy: operation.policy_id.and_then(|id| {
-                PROPOSAL_POLICY_REPOSITORY
-                    .get(&id)
-                    .map(|policy| policy.into())
-            }),
+            policy_id: operation
+                .policy_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
             input: operation.input.into(),
         }
     }

@@ -9,10 +9,10 @@ use crate::{
     EditAccessPolicyOperationDTO, EditAccessPolicyOperationInput, EditAccountOperationDTO,
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, PaginationInput, ProposalPolicyDTO, ProposalSpecifierDTO,
-    RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
-    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, SortDirection, UuidDTO,
+    EditUserOperationInput, PaginationInput, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
+    RemoveAccessPolicyOperationInput, RemoveAddressBookEntryOperationDTO,
+    RemoveAddressBookEntryOperationInput, RemoveUserGroupOperationDTO,
+    RemoveUserGroupOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -240,7 +240,7 @@ pub struct AddProposalPolicyOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddProposalPolicyOperationDTO {
-    pub policy: Option<ProposalPolicyDTO>,
+    pub policy_id: Option<UuidDTO>,
     pub input: AddProposalPolicyOperationInput,
 }
 

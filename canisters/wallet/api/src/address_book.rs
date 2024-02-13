@@ -60,10 +60,17 @@ pub struct GetAddressBookEntryResponseDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAddressBookEntriesInputDTO {
+pub struct AddressChainInput {
     pub blockchain: String,
     pub standard: String,
-    pub paginate: PaginationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListAddressBookEntriesInputDTO {
+    pub ids: Option<Vec<UuidDTO>>,
+    pub addresses: Option<Vec<String>>,
+    pub address_chain: Option<AddressChainInput>,
+    pub paginate: Option<PaginationInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

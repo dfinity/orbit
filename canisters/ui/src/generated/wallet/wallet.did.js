@@ -143,14 +143,22 @@ export const idlFactory = ({ IDL }) => {
     'RemoveUserGroup' : CommonSpecifier,
     'AddAccount' : IDL.Null,
   });
+  const MinimumVotes = IDL.Record({
+    'minimum' : IDL.Nat16,
+    'voters' : UserSpecifier,
+  });
+  const ApprovalThreshold = IDL.Record({
+    'threshold' : IDL.Nat16,
+    'voters' : UserSpecifier,
+  });
   ProposalPolicyCriteria.fill(
     IDL.Variant({
       'Or' : IDL.Vec(ProposalPolicyCriteria),
       'And' : IDL.Vec(ProposalPolicyCriteria),
       'Not' : ProposalPolicyCriteria,
       'HasAddressBookMetadata' : AddressBookMetadata,
-      'MinimumVotes' : IDL.Tuple(UserSpecifier, IDL.Nat16),
-      'ApprovalThreshold' : IDL.Tuple(UserSpecifier, IDL.Nat16),
+      'MinimumVotes' : MinimumVotes,
+      'ApprovalThreshold' : ApprovalThreshold,
       'AutoAdopted' : IDL.Null,
     })
   );
@@ -305,14 +313,9 @@ export const idlFactory = ({ IDL }) => {
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
   });
-  const ProposalPolicy = IDL.Record({
-    'id' : UUID,
-    'specifier' : ProposalSpecifier,
-    'criteria' : ProposalPolicyCriteria,
-  });
   const AddProposalPolicyOperation = IDL.Record({
     'input' : AddProposalPolicyOperationInput,
-    'policy' : IDL.Opt(ProposalPolicy),
+    'policy_id' : IDL.Opt(UUID),
   });
   const ChangeCanisterOperation = IDL.Record({
     'target' : ChangeCanisterTarget,
@@ -460,6 +463,16 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const GetProposalPolicyInput = IDL.Record({ 'id' : UUID });
+  const ProposalPolicyInfo = IDL.Record({
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
+  const ProposalPolicy = IDL.Record({
+    'id' : UUID,
+    'info' : ProposalPolicyInfo,
+    'specifier' : ProposalSpecifier,
+    'criteria' : ProposalPolicyCriteria,
+  });
   const GetProposalPolicyResult = IDL.Variant({
     'Ok' : IDL.Record({ 'policy' : ProposalPolicy }),
     'Err' : Error,
@@ -571,9 +584,12 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ListAddressBookEntriesInput = IDL.Record({
-    'blockchain' : IDL.Text,
-    'paginate' : PaginationInput,
-    'standard' : IDL.Text,
+    'ids' : IDL.Opt(IDL.Vec(UUID)),
+    'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'paginate' : IDL.Opt(PaginationInput),
+    'address_chain' : IDL.Opt(
+      IDL.Record({ 'blockchain' : IDL.Text, 'standard' : IDL.Text })
+    ),
   });
   const ListAddressBookEntriesResult = IDL.Variant({
     'Ok' : IDL.Record({

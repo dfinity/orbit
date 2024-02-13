@@ -38,6 +38,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (event: 'failed', payload: unknown): void;
   (event: 'loaded', payload: T): void;
+  (event: 'loading', payload: boolean): void;
   (event: 'update:forceReload', payload: boolean): void;
 }>();
 
@@ -78,6 +79,7 @@ const working = computed({
   set: (value: boolean) => {
     if (data.value === undefined) {
       loading.value = value;
+      emit('loading', value);
     } else {
       reloading.value = value;
     }

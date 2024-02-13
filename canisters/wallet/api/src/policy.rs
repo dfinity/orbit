@@ -33,10 +33,22 @@ pub enum UserSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ApprovalThresholdDTO {
+    pub voters: UserSpecifierDTO,
+    pub threshold: u16,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct MinimumVotesDTO {
+    pub voters: UserSpecifierDTO,
+    pub minimum: u16,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CriteriaDTO {
     AutoAdopted,
-    ApprovalThreshold(UserSpecifierDTO, u16),
-    MinimumVotes(UserSpecifierDTO, u16),
+    ApprovalThreshold(ApprovalThresholdDTO),
+    MinimumVotes(MinimumVotesDTO),
     HasAddressBookMetadata(MetadataDTO),
     Or(Vec<CriteriaDTO>),
     And(Vec<CriteriaDTO>),
@@ -151,10 +163,17 @@ pub struct GetAccessPolicyResponse {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalPolicyInfoDTO {
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalPolicyDTO {
     pub id: UuidDTO,
     pub specifier: ProposalSpecifierDTO,
     pub criteria: CriteriaDTO,
+    pub info: ProposalPolicyInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

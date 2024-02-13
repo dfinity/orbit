@@ -18,6 +18,30 @@ export const requiredRule = (value: unknown): string | boolean => {
   return true;
 };
 
+export const intNumberRangeRule = (
+  field: string,
+  min: number,
+  max: number = Number.MAX_SAFE_INTEGER,
+) => {
+  return (value: unknown): string | boolean => {
+    const hasValue = !!value;
+    if (!hasValue) {
+      // this rule only applies if there is a value
+      return true;
+    }
+
+    const parsedValue = parseInt(`${value}`, 10);
+
+    if (isNaN(parsedValue)) {
+      return i18n.global.t('forms.rules.requiredIntNumber');
+    }
+
+    return parsedValue >= min && parsedValue <= max
+      ? true
+      : i18n.global.t('forms.rules.intNumberRange', { field, min, max });
+  };
+};
+
 export const maxLengthRule = (max: number, field: string) => {
   return (value: unknown): string | boolean => {
     const hasValue = !!value;

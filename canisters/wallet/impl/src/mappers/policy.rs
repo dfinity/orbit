@@ -10,19 +10,29 @@ use crate::models::{
     ProposalPolicy,
 };
 use uuid::Uuid;
-use wallet_api::{AccessPolicyInfoDTO, CriteriaDTO, TransferSpecifierDTO, UserSpecifierDTO};
+use wallet_api::{
+    AccessPolicyInfoDTO, ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, ProposalPolicyInfoDTO,
+    TransferSpecifierDTO, UserSpecifierDTO,
+};
 
 pub type AccessPolicyInfo = AccessPolicyInfoDTO;
+pub type ProposalPolicyInfo = ProposalPolicyInfoDTO;
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
         match criteria {
             Criteria::AutoAdopted => CriteriaDTO::AutoAdopted,
             Criteria::ApprovalThreshold(specifier, threshold) => {
-                CriteriaDTO::ApprovalThreshold(specifier.into(), threshold.0)
+                CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                    voters: specifier.into(),
+                    threshold: threshold.0,
+                })
             }
             Criteria::MinimumVotes(specifier, votes) => {
-                CriteriaDTO::MinimumVotes(specifier.into(), votes)
+                CriteriaDTO::MinimumVotes(MinimumVotesDTO {
+                    voters: specifier.into(),
+                    minimum: votes,
+                })
             }
             Criteria::HasAddressBookMetadata(metadata) => {
                 CriteriaDTO::HasAddressBookMetadata(metadata)
@@ -42,11 +52,11 @@ impl From<CriteriaDTO> for Criteria {
     fn from(dto: CriteriaDTO) -> Self {
         match dto {
             CriteriaDTO::AutoAdopted => Criteria::AutoAdopted,
-            CriteriaDTO::ApprovalThreshold(specifier, threshold) => {
-                Criteria::ApprovalThreshold(specifier.into(), Percentage(threshold))
+            CriteriaDTO::ApprovalThreshold(config) => {
+                Criteria::ApprovalThreshold(config.voters.into(), Percentage(config.threshold))
             }
-            CriteriaDTO::MinimumVotes(specifier, votes) => {
-                Criteria::MinimumVotes(specifier.into(), votes)
+            CriteriaDTO::MinimumVotes(config) => {
+                Criteria::MinimumVotes(config.voters.into(), config.minimum)
             }
             CriteriaDTO::HasAddressBookMetadata(metadata) => {
                 Criteria::HasAddressBookMetadata(metadata)
@@ -397,12 +407,13 @@ impl From<wallet_api::CommonActionSpecifierDTO> for CommonActionSpecifier {
     }
 }
 
-impl From<ProposalPolicy> for wallet_api::ProposalPolicyDTO {
-    fn from(policy: ProposalPolicy) -> Self {
-        Self {
-            id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
-            specifier: policy.specifier.into(),
-            criteria: policy.criteria.into(),
+impl ProposalPolicy {
+    pub fn to_dto(self, info: ProposalPolicyInfo) -> wallet_api::ProposalPolicyDTO {
+        wallet_api::ProposalPolicyDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            specifier: self.specifier.into(),
+            criteria: self.criteria.into(),
+            info,
         }
     }
 }

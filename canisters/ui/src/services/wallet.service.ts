@@ -5,23 +5,28 @@ import {
   Account,
   AccountBalance,
   AddAccessPolicyOperationInput,
+  AddProposalPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
   ChangeCanisterOperationInput,
   Config,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
+  EditProposalPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
   GetAccountInput,
   GetProposalInput,
+  GetProposalPolicyResult,
   GetTransfersInput,
   GetUserInput,
   ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListAccountsResult,
+  ListAddressBookEntriesResult,
   ListNotificationsInput,
+  ListProposalPoliciesResult,
   ListProposalsInput,
   ListProposalsResult,
   ListUserGroupsResult,
@@ -42,7 +47,11 @@ import {
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
 import { ExtractOk } from '~/types/helper.types';
-import { ListAccountsArgs, ListProposalsArgs } from '~/types/wallet.types';
+import {
+  ListAccountsArgs,
+  ListAddressBookEntriesArgs,
+  ListProposalsArgs,
+} from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 
 export class WalletService {
@@ -361,6 +370,41 @@ export class WalletService {
     return result.Ok;
   }
 
+  async listAddressBook({
+    limit,
+    offset,
+    blockchain,
+    standard,
+    ids,
+    addresses,
+  }: ListAddressBookEntriesArgs = {}): Promise<ExtractOk<ListAddressBookEntriesResult>> {
+    const result = await this.actor.list_address_book_entries({
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+      address_chain:
+        blockchain && standard
+          ? [
+              {
+                blockchain: blockchain,
+                standard: standard,
+              },
+            ]
+          : [],
+      addresses: addresses ? [addresses] : [],
+      ids: ids ? [ids] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
   async getAccount(input: GetAccountInput): Promise<Account> {
     const result = await this.actor.get_account(input);
 
@@ -472,12 +516,82 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
+  async editProposalPolicy(input: EditProposalPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditProposalPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addProposalPolicy(input: AddProposalPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddProposalPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
   async changeCanister(input: ChangeCanisterOperationInput): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
       operation: { ChangeCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async listProposalPolicies({ limit, offset }: { limit?: number; offset?: number } = {}): Promise<
+    ExtractOk<ListProposalPoliciesResult>
+  > {
+    const result = await this.actor.list_proposal_policies({
+      limit: limit ? [limit] : [],
+      offset: offset ? [BigInt(offset)] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getProposalPolicy(id: UUID): Promise<ExtractOk<GetProposalPolicyResult>> {
+    const result = await this.actor.get_proposal_policy({ id });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async removeProposalPolicy(id: UUID): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveProposalPolicy: { policy_id: id } },
     });
 
     if (variantIs(result, 'Err')) {

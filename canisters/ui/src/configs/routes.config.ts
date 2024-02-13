@@ -15,6 +15,7 @@ export enum Routes {
   // Proposal Pages
   Proposals = 'Proposals',
   TransferProposals = 'TransferProposals',
+  ProposalPolicies = 'ProposalPolicies',
 }
 
 export const defaultLoginRoute = Routes.Login;
