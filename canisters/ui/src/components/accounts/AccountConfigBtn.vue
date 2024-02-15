@@ -7,11 +7,11 @@
     :color="props.color.value"
     @click="open = true"
   >
-    <VIcon v-if="props.icon.value" :icon="props.icon.value" />
+    <VIcon v-if="props.icon.value" class="mr-1" :icon="props.icon.value" />
     <slot name="default">
       <span v-if="props.text">{{ props.text.value }}</span>
     </slot>
-    <VIcon v-if="props.appendIcon.value" :icon="props.appendIcon.value" />
+    <VIcon v-if="props.appendIcon.value" class="ml-1" :icon="props.appendIcon.value" />
   </VBtn>
 
   <AccountConfigDialog

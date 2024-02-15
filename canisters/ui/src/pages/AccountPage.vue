@@ -33,7 +33,7 @@
           <template #title-toolbar>
             <AccountConfigBtn
               :account-id="account.id"
-              class="px-0"
+              class="px-1"
               size="small"
               variant="text"
               color="default"
