@@ -24,29 +24,43 @@
             :items-per-page="-1"
             :hover="true"
           >
+            <template #header.balance="{ column }">
+              <div class="d-flex justify-end">
+                {{ column.title }}
+              </div>
+            </template>
             <template #item.actions="{ item }">
-              <VBtn
-                size="small"
-                variant="tonal"
-                :append-icon="mdiOpenInApp"
-                :to="{ name: Routes.Account, params: { id: item.id } }"
-              >
-                {{ $t('terms.open') }}
-              </VBtn>
+              <div class="d-flex justify-end">
+                <VBtn
+                  size="small"
+                  variant="tonal"
+                  :append-icon="mdiOpenInApp"
+                  :to="{ name: Routes.Account, params: { id: item.id } }"
+                >
+                  {{ $t('terms.open') }}
+                </VBtn>
+              </div>
+            </template>
+            <template #item.balance="{ item }">
+              <div class="d-flex justify-end align-center text-no-wrap">
+                {{ item.balance }}
+              </div>
             </template>
             <template #item.address="{ item }">
-              <span>{{ item.address }}</span>
-              <VBtn
-                size="x-small"
-                variant="text"
-                :icon="mdiContentCopy"
-                @click="
-                  copyToClipboard({
-                    textToCopy: item.address,
-                    sendNotification: true,
-                  })
-                "
-              />
+              <div class="d-flex align-center flex-no-wrap">
+                <TextOverflow :max-length="app.isMobile ? 16 : 32" :text="item.address" />
+                <VBtn
+                  size="x-small"
+                  variant="text"
+                  :icon="mdiContentCopy"
+                  @click="
+                    copyToClipboard({
+                      textToCopy: item.address,
+                      sendNotification: true,
+                    })
+                  "
+                />
+              </div>
             </template>
             <template #bottom>
               <!--this hides the footer as pagination is not required-->
@@ -74,11 +88,13 @@ import { useI18n } from 'vue-i18n';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
+import TextOverflow from '~/components/TextOverflow.vue';
 import AccountConfigBtn from '~/components/accounts/AccountConfigBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import { Routes } from '~/configs/routes.config';
 import { Account } from '~/generated/wallet/wallet.did';
+import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
@@ -96,6 +112,7 @@ const input = withDefaults(
 const props = toRefs(input);
 const i18n = useI18n();
 const wallet = useWalletStore();
+const app = useAppStore();
 
 const headers = ref<{ title: string; key: string; sortable?: boolean }[]>([
   { title: i18n.t('terms.name'), key: 'name', sortable: false },
