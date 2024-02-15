@@ -1156,6 +1156,16 @@ type AddressBookMetadata = record {
   value : text;
 };
 
+// A record type that can be used to represent the privileges of a caller for a given address book entry.
+type AddressBookEntryCallerPrivileges = record {
+  // The address book entry id.
+  id: UUID;
+  // Wether or not the caller can edit the address book entry.
+  can_edit : bool;
+  // Wether or not the caller can delete the address book entry.
+  can_delete : bool;
+};
+
 // A record type that can be used to represent an address book entry in the canister.
 type AddressBookEntry = record {
   // The internal address book entry id.
@@ -1187,6 +1197,8 @@ type GetAddressBookEntryResult = variant {
   Ok : record {
     // The address book entry that was retrieved.
     address_book_entry : AddressBookEntry;
+    // The privileges of the caller for the address book entry.
+    privileges : AddressBookEntryCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1220,6 +1232,8 @@ type ListAddressBookEntriesResult = variant {
     next_offset : opt nat64;
     // The total number of address book entries for the given blockchain standard.
     total : nat64;
+    // The privileges of the caller for the address book entries.
+    privileges : vec AddressBookEntryCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;

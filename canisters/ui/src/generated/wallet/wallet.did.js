@@ -460,8 +460,16 @@ export const idlFactory = ({ IDL }) => {
   const GetAddressBookEntryInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
+  const AddressBookEntryCallerPrivileges = IDL.Record({
+    'id' : UUID,
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
   const GetAddressBookEntryResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'address_book_entry' : AddressBookEntry }),
+    'Ok' : IDL.Record({
+      'privileges' : AddressBookEntryCallerPrivileges,
+      'address_book_entry' : AddressBookEntry,
+    }),
     'Err' : Error,
   });
   const GetProposalInput = IDL.Record({ 'proposal_id' : UUID });
@@ -601,6 +609,7 @@ export const idlFactory = ({ IDL }) => {
   const ListAddressBookEntriesResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(AddressBookEntryCallerPrivileges),
       'address_book_entries' : IDL.Vec(AddressBookEntry),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),

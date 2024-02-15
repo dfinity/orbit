@@ -395,6 +395,7 @@ export default {
     not_found_btn: 'Go back to accounts',
   },
   navigation: {
+    home: 'Home',
     accounts: 'Accounts',
     address_book: 'Address Book',
     users: 'Users',

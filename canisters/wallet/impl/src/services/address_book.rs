@@ -1,13 +1,17 @@
 use crate::{
     core::{
+        access_control::evaluate_caller_access,
         generate_uuid_v4,
         utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        CallContext,
     },
     errors::AddressBookError,
     mappers::AddressBookMapper,
     models::{
-        AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryId,
-        EditAddressBookEntryOperationInput, ListAddressBookEntriesInput,
+        access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType},
+        specifier::CommonSpecifier,
+        AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
+        AddressBookEntryId, EditAddressBookEntryOperationInput, ListAddressBookEntriesInput,
         RemoveAddressBookEntryOperationInput,
     },
     repositories::{AddressBookRepository, AddressBookWhereClause, ADDRESS_BOOK_REPOSITORY},
@@ -50,6 +54,37 @@ impl AddressBookService {
             })?;
 
         Ok(address_book_entry)
+    }
+
+    /// Returns the caller privileges for the given address book entry.
+    pub async fn get_entry_caller_privileges(
+        &self,
+        id: &AddressBookEntryId,
+        ctx: &CallContext,
+    ) -> ServiceResult<AddressBookEntryCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                CommonActionSpecifier::Update(CommonSpecifier::Id(vec![*id])),
+            ),
+        )
+        .await;
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![*id])),
+            ),
+        )
+        .await;
+
+        Ok(AddressBookEntryCallerPrivileges {
+            id: *id,
+            can_edit: can_edit.is_ok(),
+            can_delete: can_delete.is_ok(),
+        })
     }
 
     /// Returns all address book entries for the given blockchain standard.

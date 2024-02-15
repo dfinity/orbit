@@ -394,6 +394,7 @@ export default {
     },
   },
   navigation: {
+    home: 'Início',
     accounts: 'Contas',
     address_book: 'Endereços',
     users: 'Usuários',

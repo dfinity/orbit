@@ -17,7 +17,12 @@
           :disable-refresh="disableRefresh"
           :load="fetchList"
           :refresh-interval-ms="5000"
-          @loaded="addressBookEntries = $event.address_book_entries"
+          @loaded="
+            data => {
+              addressBookEntries = data.address_book_entries;
+              privileges = data.privileges;
+            }
+          "
         >
           <VDataTable
             :loading="loading"
@@ -35,7 +40,7 @@
             <template #item.actions="{ item }">
               <div class="d-flex justify-end">
                 <ActionBtn
-                  v-if="true"
+                  v-if="hasDeletePrivilege(item.id)"
                   v-model="item.id"
                   :icon="mdiTrashCanOutline"
                   :submit="id => wallet.service.removeAddressBookEntry(id)"
@@ -43,8 +48,9 @@
                   @submitted="useOnSuccessfulOperation"
                 />
                 <AddressBookEntryBtn
-                  :icon="mdiPencil"
+                  :icon="!hasEditPrivilege(item.id) ? mdiEye : mdiPencil"
                   :address-book-entry-id="item.id"
+                  :readonly="!hasEditPrivilege(item.id)"
                   variant="flat"
                   color="default"
                   size="small"
@@ -84,7 +90,7 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiContentCopy, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
+import { mdiContentCopy, mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AuthCheck from '~/components/AuthCheck.vue';
@@ -100,7 +106,11 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { AddressBookEntry } from '~/generated/wallet/wallet.did';
+import {
+  AddressBookEntry,
+  AddressBookEntryCallerPrivileges,
+  UUID,
+} from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { TableHeader } from '~/types/app.types';
@@ -125,6 +135,7 @@ const wallet = useWalletStore();
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.address_book.title'));
 const addressBookEntries = ref<AddressBookEntry[]>([]);
+const privileges = ref<AddressBookEntryCallerPrivileges[]>([]);
 const disableRefresh = ref(false);
 const forceReload = ref(false);
 const pagination = usePagination();
@@ -135,6 +146,16 @@ const headers: TableHeader[] = [
   { title: i18n.t('terms.address'), key: 'address', sortable: false },
   { title: '', key: 'actions', sortable: false },
 ];
+
+const hasEditPrivilege = (id: UUID): boolean => {
+  const privilege = privileges.value.find(p => p.id === id);
+  return !!privilege?.can_edit;
+};
+
+const hasDeletePrivilege = (id: UUID): boolean => {
+  const privilege = privileges.value.find(p => p.id === id);
+  return !!privilege?.can_delete;
+};
 
 const fetchList = useFetchList(
   (offset, limit) => {

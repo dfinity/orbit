@@ -333,6 +333,10 @@ const router = createRouter({
             return {
               breadcrumbs: [
                 {
+                  title: i18n.global.t('navigation.home'),
+                  to: { name: defaultHomeRoute },
+                },
+                {
                   title: i18n.global.t('navigation.address_book'),
                 },
               ],

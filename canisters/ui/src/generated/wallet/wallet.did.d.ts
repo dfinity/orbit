@@ -110,6 +110,11 @@ export interface AddressBookEntry {
   'address_owner' : string,
   'standard' : string,
 }
+export interface AddressBookEntryCallerPrivileges {
+  'id' : UUID,
+  'can_delete' : boolean,
+  'can_edit' : boolean,
+}
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
 export interface ApprovalThreshold {
   'threshold' : number,
@@ -226,7 +231,10 @@ export type GetAccountResult = {
   { 'Err' : Error };
 export interface GetAddressBookEntryInput { 'address_book_entry_id' : UUID }
 export type GetAddressBookEntryResult = {
-    'Ok' : { 'address_book_entry' : AddressBookEntry }
+    'Ok' : {
+      'privileges' : AddressBookEntryCallerPrivileges,
+      'address_book_entry' : AddressBookEntry,
+    }
   } |
   { 'Err' : Error };
 export type GetConfigResult = { 'Ok' : { 'config' : Config } } |
@@ -302,6 +310,7 @@ export interface ListAddressBookEntriesInput {
 export type ListAddressBookEntriesResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<AddressBookEntryCallerPrivileges>,
       'address_book_entries' : Array<AddressBookEntry>,
       'next_offset' : [] | [bigint],
     }
