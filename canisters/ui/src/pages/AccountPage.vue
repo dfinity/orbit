@@ -266,7 +266,6 @@ const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
   if (account.value) {
     breadcrumbs.push({
       title: account.value.name,
-      to: { name: Routes.Account, params: { id: account.value.id } },
     });
   }
 
