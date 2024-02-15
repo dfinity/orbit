@@ -48,7 +48,12 @@
         </VRow>
         <VRow>
           <VCol cols="12">
-            <component :is="proposalReviewComponent" :proposal="proposal" />
+            <component
+              :is="detailView?.component"
+              v-if="detailView"
+              :proposal="proposal"
+              :operation="detailView.operation"
+            />
           </VCol>
         </VRow>
       </VContainer>
@@ -81,12 +86,12 @@
 import { mdiInformationOutline } from '@mdi/js';
 import type { Component } from 'vue';
 import { computed, ref } from 'vue';
-import { VListItem } from 'vuetify/components';
-import ProposalMetadata from '~/components/proposals/ProposalMetadata.vue';
-import ProposalStatusChip from '~/components/proposals/ProposalStatusChip.vue';
-import ReviewAddUserGroup from '~/components/proposals/user-groups/ReviewAddUserGroup.vue';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import { KeysOfUnion } from '~/utils/helper.utils';
+import ProposalMetadata from './ProposalMetadata.vue';
+import ProposalStatusChip from './ProposalStatusChip.vue';
+import ReviewAddUserGroup from './user-groups/ReviewAddUserGroup.vue';
+import ReviewUnknownOperation from './operations/ReviewUnknownOperation.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -104,23 +109,23 @@ const componentsMap: {
   [key in KeysOfUnion<ProposalOperation>]: Component;
 } = {
   AddUserGroup: ReviewAddUserGroup,
-  RemoveUserGroup: VListItem,
-  EditUserGroup: VListItem,
-  AddUser: VListItem,
-  EditUser: VListItem,
-  AddAccount: VListItem,
-  EditAccount: VListItem,
-  AddAccessPolicy: VListItem,
-  RemoveAccessPolicy: VListItem,
-  EditAccessPolicy: VListItem,
-  AddProposalPolicy: VListItem,
-  EditProposalPolicy: VListItem,
-  RemoveProposalPolicy: VListItem,
-  Transfer: VListItem,
-  ChangeCanister: VListItem,
-  AddAddressBookEntry: VListItem,
-  EditAddressBookEntry: VListItem,
-  RemoveAddressBookEntry: VListItem,
+  RemoveUserGroup: ReviewUnknownOperation,
+  EditUserGroup: ReviewUnknownOperation,
+  AddUser: ReviewUnknownOperation,
+  EditUser: ReviewUnknownOperation,
+  AddAccount: ReviewUnknownOperation,
+  EditAccount: ReviewUnknownOperation,
+  AddAccessPolicy: ReviewUnknownOperation,
+  RemoveAccessPolicy: ReviewUnknownOperation,
+  EditAccessPolicy: ReviewUnknownOperation,
+  AddProposalPolicy: ReviewUnknownOperation,
+  EditProposalPolicy: ReviewUnknownOperation,
+  RemoveProposalPolicy: ReviewUnknownOperation,
+  Transfer: ReviewUnknownOperation,
+  ChangeCanister: ReviewUnknownOperation,
+  AddAddressBookEntry: ReviewUnknownOperation,
+  EditAddressBookEntry: ReviewUnknownOperation,
+  RemoveAddressBookEntry: ReviewUnknownOperation,
 };
 
 defineEmits<{
@@ -128,11 +133,17 @@ defineEmits<{
   (event: 'reject', reason?: string): void;
 }>();
 
-const proposalReviewComponent = computed(() => {
-  const keys = Object.keys(componentsMap) as KeysOfUnion<ProposalOperation>[];
+const detailView = computed<{
+  component: Component;
+  operation: ProposalOperation[keyof ProposalOperation];
+} | null>(() => {
+  const keys = Object.keys(componentsMap) as Array<keyof ProposalOperation>;
   for (const key of keys) {
     if (key in props.proposal.operation && key in componentsMap) {
-      return componentsMap[key];
+      return {
+        component: componentsMap[key],
+        operation: props.proposal.operation[key],
+      };
     }
   }
 

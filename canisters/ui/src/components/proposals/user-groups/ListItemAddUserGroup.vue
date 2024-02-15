@@ -1,15 +1,14 @@
 <template>
   <p>
-    <span class="text-body-2">{{ proposal.operation.AddUserGroup.input.name }}</span>
+    <span class="text-body-2">{{ props.operation.input.name }}</span>
   </p>
 </template>
 
 <script setup lang="ts">
 import { AddUserGroupOperation, Proposal } from '~/generated/wallet/wallet.did';
 
-defineProps<{
-  proposal: Proposal & {
-    operation: { AddUserGroup: AddUserGroupOperation };
-  };
+const props = defineProps<{
+  proposal: Proposal;
+  operation: AddUserGroupOperation;
 }>();
 </script>
