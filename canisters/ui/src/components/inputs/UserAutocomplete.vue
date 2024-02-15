@@ -10,6 +10,8 @@
     :density="props.density.value"
     :readonly="props.readonly.value"
     :disabled="props.disabled.value"
+    :prepend-icon="props.prependIcon.value"
+    :rules="props.rules.value"
     @update:search="autocomplete.search"
   />
 </template>
@@ -17,7 +19,7 @@
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { useUsersAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID } from '~/generated/wallet/wallet.did';
-import { SelectItem } from '~/types/helper.types';
+import { FormValidationRuleFn, SelectItem } from '~/types/helper.types';
 
 const input = withDefaults(
   defineProps<{
@@ -28,6 +30,8 @@ const input = withDefaults(
     multiple?: boolean;
     readonly?: boolean;
     disabled?: boolean;
+    prependIcon?: string;
+    rules?: FormValidationRuleFn[];
   }>(),
   {
     modelValue: () => [],
@@ -37,6 +41,8 @@ const input = withDefaults(
     multiple: false,
     readonly: false,
     disabled: false,
+    prependIcon: undefined,
+    rules: undefined,
   },
 );
 

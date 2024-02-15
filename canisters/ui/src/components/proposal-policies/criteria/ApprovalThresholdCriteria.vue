@@ -107,7 +107,6 @@ watch(
   userType => {
     switch (userType) {
       case ProposalCriteriaUserSpecifierEnum.Proposer:
-      case ProposalCriteriaUserSpecifierEnum.Owner:
         model.value.threshold = 100;
         disabledSlider.value = true;
         break;

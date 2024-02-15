@@ -43,6 +43,11 @@ export default {
     search_users: 'Search users',
     search_user_groups: 'Search user groups',
     search_accounts: 'Search accounts',
+    destination_source: 'Destination / Source',
+    amount_token: 'Amount, {token}',
+    no_transfers: 'No transfer found.',
+    account_dialog_edit_criteria_hint: '* Approval criteria for updating account configurations',
+    account_dialog_transfers_criteria_hint: '* Approval criteria for transfers',
   },
   change_canister: {
     targets: {
@@ -254,6 +259,7 @@ export default {
     balance: 'Balance',
     address: 'Address',
     min: 'Min',
+    time: 'Time',
     criteria: 'Criteria',
     confirm: 'Confirm',
     id: 'ID',
@@ -272,6 +278,7 @@ export default {
     reset: 'Reset',
     statuses: 'Statuses',
     token: 'Token',
+    configuration: 'Configuration',
     until: 'To',
     clear: 'Clear',
     to: 'To',
@@ -329,6 +336,7 @@ export default {
     canister_id: 'Canister ID',
     principal: 'Principal',
     status: 'Status',
+    transfer: 'Transfer',
     control_panel: 'Control panel',
     confirmed: 'Confirmed',
     unconfirmed: 'Unconfirmed',
@@ -378,6 +386,12 @@ export default {
     proposal_policies: 'Policies',
   },
   pages: {
+    accounts: {
+      title: 'Accounts',
+      btn_new_transfer: 'New transfer',
+      btn_upload_csv: 'Upload CSV',
+      error_fetching_account: 'Error fetching account, please try again.',
+    },
     user_settings: {
       title: 'Account Info & Settings',
       subtitle: 'Configure preferences and manage your user.',

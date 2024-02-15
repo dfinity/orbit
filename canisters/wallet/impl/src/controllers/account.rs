@@ -53,12 +53,20 @@ impl AccountController {
         is_async = true
     )]
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
+        let ctx = call_context();
         let account = self
             .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?
-            .to_dto();
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
 
-        Ok(GetAccountResponse { account })
+        let privileges = self
+            .account_service
+            .get_account_caller_privileges(&account.id, &ctx)
+            .await?;
+
+        Ok(GetAccountResponse {
+            account: account.to_dto(),
+            privileges,
+        })
     }
 
     #[with_middleware(

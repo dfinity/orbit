@@ -37,6 +37,10 @@ export interface AccountBalanceInfo {
   'balance' : bigint,
   'last_update_timestamp' : TimestampRFC3339,
 }
+export interface AccountCallerPrivileges {
+  'can_transfer' : boolean,
+  'can_edit' : boolean,
+}
 export interface AccountMetadata { 'key' : string, 'value' : string }
 export interface AccountPolicies {
   'edit' : [] | [ProposalPolicyCriteria],
@@ -216,7 +220,9 @@ export interface GetAccessPolicyInput { 'id' : UUID }
 export type GetAccessPolicyResult = { 'Ok' : { 'policy' : AccessPolicy } } |
   { 'Err' : Error };
 export interface GetAccountInput { 'account_id' : UUID }
-export type GetAccountResult = { 'Ok' : { 'account' : Account } } |
+export type GetAccountResult = {
+    'Ok' : { 'privileges' : AccountCallerPrivileges, 'account' : Account }
+  } |
   { 'Err' : Error };
 export interface GetAddressBookEntryInput { 'address_book_entry_id' : UUID }
 export type GetAddressBookEntryResult = {
@@ -683,10 +689,10 @@ export interface VoteOnProposalInput {
 export type VoteOnProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
   { 'Err' : Error };
 export interface WalletAsset {
-  'standards' : Array<string>,
   'metadata' : Array<AssetMetadata>,
   'name' : string,
   'blockchain' : string,
+  'standard' : string,
   'symbol' : AssetSymbol,
 }
 export interface WalletInit {

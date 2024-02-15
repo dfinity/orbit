@@ -418,6 +418,10 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
             ResourceSpecifier::Common(
                 ResourceType::Account,
                 CommonActionSpecifier::Read(CommonSpecifier::Id(ids)),
+            )
+            | ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Update(CommonSpecifier::Id(ids)),
             ) => {
                 let accounts = ids
                     .iter()

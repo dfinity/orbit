@@ -1063,6 +1063,14 @@ type AccountMetadata = record {
   value : text;
 };
 
+// A record type that can be used to represent the privileges of a caller for a given account.
+type AccountCallerPrivileges = record {
+  // Wether or not the caller can edit the account.
+  can_edit : bool;
+  // Wether or not the caller can request transfers from the account.
+  can_transfer : bool;
+};
+
 // A record type that can be used to represent a account in the canister.
 type Account = record {
   // The internal account id.
@@ -1104,6 +1112,8 @@ type GetAccountResult = variant {
   Ok : record {
     // The account that was retrieved.
     account : Account;
+    // The privileges of the caller for the account.
+    privileges : AccountCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1228,13 +1238,11 @@ type AssetMetadata = record {
 type WalletAsset = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The asset symbol, e.g. "ICP" or "BTC".
-  symbol : AssetSymbol;
   // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
-  //
-  // If empty, then only the native blockchain asset is supported.
-  standards : vec text;
+  standard : text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   name : text;
   // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),

@@ -2,7 +2,6 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core/logger.core';
 import {
-  Account,
   Config,
   Notification,
   Proposal,
@@ -18,16 +17,7 @@ import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
 import { computedWalletName, redirectToWalletSettings } from '~/utils/app.utils';
-import { startWalletWorkers, stopWalletWorkers } from '~/workers';
-
-export interface WalletMetrics {
-  accounts: number;
-  transfers: {
-    completed: number;
-    pending: number;
-  };
-  notifications: number;
-}
+import { accountsWorker, startWalletWorkers, stopWalletWorkers } from '~/workers';
 
 export enum WalletConnectionStatus {
   Disconnected = 'disconnected',
@@ -46,10 +36,6 @@ export interface WalletStoreState {
   configuration: {
     loading: boolean;
     details: Config;
-  };
-  accounts: {
-    loading: boolean;
-    items: Account[];
   };
   notifications: {
     loading: boolean;
@@ -73,8 +59,8 @@ export const createUserInitialAccount = async (
         metadata: [],
         owners: [userId],
         policies: {
-          edit: [],
-          transfer: [],
+          edit: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
+          transfer: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
         },
       },
     },
@@ -101,10 +87,6 @@ const initialStoreState = (): WalletStoreState => {
         supported_assets: [],
       },
     },
-    accounts: {
-      loading: false,
-      items: [],
-    },
     notifications: {
       loading: false,
       items: [],
@@ -115,14 +97,6 @@ const initialStoreState = (): WalletStoreState => {
 export const useWalletStore = defineStore('wallet', {
   state: (): WalletStoreState => initialStoreState(),
   getters: {
-    sortedAccounts(): Account[] {
-      return this.accounts.items.sort((a, b) => {
-        const firstDt = new Date(a.last_modification_timestamp).getTime();
-        const secondDt = new Date(b.last_modification_timestamp).getTime();
-
-        return secondDt - firstDt;
-      });
-    },
     sortedNotifications(): LoadableItem<Notification>[] {
       return this.notifications.items.sort((a, b) => {
         const firstDt = new Date(a.data.created_at);
@@ -133,16 +107,6 @@ export const useWalletStore = defineStore('wallet', {
     },
     hasNotifications(): boolean {
       return this.notifications.items.length > 0;
-    },
-    metrics(): WalletMetrics {
-      return {
-        accounts: this.accounts.items.length,
-        transfers: {
-          completed: 0,
-          pending: 0,
-        },
-        notifications: this.notifications.items.length,
-      };
     },
     supportedAssets(): WalletAsset[] {
       return this.configuration.details?.supported_assets ?? [];
@@ -163,7 +127,6 @@ export const useWalletStore = defineStore('wallet', {
 
       this.connectionStatus = initialState.connectionStatus;
       this.canisterId = initialState.canisterId;
-      this.accounts = initialState.accounts;
       this.configuration = initialState.configuration;
       this.notifications = initialState.notifications;
       this.user = initialState.user;
@@ -198,7 +161,6 @@ export const useWalletStore = defineStore('wallet', {
         this.privileges = myUser.privileges;
 
         // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
-        this.loadAccountList();
         this.loadConfiguration();
 
         startWalletWorkers(walletId);
@@ -273,18 +235,6 @@ export const useWalletStore = defineStore('wallet', {
 
       return null;
     },
-    async loadAccountList(): Promise<void> {
-      if (this.accounts.loading) {
-        return;
-      }
-      try {
-        this.accounts.loading = true;
-        // todo: add pagination support
-        this.accounts.items = (await this.service.listAccounts()).accounts;
-      } finally {
-        this.accounts.loading = false;
-      }
-    },
     async loadConfiguration(): Promise<void> {
       try {
         this.configuration.loading = true;
@@ -292,6 +242,15 @@ export const useWalletStore = defineStore('wallet', {
       } finally {
         this.configuration.loading = false;
       }
+    },
+
+    trackAccountsBalance(accountIds: UUID[]): void {
+      accountsWorker?.postMessage({
+        type: 'track',
+        data: {
+          accountIds,
+        },
+      });
     },
   },
 });

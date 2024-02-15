@@ -9,7 +9,7 @@ import { nanoToJsDate } from '~/utils/date.utils';
 
 export class ICNativeApi implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;
-  static PAGE_SIZE = 10;
+  static PAGE_SIZE = BigInt(100);
 
   constructor(
     private readonly account: Account,
@@ -27,11 +27,14 @@ export class ICNativeApi implements ChainApi {
     return balance;
   }
 
-  async fetchTransfers(input: FetchTransfersInput): Promise<AccountIncomingTransfer[]> {
+  async fetchTransfers(
+    input: FetchTransfersInput,
+    startBlockId?: bigint,
+  ): Promise<AccountIncomingTransfer[]> {
     const result = await this.actor.get_account_identifier_transactions({
       account_identifier: this.account.address,
-      start: input.from_dt ? [BigInt(input.from_dt.getTime())] : [],
-      max_results: BigInt(input.limit ?? ICNativeApi.PAGE_SIZE),
+      start: startBlockId ? [startBlockId] : [],
+      max_results: ICNativeApi.PAGE_SIZE,
     });
 
     if ('Err' in result) {
@@ -39,16 +42,19 @@ export class ICNativeApi implements ChainApi {
     }
 
     const response = result.Ok;
-    const transfers: AccountIncomingTransfer[] = [];
+    let transfers: AccountIncomingTransfer[] = [];
+    let nextTxId: null | bigint = null;
+    if (response.transactions.length) {
+      const lastTx = response.transactions[response.transactions.length - 1];
+      nextTxId = lastTx.id;
+    }
     response.transactions.forEach(tx => {
       if ('Transfer' in tx.transaction.operation) {
         const transferInfo = tx.transaction.operation.Transfer;
-        if (transferInfo.to !== this.account.address) {
-          return;
-        }
 
         transfers.push({
           from: transferInfo.from,
+          to: transferInfo.to,
           amount: transferInfo.amount.e8s,
           fee: transferInfo.fee.e8s,
           created_at: tx.transaction.created_at_time?.[0]
@@ -56,6 +62,30 @@ export class ICNativeApi implements ChainApi {
             : undefined,
         });
       }
+    });
+
+    if (
+      transfers.length &&
+      transfers[transfers.length - 1]?.created_at &&
+      nextTxId !== null &&
+      nextTxId !== response.oldest_tx_id?.[0]
+    ) {
+      const lastTransfer = transfers[transfers.length - 1];
+      const lastTransferTime = lastTransfer.created_at!.getTime();
+      const shouldFetchMore =
+        (input.fromDt && lastTransferTime > input.fromDt!.getTime()) || (!input.fromDt && nextTxId);
+
+      if (shouldFetchMore) {
+        const moreTransfers = await this.fetchTransfers(input, nextTxId);
+        transfers.push(...moreTransfers);
+      }
+    }
+
+    transfers = transfers.filter(t => {
+      const isInFromDt = !input.fromDt ? true : t.created_at && t.created_at >= input.fromDt;
+      const isInToDt = !input.toDt ? true : t.created_at && t.created_at <= input.toDt;
+
+      return isInFromDt && isInToDt;
     });
 
     return transfers;

@@ -9,9 +9,7 @@ pub struct WalletAssetDTO {
     pub symbol: String,
     // The asset standard that is supported (e.g. `erc20`, etc.), canonically
     // represented as a lowercase string with spaces replaced with underscores.
-    //
-    // If empty, then only the native blockchain asset is supported.
-    pub standards: Vec<String>,
+    pub standard: String,
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
     pub name: String,
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),

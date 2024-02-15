@@ -11,10 +11,10 @@
           <SidenavMenu v-if="session.isAuthenticated" />
         </slot>
       </div>
-      <div class="sidebar__footer">
+      <div class="px-4 py-4">
         <slot name="sidebar-footer">
           <a href="https://internetcomputer.org" target="_blank">
-            <img :src="icLogoHorizontal" height="20" />
+            <img :src="poweredByBadge" height="20" />
           </a>
         </slot>
       </div>
@@ -24,12 +24,15 @@
     <VMain class="body" full-height>
       <slot name="toolbar">
         <VToolbar density="compact" class="toolbar">
-          <div v-if="!isSetAndNotFalse(props.hideToolbarContext)" class="toolbar__context">
+          <div
+            v-if="!isSetAndNotFalse(props.hideToolbarContext)"
+            class="toolbar__context d-flex align-center"
+          >
             <slot name="toolbar-context">
               <BrandLogo v-if="!session.isAuthenticated" />
               <VBtn
                 v-if="session.isAuthenticated && !isSetAndNotFalse(props.hideSidebar)"
-                :icon="mdiMenuOpen"
+                :icon="app.showSidebar ? mdiMenuOpen : mdiMenuClose"
                 @click.prevent="app.toogleSidebar"
               />
             </slot>
@@ -107,7 +110,13 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
+import {
+  mdiAlertOutline,
+  mdiMenuClose,
+  mdiMenuOpen,
+  mdiWeatherNight,
+  mdiWeatherSunny,
+} from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/utils/helper.utils';
 import BrandLogo from '~/components/BrandLogo.vue';
@@ -118,7 +127,6 @@ import UserAvatarSelector from '~/components/UserAvatarSelector.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import LanguageSelector from './LanguageSelector.vue';
-import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 
 const app = useAppStore();
 const session = useSessionStore();
@@ -136,6 +144,8 @@ const props = inject('pageLayoutProps', {
 const ghMarkImg = computed(() => {
   return app.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
 });
+
+const poweredByBadge = `/images/powered-by-badge.svg`;
 
 const themeSwitcherIcon = computed(() => {
   return app.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
@@ -168,13 +178,6 @@ const themeSwitcherIcon = computed(() => {
     &__nav {
       width: 100%;
       flex-grow: 1;
-    }
-
-    &__footer {
-      min-height: var(--ds-toolbar-height);
-      text-align: center;
-      justify-content: center;
-      line-height: var(--ds-toolbar-height);
     }
   }
 

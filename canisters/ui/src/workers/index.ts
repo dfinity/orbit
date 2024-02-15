@@ -28,17 +28,13 @@ const registerAccountWorkerEventListener = (): void => {
     return;
   }
 
-  const wallet = useWalletStore();
-
   accountsWorker.onmessage = ({ data: msg }) => {
     switch (msg.type) {
-      case 'accounts': {
-        const { accounts } = msg.data;
-        wallet.accounts.items = accounts;
-        break;
-      }
       case 'stopped':
         // do nothing on worker stop as this is expected
+        break;
+      case 'balances':
+        // do nothing on worker balances as this is handled by the individual pages
         break;
       default:
         logger.warn('Unknown message received from accounts worker', { msg });
