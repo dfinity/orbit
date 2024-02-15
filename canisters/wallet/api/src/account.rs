@@ -2,6 +2,12 @@ use crate::{CriteriaDTO, MetadataDTO, PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountCallerPrivilegesDTO {
+    pub can_transfer: bool,
+    pub can_edit: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
     pub id: UuidDTO,
     pub owners: Vec<UuidDTO>,
@@ -60,6 +66,7 @@ pub struct GetAccountInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccountResponse {
     pub account: AccountDTO,
+    pub privileges: AccountCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

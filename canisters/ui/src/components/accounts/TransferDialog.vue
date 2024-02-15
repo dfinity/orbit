@@ -8,24 +8,21 @@
   >
     <DataLoader
       v-slot="{ data }"
-      :load="loadAccount"
+      :load="loadTransfer"
       @loading="loading = $event"
-      @loaded="account = $event.account"
+      @loaded="transfer = $event.transfer"
     >
       <VCard :loading="loading">
         <VToolbar dark color="surface">
-          <VToolbarTitle>{{ $t('terms.account') }}</VToolbarTitle>
+          <VToolbarTitle>{{ $t('terms.transfer') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
         </VToolbar>
         <VCardText>
-          <AccountConfigForm
+          <TransferForm
             v-if="data"
-            v-model="account"
+            v-model="transfer"
             v-model:trigger-submit="triggerSubmit"
-            :display="{
-              id: true,
-              asset: account.id ? false : true,
-            }"
+            :account="props.account.value"
             :disabled="props.readonly.value"
             @submit="save"
             @valid="valid = $event"
@@ -39,7 +36,7 @@
             :loading="saving"
             @click="triggerSubmit = true"
           >
-            {{ props.accountId.value ? $t('terms.save') : $t('terms.create') }}
+            {{ props.transferId.value ? $t('terms.save') : $t('terms.create') }}
           </VBtn>
         </VCardActions>
       </VCard>
@@ -50,26 +47,26 @@
 import { mdiClose } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
-import AccountConfigForm from '~/components/accounts/AccountConfigForm.vue';
+import TransferForm from './TransferForm.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { Account, UUID } from '~/generated/wallet/wallet.did';
+import { Account, Transfer, UUID } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
-import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
-    accountId?: UUID;
+    account: Account;
+    transferId?: UUID;
     open?: boolean;
     dialogMaxWidth?: number;
     readonly?: boolean;
   }>(),
   {
-    accountId: undefined,
+    transferId: undefined,
     open: false,
     dialogMaxWidth: 800,
     readonly: false,
@@ -84,7 +81,7 @@ const props = toRefs(input);
 const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
-const account = ref<Partial<Account>>({});
+const transfer = ref<Partial<Transfer>>({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
@@ -92,20 +89,19 @@ const openModel = computed({
 
 const wallet = useWalletStore();
 
-const loadAccount = async (): Promise<{
-  account: Partial<Account>;
+const loadTransfer = async (): Promise<{
+  transfer: Partial<Transfer>;
 }> => {
-  if (props.accountId.value === undefined) {
-    const createModel: Partial<Account> = {
-      blockchain: BlockchainType.InternetComputer,
-      standard: BlockchainStandard.Native,
+  if (props.transferId.value === undefined) {
+    const createModel: Partial<Transfer> = {
+      from_account_id: props.account.value.id,
     };
 
-    return { account: createModel };
+    return { transfer: createModel };
   }
 
-  const result = await wallet.service.getAccount({ account_id: props.accountId.value });
-  return { account: result.account };
+  const result = await wallet.service.getTransfer(props.transferId.value);
+  return { transfer: result };
 };
 
 const canSave = computed(() => {
@@ -115,40 +111,27 @@ const canSave = computed(() => {
 const triggerSubmit = ref(false);
 
 const save = async (): Promise<void> => {
-  if (!canSave.value) {
+  if (!canSave.value || transfer.value.id) {
     return;
   }
 
   try {
     saving.value = true;
-    if (account.value.id) {
-      const proposal = await wallet.service.editAccount({
-        account_id: account.value.id,
-        name: [assertAndReturn(account.value.name)],
-        owners: [assertAndReturn(account.value.owners)],
-        policies: [assertAndReturn(account.value.policies)],
-      });
 
-      useOnSuccessfulOperation(proposal);
-
-      openModel.value = false;
-      return;
-    }
-
-    const proposal = await wallet.service.addAccount({
-      name: assertAndReturn(account.value.name, 'name'),
-      owners: assertAndReturn(account.value.owners, 'owners'),
-      blockchain: assertAndReturn(account.value.blockchain, 'blockchain'),
-      standard: assertAndReturn(account.value.standard, 'standard'),
-      metadata: assertAndReturn(account.value.metadata, 'metadata'),
-      policies: assertAndReturn(account.value.policies, 'policies'),
+    const proposal = await wallet.service.transfer({
+      from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
+      amount: assertAndReturn(transfer.value.amount, 'amount'),
+      to: assertAndReturn(transfer.value.to, 'to'),
+      fee: transfer.value.fee ? [transfer.value.fee] : [],
+      metadata: transfer.value.metadata ?? [],
+      network: transfer.value.network ? [transfer.value.network] : [],
     });
 
     useOnSuccessfulOperation(proposal);
 
     openModel.value = false;
   } catch (error) {
-    logger.error(`Failed to save account config ${error}`);
+    logger.error(`Failed to request transfer ${error}`);
 
     useOnFailedOperation();
   } finally {

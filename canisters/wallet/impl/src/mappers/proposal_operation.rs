@@ -73,7 +73,7 @@ impl From<wallet_api::AccountPoliciesDTO> for AccountPoliciesInput {
 impl AddAccountOperation {
     pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
         AddAccountOperationDTO {
-            account: account.map(|account| account.to_dto()),
+            account: account.map(|account: Account| account.to_dto()),
             input: AddAccountOperationInput {
                 name: self.input.name,
                 owners: self

@@ -9,12 +9,13 @@ export enum BlockchainStandard {
 }
 
 export interface FetchTransfersInput {
-  from_dt?: Date;
-  limit?: number;
+  fromDt?: Date;
+  toDt?: Date;
 }
 
 export interface AccountIncomingTransfer {
   from: string;
+  to: string;
   amount: bigint;
   fee: bigint;
   created_at?: Date;

@@ -9,7 +9,11 @@ use crate::{
 };
 use ic_canister_core::{repository::Repository, types::UUID, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
-use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CriteriaDTO};
+use wallet_api::{
+    AccountBalanceDTO, AccountBalanceInfoDTO, AccountCallerPrivilegesDTO, AccountDTO, CriteriaDTO,
+};
+
+pub type AccountCallerPrivileges = AccountCallerPrivilegesDTO;
 
 #[derive(Default, Clone, Debug)]
 pub struct AccountMapper {}
@@ -132,8 +136,8 @@ impl AccountMapper {
 }
 
 impl Account {
-    pub fn to_dto(&self) -> AccountDTO {
-        AccountMapper::to_dto(self.clone())
+    pub fn to_dto(self) -> AccountDTO {
+        AccountMapper::to_dto(self)
     }
 }
 

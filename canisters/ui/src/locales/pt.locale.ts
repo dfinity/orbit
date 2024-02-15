@@ -43,6 +43,11 @@ export default {
     search_users: 'Procurar usuários',
     search_user_groups: 'Procurar grupos de usuários',
     search_accounts: 'Procurar contas',
+    destination_source: 'Destino / Origem',
+    amount_token: 'Quantidade, {token}',
+    no_transfers: 'Nenhuma transferência disponível.',
+    account_dialog_edit_criteria_hint: '* Critérios de aprovação para alterações de conta',
+    account_dialog_transfers_criteria_hint: '* Critérios de aprovação para transferências',
   },
   change_canister: {
     targets: {
@@ -253,6 +258,7 @@ export default {
     clear: 'Limpar',
     filters: 'Filtros',
     until: 'Até',
+    configuration: 'Configuração',
     approved: 'Aprovado',
     confirm: 'Confirmar',
     cancel: 'Cancelar',
@@ -317,7 +323,9 @@ export default {
     new_withdraw: 'Nova retirada',
     settings: 'Configuraçōes',
     close: 'Fechar',
+    transfer: 'Transferência',
     general: 'Geral',
+    time: 'Horário',
     add: 'Adicionar',
     remove: 'Remover',
     owners: 'Proprietários',
@@ -377,6 +385,12 @@ export default {
     proposal_policies: 'Regras',
   },
   pages: {
+    accounts: {
+      title: 'Contas',
+      btn_new_transfer: 'Nova transferência',
+      btn_upload_csv: 'Carregar CSV',
+      error_fetching_account: 'Erro ao carregar as conta, por favor, tente novamente.',
+    },
     user_settings: {
       title: 'Informaçōes do usuário & Configuraçōes',
       subtitle: 'Configure as preferências e gerencie a sua conta.',

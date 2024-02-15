@@ -2,9 +2,9 @@ import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/wallet';
 import {
-  Account,
   AccountBalance,
   AddAccessPolicyOperationInput,
+  AddAccountOperationInput,
   AddProposalPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
@@ -12,11 +12,13 @@ import {
   Config,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
+  EditAccountOperationInput,
   EditProposalPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
   GetAccountInput,
+  GetAccountResult,
   GetProposalInput,
   GetProposalPolicyResult,
   GetTransfersInput,
@@ -39,6 +41,7 @@ import {
   RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
+  TransferOperationInput,
   UUID,
   User,
   UserPrivilege,
@@ -405,14 +408,14 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getAccount(input: GetAccountInput): Promise<Account> {
+  async getAccount(input: GetAccountInput): Promise<ExtractOk<GetAccountResult>> {
     const result = await this.actor.get_account(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.account;
+    return result.Ok;
   }
 
   async isHealthy(): Promise<boolean> {
@@ -449,6 +452,20 @@ export class WalletService {
     }
 
     return result.Ok.transfers;
+  }
+
+  async getTransfer(id: UUID): Promise<Transfer> {
+    const result = await this.actor.get_transfers({ transfer_ids: [id] });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    if (!result.Ok.transfers[0]) {
+      throw new Error('Transfer not found');
+    }
+
+    return result.Ok.transfers[0];
   }
 
   async createProposal(input: CreateProposalInput): Promise<Proposal> {
@@ -537,6 +554,51 @@ export class WalletService {
       title: [],
       summary: [],
       operation: { AddProposalPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editAccount(input: EditAccountOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAccount: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addAccount(input: AddAccountOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAccount: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async transfer(input: TransferOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { Transfer: input },
     });
 
     if (variantIs(result, 'Err')) {

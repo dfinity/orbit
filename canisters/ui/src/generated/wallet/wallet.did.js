@@ -14,10 +14,10 @@ export const idlFactory = ({ IDL }) => {
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const WalletAsset = IDL.Record({
-    'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
+    'standard' : IDL.Text,
     'symbol' : AssetSymbol,
   });
   const Config = IDL.Record({ 'supported_assets' : IDL.Vec(WalletAsset) });
@@ -446,8 +446,15 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const GetAccountInput = IDL.Record({ 'account_id' : UUID });
+  const AccountCallerPrivileges = IDL.Record({
+    'can_transfer' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
   const GetAccountResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'account' : Account }),
+    'Ok' : IDL.Record({
+      'privileges' : AccountCallerPrivileges,
+      'account' : Account,
+    }),
     'Err' : Error,
   });
   const GetAddressBookEntryInput = IDL.Record({

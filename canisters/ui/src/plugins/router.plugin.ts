@@ -75,6 +75,16 @@ const router = createRouter({
               path: ':id',
               name: Routes.Account,
               component: () => import('~/pages/AccountPage.vue'),
+              props: () => {
+                return {
+                  breadcrumbs: [
+                    {
+                      title: i18n.global.t('navigation.accounts'),
+                      to: { name: Routes.Accounts },
+                    },
+                  ],
+                };
+              },
               meta: {
                 auth: {
                   check: {

@@ -15,7 +15,7 @@ thread_local! {
       RefCell::new(vec![
         WalletAsset {
           blockchain: Blockchain::InternetComputer,
-          standards: vec![BlockchainStandard::Native],
+          standard: BlockchainStandard::Native,
           symbol: "ICP".to_string(),
           name: "Internet Computer".to_string(),
           metadata: Metadata::default(),

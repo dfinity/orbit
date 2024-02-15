@@ -7,9 +7,11 @@ use crate::{
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
-    mappers::{AccountMapper, HelperMapper},
+    mappers::{AccountCallerPrivileges, AccountMapper, HelperMapper},
     models::{
-        access_control::{AccountActionSpecifier, ResourceSpecifier, ResourceType},
+        access_control::{
+            AccountActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
+        },
         specifier::{AccountSpecifier, CommonSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
@@ -20,7 +22,7 @@ use crate::{
 };
 use futures::{stream, StreamExt};
 use ic_canister_core::{
-    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository,
+    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
 };
 use lazy_static::lazy_static;
 use std::sync::Arc;
@@ -69,6 +71,35 @@ impl AccountService {
                 })?;
 
         Ok(account)
+    }
+
+    /// Returns the caller privileges for the given account.
+    pub async fn get_account_caller_privileges(
+        &self,
+        account_id: &UUID,
+        ctx: &CallContext,
+    ) -> ServiceResult<AccountCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                AccountActionSpecifier::Update(CommonSpecifier::Id(vec![*account_id])),
+            ),
+        )
+        .await;
+
+        let can_transfer = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Transfer(TransferActionSpecifier::Create(AccountSpecifier::Id(
+                vec![*account_id],
+            ))),
+        )
+        .await;
+
+        Ok(AccountCallerPrivileges {
+            can_edit: can_edit.is_ok(),
+            can_transfer: can_transfer.is_ok(),
+        })
     }
 
     /// Returns a list of all the accounts of the requested owner identity.

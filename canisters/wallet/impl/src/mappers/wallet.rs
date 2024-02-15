@@ -28,11 +28,7 @@ impl From<Configuration> for ConfigDTO {
                 .map(|asset| WalletAssetDTO {
                     blockchain: asset.blockchain.to_string(),
                     symbol: asset.symbol.to_string(),
-                    standards: asset
-                        .standards
-                        .into_iter()
-                        .map(|standard| standard.to_string())
-                        .collect(),
+                    standard: asset.standard.to_string(),
                     name: asset.name,
                     metadata: asset.metadata.into_vec_dto(),
                 })
