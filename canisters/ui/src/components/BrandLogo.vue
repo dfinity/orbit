@@ -1,22 +1,24 @@
 <template>
-  <div class="pb-0">
+  <div class="pb-0" :style="props.color ? { color: props.color } : undefined">
     <RouterLink to="/">
-      <img :src="brandLogoImage" draggable="false" :height="props.height" />
+      <Logo draggable="false" :height="props.height" />
     </RouterLink>
   </div>
 </template>
 
 <script lang="ts" setup>
+import Logo from '~/components/LogoImage.vue';
+
 const props = withDefaults(
   defineProps<{
     variation?: 'themed' | 'dark';
     height?: string;
+    color?: string;
   }>(),
   {
     variation: 'themed',
     height: '36px',
+    color: undefined,
   },
 );
-
-const brandLogoImage = `/images/logo.svg`;
 </script>
