@@ -118,7 +118,6 @@ watch(
   userType => {
     switch (userType) {
       case ProposalCriteriaUserSpecifierEnum.Proposer:
-      case ProposalCriteriaUserSpecifierEnum.Owner:
         model.value.minimum = 1;
         disabledInput.value = true;
         break;

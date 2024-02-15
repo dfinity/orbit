@@ -59,8 +59,8 @@ export const createUserInitialAccount = async (
         metadata: [],
         owners: [userId],
         policies: {
-          edit: [],
-          transfer: [],
+          edit: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
+          transfer: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
         },
       },
     },

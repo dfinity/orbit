@@ -99,6 +99,10 @@ const loadAccount = async (): Promise<{
     const createModel: Partial<Account> = {
       blockchain: BlockchainType.InternetComputer,
       standard: BlockchainStandard.Native,
+      policies: {
+        edit: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
+        transfer: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
+      },
     };
 
     return { account: createModel };
@@ -109,7 +113,13 @@ const loadAccount = async (): Promise<{
 };
 
 const canSave = computed(() => {
-  return valid.value && !loading.value;
+  return (
+    valid.value &&
+    !loading.value &&
+    !!account.value.policies &&
+    !!account.value.policies.edit.length &&
+    !!account.value.policies.transfer.length
+  );
 });
 
 const triggerSubmit = ref(false);
