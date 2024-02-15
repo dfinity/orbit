@@ -1,7 +1,9 @@
 <template>
   <PageLayout :background-color="pageBackgroundColor" hide-toolbar-context>
     <template v-if="!app.isMobile" #sidebar-header>
-      <h1 class="signin__header__title">{{ $t('app.title', { app: app.appName }) }}</h1>
+      <div class="d-flex pt-8 align-center justify-center">
+        <BrandLogo />
+      </div>
     </template>
     <template v-if="!app.isMobile" #sidebar-nav>
       <div class="signin__action">
@@ -20,7 +22,9 @@
       </div>
     </template>
     <template v-else #topnav>
-      <h1 class="signin__header__title">{{ $t('app.title', { app: app.appName }) }}</h1>
+      <div class="d-flex align-center justify-center py-4">
+        <BrandLogo />
+      </div>
       <div class="signin__action">
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}
@@ -90,6 +94,7 @@
 <script lang="ts" setup>
 import { mdiAccountGroupOutline, mdiShieldLockOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
+import BrandLogo from '~/components/BrandLogo.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import { logger } from '~/core/logger.core';
 import { i18n } from '~/plugins/i18n.plugin';
@@ -240,8 +245,8 @@ const pageBackgroundColor = computed(() => {
         z-index: 1;
         font-size: var(--ds-font-size-lg);
         width: calc(var(--ds-bdu) * 48);
-        background-color: rgb(var(--ds-primary-variant-darker));
-        color: rgb(var(--ds-on-primary-variant-darker));
+        background-color: rgb(var(--ds-background));
+        color: rgb(var(--ds-on-background));
 
         @media only screen and (max-width: variables.$device-breakpoint) {
           width: 100%;
