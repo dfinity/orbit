@@ -48,6 +48,27 @@ export default {
     no_transfers: 'No transfer found.',
     account_dialog_edit_criteria_hint: '* Approval criteria for updating account configurations',
     account_dialog_transfers_criteria_hint: '* Approval criteria for transfers',
+    address_book_entry: 'Address Book Entry',
+  },
+  blockchains: {
+    icp: {
+      name: 'Internet Computer',
+      standards: {
+        native: 'Native',
+      },
+    },
+    eth: {
+      name: 'Ethereum',
+      standards: {
+        native: 'Native',
+      },
+    },
+    btc: {
+      name: 'Bitcoin',
+      standards: {
+        native: 'Native',
+      },
+    },
   },
   change_canister: {
     targets: {
@@ -249,7 +270,9 @@ export default {
     review: 'Review',
     type: 'Type',
     summary: 'Summary',
+    metadata: 'Metadata',
     view: 'View',
+    new_address: 'New Address',
     requested: 'Requested',
     proposals: 'Proposals',
     specifier: 'Specifier',
@@ -259,6 +282,8 @@ export default {
     balance: 'Balance',
     address: 'Address',
     min: 'Min',
+    blockchain: 'Blockchain',
+    address_owner: 'Address Owner',
     time: 'Time',
     criteria: 'Criteria',
     confirm: 'Confirm',
@@ -391,6 +416,12 @@ export default {
       btn_new_transfer: 'New transfer',
       btn_upload_csv: 'Upload CSV',
       error_fetching_account: 'Error fetching account, please try again.',
+    },
+    address_book: {
+      title: 'Address Book',
+      btn_new_entry: 'New entry',
+      no_results_found: 'No address book entry found.',
+      error_fetching_address_book: 'Error fetching address book, please try again.',
     },
     user_settings: {
       title: 'Account Info & Settings',

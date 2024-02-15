@@ -144,3 +144,5 @@ export interface ListAddressBookEntriesArgs {
   standard?: string;
   ids?: UUID[];
 }
+
+export type MetadataItem = { key: string; value: string };
