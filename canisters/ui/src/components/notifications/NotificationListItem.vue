@@ -29,10 +29,7 @@
       <div class="d-flex align-center justify-center flex-column h-100">
         <VProgressCircular v-if="loading" indeterminate color="primary" size="small" class="mx-4" />
         <VBtn
-          v-else-if="
-            variantIs(notification.notification_type, 'ProposalCreated') &&
-            notification.notification_type.ProposalCreated.account_id?.[0]
-          "
+          v-else-if="variantIs(notification.notification_type, 'ProposalCreated')"
           size="small"
           variant="text"
           :icon="mdiOpenInApp"
