@@ -1,18 +1,17 @@
+use super::HelperMapper;
 use crate::core::ic_cdk::api::time;
 use crate::errors::MapperError;
 use crate::mappers::BlockchainMapper;
 use crate::models::{
-    AddAddressBookEntryOperationInput, AddressBookEntry, AddressChain, ListAddressBookEntriesInput,
-    ListAddressBookEntriesResponse,
+    AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
+    AddressChain, ListAddressBookEntriesInput,
 };
 use ic_canister_core::types::UUID;
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
 use wallet_api::{
-    AddressBookEntryDTO, ListAddressBookEntriesInputDTO, ListAddressBookEntriesResponseDTO,
+    AddressBookEntryCallerPrivilegesDTO, AddressBookEntryDTO, ListAddressBookEntriesInputDTO,
 };
-
-use super::HelperMapper;
 
 #[derive(Default, Clone, Debug)]
 pub struct AddressBookMapper {}
@@ -98,16 +97,15 @@ impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
     }
 }
 
-impl From<ListAddressBookEntriesResponse> for ListAddressBookEntriesResponseDTO {
-    fn from(input: ListAddressBookEntriesResponse) -> ListAddressBookEntriesResponseDTO {
-        ListAddressBookEntriesResponseDTO {
-            address_book_entries: input
-                .address_book_entries
-                .into_iter()
-                .map(|address_book_entry| address_book_entry.to_dto())
-                .collect(),
-            next_offset: input.next_offset,
-            total: input.total,
+impl From<AddressBookEntryCallerPrivileges> for AddressBookEntryCallerPrivilegesDTO {
+    fn from(input: AddressBookEntryCallerPrivileges) -> AddressBookEntryCallerPrivilegesDTO {
+        AddressBookEntryCallerPrivilegesDTO {
+            id: Uuid::from_slice(&input.id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
+            can_edit: input.can_edit,
+            can_delete: input.can_delete,
         }
     }
 }

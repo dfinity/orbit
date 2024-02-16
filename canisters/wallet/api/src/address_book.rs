@@ -13,6 +13,13 @@ pub struct AddressBookEntryDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddressBookEntryCallerPrivilegesDTO {
+    pub id: UuidDTO,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddAddressBookEntryOperationDTO {
     pub address_book_entry: Option<AddressBookEntryDTO>,
     pub input: AddAddressBookEntryOperationInput,
@@ -57,6 +64,7 @@ pub struct GetAddressBookEntryInputDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAddressBookEntryResponseDTO {
     pub address_book_entry: AddressBookEntryDTO,
+    pub privileges: AddressBookEntryCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -78,4 +86,5 @@ pub struct ListAddressBookEntriesResponseDTO {
     pub address_book_entries: Vec<AddressBookEntryDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<AddressBookEntryCallerPrivilegesDTO>,
 }

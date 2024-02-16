@@ -329,6 +329,19 @@ const router = createRouter({
           path: 'address-book',
           name: Routes.AddressBook,
           component: () => import('~/pages/AddressBookPage.vue'),
+          props: () => {
+            return {
+              breadcrumbs: [
+                {
+                  title: i18n.global.t('navigation.home'),
+                  to: { name: defaultHomeRoute },
+                },
+                {
+                  title: i18n.global.t('navigation.address_book'),
+                },
+              ],
+            };
+          },
           meta: {
             auth: {
               check: {
