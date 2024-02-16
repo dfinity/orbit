@@ -129,9 +129,10 @@ impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
 pub struct UserMatcher;
 
 pub type VoterId = UUID;
+pub type ProposalHasVoterInUserSpecifier = (Proposal, VoterId, UserSpecifier);
 
 #[async_trait]
-impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
+impl Match<ProposalHasVoterInUserSpecifier> for UserMatcher {
     async fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
         let (proposal, voter_id, specifier) = v;
 
@@ -177,7 +178,7 @@ impl Match<(Proposal, VoterId, UserSpecifier)> for UserMatcher {
 #[derive(Clone)]
 pub struct ProposalMatcher {
     pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
-    pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
+    pub user_matcher: Arc<dyn Match<ProposalHasVoterInUserSpecifier>>,
     pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, CommonSpecifier)>>,
 }
 
@@ -301,9 +302,11 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
 #[derive(Clone)]
 pub struct AddressBookMetadataMatcher;
 
+pub type ProposalHasMetadata = (Proposal, MetadataDTO);
+
 #[async_trait]
-impl Match<(Proposal, MetadataDTO)> for AddressBookMetadataMatcher {
-    async fn is_match(&self, v: (Proposal, MetadataDTO)) -> Result<bool, MatchError> {
+impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
+    async fn is_match(&self, v: ProposalHasMetadata) -> Result<bool, MatchError> {
         let (proposal, metadata) = v;
 
         Ok(match proposal.operation.to_owned() {
