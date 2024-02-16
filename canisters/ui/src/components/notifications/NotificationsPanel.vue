@@ -1,16 +1,15 @@
 <template>
   <VCard :width="app.isMobile ? '100%' : '400px'">
-    <VList density="compact">
-      <VListItem density="compact" class="notifications-panel__title">
-        {{ $t('wallets.pending_proposals') }}
-        <VSpacer />
-        <VBtn :icon="mdiClose" variant="flat" @click="emit('close')" />
-      </VListItem>
-    </VList>
+    <VToolbar dark color="surface">
+      <VToolbarTitle class="text-body-1 font-weight-bold">{{
+        $t('app.notifications_panel_title')
+      }}</VToolbarTitle>
+      <VBtn :icon="mdiClose" size="small" variant="flat" @click="emit('close')" />
+    </VToolbar>
     <VDivider />
     <VList density="compact">
       <VListItem v-if="!wallet.hasNotifications" class="text-center">
-        {{ $t('terms.all_done') }}
+        {{ $t('app.notifications_panel_no_results') }}
       </VListItem>
       <VListItem v-for="({ loading, data }, idx) in wallet.sortedNotifications" :key="idx">
         <NotificationListItem
@@ -26,10 +25,10 @@
 
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
-import NotificationListItem from '~/components/NotificationListItem.vue';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
+import NotificationListItem from './NotificationListItem.vue';
 
 const app = useAppStore();
 const wallet = useWalletStore();
@@ -41,15 +40,3 @@ const emit = defineEmits<{
 const onRead = (notification: Notification, read: boolean) =>
   wallet.markNotificationRead(notification.id, read);
 </script>
-
-<style lang="scss">
-.notifications-panel {
-  &__title {
-    .v-list-item__content {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-    }
-  }
-}
-</style>

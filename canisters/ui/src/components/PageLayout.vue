@@ -29,6 +29,7 @@
       </template>
     </VSnackbar>
     <SessionExpiredOverlay />
+    <OpenProposalOverlay v-if="session.isAuthenticated && session.data.selectedWallet.hasAccess" />
   </VLayout>
 </template>
 
@@ -39,8 +40,12 @@ import { useAppStore } from '~/stores/app.store';
 import DesktopLayout from './DesktopLayout.vue';
 import MobileLayout from './MobileLayout.vue';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
+import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue';
+import { useSessionStore } from '~/stores/session.store';
 
 const app = useAppStore();
+const session = useSessionStore();
+
 const slotNames = [
   'sidebar',
   'sidebar-header',

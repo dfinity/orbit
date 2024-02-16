@@ -53,11 +53,15 @@ const registerNotificationsWorkerEventListener = (): void => {
     switch (msg.type) {
       case 'notifications': {
         const { notifications } = msg.data;
-        wallet.notifications.items = notifications.map(n => {
-          return {
-            loading: false,
-            data: n,
-          };
+        notifications.forEach(notification => {
+          const existingNotification = wallet.notifications.items.find(
+            n => n.data.id === notification.id,
+          );
+          if (existingNotification) {
+            existingNotification.data = notification;
+          } else {
+            wallet.notifications.items.push({ loading: false, data: notification });
+          }
         });
         break;
       }
