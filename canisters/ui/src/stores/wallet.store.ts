@@ -17,6 +17,7 @@ import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
 import { computedWalletName, redirectToWalletSettings } from '~/utils/app.utils';
+import { arrayBatchMaker } from '~/utils/helper.utils';
 import { accountsWorker, startWalletWorkers, stopWalletWorkers } from '~/workers';
 
 export enum WalletConnectionStatus {
@@ -182,6 +183,35 @@ export const useWalletStore = defineStore('wallet', {
 
       return this.connectionStatus;
     },
+    async markAllNotificationsRead(): Promise<void> {
+      const app = useAppStore();
+
+      try {
+        this.notifications.loading = true;
+        const notificationIds = this.notifications.items.map(item => item.data.id);
+        for (const ids of arrayBatchMaker(notificationIds, 50)) {
+          this.notifications.items = this.notifications.items.map(item => {
+            item.loading = true;
+            return item;
+          });
+
+          await this.service.markNotificationAsRead({ notification_ids: ids, read: true });
+
+          this.notifications.items = this.notifications.items.filter(
+            item => !ids.includes(item.data.id),
+          );
+        }
+      } catch (err) {
+        logger.error(`Failed to mark all notifications as read`, { err });
+
+        app.sendNotification({
+          type: 'error',
+          message: i18n.global.t('wallets.notification_failed_to_save'),
+        });
+      } finally {
+        this.notifications.loading = false;
+      }
+    },
     async markNotificationRead(notificationId: UUID, read: boolean): Promise<void> {
       const app = useAppStore();
       const notification = this.notifications.items.find(item => item.data.id === notificationId);
@@ -243,7 +273,6 @@ export const useWalletStore = defineStore('wallet', {
         this.configuration.loading = false;
       }
     },
-
     trackAccountsBalance(accountIds: UUID[]): void {
       accountsWorker?.postMessage({
         type: 'track',

@@ -51,6 +51,7 @@ export default {
     address_book_entry: 'Address Book Entry',
     notifications_panel_title: 'Notifications',
     notifications_panel_no_results: "You're all caught up.",
+    notifications_panel_read_all: 'Read all',
   },
   blockchains: {
     icp: {

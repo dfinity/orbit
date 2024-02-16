@@ -1,13 +1,13 @@
 <template>
   <VCard :width="app.isMobile ? '100%' : '400px'">
     <VToolbar dark color="surface">
-      <VToolbarTitle class="text-body-1 font-weight-bold">{{
-        $t('app.notifications_panel_title')
-      }}</VToolbarTitle>
+      <VToolbarTitle class="text-body-1 font-weight-bold">
+        {{ $t('app.notifications_panel_title') }}
+      </VToolbarTitle>
       <VBtn :icon="mdiClose" size="small" variant="flat" @click="emit('close')" />
     </VToolbar>
     <VDivider />
-    <VList density="compact">
+    <VList density="compact" max-height="500px">
       <VListItem v-if="!wallet.hasNotifications" class="text-center">
         {{ $t('app.notifications_panel_no_results') }}
       </VListItem>
@@ -20,11 +20,26 @@
         <VDivider v-if="wallet.notifications.items.length - 1 !== idx" class="mt-4" />
       </VListItem>
     </VList>
+    <template v-if="wallet.hasNotifications">
+      <VDivider />
+      <div class="d-flex justify-end flex-column mx-4 my-4">
+        <VBtn
+          size="x-small"
+          :prepend-icon="mdiCheckAll"
+          variant="tonal"
+          :loading="wallet.notifications.loading"
+          small
+          @click="wallet.markAllNotificationsRead"
+        >
+          {{ $t('app.notifications_panel_read_all') }}
+        </VBtn>
+      </div>
+    </template>
   </VCard>
 </template>
 
 <script lang="ts" setup>
-import { mdiClose } from '@mdi/js';
+import { mdiCheckAll, mdiClose } from '@mdi/js';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
