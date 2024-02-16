@@ -1,57 +1,52 @@
 <template>
   <VBtn
+    v-bind="$attrs"
     data-test-id="review-proposal-btn"
-    :variant="props.variant"
     :size="props.size"
+    :variant="props.variant"
+    :icon="props.icon && !btnText"
+    :color="props.color"
     @click="open = true"
   >
-    {{ props.proposal.info.can_vote ? $t('terms.review') : $t('terms.view') }}
-    <VDialog
-      v-model="open"
-      transition="dialog-bottom-transition"
-      :persistent="voting"
-      scrollable
-      max-width="800"
-    >
-      <ProposalDetailView
-        :proposal="props.proposal"
-        :loading="voting"
-        @closed="open = false"
-        @opened="open = true"
-        @approve="onVote(true)"
-        @reject="onVote(false)"
-      >
-        <template #top-actions>
-          <VBtn :disabled="voting" :icon="mdiClose" dark @click="open = false" />
-        </template>
-      </ProposalDetailView>
-    </VDialog>
+    <slot name="default">
+      {{ btnText }}
+    </slot>
   </VBtn>
+
+  <ProposalDialog v-model:open="open" :proposal-id="props.proposal.id" @voted="emit('voted')" />
 </template>
 <script setup lang="ts">
-import { mdiClose } from '@mdi/js';
+import { computed } from 'vue';
 import { ref, watch } from 'vue';
-import { logger } from '~/core/logger.core';
+import { useI18n } from 'vue-i18n';
+import ProposalDialog from '~/components/proposals/ProposalDialog.vue';
 import { Proposal } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/plugins/i18n.plugin';
-import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
-import ProposalDetailView from './ProposalDetailView.vue';
-
-const wallet = useWalletStore();
-const app = useAppStore();
-const voting = ref(false);
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
-    variant?: 'outlined';
-    size?: 'x-small' | 'small' | 'default' | 'large' | 'x-large';
+    icon?: string;
+    text?: string;
+    size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
+    variant?: 'flat' | 'text' | 'outlined';
+    color?: string;
+    readonly?: boolean;
   }>(),
   {
-    variant: 'outlined',
+    proposal: undefined,
+    icon: undefined,
+    text: undefined,
     size: 'small',
+    variant: 'flat',
+    color: 'default',
+    readonly: false,
   },
+);
+const i18n = useI18n();
+
+const btnText = computed(
+  () =>
+    props.text || (props.proposal.info.can_vote ? i18n.t('terms.review') : i18n.t('terms.view')),
 );
 
 const emit = defineEmits<{
@@ -72,36 +67,4 @@ watch(
     }
   },
 );
-
-const onVote = async (approve: boolean, reason?: string): Promise<void> => {
-  voting.value = true;
-
-  return wallet.service
-    .voteOnProposal({
-      proposal_id: props.proposal.id,
-      approve,
-      reason: reason && reason.length ? [reason] : [],
-    })
-    .then(() => {
-      open.value = false;
-
-      emit('voted');
-
-      app.sendNotification({
-        type: 'error',
-        message: i18n.global.t('app.action_save_success'),
-      });
-    })
-    .catch(err => {
-      logger.error(`Failed to vote on proposal: ${JSON.stringify(err as Error)}`);
-
-      app.sendNotification({
-        type: 'error',
-        message: i18n.global.t('app.action_save_failed'),
-      });
-    })
-    .finally(() => {
-      voting.value = false;
-    });
-};
 </script>

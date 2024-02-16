@@ -17,7 +17,7 @@ export interface NotificationsWorkerStartInput {
   walletId: Principal;
   // The frequency at which the worker should poll for notification updates in milliseconds.
   //
-  // Default: 30000 (30 seconds)
+  // Default: 5000 (5 seconds)
   poolIntervalMs?: number;
 }
 
@@ -55,6 +55,7 @@ class NotificationsWorkerImpl {
   private lastNotificationId: string | null = null;
   private lastNotificationDate: Date | null = null;
   private enabled: boolean = false;
+  private loading: boolean = false;
 
   constructor(private walletService: WalletService = new WalletService(icAgent.get())) {}
 
@@ -91,7 +92,6 @@ class NotificationsWorkerImpl {
     }
 
     this.enabled = true;
-
     this.lastNotificationDate = null;
     this.lastNotificationId = null;
 
@@ -101,7 +101,7 @@ class NotificationsWorkerImpl {
         ? data.poolIntervalMs
         : DEFAULT_POOL_INTERVAL_MS;
 
-    this.timer = timer(() => this.refreshNotifications(), poolIntervalMs, {
+    this.timer = timer(() => this.run(), poolIntervalMs, {
       immediate: true,
     });
   }
@@ -116,23 +116,24 @@ class NotificationsWorkerImpl {
     postMessage({ type: 'stopped' } as NotificationsWorkerResponseMessage);
   }
 
-  private async refreshNotifications(): Promise<void> {
-    if (!this.enabled) {
+  private async run(): Promise<void> {
+    if (!this.enabled || this.loading) {
       return;
     }
 
     try {
+      this.loading = true;
       await icAgent.loadIdentity();
 
       const notifications = await this.walletService.listUnreadNotifications(
         this.lastNotificationDate ?? undefined,
         this.lastNotificationId ?? undefined,
       );
-
-      this.lastNotificationId = notifications[0]?.id ?? null;
-      this.lastNotificationDate = notifications[0]
-        ? new Date(notifications[0].created_at)
-        : new Date();
+      const lastNotification = notifications?.[0];
+      this.lastNotificationId = lastNotification?.id ?? null;
+      if (lastNotification) {
+        this.lastNotificationDate = new Date(lastNotification.created_at);
+      }
 
       postMessage({
         type: 'notifications',
@@ -150,6 +151,8 @@ class NotificationsWorkerImpl {
           msg: `Failed to fetch notifications: ${err}`,
         },
       } as NotificationsWorkerResponseMessage);
+    } finally {
+      this.loading = false;
     }
   }
 }

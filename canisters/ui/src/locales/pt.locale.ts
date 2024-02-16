@@ -49,6 +49,9 @@ export default {
     account_dialog_edit_criteria_hint: '* Critérios de aprovação para alterações de conta',
     account_dialog_transfers_criteria_hint: '* Critérios de aprovação para transferências',
     address_book_entry: 'Entrada do livro de endereços',
+    notifications_panel_title: 'Notificações',
+    notifications_panel_no_results: 'Sem notificações por ler.',
+    notifications_panel_read_all: 'Ler todas',
   },
   change_canister: {
     targets: {
