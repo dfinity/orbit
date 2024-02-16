@@ -51,6 +51,7 @@ import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
 import ListUnknownOperation from './operations/ListUnknownOperation.vue';
+import ListTransfer from './operations/ListTransfer.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -80,7 +81,7 @@ const componentsMap: {
   AddProposalPolicy: ListUnknownOperation,
   EditProposalPolicy: ListUnknownOperation,
   RemoveProposalPolicy: ListUnknownOperation,
-  Transfer: ListUnknownOperation,
+  Transfer: ListTransfer,
   ChangeCanister: ListUnknownOperation,
   AddAddressBookEntry: ListUnknownOperation,
   EditAddressBookEntry: ListUnknownOperation,
