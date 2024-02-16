@@ -6,6 +6,12 @@ use crate::{errors::PaginationError, models::criteria::Percentage};
 pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum SortDirection {
+    Asc,
+    Desc,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct PaginatedData<T> {
     pub items: Vec<T>,
     pub next_offset: Option<u64>,

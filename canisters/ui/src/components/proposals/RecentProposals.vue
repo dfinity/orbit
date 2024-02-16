@@ -44,7 +44,10 @@
               :proposals="data.proposals"
               :hide-not-found="props.hideNotFound"
               hide-headers
-              @voted="forceReload = true"
+              @voted="
+                disablePolling = false;
+                forceReload = true;
+              "
               @opened="disablePolling = true"
               @closed="disablePolling = false"
             />

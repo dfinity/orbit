@@ -24,9 +24,9 @@
           lines="one"
           hide-column-borders
           mode="table"
-          @voted="$emit('voted', proposal)"
-          @opened="$emit('opened', proposal)"
-          @closed="$emit('closed', proposal)"
+          @voted="emit('voted', proposal)"
+          @opened="emit('opened', proposal)"
+          @closed="emit('closed', proposal)"
         />
         <tr v-if="!props.proposals.length && !props.hideNotFound">
           <td colspan="3" class="bb-none" data-test-id="proposals-empty-list">
@@ -45,9 +45,9 @@
       class="px-1"
       lines="one"
       mode="list"
-      @voted="$emit('voted', proposal)"
-      @opened="$emit('opened', proposal)"
-      @closed="$emit('closed', proposal)"
+      @voted="emit('voted', proposal)"
+      @opened="emit('opened', proposal)"
+      @closed="emit('closed', proposal)"
     />
     <VListItem v-if="!props.proposals.length && !props.hideNotFound">
       {{ props.notFoundText }}
@@ -78,7 +78,7 @@ const props = withDefaults(
   },
 );
 
-defineEmits<{
+const emit = defineEmits<{
   (event: 'voted', payload: Proposal): void;
   (event: 'opened', payload: Proposal): void;
   (event: 'closed', payload: Proposal): void;
