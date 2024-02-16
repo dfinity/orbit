@@ -1,10 +1,11 @@
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::time, CallContext},
+    core::{generate_uuid_v4, ic_cdk::api::time, utils::SortDirection, CallContext},
     errors::NotificationError,
     mappers::HelperMapper,
     models::{Notification, NotificationId, NotificationStatus, NotificationType, UserId},
     repositories::{
-        NotificationFindByUserWhereClause, NotificationRepository, NOTIFICATION_REPOSITORY,
+        NotificationFindByUserWhereClause, NotificationRepository, NotificationSortBy,
+        NOTIFICATION_REPOSITORY,
     },
     services::{UserService, USER_SERVICE},
 };
@@ -74,6 +75,7 @@ impl NotificationService {
                 created_dt_to: input.to_dt.map(|dt| rfc3339_to_timestamp(dt.as_str())),
                 notification_type: filter_by_type,
                 status: input.status.map(|status| status.into()),
+                sort_by: Some(NotificationSortBy::CreatedDt(SortDirection::Desc)),
             },
         );
 

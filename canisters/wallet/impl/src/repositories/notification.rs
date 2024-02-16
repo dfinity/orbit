@@ -1,6 +1,6 @@
 use super::indexes::notification_user_index::NotificationUserIndexRepository;
 use crate::{
-    core::{with_memory_manager, Memory, NOTIFICATION_MEMORY_ID},
+    core::{utils::SortDirection, with_memory_manager, Memory, NOTIFICATION_MEMORY_ID},
     models::{
         indexes::notification_user_index::NotificationUserIndexCriteria, Notification,
         NotificationKey, NotificationStatus, UserId,
@@ -95,7 +95,8 @@ impl NotificationRepository {
         user_id: UserId,
         condition: NotificationFindByUserWhereClause,
     ) -> Vec<Notification> {
-        self.user_index
+        let mut notifications: Vec<Notification> = self
+            .user_index
             .find_by_criteria(NotificationUserIndexCriteria {
                 user_id: user_id.to_owned(),
                 from_dt: condition.created_dt_from,
@@ -123,8 +124,40 @@ impl NotificationRepository {
                 }
                 None => None,
             })
-            .collect()
+            .collect();
+
+        match condition.sort_by {
+            Some(sort_by) => self.sort_by(&mut notifications, sort_by).to_vec(),
+            None => self
+                .sort_by(
+                    &mut notifications,
+                    NotificationSortBy::CreatedDt(SortDirection::Desc),
+                )
+                .to_vec(),
+        }
     }
+
+    pub fn sort_by<'a>(
+        &self,
+        notifications: &'a mut [Notification],
+        sort_by: NotificationSortBy,
+    ) -> &'a [Notification] {
+        match sort_by {
+            NotificationSortBy::CreatedDt(direction) => {
+                notifications.sort_by(|a, b| match direction {
+                    SortDirection::Asc => a.created_timestamp.cmp(&b.created_timestamp),
+                    SortDirection::Desc => b.created_timestamp.cmp(&a.created_timestamp),
+                });
+
+                notifications
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum NotificationSortBy {
+    CreatedDt(SortDirection),
 }
 
 #[derive(Debug)]
@@ -133,6 +166,7 @@ pub struct NotificationFindByUserWhereClause {
     pub created_dt_to: Option<Timestamp>,
     pub notification_type: Option<String>,
     pub status: Option<NotificationStatus>,
+    pub sort_by: Option<NotificationSortBy>,
 }
 
 #[cfg(test)]

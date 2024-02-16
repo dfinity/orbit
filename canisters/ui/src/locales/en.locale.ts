@@ -49,6 +49,9 @@ export default {
     account_dialog_edit_criteria_hint: '* Approval criteria for updating account configurations',
     account_dialog_transfers_criteria_hint: '* Approval criteria for transfers',
     address_book_entry: 'Address Book Entry',
+    notifications_panel_title: 'Notifications',
+    notifications_panel_no_results: "You're all caught up.",
+    notifications_panel_read_all: 'Read all',
   },
   blockchains: {
     icp: {

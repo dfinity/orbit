@@ -123,7 +123,7 @@ import { computed, inject } from 'vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import BrandLogo from '~/components/BrandLogo.vue';
-import NotificationsPanelToggle from '~/components/NotificationsPanelToggle.vue';
+import NotificationsPanelToggle from '~/components/notifications/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/components/SidenavHeader.vue';
 import SidenavMenu from '~/components/SidenavMenu.vue';
 import UserAvatarSelector from '~/components/UserAvatarSelector.vue';
