@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 
 const operationText = computed(() => {
-  return JSON.stringify(props.operation?.input ?? props.operation, (key, value) =>
+  return JSON.stringify(props.operation?.input ?? props.operation, (_, value) =>
     typeof value === 'bigint' ? value.toString() : value,
   );
 });
