@@ -89,11 +89,7 @@ impl ProposalVoteSummary {
     /// enough uncasted votes that could be casted to meet the minimum votes required, then the evaluation
     /// is kept in the `Pending` state.
     fn evaluate(&self, min_votes: &usize) -> EvaluationStatus {
-        let min_votes = match *min_votes >= self.total_possible_votes {
-            true => self.total_possible_votes,
-            false => *min_votes,
-        };
-
+        let min_votes = *cmp::min(min_votes, &self.total_possible_votes);
         let uncasted_votes = self
             .total_possible_votes
             .saturating_sub(self.adopted_votes)
