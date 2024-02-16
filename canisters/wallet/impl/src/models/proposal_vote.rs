@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn fail_proposal_vote_too_big_reason() {
-        let mut decision = mock_decision();
+        let mut decision = proposal_vote_test_utils::mock_decision();
         decision.status_reason = Some("a".repeat(201));
 
         let result = decision.validate();
@@ -66,17 +66,44 @@ mod tests {
 
     #[test]
     fn test_proposal_vote_with_reason() {
-        let mut decision = mock_decision();
+        let mut decision = proposal_vote_test_utils::mock_decision();
         decision.status_reason = Some("a".repeat(200));
 
         let result = decision.validate();
 
         assert!(result.is_ok());
     }
+}
 
-    fn mock_decision() -> ProposalVote {
+#[cfg(test)]
+pub mod proposal_vote_test_utils {
+    use super::ProposalVote;
+    use crate::models::ProposalVoteStatus;
+    use ic_canister_core::types::UUID;
+
+    pub fn mock_decision() -> ProposalVote {
         ProposalVote {
             user_id: [0; 16],
+            status: ProposalVoteStatus::Rejected,
+            status_reason: None,
+            decided_dt: 0,
+            last_modification_timestamp: 0,
+        }
+    }
+
+    pub fn mock_accepted_with_user(user_id: UUID) -> ProposalVote {
+        ProposalVote {
+            user_id,
+            status: ProposalVoteStatus::Accepted,
+            status_reason: None,
+            decided_dt: 0,
+            last_modification_timestamp: 0,
+        }
+    }
+
+    pub fn mock_rejected_with_user(user_id: UUID) -> ProposalVote {
+        ProposalVote {
+            user_id,
             status: ProposalVoteStatus::Rejected,
             status_reason: None,
             decided_dt: 0,
