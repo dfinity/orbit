@@ -10,6 +10,6 @@ homepage = "https://github.com/dfinity/orbit-wallet#readme"
 repository = "https://github.com/dfinity/orbit-wallet"
 
 [dependencies]
-candid = { workspace = true, features = ["parser"] }
+candid = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

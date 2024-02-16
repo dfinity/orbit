@@ -11,7 +11,7 @@ include = ["src", "Cargo.toml"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-candid = { workspace = true, features = ["parser"] }
+candid = { workspace = true }
 convert_case = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }

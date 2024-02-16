@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
-candid = { workspace = true, features = ["parser"] }
+candid = { workspace = true }
 hex = { workspace = true }
 ic-canister-macros = { workspace = true }
 ic-cdk = { workspace = true }

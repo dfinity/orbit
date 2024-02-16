@@ -16,7 +16,7 @@ crate-type = ["cdylib"]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 byteorder = { workspace = true }
-candid = { workspace = true, features = ["parser"] }
+candid = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 ic-canister-core = { workspace = true }
