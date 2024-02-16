@@ -3,9 +3,9 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         access_control::{
-            AccountActionSpecifier, AccountSpecifier, ChangeCanisterActionSpecifier,
-            CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
-            TransferActionSpecifier,
+            AccessPolicyCallerPrivileges, AccountActionSpecifier, AccountSpecifier,
+            ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
+            ResourceSpecifier, ResourceType, TransferActionSpecifier,
         },
         specifier::CommonSpecifier,
         Transfer,
@@ -14,6 +14,7 @@ use crate::{
 };
 use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
+use uuid::Uuid;
 use wallet_api::ProposalOperationInput;
 
 impl From<&wallet_api::GetAccountInput> for ResourceSpecifier {
@@ -323,5 +324,15 @@ impl From<&wallet_api::GetAddressBookEntryInputDTO> for ResourceSpecifier {
             ResourceType::AddressBook,
             AccountActionSpecifier::Read(CommonSpecifier::Id([address_book_entry_id].to_vec())),
         )
+    }
+}
+
+impl From<AccessPolicyCallerPrivileges> for wallet_api::AccessPolicyCallerPrivilegesDTO {
+    fn from(privileges: AccessPolicyCallerPrivileges) -> Self {
+        wallet_api::AccessPolicyCallerPrivilegesDTO {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_edit: privileges.can_edit,
+            can_delete: privileges.can_delete,
+        }
     }
 }

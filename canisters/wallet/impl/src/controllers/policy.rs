@@ -72,13 +72,14 @@ impl PolicyController {
         let access_policy = self
             .policy_service
             .get_access_policy(HelperMapper::to_uuid(input.id)?.as_bytes())?;
-        let info = self
+        let privileges = self
             .policy_service
-            .get_access_policy_info(&access_policy, &call_context())
+            .get_caller_privileges_for_access_policy(&access_policy.id, &call_context())
             .await?;
 
         Ok(GetAccessPolicyResponse {
-            policy: access_policy.to_dto(info),
+            policy: access_policy.to_dto(),
+            privileges: privileges.into(),
         })
     }
 
@@ -93,27 +94,28 @@ impl PolicyController {
         input: ListAccessPoliciesInput,
     ) -> ApiResult<ListAccessPoliciesResponse> {
         let ctx = &call_context();
-        let list = self.policy_service.list_access_policies(input, ctx).await?;
+        let result = self.policy_service.list_access_policies(input, ctx).await?;
         let deps = self
             .policy_service
-            .get_access_policies_dependencies(&list.items)?;
+            .get_access_policies_dependencies(&result.items)?;
 
-        let mut policies = Vec::new();
-        for policy in list.items {
-            let info = self
+        let mut privileges = Vec::new();
+        for policy in &result.items {
+            let privilege = self
                 .policy_service
-                .get_access_policy_info(&policy, &call_context())
+                .get_caller_privileges_for_access_policy(&policy.id, &call_context())
                 .await?;
 
-            policies.push(policy.to_dto(info));
+            privileges.push(privilege);
         }
 
         Ok(ListAccessPoliciesResponse {
-            policies,
+            policies: result.items.into_iter().map(|p| p.to_dto()).collect(),
             user_groups: deps.groups.into_iter().map(Into::into).collect(),
             users: deps.users.into_iter().map(Into::into).collect(),
-            next_offset: list.next_offset,
-            total: list.total,
+            next_offset: result.next_offset,
+            total: result.total,
+            privileges: privileges.into_iter().map(Into::into).collect(),
         })
     }
 
@@ -127,17 +129,18 @@ impl PolicyController {
         &self,
         input: GetProposalPolicyInput,
     ) -> ApiResult<GetProposalPolicyResponse> {
+        let ctx = call_context();
         let proposal_policy = self
             .policy_service
             .get_proposal_policy(HelperMapper::to_uuid(input.id)?.as_bytes())?;
-
-        let info = self
+        let privileges = self
             .policy_service
-            .get_proposal_policy_info(&proposal_policy, &call_context())
+            .get_caller_privileges_for_proposal_policy(&proposal_policy.id, &ctx)
             .await?;
 
         Ok(GetProposalPolicyResponse {
-            policy: proposal_policy.to_dto(info),
+            policy: proposal_policy.to_dto(),
+            privileges: privileges.into(),
         })
     }
 
@@ -152,25 +155,26 @@ impl PolicyController {
         input: ListProposalPoliciesInput,
     ) -> ApiResult<ListProposalPoliciesResponse> {
         let ctx = call_context();
-        let list = self
+        let result = self
             .policy_service
             .list_proposal_policies(input, &ctx)
             .await?;
 
-        let mut policies = Vec::new();
-        for policy in list.items {
-            let info = self
+        let mut privileges = Vec::new();
+        for policy in &result.items {
+            let privilege = self
                 .policy_service
-                .get_proposal_policy_info(&policy, &ctx)
+                .get_caller_privileges_for_proposal_policy(&policy.id, &ctx)
                 .await?;
 
-            policies.push(policy.to_dto(info));
+            privileges.push(privilege);
         }
 
         Ok(ListProposalPoliciesResponse {
-            policies: policies.into_iter().map(Into::into).collect(),
-            next_offset: list.next_offset,
-            total: list.total,
+            policies: result.items.into_iter().map(|p| p.to_dto()).collect(),
+            next_offset: result.next_offset,
+            total: result.total,
+            privileges: privileges.into_iter().map(Into::into).collect(),
         })
     }
 }

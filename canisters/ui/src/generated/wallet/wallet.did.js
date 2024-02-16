@@ -114,11 +114,10 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
   });
-  const UserGroupId = UUID;
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
-    'Group' : IDL.Vec(UserGroupId),
+    'Group' : IDL.Vec(UUID),
     'Proposer' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -257,6 +256,10 @@ export const idlFactory = ({ IDL }) => {
     'summary' : IDL.Opt(IDL.Text),
     'operation' : ProposalOperationInput,
   });
+  const ProposalCallerPrivileges = IDL.Record({
+    'id' : UUID,
+    'can_vote' : IDL.Bool,
+  });
   const ProposalStatus = IDL.Variant({
     'Failed' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
     'Rejected' : IDL.Null,
@@ -277,14 +280,10 @@ export const idlFactory = ({ IDL }) => {
     'status_reason' : IDL.Opt(IDL.Text),
     'decided_at' : TimestampRFC3339,
   });
-  const ProposalInfo = IDL.Record({
-    'can_vote' : IDL.Bool,
-    'proposer_name' : IDL.Opt(IDL.Text),
-  });
   const EditAccessPolicyOperation = IDL.Record({
     'input' : EditAccessPolicyOperationInput,
   });
-  const UserGroup = IDL.Record({ 'id' : UserGroupId, 'name' : IDL.Text });
+  const UserGroup = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
   const AddUserGroupOperation = IDL.Record({
     'user_group' : IDL.Opt(UserGroup),
     'input' : AddUserGroupOperationInput,
@@ -407,14 +406,21 @@ export const idlFactory = ({ IDL }) => {
     'execution_plan' : ProposalExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
     'votes' : IDL.Vec(ProposalVote),
-    'info' : ProposalInfo,
     'created_at' : TimestampRFC3339,
     'summary' : IDL.Opt(IDL.Text),
     'operation' : ProposalOperation,
     'proposed_by' : UUID,
   });
+  const ProposalAdditionalInfo = IDL.Record({
+    'id' : UUID,
+    'proposer_name' : IDL.Opt(IDL.Text),
+  });
   const CreateProposalResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposal' : Proposal }),
+    'Ok' : IDL.Record({
+      'privileges' : ProposalCallerPrivileges,
+      'proposal' : Proposal,
+      'additional_info' : ProposalAdditionalInfo,
+    }),
     'Err' : Error,
   });
   const FetchAccountBalancesInput = IDL.Record({
@@ -431,22 +437,26 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const GetAccessPolicyInput = IDL.Record({ 'id' : UUID });
-  const AccessPolicyInfo = IDL.Record({
+  const AccessPolicyCallerPrivileges = IDL.Record({
+    'id' : UUID,
     'can_delete' : IDL.Bool,
     'can_edit' : IDL.Bool,
   });
   const AccessPolicy = IDL.Record({
     'id' : UUID,
     'resource' : ResourceSpecifier,
-    'info' : AccessPolicyInfo,
     'user' : AccessControlUserSpecifier,
   });
   const GetAccessPolicyResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'policy' : AccessPolicy }),
+    'Ok' : IDL.Record({
+      'privileges' : AccessPolicyCallerPrivileges,
+      'policy' : AccessPolicy,
+    }),
     'Err' : Error,
   });
   const GetAccountInput = IDL.Record({ 'account_id' : UUID });
   const AccountCallerPrivileges = IDL.Record({
+    'id' : UUID,
     'can_transfer' : IDL.Bool,
     'can_edit' : IDL.Bool,
   });
@@ -474,22 +484,29 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetProposalInput = IDL.Record({ 'proposal_id' : UUID });
   const GetProposalResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposal' : Proposal }),
+    'Ok' : IDL.Record({
+      'privileges' : ProposalCallerPrivileges,
+      'proposal' : Proposal,
+      'additional_info' : ProposalAdditionalInfo,
+    }),
     'Err' : Error,
   });
   const GetProposalPolicyInput = IDL.Record({ 'id' : UUID });
-  const ProposalPolicyInfo = IDL.Record({
+  const ProposalPolicyCallerPrivileges = IDL.Record({
+    'id' : UUID,
     'can_delete' : IDL.Bool,
     'can_edit' : IDL.Bool,
   });
   const ProposalPolicy = IDL.Record({
     'id' : UUID,
-    'info' : ProposalPolicyInfo,
     'specifier' : ProposalSpecifier,
     'criteria' : ProposalPolicyCriteria,
   });
   const GetProposalPolicyResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'policy' : ProposalPolicy }),
+    'Ok' : IDL.Record({
+      'privileges' : ProposalPolicyCallerPrivileges,
+      'policy' : ProposalPolicy,
+    }),
     'Err' : Error,
   });
   const GetTransfersInput = IDL.Record({ 'transfer_ids' : IDL.Vec(UUID) });
@@ -518,13 +535,25 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const GetUserInput = IDL.Record({ 'user_id' : UUID });
+  const UserCallerPrivileges = IDL.Record({
+    'id' : UUID,
+    'can_edit' : IDL.Bool,
+  });
   const GetUserResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'user' : User }),
+    'Ok' : IDL.Record({ 'privileges' : UserCallerPrivileges, 'user' : User }),
     'Err' : Error,
   });
   const GetUserGroupInput = IDL.Record({ 'user_group_id' : UUID });
+  const UserGroupCallerPrivileges = IDL.Record({
+    'id' : UUID,
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
   const GetUserGroupResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'user_group' : UserGroup }),
+    'Ok' : IDL.Record({
+      'privileges' : UserGroupCallerPrivileges,
+      'user_group' : UserGroup,
+    }),
     'Err' : Error,
   });
   const HealthStatus = IDL.Variant({
@@ -556,6 +585,7 @@ export const idlFactory = ({ IDL }) => {
   const ListAccessPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(AccessPolicyCallerPrivileges),
       'user_groups' : IDL.Vec(UserGroup),
       'users' : IDL.Vec(BasicUser),
       'next_offset' : IDL.Opt(IDL.Nat64),
@@ -593,6 +623,7 @@ export const idlFactory = ({ IDL }) => {
   const ListAccountsResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(AccountCallerPrivileges),
       'accounts' : IDL.Vec(Account),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),
@@ -675,6 +706,7 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(ProposalPolicyCallerPrivileges),
       'next_offset' : IDL.Opt(IDL.Nat64),
       'policies' : IDL.Vec(ProposalPolicy),
     }),
@@ -731,8 +763,10 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalsResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(ProposalCallerPrivileges),
       'proposals' : IDL.Vec(Proposal),
       'next_offset' : IDL.Opt(IDL.Nat64),
+      'additional_info' : IDL.Vec(ProposalAdditionalInfo),
     }),
     'Err' : Error,
   });
@@ -743,6 +777,7 @@ export const idlFactory = ({ IDL }) => {
   const ListUserGroupsResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(UserGroupCallerPrivileges),
       'user_groups' : IDL.Vec(UserGroup),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),
@@ -756,6 +791,7 @@ export const idlFactory = ({ IDL }) => {
   const ListUsersResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(UserCallerPrivileges),
       'users' : IDL.Vec(User),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),
@@ -795,7 +831,11 @@ export const idlFactory = ({ IDL }) => {
     'reason' : IDL.Opt(IDL.Text),
   });
   const VoteOnProposalResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'proposal' : Proposal }),
+    'Ok' : IDL.Record({
+      'privileges' : ProposalCallerPrivileges,
+      'proposal' : Proposal,
+      'additional_info' : ProposalAdditionalInfo,
+    }),
     'Err' : Error,
   });
   const WalletSettings = IDL.Record({

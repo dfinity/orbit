@@ -63,6 +63,18 @@ pub struct ProposalKey {
     pub id: ProposalId,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalCallerPrivileges {
+    pub id: UUID,
+    pub can_vote: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalAdditionalInfo {
+    pub id: UUID,
+    pub proposer_name: Option<String>,
+}
+
 fn validate_title(title: &str) -> ModelValidatorResult<ProposalError> {
     if title.len() > Proposal::MAX_TITLE_LEN as usize {
         return Err(ProposalError::ValidationError {
