@@ -100,7 +100,7 @@ const itemView = computed<{
 } | null>(() => {
   const keys = Object.keys(componentsMap) as Array<keyof ProposalOperation>;
   for (const key of keys) {
-    if (key in props.proposal.operation && key in componentsMap) {
+    if (key in props.proposal.operation) {
       return {
         component: componentsMap[key],
         operation: props.proposal.operation[key],
