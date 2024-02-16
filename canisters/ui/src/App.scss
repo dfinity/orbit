@@ -80,6 +80,7 @@
   --ds-border-primary: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-primary-darkest));
   --ds-border-primary-variant: var(--ds-border-width) var(--ds-border-style)
     rgb(var(--ds-primary-variant));
+  --ds-border-on-background: var(--ds-border-width) dotted rgb(var(--ds-on-surface));
 }
 
 html,
@@ -136,4 +137,8 @@ a {
 // Add new utility classes
 .bb-none {
   border-bottom: none !important;
+}
+
+.b-dark {
+  border-color: rgb(var(--ds-primary-darkest)) !important;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { Proposal } from '~/generated/wallet/wallet.did';
 import { mount } from '~/test.utils';
 import ReviewAddUserGroup from './ReviewAddUserGroup.vue';
-import { AddUserGroupOperation, Proposal } from '~/generated/wallet/wallet.did';
 
 describe('ListItemAddUserGroup', () => {
   it('renders properly', () => {
@@ -10,12 +10,19 @@ describe('ListItemAddUserGroup', () => {
         proposal: {
           operation: {
             AddUserGroup: {
+              user_group: [],
               input: {
                 name: 'test',
               },
             },
           },
-        } as Proposal & { operation: { AddUserGroup: AddUserGroupOperation } },
+        } as Proposal,
+        operation: {
+          user_group: [],
+          input: {
+            name: 'test',
+          },
+        },
       },
     });
 
@@ -28,12 +35,19 @@ describe('ListItemAddUserGroup', () => {
         proposal: {
           operation: {
             AddUserGroup: {
+              user_group: [],
               input: {
                 name: 'test',
               },
             },
           },
-        } as Proposal & { operation: { AddUserGroup: AddUserGroupOperation } },
+        } as Proposal,
+        operation: {
+          user_group: [],
+          input: {
+            name: 'test',
+          },
+        },
       },
     });
 

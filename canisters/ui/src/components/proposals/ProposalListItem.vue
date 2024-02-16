@@ -5,9 +5,10 @@
     </td>
     <td class="w-75" :class="{ 'bb-none': props.hideColumnBorders }">
       <component
-        :is="listItemProposalComponent"
-        v-if="listItemProposalComponent"
+        :is="itemView?.component"
+        v-if="itemView"
         :proposal="proposal"
+        :operation="itemView.operation"
       />
     </td>
     <td class="d-flex justify-end align-center" :class="{ 'bb-none': props.hideColumnBorders }">
@@ -25,9 +26,10 @@
     </VListItemTitle>
     <VListItemSubtitle>
       <component
-        :is="listItemProposalComponent"
-        v-if="listItemProposalComponent"
+        :is="itemView?.component"
+        v-if="itemView"
         :proposal="proposal"
+        :operation="itemView.operation"
       />
     </VListItemSubtitle>
     <template #append>
@@ -44,11 +46,12 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import { VListItem } from 'vuetify/components';
-import ReviewProposalBtn from '~/components/proposals/ReviewProposalBtn.vue';
+import ReviewProposalBtn from './ReviewProposalBtn.vue';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
+import ListUnknownOperation from './operations/ListUnknownOperation.vue';
+import ListTransfer from './operations/ListTransfer.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -66,23 +69,23 @@ const componentsMap: {
   [key in KeysOfUnion<ProposalOperation>]: Component;
 } = {
   AddUserGroup: ListItemAddUserGroup,
-  RemoveUserGroup: VListItem,
-  EditUserGroup: VListItem,
-  AddUser: VListItem,
-  EditUser: VListItem,
-  AddAccount: VListItem,
-  EditAccount: VListItem,
-  AddAccessPolicy: VListItem,
-  RemoveAccessPolicy: VListItem,
-  EditAccessPolicy: VListItem,
-  AddProposalPolicy: VListItem,
-  EditProposalPolicy: VListItem,
-  RemoveProposalPolicy: VListItem,
-  Transfer: VListItem,
-  ChangeCanister: VListItem,
-  AddAddressBookEntry: VListItem,
-  EditAddressBookEntry: VListItem,
-  RemoveAddressBookEntry: VListItem,
+  RemoveUserGroup: ListUnknownOperation,
+  EditUserGroup: ListUnknownOperation,
+  AddUser: ListUnknownOperation,
+  EditUser: ListUnknownOperation,
+  AddAccount: ListUnknownOperation,
+  EditAccount: ListUnknownOperation,
+  AddAccessPolicy: ListUnknownOperation,
+  RemoveAccessPolicy: ListUnknownOperation,
+  EditAccessPolicy: ListUnknownOperation,
+  AddProposalPolicy: ListUnknownOperation,
+  EditProposalPolicy: ListUnknownOperation,
+  RemoveProposalPolicy: ListUnknownOperation,
+  Transfer: ListTransfer,
+  ChangeCanister: ListUnknownOperation,
+  AddAddressBookEntry: ListUnknownOperation,
+  EditAddressBookEntry: ListUnknownOperation,
+  RemoveAddressBookEntry: ListUnknownOperation,
 };
 
 defineEmits<{
@@ -91,11 +94,17 @@ defineEmits<{
   (event: 'closed'): void;
 }>();
 
-const listItemProposalComponent = computed(() => {
-  const keys = Object.keys(componentsMap) as KeysOfUnion<ProposalOperation>[];
+const itemView = computed<{
+  component: Component;
+  operation: ProposalOperation[keyof ProposalOperation];
+} | null>(() => {
+  const keys = Object.keys(componentsMap) as Array<keyof ProposalOperation>;
   for (const key of keys) {
-    if (key in props.proposal.operation && key in componentsMap) {
-      return componentsMap[key];
+    if (key in props.proposal.operation) {
+      return {
+        component: componentsMap[key],
+        operation: props.proposal.operation[key],
+      };
     }
   }
 

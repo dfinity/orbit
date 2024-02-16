@@ -8,14 +8,13 @@ import UserGroupForm from '~/components/forms/UserGroupForm.vue';
 import { AddUserGroupOperation, Proposal, UserGroup } from '~/generated/wallet/wallet.did';
 
 const props = defineProps<{
-  proposal: Proposal & {
-    operation: { AddUserGroup: AddUserGroupOperation };
-  };
+  proposal: Proposal;
+  operation: AddUserGroupOperation;
 }>();
 
 const formValue = computed<Partial<UserGroup>>(() => {
   return {
-    name: props.proposal.operation.AddUserGroup.input.name,
+    name: props.operation.input.name,
   };
 });
 </script>

@@ -27,7 +27,7 @@
       variant="underlined"
       density="comfortable"
       multiple
-      :disabled="props.disabled.value"
+      :disabled="props.disabled.value || props.readonly.value"
     />
   </div>
 </template>
