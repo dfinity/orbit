@@ -2,10 +2,11 @@ use crate::interfaces::{
     default_account, get_icp_balance, send_icp, send_icp_to_account, ICP, ICP_FEE,
 };
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{update_candid_as, user_test_id};
+use crate::utils::user_test_id;
 use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
+use pocket_ic::update_candid_as;
 use std::time::Duration;
 use wallet_api::{
     AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, ApprovalThresholdDTO,

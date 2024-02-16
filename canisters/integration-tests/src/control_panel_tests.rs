@@ -1,10 +1,11 @@
 use crate::setup::setup_new_env;
-use crate::utils::{update_candid_as, user_test_id};
+use crate::utils::user_test_id;
 use crate::TestEnv;
 use control_panel_api::{
     DeployWalletResponse, GetMainWalletResponse, RegisterUserInput, RegisterUserResponse,
 };
 use ic_canister_core::api::ApiResult;
+use pocket_ic::update_candid_as;
 use wallet_api::HealthStatus;
 
 #[test]
