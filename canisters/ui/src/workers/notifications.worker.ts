@@ -131,9 +131,9 @@ class NotificationsWorkerImpl {
       );
       const lastNotification = notifications?.[0];
       this.lastNotificationId = lastNotification?.id ?? null;
-      this.lastNotificationDate = lastNotification
-        ? new Date(lastNotification.created_at)
-        : new Date();
+      if (lastNotification) {
+        this.lastNotificationDate = new Date(lastNotification.created_at);
+      }
 
       postMessage({
         type: 'notifications',

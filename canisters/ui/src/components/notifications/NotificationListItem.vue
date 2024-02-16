@@ -1,11 +1,13 @@
 <template>
-  <div class="notification d-flex flex-row ga-2">
+  <div class="notification d-flex flex-row ga-2 cursor-pointer pa-2" @click="onRowClick">
     <div v-if="props.loading" class="notification__loading"></div>
     <div class="d-flex justify-center align-center">
       <VBtn
-        :icon="isRead ? mdiCheckCircle : mdiCheckCircleOutline"
-        size="x-small"
-        :variant="isRead ? 'text' : 'plain'"
+        :loading="loading"
+        :icon="isRead ? mdiEmailOpenOutline : mdiClose"
+        size="small"
+        variant="plain"
+        density="comfortable"
         @click="onRead"
       />
     </div>
@@ -26,22 +28,12 @@
           </VChip>
         </div>
       </div>
-      <div class="d-flex align-center justify-center flex-column h-100">
-        <VProgressCircular v-if="loading" indeterminate color="primary" size="small" class="mx-4" />
-        <VBtn
-          v-else-if="variantIs(notification.notification_type, 'ProposalCreated')"
-          size="small"
-          variant="text"
-          :icon="mdiOpenInApp"
-          @click="openProposal(notification.notification_type.ProposalCreated.proposal_id)"
-        />
-      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { mdiCheckCircle, mdiCheckCircleOutline, mdiClockOutline, mdiOpenInApp } from '@mdi/js';
+import { mdiClockOutline, mdiClose, mdiEmailOpenOutline } from '@mdi/js';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import TextOverflow from '~/components/TextOverflow.vue';
@@ -75,6 +67,14 @@ const message = computed(() => notification.value.message?.[0]);
 const isRead = computed(() => variantIs(notification.value.status, 'Read'));
 const router = useRouter();
 
+const onRowClick = () => {
+  if (!variantIs(notification.value.notification_type, 'ProposalCreated')) {
+    return;
+  }
+
+  openProposal(notification.value.notification_type.ProposalCreated.proposal_id);
+};
+
 const openProposal = (proposalId: UUID): void => {
   emit('read', true);
 
@@ -83,7 +83,10 @@ const openProposal = (proposalId: UUID): void => {
   });
 };
 
-const onRead = () => {
+const onRead = (event: ClipboardEvent) => {
+  event.stopPropagation();
+  event.preventDefault();
+
   emit('read', !isRead.value);
 };
 </script>
@@ -91,6 +94,10 @@ const onRead = () => {
 <style lang="scss" scoped>
 .notification {
   position: relative;
+
+  &:hover {
+    background: rgb(var(--ds-background));
+  }
 
   &__loading {
     position: absolute;

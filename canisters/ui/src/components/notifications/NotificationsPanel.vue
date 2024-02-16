@@ -7,17 +7,21 @@
       <VBtn :icon="mdiClose" size="small" variant="flat" @click="emit('close')" />
     </VToolbar>
     <VDivider />
-    <VList density="compact" max-height="500px">
+    <VList density="compact" max-height="500px" class="py-0">
       <VListItem v-if="!wallet.hasNotifications" class="text-center">
         {{ $t('app.notifications_panel_no_results') }}
       </VListItem>
-      <VListItem v-for="({ loading, data }, idx) in wallet.sortedNotifications" :key="idx">
+      <VListItem
+        v-for="({ loading, data }, idx) in wallet.sortedNotifications"
+        :key="idx"
+        class="py-0 px-0"
+      >
         <NotificationListItem
           :loading="loading"
           :notification="wallet.sortedNotifications[idx].data"
           @read="read => onRead(data, read)"
         />
-        <VDivider v-if="wallet.notifications.items.length - 1 !== idx" class="mt-4" />
+        <VDivider v-if="wallet.notifications.items.length - 1 !== idx" />
       </VListItem>
     </VList>
     <template v-if="wallet.hasNotifications">
