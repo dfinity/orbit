@@ -107,10 +107,10 @@ pub struct ListAddressBookEntriesInput {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAddressBookEntriesResponse {
-    pub address_book_entries: Vec<AddressBookEntry>,
-    pub next_offset: Option<u64>,
-    pub total: u64,
+pub struct AddressBookEntryCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
 }
 
 #[cfg(test)]

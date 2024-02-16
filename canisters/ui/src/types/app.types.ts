@@ -34,3 +34,11 @@ export interface GlobalNotification {
   message: string;
   type: 'error' | 'success' | 'info' | 'warning';
 }
+
+export interface Pagination {
+  limit: number;
+  totalPages: number;
+  selectedPage: number;
+}
+
+export type TableHeader = { title: string; key: string; sortable?: boolean };

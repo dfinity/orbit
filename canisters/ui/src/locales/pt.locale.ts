@@ -48,11 +48,32 @@ export default {
     no_transfers: 'Nenhuma transferência disponível.',
     account_dialog_edit_criteria_hint: '* Critérios de aprovação para alterações de conta',
     account_dialog_transfers_criteria_hint: '* Critérios de aprovação para transferências',
+    address_book_entry: 'Entrada do livro de endereços',
   },
   change_canister: {
     targets: {
       upgradewallet: 'Carteira',
       upgradeupgrader: 'Atualizador',
+    },
+  },
+  blockchains: {
+    icp: {
+      name: 'Internet Computer',
+      standards: {
+        native: 'Nativo',
+      },
+    },
+    eth: {
+      name: 'Ethereum',
+      standards: {
+        native: 'Nativo',
+      },
+    },
+    btc: {
+      name: 'Bitcoin',
+      standards: {
+        native: 'Nativo',
+      },
     },
   },
   proposals: {
@@ -266,8 +287,11 @@ export default {
     min: 'Mínimo',
     requests: 'Pedidos',
     criteria: 'Critério',
+    blockchain: 'Blockchain',
+    address_owner: 'Proprietário do endereço',
     checksum: 'Checksum',
     reject: 'Rejeitar',
+    metadata: 'Metadados',
     none: 'Nenhum',
     statuses: 'Estados',
     created: 'Criado',
@@ -308,6 +332,7 @@ export default {
     token: 'Token',
     new_account: 'Criar conta',
     edit_account: 'Editar conta',
+    new_address: 'Novo endereço',
     policies: 'Regras',
     balance: 'Saldo',
     address: 'Endereço',
@@ -369,6 +394,7 @@ export default {
     },
   },
   navigation: {
+    home: 'Início',
     accounts: 'Contas',
     address_book: 'Endereços',
     users: 'Usuários',
@@ -390,6 +416,13 @@ export default {
       btn_new_transfer: 'Nova transferência',
       btn_upload_csv: 'Carregar CSV',
       error_fetching_account: 'Erro ao carregar as conta, por favor, tente novamente.',
+    },
+    address_book: {
+      title: 'Livro de endereços',
+      btn_new_entry: 'Nova entrada',
+      no_results_found: 'Nenhum resultado encontrado.',
+      error_fetching_address_book:
+        'Erro ao carregar o livro de endereços, por favor, tente novamente.',
     },
     user_settings: {
       title: 'Informaçōes do usuário & Configuraçōes',

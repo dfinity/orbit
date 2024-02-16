@@ -5,6 +5,7 @@ import {
   AccountBalance,
   AddAccessPolicyOperationInput,
   AddAccountOperationInput,
+  AddAddressBookEntryOperationInput,
   AddProposalPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
@@ -13,12 +14,15 @@ import {
   CreateProposalInput,
   EditAccessPolicyOperationInput,
   EditAccountOperationInput,
+  EditAddressBookEntryOperationInput,
   EditProposalPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
   GetAccountInput,
   GetAccountResult,
+  GetAddressBookEntryInput,
+  GetAddressBookEntryResult,
   GetProposalInput,
   GetProposalPolicyResult,
   GetTransfersInput,
@@ -418,6 +422,48 @@ export class WalletService {
     return result.Ok;
   }
 
+  async getAddressBookEntry(
+    input: GetAddressBookEntryInput,
+  ): Promise<ExtractOk<GetAddressBookEntryResult>> {
+    const result = await this.actor.get_address_book_entry(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async addAddressBookEntry(input: AddAddressBookEntryOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAddressBookEntry: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editAddressBookEntry(input: EditAddressBookEntryOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAddressBookEntry: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
   async isHealthy(): Promise<boolean> {
     const result = await this.actor.health_status();
 
@@ -654,6 +700,21 @@ export class WalletService {
       title: [],
       summary: [],
       operation: { RemoveProposalPolicy: { policy_id: id } },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async removeAddressBookEntry(id: UUID): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveAddressBookEntry: { address_book_entry_id: id } },
     });
 
     if (variantIs(result, 'Err')) {

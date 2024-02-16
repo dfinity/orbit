@@ -57,14 +57,22 @@ impl AddressBookController {
         &self,
         input: GetAddressBookEntryInputDTO,
     ) -> ApiResult<GetAddressBookEntryResponseDTO> {
+        let ctx = call_context();
         let address_book_entry_id = HelperMapper::to_uuid(input.address_book_entry_id)?;
 
         let address_book_entry = self
             .address_book_service
             .get_entry_by_id(address_book_entry_id.as_bytes())?
             .to_dto();
+        let privileges = self
+            .address_book_service
+            .get_entry_caller_privileges(address_book_entry_id.as_bytes(), &ctx)
+            .await?;
 
-        Ok(GetAddressBookEntryResponseDTO { address_book_entry })
+        Ok(GetAddressBookEntryResponseDTO {
+            address_book_entry,
+            privileges: privileges.into(),
+        })
     }
 
     #[with_middleware(
@@ -81,6 +89,21 @@ impl AddressBookController {
         let input: ListAddressBookEntriesInput = input_dto.into();
 
         let result = self.address_book_service.search_entries(input, paginate)?;
+        let ids = result
+            .items
+            .iter()
+            .map(|entry| entry.id)
+            .collect::<Vec<_>>();
+
+        let mut privileges = Vec::new();
+        for id in ids {
+            let privilege = self
+                .address_book_service
+                .get_entry_caller_privileges(&id, &call_context())
+                .await?;
+
+            privileges.push(privilege);
+        }
 
         Ok(ListAddressBookEntriesResponseDTO {
             address_book_entries: result
@@ -90,6 +113,7 @@ impl AddressBookController {
                 .collect(),
             next_offset: result.next_offset,
             total: result.total,
+            privileges: privileges.into_iter().map(|p| p.into()).collect(),
         })
     }
 }
