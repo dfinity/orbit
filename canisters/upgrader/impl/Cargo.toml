@@ -23,4 +23,5 @@ thiserror = { workspace = true }
 upgrader_api = { path = "../api" }
 
 [dev-dependencies]
+candid_parser = { workspace = true }
 tokio = { workspace = true }

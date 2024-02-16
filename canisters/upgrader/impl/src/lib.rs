@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn check_candid_interface() {
-        use candid::utils::{service_equal, CandidSource};
+        use candid_parser::utils::{service_equal, CandidSource};
 
         candid::export_service!();
         let new_interface = __export_service();

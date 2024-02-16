@@ -29,8 +29,9 @@ fi
 
 cd canisters/integration-tests
 echo "PocketIC download starting"
-curl -sO https://download.dfinity.systems/ic/69e1408347723dbaa7a6cd2faa9b65c42abbe861/openssl-static-binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
-gzip -df pocket-ic.gz
+curl -sLO https://github.com/dfinity/pocketic/releases/download/3.0.1/pocket-ic-x86_64-$PLATFORM.gz || exit 1
+gzip -df pocket-ic-x86_64-$PLATFORM.gz
+mv pocket-ic-x86_64-$PLATFORM pocket-ic
 chmod +x pocket-ic
 echo "PocketIC download completed"
 cd ../..

@@ -1,12 +1,11 @@
 use crate::setup::WALLET_ADMIN_USER;
-use candid::utils::{ArgumentDecoder, ArgumentEncoder};
 use candid::Principal;
 use ic_canister_core::api::ApiResult;
 use ic_canister_core::cdk::api::management_canister::main::CanisterId;
 use ic_cdk::api::management_canister::main::{
     CanisterIdRecord, CanisterSettings, CanisterStatusResponse, UpdateSettingsArgument,
 };
-use pocket_ic::{with_candid, CallError, PocketIc};
+use pocket_ic::{update_candid_as, PocketIc};
 use std::time::Duration;
 use wallet_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
@@ -279,22 +278,4 @@ pub fn get_wallet_owners(
         .into_iter()
         .flat_map(|u| u.identities)
         .collect()
-}
-
-/// Call a canister candid update method, authenticated. The sender can be impersonated (i.e., the
-/// signature is not verified).
-pub fn update_candid_as<Input, Output>(
-    env: &PocketIc,
-    canister_id: CanisterId,
-    sender: Principal,
-    method: &str,
-    input: Input,
-) -> Result<Output, CallError>
-where
-    Input: ArgumentEncoder,
-    Output: for<'a> ArgumentDecoder<'a>,
-{
-    with_candid(input, |bytes| {
-        env.update_call(canister_id, sender, method, bytes)
-    })
 }

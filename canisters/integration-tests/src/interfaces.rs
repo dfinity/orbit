@@ -1,10 +1,9 @@
-use crate::utils::update_candid_as;
 use candid::{CandidType, Principal};
 use ic_ledger_types::{
     AccountBalanceArgs, AccountIdentifier, Memo, Tokens, TransferArgs, TransferError,
     DEFAULT_SUBACCOUNT,
 };
-use pocket_ic::PocketIc;
+use pocket_ic::{update_candid_as, PocketIc};
 use std::collections::{HashMap, HashSet};
 
 #[derive(CandidType)]

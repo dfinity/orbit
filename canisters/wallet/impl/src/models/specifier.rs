@@ -411,7 +411,7 @@ mod tests {
                     input: TransferOperationInput {
                         from_account_id: [0; 16],
                         to: "address-1".into(),
-                        amount: Nat::from(1),
+                        amount: Nat::from(1_u64),
                         metadata: Metadata::default(),
                         network: "network-1".into(),
                         fee: None,

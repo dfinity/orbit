@@ -1,8 +1,9 @@
 use crate::interfaces::{default_account, get_icp_balance, send_icp_to_account, ICP, ICP_FEE};
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{execute_proposal, get_user, update_candid_as, user_test_id};
+use crate::utils::{execute_proposal, get_user, user_test_id};
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
+use pocket_ic::update_candid_as;
 use wallet_api::{
     AccountPoliciesDTO, AddAccountOperationInput, AddAddressBookEntryOperationInput,
     AddressChainInput, ApiErrorDTO, ChangeMetadataDTO, CriteriaDTO,
