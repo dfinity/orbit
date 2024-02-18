@@ -116,12 +116,12 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (user.value.id) {
-      // todo: missing edit user status field
       const proposal = await wallet.service.editUser({
         id: user.value.id,
         groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
         identities: [assertAndReturn(user.value.identities, 'identities')],
         name: assertAndReturn(user.value.name, 'name'),
+        status: [assertAndReturn(user.value.status, 'status')],
       });
 
       useOnSuccessfulOperation(proposal);

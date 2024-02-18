@@ -171,6 +171,10 @@ impl User {
             self.name = Some(new_name);
         }
 
+        if let Some(new_status) = input.status {
+            self.status = new_status.into();
+        }
+
         Ok(())
     }
 }

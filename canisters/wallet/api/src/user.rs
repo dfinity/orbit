@@ -62,6 +62,7 @@ pub struct EditUserOperationInput {
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<String>>,
+    pub status: Option<UserStatusDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

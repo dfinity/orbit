@@ -367,6 +367,7 @@ mod tests {
             identities: Some(vec![ctx.call_context.caller()]),
             groups: None,
             name: None,
+            status: None,
         };
 
         let result = ctx.service.edit_user(input).await;

@@ -214,6 +214,7 @@ export interface EditUserGroupOperationInput {
 export interface EditUserOperation { 'input' : EditUserOperationInput }
 export interface EditUserOperationInput {
   'id' : UUID,
+  'status' : [] | [UserStatus],
   'groups' : [] | [Array<UUID>],
   'name' : [] | [string],
   'identities' : [] | [Array<Principal>],

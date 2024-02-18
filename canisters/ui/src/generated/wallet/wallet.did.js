@@ -183,6 +183,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditUserOperationInput = IDL.Record({
     'id' : UUID,
+    'status' : IDL.Opt(UserStatus),
     'groups' : IDL.Opt(IDL.Vec(UUID)),
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),

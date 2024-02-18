@@ -242,6 +242,7 @@ impl From<EditUserOperation> for EditUserOperationDTO {
                         .map(|group| Uuid::from_bytes(*group).hyphenated().to_string())
                         .collect()
                 }),
+                status: operation.input.status.map(|status| status.into()),
             },
         }
     }
@@ -284,6 +285,7 @@ impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
                     })
                     .collect()
             }),
+            status: input.status.map(|status| status.into()),
         }
     }
 }

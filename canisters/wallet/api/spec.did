@@ -390,6 +390,8 @@ type EditUserOperationInput = record {
   // Users can be tagged with groups that can be used to control access to the wallet
   // (e.g. "UUID of the finance group").
   groups : opt vec UUID;
+  // The status of the user (e.g. `Active`).
+  status : opt UserStatus;
 };
 
 type EditUserOperation = record {
