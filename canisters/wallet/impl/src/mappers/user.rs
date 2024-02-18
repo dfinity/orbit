@@ -172,7 +172,7 @@ impl User {
         }
 
         if let Some(new_status) = input.status {
-            self.status = new_status.into();
+            self.status = new_status;
         }
 
         Ok(())
