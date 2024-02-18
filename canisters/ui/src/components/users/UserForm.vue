@@ -1,8 +1,8 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <VTextField
-      v-if="modelValue.id"
-      v-model="modelValue.id"
+      v-if="model.id"
+      v-model="model.id"
       name="id"
       :label="$t('terms.id')"
       variant="plain"
@@ -27,7 +27,7 @@
       :readonly="isViewMode"
     />
     <UserGroupAutocomplete
-      v-model="modelValue.groups"
+      v-model="userGroups"
       name="groups"
       :label="$t('terms.user_groups')"
       :variant="isViewMode ? 'plain' : 'underlined'"
@@ -38,13 +38,13 @@
     />
     <VAutocomplete
       ref="identitiesInput"
-      v-model="modelValue.identities"
+      v-model="identities"
       name="identities"
       :label="$t('terms.principal')"
       :variant="isViewMode ? 'plain' : 'underlined'"
       :readonly="isViewMode"
       :rules="[requiredRule]"
-      :items="modelValue.identities"
+      :items="identities"
       chips
       multiple
     >
@@ -56,12 +56,8 @@
           color="primary"
           :submit="
             newPrincipal => {
-              if (!modelValue.identities) {
-                modelValue.identities = [];
-              }
-
               if (newPrincipal.model) {
-                if (modelValue.identities?.includes(newPrincipal.model)) {
+                if (identities?.includes(newPrincipal.model)) {
                   app.sendNotification({
                     type: 'warning',
                     message: $t('app.principal_already_added'),
@@ -70,7 +66,8 @@
                   return;
                 }
 
-                modelValue.identities.push(newPrincipal.model);
+                // an assignment is necessary to trigger the reactivity
+                identities = [...identities, newPrincipal.model];
 
                 identitiesInput?.validate();
               }
@@ -110,21 +107,23 @@
 </template>
 
 <script lang="ts" setup>
+import { Principal } from '@dfinity/principal';
 import { mdiPlus } from '@mdi/js';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
+import { User } from '~/generated/wallet/wallet.did';
 import { fromUserStatusEnumToVariant, fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
-import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { VFormValidation } from '~/types/helper.types';
-import { UserDTO, UserStatusType } from '~/types/wallet.types';
+import { UserStatusType } from '~/types/wallet.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 import AddPrincipalForm from './AddPrincipalForm.vue';
 
 const props = withDefaults(
   defineProps<{
-    modelValue: Partial<UserDTO>;
+    modelValue: Partial<User>;
     valid?: boolean;
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
@@ -137,47 +136,57 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: Partial<UserDTO>): void;
+  (event: 'update:modelValue', payload: Partial<User>): void;
   (event: 'update:triggerSubmit', payload: boolean): void;
   (event: 'valid', payload: boolean): void;
-  (event: 'submit', payload: Partial<UserDTO>): void;
+  (event: 'submit', payload: Partial<User>): void;
 }>();
 
+const i18n = useI18n();
 const app = useAppStore();
 const form = ref<VFormValidation | null>(null);
 const identitiesInput = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+
+const model = computed(() => props.modelValue);
+watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
 
 watch(
   () => isFormValid.value,
   isValid => emit('valid', isValid ?? false),
 );
 
-const modelValue = reactive({ ...props.modelValue });
-
-watch(
-  () => modelValue,
-  value => emit('update:modelValue', value),
-  { deep: true },
-);
-
 const status = computed({
-  get: () => fromUserStatusVariantToEnum(props.modelValue.status ?? { Inactive: null }),
+  get: () => fromUserStatusVariantToEnum(model.value.status ?? { Inactive: null }),
   set: value => {
-    modelValue.status = fromUserStatusEnumToVariant(value);
+    model.value.status = fromUserStatusEnumToVariant(value);
   },
 });
 
 const name = computed({
-  get: () => modelValue.name?.[0] ?? null,
+  get: () => model.value.name?.[0] ?? null,
   set: value => {
-    modelValue.name = !value ? [] : [value];
+    model.value.name = !value ? [] : [value];
+  },
+});
+
+const identities = computed({
+  get: () => model.value.identities?.map(i => i.toText()) ?? [],
+  set: value => {
+    model.value.identities = value?.map(i => Principal.fromText(i)) ?? [];
+  },
+});
+
+const userGroups = computed({
+  get: () => model.value.groups?.map(g => g.id) ?? [],
+  set: value => {
+    model.value.groups = value?.map(id => ({ id, name: '' })) ?? [];
   },
 });
 
 const statusItems = computed(() =>
   Object.values(UserStatusType).map(status => ({
-    title: i18n.global.t(`app.user_status_${status.toLowerCase()}`),
+    title: i18n.t(`app.user_status_${status.toLowerCase()}`),
     value: status,
   })),
 );
@@ -198,7 +207,7 @@ const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
   if (valid) {
-    emit('submit', modelValue);
+    emit('submit', model.value);
   }
 };
 

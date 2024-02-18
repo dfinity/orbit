@@ -10,7 +10,7 @@
       v-slot="{ data }"
       :load="loadUser"
       @loading="loading = $event"
-      @loaded="user = toPartialUserDTO($event.user)"
+      @loaded="user = $event.user"
     >
       <VCard :loading="loading">
         <VToolbar dark color="surface">
@@ -43,9 +43,8 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
 import { mdiClose } from '@mdi/js';
-import { computed, ref, toRefs } from 'vue';
+import { Ref, computed, ref, toRefs } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
 import UserForm from '~/components/users/UserForm.vue';
 import {
@@ -54,9 +53,7 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { UUID, User } from '~/generated/wallet/wallet.did';
-import { toPartialUserDTO } from '~/mappers/users.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
-import { UserDTO } from '~/types/wallet.types';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -82,7 +79,7 @@ const props = toRefs(input);
 const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
-const user = ref<Partial<UserDTO>>({});
+const user: Ref<Partial<User>> = ref({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
@@ -118,16 +115,12 @@ const save = async (): Promise<void> => {
 
   try {
     saving.value = true;
-    const identities = assertAndReturn(user.value.identities, 'identities').map(i =>
-      Principal.fromText(i),
-    );
-
     if (user.value.id) {
       // todo: missing edit user status field
       const proposal = await wallet.service.editUser({
         id: user.value.id,
-        groups: [assertAndReturn(user.value.groups, 'groups')],
-        identities: [identities],
+        groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
+        identities: [assertAndReturn(user.value.identities, 'identities')],
         name: assertAndReturn(user.value.name, 'name'),
       });
 
@@ -138,8 +131,8 @@ const save = async (): Promise<void> => {
     }
 
     const proposal = await wallet.service.addUser({
-      groups: assertAndReturn(user.value.groups, 'groups'),
-      identities: identities,
+      groups: assertAndReturn(user.value.groups, 'groups').map(g => g.id),
+      identities: assertAndReturn(user.value.identities, 'identities'),
       name: assertAndReturn(user.value.name, 'name'),
       status: assertAndReturn(user.value.status, 'status'),
     });

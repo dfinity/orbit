@@ -30,15 +30,15 @@ describe('AddPrincipalForm', () => {
     await nameInput.setValue('Test');
 
     expect(wrapper.emitted('update:modelValue')).toBeTruthy();
-    expect(wrapper.emitted('update:modelValue')).toEqual([[{ name: 'Test' }]]);
+    expect(wrapper.emitted('update:modelValue')).toEqual([[{ name: ['Test'] }]]);
   });
 
   it('submits the form and emits it', async () => {
     const wrapper = mount(UserForm, {
       props: {
         modelValue: {
-          groups: ['test'],
-          identities: [Principal.anonymous().toText()],
+          groups: [{ id: '1', name: 'test' }],
+          identities: [Principal.anonymous()],
           status: { Active: null },
         },
       },
@@ -58,9 +58,9 @@ describe('AddPrincipalForm', () => {
     expect(wrapper.emitted('submit')).toEqual([
       [
         {
-          name: 'Test',
-          groups: ['test'],
-          identities: [Principal.anonymous().toText()],
+          name: ['Test'],
+          groups: [{ id: '1', name: 'test' }],
+          identities: [Principal.anonymous()],
           status: { Active: null },
         },
       ],

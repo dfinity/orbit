@@ -2,7 +2,6 @@ import {
   ListProposalsOperationType,
   ProposalStatusCode,
   UUID,
-  User,
 } from '~/generated/wallet/wallet.did';
 
 export enum PolicyType {
@@ -136,12 +135,6 @@ export interface ListAddressBookEntriesArgs {
 }
 
 export type MetadataItem = { key: string; value: string };
-
-export type UserDTO = Omit<User, 'identities' | 'groups'> & {
-  // Use string representations for identities to avoid type issues with the Principal type
-  identities: string[];
-  groups: string[];
-};
 
 export interface ProposalDetails {
   can_vote: boolean;
