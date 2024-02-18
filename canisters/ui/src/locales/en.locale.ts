@@ -340,6 +340,7 @@ export default {
     transactions: 'Transactions',
     address_book: 'Address Book',
     new_transfer: 'New Transfer',
+    approval_policy: 'Approval Policy',
     completed: 'completed',
     pending: 'pending',
     new_withdraw: 'New withdraw',
@@ -404,7 +405,7 @@ export default {
     users: 'Users',
     settings: 'Settings',
     user_groups_permissions: 'User Groups & Permissions',
-    administration: 'Wallet Administration',
+    administration: 'Administration',
     add_another_wallet: 'Add another wallet',
     account_info_settings: 'Account Info & Settings',
     login: 'Login',
@@ -412,7 +413,7 @@ export default {
     proposals: 'Requests',
     transfer_proposals: 'Transfer Requests',
     access_policies: 'Permissions',
-    proposal_policies: 'Policies',
+    proposal_policies: 'Approval Policies',
   },
   pages: {
     accounts: {
@@ -432,7 +433,7 @@ export default {
       subtitle: 'Configure preferences and manage your user.',
     },
     administration: {
-      title: 'Wallet Administration',
+      title: 'Administration',
     },
     users: {
       title: 'Users',
@@ -466,7 +467,7 @@ export default {
       update_dialog_title: 'Update Permissions',
     },
     proposal_policies: {
-      title: 'Policies',
+      title: 'Approval Policies',
       create_label: 'Add Policy',
       dialog_title: 'Policy',
     },

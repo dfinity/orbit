@@ -15,6 +15,10 @@
       <ProposalDetailView
         v-if="data"
         :proposal="data.proposal"
+        :details="{
+          can_vote: data.privileges.can_vote,
+          proposer_name: data.additionalInfo.proposer_name?.[0] ?? undefined,
+        }"
         :loading="voting || loading"
         @closed="openModel = false"
         @opened="openModel = true"
@@ -34,7 +38,12 @@ import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataLoader from '~/components/DataLoader.vue';
 import logger from '~/core/logger.core';
-import { Proposal, UUID } from '~/generated/wallet/wallet.did';
+import {
+  Proposal,
+  ProposalAdditionalInfo,
+  ProposalCallerPrivileges,
+  UUID,
+} from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import ProposalDetailView from './ProposalDetailView.vue';
@@ -80,6 +89,8 @@ const wallet = useWalletStore();
 
 const loadProposal = async (): Promise<{
   proposal: Proposal;
+  privileges: ProposalCallerPrivileges;
+  additionalInfo: ProposalAdditionalInfo;
 }> => {
   wallet.notifications.items.forEach(notification => {
     if (
@@ -93,7 +104,11 @@ const loadProposal = async (): Promise<{
   });
 
   const result = await wallet.service.getProposal({ proposal_id: props.proposalId.value });
-  return { proposal: result };
+  return {
+    proposal: result.proposal,
+    privileges: result.privileges,
+    additionalInfo: result.additional_info,
+  };
 };
 
 const onVote = async (approve: boolean, reason?: string): Promise<void> => {

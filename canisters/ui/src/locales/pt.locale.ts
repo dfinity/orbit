@@ -334,6 +334,7 @@ export default {
     addresses: 'Endereços',
     token: 'Token',
     new_account: 'Criar conta',
+    approval_policy: 'Regra de aprovação',
     edit_account: 'Editar conta',
     new_address: 'Novo endereço',
     policies: 'Regras',
@@ -411,7 +412,7 @@ export default {
     proposals: 'Pedidos',
     transfer_proposals: 'Pedidos de transferência',
     access_policies: 'Permissões',
-    proposal_policies: 'Regras',
+    proposal_policies: 'Regras de aprovação',
   },
   pages: {
     accounts: {
@@ -432,7 +433,7 @@ export default {
       subtitle: 'Configure as preferências e gerencie a sua conta.',
     },
     administration: {
-      title: 'Administração da carteira',
+      title: 'Administração',
     },
     user_groups: {
       title: 'Grupos de usuários',
@@ -468,7 +469,7 @@ export default {
       update_dialog_title: 'Atualizar permissões',
     },
     proposal_policies: {
-      title: 'Regras',
+      title: 'Regras de aprovação',
       create_label: 'Criar Regra',
       dialog_title: 'Regra',
     },

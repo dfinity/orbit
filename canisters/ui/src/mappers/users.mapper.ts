@@ -1,17 +1,6 @@
 import { User, UserStatus } from '~/generated/wallet/wallet.did';
-import { UserInput, UserStatusType } from '~/types/wallet.types';
+import { UserDTO, UserStatusType } from '~/types/wallet.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
-
-export const fromUserToUserInput = (user: Partial<User> = {}): UserInput => {
-  return {
-    id: user.id,
-    name: user.name?.[0],
-    status: user.status ? user.status : { Inactive: null },
-    groups: user.groups?.map(g => g.id) ?? [],
-    identities: user.identities?.map(i => i.toText()) ?? [],
-    prefilledGroups: user.groups ?? [],
-  };
-};
 
 export const fromUserStatusVariantToEnum = (status: UserStatus): UserStatusType => {
   if (variantIs(status, UserStatusType.Active)) {
@@ -34,4 +23,28 @@ export const fromUserStatusEnumToVariant = (status: UserStatusType): UserStatus 
   }
 
   unreachable(status);
+};
+
+export const toPartialUserDTO = (user: Partial<User>): Partial<UserDTO> => {
+  const dto: Partial<UserDTO> = {};
+  if (user.id) {
+    dto.id = user.id;
+  }
+  if (user.name) {
+    dto.name = user.name;
+  }
+  if (user.groups) {
+    dto.groups = user.groups?.map(group => group.id);
+  }
+  if (user.identities) {
+    dto.identities = user.identities.map(identity => identity.toText());
+  }
+  if (user.status) {
+    dto.status = user.status;
+  }
+  if (user.last_modification_timestamp) {
+    dto.last_modification_timestamp = user.last_modification_timestamp;
+  }
+
+  return dto;
 };

@@ -10,40 +10,41 @@
       readonly
     />
     <VTextField
-      v-model="modelValue.name"
+      v-model="name"
       name="name"
       :label="$t('terms.name')"
-      variant="underlined"
-      :rules="rules.name"
+      :rules="[maxLengthRule(100, $t('terms.name'))]"
+      :variant="isViewMode ? 'plain' : 'underlined'"
+      :readonly="isViewMode"
     />
     <VAutocomplete
       v-model="status"
       name="status"
       :label="$t('terms.status')"
-      variant="underlined"
       :items="statusItems"
       chips
+      :variant="isViewMode ? 'plain' : 'underlined'"
+      :readonly="isViewMode"
     />
-    <VAutocomplete
+    <UserGroupAutocomplete
       v-model="modelValue.groups"
       name="groups"
       :label="$t('terms.user_groups')"
-      :loading="userGroupsAutocomplete.loading.value"
-      variant="underlined"
-      :rules="rules.groups"
-      :items="userGroups"
+      :variant="isViewMode ? 'plain' : 'underlined'"
+      :readonly="isViewMode"
+      :rules="[requiredRule]"
       chips
       multiple
-      @update:search="userGroupsAutocomplete.searchItems"
     />
     <VAutocomplete
       ref="identitiesInput"
       v-model="modelValue.identities"
       name="identities"
       :label="$t('terms.principal')"
-      variant="underlined"
-      :rules="rules.principals"
-      :items="modelValue.identities ?? []"
+      :variant="isViewMode ? 'plain' : 'underlined'"
+      :readonly="isViewMode"
+      :rules="[requiredRule]"
+      :items="modelValue.identities"
       chips
       multiple
     >
@@ -55,12 +56,12 @@
           color="primary"
           :submit="
             newPrincipal => {
-              if (newPrincipal.model) {
-                if (!modelValue.identities) {
-                  modelValue.identities = [];
-                }
+              if (!modelValue.identities) {
+                modelValue.identities = [];
+              }
 
-                if (modelValue.identities.includes(newPrincipal.model)) {
+              if (newPrincipal.model) {
+                if (modelValue.identities?.includes(newPrincipal.model)) {
                   app.sendNotification({
                     type: 'warning',
                     message: $t('app.principal_already_added'),
@@ -110,54 +111,42 @@
 
 <script lang="ts" setup>
 import { mdiPlus } from '@mdi/js';
-import { computed, ref, watch } from 'vue';
-import { fromUserStatusVariantToEnum, fromUserStatusEnumToVariant } from '~/mappers/users.mapper';
-import { UserInput, UserStatusType } from '~/types/wallet.types';
-import { i18n } from '~/plugins/i18n.plugin';
-import { FormValidationRules, VFormValidation } from '~/types/helper.types';
-import { maxLengthRule, requiredRule } from '~/utils/form.utils';
+import { computed, reactive, ref, watch } from 'vue';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
-import AddPrincipalForm from '~/components/forms/AddPrincipalForm.vue';
+import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
+import { fromUserStatusEnumToVariant, fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
+import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
-import { reactive } from 'vue';
-import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
-import { onMounted } from 'vue';
-
-const app = useAppStore();
-const form = ref<VFormValidation | null>(null);
-const identitiesInput = ref<VFormValidation | null>(null);
-const userGroupsAutocomplete = useUserGroupsAutocomplete();
-
-onMounted(() => {
-  userGroupsAutocomplete.searchItems();
-});
-
-const isFormValid = computed(() => (form.value ? form.value.isValid : false));
-const rules: {
-  name: FormValidationRules;
-  groups: FormValidationRules;
-  principals: FormValidationRules;
-} = {
-  name: [maxLengthRule(100, i18n.global.t('terms.name'))],
-  groups: [requiredRule],
-  principals: [requiredRule],
-};
+import { VFormValidation } from '~/types/helper.types';
+import { UserDTO, UserStatusType } from '~/types/wallet.types';
+import { maxLengthRule, requiredRule } from '~/utils/form.utils';
+import AddPrincipalForm from './AddPrincipalForm.vue';
 
 const props = withDefaults(
   defineProps<{
-    modelValue: Partial<UserInput>;
+    modelValue: Partial<UserDTO>;
     valid?: boolean;
+    triggerSubmit?: boolean;
+    mode?: 'view' | 'edit';
   }>(),
   {
     valid: true,
+    triggerSubmit: false,
+    mode: 'edit',
   },
 );
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: Partial<UserInput>): void;
+  (event: 'update:modelValue', payload: Partial<UserDTO>): void;
+  (event: 'update:triggerSubmit', payload: boolean): void;
   (event: 'valid', payload: boolean): void;
-  (event: 'submit', payload: Partial<UserInput>): void;
+  (event: 'submit', payload: Partial<UserDTO>): void;
 }>();
+
+const app = useAppStore();
+const form = ref<VFormValidation | null>(null);
+const identitiesInput = ref<VFormValidation | null>(null);
+const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 watch(
   () => isFormValid.value,
@@ -179,6 +168,13 @@ const status = computed({
   },
 });
 
+const name = computed({
+  get: () => modelValue.name?.[0] ?? null,
+  set: value => {
+    modelValue.name = !value ? [] : [value];
+  },
+});
+
 const statusItems = computed(() =>
   Object.values(UserStatusType).map(status => ({
     title: i18n.global.t(`app.user_status_${status.toLowerCase()}`),
@@ -186,32 +182,17 @@ const statusItems = computed(() =>
   })),
 );
 
-const userGroups = computed(() => {
-  const groups = userGroupsAutocomplete.results.value.map(group => ({
-    title: group.name,
-    value: group.id,
-  }));
-
-  (modelValue.prefilledGroups ?? []).forEach(group => {
-    if (!groups.find(g => g.value === group.id)) {
-      groups.push({
-        title: group.name,
-        value: group.id,
-      });
+watch(
+  () => props.triggerSubmit,
+  () => {
+    if (props.triggerSubmit) {
+      emit('update:triggerSubmit', false);
+      submit();
     }
-  });
+  },
+);
 
-  props.modelValue.groups?.forEach(group => {
-    if (!groups.find(g => g.value === group)) {
-      groups.push({
-        title: group,
-        value: group,
-      });
-    }
-  });
-
-  return groups;
-});
+const isViewMode = computed(() => props.mode === 'view');
 
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };

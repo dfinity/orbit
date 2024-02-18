@@ -75,6 +75,7 @@
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import AccessPolicyList from '~/components/access-policies/AccessPolicyList.vue';
@@ -87,7 +88,6 @@ import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { globalAccessPolicies } from '~/configs/access-policies.config';
 import { Routes } from '~/configs/routes.config';
 import { AccessPolicy, BasicUser, UserGroup } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/plugins/i18n.plugin';
 import { useWalletStore } from '~/stores/wallet.store';
 import { ResourceTypeEnum } from '~/types/access-policies.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
@@ -104,8 +104,9 @@ const props = withDefaults(
   },
 );
 
+const i18n = useI18n();
 const title = computed(() => {
-  return props.title || i18n.global.t('pages.access_policies.title');
+  return props.title || i18n.t('pages.access_policies.title');
 });
 
 const wallet = useWalletStore();
@@ -121,7 +122,7 @@ const individualResourceKeys = ref<ResourceTypeEnum[]>([
 const individualResources = computed(() => {
   return individualResourceKeys.value.map(key => ({
     value: key,
-    title: i18n.global.t(`access_policies.resources.${key.toLowerCase()}`),
+    title: i18n.t(`access_policies.resources.${key.toLowerCase()}`),
   }));
 });
 
