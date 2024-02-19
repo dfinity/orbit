@@ -11,7 +11,8 @@ use lazy_static::lazy_static;
 use std::sync::Arc;
 use wallet_api::{
     CreateProposalInput, CreateProposalResponse, GetProposalInput, GetProposalResponse,
-    ListProposalsInput, ListProposalsResponse, VoteOnProposalInput, VoteOnProposalResponse,
+    ListProposalsInput, ListProposalsResponse, ProposalAdditionalInfoDTO,
+    ProposalCallerPrivilegesDTO, VoteOnProposalInput, VoteOnProposalResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -130,16 +131,16 @@ impl ProposalController {
                 .proposal_service
                 .get_proposal_additional_info(proposal)?;
 
-            privileges.push(privilege);
-            additionals.push(additional_info);
+            privileges.push(ProposalCallerPrivilegesDTO::from(privilege));
+            additionals.push(ProposalAdditionalInfoDTO::from(additional_info));
         }
 
         Ok(ListProposalsResponse {
             proposals: result.items.into_iter().map(|p| p.to_dto()).collect(),
             next_offset: result.next_offset,
             total: result.total,
-            privileges: privileges.into_iter().map(Into::into).collect(),
-            additional_info: additionals.into_iter().map(Into::into).collect(),
+            privileges,
+            additional_info: additionals,
         })
     }
 

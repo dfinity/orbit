@@ -10,6 +10,7 @@ use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use wallet_api::{
     GetUserGroupInput, GetUserGroupResponse, ListUserGroupsInput, ListUserGroupsResponse,
+    UserGroupCallerPrivilegesDTO,
 };
 
 #[query(name = "get_user_group")]
@@ -79,14 +80,14 @@ impl UserGroupController {
                 .get_caller_privileges_for_user_group(&user_group.id, &ctx)
                 .await?;
 
-            privileges.push(user_group_privileges);
+            privileges.push(UserGroupCallerPrivilegesDTO::from(user_group_privileges));
         }
 
         Ok(ListUserGroupsResponse {
             user_groups: result.items.into_iter().map(Into::into).collect(),
             next_offset: result.next_offset,
             total: result.total,
-            privileges: privileges.into_iter().map(Into::into).collect(),
+            privileges,
         })
     }
 }

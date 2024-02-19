@@ -12,9 +12,10 @@ use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use wallet_api::{
-    GetAccessPolicyInput, GetAccessPolicyResponse, GetProposalPolicyInput,
-    GetProposalPolicyResponse, ListAccessPoliciesInput, ListAccessPoliciesResponse,
-    ListProposalPoliciesInput, ListProposalPoliciesResponse,
+    AccessPolicyCallerPrivilegesDTO, GetAccessPolicyInput, GetAccessPolicyResponse,
+    GetProposalPolicyInput, GetProposalPolicyResponse, ListAccessPoliciesInput,
+    ListAccessPoliciesResponse, ListProposalPoliciesInput, ListProposalPoliciesResponse,
+    ProposalPolicyCallerPrivilegesDTO,
 };
 
 // Canister entrypoints for the controller.
@@ -93,8 +94,11 @@ impl PolicyController {
         &self,
         input: ListAccessPoliciesInput,
     ) -> ApiResult<ListAccessPoliciesResponse> {
-        let ctx = &call_context();
-        let result = self.policy_service.list_access_policies(input, ctx).await?;
+        let ctx = call_context();
+        let result = self
+            .policy_service
+            .list_access_policies(input, &ctx)
+            .await?;
         let deps = self
             .policy_service
             .get_access_policies_dependencies(&result.items)?;
@@ -103,10 +107,10 @@ impl PolicyController {
         for policy in &result.items {
             let privilege = self
                 .policy_service
-                .get_caller_privileges_for_access_policy(&policy.id, &call_context())
+                .get_caller_privileges_for_access_policy(&policy.id, &ctx)
                 .await?;
 
-            privileges.push(privilege);
+            privileges.push(AccessPolicyCallerPrivilegesDTO::from(privilege));
         }
 
         Ok(ListAccessPoliciesResponse {
@@ -115,7 +119,7 @@ impl PolicyController {
             users: deps.users.into_iter().map(Into::into).collect(),
             next_offset: result.next_offset,
             total: result.total,
-            privileges: privileges.into_iter().map(Into::into).collect(),
+            privileges,
         })
     }
 
@@ -167,14 +171,14 @@ impl PolicyController {
                 .get_caller_privileges_for_proposal_policy(&policy.id, &ctx)
                 .await?;
 
-            privileges.push(privilege);
+            privileges.push(ProposalPolicyCallerPrivilegesDTO::from(privilege));
         }
 
         Ok(ListProposalPoliciesResponse {
             policies: result.items.into_iter().map(|p| p.to_dto()).collect(),
             next_offset: result.next_offset,
             total: result.total,
-            privileges: privileges.into_iter().map(Into::into).collect(),
+            privileges,
         })
     }
 }

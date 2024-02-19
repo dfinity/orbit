@@ -22,6 +22,7 @@
       name="status"
       :label="$t('terms.status')"
       :items="statusItems"
+      :rules="[requiredRule]"
       chips
       :variant="isViewMode ? 'plain' : 'underlined'"
       :disabled="isViewMode"
