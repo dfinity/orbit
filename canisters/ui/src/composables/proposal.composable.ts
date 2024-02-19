@@ -2,8 +2,9 @@ import { ComputedRef, Ref, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
+import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { logger } from '~/core/logger.core';
-import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
+import { ListProposalsOperationType, UUID } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { Privilege } from '~/types/auth.types';
@@ -203,4 +204,29 @@ export const useAvailableOProposalSpecifiers = (): SelectItem[] => {
   items.sort((a, b) => a.text.localeCompare(b.text));
 
   return items;
+};
+
+export const useProposalOverlay = (): {
+  open: (proposalId: UUID) => void;
+  close: () => void;
+} => {
+  const router = useRouter();
+
+  const open = (proposalId: UUID): void => {
+    router.push({ query: { [PROPOSAL_DIALOG_QUERY_PARAM]: proposalId } });
+  };
+
+  const close = (): void => {
+    // Delay to allow the dialog to close before removing the query param
+    setTimeout(() => {
+      const query = Object.assign({}, router.currentRoute.value.query);
+      if (query[PROPOSAL_DIALOG_QUERY_PARAM] !== undefined) {
+        delete query[PROPOSAL_DIALOG_QUERY_PARAM];
+      }
+
+      router.replace({ query });
+    }, 100);
+  };
+
+  return { open, close };
 };

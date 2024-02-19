@@ -57,7 +57,7 @@ impl AddressBookService {
     }
 
     /// Returns the caller privileges for the given address book entry.
-    pub async fn get_entry_caller_privileges(
+    pub async fn get_caller_privileges_for_entry(
         &self,
         id: &AddressBookEntryId,
         ctx: &CallContext,
@@ -69,7 +69,8 @@ impl AddressBookService {
                 CommonActionSpecifier::Update(CommonSpecifier::Id(vec![*id])),
             ),
         )
-        .await;
+        .await
+        .is_ok();
 
         let can_delete = evaluate_caller_access(
             ctx,
@@ -78,12 +79,13 @@ impl AddressBookService {
                 CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![*id])),
             ),
         )
-        .await;
+        .await
+        .is_ok();
 
         Ok(AddressBookEntryCallerPrivileges {
             id: *id,
-            can_edit: can_edit.is_ok(),
-            can_delete: can_delete.is_ok(),
+            can_edit,
+            can_delete,
         })
     }
 

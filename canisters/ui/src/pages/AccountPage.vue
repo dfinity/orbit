@@ -1,7 +1,7 @@
 <template>
   <DataLoader
     :load="loadAccount"
-    :refresh-interval-ms="props.refreshIntervalMs.value"
+    :refresh-interval-ms="5000"
     :disable-refresh="disableRefresh"
     @loading="loading = $event"
     @loaded="
@@ -27,7 +27,7 @@
           <VProgressCircular indeterminate color="primary" class="ma-8" />
         </div>
         <div v-else-if="!account">
-          <PageHeader :title="$t('account_page.not_found_title')" :breadcrumbs="pageBreadcrumbs" />
+          <PageHeader :title="$t('pages.account.not_found')" :breadcrumbs="pageBreadcrumbs" />
         </div>
         <PageHeader v-else :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
           <template #title-toolbar>
@@ -69,7 +69,7 @@
         </PageHeader>
       </template>
       <template v-if="!loading" #main-body>
-        <PageBody v-if="!account">{{ $t('account_page.not_found_description') }}</PageBody>
+        <PageBody v-if="!account">{{ $t('pages.account.not_found_description') }}</PageBody>
         <PageBody v-else>
           <RecentProposals
             class="mb-4"
@@ -202,7 +202,7 @@ import {
   mdiFilter,
   mdiTuneVariant,
 } from '@mdi/js';
-import { computed, ref, toRefs, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
@@ -219,6 +219,7 @@ import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did'
 import { ChainApiFactory } from '~/services/chains';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
+import type { PageProps } from '~/types/app.types';
 import type { AccountIncomingTransfer } from '~/types/chain.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { ProposalDomains } from '~/types/wallet.types';
@@ -226,18 +227,10 @@ import { copyToClipboard } from '~/utils/app.utils';
 import { convertDate } from '~/utils/date.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
 
-const input = withDefaults(
-  defineProps<{
-    refreshIntervalMs?: number;
-    breadcrumbs?: BreadCrumbItem[];
-  }>(),
-  {
-    refreshIntervalMs: 5000,
-    breadcrumbs: () => [],
-  },
-);
-
-const props = toRefs(input);
+const props = withDefaults(defineProps<PageProps>(), {
+  title: undefined,
+  breadcrumbs: () => [],
+});
 const router = useRouter();
 const pageTitle = computed(() => {
   if (account.value && account.value.balance[0]) {
@@ -254,14 +247,16 @@ const forceReload = ref(false);
 const disableRefresh = ref(false);
 const account = ref<Account | null>(null);
 const privileges = ref<AccountCallerPrivileges>({
+  id: '',
   can_edit: false,
   can_transfer: false,
 });
 const loading = ref(false);
 const app = useAppStore();
 const wallet = useWalletStore();
+const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
-  const breadcrumbs = [...props.breadcrumbs.value];
+  const breadcrumbs = [...props.breadcrumbs];
 
   if (account.value) {
     breadcrumbs.push({
@@ -271,16 +266,11 @@ const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
 
   return breadcrumbs;
 });
-
 const filters = useSavedFilters();
 const filterUtils = useFilterUtils();
 const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
 };
-
-const triggerSearch = throttle(() => {
-  forceReload.value = true;
-}, 500);
 
 watch(
   () => filters.value,

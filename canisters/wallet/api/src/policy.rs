@@ -128,7 +128,8 @@ pub enum ResourceSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccessPolicyInfoDTO {
+pub struct AccessPolicyCallerPrivilegesDTO {
+    pub id: UuidDTO,
     pub can_edit: bool,
     pub can_delete: bool,
 }
@@ -138,7 +139,6 @@ pub struct AccessPolicyDTO {
     pub id: UuidDTO,
     pub user: AccessControlUserSpecifierDTO,
     pub resource: ResourceSpecifierDTO,
-    pub info: AccessPolicyInfoDTO,
 }
 
 pub type ListAccessPoliciesInput = PaginationInput;
@@ -150,6 +150,7 @@ pub struct ListAccessPoliciesResponse {
     pub users: Vec<BasicUserDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<AccessPolicyCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -160,10 +161,12 @@ pub struct GetAccessPolicyInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyResponse {
     pub policy: AccessPolicyDTO,
+    pub privileges: AccessPolicyCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalPolicyInfoDTO {
+pub struct ProposalPolicyCallerPrivilegesDTO {
+    pub id: UuidDTO,
     pub can_edit: bool,
     pub can_delete: bool,
 }
@@ -173,7 +176,6 @@ pub struct ProposalPolicyDTO {
     pub id: UuidDTO,
     pub specifier: ProposalSpecifierDTO,
     pub criteria: CriteriaDTO,
-    pub info: ProposalPolicyInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -184,6 +186,7 @@ pub struct GetProposalPolicyInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetProposalPolicyResponse {
     pub policy: ProposalPolicyDTO,
+    pub privileges: ProposalPolicyCallerPrivilegesDTO,
 }
 
 pub type ListProposalPoliciesInput = PaginationInput;
@@ -193,6 +196,7 @@ pub struct ListProposalPoliciesResponse {
     pub policies: Vec<ProposalPolicyDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<ProposalPolicyCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

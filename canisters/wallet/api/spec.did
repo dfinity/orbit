@@ -16,11 +16,13 @@ type PaginationInput = record {
   limit : opt nat16;
 };
 
-// The proposal policy information, used to specify additional information about the policy.
-type ProposalPolicyInfo = record {
-  // Wether or not the user can edit the resource.
+// A record type that can be used to represent the caller privileges for a given proposal policy.
+type ProposalPolicyCallerPrivileges = record {
+  // The proposal policy id.
+  id : UUID;
+  // Wether or not the caller can edit the resource.
   can_edit : bool;
-  // Wether or not the user can delete the resource.
+  // Wether or not the caller can delete the resource.
   can_delete : bool;
 };
 
@@ -29,7 +31,6 @@ type ProposalPolicy = record {
   id : UUID;
   specifier : ProposalSpecifier;
   criteria : ProposalPolicyCriteria;
-  info : ProposalPolicyInfo;
 };
 
 // Defines the various types of proposals that can be created.
@@ -85,7 +86,7 @@ type ProposalPolicyCriteria = variant {
 type UserSpecifier = variant {
   Any;
   Id : vec UUID;
-  Group : vec UserGroupId;
+  Group : vec UUID;
   Owner;
   Proposer;
 };
@@ -389,6 +390,8 @@ type EditUserOperationInput = record {
   // Users can be tagged with groups that can be used to control access to the wallet
   // (e.g. "UUID of the finance group").
   groups : opt vec UUID;
+  // The status of the user (e.g. `Active`).
+  status : opt UserStatus;
 };
 
 type EditUserOperation = record {
@@ -661,10 +664,18 @@ type ProposalExecutionSchedule = variant {
   };
 };
 
-// A record field that can be used to represent information about a proposal.
-type ProposalInfo = record {
+// A record type that can be used to represent the caller privileges for a given proposal.
+type ProposalCallerPrivileges = record {
+  // The proposal id.
+  id : UUID;
   // Wether or not the caller can vote on the proposal.
   can_vote : bool;
+};
+
+// A record type that can be used to represent additional information about a proposal.
+type ProposalAdditionalInfo = record {
+  // The proposal id.
+  id : UUID;
   // The proposer name (e.g. "John Doe").
   proposer_name : opt text;
 };
@@ -691,8 +702,6 @@ type Proposal = record {
   expiration_dt : TimestampRFC3339;
   // The time at which the proposal should be executed if adopted.
   execution_plan : ProposalExecutionSchedule;
-  // Information about the proposal that can be used to display additional information.
-  info : ProposalInfo;
 };
 
 // The input type for creating a proposal.
@@ -710,7 +719,12 @@ type CreateProposalInput = record {
 // The result type for creating a proposal.
 type CreateProposalResult = variant {
   Ok : record {
+    // The proposal that was created.
     proposal : Proposal;
+    // The privileges of the caller.
+    privileges : ProposalCallerPrivileges;
+    // The additional info about the proposal.
+    additional_info : ProposalAdditionalInfo;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -807,6 +821,10 @@ type ListProposalsResult = variant {
     total : nat64;
     // The next offset to use for pagination.
     next_offset : opt nat64;
+    // The privileges of the caller.
+    privileges : vec ProposalCallerPrivileges;
+    // The additional info about the proposals.
+    additional_info : vec ProposalAdditionalInfo;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -824,6 +842,10 @@ type GetProposalResult = variant {
   Ok : record {
     // The proposal that was requested.
     proposal : Proposal;
+    // The privileges of the caller.
+    privileges : ProposalCallerPrivileges;
+    // The additional info about the proposal.
+    additional_info : ProposalAdditionalInfo;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -842,7 +864,12 @@ type VoteOnProposalInput = record {
 // Result type for voting on a proposal.
 type VoteOnProposalResult = variant {
   Ok : record {
+    // The proposal that was voted on.
     proposal : Proposal;
+    // The privileges of the caller.
+    privileges : ProposalCallerPrivileges;
+    // The additional info about the proposal.
+    additional_info : ProposalAdditionalInfo;
   };
   Err : Error;
 };
@@ -874,6 +901,8 @@ type ListAccountsResult = variant {
     next_offset : opt nat64;
     // The total number of users.
     total : nat64;
+    // The privileges of the caller.
+    privileges : vec AccountCallerPrivileges;
   };
   Err : Error;
 };
@@ -912,12 +941,20 @@ type ListAccountTransfersResult = variant {
   Err : Error;
 };
 
-type UserGroupId = UUID;
+// A record type that can be used to represent the privileges of a caller for a given user group.
+type UserGroupCallerPrivileges = record {
+  // The user id.
+  id : UUID;
+  // Wether or not the caller can edit the user group.
+  can_edit : bool;
+  // Wether or not the caller can delete the user group.
+  can_delete : bool;
+};
 
 // A record type that can be used to represent a user group in the wallet.
 type UserGroup = record {
   // The UUID of the group (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-  id : UserGroupId;
+  id : UUID;
   // The name of the group (e.g. "Finance").
   name : text;
 };
@@ -927,6 +964,14 @@ type UserStatus = variant {
   Active;
   // The user is inactive.
   Inactive;
+};
+
+// A record type that can be used to represent the privileges of a caller for a given user.
+type UserCallerPrivileges = record {
+  // The user id.
+  id : UUID;
+  // Wether or not the caller can edit the user.
+  can_edit : bool;
 };
 
 // A record type that can be used to represent a user in the wallet.
@@ -1065,6 +1110,8 @@ type AccountMetadata = record {
 
 // A record type that can be used to represent the privileges of a caller for a given account.
 type AccountCallerPrivileges = record {
+  // The account id that the caller has privileges for.
+  id : UUID;
   // Wether or not the caller can edit the account.
   can_edit : bool;
   // Wether or not the caller can request transfers from the account.
@@ -1159,7 +1206,7 @@ type AddressBookMetadata = record {
 // A record type that can be used to represent the privileges of a caller for a given address book entry.
 type AddressBookEntryCallerPrivileges = record {
   // The address book entry id.
-  id: UUID;
+  id : UUID;
   // Wether or not the caller can edit the address book entry.
   can_edit : bool;
   // Wether or not the caller can delete the address book entry.
@@ -1302,6 +1349,8 @@ type GetUserResult = variant {
   Ok : record {
     // The user that was retrieved.
     user : User;
+    // The caller privileges for the user.
+    privileges : UserCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1327,6 +1376,8 @@ type ListUsersResult = variant {
     next_offset : opt nat64;
     // The total number of users.
     total : nat64;
+    // The privileges of the caller.
+    privileges : vec UserCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1399,11 +1450,13 @@ type ResourceSpecifier = variant {
   ProposalPolicy : CommonActionSpecifier;
 };
 
-// The access control policy information, used to specify useful information about the access policy.
-type AccessPolicyInfo = record {
-  // Wether or not the user can edit the resource.
+// A record type that can be used to represent the caller privileges for a given access policy.
+type AccessPolicyCallerPrivileges = record {
+  // The access policy id.
+  id : UUID;
+  // Wether or not the caller can edit the resource.
   can_edit : bool;
-  // Wether or not the user can delete the resource.
+  // Wether or not the caller can delete the resource.
   can_delete : bool;
 };
 
@@ -1413,7 +1466,6 @@ type AccessPolicy = record {
   id : UUID;
   user : AccessControlUserSpecifier;
   resource : ResourceSpecifier;
-  info : AccessPolicyInfo;
 };
 
 // Input type for listing access policies with the given pagination parameters.
@@ -1443,6 +1495,8 @@ type ListAccessPoliciesResult = variant {
     next_offset : opt nat64;
     // The total number of access policies.
     total : nat64;
+    // The caller privileges for the access policies.
+    privileges : vec AccessPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1458,6 +1512,8 @@ type GetAccessPolicyResult = variant {
   Ok : record {
     // The access policy that was retrieved.
     policy : AccessPolicy;
+    // The privileges of the caller for the access policy.
+    privileges : AccessPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1479,6 +1535,8 @@ type ListUserGroupsResult = variant {
     next_offset : opt nat64;
     // The total number of user groups.
     total : nat64;
+    // The caller privileges for the user groups.
+    privileges : vec UserGroupCallerPrivileges;
   };
   Err : Error;
 };
@@ -1495,6 +1553,8 @@ type GetUserGroupResult = variant {
   Ok : record {
     // The group that was retrieved.
     user_group : UserGroup;
+    // The caller privileges for the user group.
+    privileges : UserGroupCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1510,6 +1570,8 @@ type GetProposalPolicyResult = variant {
   Ok : record {
     // The proposal policy that was retrieved.
     policy : ProposalPolicy;
+    // The privileges of the caller for the proposal policy.
+    privileges : ProposalPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1528,6 +1590,8 @@ type ListProposalPoliciesResult = variant {
     next_offset : opt nat64;
     // The total number of proposal policies.
     total : nat64;
+    // The caller privileges for the proposal policies.
+    privileges : vec ProposalPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;

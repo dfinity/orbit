@@ -21,6 +21,13 @@ pub struct UserGroup {
     pub last_modification_timestamp: Timestamp,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UserGroupCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 impl UserGroup {
     const NAME_RANGE: (u8, u8) = (1, 50);
 }

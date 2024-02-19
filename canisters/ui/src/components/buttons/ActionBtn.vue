@@ -38,7 +38,7 @@
           <p>{{ props.content }}</p>
         </slot>
       </VCardText>
-      <VCardActions class="px-6 py-3">
+      <VCardActions class="pa-3">
         <slot
           name="actions"
           :submit="submit"
@@ -47,14 +47,8 @@
           :model="{ value: intervalValue }"
         >
           <VSpacer />
-          <VBtn variant="text" @click="close">{{ props.cancelText }}</VBtn>
-          <VBtn
-            :loading="loading"
-            color="primary"
-            variant="flat"
-            data-test-id="action-btn-default-submit-btn"
-            @click="submit"
-          >
+          <VBtn variant="outlined" @click="close">{{ props.cancelText }}</VBtn>
+          <VBtn :loading="loading" data-test-id="action-btn-default-submit-btn" @click="submit">
             {{ props.confirmText }}
           </VBtn>
         </slot>

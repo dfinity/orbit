@@ -7,7 +7,7 @@
       <VListSubheader v-if="session.isAuthenticated">
         {{ $t('terms.user_id') }}<br />
         <p>
-          <span>{{ session.principal }}</span>
+          <TextOverflow :text="session.principal" :max-length="32" />
           <VBtn
             size="x-small"
             variant="text"
@@ -35,6 +35,7 @@
 <script lang="ts" setup>
 import { mdiAccountCircle, mdiAccountCircleOutline, mdiContentCopy } from '@mdi/js';
 import { computed } from 'vue';
+import TextOverflow from '~/components/TextOverflow.vue';
 import { useSessionStore } from '~/stores/session.store';
 import { copyToClipboard } from '~/utils/app.utils';
 

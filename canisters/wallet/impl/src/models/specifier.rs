@@ -404,6 +404,7 @@ mod tests {
                         name: None,
                         identities: None,
                         groups: None,
+                        status: None,
                     },
                 }),
                 ProposalSpecifier::EditUser(UserSpecifier::Any),

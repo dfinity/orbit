@@ -63,13 +63,18 @@ impl ProposalController {
     ) -> ApiResult<CreateProposalResponse> {
         let ctx = &call_context();
         let proposal = self.proposal_service.create_proposal(input, ctx).await?;
-        let info = self
+        let privileges = self
             .proposal_service
-            .get_proposal_info(&proposal, ctx)
+            .get_caller_privileges_for_proposal(&proposal.id, ctx)
             .await?;
+        let additional_info = self
+            .proposal_service
+            .get_proposal_additional_info(&proposal)?;
 
         Ok(CreateProposalResponse {
-            proposal: proposal.to_dto(info),
+            proposal: proposal.to_dto(),
+            privileges: privileges.into(),
+            additional_info: additional_info.into(),
         })
     }
 
@@ -84,13 +89,18 @@ impl ProposalController {
         let proposal = self
             .proposal_service
             .get_proposal(HelperMapper::to_uuid(input.proposal_id)?.as_bytes())?;
-        let info = self
+        let privileges = self
             .proposal_service
-            .get_proposal_info(&proposal, ctx)
+            .get_caller_privileges_for_proposal(&proposal.id, ctx)
             .await?;
+        let additional_info = self
+            .proposal_service
+            .get_proposal_additional_info(&proposal)?;
 
         Ok(GetProposalResponse {
-            proposal: proposal.to_dto(info),
+            proposal: proposal.to_dto(),
+            privileges: privileges.into(),
+            additional_info: additional_info.into(),
         })
     }
 
@@ -102,24 +112,34 @@ impl ProposalController {
     )]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let ctx = call_context();
-        let list = self
+        let result = self
             .proposal_service
             .list_proposals(input, Some(&ctx))
             .await?;
-        let mut items = Vec::new();
-        for proposal in list.items {
-            let info = self
+
+        let mut privileges = Vec::new();
+        let mut additionals = Vec::new();
+
+        for proposal in &result.items {
+            let privilege = self
                 .proposal_service
-                .get_proposal_info(&proposal, &ctx)
+                .get_caller_privileges_for_proposal(&proposal.id, &ctx)
                 .await?;
 
-            items.push(proposal.to_dto(info));
+            let additional_info = self
+                .proposal_service
+                .get_proposal_additional_info(proposal)?;
+
+            privileges.push(privilege);
+            additionals.push(additional_info);
         }
 
         Ok(ListProposalsResponse {
-            proposals: items,
-            next_offset: list.next_offset,
-            total: list.total,
+            proposals: result.items.into_iter().map(|p| p.to_dto()).collect(),
+            next_offset: result.next_offset,
+            total: result.total,
+            privileges: privileges.into_iter().map(Into::into).collect(),
+            additional_info: additionals.into_iter().map(Into::into).collect(),
         })
     }
 
@@ -135,13 +155,18 @@ impl ProposalController {
     ) -> ApiResult<VoteOnProposalResponse> {
         let ctx = &call_context();
         let proposal = self.proposal_service.vote_on_proposal(input, ctx).await?;
-        let info = self
+        let privileges = self
             .proposal_service
-            .get_proposal_info(&proposal, ctx)
+            .get_caller_privileges_for_proposal(&proposal.id, ctx)
             .await?;
+        let additional_info = self
+            .proposal_service
+            .get_proposal_additional_info(&proposal)?;
 
         Ok(VoteOnProposalResponse {
-            proposal: proposal.to_dto(info),
+            proposal: proposal.to_dto(),
+            privileges: privileges.into(),
+            additional_info: additional_info.into(),
         })
     }
 }

@@ -27,13 +27,7 @@
       </template>
       <template #actions="{ submit, loading: saving, model: elem }">
         <VSpacer />
-        <VBtn
-          :loading="saving"
-          :disabled="shouldDisableSubmitBtn(elem.value)"
-          color="primary"
-          variant="flat"
-          @click="submit"
-        >
+        <VBtn :loading="saving" :disabled="shouldDisableSubmitBtn(elem.value)" @click="submit">
           {{ $t('terms.edit') }}
         </VBtn>
       </template>

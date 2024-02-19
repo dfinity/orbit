@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import UserGroupForm from '~/components/forms/UserGroupForm.vue';
+import UserGroupForm from '~/components/users/UserGroupForm.vue';
 import { AddUserGroupOperation, Proposal, UserGroup } from '~/generated/wallet/wallet.did';
 
 const props = defineProps<{

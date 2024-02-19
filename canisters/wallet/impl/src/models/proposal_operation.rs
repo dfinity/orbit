@@ -165,6 +165,7 @@ pub struct EditUserOperationInput {
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
+    pub status: Option<UserStatus>,
 }
 
 #[stable_object]

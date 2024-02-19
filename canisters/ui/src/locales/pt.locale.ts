@@ -52,6 +52,7 @@ export default {
     notifications_panel_title: 'Notificações',
     notifications_panel_no_results: 'Sem notificações por ler.',
     notifications_panel_read_all: 'Ler todas',
+    btn_home_back: 'Voltar ao início',
   },
   change_canister: {
     targets: {
@@ -186,11 +187,6 @@ export default {
   login: {
     signin_slogan: 'Conecte-se para gerir a sua carteira de ativos crypto',
     auth_failed: 'Login falhou, tente novamente',
-  },
-  not_found: {
-    title: 'Ups, 404',
-    description: 'A página que está a tentar aceder não existe.',
-    btn_back: 'Voltar ao início',
   },
   slogans: {
     elevate_to_orbit: {
@@ -334,6 +330,7 @@ export default {
     addresses: 'Endereços',
     token: 'Token',
     new_account: 'Criar conta',
+    approval_policy: 'Regra de aprovação',
     edit_account: 'Editar conta',
     new_address: 'Novo endereço',
     policies: 'Regras',
@@ -373,11 +370,6 @@ export default {
     all: 'Todos',
     subset: 'Subconjunto',
   },
-  account_page: {
-    not_found_title: 'Conta não encontrada',
-    not_found_description: 'Não foi possível aceder a conta requisitada.',
-    not_found_btn: 'Voltar as contas',
-  },
   forms: {
     create: 'Criar',
     edit: 'Editar',
@@ -411,7 +403,7 @@ export default {
     proposals: 'Pedidos',
     transfer_proposals: 'Pedidos de transferência',
     access_policies: 'Permissões',
-    proposal_policies: 'Regras',
+    proposal_policies: 'Regras de aprovação',
   },
   pages: {
     accounts: {
@@ -419,6 +411,10 @@ export default {
       btn_new_transfer: 'Nova transferência',
       btn_upload_csv: 'Carregar CSV',
       error_fetching_account: 'Erro ao carregar as conta, por favor, tente novamente.',
+    },
+    account: {
+      not_found: 'Conta não encontrada',
+      not_found_description: 'A conta que está a tentar aceder não existe.',
     },
     address_book: {
       title: 'Livro de endereços',
@@ -432,7 +428,7 @@ export default {
       subtitle: 'Configure as preferências e gerencie a sua conta.',
     },
     administration: {
-      title: 'Administração da carteira',
+      title: 'Administração',
     },
     user_groups: {
       title: 'Grupos de usuários',
@@ -468,9 +464,25 @@ export default {
       update_dialog_title: 'Atualizar permissões',
     },
     proposal_policies: {
-      title: 'Regras',
+      title: 'Regras de aprovação',
       create_label: 'Criar Regra',
       dialog_title: 'Regra',
+    },
+    not_found: {
+      title: 'Ups, 404',
+      subtitle: 'A página que está a tentar aceder não existe.',
+    },
+    unauthorized: {
+      title: 'Acesso não autorizado',
+      subtitle: 'Você não tem permissão para aceder a esta página.',
+    },
+    disconnected: {
+      title: 'Desconectado',
+      subtitle: 'Você está desconectado, por favor, tente novamente.',
+    },
+    error: {
+      title: 'Erro',
+      subtitle: 'Ocorreu um erro, por favor, tente novamente.',
     },
   },
   session: {

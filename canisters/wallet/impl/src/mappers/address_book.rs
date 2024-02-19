@@ -100,10 +100,7 @@ impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
 impl From<AddressBookEntryCallerPrivileges> for AddressBookEntryCallerPrivilegesDTO {
     fn from(input: AddressBookEntryCallerPrivileges) -> AddressBookEntryCallerPrivilegesDTO {
         AddressBookEntryCallerPrivilegesDTO {
-            id: Uuid::from_slice(&input.id)
-                .unwrap()
-                .hyphenated()
-                .to_string(),
+            id: Uuid::from_bytes(input.id).hyphenated().to_string(),
             can_edit: input.can_edit,
             can_delete: input.can_delete,
         }

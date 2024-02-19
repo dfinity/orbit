@@ -2,7 +2,7 @@ use super::HelperMapper;
 use crate::models::{
     AddUserGroupOperation, AddUserGroupOperationInput, EditUserGroupOperation,
     EditUserGroupOperationInput, RemoveUserGroupOperation, RemoveUserGroupOperationInput,
-    UserGroup,
+    UserGroup, UserGroupCallerPrivileges,
 };
 use uuid::Uuid;
 
@@ -115,6 +115,16 @@ impl From<wallet_api::RemoveUserGroupOperationInput> for RemoveUserGroupOperatio
     fn from(input: wallet_api::RemoveUserGroupOperationInput) -> Self {
         Self {
             input: input.into(),
+        }
+    }
+}
+
+impl From<UserGroupCallerPrivileges> for wallet_api::UserGroupCallerPrivilegesDTO {
+    fn from(privileges: UserGroupCallerPrivileges) -> Self {
+        Self {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_edit: privileges.can_edit,
+            can_delete: privileges.can_delete,
         }
     }
 }

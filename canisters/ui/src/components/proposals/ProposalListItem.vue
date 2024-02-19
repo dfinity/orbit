@@ -7,13 +7,13 @@
       <component
         :is="itemView?.component"
         v-if="itemView"
-        :proposal="proposal"
+        :proposal="props.proposal"
         :operation="itemView.operation"
       />
     </td>
     <td class="d-flex justify-end align-center" :class="{ 'bb-none': props.hideColumnBorders }">
       <ReviewProposalBtn
-        :proposal="proposal"
+        :proposal="props.proposal"
         @voted="$emit('voted')"
         @opened="$emit('opened')"
         @closed="$emit('closed')"
@@ -28,13 +28,14 @@
       <component
         :is="itemView?.component"
         v-if="itemView"
-        :proposal="proposal"
+        :proposal="props.proposal"
         :operation="itemView.operation"
       />
     </VListItemSubtitle>
     <template #append>
       <ReviewProposalBtn
-        :proposal="proposal"
+        :proposal="props.proposal"
+        :details="props.details"
         @voted="$emit('voted')"
         @opened="$emit('opened')"
         @closed="$emit('closed')"
@@ -46,16 +47,18 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import ReviewProposalBtn from './ReviewProposalBtn.vue';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
+import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
-import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
-import ListUnknownOperation from './operations/ListUnknownOperation.vue';
+import ReviewProposalBtn from './ReviewProposalBtn.vue';
 import ListTransfer from './operations/ListTransfer.vue';
+import ListUnknownOperation from './operations/ListUnknownOperation.vue';
+import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
+    details: ProposalDetails;
     hideColumnBorders?: boolean;
     mode?: 'list' | 'table';
   }>(),

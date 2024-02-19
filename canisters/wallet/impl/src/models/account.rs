@@ -70,6 +70,13 @@ pub struct AccountKey {
     pub id: AccountId,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_transfer: bool,
+}
+
 fn validate_symbol(symbol: &String) -> ModelValidatorResult<AccountError> {
     if (symbol.len() < Account::SYMBOL_RANGE.0 as usize)
         || (symbol.len() > Account::SYMBOL_RANGE.1 as usize)
