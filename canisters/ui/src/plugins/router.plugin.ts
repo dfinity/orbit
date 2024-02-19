@@ -64,7 +64,10 @@ const router = createRouter({
               component: () => import('~/pages/AccountsPage.vue'),
               props: () => {
                 return {
-                  breadcrumbs: [],
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.accounts') },
+                  ],
                 };
               },
               meta: {
@@ -83,6 +86,7 @@ const router = createRouter({
               props: () => {
                 return {
                   breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
                     { title: i18n.global.t('navigation.accounts'), to: { name: Routes.Accounts } },
                   ],
                 };
