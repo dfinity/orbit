@@ -49,6 +49,7 @@ const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
   breadcrumbs: () => [],
 });
+
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.user_settings.title'));
 const pageSubtitle = computed(() => i18n.t('pages.user_settings.subtitle'));

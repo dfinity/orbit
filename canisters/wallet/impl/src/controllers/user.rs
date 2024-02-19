@@ -8,7 +8,10 @@ use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
-use wallet_api::{GetUserInput, GetUserResponse, ListUsersInput, ListUsersResponse, MeResponse};
+use wallet_api::{
+    GetUserInput, GetUserResponse, ListUsersInput, ListUsersResponse, MeResponse,
+    UserCallerPrivilegesDTO,
+};
 
 // Canister entrypoints for the controller.
 #[query(name = "get_user")]
@@ -80,14 +83,14 @@ impl UserController {
                 .get_caller_privileges_for_user(&user.id, &ctx)
                 .await?;
 
-            privileges.push(user_privileges);
+            privileges.push(UserCallerPrivilegesDTO::from(user_privileges));
         }
 
         Ok(ListUsersResponse {
             users: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
             total: list.total,
-            privileges: privileges.into_iter().map(Into::into).collect(),
+            privileges,
         })
     }
 

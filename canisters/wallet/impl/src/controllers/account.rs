@@ -9,8 +9,8 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
-    FetchAccountBalancesInput, FetchAccountBalancesResponse, GetAccountInput, GetAccountResponse,
-    ListAccountsInput, ListAccountsResponse,
+    AccountCallerPrivilegesDTO, FetchAccountBalancesInput, FetchAccountBalancesResponse,
+    GetAccountInput, GetAccountResponse, ListAccountsInput, ListAccountsResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -89,7 +89,7 @@ impl AccountController {
                 .get_caller_privileges_for_account(&account.id, &ctx)
                 .await?;
 
-            privileges.push(account_privileges);
+            privileges.push(AccountCallerPrivilegesDTO::from(account_privileges));
         }
 
         Ok(ListAccountsResponse {
@@ -100,7 +100,7 @@ impl AccountController {
                 .collect(),
             next_offset: result.next_offset,
             total: result.total,
-            privileges: privileges.into_iter().map(Into::into).collect(),
+            privileges,
         })
     }
 
