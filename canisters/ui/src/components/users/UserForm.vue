@@ -150,7 +150,20 @@ const identitiesInput = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 const model = computed(() => props.modelValue);
-watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
+watch(
+  model.value,
+  newValue => {
+    if (newValue.name === undefined) {
+      newValue.name = [];
+    }
+
+    emit('update:modelValue', newValue);
+  },
+  {
+    deep: true,
+    immediate: true,
+  },
+);
 
 watch(
   () => isFormValid.value,
@@ -158,14 +171,14 @@ watch(
 );
 
 const status = computed({
-  get: () => fromUserStatusVariantToEnum(model.value.status ?? { Inactive: null }),
+  get: () => (model.value.status ? fromUserStatusVariantToEnum(model.value.status) : undefined),
   set: value => {
-    model.value.status = fromUserStatusEnumToVariant(value);
+    model.value.status = value ? fromUserStatusEnumToVariant(value) : undefined;
   },
 });
 
 const name = computed({
-  get: () => model.value.name?.[0] ?? null,
+  get: () => model.value.name?.[0],
   set: value => {
     model.value.name = !value ? [] : [value];
   },
