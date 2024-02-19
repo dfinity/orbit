@@ -42,6 +42,8 @@
             <ProposalList
               v-if="data"
               :proposals="data.proposals"
+              :privileges="data.privileges"
+              :additionals="data.additional_info"
               :hide-not-found="props.hideNotFound"
               hide-headers
               @voted="
@@ -96,7 +98,7 @@ const wallet = useWalletStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);
 
-const fetchRecentProposals = async () => {
+const fetchRecentProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
   const result = await wallet.service.listProposals({
     types: props.types,
     statuses: [{ Created: null }],

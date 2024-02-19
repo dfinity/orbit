@@ -16,15 +16,16 @@
   <ProposalDialog v-model:open="open" :proposal-id="props.proposal.id" @voted="emit('voted')" />
 </template>
 <script setup lang="ts">
-import { computed } from 'vue';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ProposalDialog from '~/components/proposals/ProposalDialog.vue';
 import { Proposal } from '~/generated/wallet/wallet.did';
+import { ProposalDetails } from '~/types/wallet.types';
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
+    details?: ProposalDetails;
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
@@ -34,6 +35,10 @@ const props = withDefaults(
   }>(),
   {
     proposal: undefined,
+    details: () => ({
+      can_vote: false,
+      proposer_name: undefined,
+    }),
     icon: undefined,
     text: undefined,
     size: 'small',
@@ -41,12 +46,6 @@ const props = withDefaults(
     color: 'default',
     readonly: false,
   },
-);
-const i18n = useI18n();
-
-const btnText = computed(
-  () =>
-    props.text || (props.proposal.info.can_vote ? i18n.t('terms.review') : i18n.t('terms.view')),
 );
 
 const emit = defineEmits<{
@@ -56,6 +55,10 @@ const emit = defineEmits<{
 }>();
 
 const open = ref(false);
+const i18n = useI18n();
+const btnText = computed(
+  () => props.text || (props.details.can_vote ? i18n.t('terms.review') : i18n.t('terms.view')),
+);
 
 watch(
   () => open.value,

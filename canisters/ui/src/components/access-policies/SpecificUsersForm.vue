@@ -18,6 +18,7 @@
       :items="userList"
       chips
       multiple
+      :disabled="isViewMode"
       clearable
       @update:search="usersAutocomplete.searchItems"
     />
@@ -30,6 +31,19 @@ import { useUsersAutocomplete } from '~/composables/autocomplete.composable';
 import { BasicUser, UUID } from '~/generated/wallet/wallet.did';
 import { VFormValidation } from '~/types/helper.types';
 
+export type SpecificUsersFormProps = {
+  modelValue: { policyId: UUID | null; userIds: UUID[]; prefilledUsers?: BasicUser[] };
+  valid?: boolean;
+  mode?: 'view' | 'edit';
+};
+
+const props = withDefaults(defineProps<SpecificUsersFormProps>(), {
+  valid: true,
+  mode: 'edit',
+});
+
+const reactiveProps = toRefs(props);
+
 const form = ref<VFormValidation | null>(null);
 const usersAutocomplete = useUsersAutocomplete();
 
@@ -39,16 +53,7 @@ onMounted(() => {
 
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
-export type SpecificUsersFormProps = {
-  modelValue: { policyId: UUID | null; userIds: UUID[]; prefilledUsers?: BasicUser[] };
-  valid?: boolean;
-};
-
-const props = withDefaults(defineProps<SpecificUsersFormProps>(), {
-  valid: true,
-});
-
-const reactiveProps = toRefs(props);
+const isViewMode = computed(() => reactiveProps.mode.value === 'view');
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: SpecificUsersFormProps['modelValue']): void;

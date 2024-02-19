@@ -22,6 +22,7 @@
       :loading="loading"
       :resources="resources"
       :access-policies="data ? data.policies : []"
+      :privileges="data ? data.privileges : []"
       :preload-user-groups="data ? data.userGroups : []"
       :preload-users="data ? data.users : []"
       @editing="disableRefresh = $event"
@@ -31,12 +32,35 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
-import { getAccountAccessPolicies } from '~/configs/access-policies.config';
-import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import DataLoader from '~/components/DataLoader.vue';
 import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
+import { getAccountAccessPolicies } from '~/configs/access-policies.config';
+import type {
+  AccessPolicy,
+  AccessPolicyCallerPrivileges,
+  BasicUser,
+  UUID,
+  UserGroup,
+} from '~/generated/wallet/wallet.did';
+import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
+
+const props = withDefaults(
+  defineProps<{
+    fetchPolicies?: () => Promise<{
+      policies: AccessPolicy[];
+      userGroups: UserGroup[];
+      users: BasicUser[];
+      privileges: AccessPolicyCallerPrivileges[];
+    }>;
+  }>(),
+  {
+    fetchPolicies: () =>
+      Promise.resolve({ policies: [], userGroups: [], users: [], privileges: [] }),
+  },
+);
+
+const { fetchPolicies } = toRefs(props);
 
 const autocomplete = useAccountsAutocomplete();
 const selectedAccountId = ref<UUID | null>(null);
@@ -46,21 +70,6 @@ const disableRefresh = ref(false);
 onMounted(() => {
   autocomplete.searchItems();
 });
-
-const props = withDefaults(
-  defineProps<{
-    fetchPolicies?: () => Promise<{
-      policies: AccessPolicy[];
-      userGroups: UserGroup[];
-      users: BasicUser[];
-    }>;
-  }>(),
-  {
-    fetchPolicies: () => Promise.resolve({ policies: [], userGroups: [], users: [] }),
-  },
-);
-
-const { fetchPolicies } = toRefs(props);
 
 const groupList = computed(() => {
   const groups = autocomplete.results.value.map(group => ({

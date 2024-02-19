@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      readonly
+      :disabled="isViewMode"
     />
     <VTextField
       v-model="model.name"
@@ -18,7 +18,7 @@
       class="mb-2"
       density="comfortable"
       :prepend-icon="mdiWallet"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
     />
     <TokenAutocomplete
       v-if="props.display.value.asset"
@@ -29,7 +29,7 @@
       :rules="[requiredRule]"
       variant="underlined"
       density="comfortable"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
       @selected-asset="onSelectedAsset"
     />
     <UserAutocomplete
@@ -38,7 +38,7 @@
       variant="underlined"
       class="mb-2"
       density="comfortable"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
       :rules="[requiredRule]"
       multiple
       :prepend-icon="mdiAccountGroup"
@@ -54,7 +54,7 @@
           <CriteriaBuilder
             v-model="editPolicy"
             :specifier="{ EditAccount: { Any: null } }"
-            :disabled="props.disabled.value"
+            :disabled="isViewMode"
             @remove="editPolicy = undefined"
           />
         </div>
@@ -65,7 +65,7 @@
           <CriteriaBuilder
             v-model="transferPolicy"
             :specifier="{ Transfer: { account: { Any: null } } }"
-            :disabled="props.disabled.value"
+            :disabled="isViewMode"
             @remove="transferPolicy = undefined"
           />
         </div>
@@ -89,7 +89,7 @@ export type AccountConfigFormProps = {
   modelValue: Partial<Account>;
   triggerSubmit?: boolean;
   valid?: boolean;
-  disabled?: boolean;
+  mode: 'view' | 'edit';
   display?: {
     id?: boolean;
     asset?: boolean;
@@ -104,7 +104,7 @@ const input = withDefaults(defineProps<AccountConfigFormProps>(), {
     id: true,
     asset: true,
   }),
-  disabled: false,
+  mode: 'edit',
   triggerSubmit: false,
 });
 const props = toRefs(input);
@@ -115,6 +115,8 @@ const emit = defineEmits<{
   (event: 'valid', payload: boolean): void;
   (event: 'submit', payload: AccountConfigFormProps['modelValue']): void;
 }>();
+
+const isViewMode = computed(() => props.mode.value === 'view');
 
 const model = computed(() => props.modelValue.value);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });

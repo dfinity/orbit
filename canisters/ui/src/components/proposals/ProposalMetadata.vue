@@ -11,21 +11,13 @@
         >
           <span class="text-no-wrap text-truncate" style="max-width: 80px">
             {{
-              props.proposal.info.proposer_name?.[0]
-                ? props.proposal.info.proposer_name[0]
-                : props.proposal.proposed_by
+              props.details.proposer_name ? props.details.proposer_name : props.proposal.proposed_by
             }}
           </span>
         </VChip>
       </template>
       <span>
-        {{
-          $t('proposals.proposed_by', {
-            name: props.proposal.info.proposer_name?.[0]
-              ? props.proposal.info.proposer_name[0]
-              : '-',
-          })
-        }}
+        {{ $t('proposals.proposed_by', { name: props.details.proposer_name ?? '-' }) }}
         <br />
         {{ $t('proposals.proposer_id', { id: props.proposal.proposed_by }) }}
       </span>
@@ -72,10 +64,12 @@
 import { mdiAccountCircle, mdiClockPlusOutline, mdiClockTimeFourOutline } from '@mdi/js';
 import { computed } from 'vue';
 import { Proposal } from '~/generated/wallet/wallet.did';
+import type { ProposalDetails } from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 
 const props = defineProps<{
   proposal: Proposal;
+  details: ProposalDetails;
 }>();
 
 const createdAt = computed<Date>(() => new Date(props.proposal.created_at));

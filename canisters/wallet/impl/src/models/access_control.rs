@@ -12,6 +12,13 @@ pub struct AccessControlPolicy {
     pub resource: ResourceSpecifier,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccessPolicyCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceSpecifier {

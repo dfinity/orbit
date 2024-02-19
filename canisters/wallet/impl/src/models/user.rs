@@ -36,6 +36,13 @@ pub struct UserKey {
     pub id: UserId,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UserCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 impl User {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const MAX_USER_GROUPS: u8 = 25;

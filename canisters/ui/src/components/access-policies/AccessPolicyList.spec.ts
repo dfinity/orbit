@@ -7,6 +7,7 @@ describe('AccessPolicyList', () => {
     const wrapper = mount(AccessPolicyList, {
       props: {
         accessPolicies: [],
+        privileges: [],
         resources: [],
       },
     });
@@ -20,6 +21,7 @@ describe('AccessPolicyList', () => {
       {
         props: {
           accessPolicies: [],
+          privileges: [],
           resources: [],
         },
       },
@@ -42,6 +44,7 @@ describe('AccessPolicyList', () => {
       {
         props: {
           accessPolicies: [],
+          privileges: [],
           resources: [],
         },
       },

@@ -21,7 +21,7 @@
           <ProposalPolicyForm
             v-if="data"
             v-model="proposalPolicy"
-            :disabled="props.readonly.value"
+            :mode="props.readonly.value ? 'view' : 'edit'"
             @submit="save"
             @valid="valid = $event"
           />

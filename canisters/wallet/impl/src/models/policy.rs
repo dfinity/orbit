@@ -20,6 +20,13 @@ pub struct ProposalPolicy {
     pub criteria: Criteria,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalPolicyCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum EvaluateError {
     #[error("unauthorized")]

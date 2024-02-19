@@ -7,13 +7,13 @@ use crate::{
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
-    mappers::{AccountCallerPrivileges, AccountMapper, HelperMapper},
+    mappers::{AccountMapper, HelperMapper},
     models::{
         access_control::{
             AccountActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
         },
         specifier::{AccountSpecifier, CommonSpecifier, ProposalSpecifier},
-        Account, AccountBalance, AccountId, AddAccountOperationInput,
+        Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
         EditProposalPolicyOperationInput,
     },
@@ -74,7 +74,7 @@ impl AccountService {
     }
 
     /// Returns the caller privileges for the given account.
-    pub async fn get_account_caller_privileges(
+    pub async fn get_caller_privileges_for_account(
         &self,
         account_id: &UUID,
         ctx: &CallContext,
@@ -86,7 +86,8 @@ impl AccountService {
                 AccountActionSpecifier::Update(CommonSpecifier::Id(vec![*account_id])),
             ),
         )
-        .await;
+        .await
+        .is_ok();
 
         let can_transfer = evaluate_caller_access(
             ctx,
@@ -94,11 +95,13 @@ impl AccountService {
                 vec![*account_id],
             ))),
         )
-        .await;
+        .await
+        .is_ok();
 
         Ok(AccountCallerPrivileges {
-            can_edit: can_edit.is_ok(),
-            can_transfer: can_transfer.is_ok(),
+            id: *account_id,
+            can_edit,
+            can_transfer,
         })
     }
 

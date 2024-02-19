@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      readonly
+      :disabled="isViewMode"
     />
     <BlockchainAutocomplete
       v-model="model.blockchain"
@@ -17,7 +17,7 @@
       :rules="[requiredRule]"
       variant="underlined"
       density="comfortable"
-      :disabled="props.disabled.value || !!model.id"
+      :disabled="isViewMode || !!model.id"
     />
     <VTextField
       v-model="model.address_owner"
@@ -28,7 +28,7 @@
       class="mb-2"
       density="comfortable"
       :prepend-icon="mdiAccount"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
     />
     <VTextField
       v-model="model.address"
@@ -38,13 +38,9 @@
       :rules="[requiredRule]"
       variant="underlined"
       density="comfortable"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
     />
-    <MetadataField
-      v-model="model.metadata"
-      :label="$t('terms.metadata')"
-      :disabled="props.disabled.value"
-    />
+    <MetadataField v-model="model.metadata" :label="$t('terms.metadata')" :disabled="isViewMode" />
   </VForm>
 </template>
 
@@ -62,7 +58,7 @@ export type AddressBookFormProps = {
   modelValue: Partial<AddressBookEntry>;
   triggerSubmit?: boolean;
   valid?: boolean;
-  disabled?: boolean;
+  mode?: 'view' | 'edit';
   display?: {
     id?: boolean;
   };
@@ -75,10 +71,12 @@ const input = withDefaults(defineProps<AddressBookFormProps>(), {
   display: () => ({
     id: true,
   }),
-  disabled: false,
+  mode: 'edit',
   triggerSubmit: false,
 });
 const props = toRefs(input);
+
+const isViewMode = computed(() => props.mode.value === 'view');
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: AddressBookFormProps['modelValue']): void;

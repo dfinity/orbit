@@ -1,17 +1,23 @@
 import { NavigationGuard, RouterView, createRouter, createWebHistory } from 'vue-router';
+import { supportedLocales } from '~/configs/i18n.config';
 import { appInitConfig } from '~/configs/init.config';
-import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
+import {
+  RouteStatusCode,
+  Routes,
+  defaultHomeRoute,
+  defaultLoginRoute,
+} from '~/configs/routes.config';
+import ErrorPage from '~/pages/ErrorPage.vue';
+import LoginPage from '~/pages/LoginPage.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
+import { ProposalDomains } from '~/types/wallet.types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
 import { services } from './services.plugin';
-import NotFoundPage from '~/pages/NotFoundPage.vue';
-import { supportedLocales } from '~/configs/i18n.config';
-import LoginPage from '~/pages/LoginPage.vue';
-import { ProposalDomains } from '~/types/wallet.types';
+import logger from '~/core/logger.core';
 
 export const redirectToKey = 'redirectTo';
 
@@ -61,14 +67,10 @@ const router = createRouter({
             {
               path: '',
               name: Routes.Accounts,
-              component: () => import('~/pages/AccountListPage.vue'),
+              component: () => import('~/pages/AccountsPage.vue'),
               props: () => {
                 return {
-                  breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.accounts'),
-                    },
-                  ],
+                  breadcrumbs: [],
                 };
               },
               meta: {
@@ -87,10 +89,7 @@ const router = createRouter({
               props: () => {
                 return {
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.accounts'),
-                      to: { name: Routes.Accounts },
-                    },
+                    { title: i18n.global.t('navigation.accounts'), to: { name: Routes.Accounts } },
                   ],
                 };
               },
@@ -104,30 +103,6 @@ const router = createRouter({
               },
             },
           ],
-        },
-        {
-          path: 'disconnected',
-          name: Routes.Disconnected,
-          component: () => import('~/pages/DisconnectedPage.vue'),
-          meta: {
-            auth: {
-              check: {
-                session: RequiredSessionState.Authenticated,
-              },
-            },
-          },
-        },
-        {
-          path: 'unauthorized',
-          name: Routes.Unauthorized,
-          component: () => import('~/pages/UnauthorizedPage.vue'),
-          meta: {
-            auth: {
-              check: {
-                session: RequiredSessionState.Authenticated,
-              },
-            },
-          },
         },
         {
           path: 'initialization',
@@ -150,13 +125,8 @@ const router = createRouter({
               title: i18n.global.t('pages.proposals.transfer_title'),
               domains: [ProposalDomains.Transfers],
               breadcrumbs: [
-                {
-                  title: i18n.global.t('navigation.proposals'),
-                  to: { name: Routes.Proposals },
-                },
-                {
-                  title: i18n.global.t('navigation.transfer_proposals'),
-                },
+                { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                { title: i18n.global.t('navigation.transfer_proposals') },
               ],
             };
           },
@@ -196,6 +166,15 @@ const router = createRouter({
               path: 'system',
               name: Routes.SystemSettings,
               component: () => import('~/pages/AdministrationPage.vue'),
+              props: () => {
+                return {
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.administration') },
+                  ],
+                };
+              },
               meta: {
                 auth: {
                   check: {
@@ -220,6 +199,15 @@ const router = createRouter({
                   path: '',
                   name: Routes.UserGroups,
                   component: () => import('~/pages/UserGroupsPage.vue'),
+                  props: () => {
+                    return {
+                      breadcrumbs: [
+                        { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                        { title: i18n.global.t('navigation.settings') },
+                        { title: i18n.global.t('navigation.user_groups_permissions') },
+                      ],
+                    };
+                  },
                   meta: {
                     auth: {
                       check: {
@@ -236,16 +224,13 @@ const router = createRouter({
                   props: () => {
                     return {
                       breadcrumbs: [
-                        {
-                          title: i18n.global.t('navigation.settings'),
-                        },
+                        { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                        { title: i18n.global.t('navigation.settings') },
                         {
                           title: i18n.global.t('terms.user_groups'),
                           to: { name: Routes.UserGroups },
                         },
-                        {
-                          title: i18n.global.t('navigation.access_policies'),
-                        },
+                        { title: i18n.global.t('navigation.access_policies') },
                       ],
                     };
                   },
@@ -264,6 +249,15 @@ const router = createRouter({
               path: 'users',
               name: Routes.Users,
               component: () => import('~/pages/UsersPage.vue'),
+              props: () => {
+                return {
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.users') },
+                  ],
+                };
+              },
               meta: {
                 auth: {
                   check: {
@@ -281,12 +275,9 @@ const router = createRouter({
                 return {
                   title: i18n.global.t('pages.proposals.title'),
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.settings'),
-                    },
-                    {
-                      title: i18n.global.t('navigation.proposals'),
-                    },
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.proposals') },
                   ],
                 };
               },
@@ -306,12 +297,9 @@ const router = createRouter({
                 return {
                   title: i18n.global.t('pages.proposal_policies.title'),
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.settings'),
-                    },
-                    {
-                      title: i18n.global.t('navigation.proposal_policies'),
-                    },
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.proposal_policies') },
                   ],
                 };
               },
@@ -353,8 +341,8 @@ const router = createRouter({
         },
         {
           path: ':pathMatch(.*)*',
-          name: Routes.NotFound,
-          component: NotFoundPage,
+          name: Routes.Error,
+          component: ErrorPage,
           meta: {
             auth: {
               check: {
@@ -370,6 +358,7 @@ const router = createRouter({
 
 export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
   const session = useSessionStore();
+  const app = useAppStore();
 
   if (to.name === Routes.Disconnected && session.data.selectedWallet.hasAccess) {
     return next({ name: defaultHomeRoute });
@@ -385,30 +374,56 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
 
   const matchesRequiredSession = hasRequiredSession(to.meta.auth.check.session);
   if (!matchesRequiredSession) {
-    let redirectToRoute = defaultHomeRoute;
     switch (to.meta.auth.check.session) {
       case RequiredSessionState.Authenticated:
-        redirectToRoute = defaultLoginRoute;
-        break;
+        return next({ name: defaultLoginRoute });
       case RequiredSessionState.ConnectedToWallet: {
-        redirectToRoute = Routes.Disconnected;
-        break;
+        if (!session.isAuthenticated) {
+          return next({ name: defaultLoginRoute });
+        }
+
+        app.routeStatusCode = RouteStatusCode.Disconnected;
+        return next();
+      }
+      default: {
+        return next({ name: defaultHomeRoute });
       }
     }
-
-    return next({ name: redirectToRoute });
   }
 
   const matchesRequiredPrivilege = hasRequiredPrivilege({ anyOf: to.meta.auth.check.privileges });
   if (!matchesRequiredPrivilege) {
-    return next({ name: Routes.Unauthorized });
+    app.routeStatusCode = RouteStatusCode.Unauthorized;
+    return next();
   }
 
   return next();
 };
 
+// needs to be the first guard to begin the loading state of the app routing
+router.beforeEach((_, _from, next) => {
+  const app = useAppStore();
+  app.loading = true;
+  app.routeStatusCode = RouteStatusCode.Success;
+
+  return next();
+});
+
 router.beforeEach(initStateGuard);
 router.beforeEach(i18nRouteGuard(services(), () => useAppStore()));
 router.beforeEach(routeAccessGuard);
+
+// needs to be the last guard to end the loading state of the app routing
+router.afterEach((_to, _from) => {
+  const app = useAppStore();
+  app.loading = false;
+});
+
+router.onError(error => {
+  logger.error(`Router error`, { error });
+
+  const app = useAppStore();
+  app.loading = false;
+});
 
 export { router };

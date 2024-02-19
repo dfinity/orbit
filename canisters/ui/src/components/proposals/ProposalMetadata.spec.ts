@@ -7,11 +7,8 @@ describe('ProposalMetadata', () => {
   it('renders properly', () => {
     const wrapper = mount(ProposalMetadata, {
       props: {
+        details: { can_vote: false, proposer_name: undefined },
         proposal: {
-          info: {
-            can_vote: false,
-            proposer_name: [],
-          },
           status: { Adopted: null },
         } as Proposal,
       },
@@ -23,11 +20,8 @@ describe('ProposalMetadata', () => {
   it('shows the expiration_dt when still pending', () => {
     const wrapper = mount(ProposalMetadata, {
       props: {
+        details: { can_vote: false, proposer_name: undefined },
         proposal: {
-          info: {
-            can_vote: false,
-            proposer_name: [],
-          },
           expiration_dt: new Date().toISOString(),
           status: { Created: null },
         } as Proposal,
@@ -41,11 +35,8 @@ describe('ProposalMetadata', () => {
   it('hides the expiration_dt when not pending', () => {
     const wrapper = mount(ProposalMetadata, {
       props: {
+        details: { can_vote: false, proposer_name: undefined },
         proposal: {
-          info: {
-            can_vote: false,
-            proposer_name: [],
-          },
           expiration_dt: new Date().toISOString(),
           status: { Adopted: null },
         } as Proposal,

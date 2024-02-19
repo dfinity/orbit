@@ -52,6 +52,7 @@ export default {
     notifications_panel_title: 'Notifications',
     notifications_panel_no_results: "You're all caught up.",
     notifications_panel_read_all: 'Read all',
+    btn_home_back: 'Back to home',
   },
   blockchains: {
     icp: {
@@ -153,6 +154,10 @@ export default {
         title: 'Change canister',
         request_title: 'Change canister request',
       },
+      editaccesspolicy: {
+        title: 'Edit access policy',
+        request_title: 'Edit access policy request',
+      },
       editusergroup: {
         title: 'Edit user group',
         request_title: 'Edit user group request',
@@ -186,11 +191,6 @@ export default {
   login: {
     signin_slogan: 'Securely connect to manage your crypto assets',
     auth_failed: 'Authentication failed, please try again.',
-  },
-  not_found: {
-    title: 'Whoops, 404',
-    description: 'The page you were looking for does not exist.',
-    btn_back: 'Go back to home',
   },
   slogans: {
     elevate_to_orbit: {
@@ -274,6 +274,10 @@ export default {
     type: 'Type',
     summary: 'Summary',
     metadata: 'Metadata',
+    wasm: 'Wasm',
+    arg: 'Arg',
+    target: 'Target',
+    upgrader: 'Upgrader',
     view: 'View',
     new_address: 'New Address',
     requested: 'Requested',
@@ -321,6 +325,7 @@ export default {
     expires_at: 'Expires at',
     yes: 'Yes',
     no: 'No',
+    identities: 'Identities',
     asset: 'Asset',
     user: 'User',
     unknown: 'Unknown',
@@ -335,11 +340,15 @@ export default {
     accounts: 'Accounts',
     addresses: 'Addresses',
     policies: 'Policies',
+    any: 'Any',
     transfers: 'Transfers',
     withdrawals: 'Withdrawals',
     transactions: 'Transactions',
     address_book: 'Address Book',
+    resource: 'Resource',
+    action: 'Action',
     new_transfer: 'New Transfer',
+    approval_policy: 'Approval Policy',
     completed: 'completed',
     pending: 'pending',
     new_withdraw: 'New withdraw',
@@ -360,6 +369,7 @@ export default {
     scheduled: 'Scheduled',
     wallet_name: 'Wallet Name',
     users: 'Users',
+    everyone: 'Everyone',
     identity_name: 'Identity Name',
     canister_id: 'Canister ID',
     principal: 'Principal',
@@ -392,11 +402,6 @@ export default {
       intNumberRange: '{field} must be between {min} and {max}.',
     },
   },
-  account_page: {
-    not_found_title: 'Account not found',
-    not_found_description: 'The account you are looking for could not be loaded.',
-    not_found_btn: 'Go back to accounts',
-  },
   navigation: {
     home: 'Home',
     accounts: 'Accounts',
@@ -404,7 +409,7 @@ export default {
     users: 'Users',
     settings: 'Settings',
     user_groups_permissions: 'User Groups & Permissions',
-    administration: 'Wallet Administration',
+    administration: 'Administration',
     add_another_wallet: 'Add another wallet',
     account_info_settings: 'Account Info & Settings',
     login: 'Login',
@@ -412,7 +417,7 @@ export default {
     proposals: 'Requests',
     transfer_proposals: 'Transfer Requests',
     access_policies: 'Permissions',
-    proposal_policies: 'Policies',
+    proposal_policies: 'Approval Policies',
   },
   pages: {
     accounts: {
@@ -420,6 +425,10 @@ export default {
       btn_new_transfer: 'New transfer',
       btn_upload_csv: 'Upload CSV',
       error_fetching_account: 'Error fetching account, please try again.',
+    },
+    account: {
+      not_found: 'Account not found',
+      not_found_description: 'The account you are looking for does not exist.',
     },
     address_book: {
       title: 'Address Book',
@@ -432,7 +441,7 @@ export default {
       subtitle: 'Configure preferences and manage your user.',
     },
     administration: {
-      title: 'Wallet Administration',
+      title: 'Administration',
     },
     users: {
       title: 'Users',
@@ -466,9 +475,25 @@ export default {
       update_dialog_title: 'Update Permissions',
     },
     proposal_policies: {
-      title: 'Policies',
+      title: 'Approval Policies',
       create_label: 'Add Policy',
       dialog_title: 'Policy',
+    },
+    not_found: {
+      title: 'Whoops, 404',
+      subtitle: 'The page you were looking for does not exist.',
+    },
+    unauthorized: {
+      title: 'Unauthorized',
+      subtitle: 'You are not authorized to view this page.',
+    },
+    disconnected: {
+      title: 'Disconnected',
+      subtitle: 'You are not connected to the selected wallet.',
+    },
+    error: {
+      title: 'Error',
+      subtitle: 'An error occurred while loading the page.',
     },
   },
   session: {

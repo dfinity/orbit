@@ -1,15 +1,16 @@
 use crate::{
     core::ic_cdk::api::time,
-    models::{Proposal, ProposalExecutionPlan, ProposalOperation, ProposalStatus, UserId},
+    models::{
+        Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges, ProposalExecutionPlan,
+        ProposalOperation, ProposalStatus, UserId,
+    },
 };
 use ic_canister_core::{
     types::{Timestamp, UUID},
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
 use uuid::Uuid;
-use wallet_api::{ProposalDTO, ProposalExecutionScheduleDTO, ProposalInfoDTO};
-
-pub type ProposalInfo = ProposalInfoDTO;
+use wallet_api::{ProposalDTO, ProposalExecutionScheduleDTO};
 
 impl Proposal {
     pub fn new(
@@ -36,7 +37,7 @@ impl Proposal {
         }
     }
 
-    pub fn to_dto(self, info: ProposalInfoDTO) -> ProposalDTO {
+    pub fn to_dto(self) -> ProposalDTO {
         ProposalDTO {
             id: Uuid::from_bytes(self.id).hyphenated().to_string(),
             proposed_by: Uuid::from_bytes(self.proposed_by).hyphenated().to_string(),
@@ -52,7 +53,6 @@ impl Proposal {
                 .iter()
                 .map(|vote| vote.to_owned().into())
                 .collect(),
-            info,
         }
     }
 }
@@ -75,6 +75,24 @@ impl From<ProposalExecutionPlan> for ProposalExecutionScheduleDTO {
             ProposalExecutionPlan::Scheduled { execution_time } => Self::Scheduled {
                 execution_time: timestamp_to_rfc3339(&execution_time),
             },
+        }
+    }
+}
+
+impl From<ProposalCallerPrivileges> for wallet_api::ProposalCallerPrivilegesDTO {
+    fn from(privileges: ProposalCallerPrivileges) -> Self {
+        Self {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_vote: privileges.can_vote,
+        }
+    }
+}
+
+impl From<ProposalAdditionalInfo> for wallet_api::ProposalAdditionalInfoDTO {
+    fn from(info: ProposalAdditionalInfo) -> Self {
+        Self {
+            id: Uuid::from_bytes(info.id).hyphenated().to_string(),
+            proposer_name: info.proposer_name,
         }
     }
 }

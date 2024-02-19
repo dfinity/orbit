@@ -5,10 +5,10 @@ export type AccessControlUserSpecifier = CommonSpecifier;
 export interface AccessPolicy {
   'id' : UUID,
   'resource' : ResourceSpecifier,
-  'info' : AccessPolicyInfo,
   'user' : AccessControlUserSpecifier,
 }
-export interface AccessPolicyInfo {
+export interface AccessPolicyCallerPrivileges {
+  'id' : UUID,
   'can_delete' : boolean,
   'can_edit' : boolean,
 }
@@ -38,6 +38,7 @@ export interface AccountBalanceInfo {
   'last_update_timestamp' : TimestampRFC3339,
 }
 export interface AccountCallerPrivileges {
+  'id' : UUID,
   'can_transfer' : boolean,
   'can_edit' : boolean,
 }
@@ -164,7 +165,13 @@ export interface CreateProposalInput {
   'summary' : [] | [string],
   'operation' : ProposalOperationInput,
 }
-export type CreateProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
+export type CreateProposalResult = {
+    'Ok' : {
+      'privileges' : ProposalCallerPrivileges,
+      'proposal' : Proposal,
+      'additional_info' : ProposalAdditionalInfo,
+    }
+  } |
   { 'Err' : Error };
 export interface EditAccessPolicyOperation {
   'input' : EditAccessPolicyOperationInput,
@@ -207,6 +214,7 @@ export interface EditUserGroupOperationInput {
 export interface EditUserOperation { 'input' : EditUserOperationInput }
 export interface EditUserOperationInput {
   'id' : UUID,
+  'status' : [] | [UserStatus],
   'groups' : [] | [Array<UUID>],
   'name' : [] | [string],
   'identities' : [] | [Array<Principal>],
@@ -222,7 +230,12 @@ export type FetchAccountBalancesResult = {
   } |
   { 'Err' : Error };
 export interface GetAccessPolicyInput { 'id' : UUID }
-export type GetAccessPolicyResult = { 'Ok' : { 'policy' : AccessPolicy } } |
+export type GetAccessPolicyResult = {
+    'Ok' : {
+      'privileges' : AccessPolicyCallerPrivileges,
+      'policy' : AccessPolicy,
+    }
+  } |
   { 'Err' : Error };
 export interface GetAccountInput { 'account_id' : UUID }
 export type GetAccountResult = {
@@ -241,18 +254,36 @@ export type GetConfigResult = { 'Ok' : { 'config' : Config } } |
   { 'Err' : Error };
 export interface GetProposalInput { 'proposal_id' : UUID }
 export interface GetProposalPolicyInput { 'id' : UUID }
-export type GetProposalPolicyResult = { 'Ok' : { 'policy' : ProposalPolicy } } |
+export type GetProposalPolicyResult = {
+    'Ok' : {
+      'privileges' : ProposalPolicyCallerPrivileges,
+      'policy' : ProposalPolicy,
+    }
+  } |
   { 'Err' : Error };
-export type GetProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
+export type GetProposalResult = {
+    'Ok' : {
+      'privileges' : ProposalCallerPrivileges,
+      'proposal' : Proposal,
+      'additional_info' : ProposalAdditionalInfo,
+    }
+  } |
   { 'Err' : Error };
 export interface GetTransfersInput { 'transfer_ids' : Array<UUID> }
 export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
   { 'Err' : Error };
 export interface GetUserGroupInput { 'user_group_id' : UUID }
-export type GetUserGroupResult = { 'Ok' : { 'user_group' : UserGroup } } |
+export type GetUserGroupResult = {
+    'Ok' : {
+      'privileges' : UserGroupCallerPrivileges,
+      'user_group' : UserGroup,
+    }
+  } |
   { 'Err' : Error };
 export interface GetUserInput { 'user_id' : UUID }
-export type GetUserResult = { 'Ok' : { 'user' : User } } |
+export type GetUserResult = {
+    'Ok' : { 'privileges' : UserCallerPrivileges, 'user' : User }
+  } |
   { 'Err' : Error };
 export type HeaderField = [string, string];
 export type HealthStatus = { 'Healthy' : null } |
@@ -272,6 +303,7 @@ export type ListAccessPoliciesInput = PaginationInput;
 export type ListAccessPoliciesResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<AccessPolicyCallerPrivileges>,
       'user_groups' : Array<UserGroup>,
       'users' : Array<BasicUser>,
       'next_offset' : [] | [bigint],
@@ -296,6 +328,7 @@ export interface ListAccountsInput {
 export type ListAccountsResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<AccountCallerPrivileges>,
       'accounts' : Array<Account>,
       'next_offset' : [] | [bigint],
     }
@@ -330,6 +363,7 @@ export type ListProposalPoliciesInput = PaginationInput;
 export type ListProposalPoliciesResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<ProposalPolicyCallerPrivileges>,
       'next_offset' : [] | [bigint],
       'policies' : Array<ProposalPolicy>,
     }
@@ -368,8 +402,10 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
 export type ListProposalsResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<ProposalCallerPrivileges>,
       'proposals' : Array<Proposal>,
       'next_offset' : [] | [bigint],
+      'additional_info' : Array<ProposalAdditionalInfo>,
     }
   } |
   { 'Err' : Error };
@@ -383,6 +419,7 @@ export interface ListUserGroupsInput {
 export type ListUserGroupsResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<UserGroupCallerPrivileges>,
       'user_groups' : Array<UserGroup>,
       'next_offset' : [] | [bigint],
     }
@@ -396,6 +433,7 @@ export interface ListUsersInput {
 export type ListUsersResult = {
     'Ok' : {
       'total' : bigint,
+      'privileges' : Array<UserCallerPrivileges>,
       'users' : Array<User>,
       'next_offset' : [] | [bigint],
     }
@@ -447,7 +485,6 @@ export interface Proposal {
   'execution_plan' : ProposalExecutionSchedule,
   'expiration_dt' : TimestampRFC3339,
   'votes' : Array<ProposalVote>,
-  'info' : ProposalInfo,
   'created_at' : TimestampRFC3339,
   'summary' : [] | [string],
   'operation' : ProposalOperation,
@@ -455,12 +492,13 @@ export interface Proposal {
 }
 export type ProposalActionSpecifier = { 'List' : null } |
   { 'Read' : CommonSpecifier };
-export type ProposalExecutionSchedule = { 'Immediate' : null } |
-  { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
-export interface ProposalInfo {
-  'can_vote' : boolean,
+export interface ProposalAdditionalInfo {
+  'id' : UUID,
   'proposer_name' : [] | [string],
 }
+export interface ProposalCallerPrivileges { 'id' : UUID, 'can_vote' : boolean }
+export type ProposalExecutionSchedule = { 'Immediate' : null } |
+  { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type ProposalOperation = {
     'EditAccessPolicy' : EditAccessPolicyOperation
   } |
@@ -521,9 +559,13 @@ export type ProposalOperationType = { 'EditAccessPolicy' : null } |
   { 'AddAccount' : null };
 export interface ProposalPolicy {
   'id' : UUID,
-  'info' : ProposalPolicyInfo,
   'specifier' : ProposalSpecifier,
   'criteria' : ProposalPolicyCriteria,
+}
+export interface ProposalPolicyCallerPrivileges {
+  'id' : UUID,
+  'can_delete' : boolean,
+  'can_edit' : boolean,
 }
 export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'And' : Array<ProposalPolicyCriteria> } |
@@ -532,10 +574,6 @@ export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'MinimumVotes' : MinimumVotes } |
   { 'ApprovalThreshold' : ApprovalThreshold } |
   { 'AutoAdopted' : null };
-export interface ProposalPolicyInfo {
-  'can_delete' : boolean,
-  'can_edit' : boolean,
-}
 export type ProposalSpecifier = { 'EditAccessPolicy' : CommonSpecifier } |
   { 'AddUserGroup' : null } |
   { 'RemoveProposalPolicy' : CommonSpecifier } |
@@ -667,8 +705,13 @@ export interface User {
   'last_modification_timestamp' : TimestampRFC3339,
   'identities' : Array<Principal>,
 }
-export interface UserGroup { 'id' : UserGroupId, 'name' : string }
-export type UserGroupId = UUID;
+export interface UserCallerPrivileges { 'id' : UUID, 'can_edit' : boolean }
+export interface UserGroup { 'id' : UUID, 'name' : string }
+export interface UserGroupCallerPrivileges {
+  'id' : UUID,
+  'can_delete' : boolean,
+  'can_edit' : boolean,
+}
 export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListProposals' : null } |
   { 'ListUserGroups' : null } |
@@ -685,7 +728,7 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'AddAccount' : null };
 export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
-  { 'Group' : Array<UserGroupId> } |
+  { 'Group' : Array<UUID> } |
   { 'Proposer' : null } |
   { 'Owner' : null };
 export type UserStatus = { 'Inactive' : null } |
@@ -695,7 +738,13 @@ export interface VoteOnProposalInput {
   'proposal_id' : UUID,
   'reason' : [] | [string],
 }
-export type VoteOnProposalResult = { 'Ok' : { 'proposal' : Proposal } } |
+export type VoteOnProposalResult = {
+    'Ok' : {
+      'privileges' : ProposalCallerPrivileges,
+      'proposal' : Proposal,
+      'additional_info' : ProposalAdditionalInfo,
+    }
+  } |
   { 'Err' : Error };
 export interface WalletAsset {
   'metadata' : Array<AssetMetadata>,

@@ -48,12 +48,19 @@ impl UserController {
         is_async = true
     )]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
+        let ctx = call_context();
         let user = self
             .user_service
-            .get_user(HelperMapper::to_uuid(input.user_id)?.as_bytes())?
-            .into();
+            .get_user(HelperMapper::to_uuid(input.user_id)?.as_bytes())?;
+        let privileges = self
+            .user_service
+            .get_caller_privileges_for_user(&user.id, &ctx)
+            .await?;
 
-        Ok(GetUserResponse { user })
+        Ok(GetUserResponse {
+            user: user.into(),
+            privileges: privileges.into(),
+        })
     }
 
     #[with_middleware(
@@ -65,11 +72,22 @@ impl UserController {
     async fn list_users(&self, input: ListUsersInput) -> ApiResult<ListUsersResponse> {
         let ctx = call_context();
         let list = self.user_service.list_users(input, Some(&ctx)).await?;
+        let mut privileges = Vec::new();
+
+        for user in &list.items {
+            let user_privileges = self
+                .user_service
+                .get_caller_privileges_for_user(&user.id, &ctx)
+                .await?;
+
+            privileges.push(user_privileges);
+        }
 
         Ok(ListUsersResponse {
             users: list.items.into_iter().map(Into::into).collect(),
             next_offset: list.next_offset,
             total: list.total,
+            privileges: privileges.into_iter().map(Into::into).collect(),
         })
     }
 

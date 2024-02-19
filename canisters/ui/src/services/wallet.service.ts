@@ -19,14 +19,20 @@ import {
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  GetAccessPolicyInput,
+  GetAccessPolicyResult,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
   GetProposalInput,
   GetProposalPolicyResult,
+  GetProposalResult,
   GetTransfersInput,
+  GetUserGroupInput,
+  GetUserGroupResult,
   GetUserInput,
+  GetUserResult,
   ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListAccountsResult,
@@ -86,13 +92,31 @@ export class WalletService {
     return this;
   }
 
-  async getUser(input: GetUserInput): Promise<User> {
+  async getUser(input: GetUserInput): Promise<ExtractOk<GetUserResult>> {
     const result = await this.actor.get_user(input);
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.user;
+    return result.Ok;
+  }
+
+  async getAccessPolicy(input: GetAccessPolicyInput): Promise<ExtractOk<GetAccessPolicyResult>> {
+    const result = await this.actor.get_access_policy(input);
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getUserGroup(input: GetUserGroupInput): Promise<ExtractOk<GetUserGroupResult>> {
+    const result = await this.actor.get_user_group(input);
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 
   async myUser(): Promise<{ me: User; privileges: UserPrivilege[] } | null> {
@@ -244,11 +268,7 @@ export class WalletService {
       throw result.Err;
     }
 
-    return {
-      users: result.Ok.users,
-      next_offset: result.Ok.next_offset,
-      total: result.Ok.total,
-    };
+    return result.Ok;
   }
 
   async config(): Promise<Config> {
@@ -347,14 +367,14 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async getProposal(input: GetProposalInput): Promise<Proposal> {
+  async getProposal(input: GetProposalInput): Promise<ExtractOk<GetProposalResult>> {
     const result = await this.actor.get_proposal(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok;
   }
 
   async listAccounts({ limit, offset, searchTerm }: ListAccountsArgs = {}): Promise<

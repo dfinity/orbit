@@ -6,12 +6,12 @@ use crate::{
     },
     errors::ProposalError,
     factories::proposals::ProposalFactory,
-    mappers::{HelperMapper, ProposalInfo},
+    mappers::HelperMapper,
     models::{
         access_control::{ProposalActionSpecifier, ResourceSpecifier},
         specifier::CommonSpecifier,
-        NotificationType, Proposal, ProposalCreatedNotification, ProposalStatus,
-        ProposalVoteStatus,
+        NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
+        ProposalCreatedNotification, ProposalStatus, ProposalVoteStatus,
     },
     repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
     services::{NotificationService, UserService, NOTIFICATION_SERVICE, USER_SERVICE},
@@ -74,21 +74,33 @@ impl ProposalService {
         Ok(proposal)
     }
 
-    pub async fn get_proposal_info(
+    pub async fn get_caller_privileges_for_proposal(
+        &self,
+        proposal_id: &UUID,
+        ctx: &CallContext,
+    ) -> ServiceResult<ProposalCallerPrivileges> {
+        let voter = self.user_service.get_user_by_identity(&ctx.caller())?;
+        let proposal = self.get_proposal(proposal_id)?;
+        let can_vote = proposal.can_vote(&voter.id).await;
+
+        Ok(ProposalCallerPrivileges {
+            id: *proposal_id,
+            can_vote,
+        })
+    }
+
+    pub fn get_proposal_additional_info(
         &self,
         proposal: &Proposal,
-        ctx: &CallContext,
-    ) -> ServiceResult<ProposalInfo> {
-        let voter = self.user_service.get_user_by_identity(&ctx.caller())?;
-        let can_vote = proposal.can_vote(&voter.id).await;
+    ) -> ServiceResult<ProposalAdditionalInfo> {
         let proposer = self
             .user_service
             .get_user(&proposal.proposed_by)
             .map(|user| user.name)
             .unwrap_or(None);
 
-        Ok(ProposalInfo {
-            can_vote,
+        Ok(ProposalAdditionalInfo {
+            id: proposal.id,
             proposer_name: proposer,
         })
     }

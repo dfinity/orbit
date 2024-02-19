@@ -1,5 +1,5 @@
 <template>
-  <slot v-if="hasAccess">{{ props }}</slot>
+  <slot v-if="hasAccess"></slot>
   <slot v-else name="unauthorized"></slot>
 </template>
 

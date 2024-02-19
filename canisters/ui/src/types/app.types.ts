@@ -1,4 +1,5 @@
 import en from '~/locales/en.locale';
+import { BreadCrumbItem } from '~/types/navigation.types';
 
 export interface AppInitConfig {
   name: string;
@@ -41,4 +42,19 @@ export interface Pagination {
   selectedPage: number;
 }
 
-export type TableHeader = { title: string; key: string; sortable?: boolean };
+export interface TableHeaderProps {
+  class?: string;
+}
+
+export interface TableHeader {
+  title: string;
+  key: string;
+  sortable?: boolean;
+  headerProps?: TableHeaderProps;
+}
+
+export interface PageProps {
+  title?: string;
+  subtitle?: string;
+  breadcrumbs?: BreadCrumbItem[];
+}

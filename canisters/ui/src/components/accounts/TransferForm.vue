@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      readonly
+      :disabled="isViewMode"
     />
     <VTextField
       v-model="model.to"
@@ -16,7 +16,7 @@
       density="compact"
       class="mb-2"
       name="to"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
       type="text"
       :prepend-icon="mdiSend"
       :rules="[requiredRule]"
@@ -30,6 +30,7 @@
       name="amount"
       class="mb-2"
       type="number"
+      :disabled="isViewMode"
       :prepend-icon="mdiNumeric"
       :rules="[requiredRule, v => validTokenAmount(v, account.decimals)]"
     />
@@ -51,7 +52,7 @@ export type TransferFormProps = {
   modelValue: Partial<Transfer>;
   triggerSubmit?: boolean;
   valid?: boolean;
-  disabled?: boolean;
+  mode?: 'view' | 'edit';
   display?: {
     id?: boolean;
   };
@@ -64,10 +65,12 @@ const input = withDefaults(defineProps<TransferFormProps>(), {
   display: () => ({
     id: true,
   }),
-  disabled: false,
+  mode: 'edit',
   triggerSubmit: false,
 });
 const props = toRefs(input);
+
+const isViewMode = computed(() => props.mode.value === 'view');
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: TransferFormProps['modelValue']): void;

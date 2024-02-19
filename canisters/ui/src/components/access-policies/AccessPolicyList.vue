@@ -39,17 +39,23 @@ import { computed, toRefs } from 'vue';
 import { defaultUserSpecifiers } from '~/configs/access-policies.config';
 import { logger } from '~/core/logger.core';
 import { variantIs } from '~/utils/helper.utils';
-import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
+import {
+  AccessPolicy,
+  AccessPolicyCallerPrivileges,
+  BasicUser,
+  UUID,
+  UserGroup,
+} from '~/generated/wallet/wallet.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
 import AccessPolicyListItem from './AccessPolicyListItem.vue';
 
 const app = useAppStore();
-
 const props = withDefaults(
   defineProps<{
     resources: AggregatedResouceAccessPolicies[];
     accessPolicies: AccessPolicy[];
+    privileges: AccessPolicyCallerPrivileges[];
     preloadUserGroups?: UserGroup[];
     preloadUsers?: BasicUser[];
     loading?: boolean;
@@ -61,7 +67,7 @@ const props = withDefaults(
   },
 );
 
-const { preloadUserGroups, preloadUsers, accessPolicies, resources } = toRefs(props);
+const { preloadUserGroups, preloadUsers, accessPolicies, resources, privileges } = toRefs(props);
 
 const userGroups = computed<Record<UUID, UserGroup>>(() => {
   return preloadUserGroups.value.reduce<Record<UUID, UserGroup>>((acc, group) => {
@@ -76,6 +82,14 @@ const users = computed<Record<UUID, BasicUser>>(() => {
     return acc;
   }, {});
 });
+
+const hasEditPrivilege = (accessPolicyId: string): boolean => {
+  return privileges.value.find(privilege => privilege.id === accessPolicyId)?.can_edit ?? false;
+};
+
+const hasDeletePrivilege = (accessPolicyId: string): boolean => {
+  return privileges.value.find(privilege => privilege.id === accessPolicyId)?.can_delete ?? false;
+};
 
 const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
   const resourceAccessPolicies = resources.value.map(resource => ({
@@ -93,12 +107,12 @@ const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() =>
         if (resource.match(resourceSpecifier.specifier, policy)) {
           if (variantIs(policy.user, 'Any')) {
             resourceSpecifier.users.allUsers.policy.id = policy.id;
-            resourceSpecifier.users.allUsers.policy.canEdit = policy.info.can_edit;
-            resourceSpecifier.users.allUsers.policy.canRemove = policy.info.can_delete;
+            resourceSpecifier.users.allUsers.policy.canEdit = hasEditPrivilege(policy.id);
+            resourceSpecifier.users.allUsers.policy.canRemove = hasDeletePrivilege(policy.id);
           } else if (variantIs(policy.user, 'Id')) {
             resourceSpecifier.users.specificUsers.policy.id = policy.id;
-            resourceSpecifier.users.specificUsers.policy.canEdit = policy.info.can_edit;
-            resourceSpecifier.users.specificUsers.policy.canRemove = policy.info.can_delete;
+            resourceSpecifier.users.specificUsers.policy.canEdit = hasEditPrivilege(policy.id);
+            resourceSpecifier.users.specificUsers.policy.canRemove = hasDeletePrivilege(policy.id);
             resourceSpecifier.users.specificUsers.users = policy.user.Id.map(id => {
               const user = users.value[id];
               if (!user) {
@@ -110,8 +124,8 @@ const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() =>
             });
           } else if (variantIs(policy.user, 'Group')) {
             resourceSpecifier.users.membersOfGroup.policy.id = policy.id;
-            resourceSpecifier.users.membersOfGroup.policy.canEdit = policy.info.can_edit;
-            resourceSpecifier.users.membersOfGroup.policy.canRemove = policy.info.can_delete;
+            resourceSpecifier.users.membersOfGroup.policy.canEdit = hasEditPrivilege(policy.id);
+            resourceSpecifier.users.membersOfGroup.policy.canRemove = hasDeletePrivilege(policy.id);
             resourceSpecifier.users.membersOfGroup.groups = policy.user.Group.map(id => {
               const group = userGroups.value[id];
               if (!group) {

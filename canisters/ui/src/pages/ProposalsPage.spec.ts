@@ -25,6 +25,8 @@ serviceManager.services.wallet = mockedWalletService;
 vi.spyOn(mockedWalletService, 'listProposals').mockReturnValue(
   Promise.resolve({
     proposals: [],
+    additional_info: [],
+    privileges: [],
     next_offset: [],
     total: BigInt(0),
   } as ExtractOk<ListProposalsResult>),
@@ -59,15 +61,13 @@ describe('ProposalsPage', () => {
           {
             id: '1',
             created_at: new Date().toISOString(),
+            status: { Adopted: null },
             operation: {
               AddUserGroup: {
                 input: {
                   name: 'finance',
                 },
               },
-            },
-            info: {
-              can_vote: true,
             },
           },
         ],
