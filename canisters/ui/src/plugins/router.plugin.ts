@@ -165,6 +165,14 @@ const router = createRouter({
           path: 'my-settings',
           name: Routes.MySettings,
           component: () => import('~/pages/MySettingsPage.vue'),
+          props: () => {
+            return {
+              breadcrumbs: [
+                { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                { title: i18n.global.t('navigation.account_info_settings') },
+              ],
+            };
+          },
           meta: {
             auth: {
               check: {
