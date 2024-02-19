@@ -150,20 +150,7 @@ const identitiesInput = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 const model = computed(() => props.modelValue);
-watch(
-  model.value,
-  newValue => {
-    if (newValue.name === undefined) {
-      newValue.name = [];
-    }
-
-    emit('update:modelValue', newValue);
-  },
-  {
-    deep: true,
-    immediate: true,
-  },
-);
+watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
 
 watch(
   () => isFormValid.value,

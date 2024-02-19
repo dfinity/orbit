@@ -120,7 +120,7 @@ const save = async (): Promise<void> => {
         id: user.value.id,
         groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
         identities: [assertAndReturn(user.value.identities, 'identities')],
-        name: assertAndReturn(user.value.name, 'name'),
+        name: user.value.name !== undefined ? user.value.name : [],
         status: [assertAndReturn(user.value.status, 'status')],
       });
 
@@ -133,7 +133,7 @@ const save = async (): Promise<void> => {
     const proposal = await wallet.service.addUser({
       groups: assertAndReturn(user.value.groups, 'groups').map(g => g.id),
       identities: assertAndReturn(user.value.identities, 'identities'),
-      name: assertAndReturn(user.value.name, 'name'),
+      name: user.value.name !== undefined ? user.value.name : [],
       status: assertAndReturn(user.value.status, 'status'),
     });
 
