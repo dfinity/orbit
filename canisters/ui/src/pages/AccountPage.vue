@@ -27,7 +27,7 @@
           <VProgressCircular indeterminate color="primary" class="ma-8" />
         </div>
         <div v-else-if="!account">
-          <PageHeader :title="$t('account_page.not_found_title')" :breadcrumbs="pageBreadcrumbs" />
+          <PageHeader :title="$t('pages.account.not_found')" :breadcrumbs="pageBreadcrumbs" />
         </div>
         <PageHeader v-else :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
           <template #title-toolbar>
@@ -69,7 +69,7 @@
         </PageHeader>
       </template>
       <template v-if="!loading" #main-body>
-        <PageBody v-if="!account">{{ $t('account_page.not_found_description') }}</PageBody>
+        <PageBody v-if="!account">{{ $t('pages.account.not_found_description') }}</PageBody>
         <PageBody v-else>
           <RecentProposals
             class="mb-4"

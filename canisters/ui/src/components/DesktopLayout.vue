@@ -29,7 +29,7 @@
             class="toolbar__context d-flex align-center"
           >
             <slot name="toolbar-context">
-              <BrandLogo v-if="!session.isAuthenticated" />
+              <BrandLogo v-if="!session.isAuthenticated" height="26px" class="ml-4" />
               <VBtn
                 v-if="session.isAuthenticated && !isSetAndNotFalse(props.hideSidebar)"
                 :icon="app.showSidebar ? mdiMenuOpen : mdiMenuClose"
@@ -38,7 +38,7 @@
             </slot>
           </div>
           <VSpacer />
-          <div class="toolbar__actions">
+          <div class="toolbar__actions mr-4">
             <slot name="toolbar-actions">
               <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
               <LanguageSelector />

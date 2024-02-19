@@ -34,6 +34,7 @@
                   :loading="loading"
                   :resources="resourceAccessPolicies"
                   :access-policies="data ? data.policies : []"
+                  :privileges="data ? data.privileges : []"
                   :preload-user-groups="data ? data.userGroups : []"
                   :preload-users="data ? data.users : []"
                   @editing="disableRefresh = $event"
@@ -87,28 +88,24 @@ import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { globalAccessPolicies } from '~/configs/access-policies.config';
 import { Routes } from '~/configs/routes.config';
-import { AccessPolicy, BasicUser, UserGroup } from '~/generated/wallet/wallet.did';
+import {
+  AccessPolicy,
+  AccessPolicyCallerPrivileges,
+  BasicUser,
+  UserGroup,
+} from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { ResourceTypeEnum } from '~/types/access-policies.types';
-import { BreadCrumbItem } from '~/types/navigation.types';
+import type { PageProps } from '~/types/app.types';
 import { ProposalDomains } from '~/types/wallet.types';
 
-const props = withDefaults(
-  defineProps<{
-    title?: string;
-    breadcrumbs?: BreadCrumbItem[];
-  }>(),
-  {
-    title: undefined,
-    breadcrumbs: () => [],
-  },
-);
-
-const i18n = useI18n();
-const title = computed(() => {
-  return props.title || i18n.t('pages.access_policies.title');
+const props = withDefaults(defineProps<PageProps>(), {
+  title: undefined,
+  breadcrumbs: () => [],
 });
 
+const i18n = useI18n();
+const title = computed(() => props.title || i18n.t('pages.access_policies.title'));
 const wallet = useWalletStore();
 const disableRefresh = ref(false);
 const resourceAccessPolicies = globalAccessPolicies();
@@ -128,12 +125,14 @@ const individualResources = computed(() => {
 
 const fetchAccessPolicies = async (): Promise<{
   policies: AccessPolicy[];
+  privileges: AccessPolicyCallerPrivileges[];
   userGroups: UserGroup[];
   users: BasicUser[];
 }> => {
   const userGroups: UserGroup[] = [];
   const users: BasicUser[] = [];
   let policies: AccessPolicy[] = [];
+  let privileges: AccessPolicyCallerPrivileges[] = [];
   let limit = 500;
   let nextOffset = BigInt(0);
   let maxOffsetFound = nextOffset;
@@ -149,6 +148,7 @@ const fetchAccessPolicies = async (): Promise<{
 
     userGroups.push(...result.user_groups);
     users.push(...result.users);
+    privileges.push(...result.privileges);
 
     policies = policies.concat(result.policies);
     nextOffset =
@@ -157,6 +157,6 @@ const fetchAccessPolicies = async (): Promise<{
         : BigInt(-1);
   } while (nextOffset > 0 && nextOffset > maxOffsetFound);
 
-  return { policies, userGroups, users };
+  return { policies, userGroups, users, privileges };
 };
 </script>
