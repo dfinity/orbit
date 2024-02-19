@@ -8,19 +8,20 @@
   >
     <DataLoader
       v-slot="{ data }"
-      :load="loadPolicy"
+      :load="loadUser"
       @loading="loading = $event"
-      @loaded="proposalPolicy = $event.policy"
+      @loaded="user = $event.user"
     >
       <VCard :loading="loading">
         <VToolbar dark color="surface">
-          <VToolbarTitle>{{ $t('pages.proposal_policies.dialog_title') }}</VToolbarTitle>
+          <VToolbarTitle>{{ $t('terms.user') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
         </VToolbar>
         <VCardText>
-          <ProposalPolicyForm
+          <UserForm
             v-if="data"
-            v-model="proposalPolicy"
+            v-model="user"
+            v-model:trigger-submit="triggerSubmit"
             :mode="props.readonly.value ? 'view' : 'edit'"
             @submit="save"
             @valid="valid = $event"
@@ -28,8 +29,13 @@
         </VCardText>
         <VCardActions class="pa-3">
           <VSpacer />
-          <VBtn v-if="!props.readonly.value" :disabled="!canSave" :loading="saving" @click="save">
-            {{ $t('terms.save') }}
+          <VBtn
+            v-if="!props.readonly.value"
+            :disabled="!canSave"
+            :loading="saving"
+            @click="triggerSubmit = true"
+          >
+            {{ props.userId.value ? $t('terms.save') : $t('terms.create') }}
           </VBtn>
         </VCardActions>
       </VCard>
@@ -38,27 +44,27 @@
 </template>
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
-import { computed, ref, toRefs } from 'vue';
+import { Ref, computed, ref, toRefs } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
-import ProposalPolicyForm from '~/components/proposal-policies/ProposalPolicyForm.vue';
+import UserForm from '~/components/users/UserForm.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { ProposalPolicy, UUID } from '~/generated/wallet/wallet.did';
+import { UUID, User } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
-    policyId?: UUID;
+    userId?: UUID;
     open?: boolean;
     dialogMaxWidth?: number;
     readonly?: boolean;
   }>(),
   {
-    policyId: undefined,
+    userId: undefined,
     open: false,
     dialogMaxWidth: 800,
     readonly: false,
@@ -73,7 +79,7 @@ const props = toRefs(input);
 const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
-const proposalPolicy = ref<Partial<ProposalPolicy>>({});
+const user: Ref<Partial<User>> = ref({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
@@ -81,29 +87,26 @@ const openModel = computed({
 
 const wallet = useWalletStore();
 
-const loadPolicy = async (): Promise<{
-  policy: Partial<ProposalPolicy>;
+const loadUser = async (): Promise<{
+  user: Partial<User>;
 }> => {
-  if (props.policyId.value === undefined) {
-    const createModel: Partial<ProposalPolicy> = {
-      criteria: { AutoAdopted: null },
-    };
+  if (props.userId.value === undefined) {
+    const createModel: Partial<User> = {};
 
-    return { policy: createModel };
+    return { user: createModel };
   }
 
-  const result = await wallet.service.getProposalPolicy(props.policyId.value);
-  return result;
+  const result = await wallet.service.getUser({
+    user_id: props.userId.value,
+  });
+  return { user: result.user };
 };
 
 const canSave = computed(() => {
-  return (
-    valid.value &&
-    !loading.value &&
-    !!proposalPolicy.value?.criteria &&
-    !!proposalPolicy.value?.specifier
-  );
+  return valid.value && !loading.value;
 });
+
+const triggerSubmit = ref(false);
 
 const save = async (): Promise<void> => {
   if (!canSave.value) {
@@ -112,11 +115,13 @@ const save = async (): Promise<void> => {
 
   try {
     saving.value = true;
-    if (proposalPolicy.value.id) {
-      const proposal = await wallet.service.editProposalPolicy({
-        policy_id: proposalPolicy.value.id,
-        specifier: [assertAndReturn(proposalPolicy.value.specifier)],
-        criteria: [assertAndReturn(proposalPolicy.value.criteria)],
+    if (user.value.id) {
+      const proposal = await wallet.service.editUser({
+        id: user.value.id,
+        groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
+        identities: [assertAndReturn(user.value.identities, 'identities')],
+        name: assertAndReturn(user.value.name, 'name'),
+        status: [assertAndReturn(user.value.status, 'status')],
       });
 
       useOnSuccessfulOperation(proposal);
@@ -125,16 +130,18 @@ const save = async (): Promise<void> => {
       return;
     }
 
-    const proposal = await wallet.service.addProposalPolicy({
-      specifier: assertAndReturn(proposalPolicy.value.specifier),
-      criteria: assertAndReturn(proposalPolicy.value.criteria),
+    const proposal = await wallet.service.addUser({
+      groups: assertAndReturn(user.value.groups, 'groups').map(g => g.id),
+      identities: assertAndReturn(user.value.identities, 'identities'),
+      name: assertAndReturn(user.value.name, 'name'),
+      status: assertAndReturn(user.value.status, 'status'),
     });
 
     useOnSuccessfulOperation(proposal);
 
     openModel.value = false;
   } catch (error) {
-    logger.error(`Failed to save proposal policy ${error}`);
+    logger.error(`Failed to save user ${error}`);
 
     useOnFailedOperation();
   } finally {

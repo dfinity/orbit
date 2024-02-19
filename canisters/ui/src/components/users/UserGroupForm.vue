@@ -22,33 +22,37 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { UserGroup } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/plugins/i18n.plugin';
 import { FormValidationRules, VFormValidation } from '~/types/helper.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
-
-const form = ref<VFormValidation | null>(null);
-const isFormValid = computed(() => (form.value ? form.value.isValid : false));
-const rules: {
-  name: FormValidationRules;
-} = {
-  name: [requiredRule, maxLengthRule(50, i18n.global.t('terms.name'))],
-};
 
 const props = withDefaults(
   defineProps<{
     modelValue: Partial<UserGroup>;
     valid?: boolean;
     mode?: 'view' | 'edit';
+    triggerSubmit?: boolean;
   }>(),
   {
     valid: true,
     mode: 'edit',
+    triggerSubmit: false,
   },
 );
 
+const i18n = useI18n();
+const form = ref<VFormValidation | null>(null);
+const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+const rules: {
+  name: FormValidationRules;
+} = {
+  name: [requiredRule, maxLengthRule(50, i18n.t('terms.name'))],
+};
+
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: Partial<UserGroup>): void;
+  (event: 'update:triggerSubmit', payload: boolean): void;
   (event: 'valid', payload: boolean): void;
   (event: 'submit', payload: Partial<UserGroup>): void;
 }>();
@@ -59,6 +63,16 @@ watch(
 );
 
 const modelValue = reactive({ ...props.modelValue });
+
+watch(
+  () => props.triggerSubmit,
+  () => {
+    if (props.triggerSubmit) {
+      emit('update:triggerSubmit', false);
+      submit();
+    }
+  },
+);
 
 watch(
   () => modelValue,

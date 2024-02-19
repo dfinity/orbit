@@ -3,6 +3,7 @@ use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountCallerPrivilegesDTO {
+    pub id: UuidDTO,
     pub can_transfer: bool,
     pub can_edit: bool,
 }
@@ -105,4 +106,5 @@ pub struct ListAccountsResponse {
     pub accounts: Vec<AccountDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<AccountCallerPrivilegesDTO>,
 }

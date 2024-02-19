@@ -1,17 +1,17 @@
 import { NavigationGuard, RouterView, createRouter, createWebHistory } from 'vue-router';
+import { supportedLocales } from '~/configs/i18n.config';
 import { appInitConfig } from '~/configs/init.config';
 import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
+import LoginPage from '~/pages/LoginPage.vue';
+import NotFoundPage from '~/pages/NotFoundPage.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
+import { ProposalDomains } from '~/types/wallet.types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
 import { services } from './services.plugin';
-import NotFoundPage from '~/pages/NotFoundPage.vue';
-import { supportedLocales } from '~/configs/i18n.config';
-import LoginPage from '~/pages/LoginPage.vue';
-import { ProposalDomains } from '~/types/wallet.types';
 
 export const redirectToKey = 'redirectTo';
 
@@ -61,13 +61,12 @@ const router = createRouter({
             {
               path: '',
               name: Routes.Accounts,
-              component: () => import('~/pages/AccountListPage.vue'),
+              component: () => import('~/pages/AccountsPage.vue'),
               props: () => {
                 return {
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.accounts'),
-                    },
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.accounts') },
                   ],
                 };
               },
@@ -87,10 +86,8 @@ const router = createRouter({
               props: () => {
                 return {
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.accounts'),
-                      to: { name: Routes.Accounts },
-                    },
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.accounts'), to: { name: Routes.Accounts } },
                   ],
                 };
               },
@@ -150,13 +147,8 @@ const router = createRouter({
               title: i18n.global.t('pages.proposals.transfer_title'),
               domains: [ProposalDomains.Transfers],
               breadcrumbs: [
-                {
-                  title: i18n.global.t('navigation.proposals'),
-                  to: { name: Routes.Proposals },
-                },
-                {
-                  title: i18n.global.t('navigation.transfer_proposals'),
-                },
+                { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                { title: i18n.global.t('navigation.transfer_proposals') },
               ],
             };
           },
@@ -173,6 +165,14 @@ const router = createRouter({
           path: 'my-settings',
           name: Routes.MySettings,
           component: () => import('~/pages/MySettingsPage.vue'),
+          props: () => {
+            return {
+              breadcrumbs: [
+                { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                { title: i18n.global.t('navigation.account_info_settings') },
+              ],
+            };
+          },
           meta: {
             auth: {
               check: {
@@ -196,6 +196,15 @@ const router = createRouter({
               path: 'system',
               name: Routes.SystemSettings,
               component: () => import('~/pages/AdministrationPage.vue'),
+              props: () => {
+                return {
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.administration') },
+                  ],
+                };
+              },
               meta: {
                 auth: {
                   check: {
@@ -220,6 +229,15 @@ const router = createRouter({
                   path: '',
                   name: Routes.UserGroups,
                   component: () => import('~/pages/UserGroupsPage.vue'),
+                  props: () => {
+                    return {
+                      breadcrumbs: [
+                        { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                        { title: i18n.global.t('navigation.settings') },
+                        { title: i18n.global.t('navigation.user_groups_permissions') },
+                      ],
+                    };
+                  },
                   meta: {
                     auth: {
                       check: {
@@ -236,16 +254,13 @@ const router = createRouter({
                   props: () => {
                     return {
                       breadcrumbs: [
-                        {
-                          title: i18n.global.t('navigation.settings'),
-                        },
+                        { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                        { title: i18n.global.t('navigation.settings') },
                         {
                           title: i18n.global.t('terms.user_groups'),
                           to: { name: Routes.UserGroups },
                         },
-                        {
-                          title: i18n.global.t('navigation.access_policies'),
-                        },
+                        { title: i18n.global.t('navigation.access_policies') },
                       ],
                     };
                   },
@@ -264,6 +279,15 @@ const router = createRouter({
               path: 'users',
               name: Routes.Users,
               component: () => import('~/pages/UsersPage.vue'),
+              props: () => {
+                return {
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.users') },
+                  ],
+                };
+              },
               meta: {
                 auth: {
                   check: {
@@ -281,12 +305,9 @@ const router = createRouter({
                 return {
                   title: i18n.global.t('pages.proposals.title'),
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.settings'),
-                    },
-                    {
-                      title: i18n.global.t('navigation.proposals'),
-                    },
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.proposals') },
                   ],
                 };
               },
@@ -306,12 +327,9 @@ const router = createRouter({
                 return {
                   title: i18n.global.t('pages.proposal_policies.title'),
                   breadcrumbs: [
-                    {
-                      title: i18n.global.t('navigation.settings'),
-                    },
-                    {
-                      title: i18n.global.t('navigation.proposal_policies'),
-                    },
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.proposal_policies') },
                   ],
                 };
               },

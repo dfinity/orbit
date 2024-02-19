@@ -10,7 +10,8 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use wallet_api::{
-    GetAddressBookEntryInputDTO, GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
+    AddressBookEntryCallerPrivilegesDTO, GetAddressBookEntryInputDTO,
+    GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
     ListAddressBookEntriesResponseDTO,
 };
 
@@ -66,7 +67,7 @@ impl AddressBookController {
             .to_dto();
         let privileges = self
             .address_book_service
-            .get_entry_caller_privileges(address_book_entry_id.as_bytes(), &ctx)
+            .get_caller_privileges_for_entry(address_book_entry_id.as_bytes(), &ctx)
             .await?;
 
         Ok(GetAddressBookEntryResponseDTO {
@@ -85,24 +86,19 @@ impl AddressBookController {
         &self,
         input_dto: ListAddressBookEntriesInputDTO,
     ) -> ApiResult<ListAddressBookEntriesResponseDTO> {
+        let ctx = call_context();
         let paginate = input_dto.paginate.clone();
         let input: ListAddressBookEntriesInput = input_dto.into();
-
         let result = self.address_book_service.search_entries(input, paginate)?;
-        let ids = result
-            .items
-            .iter()
-            .map(|entry| entry.id)
-            .collect::<Vec<_>>();
 
         let mut privileges = Vec::new();
-        for id in ids {
+        for entry in &result.items {
             let privilege = self
                 .address_book_service
-                .get_entry_caller_privileges(&id, &call_context())
+                .get_caller_privileges_for_entry(&entry.id, &ctx)
                 .await?;
 
-            privileges.push(privilege);
+            privileges.push(AddressBookEntryCallerPrivilegesDTO::from(privilege));
         }
 
         Ok(ListAddressBookEntriesResponseDTO {
@@ -113,7 +109,7 @@ impl AddressBookController {
                 .collect(),
             next_offset: result.next_offset,
             total: result.total,
-            privileges: privileges.into_iter().map(|p| p.into()).collect(),
+            privileges,
         })
     }
 }

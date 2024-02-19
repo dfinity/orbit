@@ -11,7 +11,8 @@ use crate::{
     models::{
         access_control::{ResourceSpecifier, ResourceType, UserActionSpecifier},
         specifier::CommonSpecifier,
-        AddUserOperationInput, EditUserOperationInput, User, UserId, ADMIN_GROUP_ID,
+        AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges, UserId,
+        ADMIN_GROUP_ID,
     },
     repositories::{UserRepository, UserWhereClause},
 };
@@ -55,6 +56,38 @@ impl UserService {
                 })?;
 
         Ok(user)
+    }
+
+    pub async fn get_caller_privileges_for_user(
+        &self,
+        user_id: &UserId,
+        ctx: &CallContext,
+    ) -> ServiceResult<UserCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                UserActionSpecifier::Update(CommonSpecifier::Id(vec![user_id.to_owned()])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::User,
+                UserActionSpecifier::Delete(CommonSpecifier::Id(vec![user_id.to_owned()])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        Ok(UserCallerPrivileges {
+            id: user_id.to_owned(),
+            can_edit,
+            can_delete,
+        })
     }
 
     /// Returns the user associated with the given user identity.
@@ -334,6 +367,7 @@ mod tests {
             identities: Some(vec![ctx.call_context.caller()]),
             groups: None,
             name: None,
+            status: None,
         };
 
         let result = ctx.service.edit_user(input).await;

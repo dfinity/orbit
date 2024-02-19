@@ -24,7 +24,7 @@ export const useFetchList =
         )
       : await fetchFn();
     if (paginate) {
-      paginate.pagination.value.totalPages = Math.min(
+      paginate.pagination.value.totalPages = Math.max(
         Math.ceil(paginate.getTotal(result) / paginate.pagination.value.limit),
         1,
       );

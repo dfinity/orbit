@@ -3,8 +3,8 @@
     <template #main-header>
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
-          <AuthCheck :privileges="[Privilege.AddAddressBookEntry]">
-            <AddressBookEntryBtn :text="$t('terms.new_address')" variant="outlined" />
+          <AuthCheck :privileges="[Privilege.AddAccount]">
+            <AccountConfigBtn :text="$t('terms.new_account')" variant="outlined" />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -16,13 +16,9 @@
             class="mb-4"
             :see-all-link="{
               name: Routes.Proposals,
-              query: { group_by: ProposalDomains.AddressBook },
+              query: { group_by: ProposalDomains.Accounts },
             }"
-            :types="[
-              { AddAddressBookEntry: null },
-              { EditAddressBookEntry: null },
-              { RemoveAddressBookEntry: null },
-            ]"
+            :types="[{ AddAccount: null }, { EditAccount: null }]"
             hide-not-found
           />
         </AuthCheck>
@@ -30,12 +26,11 @@
         <DataLoader
           v-slot="{ loading }"
           v-model:force-reload="forceReload"
-          :disable-refresh="disableRefresh"
           :load="fetchList"
           :refresh-interval-ms="5000"
           @loaded="
             result => {
-              addressBookEntries = result.address_book_entries;
+              accounts = result.accounts;
               privileges = result.privileges;
             }
           "
@@ -43,54 +38,55 @@
           <VDataTable
             :loading="loading"
             :headers="headers"
-            :items="addressBookEntries"
+            :items="accounts"
             :items-per-page="-1"
             :hover="true"
           >
             <template #bottom>
               <!--this hides the footer as pagination is not required-->
             </template>
-            <template #item.blockchain="{ item: addressBookEntry }">
-              {{ $t(`blockchains.${addressBookEntry.blockchain.toLowerCase()}.name`) }}
+            <template #header.balance="{ column }">
+              <div class="d-flex justify-end">
+                {{ column.title }}
+              </div>
             </template>
-            <template #item.address="{ item: addressBookEntry }">
+            <template #item.balance="{ item: account }">
+              <div class="d-flex justify-end align-center text-no-wrap">
+                {{
+                  account.balance?.[0]
+                    ? `${formatBalance(account.balance[0].balance, account.balance[0].decimals)} ${
+                        account.symbol
+                      }`
+                    : '-'
+                }}
+              </div>
+            </template>
+            <template #item.address="{ item: account }">
               <div class="d-flex align-center flex-no-wrap">
-                <TextOverflow
-                  :max-length="app.isMobile ? 16 : 32"
-                  :text="addressBookEntry.address"
-                />
+                <TextOverflow :max-length="app.isMobile ? 16 : 32" :text="account.address" />
                 <VBtn
                   size="x-small"
                   variant="text"
                   :icon="mdiContentCopy"
                   @click="
                     copyToClipboard({
-                      textToCopy: addressBookEntry.address,
+                      textToCopy: account.address,
                       sendNotification: true,
                     })
                   "
                 />
               </div>
             </template>
-            <template #item.actions="{ item: addressBookEntry }">
+            <template #item.actions="{ item: account }">
               <div class="d-flex justify-end">
-                <ActionBtn
-                  v-if="hasDeletePrivilege(addressBookEntry.id)"
-                  v-model="addressBookEntry.id"
-                  :icon="mdiTrashCanOutline"
-                  :submit="id => wallet.service.removeAddressBookEntry(id)"
-                  @failed="useOnFailedOperation"
-                  @submitted="useOnSuccessfulOperation"
-                />
-                <AddressBookEntryBtn
-                  :icon="!hasEditPrivilege(addressBookEntry.id) ? mdiEye : mdiPencil"
-                  :address-book-entry-id="addressBookEntry.id"
-                  :readonly="!hasEditPrivilege(addressBookEntry.id)"
-                  variant="flat"
-                  color="default"
+                <VBtn
                   size="small"
-                  @opened="disableRefresh = $event"
-                />
+                  variant="tonal"
+                  :append-icon="mdiOpenInApp"
+                  :to="{ name: Routes.Account, params: { id: account.id } }"
+                >
+                  {{ $t('terms.open') }}
+                </VBtn>
               </div>
             </template>
           </VDataTable>
@@ -109,71 +105,54 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiContentCopy, mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
+import { mdiContentCopy, mdiOpenInApp } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
-import AddressBookEntryBtn from '~/components/address-book/AddressBookEntryBtn.vue';
-import ActionBtn from '~/components/buttons/ActionBtn.vue';
+import AccountConfigBtn from '~/components/accounts/AccountConfigBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
-import {
-  useOnFailedOperation,
-  useOnSuccessfulOperation,
-} from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
-import {
-  AddressBookEntry,
-  AddressBookEntryCallerPrivileges,
-  UUID,
-} from '~/generated/wallet/wallet.did';
+import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
 import { ProposalDomains } from '~/types/wallet.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { throttle } from '~/utils/helper.utils';
+import { formatBalance, throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
-const app = useAppStore();
-const wallet = useWalletStore();
 const i18n = useI18n();
-const pageTitle = computed(() => props.title || i18n.t('pages.address_book.title'));
-const addressBookEntries = ref<AddressBookEntry[]>([]);
-const privileges = ref<AddressBookEntryCallerPrivileges[]>([]);
-const disableRefresh = ref(false);
-const forceReload = ref(false);
+const wallet = useWalletStore();
+const app = useAppStore();
+const pageTitle = computed(() => props.title || i18n.t('pages.accounts.title'));
 const pagination = usePagination();
-const triggerSearch = throttle(() => (forceReload.value = true), 500);
+const forceReload = ref(false);
 const headers = ref<TableHeader[]>([
-  { title: i18n.t('terms.blockchain'), key: 'blockchain', sortable: false },
-  { title: i18n.t('terms.address_owner'), key: 'address_owner', sortable: false },
+  { title: i18n.t('terms.name'), key: 'name', sortable: false },
+  { title: i18n.t('terms.token'), key: 'symbol', sortable: false },
   { title: i18n.t('terms.address'), key: 'address', sortable: false },
+  { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
   { title: '', key: 'actions', sortable: false },
 ]);
-
-const hasEditPrivilege = (id: UUID): boolean => {
-  const privilege = privileges.value.find(p => p.id === id);
-  return !!privilege?.can_edit;
-};
-
-const hasDeletePrivilege = (id: UUID): boolean => {
-  const privilege = privileges.value.find(p => p.id === id);
-  return !!privilege?.can_delete;
-};
-
+const triggerSearch = throttle(() => (forceReload.value = true), 500);
+const accounts = ref<Account[]>([]);
+const privileges = ref<AccountCallerPrivileges[]>([]);
 const fetchList = useFetchList(
-  (offset, limit) => {
-    return wallet.service.listAddressBook({
+  async (offset, limit) => {
+    const results = await wallet.service.listAccounts({
       offset,
       limit,
     });
+
+    wallet.trackAccountsBalance(results.accounts.map(account => account.id));
+    return results;
   },
   {
     pagination,

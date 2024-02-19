@@ -1,3 +1,4 @@
+use super::HelperMapper;
 use crate::{
     core::ic_cdk::api::time,
     errors::UserError,
@@ -6,7 +7,7 @@ use crate::{
             ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
             ResourceSpecifier, ResourceType,
         },
-        AddUserOperationInput, EditUserOperationInput, User,
+        AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges,
     },
     repositories::USER_GROUP_REPOSITORY,
 };
@@ -17,8 +18,6 @@ use ic_canister_core::{
 };
 use uuid::Uuid;
 use wallet_api::{BasicUserDTO, UserDTO, UserPrivilege};
-
-use super::HelperMapper;
 
 #[derive(Default, Clone, Debug)]
 pub struct UserMapper {}
@@ -172,6 +171,19 @@ impl User {
             self.name = Some(new_name);
         }
 
+        if let Some(new_status) = input.status {
+            self.status = new_status;
+        }
+
         Ok(())
+    }
+}
+
+impl From<UserCallerPrivileges> for wallet_api::UserCallerPrivilegesDTO {
+    fn from(privileges: UserCallerPrivileges) -> Self {
+        wallet_api::UserCallerPrivilegesDTO {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_edit: privileges.can_edit,
+        }
     }
 }

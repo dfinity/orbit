@@ -1,16 +1,16 @@
+use crate::{
+    core::middlewares::{authorize, call_context},
+    mappers::HelperMapper,
+    models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier},
+    services::UserGroupService,
+};
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use wallet_api::{
     GetUserGroupInput, GetUserGroupResponse, ListUserGroupsInput, ListUserGroupsResponse,
-};
-
-use crate::{
-    core::middlewares::{authorize, call_context},
-    mappers::HelperMapper,
-    models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier},
-    services::UserGroupService,
+    UserGroupCallerPrivilegesDTO,
 };
 
 #[query(name = "get_user_group")]
@@ -45,12 +45,19 @@ impl UserGroupController {
         is_async = true
     )]
     async fn get_user_group(&self, input: GetUserGroupInput) -> ApiResult<GetUserGroupResponse> {
+        let ctx = call_context();
         let user_group = self
             .user_group_service
-            .get(HelperMapper::to_uuid(input.user_group_id)?.as_bytes())?
-            .into();
+            .get(HelperMapper::to_uuid(input.user_group_id)?.as_bytes())?;
+        let privileges = self
+            .user_group_service
+            .get_caller_privileges_for_user_group(&user_group.id, &ctx)
+            .await?;
 
-        Ok(GetUserGroupResponse { user_group })
+        Ok(GetUserGroupResponse {
+            user_group: user_group.into(),
+            privileges: privileges.into(),
+        })
     }
 
     #[with_middleware(
@@ -65,11 +72,22 @@ impl UserGroupController {
     ) -> ApiResult<ListUserGroupsResponse> {
         let ctx = call_context();
         let result = self.user_group_service.list(input, Some(&ctx)).await?;
+        let mut privileges = Vec::new();
+
+        for user_group in &result.items {
+            let user_group_privileges = self
+                .user_group_service
+                .get_caller_privileges_for_user_group(&user_group.id, &ctx)
+                .await?;
+
+            privileges.push(UserGroupCallerPrivilegesDTO::from(user_group_privileges));
+        }
 
         Ok(ListUserGroupsResponse {
             user_groups: result.items.into_iter().map(Into::into).collect(),
             next_offset: result.next_offset,
             total: result.total,
+            privileges,
         })
     }
 }

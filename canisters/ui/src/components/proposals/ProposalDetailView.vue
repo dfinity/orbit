@@ -60,12 +60,13 @@
     </VCardText>
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-md-row ga-2">
       <ProposalMetadata
-        :proposal="proposal"
+        :proposal="props.proposal"
+        :details="props.details"
         class="flex-grow-0 mt-md-0"
-        :class="{ 'mt-8': proposal.info.can_vote }"
+        :class="{ 'mt-8': props.details.can_vote }"
       />
       <div class="d-flex flex-column flex-md-row ga-2 justify-end flex-grow-1 w-100 w-md-auto">
-        <template v-if="proposal.info.can_vote">
+        <template v-if="props.details.can_vote">
           <VBtn variant="outlined" :disabled="props.loading" @click="$emit('approve')">
             {{ $t('terms.approve') }}
           </VBtn>
@@ -87,15 +88,17 @@ import { mdiInformationOutline } from '@mdi/js';
 import type { Component } from 'vue';
 import { computed, ref } from 'vue';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
+import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ProposalMetadata from './ProposalMetadata.vue';
 import ProposalStatusChip from './ProposalStatusChip.vue';
-import ReviewAddUserGroup from './user-groups/ReviewAddUserGroup.vue';
 import ReviewUnknownOperation from './operations/ReviewUnknownOperation.vue';
+import ReviewAddUserGroup from './user-groups/ReviewAddUserGroup.vue';
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
+    details: ProposalDetails;
     loading?: boolean;
   }>(),
   {

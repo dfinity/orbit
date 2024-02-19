@@ -1,250 +1,149 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <PageHeader :title="$t('pages.users.title')">
+      <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddUser]">
-            <ActionBtn
-              v-model="createModel"
-              :text="$t('pages.users.btn_new_user')"
-              :title="$t('pages.users.create_new_user_title')"
-              :submit="
-                ({ model }) =>
-                  wallet.service.addUser({
-                    name: model.name ? [model.name.trim()] : [],
-                    status: assertAndReturn(model.status),
-                    groups: model.groups ?? [],
-                    identities: model.identities
-                      ? model.identities.map(id => Principal.fromText(id))
-                      : [],
-                  })
-              "
-              color="primary-variant"
-              size="default"
-              variant="outlined"
-              data-test-id="create-user-btn"
-              @failed="onFailedOperation"
-              @submitted="onSuccessfulOperation"
-            >
-              <template #default="{ model: elem, submit }">
-                <UserForm
-                  v-model="elem.value.model"
-                  @valid="isValid => (elem.value.valid = isValid)"
-                  @submit="submit"
-                />
-              </template>
-              <template #actions="{ submit, loading: saving, model: elem }">
-                <VSpacer />
-                <VBtn
-                  :loading="saving"
-                  :disabled="!elem.value.valid"
-                  color="primary"
-                  variant="flat"
-                  @click="submit"
-                >
-                  {{ $t('terms.create') }}
-                </VBtn>
-              </template>
-            </ActionBtn>
+            <OpenUserBtn :text="$t('pages.users.btn_new_user')" variant="outlined" />
           </AuthCheck>
         </template>
       </PageHeader>
     </template>
     <template #main-body>
       <PageBody>
-        <RecentProposals
-          :see-all-link="{
-            name: Routes.Proposals,
-            query: { group_by: ProposalDomains.Users },
-          }"
-          :types="[{ AddUser: null }, { EditUser: null }]"
-          hide-not-found
-        />
+        <AuthCheck :privileges="[Privilege.ListProposals]">
+          <RecentProposals
+            class="mb-4"
+            :see-all-link="{
+              name: Routes.Proposals,
+              query: { group_by: ProposalDomains.Users },
+            }"
+            :types="[{ AddUser: null }, { EditUser: null }]"
+            hide-not-found
+          />
+        </AuthCheck>
         <DataLoader
-          :load="fetchData"
-          :error-msg="$t('pages.users.error_fetching_users')"
-          :refresh-interval-ms="10000"
+          v-slot="{ loading }"
+          v-model:force-reload="forceReload"
+          :disable-refresh="disableRefresh"
+          :load="fetchList"
+          :refresh-interval-ms="5000"
+          @loaded="
+            result => {
+              privileges = result.privileges;
+              users = result.users;
+            }
+          "
         >
-          <template #default="{ data, loading }">
-            <VDataTable
-              hover
-              :headers="headers"
-              :loading="loading"
-              :items="data ? transformItems(data.users) : undefined"
-              :items-per-page="-1"
-            >
-              <template #bottom>
-                <!-- This removes the bottom pagination since we want to display all the results -->
+          <VDataTable
+            :loading="loading"
+            :headers="headers"
+            :items="users"
+            :items-per-page="-1"
+            :hover="true"
+          >
+            <template #bottom>
+              <!-- This removes the bottom pagination since we want to display all the results -->
+            </template>
+            <template #item.name="{ item: user }">
+              <div class="d-flex align-center">
+                {{ user.name?.[0] ?? '-' }}
+              </div>
+            </template>
+            <template #item.status="{ item: user }">
+              <UserStatusChip :status="fromUserStatusVariantToEnum(user.status)" />
+            </template>
+            <template #item.principals="{ item: user }">
+              <template v-if="user.identities.length > 0">
+                <TextOverflow :text="user.identities[0].toText()" />
+                <VChip v-if="user.identities.length > 1" size="x-small" class="ml-2">
+                  +{{ user.identities.length - 1 }}
+                </VChip>
               </template>
-              <template #item.status="{ item }">
-                <UserStatusChip :status="item.status" />
-              </template>
-              <template #item.principals="{ item }">
-                <template v-if="item.principals.length > 0">
-                  <span>{{ item.principals[0] }}</span>
-                  <VChip v-if="item.principals.length > 1" size="x-small" class="ml-2">
-                    +{{ item.principals.length - 1 }}
-                  </VChip>
-                </template>
-                <template v-else>-</template>
-              </template>
-              <template #item.actions="{ item }">
-                <div class="text-right">
-                  <ActionBtn
-                    v-model="item.edit"
-                    :title="$t('pages.users.btn_edit_title')"
-                    :icon="mdiPencil"
-                    :submit="
-                      changes =>
-                        wallet.service.editUser({
-                          id: item.id,
-                          name: changes.model.name ? [changes.model.name.trim()] : [],
-                          groups: changes.model.groups ? [changes.model.groups] : [],
-                          identities: changes.model.identities
-                            ? [changes.model.identities.map(id => Principal.fromText(id))]
-                            : [],
-                        })
-                    "
-                    data-test-id="edit-user-btn"
-                    @failed="onFailedOperation"
-                    @submitted="onSuccessfulOperation"
-                  >
-                    <template #default="{ model: elem, submit }">
-                      <UserForm
-                        v-model="elem.value.model"
-                        @valid="isValid => (elem.value.valid = isValid)"
-                        @submit="submit"
-                      />
-                    </template>
-                    <template #actions="{ submit, loading: saving, model: elem }">
-                      <VSpacer />
-                      <VBtn
-                        :loading="saving"
-                        :disabled="!elem.value.valid"
-                        color="primary"
-                        variant="flat"
-                        @click="submit"
-                      >
-                        {{ $t('terms.save') }}
-                      </VBtn>
-                    </template>
-                  </ActionBtn>
-                </div>
-              </template>
-            </VDataTable>
-          </template>
+              <template v-else>-</template>
+            </template>
+            <template #item.actions="{ item: user }">
+              <div class="text-right">
+                <OpenUserBtn
+                  :icon="!hasEditPrivilege(user.id) ? mdiEye : mdiPencil"
+                  :user-id="user.id"
+                  :readonly="!hasEditPrivilege(user.id)"
+                  variant="flat"
+                  color="default"
+                  size="small"
+                  @opened="disableRefresh = $event"
+                />
+              </div>
+            </template>
+          </VDataTable>
         </DataLoader>
+        <VPagination
+          v-model="pagination.selectedPage"
+          class="mt-2"
+          :length="pagination.totalPages"
+          rounded
+          density="comfortable"
+          @update:model-value="triggerSearch"
+        />
       </PageBody>
     </template>
   </PageLayout>
 </template>
 
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
-import { mdiPencil } from '@mdi/js';
-import { ref } from 'vue';
-import { Routes } from '~/configs/routes.config';
-import { Proposal, User } from '~/generated/wallet/wallet.did';
-import { fromUserStatusVariantToEnum, fromUserToUserInput } from '~/mappers/users.mapper';
-import { i18n } from '~/plugins/i18n.plugin';
-import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
-import { Privilege } from '~/types/auth.types';
-import { ProposalDomains, UserInput } from '~/types/wallet.types';
+import { mdiEye, mdiPencil } from '@mdi/js';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import ActionBtn from '~/components/buttons/ActionBtn.vue';
+import TextOverflow from '~/components/TextOverflow.vue';
 import UserStatusChip from '~/components/chips/UserStatusChip.vue';
-import UserForm from '~/components/forms/UserForm.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
-import { assertAndReturn } from '~/utils/helper.utils';
+import OpenUserBtn from '~/components/users/OpenUserBtn.vue';
+import { useFetchList, usePagination } from '~/composables/lists.composable';
+import { Routes } from '~/configs/routes.config';
+import { UUID, User, UserCallerPrivileges } from '~/generated/wallet/wallet.did';
+import { fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
+import { useWalletStore } from '~/stores/wallet.store';
+import type { PageProps, TableHeader } from '~/types/app.types';
+import { Privilege } from '~/types/auth.types';
+import { ProposalDomains } from '~/types/wallet.types';
+import { throttle } from '~/utils/helper.utils';
 
+const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
+const i18n = useI18n();
+const pageTitle = computed(() => props.title || i18n.t('pages.users.title'));
 const wallet = useWalletStore();
-const app = useAppStore();
-
+const users = ref<User[]>([]);
+const privileges = ref<UserCallerPrivileges[]>([]);
+const forceReload = ref(false);
+const disableRefresh = ref(false);
+const pagination = usePagination();
+const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const headerProps: { class: string } = { class: 'font-weight-bold' };
-const headers = ref<{ title: string; key: string; headerProps: { class: string } }[]>([
-  { title: i18n.global.t('terms.name'), key: 'name', headerProps },
-  { title: i18n.global.t('terms.status'), key: 'status', headerProps },
-  { title: i18n.global.t('terms.principal'), key: 'principals', headerProps },
+const headers = ref<TableHeader[]>([
+  { title: i18n.t('terms.name'), key: 'name', headerProps },
+  { title: i18n.t('terms.status'), key: 'status', headerProps },
+  { title: i18n.t('terms.principal'), key: 'principals', headerProps },
   { title: '', key: 'actions', headerProps },
 ]);
 
-const fetchData = async (): Promise<{ users: User[] }> => {
-  let limit = 100;
-  let nextOffset = 0;
-  let users: User[] = [];
-  let maxOffsetFound = nextOffset;
+const hasEditPrivilege = (id: UUID): boolean =>
+  privileges.value.find(p => p.id === id)?.can_edit ?? false;
 
-  do {
-    // This is to avoid infinite loops in case the offset is not updated properly
-    maxOffsetFound = nextOffset;
-
-    const { users: usersChunk, next_offset } = await wallet.service.listUsers({
+const fetchList = useFetchList(
+  (offset, limit) => {
+    return wallet.service.listUsers({
+      offset,
       limit,
-      offset: nextOffset,
     });
-    users.push(...usersChunk);
-
-    nextOffset = next_offset?.[0] !== undefined && next_offset[0] > 0 ? Number(next_offset[0]) : -1;
-  } while (nextOffset > 0 && nextOffset > maxOffsetFound);
-
-  return { users };
-};
-
-const transformItems = (items: User[]) => {
-  return items.map(item => ({
-    name: item.name?.[0] ?? '-',
-    id: item.id,
-    status: fromUserStatusVariantToEnum(item.status),
-    principals: item.identities?.map(id => id.toText()) ?? [],
-    edit: {
-      model: fromUserToUserInput(item),
-      valid: false,
-    },
-  }));
-};
-
-const onFailedOperation = (): void => {
-  app.sendNotification({
-    type: 'error',
-    message: i18n.global.t('app.request_failed_message'),
-  });
-};
-
-const onSuccessfulOperation = (proposal?: Proposal): void => {
-  if (proposal && 'Rejected' in proposal.status) {
-    app.sendNotification({
-      type: 'error',
-      message: i18n.global.t('app.request_rejected_message'),
-    });
-
-    return;
-  }
-
-  if (proposal && 'Adopted' in proposal.status) {
-    app.sendNotification({
-      type: 'success',
-      message: i18n.global.t('app.request_adopted_message'),
-    });
-
-    return;
-  }
-
-  app.sendNotification({
-    type: 'warning',
-    message: i18n.global.t('app.request_pending_message'),
-  });
-};
-
-const createModel = ref<{
-  valid: boolean;
-  model: Partial<UserInput>;
-}>({
-  model: fromUserToUserInput({}),
-  valid: false,
-});
+  },
+  {
+    pagination,
+    getTotal: res => Number(res.total),
+  },
+);
 </script>

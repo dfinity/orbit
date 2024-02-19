@@ -7,16 +7,12 @@ use crate::models::{
     },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier},
-    ProposalPolicy,
+    ProposalPolicy, ProposalPolicyCallerPrivileges,
 };
 use uuid::Uuid;
 use wallet_api::{
-    AccessPolicyInfoDTO, ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, ProposalPolicyInfoDTO,
-    TransferSpecifierDTO, UserSpecifierDTO,
+    ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, TransferSpecifierDTO, UserSpecifierDTO,
 };
-
-pub type AccessPolicyInfo = AccessPolicyInfoDTO;
-pub type ProposalPolicyInfo = ProposalPolicyInfoDTO;
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
@@ -113,12 +109,11 @@ impl From<UserSpecifier> for UserSpecifierDTO {
 }
 
 impl AccessControlPolicy {
-    pub fn to_dto(self, info: AccessPolicyInfo) -> wallet_api::AccessPolicyDTO {
+    pub fn to_dto(self) -> wallet_api::AccessPolicyDTO {
         wallet_api::AccessPolicyDTO {
             id: Uuid::from_bytes(self.id).hyphenated().to_string(),
             user: self.user.into(),
             resource: self.resource.into(),
-            info,
         }
     }
 }
@@ -408,12 +403,11 @@ impl From<wallet_api::CommonActionSpecifierDTO> for CommonActionSpecifier {
 }
 
 impl ProposalPolicy {
-    pub fn to_dto(self, info: ProposalPolicyInfo) -> wallet_api::ProposalPolicyDTO {
+    pub fn to_dto(self) -> wallet_api::ProposalPolicyDTO {
         wallet_api::ProposalPolicyDTO {
             id: Uuid::from_bytes(self.id).hyphenated().to_string(),
             specifier: self.specifier.into(),
             criteria: self.criteria.into(),
-            info,
         }
     }
 }
@@ -518,6 +512,16 @@ impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
             wallet_api::ProposalSpecifierDTO::RemoveUserGroup(group) => {
                 ProposalSpecifier::RemoveUserGroup(group.into())
             }
+        }
+    }
+}
+
+impl From<ProposalPolicyCallerPrivileges> for wallet_api::ProposalPolicyCallerPrivilegesDTO {
+    fn from(privileges: ProposalPolicyCallerPrivileges) -> Self {
+        wallet_api::ProposalPolicyCallerPrivilegesDTO {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_delete: privileges.can_delete,
+            can_edit: privileges.can_edit,
         }
     }
 }

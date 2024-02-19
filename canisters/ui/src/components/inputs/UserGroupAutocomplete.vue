@@ -23,7 +23,7 @@ const input = withDefaults(
   defineProps<{
     modelValue?: UUID[] | UUID;
     label?: string;
-    variant?: 'underlined' | 'outlined';
+    variant?: 'underlined' | 'outlined' | 'plain';
     density?: 'comfortable' | 'compact';
     multiple?: boolean;
     readonly?: boolean;

@@ -1,7 +1,12 @@
-use crate::{PaginationInput, UserGroupDTO, UuidDTO};
-
 use super::TimestampRfc3339;
+use crate::{PaginationInput, UserGroupDTO, UuidDTO};
 use candid::{CandidType, Deserialize, Principal};
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UserCallerPrivilegesDTO {
+    pub id: UuidDTO,
+    pub can_edit: bool,
+}
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum UserStatusDTO {
@@ -34,6 +39,7 @@ pub struct GetUserInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetUserResponse {
     pub user: UserDTO,
+    pub privileges: UserCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -56,6 +62,7 @@ pub struct EditUserOperationInput {
     pub name: Option<String>,
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<String>>,
+    pub status: Option<UserStatusDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -75,6 +82,7 @@ pub struct ListUsersResponse {
     pub users: Vec<UserDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<UserCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]

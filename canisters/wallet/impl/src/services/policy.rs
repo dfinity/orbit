@@ -6,16 +6,15 @@ use crate::{
         CallContext,
     },
     errors::{AccessControlError, ProposalError},
-    mappers::{AccessPolicyInfo, ProposalPolicyInfo},
     models::{
         access_control::{
-            AccessControlPolicy, AccessPolicyActionSpecifier, CommonActionSpecifier,
-            ResourceSpecifier, ResourceType, UserSpecifier,
+            AccessControlPolicy, AccessPolicyActionSpecifier, AccessPolicyCallerPrivileges,
+            CommonActionSpecifier, ResourceSpecifier, ResourceType, UserSpecifier,
         },
         specifier::CommonSpecifier,
         AddAccessPolicyOperationInput, AddProposalPolicyOperationInput,
-        EditAccessPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy, User,
-        UserGroup,
+        EditAccessPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy,
+        ProposalPolicyCallerPrivileges, User, UserGroup,
     },
     repositories::{
         access_control::{AccessControlRepository, ACCESS_CONTROL_REPOSITORY},
@@ -183,6 +182,38 @@ impl PolicyService {
         Ok(policy)
     }
 
+    pub async fn get_caller_privileges_for_access_policy(
+        &self,
+        policy_id: &UUID,
+        ctx: &CallContext,
+    ) -> ServiceResult<AccessPolicyCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                AccessPolicyActionSpecifier::Update(CommonSpecifier::Id(vec![*policy_id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AccessPolicy,
+                AccessPolicyActionSpecifier::Delete(CommonSpecifier::Id(vec![*policy_id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        Ok(AccessPolicyCallerPrivileges {
+            id: *policy_id,
+            can_edit,
+            can_delete,
+        })
+    }
+
     pub async fn list_access_policies(
         &self,
         input: ListAccessPoliciesInput,
@@ -207,37 +238,6 @@ impl PolicyService {
         })?;
 
         Ok(result)
-    }
-
-    pub async fn get_access_policy_info(
-        &self,
-        policy: &AccessControlPolicy,
-        ctx: &CallContext,
-    ) -> ServiceResult<AccessPolicyInfo> {
-        let can_edit = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::AccessPolicy,
-                CommonActionSpecifier::Update(CommonSpecifier::Id(vec![policy.id])),
-            ),
-        )
-        .await
-        .is_ok();
-
-        let can_delete = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::AccessPolicy,
-                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![policy.id])),
-            ),
-        )
-        .await
-        .is_ok();
-
-        Ok(AccessPolicyInfo {
-            can_edit,
-            can_delete,
-        })
     }
 
     pub fn get_access_policies_dependencies(
@@ -271,16 +271,16 @@ impl PolicyService {
         Ok(AccessPolicyDependenciesResponse { groups, users })
     }
 
-    pub async fn get_proposal_policy_info(
+    pub async fn get_caller_privileges_for_proposal_policy(
         &self,
-        policy: &ProposalPolicy,
+        policy_id: &UUID,
         ctx: &CallContext,
-    ) -> ServiceResult<ProposalPolicyInfo> {
+    ) -> ServiceResult<ProposalPolicyCallerPrivileges> {
         let can_edit = evaluate_caller_access(
             ctx,
             &ResourceSpecifier::Common(
                 ResourceType::ProposalPolicy,
-                CommonActionSpecifier::Read(CommonSpecifier::Id(vec![policy.id])),
+                CommonActionSpecifier::Update(CommonSpecifier::Id(vec![*policy_id])),
             ),
         )
         .await
@@ -290,13 +290,14 @@ impl PolicyService {
             ctx,
             &ResourceSpecifier::Common(
                 ResourceType::ProposalPolicy,
-                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![policy.id])),
+                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![*policy_id])),
             ),
         )
         .await
         .is_ok();
 
-        Ok(ProposalPolicyInfo {
+        Ok(ProposalPolicyCallerPrivileges {
+            id: *policy_id,
             can_edit,
             can_delete,
         })

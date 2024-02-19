@@ -12,7 +12,7 @@
 
     <SpecifierSelector
       v-model="model.specifier"
-      :disabled="props.disabled.value"
+      :disabled="isViewMode"
       @changed-variant="onChangedVariant"
     />
 
@@ -21,11 +21,11 @@
       <CriteriaBuilder
         v-model="model.criteria"
         :specifier="model.specifier"
-        :disabled="props.disabled.value"
+        :disabled="isViewMode"
         @remove="model.criteria = undefined"
       />
 
-      <span v-if="!model.criteria && props.disabled.value">
+      <span v-if="!model.criteria && isViewMode">
         {{ $t('terms.none') }}
       </span>
     </template>
@@ -42,7 +42,7 @@ import { VFormValidation } from '~/types/helper.types';
 export type ProposalPolicyFormProps = {
   modelValue: Partial<ProposalPolicy>;
   valid?: boolean;
-  disabled?: boolean;
+  mode?: 'view' | 'edit';
   display?: {
     id?: boolean;
     specifier?: boolean;
@@ -51,15 +51,15 @@ export type ProposalPolicyFormProps = {
 
 const form = ref<VFormValidation | null>(null);
 
-const p = withDefaults(defineProps<ProposalPolicyFormProps>(), {
+const input = withDefaults(defineProps<ProposalPolicyFormProps>(), {
   valid: true,
   display: () => ({
     id: true,
     specifier: true,
   }),
-  disabled: false,
+  mode: 'edit',
 });
-const props = toRefs(p);
+const props = toRefs(input);
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: ProposalPolicyFormProps['modelValue']): void;
@@ -71,6 +71,8 @@ const model = computed({
   get: () => props.modelValue.value,
   set: value => emit('update:modelValue', value),
 });
+
+const isViewMode = computed(() => props.mode.value === 'view');
 
 const onChangedVariant = (): void => {
   model.value.criteria = undefined;
