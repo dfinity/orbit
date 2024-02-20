@@ -75,7 +75,7 @@ const beforeUnloadCallback = (e: BeforeUnloadEvent): boolean => {
   e.preventDefault();
 
   return true;
-}
+};
 
 export const registerBeforeUnloadConfirmation = (): void => {
   window.addEventListener('beforeunload', beforeUnloadCallback);
