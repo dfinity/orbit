@@ -98,9 +98,22 @@
           </template>
         </VCardText>
         <VCardActions>
-          <span v-if="hasInvalidTransfers" class="text-body-2 pl-2">
-            * {{ $t('pages.account.csv_ignored_transfers_hint') }}
-          </span>
+          <div v-if="hasInvalidTransfers" class="d-flex flex-column ga-1">
+            <span class="text-body-2 pl-2">
+              * {{ $t('pages.account.csv_ignored_transfers_hint') }}
+            </span>
+            <VBtn
+              :loading="downloadingInvalid"
+              :disabled="!invalidRawCsvTable?.rows.length"
+              variant="tonal"
+              size="x-small"
+              class="ml-1"
+              :prepend-icon="mdiDownload"
+              @click="downloadInvalidCsvRows"
+            >
+              {{ $t('pages.account.csv_download_invalid') }}
+            </VBtn>
+          </div>
           <VSpacer />
           <VBtn
             :loading="loading"
@@ -116,7 +129,7 @@
   </VBtn>
 </template>
 <script lang="ts" setup>
-import { mdiAlertCircle, mdiCashFast, mdiClose, mdiTable } from '@mdi/js';
+import { mdiAlertCircle, mdiCashFast, mdiClose, mdiDownload, mdiTable } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import logger from '~/core/logger.core';
@@ -124,7 +137,7 @@ import { Account, Transfer, TransferOperationInput } from '~/generated/wallet/wa
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { CsvTable } from '~/types/app.types';
-import { readFileAsCsvTable } from '~/utils/file.utils';
+import { downloadCsv, readFileAsCsvTable } from '~/utils/file.utils';
 import { requiredRule } from '~/utils/form.utils';
 import {
   amountToBigInt,
@@ -181,6 +194,8 @@ const csvHint = computed(() =>
 );
 const hasInvalidTransfers = computed(() => rows.value.some(row => !row.valid));
 const rawCsvTable = ref<CsvTable | null>(null);
+const invalidRawCsvTable = ref<CsvTable | null>(null);
+const downloadingInvalid = ref(false);
 const rows = ref<
   {
     transfer: Partial<Transfer>;
@@ -196,11 +211,9 @@ const canSubmit = computed(() => {
     return false;
   }
 
-  return (
-    rows.value.every(row => row.valid) &&
-    !rows.value.some(row => row.requesting) &&
-    !rows.value.every(row => row.requested)
-  );
+  const remainingValidRows = rows.value.filter(row => row.valid && !row.requested);
+
+  return !rows.value.some(row => row.requesting) && remainingValidRows.length > 0;
 });
 
 const totalAmount = computed(() =>
@@ -224,10 +237,17 @@ watch(
     if (!files || !files.length) {
       rows.value = [];
       rawCsvTable.value = null;
+      invalidRawCsvTable.value = null;
       return;
     }
+
     const table = await readFileAsCsvTable(files[0]);
+    rows.value = [];
     rawCsvTable.value = table;
+    invalidRawCsvTable.value = {
+      headers: table.headers,
+      rows: [],
+    };
 
     for (const row of rawCsvTable.value.rows) {
       const transfer: Partial<Transfer> = {};
@@ -249,6 +269,10 @@ watch(
         valid = false;
       }
 
+      if (!valid) {
+        invalidRawCsvTable.value.rows.push(row);
+      }
+
       rows.value.push({
         transfer: transfer,
         valid,
@@ -259,6 +283,30 @@ watch(
     }
   },
 );
+
+const downloadInvalidCsvRows = async (): Promise<void> => {
+  if (!invalidRawCsvTable.value?.rows.length || downloadingInvalid.value) {
+    return;
+  }
+
+  try {
+    downloadingInvalid.value = true;
+
+    await downloadCsv({
+      content: invalidRawCsvTable.value,
+      filename: 'invalid_' + new Date().toLocaleString().replace(/ /g, '_').toLowerCase() + '.csv',
+    });
+  } catch (e) {
+    logger.error(`Failed to download invalid csv rows, reason: ${e}`);
+
+    app.sendNotification({
+      type: 'error',
+      message: i18n.t('app.download_error'),
+    });
+  } finally {
+    downloadingInvalid.value = false;
+  }
+};
 
 const startBatchTransfer = async (): Promise<void> => {
   if (!canSubmit.value || loading.value) {

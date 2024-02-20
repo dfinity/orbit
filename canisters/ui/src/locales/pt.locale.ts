@@ -55,6 +55,7 @@ export default {
     btn_home_back: 'Voltar ao início',
     no_download_available: 'Nenhum download disponível.',
     failed_to_download_item: 'Falha ao baixar {item}, por favor, tente novamente.',
+    download_error: 'Erro ao baixar o ficheiro, por favor, tente novamente.',
   },
   change_canister: {
     targets: {
@@ -478,6 +479,7 @@ export default {
       csv_transfer_file_rows_title: 'Transferências para criar: {count}',
       csv_ignored_transfers_hint: 'Transferências com erros serão ignoradas.',
       csv_transfer_failed: 'Error ao processar transferências, por favor, tente novamente.',
+      csv_download_invalid: 'Baixar erros',
     },
     address_book: {
       title: 'Livro de endereços',

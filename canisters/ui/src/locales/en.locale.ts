@@ -55,6 +55,7 @@ export default {
     btn_home_back: 'Back to home',
     no_download_available: 'No download available.',
     failed_to_download_item: 'Failed to download {item}, please try again.',
+    download_error: 'Failed to download file, please try again.',
   },
   blockchains: {
     icp: {
@@ -479,6 +480,7 @@ export default {
       csv_transfer_file_rows_title: 'Transfers to be created: {count}',
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
       csv_transfer_failed: 'Failed to process transfers, please try again.',
+      csv_download_invalid: 'Download invalid',
     },
     address_book: {
       title: 'Address Book',
