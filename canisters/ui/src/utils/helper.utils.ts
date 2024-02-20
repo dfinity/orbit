@@ -172,3 +172,10 @@ export const assertAndReturn = <T>(value: T | undefined | null, name = 'Value'):
 export const isValidUUID = (uuid: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
 };
+
+export const stringify = (obj: unknown): string => {
+  return JSON.stringify(
+    obj,
+    (_, value) => (typeof value === 'bigint' ? value.toString() : value), // return everything else unchanged
+  );
+};

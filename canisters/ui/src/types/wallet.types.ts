@@ -31,6 +31,7 @@ export enum ProposalStatusEnum {
   Failed = 'Failed',
   Scheduled = 'Scheduled',
   Processing = 'Processing',
+  Cancelled = 'Cancelled',
 }
 
 export enum UserStatusType {
@@ -139,4 +140,25 @@ export type MetadataItem = { key: string; value: string };
 export interface ProposalDetails {
   can_vote: boolean;
   proposer_name?: string;
+}
+
+export enum ProposalOperationEnum {
+  AddUser = 'AddUser',
+  EditUser = 'EditUser',
+  AddUserGroup = 'AddUserGroup',
+  EditUserGroup = 'EditUserGroup',
+  RemoveUserGroup = 'RemoveUserGroup',
+  AddAccount = 'AddAccount',
+  EditAccount = 'EditAccount',
+  AddAddressBookEntry = 'AddAddressBookEntry',
+  EditAddressBookEntry = 'EditAddressBookEntry',
+  RemoveAddressBookEntry = 'RemoveAddressBookEntry',
+  AddProposalPolicy = 'AddProposalPolicy',
+  EditProposalPolicy = 'EditProposalPolicy',
+  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  AddAccessPolicy = 'AddAccessPolicy',
+  EditAccessPolicy = 'EditAccessPolicy',
+  RemoveAccessPolicy = 'RemoveAccessPolicy',
+  ChangeCanister = 'ChangeCanister',
+  Transfer = 'Transfer',
 }

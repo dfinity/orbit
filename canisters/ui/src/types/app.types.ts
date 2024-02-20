@@ -58,3 +58,10 @@ export interface PageProps {
   subtitle?: string;
   breadcrumbs?: BreadCrumbItem[];
 }
+
+export type CsvRow = Record<string, string>;
+
+export interface CsvTable {
+  headers: CsvRow;
+  rows: CsvRow[];
+}
