@@ -3,10 +3,7 @@
     <template #main-header>
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
-          <!--todo: add export to csv functionality-->
-          <VBtn color="primary-variant" variant="flat" disabled>
-            {{ $t('app.export_csv') }}
-          </VBtn>
+          <ExportCsvActionBtn :filters="filters" :domains="shownProposalDomains" />
         </template>
       </PageHeader>
     </template>
@@ -132,6 +129,7 @@ import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import ProposalList from '~/components/proposals/ProposalList.vue';
+import ExportCsvActionBtn from '~/components/proposals/export/ExportCsvActionBtn.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
   useAvailableDomains,
@@ -242,7 +240,7 @@ const fetchList = useFetchList(
       limit: limit,
       offset: offset,
       sortBy: {
-        createdAt: 'asc',
+        createdAt: 'desc',
       },
     });
   },

@@ -1,14 +1,16 @@
-import { ComputedRef, Ref, computed, ref } from 'vue';
+import { ComputedRef, Ref, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { logger } from '~/core/logger.core';
 import { ListProposalsOperationType, UUID } from '~/generated/wallet/wallet.did';
+import { mapListProposalsOperationTypeToGroups } from '~/mappers/proposals.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { Privilege } from '~/types/auth.types';
 import { SelectItem } from '~/types/helper.types';
+import { ListProposalsOperationTypeGroup } from '~/types/proposals.types';
 import { ProposalDomains, ProposalSpecifierEnum, ProposalStatusEnum } from '~/types/wallet.types';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { parseDate } from '~/utils/date.utils';
@@ -229,4 +231,58 @@ export const useProposalOverlay = (): {
   };
 
   return { open, close };
+};
+
+export interface DownloadItem {
+  downloading: boolean;
+  group: ListProposalsOperationTypeGroup;
+  filterBy: {
+    types: ListProposalsOperationType[];
+    created: DateRangeModel;
+    expires: DateRangeModel;
+    statuses: ProposalStatusEnum[];
+  };
+}
+
+export const useDownloadItems = (
+  filters: Ref<Filters>,
+  domains: Ref<AvailableDomain[]>,
+): Ref<DownloadItem[]> => {
+  const downloads: Ref<DownloadItem[]> = ref([]);
+
+  const createDownloadList = (): void => {
+    const items: DownloadItem[] = [];
+    if (!domains.value.length) {
+      downloads.value = [];
+      return;
+    }
+    const types = domains.value.find((_, idx) => idx === filters.value.groupBy)?.types ?? [];
+    if (!types.length) {
+      types.push(...domains.value.map(d => d.types).flat());
+    }
+
+    const downloadGroups = mapListProposalsOperationTypeToGroups(types);
+    for (const [group, types] of downloadGroups) {
+      items.push({
+        downloading: false,
+        group,
+        filterBy: {
+          types,
+          created: filters.value.created,
+          expires: filters.value.expires,
+          statuses: filters.value.statuses,
+        },
+      });
+    }
+
+    downloads.value = items;
+  };
+
+  watch(
+    () => filters.value,
+    () => createDownloadList(),
+    { deep: true, immediate: true },
+  );
+
+  return downloads;
 };
