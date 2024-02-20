@@ -184,13 +184,10 @@ function setup_ui() {
 }
 
 function candid_generate() {
-  # ICP INDEX CANDID CODE GENERATION
-  ICP_INDEX_CANDID=$(dfx canister metadata icp_index candid:service)
-  echo "$ICP_INDEX_CANDID" >/tmp/icp_index.did
-
-  didc bind --target rs /tmp/icp_index.did >canisters/wallet/src/generated/icp_index.rs
-
-  rm /tmp/icp_index.did
+  dfx generate wallet
+  dfx generate control_panel
+  dfx generate icp_index
+  dfx generate internet_identity
 }
 
 function setup_devenv() {
