@@ -53,6 +53,7 @@
               v-if="detailView"
               :proposal="proposal"
               :operation="detailView.operation"
+              mode="detail"
             />
           </VCol>
         </VRow>
@@ -92,8 +93,24 @@ import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ProposalMetadata from './ProposalMetadata.vue';
 import ProposalStatusChip from './ProposalStatusChip.vue';
-import ReviewUnknownOperation from './operations/ReviewUnknownOperation.vue';
-import ReviewAddUserGroup from './user-groups/ReviewAddUserGroup.vue';
+import AddAccessPolicyOperation from './operations/AddAccessPolicyOperation.vue';
+import AddAccountOperation from './operations/AddAccountOperation.vue';
+import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
+import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.vue';
+import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
+import AddUserOperation from './operations/AddUserOperation.vue';
+import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
+import EditAccessPolicyOperation from './operations/EditAccessPolicyOperation.vue';
+import EditAccountOperation from './operations/EditAccountOperation.vue';
+import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
+import EditProposalPolicyOperation from './operations/EditProposalPolicyOperation.vue';
+import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
+import EditUserOperation from './operations/EditUserOperation.vue';
+import RemoveAccessPolicyOperation from './operations/RemoveAccessPolicyOperation.vue';
+import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
+import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
+import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
+import TransferOperation from './operations/TransferOperation.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -111,24 +128,24 @@ const titleTooltip = ref(false);
 const componentsMap: {
   [key in KeysOfUnion<ProposalOperation>]: Component;
 } = {
-  AddUserGroup: ReviewAddUserGroup,
-  RemoveUserGroup: ReviewUnknownOperation,
-  EditUserGroup: ReviewUnknownOperation,
-  AddUser: ReviewUnknownOperation,
-  EditUser: ReviewUnknownOperation,
-  AddAccount: ReviewUnknownOperation,
-  EditAccount: ReviewUnknownOperation,
-  AddAccessPolicy: ReviewUnknownOperation,
-  RemoveAccessPolicy: ReviewUnknownOperation,
-  EditAccessPolicy: ReviewUnknownOperation,
-  AddProposalPolicy: ReviewUnknownOperation,
-  EditProposalPolicy: ReviewUnknownOperation,
-  RemoveProposalPolicy: ReviewUnknownOperation,
-  Transfer: ReviewUnknownOperation,
-  ChangeCanister: ReviewUnknownOperation,
-  AddAddressBookEntry: ReviewUnknownOperation,
-  EditAddressBookEntry: ReviewUnknownOperation,
-  RemoveAddressBookEntry: ReviewUnknownOperation,
+  AddUserGroup: AddUserGroupOperation,
+  AddUser: AddUserOperation,
+  EditUser: EditUserOperation,
+  EditUserGroup: EditUserGroupOperation,
+  AddAccount: AddAccountOperation,
+  EditAccount: EditAccountOperation,
+  Transfer: TransferOperation,
+  AddAddressBookEntry: AddAddressBookEntryOperation,
+  EditAddressBookEntry: EditAddressBookEntryOperation,
+  RemoveAddressBookEntry: RemoveAddressBookEntryOperation,
+  RemoveUserGroup: RemoveUserGroupOperation,
+  AddProposalPolicy: AddProposalPolicyOperation,
+  EditProposalPolicy: EditProposalPolicyOperation,
+  RemoveProposalPolicy: RemoveProposalPolicyOperation,
+  ChangeCanister: ChangeCanisterOperation,
+  AddAccessPolicy: AddAccessPolicyOperation,
+  RemoveAccessPolicy: RemoveAccessPolicyOperation,
+  EditAccessPolicy: EditAccessPolicyOperation,
 };
 
 defineEmits<{

@@ -19,6 +19,8 @@ import {
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  GetAccessPolicyInput,
+  GetAccessPolicyResult,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
@@ -92,6 +94,15 @@ export class WalletService {
 
   async getUser(input: GetUserInput): Promise<ExtractOk<GetUserResult>> {
     const result = await this.actor.get_user(input);
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getAccessPolicy(input: GetAccessPolicyInput): Promise<ExtractOk<GetAccessPolicyResult>> {
+    const result = await this.actor.get_access_policy(input);
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }

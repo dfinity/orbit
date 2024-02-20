@@ -26,7 +26,7 @@
               id: true,
               asset: account.id ? false : true,
             }"
-            :disabled="props.readonly.value"
+            :mode="props.readonly.value ? 'view' : 'edit'"
             @submit="save"
             @valid="valid = $event"
           />

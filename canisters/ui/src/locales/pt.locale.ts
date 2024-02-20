@@ -154,21 +154,25 @@ export default {
         title: 'Alterar canister',
         request_title: 'Pedido de alteração de canister',
       },
+      editaccesspolicy: {
+        title: 'Editar regra de acesso',
+        request_title: 'Pedido de alteração de regra de acesso',
+      },
       editusergroup: {
         title: 'Editar grupo de usuários',
-        request_title: 'Pedido de edição de grupo de usuários',
+        request_title: 'Pedido de alteração de grupo de usuários',
       },
       edituser: {
         title: 'Editar usuário',
-        request_title: 'Pedido de edição de usuário',
+        request_title: 'Pedido de alteração de usuário',
       },
       editaccount: {
         title: 'Editar conta',
-        request_title: 'Pedido de edição de conta',
+        request_title: 'Pedido de alteração de conta',
       },
       editaddressbookentry: {
         title: 'Editar endereço',
-        request_title: 'Pedido de edição de endereço',
+        request_title: 'Pedido de alteração de endereço',
       },
       transfer: {
         title: 'Transferir',
@@ -176,7 +180,7 @@ export default {
       },
       editproposalpolicy: {
         title: 'Editar regra de aprovação',
-        request_title: 'Pedido de edição de regra de aprovação',
+        request_title: 'Pedido de alteração de regra de aprovação',
       },
       unknown: {
         title: 'Desconhecido',
@@ -269,9 +273,18 @@ export default {
     withdraw_requests: 'Pedidos de retirada',
     approve: 'Aprovar',
     id: 'ID',
+    any: 'Qualquer',
+    everyone: 'Todos',
+    action: 'Ação',
+    wasm: 'Wasm',
+    arg: 'Arg',
+    target: 'Alvo',
+    upgrader: 'Atualizador',
+    resource: 'Recurso',
     submit: 'Submeter',
     save: 'Salvar',
     type: 'Tipo',
+    identities: 'Identidades',
     view: 'Ver',
     from: 'De',
     specifier: 'Especificador',

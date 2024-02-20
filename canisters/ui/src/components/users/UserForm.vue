@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      readonly
+      disabled
     />
     <VTextField
       v-model="name"
@@ -15,7 +15,7 @@
       :label="$t('terms.name')"
       :rules="[maxLengthRule(100, $t('terms.name'))]"
       :variant="isViewMode ? 'plain' : 'underlined'"
-      :readonly="isViewMode"
+      :disabled="isViewMode"
     />
     <VAutocomplete
       v-model="status"
@@ -25,14 +25,14 @@
       :rules="[requiredRule]"
       chips
       :variant="isViewMode ? 'plain' : 'underlined'"
-      :readonly="isViewMode"
+      :disabled="isViewMode"
     />
     <UserGroupAutocomplete
       v-model="userGroups"
       name="groups"
       :label="$t('terms.user_groups')"
       :variant="isViewMode ? 'plain' : 'underlined'"
-      :readonly="isViewMode"
+      :disabled="isViewMode"
       :rules="[requiredRule]"
       chips
       multiple
@@ -41,15 +41,15 @@
       ref="identitiesInput"
       v-model="identities"
       name="identities"
-      :label="$t('terms.principal')"
+      :label="$t('terms.identities')"
       :variant="isViewMode ? 'plain' : 'underlined'"
-      :readonly="isViewMode"
+      :disabled="isViewMode"
       :rules="[requiredRule]"
       :items="identities"
       chips
       multiple
     >
-      <template #append>
+      <template v-if="!isViewMode" #append>
         <ActionBtn
           v-model="addNewPrincipalModel"
           :title="$t('app.add_new_principal')"
@@ -158,14 +158,14 @@ watch(
 );
 
 const status = computed({
-  get: () => fromUserStatusVariantToEnum(model.value.status ?? { Inactive: null }),
+  get: () => (model.value.status ? fromUserStatusVariantToEnum(model.value.status) : undefined),
   set: value => {
-    model.value.status = fromUserStatusEnumToVariant(value);
+    model.value.status = value ? fromUserStatusEnumToVariant(value) : undefined;
   },
 });
 
 const name = computed({
-  get: () => model.value.name?.[0] ?? null,
+  get: () => model.value.name?.[0],
   set: value => {
     model.value.name = !value ? [] : [value];
   },

@@ -50,8 +50,8 @@
               </VCol>
             </VRow>
             <VRow>
-              <VCol cols="12 d-flex flex-column-reverse flex-md-row flex-wrap ga-4">
-                <div class="d-flex flex-column flex-grow-1 ga-4">
+              <VCol cols="12 d-flex flex-column-reverse flex-md-row align-start flex-no-wrap ga-4">
+                <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
                   <ProposalList
                     :loading="loading"
                     :proposals="proposals"
@@ -72,6 +72,7 @@
                   color="background"
                   variant="flat"
                   min-height="300px"
+                  min-width="272px"
                   :max-width="!app.isMobile ? `272px` : undefined"
                 >
                   <VToolbar color="transparent" class="pr-4">

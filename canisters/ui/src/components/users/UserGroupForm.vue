@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      readonly
+      disabled
     />
     <VTextField
       v-model="modelValue.name"
@@ -15,7 +15,7 @@
       :label="$t('terms.user_group')"
       :variant="isViewMode ? 'plain' : 'underlined'"
       :rules="rules.name"
-      :readonly="isViewMode"
+      :disabled="isViewMode"
     />
   </VForm>
 </template>

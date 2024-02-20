@@ -1,24 +1,29 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { Account } from '~/generated/wallet/wallet.did';
-import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
-import { createMockRef, mount } from '~/test.utils';
+import { WalletService } from '~/services/wallet.service';
+import { mount } from '~/test.utils';
 import IndividualAccountAccessPolicies from './IndividualAccountAccessPolicies.vue';
 
-vi.mock('~/composables/autocomplete.composable', () => {
-  const mock: Partial<ReturnType<typeof useAccountsAutocomplete>> = {
-    searchItems: vi.fn(),
-    loading: createMockRef(false),
-    results: createMockRef<Account[]>([
-      {
-        id: '1',
-        name: 'Test1',
-      } as Account,
-    ]),
+vi.mock('~/services/wallet.service', () => {
+  const mock: Partial<WalletService> = {
+    withWalletId: vi.fn().mockReturnThis(),
+    listAccounts: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        accounts: [
+          {
+            id: '1',
+            name: 'Test1',
+          } as Account,
+        ],
+        next_offset: [BigInt(0)],
+        total: BigInt(0),
+      }),
+    ),
   };
 
   return {
-    useAccountsAutocomplete: vi.fn(() => mock),
+    WalletService: vi.fn(() => mock),
   };
 });
 

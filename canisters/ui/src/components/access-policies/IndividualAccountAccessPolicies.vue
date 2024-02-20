@@ -35,7 +35,7 @@ import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
 import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
 import { getAccountAccessPolicies } from '~/configs/access-policies.config';
-import {
+import type {
   AccessPolicy,
   AccessPolicyCallerPrivileges,
   BasicUser,
@@ -44,15 +44,6 @@ import {
 } from '~/generated/wallet/wallet.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
-
-const autocomplete = useAccountsAutocomplete();
-const selectedAccountId = ref<UUID | null>(null);
-const resources = ref<AggregatedResouceAccessPolicies[]>([]);
-const disableRefresh = ref(false);
-
-onMounted(() => {
-  autocomplete.searchItems();
-});
 
 const props = withDefaults(
   defineProps<{
@@ -70,6 +61,15 @@ const props = withDefaults(
 );
 
 const { fetchPolicies } = toRefs(props);
+
+const autocomplete = useAccountsAutocomplete();
+const selectedAccountId = ref<UUID | null>(null);
+const resources = ref<AggregatedResouceAccessPolicies[]>([]);
+const disableRefresh = ref(false);
+
+onMounted(() => {
+  autocomplete.searchItems();
+});
 
 const groupList = computed(() => {
   const groups = autocomplete.results.value.map(group => ({
