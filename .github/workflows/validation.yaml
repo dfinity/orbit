@@ -61,7 +61,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v3
       - name: 'Install DFX'
-        run: DFX_VERSION="0.15.3" sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+        run: DFX_VERSION="0.17.0" sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel
