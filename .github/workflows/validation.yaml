@@ -60,8 +60,10 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: 'Install DFX'
-        run: DFX_VERSION="0.17.0" sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@main
+        with:
+          dfx-version: '0.17.0'
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel
