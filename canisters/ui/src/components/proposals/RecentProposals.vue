@@ -46,6 +46,7 @@
               :additionals="data.additional_info"
               :hide-not-found="props.hideNotFound"
               hide-headers
+              :mode="app.isMobile ? 'list' : 'grid'"
               @voted="
                 disablePolling = false;
                 forceReload = true;
@@ -69,6 +70,7 @@ import { useWalletStore } from '~/stores/wallet.store';
 import { ListProposalsArgs } from '~/types/wallet.types';
 import DataLoader from '~/components/DataLoader.vue';
 import ProposalList from './ProposalList.vue';
+import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
@@ -94,6 +96,7 @@ const props = withDefaults(
   },
 );
 
+const app = useAppStore();
 const wallet = useWalletStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);

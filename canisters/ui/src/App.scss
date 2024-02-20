@@ -146,3 +146,11 @@ a {
 .b-dark {
   border-color: rgb(var(--ds-primary-darkest)) !important;
 }
+
+.br-on-background {
+  border-right: 1px solid rgb(var(--ds-on-background), 0.1) !important;
+
+  &:last-child {
+    border-right: none !important;
+  }
+}

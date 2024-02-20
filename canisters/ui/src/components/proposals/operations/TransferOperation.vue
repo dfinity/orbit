@@ -1,8 +1,8 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
     <ProposalOperationListRow v-if="formValue.from_account_id && formValue.to && formValue.amount">
-      <div class="d-flex flex-row ga-2">
-        <div class="d-flex flex-no-wrap text-no-wrap align-center">
+      <div class="d-flex flex-row flex-wrap ga-2">
+        <div class="d-flex align-center text-no-wrap">
           <VBtn
             :append-icon="mdiOpenInApp"
             size="x-small"
@@ -17,7 +17,7 @@
           </VBtn>
           <VIcon :icon="mdiArrowRight" size="x-small" class="ml-1" />
         </div>
-        <div class="d-flex flex-no-wrap text-no-wrap align-center">
+        <div class="d-flex align-center text-no-wrap">
           <TextOverflow :text="formValue.to" />
           <VBtn
             size="x-small"
@@ -31,7 +31,7 @@
             "
           />
         </div>
-        <div class="d-flex flex-no-wrap text-no-wrap align-center justify-end flex-grow-1">
+        <div class="d-flex align-center text-no-wrap flex-grow-1">
           {{ account ? formatBalance(formValue.amount, account.decimals) : '-' }}
           {{ account ? account.symbol : '' }}
         </div>
