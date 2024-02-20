@@ -20,7 +20,7 @@ Usage:
 
 Options:
   --local Performs a local deployment of Orbit to your local dfx environment
-  --testing Performs a dev deployment of Orbit to the IC
+  --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
   --prod Performs a production deployment of Orbit to the IC
 EOF
@@ -57,7 +57,7 @@ function setup_enviroment() {
 }
 
 function get_network() {
-  local network=${IC_NETWORK:-dev}
+  local network=${IC_NETWORK:-local}
   echo "$network"
 }
 
@@ -155,7 +155,7 @@ while [[ $# -gt 0 ]]; do
     help
     exit 0
     ;;
-  --prod)
+  --prod | --production)
     shift
     set_network prod
     exec_function setup_enviroment
@@ -171,9 +171,9 @@ while [[ $# -gt 0 ]]; do
     exec_function deploy_ui
     echo
     ;;
-  --dev)
+  --testing)
     shift
-    set_network dev
+    set_network testing
     exec_function setup_enviroment
     exec_function deploy_control_panel
     exec_function deploy_ui

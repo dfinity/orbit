@@ -91,7 +91,7 @@
         "subnet_type": "application"
       }
     },
-    "dev": {
+    "testing": {
       "providers": ["https://icp0.io"],
       "type": "persistent",
       "replica": {
