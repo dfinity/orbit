@@ -56,6 +56,7 @@ export default {
     no_download_available: 'Nenhum download disponível.',
     failed_to_download_item: 'Falha ao baixar {item}, por favor, tente novamente.',
     download_error: 'Erro ao baixar o ficheiro, por favor, tente novamente.',
+    leave_page_warning: 'Tem a certeza que pretende sair? As alterações não gravadas serão perdidas.',
   },
   change_canister: {
     targets: {

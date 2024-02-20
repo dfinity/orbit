@@ -14,6 +14,17 @@ export const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   });
 };
 
+const parseCsvLine = (line: string): string[] => {
+  // This regex matches:
+  // - Sequences of characters that are not commas or quotes
+  // - Sequences enclosed in quotes that may contain commas, where quotes are escaped by two quotes
+  const regex = /(".*?"|[^",]+)(?=\s*,|\s*$)/g;
+
+  // Find matches and remove quotes from quoted fields, replacing two double quotes with one
+  const matches = line.match(regex) || [];
+  return matches.map(field => field.replace(/^"(.*)"$/, '$1').replace(/""/g, '"'));
+};
+
 export const readFileAsCsvTable = async (file: File): Promise<CsvTable> => {
   const reader = new FileReader();
 
@@ -23,7 +34,7 @@ export const readFileAsCsvTable = async (file: File): Promise<CsvTable> => {
     reader.onload = () => {
       const csv = reader.result as string;
       const [header, ...rows] = csv.replace(/\r\n/g, '\n').split('\n');
-      const headers = header.split(',');
+      const headers = parseCsvLine(header);
       const table: CsvTable = {
         headers: {},
         rows: [],
@@ -35,7 +46,7 @@ export const readFileAsCsvTable = async (file: File): Promise<CsvTable> => {
       }
 
       for (const row of rows) {
-        const rowValues = row.split(',');
+        const rowValues = parseCsvLine(row);
         const rowObject: CsvRow = {};
 
         for (let i = 0; i < headers.length; i++) {

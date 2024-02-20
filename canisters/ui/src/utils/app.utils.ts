@@ -70,3 +70,17 @@ export const redirectToWalletSettings = (): void => {
 export function isApiError(e: unknown): e is ApiError {
   return typeof e === 'object' && e !== null && 'code' in e && 'message' in e && 'details' in e;
 }
+
+const beforeUnloadCallback = (e: BeforeUnloadEvent): boolean => {
+  e.preventDefault();
+
+  return true;
+}
+
+export const registerBeforeUnloadConfirmation = (): void => {
+  window.addEventListener('beforeunload', beforeUnloadCallback);
+};
+
+export const unregisterBeforeUnloadConfirmation = (): void => {
+  window.removeEventListener('beforeunload', beforeUnloadCallback);
+};

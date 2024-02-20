@@ -56,6 +56,7 @@ export default {
     no_download_available: 'No download available.',
     failed_to_download_item: 'Failed to download {item}, please try again.',
     download_error: 'Failed to download file, please try again.',
+    leave_page_warning: 'Are you sure you want to leave? In progress changes will be lost.',
   },
   blockchains: {
     icp: {

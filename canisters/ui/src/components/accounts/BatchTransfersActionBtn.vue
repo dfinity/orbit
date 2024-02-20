@@ -104,7 +104,6 @@
             </span>
             <VBtn
               :loading="downloadingInvalid"
-              :disabled="!invalidRawCsvTable?.rows.length"
               variant="tonal"
               size="x-small"
               class="ml-1"
@@ -134,6 +133,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import logger from '~/core/logger.core';
 import { Account, Transfer, TransferOperationInput } from '~/generated/wallet/wallet.did';
+import { ChainApiFactory } from '~/services/chains';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { CsvTable } from '~/types/app.types';
@@ -145,6 +145,10 @@ import {
   assertAndReturn,
   formatBalance,
 } from '~/utils/helper.utils';
+import {
+  registerBeforeUnloadConfirmation,
+  unregisterBeforeUnloadConfirmation,
+} from '~/utils/app.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -196,6 +200,7 @@ const hasInvalidTransfers = computed(() => rows.value.some(row => !row.valid));
 const rawCsvTable = ref<CsvTable | null>(null);
 const invalidRawCsvTable = ref<CsvTable | null>(null);
 const downloadingInvalid = ref(false);
+const chainApi = computed(() => ChainApiFactory.create(props.account));
 const rows = ref<
   {
     transfer: Partial<Transfer>;
@@ -253,7 +258,10 @@ watch(
       const transfer: Partial<Transfer> = {};
       let valid = true;
 
-      if (row?.[csvToColumn.value] !== undefined) {
+      if (
+        row?.[csvToColumn.value] !== undefined &&
+        chainApi.value.isValidAddress(row[csvToColumn.value])
+      ) {
         transfer.to = row[csvToColumn.value];
       }
 
@@ -314,6 +322,7 @@ const startBatchTransfer = async (): Promise<void> => {
   }
 
   try {
+    registerBeforeUnloadConfirmation();
     loading.value = true;
     const transfersToProcess: { rowId: number; transfer: TransferOperationInput }[] = [];
     for (let rowId = 0; rowId < rows.value.length; rowId++) {
@@ -363,6 +372,7 @@ const startBatchTransfer = async (): Promise<void> => {
     });
   } finally {
     loading.value = false;
+    unregisterBeforeUnloadConfirmation();
   }
 };
 </script>
