@@ -1,4 +1,4 @@
-import { CsvTable } from '~/types/app.types';
+import { CsvRow, CsvTable } from '~/types/app.types';
 
 export const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   const reader = new FileReader();
@@ -8,6 +8,52 @@ export const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     reader.onload = () => {
       resolve(reader.result as ArrayBuffer);
+    };
+
+    reader.onerror = reject;
+  });
+};
+
+export const readFileAsCsvTable = async (file: File): Promise<CsvTable> => {
+  const reader = new FileReader();
+
+  reader.readAsText(file);
+
+  return new Promise((resolve, reject) => {
+    reader.onload = () => {
+      const csv = reader.result as string;
+      const [header, ...rows] = csv.replace(/\r\n/g, '\n').split('\n');
+      const headers = header.split(',');
+      const table: CsvTable = {
+        headers: {},
+        rows: [],
+      };
+
+      for (const header of headers) {
+        const headerKey = header.toLowerCase().replace(/ /g, '_');
+        table.headers[headerKey] = header;
+      }
+
+      for (const row of rows) {
+        const rowValues = row.split(',');
+        const rowObject: CsvRow = {};
+
+        for (let i = 0; i < headers.length; i++) {
+          rowObject[headers[i]] = rowValues[i];
+        }
+
+        table.rows.push(rowObject);
+      }
+
+      // cleanup last empty row
+      if (
+        table.rows.length &&
+        Object.values(table.rows[table.rows.length - 1]).every(value => !value)
+      ) {
+        table.rows.pop();
+      }
+
+      resolve(table);
     };
 
     reader.onerror = reject;
