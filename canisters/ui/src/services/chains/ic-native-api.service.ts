@@ -6,6 +6,7 @@ import { _SERVICE } from '~/generated/icp_index/icp_index.did';
 import { Account } from '~/generated/wallet/wallet.did';
 import { AccountIncomingTransfer, ChainApi, FetchTransfersInput } from '~/types/chain.types';
 import { nanoToJsDate } from '~/utils/date.utils';
+import { isValidSha256 } from '~/utils/helper.utils';
 
 export class ICNativeApi implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;
@@ -19,6 +20,10 @@ export class ICNativeApi implements ChainApi {
       agent,
       canisterId: appInitConfig.canisters.icpIndex,
     });
+  }
+
+  isValidAddress(address: string): boolean {
+    return isValidSha256(address);
   }
 
   async fetchBalance(): Promise<bigint> {

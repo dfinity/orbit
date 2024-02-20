@@ -1,5 +1,12 @@
 <template>
-  <VCard density="compact" color="background" variant="flat" class="mb-2">
+  <VCard
+    density="compact"
+    color="background"
+    variant="flat"
+    :rounded="0"
+    class="mb-2"
+    :class="{ 'br-on-background': props.mode === 'grid' }"
+  >
     <VCardTitle class="text-body-2 font-weight-bold">
       {{ $t(`proposals.types.${proposalType}.title`) }}
     </VCardTitle>
@@ -58,7 +65,7 @@ const props = withDefaults(
     proposal: Proposal;
     details: ProposalDetails;
     hideColumnBorders?: boolean;
-    mode?: 'list';
+    mode?: 'list' | 'grid';
   }>(),
   {
     hideColumnBorders: false,

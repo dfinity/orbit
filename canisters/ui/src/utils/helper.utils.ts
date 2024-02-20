@@ -80,6 +80,10 @@ export const isSetAndNotFalse = (value: unknown) => {
   return true;
 };
 
+export const isValidSha256 = (value: string): boolean => {
+  return /^[a-f0-9]{64}$/i.test(value);
+};
+
 // Formats a balance that is a bigint into a string with the correct number of decimals
 export const formatBalance = (amount: bigint, decimals: number): string => {
   const integerPart = amount / BigInt(10 ** decimals);

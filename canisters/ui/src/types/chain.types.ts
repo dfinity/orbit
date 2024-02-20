@@ -30,4 +30,6 @@ export interface ChainApi {
   fetchBalance(): Promise<bigint>;
 
   fetchTransfers(input: FetchTransfersInput): Promise<AccountIncomingTransfer[]>;
+
+  isValidAddress(address: string): boolean;
 }

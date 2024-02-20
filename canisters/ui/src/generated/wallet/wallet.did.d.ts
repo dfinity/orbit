@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export type AccessControlUserSpecifier = CommonSpecifier;
 export interface AccessPolicy {
@@ -824,3 +825,5 @@ export interface _SERVICE {
   'vote_on_proposal' : ActorMethod<[VoteOnProposalInput], VoteOnProposalResult>,
   'wallet_settings' : ActorMethod<[], WalletSettingsResult>,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

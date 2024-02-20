@@ -1,13 +1,12 @@
 <template>
   <VProgressLinear v-if="props.loading" indeterminate color="primary" data-test-id="loading" />
-  <div v-else>
+  <div v-else :class="{ 'd-flex flex-row ga-1': props.mode === 'grid' }">
     <ProposalListItem
       v-for="proposal in props.proposals"
       :key="proposal.id"
       :proposal="proposal"
       :details="getDetails(proposal)"
-      class="px-1"
-      lines="one"
+      :mode="props.mode"
       @voted="emit('voted', proposal)"
       @opened="emit('opened', proposal)"
       @closed="emit('closed', proposal)"
@@ -40,6 +39,7 @@ const props = withDefaults(
     notFoundText?: string;
     loading?: boolean;
     hideNotFound?: boolean;
+    mode?: 'list' | 'grid';
   }>(),
   {
     hideHeaders: false,
@@ -48,6 +48,7 @@ const props = withDefaults(
     additionals: () => [],
     loading: false,
     hideNotFound: false,
+    mode: 'list',
   },
 );
 

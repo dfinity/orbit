@@ -1,4 +1,4 @@
-import { CsvTable } from '~/types/app.types';
+import { CsvRow, CsvTable } from '~/types/app.types';
 
 export const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   const reader = new FileReader();
@@ -8,6 +8,63 @@ export const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     reader.onload = () => {
       resolve(reader.result as ArrayBuffer);
+    };
+
+    reader.onerror = reject;
+  });
+};
+
+const parseCsvLine = (line: string): string[] => {
+  // This regex matches:
+  // - Sequences of characters that are not commas or quotes
+  // - Sequences enclosed in quotes that may contain commas, where quotes are escaped by two quotes
+  const regex = /(".*?"|[^",]+)(?=\s*,|\s*$)/g;
+
+  // Find matches and remove quotes from quoted fields, replacing two double quotes with one
+  const matches = line.match(regex) || [];
+  return matches.map(field => field.replace(/^"(.*)"$/, '$1').replace(/""/g, '"'));
+};
+
+export const readFileAsCsvTable = async (file: File): Promise<CsvTable> => {
+  const reader = new FileReader();
+
+  reader.readAsText(file);
+
+  return new Promise((resolve, reject) => {
+    reader.onload = () => {
+      const csv = reader.result as string;
+      const [header, ...rows] = csv.replace(/\r\n/g, '\n').split('\n');
+      const headers = parseCsvLine(header);
+      const table: CsvTable = {
+        headers: {},
+        rows: [],
+      };
+
+      for (const header of headers) {
+        const headerKey = header.toLowerCase().replace(/ /g, '_');
+        table.headers[headerKey] = header;
+      }
+
+      for (const row of rows) {
+        const rowValues = parseCsvLine(row);
+        const rowObject: CsvRow = {};
+
+        for (let i = 0; i < headers.length; i++) {
+          rowObject[headers[i]] = rowValues[i];
+        }
+
+        table.rows.push(rowObject);
+      }
+
+      // cleanup last empty row
+      if (
+        table.rows.length &&
+        Object.values(table.rows[table.rows.length - 1]).every(value => !value)
+      ) {
+        table.rows.pop();
+      }
+
+      resolve(table);
     };
 
     reader.onerror = reject;

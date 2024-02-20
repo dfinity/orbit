@@ -55,6 +55,9 @@ export default {
     btn_home_back: 'Voltar ao início',
     no_download_available: 'Nenhum download disponível.',
     failed_to_download_item: 'Falha ao baixar {item}, por favor, tente novamente.',
+    download_error: 'Erro ao baixar o ficheiro, por favor, tente novamente.',
+    leave_page_warning:
+      'Tem a certeza que pretende sair? As alterações não gravadas serão perdidas.',
   },
   change_canister: {
     targets: {
@@ -397,6 +400,7 @@ export default {
     transactions: 'Transaçōes',
     address_book: 'Endereços',
     completed: 'Realizado',
+    invalid: 'Inválido',
     pending: 'Pendente',
     name: 'Nome',
     new_withdraw: 'Nova retirada',
@@ -417,6 +421,7 @@ export default {
     status: 'Estado',
     control_panel: 'Painel de controle',
     confirmed: 'Confirmado',
+    total: 'Total',
     unconfirmed: 'Não confirmado',
     main: 'Principal',
     user_group: 'Grupo de usuário',
@@ -469,6 +474,14 @@ export default {
     account: {
       not_found: 'Conta não encontrada',
       not_found_description: 'A conta que está a tentar aceder não existe.',
+      csv_transfer_subtitle: 'Carregar um ficheiro CSV para transferir fundos para várias contas.',
+      csv_transfer_file_format_hint: 'O ficheiro CSV deve conter as colunas "{to}" e "{amount}".',
+      csv_transfer_file_column_to: 'Para',
+      csv_transfer_file_column_amount: 'Quantidade',
+      csv_transfer_file_rows_title: 'Transferências para criar: {count}',
+      csv_ignored_transfers_hint: 'Transferências com erros serão ignoradas.',
+      csv_transfer_failed: 'Error ao processar transferências, por favor, tente novamente.',
+      csv_download_invalid: 'Baixar erros',
     },
     address_book: {
       title: 'Livro de endereços',

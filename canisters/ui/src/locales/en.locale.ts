@@ -55,6 +55,8 @@ export default {
     btn_home_back: 'Back to home',
     no_download_available: 'No download available.',
     failed_to_download_item: 'Failed to download {item}, please try again.',
+    download_error: 'Failed to download file, please try again.',
+    leave_page_warning: 'Are you sure you want to leave? In progress changes will be lost.',
   },
   blockchains: {
     icp: {
@@ -404,6 +406,7 @@ export default {
     owners: 'Owners',
     name: 'Name',
     of: 'of',
+    total: 'Total',
     processing: 'Processing',
     cancelled: 'Cancelled',
     user_name: 'User Name',
@@ -416,6 +419,7 @@ export default {
     principal: 'Principal',
     status: 'Status',
     transfer: 'Transfer',
+    invalid: 'Invalid',
     control_panel: 'Control panel',
     confirmed: 'Confirmed',
     unconfirmed: 'Unconfirmed',
@@ -470,6 +474,14 @@ export default {
     account: {
       not_found: 'Account not found',
       not_found_description: 'The account you are looking for does not exist.',
+      csv_transfer_subtitle: 'Upload a CSV file to create multiple transfers at once.',
+      csv_transfer_file_format_hint: 'The CSV file must contain the column "{to}" and "{amount}".',
+      csv_transfer_file_column_to: 'to',
+      csv_transfer_file_column_amount: 'amount',
+      csv_transfer_file_rows_title: 'Transfers to be created: {count}',
+      csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
+      csv_transfer_failed: 'Failed to process transfers, please try again.',
+      csv_download_invalid: 'Download invalid',
     },
     address_book: {
       title: 'Address Book',

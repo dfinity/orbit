@@ -58,10 +58,11 @@
             />
           </template>
           <template v-if="privileges.can_transfer" #actions>
-            <!--todo: add import from csv functionality-->
-            <VBtn color="primary-variant" variant="outlined" disabled>
-              {{ $t('pages.accounts.btn_upload_csv') }}
-            </VBtn>
+            <BatchTransfersActionBtn
+              :account="account"
+              color="primary-variant"
+              variant="outlined"
+            />
             <TransferBtn :account="account" color="primary-variant" variant="flat">
               + {{ $t('pages.accounts.btn_new_transfer') }}
             </TransferBtn>
@@ -208,6 +209,7 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import AccountConfigBtn from '~/components/accounts/AccountConfigBtn.vue';
+import BatchTransfersActionBtn from '~/components/accounts/BatchTransfersActionBtn.vue';
 import TransferBtn from '~/components/accounts/TransferBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
