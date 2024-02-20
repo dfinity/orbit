@@ -178,7 +178,7 @@ const startDownload = async (idx: number): Promise<void> => {
     const fileName =
       i18n.t(`proposals.download.${downloadItem.group.toLowerCase()}`) +
       '_' +
-      new Date().toLocaleString() +
+      new Date().toISOString() +
       '.csv';
 
     await downloadCsv({
