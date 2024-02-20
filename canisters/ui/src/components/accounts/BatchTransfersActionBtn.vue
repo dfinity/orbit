@@ -294,7 +294,7 @@ const downloadInvalidCsvRows = async (): Promise<void> => {
 
     await downloadCsv({
       content: invalidRawCsvTable.value,
-      filename: 'invalid_' + new Date().toLocaleString().replace(/ /g, '_').toLowerCase() + '.csv',
+      filename: 'invalid_' + new Date().toISOString().toLowerCase() + '.csv',
     });
   } catch (e) {
     logger.error(`Failed to download invalid csv rows, reason: ${e}`);
