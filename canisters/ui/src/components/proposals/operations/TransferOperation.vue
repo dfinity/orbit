@@ -1,8 +1,6 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn
-      v-if="formValue.from_account_id && formValue.to && formValue.amount"
-    >
+    <ProposalOperationListRow v-if="formValue.from_account_id && formValue.to && formValue.amount">
       <div class="d-flex flex-row ga-2">
         <div class="d-flex flex-no-wrap text-no-wrap align-center">
           <VBtn
@@ -38,7 +36,7 @@
           {{ account ? account.symbol : '' }}
         </div>
       </div>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <div v-else-if="account">
     <VTextField
@@ -56,7 +54,7 @@
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import TransferForm from '~/components/accounts/TransferForm.vue';
 import { Proposal, Transfer, TransferOperation } from '~/generated/wallet/wallet.did';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 import { mdiArrowRight, mdiContentCopy, mdiOpenInApp, mdiWallet } from '@mdi/js';
 import { Routes } from '~/configs/routes.config';
 import TextOverflow from '~/components/TextOverflow.vue';

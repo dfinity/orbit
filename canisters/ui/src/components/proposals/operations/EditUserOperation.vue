@@ -1,23 +1,23 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn v-if="formValue.id">
+    <ProposalOperationListRow v-if="formValue.id">
       <template #name>{{ $t('terms.id') }}</template>
       <template #content>
         {{ formValue.id }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn v-if="formValue.name">
+    </ProposalOperationListRow>
+    <ProposalOperationListRow v-if="formValue.name">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
         {{ formValue.name?.[0] ?? '-' }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn v-if="formValue.status">
+    </ProposalOperationListRow>
+    <ProposalOperationListRow v-if="formValue.status">
       <template #name>{{ $t('terms.status') }}</template>
       <template #content>
         {{ fromUserStatusVariantToEnum(formValue.status) }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <UserForm v-else :model-value="formValue" mode="view" />
 </template>
@@ -27,7 +27,7 @@ import { Ref, computed, onBeforeMount, ref } from 'vue';
 import UserForm from '~/components/users/UserForm.vue';
 import { EditUserOperation, Proposal, User } from '~/generated/wallet/wallet.did';
 import { fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{

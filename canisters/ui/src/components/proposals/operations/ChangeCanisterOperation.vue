@@ -1,23 +1,23 @@
 <template>
   <div class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn>
+    <ProposalOperationListRow>
       <template #name>{{ $t('terms.target') }}</template>
       <template #content>
         {{ target }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn>
+    </ProposalOperationListRow>
+    <ProposalOperationListRow>
       <template #name>{{ $t('terms.wasm') }}</template>
       <template #content>
         {{ checksum }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn v-if="!isListMode && argChecksum">
+    </ProposalOperationListRow>
+    <ProposalOperationListRow v-if="!isListMode && argChecksum">
       <template #name>{{ $t('terms.arg') }}</template>
       <template #content>
         {{ argChecksum }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
 </template>
 
@@ -26,7 +26,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ChangeCanisterOperation, Proposal } from '~/generated/wallet/wallet.did';
 import { variantIs } from '~/utils/helper.utils';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{

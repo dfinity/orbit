@@ -1,11 +1,11 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn v-if="formValue.id">
+    <ProposalOperationListRow v-if="formValue.id">
       <template #name>{{ $t('terms.id') }}</template>
       <template #content>
         {{ formValue.id }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
   <UserGroupForm v-else :model-value="formValue" mode="view" />
@@ -17,7 +17,7 @@ import UserGroupForm from '~/components/users/UserGroupForm.vue';
 import logger from '~/core/logger.core';
 import { Proposal, RemoveUserGroupOperation, UserGroup } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{

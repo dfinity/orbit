@@ -1,11 +1,11 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn>
+    <ProposalOperationListRow>
       <template #name>{{ $t('terms.specifier') }}</template>
       <template #content>
         {{ proposalPolicyType }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <ProposalPolicyForm v-else :model-value="formValue" mode="view" />
 </template>
@@ -14,7 +14,7 @@
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ProposalPolicyForm from '~/components/proposal-policies/ProposalPolicyForm.vue';
-import ProposalOperationListColumn from '~/components/proposals/ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '~/components/proposals/ProposalOperationListRow.vue';
 import {
   AddProposalPolicyOperation,
   Proposal,

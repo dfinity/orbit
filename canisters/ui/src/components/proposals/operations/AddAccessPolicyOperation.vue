@@ -1,11 +1,11 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn>
+    <ProposalOperationListRow>
       <template #name>{{ $t('access_policies.resource_title') }}</template>
       <template #content>
         {{ accessPolicyResource }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <AccessPolicyForm v-else :model-value="formValue" mode="view" />
 </template>
@@ -14,7 +14,7 @@
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AccessPolicyForm from '~/components/access-policies/AccessPolicyForm.vue';
-import ProposalOperationListColumn from '~/components/proposals/ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '~/components/proposals/ProposalOperationListRow.vue';
 import { AccessPolicy, AddAccessPolicyOperation, Proposal } from '~/generated/wallet/wallet.did';
 
 const props = withDefaults(

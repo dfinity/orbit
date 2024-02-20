@@ -1,23 +1,23 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn v-if="formValue.id">
+    <ProposalOperationListRow v-if="formValue.id">
       <template #name>{{ $t('terms.id') }}</template>
       <template #content>
         {{ formValue.id }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn>
+    </ProposalOperationListRow>
+    <ProposalOperationListRow>
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
         {{ formValue.address_owner ?? '-' }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn v-if="formValue.address">
+    </ProposalOperationListRow>
+    <ProposalOperationListRow v-if="formValue.address">
       <template #name>{{ $t('terms.address') }}</template>
       <template #content>
         {{ formValue.address }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
   <AddressBookForm v-else :model-value="formValue" mode="view" />
@@ -34,7 +34,7 @@ import {
 } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { variantIs } from '~/utils/helper.utils';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{

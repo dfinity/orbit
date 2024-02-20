@@ -1,17 +1,17 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn>
+    <ProposalOperationListRow>
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
         {{ formValue.address_owner ?? '-' }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn v-if="formValue.address">
+    </ProposalOperationListRow>
+    <ProposalOperationListRow v-if="formValue.address">
       <template #name>{{ $t('terms.address') }}</template>
       <template #content>
         {{ formValue.address }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <AddressBookForm v-else :model-value="formValue" mode="view" />
 </template>
@@ -23,7 +23,7 @@ import {
   AddAddressBookEntryOperation,
   Proposal,
 } from '~/generated/wallet/wallet.did';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 import AddressBookForm from '~/components/address-book/AddressBookForm.vue';
 
 const props = withDefaults(

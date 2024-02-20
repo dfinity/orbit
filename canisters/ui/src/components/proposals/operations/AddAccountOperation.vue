@@ -1,17 +1,17 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListColumn v-if="formValue.name">
+    <ProposalOperationListRow v-if="formValue.name">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
         {{ formValue.name ?? '-' }}
       </template>
-    </ProposalOperationListColumn>
-    <ProposalOperationListColumn v-if="formValue.blockchain">
+    </ProposalOperationListRow>
+    <ProposalOperationListRow v-if="formValue.blockchain">
       <template #name>{{ $t('terms.blockchain') }}</template>
       <template #content>
         {{ $t(`blockchains.${formValue.blockchain}.name`) }}
       </template>
-    </ProposalOperationListColumn>
+    </ProposalOperationListRow>
   </div>
   <AccountForm v-else :model-value="formValue" mode="view" />
 </template>
@@ -20,7 +20,7 @@
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import AccountForm from '~/components/accounts/AccountConfigForm.vue';
 import { Account, AddAccountOperation, Proposal } from '~/generated/wallet/wallet.did';
-import ProposalOperationListColumn from '../ProposalOperationListColumn.vue';
+import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{
