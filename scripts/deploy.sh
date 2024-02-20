@@ -157,7 +157,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   --prod)
     shift
-    set_network ic
+    set_network prod
     exec_function setup_enviroment
     exec_function deploy_control_panel
     exec_function deploy_ui

@@ -77,7 +77,7 @@
     }
   },
   "networks": {
-    "ic": {
+    "prod": {
       "providers": ["https://icp0.io"],
       "type": "persistent",
       "replica": {
