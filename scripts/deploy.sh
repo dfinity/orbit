@@ -20,7 +20,7 @@ Usage:
 
 Options:
   --local Performs a local deployment of Orbit to your local dfx environment
-  --dev Performs a dev deployment of Orbit to the IC
+  --testing Performs a dev deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
   --prod Performs a production deployment of Orbit to the IC
 EOF
