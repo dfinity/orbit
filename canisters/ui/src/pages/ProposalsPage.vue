@@ -188,7 +188,7 @@ const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
 };
 
-const pagination = usePagination();
+const pagination = usePagination({ limit: 10 });
 
 const resetPagination = (): void => {
   pagination.value = {
@@ -237,8 +237,8 @@ const fetchList = useFetchList(
         }),
       },
       statuses: filters.value.statuses.map(status => ({ [status]: null })) as ProposalStatusCode[],
-      limit: limit,
-      offset: offset,
+      limit,
+      offset,
       sortBy: {
         createdAt: 'desc',
       },

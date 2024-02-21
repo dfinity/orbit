@@ -75,6 +75,7 @@ const props = withDefaults(
   defineProps<{
     filters: Filters;
     domains: AvailableDomain[];
+    batchFetchLimit?: number;
     icon?: string;
     text?: string;
     color?: string;
@@ -86,6 +87,7 @@ const props = withDefaults(
     dialogMaxWidth?: number;
   }>(),
   {
+    batchFetchLimit: 50,
     density: 'default',
     color: 'primary-variant',
     size: 'default',
@@ -124,7 +126,7 @@ const startDownload = async (idx: number): Promise<void> => {
       return;
     }
     downloadItem.downloading = true;
-    const limit = 100;
+    const limit = props.batchFetchLimit;
     const proposals = new Map<UUID, ProposalWithDetails>();
     let offset: number | undefined = undefined;
 
