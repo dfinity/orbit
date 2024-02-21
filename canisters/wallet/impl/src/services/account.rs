@@ -305,6 +305,7 @@ impl AccountService {
 
         account.validate()?;
 
+        account.last_modification_timestamp = time();
         self.account_repository
             .insert(account.to_key(), account.to_owned());
 

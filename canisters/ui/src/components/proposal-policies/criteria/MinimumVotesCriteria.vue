@@ -16,7 +16,7 @@
     <div class="d-flex flex-column flex-md-row ga-4 align-center">
       <div class="w-md-50 w-100">
         <VTextField
-          v-model="model.minimum"
+          v-model="minimumVotes"
           :label="$t('terms.min')"
           type="number"
           :rules="rules.min"
@@ -99,6 +99,21 @@ const userTypeModel = computed({
   get: () => mapProposalCriteriaUserSpecifierToEnum(model.value.voters),
   set: value => {
     model.value.voters = mapProposalCriteriaUserSpecifierEnumToVariant(value);
+  },
+});
+
+const minimumVotes = computed({
+  get: () => model.value.minimum,
+  set: min => {
+    if (min && typeof min !== 'number') {
+      min = parseInt(min, 10);
+    }
+
+    // needs a reassignment to trigger the reactivity of the model
+    model.value = {
+      ...model.value,
+      minimum: min,
+    };
   },
 });
 
