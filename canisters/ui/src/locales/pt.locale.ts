@@ -255,7 +255,7 @@ export default {
     },
   },
   footer: {
-    copyright: '© 2023 - DFINITY Foundation',
+    copyright: '© 2024 - DFINITY Foundation',
     github: {
       description: 'Código-fonte',
     },
