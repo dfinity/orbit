@@ -76,6 +76,36 @@
       "packtool": ""
     }
   },
+  "networks": {
+    "prod": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent",
+      "replica": {
+        "subnet_type": "application"
+      }
+    },
+    "staging": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent",
+      "replica": {
+        "subnet_type": "application"
+      }
+    },
+    "testing": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent",
+      "replica": {
+        "subnet_type": "application"
+      }
+    },
+    "local": {
+      "bind": "127.0.0.1:4943",
+      "type": "ephemeral",
+      "replica": {
+        "subnet_type": "application"
+      }
+    }
+  },
   "dfx": "0.17.0",
   "version": 1
 }
