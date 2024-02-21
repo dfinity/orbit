@@ -81,7 +81,7 @@
       "providers": ["https://icp0.io"],
       "type": "persistent",
       "replica": {
-        "subnet_type": "fiduciary"
+        "subnet_type": "application"
       }
     },
     "staging": {

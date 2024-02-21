@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eEuo pipefail
 
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
 maybe_load_nvm() {
   if [ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]; then
     echo "Loading nvm from ${NVM_DIR:-$HOME/.nvm}"
@@ -24,7 +26,7 @@ maybe_load_n() {
 }
 
 # Attempt to read the required Node.js version from .nvmrc
-if [ -f ".nvmrc" ]; then
+if [ -f "$REPO_ROOT/.nvmrc" ]; then
   required_node_version="$(cat .nvmrc)"
 else
   echo ".nvmrc file not found. Please ensure it exists and specifies the required Node.js version."

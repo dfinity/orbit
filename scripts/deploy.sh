@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -eEuo pipefail
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
 #############################################
 # USAGE                                     #
 #############################################
@@ -29,7 +26,7 @@ EOF
 function help() {
   cat <<EOF
 
-Helper script to setup Orbit deployment utils.
+Helper script to setup Orbit deployment.
 
 NOTE: This requires a working rust toolchain, dfx and nodejs to operate correctly.
 EOF
@@ -66,6 +63,16 @@ function set_network() {
   export IC_NETWORK=$network
 }
 
+function get_subnet_type() {
+  local network=$(get_network)
+
+  if [ "$network" == "prod" ]; then
+    echo "fiduciary"
+  else
+    echo "application"
+  fi
+}
+
 #############################################
 # UTILS                                     #
 #############################################
@@ -96,6 +103,7 @@ function setup_cycles_wallet() {
 
 function deploy_control_panel() {
   local network="$(get_network)"
+  local subnet_type=$(get_subnet_type)
 
   echo "Deploying the control_panel canister to the '$network' network."
 
@@ -113,7 +121,7 @@ function deploy_control_panel() {
   if [ $canister_id_exit_code -ne 0 ]; then
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
-    dfx canister create control_panel --network $network --with-cycles 500000000000
+    dfx canister create control_panel --network $network --with-cycles 500000000000 --subnet-type $subnet_type
     dfx build control_panel --network $network
     dfx canister install control_panel --network $network --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
   else
@@ -126,15 +134,16 @@ function deploy_control_panel() {
 
 function deploy_ui() {
   local network=$(get_network)
+  local subnet_type=$(get_subnet_type)
 
   echo "Deploying the UI canister to the '$network' network."
 
   if [ "$network" == "local" ]; then
-    NODE_ENV=development dfx deploy --network $network ui
+    NODE_ENV=development dfx deploy --network $network ui --with-cycles 500000000000 --subnet-type $subnet_type
     return
   fi
 
-  NODE_ENV=production dfx deploy --network $network ui --with-cycles 500000000000
+  NODE_ENV=production dfx deploy --network $network ui --with-cycles 500000000000 --subnet-type $subnet_type
 }
 
 #############################################
