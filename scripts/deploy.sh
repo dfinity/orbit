@@ -95,7 +95,7 @@ function setup_cycles_wallet() {
 }
 
 function deploy_control_panel() {
-  local network=$(get_network)
+  local network="$(get_network)"
 
   echo "Deploying the control_panel canister to the '$network' network."
 
