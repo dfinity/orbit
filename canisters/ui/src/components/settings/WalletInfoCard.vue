@@ -65,7 +65,7 @@
             variant="flat"
             @click="submit"
           >
-            {{ $t('forms.edit') }}
+            {{ $t('terms.save') }}
           </VBtn>
         </template>
       </ActionBtn>
