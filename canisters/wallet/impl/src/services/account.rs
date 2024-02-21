@@ -2,6 +2,7 @@ use crate::{
     core::{
         access_control::evaluate_caller_access,
         generate_uuid_v4,
+        ic_cdk::api::time,
         utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
         CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
@@ -22,7 +23,7 @@ use crate::{
 };
 use futures::{stream, StreamExt};
 use ic_canister_core::{
-    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository, types::UUID,
+    api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
 };
 use lazy_static::lazy_static;
 use std::sync::Arc;
