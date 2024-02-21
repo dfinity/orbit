@@ -78,7 +78,7 @@ function build_wasms() {
 }
 
 function setup_cycles_wallet() {
-  local network=$(get_network)
+  local network="$(get_network)"
 
   if [ "$network" != "local" ]; then
     set +e # Disable 'exit on error'
