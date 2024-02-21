@@ -25,7 +25,7 @@ maybe_load_n() {
 
 # Attempt to read the required Node.js version from .nvmrc
 if [ -f ".nvmrc" ]; then
-  required_node_version=$(cat .nvmrc)
+  required_node_version="$(cat .nvmrc)"
 else
   echo ".nvmrc file not found. Please ensure it exists and specifies the required Node.js version."
   exit 1
