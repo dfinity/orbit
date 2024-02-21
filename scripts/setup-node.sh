@@ -9,11 +9,11 @@ maybe_load_nvm() {
     \. "${NVM_DIR:-$HOME/.nvm}/nvm.sh"
   fi
 
-  command -v nvm >/dev/null 2>&1
+  command -v nvm &> /dev/null
 }
 
 is_n_installed() {
-  command -v n >/dev/null 2>&1
+  command -v n &> /dev/null
 }
 
 maybe_load_n() {
