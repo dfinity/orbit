@@ -84,6 +84,20 @@ fn is_proposal_evaluated(proposal: ProposalDTO) -> bool {
     }
 }
 
+pub fn is_proposal_adopted(proposal_status: &ProposalStatusDTO) -> bool {
+    match proposal_status {
+        wallet_api::ProposalStatusDTO::Adopted
+        | wallet_api::ProposalStatusDTO::Completed { .. }
+        | wallet_api::ProposalStatusDTO::Scheduled { .. }
+        | wallet_api::ProposalStatusDTO::Processing { .. } => true,
+
+        wallet_api::ProposalStatusDTO::Created
+        | wallet_api::ProposalStatusDTO::Rejected { .. }
+        | wallet_api::ProposalStatusDTO::Cancelled { .. }
+        | wallet_api::ProposalStatusDTO::Failed { .. } => false,
+    }
+}
+
 pub fn submit_proposal(
     env: &PocketIc,
     user_id: Principal,
