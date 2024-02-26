@@ -254,7 +254,7 @@ export default {
     },
   },
   footer: {
-    copyright: '© 2023 - DFINITY Foundation',
+    copyright: '© 2024 - DFINITY Foundation',
     github: {
       description: 'Source Code',
     },
@@ -516,7 +516,7 @@ export default {
       status_deploying: 'Deploying your wallet to the Internet Computer ...',
       status_waiting_for_canister_initialization: 'Waiting for deployment to complete ...',
       status_creating_initial_account: 'Creating your initial account ...',
-      status_completed: 'Your wallet has been successfully initialized, you`ll soon be redirected.',
+      status_completed: "Your wallet has been successfully initialized, you'll soon be redirected.",
       status_failed: 'Failed to initialize, please try again.',
     },
     proposals: {
