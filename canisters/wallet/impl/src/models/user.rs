@@ -58,7 +58,7 @@ impl User {
     }
 }
 
-fn validate_identities(identities: &Vec<Principal>) -> ModelValidatorResult<UserError> {
+fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserError> {
     if identities.len() < User::IDENTITIES_RANGE.0 as usize {
         return Err(UserError::TooLittleIdentities);
     }
@@ -72,7 +72,7 @@ fn validate_identities(identities: &Vec<Principal>) -> ModelValidatorResult<User
     Ok(())
 }
 
-fn validate_groups(access_roles: &Vec<UUID>) -> ModelValidatorResult<UserError> {
+fn validate_groups(access_roles: &[UUID]) -> ModelValidatorResult<UserError> {
     if access_roles.len() > User::MAX_USER_GROUPS as usize {
         return Err(UserError::TooManyUserGroups {
             max: User::MAX_USER_GROUPS,
