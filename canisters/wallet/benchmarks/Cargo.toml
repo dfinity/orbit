@@ -1,0 +1,22 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "wallet-benchmarks"
+version = "0.1.0"
+edition = "2021"
+authors = ["DFINITY Stiftung"]
+license = "Apache-2.0"
+include = ["src", "Cargo.toml"]
+homepage = "https://github.com/dfinity/orbit-wallet#readme"
+repository = "https://github.com/dfinity/orbit-wallet"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+canbench-rs = { workspace = true }
+candid = { workspace = true }
+ic-canister-core = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+wallet_impl = { path = "../impl", package = "wallet", features = ["canbench-rs"] }

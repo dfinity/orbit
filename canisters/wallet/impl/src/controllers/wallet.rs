@@ -9,16 +9,16 @@ use crate::{
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
-use ic_cdk_macros::{init, post_upgrade, query};
+use ic_cdk_macros::{post_upgrade, query};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use wallet_api::{
-    GetConfigResponse, HealthStatus, WalletInit, WalletInstall, WalletSettingsResponse,
-    WalletUpgrade,
+    GetConfigResponse, HealthStatus, WalletInstall, WalletSettingsResponse, WalletUpgrade,
 };
 
 // Canister entrypoints for the controller.
-#[init]
+#[cfg(not(feature = "canbench-rs"))]
+#[ic_cdk_macros::init]
 async fn initialize(input: Option<WalletInstall>) {
     match input {
         Some(WalletInstall::Init(input)) => CONTROLLER.initialize(input).await,
@@ -68,7 +68,8 @@ impl WalletController {
         Self { wallet_service }
     }
 
-    async fn initialize(&self, input: WalletInit) {
+    #[cfg(not(feature = "canbench-rs"))]
+    async fn initialize(&self, input: wallet_api::WalletInit) {
         let ctx = &call_context();
         self.wallet_service
             .init_canister(input, ctx)

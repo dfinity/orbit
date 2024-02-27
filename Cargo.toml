@@ -8,6 +8,7 @@ members = [
     "canisters/upgrader/impl",
     "canisters/wallet/api",
     "canisters/wallet/impl",
+    "canisters/wallet/benchmarks",
     "libs/ic-canister-core",
     "libs/ic-canister-macros",
 ]

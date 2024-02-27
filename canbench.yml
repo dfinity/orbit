@@ -1,5 +1,5 @@
 build_cmd:
-  FEATURES=canbench-rs ./scripts/generate-wasm.sh wallet
+  cargo build --locked --release --target wasm32-unknown-unknown --package wallet-benchmarks
 
 wasm_path:
-  ./wasms/wallet.wasm.gz
+  ./target/wasm32-unknown-unknown/release/wallet_benchmarks.wasm

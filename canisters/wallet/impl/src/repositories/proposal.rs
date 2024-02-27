@@ -800,26 +800,3 @@ mod tests {
         assert!(proposals.is_empty());
     }
 }
-
-#[cfg(feature = "canbench-rs")]
-mod benches {
-    use super::PROPOSAL_REPOSITORY;
-    use crate::models::proposal_test_utils::mock_proposal;
-    use canbench_rs::bench;
-    use ic_canister_core::repository::Repository;
-    use uuid::Uuid;
-
-    fn add_proposals(count: usize) {
-        for _ in 0..count {
-            let mut proposal = mock_proposal();
-            proposal.id = *Uuid::new_v4().as_bytes();
-
-            PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
-        }
-    }
-
-    #[bench]
-    fn add_proposal() {
-        add_proposals(1);
-    }
-}

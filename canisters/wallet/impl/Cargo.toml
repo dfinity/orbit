@@ -10,7 +10,7 @@ homepage = "https://github.com/dfinity/orbit-wallet#readme"
 repository = "https://github.com/dfinity/orbit-wallet"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = { workspace = true }
