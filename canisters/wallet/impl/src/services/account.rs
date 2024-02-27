@@ -8,7 +8,7 @@ use crate::{
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
-    mappers::{AccountMapper, HelperMapper},
+    mappers::{account::AccountMapper, HelperMapper},
     models::{
         access_control::{
             AccountActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,

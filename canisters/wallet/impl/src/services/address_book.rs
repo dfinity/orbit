@@ -6,7 +6,7 @@ use crate::{
         CallContext,
     },
     errors::AddressBookError,
-    mappers::AddressBookMapper,
+    mappers::address_book::AddressBookMapper,
     models::{
         access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType},
         specifier::CommonSpecifier,

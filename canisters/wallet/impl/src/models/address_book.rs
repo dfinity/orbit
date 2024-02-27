@@ -39,7 +39,7 @@ pub struct AddressBookEntryKey {
     pub id: AddressBookEntryId,
 }
 
-fn validate_address_owner(address_owner: &String) -> ModelValidatorResult<AddressBookError> {
+fn validate_address_owner(address_owner: &str) -> ModelValidatorResult<AddressBookError> {
     if (address_owner.len() < AddressBookEntry::ADDRESS_OWNER_RANGE.0 as usize)
         || (address_owner.len() > AddressBookEntry::ADDRESS_OWNER_RANGE.1 as usize)
     {
@@ -52,7 +52,7 @@ fn validate_address_owner(address_owner: &String) -> ModelValidatorResult<Addres
     Ok(())
 }
 
-fn validate_address(address: &String) -> ModelValidatorResult<AddressBookError> {
+fn validate_address(address: &str) -> ModelValidatorResult<AddressBookError> {
     if (address.len() < AddressBookEntry::ADDRESS_RANGE.0 as usize)
         || (address.len() > AddressBookEntry::ADDRESS_RANGE.1 as usize)
     {
