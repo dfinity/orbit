@@ -37,8 +37,9 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
-  bench-wallet:
+  bench-rust:
     name: 'bench-wallet:required'
+    needs: [test-rust]
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
