@@ -41,10 +41,10 @@ fi
 canbench --less-verbose >"$CANBENCH_TMP_OUTPUT"
 if grep -q "(regress\|(improved by \|(new)" "$CANBENCH_TMP_OUTPUT"; then
   # Check if running in GitHub Actions and print the CANBENCH_TMP_OUTPUT file if so
-  # if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
   print_message "Review the benchmark results below:"
   cat "$CANBENCH_TMP_OUTPUT"
-  # fi
+  fi
 
   print_message "Benchmarking completed. 
 
