@@ -22,7 +22,7 @@ fn list_all_proposals() -> BenchResult {
 
 #[bench(raw)]
 fn filter_all_proposals_by_default_filters() -> BenchResult {
-    add_proposals_to_repository(1_050);
+    add_proposals_to_repository(1_000);
 
     canbench_rs::bench_fn(|| {
         let _ = PROPOSAL_REPOSITORY.find_where(

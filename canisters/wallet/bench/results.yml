@@ -1,19 +1,19 @@
 benches:
   batch_insert_100_proposals:
     total:
-      instructions: 3059330956
+      instructions: 3059283990
       heap_increase: 2
       stable_memory_increase: 898
     scopes: {}
   filter_all_proposals_by_default_filters:
     total:
-      instructions: 4700389159
+      instructions: 4700388689
       heap_increase: 10
       stable_memory_increase: 0
     scopes: {}
   list_all_proposals:
     total:
-      instructions: 3305653310
+      instructions: 3305652840
       heap_increase: 8
       stable_memory_increase: 0
     scopes: {}

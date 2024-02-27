@@ -38,8 +38,7 @@ jobs:
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
   bench-rust:
-    name: 'bench-wallet:required'
-    needs: [test-rust]
+    name: 'bench-rust:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
