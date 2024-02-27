@@ -33,7 +33,7 @@ pub struct NotificationKey {
     pub id: NotificationId,
 }
 
-fn validate_title(title: &String) -> ModelValidatorResult<NotificationError> {
+fn validate_title(title: &str) -> ModelValidatorResult<NotificationError> {
     if title.len() > Notification::MAX_TITLE_LEN as usize {
         return Err(NotificationError::ValidationError {
             info: format!(

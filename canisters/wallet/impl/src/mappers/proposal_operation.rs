@@ -1,4 +1,4 @@
-use super::{BlockchainMapper, HelperMapper};
+use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
