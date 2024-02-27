@@ -1,4 +1,3 @@
-use crate::helpers::constants::QUERY_INSTRUCTIONS_LIMIT_P95;
 use canbench_rs::{bench, BenchResult};
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
@@ -16,25 +15,16 @@ fn batch_insert_100_proposals() {
 fn list_all_proposals() -> BenchResult {
     add_proposals_to_repository(1_000);
 
-    let res = canbench_rs::bench_fn(|| {
+    canbench_rs::bench_fn(|| {
         let _ = PROPOSAL_REPOSITORY.list();
-    });
-
-    if res.total.instructions >= QUERY_INSTRUCTIONS_LIMIT_P95 {
-        panic!(
-            "Instructions limit should be below {}, but was {}",
-            QUERY_INSTRUCTIONS_LIMIT_P95, res.total.instructions
-        );
-    }
-
-    res
+    })
 }
 
 #[bench(raw)]
 fn filter_all_proposals_by_default_filters() -> BenchResult {
-    add_proposals_to_repository(1_000);
+    add_proposals_to_repository(1_050);
 
-    let res = canbench_rs::bench_fn(|| {
+    canbench_rs::bench_fn(|| {
         let _ = PROPOSAL_REPOSITORY.find_where(
             ProposalWhereClause {
                 created_dt_from: None,
@@ -48,16 +38,7 @@ fn filter_all_proposals_by_default_filters() -> BenchResult {
             },
             None,
         );
-    });
-
-    if res.total.instructions >= QUERY_INSTRUCTIONS_LIMIT_P95 {
-        panic!(
-            "Instructions limit should be below {}, but was {}",
-            QUERY_INSTRUCTIONS_LIMIT_P95, res.total.instructions
-        );
-    }
-
-    res
+    })
 }
 
 fn add_proposals_to_repository(count: usize) {

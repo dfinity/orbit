@@ -37,6 +37,16 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
+  bench-wallet:
+    name: 'bench-wallet:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: 'Run Wallet Benchmarks'
+        run: ./scripts/benchmark-canister.sh ./canisters/wallet/bench
   test-node:
     name: 'test-node:required'
     runs-on: ubuntu-latest

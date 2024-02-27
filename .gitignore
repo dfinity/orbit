@@ -68,3 +68,4 @@ ic-wasm
 wasms/*.wasm.gz
 /src
 .canbench
+.canbench_output

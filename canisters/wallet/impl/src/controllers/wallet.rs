@@ -17,7 +17,7 @@ use wallet_api::{
 };
 
 // Canister entrypoints for the controller.
-#[cfg(not(feature = "canbench-rs"))]
+#[cfg(any(not(feature = "canbench-rs"), test))]
 #[ic_cdk_macros::init]
 async fn initialize(input: Option<WalletInstall>) {
     match input {
@@ -68,7 +68,7 @@ impl WalletController {
         Self { wallet_service }
     }
 
-    #[cfg(not(feature = "canbench-rs"))]
+    #[cfg(any(not(feature = "canbench-rs"), test))]
     async fn initialize(&self, input: wallet_api::WalletInit) {
         let ctx = &call_context();
         self.wallet_service

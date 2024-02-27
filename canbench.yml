@@ -1,5 +1,0 @@
-build_cmd:
-  cargo build --locked --release --target wasm32-unknown-unknown --package wallet-benchmarks
-
-wasm_path:
-  ./target/wasm32-unknown-unknown/release/wallet_benchmarks.wasm

@@ -15,7 +15,7 @@ thread_local! {
     target_os = "unknown"
 ))]
 /// A getrandom implementation that works in the IC.
-pub fn ic_random_bytes(dest: &mut [u8]) -> Result<(), getrandom::Error> {
+pub fn ic_custom_getrandom_bytes_impl(dest: &mut [u8]) -> Result<(), getrandom::Error> {
     RNG.with(|maybe_rng| {
         let mut maybe_rng = maybe_rng.borrow_mut();
         let rng = maybe_rng.as_mut().expect("missing random number generator");
@@ -30,37 +30,38 @@ pub fn ic_random_bytes(dest: &mut [u8]) -> Result<(), getrandom::Error> {
     target_vendor = "unknown",
     target_os = "unknown"
 ))]
-getrandom::register_custom_getrandom!(ic_random_bytes);
+getrandom::register_custom_getrandom!(ic_custom_getrandom_bytes_impl);
 
 pub async fn random_bytes<const N: usize>() -> [u8; N] {
+    maybe_initialize_rng().await;
+
+    random_bytes_gen::<N>()
+}
+
+/// Initializes the random number generator if it has not been initialized yet.
+///
+/// This function is async because it may need to call into the management canister to get a seed with `raw_rand``.
+pub async fn maybe_initialize_rng() {
     let is_initialized = RNG.with(|rng| rng.borrow().is_some());
-    let seed: [u8; 32];
     if !is_initialized {
         let (created_seed,) = management_canister::main::raw_rand()
             .await
             .unwrap_or_else(|_| trap("call to raw_rand failed"));
 
-        seed = created_seed
+        let seed = created_seed
             .try_into()
             .unwrap_or_else(|_| trap("raw_rand not 32 bytes"));
 
-        maybe_initialize_rng(seed);
+        initialize_rng_from_seed(seed);
     }
-
-    random_bytes_gen::<N>()
 }
 
-/// Initializes the random number generator with the given seed, if it hasn't been initialized yet.
-///
-/// If the random number generator has already been initialized, this function does nothing.
-pub fn maybe_initialize_rng(seed: [u8; 32]) {
-    let is_initialized = RNG.with(|rng| rng.borrow().is_some());
-    if !is_initialized {
-        RNG.with(|rng| {
-            let new_rng = ChaCha20Rng::from_seed(seed);
-            let _ = rng.borrow_mut().insert(new_rng);
-        });
-    }
+/// Initializes the random number generator with the given seed.
+pub fn initialize_rng_from_seed(seed: [u8; 32]) {
+    RNG.with(|rng| {
+        let new_rng = ChaCha20Rng::from_seed(seed);
+        let _ = rng.borrow_mut().insert(new_rng);
+    });
 }
 
 pub fn random_bytes_gen<const N: usize>() -> [u8; N] {
@@ -74,8 +75,8 @@ pub fn random_bytes_gen<const N: usize>() -> [u8; N] {
 }
 
 pub async fn generate_uuid_v4() -> Uuid {
-    let bytes = random_bytes::<16>().await;
-    Uuid::from_bytes(bytes)
+    let _ = random_bytes::<16>().await;
+    Uuid::new_v4()
 }
 
 #[cfg(test)]

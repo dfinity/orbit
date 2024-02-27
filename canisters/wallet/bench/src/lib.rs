@@ -9,5 +9,5 @@ pub mod repositories;
 pub async fn init() {
     // Initialize the random number generator with a fixed seed to ensure deterministic
     // results across runs of the benchmarks.
-    ic_canister_core::utils::maybe_initialize_rng([0u8; 32]);
+    ic_canister_core::utils::initialize_rng_from_seed([0u8; 32]);
 }
