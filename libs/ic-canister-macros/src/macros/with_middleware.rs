@@ -58,11 +58,11 @@ impl MacroDefinition for WithMiddlewareMacro {
 }
 
 impl WithMiddlewareMacro {
-    const MACRO_ARG_KEY_IS_ASYNC: &str = "is_async";
-    const MACRO_ARG_KEY_GUARD: &str = "guard";
-    const MACRO_ARG_KEY_WHEN: &str = "when";
-    const MACRO_ARG_KEY_CONTEXT: &str = "context";
-    const MACRO_ARG_KEY_ARGS: &str = "args";
+    const MACRO_ARG_KEY_IS_ASYNC: &'static str = "is_async";
+    const MACRO_ARG_KEY_GUARD: &'static str = "guard";
+    const MACRO_ARG_KEY_WHEN: &'static str = "when";
+    const MACRO_ARG_KEY_CONTEXT: &'static str = "context";
+    const MACRO_ARG_KEY_ARGS: &'static str = "args";
 
     fn expand_implementation(&self, args: &MacroArguments) -> Result<TokenStream, Error> {
         let parsed_input: syn::Item = parse2(self.input.clone().into())?;

@@ -61,7 +61,7 @@ impl Display for InternetComputerNetwork {
 impl InternetComputer {
     pub const BLOCKCHAIN: Blockchain = Blockchain::InternetComputer;
     pub const STANDARD: BlockchainStandard = BlockchainStandard::Native;
-    pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    pub const ICP_LEDGER_CANISTER_ID: &'static str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     pub const DECIMALS: u32 = 8;
     pub const MAIN_NETWORK: InternetComputerNetwork = InternetComputerNetwork::Mainnet;
 

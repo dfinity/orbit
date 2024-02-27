@@ -67,3 +67,4 @@ canisters/integration-tests/pocket-ic
 ic-wasm
 wasms/*.wasm.gz
 /src
+.canbench
