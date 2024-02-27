@@ -135,15 +135,15 @@ impl CriteriaEvaluator {
             .then(|(user_id, match_return)| {
                 let match_return = match_return.clone();
                 async move {
-                    match {
-                        self.user_matcher
-                            .is_match((
-                                proposal.as_ref().to_owned(),
-                                user_id.to_owned(),
-                                user_specifier.to_owned(),
-                            ))
-                            .await
-                    } {
+                    match self
+                        .user_matcher
+                        .is_match((
+                            proposal.as_ref().to_owned(),
+                            user_id.to_owned(),
+                            user_specifier.to_owned(),
+                        ))
+                        .await
+                    {
                         Ok(true) => Ok(Some(match_return)),
                         Ok(false) => Ok(None),
                         Err(e) => Err(e),

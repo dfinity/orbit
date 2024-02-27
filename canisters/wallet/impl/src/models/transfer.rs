@@ -130,7 +130,7 @@ impl Transfer {
     }
 }
 
-fn validate_to_address(to_address: &String) -> ModelValidatorResult<TransferError> {
+fn validate_to_address(to_address: &str) -> ModelValidatorResult<TransferError> {
     if (to_address.len() < Transfer::ADDRESS_RANGE.0 as usize)
         || (to_address.len() > Transfer::ADDRESS_RANGE.1 as usize)
     {
@@ -146,7 +146,7 @@ fn validate_to_address(to_address: &String) -> ModelValidatorResult<TransferErro
     Ok(())
 }
 
-fn validate_network(blockchain_network: &String) -> ModelValidatorResult<TransferError> {
+fn validate_network(blockchain_network: &str) -> ModelValidatorResult<TransferError> {
     if (blockchain_network.len() < Transfer::NETWORK_RANGE.0 as usize)
         || (blockchain_network.len() > Transfer::NETWORK_RANGE.1 as usize)
     {

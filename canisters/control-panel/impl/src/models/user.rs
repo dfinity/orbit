@@ -36,7 +36,7 @@ impl User {
     }
 }
 
-fn validate_wallets(wallets: &Vec<UserWallet>) -> ModelValidatorResult<UserError> {
+fn validate_wallets(wallets: &[UserWallet]) -> ModelValidatorResult<UserError> {
     if wallets.len() > User::MAX_WALLETS as usize {
         return Err(UserError::ValidationError {
             info: format!(

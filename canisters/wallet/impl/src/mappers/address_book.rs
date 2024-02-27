@@ -1,7 +1,7 @@
 use super::HelperMapper;
 use crate::core::ic_cdk::api::time;
 use crate::errors::MapperError;
-use crate::mappers::BlockchainMapper;
+use crate::mappers::blockchain::BlockchainMapper;
 use crate::models::{
     AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
     AddressChain, ListAddressBookEntriesInput,
