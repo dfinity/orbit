@@ -259,7 +259,7 @@ mod tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench-rs"))]
 pub mod proposal_test_utils {
     use num_bigint::BigUint;
 

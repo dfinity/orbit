@@ -9,21 +9,32 @@ use crate::{
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
-use ic_cdk_macros::{init, post_upgrade, query};
+use ic_cdk_macros::{post_upgrade, query};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use wallet_api::{
-    GetConfigResponse, HealthStatus, WalletInit, WalletInstall, WalletSettingsResponse,
-    WalletUpgrade,
+    GetConfigResponse, HealthStatus, WalletInstall, WalletSettingsResponse, WalletUpgrade,
 };
 
 // Canister entrypoints for the controller.
-#[init]
+#[cfg(any(not(feature = "canbench-rs"), test))]
+#[ic_cdk_macros::init]
 async fn initialize(input: Option<WalletInstall>) {
     match input {
         Some(WalletInstall::Init(input)) => CONTROLLER.initialize(input).await,
         _ => trap("Invalid init args to install canister"),
     }
+}
+
+/// The init is overriden for benchmarking purposes.
+///
+/// This is only used for benchmarking and is not included in the final canister.
+#[cfg(feature = "canbench-rs")]
+#[ic_cdk_macros::init]
+pub async fn mock_init() {
+    // Initialize the random number generator with a fixed seed to ensure deterministic
+    // results across runs of the benchmarks.
+    ic_canister_core::utils::initialize_rng_from_seed([0u8; 32]);
 }
 
 #[post_upgrade]
@@ -68,7 +79,8 @@ impl WalletController {
         Self { wallet_service }
     }
 
-    async fn initialize(&self, input: WalletInit) {
+    #[cfg(any(not(feature = "canbench-rs"), test))]
+    async fn initialize(&self, input: wallet_api::WalletInit) {
         let ctx = &call_context();
         self.wallet_service
             .init_canister(input, ctx)
