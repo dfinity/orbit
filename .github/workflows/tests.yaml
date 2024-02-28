@@ -23,8 +23,8 @@ env:
   # Use the local .curlrc
   CURL_HOME: .
   # sscache environment variables
-  # SCCACHE_GHA_ENABLED: 'true'
-  # RUSTC_WRAPPER: 'sccache'
+  SCCACHE_GHA_ENABLED: 'true'
+  RUSTC_WRAPPER: 'sccache'
 
 jobs:
   test-rust:
@@ -33,93 +33,93 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      # - name: Run sccache-cache
-      #   uses: mozilla-actions/sccache-action@v0.0.4
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
-  # test-node:
-  #   name: 'test-node:required'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: 'Checkout'
-  #       uses: actions/checkout@v3
-  #     - name: 'Setup Node'
-  #       uses: ./.github/actions/setup-node
-  #     - name: 'Install Dependencies'
-  #       run: |
-  #         pnpm install --frozen-lockfile
-  #     - name: 'Check code'
-  #       run: |
-  #         pnpm test -- --run
+  test-node:
+    name: 'test-node:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install Dependencies'
+        run: |
+          pnpm install --frozen-lockfile
+      - name: 'Check code'
+        run: |
+          pnpm test -- --run
 
   # Github Actions only supports jobs to be run in parallel, not steps, so we have to build the packages in
   # separate jobs from the integration tests execution to speed up the build.
-  # build-wasms:
-  #   name: Build canister
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       package: [control_panel, upgrader, wallet]
-  #   steps:
-  #     - name: 'Checkout'
-  #       uses: actions/checkout@v3
-  #     # - name: Run sccache-cache
-  #     #   uses: mozilla-actions/sccache-action@v0.0.4
-  #     - name: 'Build Package'
-  #       run: ./scripts/generate-wasm.sh ${{ matrix.package }}
-  #     - name: 'Prepare artifacts'
-  #       run: |
-  #         mkdir -p artifacts
-  #         mv canisters/integration-tests/wasms/* artifacts
-  #     - name: 'Upload Artifacts'
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: integration-tests
-  #         path: artifacts/${{ matrix.package }}.wasm.gz
-  #         retention-days: 10
-  #         if-no-files-found: error
-  # download-canisters:
-  #   name: Download Canister
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - canister: 'icp_ledger'
-  #           name: 'ledger-canister'
-  #         - canister: 'icp_index'
-  #           name: 'ic-icp-index-canister'
-  #   steps:
-  #     - name: 'Checkout'
-  #       uses: actions/checkout@v3
-  #     - name: 'Download Canister'
-  #       run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
-  #     - name: 'Prepare artifacts'
-  #       run: |
-  #         mkdir -p artifacts
-  #         mv canisters/integration-tests/wasms/* artifacts
-  #     - name: 'Upload Artifacts'
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: integration-tests
-  #         path: artifacts/${{ matrix.canister }}.wasm.gz
-  #         retention-days: 10
-  #         if-no-files-found: error
-  # integration-tests:
-  #   name: 'integration-tests:required'
-  #   needs: [build-wasms, download-canisters]
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     BUILD_WASMS: 'false'
-  #     DOWNLOAD_NNS_CANISTERS: 'false'
-  #   steps:
-  #     - name: 'Checkout'
-  #       uses: actions/checkout@v3
-  #     # - name: Run sccache-cache
-  #     #   uses: mozilla-actions/sccache-action@v0.0.4
-  #     - name: 'Download Artifacts'
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: integration-tests
-  #         path: canisters/integration-tests/wasms
-  #     - name: Run integration tests
-  #       run: ./scripts/run-integration-tests.sh
+  build-wasms:
+    name: Build canister
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [control_panel, upgrader, wallet]
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Build Package'
+        run: ./scripts/generate-wasm.sh ${{ matrix.package }}
+      - name: 'Prepare artifacts'
+        run: |
+          mkdir -p artifacts
+          mv canisters/integration-tests/wasms/* artifacts
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-tests
+          path: artifacts/${{ matrix.package }}.wasm.gz
+          retention-days: 10
+          if-no-files-found: error
+  download-canisters:
+    name: Download Canister
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - canister: 'icp_ledger'
+            name: 'ledger-canister'
+          - canister: 'icp_index'
+            name: 'ic-icp-index-canister'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Download Canister'
+        run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
+      - name: 'Prepare artifacts'
+        run: |
+          mkdir -p artifacts
+          mv canisters/integration-tests/wasms/* artifacts
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-tests
+          path: artifacts/${{ matrix.canister }}.wasm.gz
+          retention-days: 10
+          if-no-files-found: error
+  integration-tests:
+    name: 'integration-tests:required'
+    needs: [build-wasms, download-canisters]
+    runs-on: ubuntu-latest
+    env:
+      BUILD_WASMS: 'false'
+      DOWNLOAD_NNS_CANISTERS: 'false'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Download Artifacts'
+        uses: actions/download-artifact@v3
+        with:
+          name: integration-tests
+          path: canisters/integration-tests/wasms
+      - name: Run integration tests
+        run: ./scripts/run-integration-tests.sh

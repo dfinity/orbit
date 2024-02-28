@@ -15,7 +15,7 @@ thread_local! {
     target_os = "unknown"
 ))]
 /// A getrandom implementation that works in the IC.
-pub fn ic_custom_getrandom_bytes_impl(dest: &mut [u8]) -> Result<(), getrandom::Error> {
+pub fn custom_getrandom_bytes_impl(dest: &mut [u8]) -> Result<(), getrandom::Error> {
     RNG.with(|maybe_rng| {
         let mut maybe_rng = maybe_rng.borrow_mut();
         let rng = maybe_rng.as_mut().expect("missing random number generator");
@@ -30,7 +30,7 @@ pub fn ic_custom_getrandom_bytes_impl(dest: &mut [u8]) -> Result<(), getrandom::
     target_vendor = "unknown",
     target_os = "unknown"
 ))]
-getrandom::register_custom_getrandom!(ic_custom_getrandom_bytes_impl);
+getrandom::register_custom_getrandom!(custom_getrandom_bytes_impl);
 
 pub async fn random_bytes<const N: usize>() -> [u8; N] {
     maybe_initialize_rng().await;
@@ -76,7 +76,7 @@ pub fn random_bytes_gen<const N: usize>() -> [u8; N] {
 
 pub async fn generate_uuid_v4() -> Uuid {
     let bytes = random_bytes::<16>().await;
-    Builder::from_bytes(bytes).into_uuid()
+    Builder::from_random_bytes(bytes).into_uuid()
 }
 
 #[cfg(test)]
