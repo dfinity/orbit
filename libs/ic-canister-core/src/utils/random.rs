@@ -9,28 +9,28 @@ thread_local! {
   static RNG: RefCell<Option<ChaCha20Rng>> = RefCell::new(None);
 }
 
-#[cfg(all(
-    target_arch = "wasm32",
-    target_vendor = "unknown",
-    target_os = "unknown"
-))]
-/// A getrandom implementation that works in the IC.
-pub fn ic_custom_getrandom_bytes_impl(dest: &mut [u8]) -> Result<(), getrandom::Error> {
-    RNG.with(|maybe_rng| {
-        let mut maybe_rng = maybe_rng.borrow_mut();
-        let rng = maybe_rng.as_mut().expect("missing random number generator");
-        rng.fill_bytes(dest);
-    });
+// #[cfg(all(
+//     target_arch = "wasm32",
+//     target_vendor = "unknown",
+//     target_os = "unknown"
+// ))]
+// /// A getrandom implementation that works in the IC.
+// pub fn ic_custom_getrandom_bytes_impl(dest: &mut [u8]) -> Result<(), getrandom::Error> {
+//     RNG.with(|maybe_rng| {
+//         let mut maybe_rng = maybe_rng.borrow_mut();
+//         let rng = maybe_rng.as_mut().expect("missing random number generator");
+//         rng.fill_bytes(dest);
+//     });
 
-    Ok(())
-}
+//     Ok(())
+// }
 
-#[cfg(all(
-    target_arch = "wasm32",
-    target_vendor = "unknown",
-    target_os = "unknown"
-))]
-getrandom::register_custom_getrandom!(ic_custom_getrandom_bytes_impl);
+// #[cfg(all(
+//     target_arch = "wasm32",
+//     target_vendor = "unknown",
+//     target_os = "unknown"
+// ))]
+// getrandom::register_custom_getrandom!(ic_custom_getrandom_bytes_impl);
 
 pub async fn random_bytes<const N: usize>() -> [u8; N] {
     maybe_initialize_rng().await;
