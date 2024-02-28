@@ -671,6 +671,7 @@ export interface TransferListItem {
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
   'network' : Network,
+  'transfer_id' : [] | [UUID],
   'from_account' : [] | [Account],
   'input' : TransferOperationInput,
 }
