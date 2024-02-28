@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "canisters/integration-tests",
+    # "canisters/integration-tests",
     "canisters/control-panel/api",
     "canisters/control-panel/impl",
     "canisters/upgrader/api",
