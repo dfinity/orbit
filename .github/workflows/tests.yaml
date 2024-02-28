@@ -32,9 +32,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Setup Rust Toolchain'
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
   test-node:
@@ -42,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'
@@ -62,7 +64,7 @@ jobs:
         package: [control_panel, upgrader, wallet]
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Build Package'
@@ -90,7 +92,7 @@ jobs:
             name: 'ic-icp-index-canister'
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Download Canister'
         run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
       - name: 'Prepare artifacts'
@@ -113,7 +115,7 @@ jobs:
       DOWNLOAD_NNS_CANISTERS: 'false'
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Download Artifacts'
