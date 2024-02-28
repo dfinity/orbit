@@ -7,6 +7,11 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
+FEATURES="${FEATURES:-}"
+if [ -n "$FEATURES" ]
+then
+  FEATURES="--features $FEATURES"
+fi
 PACKAGE="${CANISTER_NAME}"
 OSTYPE=$(uname -s) || OSTYPE=$OSTYPE
 OSTYPE="${OSTYPE,,}"
@@ -28,7 +33,8 @@ for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
-cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
+
+cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE $FEATURES
 
 echo Optimising wasm
 if [[ "$OSTYPE" == "linux"* || "$RUNNER_OS" == "Linux" ]]
