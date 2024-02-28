@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    # "canisters/integration-tests",
+    "canisters/integration-tests",
     "canisters/control-panel/api",
     "canisters/control-panel/impl",
     "canisters/upgrader/api",
@@ -40,6 +40,9 @@ lazy_static = "1.4.0"
 mockall = "0.12.1"
 num-bigint = "0.4"
 num-traits = "0.2"
+# This is a temporary workaround for pocket-ic to use the latest version of ic-cdk that is 
+# already in master but not yet published to crates.io
+pocket-ic = { git = "https://github.com/dfinity/ic.git", rev = "6397368" }
 proc-macro2 = "1.0"
 prometheus = "0.13.3"
 quote = "1.0"
