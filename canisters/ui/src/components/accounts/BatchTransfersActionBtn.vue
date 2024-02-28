@@ -222,7 +222,13 @@ const canSubmit = computed(() => {
 });
 
 const totalAmount = computed(() =>
-  rows.value.reduce((acc, row) => acc + (row.transfer.amount || 0n), 0n),
+  rows.value.reduce((acc, row) => {
+    if (row.valid && row.transfer.amount) {
+      return acc + row.transfer.amount;
+    }
+
+    return acc;
+  }, 0n),
 );
 
 watch(
