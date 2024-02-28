@@ -9,6 +9,7 @@ include = ["src", "Cargo.toml"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+bench = false
 
 [dependencies]
 candid = { workspace = true }
