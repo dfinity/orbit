@@ -33,8 +33,8 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+      # - name: Run sccache-cache
+      #   uses: mozilla-actions/sccache-action@v0.0.3
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
   test-node:
