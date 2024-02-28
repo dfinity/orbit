@@ -26,6 +26,17 @@ async fn initialize(input: Option<WalletInstall>) {
     }
 }
 
+/// The init is overriden for benchmarking purposes.
+///
+/// This is only used for benchmarking and is not included in the final canister.
+#[cfg(feature = "canbench-rs")]
+#[ic_cdk_macros::init]
+pub async fn mock_init() {
+    // Initialize the random number generator with a fixed seed to ensure deterministic
+    // results across runs of the benchmarks.
+    ic_canister_core::utils::initialize_rng_from_seed([0u8; 32]);
+}
+
 #[post_upgrade]
 async fn post_upgrade(input: Option<WalletInstall>) {
     match input {

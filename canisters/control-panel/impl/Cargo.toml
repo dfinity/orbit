@@ -10,7 +10,7 @@ homepage = "https://github.com/dfinity/orbit-wallet#readme"
 repository = "https://github.com/dfinity/orbit-wallet"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 bench = false
 
 [dependencies]

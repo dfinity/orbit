@@ -2340,19 +2340,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "wallet-bench"
-version = "0.1.0"
-dependencies = [
- "canbench-rs",
- "candid",
- "ic-canister-core",
- "ic-cdk",
- "ic-cdk-macros",
- "uuid",
- "wallet",
-]
-
-[[package]]
 name = "wallet_api"
 version = "0.1.0"
 dependencies = [
