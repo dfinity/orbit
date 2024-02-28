@@ -11,7 +11,9 @@ ic-canister-core = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 lazy_static = { workspace = true }
-pocket-ic = { workspace = true }
+# This is a temporary workaround for pocket-ic to use the latest version of ic-cdk that is
+# already in master but not yet published to crates.io
+pocket-ic = { git = "https://github.com/dfinity/ic.git", rev = "6397368" }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 control_panel_api = { path = "../control-panel/api" }

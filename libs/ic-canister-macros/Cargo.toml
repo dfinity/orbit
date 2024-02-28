@@ -9,6 +9,7 @@ include = ["src", "Cargo.toml"]
 
 [lib]
 proc-macro = true
+bench = false
 
 [dependencies]
 candid = { workspace = true }
