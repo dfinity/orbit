@@ -34,6 +34,6 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v3
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+        uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Run Wallet Benchmarks'
         run: ./scripts/benchmark-canister.sh ./canisters/wallet/bench

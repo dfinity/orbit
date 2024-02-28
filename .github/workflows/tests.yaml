@@ -24,7 +24,7 @@ env:
   CURL_HOME: .
   # sscache environment variables
   SCCACHE_GHA_ENABLED: 'true'
-  RUSTC_WRAPPER: 'sccache'
+  # RUSTC_WRAPPER: 'sccache'
 
 jobs:
   test-rust:
@@ -34,7 +34,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v3
       # - name: Run sccache-cache
-      #   uses: mozilla-actions/sccache-action@v0.0.3
+      #   uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
   test-node:
@@ -63,8 +63,8 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+      # - name: Run sccache-cache
+      #   uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Build Package'
         run: ./scripts/generate-wasm.sh ${{ matrix.package }}
       - name: 'Prepare artifacts'
@@ -114,8 +114,8 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v3
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+      # - name: Run sccache-cache
+      #   uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Download Artifacts'
         uses: actions/download-artifact@v3
         with:
