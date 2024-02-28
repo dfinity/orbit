@@ -2,7 +2,6 @@
 //!
 //! The wallet benchmarks provide a comprehensive set of benchmarks for the wallet canister.
 
-pub mod helpers;
 pub mod repositories;
 
 #[ic_cdk_macros::init]

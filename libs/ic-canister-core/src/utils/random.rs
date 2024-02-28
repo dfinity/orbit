@@ -3,7 +3,7 @@ use rand_chacha::rand_core::RngCore;
 use rand_chacha::rand_core::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use std::cell::RefCell;
-use uuid::Uuid;
+use uuid::{Builder, Uuid};
 
 thread_local! {
   static RNG: RefCell<Option<ChaCha20Rng>> = RefCell::new(None);
@@ -75,8 +75,8 @@ pub fn random_bytes_gen<const N: usize>() -> [u8; N] {
 }
 
 pub async fn generate_uuid_v4() -> Uuid {
-    let _ = random_bytes::<16>().await;
-    Uuid::new_v4()
+    let bytes = random_bytes::<16>().await;
+    Builder::from_bytes(bytes).into_uuid()
 }
 
 #[cfg(test)]
