@@ -419,6 +419,7 @@ mod tests {
                         metadata: Metadata::default(),
                         network: "network-1".into(),
                         fee: None,
+                        description: None,
                     },
                 }),
                 ProposalSpecifier::Transfer(AccountSpecifier::Any),

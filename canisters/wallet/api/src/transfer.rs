@@ -18,6 +18,7 @@ pub struct TransferOperationInput {
     pub fee: Option<candid::Nat>,
     pub metadata: Vec<MetadataDTO>,
     pub network: Option<NetworkDTO>,
+    pub description: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

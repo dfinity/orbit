@@ -245,6 +245,8 @@ type TransferOperationInput = record {
   // Trasanctions can be tagged with an optional additional info
   // (e.g. a nonce in the case of an Ethereum transaction)
   metadata : vec TransferMetadata;
+  // Description of transfer.
+  description : opt text;
 };
 
 // Input type for transferring funds.

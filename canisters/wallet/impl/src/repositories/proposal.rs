@@ -597,6 +597,7 @@ mod tests {
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
                 from_account_id: *account_id.as_bytes(),
+                description: None,
             },
         });
 

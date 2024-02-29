@@ -47,6 +47,7 @@ impl TransferOperation {
                     id: self.input.network.clone(),
                     name: self.input.network.clone(),
                 }),
+                description: self.input.description,
             },
             transfer_id: self
                 .transfer_id

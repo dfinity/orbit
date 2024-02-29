@@ -49,6 +49,7 @@ pub struct TransferOperationInput {
     pub metadata: Metadata,
     pub network: String,
     pub fee: Option<candid::Nat>,
+    pub description: Option<String>,
 }
 
 #[stable_object]
