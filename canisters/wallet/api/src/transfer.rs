@@ -25,6 +25,7 @@ pub struct TransferOperationDTO {
     pub from_account: Option<AccountDTO>,
     pub network: NetworkDTO,
     pub input: TransferOperationInput,
+    pub transfer_id: Option<UuidDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

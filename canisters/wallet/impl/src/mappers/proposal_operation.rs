@@ -48,6 +48,9 @@ impl TransferOperation {
                     name: self.input.network.clone(),
                 }),
             },
+            transfer_id: self
+                .transfer_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
         }
     }
 }

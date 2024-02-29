@@ -255,6 +255,8 @@ type TransferOperation = record {
   network : Network;
   // The input to the proposal to transfer funds.
   input : TransferOperationInput;
+  // The id of the executed transfer.
+  transfer_id : opt UUID;
 };
 
 // Input type for editing an account through a proposal.

@@ -8,6 +8,9 @@ use ic_canister_core::api::ApiError;
 use num_bigint::BigUint;
 use std::collections::HashMap;
 
+pub const TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY: &str = "block_height";
+pub const TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY: &str = "transaction_hash";
+
 pub type BlockchainApiResult<T> = Result<T, ApiError>;
 
 #[derive(Clone, Debug, Hash)]

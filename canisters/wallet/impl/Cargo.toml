@@ -34,6 +34,7 @@ num-traits = { workspace = true }
 prometheus = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
