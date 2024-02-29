@@ -357,7 +357,6 @@ mod tests {
                 metadata: Metadata::default(),
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
-                description: None,
             },
         });
 
@@ -390,7 +389,6 @@ mod tests {
                 metadata: Metadata::default(),
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
-                description: None,
             },
         });
         proposal.votes = vec![];
@@ -477,7 +475,6 @@ mod tests {
                             metadata: vec![],
                             network: None,
                             to: "0x1234".to_string(),
-                            description: None,
                         },
                     ),
                     title: None,
@@ -510,7 +507,6 @@ mod tests {
                 metadata: Metadata::default(),
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
-                description: None,
             },
         });
         proposal.created_timestamp = 10;

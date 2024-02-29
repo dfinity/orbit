@@ -60,7 +60,6 @@ impl Create<wallet_api::TransferOperationInput> for TransferProposalCreate {
                         Some(network) => network.id,
                         None => "mainnet".to_string(),
                     },
-                    description: operation_input.description,
                 },
             }),
             input

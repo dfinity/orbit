@@ -136,7 +136,6 @@ fn make_transfer_successful() {
         fee: None,
         metadata: vec![],
         network: None,
-        description: Some("test transfer".to_string()),
     };
     let transfer_proposal = CreateProposalInput {
         operation: ProposalOperationInput::Transfer(transfer),
@@ -185,16 +184,10 @@ fn make_transfer_successful() {
         }
     };
 
+    // proposal has the transfer id filled out
     match new_proposal_dto.operation {
         ProposalOperationDTO::Transfer(transfer) => {
-            // proposal has the transfer id filled out
-            transfer.transfer_id.expect("transfer id must be set");
-
-            // proposal has a description
-            assert_eq!(
-                transfer.input.description.expect("description must be set"),
-                "test transfer"
-            );
+            transfer.transfer_id.expect("transfer id must be set")
         }
         _ => {
             panic!("proposal must be Transfer");

@@ -293,7 +293,6 @@ fn check_address_book_for_transfer() {
         fee: None,
         metadata: vec![],
         network: None,
-        description: None,
     });
     let transfer_error = execute_proposal(
         &env,

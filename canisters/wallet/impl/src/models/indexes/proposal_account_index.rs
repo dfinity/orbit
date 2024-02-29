@@ -74,7 +74,6 @@ mod tests {
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
                 from_account_id: [0; 16],
-                description: None,
             },
         });
 

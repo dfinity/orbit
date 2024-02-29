@@ -681,7 +681,6 @@ export interface TransferOperationInput {
   'from_account_id' : UUID,
   'metadata' : Array<TransferMetadata>,
   'network' : [] | [Network],
-  'description' : [] | [string],
   'amount' : bigint,
 }
 export interface TransferSpecifier { 'account' : CommonSpecifier }

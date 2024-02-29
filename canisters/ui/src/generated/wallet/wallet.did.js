@@ -197,7 +197,6 @@ export const idlFactory = ({ IDL }) => {
     'from_account_id' : UUID,
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : IDL.Opt(Network),
-    'description' : IDL.Opt(IDL.Text),
     'amount' : IDL.Nat,
   });
   const AccountPolicies = IDL.Record({

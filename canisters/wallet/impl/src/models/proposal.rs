@@ -284,7 +284,6 @@ pub mod proposal_test_utils {
                     metadata: Metadata::default(),
                     to: "0x1234".to_string(),
                     from_account_id: [1; 16],
-                    description: None,
                 },
             }),
             votes: vec![ProposalVote {
