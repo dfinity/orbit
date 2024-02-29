@@ -23,10 +23,26 @@
             v-model="transfer"
             v-model:trigger-submit="triggerSubmit"
             :account="props.account.value"
-            :disabled="props.readonly.value"
+            :mode="props.readonly.value ? 'view' : 'edit'"
             @submit="save"
             @valid="valid = $event"
           />
+
+          <VRow v-if="!props.transferId.value">
+            <VCol :cols="12">
+              <VTextField
+                v-model="summary"
+                :label="$t('terms.summary')"
+                variant="underlined"
+                density="compact"
+                class="mb-2"
+                name="to"
+                :disabled="props.readonly.value"
+                type="text"
+                :prepend-icon="mdiComment"
+              />
+            </VCol>
+          </VRow>
         </VCardText>
         <VCardActions class="pa-3">
           <VSpacer />
@@ -44,7 +60,7 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiClose } from '@mdi/js';
+import { mdiClose, mdiComment } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
 import TransferForm from './TransferForm.vue';
@@ -53,7 +69,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { Account, Transfer, UUID } from '~/generated/wallet/wallet.did';
+import { Account, Proposal, Transfer, UUID } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 
@@ -82,9 +98,17 @@ const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
 const transfer = ref<Partial<Transfer>>({});
+const proposal = ref<Partial<Proposal>>({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
+});
+
+const summary = computed({
+  get: () => proposal.value.summary?.[0],
+  set: value => {
+    proposal.value.summary = !value ? [] : [value];
+  },
 });
 
 const wallet = useWalletStore();
@@ -101,6 +125,9 @@ const loadTransfer = async (): Promise<{
   }
 
   const result = await wallet.service.getTransfer(props.transferId.value);
+
+  // todo: also load proposal to show summary
+
   return { transfer: result };
 };
 
@@ -118,16 +145,19 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
 
-    const proposal = await wallet.service.transfer({
-      from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
-      amount: assertAndReturn(transfer.value.amount, 'amount'),
-      to: assertAndReturn(transfer.value.to, 'to'),
-      fee: transfer.value.fee ? [transfer.value.fee] : [],
-      metadata: transfer.value.metadata ?? [],
-      network: transfer.value.network ? [transfer.value.network] : [],
-    });
+    const newProposal = await wallet.service.transfer(
+      {
+        from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
+        amount: assertAndReturn(transfer.value.amount, 'amount'),
+        to: assertAndReturn(transfer.value.to, 'to'),
+        fee: transfer.value.fee ? [transfer.value.fee] : [],
+        metadata: transfer.value.metadata ?? [],
+        network: transfer.value.network ? [transfer.value.network] : [],
+      },
+      summary.value,
+    );
 
-    useOnSuccessfulOperation(proposal);
+    useOnSuccessfulOperation(newProposal);
 
     openModel.value = false;
   } catch (error) {

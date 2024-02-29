@@ -659,11 +659,11 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async transfer(input: TransferOperationInput): Promise<Proposal> {
+  async transfer(input: TransferOperationInput, description?: string): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
-      summary: [],
+      summary: description ? [description] : [],
       operation: { Transfer: input },
     });
 
