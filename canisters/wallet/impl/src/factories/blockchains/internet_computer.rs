@@ -16,7 +16,7 @@ use byteorder::{BigEndian, ByteOrder};
 use candid::Principal;
 use ic_canister_core::{
     api::ApiError,
-    cdk::{self},
+    cdk::{self, api::print},
 };
 use ic_ledger_types::{
     account_balance, query_blocks, transfer, AccountBalanceArgs, AccountIdentifier, GetBlocksArgs,
@@ -206,11 +206,26 @@ impl InternetComputer {
         )
         .await
         {
-            Ok(QueryBlocksResponse { blocks, .. }) => blocks
-                .first()
-                .map(|block| Self::hash_transaction(&block.transaction)),
+            Ok(QueryBlocksResponse { blocks, .. }) => {
+                let maybe_transaction_hash = blocks
+                    .first()
+                    .map(|block| Self::hash_transaction(&block.transaction));
 
-            Err(_) => None,
+                print(format!(
+                    "Error: no ICP ledger block found at height {}",
+                    block_height
+                ));
+
+                maybe_transaction_hash
+            }
+
+            Err(e) => {
+                print(format!(
+                    "Error: could not query ICP ledger block at height {}:\nCode: {:?}\nMessage: {:?}",
+                    block_height, e.0, e.1
+                ));
+                None
+            }
         };
 
         Ok(SubmitTransferResponse {
