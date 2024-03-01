@@ -10,9 +10,12 @@
       v-slot="{ data }"
       :load="loadTransfer"
       @loading="loading = $event"
-      @loaded="transfer = $event.transfer"
+      @loaded="
+        transfer = $event.transfer;
+        proposal = $event.proposal;
+      "
     >
-      <VCard :loading="loading">
+      <VCard :loading="loading" data-test-id="transfer-dialog-form">
         <VToolbar dark color="surface">
           <VToolbarTitle>{{ $t('terms.transfer') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
@@ -28,7 +31,7 @@
             @valid="valid = $event"
           />
 
-          <VRow v-if="!props.transferId.value">
+          <VRow>
             <VCol :cols="12">
               <VTextField
                 v-model="summary"
@@ -40,6 +43,7 @@
                 :disabled="props.readonly.value"
                 type="text"
                 :prepend-icon="mdiComment"
+                data-test-id="transfer-dialog-proposal-summary"
               />
             </VCol>
           </VRow>
@@ -50,6 +54,7 @@
             v-if="!props.readonly.value"
             :disabled="!canSave"
             :loading="saving"
+            data-test-id="transfer-dialog-save-button"
             @click="triggerSubmit = true"
           >
             {{ props.transferId.value ? $t('terms.save') : $t('terms.create') }}
@@ -70,8 +75,8 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { Account, Proposal, Transfer, UUID } from '~/generated/wallet/wallet.did';
-import { useWalletStore } from '~/stores/wallet.store';
 import { assertAndReturn } from '~/utils/helper.utils';
+import { services } from '~/plugins/services.plugin';
 
 const input = withDefaults(
   defineProps<{
@@ -111,24 +116,27 @@ const summary = computed({
   },
 });
 
-const wallet = useWalletStore();
+const walletService = services().wallet;
 
 const loadTransfer = async (): Promise<{
   transfer: Partial<Transfer>;
+  proposal: Partial<Proposal>;
 }> => {
   if (props.transferId.value === undefined) {
     const createModel: Partial<Transfer> = {
       from_account_id: props.account.value.id,
     };
 
-    return { transfer: createModel };
+    return { transfer: createModel, proposal: {} };
   }
 
-  const result = await wallet.service.getTransfer(props.transferId.value);
+  const transfer = await walletService.getTransfer(props.transferId.value);
 
-  // todo: also load proposal to show summary
+  const { proposal } = await walletService.getProposal({
+    proposal_id: transfer.proposal_id,
+  });
 
-  return { transfer: result };
+  return { transfer, proposal };
 };
 
 const canSave = computed(() => {
@@ -145,7 +153,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
 
-    const newProposal = await wallet.service.transfer(
+    const newProposal = await walletService.transfer(
       {
         from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
         amount: assertAndReturn(transfer.value.amount, 'amount'),
