@@ -13,6 +13,10 @@ impl TransferMapper {
                 .unwrap()
                 .hyphenated()
                 .to_string(),
+            proposal_id: Uuid::from_slice(&transfer.proposal_id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
             amount: transfer.amount,
             fee: transfer.fee,
             metadata: transfer.metadata.into_vec_dto(),
@@ -39,6 +43,10 @@ impl TransferMapper {
             to: transfer.to_address,
             created_at: timestamp_to_rfc3339(&transfer.created_timestamp),
             status: transfer.status.into(),
+            proposal_id: Uuid::from_slice(&transfer.proposal_id)
+                .unwrap()
+                .hyphenated()
+                .to_string(),
         }
     }
 }

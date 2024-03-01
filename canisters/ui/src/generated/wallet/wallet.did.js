@@ -530,6 +530,7 @@ export const idlFactory = ({ IDL }) => {
     'from_account_id' : UUID,
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : Network,
+    'proposal_id' : UUID,
     'amount' : IDL.Nat,
   });
   const GetTransfersResult = IDL.Variant({
@@ -612,6 +613,7 @@ export const idlFactory = ({ IDL }) => {
     'status' : TransferStatus,
     'created_at' : TimestampRFC3339,
     'transfer_id' : UUID,
+    'proposal_id' : UUID,
     'amount' : IDL.Nat,
   });
   const ListAccountTransfersResult = IDL.Variant({
