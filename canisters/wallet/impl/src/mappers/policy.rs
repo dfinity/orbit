@@ -7,22 +7,28 @@ use crate::models::{
     },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier},
-    ProposalPolicy,
+    ProposalPolicy, ProposalPolicyCallerPrivileges,
 };
 use uuid::Uuid;
-use wallet_api::{AccessPolicyInfoDTO, CriteriaDTO, TransferSpecifierDTO, UserSpecifierDTO};
-
-pub type AccessPolicyInfo = AccessPolicyInfoDTO;
+use wallet_api::{
+    ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, TransferSpecifierDTO, UserSpecifierDTO,
+};
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
         match criteria {
             Criteria::AutoAdopted => CriteriaDTO::AutoAdopted,
             Criteria::ApprovalThreshold(specifier, threshold) => {
-                CriteriaDTO::ApprovalThreshold(specifier.into(), threshold.0)
+                CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                    voters: specifier.into(),
+                    threshold: threshold.0,
+                })
             }
             Criteria::MinimumVotes(specifier, votes) => {
-                CriteriaDTO::MinimumVotes(specifier.into(), votes)
+                CriteriaDTO::MinimumVotes(MinimumVotesDTO {
+                    voters: specifier.into(),
+                    minimum: votes,
+                })
             }
             Criteria::HasAddressBookMetadata(metadata) => {
                 CriteriaDTO::HasAddressBookMetadata(metadata)
@@ -42,11 +48,11 @@ impl From<CriteriaDTO> for Criteria {
     fn from(dto: CriteriaDTO) -> Self {
         match dto {
             CriteriaDTO::AutoAdopted => Criteria::AutoAdopted,
-            CriteriaDTO::ApprovalThreshold(specifier, threshold) => {
-                Criteria::ApprovalThreshold(specifier.into(), Percentage(threshold))
+            CriteriaDTO::ApprovalThreshold(config) => {
+                Criteria::ApprovalThreshold(config.voters.into(), Percentage(config.threshold))
             }
-            CriteriaDTO::MinimumVotes(specifier, votes) => {
-                Criteria::MinimumVotes(specifier.into(), votes)
+            CriteriaDTO::MinimumVotes(config) => {
+                Criteria::MinimumVotes(config.voters.into(), config.minimum)
             }
             CriteriaDTO::HasAddressBookMetadata(metadata) => {
                 Criteria::HasAddressBookMetadata(metadata)
@@ -103,12 +109,11 @@ impl From<UserSpecifier> for UserSpecifierDTO {
 }
 
 impl AccessControlPolicy {
-    pub fn to_dto(self, info: AccessPolicyInfo) -> wallet_api::AccessPolicyDTO {
+    pub fn to_dto(self) -> wallet_api::AccessPolicyDTO {
         wallet_api::AccessPolicyDTO {
             id: Uuid::from_bytes(self.id).hyphenated().to_string(),
             user: self.user.into(),
             resource: self.resource.into(),
-            info,
         }
     }
 }
@@ -397,12 +402,12 @@ impl From<wallet_api::CommonActionSpecifierDTO> for CommonActionSpecifier {
     }
 }
 
-impl From<ProposalPolicy> for wallet_api::ProposalPolicyDTO {
-    fn from(policy: ProposalPolicy) -> Self {
-        Self {
-            id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
-            specifier: policy.specifier.into(),
-            criteria: policy.criteria.into(),
+impl ProposalPolicy {
+    pub fn to_dto(self) -> wallet_api::ProposalPolicyDTO {
+        wallet_api::ProposalPolicyDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            specifier: self.specifier.into(),
+            criteria: self.criteria.into(),
         }
     }
 }
@@ -507,6 +512,16 @@ impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
             wallet_api::ProposalSpecifierDTO::RemoveUserGroup(group) => {
                 ProposalSpecifier::RemoveUserGroup(group.into())
             }
+        }
+    }
+}
+
+impl From<ProposalPolicyCallerPrivileges> for wallet_api::ProposalPolicyCallerPrivilegesDTO {
+    fn from(privileges: ProposalPolicyCallerPrivileges) -> Self {
+        wallet_api::ProposalPolicyCallerPrivilegesDTO {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_delete: privileges.can_delete,
+            can_edit: privileges.can_edit,
         }
     }
 }

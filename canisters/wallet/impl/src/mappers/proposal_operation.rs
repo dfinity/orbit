@@ -1,4 +1,4 @@
-use super::{BlockchainMapper, HelperMapper};
+use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
@@ -12,8 +12,7 @@ use crate::{
         RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
-        policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, AddressBookRepository,
-        UserRepository, USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
     },
 };
 use ic_canister_core::repository::Repository;
@@ -49,6 +48,9 @@ impl TransferOperation {
                     name: self.input.network.clone(),
                 }),
             },
+            transfer_id: self
+                .transfer_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
         }
     }
 }
@@ -74,7 +76,7 @@ impl From<wallet_api::AccountPoliciesDTO> for AccountPoliciesInput {
 impl AddAccountOperation {
     pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
         AddAccountOperationDTO {
-            account: account.map(|account| account.to_dto()),
+            account: account.map(|account: Account| account.to_dto()),
             input: AddAccountOperationInput {
                 name: self.input.name,
                 owners: self
@@ -243,6 +245,7 @@ impl From<EditUserOperation> for EditUserOperationDTO {
                         .map(|group| Uuid::from_bytes(*group).hyphenated().to_string())
                         .collect()
                 }),
+                status: operation.input.status.map(|status| status.into()),
             },
         }
     }
@@ -285,6 +288,7 @@ impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
                     })
                     .collect()
             }),
+            status: input.status.map(|status| status.into()),
         }
     }
 }
@@ -455,11 +459,9 @@ impl From<wallet_api::AddProposalPolicyOperationInput> for AddProposalPolicyOper
 impl From<AddProposalPolicyOperation> for wallet_api::AddProposalPolicyOperationDTO {
     fn from(operation: AddProposalPolicyOperation) -> wallet_api::AddProposalPolicyOperationDTO {
         wallet_api::AddProposalPolicyOperationDTO {
-            policy: operation.policy_id.and_then(|id| {
-                PROPOSAL_POLICY_REPOSITORY
-                    .get(&id)
-                    .map(|policy| policy.into())
-            }),
+            policy_id: operation
+                .policy_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
             input: operation.input.into(),
         }
     }

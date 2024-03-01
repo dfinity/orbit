@@ -22,6 +22,7 @@
       :loading="loading"
       :resources="resources"
       :access-policies="data ? data.policies : []"
+      :privileges="data ? data.privileges : []"
       :preload-user-groups="data ? data.userGroups : []"
       :preload-users="data ? data.users : []"
       @editing="disableRefresh = $event"
@@ -31,11 +32,17 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
-import { getUserGroupAccessPolicies } from '~/configs/access-policies.config';
-import { AccessPolicy, BasicUser, UUID, UserGroup } from '~/generated/wallet/wallet.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import DataLoader from '~/components/DataLoader.vue';
 import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
+import { getUserGroupAccessPolicies } from '~/configs/access-policies.config';
+import {
+  AccessPolicy,
+  AccessPolicyCallerPrivileges,
+  BasicUser,
+  UUID,
+  UserGroup,
+} from '~/generated/wallet/wallet.did';
+import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
 
 const autocomplete = useUserGroupsAutocomplete();
@@ -53,10 +60,12 @@ const props = withDefaults(
       policies: AccessPolicy[];
       userGroups: UserGroup[];
       users: BasicUser[];
+      privileges: AccessPolicyCallerPrivileges[];
     }>;
   }>(),
   {
-    fetchPolicies: () => Promise.resolve({ policies: [], userGroups: [], users: [] }),
+    fetchPolicies: () =>
+      Promise.resolve({ policies: [], userGroups: [], users: [], privileges: [] }),
   },
 );
 

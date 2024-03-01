@@ -11,9 +11,10 @@ repository = "https://github.com/dfinity/orbit-wallet"
 
 [lib]
 crate-type = ["cdylib"]
+bench = false
 
 [dependencies]
-candid = { workspace = true, features = ["parser"] }
+candid = { workspace = true }
 ic-canister-core = { workspace = true }
 ic-canister-macros = { workspace = true }
 ic-cdk = { workspace = true }
@@ -30,5 +31,6 @@ control_panel_api = { path = "../api" }
 wallet_api = { path = "../../wallet/api" }
 
 [dev-dependencies]
+candid_parser = { workspace = true }
 rstest = { workspace = true }
 tokio = { workspace = true, features = ["full"] }

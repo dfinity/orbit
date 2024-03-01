@@ -1,28 +1,33 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { User } from '~/generated/wallet/wallet.did';
-import { useUsersAutocomplete } from '~/composables/autocomplete.composable';
-import { createMockRef, mount } from '~/test.utils';
+import { WalletService } from '~/services/wallet.service';
+import { mount } from '~/test.utils';
 import IndividualUserAccessPolicies from './IndividualUserAccessPolicies.vue';
 
-vi.mock('~/composables/autocomplete.composable', () => {
-  const mock: Partial<ReturnType<typeof useUsersAutocomplete>> = {
-    searchItems: vi.fn(),
-    loading: createMockRef(false),
-    results: createMockRef<User[]>([
-      {
-        id: '1',
-        name: ['Test1'],
-        groups: [],
-        identities: [],
-        last_modification_timestamp: '',
-        status: { Active: null },
-      },
-    ]),
+vi.mock('~/services/wallet.service', () => {
+  const mock: Partial<WalletService> = {
+    withWalletId: vi.fn().mockReturnThis(),
+    listUsers: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        users: [
+          {
+            id: '1',
+            name: ['Test1'],
+            groups: [],
+            identities: [],
+            last_modification_timestamp: '',
+            status: { Active: null },
+          },
+        ],
+        privileges: [],
+        next_offset: [],
+        total: BigInt(1),
+      }),
+    ),
   };
 
   return {
-    useUsersAutocomplete: vi.fn(() => mock),
+    WalletService: vi.fn(() => mock),
   };
 });
 

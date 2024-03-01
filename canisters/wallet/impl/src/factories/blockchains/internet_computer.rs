@@ -1,5 +1,7 @@
 use super::{
     BlockchainApi, BlockchainApiResult, BlockchainTransactionFee, BlockchainTransactionSubmitted,
+    TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY,
+    TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
 };
 use crate::{
     core::ic_cdk::api::id as wallet_canister_self_id,
@@ -14,20 +16,20 @@ use byteorder::{BigEndian, ByteOrder};
 use candid::Principal;
 use ic_canister_core::{
     api::ApiError,
-    cdk::{self},
+    cdk::{self, api::print},
 };
 use ic_ledger_types::{
-    account_balance, transfer, AccountBalanceArgs, AccountIdentifier, Memo, Subaccount, Timestamp,
-    Tokens, TransferArgs, TransferError as LedgerTransferError, DEFAULT_FEE,
+    account_balance, query_blocks, transfer, AccountBalanceArgs, AccountIdentifier, GetBlocksArgs,
+    Memo, QueryBlocksResponse, Subaccount, Timestamp, Tokens, Transaction, TransferArgs,
+    TransferError as LedgerTransferError, DEFAULT_FEE,
 };
 use num_bigint::BigUint;
+use sha2::{Digest, Sha256};
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
 };
 use uuid::Uuid;
-
-pub const ICP_TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY: &str = "block_height";
 
 #[derive(Debug)]
 pub struct InternetComputer {
@@ -58,10 +60,15 @@ impl Display for InternetComputerNetwork {
     }
 }
 
+pub struct SubmitTransferResponse {
+    pub block_height: u64,
+    pub transaction_hash: Option<String>,
+}
+
 impl InternetComputer {
     pub const BLOCKCHAIN: Blockchain = Blockchain::InternetComputer;
     pub const STANDARD: BlockchainStandard = BlockchainStandard::Native;
-    pub const ICP_LEDGER_CANISTER_ID: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    pub const ICP_LEDGER_CANISTER_ID: &'static str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     pub const DECIMALS: u32 = 8;
     pub const MAIN_NETWORK: InternetComputerNetwork = InternetComputerNetwork::Mainnet;
 
@@ -73,6 +80,12 @@ impl InternetComputer {
 
     fn ledger_canister_id() -> Principal {
         Principal::from_text(Self::ICP_LEDGER_CANISTER_ID).unwrap()
+    }
+
+    fn hash_transaction(transaction: &Transaction) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(&serde_cbor::ser::to_vec_packed(transaction).unwrap());
+        hex::encode(hasher.finalize())
     }
 
     /// Generates the corresponded subaccount id for the given wallet_account id.
@@ -136,7 +149,7 @@ impl InternetComputer {
         &self,
         wallet_account: Account,
         wallet_transfer: Transfer,
-    ) -> Result<u64, ApiError> {
+    ) -> Result<SubmitTransferResponse, ApiError> {
         let current_time = cdk::api::time();
         let amount: u64 = HelperMapper::biguint_to_u64(&wallet_transfer.amount.0)?;
         let transaction_fee: u64 = HelperMapper::biguint_to_u64(&wallet_transfer.fee.0)?;
@@ -184,7 +197,41 @@ impl InternetComputer {
             },
         })?;
 
-        Ok(block_height)
+        let transaction_hash = match query_blocks(
+            Self::ledger_canister_id(),
+            GetBlocksArgs {
+                length: 1,
+                start: block_height,
+            },
+        )
+        .await
+        {
+            Ok(QueryBlocksResponse { blocks, .. }) => {
+                let maybe_transaction_hash = blocks
+                    .first()
+                    .map(|block| Self::hash_transaction(&block.transaction));
+
+                print(format!(
+                    "Error: no ICP ledger block found at height {}",
+                    block_height
+                ));
+
+                maybe_transaction_hash
+            }
+
+            Err(e) => {
+                print(format!(
+                    "Error: could not query ICP ledger block at height {}:\nCode: {:?}\nMessage: {:?}",
+                    block_height, e.0, e.1
+                ));
+                None
+            }
+        };
+
+        Ok(SubmitTransferResponse {
+            block_height,
+            transaction_hash,
+        })
     }
 }
 
@@ -223,15 +270,21 @@ impl BlockchainApi for InternetComputer {
         wallet_account: &Account,
         transfer: &Transfer,
     ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
-        let block_height = self
+        let transfer_response = self
             .submit_transfer(wallet_account.clone(), transfer.clone())
             .await?;
 
         Ok(BlockchainTransactionSubmitted {
-            details: vec![(
-                ICP_TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY.to_string(),
-                block_height.to_string(),
-            )],
+            details: vec![
+                (
+                    TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY.to_string(),
+                    transfer_response.block_height.to_string(),
+                ),
+                (
+                    TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY.to_string(),
+                    transfer_response.transaction_hash.unwrap_or("".to_string()),
+                ),
+            ],
         })
     }
 }

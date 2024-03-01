@@ -1,12 +1,15 @@
 import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
-import { Account } from '~/generated/wallet/wallet.did';
+import { AccountBalance, UUID } from '~/generated/wallet/wallet.did';
 import { WalletService } from '~/services/wallet.service';
-import { timer, unreachable } from '~/utils/helper.utils';
+import { arrayBatchMaker, timer, unreachable } from '~/utils/helper.utils';
 
-const DEFAULT_POOL_INTERVAL_MS = 5000;
-const BALANCES_OUTDATED_THRESHOLD_MS = 15000;
+const DEFAULT_INTERVAL_MS = 10000;
+const MAX_BATCH_SIZE = 5;
+
+const accountsToTrack = new Set<UUID>();
+let running = false;
 
 export interface AccountsWorker extends Worker {
   postMessage(msg: AccountsWorkerIncomingMessage): void;
@@ -16,40 +19,36 @@ export interface AccountsWorker extends Worker {
 export interface AccountsWorkerStartInput {
   // The wallet id to use for the worker.
   walletId: Principal;
-  // The frequency at which the worker should poll for account updates in milliseconds.
+  // The frequency at which the worker should run in milliseconds.
   //
-  // Default: 30000 (30 seconds)
+  // Default: 10000 (10 seconds)
   poolIntervalMs?: number;
 }
 
+export interface AccountsWorkerTrackInput {
+  accountIds: UUID[];
+}
+
 export type AccountsWorkerIncomingMessage =
-  | {
-      type: 'start';
-      data: AccountsWorkerStartInput;
-    }
-  | {
-      type: 'stop';
-    }
-  | {
-      type: 'enable';
-    }
-  | {
-      type: 'disable';
-    };
+  | { type: 'start'; data: AccountsWorkerStartInput }
+  | { type: 'track'; data: AccountsWorkerTrackInput }
+  | { type: 'stop' }
+  | { type: 'enable' }
+  | { type: 'disable' };
 
 export interface AccountsWorkerErrorResponse {
-  code: 'ERR_FETCH_ACCOUNTS';
+  code: 'ERR_ACCOUNTS_WORKER';
   msg: string;
 }
 
-export interface AccountsWorkerResponse {
-  accounts: Account[];
+export interface AccountBalancesWorkerResponse {
+  balances: AccountBalance[];
 }
 
 export type AccountsWorkerResponseMessage =
   | { type: 'stopped' }
   | { type: 'error'; data: AccountsWorkerErrorResponse }
-  | { type: 'accounts'; data: AccountsWorkerResponse };
+  | { type: 'balances'; data: AccountBalancesWorkerResponse };
 
 class AccountsWorkerImpl {
   private timer: NodeJS.Timeout | null = null;
@@ -69,6 +68,10 @@ class AccountsWorkerImpl {
         case 'start':
           worker.start(msg.data);
           break;
+        case 'track':
+          accountsToTrack.clear();
+          msg.data.accountIds.forEach(id => accountsToTrack.add(id));
+          break;
         case 'stop':
           worker.stop();
           break;
@@ -85,6 +88,8 @@ class AccountsWorkerImpl {
   }
 
   private start(data: AccountsWorkerStartInput): void {
+    accountsToTrack.clear();
+
     if (this.timer) {
       this.stop();
     }
@@ -92,16 +97,16 @@ class AccountsWorkerImpl {
 
     this.walletService.withWalletId(data.walletId);
     const poolIntervalMs =
-      data.poolIntervalMs && data.poolIntervalMs > 0
-        ? data.poolIntervalMs
-        : DEFAULT_POOL_INTERVAL_MS;
+      data.poolIntervalMs && data.poolIntervalMs > 0 ? data.poolIntervalMs : DEFAULT_INTERVAL_MS;
 
-    this.timer = timer(() => this.refreshAccounts(), poolIntervalMs, {
+    this.timer = timer(() => this.run(), poolIntervalMs, {
       immediate: true,
     });
   }
 
   private stop(): void {
+    accountsToTrack.clear();
+
     if (this.timer) {
       clearInterval(this.timer);
 
@@ -111,64 +116,45 @@ class AccountsWorkerImpl {
     postMessage({ type: 'stopped' } as AccountsWorkerResponseMessage);
   }
 
-  private async refreshAccounts(): Promise<void> {
-    if (!this.enabled) {
+  private async run(): Promise<void> {
+    if (!this.enabled || running) {
       return;
     }
 
     try {
+      running = true;
       await icAgent.loadIdentity();
 
-      const result = await this.walletService.listAccounts();
-      const accounts = result.accounts;
+      const batchToTrack = arrayBatchMaker(Array.from(accountsToTrack), MAX_BATCH_SIZE);
+      const requests = batchToTrack.map(accountIds =>
+        this.walletService.fetchAccountBalances({ account_ids: accountIds }).catch(err => {
+          logger.error('Failed to update the balance for the given account ids', { err });
 
-      const balancesOutdatedAccounts = accounts.filter(account => {
-        if (!account.balance?.[0]) {
-          return true;
-        }
+          return [] as AccountBalance[];
+        }),
+      );
 
-        const lastUpdated = new Date(account.balance[0].last_update_timestamp);
-        const now = new Date();
-        const diff = now.getTime() - lastUpdated.getTime();
-
-        return diff > BALANCES_OUTDATED_THRESHOLD_MS;
-      });
-
-      // This will update the account balances in the background, the balances will be updated
-      // in the next polling cycle if already available.
-      this.refreshAccountBalances(balancesOutdatedAccounts);
+      const balances = (await Promise.all(requests)).flat();
 
       postMessage({
-        type: 'accounts',
+        type: 'balances',
         data: {
-          accounts,
+          balances,
         },
       } as AccountsWorkerResponseMessage);
     } catch (err) {
-      logger.error(`Failed to fetch accounts`, { err });
+      logger.error(`Failed to run accounts worker job`, { err });
 
       postMessage({
         type: 'error',
         data: {
-          code: 'ERR_FETCH_ACCOUNTS',
-          msg: `Failed to fetch accounts: ${err}`,
+          code: 'ERR_ACCOUNTS_WORKER',
+          msg: `Failed to run job: ${err}`,
         },
       } as AccountsWorkerResponseMessage);
+    } finally {
+      running = false;
     }
-  }
-
-  private async refreshAccountBalances(accounts: Account[]): Promise<void> {
-    if (accounts.length === 0) {
-      return;
-    }
-
-    await this.walletService
-      .fetchAccountBalances({
-        account_ids: accounts.map(account => account.id),
-      })
-      .catch(err => {
-        logger.error('Failed to update the balance for the given account ids', { err });
-      });
   }
 }
 

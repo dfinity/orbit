@@ -33,10 +33,22 @@ pub enum UserSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ApprovalThresholdDTO {
+    pub voters: UserSpecifierDTO,
+    pub threshold: u16,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct MinimumVotesDTO {
+    pub voters: UserSpecifierDTO,
+    pub minimum: u16,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CriteriaDTO {
     AutoAdopted,
-    ApprovalThreshold(UserSpecifierDTO, u16),
-    MinimumVotes(UserSpecifierDTO, u16),
+    ApprovalThreshold(ApprovalThresholdDTO),
+    MinimumVotes(MinimumVotesDTO),
     HasAddressBookMetadata(MetadataDTO),
     Or(Vec<CriteriaDTO>),
     And(Vec<CriteriaDTO>),
@@ -116,7 +128,8 @@ pub enum ResourceSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccessPolicyInfoDTO {
+pub struct AccessPolicyCallerPrivilegesDTO {
+    pub id: UuidDTO,
     pub can_edit: bool,
     pub can_delete: bool,
 }
@@ -126,7 +139,6 @@ pub struct AccessPolicyDTO {
     pub id: UuidDTO,
     pub user: AccessControlUserSpecifierDTO,
     pub resource: ResourceSpecifierDTO,
-    pub info: AccessPolicyInfoDTO,
 }
 
 pub type ListAccessPoliciesInput = PaginationInput;
@@ -138,6 +150,7 @@ pub struct ListAccessPoliciesResponse {
     pub users: Vec<BasicUserDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<AccessPolicyCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -148,6 +161,14 @@ pub struct GetAccessPolicyInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyResponse {
     pub policy: AccessPolicyDTO,
+    pub privileges: AccessPolicyCallerPrivilegesDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalPolicyCallerPrivilegesDTO {
+    pub id: UuidDTO,
+    pub can_edit: bool,
+    pub can_delete: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -165,6 +186,7 @@ pub struct GetProposalPolicyInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetProposalPolicyResponse {
     pub policy: ProposalPolicyDTO,
+    pub privileges: ProposalPolicyCallerPrivilegesDTO,
 }
 
 pub type ListProposalPoliciesInput = PaginationInput;
@@ -174,6 +196,7 @@ pub struct ListProposalPoliciesResponse {
     pub policies: Vec<ProposalPolicyDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<ProposalPolicyCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

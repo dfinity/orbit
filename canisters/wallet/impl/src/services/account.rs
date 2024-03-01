@@ -2,16 +2,19 @@ use crate::{
     core::{
         access_control::evaluate_caller_access,
         generate_uuid_v4,
+        ic_cdk::api::time,
         utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
         CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
-    mappers::{AccountMapper, HelperMapper},
+    mappers::{account::AccountMapper, HelperMapper},
     models::{
-        access_control::{AccountActionSpecifier, ResourceSpecifier, ResourceType},
+        access_control::{
+            AccountActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
+        },
         specifier::{AccountSpecifier, CommonSpecifier, ProposalSpecifier},
-        Account, AccountBalance, AccountId, AddAccountOperationInput,
+        Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
         EditProposalPolicyOperationInput,
     },
@@ -20,7 +23,7 @@ use crate::{
 };
 use futures::{stream, StreamExt};
 use ic_canister_core::{
-    api::ServiceResult, cdk::api::time, model::ModelValidator, repository::Repository,
+    api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
 };
 use lazy_static::lazy_static;
 use std::sync::Arc;
@@ -69,6 +72,38 @@ impl AccountService {
                 })?;
 
         Ok(account)
+    }
+
+    /// Returns the caller privileges for the given account.
+    pub async fn get_caller_privileges_for_account(
+        &self,
+        account_id: &UUID,
+        ctx: &CallContext,
+    ) -> ServiceResult<AccountCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::Account,
+                AccountActionSpecifier::Update(CommonSpecifier::Id(vec![*account_id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_transfer = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Transfer(TransferActionSpecifier::Create(AccountSpecifier::Id(
+                vec![*account_id],
+            ))),
+        )
+        .await
+        .is_ok();
+
+        Ok(AccountCallerPrivileges {
+            id: *account_id,
+            can_edit,
+            can_transfer,
+        })
     }
 
     /// Returns a list of all the accounts of the requested owner identity.
@@ -271,6 +306,7 @@ impl AccountService {
 
         account.validate()?;
 
+        account.last_modification_timestamp = time();
         self.account_repository
             .insert(account.to_key(), account.to_owned());
 

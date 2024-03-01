@@ -70,7 +70,14 @@ pub struct AccountKey {
     pub id: AccountId,
 }
 
-fn validate_symbol(symbol: &String) -> ModelValidatorResult<AccountError> {
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_transfer: bool,
+}
+
+fn validate_symbol(symbol: &str) -> ModelValidatorResult<AccountError> {
     if (symbol.len() < Account::SYMBOL_RANGE.0 as usize)
         || (symbol.len() > Account::SYMBOL_RANGE.1 as usize)
     {
@@ -86,7 +93,7 @@ fn validate_symbol(symbol: &String) -> ModelValidatorResult<AccountError> {
     Ok(())
 }
 
-fn validate_owners(owners: &Vec<UUID>) -> ModelValidatorResult<AccountError> {
+fn validate_owners(owners: &[UUID]) -> ModelValidatorResult<AccountError> {
     if (owners.len() < Account::OWNERS_RANGE.0 as usize)
         || (owners.len() > Account::OWNERS_RANGE.1 as usize)
     {
@@ -99,7 +106,7 @@ fn validate_owners(owners: &Vec<UUID>) -> ModelValidatorResult<AccountError> {
     Ok(())
 }
 
-fn validate_address(address: &String) -> ModelValidatorResult<AccountError> {
+fn validate_address(address: &str) -> ModelValidatorResult<AccountError> {
     if (address.len() < Account::ADDRESS_RANGE.0 as usize)
         || (address.len() > Account::ADDRESS_RANGE.1 as usize)
     {

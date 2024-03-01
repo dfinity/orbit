@@ -80,6 +80,7 @@
   --ds-border-primary: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-primary-darkest));
   --ds-border-primary-variant: var(--ds-border-width) var(--ds-border-style)
     rgb(var(--ds-primary-variant));
+  --ds-border-on-background: var(--ds-border-width) dotted rgb(var(--ds-on-surface));
 }
 
 html,
@@ -115,9 +116,41 @@ a {
   .w-md-auto {
     width: auto !important;
   }
+
+  .w-md-25 {
+    width: 25% !important;
+  }
+
+  .w-md-50 {
+    width: 50% !important;
+  }
+
+  .w-md-75 {
+    width: 75% !important;
+  }
+
+  .w-md-100 {
+    width: 100% !important;
+  }
+}
+
+.mvh-50 {
+  max-height: 50vh !important;
 }
 
 // Add new utility classes
 .bb-none {
   border-bottom: none !important;
+}
+
+.b-dark {
+  border-color: rgb(var(--ds-primary-darkest)) !important;
+}
+
+.br-on-background {
+  border-right: 1px solid rgb(var(--ds-on-background), 0.1) !important;
+
+  &:last-child {
+    border-right: none !important;
+  }
 }

@@ -1,16 +1,16 @@
 use crate::interfaces::{default_account, get_icp_balance, send_icp_to_account, ICP, ICP_FEE};
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{execute_proposal, get_user, update_candid_as, user_test_id};
+use crate::utils::{execute_proposal, get_user, user_test_id};
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
-
+use pocket_ic::update_candid_as;
 use wallet_api::{
-    AccountPoliciesDTO, AddAccountOperationInput, AddAddressBookEntryOperationInput, ApiErrorDTO,
-    ChangeMetadataDTO, CriteriaDTO, EditAddressBookEntryOperationInput,
-    GetAddressBookEntryInputDTO, GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
-    ListAddressBookEntriesResponseDTO, MetadataDTO, PaginationInput, ProposalOperationDTO,
-    ProposalOperationInput, ProposalStatusDTO, RemoveAddressBookEntryOperationInput,
-    TransferOperationInput,
+    AccountPoliciesDTO, AddAccountOperationInput, AddAddressBookEntryOperationInput,
+    AddressChainInput, ApiErrorDTO, ChangeMetadataDTO, CriteriaDTO,
+    EditAddressBookEntryOperationInput, GetAddressBookEntryInputDTO,
+    GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
+    ListAddressBookEntriesResponseDTO, MetadataDTO, ProposalOperationDTO, ProposalOperationInput,
+    ProposalStatusDTO, RemoveAddressBookEntryOperationInput, TransferOperationInput,
 };
 
 #[test]
@@ -118,12 +118,13 @@ fn address_book_entry_lifecycle() {
 
     // list address book entries
     let list_address_book_entries_args = ListAddressBookEntriesInputDTO {
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
-        paginate: PaginationInput {
-            offset: None,
-            limit: None,
-        },
+        address_chain: Some(AddressChainInput {
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+        }),
+        addresses: None,
+        ids: None,
+        paginate: None,
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
@@ -191,12 +192,13 @@ fn address_book_entry_lifecycle() {
 
     // list address book entries and check that the address book entry for John Doe is indeed deleted
     let list_address_book_entries_args = ListAddressBookEntriesInputDTO {
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
-        paginate: PaginationInput {
-            offset: None,
-            limit: None,
-        },
+        address_chain: Some(AddressChainInput {
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+        }),
+        addresses: None,
+        ids: None,
+        paginate: None,
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,

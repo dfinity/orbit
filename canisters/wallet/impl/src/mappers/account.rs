@@ -2,8 +2,8 @@ use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
     models::{
-        Account, AccountBalance, AccountId, AccountPolicies, AddAccountOperationInput,
-        BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
+        Account, AccountBalance, AccountCallerPrivileges, AccountId, AccountPolicies,
+        AddAccountOperationInput, BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
@@ -132,8 +132,8 @@ impl AccountMapper {
 }
 
 impl Account {
-    pub fn to_dto(&self) -> AccountDTO {
-        AccountMapper::to_dto(self.clone())
+    pub fn to_dto(self) -> AccountDTO {
+        AccountMapper::to_dto(self)
     }
 }
 
@@ -150,6 +150,16 @@ impl From<AccountPolicies> for wallet_api::AccountPoliciesDTO {
                     .get(&policy_id)
                     .map(|policy| CriteriaDTO::from(policy.criteria))
             }),
+        }
+    }
+}
+
+impl From<AccountCallerPrivileges> for wallet_api::AccountCallerPrivilegesDTO {
+    fn from(privileges: AccountCallerPrivileges) -> Self {
+        Self {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            can_transfer: privileges.can_transfer,
+            can_edit: privileges.can_edit,
         }
     }
 }

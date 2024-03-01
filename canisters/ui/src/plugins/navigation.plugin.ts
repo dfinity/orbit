@@ -40,6 +40,19 @@ const sections = (): NavigationSections => ({
           },
         },
         {
+          name: 'users',
+          localeKey: 'navigation.users',
+          action: {
+            type: NavigationActionType.To,
+            handle: route =>
+              route.params.locale ? `/${route.params.locale}/settings/users` : '/settings/users',
+          },
+          auth: {
+            type: NavigastionAuthType.Route,
+            route: Routes.Users,
+          },
+        },
+        {
           name: 'user_groups_permissions',
           localeKey: 'navigation.user_groups_permissions',
           action: {
@@ -55,16 +68,18 @@ const sections = (): NavigationSections => ({
           },
         },
         {
-          name: 'users',
-          localeKey: 'navigation.users',
+          name: 'proposal_policies',
+          localeKey: 'navigation.proposal_policies',
           action: {
             type: NavigationActionType.To,
             handle: route =>
-              route.params.locale ? `/${route.params.locale}/settings/users` : '/settings/users',
+              route.params.locale
+                ? `/${route.params.locale}/settings/policies`
+                : '/settings/policies',
           },
           auth: {
             type: NavigastionAuthType.Route,
-            route: Routes.Users,
+            route: Routes.ProposalPolicies,
           },
         },
         {

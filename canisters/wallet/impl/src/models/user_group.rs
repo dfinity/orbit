@@ -21,11 +21,18 @@ pub struct UserGroup {
     pub last_modification_timestamp: Timestamp,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UserGroupCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 impl UserGroup {
     const NAME_RANGE: (u8, u8) = (1, 50);
 }
 
-fn validate_name(name: &String) -> ModelValidatorResult<UserGroupError> {
+fn validate_name(name: &str) -> ModelValidatorResult<UserGroupError> {
     if name.len() < UserGroup::NAME_RANGE.0 as usize {
         return Err(UserGroupError::NameTooShort {
             min_length: UserGroup::NAME_RANGE.0,

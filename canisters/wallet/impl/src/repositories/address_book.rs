@@ -3,12 +3,18 @@ use super::indexes::address_book_standard_index::AddressBookStandardIndexReposit
 use crate::{
     core::{with_memory_manager, Memory, ADDRESS_BOOK_MEMORY_ID},
     models::{
-        indexes::address_book_index::AddressBookIndexCriteria,
-        indexes::address_book_standard_index::AddressBookStandardIndexCriteria, AddressBookEntry,
-        AddressBookEntryId, AddressBookEntryKey, Blockchain, BlockchainStandard,
+        indexes::{
+            address_book_index::AddressBookIndexCriteria,
+            address_book_standard_index::AddressBookStandardIndexCriteria,
+        },
+        AddressBookEntry, AddressBookEntryId, AddressBookEntryKey, AddressChain, Blockchain,
+        BlockchainStandard,
     },
 };
-use ic_canister_core::repository::{IndexRepository, RefreshIndexMode, Repository};
+use ic_canister_core::{
+    repository::{IndexRepository, RefreshIndexMode, Repository},
+    types::UUID,
+};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
@@ -116,6 +122,32 @@ impl AddressBookRepository {
             .filter_map(|id| self.get(&AddressBookEntry::key(*id)))
             .collect::<Vec<_>>()
     }
+
+    pub fn find_where(&self, where_clause: AddressBookWhereClause) -> Vec<AddressBookEntry> {
+        let mut entries = match where_clause.address_chain {
+            Some(chain) => self.find_by_blockchain_standard(chain.blockchain, chain.standard),
+            _ => self.list(),
+        };
+
+        if let Some(ids) = where_clause.ids {
+            entries.retain(|entry| ids.contains(&entry.id));
+        }
+
+        if let Some(addresses) = where_clause.addresses {
+            entries.retain(|entry| addresses.contains(&entry.address));
+        }
+
+        entries.sort();
+
+        entries
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AddressBookWhereClause {
+    pub address_chain: Option<AddressChain>,
+    pub addresses: Option<Vec<String>>,
+    pub ids: Option<Vec<UUID>>,
 }
 
 #[cfg(test)]

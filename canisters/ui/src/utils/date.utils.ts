@@ -66,3 +66,11 @@ export function nanoToJsDate(nanoTimestamp: bigint): Date {
   const jsDate = new Date(Number(milliTimestamp));
   return jsDate;
 }
+
+export function formatLocaleDatetimeString(date: Date | string): string {
+  if (typeof date === 'string') {
+    date = parseDate(date);
+  }
+
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}

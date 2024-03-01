@@ -19,6 +19,7 @@
       chips
       multiple
       clearable
+      :disabled="isViewMode"
       @update:search="userGroupsAutocomplete.searchItems"
     />
   </VForm>
@@ -30,22 +31,15 @@ import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable
 import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import { VFormValidation } from '~/types/helper.types';
 
-const form = ref<VFormValidation | null>(null);
-const userGroupsAutocomplete = useUserGroupsAutocomplete();
-
-onMounted(() => {
-  userGroupsAutocomplete.searchItems();
-});
-
-const isFormValid = computed(() => (form.value ? form.value.isValid : false));
-
 export type MembersOfGroupFormProps = {
   modelValue: { policyId: UUID | null; groupIds: UUID[]; prefilledGroups?: UserGroup[] };
   valid?: boolean;
+  mode?: 'view' | 'edit';
 };
 
 const props = withDefaults(defineProps<MembersOfGroupFormProps>(), {
   valid: true,
+  mode: 'edit',
 });
 
 const emit = defineEmits<{
@@ -54,12 +48,22 @@ const emit = defineEmits<{
   (event: 'submit', payload: MembersOfGroupFormProps['modelValue']): void;
 }>();
 
+const reactiveProps = toRefs(props);
+
+const form = ref<VFormValidation | null>(null);
+const userGroupsAutocomplete = useUserGroupsAutocomplete();
+
+onMounted(() => {
+  userGroupsAutocomplete.searchItems();
+});
+
+const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+const isViewMode = computed(() => props.mode === 'view');
+
 watch(
   () => isFormValid.value,
   isValid => emit('valid', isValid ?? false),
 );
-
-const reactiveProps = toRefs(props);
 
 const model = computed({
   get: () => reactiveProps.modelValue.value,

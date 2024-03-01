@@ -2,26 +2,43 @@ import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/wallet';
 import {
-  Account,
   AccountBalance,
   AddAccessPolicyOperationInput,
+  AddAccountOperationInput,
+  AddAddressBookEntryOperationInput,
+  AddProposalPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
   ChangeCanisterOperationInput,
   Config,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
+  EditAccountOperationInput,
+  EditAddressBookEntryOperationInput,
+  EditProposalPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  GetAccessPolicyInput,
+  GetAccessPolicyResult,
   GetAccountInput,
+  GetAccountResult,
+  GetAddressBookEntryInput,
+  GetAddressBookEntryResult,
   GetProposalInput,
+  GetProposalPolicyResult,
+  GetProposalResult,
   GetTransfersInput,
+  GetUserGroupInput,
+  GetUserGroupResult,
   GetUserInput,
+  GetUserResult,
   ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListAccountsResult,
+  ListAddressBookEntriesResult,
   ListNotificationsInput,
+  ListProposalPoliciesResult,
   ListProposalsInput,
   ListProposalsResult,
   ListUserGroupsResult,
@@ -34,6 +51,7 @@ import {
   RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
+  TransferOperationInput,
   UUID,
   User,
   UserPrivilege,
@@ -42,7 +60,11 @@ import {
   _SERVICE,
 } from '~/generated/wallet/wallet.did';
 import { ExtractOk } from '~/types/helper.types';
-import { ListAccountsArgs, ListProposalsArgs } from '~/types/wallet.types';
+import {
+  ListAccountsArgs,
+  ListAddressBookEntriesArgs,
+  ListProposalsArgs,
+} from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';
 
 export class WalletService {
@@ -70,13 +92,31 @@ export class WalletService {
     return this;
   }
 
-  async getUser(input: GetUserInput): Promise<User> {
+  async getUser(input: GetUserInput): Promise<ExtractOk<GetUserResult>> {
     const result = await this.actor.get_user(input);
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.user;
+    return result.Ok;
+  }
+
+  async getAccessPolicy(input: GetAccessPolicyInput): Promise<ExtractOk<GetAccessPolicyResult>> {
+    const result = await this.actor.get_access_policy(input);
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getUserGroup(input: GetUserGroupInput): Promise<ExtractOk<GetUserGroupResult>> {
+    const result = await this.actor.get_user_group(input);
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 
   async myUser(): Promise<{ me: User; privileges: UserPrivilege[] } | null> {
@@ -228,11 +268,7 @@ export class WalletService {
       throw result.Err;
     }
 
-    return {
-      users: result.Ok.users,
-      next_offset: result.Ok.next_offset,
-      total: result.Ok.total,
-    };
+    return result.Ok;
   }
 
   async config(): Promise<Config> {
@@ -331,14 +367,14 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async getProposal(input: GetProposalInput): Promise<Proposal> {
+  async getProposal(input: GetProposalInput): Promise<ExtractOk<GetProposalResult>> {
     const result = await this.actor.get_proposal(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok;
   }
 
   async listAccounts({ limit, offset, searchTerm }: ListAccountsArgs = {}): Promise<
@@ -361,14 +397,91 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getAccount(input: GetAccountInput): Promise<Account> {
+  async listAddressBook({
+    limit,
+    offset,
+    blockchain,
+    standard,
+    ids,
+    addresses,
+  }: ListAddressBookEntriesArgs = {}): Promise<ExtractOk<ListAddressBookEntriesResult>> {
+    const result = await this.actor.list_address_book_entries({
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+      address_chain:
+        blockchain && standard
+          ? [
+              {
+                blockchain: blockchain,
+                standard: standard,
+              },
+            ]
+          : [],
+      addresses: addresses ? [addresses] : [],
+      ids: ids ? [ids] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getAccount(input: GetAccountInput): Promise<ExtractOk<GetAccountResult>> {
     const result = await this.actor.get_account(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.account;
+    return result.Ok;
+  }
+
+  async getAddressBookEntry(
+    input: GetAddressBookEntryInput,
+  ): Promise<ExtractOk<GetAddressBookEntryResult>> {
+    const result = await this.actor.get_address_book_entry(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async addAddressBookEntry(input: AddAddressBookEntryOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAddressBookEntry: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editAddressBookEntry(input: EditAddressBookEntryOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAddressBookEntry: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
   }
 
   async isHealthy(): Promise<boolean> {
@@ -405,6 +518,20 @@ export class WalletService {
     }
 
     return result.Ok.transfers;
+  }
+
+  async getTransfer(id: UUID): Promise<Transfer> {
+    const result = await this.actor.get_transfers({ transfer_ids: [id] });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    if (!result.Ok.transfers[0]) {
+      throw new Error('Transfer not found');
+    }
+
+    return result.Ok.transfers[0];
   }
 
   async createProposal(input: CreateProposalInput): Promise<Proposal> {
@@ -472,12 +599,142 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
+  async editProposalPolicy(input: EditProposalPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditProposalPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addProposalPolicy(input: AddProposalPolicyOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddProposalPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async editAccount(input: EditAccountOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAccount: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async addAccount(input: AddAccountOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAccount: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async transfer(input: TransferOperationInput): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { Transfer: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
   async changeCanister(input: ChangeCanisterOperationInput): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
       operation: { ChangeCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async listProposalPolicies({ limit, offset }: { limit?: number; offset?: number } = {}): Promise<
+    ExtractOk<ListProposalPoliciesResult>
+  > {
+    const result = await this.actor.list_proposal_policies({
+      limit: limit ? [limit] : [],
+      offset: offset ? [BigInt(offset)] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getProposalPolicy(id: UUID): Promise<ExtractOk<GetProposalPolicyResult>> {
+    const result = await this.actor.get_proposal_policy({ id });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async removeProposalPolicy(id: UUID): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveProposalPolicy: { policy_id: id } },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.proposal;
+  }
+
+  async removeAddressBookEntry(id: UUID): Promise<Proposal> {
+    const result = await this.actor.create_proposal({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveAddressBookEntry: { address_book_entry_id: id } },
     });
 
     if (variantIs(result, 'Err')) {

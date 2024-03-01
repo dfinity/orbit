@@ -9,9 +9,10 @@ include = ["src", "Cargo.toml"]
 
 [lib]
 proc-macro = true
+bench = false
 
 [dependencies]
-candid = { workspace = true, features = ["parser"] }
+candid = { workspace = true }
 ic-stable-structures = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }

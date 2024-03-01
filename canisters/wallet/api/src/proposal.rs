@@ -9,10 +9,10 @@ use crate::{
     EditAccessPolicyOperationDTO, EditAccessPolicyOperationInput, EditAccountOperationDTO,
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, PaginationInput, ProposalPolicyDTO, ProposalSpecifierDTO,
-    RemoveAccessPolicyOperationDTO, RemoveAccessPolicyOperationInput,
-    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, SortDirection, UuidDTO,
+    EditUserOperationInput, PaginationInput, ProposalSpecifierDTO, RemoveAccessPolicyOperationDTO,
+    RemoveAccessPolicyOperationInput, RemoveAddressBookEntryOperationDTO,
+    RemoveAddressBookEntryOperationInput, RemoveUserGroupOperationDTO,
+    RemoveUserGroupOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -127,12 +127,6 @@ pub struct ProposalVoteDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalInfoDTO {
-    pub can_vote: bool,
-    pub proposer_name: Option<String>,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalDTO {
     pub id: UuidDTO,
     pub title: String,
@@ -144,7 +138,18 @@ pub struct ProposalDTO {
     pub status: ProposalStatusDTO,
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: ProposalExecutionScheduleDTO,
-    pub info: ProposalInfoDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalCallerPrivilegesDTO {
+    pub id: UuidDTO,
+    pub can_vote: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalAdditionalInfoDTO {
+    pub id: UuidDTO,
+    pub proposer_name: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -165,6 +170,8 @@ pub struct VoteOnProposalInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct VoteOnProposalResponse {
     pub proposal: ProposalDTO,
+    pub privileges: ProposalCallerPrivilegesDTO,
+    pub additional_info: ProposalAdditionalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -175,6 +182,8 @@ pub struct GetProposalInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetProposalResponse {
     pub proposal: ProposalDTO,
+    pub privileges: ProposalCallerPrivilegesDTO,
+    pub additional_info: ProposalAdditionalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -225,11 +234,15 @@ pub struct ListProposalsResponse {
     pub proposals: Vec<ProposalDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<ProposalCallerPrivilegesDTO>,
+    pub additional_info: Vec<ProposalAdditionalInfoDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CreateProposalResponse {
     pub proposal: ProposalDTO,
+    pub privileges: ProposalCallerPrivilegesDTO,
+    pub additional_info: ProposalAdditionalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -240,7 +253,7 @@ pub struct AddProposalPolicyOperationInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddProposalPolicyOperationDTO {
-    pub policy: Option<ProposalPolicyDTO>,
+    pub policy_id: Option<UuidDTO>,
     pub input: AddProposalPolicyOperationInput,
 }
 

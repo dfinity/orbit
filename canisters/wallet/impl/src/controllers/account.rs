@@ -9,8 +9,8 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use wallet_api::{
-    FetchAccountBalancesInput, FetchAccountBalancesResponse, GetAccountInput, GetAccountResponse,
-    ListAccountsInput, ListAccountsResponse,
+    AccountCallerPrivilegesDTO, FetchAccountBalancesInput, FetchAccountBalancesResponse,
+    GetAccountInput, GetAccountResponse, ListAccountsInput, ListAccountsResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -53,12 +53,20 @@ impl AccountController {
         is_async = true
     )]
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
+        let ctx = call_context();
         let account = self
             .account_service
-            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?
-            .to_dto();
+            .get_account(HelperMapper::to_uuid(input.account_id)?.as_bytes())?;
 
-        Ok(GetAccountResponse { account })
+        let privileges = self
+            .account_service
+            .get_caller_privileges_for_account(&account.id, &ctx)
+            .await?;
+
+        Ok(GetAccountResponse {
+            account: account.to_dto(),
+            privileges: privileges.into(),
+        })
     }
 
     #[with_middleware(
@@ -69,11 +77,20 @@ impl AccountController {
     )]
     async fn list_accounts(&self, input: ListAccountsInput) -> ApiResult<ListAccountsResponse> {
         let ctx = call_context();
-
         let result = self
             .account_service
             .list_accounts(input, Some(&ctx))
             .await?;
+
+        let mut privileges = Vec::new();
+        for account in &result.items {
+            let account_privileges = self
+                .account_service
+                .get_caller_privileges_for_account(&account.id, &ctx)
+                .await?;
+
+            privileges.push(AccountCallerPrivilegesDTO::from(account_privileges));
+        }
 
         Ok(ListAccountsResponse {
             accounts: result
@@ -83,6 +100,7 @@ impl AccountController {
                 .collect(),
             next_offset: result.next_offset,
             total: result.total,
+            privileges,
         })
     }
 

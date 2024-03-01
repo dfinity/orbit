@@ -1,15 +1,16 @@
+use super::HelperMapper;
 use crate::core::ic_cdk::api::time;
 use crate::errors::MapperError;
-use crate::mappers::BlockchainMapper;
+use crate::mappers::blockchain::BlockchainMapper;
 use crate::models::{
-    AddAddressBookEntryOperationInput, AddressBookEntry, ListAddressBookEntriesInput,
-    ListAddressBookEntriesResponse,
+    AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
+    AddressChain, ListAddressBookEntriesInput,
 };
 use ic_canister_core::types::UUID;
 use ic_canister_core::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
 use wallet_api::{
-    AddressBookEntryDTO, ListAddressBookEntriesInputDTO, ListAddressBookEntriesResponseDTO,
+    AddressBookEntryCallerPrivilegesDTO, AddressBookEntryDTO, ListAddressBookEntriesInputDTO,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -76,24 +77,32 @@ impl AddressBookEntry {
 impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
     fn from(input: ListAddressBookEntriesInputDTO) -> ListAddressBookEntriesInput {
         ListAddressBookEntriesInput {
-            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
-                .expect("Invalid blockchain"),
-            standard: BlockchainMapper::to_blockchain_standard(input.standard)
-                .expect("Invalid blockchain standard"),
+            address_chain: input.address_chain.map(|address_chain| AddressChain {
+                blockchain: BlockchainMapper::to_blockchain(address_chain.blockchain)
+                    .expect("Invalid blockchain"),
+                standard: BlockchainMapper::to_blockchain_standard(address_chain.standard)
+                    .expect("Invalid blockchain standard"),
+            }),
+            addresses: input.addresses,
+            ids: input.ids.map(|ids| {
+                ids.into_iter()
+                    .map(|id| {
+                        HelperMapper::to_uuid(id)
+                            .expect("Invalid UUID")
+                            .into_bytes()
+                    })
+                    .collect()
+            }),
         }
     }
 }
 
-impl From<ListAddressBookEntriesResponse> for ListAddressBookEntriesResponseDTO {
-    fn from(input: ListAddressBookEntriesResponse) -> ListAddressBookEntriesResponseDTO {
-        ListAddressBookEntriesResponseDTO {
-            address_book_entries: input
-                .address_book_entries
-                .into_iter()
-                .map(|address_book_entry| address_book_entry.to_dto())
-                .collect(),
-            next_offset: input.next_offset,
-            total: input.total,
+impl From<AddressBookEntryCallerPrivileges> for AddressBookEntryCallerPrivilegesDTO {
+    fn from(input: AddressBookEntryCallerPrivileges) -> AddressBookEntryCallerPrivilegesDTO {
+        AddressBookEntryCallerPrivilegesDTO {
+            id: Uuid::from_bytes(input.id).hyphenated().to_string(),
+            can_edit: input.can_edit,
+            can_delete: input.can_delete,
         }
     }
 }

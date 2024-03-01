@@ -392,6 +392,10 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
             ResourceSpecifier::Common(
                 ResourceType::Account,
                 CommonActionSpecifier::Read(CommonSpecifier::Id(ids)),
+            )
+            | ResourceSpecifier::Common(
+                ResourceType::Account,
+                CommonActionSpecifier::Update(CommonSpecifier::Id(ids)),
             ) => {
                 let accounts = ids
                     .iter()
@@ -408,7 +412,10 @@ impl Match<(User, ResourceSpecifier)> for AccessControlDefaultAccessMatcher {
                     .iter()
                     .all(|account| account.owners.contains(&caller.id))
             }
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(CommonSpecifier::Id(
+            ResourceSpecifier::Transfer(TransferActionSpecifier::Read(CommonSpecifier::Id(
+                account_ids,
+            )))
+            | ResourceSpecifier::Transfer(TransferActionSpecifier::Create(CommonSpecifier::Id(
                 account_ids,
             ))) => {
                 let accounts = account_ids

@@ -39,7 +39,7 @@ pub struct AddressBookEntryKey {
     pub id: AddressBookEntryId,
 }
 
-fn validate_address_owner(address_owner: &String) -> ModelValidatorResult<AddressBookError> {
+fn validate_address_owner(address_owner: &str) -> ModelValidatorResult<AddressBookError> {
     if (address_owner.len() < AddressBookEntry::ADDRESS_OWNER_RANGE.0 as usize)
         || (address_owner.len() > AddressBookEntry::ADDRESS_OWNER_RANGE.1 as usize)
     {
@@ -52,7 +52,7 @@ fn validate_address_owner(address_owner: &String) -> ModelValidatorResult<Addres
     Ok(())
 }
 
-fn validate_address(address: &String) -> ModelValidatorResult<AddressBookError> {
+fn validate_address(address: &str) -> ModelValidatorResult<AddressBookError> {
     if (address.len() < AddressBookEntry::ADDRESS_RANGE.0 as usize)
         || (address.len() > AddressBookEntry::ADDRESS_RANGE.1 as usize)
     {
@@ -94,16 +94,23 @@ impl AddressBookEntry {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAddressBookEntriesInput {
+pub struct AddressChain {
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAddressBookEntriesResponse {
-    pub address_book_entries: Vec<AddressBookEntry>,
-    pub next_offset: Option<u64>,
-    pub total: u64,
+pub struct ListAddressBookEntriesInput {
+    pub ids: Option<Vec<UUID>>,
+    pub addresses: Option<Vec<String>>,
+    pub address_chain: Option<AddressChain>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddressBookEntryCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
 }
 
 #[cfg(test)]

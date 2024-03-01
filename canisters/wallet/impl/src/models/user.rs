@@ -36,6 +36,13 @@ pub struct UserKey {
     pub id: UserId,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UserCallerPrivileges {
+    pub id: UUID,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 impl User {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const MAX_USER_GROUPS: u8 = 25;
@@ -51,7 +58,7 @@ impl User {
     }
 }
 
-fn validate_identities(identities: &Vec<Principal>) -> ModelValidatorResult<UserError> {
+fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserError> {
     if identities.len() < User::IDENTITIES_RANGE.0 as usize {
         return Err(UserError::TooLittleIdentities);
     }
@@ -65,7 +72,7 @@ fn validate_identities(identities: &Vec<Principal>) -> ModelValidatorResult<User
     Ok(())
 }
 
-fn validate_groups(access_roles: &Vec<UUID>) -> ModelValidatorResult<UserError> {
+fn validate_groups(access_roles: &[UUID]) -> ModelValidatorResult<UserError> {
     if access_roles.len() > User::MAX_USER_GROUPS as usize {
         return Err(UserError::TooManyUserGroups {
             max: User::MAX_USER_GROUPS,
@@ -212,6 +219,16 @@ pub mod user_test_utils {
     pub fn add_user(id: &UUID) -> User {
         let mut user = mock_user();
         user.id = id.to_owned();
+        user.status = UserStatus::Active;
+        USER_REPOSITORY.insert(user.to_key(), user.to_owned());
+
+        user
+    }
+
+    pub fn add_inactive_user(id: &UUID) -> User {
+        let mut user = mock_user();
+        user.id = id.to_owned();
+        user.status = UserStatus::Inactive;
         USER_REPOSITORY.insert(user.to_key(), user.to_owned());
 
         user

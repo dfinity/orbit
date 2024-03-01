@@ -1,17 +1,6 @@
-import { User, UserStatus } from '~/generated/wallet/wallet.did';
-import { UserInput, UserStatusType } from '~/types/wallet.types';
+import { UserStatus } from '~/generated/wallet/wallet.did';
+import { UserStatusType } from '~/types/wallet.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
-
-export const fromUserToUserInput = (user: Partial<User> = {}): UserInput => {
-  return {
-    id: user.id,
-    name: user.name?.[0],
-    status: user.status ? user.status : { Inactive: null },
-    groups: user.groups?.map(g => g.id) ?? [],
-    identities: user.identities?.map(i => i.toText()) ?? [],
-    prefilledGroups: user.groups ?? [],
-  };
-};
 
 export const fromUserStatusVariantToEnum = (status: UserStatus): UserStatusType => {
   if (variantIs(status, UserStatusType.Active)) {

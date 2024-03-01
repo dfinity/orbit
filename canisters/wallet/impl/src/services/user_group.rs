@@ -5,7 +5,9 @@ use crate::core::{generate_uuid_v4, CallContext};
 use crate::errors::UserGroupError;
 use crate::models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier};
 use crate::models::specifier::CommonSpecifier;
-use crate::models::{AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup};
+use crate::models::{
+    AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup, UserGroupCallerPrivileges,
+};
 use crate::repositories::{UseGroupWhereClause, UserGroupRepository};
 use futures::{stream, StreamExt};
 use ic_canister_core::api::ServiceResult;
@@ -40,6 +42,38 @@ impl UserGroupService {
                 })?;
 
         Ok(user_group)
+    }
+
+    pub async fn get_caller_privileges_for_user_group(
+        &self,
+        user_group_id: &UUID,
+        ctx: &CallContext,
+    ) -> ServiceResult<UserGroupCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::UserGroup,
+                UserGroupActionSpecifier::Update(CommonSpecifier::Id(vec![*user_group_id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::UserGroup,
+                UserGroupActionSpecifier::Delete(CommonSpecifier::Id(vec![*user_group_id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        Ok(UserGroupCallerPrivileges {
+            id: *user_group_id,
+            can_edit,
+            can_delete,
+        })
     }
 
     pub async fn list(

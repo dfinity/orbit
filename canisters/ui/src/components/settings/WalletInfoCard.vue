@@ -65,7 +65,7 @@
             variant="flat"
             @click="submit"
           >
-            {{ $t('forms.edit') }}
+            {{ $t('terms.save') }}
           </VBtn>
         </template>
       </ActionBtn>
@@ -88,7 +88,6 @@ import { Principal } from '@dfinity/principal';
 import { mdiContentCopy } from '@mdi/js';
 import { computed, ref } from 'vue';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
-import WalletInfoForm, { WalletInfoModel } from '~/components/forms/WalletInfoForm.vue';
 import { UserWallet } from '~/generated/control-panel/control_panel.did';
 import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
@@ -97,6 +96,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { copyToClipboard } from '~/utils/app.utils';
+import WalletInfoForm, { WalletInfoModel } from './WalletInfoForm.vue';
 
 const wallet = useWalletStore();
 const session = useSessionStore();

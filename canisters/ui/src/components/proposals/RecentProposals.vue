@@ -42,9 +42,15 @@
             <ProposalList
               v-if="data"
               :proposals="data.proposals"
+              :privileges="data.privileges"
+              :additionals="data.additional_info"
               :hide-not-found="props.hideNotFound"
               hide-headers
-              @voted="forceReload = true"
+              :mode="app.isMobile ? 'list' : 'grid'"
+              @voted="
+                disablePolling = false;
+                forceReload = true;
+              "
               @opened="disablePolling = true"
               @closed="disablePolling = false"
             />
@@ -64,6 +70,7 @@ import { useWalletStore } from '~/stores/wallet.store';
 import { ListProposalsArgs } from '~/types/wallet.types';
 import DataLoader from '~/components/DataLoader.vue';
 import ProposalList from './ProposalList.vue';
+import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
@@ -89,11 +96,12 @@ const props = withDefaults(
   },
 );
 
+const app = useAppStore();
 const wallet = useWalletStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);
 
-const fetchRecentProposals = async () => {
+const fetchRecentProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
   const result = await wallet.service.listProposals({
     types: props.types,
     statuses: [{ Created: null }],

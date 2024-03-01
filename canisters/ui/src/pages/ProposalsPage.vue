@@ -1,12 +1,9 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <PageHeader :title="props.title" :breadcrumbs="props.breadcrumbs">
+      <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
-          <!--todo: add export to csv functionality-->
-          <VBtn color="primary-variant" variant="flat" disabled>
-            {{ $t('app.export_csv') }}
-          </VBtn>
+          <ExportCsvActionBtn :filters="filters" :domains="shownProposalDomains" />
         </template>
       </PageHeader>
     </template>
@@ -14,96 +11,105 @@
     <template #main-body>
       <PageBody>
         <DataLoader
+          v-slot="{ loading }"
           v-model:force-reload="forceReload"
-          :load="fetchProposals"
           :disable-refresh="disableRefresh"
+          :load="fetchList"
           :refresh-interval-ms="5000"
+          @loaded="
+            result => {
+              proposals = result.proposals;
+              privileges = result.privileges;
+              additionals = result.additional_info;
+            }
+          "
         >
-          <template #default="{ data, loading }">
-            <VContainer class="pa-0" fluid>
-              <VRow v-if="shownProposalDomains.length > 1">
-                <VCol cols="12">
-                  <VSlideGroup v-model="filters.groupBy" show-arrows>
-                    <VSlideGroupItem
-                      v-for="(domain, idx) in shownProposalDomains"
-                      :key="idx"
-                      v-slot="{ isSelected, toggle }"
-                    >
-                      <VBtn
-                        :color="isSelected ? 'primary-variant' : undefined"
-                        variant="flat"
-                        density="comfortable"
-                        class="mr-2"
-                        @click="toggle"
-                      >
-                        {{ $t(`proposals.domains.${domain.id}`) }}
-                      </VBtn>
-                    </VSlideGroupItem>
-                  </VSlideGroup>
-                </VCol>
-              </VRow>
-              <VRow>
-                <VCol cols="12 d-flex flex-column-reverse flex-md-row flex-wrap ga-4">
-                  <div class="d-flex flex-column flex-grow-1 ga-4">
-                    <ProposalList
-                      :loading="loading"
-                      :proposals="data?.proposals ?? []"
-                      @closed="disableRefresh = false"
-                      @opened="disableRefresh = true"
-                    />
-                    <VPagination
-                      v-model="pagination.selectedPage"
-                      :length="pagination.totalPages"
-                      rounded
-                      density="comfortable"
-                      @update:model-value="triggerSearch"
-                    />
-                  </div>
-                  <VCard
-                    color="background"
-                    variant="flat"
-                    min-height="300px"
-                    :max-width="!app.isMobile ? `272px` : undefined"
+          <VContainer class="pa-0" fluid>
+            <VRow v-if="shownProposalDomains.length > 1">
+              <VCol cols="12">
+                <VSlideGroup v-model="filters.groupBy" show-arrows>
+                  <VSlideGroupItem
+                    v-for="(domain, idx) in shownProposalDomains"
+                    :key="idx"
+                    v-slot="{ isSelected, toggle }"
                   >
-                    <VToolbar color="transparent" class="pr-4">
-                      <VToolbarTitle>{{ $t('terms.filters') }}</VToolbarTitle>
-                      <VIcon :icon="mdiFilter" />
-                    </VToolbar>
-                    <VCardText class="pt-2">
-                      <DateRange
-                        v-model="filters.created"
-                        :label="$t('terms.created')"
-                        :prepend-icon="mdiCalendar"
-                      />
-                      <DateRange
-                        v-model="filters.expires"
-                        :label="$t('terms.expires')"
-                        :prepend-icon="mdiCalendar"
-                      />
-                      <BtnSelect
-                        v-model="filters.statuses"
-                        :label="$t('terms.statuses')"
-                        :items="statuses"
-                        :prepend-icon="mdiCog"
-                      />
-                      <VDivider thickness="2" class="my-2" />
-                      <VBtn
-                        density="comfortable"
-                        block
-                        color="primary-variant"
-                        flat
-                        size="small"
-                        variant="tonal"
-                        @click="filters = filterUtils.getDefaultFilters()"
-                      >
-                        {{ $t('terms.reset') }}
-                      </VBtn>
-                    </VCardText>
-                  </VCard>
-                </VCol>
-              </VRow>
-            </VContainer>
-          </template>
+                    <VBtn
+                      :color="isSelected ? 'primary-variant' : undefined"
+                      variant="flat"
+                      density="comfortable"
+                      class="mr-2"
+                      @click="toggle"
+                    >
+                      {{ $t(`proposals.domains.${domain.id}`) }}
+                    </VBtn>
+                  </VSlideGroupItem>
+                </VSlideGroup>
+              </VCol>
+            </VRow>
+            <VRow>
+              <VCol cols="12 d-flex flex-column-reverse flex-md-row align-start flex-no-wrap ga-4">
+                <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
+                  <ProposalList
+                    :loading="loading"
+                    :proposals="proposals"
+                    :privileges="privileges"
+                    :additionals="additionals"
+                    @closed="disableRefresh = false"
+                    @opened="disableRefresh = true"
+                  />
+                  <VPagination
+                    v-model="pagination.selectedPage"
+                    :length="pagination.totalPages"
+                    rounded
+                    density="comfortable"
+                    @update:model-value="triggerSearch"
+                  />
+                </div>
+                <VCard
+                  color="background"
+                  variant="flat"
+                  min-height="300px"
+                  min-width="272px"
+                  :max-width="!app.isMobile ? `272px` : undefined"
+                >
+                  <VToolbar color="transparent" class="pr-4">
+                    <VToolbarTitle>{{ $t('terms.filters') }}</VToolbarTitle>
+                    <VIcon :icon="mdiFilter" />
+                  </VToolbar>
+                  <VCardText class="pt-2">
+                    <DateRange
+                      v-model="filters.created"
+                      :label="$t('terms.created')"
+                      :prepend-icon="mdiCalendar"
+                    />
+                    <DateRange
+                      v-model="filters.expires"
+                      :label="$t('terms.expires')"
+                      :prepend-icon="mdiCalendar"
+                    />
+                    <BtnSelect
+                      v-model="filters.statuses"
+                      :label="$t('terms.statuses')"
+                      :items="statuses"
+                      :prepend-icon="mdiCog"
+                    />
+                    <VDivider thickness="2" class="my-2" />
+                    <VBtn
+                      density="comfortable"
+                      block
+                      color="primary-variant"
+                      flat
+                      size="small"
+                      variant="tonal"
+                      @click="filters = filterUtils.getDefaultFilters()"
+                    >
+                      {{ $t('terms.reset') }}
+                    </VBtn>
+                  </VCardText>
+                </VCard>
+              </VCol>
+            </VRow>
+          </VContainer>
         </DataLoader>
       </PageBody>
     </template>
@@ -112,7 +118,9 @@
 
 <script lang="ts" setup>
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
+import { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
@@ -121,21 +129,39 @@ import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import ProposalList from '~/components/proposals/ProposalList.vue';
+import ExportCsvActionBtn from '~/components/proposals/export/ExportCsvActionBtn.vue';
+import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
   useAvailableDomains,
   useFilterUtils,
   useProposalStatusItems,
   useSavedFilters,
 } from '~/composables/proposal.composable';
-import { ProposalStatusCode } from '~/generated/wallet/wallet.did';
-import { i18n } from '~/plugins/i18n.plugin';
+import {
+  Proposal,
+  ProposalAdditionalInfo,
+  ProposalCallerPrivileges,
+  ProposalStatusCode,
+} from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
-import { BreadCrumbItem } from '~/types/navigation.types';
+import type { PageProps } from '~/types/app.types';
 import { ProposalDomains } from '~/types/wallet.types';
 import { convertDate } from '~/utils/date.utils';
 import { throttle } from '~/utils/helper.utils';
 
+export interface ProposalsPageProps extends PageProps {
+  domains?: ProposalDomains[];
+}
+
+const props = withDefaults(defineProps<ProposalsPageProps>(), {
+  title: undefined,
+  domains: () => [],
+  breadcrumbs: () => [],
+});
+
+const i18n = useI18n();
+const pageTitle = computed(() => props.title || i18n.t('pages.proposals.title'));
 const app = useAppStore();
 const wallet = useWalletStore();
 const availableDomains = useAvailableDomains();
@@ -144,20 +170,6 @@ const filterUtils = useFilterUtils();
 const disableRefresh = ref(false);
 const forceReload = ref(false);
 const router = useRouter();
-
-const props = withDefaults(
-  defineProps<{
-    title?: string;
-    domains?: ProposalDomains[];
-    breadcrumbs?: BreadCrumbItem[];
-  }>(),
-  {
-    title: i18n.global.t('pages.proposals.title'),
-    domains: () => [],
-    breadcrumbs: () => [],
-  },
-);
-
 const shownProposalDomains = computed(() => {
   if (props.domains !== undefined && props.domains.length > 0) {
     const domains = props.domains;
@@ -167,22 +179,16 @@ const shownProposalDomains = computed(() => {
 
   return availableDomains.value;
 });
-
+const proposals: Ref<Proposal[]> = ref([]);
+const privileges = ref<ProposalCallerPrivileges[]>([]);
+const additionals = ref<ProposalAdditionalInfo[]>([]);
 const filters = useSavedFilters(shownProposalDomains.value);
 
 const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
 };
 
-const pagination = ref<{
-  limit: number;
-  totalPages: number;
-  selectedPage: number;
-}>({
-  limit: 25,
-  totalPages: 1,
-  selectedPage: 1,
-});
+const pagination = usePagination({ limit: 10 });
 
 const resetPagination = (): void => {
   pagination.value = {
@@ -206,45 +212,41 @@ watch(
   { deep: true },
 );
 
-const fetchProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
-  const nextOffset =
-    pagination.value.selectedPage * pagination.value.limit - pagination.value.limit;
-
-  const result = await wallet.service.listProposals({
-    types: shownProposalDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
-    created_dt: {
-      fromDt: convertDate(filters.value.created.from, {
-        time: 'start-of-day',
-        tz: 'local',
-      }),
-      toDt: convertDate(filters.value.created.to, {
-        time: 'end-of-day',
-        tz: 'local',
-      }),
-    },
-    expiration_dt: {
-      fromDt: convertDate(filters.value.expires.from, {
-        time: 'start-of-day',
-        tz: 'local',
-      }),
-      toDt: convertDate(filters.value.expires.to, {
-        time: 'end-of-day',
-        tz: 'local',
-      }),
-    },
-    statuses: filters.value.statuses.map(status => ({ [status]: null })) as ProposalStatusCode[],
-    limit: pagination.value.limit,
-    offset: nextOffset,
-    sortBy: {
-      createdAt: 'asc',
-    },
-  });
-
-  pagination.value.totalPages = Math.max(
-    Math.ceil(Number(result.total) / pagination.value.limit),
-    1,
-  );
-
-  return result;
-};
+const fetchList = useFetchList(
+  async (offset, limit) => {
+    return wallet.service.listProposals({
+      types: shownProposalDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
+      created_dt: {
+        fromDt: convertDate(filters.value.created.from, {
+          time: 'start-of-day',
+          tz: 'local',
+        }),
+        toDt: convertDate(filters.value.created.to, {
+          time: 'end-of-day',
+          tz: 'local',
+        }),
+      },
+      expiration_dt: {
+        fromDt: convertDate(filters.value.expires.from, {
+          time: 'start-of-day',
+          tz: 'local',
+        }),
+        toDt: convertDate(filters.value.expires.to, {
+          time: 'end-of-day',
+          tz: 'local',
+        }),
+      },
+      statuses: filters.value.statuses.map(status => ({ [status]: null })) as ProposalStatusCode[],
+      limit,
+      offset,
+      sortBy: {
+        createdAt: 'desc',
+      },
+    });
+  },
+  {
+    pagination,
+    getTotal: res => Number(res.total),
+  },
+);
 </script>

@@ -444,3 +444,208 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::evaluation::{CRITERIA_EVALUATOR, PROPOSAL_MATCHER},
+        models::{
+            criteria::Percentage,
+            proposal_policy_test_utils::mock_proposal_policy,
+            proposal_test_utils::mock_proposal,
+            proposal_vote_test_utils::{mock_accepted_with_user, mock_rejected_with_user},
+            user_test_utils, AddUserGroupOperation, AddUserGroupOperationInput,
+        },
+        repositories::{policy::PROPOSAL_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
+    };
+    use ic_canister_core::repository::Repository;
+
+    #[tokio::test]
+    async fn is_rejected_when_no_policy_is_available() {
+        let proposal = mock_proposal();
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        let evaluator = ProposalEvaluator {
+            proposal: proposal.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
+
+        let evaluation_status = evaluator.evaluate().await.unwrap();
+
+        assert_eq!(evaluation_status, EvaluationStatus::Rejected);
+    }
+
+    #[tokio::test]
+    async fn succeeds_when_all_criterias_are_adopted() {
+        let mut proposal = mock_proposal();
+        let mut policy = mock_proposal_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+
+        proposal.operation = ProposalOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        proposal.proposed_by = user.id;
+        proposal.votes = vec![mock_accepted_with_user(user.id)];
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        policy.specifier = ProposalSpecifier::AddUserGroup;
+        policy.criteria = Criteria::ApprovalThreshold(UserSpecifier::Proposer, Percentage(100));
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = ProposalEvaluator {
+            proposal: proposal.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
+
+        let evaluation_status = evaluator.evaluate().await.unwrap();
+
+        assert_eq!(evaluation_status, EvaluationStatus::Adopted);
+    }
+
+    #[tokio::test]
+    async fn is_pending_when_votes_are_not_reached() {
+        let mut proposal = mock_proposal();
+        let mut policy = mock_proposal_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+        user_test_utils::add_user(&[2; 16]);
+
+        proposal.operation = ProposalOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        proposal.proposed_by = user.id;
+        proposal.votes = vec![mock_accepted_with_user(user.id)];
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        policy.specifier = ProposalSpecifier::AddUserGroup;
+        policy.criteria = Criteria::ApprovalThreshold(UserSpecifier::Any, Percentage(100));
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = ProposalEvaluator {
+            proposal: proposal.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
+
+        let evaluation_status = evaluator.evaluate().await.unwrap();
+
+        assert_eq!(evaluation_status, EvaluationStatus::Pending);
+    }
+
+    #[tokio::test]
+    async fn is_rejected_when_votes_are_not_reached() {
+        let mut proposal = mock_proposal();
+        let mut policy = mock_proposal_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+        let user1 = user_test_utils::add_user(&[2; 16]);
+
+        proposal.operation = ProposalOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        proposal.proposed_by = user.id;
+        proposal.votes = vec![
+            mock_accepted_with_user(user.id),
+            mock_rejected_with_user(user1.id),
+        ];
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        policy.specifier = ProposalSpecifier::AddUserGroup;
+        policy.criteria = Criteria::ApprovalThreshold(UserSpecifier::Any, Percentage(100));
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = ProposalEvaluator {
+            proposal: proposal.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
+
+        let evaluation_status = evaluator.evaluate().await.unwrap();
+
+        assert_eq!(evaluation_status, EvaluationStatus::Rejected);
+    }
+
+    #[tokio::test]
+    async fn is_accepted_disregarding_inactive_users() {
+        let mut proposal = mock_proposal();
+        let mut policy = mock_proposal_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+        user_test_utils::add_inactive_user(&[2; 16]);
+
+        proposal.operation = ProposalOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        proposal.proposed_by = user.id;
+        proposal.votes = vec![mock_accepted_with_user(user.id)];
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        policy.specifier = ProposalSpecifier::AddUserGroup;
+        policy.criteria = Criteria::ApprovalThreshold(UserSpecifier::Any, Percentage(100));
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = ProposalEvaluator {
+            proposal: proposal.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
+
+        let evaluation_status = evaluator.evaluate().await.unwrap();
+
+        assert_eq!(evaluation_status, EvaluationStatus::Adopted);
+    }
+
+    #[tokio::test]
+    async fn misconfigured_min_votes_when_not_enough_voters_should_still_adopt() {
+        let mut proposal = mock_proposal();
+        let mut policy = mock_proposal_policy();
+        let user = user_test_utils::add_user(&[1; 16]);
+
+        proposal.operation = ProposalOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "test".to_string(),
+            },
+        });
+        proposal.proposed_by = user.id;
+        proposal.votes = vec![mock_accepted_with_user(user.id)];
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        policy.specifier = ProposalSpecifier::AddUserGroup;
+        policy.criteria = Criteria::MinimumVotes(UserSpecifier::Any, 2);
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        let evaluator = ProposalEvaluator {
+            proposal: proposal.to_owned(),
+            proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+            criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
+        };
+
+        let evaluation_status = evaluator.evaluate().await.unwrap();
+
+        assert_eq!(evaluation_status, EvaluationStatus::Adopted);
+    }
+}

@@ -1,478 +1,337 @@
 <template>
-  <PageLayout class="account">
-    <template v-if="pageStore.hasLoaded" #main-header>
-      <VContainer class="pt-16 pb-16 pl-8 pr-8 account__header" fluid>
-        <div class="account__balance">
-          <span
-            v-if="pageStore.account.balance?.[0]"
-            :title="pageStore.account.balance?.[0]?.last_update_timestamp"
-          >
-            {{ formatBalance(pageStore.account.balance[0].balance, pageStore.account.decimals) }}
-          </span>
-          <span v-else>-</span>
-          &nbsp;{{ pageStore.account.symbol }}
+  <DataLoader
+    :load="loadAccount"
+    :refresh-interval-ms="5000"
+    :disable-refresh="disableRefresh"
+    @loading="loading = $event"
+    @loaded="
+      result => {
+        account = result.account;
+        privileges = result.privileges;
+      }
+    "
+  >
+    <template #error>
+      <PageLayout>
+        <template #main-header>
+          <PageHeader
+            :title="$t('pages.accounts.error_fetching_account')"
+            :breadcrumbs="pageBreadcrumbs"
+          />
+        </template>
+      </PageLayout>
+    </template>
+    <PageLayout>
+      <template #main-header>
+        <div v-if="loading" class="d-flex justify-center">
+          <VProgressCircular indeterminate color="primary" class="ma-8" />
         </div>
-        <VRow>
-          <VCol cols="12" sm="8" class="account__header__details">
-            <div>
-              <h1 class="text-h4">
-                <VIcon :icon="mdiWallet" size="x-small" />
-                {{ pageStore.account.name }}
-                <!--TODO: add access control if the user can edit the account-->
-                <template v-if="true">
-                  <EditAccountBtn v-model="pageStore.account" />
-                </template>
-              </h1>
-            </div>
-            <div class="account__header__details__addr">
-              <small class="account__header__details__addr__text">
-                {{ pageStore.account.symbol }}: {{ pageStore.account.address }}
-              </small>
-              <VBtn
-                class="account-card__subtitle__copy"
-                size="x-small"
-                variant="text"
-                :icon="mdiContentCopy"
-                @click="copyAddressToClipboard(`${pageStore.account.address}`)"
-              />
-            </div>
-            <div>
-              <VChip
-                size="x-small"
-                color="primary-variant"
-                variant="tonal"
-                :prepend-icon="pageStore.account.owners.length > 1 ? mdiAccountGroup : mdiAccount"
+        <div v-else-if="!account">
+          <PageHeader :title="$t('pages.account.not_found')" :breadcrumbs="pageBreadcrumbs" />
+        </div>
+        <PageHeader v-else :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
+          <template #title-toolbar>
+            <AccountConfigBtn
+              :account-id="account.id"
+              class="px-1"
+              size="small"
+              variant="text"
+              color="default"
+              :readonly="!privileges.can_edit"
+              :append-icon="mdiTuneVariant"
+            >
+              {{ account.name }}
+            </AccountConfigBtn>
+          </template>
+          <template #subtitle>
+            <small><TextOverflow :max-length="32" :text="account.address" /></small>
+            <VBtn
+              size="x-small"
+              variant="text"
+              :icon="mdiContentCopy"
+              @click="
+                copyToClipboard({
+                  textToCopy: account.address,
+                  sendNotification: true,
+                })
+              "
+            />
+          </template>
+          <template v-if="privileges.can_transfer" #actions>
+            <BatchTransfersActionBtn
+              :account="account"
+              color="primary-variant"
+              variant="outlined"
+            />
+            <TransferBtn :account="account" color="primary-variant" variant="flat">
+              + {{ $t('pages.accounts.btn_new_transfer') }}
+            </TransferBtn>
+          </template>
+        </PageHeader>
+      </template>
+      <template v-if="!loading" #main-body>
+        <PageBody v-if="!account">{{ $t('pages.account.not_found_description') }}</PageBody>
+        <PageBody v-else>
+          <RecentProposals
+            class="mb-4"
+            :see-all-link="{
+              name: Routes.Proposals,
+              query: { group_by: ProposalDomains.Transfers },
+            }"
+            :types="[{ Transfer: [account.id] }]"
+            hide-not-found
+          />
+          <VContainer fluid>
+            <VRow>
+              <VCol
+                cols="12"
+                class="d-flex flex-column-reverse flex-md-row ga-4 px-0 align-md-start"
               >
-                {{
-                  pageStore.account.owners.length > 1
-                    ? $t('wallets.joint_account')
-                    : $t('wallets.private_account')
-                }}
-              </VChip>
-            </div>
-          </VCol>
-          <VCol cols="12" sm="4" class="header-actions">
-            <VSpacer v-if="!app.isMobile" />
-            <NewTransferBtn :account-id="pageStore.account.id" />
-          </VCol>
-        </VRow>
-      </VContainer>
-    </template>
-    <template v-else-if="!pageStore.loading" #main-header>
-      <div class="account__not-found pb-16">
-        <header class="text-h3 account__not-found__title">
-          {{ $t('account_page.not_found_title') }}
-        </header>
-        <p class="text-h6">
-          {{ $t('account_page.not_found_description') }}
-        </p>
-        <VBtn color="primary-variant mt-8" :append-icon="_mdiLink" :to="{ name: 'Accounts' }">
-          {{ $t('account_page.not_found_btn') }}
-        </VBtn>
-      </div>
-    </template>
-    <template v-else #main-header>
-      <VProgressLinear indeterminate color="primary" />
-    </template>
-    <template v-if="pageStore.hasLoaded" #main-body>
-      <VRow>
-        <VCol cols="12">
-          <VCard color="background" variant="flat">
-            <VTabs v-model="tab" center-active class="px-8">
-              <VTab
-                :loading="pageStore.transfers.loading"
-                value="withdrawals"
-                class="account__tab__item"
-              >
-                {{ $t(`terms.withdrawals`) }}
-              </VTab>
-              <VTab
-                v-if="pageStore.chainApi"
-                :loading="pageStore.deposits.loading"
-                value="deposits"
-                class="account__tab__item"
-              >
-                {{ $t(`terms.deposits`) }}
-              </VTab>
-              <VTab
-                :loading="pageStore.transfers.loading"
-                value="proposals"
-                class="account__tab__item"
-              >
-                {{ $t(`terms.withdraw_requests`) }}
-              </VTab>
-            </VTabs>
-            <VCardText>
-              <VWindow v-model="tab">
-                <VWindowItem v-if="pageStore.chainApi" value="deposits">
-                  <VContainer class="py-0">
-                    <VCol cols="12" class="px-0 pb-0">
-                      <VBtn
-                        block
-                        variant="tonal"
-                        color="primary-variant"
-                        :prepend-icon="mdiRefresh"
-                        :loading="pageStore.deposits.loading"
-                        @click="pageStore.loadDeposits"
-                      >
-                        {{ $t(`terms.search`) }}
-                      </VBtn>
-                    </VCol>
-                    <VCol cols="12" class="px-0 pt-1">
-                      <VTable v-if="pageStore.deposits.items.length" hover>
-                        <tbody>
-                          <tr v-for="(transfer, _idx) in pageStore.sortedDeposits" :key="_idx">
-                            <td class="transfers__item__icon"><VIcon :icon="mdiTransfer" /></td>
-                            <td class="transfers__item__details">
-                              <div class="transfers__item__details--amount">
-                                {{
-                                  `${formatBalance(transfer.amount, 8)} ${pageStore.account.symbol}`
-                                }}
-                              </div>
-                              <div class="transfers__item__details--to">
-                                <small>{{ $t(`terms.from`) }}: {{ transfer.from }}</small>
-                              </div>
-                              <div
-                                v-if="transfer.created_at"
-                                class="transfers__item__details--created_at"
-                              >
-                                <small>{{ transfer.created_at.toISOString() }}</small>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </VTable>
-                      <p v-else class="text-h6">{{ $t(`wallets.no_deposit_found_search`) }}</p>
-                    </VCol>
-                  </VContainer>
-                </VWindowItem>
-                <VWindowItem value="withdrawals">
-                  <VContainer>
-                    <VRow>
-                      <VCol cols="12" md="4" class="py-0">
-                        <VTextField
-                          v-model="pageStore.transfers.fromDt"
-                          :prepend-inner-icon="mdiCalendar"
-                          density="compact"
-                          type="date"
-                          :label="$t(`terms.from`)"
-                          variant="solo"
-                          :disabled="pageStore.transfers.loading"
-                          class="mb-2"
-                          hide-details
-                        />
-                      </VCol>
-                      <VCol cols="12" md="4" class="py-0">
-                        <VTextField
-                          v-model="pageStore.transfers.toDt"
-                          :prepend-inner-icon="mdiCalendar"
-                          density="compact"
-                          type="date"
-                          :label="$t(`terms.until`)"
-                          :disabled="pageStore.transfers.loading"
-                          variant="solo"
-                          class="mb-2"
-                          hide-details
-                        />
-                      </VCol>
-                      <VCol cols="12" md="4">
-                        <VBtn
-                          block
-                          variant="tonal"
-                          color="primary-variant"
-                          :prepend-icon="mdiRefresh"
-                          :loading="pageStore.transfers.loading"
-                          @click="
-                            pageStore.loadSentTransfers(
-                              pageStore.transfers.fromDt
-                                ? new Date(pageStore.transfers.fromDt)
-                                : undefined,
-                              pageStore.transfers.toDt
-                                ? new Date(pageStore.transfers.toDt)
-                                : undefined,
-                            )
-                          "
-                        >
-                          {{ $t(`terms.search`) }}
-                        </VBtn>
-                      </VCol>
-                      <VCol cols="12">
-                        <VTable v-if="pageStore.transfers.items.length" hover class="transfers">
-                          <tbody>
-                            <tr v-for="(transfer, _idx) in pageStore.sortedTransfers" :key="_idx">
-                              <td class="transfers__item__icon"><VIcon :icon="mdiTransfer" /></td>
-                              <td class="transfers__item__details">
-                                <div class="transfers__item__details--amount">
-                                  {{
-                                    `${formatBalance(transfer.amount, 8)} ${
-                                      pageStore.account.symbol
-                                    }`
-                                  }}
-                                </div>
-                                <div class="transfers__item__details--to">
-                                  <small>{{ $t(`terms.to`) }}: {{ transfer.to }}</small>
-                                </div>
-                                <div class="transfers__item__details--created_at">
-                                  <small>{{ transfer.created_at }}</small>
-                                </div>
-                              </td>
-                              <td class="transfers__item__status text-right">
-                                <TransferStatusChip :status="transfer.status" />
-                              </td>
-                            </tr>
-                          </tbody>
-                        </VTable>
-                        <p v-else class="text-h6">{{ $t(`wallets.no_withdrawal_found_search`) }}</p>
-                      </VCol>
-                    </VRow>
-                  </VContainer>
-                </VWindowItem>
-                <VWindowItem value="proposals">
-                  <VContainer>
-                    <VRow>
-                      <VCol cols="12" md="4" class="py-0">
-                        <VTextField
-                          v-model="pageStore.proposals.fromDt"
-                          :prepend-inner-icon="mdiCalendar"
-                          density="compact"
-                          type="date"
-                          :label="$t(`terms.from`)"
-                          variant="solo"
-                          :disabled="pageStore.proposals.loading"
-                          class="mb-2"
-                          hide-details
-                        />
-                      </VCol>
-                      <VCol cols="12" md="4" class="py-0">
-                        <VTextField
-                          v-model="pageStore.proposals.toDt"
-                          :prepend-inner-icon="mdiCalendar"
-                          density="compact"
-                          type="date"
-                          :label="$t(`terms.until`)"
-                          :disabled="pageStore.proposals.loading"
-                          variant="solo"
-                          class="mb-2"
-                          hide-details
-                        />
-                      </VCol>
-                      <VCol cols="12" md="4">
-                        <VBtn
-                          block
-                          variant="tonal"
-                          color="primary-variant"
-                          :prepend-icon="mdiRefresh"
-                          :loading="pageStore.proposals.loading"
-                          @click="
-                            pageStore.loadProposals(
-                              pageStore.proposals.fromDt
-                                ? new Date(pageStore.proposals.fromDt)
-                                : undefined,
-                              pageStore.proposals.toDt
-                                ? new Date(pageStore.proposals.toDt)
-                                : undefined,
-                            )
-                          "
-                        >
-                          {{ $t(`terms.search`) }}
-                        </VBtn>
-                      </VCol>
-                      <VCol cols="12">
-                        <VTable v-if="pageStore.proposals.items.length" hover class="proposals">
-                          <tbody>
-                            <tr
-                              v-for="(
-                                { loading, data: { id: proposalId } }, _idx
-                              ) in pageStore.sortedProposals"
-                              :key="_idx"
+                <div class="d-flex flex-column flex-grow-1 ga-4">
+                  <DataLoader
+                    v-slot="{ data, loading: loadingTransfers }"
+                    v-model:force-reload="forceReload"
+                    :load="loadTransfers"
+                    :refresh-interval-ms="10000"
+                  >
+                    <VProgressCircular v-if="loadingTransfers" indeterminate color="primary" />
+                    <VTable v-else-if="data" hover>
+                      <thead>
+                        <tr>
+                          <th class="w-50 font-weight-bold">{{ $t('terms.time') }}</th>
+                          <th class="text-no-wrap font-weight-bold">
+                            {{ $t('app.destination_source') }}
+                          </th>
+                          <th class="text-no-wrap text-right font-weight-bold">
+                            {{ $t('app.amount_token', { token: account.symbol }) }}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-if="!data.length">
+                          <td colspan="4">{{ $t('app.no_transfers') }}</td>
+                        </tr>
+                        <tr v-for="(transfer, idx) in data" :key="idx">
+                          <td>
+                            {{
+                              `${transfer.created_at?.toLocaleDateString()} ${transfer.created_at?.toLocaleTimeString()}`
+                            }}
+                          </td>
+                          <td>
+                            <div class="d-flex flex-row align-center">
+                              <TextOverflow
+                                :text="isReceivedTransfer(transfer) ? transfer.from : transfer.to"
+                              />
+                              <VBtn
+                                size="x-small"
+                                variant="text"
+                                :icon="mdiContentCopy"
+                                @click="
+                                  copyToClipboard({
+                                    textToCopy: isReceivedTransfer(transfer)
+                                      ? transfer.from
+                                      : transfer.to,
+                                    sendNotification: true,
+                                  })
+                                "
+                              />
+                            </div>
+                          </td>
+                          <td class="d-flex flex-row ga-2 align-center justify-end">
+                            {{ formatBalance(transfer.amount, account.decimals) }}
+                            <VChip
+                              size="x-small"
+                              :color="isReceivedTransfer(transfer) ? 'success' : 'error'"
                             >
-                              <td class="py-4">
-                                <WalletProposal
-                                  :proposal="pageStore.sortedProposals[_idx].data"
-                                  :outer="false"
-                                  :loading="loading"
-                                  @adopted="pageStore.voteOnProposal(proposalId, { approve: true })"
-                                  @rejected="
-                                    pageStore.voteOnProposal(proposalId, { approve: false })
-                                  "
-                                />
-                              </td>
-                            </tr>
-                          </tbody>
-                        </VTable>
-                        <p v-else class="text-h6">
-                          {{ $t(`wallets.no_withdraw_request_found_search`) }}
-                        </p>
-                      </VCol>
-                    </VRow>
-                  </VContainer>
-                </VWindowItem>
-              </VWindow>
-            </VCardText>
-          </VCard>
-        </VCol>
-      </VRow>
-    </template>
-  </PageLayout>
+                              <VIcon
+                                size="default"
+                                :icon="isReceivedTransfer(transfer) ? mdiArrowDown : mdiArrowUp"
+                              />
+                            </VChip>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </VTable>
+                  </DataLoader>
+                </div>
+                <VCard
+                  color="background"
+                  variant="flat"
+                  min-height="200px"
+                  min-width="272px"
+                  :max-width="!app.isMobile ? `272px` : undefined"
+                >
+                  <VToolbar color="transparent" class="pr-4">
+                    <VToolbarTitle>{{ $t('terms.filters') }}</VToolbarTitle>
+                    <VIcon :icon="mdiFilter" />
+                  </VToolbar>
+                  <VCardText class="pt-2">
+                    <DateRange
+                      v-model="filters.created"
+                      :label="$t('terms.created')"
+                      :prepend-icon="mdiCalendar"
+                    />
+                    <VDivider thickness="2" class="my-2" />
+                    <VBtn
+                      density="comfortable"
+                      block
+                      color="primary-variant"
+                      flat
+                      size="small"
+                      variant="tonal"
+                      @click="filters = filterUtils.getDefaultFilters()"
+                    >
+                      {{ $t('terms.reset') }}
+                    </VBtn>
+                  </VCardText>
+                </VCard>
+              </VCol>
+            </VRow>
+          </VContainer>
+        </PageBody>
+      </template>
+    </PageLayout>
+  </DataLoader>
 </template>
 
 <script lang="ts" setup>
 import {
-  mdiAccount,
-  mdiAccountGroup,
+  mdiArrowDown,
+  mdiArrowUp,
   mdiCalendar,
   mdiContentCopy,
-  mdiRefresh,
-  mdiTransfer,
-  mdiWallet,
+  mdiFilter,
+  mdiTuneVariant,
 } from '@mdi/js';
-import { onMounted, ref, watch } from 'vue';
-import NewTransferBtn from '~/components/NewTransferBtn.vue';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import EditAccountBtn from '~/components/accounts/EditAccountBtn.vue';
-import WalletProposal from '~/components/proposals/WalletProposal.vue';
-import TransferStatusChip from '~/components/transfers/TransferStatusChip.vue';
-import { i18n } from '~/plugins/i18n.plugin';
-import { router } from '~/plugins/router.plugin';
+import TextOverflow from '~/components/TextOverflow.vue';
+import AccountConfigBtn from '~/components/accounts/AccountConfigBtn.vue';
+import BatchTransfersActionBtn from '~/components/accounts/BatchTransfersActionBtn.vue';
+import TransferBtn from '~/components/accounts/TransferBtn.vue';
+import DateRange from '~/components/inputs/DateRange.vue';
+import PageBody from '~/components/layouts/PageBody.vue';
+import PageHeader from '~/components/layouts/PageHeader.vue';
+import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import { useFilterUtils, useSavedFilters } from '~/composables/account.composable';
+import { Routes } from '~/configs/routes.config';
+import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did';
+import { ChainApiFactory } from '~/services/chains';
 import { useAppStore } from '~/stores/app.store';
-import { useAccountPageStore } from '~/stores/pages/account.store';
 import { useWalletStore } from '~/stores/wallet.store';
-import { formatBalance } from '~/utils/helper.utils';
+import type { PageProps } from '~/types/app.types';
+import type { AccountIncomingTransfer } from '~/types/chain.types';
+import { BreadCrumbItem } from '~/types/navigation.types';
+import { ProposalDomains } from '~/types/wallet.types';
+import { copyToClipboard } from '~/utils/app.utils';
+import { convertDate } from '~/utils/date.utils';
+import { formatBalance, throttle } from '~/utils/helper.utils';
 
-const wallet = useWalletStore();
-const app = useAppStore();
-const pageStore = useAccountPageStore();
-
-const tab = ref<'withdrawals' | 'proposals' | 'deposits'>('withdrawals');
-
-onMounted(() => {
-  pageStore.load(`${router.currentRoute.value.params.id}`);
+const props = withDefaults(defineProps<PageProps>(), {
+  title: undefined,
+  breadcrumbs: () => [],
 });
+const router = useRouter();
+const pageTitle = computed(() => {
+  if (account.value && account.value.balance[0]) {
+    return (
+      formatBalance(account.value.balance[0].balance, account.value.balance[0].decimals) +
+      ' ' +
+      account.value.symbol
+    );
+  }
+
+  return '-';
+});
+const forceReload = ref(false);
+const disableRefresh = ref(false);
+const account = ref<Account | null>(null);
+const privileges = ref<AccountCallerPrivileges>({
+  id: '',
+  can_edit: false,
+  can_transfer: false,
+});
+const loading = ref(false);
+const app = useAppStore();
+const wallet = useWalletStore();
+const triggerSearch = throttle(() => (forceReload.value = true), 500);
+const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
+  const breadcrumbs = [...props.breadcrumbs];
+
+  if (account.value) {
+    breadcrumbs.push({
+      title: account.value.name,
+    });
+  }
+
+  return breadcrumbs;
+});
+const filters = useSavedFilters();
+const filterUtils = useFilterUtils();
+const saveFilters = (): void => {
+  router.replace({ query: filterUtils.getQuery(filters.value) });
+};
 
 watch(
-  wallet.accounts,
-  accounts => {
-    if (!pageStore.hasLoaded) {
-      return;
-    }
-
-    const updatedAccount = accounts.items.find(w => w.id === pageStore.account.id);
-    if (updatedAccount && pageStore._account) {
-      pageStore._account.balance = updatedAccount.balance;
-    }
+  () => filters.value,
+  () => {
+    saveFilters();
+    triggerSearch();
   },
-  {
-    deep: true,
-  },
+  { deep: true },
 );
 
-const copyAddressToClipboard = (address: string) => {
-  navigator.clipboard.writeText(address);
+const isReceivedTransfer = (transfer: AccountIncomingTransfer): boolean => {
+  return transfer.to === account.value?.address;
+};
 
-  app.sendNotification({
-    type: 'success',
-    message: i18n.global.t('wallets.account_address_copied_to_clipboard'),
+const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
+  if (!account.value) {
+    return [];
+  }
+
+  const chainApi = ChainApiFactory.create(account.value);
+  const transfers = await chainApi.fetchTransfers({
+    fromDt: convertDate(filters.value.created.from, {
+      time: 'start-of-day',
+      tz: 'local',
+    }),
+    toDt: convertDate(filters.value.created.to, {
+      time: 'end-of-day',
+      tz: 'local',
+    }),
   });
+
+  return transfers;
+};
+
+const loadAccount = async (): Promise<{
+  account: Account;
+  privileges: AccountCallerPrivileges;
+}> => {
+  const accountId = `${router.currentRoute.value.params.id}`;
+  const result = await wallet.service.getAccount({ account_id: accountId });
+  const account = result.account;
+
+  if (!account.balance.length) {
+    const balances = await wallet.service.fetchAccountBalances({
+      account_ids: [accountId],
+    });
+
+    if (balances.length) {
+      account.balance = [
+        {
+          balance: balances[0].balance,
+          decimals: balances[0].decimals,
+          last_update_timestamp: balances[0].last_update_timestamp,
+        },
+      ];
+    }
+  }
+
+  wallet.trackAccountsBalance([account.id]);
+  return { account, privileges: result.privileges };
 };
 </script>
-
-<style scoped lang="scss">
-.header-actions {
-  display: flex;
-  justify-content: end;
-  align-items: center;
-  gap: calc(var(--ds-bdu) * 2);
-
-  :deep(.v-btn) {
-    flex-grow: 1;
-  }
-}
-
-.page-layout--mobile {
-  .header-actions {
-    justify-content: center;
-  }
-}
-
-.account {
-  &__not-found {
-    text-align: center;
-    margin-top: calc(var(--ds-bdu) * 10);
-
-    &__title {
-      color: rgb(var(--ds-primary-variant));
-    }
-  }
-
-  &__tab {
-    &__item {
-      background: rgb(var(--ds-surface));
-    }
-
-    &__item.v-slide-group-item--active {
-      font-weight: 600;
-    }
-  }
-
-  &__header {
-    position: relative;
-
-    &__details {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100%;
-
-      &__addr {
-        white-space: nowrap;
-        align-items: center;
-        display: flex;
-        flex-wrap: nowrap;
-
-        &__text {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: calc(100% - calc(var(--ds-bdu) * 4));
-        }
-      }
-    }
-  }
-
-  &__balance {
-    font-size: var(--ds-font-size-md);
-    position: absolute;
-    display: flex;
-    z-index: 2;
-    background: rgb(var(--ds-surface));
-    width: auto;
-    min-width: calc(var(--ds-bdu) * 20);
-    border-radius: 10px;
-    justify-content: center;
-    align-items: center;
-    padding: calc(var(--ds-bdu) * 2) calc(var(--ds-bdu) * 2);
-    height: calc(var(--ds-bdu) * 6);
-    right: calc(var(--ds-bdu) * 4);
-    bottom: 0;
-  }
-
-  .transfers {
-    &__item {
-      &__details {
-        &--created_at {
-          white-space: nowrap;
-        }
-
-        &--amount {
-          white-space: nowrap;
-        }
-      }
-
-      &__icon {
-        min-width: calc(var(--ds-bdu) * 3);
-        width: calc(var(--ds-bdu) * 3);
-        max-width: calc(var(--ds-bdu) * 3);
-      }
-    }
-  }
-}
-</style>

@@ -48,19 +48,26 @@
         </VRow>
         <VRow>
           <VCol cols="12">
-            <component :is="proposalReviewComponent" :proposal="proposal" />
+            <component
+              :is="detailView?.component"
+              v-if="detailView"
+              :proposal="proposal"
+              :operation="detailView.operation"
+              mode="detail"
+            />
           </VCol>
         </VRow>
       </VContainer>
     </VCardText>
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-md-row ga-2">
       <ProposalMetadata
-        :proposal="proposal"
+        :proposal="props.proposal"
+        :details="props.details"
         class="flex-grow-0 mt-md-0"
-        :class="{ 'mt-8': proposal.info.can_vote }"
+        :class="{ 'mt-8': props.details.can_vote }"
       />
       <div class="d-flex flex-column flex-md-row ga-2 justify-end flex-grow-1 w-100 w-md-auto">
-        <template v-if="proposal.info.can_vote">
+        <template v-if="props.details.can_vote">
           <VBtn variant="outlined" :disabled="props.loading" @click="$emit('approve')">
             {{ $t('terms.approve') }}
           </VBtn>
@@ -81,16 +88,34 @@
 import { mdiInformationOutline } from '@mdi/js';
 import type { Component } from 'vue';
 import { computed, ref } from 'vue';
-import { VListItem } from 'vuetify/components';
-import ProposalMetadata from '~/components/proposals/ProposalMetadata.vue';
-import ProposalStatusChip from '~/components/proposals/ProposalStatusChip.vue';
-import ReviewAddUserGroup from '~/components/proposals/user-groups/ReviewAddUserGroup.vue';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
+import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
+import ProposalMetadata from './ProposalMetadata.vue';
+import ProposalStatusChip from './ProposalStatusChip.vue';
+import AddAccessPolicyOperation from './operations/AddAccessPolicyOperation.vue';
+import AddAccountOperation from './operations/AddAccountOperation.vue';
+import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
+import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.vue';
+import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
+import AddUserOperation from './operations/AddUserOperation.vue';
+import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
+import EditAccessPolicyOperation from './operations/EditAccessPolicyOperation.vue';
+import EditAccountOperation from './operations/EditAccountOperation.vue';
+import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
+import EditProposalPolicyOperation from './operations/EditProposalPolicyOperation.vue';
+import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
+import EditUserOperation from './operations/EditUserOperation.vue';
+import RemoveAccessPolicyOperation from './operations/RemoveAccessPolicyOperation.vue';
+import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
+import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
+import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
+import TransferOperation from './operations/TransferOperation.vue';
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
+    details: ProposalDetails;
     loading?: boolean;
   }>(),
   {
@@ -103,24 +128,24 @@ const titleTooltip = ref(false);
 const componentsMap: {
   [key in KeysOfUnion<ProposalOperation>]: Component;
 } = {
-  AddUserGroup: ReviewAddUserGroup,
-  RemoveUserGroup: VListItem,
-  EditUserGroup: VListItem,
-  AddUser: VListItem,
-  EditUser: VListItem,
-  AddAccount: VListItem,
-  EditAccount: VListItem,
-  AddAccessPolicy: VListItem,
-  RemoveAccessPolicy: VListItem,
-  EditAccessPolicy: VListItem,
-  AddProposalPolicy: VListItem,
-  EditProposalPolicy: VListItem,
-  RemoveProposalPolicy: VListItem,
-  Transfer: VListItem,
-  ChangeCanister: VListItem,
-  AddAddressBookEntry: VListItem,
-  EditAddressBookEntry: VListItem,
-  RemoveAddressBookEntry: VListItem,
+  AddUserGroup: AddUserGroupOperation,
+  AddUser: AddUserOperation,
+  EditUser: EditUserOperation,
+  EditUserGroup: EditUserGroupOperation,
+  AddAccount: AddAccountOperation,
+  EditAccount: EditAccountOperation,
+  Transfer: TransferOperation,
+  AddAddressBookEntry: AddAddressBookEntryOperation,
+  EditAddressBookEntry: EditAddressBookEntryOperation,
+  RemoveAddressBookEntry: RemoveAddressBookEntryOperation,
+  RemoveUserGroup: RemoveUserGroupOperation,
+  AddProposalPolicy: AddProposalPolicyOperation,
+  EditProposalPolicy: EditProposalPolicyOperation,
+  RemoveProposalPolicy: RemoveProposalPolicyOperation,
+  ChangeCanister: ChangeCanisterOperation,
+  AddAccessPolicy: AddAccessPolicyOperation,
+  RemoveAccessPolicy: RemoveAccessPolicyOperation,
+  EditAccessPolicy: EditAccessPolicyOperation,
 };
 
 defineEmits<{
@@ -128,11 +153,17 @@ defineEmits<{
   (event: 'reject', reason?: string): void;
 }>();
 
-const proposalReviewComponent = computed(() => {
-  const keys = Object.keys(componentsMap) as KeysOfUnion<ProposalOperation>[];
+const detailView = computed<{
+  component: Component;
+  operation: ProposalOperation[keyof ProposalOperation];
+} | null>(() => {
+  const keys = Object.keys(componentsMap) as Array<keyof ProposalOperation>;
   for (const key of keys) {
     if (key in props.proposal.operation && key in componentsMap) {
-      return componentsMap[key];
+      return {
+        component: componentsMap[key],
+        operation: props.proposal.operation[key],
+      };
     }
   }
 

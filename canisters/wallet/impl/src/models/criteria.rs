@@ -1,18 +1,19 @@
 use super::{
-    specifier::{Match, UserSpecifier},
-    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus, UserId,
+    specifier::{Match, ProposalHasMetadata, ProposalHasVoterInUserSpecifier, UserSpecifier},
+    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus, UserId, UserStatus,
 };
 use crate::{
-    core::utils::calculate_minimum_threshold, errors::MatchError, repositories::USER_REPOSITORY,
+    core::utils::calculate_minimum_threshold,
+    errors::MatchError,
+    repositories::{UserWhereClause, USER_REPOSITORY},
 };
 use anyhow::{anyhow, Error};
 use async_trait::async_trait;
 use candid::{CandidType, Deserialize};
 use futures::{stream, StreamExt, TryStreamExt};
-use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::stable_object;
-use std::hash::Hash;
 use std::sync::Arc;
+use std::{cmp, hash::Hash};
 use wallet_api::MetadataDTO;
 
 #[stable_object]
@@ -70,8 +71,8 @@ pub trait EvaluateCriteria<
 
 #[derive(Clone)]
 pub struct CriteriaEvaluator {
-    pub user_matcher: Arc<dyn Match<(Proposal, UUID, UserSpecifier)>>,
-    pub address_book_metadata_matcher: Arc<dyn Match<(Proposal, MetadataDTO)>>,
+    pub user_matcher: Arc<dyn Match<ProposalHasVoterInUserSpecifier>>,
+    pub address_book_metadata_matcher: Arc<dyn Match<ProposalHasMetadata>>,
 }
 
 struct ProposalVoteSummary {
@@ -88,16 +89,17 @@ impl ProposalVoteSummary {
     /// enough uncasted votes that could be casted to meet the minimum votes required, then the evaluation
     /// is kept in the `Pending` state.
     fn evaluate(&self, min_votes: &usize) -> EvaluationStatus {
+        let min_votes = *cmp::min(min_votes, &self.total_possible_votes);
         let uncasted_votes = self
             .total_possible_votes
             .saturating_sub(self.adopted_votes)
             .saturating_sub(self.rejected_votes);
 
-        if self.adopted_votes >= *min_votes {
+        if self.adopted_votes >= min_votes {
             return EvaluationStatus::Adopted;
         }
 
-        if self.adopted_votes.saturating_add(uncasted_votes) < *min_votes {
+        if self.adopted_votes.saturating_add(uncasted_votes) < min_votes {
             return EvaluationStatus::Rejected;
         }
 
@@ -133,15 +135,15 @@ impl CriteriaEvaluator {
             .then(|(user_id, match_return)| {
                 let match_return = match_return.clone();
                 async move {
-                    match {
-                        self.user_matcher
-                            .is_match((
-                                proposal.as_ref().to_owned(),
-                                user_id.to_owned(),
-                                user_specifier.to_owned(),
-                            ))
-                            .await
-                    } {
+                    match self
+                        .user_matcher
+                        .is_match((
+                            proposal.as_ref().to_owned(),
+                            user_id.to_owned(),
+                            user_specifier.to_owned(),
+                        ))
+                        .await
+                    {
                         Ok(true) => Ok(Some(match_return)),
                         Ok(false) => Ok(None),
                         Err(e) => Err(e),
@@ -171,11 +173,14 @@ impl CriteriaEvaluator {
             )
             .await?;
 
-        let total_possible_votes = self
+        let mut total_possible_votes = self
             .find_matching_users::<()>(
                 proposal,
                 USER_REPOSITORY
-                    .list()
+                    .find_where(UserWhereClause {
+                        statuses: Some(vec![UserStatus::Active]),
+                        search_term: None,
+                    })
                     .iter()
                     .map(|user| (user.id.to_owned(), ()))
                     .collect::<Vec<(UserId, ())>>()
@@ -184,6 +189,10 @@ impl CriteriaEvaluator {
             )
             .await?
             .len();
+
+        // This is to ensure that the if users become inactive or the criteria is misconfigured
+        // the total_possible_votes is not less than the casted votes.
+        total_possible_votes = cmp::max(casted_votes.len(), total_possible_votes);
 
         Ok(ProposalVoteSummary {
             total_possible_votes,

@@ -18,10 +18,10 @@
           <SidenavMenu />
         </slot>
       </div>
-      <div class="sidebar__footer">
+      <div class="px-4 py-2">
         <slot name="sidebar-footer">
           <a href="https://internetcomputer.org" target="_blank">
-            <img :src="icLogoHorizontal" height="20" />
+            <img :src="poweredByBadge" height="20" />
           </a>
         </slot>
       </div>
@@ -33,7 +33,7 @@
         <VToolbar density="compact" class="toolbar">
           <div v-if="!isSetAndNotFalse(props.hideToolbarContext)" class="toolbar__context">
             <slot name="toolbar-context">
-              <BrandLogo />
+              <BrandLogo class="px-4" height="20px" />
             </slot>
           </div>
           <VSpacer />
@@ -120,11 +120,10 @@
 <script lang="ts" setup>
 import { mdiAlertOutline, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed, inject } from 'vue';
-import icLogoHorizontal from '~/static/internet-computer-horizontal-light.png';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import BrandLogo from '~/components/BrandLogo.vue';
-import NotificationsPanelToggle from '~/components/NotificationsPanelToggle.vue';
+import NotificationsPanelToggle from '~/components/notifications/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/components/SidenavHeader.vue';
 import SidenavMenu from '~/components/SidenavMenu.vue';
 import UserAvatarSelector from '~/components/UserAvatarSelector.vue';
@@ -144,6 +143,8 @@ const props = inject('pageLayoutProps', {
   hideFooter: false,
   hideToolbarContext: false,
 });
+
+const poweredByBadge = `/images/powered-by-badge.svg`;
 
 const icLogoVertical = computed(() => {
   return app.isDarkTheme

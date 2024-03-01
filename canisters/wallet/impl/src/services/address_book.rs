@@ -1,14 +1,20 @@
 use crate::{
-    core::generate_uuid_v4,
-    core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+    core::{
+        access_control::evaluate_caller_access,
+        generate_uuid_v4,
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        CallContext,
+    },
     errors::AddressBookError,
-    mappers::AddressBookMapper,
+    mappers::address_book::AddressBookMapper,
     models::{
-        AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryId, Blockchain,
-        BlockchainStandard, EditAddressBookEntryOperationInput,
+        access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType},
+        specifier::CommonSpecifier,
+        AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
+        AddressBookEntryId, EditAddressBookEntryOperationInput, ListAddressBookEntriesInput,
         RemoveAddressBookEntryOperationInput,
     },
-    repositories::{AddressBookRepository, ADDRESS_BOOK_REPOSITORY},
+    repositories::{AddressBookRepository, AddressBookWhereClause, ADDRESS_BOOK_REPOSITORY},
 };
 use ic_canister_core::{api::ServiceResult, model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
@@ -50,20 +56,56 @@ impl AddressBookService {
         Ok(address_book_entry)
     }
 
-    /// Returns all address book entries for the given blockchain standard.
-    pub fn get_entries_by_blockchain_standard(
+    /// Returns the caller privileges for the given address book entry.
+    pub async fn get_caller_privileges_for_entry(
         &self,
-        blockchain: Blockchain,
-        standard: BlockchainStandard,
-        paginate: PaginationInput,
+        id: &AddressBookEntryId,
+        ctx: &CallContext,
+    ) -> ServiceResult<AddressBookEntryCallerPrivileges> {
+        let can_edit = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                CommonActionSpecifier::Update(CommonSpecifier::Id(vec![*id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        let can_delete = evaluate_caller_access(
+            ctx,
+            &ResourceSpecifier::Common(
+                ResourceType::AddressBook,
+                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![*id])),
+            ),
+        )
+        .await
+        .is_ok();
+
+        Ok(AddressBookEntryCallerPrivileges {
+            id: *id,
+            can_edit,
+            can_delete,
+        })
+    }
+
+    /// Returns all address book entries for the given blockchain standard.
+    pub fn search_entries(
+        &self,
+        input: ListAddressBookEntriesInput,
+        paginate: Option<PaginationInput>,
     ) -> ServiceResult<PaginatedData<AddressBookEntry>> {
-        let mut entries = self
+        let entries = self
             .address_book_repository
-            .find_by_blockchain_standard(blockchain, standard);
-        entries.sort();
+            .find_where(AddressBookWhereClause {
+                ids: input.ids,
+                addresses: input.addresses,
+                address_chain: input.address_chain,
+            });
+
         Ok(paginated_items(PaginatedItemsArgs {
-            offset: paginate.offset,
-            limit: paginate.limit,
+            offset: paginate.to_owned().and_then(|p| p.offset),
+            limit: paginate.and_then(|p| p.limit),
             default_limit: Some(Self::DEFAULT_ENTRIES_LIMIT),
             max_limit: Some(Self::MAX_LIST_ENTRIES_LIMIT),
             items: &entries,

@@ -1,4 +1,5 @@
 import en from '~/locales/en.locale';
+import { BreadCrumbItem } from '~/types/navigation.types';
 
 export interface AppInitConfig {
   name: string;
@@ -33,4 +34,34 @@ export interface GlobalNotification {
   show: boolean;
   message: string;
   type: 'error' | 'success' | 'info' | 'warning';
+}
+
+export interface Pagination {
+  limit: number;
+  totalPages: number;
+  selectedPage: number;
+}
+
+export interface TableHeaderProps {
+  class?: string;
+}
+
+export interface TableHeader {
+  title: string;
+  key: string;
+  sortable?: boolean;
+  headerProps?: TableHeaderProps;
+}
+
+export interface PageProps {
+  title?: string;
+  subtitle?: string;
+  breadcrumbs?: BreadCrumbItem[];
+}
+
+export type CsvRow = Record<string, string>;
+
+export interface CsvTable {
+  headers: CsvRow;
+  rows: CsvRow[];
 }

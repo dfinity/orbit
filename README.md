@@ -54,7 +54,7 @@ After adding this line, you can access the wallet interface at [http://asrmz-lma
 For a faster frontend development experience, you can run the following commands to enable hot-reloading and use it through locahost:
 
 ```bash
-cd canisters/wallet-ui
+cd canisters/ui
 nvm use
 pnpm dev
 ```

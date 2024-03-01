@@ -184,18 +184,14 @@ function setup_ui() {
 }
 
 function candid_generate() {
-  # ICP INDEX CANDID CODE GENERATION
-  ICP_INDEX_CANDID=$(dfx canister metadata icp_index candid:service)
-  echo "$ICP_INDEX_CANDID" >/tmp/icp_index.did
-
-  didc bind --target rs /tmp/icp_index.did >canisters/wallet/src/generated/icp_index.rs
-
-  rm /tmp/icp_index.did
+  dfx generate wallet
+  dfx generate control_panel
+  dfx generate icp_index
+  dfx generate internet_identity
 }
 
 function setup_devenv() {
-  nvm install
-  nvm use
+  . ./scripts/setup-node.sh
 
   if ! command -v pnpm >/dev/null 2>&1; then
     echo "pnpm not found, installing..."
@@ -267,7 +263,7 @@ while [[ $# -gt 0 ]]; do
     echo "ERROR: unknown argument $1"
     usage
     echo
-    echo "Use 'orbit --help' for more information"
+    echo "Use '$0 --help' for more information"
     exit 1
     ;;
   esac

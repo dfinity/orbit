@@ -1,19 +1,24 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { UserGroup } from '~/generated/wallet/wallet.did';
-import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
-import { createMockRef, mount } from '~/test.utils';
+import { WalletService } from '~/services/wallet.service';
+import { mount } from '~/test.utils';
 import MembersOfGroupForm from './MembersOfGroupForm.vue';
 
-vi.mock('~/composables/autocomplete.composable', () => {
-  const mock: Partial<ReturnType<typeof useUserGroupsAutocomplete>> = {
-    searchItems: vi.fn(),
-    loading: createMockRef(false),
-    results: createMockRef<UserGroup[]>([]),
+vi.mock('~/services/wallet.service', () => {
+  const mock: Partial<WalletService> = {
+    withWalletId: vi.fn().mockReturnThis(),
+    listUserGroups: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        user_groups: [],
+        privileges: [],
+        next_offset: [BigInt(0)],
+        total: BigInt(0),
+      }),
+    ),
   };
 
   return {
-    useUserGroupsAutocomplete: vi.fn(() => mock),
+    WalletService: vi.fn(() => mock),
   };
 });
 

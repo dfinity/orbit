@@ -2,8 +2,6 @@ import {
   ListProposalsOperationType,
   ProposalStatusCode,
   UUID,
-  UserGroup,
-  UserStatus,
 } from '~/generated/wallet/wallet.did';
 
 export enum PolicyType {
@@ -33,15 +31,7 @@ export enum ProposalStatusEnum {
   Failed = 'Failed',
   Scheduled = 'Scheduled',
   Processing = 'Processing',
-}
-
-export interface UserInput {
-  id?: UUID;
-  name?: string;
-  status: UserStatus;
-  groups: UUID[];
-  identities: string[];
-  prefilledGroups: UserGroup[];
+  Cancelled = 'Cancelled',
 }
 
 export enum UserStatusType {
@@ -95,4 +85,80 @@ export interface ListAccountsArgs {
 export enum ChangeCanisterTargetType {
   UpgradeWallet = 'UpgradeWallet',
   UpgradeUpgrader = 'UpgradeUpgrader',
+}
+
+export enum ProposalSpecifierEnum {
+  EditAccessPolicy = 'EditAccessPolicy',
+  AddUserGroup = 'AddUserGroup',
+  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  AddUser = 'AddUser',
+  EditUserGroup = 'EditUserGroup',
+  RemoveAddressBookEntry = 'RemoveAddressBookEntry',
+  EditAddressBookEntry = 'EditAddressBookEntry',
+  AddProposalPolicy = 'AddProposalPolicy',
+  ChangeCanister = 'ChangeCanister',
+  EditProposalPolicy = 'EditProposalPolicy',
+  EditUser = 'EditUser',
+  Transfer = 'Transfer',
+  EditAccount = 'EditAccount',
+  AddAddressBookEntry = 'AddAddressBookEntry',
+  AddAccessPolicy = 'AddAccessPolicy',
+  RemoveAccessPolicy = 'RemoveAccessPolicy',
+  RemoveUserGroup = 'RemoveUserGroup',
+  AddAccount = 'AddAccount',
+}
+
+export enum ProposalCriteriaEnum {
+  AutoAdopted = 'AutoAdopted',
+  HasAddressBookMetadata = 'HasAddressBookMetadata',
+  MinimumVotes = 'MinimumVotes',
+  ApprovalThreshold = 'ApprovalThreshold',
+  And = 'And',
+  Or = 'Or',
+  Not = 'Not',
+}
+
+export enum ProposalCriteriaUserSpecifierEnum {
+  Owner = 'Owner',
+  Proposer = 'Proposer',
+  Any = 'Any',
+  Group = 'Group',
+  Id = 'Id',
+}
+
+export interface ListAddressBookEntriesArgs {
+  limit?: number;
+  offset?: number;
+  addresses?: string[];
+  blockchain?: string;
+  standard?: string;
+  ids?: UUID[];
+}
+
+export type MetadataItem = { key: string; value: string };
+
+export interface ProposalDetails {
+  can_vote: boolean;
+  proposer_name?: string;
+}
+
+export enum ProposalOperationEnum {
+  AddUser = 'AddUser',
+  EditUser = 'EditUser',
+  AddUserGroup = 'AddUserGroup',
+  EditUserGroup = 'EditUserGroup',
+  RemoveUserGroup = 'RemoveUserGroup',
+  AddAccount = 'AddAccount',
+  EditAccount = 'EditAccount',
+  AddAddressBookEntry = 'AddAddressBookEntry',
+  EditAddressBookEntry = 'EditAddressBookEntry',
+  RemoveAddressBookEntry = 'RemoveAddressBookEntry',
+  AddProposalPolicy = 'AddProposalPolicy',
+  EditProposalPolicy = 'EditProposalPolicy',
+  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  AddAccessPolicy = 'AddAccessPolicy',
+  EditAccessPolicy = 'EditAccessPolicy',
+  RemoveAccessPolicy = 'RemoveAccessPolicy',
+  ChangeCanister = 'ChangeCanister',
+  Transfer = 'Transfer',
 }

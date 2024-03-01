@@ -80,6 +80,10 @@ export const isSetAndNotFalse = (value: unknown) => {
   return true;
 };
 
+export const isValidSha256 = (value: string): boolean => {
+  return /^[a-f0-9]{64}$/i.test(value);
+};
+
 // Formats a balance that is a bigint into a string with the correct number of decimals
 export const formatBalance = (amount: bigint, decimals: number): string => {
   const integerPart = amount / BigInt(10 ** decimals);
@@ -167,4 +171,15 @@ export const assertAndReturn = <T>(value: T | undefined | null, name = 'Value'):
   }
 
   return value;
+};
+
+export const isValidUUID = (uuid: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
+};
+
+export const stringify = (obj: unknown): string => {
+  return JSON.stringify(
+    obj,
+    (_, value) => (typeof value === 'bigint' ? value.toString() : value), // return everything else unchanged
+  );
 };

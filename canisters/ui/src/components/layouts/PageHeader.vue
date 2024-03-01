@@ -14,12 +14,14 @@
         </VBreadcrumbs>
       </VCol>
       <VCol cols="12" :md="hasActions ? 6 : 12">
+        <slot name="title-toolbar"></slot>
         <h1
           class="text-h4"
           :data-test-id="$props.dataTestId ? `${$props.dataTestId}-title` : undefined"
         >
           <slot name="title">{{ $props.title ?? '' }}</slot>
         </h1>
+        <slot name="subtitle">{{ props.subtitle }}</slot>
       </VCol>
       <VCol
         v-if="hasActions"
@@ -45,11 +47,13 @@ import { BreadCrumbItem } from '~/types/navigation.types';
 const props = withDefaults(
   defineProps<{
     title?: string;
+    subtitle?: string;
     dataTestId?: string;
     breadcrumbs?: BreadCrumbItem[];
   }>(),
   {
     title: undefined,
+    subtitle: undefined,
     dataTestId: 'page-header',
     breadcrumbs: () => [],
   },

@@ -2,6 +2,13 @@ use crate::{CriteriaDTO, MetadataDTO, PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AccountCallerPrivilegesDTO {
+    pub id: UuidDTO,
+    pub can_transfer: bool,
+    pub can_edit: bool,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
     pub id: UuidDTO,
     pub owners: Vec<UuidDTO>,
@@ -53,12 +60,6 @@ pub struct AddAccountOperationDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ApprovalThresholdPolicyDTO {
-    VariableThreshold(u8),
-    FixedThreshold(u8),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccountInput {
     pub account_id: UuidDTO,
 }
@@ -66,6 +67,7 @@ pub struct GetAccountInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccountResponse {
     pub account: AccountDTO,
+    pub privileges: AccountCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -104,4 +106,5 @@ pub struct ListAccountsResponse {
     pub accounts: Vec<AccountDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
+    pub privileges: Vec<AccountCallerPrivilegesDTO>,
 }

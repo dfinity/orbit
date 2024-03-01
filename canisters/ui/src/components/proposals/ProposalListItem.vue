@@ -1,88 +1,99 @@
 <template>
-  <tr v-if="props.mode === 'table'">
-    <td class="text-body-2 w-25" :class="{ 'bb-none': props.hideColumnBorders }">
+  <VCard
+    density="compact"
+    color="background"
+    variant="flat"
+    :rounded="0"
+    class="mb-2"
+    :class="{ 'br-on-background': props.mode === 'grid' }"
+  >
+    <VCardTitle class="text-body-2 font-weight-bold">
       {{ $t(`proposals.types.${proposalType}.title`) }}
-    </td>
-    <td class="w-75" :class="{ 'bb-none': props.hideColumnBorders }">
+    </VCardTitle>
+    <VCardText class="px-4 pb-1">
       <component
-        :is="listItemProposalComponent"
-        v-if="listItemProposalComponent"
-        :proposal="proposal"
+        :is="itemView?.component"
+        v-if="itemView"
+        :proposal="props.proposal"
+        :operation="itemView.operation"
+        mode="list"
       />
-    </td>
-    <td class="d-flex justify-end align-center" :class="{ 'bb-none': props.hideColumnBorders }">
+    </VCardText>
+    <VCardActions class="px-4">
+      <ProposalStatusChip size="small" :status="props.proposal.status" />
+      <VSpacer />
       <ReviewProposalBtn
-        :proposal="proposal"
+        :proposal="props.proposal"
+        :details="props.details"
         @voted="$emit('voted')"
         @opened="$emit('opened')"
         @closed="$emit('closed')"
       />
-    </td>
-  </tr>
-  <VListItem v-else>
-    <VListItemTitle class="text-body-2 font-weight-bold">
-      {{ $t(`proposals.types.${proposalType}.title`) }}
-    </VListItemTitle>
-    <VListItemSubtitle>
-      <component
-        :is="listItemProposalComponent"
-        v-if="listItemProposalComponent"
-        :proposal="proposal"
-      />
-    </VListItemSubtitle>
-    <template #append>
-      <ReviewProposalBtn
-        :proposal="proposal"
-        @voted="$emit('voted')"
-        @opened="$emit('opened')"
-        @closed="$emit('closed')"
-      />
-    </template>
-  </VListItem>
+    </VCardActions>
+  </VCard>
 </template>
 
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import { VListItem } from 'vuetify/components';
-import ReviewProposalBtn from '~/components/proposals/ReviewProposalBtn.vue';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
+import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
-import ListItemAddUserGroup from './user-groups/ListItemAddUserGroup.vue';
+import ProposalStatusChip from './ProposalStatusChip.vue';
+import ReviewProposalBtn from './ReviewProposalBtn.vue';
+import AddAccessPolicyOperation from './operations/AddAccessPolicyOperation.vue';
+import AddAccountOperation from './operations/AddAccountOperation.vue';
+import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
+import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.vue';
+import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
+import AddUserOperation from './operations/AddUserOperation.vue';
+import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
+import EditAccessPolicyOperation from './operations/EditAccessPolicyOperation.vue';
+import EditAccountOperation from './operations/EditAccountOperation.vue';
+import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
+import EditProposalPolicyOperation from './operations/EditProposalPolicyOperation.vue';
+import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
+import EditUserOperation from './operations/EditUserOperation.vue';
+import RemoveAccessPolicyOperation from './operations/RemoveAccessPolicyOperation.vue';
+import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
+import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
+import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
+import TransferOperation from './operations/TransferOperation.vue';
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
+    details: ProposalDetails;
     hideColumnBorders?: boolean;
-    mode?: 'list' | 'table';
+    mode?: 'list' | 'grid';
   }>(),
   {
     hideColumnBorders: false,
-    mode: 'table',
+    mode: 'list',
   },
 );
 
 const componentsMap: {
   [key in KeysOfUnion<ProposalOperation>]: Component;
 } = {
-  AddUserGroup: ListItemAddUserGroup,
-  RemoveUserGroup: VListItem,
-  EditUserGroup: VListItem,
-  AddUser: VListItem,
-  EditUser: VListItem,
-  AddAccount: VListItem,
-  EditAccount: VListItem,
-  AddAccessPolicy: VListItem,
-  RemoveAccessPolicy: VListItem,
-  EditAccessPolicy: VListItem,
-  AddProposalPolicy: VListItem,
-  EditProposalPolicy: VListItem,
-  RemoveProposalPolicy: VListItem,
-  Transfer: VListItem,
-  ChangeCanister: VListItem,
-  AddAddressBookEntry: VListItem,
-  EditAddressBookEntry: VListItem,
-  RemoveAddressBookEntry: VListItem,
+  AddUserGroup: AddUserGroupOperation,
+  AddUser: AddUserOperation,
+  EditUser: EditUserOperation,
+  EditUserGroup: EditUserGroupOperation,
+  AddAccount: AddAccountOperation,
+  EditAccount: EditAccountOperation,
+  Transfer: TransferOperation,
+  AddAddressBookEntry: AddAddressBookEntryOperation,
+  EditAddressBookEntry: EditAddressBookEntryOperation,
+  RemoveAddressBookEntry: RemoveAddressBookEntryOperation,
+  RemoveUserGroup: RemoveUserGroupOperation,
+  AddProposalPolicy: AddProposalPolicyOperation,
+  EditProposalPolicy: EditProposalPolicyOperation,
+  RemoveProposalPolicy: RemoveProposalPolicyOperation,
+  ChangeCanister: ChangeCanisterOperation,
+  AddAccessPolicy: AddAccessPolicyOperation,
+  RemoveAccessPolicy: RemoveAccessPolicyOperation,
+  EditAccessPolicy: EditAccessPolicyOperation,
 };
 
 defineEmits<{
@@ -91,11 +102,17 @@ defineEmits<{
   (event: 'closed'): void;
 }>();
 
-const listItemProposalComponent = computed(() => {
-  const keys = Object.keys(componentsMap) as KeysOfUnion<ProposalOperation>[];
+const itemView = computed<{
+  component: Component;
+  operation: ProposalOperation[keyof ProposalOperation];
+} | null>(() => {
+  const keys = Object.keys(componentsMap) as Array<keyof ProposalOperation>;
   for (const key of keys) {
-    if (key in props.proposal.operation && key in componentsMap) {
-      return componentsMap[key];
+    if (key in props.proposal.operation) {
+      return {
+        component: componentsMap[key],
+        operation: props.proposal.operation[key],
+      };
     }
   }
 

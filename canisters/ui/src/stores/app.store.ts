@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { en as designSystemFallbackMessages } from 'vuetify/locale';
 import { Locale } from '~/configs/i18n.config';
 import { appInitConfig } from '~/configs/init.config';
+import { RouteStatusCode } from '~/configs/routes.config';
 import { logger } from '~/core/logger.core';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
@@ -11,17 +12,20 @@ import { GlobalNotification, SupportedTheme } from '~/types/app.types';
 
 export interface AppStoreState {
   initialized: boolean;
+  loading: boolean;
   appName: string;
   theme: SupportedTheme;
   showSidebar: boolean;
   notification: GlobalNotification;
   isMobile: boolean;
+  routeStatusCode: RouteStatusCode;
 }
 
 export const useAppStore = defineStore('app', {
   state: (): AppStoreState => {
     return {
       initialized: false,
+      loading: false,
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),
       showSidebar: true,
@@ -31,6 +35,7 @@ export const useAppStore = defineStore('app', {
         message: '',
         type: 'info',
       },
+      routeStatusCode: RouteStatusCode.Success,
     };
   },
   getters: {

@@ -2,14 +2,16 @@ use crate::interfaces::{
     default_account, get_icp_balance, send_icp, send_icp_to_account, ICP, ICP_FEE,
 };
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{update_candid_as, user_test_id};
+use crate::utils::user_test_id;
 use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
+use pocket_ic::{query_candid_as, update_candid_as};
 use std::time::Duration;
 use wallet_api::{
-    AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, CreateProposalInput,
-    CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, MeResponse,
+    AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, ApprovalThresholdDTO,
+    CreateProposalInput, CreateProposalResponse, CriteriaDTO, GetProposalInput,
+    GetProposalResponse, ListAccountTransfersInput, ListAccountTransfersResponse, MeResponse,
     ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
     TransferOperationInput, UserSpecifierDTO,
 };
@@ -37,8 +39,14 @@ fn make_transfer_successful() {
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
         policies: AccountPoliciesDTO {
-            transfer: Some(CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 100)),
-            edit: Some(CriteriaDTO::ApprovalThreshold(UserSpecifierDTO::Owner, 100)),
+            transfer: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                voters: UserSpecifierDTO::Owner,
+                threshold: 100,
+            })),
+            edit: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+                voters: UserSpecifierDTO::Owner,
+                threshold: 100,
+            })),
         },
         metadata: vec![],
     };
@@ -122,7 +130,7 @@ fn make_transfer_successful() {
 
     // make transfer proposal to beneficiary
     let transfer = TransferOperationInput {
-        from_account_id: account_dto.id,
+        from_account_id: account_dto.id.clone(),
         to: default_account(beneficiary_id),
         amount: ICP.into(),
         fee: None,
@@ -176,7 +184,42 @@ fn make_transfer_successful() {
         }
     };
 
+    // proposal has the transfer id filled out
+    match new_proposal_dto.operation {
+        ProposalOperationDTO::Transfer(transfer) => {
+            transfer.transfer_id.expect("transfer id must be set")
+        }
+        _ => {
+            panic!("proposal must be Transfer");
+        }
+    };
+
     // check beneficiary balance after completed transfer
     let new_beneficiary_balance = get_icp_balance(&env, beneficiary_id);
     assert_eq!(new_beneficiary_balance, ICP);
+
+    // load account transfers
+    let res: (Result<ListAccountTransfersResponse, ApiErrorDTO>,) = query_candid_as(
+        &env,
+        canister_ids.wallet,
+        WALLET_ADMIN_USER,
+        "list_account_transfers",
+        (ListAccountTransfersInput {
+            account_id: account_dto.id,
+            from_dt: None,
+            to_dt: None,
+            status: None,
+        },),
+    )
+    .unwrap();
+
+    // transactions should be completed and have transaction hash
+    let all_have_transaction_hash = res.0.unwrap().transfers.iter().all(|t| match &t.status {
+        wallet_api::TransferStatusDTO::Completed { hash, .. } => hash.is_some(),
+        _ => {
+            panic!("transfer should be completed");
+        }
+    });
+
+    assert!(all_have_transaction_hash);
 }

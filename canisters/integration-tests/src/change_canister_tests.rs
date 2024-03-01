@@ -7,7 +7,7 @@ use crate::TestEnv;
 use wallet_api::{
     AddAccessPolicyOperationInput, AddProposalPolicyOperationInput,
     ChangeCanisterActionSpecifierDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    CommonSpecifierDTO, CriteriaDTO, ProposalOperationInput, ProposalSpecifierDTO,
+    CommonSpecifierDTO, CriteriaDTO, MinimumVotesDTO, ProposalOperationInput, ProposalSpecifierDTO,
     ResourceSpecifierDTO, UserSpecifierDTO,
 };
 
@@ -23,7 +23,10 @@ fn successful_four_eyes_upgrade() {
     let add_proposal_policy =
         ProposalOperationInput::AddProposalPolicy(AddProposalPolicyOperationInput {
             specifier: ProposalSpecifierDTO::ChangeCanister,
-            criteria: CriteriaDTO::MinimumVotes(UserSpecifierDTO::Any, 2),
+            criteria: CriteriaDTO::MinimumVotes(MinimumVotesDTO {
+                voters: UserSpecifierDTO::Any,
+                minimum: 2,
+            }),
         });
     execute_proposal(
         &env,
