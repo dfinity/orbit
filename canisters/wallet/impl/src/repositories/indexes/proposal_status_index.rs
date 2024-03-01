@@ -36,12 +36,10 @@ impl IndexRepository<ProposalStatusIndex, UUID> for ProposalStatusIndexRepositor
         DB.with(|db| {
             let start_key = ProposalStatusIndex {
                 status: criteria.status.to_owned(),
-                last_modification_timestamp: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
                 proposal_id: [std::u8::MIN; 16],
             };
             let end_key = ProposalStatusIndex {
                 status: criteria.status.to_owned(),
-                last_modification_timestamp: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
                 proposal_id: [std::u8::MAX; 16],
             };
 
@@ -64,7 +62,6 @@ mod tests {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
             status: ProposalStatus::Created.to_string(),
-            last_modification_timestamp: 10,
             proposal_id: [1; 16],
         };
 
@@ -82,21 +79,17 @@ mod tests {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
             status: ProposalStatus::Created.to_string(),
-            last_modification_timestamp: 10,
             proposal_id: [1; 16],
         };
 
         repository.insert(index.clone());
         repository.insert(ProposalStatusIndex {
             status: ProposalStatus::Created.to_string(),
-            last_modification_timestamp: 11,
             proposal_id: [2; 16],
         });
 
         let criteria = ProposalStatusIndexCriteria {
             status: ProposalStatus::Created.to_string(),
-            from_dt: None,
-            to_dt: Some(10),
         };
 
         let result = repository.find_by_criteria(criteria);
