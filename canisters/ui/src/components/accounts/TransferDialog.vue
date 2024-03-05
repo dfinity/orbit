@@ -10,9 +10,12 @@
       v-slot="{ data }"
       :load="loadTransfer"
       @loading="loading = $event"
-      @loaded="transfer = $event.transfer"
+      @loaded="
+        transfer = $event.transfer;
+        proposal = $event.proposal;
+      "
     >
-      <VCard :loading="loading">
+      <VCard :loading="loading" data-test-id="transfer-dialog-form">
         <VToolbar dark color="surface">
           <VToolbarTitle>{{ $t('terms.transfer') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
@@ -23,10 +26,27 @@
             v-model="transfer"
             v-model:trigger-submit="triggerSubmit"
             :account="props.account.value"
-            :disabled="props.readonly.value"
+            :mode="props.readonly.value ? 'view' : 'edit'"
             @submit="save"
             @valid="valid = $event"
           />
+
+          <VRow>
+            <VCol :cols="12">
+              <VTextField
+                v-model="summary"
+                :label="$t('terms.summary')"
+                variant="underlined"
+                density="compact"
+                class="mb-2"
+                name="to"
+                :disabled="props.readonly.value"
+                type="text"
+                :prepend-icon="mdiComment"
+                data-test-id="transfer-dialog-proposal-summary"
+              />
+            </VCol>
+          </VRow>
         </VCardText>
         <VCardActions class="pa-3">
           <VSpacer />
@@ -34,6 +54,7 @@
             v-if="!props.readonly.value"
             :disabled="!canSave"
             :loading="saving"
+            data-test-id="transfer-dialog-save-button"
             @click="triggerSubmit = true"
           >
             {{ props.transferId.value ? $t('terms.save') : $t('terms.create') }}
@@ -44,7 +65,7 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiClose } from '@mdi/js';
+import { mdiClose, mdiComment } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
 import TransferForm from './TransferForm.vue';
@@ -53,9 +74,9 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { Account, Transfer, UUID } from '~/generated/wallet/wallet.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { Account, Proposal, Transfer, UUID } from '~/generated/wallet/wallet.did';
 import { assertAndReturn } from '~/utils/helper.utils';
+import { services } from '~/plugins/services.plugin';
 
 const input = withDefaults(
   defineProps<{
@@ -82,26 +103,40 @@ const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
 const transfer = ref<Partial<Transfer>>({});
+const proposal = ref<Partial<Proposal>>({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
 });
 
-const wallet = useWalletStore();
+const summary = computed({
+  get: () => proposal.value.summary?.[0],
+  set: value => {
+    proposal.value.summary = !value ? [] : [value];
+  },
+});
+
+const walletService = services().wallet;
 
 const loadTransfer = async (): Promise<{
   transfer: Partial<Transfer>;
+  proposal: Partial<Proposal>;
 }> => {
   if (props.transferId.value === undefined) {
     const createModel: Partial<Transfer> = {
       from_account_id: props.account.value.id,
     };
 
-    return { transfer: createModel };
+    return { transfer: createModel, proposal: {} };
   }
 
-  const result = await wallet.service.getTransfer(props.transferId.value);
-  return { transfer: result };
+  const transfer = await walletService.getTransfer(props.transferId.value);
+
+  const { proposal } = await walletService.getProposal({
+    proposal_id: transfer.proposal_id,
+  });
+
+  return { transfer, proposal };
 };
 
 const canSave = computed(() => {
@@ -118,16 +153,19 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
 
-    const proposal = await wallet.service.transfer({
-      from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
-      amount: assertAndReturn(transfer.value.amount, 'amount'),
-      to: assertAndReturn(transfer.value.to, 'to'),
-      fee: transfer.value.fee ? [transfer.value.fee] : [],
-      metadata: transfer.value.metadata ?? [],
-      network: transfer.value.network ? [transfer.value.network] : [],
-    });
+    const newProposal = await walletService.transfer(
+      {
+        from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
+        amount: assertAndReturn(transfer.value.amount, 'amount'),
+        to: assertAndReturn(transfer.value.to, 'to'),
+        fee: transfer.value.fee ? [transfer.value.fee] : [],
+        metadata: transfer.value.metadata ?? [],
+        network: transfer.value.network ? [transfer.value.network] : [],
+      },
+      summary.value,
+    );
 
-    useOnSuccessfulOperation(proposal);
+    useOnSuccessfulOperation(newProposal);
 
     openModel.value = false;
   } catch (error) {

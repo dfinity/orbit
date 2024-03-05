@@ -11,9 +11,9 @@ use std::time::Duration;
 use wallet_api::{
     AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, ApprovalThresholdDTO,
     CreateProposalInput, CreateProposalResponse, CriteriaDTO, GetProposalInput,
-    GetProposalResponse, ListAccountTransfersInput, ListAccountTransfersResponse, MeResponse,
-    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
-    TransferOperationInput, UserSpecifierDTO,
+    GetProposalResponse, GetTransfersInput, GetTransfersResponse, ListAccountTransfersInput,
+    ListAccountTransfersResponse, MeResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO,
+    ProposalOperationInput, ProposalStatusDTO, TransferOperationInput, UserSpecifierDTO,
 };
 
 #[test]
@@ -163,7 +163,7 @@ fn make_transfer_successful() {
 
     // check transfer proposal status
     let get_proposal_args = GetProposalInput {
-        proposal_id: proposal_dto.id,
+        proposal_id: proposal_dto.id.clone(),
     };
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
@@ -185,14 +185,37 @@ fn make_transfer_successful() {
     };
 
     // proposal has the transfer id filled out
-    match new_proposal_dto.operation {
-        ProposalOperationDTO::Transfer(transfer) => {
-            transfer.transfer_id.expect("transfer id must be set")
-        }
+    let transfer_id = match new_proposal_dto.operation {
+        ProposalOperationDTO::Transfer(transfer) => transfer
+            .transfer_id
+            .expect("transfer id must be set for completed transfer"),
         _ => {
             panic!("proposal must be Transfer");
         }
     };
+
+    // fetch the transfer and check if its proposal id matches the proposal id that created it
+    let res: (Result<GetTransfersResponse, ApiErrorDTO>,) = query_candid_as(
+        &env,
+        canister_ids.wallet,
+        WALLET_ADMIN_USER,
+        "get_transfers",
+        (GetTransfersInput {
+            transfer_ids: vec![transfer_id],
+        },),
+    )
+    .unwrap();
+
+    let proposal_id_in_transfer_dto = res
+        .0
+        .unwrap()
+        .transfers
+        .first()
+        .expect("One transaction must be returned")
+        .proposal_id
+        .clone();
+
+    assert_eq!(proposal_id_in_transfer_dto, proposal_dto.id);
 
     // check beneficiary balance after completed transfer
     let new_beneficiary_balance = get_icp_balance(&env, beneficiary_id);
