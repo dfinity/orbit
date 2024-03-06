@@ -577,7 +577,7 @@ mod benchs {
 
     #[bench(raw)]
     fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 10000u64;
+        let proposals_to_insert = 16000u64;
         let end_creation_time = proposals_to_insert * 1_000_000_000;
         // this emulates a real world scenario where the proposals are created in a time span and
         // the filter is used to fetch the proposals created in the last half of the time span
