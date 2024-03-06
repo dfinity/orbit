@@ -255,6 +255,8 @@ type TransferOperation = record {
   network : Network;
   // The input to the proposal to transfer funds.
   input : TransferOperationInput;
+  // The id of the executed transfer.
+  transfer_id : opt UUID;
 };
 
 // Input type for editing an account through a proposal.
@@ -921,6 +923,8 @@ type ListAccountTransfersInput = record {
 type TransferListItem = record {
   // The transfer id.
   transfer_id : UUID;
+  // The id of the proposal that created the transfer.
+  proposal_id : UUID;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
   to : text;
   // The amount to transfer.
@@ -1050,6 +1054,8 @@ type TransferStatusType = variant {
 type Transfer = record {
   // The internal transfer id, this a unique identifier for the transfer.
   id : UUID;
+  // The id of the proposal that created the transfer.
+  proposal_id : UUID;
   // The account id to use for the transfer.
   from_account_id : UUID;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").

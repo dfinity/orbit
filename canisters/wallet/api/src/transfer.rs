@@ -25,6 +25,7 @@ pub struct TransferOperationDTO {
     pub from_account: Option<AccountDTO>,
     pub network: NetworkDTO,
     pub input: TransferOperationInput,
+    pub transfer_id: Option<UuidDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -54,6 +55,7 @@ pub enum TransferStatusTypeDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferDTO {
     pub id: UuidDTO,
+    pub proposal_id: UuidDTO,
     pub from_account_id: UuidDTO,
     pub to: String,
     pub fee: candid::Nat,
@@ -89,6 +91,7 @@ pub struct ListAccountTransfersInput {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct TransferListItemDTO {
     pub transfer_id: UuidDTO,
+    pub proposal_id: UuidDTO,
     pub status: TransferStatusDTO,
     pub to: String,
     pub amount: candid::Nat,

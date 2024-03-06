@@ -2,8 +2,13 @@ use super::ScheduledJob;
 use crate::{
     core::ic_cdk::api::{print, time},
     errors::TransferError,
-    factories::blockchains::BlockchainApiFactory,
-    models::{Account, Proposal, ProposalStatus, Transfer, TransferId, TransferStatus},
+    factories::blockchains::{
+        BlockchainApiFactory, BlockchainTransactionSubmitted,
+        TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
+    },
+    models::{
+        Account, Proposal, ProposalOperation, ProposalStatus, Transfer, TransferId, TransferStatus,
+    },
     repositories::{AccountRepository, ProposalRepository, TransferRepository},
 };
 use async_trait::async_trait;
@@ -99,11 +104,18 @@ impl Job {
             .iter()
             .enumerate()
             .for_each(|(pos, result)| match result {
-                Ok(transfer) => {
+                Ok((transfer, details)) => {
                     let mut transfer = transfer.clone();
+
+                    let maybe_transaction_hash = details
+                        .details
+                        .iter()
+                        .find(|(key, _)| key == TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY)
+                        .map(|(_, value)| value.to_owned());
+
                     transfer.status = TransferStatus::Completed {
                         completed_at: time(),
-                        hash: None,
+                        hash: maybe_transaction_hash,
                         signature: None,
                     };
                     transfer.last_modification_timestamp = time();
@@ -112,6 +124,13 @@ impl Job {
 
                     if let Some(proposal) = proposals.get(&transfer.id) {
                         let mut proposal = proposal.clone();
+
+                        if let ProposalOperation::Transfer(transfer_operation) =
+                            &mut proposal.operation
+                        {
+                            transfer_operation.transfer_id = Some(transfer.id);
+                        }
+
                         proposal.status = ProposalStatus::Completed {
                             completed_at: time(),
                         };
@@ -155,7 +174,10 @@ impl Job {
     /// Executes a single transfer.
     ///
     /// This function will handle the submission of the transfer to the blockchain.
-    async fn execute_transfer(&self, transfer: Transfer) -> Result<Transfer, TransferError> {
+    async fn execute_transfer(
+        &self,
+        transfer: Transfer,
+    ) -> Result<(Transfer, BlockchainTransactionSubmitted), TransferError> {
         let account = self
             .account_repository
             .get(&Account::key(transfer.from_account))
@@ -171,12 +193,12 @@ impl Job {
                 reason: format!("Failed to build blockchain api: {}", e),
             })?;
 
-        if let Err(error) = blockchain_api.submit_transaction(&account, &transfer).await {
-            Err(TransferError::ExecutionError {
-                reason: error.to_json_string(),
-            })?
-        }
+        match blockchain_api.submit_transaction(&account, &transfer).await {
+            Ok(details) => Ok((transfer, details)),
 
-        Ok(transfer)
+            Err(error) => Err(TransferError::ExecutionError {
+                reason: error.to_json_string(),
+            })?,
+        }
     }
 }

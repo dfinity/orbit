@@ -656,6 +656,7 @@ export interface Transfer {
   'from_account_id' : UUID,
   'metadata' : Array<TransferMetadata>,
   'network' : Network,
+  'proposal_id' : UUID,
   'amount' : bigint,
 }
 export type TransferActionSpecifier = { 'Read' : TransferSpecifier } |
@@ -666,11 +667,13 @@ export interface TransferListItem {
   'status' : TransferStatus,
   'created_at' : TimestampRFC3339,
   'transfer_id' : UUID,
+  'proposal_id' : UUID,
   'amount' : bigint,
 }
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
   'network' : Network,
+  'transfer_id' : [] | [UUID],
   'from_account' : [] | [Account],
   'input' : TransferOperationInput,
 }
