@@ -291,10 +291,11 @@ pub mod account_test_utils {
     use super::*;
     use crate::repositories::ACCOUNT_REPOSITORY;
     use ic_canister_core::repository::Repository;
+    use uuid::Uuid;
 
     pub fn mock_account() -> Account {
         Account {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             address: "0x1234".to_string(),
             balance: None,
             blockchain: Blockchain::InternetComputer,

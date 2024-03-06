@@ -1,4 +1,8 @@
-use crate::{core::ic_cdk::api::time, models::ProposalStatus, repositories::ProposalRepository};
+use crate::{
+    core::ic_cdk::api::time,
+    models::{ProposalStatus, ProposalStatusCode},
+    repositories::ProposalRepository,
+};
 use async_trait::async_trait;
 use ic_canister_core::repository::Repository;
 
@@ -27,7 +31,7 @@ impl Job {
         let mut proposals = self.proposal_repository.find_by_expiration_dt_and_status(
             None,
             Some(current_time),
-            ProposalStatus::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         for proposal in proposals.iter_mut() {

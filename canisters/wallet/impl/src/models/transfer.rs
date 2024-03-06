@@ -281,10 +281,11 @@ mod tests {
 #[cfg(test)]
 pub mod transfer_test_utils {
     use super::*;
+    use uuid::Uuid;
 
     pub fn mock_transfer() -> Transfer {
         Transfer {
-            id: [1; 16],
+            id: *Uuid::new_v4().as_bytes(),
             initiator_user: [0; 16],
             from_account: [0; 16],
             proposal_id: [2; 16],

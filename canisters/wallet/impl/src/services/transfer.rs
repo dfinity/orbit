@@ -92,8 +92,6 @@ impl TransferService {
 
 #[cfg(test)]
 mod tests {
-    use candid::Principal;
-
     use super::*;
     use crate::{
         core::test_utils,
@@ -101,8 +99,9 @@ mod tests {
             account_test_utils::mock_account, transfer_test_utils::mock_transfer,
             user_test_utils::mock_user, User,
         },
-        repositories::UserRepository,
+        repositories::{ACCOUNT_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY},
     };
+    use candid::Principal;
 
     struct TestContext {
         repository: TransferRepository,
@@ -119,12 +118,12 @@ mod tests {
         let mut user = mock_user();
         user.identities = vec![call_context.caller()];
 
-        UserRepository::default().insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
 
         let mut account = mock_account();
         account.owners.push(user.id);
 
-        AccountRepository::default().insert(account.to_key(), account.clone());
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 
         TestContext {
             repository: TransferRepository::default(),
@@ -153,13 +152,20 @@ mod tests {
     fn fail_get_transfer_not_allowed() {
         let ctx = setup();
         let mut user = mock_user();
-        user.identities = vec![Principal::anonymous()];
-        UserRepository::default().insert(user.to_key(), user.clone());
+        user.identities = vec![Principal::from_slice(&[10; 29])];
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let mut account = mock_account();
+        account.owners.push(user.id);
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+
         let mut transfer = mock_transfer();
-        transfer.from_account = ctx.account.id;
+        transfer.from_account = account.id;
         transfer.initiator_user = user.id;
 
-        ctx.repository.insert(transfer.to_key(), transfer.clone());
+        TRANSFER_REPOSITORY.insert(transfer.to_key(), transfer.clone());
 
         let result = ctx.service.get_transfer(&transfer.id, &ctx.call_context);
 

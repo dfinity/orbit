@@ -81,18 +81,6 @@ pub fn calculate_minimum_threshold(percentage: &Percentage, total_value: &usize)
     }
 }
 
-/// Matches a date against a date range.
-///
-/// If the provided range is `None`, then the date is considered to be within the range.
-pub(crate) fn match_date_range(date: &u64, start_dt: &Option<u64>, to_dt: &Option<u64>) -> bool {
-    match (start_dt, to_dt) {
-        (Some(start_dt), Some(to_dt)) => date >= start_dt && date <= to_dt,
-        (Some(start_dt), None) => date >= start_dt,
-        (None, Some(to_dt)) => date <= to_dt,
-        (None, None) => true,
-    }
-}
-
 /// Retains items based on the result of an access control evaluation.
 ///
 /// This function will evaluate the access control for each item in the list and retain only the

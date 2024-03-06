@@ -17,7 +17,7 @@ use wallet_api::{
 };
 
 // Canister entrypoints for the controller.
-#[cfg(any(not(feature = "canbench-rs"), test))]
+#[cfg(any(not(feature = "canbench"), test))]
 #[ic_cdk_macros::init]
 async fn initialize(input: Option<WalletInstall>) {
     match input {
@@ -29,7 +29,7 @@ async fn initialize(input: Option<WalletInstall>) {
 /// The init is overriden for benchmarking purposes.
 ///
 /// This is only used for benchmarking and is not included in the final canister.
-#[cfg(feature = "canbench-rs")]
+#[cfg(all(feature = "canbench", not(test)))]
 #[ic_cdk_macros::init]
 pub async fn mock_init() {
     // Initialize the random number generator with a fixed seed to ensure deterministic
@@ -79,7 +79,7 @@ impl WalletController {
         Self { wallet_service }
     }
 
-    #[cfg(any(not(feature = "canbench-rs"), test))]
+    #[cfg(any(not(feature = "canbench"), test))]
     async fn initialize(&self, input: wallet_api::WalletInit) {
         let ctx = &call_context();
         self.wallet_service

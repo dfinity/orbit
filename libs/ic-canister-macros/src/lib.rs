@@ -101,3 +101,58 @@ pub fn with_middleware(input_args: TokenStream, input: TokenStream) -> TokenStre
         input,
     )
 }
+
+/// The `storable` procedural macro is designed to generate serialization and deserialization
+/// implementations for a given struct or enum. It allows for the serialization format to be
+/// specified, as well as, optionally the maximum byte size that the object can be serialized to.
+///
+/// This macro is compatible with the `ic_stable_strcutures` crate and it can be used to generate
+/// objects that can be stored in the stable memory of a canister.
+///
+/// # Parameters
+///
+/// - `size`: The maximum byte size that the object can be serialized to.
+/// - `format`: The serialization format to be used. Supported formats are `cbor` and `candid`.
+///
+/// # Usage
+///
+/// Annotate a struct or enum with `#[storable]`.
+///
+/// # Examples
+///
+/// Basic usage with default parameters:
+///
+/// ```ignore
+/// #[storable]
+/// struct MyStruct {
+///     field1: u32,
+///     field2: String,
+/// }
+/// ```
+///
+/// Usage with custom parameters:
+///
+/// ```ignore
+/// #[storable(size = 1000, format = "cbor")]
+/// struct MyStruct {
+///     field1: u32,
+///     field2: String,
+/// }
+/// ```
+///
+/// # Notes
+///
+/// - The macro currently supports only struct and enum items.
+#[proc_macro_attribute]
+pub fn storable(input_args: TokenStream, input: TokenStream) -> TokenStream {
+    utils::handle_macro_errors(
+        |input_args, input| {
+            let macro_impl = macros::storable::StorableMacro::new(input_args, input);
+
+            macro_impl.build()
+        },
+        macros::storable::StorableMacro::MACRO_NAME,
+        input_args,
+        input,
+    )
+}
