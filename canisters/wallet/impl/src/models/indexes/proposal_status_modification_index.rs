@@ -1,24 +1,23 @@
-use crate::models::Proposal;
-use candid::{CandidType, Deserialize};
-use ic_canister_core::types::{Timestamp, UUID};
-use ic_canister_macros::stable_object;
+use crate::models::{Proposal, ProposalId, ProposalStatusCode};
+use ic_canister_core::types::Timestamp;
+use ic_canister_macros::storable;
 use std::hash::Hash;
 
 /// Represents a proposal index by its status and the last modification timestamp.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalStatusModificationIndex {
     /// The status of the proposal.
-    pub status: String,
+    pub status: ProposalStatusCode,
     /// The last modification timestamp of the proposal.
     pub modification_timestamp: Timestamp,
     /// The proposal id, which is a UUID.
-    pub proposal_id: UUID,
+    pub proposal_id: ProposalId,
 }
 
 #[derive(Clone, Debug)]
 pub struct ProposalStatusModificationIndexCriteria {
-    pub status: String,
+    pub status: ProposalStatusCode,
     pub from_dt: Option<Timestamp>,
     pub to_dt: Option<Timestamp>,
 }
@@ -26,7 +25,7 @@ pub struct ProposalStatusModificationIndexCriteria {
 impl Proposal {
     pub fn to_index_by_status_and_modification(&self) -> ProposalStatusModificationIndex {
         ProposalStatusModificationIndex {
-            status: self.status.to_type().to_string(),
+            status: self.status.to_type(),
             modification_timestamp: self.last_modification_timestamp,
             proposal_id: self.id,
         }
@@ -35,7 +34,7 @@ impl Proposal {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::{proposal_test_utils::mock_proposal, ProposalStatus};
+    use crate::models::{proposal_test_utils::mock_proposal, ProposalStatus, ProposalStatusCode};
 
     #[test]
     fn test_proposal_to_index_by_status_and_modification() {
@@ -46,7 +45,7 @@ mod tests {
         let index = proposal.to_index_by_status_and_modification();
 
         assert_eq!(index.proposal_id, proposal.id);
-        assert_eq!(index.status, "created");
+        assert_eq!(index.status, ProposalStatusCode::Created);
         assert_eq!(index.modification_timestamp, 5);
     }
 }

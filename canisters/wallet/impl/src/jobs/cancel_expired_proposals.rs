@@ -1,6 +1,6 @@
 use crate::{
     core::ic_cdk::api::time,
-    models::{ProposalStatus, ProposalStatusType},
+    models::{ProposalStatus, ProposalStatusCode},
     repositories::ProposalRepository,
 };
 use async_trait::async_trait;
@@ -31,7 +31,7 @@ impl Job {
         let mut proposals = self.proposal_repository.find_by_expiration_dt_and_status(
             None,
             Some(current_time),
-            ProposalStatusType::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         for proposal in proposals.iter_mut() {

@@ -54,13 +54,13 @@ impl IndexRepository<ProposalStatusIndex, UUID> for ProposalStatusIndexRepositor
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ProposalStatusType;
+    use crate::models::ProposalStatusCode;
 
     #[test]
     fn test_repository_crud() {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
-            status: ProposalStatusType::Created,
+            status: ProposalStatusCode::Created,
             proposal_id: [1; 16],
         };
 
@@ -77,18 +77,18 @@ mod tests {
     fn test_find_by_criteria() {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
-            status: ProposalStatusType::Adopted,
+            status: ProposalStatusCode::Adopted,
             proposal_id: [1; 16],
         };
 
         repository.insert(index.clone());
         repository.insert(ProposalStatusIndex {
-            status: ProposalStatusType::Created,
+            status: ProposalStatusCode::Created,
             proposal_id: [2; 16],
         });
 
         let criteria = ProposalStatusIndexCriteria {
-            status: ProposalStatusType::Created,
+            status: ProposalStatusCode::Created,
         };
 
         let result = repository.find_by_criteria(criteria);

@@ -1,4 +1,4 @@
-use crate::models::{Proposal, ProposalStatusType};
+use crate::models::{Proposal, ProposalStatusCode};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
 use std::hash::Hash;
@@ -8,14 +8,14 @@ use std::hash::Hash;
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalStatusIndex {
     /// The status of the proposal.
-    pub status: ProposalStatusType,
+    pub status: ProposalStatusCode,
     /// The proposal id, which is a UUID.
     pub proposal_id: UUID,
 }
 
 #[derive(Clone, Debug)]
 pub struct ProposalStatusIndexCriteria {
-    pub status: ProposalStatusType,
+    pub status: ProposalStatusCode,
 }
 
 impl Proposal {
@@ -29,7 +29,7 @@ impl Proposal {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::{proposal_test_utils::mock_proposal, ProposalStatus, ProposalStatusType};
+    use crate::models::{proposal_test_utils::mock_proposal, ProposalStatus, ProposalStatusCode};
 
     #[test]
     fn test_proposal_to_index_by_status() {
@@ -40,6 +40,6 @@ mod tests {
         let index = proposal.to_index_by_status();
 
         assert_eq!(index.proposal_id, proposal.id);
-        assert_eq!(index.status, ProposalStatusType::Created);
+        assert_eq!(index.status, ProposalStatusCode::Created);
     }
 }

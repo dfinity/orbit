@@ -29,7 +29,7 @@ use crate::{
             proposal_status_modification_index::ProposalStatusModificationIndexCriteria,
             proposal_voter_index::{ProposalVoterIndex, ProposalVoterIndexCriteria},
         },
-        Proposal, ProposalKey, ProposalStatusType,
+        AccountId, Proposal, ProposalKey, ProposalStatusCode,
     },
 };
 use ic_canister_core::{
@@ -259,13 +259,13 @@ impl ProposalRepository {
 
     pub fn find_by_status(
         &self,
-        status: String,
+        status: ProposalStatusCode,
         from_last_modified_dt: Option<Timestamp>,
         to_last_modified_dt: Option<Timestamp>,
     ) -> Vec<Proposal> {
         let ids = self.status_modification_index.find_by_criteria(
             ProposalStatusModificationIndexCriteria {
-                status: status.to_owned(),
+                status,
                 from_dt: from_last_modified_dt,
                 to_dt: to_last_modified_dt,
             },
@@ -473,7 +473,7 @@ pub struct ProposalWhereClause {
     pub expiration_dt_from: Option<Timestamp>,
     pub expiration_dt_to: Option<Timestamp>,
     pub operation_types: Vec<ListProposalsOperationTypeDTO>,
-    pub statuses: Vec<ProposalStatusType>,
+    pub statuses: Vec<ProposalStatusCode>,
     pub voters: Vec<UUID>,
     pub proposers: Vec<UUID>,
 }
@@ -555,7 +555,7 @@ impl<'a> SelectionFilter<'a> for ExpirationDtSelectionFilter<'a> {
 #[derive(Debug, Clone)]
 pub(crate) struct AccountSelectionFilter<'a> {
     repository: &'a ProposalAccountIndexRepository,
-    account_id: UUID,
+    account_id: AccountId,
 }
 
 impl<'a> SelectionFilter<'a> for AccountSelectionFilter<'a> {
@@ -627,7 +627,7 @@ impl<'a> SelectionFilter<'a> for ProposerSelectionFilter<'a> {
 #[derive(Debug, Clone)]
 pub(crate) struct StatusSelectionFilter<'a> {
     repository: &'a ProposalStatusIndexRepository,
-    status: ProposalStatusType,
+    status: ProposalStatusCode,
 }
 
 impl<'a> SelectionFilter<'a> for StatusSelectionFilter<'a> {
@@ -806,19 +806,19 @@ mod tests {
         let last_six = repository.find_by_expiration_dt_and_status(
             Some(45),
             None,
-            ProposalStatusType::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         let middle_eleven = repository.find_by_expiration_dt_and_status(
             Some(30),
             Some(40),
-            ProposalStatusType::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         let first_three = repository.find_by_expiration_dt_and_status(
             None,
             Some(2),
-            ProposalStatusType::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         assert_eq!(last_six.len(), 6);
@@ -962,7 +962,7 @@ mod tests {
             operation_types: Vec::new(),
             proposers: Vec::new(),
             voters: Vec::new(),
-            statuses: vec![ProposalStatusType::Created],
+            statuses: vec![ProposalStatusCode::Created],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -979,7 +979,7 @@ mod tests {
             operation_types: Vec::new(),
             proposers: Vec::new(),
             voters: Vec::new(),
-            statuses: vec![ProposalStatusType::Adopted],
+            statuses: vec![ProposalStatusCode::Adopted],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -996,7 +996,7 @@ mod tests {
             operation_types: Vec::new(),
             proposers: Vec::new(),
             voters: Vec::new(),
-            statuses: vec![ProposalStatusType::Adopted, ProposalStatusType::Created],
+            statuses: vec![ProposalStatusCode::Adopted, ProposalStatusCode::Created],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -1013,7 +1013,7 @@ mod tests {
             operation_types: Vec::new(),
             proposers: Vec::new(),
             voters: Vec::new(),
-            statuses: vec![ProposalStatusType::Adopted],
+            statuses: vec![ProposalStatusCode::Adopted],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -1094,7 +1094,7 @@ mod benchs {
                     operation_types: Vec::new(),
                     proposers: Vec::new(),
                     voters: Vec::new(),
-                    statuses: vec![ProposalStatusType::Created],
+                    statuses: vec![ProposalStatusCode::Created],
                 },
                 None,
             );

@@ -1,6 +1,5 @@
-use crate::models::{Proposal, ProposalId, ProposalOperation};
+use crate::models::{AccountId, Proposal, ProposalId, ProposalOperation};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 
 /// Index of proposals by account id.
@@ -8,14 +7,14 @@ use ic_canister_macros::stable_object;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalAccountIndex {
     /// The account id that is associated with this proposal.
-    pub account_id: UUID,
+    pub account_id: AccountId,
     /// The proposal id, which is a UUID.
     pub proposal_id: ProposalId,
 }
 
 #[derive(Clone, Debug)]
 pub struct ProposalAccountIndexCriteria {
-    pub account_id: UUID,
+    pub account_id: AccountId,
 }
 
 impl Proposal {
