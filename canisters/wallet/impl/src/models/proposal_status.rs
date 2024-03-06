@@ -1,6 +1,6 @@
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::{stable_object, storable};
 use std::fmt::{Display, Formatter};
 
 #[stable_object]
@@ -16,7 +16,8 @@ pub enum ProposalStatus {
     Failed { reason: Option<String> },
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[storable]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum ProposalStatusType {
     Created = 0,

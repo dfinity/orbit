@@ -639,7 +639,6 @@ mod benchs {
                             )),
                         },
                         None,
-                        //&CallContext::new(Principal::from_slice(&[2; 29])),
                     )
                     .await;
 

@@ -1,12 +1,11 @@
 use crate::models::{Proposal, ProposalStatusType};
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::hash::Hash;
 
 /// Represents a proposal index by its status.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalStatusIndex {
     /// The status of the proposal.
     pub status: ProposalStatusType,

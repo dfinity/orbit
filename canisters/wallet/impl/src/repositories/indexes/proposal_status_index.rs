@@ -77,7 +77,7 @@ mod tests {
     fn test_find_by_criteria() {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
-            status: ProposalStatusType::Created,
+            status: ProposalStatusType::Adopted,
             proposal_id: [1; 16],
         };
 
@@ -94,6 +94,6 @@ mod tests {
         let result = repository.find_by_criteria(criteria);
 
         assert_eq!(result.len(), 1);
-        assert!(result.contains(&index.proposal_id));
+        assert!(result.contains(&[2; 16]));
     }
 }
