@@ -576,7 +576,7 @@ mod benchs {
     use wallet_api::ProposalStatusCodeDTO;
 
     #[bench(raw)]
-    fn filter_all_proposals_with_default_filters() -> BenchResult {
+    fn service_filter_all_proposals_with_default_filters() -> BenchResult {
         let proposals_to_insert = 1000u64;
         let end_creation_time = proposals_to_insert * 1_000_000_000;
         // this emulates a real world scenario where the proposals are created in a time span and

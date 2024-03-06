@@ -1053,13 +1053,15 @@ mod benchs {
     use canbench_rs::{bench, BenchResult};
     use uuid::Uuid;
 
-    #[bench]
-    fn batch_insert_100_proposals() {
-        proposal_repository_test_utils::add_proposals_to_repository(100);
+    #[bench(raw)]
+    fn repository_batch_insert_100_proposals() -> BenchResult {
+        canbench_rs::bench_fn(|| {
+            proposal_repository_test_utils::add_proposals_to_repository(100);
+        })
     }
 
     #[bench(raw)]
-    fn list_all_proposals() -> BenchResult {
+    fn repository_list_all_proposals() -> BenchResult {
         proposal_repository_test_utils::add_proposals_to_repository(1_000);
 
         canbench_rs::bench_fn(|| {
@@ -1068,7 +1070,7 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn filter_all_proposal_ids_by_default_filters() -> BenchResult {
+    fn repository_filter_all_proposal_ids_by_default_filters() -> BenchResult {
         for i in 0..2_500 {
             let mut proposal = mock_proposal();
             proposal.id = *Uuid::new_v4().as_bytes();
