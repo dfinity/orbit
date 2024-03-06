@@ -1,25 +1,25 @@
 benches:
   repository_batch_insert_100_proposals:
     total:
-      instructions: 3833420837
+      instructions: 3398904981
       heap_increase: 2
       stable_memory_increase: 1410
     scopes: {}
   repository_filter_all_proposal_ids_by_default_filters:
     total:
-      instructions: 4159152344
+      instructions: 1218868045
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   repository_list_all_proposals:
     total:
-      instructions: 3303642680
+      instructions: 3307277207
       heap_increase: 8
       stable_memory_increase: 0
     scopes: {}
   service_filter_all_proposals_with_default_filters:
     total:
-      instructions: 1966948534
+      instructions: 655877746
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
