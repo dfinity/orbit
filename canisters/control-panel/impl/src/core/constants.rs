@@ -16,12 +16,11 @@ pub const MAX_STABLE_MEMORY_SIZE: u64 = 32 * GIB;
 pub const WASM_PAGE_SIZE: u32 = 65536;
 
 /// The pages to reserve for the canister configuration.
-pub const CANISTER_CONFIG_TOTAL_MEMORY_PAGES: u32 = 31;
+pub const CANISTER_CONFIG_TOTAL_MEMORY_PAGES: u32 = 152;
 
 /// The maximum size of the stable memory that can be used for the canister configuration.
 ///
-/// This is currently set to 2MiB which is the ingress message size limit for the IC. This is
-/// because the canister configuration is passed as an argument to the `init` and `upgrade` method.
+/// This is currently set to the maximum inter canister message size within the same subnet (10MiB).
 pub const CANISTER_CONFIG_STATE_SIZE: u32 = WASM_PAGE_SIZE * CANISTER_CONFIG_TOTAL_MEMORY_PAGES;
 
 /// The maximum number of Wasm pages that we allow to use for the stable storage.

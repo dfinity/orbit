@@ -1,15 +1,15 @@
 use super::UserWallet;
 use crate::errors::UserError;
-use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use candid::Principal;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::Timestamp,
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// The identity of an user.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[storable]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct User {
     /// The UUID that identifies the user.
     pub id: Principal,
@@ -23,8 +23,8 @@ pub struct User {
     pub last_update_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[storable]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct UserKey(pub Principal);
 
 impl User {

@@ -1,10 +1,10 @@
 use crate::errors::UserError;
-use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use candid::Principal;
 use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
+#[storable]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct UserWallet {
     pub canister_id: Principal,
     pub name: Option<String>,

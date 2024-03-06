@@ -5,6 +5,7 @@
 //! Some of the features include:
 //!
 //! - Entity generation for stable structures.
+//! - Middleware injection for functions.
 
 extern crate proc_macro;
 
@@ -13,16 +14,6 @@ mod utils;
 
 use crate::macros::MacroDefinition;
 use proc_macro::TokenStream;
-
-#[proc_macro_attribute]
-pub fn stable_object(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    utils::handle_macro_errors(
-        macros::dfn_stable_object_macro,
-        "stable_object",
-        metadata,
-        input,
-    )
-}
 
 /// The `with_middleware` procedural macro is designed to inject middleware functionality
 /// into functions. It enables pre- or post-execution of specified middleware,

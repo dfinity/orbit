@@ -1,13 +1,12 @@
 use super::CANISTER_CONFIG_STATE_SIZE;
 use crate::core::ic_cdk::api::{time, trap};
-use candid::{CandidType, Decode, Deserialize, Encode};
 use ic_canister_core::types::Timestamp;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::borrow::Cow;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
     /// The upgrader canister wasm module that will be used to upgrade the wallet canister.
     pub upgrader_wasm_module: Vec<u8>,
