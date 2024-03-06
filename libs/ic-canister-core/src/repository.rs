@@ -136,10 +136,8 @@ where
     fn apply(&self, existing_ids: Option<&HashSet<Self::IdType>>) -> HashSet<Self::IdType> {
         match (existing_ids, self.is_selective()) {
             (Some(ids), true) => {
-                let mut new_ids = self.select();
-                new_ids.retain(|id| ids.contains(id));
-
-                new_ids
+                let new_ids = self.select();
+                new_ids.intersection(ids).cloned().collect()
             }
             (Some(ids), false) => ids.iter().filter(|id| self.matches(id)).cloned().collect(),
             // If the existing set of IDs is None, then we are meant to select all IDs that match the filter
