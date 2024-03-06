@@ -15,22 +15,22 @@ use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::collections::HashSet;
 
 /// The proposal id, which is a UUID.
 pub type ProposalId = UUID;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalExecutionPlan {
     Immediate,
     Scheduled { execution_time: Timestamp },
 }
 
 /// Represents a proposal within the system.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Proposal {
     /// The proposal id, which is a UUID.
     pub id: ProposalId,
@@ -56,8 +56,8 @@ pub struct Proposal {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalKey {
     /// The proposal id, which is a UUID.
     pub id: ProposalId,

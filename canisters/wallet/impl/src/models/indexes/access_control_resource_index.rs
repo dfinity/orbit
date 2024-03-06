@@ -1,11 +1,10 @@
 use crate::models::access_control::AccessControlPolicy;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// Represents an index to facilitate the search of access control policies by the resource and access modifier.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccessControlPolicyResourceIndex {
     pub resource: String,
     pub policy_id: UUID,

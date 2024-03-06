@@ -1,18 +1,17 @@
 use super::{NotificationStatus, NotificationType, UserId};
 use crate::errors::NotificationError;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// The notification id, which is a UUID.
 pub type NotificationId = UUID;
 
 /// Represents a notification within the system.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Notification {
     pub id: NotificationId,
     pub notification_type: NotificationType,
@@ -27,8 +26,8 @@ pub struct Notification {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct NotificationKey {
     pub id: NotificationId,
 }

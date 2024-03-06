@@ -3,9 +3,9 @@ use crate::{
     core::ic_cdk::api::{time, trap},
     models::{Blockchain, BlockchainStandard, Metadata, WalletAsset},
 };
-use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+use candid::Principal;
 use ic_canister_core::types::{Timestamp, UUID};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::{borrow::Cow, cell::RefCell, collections::HashSet};
 
@@ -23,8 +23,8 @@ thread_local! {
       ].into_iter().collect());
 }
 
-#[stable_object(size = WASM_PAGE_SIZE)]
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[storable(size = WASM_PAGE_SIZE)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
     /// Last time the canister was upgraded or initialized.
     pub last_upgrade_timestamp: Timestamp,

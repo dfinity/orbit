@@ -1,9 +1,8 @@
 use crate::models::{Account, AccountId, UserId};
-use candid::{CandidType, Deserialize};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountUserIndex {
     /// The user id, which is a UUID.
     pub user_id: UserId,

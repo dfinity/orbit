@@ -184,10 +184,11 @@ mod tests {
         core::test_utils,
         models::{
             address_book_entry_test_utils::mock_address_book_entry, AddAddressBookEntryOperation,
-            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard,
+            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard, ChangeMetadata,
+            Metadata, MetadataItem,
         },
     };
-    use wallet_api::{ChangeMetadataDTO, MetadataDTO};
+    use wallet_api::MetadataDTO;
 
     struct TestContext {
         repository: AddressBookRepository,
@@ -215,7 +216,7 @@ mod tests {
                 address: "0x1234".to_string(),
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
-                metadata: address_book_entry.metadata.clone().into_vec_dto(),
+                metadata: address_book_entry.metadata.clone().into(),
             },
         };
 
@@ -242,29 +243,30 @@ mod tests {
         ctx.repository
             .insert(address_book_entry.to_key(), address_book_entry.clone());
 
-        let metadata_dto = vec![
-            MetadataDTO {
+        let metadata_items = vec![
+            MetadataItem {
                 key: "a".to_string(),
                 value: "b".to_string(),
             },
-            MetadataDTO {
+            MetadataItem {
                 key: "b".to_string(),
                 value: "c".to_string(),
             },
         ];
+        let metadata_map = Metadata::from(metadata_items.clone());
         let operation = EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id,
             address_owner: Some("test_edit".to_string()),
-            change_metadata: Some(ChangeMetadataDTO::ReplaceAllBy(metadata_dto.clone())),
+            change_metadata: Some(ChangeMetadata::ReplaceAllBy(metadata_map.metadata.clone())),
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());
         let updated_entry = result.unwrap();
         address_book_entry.address_owner = "test_edit".to_string();
-        address_book_entry.metadata = metadata_dto.into();
+        address_book_entry.metadata = metadata_map.clone();
         assert_eq!(updated_entry, address_book_entry);
 
-        let diff_metadata_dto = vec![
+        let diff_metadata_dto = Metadata::from(vec![
             MetadataDTO {
                 key: "a".to_string(),
                 value: "d".to_string(),
@@ -273,8 +275,8 @@ mod tests {
                 key: "c".to_string(),
                 value: "e".to_string(),
             },
-        ];
-        let new_metadata_dto = vec![
+        ]);
+        let new_metadata_dto = Metadata::from(vec![
             MetadataDTO {
                 key: "a".to_string(),
                 value: "d".to_string(),
@@ -287,16 +289,19 @@ mod tests {
                 key: "c".to_string(),
                 value: "e".to_string(),
             },
-        ];
+        ]);
+
         let operation = EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id,
             address_owner: None,
-            change_metadata: Some(ChangeMetadataDTO::OverrideSpecifiedBy(diff_metadata_dto)),
+            change_metadata: Some(ChangeMetadata::OverrideSpecifiedBy(
+                diff_metadata_dto.metadata,
+            )),
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());
         let updated_entry = result.unwrap();
-        address_book_entry.metadata = new_metadata_dto.into();
+        address_book_entry.metadata = new_metadata_dto;
         assert_eq!(updated_entry, address_book_entry);
 
         let remove_keys = vec!["a".to_string(), "c".to_string()];
@@ -307,7 +312,7 @@ mod tests {
         let operation = EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id,
             address_owner: None,
-            change_metadata: Some(ChangeMetadataDTO::RemoveKeys(remove_keys)),
+            change_metadata: Some(ChangeMetadata::RemoveKeys(remove_keys)),
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());

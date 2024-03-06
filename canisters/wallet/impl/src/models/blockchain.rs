@@ -1,11 +1,11 @@
 use super::BlockchainStandard;
-use candid::{CandidType, Deserialize};
-use ic_stable_structures::{storable::Bound, Storable};
-use std::borrow::Cow;
+use candid::CandidType;
+use ic_canister_macros::storable;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Blockchain {
     InternetComputer,
     Ethereum,
@@ -55,19 +55,6 @@ impl Display for Blockchain {
             Blockchain::Bitcoin => write!(f, "btc"),
         }
     }
-}
-
-impl Storable for Blockchain {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(self.to_string().as_bytes().to_vec())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let chain_id: String = String::from_bytes(bytes);
-        Self::from_str(&chain_id).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]

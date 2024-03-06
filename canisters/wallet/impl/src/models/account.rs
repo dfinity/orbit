@@ -6,7 +6,7 @@ use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::{collections::HashMap, hash::Hash};
 
 /// The account metadata key for the asset symbol;
@@ -19,8 +19,8 @@ pub type AccountId = UUID;
 ///
 /// A account can be associated with one or more users and can only hold one type of asset,
 /// which is defined by the blockchain, standard and symbol.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Account {
     /// The account id, which is a UUID.
     pub id: AccountId,
@@ -56,15 +56,15 @@ pub struct Account {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountPolicies {
     pub transfer_policy_id: Option<UUID>,
     pub edit_policy_id: Option<UUID>,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountKey {
     /// The account id, which is a UUID.
     pub id: AccountId,

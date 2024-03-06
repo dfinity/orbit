@@ -2,9 +2,9 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
-        AddAccountOperation, AddAddressBookEntryOperation, AddProposalPolicyOperation,
-        AddProposalPolicyOperationInput, AddUserOperation, AddressBookEntry,
-        ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
+        AddAccountOperation, AddAddressBookEntryOperation, AddAddressBookEntryOperationInput,
+        AddProposalPolicyOperation, AddProposalPolicyOperationInput, AddUserOperation,
+        AddressBookEntry, ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
         EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
         EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserOperation,
         ProposalOperation, RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
@@ -19,9 +19,9 @@ use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
-    AddAddressBookEntryOperationInput, AddUserOperationDTO, AddUserOperationInput,
-    ChangeCanisterOperationDTO, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    EditAccountOperationDTO, EditAccountOperationInput, EditAddressBookEntryOperationDTO,
+    AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
+    ChangeCanisterOperationInput, ChangeCanisterTargetDTO, EditAccountOperationDTO,
+    EditAccountOperationInput, EditAddressBookEntryOperationDTO,
     EditAddressBookEntryOperationInput, EditUserOperationDTO, EditUserOperationInput, NetworkDTO,
     ProposalOperationDTO, RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     TransferOperationDTO, TransferOperationInput,
@@ -158,29 +158,29 @@ impl AddAddressBookEntryOperation {
         AddAddressBookEntryOperationDTO {
             address_book_entry: address_book_entry
                 .map(|address_book_entry| address_book_entry.to_dto()),
-            input: AddAddressBookEntryOperationInput {
+            input: wallet_api::AddAddressBookEntryOperationInput {
                 address_owner: self.input.address_owner,
                 address: self.input.address,
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
-                metadata: self.input.metadata,
+                metadata: self.input.metadata.into_iter().map(Into::into).collect(),
             },
         }
     }
 }
 
-impl From<AddAddressBookEntryOperationInput> for crate::models::AddAddressBookEntryOperationInput {
+impl From<wallet_api::AddAddressBookEntryOperationInput> for AddAddressBookEntryOperationInput {
     fn from(
-        input: AddAddressBookEntryOperationInput,
-    ) -> crate::models::AddAddressBookEntryOperationInput {
-        crate::models::AddAddressBookEntryOperationInput {
+        input: wallet_api::AddAddressBookEntryOperationInput,
+    ) -> AddAddressBookEntryOperationInput {
+        AddAddressBookEntryOperationInput {
             address_owner: input.address_owner,
             address: input.address,
             blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
                 .expect("Invalid blockchain"),
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
                 .expect("Invalid blockchain standard"),
-            metadata: input.metadata,
+            metadata: input.metadata.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -193,7 +193,10 @@ impl From<EditAddressBookEntryOperation> for EditAddressBookEntryOperationDTO {
                     .hyphenated()
                     .to_string(),
                 address_owner: operation.input.address_owner,
-                change_metadata: operation.input.change_metadata,
+                change_metadata: operation
+                    .input
+                    .change_metadata
+                    .map(|change_metadata| change_metadata.into()),
             },
         }
     }
