@@ -259,16 +259,16 @@ mod tests {
     }
 }
 
-#[cfg(any(test, feature = "canbench-rs"))]
+#[cfg(any(test, feature = "canbench"))]
 pub mod proposal_test_utils {
-    use num_bigint::BigUint;
-
     use super::*;
     use crate::models::{Metadata, ProposalVoteStatus, TransferOperation, TransferOperationInput};
+    use num_bigint::BigUint;
+    use uuid::Uuid;
 
     pub fn mock_proposal() -> Proposal {
         Proposal {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             title: "foo".to_string(),
             summary: Some("bar".to_string()),
             proposed_by: [1; 16],

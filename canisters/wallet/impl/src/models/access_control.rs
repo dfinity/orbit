@@ -414,13 +414,14 @@ mod tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod access_control_test_utils {
     use super::*;
+    use uuid::Uuid;
 
     pub fn mock_access_policy() -> AccessControlPolicy {
         AccessControlPolicy {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             user: UserSpecifier::Any,
             resource: ResourceSpecifier::Common(
                 ResourceType::Account,

@@ -199,15 +199,16 @@ mod tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod user_test_utils {
     use super::*;
     use crate::repositories::USER_REPOSITORY;
     use ic_canister_core::repository::Repository;
+    use uuid::Uuid;
 
     pub fn mock_user() -> User {
         User {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             identities: vec![Principal::anonymous()],
             groups: vec![],
             name: None,

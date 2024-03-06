@@ -21,7 +21,7 @@ impl IndexRepository<ProposalStatusIndex, UUID> for ProposalStatusIndexRepositor
     type FindByCriteria = ProposalStatusIndexCriteria;
 
     fn exists(&self, index: &ProposalStatusIndex) -> bool {
-        DB.with(|m| m.borrow().get(index).is_some())
+        DB.with(|m| m.borrow().contains_key(index))
     }
 
     fn insert(&self, index: ProposalStatusIndex) {
@@ -53,15 +53,14 @@ impl IndexRepository<ProposalStatusIndex, UUID> for ProposalStatusIndexRepositor
 
 #[cfg(test)]
 mod tests {
-    use crate::models::ProposalStatus;
-
     use super::*;
+    use crate::models::ProposalStatusType;
 
     #[test]
     fn test_repository_crud() {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
-            status: ProposalStatus::Created.to_string(),
+            status: ProposalStatusType::Created,
             proposal_id: [1; 16],
         };
 
@@ -78,18 +77,18 @@ mod tests {
     fn test_find_by_criteria() {
         let repository = ProposalStatusIndexRepository::default();
         let index = ProposalStatusIndex {
-            status: ProposalStatus::Created.to_string(),
+            status: ProposalStatusType::Created,
             proposal_id: [1; 16],
         };
 
         repository.insert(index.clone());
         repository.insert(ProposalStatusIndex {
-            status: ProposalStatus::Created.to_string(),
+            status: ProposalStatusType::Created,
             proposal_id: [2; 16],
         });
 
         let criteria = ProposalStatusIndexCriteria {
-            status: ProposalStatus::Created.to_string(),
+            status: ProposalStatusType::Created,
         };
 
         let result = repository.find_by_criteria(criteria);

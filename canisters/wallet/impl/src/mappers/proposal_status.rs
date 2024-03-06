@@ -1,4 +1,4 @@
-use crate::models::ProposalStatus;
+use crate::models::{ProposalStatus, ProposalStatusType};
 use ic_canister_core::utils::{rfc3339_to_timestamp, timestamp_to_rfc3339};
 use wallet_api::{ProposalStatusCodeDTO, ProposalStatusDTO};
 
@@ -55,6 +55,21 @@ impl From<ProposalStatusDTO> for ProposalStatus {
                 scheduled_at: rfc3339_to_timestamp(&scheduled_at),
             },
             ProposalStatusDTO::Cancelled { reason } => ProposalStatus::Cancelled { reason },
+        }
+    }
+}
+
+impl From<ProposalStatusCodeDTO> for ProposalStatusType {
+    fn from(status: ProposalStatusCodeDTO) -> Self {
+        match status {
+            ProposalStatusCodeDTO::Created => ProposalStatusType::Created,
+            ProposalStatusCodeDTO::Adopted => ProposalStatusType::Adopted,
+            ProposalStatusCodeDTO::Rejected => ProposalStatusType::Rejected,
+            ProposalStatusCodeDTO::Completed => ProposalStatusType::Completed,
+            ProposalStatusCodeDTO::Failed => ProposalStatusType::Failed,
+            ProposalStatusCodeDTO::Processing => ProposalStatusType::Processing,
+            ProposalStatusCodeDTO::Scheduled => ProposalStatusType::Scheduled,
+            ProposalStatusCodeDTO::Cancelled => ProposalStatusType::Cancelled,
         }
     }
 }
