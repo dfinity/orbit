@@ -1,11 +1,10 @@
-use crate::models::Proposal;
-use candid::{CandidType, Deserialize};
-use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use crate::models::{Proposal, ProposalId};
+use ic_canister_core::types::Timestamp;
+use ic_canister_macros::storable;
 
 /// Index of proposals to use for sorting.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalSortIndex {
     /// The proposal id, which is a UUID.
     pub key: ProposalSortIndexKey,
@@ -13,26 +12,26 @@ pub struct ProposalSortIndex {
     pub value: ProposalSortIndexValue,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalSortIndexKey {
-    pub proposal_id: UUID,
+    pub proposal_id: ProposalId,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalSortIndexValue {
     /// The proposal's last modification timestamp.
-    pub modification_timestamp: u64,
+    pub modification_timestamp: Timestamp,
     /// The proposal's creation timestamp.
-    pub creation_timestamp: u64,
+    pub creation_timestamp: Timestamp,
     /// The proposal's expiration_dt.
-    pub expiration_timestamp: u64,
+    pub expiration_timestamp: Timestamp,
 }
 
 #[derive(Clone, Debug)]
 pub struct ProposalSortIndexCriteria {
-    pub proposal_id: UUID,
+    pub proposal_id: ProposalId,
 }
 
 impl Proposal {

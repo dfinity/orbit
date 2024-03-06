@@ -41,11 +41,7 @@ use ic_canister_core::{
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use std::{
-    cell::RefCell,
-    collections::{HashMap, HashSet},
-    sync::Arc,
-};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 use wallet_api::{ListProposalsOperationTypeDTO, ListProposalsSortBy};
 
 thread_local! {
@@ -315,43 +311,47 @@ impl ProposalRepository {
     ) {
         match sort_by {
             Some(wallet_api::ListProposalsSortBy::CreatedAt(direction)) => {
-                let sort_strategy = CreatedTimeSortingStrategy {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Creation,
                     direction: match direction {
                         wallet_api::SortDirection::Asc => Some(SortDirection::Ascending),
                         wallet_api::SortDirection::Desc => Some(SortDirection::Descending),
                     },
-                    index: &self.sort_index,
                 };
 
                 sort_strategy.sort(proposal_ids);
             }
             Some(wallet_api::ListProposalsSortBy::ExpirationDt(direction)) => {
-                let sort_strategy = ExpirationTimeSortingStrategy {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Expiration,
                     direction: match direction {
                         wallet_api::SortDirection::Asc => Some(SortDirection::Ascending),
                         wallet_api::SortDirection::Desc => Some(SortDirection::Descending),
                     },
-                    index: &self.sort_index,
                 };
 
                 sort_strategy.sort(proposal_ids);
             }
             Some(wallet_api::ListProposalsSortBy::LastModificationDt(direction)) => {
-                let sort_strategy = ModificationTimeSortingStrategy {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Modification,
                     direction: match direction {
                         wallet_api::SortDirection::Asc => Some(SortDirection::Ascending),
                         wallet_api::SortDirection::Desc => Some(SortDirection::Descending),
                     },
-                    index: &self.sort_index,
                 };
 
                 sort_strategy.sort(proposal_ids);
             }
             None => {
                 // Default sort by creation timestamp descending
-                let sort_strategy = CreatedTimeSortingStrategy {
-                    direction: Some(SortDirection::Descending),
+                let sort_strategy = TimestampSortingStrategy {
                     index: &self.sort_index,
+                    timestamp_type: TimestampType::Creation,
+                    direction: Some(SortDirection::Descending),
                 };
 
                 sort_strategy.sort(proposal_ids);
@@ -649,123 +649,54 @@ impl<'a> SelectionFilter<'a> for StatusSelectionFilter<'a> {
 }
 
 #[derive(Debug, Clone)]
-struct CreatedTimeSortingStrategy<'a> {
-    direction: Option<SortDirection>,
-    index: &'a ProposalSortIndexRepository,
-}
-
-impl<'a> SortingStrategy<'a> for CreatedTimeSortingStrategy<'a> {
-    type IdType = UUID;
-
-    fn sort(&self, ids: &mut [Self::IdType]) {
-        let direction = self.direction.unwrap_or(SortDirection::Ascending);
-        let mut cache = HashMap::new();
-
-        ids.sort_by(|a, b| {
-            let a_key = ProposalSortIndexKey { proposal_id: *a };
-            let b_key = ProposalSortIndexKey { proposal_id: *b };
-
-            let a_creation_timestamp = cache.get(&a_key).copied().unwrap_or_else(|| {
-                let a = self.index.get(&a_key);
-                let a_creation_timestamp = a.map(|a| a.creation_timestamp).unwrap_or_default();
-                cache.insert(a_key, a_creation_timestamp);
-                a_creation_timestamp
-            });
-
-            let b_creation_timestamp = cache.get(&b_key).copied().unwrap_or_else(|| {
-                let b = self.index.get(&b_key);
-                let b_creation_timestamp = b.map(|b| b.creation_timestamp).unwrap_or_default();
-                cache.insert(b_key, b_creation_timestamp);
-                b_creation_timestamp
-            });
-
-            match direction {
-                SortDirection::Ascending => a_creation_timestamp.cmp(&b_creation_timestamp),
-                SortDirection::Descending => b_creation_timestamp.cmp(&a_creation_timestamp),
-            }
-        });
-    }
+enum TimestampType {
+    Creation,
+    Expiration,
+    Modification,
 }
 
 #[derive(Debug, Clone)]
-struct ExpirationTimeSortingStrategy<'a> {
-    direction: Option<SortDirection>,
+struct TimestampSortingStrategy<'a> {
     index: &'a ProposalSortIndexRepository,
+    timestamp_type: TimestampType,
+    direction: Option<SortDirection>,
 }
 
-impl<'a> SortingStrategy<'a> for ExpirationTimeSortingStrategy<'a> {
+impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
     type IdType = UUID;
 
     fn sort(&self, ids: &mut [Self::IdType]) {
         let direction = self.direction.unwrap_or(SortDirection::Ascending);
-        let mut cache = HashMap::new();
+        let mut id_with_timestamps: Vec<(Timestamp, Self::IdType)> = ids
+            .iter()
+            .map(|id| {
+                let key = ProposalSortIndexKey { proposal_id: *id };
+                let timestamp = self
+                    .index
+                    .get(&key)
+                    .map(|index| match self.timestamp_type {
+                        TimestampType::Creation => index.creation_timestamp,
+                        TimestampType::Expiration => index.expiration_timestamp,
+                        TimestampType::Modification => index.modification_timestamp,
+                    })
+                    .unwrap_or_default();
+                (timestamp, *id)
+            })
+            .collect();
 
-        ids.sort_by(|a, b| {
-            let a_key = ProposalSortIndexKey { proposal_id: *a };
-            let b_key = ProposalSortIndexKey { proposal_id: *b };
-
-            let a_expiration_timestamp = cache.get(&a_key).copied().unwrap_or_else(|| {
-                let a = self.index.get(&a_key);
-                let a_expiration_timestamp = a.map(|a| a.expiration_timestamp).unwrap_or_default();
-                cache.insert(a_key, a_expiration_timestamp);
-                a_expiration_timestamp
-            });
-
-            let b_expiration_timestamp = cache.get(&b_key).copied().unwrap_or_else(|| {
-                let b = self.index.get(&b_key);
-                let b_expiration_timestamp = b.map(|b| b.expiration_timestamp).unwrap_or_default();
-                cache.insert(b_key, b_expiration_timestamp);
-                b_expiration_timestamp
-            });
-
-            match direction {
-                SortDirection::Ascending => a_expiration_timestamp.cmp(&b_expiration_timestamp),
-                SortDirection::Descending => b_expiration_timestamp.cmp(&a_expiration_timestamp),
-            }
-        });
-    }
-}
-
-#[derive(Debug, Clone)]
-struct ModificationTimeSortingStrategy<'a> {
-    direction: Option<SortDirection>,
-    index: &'a ProposalSortIndexRepository,
-}
-
-impl<'a> SortingStrategy<'a> for ModificationTimeSortingStrategy<'a> {
-    type IdType = UUID;
-
-    fn sort(&self, ids: &mut [Self::IdType]) {
-        let direction = self.direction.unwrap_or(SortDirection::Ascending);
-        let mut cache = HashMap::new();
-
-        ids.sort_by(|a, b| {
-            let a_key = ProposalSortIndexKey { proposal_id: *a };
-            let b_key = ProposalSortIndexKey { proposal_id: *b };
-
-            let a_modification_timestamp = cache.get(&a_key).copied().unwrap_or_else(|| {
-                let a = self.index.get(&a_key);
-                let a_modification_timestamp =
-                    a.map(|a| a.modification_timestamp).unwrap_or_default();
-                cache.insert(a_key, a_modification_timestamp);
-                a_modification_timestamp
-            });
-
-            let b_modification_timestamp = cache.get(&b_key).copied().unwrap_or_else(|| {
-                let b = self.index.get(&b_key);
-                let b_modification_timestamp =
-                    b.map(|b| b.modification_timestamp).unwrap_or_default();
-                cache.insert(b_key, b_modification_timestamp);
-                b_modification_timestamp
-            });
-
-            match direction {
-                SortDirection::Ascending => a_modification_timestamp.cmp(&b_modification_timestamp),
-                SortDirection::Descending => {
-                    b_modification_timestamp.cmp(&a_modification_timestamp)
+        id_with_timestamps.sort_by(|a, b| {
+            {
+                let ord = a.0.cmp(&b.0); // Compare timestamps
+                match direction {
+                    SortDirection::Ascending => ord,
+                    SortDirection::Descending => ord.reverse(),
                 }
             }
+            .then_with(|| a.1.cmp(&b.1)) // Compare proposal IDs if timestamps are equal
         });
+
+        let sorted_ids: Vec<UUID> = id_with_timestamps.into_iter().map(|(_, id)| id).collect();
+        ids.copy_from_slice(&sorted_ids);
     }
 }
 
