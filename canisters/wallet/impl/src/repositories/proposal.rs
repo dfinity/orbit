@@ -300,7 +300,7 @@ impl ProposalRepository {
         let proposal_ids = self.find_with_filters(filters);
         let mut ids = proposal_ids.into_iter().collect::<Vec<_>>();
 
-        // self.sort_ids_with_strategy(&mut ids, &sort_by);
+        self.sort_ids_with_strategy(&mut ids, &sort_by);
 
         Ok(ids)
     }
@@ -391,7 +391,7 @@ impl ProposalRepository {
                     .map(|status| {
                         Box::new(StatusSelectionFilter {
                             repository: &self.status_index,
-                            status: status.to_owned().into(),
+                            status: status.to_owned(),
                         }) as Box<dyn SelectionFilter<IdType = UUID>>
                     })
                     .collect(),

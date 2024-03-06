@@ -157,13 +157,14 @@ impl ProposalService {
         if let Some(ctx) = ctx {
             let mut ids_with_access = Vec::new();
             for proposal_id in &proposal_ids {
-                if let Ok(_) = evaluate_caller_access(
+                if evaluate_caller_access(
                     ctx,
                     &ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(
                         CommonSpecifier::Id(vec![proposal_id.to_owned()]),
                     )),
                 )
                 .await
+                .is_ok()
                 {
                     ids_with_access.push(*proposal_id);
                 }

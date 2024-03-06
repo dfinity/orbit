@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn test_repository_crud() {
-        let repository = ProposalStatusModificationIndexRepository::default();
+        let repository = ProposalStatusModificationIndexRepository;
         let index = ProposalStatusModificationIndex {
             status: ProposalStatusType::Created.to_string(),
             modification_timestamp: 1,
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn test_find_by_criteria() {
-        let repository = ProposalStatusModificationIndexRepository::default();
+        let repository = ProposalStatusModificationIndexRepository;
         let index = ProposalStatusModificationIndex {
             status: ProposalStatusType::Created.to_string(),
             modification_timestamp: 1,

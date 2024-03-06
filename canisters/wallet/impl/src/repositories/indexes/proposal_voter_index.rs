@@ -86,9 +86,7 @@ mod tests {
 
         repository.insert(index.clone());
 
-        let criteria = ProposalVoterIndexCriteria {
-            voter_id: [1; 16],
-        };
+        let criteria = ProposalVoterIndexCriteria { voter_id: [1; 16] };
 
         let result = repository.find_by_criteria(criteria);
 
