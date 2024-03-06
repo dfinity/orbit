@@ -243,6 +243,7 @@ impl ProposalRepository {
                 Some(proposal) => {
                     if proposal
                         .status
+                        .to_type()
                         .to_string()
                         .eq_ignore_ascii_case(status.as_str())
                     {
@@ -805,19 +806,19 @@ mod tests {
         let last_six = repository.find_by_expiration_dt_and_status(
             Some(45),
             None,
-            ProposalStatus::Created.to_string(),
+            ProposalStatusType::Created.to_string(),
         );
 
         let middle_eleven = repository.find_by_expiration_dt_and_status(
             Some(30),
             Some(40),
-            ProposalStatus::Created.to_string(),
+            ProposalStatusType::Created.to_string(),
         );
 
         let first_three = repository.find_by_expiration_dt_and_status(
             None,
             Some(2),
-            ProposalStatus::Created.to_string(),
+            ProposalStatusType::Created.to_string(),
         );
 
         assert_eq!(last_six.len(), 6);
@@ -836,7 +837,7 @@ mod tests {
         let proposals = repository.find_by_expiration_dt_and_status(
             Some(20),
             None,
-            proposal.status.to_string(),
+            proposal.status.to_type().to_string(),
         );
 
         assert!(proposals.is_empty());

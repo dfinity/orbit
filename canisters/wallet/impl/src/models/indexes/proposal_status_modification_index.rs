@@ -26,7 +26,7 @@ pub struct ProposalStatusModificationIndexCriteria {
 impl Proposal {
     pub fn to_index_by_status_and_modification(&self) -> ProposalStatusModificationIndex {
         ProposalStatusModificationIndex {
-            status: self.status.to_string(),
+            status: self.status.to_type().to_string(),
             modification_timestamp: self.last_modification_timestamp,
             proposal_id: self.id,
         }

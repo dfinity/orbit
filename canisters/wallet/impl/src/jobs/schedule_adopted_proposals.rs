@@ -1,6 +1,6 @@
 use crate::{
     core::ic_cdk::api::time,
-    models::{ProposalExecutionPlan, ProposalStatus},
+    models::{ProposalExecutionPlan, ProposalStatus, ProposalStatusType},
     repositories::ProposalRepository,
 };
 use async_trait::async_trait;
@@ -34,7 +34,7 @@ impl Job {
     async fn process_adopted_proposals(&self) {
         let current_time = time();
         let mut proposals = self.proposal_repository.find_by_status(
-            ProposalStatus::Adopted.to_string(),
+            ProposalStatusType::Adopted.to_string(),
             None,
             Some(current_time),
         );
