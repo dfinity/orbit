@@ -103,6 +103,8 @@ export default {
       scheduled: 'Prévu',
       unknown: 'État Inconnu',
     },
+    proposer_auto_approval: 'Demande approuvée automatiquement par le proposeur',
+    comment_optional: 'Commentaire (optionnel)',
     processing_started_at: 'Traitement commencé at {dt}',
     processing_completed_at: 'Traitement completé at {dt}',
     processing_scheduled_at: 'Traitement prévu à {dt}',

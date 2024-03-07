@@ -174,6 +174,7 @@ export type CreateProposalResult = {
     }
   } |
   { 'Err' : Error };
+export interface DisplayUser { 'id' : UUID, 'name' : [] | [string] }
 export interface EditAccessPolicyOperation {
   'input' : EditAccessPolicyOperationInput,
 }
@@ -494,8 +495,8 @@ export interface Proposal {
 export type ProposalActionSpecifier = { 'List' : null } |
   { 'Read' : CommonSpecifier };
 export interface ProposalAdditionalInfo {
-  'id' : UUID,
-  'proposer_name' : [] | [string],
+  'voters' : Array<DisplayUser>,
+  'proposer' : DisplayUser,
 }
 export interface ProposalCallerPrivileges { 'id' : UUID, 'can_vote' : boolean }
 export type ProposalExecutionSchedule = { 'Immediate' : null } |

@@ -59,6 +59,52 @@
         </VRow>
       </VContainer>
     </VCardText>
+
+    <table v-if="votes.length > 0" class="voters mx-4 text-body-1" data-test-id="proposal-votes">
+      <thead>
+        <tr>
+          <th>Votes</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- key is index -->
+        <tr v-for="vote in votes" :key="vote.voter?.id">
+          <td>
+            {{ vote.voter?.name?.[0] || vote.voter?.id || 'Unknown voter' }}
+          </td>
+          <td>
+            <VoteChip :status="vote.vote.status" size="small" class="ml-2" />
+          </td>
+          <td>
+            <p v-if="vote.vote.status_reason[0]" class="text-medium-emphasis text-body-2">
+              {{ vote.vote.status_reason[0] }}
+            </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <VCardText v-if="props.details.can_vote || reason" class="px-4 pt-2">
+      <VContainer class="px-0">
+        <VRow>
+          <VCol cols="12">
+            <VTextarea
+              v-model.trim="reason"
+              :label="$t('proposals.comment_optional')"
+              :variant="props.details.can_vote ? 'underlined' : 'plain'"
+              hide-details
+              rows="1"
+              auto-grow
+              data-test-id="proposal-details-comment"
+              :readonly="props.loading || !props.details.can_vote"
+            />
+          </VCol>
+        </VRow>
+      </VContainer>
+    </VCardText>
+
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-md-row ga-2">
       <ProposalMetadata
         :proposal="props.proposal"
@@ -68,10 +114,21 @@
       />
       <div class="d-flex flex-column flex-md-row ga-2 justify-end flex-grow-1 w-100 w-md-auto">
         <template v-if="props.details.can_vote">
-          <VBtn variant="outlined" :disabled="props.loading" @click="$emit('approve')">
+          <VBtn
+            variant="outlined"
+            :disabled="props.loading"
+            data-test-id="proposal-details-approve"
+            @click="$emit('approve', reasonOrUndefined)"
+          >
             {{ $t('terms.approve') }}
           </VBtn>
-          <VBtn variant="outlined" :disabled="props.loading" class="ma-0" @click="$emit('reject')">
+          <VBtn
+            variant="outlined"
+            :disabled="props.loading"
+            class="ma-0"
+            data-test-id="proposal-details-reject"
+            @click="$emit('reject', reasonOrUndefined)"
+          >
             {{ $t('terms.reject') }}
           </VBtn>
         </template>
@@ -111,6 +168,10 @@ import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntry
 import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
+import VoteChip from './VoteChip.vue';
+import { useI18n } from 'vue-i18n';
+
+const i18n = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -180,4 +241,42 @@ const proposalType = computed(() => {
 
   return 'unknown';
 });
+
+const reason = ref('');
+const reasonOrUndefined = computed(() => (reason.value.length ? reason.value : undefined));
+
+const votes = computed(() =>
+  props.proposal.votes.map(vote => {
+    const voter = props.details.voters.find(voter => voter.id === vote.user_id);
+
+    if (voter?.id === props.proposal.proposed_by && !vote.status_reason[0]) {
+      vote.status_reason[0] = i18n.t('proposals.proposer_auto_approval');
+    }
+
+    return {
+      voter: voter || {
+        id: vote.user_id,
+        name: [],
+      },
+      vote,
+    };
+  }),
+);
 </script>
+
+<style scoped lang="scss">
+.voters {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    padding: 0px 4px 8px;
+  }
+
+  td {
+    padding: 0px 4px 8px;
+    vertical-align: top;
+  }
+}
+</style>

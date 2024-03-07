@@ -17,13 +17,14 @@
         :proposal="data.proposal"
         :details="{
           can_vote: data.privileges.can_vote,
-          proposer_name: data.additionalInfo.proposer_name?.[0] ?? undefined,
+          proposer: data.additionalInfo.proposer,
+          voters: data.additionalInfo.voters,
         }"
         :loading="voting || loading"
         @closed="openModel = false"
         @opened="openModel = true"
-        @approve="onVote(true)"
-        @reject="onVote(false)"
+        @approve="reason => onVote(true, reason)"
+        @reject="reason => onVote(false, reason)"
       >
         <template #top-actions>
           <VBtn :disabled="voting" :icon="mdiClose" dark @click="openModel = false" />
@@ -104,6 +105,9 @@ const loadProposal = async (): Promise<{
   });
 
   const result = await wallet.service.getProposal({ proposal_id: props.proposalId.value });
+
+  console.log('result', result);
+
   return {
     proposal: result.proposal,
     privileges: result.privileges,

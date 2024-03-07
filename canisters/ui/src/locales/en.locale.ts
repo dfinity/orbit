@@ -100,6 +100,8 @@ export default {
       scheduled: 'Scheduled',
       unknown: 'Unknown',
     },
+    proposer_auto_approval: 'Proposal automatically approved by the proposer',
+    comment_optional: 'Comment (optional)',
     processing_started_at: 'Processing started at {dt}',
     processing_completed_at: 'Processing completed at {dt}',
     processing_scheduled_at: 'Processing scheduled at {dt}',

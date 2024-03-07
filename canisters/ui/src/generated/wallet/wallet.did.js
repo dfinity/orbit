@@ -413,9 +413,10 @@ export const idlFactory = ({ IDL }) => {
     'operation' : ProposalOperation,
     'proposed_by' : UUID,
   });
+  const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Opt(IDL.Text) });
   const ProposalAdditionalInfo = IDL.Record({
-    'id' : UUID,
-    'proposer_name' : IDL.Opt(IDL.Text),
+    'voters' : IDL.Vec(DisplayUser),
+    'proposer' : DisplayUser,
   });
   const CreateProposalResult = IDL.Variant({
     'Ok' : IDL.Record({

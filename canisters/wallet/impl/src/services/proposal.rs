@@ -10,7 +10,7 @@ use crate::{
     models::{
         access_control::{ProposalActionSpecifier, ResourceSpecifier},
         specifier::CommonSpecifier,
-        NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
+        DisplayUser, NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalVoteStatus,
     },
     repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
@@ -96,13 +96,33 @@ impl ProposalService {
         let proposer = self
             .user_service
             .get_user(&proposal.proposed_by)
-            .map(|user| user.name)
-            .unwrap_or(None);
+            .map(|user| DisplayUser {
+                name: user.name,
+                id: user.id,
+            })
+            .unwrap_or(DisplayUser {
+                id: proposal.proposed_by,
+                name: None,
+            });
 
-        Ok(ProposalAdditionalInfo {
-            id: proposal.id,
-            proposer_name: proposer,
-        })
+        let voters = proposal
+            .votes
+            .iter()
+            .map(|vote| {
+                self.user_service
+                    .get_user(&vote.user_id)
+                    .map(|user| DisplayUser {
+                        name: user.name,
+                        id: user.id,
+                    })
+                    .unwrap_or(DisplayUser {
+                        id: vote.user_id,
+                        name: None,
+                    })
+            })
+            .collect();
+
+        Ok(ProposalAdditionalInfo { proposer, voters })
     }
 
     pub async fn list_proposals(
@@ -221,7 +241,7 @@ impl ProposalService {
             proposal.add_vote(
                 proposer.id,
                 ProposalVoteStatus::Accepted,
-                Some("Proposal automatically approved by the proposer".to_string()),
+                None,
             );
         }
 

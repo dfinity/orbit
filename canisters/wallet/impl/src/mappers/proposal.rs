@@ -91,8 +91,8 @@ impl From<ProposalCallerPrivileges> for wallet_api::ProposalCallerPrivilegesDTO 
 impl From<ProposalAdditionalInfo> for wallet_api::ProposalAdditionalInfoDTO {
     fn from(info: ProposalAdditionalInfo) -> Self {
         Self {
-            id: Uuid::from_bytes(info.id).hyphenated().to_string(),
-            proposer_name: info.proposer_name,
+            proposer: info.proposer.into(),
+            voters: info.voters.into_iter().map(|voter| voter.into()).collect(),
         }
     }
 }
