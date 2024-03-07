@@ -63,16 +63,15 @@
     <table v-if="votes.length > 0" class="voters mx-4 text-body-1" data-test-id="proposal-votes">
       <thead>
         <tr>
-          <th>Votes</th>
+          <th>{{ $t('proposals.votes') }}</th>
           <th></th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <!-- key is index -->
         <tr v-for="vote in votes" :key="vote.voter?.id">
           <td>
-            {{ vote.voter?.name?.[0] || vote.voter?.id || 'Unknown voter' }}
+            {{ vote.voter.name?.[0] || vote.voter.id }}
           </td>
           <td>
             <VoteChip :status="vote.vote.status" size="small" class="ml-2" />

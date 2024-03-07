@@ -100,6 +100,7 @@ export default {
       scheduled: 'Agendado',
       unknown: 'Desconhecido',
     },
+    votes: 'Votos',
     proposer_auto_approval: 'Pedido aprovado automaticamente pelo requerente',
     comment_optional: 'Comentário (opcional)',
     no_results_found: 'Nenhum resultado encontrado.',
