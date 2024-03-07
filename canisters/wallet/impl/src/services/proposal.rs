@@ -247,11 +247,7 @@ impl ProposalService {
         proposal.validate()?;
 
         if proposal.can_vote(&proposer.id).await {
-            proposal.add_vote(
-                proposer.id,
-                ProposalVoteStatus::Accepted,
-                None,
-            );
+            proposal.add_vote(proposer.id, ProposalVoteStatus::Accepted, None);
         }
 
         // When a proposal is created, it is immediately evaluated to determine its status.
