@@ -7,7 +7,7 @@ use wallet_api::MetadataDTO;
 #[storable]
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Metadata {
-    pub metadata: BTreeMap<String, String>,
+    metadata: BTreeMap<String, String>,
 }
 
 #[storable]
@@ -30,6 +30,10 @@ impl Metadata {
     const MAX_METADATA_KEY_LEN: u8 = 24;
     const MAX_METADATA_VALUE_LEN: u8 = 255;
 
+    pub fn new(metadata: BTreeMap<String, String>) -> Self {
+        Self { metadata }
+    }
+
     pub fn get(&self, key: &str) -> Option<String> {
         self.metadata.get(key).cloned()
     }
@@ -50,6 +54,10 @@ impl Metadata {
             .iter()
             .map(|(k, v)| (k.to_owned(), v.to_owned()))
             .collect()
+    }
+
+    pub fn as_btreemap(&self) -> &BTreeMap<String, String> {
+        &self.metadata
     }
 
     pub(crate) fn change(&mut self, change_metadata: ChangeMetadata) {

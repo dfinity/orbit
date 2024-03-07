@@ -253,17 +253,19 @@ mod tests {
                 value: "c".to_string(),
             },
         ];
-        let metadata_map = Metadata::from(metadata_items.clone());
+        let metadata = Metadata::from(metadata_items.clone());
         let operation = EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id,
             address_owner: Some("test_edit".to_string()),
-            change_metadata: Some(ChangeMetadata::ReplaceAllBy(metadata_map.metadata.clone())),
+            change_metadata: Some(ChangeMetadata::ReplaceAllBy(
+                metadata.as_btreemap().to_owned(),
+            )),
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());
         let updated_entry = result.unwrap();
         address_book_entry.address_owner = "test_edit".to_string();
-        address_book_entry.metadata = metadata_map.clone();
+        address_book_entry.metadata = metadata.clone();
         assert_eq!(updated_entry, address_book_entry);
 
         let diff_metadata_dto = Metadata::from(vec![
@@ -295,7 +297,7 @@ mod tests {
             address_book_entry_id: address_book_entry.id,
             address_owner: None,
             change_metadata: Some(ChangeMetadata::OverrideSpecifiedBy(
-                diff_metadata_dto.metadata,
+                diff_metadata_dto.as_btreemap().to_owned(),
             )),
         };
         let result = ctx.service.edit_entry(operation).await;
