@@ -2,30 +2,41 @@ use super::indexes::{
     proposal_account_index::ProposalAccountIndexRepository,
     proposal_creation_time_index::ProposalCreationTimeIndexRepository,
     proposal_expiration_time_index::ProposalExpirationTimeIndexRepository,
+    proposal_key_creation_time_index::ProposalKeyCreationTimeIndexRepository,
+    proposal_key_expiration_time_index::ProposalKeyExpirationTimeIndexRepository,
     proposal_proposer_index::ProposalProposerIndexRepository,
     proposal_scheduled_index::ProposalScheduledIndexRepository,
+    proposal_sort_index::ProposalSortIndexRepository,
     proposal_status_index::ProposalStatusIndexRepository,
+    proposal_status_modification_index::ProposalStatusModificationIndexRepository,
     proposal_voter_index::ProposalVoterIndexRepository,
 };
 use crate::{
-    core::{utils::match_date_range, with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
+    core::{with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
     errors::{MapperError, RepositoryError},
-    mappers::{HelperMapper, ProposalStatusMapper},
+    mappers::HelperMapper,
     models::{
         indexes::{
-            proposal_account_index::ProposalAccountIndexCriteria,
+            proposal_account_index::{ProposalAccountIndex, ProposalAccountIndexCriteria},
             proposal_creation_time_index::ProposalCreationTimeIndexCriteria,
             proposal_expiration_time_index::ProposalExpirationTimeIndexCriteria,
-            proposal_proposer_index::ProposalProposerIndexCriteria,
+            proposal_key_creation_time_index::ProposalKeyCreationTimeIndexCriteria,
+            proposal_key_expiration_time_index::ProposalKeyExpirationTimeIndexCriteria,
+            proposal_proposer_index::{ProposalProposerIndex, ProposalProposerIndexCriteria},
             proposal_scheduled_index::ProposalScheduledIndexCriteria,
-            proposal_status_index::ProposalStatusIndexCriteria,
-            proposal_voter_index::ProposalVoterIndexCriteria,
+            proposal_sort_index::ProposalSortIndexKey,
+            proposal_status_index::{ProposalStatusIndex, ProposalStatusIndexCriteria},
+            proposal_status_modification_index::ProposalStatusModificationIndexCriteria,
+            proposal_voter_index::{ProposalVoterIndex, ProposalVoterIndexCriteria},
         },
-        AccountId, Proposal, ProposalKey, ProposalStatusCode, UserId,
+        AccountId, Proposal, ProposalKey, ProposalStatusCode,
     },
 };
 use ic_canister_core::{
-    repository::{IndexRepository, RefreshIndexMode, Repository},
+    repository::{
+        IndexRepository, OrSelectionFilter, RefreshIndexMode, Repository, SelectionFilter,
+        SortDirection, SortingStrategy,
+    },
     types::{Timestamp, UUID},
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -56,6 +67,10 @@ pub struct ProposalRepository {
     status_index: ProposalStatusIndexRepository,
     scheduled_index: ProposalScheduledIndexRepository,
     proposer_index: ProposalProposerIndexRepository,
+    status_modification_index: ProposalStatusModificationIndexRepository,
+    prefixed_creation_time_index: ProposalKeyCreationTimeIndexRepository,
+    prefixed_expiration_time_index: ProposalKeyExpirationTimeIndexRepository,
+    sort_index: ProposalSortIndexRepository,
 }
 
 impl Repository<ProposalKey, Proposal> for ProposalRepository {
@@ -97,15 +112,41 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                     previous: prev.clone().map(|prev| prev.to_index_by_creation_dt()),
                     current: Some(value.to_index_by_creation_dt()),
                 });
+            self.prefixed_creation_time_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map(|prev| prev.to_index_by_key_and_creation_dt()),
+                    current: Some(value.to_index_by_key_and_creation_dt()),
+                });
             self.expiration_dt_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
                     current: Some(value.to_index_by_expiration_dt()),
                 });
+            self.prefixed_expiration_time_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map(|prev| prev.to_index_by_key_and_expiration_dt()),
+                    current: Some(value.to_index_by_key_and_expiration_dt()),
+                });
             self.status_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().clone().map(|prev| prev.to_index_by_status()),
                     current: Some(value.to_index_by_status()),
+                });
+            self.sort_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_for_sorting()),
+                    current: Some(value.to_index_for_sorting()),
+                });
+            self.status_modification_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev
+                        .clone()
+                        .map(|prev| prev.to_index_by_status_and_modification()),
+                    current: Some(value.to_index_by_status_and_modification()),
                 });
 
             prev
@@ -142,9 +183,31 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                     current: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
                 },
             );
+            self.prefixed_creation_time_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map(|prev| prev.to_index_by_key_and_creation_dt()),
+                });
+            self.prefixed_expiration_time_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map(|prev| prev.to_index_by_key_and_expiration_dt()),
+                });
             self.status_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index_by_status()),
+                });
+            self.sort_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_for_sorting()),
+                });
+            self.status_modification_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev
+                        .clone()
+                        .map(|prev| prev.to_index_by_status_and_modification()),
                 });
 
             prev
@@ -176,6 +239,7 @@ impl ProposalRepository {
                 Some(proposal) => {
                     if proposal
                         .status
+                        .to_type()
                         .to_string()
                         .eq_ignore_ascii_case(status.as_str())
                     {
@@ -191,20 +255,19 @@ impl ProposalRepository {
 
     pub fn find_by_status(
         &self,
-        status: String,
-        from_last_update_dt: Option<Timestamp>,
-        to_last_update_dt: Option<Timestamp>,
+        status: ProposalStatusCode,
+        from_last_modified_dt: Option<Timestamp>,
+        to_last_modified_dt: Option<Timestamp>,
     ) -> Vec<Proposal> {
-        let proposals = self
-            .status_index
-            .find_by_criteria(ProposalStatusIndexCriteria {
-                status: status.to_owned(),
-                from_dt: from_last_update_dt,
-                to_dt: to_last_update_dt,
-            });
+        let ids = self.status_modification_index.find_by_criteria(
+            ProposalStatusModificationIndexCriteria {
+                status,
+                from_dt: from_last_modified_dt,
+                to_dt: to_last_modified_dt,
+            },
+        );
 
-        proposals
-            .iter()
+        ids.iter()
             .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect::<Vec<Proposal>>()
     }
@@ -224,298 +287,182 @@ impl ProposalRepository {
             .collect::<Vec<Proposal>>()
     }
 
-    pub fn find_by_account(
-        &self,
-        account_id: AccountId,
-        created_from_dt: Option<Timestamp>,
-        created_to_dt: Option<Timestamp>,
-    ) -> Vec<Proposal> {
-        let filtered_by_accounts =
-            self.account_index
-                .find_by_criteria(ProposalAccountIndexCriteria {
-                    account_id: account_id.to_owned(),
-                    from_dt: created_from_dt.to_owned(),
-                    to_dt: created_to_dt.to_owned(),
-                });
-
-        filtered_by_accounts
-            .iter()
-            .filter_map(|id| self.get(&Proposal::key(*id)))
-            .collect()
-    }
-
-    pub fn find_by_account_where(
-        &self,
-        account_id: AccountId,
-        condition: ProposalWhereClause,
-    ) -> Vec<Proposal> {
-        self.account_index
-            .find_by_criteria(ProposalAccountIndexCriteria {
-                account_id: account_id.to_owned(),
-                from_dt: condition.created_dt_from.to_owned(),
-                to_dt: condition.created_dt_to.to_owned(),
-            })
-            .iter()
-            .filter_map(|id| self.check_condition(*id, &condition))
-            .collect()
-    }
-
-    pub fn find_by_voter_where(
-        &self,
-        user_id: UserId,
-        condition: ProposalWhereClause,
-    ) -> Vec<Proposal> {
-        self.voter_index
-            .find_by_criteria(ProposalVoterIndexCriteria {
-                user_id: user_id.to_owned(),
-                from_dt: condition.created_dt_from,
-                to_dt: condition.created_dt_to,
-            })
-            .iter()
-            .filter_map(|id| self.check_condition(*id, &condition))
-            .collect()
-    }
-
-    pub fn find_where(
+    pub fn find_ids_where(
         &self,
         condition: ProposalWhereClause,
         sort_by: Option<ListProposalsSortBy>,
-    ) -> Result<Vec<Proposal>, RepositoryError> {
-        let strategy = self.pick_most_selective_where_filter(&condition);
-        let proposal_ids = self.find_with_strategy(strategy, &condition)?;
-        let mut proposals = proposal_ids
-            .iter()
-            .filter_map(|id| self.check_condition(*id, &condition))
-            .collect::<Vec<Proposal>>();
+    ) -> Result<Vec<UUID>, RepositoryError> {
+        let filters = self.build_where_filtering_strategy(condition);
+        let proposal_ids = self.find_with_filters(filters);
+        let mut ids = proposal_ids.into_iter().collect::<Vec<_>>();
 
-        self.sort_proposals(&mut proposals, &sort_by);
-
-        Ok(proposals)
-    }
-
-    fn sort_proposals(&self, proposals: &mut [Proposal], sort_by: &Option<ListProposalsSortBy>) {
-        match sort_by {
-            Some(wallet_api::ListProposalsSortBy::CreatedAt(direction)) => {
-                proposals.sort_by(|a, b| match direction {
-                    wallet_api::SortDirection::Asc => a.created_timestamp.cmp(&b.created_timestamp),
-                    wallet_api::SortDirection::Desc => {
-                        b.created_timestamp.cmp(&a.created_timestamp)
-                    }
-                });
-            }
-            Some(wallet_api::ListProposalsSortBy::ExpirationDt(direction)) => {
-                proposals.sort_by(|a, b| match direction {
-                    wallet_api::SortDirection::Asc => a.expiration_dt.cmp(&b.expiration_dt),
-                    wallet_api::SortDirection::Desc => b.expiration_dt.cmp(&a.expiration_dt),
-                });
-            }
-            Some(wallet_api::ListProposalsSortBy::LastModificationDt(direction)) => {
-                proposals.sort_by(|a, b| match direction {
-                    wallet_api::SortDirection::Asc => a
-                        .last_modification_timestamp
-                        .cmp(&b.last_modification_timestamp),
-                    wallet_api::SortDirection::Desc => b
-                        .last_modification_timestamp
-                        .cmp(&a.last_modification_timestamp),
-                });
-            }
-            None => {
-                // Default sort by created timestamp descending
-                proposals.sort_by(|a, b| b.created_timestamp.cmp(&a.created_timestamp));
-            }
-        }
-    }
-
-    fn pick_most_selective_where_filter(
-        &self,
-        condition: &ProposalWhereClause,
-    ) -> WhereSelectionStrategy {
-        let mut strategy = WhereSelectionStrategy::CreationDt;
-
-        if condition.expiration_dt_from.is_some() || condition.expiration_dt_to.is_some() {
-            strategy = WhereSelectionStrategy::ExpirationDt;
-        }
-
-        if condition.created_dt_from.is_some() || condition.created_dt_to.is_some() {
-            strategy = WhereSelectionStrategy::CreationDt;
-        }
-
-        if !condition.statuses.is_empty() {
-            strategy = WhereSelectionStrategy::Status;
-        }
-
-        if !condition.account_ids().unwrap_or_default().is_empty() {
-            strategy = WhereSelectionStrategy::Account;
-        }
-
-        if !condition.voters.is_empty() {
-            strategy = WhereSelectionStrategy::Voter;
-        }
-
-        if !condition.proposers.is_empty() {
-            strategy = WhereSelectionStrategy::Proposer;
-        }
-
-        strategy
-    }
-
-    fn find_with_strategy(
-        &self,
-        strategy: WhereSelectionStrategy,
-        condition: &ProposalWhereClause,
-    ) -> Result<HashSet<UUID>, RepositoryError> {
-        let ids = match strategy {
-            WhereSelectionStrategy::Account => {
-                let mut proposal_ids = HashSet::<UUID>::new();
-                let account_ids = condition.account_ids().map_err(|e| {
-                    RepositoryError::CriteriaValidationError {
-                        reason: e.to_string(),
-                    }
-                })?;
-
-                for account_id in account_ids {
-                    proposal_ids.extend(self.account_index.find_by_criteria(
-                        ProposalAccountIndexCriteria {
-                            account_id,
-                            from_dt: condition.created_dt_from,
-                            to_dt: condition.created_dt_to,
-                        },
-                    ));
-                }
-
-                proposal_ids
-            }
-            WhereSelectionStrategy::Voter => {
-                let mut proposal_ids = HashSet::<UUID>::new();
-                let user_ids: HashSet<_> = condition.voters.iter().collect();
-
-                for user_id in user_ids {
-                    proposal_ids.extend(self.voter_index.find_by_criteria(
-                        ProposalVoterIndexCriteria {
-                            user_id: *user_id,
-                            from_dt: condition.created_dt_from,
-                            to_dt: condition.created_dt_to,
-                        },
-                    ));
-                }
-
-                proposal_ids
-            }
-            WhereSelectionStrategy::Proposer => {
-                let mut proposal_ids = HashSet::<UUID>::new();
-                let user_ids: HashSet<_> = condition.proposers.iter().collect();
-
-                for user_id in user_ids {
-                    proposal_ids.extend(self.proposer_index.find_by_criteria(
-                        ProposalProposerIndexCriteria {
-                            user_id: *user_id,
-                            from_dt: condition.created_dt_from,
-                            to_dt: condition.created_dt_to,
-                        },
-                    ));
-                }
-
-                proposal_ids
-            }
-            WhereSelectionStrategy::Status => {
-                let mut proposal_ids = HashSet::<UUID>::new();
-                let statuses: HashSet<_> = condition
-                    .statuses
-                    .iter()
-                    .map(ProposalStatusMapper::from_status_code_dto)
-                    .collect();
-
-                for status in statuses {
-                    proposal_ids.extend(self.status_index.find_by_criteria(
-                        ProposalStatusIndexCriteria {
-                            status: status.to_string(),
-                            from_dt: condition.created_dt_from,
-                            to_dt: condition.created_dt_to,
-                        },
-                    ));
-                }
-
-                proposal_ids
-            }
-            WhereSelectionStrategy::ExpirationDt => {
-                self.expiration_dt_index
-                    .find_by_criteria(ProposalExpirationTimeIndexCriteria {
-                        from_dt: condition.expiration_dt_from,
-                        to_dt: condition.expiration_dt_to,
-                    })
-            }
-            WhereSelectionStrategy::CreationDt => {
-                self.creation_dt_index
-                    .find_by_criteria(ProposalCreationTimeIndexCriteria {
-                        from_dt: condition.created_dt_from,
-                        to_dt: condition.created_dt_to,
-                    })
-            }
-        };
+        self.sort_ids_with_strategy(&mut ids, &sort_by);
 
         Ok(ids)
     }
 
-    fn check_condition(
+    /// Sorts the proposal IDs based on the provided sort strategy.
+    ///
+    /// If no sort strategy is provided, it defaults to sorting by creation timestamp descending.
+    fn sort_ids_with_strategy(
         &self,
-        proposal_id: UUID,
-        condition: &ProposalWhereClause,
-    ) -> Option<Proposal> {
-        match self.get(&Proposal::key(proposal_id)) {
-            Some(proposal) => {
-                let mut match_operation_types = true;
-                let mut match_statuses = true;
-                let mut match_voters = true;
-                let mut match_proposers = true;
-                let match_creation_dt_range = match_date_range(
-                    &proposal.created_timestamp,
-                    &condition.created_dt_from,
-                    &condition.created_dt_to,
-                );
-                let match_expiration_dt_range = match_date_range(
-                    &proposal.expiration_dt,
-                    &condition.expiration_dt_from,
-                    &condition.expiration_dt_to,
-                );
+        proposal_ids: &mut [UUID],
+        sort_by: &Option<ListProposalsSortBy>,
+    ) {
+        match sort_by {
+            Some(wallet_api::ListProposalsSortBy::CreatedAt(direction)) => {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Creation,
+                    direction: match direction {
+                        wallet_api::SortDirection::Asc => Some(SortDirection::Ascending),
+                        wallet_api::SortDirection::Desc => Some(SortDirection::Descending),
+                    },
+                };
 
-                if !condition.operation_types.is_empty() {
-                    match_operation_types = condition
-                        .operation_types
-                        .iter()
-                        .any(|operation_type| proposal.operation.is_of_type(operation_type));
-                }
-
-                if !condition.statuses.is_empty() {
-                    match_statuses = condition
-                        .statuses
-                        .iter()
-                        .any(|s| ProposalStatusCode::from(proposal.status.clone()) == *s);
-                }
-
-                if !condition.voters.is_empty() {
-                    match_voters = condition
-                        .voters
-                        .iter()
-                        .any(|v| proposal.voters().contains(v));
-                }
-
-                if !condition.proposers.is_empty() {
-                    match_proposers = condition.proposers.contains(&proposal.proposed_by);
-                }
-
-                match match_expiration_dt_range
-                    && match_creation_dt_range
-                    && match_operation_types
-                    && match_statuses
-                    && match_proposers
-                    && match_voters
-                {
-                    true => Some(proposal),
-                    false => None,
-                }
+                sort_strategy.sort(proposal_ids);
             }
-            None => None,
+            Some(wallet_api::ListProposalsSortBy::ExpirationDt(direction)) => {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Expiration,
+                    direction: match direction {
+                        wallet_api::SortDirection::Asc => Some(SortDirection::Ascending),
+                        wallet_api::SortDirection::Desc => Some(SortDirection::Descending),
+                    },
+                };
+
+                sort_strategy.sort(proposal_ids);
+            }
+            Some(wallet_api::ListProposalsSortBy::LastModificationDt(direction)) => {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Modification,
+                    direction: match direction {
+                        wallet_api::SortDirection::Asc => Some(SortDirection::Ascending),
+                        wallet_api::SortDirection::Desc => Some(SortDirection::Descending),
+                    },
+                };
+
+                sort_strategy.sort(proposal_ids);
+            }
+            None => {
+                // Default sort by creation timestamp descending
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Creation,
+                    direction: Some(SortDirection::Descending),
+                };
+
+                sort_strategy.sort(proposal_ids);
+            }
         }
+    }
+
+    fn build_where_filtering_strategy<'a>(
+        &'a self,
+        condition: ProposalWhereClause,
+    ) -> Vec<Box<dyn SelectionFilter<'a, IdType = UUID> + 'a>> {
+        let mut filters = Vec::new();
+
+        if condition.created_dt_from.is_some() || condition.created_dt_to.is_some() {
+            filters.push(Box::new(CreationDtSelectionFilter {
+                repository: &self.creation_dt_index,
+                prefixed_repository: &self.prefixed_creation_time_index,
+                from: condition.created_dt_from,
+                to: condition.created_dt_to,
+            }) as Box<dyn SelectionFilter<IdType = UUID>>);
+        }
+
+        if condition.expiration_dt_from.is_some() || condition.expiration_dt_to.is_some() {
+            filters.push(Box::new(ExpirationDtSelectionFilter {
+                repository: &self.expiration_dt_index,
+                prefixed_repository: &self.prefixed_expiration_time_index,
+                from: condition.expiration_dt_from,
+                to: condition.expiration_dt_to,
+            }) as Box<dyn SelectionFilter<IdType = UUID>>);
+        }
+
+        if !condition.statuses.is_empty() {
+            let includes_status = Box::new(OrSelectionFilter {
+                filters: condition
+                    .statuses
+                    .iter()
+                    .map(|status| {
+                        Box::new(StatusSelectionFilter {
+                            repository: &self.status_index,
+                            status: status.to_owned(),
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+
+            filters.push(includes_status);
+        }
+
+        if !condition.account_ids().unwrap_or_default().is_empty() {
+            let includes_account = Box::new(OrSelectionFilter {
+                filters: condition
+                    .account_ids()
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|account_id| {
+                        Box::new(AccountSelectionFilter {
+                            repository: &self.account_index,
+                            account_id: *account_id,
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+
+            filters.push(includes_account);
+        }
+
+        if !condition.voters.is_empty() {
+            let includes_voter = Box::new(OrSelectionFilter {
+                filters: condition
+                    .voters
+                    .iter()
+                    .map(|voter_id| {
+                        Box::new(VoterSelectionFilter {
+                            repository: &self.voter_index,
+                            voter_id: *voter_id,
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+
+            filters.push(includes_voter);
+        }
+
+        if !condition.proposers.is_empty() {
+            let includes_proposer = Box::new(OrSelectionFilter {
+                filters: condition
+                    .proposers
+                    .iter()
+                    .map(|proposer_id| {
+                        Box::new(ProposerSelectionFilter {
+                            repository: &self.proposer_index,
+                            proposer_id: *proposer_id,
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+
+            filters.push(includes_proposer);
+        }
+
+        if filters.is_empty() {
+            // If no filters are provided, return all
+            filters.push(Box::new(CreationDtSelectionFilter {
+                repository: &self.creation_dt_index,
+                prefixed_repository: &self.prefixed_creation_time_index,
+                from: None,
+                to: None,
+            }) as Box<dyn SelectionFilter<IdType = UUID>>);
+        }
+
+        filters
     }
 }
 
@@ -547,14 +494,210 @@ impl ProposalWhereClause {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum WhereSelectionStrategy {
-    Account,
-    Voter,
-    Proposer,
-    Status,
-    ExpirationDt,
-    CreationDt,
+#[derive(Debug, Clone)]
+pub(crate) struct CreationDtSelectionFilter<'a> {
+    repository: &'a ProposalCreationTimeIndexRepository,
+    prefixed_repository: &'a ProposalKeyCreationTimeIndexRepository,
+    from: Option<Timestamp>,
+    to: Option<Timestamp>,
+}
+
+impl<'a> SelectionFilter<'a> for CreationDtSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.prefixed_repository
+            .exists_by_criteria(ProposalKeyCreationTimeIndexCriteria {
+                proposal_id: *id,
+                from_dt: self.from,
+                to_dt: self.to,
+            })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository
+            .find_by_criteria(ProposalCreationTimeIndexCriteria {
+                from_dt: self.from,
+                to_dt: self.to,
+            })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct ExpirationDtSelectionFilter<'a> {
+    repository: &'a ProposalExpirationTimeIndexRepository,
+    prefixed_repository: &'a ProposalKeyExpirationTimeIndexRepository,
+    from: Option<Timestamp>,
+    to: Option<Timestamp>,
+}
+
+impl<'a> SelectionFilter<'a> for ExpirationDtSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.prefixed_repository
+            .exists_by_criteria(ProposalKeyExpirationTimeIndexCriteria {
+                proposal_id: *id,
+                from_dt: self.from,
+                to_dt: self.to,
+            })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository
+            .find_by_criteria(ProposalExpirationTimeIndexCriteria {
+                from_dt: self.from,
+                to_dt: self.to,
+            })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct AccountSelectionFilter<'a> {
+    repository: &'a ProposalAccountIndexRepository,
+    account_id: AccountId,
+}
+
+impl<'a> SelectionFilter<'a> for AccountSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&ProposalAccountIndex {
+            account_id: self.account_id,
+            proposal_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository
+            .find_by_criteria(ProposalAccountIndexCriteria {
+                account_id: self.account_id,
+            })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct VoterSelectionFilter<'a> {
+    repository: &'a ProposalVoterIndexRepository,
+    voter_id: UUID,
+}
+
+impl<'a> SelectionFilter<'a> for VoterSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&ProposalVoterIndex {
+            voter_id: self.voter_id,
+            proposal_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository
+            .find_by_criteria(ProposalVoterIndexCriteria {
+                voter_id: self.voter_id,
+            })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct ProposerSelectionFilter<'a> {
+    repository: &'a ProposalProposerIndexRepository,
+    proposer_id: UUID,
+}
+
+impl<'a> SelectionFilter<'a> for ProposerSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&ProposalProposerIndex {
+            proposer_id: self.proposer_id,
+            proposal_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository
+            .find_by_criteria(ProposalProposerIndexCriteria {
+                proposer_id: self.proposer_id,
+            })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct StatusSelectionFilter<'a> {
+    repository: &'a ProposalStatusIndexRepository,
+    status: ProposalStatusCode,
+}
+
+impl<'a> SelectionFilter<'a> for StatusSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&ProposalStatusIndex {
+            status: self.status.to_owned(),
+            proposal_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository
+            .find_by_criteria(ProposalStatusIndexCriteria {
+                status: self.status.to_owned(),
+            })
+    }
+}
+
+#[derive(Debug, Clone)]
+enum TimestampType {
+    Creation,
+    Expiration,
+    Modification,
+}
+
+#[derive(Debug, Clone)]
+struct TimestampSortingStrategy<'a> {
+    index: &'a ProposalSortIndexRepository,
+    timestamp_type: TimestampType,
+    direction: Option<SortDirection>,
+}
+
+impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
+    type IdType = UUID;
+
+    fn sort(&self, ids: &mut [Self::IdType]) {
+        let direction = self.direction.unwrap_or(SortDirection::Ascending);
+        let mut id_with_timestamps: Vec<(Timestamp, Self::IdType)> = ids
+            .iter()
+            .map(|id| {
+                let key = ProposalSortIndexKey { proposal_id: *id };
+                let timestamp = self
+                    .index
+                    .get(&key)
+                    .map(|index| match self.timestamp_type {
+                        TimestampType::Creation => index.creation_timestamp,
+                        TimestampType::Expiration => index.expiration_timestamp,
+                        TimestampType::Modification => index.modification_timestamp,
+                    })
+                    .unwrap_or_default();
+                (timestamp, *id)
+            })
+            .collect();
+
+        id_with_timestamps.sort_by(|a, b| {
+            {
+                let ord = a.0.cmp(&b.0); // Compare timestamps
+                match direction {
+                    SortDirection::Ascending => ord,
+                    SortDirection::Descending => ord.reverse(),
+                }
+            }
+            .then_with(|| a.1.cmp(&b.1)) // Compare proposal IDs if timestamps are equal
+        });
+
+        let sorted_ids: Vec<UUID> = id_with_timestamps.into_iter().map(|(_, id)| id).collect();
+        ids.copy_from_slice(&sorted_ids);
+    }
 }
 
 #[cfg(test)]
@@ -562,9 +705,8 @@ mod tests {
     use super::*;
     use crate::models::{
         proposal_test_utils::{self, mock_proposal},
-        Metadata, ProposalOperation, ProposalStatus, TransferOperation, TransferOperationInput,
+        ProposalStatus,
     };
-    use num_bigint::BigUint;
     use uuid::Uuid;
 
     #[test]
@@ -582,33 +724,6 @@ mod tests {
     }
 
     #[test]
-    fn find_by_account() {
-        let repository = ProposalRepository::default();
-        let mut proposal = mock_proposal();
-        let user_id = Uuid::new_v4();
-        let account_id = Uuid::new_v4();
-        proposal.proposed_by = *user_id.as_bytes();
-        proposal.operation = ProposalOperation::Transfer(TransferOperation {
-            transfer_id: None,
-            input: TransferOperationInput {
-                amount: candid::Nat(BigUint::from(100u32)),
-                fee: None,
-                metadata: Metadata::default(),
-                network: "mainnet".to_string(),
-                to: "0x1234".to_string(),
-                from_account_id: *account_id.as_bytes(),
-            },
-        });
-
-        repository.insert(proposal.to_key(), proposal.clone());
-
-        assert_eq!(
-            repository.find_by_account(*account_id.as_bytes(), None, None),
-            vec![proposal]
-        );
-    }
-
-    #[test]
     fn find_by_expiration_dt_and_status() {
         let repository = ProposalRepository::default();
         for i in 0..=50 {
@@ -622,19 +737,19 @@ mod tests {
         let last_six = repository.find_by_expiration_dt_and_status(
             Some(45),
             None,
-            ProposalStatus::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         let middle_eleven = repository.find_by_expiration_dt_and_status(
             Some(30),
             Some(40),
-            ProposalStatus::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         let first_three = repository.find_by_expiration_dt_and_status(
             None,
             Some(2),
-            ProposalStatus::Created.to_string(),
+            ProposalStatusCode::Created.to_string(),
         );
 
         assert_eq!(last_six.len(), 6);
@@ -643,7 +758,7 @@ mod tests {
     }
 
     #[test]
-    fn no_of_future_expiration_dt() {
+    fn no_future_expiration_dt() {
         let repository = ProposalRepository::default();
         let mut proposal = proposal_test_utils::mock_proposal();
         proposal.expiration_dt = 10;
@@ -653,70 +768,14 @@ mod tests {
         let proposals = repository.find_by_expiration_dt_and_status(
             Some(20),
             None,
-            proposal.status.to_string(),
+            proposal.status.to_type().to_string(),
         );
 
         assert!(proposals.is_empty());
     }
 
     #[test]
-    fn pick_optmized_lookup_strategy() {
-        let mut condition = ProposalWhereClause {
-            created_dt_from: None,
-            created_dt_to: None,
-            expiration_dt_from: Some(10),
-            expiration_dt_to: None,
-            operation_types: vec![],
-            statuses: vec![],
-            voters: vec![],
-            proposers: vec![],
-        };
-
-        assert_eq!(
-            WhereSelectionStrategy::ExpirationDt,
-            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
-        );
-
-        condition.created_dt_from = Some(10);
-
-        assert_eq!(
-            WhereSelectionStrategy::CreationDt,
-            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
-        );
-
-        condition.statuses = vec![ProposalStatusCode::Created];
-
-        assert_eq!(
-            WhereSelectionStrategy::Status,
-            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
-        );
-
-        condition.operation_types = vec![ListProposalsOperationTypeDTO::Transfer(Some(
-            Uuid::new_v4().to_string(),
-        ))];
-
-        assert_eq!(
-            WhereSelectionStrategy::Account,
-            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
-        );
-
-        condition.voters = vec![[0; 16]];
-
-        assert_eq!(
-            WhereSelectionStrategy::Voter,
-            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
-        );
-
-        condition.proposers = vec![[0; 16]];
-
-        assert_eq!(
-            WhereSelectionStrategy::Proposer,
-            PROPOSAL_REPOSITORY.pick_most_selective_where_filter(&condition)
-        );
-    }
-
-    #[test]
-    fn find_where_with_expiration_dt() {
+    fn find_with_expiration_dt() {
         let mut proposal = proposal_test_utils::mock_proposal();
         proposal.id = *Uuid::new_v4().as_bytes();
         proposal.created_timestamp = 5;
@@ -743,23 +802,28 @@ mod tests {
         };
 
         let proposals = PROPOSAL_REPOSITORY
-            .find_where(condition.clone(), None)
+            .find_ids_where(condition.clone(), None)
             .unwrap();
 
         assert_eq!(proposals.len(), 1);
-        assert_eq!(proposals[0], proposal);
+
+        let found_proposal = PROPOSAL_REPOSITORY
+            .get(&ProposalKey { id: proposals[0] })
+            .unwrap();
+
+        assert_eq!(found_proposal, proposal);
 
         condition.expiration_dt_from = Some(11);
 
         let proposals = PROPOSAL_REPOSITORY
-            .find_where(condition.clone(), None)
+            .find_ids_where(condition.clone(), None)
             .unwrap();
 
         assert!(proposals.is_empty());
     }
 
     #[test]
-    fn find_where_with_creation_dt() {
+    fn find_with_creation_dt() {
         let mut proposal = proposal_test_utils::mock_proposal();
         proposal.id = *Uuid::new_v4().as_bytes();
         proposal.created_timestamp = 10;
@@ -784,38 +848,152 @@ mod tests {
         };
 
         let proposals = PROPOSAL_REPOSITORY
-            .find_where(condition.clone(), None)
+            .find_ids_where(condition.clone(), None)
             .unwrap();
 
         assert_eq!(proposals.len(), 1);
-        assert_eq!(proposals[0], proposal);
+
+        let found_proposal = PROPOSAL_REPOSITORY
+            .get(&ProposalKey { id: proposals[0] })
+            .unwrap();
+
+        assert_eq!(found_proposal, proposal);
 
         condition.created_dt_from = Some(8);
         condition.created_dt_to = Some(9);
 
         let proposals = PROPOSAL_REPOSITORY
-            .find_where(condition.clone(), None)
+            .find_ids_where(condition.clone(), None)
             .unwrap();
 
         assert!(proposals.is_empty());
     }
+
+    #[test]
+    fn find_with_default_filters() {
+        for i in 0..100 {
+            let mut proposal = mock_proposal();
+            proposal.id = *Uuid::new_v4().as_bytes();
+            proposal.created_timestamp = i;
+            proposal.expiration_dt = i + 100;
+            proposal.status = match i % 2 {
+                0 => ProposalStatus::Created,
+                1 => ProposalStatus::Adopted,
+                _ => ProposalStatus::Rejected,
+            };
+
+            PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
+        }
+
+        let condition = ProposalWhereClause {
+            created_dt_from: Some(50),
+            created_dt_to: Some(100),
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: Vec::new(),
+            proposers: Vec::new(),
+            voters: Vec::new(),
+            statuses: vec![ProposalStatusCode::Created],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY
+            .find_ids_where(condition.clone(), None)
+            .unwrap();
+
+        assert_eq!(proposals.len(), 25);
+
+        let condition = ProposalWhereClause {
+            created_dt_from: Some(0),
+            created_dt_to: Some(100),
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: Vec::new(),
+            proposers: Vec::new(),
+            voters: Vec::new(),
+            statuses: vec![ProposalStatusCode::Adopted],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY
+            .find_ids_where(condition.clone(), None)
+            .unwrap();
+
+        assert_eq!(proposals.len(), 50);
+
+        let condition = ProposalWhereClause {
+            created_dt_from: Some(0),
+            created_dt_to: Some(100),
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: Vec::new(),
+            proposers: Vec::new(),
+            voters: Vec::new(),
+            statuses: vec![ProposalStatusCode::Adopted, ProposalStatusCode::Created],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY
+            .find_ids_where(condition.clone(), None)
+            .unwrap();
+
+        assert_eq!(proposals.len(), 100);
+
+        let condition = ProposalWhereClause {
+            created_dt_from: Some(0),
+            created_dt_to: Some(100),
+            expiration_dt_from: Some(110),
+            expiration_dt_to: Some(120),
+            operation_types: Vec::new(),
+            proposers: Vec::new(),
+            voters: Vec::new(),
+            statuses: vec![ProposalStatusCode::Adopted],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY
+            .find_ids_where(condition.clone(), None)
+            .unwrap();
+
+        assert_eq!(proposals.len(), 5);
+    }
+
+    #[test]
+    fn find_with_empty_where_clause_should_return_all() {
+        proposal_repository_test_utils::add_proposals_to_repository(100);
+
+        let condition = ProposalWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            statuses: vec![],
+            voters: vec![],
+            proposers: vec![],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY
+            .find_ids_where(condition.clone(), None)
+            .unwrap();
+
+        assert_eq!(proposals.len(), 100);
+    }
 }
 
-#[cfg(feature = "canbench-rs")]
+#[cfg(feature = "canbench")]
 mod benchs {
     use super::*;
-    use crate::models::proposal_test_utils::mock_proposal;
+    use crate::models::{proposal_test_utils::mock_proposal, ProposalStatus};
     use canbench_rs::{bench, BenchResult};
     use uuid::Uuid;
 
-    #[bench]
-    fn batch_insert_100_proposals() {
-        add_proposals_to_repository(100);
+    #[bench(raw)]
+    fn repository_batch_insert_100_proposals() -> BenchResult {
+        canbench_rs::bench_fn(|| {
+            proposal_repository_test_utils::add_proposals_to_repository(100);
+        })
     }
 
     #[bench(raw)]
-    fn list_all_proposals() -> BenchResult {
-        add_proposals_to_repository(1_000);
+    fn repository_list_all_proposals() -> BenchResult {
+        proposal_repository_test_utils::add_proposals_to_repository(1_000);
 
         canbench_rs::bench_fn(|| {
             let _ = PROPOSAL_REPOSITORY.list();
@@ -823,27 +1001,45 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn filter_all_proposals_by_default_filters() -> BenchResult {
-        add_proposals_to_repository(1_000);
+    fn repository_filter_all_proposal_ids_by_default_filters() -> BenchResult {
+        for i in 0..2_500 {
+            let mut proposal = mock_proposal();
+            proposal.id = *Uuid::new_v4().as_bytes();
+            proposal.created_timestamp = i;
+            proposal.status = match i % 2 {
+                0 => ProposalStatus::Created,
+                1 => ProposalStatus::Adopted,
+                _ => ProposalStatus::Rejected,
+            };
+
+            PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
+        }
 
         canbench_rs::bench_fn(|| {
-            let _ = PROPOSAL_REPOSITORY.find_where(
+            let _ = PROPOSAL_REPOSITORY.find_ids_where(
                 ProposalWhereClause {
-                    created_dt_from: None,
-                    created_dt_to: None,
+                    created_dt_from: Some(500),
+                    created_dt_to: Some(1500),
                     expiration_dt_from: None,
                     expiration_dt_to: None,
                     operation_types: Vec::new(),
                     proposers: Vec::new(),
                     voters: Vec::new(),
-                    statuses: Vec::new(),
+                    statuses: vec![ProposalStatusCode::Created],
                 },
                 None,
             );
         })
     }
+}
 
-    fn add_proposals_to_repository(count: usize) {
+#[cfg(any(test, feature = "canbench"))]
+mod proposal_repository_test_utils {
+    use super::*;
+    use crate::models::proposal_test_utils::mock_proposal;
+    use uuid::Uuid;
+
+    pub fn add_proposals_to_repository(count: usize) {
         for _ in 0..count {
             let mut proposal = mock_proposal();
             proposal.id = *Uuid::new_v4().as_bytes();

@@ -1,6 +1,6 @@
 use crate::models::Proposal;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::{Timestamp, UUID};
+use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 use std::collections::HashSet;
 
@@ -9,18 +9,14 @@ use std::collections::HashSet;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalVoterIndex {
     /// The user that has voted on this proposal.
-    pub user_id: UUID,
-    /// The time when the proposal was created.
-    pub created_at: Timestamp,
+    pub voter_id: UUID,
     /// The proposal id, which is a UUID.
     pub proposal_id: UUID,
 }
 
 #[derive(Clone, Debug)]
 pub struct ProposalVoterIndexCriteria {
-    pub user_id: UUID,
-    pub from_dt: Option<Timestamp>,
-    pub to_dt: Option<Timestamp>,
+    pub voter_id: UUID,
 }
 
 impl Proposal {
@@ -33,9 +29,8 @@ impl Proposal {
         users
             .iter()
             .map(|user_id| ProposalVoterIndex {
+                voter_id: user_id.to_owned(),
                 proposal_id: self.id.to_owned(),
-                created_at: self.created_timestamp.to_owned(),
-                user_id: user_id.to_owned(),
             })
             .collect()
     }
@@ -52,16 +47,15 @@ mod tests {
         let proposal_id = [1; 16];
         let user_id = [u8::MAX; 16];
         let model = ProposalVoterIndex {
+            voter_id: user_id,
             proposal_id,
-            user_id,
-            created_at: 0,
         };
 
         let serialized_model = model.to_bytes();
         let deserialized_model = ProposalVoterIndex::from_bytes(serialized_model);
 
         assert_eq!(model.proposal_id, deserialized_model.proposal_id);
-        assert_eq!(model.user_id, deserialized_model.user_id);
+        assert_eq!(model.voter_id, deserialized_model.voter_id);
     }
 
     #[test]
@@ -89,7 +83,7 @@ mod tests {
         let indexes = proposal.to_index_for_voters();
 
         assert_eq!(indexes.len(), 2);
-        assert!(indexes.iter().any(|i| i.user_id == [1; 16]));
-        assert!(indexes.iter().any(|i| i.user_id == [2; 16]));
+        assert!(indexes.iter().any(|i| i.voter_id == [1; 16]));
+        assert!(indexes.iter().any(|i| i.voter_id == [2; 16]));
     }
 }

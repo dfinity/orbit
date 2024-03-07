@@ -38,13 +38,11 @@ impl IndexRepository<ProposalProposerIndex, UUID> for ProposalProposerIndexRepos
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<UUID> {
         DB.with(|db| {
             let start_key = ProposalProposerIndex {
-                user_id: criteria.user_id.to_owned(),
-                created_at: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
+                proposer_id: criteria.proposer_id.to_owned(),
                 proposal_id: [u8::MIN; 16],
             };
             let end_key = ProposalProposerIndex {
-                user_id: criteria.user_id.to_owned(),
-                created_at: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
+                proposer_id: criteria.proposer_id.to_owned(),
                 proposal_id: [u8::MAX; 16],
             };
 
@@ -65,8 +63,7 @@ mod tests {
         let repository = ProposalProposerIndexRepository::default();
         let index = ProposalProposerIndex {
             proposal_id: [0; 16],
-            created_at: 10,
-            user_id: [1; 16],
+            proposer_id: [1; 16],
         };
 
         assert!(!repository.exists(&index));
@@ -83,16 +80,13 @@ mod tests {
         let repository = ProposalProposerIndexRepository::default();
         let index = ProposalProposerIndex {
             proposal_id: [0; 16],
-            created_at: 10,
-            user_id: [1; 16],
+            proposer_id: [1; 16],
         };
 
         repository.insert(index.clone());
 
         let criteria = ProposalProposerIndexCriteria {
-            user_id: [1; 16],
-            from_dt: None,
-            to_dt: None,
+            proposer_id: [1; 16],
         };
 
         let result = repository.find_by_criteria(criteria);

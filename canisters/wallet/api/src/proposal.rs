@@ -30,14 +30,14 @@ pub enum ProposalStatusDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ProposalStatusCodeDTO {
-    Created,
-    Adopted,
-    Rejected,
-    Cancelled,
-    Scheduled,
-    Processing,
-    Completed,
-    Failed,
+    Created = 0,
+    Adopted = 1,
+    Rejected = 2,
+    Cancelled = 3,
+    Scheduled = 4,
+    Processing = 5,
+    Completed = 6,
+    Failed = 7,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

@@ -767,6 +767,7 @@ dependencies = [
  "convert_case",
  "getrandom",
  "ic-cdk",
+ "ic-stable-structures",
  "rand_chacha",
  "serde",
  "serde_json",

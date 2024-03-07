@@ -1,8 +1,7 @@
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::{stable_object, storable};
 use std::fmt::{Display, Formatter};
-use wallet_api::ProposalStatusCodeDTO;
 
 #[stable_object]
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -17,19 +16,70 @@ pub enum ProposalStatus {
     Failed { reason: Option<String> },
 }
 
-pub type ProposalStatusCode = ProposalStatusCodeDTO;
+#[storable]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u8)]
+pub enum ProposalStatusCode {
+    Created = 0,
+    Adopted = 1,
+    Rejected = 2,
+    Cancelled = 3,
+    Scheduled = 4,
+    Processing = 5,
+    Completed = 6,
+    Failed = 7,
+}
 
-impl Display for ProposalStatus {
+impl From<ProposalStatusCode> for u8 {
+    fn from(status: ProposalStatusCode) -> Self {
+        status as u8
+    }
+}
+
+impl TryFrom<u8> for ProposalStatusCode {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ProposalStatusCode::Created),
+            1 => Ok(ProposalStatusCode::Adopted),
+            2 => Ok(ProposalStatusCode::Rejected),
+            3 => Ok(ProposalStatusCode::Cancelled),
+            4 => Ok(ProposalStatusCode::Scheduled),
+            5 => Ok(ProposalStatusCode::Processing),
+            6 => Ok(ProposalStatusCode::Completed),
+            7 => Ok(ProposalStatusCode::Failed),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Display for ProposalStatusCode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ProposalStatus::Created => write!(f, "created"),
-            ProposalStatus::Adopted => write!(f, "adopted"),
-            ProposalStatus::Rejected => write!(f, "rejected"),
-            ProposalStatus::Scheduled { .. } => write!(f, "scheduled"),
-            ProposalStatus::Processing { .. } => write!(f, "processing"),
-            ProposalStatus::Completed { .. } => write!(f, "completed"),
-            ProposalStatus::Failed { .. } => write!(f, "failed"),
-            ProposalStatus::Cancelled { .. } => write!(f, "cancelled"),
+            ProposalStatusCode::Created => write!(f, "created"),
+            ProposalStatusCode::Adopted => write!(f, "adopted"),
+            ProposalStatusCode::Rejected => write!(f, "rejected"),
+            ProposalStatusCode::Scheduled => write!(f, "scheduled"),
+            ProposalStatusCode::Processing => write!(f, "processing"),
+            ProposalStatusCode::Completed => write!(f, "completed"),
+            ProposalStatusCode::Failed => write!(f, "failed"),
+            ProposalStatusCode::Cancelled => write!(f, "cancelled"),
+        }
+    }
+}
+
+impl ProposalStatus {
+    pub fn to_type(&self) -> ProposalStatusCode {
+        match self {
+            ProposalStatus::Created => ProposalStatusCode::Created,
+            ProposalStatus::Adopted => ProposalStatusCode::Adopted,
+            ProposalStatus::Rejected => ProposalStatusCode::Rejected,
+            ProposalStatus::Scheduled { .. } => ProposalStatusCode::Scheduled,
+            ProposalStatus::Processing { .. } => ProposalStatusCode::Processing,
+            ProposalStatus::Completed { .. } => ProposalStatusCode::Completed,
+            ProposalStatus::Failed { .. } => ProposalStatusCode::Failed,
+            ProposalStatus::Cancelled { .. } => ProposalStatusCode::Cancelled,
         }
     }
 }
@@ -40,28 +90,61 @@ mod tests {
 
     #[test]
     fn test_status_string_representation() {
-        assert_eq!(ProposalStatus::Created.to_string(), "created");
-        assert_eq!(ProposalStatus::Adopted.to_string(), "adopted");
-        assert_eq!(ProposalStatus::Rejected.to_string(), "rejected");
+        assert_eq!(ProposalStatusCode::Created.to_string(), "created");
+        assert_eq!(ProposalStatusCode::Adopted.to_string(), "adopted");
+        assert_eq!(ProposalStatusCode::Rejected.to_string(), "rejected");
+        assert_eq!(ProposalStatusCode::Scheduled.to_string(), "scheduled");
+        assert_eq!(ProposalStatusCode::Processing.to_string(), "processing");
+        assert_eq!(ProposalStatusCode::Completed.to_string(), "completed");
+        assert_eq!(ProposalStatusCode::Failed.to_string(), "failed");
+        assert_eq!(ProposalStatusCode::Cancelled.to_string(), "cancelled");
+    }
+
+    #[test]
+    fn test_to_status_u8_representation() {
+        assert_eq!(u8::from(ProposalStatusCode::Created), 0);
+        assert_eq!(u8::from(ProposalStatusCode::Adopted), 1);
+        assert_eq!(u8::from(ProposalStatusCode::Rejected), 2);
+        assert_eq!(u8::from(ProposalStatusCode::Scheduled), 4);
+        assert_eq!(u8::from(ProposalStatusCode::Processing), 5);
+        assert_eq!(u8::from(ProposalStatusCode::Completed), 6);
+        assert_eq!(u8::from(ProposalStatusCode::Failed), 7);
+        assert_eq!(u8::from(ProposalStatusCode::Cancelled), 3);
+    }
+
+    #[test]
+    fn test_from_status_u8_representation() {
         assert_eq!(
-            ProposalStatus::Scheduled { scheduled_at: 0 }.to_string(),
-            "scheduled"
+            ProposalStatusCode::try_from(0),
+            Ok(ProposalStatusCode::Created)
         );
         assert_eq!(
-            ProposalStatus::Processing { started_at: 0 }.to_string(),
-            "processing"
+            ProposalStatusCode::try_from(1),
+            Ok(ProposalStatusCode::Adopted)
         );
         assert_eq!(
-            ProposalStatus::Completed { completed_at: 0 }.to_string(),
-            "completed"
+            ProposalStatusCode::try_from(2),
+            Ok(ProposalStatusCode::Rejected)
         );
         assert_eq!(
-            ProposalStatus::Failed { reason: None }.to_string(),
-            "failed"
+            ProposalStatusCode::try_from(4),
+            Ok(ProposalStatusCode::Scheduled)
         );
         assert_eq!(
-            ProposalStatus::Cancelled { reason: None }.to_string(),
-            "cancelled"
+            ProposalStatusCode::try_from(5),
+            Ok(ProposalStatusCode::Processing)
+        );
+        assert_eq!(
+            ProposalStatusCode::try_from(6),
+            Ok(ProposalStatusCode::Completed)
+        );
+        assert_eq!(
+            ProposalStatusCode::try_from(7),
+            Ok(ProposalStatusCode::Failed)
+        );
+        assert_eq!(
+            ProposalStatusCode::try_from(3),
+            Ok(ProposalStatusCode::Cancelled)
         );
     }
 }

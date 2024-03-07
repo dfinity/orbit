@@ -7,7 +7,7 @@ use crate::{
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
-use ic_canister_core::{repository::Repository, types::UUID, utils::timestamp_to_rfc3339};
+use ic_canister_core::{repository::Repository, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
 use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CriteriaDTO};
 
@@ -47,7 +47,7 @@ impl AccountMapper {
 
     pub fn from_create_input(
         input: AddAccountOperationInput,
-        account_id: UUID,
+        account_id: AccountId,
         address: Option<String>,
     ) -> Result<Account, MapperError> {
         if !input

@@ -1,6 +1,6 @@
 use crate::models::Proposal;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::{Timestamp, UUID};
+use ic_canister_core::types::UUID;
 use ic_canister_macros::stable_object;
 
 /// Index of proposals by the proposer user id.
@@ -8,26 +8,21 @@ use ic_canister_macros::stable_object;
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalProposerIndex {
     /// The user who proposed this proposal.
-    pub user_id: UUID,
-    /// The time when the proposal was created.
-    pub created_at: Timestamp,
+    pub proposer_id: UUID,
     /// The proposal id, which is a UUID.
     pub proposal_id: UUID,
 }
 
 #[derive(Clone, Debug)]
 pub struct ProposalProposerIndexCriteria {
-    pub user_id: UUID,
-    pub from_dt: Option<Timestamp>,
-    pub to_dt: Option<Timestamp>,
+    pub proposer_id: UUID,
 }
 
 impl Proposal {
     pub fn to_index_for_proposer(&self) -> ProposalProposerIndex {
         ProposalProposerIndex {
-            user_id: self.proposed_by.to_owned(),
+            proposer_id: self.proposed_by.to_owned(),
             proposal_id: self.id.to_owned(),
-            created_at: self.created_timestamp.to_owned(),
         }
     }
 }
@@ -43,16 +38,15 @@ mod tests {
         let proposal_id = [1; 16];
         let user_id = [u8::MAX; 16];
         let model = ProposalProposerIndex {
+            proposer_id: user_id,
             proposal_id,
-            user_id,
-            created_at: 0,
         };
 
         let serialized_model = model.to_bytes();
         let deserialized_model = ProposalProposerIndex::from_bytes(serialized_model);
 
         assert_eq!(model.proposal_id, deserialized_model.proposal_id);
-        assert_eq!(model.user_id, deserialized_model.user_id);
+        assert_eq!(model.proposer_id, deserialized_model.proposer_id);
     }
 
     #[test]
@@ -79,7 +73,7 @@ mod tests {
 
         let index = proposal.to_index_for_proposer();
 
-        assert_eq!(index.created_at, proposal.created_timestamp);
-        assert_eq!(index.user_id, proposal.proposed_by);
+        assert_eq!(index.proposal_id, proposal.id);
+        assert_eq!(index.proposer_id, proposal.proposed_by);
     }
 }

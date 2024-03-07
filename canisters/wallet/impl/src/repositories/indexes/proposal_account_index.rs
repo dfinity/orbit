@@ -40,12 +40,10 @@ impl IndexRepository<ProposalAccountIndex, ProposalId> for ProposalAccountIndexR
         DB.with(|db| {
             let start_key = ProposalAccountIndex {
                 account_id: criteria.account_id.to_owned(),
-                created_at: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
                 proposal_id: [u8::MIN; 16],
             };
             let end_key = ProposalAccountIndex {
                 account_id: criteria.account_id.to_owned(),
-                created_at: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
                 proposal_id: [u8::MAX; 16],
             };
 
@@ -66,7 +64,6 @@ mod tests {
         let repository = ProposalAccountIndexRepository::default();
         let index = ProposalAccountIndex {
             proposal_id: [0; 16],
-            created_at: 10,
             account_id: [1; 16],
         };
 
@@ -84,7 +81,6 @@ mod tests {
         let repository = ProposalAccountIndexRepository::default();
         let index = ProposalAccountIndex {
             proposal_id: [0; 16],
-            created_at: 10,
             account_id: [1; 16],
         };
 
@@ -92,8 +88,6 @@ mod tests {
 
         let criteria = ProposalAccountIndexCriteria {
             account_id: [1; 16],
-            from_dt: None,
-            to_dt: None,
         };
 
         let result = repository.find_by_criteria(criteria);

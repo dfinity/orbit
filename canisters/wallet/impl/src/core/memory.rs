@@ -34,6 +34,10 @@ pub const ADDRESS_BOOK_MEMORY_ID: MemoryId = MemoryId::new(22);
 pub const ADDRESS_BOOK_INDEX_MEMORY_ID: MemoryId = MemoryId::new(23);
 pub const PROPOSAL_PROPOSER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(24);
 pub const PROPOSAL_CREATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(25);
+pub const PROPOSAL_KEY_CREATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(26);
+pub const PROPOSAL_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
+pub const PROPOSAL_SORT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(28);
+pub const PROPOSAL_STATUS_MODIFICATION_INDEX_MEMORY_ID: MemoryId = MemoryId::new(29);
 
 thread_local! {
   /// Static configuration of the canister.
