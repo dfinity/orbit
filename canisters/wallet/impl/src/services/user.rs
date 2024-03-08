@@ -198,17 +198,14 @@ impl UserService {
     }
 
     /// Returns the user privileges from the given user.
-    pub async fn get_user_privileges_by_identity(
+    pub async fn get_caller_privileges(
         &self,
-        user_identity: &Principal,
+        ctx: &CallContext,
     ) -> ServiceResult<Vec<UserPrivilege>> {
         let mut privileges = Vec::new();
+
         for privilege in USER_PRIVILEGES.into_iter() {
-            let evaluated_access = evaluate_caller_access(
-                &CallContext::new(user_identity.to_owned()),
-                &privilege.to_owned().into(),
-            )
-            .await;
+            let evaluated_access = evaluate_caller_access(ctx, &privilege.to_owned().into()).await;
 
             match evaluated_access {
                 Ok(_) => privileges.push(privilege),
@@ -431,7 +428,7 @@ mod tests {
 
         let privileges = ctx
             .service
-            .get_user_privileges_by_identity(&user.identities[0])
+            .get_caller_privileges(&ctx.call_context)
             .await
             .unwrap();
 
