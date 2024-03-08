@@ -5,6 +5,4 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-ic-canister-macros = { workspace = true }
-ic-stable-structures = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true }

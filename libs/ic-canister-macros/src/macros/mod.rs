@@ -1,6 +1,4 @@
-mod stable_object;
 use proc_macro::TokenStream;
-pub use stable_object::*;
 use syn::Error;
 
 pub mod storable;

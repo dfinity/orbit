@@ -1,10 +1,9 @@
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::Timestamp;
-use ic_canister_macros::{stable_object, storable};
+use ic_canister_macros::storable;
 use std::fmt::{Display, Formatter};
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalStatus {
     Created,
     Adopted,

@@ -5,8 +5,8 @@ use crate::{
         WithLogs, WithStart, WithStop,
     },
 };
-use candid::{CandidType, Deserialize, Principal};
-use ic_canister_macros::stable_object;
+use candid::Principal;
+use ic_canister_macros::storable;
 use ic_cdk::{init, update};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -32,8 +32,7 @@ thread_local! {
         RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize)]
+#[storable]
 pub struct StorablePrincipal(Principal);
 
 thread_local! {

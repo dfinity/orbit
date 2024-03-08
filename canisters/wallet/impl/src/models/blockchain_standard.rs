@@ -1,12 +1,12 @@
-use candid::{CandidType, Deserialize};
-use ic_stable_structures::{storable::Bound, Storable};
+use candid::CandidType;
+use ic_canister_macros::storable;
 use std::{
-    borrow::Cow,
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum BlockchainStandard {
     Native,
     ICRC1,
@@ -34,19 +34,6 @@ impl Display for BlockchainStandard {
             BlockchainStandard::ICRC1 => write!(f, "icrc1"),
         }
     }
-}
-
-impl Storable for BlockchainStandard {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(self.to_string().as_bytes().to_vec())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let chain_id: String = String::from_bytes(bytes);
-        Self::from_str(&chain_id).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]

@@ -1,11 +1,10 @@
 use crate::models::Proposal;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// Index of proposals by the proposer user id.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalProposerIndex {
     /// The user who proposed this proposal.
     pub proposer_id: UUID,

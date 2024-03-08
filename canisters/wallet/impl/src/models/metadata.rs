@@ -1,50 +1,38 @@
-use crate::errors::{AccountError, AddressBookError, MetadataError, TransferError};
-use candid::{CandidType, Deserialize};
+use crate::errors::MetadataError;
 use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
+use ic_canister_macros::storable;
 use std::collections::{BTreeMap, HashMap};
-use wallet_api::{ChangeMetadataDTO, MetadataDTO};
+use wallet_api::MetadataDTO;
 
-#[derive(CandidType, Deserialize, Default, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Metadata {
     metadata: BTreeMap<String, String>,
 }
 
-impl From<MetadataError> for AccountError {
-    fn from(metadata_error: MetadataError) -> Self {
-        match metadata_error {
-            MetadataError::ValidationError { info: e } => Self::ValidationError { info: e },
-        }
-    }
+#[storable]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct MetadataItem {
+    pub key: String,
+    pub value: String,
 }
 
-impl From<MetadataError> for AddressBookError {
-    fn from(metadata_error: MetadataError) -> Self {
-        match metadata_error {
-            MetadataError::ValidationError { info: e } => Self::ValidationError { info: e },
-        }
-    }
-}
-
-impl From<MetadataError> for TransferError {
-    fn from(metadata_error: MetadataError) -> Self {
-        match metadata_error {
-            MetadataError::ValidationError { info: e } => Self::ValidationError { info: e },
-        }
-    }
-}
-
-impl From<Vec<MetadataDTO>> for Metadata {
-    fn from(metadata_dto: Vec<MetadataDTO>) -> Self {
-        let metadata = metadata_dto.into_iter().map(|m| (m.key, m.value)).collect();
-
-        Self { metadata }
-    }
+#[storable]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeMetadata {
+    ReplaceAllBy(BTreeMap<String, String>),
+    OverrideSpecifiedBy(BTreeMap<String, String>),
+    RemoveKeys(Vec<String>),
 }
 
 impl Metadata {
     const MAX_METADATA: u8 = 10;
     const MAX_METADATA_KEY_LEN: u8 = 24;
     const MAX_METADATA_VALUE_LEN: u8 = 255;
+
+    pub fn new(metadata: BTreeMap<String, String>) -> Self {
+        Self { metadata }
+    }
 
     pub fn get(&self, key: &str) -> Option<String> {
         self.metadata.get(key).cloned()
@@ -54,10 +42,10 @@ impl Metadata {
         self.metadata.keys().collect()
     }
 
-    pub fn contains(&self, dto: MetadataDTO) -> bool {
+    pub fn contains(&self, item: &MetadataItem) -> bool {
         self.metadata
-            .get(&dto.key)
-            .map(|v| v.clone() == dto.value)
+            .get(&item.key)
+            .map(|v| *v == item.value)
             .unwrap_or_default()
     }
 
@@ -68,17 +56,21 @@ impl Metadata {
             .collect()
     }
 
-    pub(crate) fn change(&mut self, change_metadata: ChangeMetadataDTO) {
+    pub fn as_btreemap(&self) -> &BTreeMap<String, String> {
+        &self.metadata
+    }
+
+    pub(crate) fn change(&mut self, change_metadata: ChangeMetadata) {
         match change_metadata {
-            ChangeMetadataDTO::ReplaceAllBy(metadata_dto) => {
-                self.metadata = metadata_dto.into_iter().map(|m| (m.key, m.value)).collect();
+            ChangeMetadata::ReplaceAllBy(metadata) => {
+                self.metadata = metadata;
             }
-            ChangeMetadataDTO::OverrideSpecifiedBy(metadata_dto) => {
-                for MetadataDTO { key, value } in metadata_dto {
+            ChangeMetadata::OverrideSpecifiedBy(metadata) => {
+                for (key, value) in metadata {
                     self.metadata.insert(key, value);
                 }
             }
-            ChangeMetadataDTO::RemoveKeys(keys) => {
+            ChangeMetadata::RemoveKeys(keys) => {
                 for k in keys {
                     self.metadata.remove(&k);
                 }
