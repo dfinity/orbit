@@ -577,11 +577,9 @@ mod benchs {
 
     #[bench(raw)]
     fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 16000u64;
+        let proposals_to_insert = 2000u64;
+        let start_creation_time = 0;
         let end_creation_time = proposals_to_insert * 1_000_000_000;
-        // this emulates a real world scenario where the proposals are created in a time span and
-        // the filter is used to fetch the proposals created in the last half of the time span
-        let start_creation_time = end_creation_time / 2;
 
         for i in 0..proposals_to_insert {
             let mut proposal = mock_proposal();
@@ -624,7 +622,10 @@ mod benchs {
                         wallet_api::ListProposalsInput {
                             created_from_dt: Some(timestamp_to_rfc3339(&start_creation_time)),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
-                            statuses: Some(vec![ProposalStatusCodeDTO::Created]),
+                            statuses: Some(vec![
+                                ProposalStatusCodeDTO::Created,
+                                ProposalStatusCodeDTO::Adopted,
+                            ]),
                             voter_ids: None,
                             proposer_ids: None,
                             operation_types: None,
@@ -638,7 +639,7 @@ mod benchs {
                                 wallet_api::SortDirection::Asc,
                             )),
                         },
-                        None,
+                        Some(&CallContext::new(Principal::from_slice(&[5; 29]))),
                     )
                     .await;
 
