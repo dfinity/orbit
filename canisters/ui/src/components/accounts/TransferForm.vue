@@ -34,7 +34,7 @@
       type="number"
       :disabled="isViewMode"
       :prepend-icon="mdiNumeric"
-      :rules="[requiredRule, v => validTokenAmount(v, account.decimals)]"
+      :rules="[requiredRule, (v: unknown) => validTokenAmount(v, account.decimals)]"
       data-test-id="transfer-form-amount"
     />
   </VForm>

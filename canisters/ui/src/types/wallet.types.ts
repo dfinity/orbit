@@ -140,7 +140,7 @@ export type MetadataItem = { key: string; value: string };
 
 export interface ProposalDetails {
   can_vote: boolean;
-  proposer: DisplayUser;
+  proposer_name?: string;
   voters: DisplayUser[];
 }
 

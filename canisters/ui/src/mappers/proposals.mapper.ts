@@ -542,7 +542,7 @@ export const mapProposalsToCsvTable = (
   const rows = proposals.map(entry => {
     const row: CsvRow = {
       id: entry.proposal.id,
-      proposer: entry.additionalInfo?.proposer_name?.[0] ?? entry.proposal.proposed_by,
+      proposer: entry.additionalInfo?.proposer_name[0] ?? entry.proposal.proposed_by,
       status: mapProposalStatusToText(entry.proposal.status),
       status_reason: mapProposalStatusToReason(entry.proposal.status),
       created: entry.proposal.created_at,

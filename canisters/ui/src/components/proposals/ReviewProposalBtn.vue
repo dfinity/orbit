@@ -25,7 +25,7 @@ import { ProposalDetails } from '~/types/wallet.types';
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
-    details?: ProposalDetails;
+    details: ProposalDetails;
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
@@ -34,11 +34,6 @@ const props = withDefaults(
     readonly?: boolean;
   }>(),
   {
-    proposal: undefined,
-    details: () => ({
-      can_vote: false,
-      proposer_name: undefined,
-    }),
     icon: undefined,
     text: undefined,
     size: 'small',
@@ -57,7 +52,7 @@ const emit = defineEmits<{
 const open = ref(false);
 const i18n = useI18n();
 const btnText = computed(
-  () => props.text || (props.details.can_vote ? i18n.t('terms.review') : i18n.t('terms.view')),
+  () => props.text || (props.details?.can_vote ? i18n.t('terms.review') : i18n.t('terms.view')),
 );
 
 watch(

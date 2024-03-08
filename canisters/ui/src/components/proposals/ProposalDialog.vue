@@ -17,7 +17,7 @@
         :proposal="data.proposal"
         :details="{
           can_vote: data.privileges.can_vote,
-          proposer: data.additionalInfo.proposer,
+          proposer_name: data.additionalInfo.proposer_name[0],
           voters: data.additionalInfo.voters,
         }"
         :loading="voting || loading"
@@ -105,9 +105,6 @@ const loadProposal = async (): Promise<{
   });
 
   const result = await wallet.service.getProposal({ proposal_id: props.proposalId.value });
-
-  console.log('result', result);
-
   return {
     proposal: result.proposal,
     privileges: result.privileges,

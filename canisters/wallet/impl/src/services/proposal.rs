@@ -94,15 +94,8 @@ impl ProposalService {
         let proposer = self
             .user_service
             .get_user(&proposal.proposed_by)
-            .map(|user| DisplayUser {
-                name: user.name,
-                id: user.id,
-            })
-            .unwrap_or(DisplayUser {
-                id: proposal.proposed_by,
-                name: None,
-            });
-
+            .map(|user| user.name)
+            .unwrap_or(None);
         let voters = proposal
             .votes
             .iter()
@@ -120,7 +113,11 @@ impl ProposalService {
             })
             .collect();
 
-        Ok(ProposalAdditionalInfo { proposer, voters })
+        Ok(ProposalAdditionalInfo {
+            id: proposal.id,
+            proposer_name: proposer,
+            voters,
+        })
     }
 
     pub async fn list_proposals(

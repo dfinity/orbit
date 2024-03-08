@@ -7,7 +7,7 @@ type ProposalDetailViewProps = InstanceType<typeof ProposalDetailView>['$props']
 const pendingProps: ProposalDetailViewProps = {
   details: {
     can_vote: true,
-    proposer: { id: 'proposer-id', name: [] },
+    proposer_name: undefined,
     voters: [{ id: 'proposer-id', name: [] }],
   },
   proposal: {
@@ -39,7 +39,7 @@ const pendingProps: ProposalDetailViewProps = {
 const approvedProps: ProposalDetailViewProps = {
   details: {
     can_vote: false,
-    proposer: { id: 'voter-1-id', name: [] },
+    proposer_name: undefined,
     voters: [
       { id: 'voter-1-id', name: [] },
       { id: 'voter-2-id', name: [] },
@@ -80,7 +80,7 @@ const approvedProps: ProposalDetailViewProps = {
 const rejectedProps: ProposalDetailViewProps = {
   details: {
     can_vote: false,
-    proposer: { id: 'voter-1-id', name: [] },
+    proposer_name: undefined,
     voters: [
       { id: 'voter-1-id', name: [] },
       { id: 'voter-2-id', name: [] },

@@ -72,7 +72,8 @@ pub struct ProposalCallerPrivileges {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalAdditionalInfo {
-    pub proposer: DisplayUser,
+    pub id: UUID,
+    pub proposer_name: Option<String>,
     pub voters: Vec<DisplayUser>,
 }
 

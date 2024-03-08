@@ -495,8 +495,9 @@ export interface Proposal {
 export type ProposalActionSpecifier = { 'List' : null } |
   { 'Read' : CommonSpecifier };
 export interface ProposalAdditionalInfo {
+  'id' : UUID,
   'voters' : Array<DisplayUser>,
-  'proposer' : DisplayUser,
+  'proposer_name' : [] | [string],
 }
 export interface ProposalCallerPrivileges { 'id' : UUID, 'can_vote' : boolean }
 export type ProposalExecutionSchedule = { 'Immediate' : null } |

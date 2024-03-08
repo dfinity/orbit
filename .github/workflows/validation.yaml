@@ -96,3 +96,6 @@ jobs:
       - name: 'Check code'
         run: |
           pnpm lint
+      - name: 'Check typing'
+        run: |
+          pnpm type-check

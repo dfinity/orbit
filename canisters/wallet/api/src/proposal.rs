@@ -148,7 +148,8 @@ pub struct ProposalCallerPrivilegesDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ProposalAdditionalInfoDTO {
-    pub proposer: DisplayUserDTO,
+    pub id: UuidDTO,
+    pub proposer_name: Option<String>,
     pub voters: Vec<DisplayUserDTO>,
 }
 

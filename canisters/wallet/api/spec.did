@@ -676,9 +676,10 @@ type ProposalCallerPrivileges = record {
 
 // A record type that can be used to represent additional information about a proposal.
 type ProposalAdditionalInfo = record {
-  // Proposal display information.
-  proposer : DisplayUser;
-
+  // The proposal id.
+  id : UUID;
+  // The proposer name (e.g. "John Doe").
+  proposer_name : opt text;
   // Display information for the voters.
   voters : vec DisplayUser;
 };
