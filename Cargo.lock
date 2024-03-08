@@ -305,6 +305,7 @@ dependencies = [
  "prometheus",
  "rstest",
  "serde",
+ "serde_cbor",
  "serde_json",
  "thiserror",
  "tokio",
@@ -766,10 +767,12 @@ dependencies = [
  "candid",
  "convert_case",
  "getrandom",
+ "ic-canister-macros",
  "ic-cdk",
  "ic-stable-structures",
  "rand_chacha",
  "serde",
+ "serde_cbor",
  "serde_json",
  "thiserror",
  "time",
@@ -2273,6 +2276,7 @@ dependencies = [
  "lazy_static",
  "mockall",
  "serde",
+ "serde_cbor",
  "sha2",
  "thiserror",
  "tokio",
@@ -2284,8 +2288,6 @@ name = "upgrader_api"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-canister-macros",
- "ic-stable-structures",
  "serde",
 ]
 

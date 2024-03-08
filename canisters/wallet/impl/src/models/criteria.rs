@@ -1,6 +1,7 @@
 use super::{
     specifier::{Match, ProposalHasMetadata, ProposalHasVoterInUserSpecifier, UserSpecifier},
-    EvaluateError, EvaluationStatus, Proposal, ProposalVoteStatus, UserId, UserStatus,
+    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalVoteStatus, UserId,
+    UserStatus,
 };
 use crate::{
     core::utils::calculate_minimum_threshold,
@@ -9,15 +10,13 @@ use crate::{
 };
 use anyhow::{anyhow, Error};
 use async_trait::async_trait;
-use candid::{CandidType, Deserialize};
 use futures::{stream, StreamExt, TryStreamExt};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::sync::Arc;
 use std::{cmp, hash::Hash};
-use wallet_api::MetadataDTO;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Percentage(pub u16);
 
 impl TryFrom<u16> for Percentage {
@@ -34,15 +33,15 @@ impl TryFrom<u16> for Percentage {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Criteria {
     // Auto
     AutoAdopted,
     // Votes
     ApprovalThreshold(UserSpecifier, Percentage),
     MinimumVotes(UserSpecifier, u16),
-    HasAddressBookMetadata(MetadataDTO),
+    HasAddressBookMetadata(MetadataItem),
     // Logical
     Or(Vec<Criteria>),
     And(Vec<Criteria>),

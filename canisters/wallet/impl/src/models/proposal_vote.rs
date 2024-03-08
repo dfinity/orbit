@@ -1,14 +1,13 @@
 use super::{ProposalVoteStatus, UserId};
 use crate::errors::ProposalError;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::Timestamp,
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalVote {
     /// The user id associated with the vote.
     pub user_id: UserId,

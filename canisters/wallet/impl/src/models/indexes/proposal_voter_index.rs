@@ -1,12 +1,11 @@
 use crate::models::Proposal;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::collections::HashSet;
 
 /// Index of proposals by the voters' user id.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalVoterIndex {
     /// The user that has voted on this proposal.
     pub voter_id: UUID,
