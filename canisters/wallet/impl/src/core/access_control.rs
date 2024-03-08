@@ -193,25 +193,21 @@ impl Match<(Arc<AccountSpecifier>, AccessControlPolicy)> for AccessControlPolicy
                         return Ok(false);
                     }
 
-                    let match_requested_groups =
+                    let all_requested_groups_matched =
                         requested_account_group_ids.iter().all(|group_id| {
                             group_ids
                                 .iter()
                                 .any(|policy_group_id| policy_group_id == group_id)
                         });
 
-                    // TODO: Add support once accounts are associated with groups.
-                    // For now, this is always true.
-                    let match_requested_users = true;
-
-                    match_requested_groups && match_requested_users
+                    all_requested_groups_matched
                 }
-                AccountSpecifier::Id(account_ids) => match requested_accounts.is_empty() {
+                AccountSpecifier::Id(policy_account_ids) => match requested_accounts.is_empty() {
                     // If the requested accounts is empty, then by default we filter out the policy, otherwise this would
                     // allow access when requested for an empty list of accounts.
                     true => false,
                     _ => requested_accounts.iter().all(|requested_account| {
-                        account_ids
+                        policy_account_ids
                             .iter()
                             .any(|account_id| *account_id == requested_account.id)
                     }),
@@ -252,28 +248,8 @@ impl Match<(User, ResourceSpecifier)> for AccessControlPolicyMatcher {
             | ResourceSpecifier::Common(
                 ResourceType::Account,
                 CommonActionSpecifier::Delete(account),
-            ) => {
-                let requested_account = &Arc::new(account);
-                stream::iter(policies.iter())
-                    .filter_map(|policy| async move {
-                        match self
-                            .policy_account_matcher
-                            .is_match((requested_account.to_owned(), policy.to_owned()))
-                            .await
-                        {
-                            Ok(true) => Some(policy.to_owned()),
-                            Ok(false) => None,
-                            Err(e) => {
-                                print(format!("Failed policy account matcher: {:?}", e));
-
-                                None
-                            }
-                        }
-                    })
-                    .collect()
-                    .await
-            }
-            ResourceSpecifier::Transfer(TransferActionSpecifier::Create(account))
+            )
+            | ResourceSpecifier::Transfer(TransferActionSpecifier::Create(account))
             | ResourceSpecifier::Transfer(TransferActionSpecifier::Read(account))
             | ResourceSpecifier::Transfer(TransferActionSpecifier::Delete(account)) => {
                 let requested_account = &Arc::new(account);
@@ -325,29 +301,27 @@ impl Match<(User, ResourceSpecifier)> for AccessControlPolicyMatcher {
         };
 
         let caller_arc: &Arc<User> = &Arc::new(caller);
-        let is_match = stream::iter(filtered_policies.iter())
-            .then(|policy| async move {
-                self.user_matcher
-                    .is_match((caller_arc.to_owned(), policy.to_owned()))
-                    .await
-            })
-            .filter_map(|result| async move {
-                match result {
-                    Ok(is_match) => Some(is_match),
-                    Err(e) => {
-                        print(format!(
-                            "Failed to match access control for caller: {:?}",
-                            e
-                        ));
 
-                        None
-                    }
+        for policy in &filtered_policies {
+            match self
+                .user_matcher
+                .is_match((caller_arc.to_owned(), policy.to_owned()))
+                .await
+            {
+                Ok(true) => return Ok(true),
+                Ok(false) => continue,
+                Err(e) => {
+                    print(format!(
+                        "Failed to match access control for caller: {:?}",
+                        e
+                    ));
+
+                    continue;
                 }
-            })
-            .any(|is_match| async move { is_match })
-            .await;
+            }
+        }
 
-        return Ok(is_match);
+        Ok(false)
     }
 }
 
