@@ -30,10 +30,10 @@ getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 ic-canister-core = { path = "./libs/ic-canister-core" }
 ic-canister-macros = { path = "./libs/ic-canister-macros" }
-ic-cdk = "0.12.1"
-ic-cdk-macros = "0.8"
-ic-cdk-timers = "0.6.0"
-ic-ledger-types = "0.9.0"
+ic-cdk = "0.13.1"
+ic-cdk-macros = "0.9"
+ic-cdk-timers = "0.7.0"
+ic-ledger-types = "0.10.0"
 ic-stable-structures = "0.6.0"
 lazy_static = "1.4.0"
 mockall = "0.12.1"
@@ -55,5 +55,5 @@ sha2 = "0.10"
 syn = { version = "2.0", features = ["extra-traits", "full"] }
 thiserror = "1.0.48"
 time = { version = "0.3", features = ["formatting", "parsing"] }
-tokio = { version = "1.33.0", features = ["full"] }
+tokio = { version = "1.33.0" }
 uuid = { version = "1.4.1", features = ["serde", "v4"] }

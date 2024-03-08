@@ -1,14 +1,13 @@
 use crate::models::Proposal;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::{Timestamp, UUID};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::hash::Hash;
 
-/// Represents a proposal index by execution time.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+/// Represents a proposal index by expiration time.
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalExpirationTimeIndex {
-    /// The time the proposal is scheduled to be set as expired if not executed.
+    /// The time the proposal is scheduled to be set as expired if still pending.
     pub expiration_dt: Timestamp,
     /// The proposal id, which is a UUID.
     pub proposal_id: UUID,

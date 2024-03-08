@@ -8,6 +8,7 @@
       variant="plain"
       density="compact"
       :disabled="isViewMode"
+      data-test-id="transfer-form-transfer-id"
     />
     <VTextField
       v-model="model.to"
@@ -20,6 +21,7 @@
       type="text"
       :prepend-icon="mdiSend"
       :rules="[requiredRule]"
+      data-test-id="transfer-form-destination-address"
     />
     <VTextField
       ref="amountInput"
@@ -33,6 +35,7 @@
       :disabled="isViewMode"
       :prepend-icon="mdiNumeric"
       :rules="[requiredRule, v => validTokenAmount(v, account.decimals)]"
+      data-test-id="transfer-form-amount"
     />
   </VForm>
 </template>

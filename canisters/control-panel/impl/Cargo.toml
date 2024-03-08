@@ -23,8 +23,9 @@ ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 lazy_static = { workspace = true }
 prometheus = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
 control_panel_api = { path = "../api" }

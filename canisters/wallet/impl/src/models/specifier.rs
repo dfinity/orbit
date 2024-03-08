@@ -1,17 +1,15 @@
-use super::{Account, Proposal, ProposalOperation, ProposalOperationType};
+use super::{Account, MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
 use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use async_trait::async_trait;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::{repository::Repository, types::UUID};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::sync::Arc;
-use wallet_api::MetadataDTO;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CommonSpecifier {
     Any,
     Group(Vec<UUID>),
@@ -20,8 +18,8 @@ pub enum CommonSpecifier {
 
 pub type AccountSpecifier = CommonSpecifier;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum UserSpecifier {
     Any,
     Group(Vec<UUID>),
@@ -30,8 +28,8 @@ pub enum UserSpecifier {
     Proposer,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalSpecifier {
     AddAccount,
     AddUser,
@@ -302,7 +300,7 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
 #[derive(Clone)]
 pub struct AddressBookMetadataMatcher;
 
-pub type ProposalHasMetadata = (Proposal, MetadataDTO);
+pub type ProposalHasMetadata = (Proposal, MetadataItem);
 
 #[async_trait]
 impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
@@ -317,7 +315,7 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
                         account.standard,
                         transfer.input.to,
                     ) {
-                        address_book_entry.metadata.contains(metadata)
+                        address_book_entry.metadata.contains(&metadata)
                     } else {
                         false
                     }

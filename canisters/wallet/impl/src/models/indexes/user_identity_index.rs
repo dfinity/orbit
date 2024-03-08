@@ -1,10 +1,10 @@
 use crate::models::{User, UserId};
-use candid::{CandidType, Deserialize, Principal};
-use ic_canister_macros::stable_object;
+use candid::Principal;
+use ic_canister_macros::storable;
 
 /// Represents an user identity index within the system.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserIdentityIndex {
     /// The identity associated with the user.
     pub identity_id: Principal,

@@ -19,8 +19,7 @@ pub struct AddressBookMapper {}
 impl AddressBookMapper {
     pub fn to_dto(address_book_entry: AddressBookEntry) -> AddressBookEntryDTO {
         AddressBookEntryDTO {
-            id: Uuid::from_slice(&address_book_entry.id)
-                .unwrap()
+            id: Uuid::from_bytes(address_book_entry.id)
                 .hyphenated()
                 .to_string(),
             address_owner: address_book_entry.address_owner,

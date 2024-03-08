@@ -1,11 +1,11 @@
 use super::specifier::CommonSpecifier;
 use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::fmt::{Display, Formatter};
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccessControlPolicy {
     pub id: UUID,
     pub user: UserSpecifier,
@@ -19,8 +19,8 @@ pub struct AccessPolicyCallerPrivileges {
     pub can_delete: bool,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceSpecifier {
     Transfer(TransferActionSpecifier),
     ChangeCanister(ChangeCanisterActionSpecifier),
@@ -51,8 +51,8 @@ impl Display for ResourceSpecifier {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceType {
     Account,
     User,
@@ -78,8 +78,8 @@ impl Display for ResourceType {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CommonActionSpecifier {
     List,
     Create,
@@ -100,8 +100,8 @@ impl Display for CommonActionSpecifier {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CanisterSettingsActionSpecifier {
     Read,
     ReadConfig,
@@ -116,8 +116,8 @@ impl Display for CanisterSettingsActionSpecifier {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterActionSpecifier {
     Create,
 }
@@ -130,8 +130,8 @@ impl Display for ChangeCanisterActionSpecifier {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalActionSpecifier {
     List,
     Read(CommonSpecifier),
@@ -146,8 +146,8 @@ impl Display for ProposalActionSpecifier {
     }
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferActionSpecifier {
     Create(AccountSpecifier),
     Read(AccountSpecifier),
@@ -414,13 +414,14 @@ mod tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod access_control_test_utils {
     use super::*;
+    use uuid::Uuid;
 
     pub fn mock_access_policy() -> AccessControlPolicy {
         AccessControlPolicy {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             user: UserSpecifier::Any,
             resource: ResourceSpecifier::Common(
                 ResourceType::Account,

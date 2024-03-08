@@ -1,16 +1,12 @@
 use crate::models::{AccountId, Proposal, ProposalId, ProposalOperation};
-use candid::{CandidType, Deserialize};
-use ic_canister_core::types::Timestamp;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// Index of proposals by account id.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalAccountIndex {
     /// The account id that is associated with this proposal.
     pub account_id: AccountId,
-    /// The time when the proposal was created.
-    pub created_at: Timestamp,
     /// The proposal id, which is a UUID.
     pub proposal_id: ProposalId,
 }
@@ -18,8 +14,6 @@ pub struct ProposalAccountIndex {
 #[derive(Clone, Debug)]
 pub struct ProposalAccountIndexCriteria {
     pub account_id: AccountId,
-    pub from_dt: Option<Timestamp>,
-    pub to_dt: Option<Timestamp>,
 }
 
 impl Proposal {
@@ -27,7 +21,6 @@ impl Proposal {
         if let ProposalOperation::Transfer(ctx) = &self.operation {
             return Some(ProposalAccountIndex {
                 proposal_id: self.id.to_owned(),
-                created_at: self.created_timestamp.to_owned(),
                 account_id: ctx.input.from_account_id.to_owned(),
             });
         }
@@ -50,9 +43,8 @@ mod tests {
         let account_id = [0; 16];
         let proposal_id = [1; 16];
         let model = ProposalAccountIndex {
-            proposal_id,
             account_id,
-            created_at: 0,
+            proposal_id,
         };
 
         let serialized_model = model.to_bytes();

@@ -1,6 +1,6 @@
 use super::MacroDefinition;
-use proc_macro::TokenStream;
 use proc_macro2::Span;
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{parse::Parser, parse2, Error, Token};
 
@@ -45,15 +45,18 @@ pub struct WithMiddlewareMacro {
 impl MacroDefinition for WithMiddlewareMacro {
     const MACRO_NAME: &'static str = "with_middleware";
 
-    fn new(input_args: TokenStream, input: TokenStream) -> Self {
-        Self { input, input_args }
+    fn new(input_args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> Self {
+        Self {
+            input: input.into(),
+            input_args: input_args.into(),
+        }
     }
 
-    fn build(&self) -> Result<TokenStream, Error> {
+    fn build(&self) -> Result<proc_macro::TokenStream, Error> {
         let args: MacroArguments = self.parse_input_arguments()?;
         let expanded_input = self.expand_implementation(&args)?;
 
-        Ok(expanded_input)
+        Ok(expanded_input.into())
     }
 }
 
@@ -65,7 +68,7 @@ impl WithMiddlewareMacro {
     const MACRO_ARG_KEY_ARGS: &'static str = "args";
 
     fn expand_implementation(&self, args: &MacroArguments) -> Result<TokenStream, Error> {
-        let parsed_input: syn::Item = parse2(self.input.clone().into())?;
+        let parsed_input: syn::Item = parse2(self.input.clone())?;
 
         match &parsed_input {
             syn::Item::Fn(syn::ItemFn {
@@ -182,7 +185,7 @@ impl WithMiddlewareMacro {
                     }
                 };
 
-                Ok(expanded.into())
+                Ok(expanded)
             }
             _ => Err(Error::new_spanned(
                 parsed_input,
@@ -196,7 +199,7 @@ impl WithMiddlewareMacro {
 
     fn parse_input_arguments(&self) -> Result<MacroArguments, Error> {
         let parser = syn::punctuated::Punctuated::<syn::ExprAssign, Token![,]>::parse_terminated;
-        let args = parser.parse(self.input_args.clone())?;
+        let args = parser.parse(self.input_args.clone().into())?;
 
         let mut attach_fn: Option<String> = None;
         let mut attach_when: Option<String> = Some(String::from("before"));

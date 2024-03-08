@@ -5,7 +5,7 @@ use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// The user id, which is a UUID.
 pub type UserId = UUID;
@@ -13,8 +13,8 @@ pub type UserId = UUID;
 /// Represents a user within the system.
 ///
 /// A user can be associated with one or more identity.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct User {
     /// The user id, which is a UUID.
     pub id: UserId,
@@ -30,8 +30,8 @@ pub struct User {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserKey {
     pub id: UserId,
 }
@@ -199,15 +199,16 @@ mod tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod user_test_utils {
     use super::*;
     use crate::repositories::USER_REPOSITORY;
     use ic_canister_core::repository::Repository;
+    use uuid::Uuid;
 
     pub fn mock_user() -> User {
         User {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             identities: vec![Principal::anonymous()],
             groups: vec![],
             name: None,

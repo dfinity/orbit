@@ -2,12 +2,11 @@ use super::{AccountId, UserId};
 use crate::core::ic_cdk::api::time;
 use crate::errors::TransferError;
 use crate::models::Metadata;
-use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter},
@@ -19,8 +18,8 @@ pub const METADATA_MEMO_KEY: &str = "memo";
 /// The transfer id, which is a UUID.
 pub type TransferId = UUID;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TransferStatus {
     Created,
     Processing {
@@ -48,8 +47,8 @@ impl Display for TransferStatus {
 }
 
 /// Represents a transfer in the system.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Transfer {
     /// The transfer id, which is a UUID.
     pub id: TransferId,
@@ -77,8 +76,8 @@ pub struct Transfer {
     pub created_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferKey {
     /// The transfer id, which is a UUID.
     pub id: TransferId,
@@ -281,10 +280,11 @@ mod tests {
 #[cfg(test)]
 pub mod transfer_test_utils {
     use super::*;
+    use uuid::Uuid;
 
     pub fn mock_transfer() -> Transfer {
         Transfer {
-            id: [1; 16],
+            id: *Uuid::new_v4().as_bytes(),
             initiator_user: [0; 16],
             from_account: [0; 16],
             proposal_id: [2; 16],

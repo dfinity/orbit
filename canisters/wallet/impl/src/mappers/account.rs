@@ -7,7 +7,7 @@ use crate::{
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
-use ic_canister_core::{repository::Repository, types::UUID, utils::timestamp_to_rfc3339};
+use ic_canister_core::{repository::Repository, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
 use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CriteriaDTO};
 
@@ -17,10 +17,7 @@ pub struct AccountMapper {}
 impl AccountMapper {
     pub fn to_dto(account: Account) -> AccountDTO {
         AccountDTO {
-            id: Uuid::from_slice(&account.id)
-                .unwrap()
-                .hyphenated()
-                .to_string(),
+            id: Uuid::from_bytes(account.id).hyphenated().to_string(),
             name: account.name,
             decimals: account.decimals,
             balance: match account.balance {
@@ -38,13 +35,8 @@ impl AccountMapper {
             address: account.address,
             owners: account
                 .owners
-                .iter()
-                .map(|owner_id| {
-                    Uuid::from_slice(owner_id.as_slice())
-                        .unwrap()
-                        .hyphenated()
-                        .to_string()
-                })
+                .into_iter()
+                .map(|owner_id| Uuid::from_bytes(owner_id).hyphenated().to_string())
                 .collect(),
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
@@ -55,7 +47,7 @@ impl AccountMapper {
 
     pub fn from_create_input(
         input: AddAccountOperationInput,
-        account_id: UUID,
+        account_id: AccountId,
         address: Option<String>,
     ) -> Result<Account, MapperError> {
         if !input
@@ -120,10 +112,7 @@ impl AccountMapper {
         account_id: AccountId,
     ) -> AccountBalanceDTO {
         AccountBalanceDTO {
-            account_id: Uuid::from_slice(&account_id)
-                .unwrap()
-                .hyphenated()
-                .to_string(),
+            account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
             balance: balance.balance,
             decimals,
             last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
