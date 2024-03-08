@@ -203,13 +203,9 @@ impl UserService {
         ctx: &CallContext,
     ) -> ServiceResult<Vec<UserPrivilege>> {
         let mut privileges = Vec::new();
-        
+
         for privilege in USER_PRIVILEGES.into_iter() {
-            let evaluated_access = evaluate_caller_access(
-                ctx,
-                &privilege.to_owned().into(),
-            )
-            .await;
+            let evaluated_access = evaluate_caller_access(ctx, &privilege.to_owned().into()).await;
 
             match evaluated_access {
                 Ok(_) => privileges.push(privilege),
@@ -432,7 +428,7 @@ mod tests {
 
         let privileges = ctx
             .service
-            .get_caller_privileges(&ctx)
+            .get_caller_privileges(&ctx.call_context)
             .await
             .unwrap();
 
