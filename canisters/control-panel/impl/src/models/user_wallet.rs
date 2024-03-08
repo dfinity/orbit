@@ -3,7 +3,7 @@ use candid::Principal;
 use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
 use ic_canister_macros::storable;
 
-#[storable]
+#[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct UserWallet {
     pub canister_id: Principal,

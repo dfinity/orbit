@@ -5,7 +5,7 @@ use ic_canister_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
 use std::borrow::Cow;
 
-#[storable]
+#[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
     /// The upgrader canister wasm module that will be used to upgrade the wallet canister.

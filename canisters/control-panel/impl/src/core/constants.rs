@@ -16,11 +16,9 @@ pub const MAX_STABLE_MEMORY_SIZE: u64 = 32 * GIB;
 pub const WASM_PAGE_SIZE: u32 = 65536;
 
 /// The pages to reserve for the canister configuration.
-pub const CANISTER_CONFIG_TOTAL_MEMORY_PAGES: u32 = 160;
+pub const CANISTER_CONFIG_TOTAL_MEMORY_PAGES: u32 = 31;
 
 /// The maximum size of the stable memory that can be used for the canister configuration.
-///
-/// This reserves 10MiB for the canister configuration state, giving enough space to grow in the future.
 pub const CANISTER_CONFIG_STATE_SIZE: u32 = WASM_PAGE_SIZE * CANISTER_CONFIG_TOTAL_MEMORY_PAGES;
 
 /// The maximum number of Wasm pages that we allow to use for the stable storage.

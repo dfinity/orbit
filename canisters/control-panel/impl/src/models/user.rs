@@ -8,7 +8,7 @@ use ic_canister_core::{
 use ic_canister_macros::storable;
 
 /// The identity of an user.
-#[storable]
+#[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct User {
     /// The UUID that identifies the user.
@@ -23,7 +23,7 @@ pub struct User {
     pub last_update_timestamp: Timestamp,
 }
 
-#[storable]
+#[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct UserKey(pub Principal);
 

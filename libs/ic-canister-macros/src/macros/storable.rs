@@ -141,51 +141,27 @@ fn expand_candid_impl(
     size: Option<u32>,
 ) -> Result<proc_macro2::TokenStream, Error> {
     let object_name = input.ident.clone();
+    let storage_bounds = storage_bounds(size);
 
-    let expanded = match size {
-        Some(size) => quote! {
-            #[derive(candid::CandidType, candid::Deserialize)]
-            #input
+    let expanded = quote! {
+        #[derive(candid::CandidType, candid::Deserialize)]
+        #input
 
-            impl ic_stable_structures::Storable for #object_name {
-                fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                    use candid::Encode;
+        impl ic_stable_structures::Storable for #object_name {
+            fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+                use candid::Encode;
 
-                    std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
-                }
-
-                fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                    use candid::Decode;
-
-                    candid::Decode!(bytes.as_ref(), Self).unwrap()
-                }
-
-                const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Bounded {
-                    max_size: #size,
-                    is_fixed_size: false,
-                };
+                std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
             }
-        },
-        None => quote! {
-            #[derive(candid::CandidType, candid::Deserialize)]
-            #input
 
-            impl ic_stable_structures::Storable for #object_name {
-                fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                    use candid::Encode;
+            fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+                use candid::Decode;
 
-                    std::borrow::Cow::Owned(candid::Encode!(self).unwrap())
-                }
-
-                fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                    use candid::Decode;
-
-                    candid::Decode!(bytes.as_ref(), Self).unwrap()
-                }
-
-                const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
+                candid::Decode!(bytes.as_ref(), Self).unwrap()
             }
-        },
+
+            #storage_bounds
+        }
     };
 
     Ok(expanded)
@@ -196,46 +172,40 @@ fn expand_cbor_impl(
     size: Option<u32>,
 ) -> Result<proc_macro2::TokenStream, Error> {
     let object_name = input.ident.clone();
+    let storage_bounds = storage_bounds(size);
 
-    let expanded = match size {
-        Some(size) => quote! {
-            #[derive(serde::Serialize, serde::Deserialize)]
-            #input
+    let expanded = quote! {
+        #[derive(serde::Serialize, serde::Deserialize)]
+        #input
 
-            impl ic_stable_structures::Storable for #object_name {
-                fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                    std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
-                }
-
-                fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                    serde_cbor::from_slice(bytes.as_ref()).unwrap()
-                }
-
-                const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Bounded {
-                    max_size: #size,
-                    is_fixed_size: false,
-                };
+        impl ic_stable_structures::Storable for #object_name {
+            fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+                std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
             }
-        },
-        None => quote! {
-            #[derive(serde::Serialize, serde::Deserialize)]
-            #input
 
-            impl ic_stable_structures::Storable for #object_name {
-                fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                    std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
-                }
-
-                fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                    serde_cbor::from_slice(bytes.as_ref()).unwrap()
-                }
-
-                const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
+            fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+                serde_cbor::from_slice(bytes.as_ref()).unwrap()
             }
-        },
+
+            #storage_bounds
+        }
     };
 
     Ok(expanded)
+}
+
+fn storage_bounds(size: Option<u32>) -> proc_macro2::TokenStream {
+    match size {
+        Some(size) => quote! {
+            const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Bounded {
+                max_size: #size,
+                is_fixed_size: false,
+            };
+        },
+        None => quote! {
+            const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
+        },
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

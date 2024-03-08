@@ -1,13 +1,13 @@
 use ic_canister_macros::storable;
 use ic_stable_structures::Storable;
 
-#[storable]
+#[storable(serializer = "cbor")]
 struct MyInitialStruct {
     id: u32,
     name: String,
 }
 
-#[storable]
+#[storable(serializer = "cbor")]
 struct MyUpdatedStruct {
     id: u32,
     name: String,
@@ -15,19 +15,33 @@ struct MyUpdatedStruct {
     active: bool,
 }
 
-#[storable]
+#[storable(serializer = "cbor")]
 #[derive(Debug, PartialEq, Eq)]
 enum MyInitialEnum {
     A(u32),
     B(String),
 }
 
-#[storable]
+#[storable(serializer = "cbor")]
 #[derive(Debug, PartialEq, Eq)]
 enum MyUpdatedEnum {
     A(u32),
     B(String),
     C(bool),
+}
+
+#[test]
+fn validate_serialization() {
+    let initial = MyInitialStruct {
+        id: 1,
+        name: "test".to_string(),
+    };
+
+    let serialized_initial = initial.to_bytes();
+    let deserialized_to_initial = MyInitialStruct::from_bytes(serialized_initial);
+
+    assert_eq!(deserialized_to_initial.id, initial.id);
+    assert_eq!(deserialized_to_initial.name, initial.name);
 }
 
 #[test]

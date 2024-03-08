@@ -1,2 +1,2 @@
-#[cfg(test)]
-mod storable_macro;
+mod storable_macro_candid;
+mod storable_macro_cbor;

@@ -134,6 +134,16 @@ pub fn with_middleware(input_args: TokenStream, input: TokenStream) -> TokenStre
 /// # Notes
 ///
 /// - The macro currently supports only struct and enum items.
+/// 
+/// # Notes on Serialization Formats
+/// 
+/// ## Candid
+/// 
+/// - Only accepts schema evolution without breaking changes in struct fields if the new field is `optional`.
+/// 
+/// ## CBOR
+/// 
+/// - Accepts schema evolution with field addition in structs, but only if serde's `default` attribute is used.
 #[proc_macro_attribute]
 pub fn storable(input_args: TokenStream, input: TokenStream) -> TokenStream {
     utils::handle_macro_errors(

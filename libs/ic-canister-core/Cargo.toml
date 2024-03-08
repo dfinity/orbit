@@ -29,4 +29,3 @@ tokio = { workspace = true, features = ["full"] }
 ic-canister-macros = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_cbor = { workspace = true }
-
