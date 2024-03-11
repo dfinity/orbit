@@ -43,6 +43,12 @@ pub struct UserCallerPrivileges {
     pub can_delete: bool,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct DisplayUser {
+    pub id: UUID,
+    pub name: Option<String>,
+}
+
 impl User {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const MAX_USER_GROUPS: u8 = 25;

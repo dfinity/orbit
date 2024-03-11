@@ -7,7 +7,7 @@ use crate::{
             ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
             ResourceSpecifier, ResourceType,
         },
-        AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges,
+        AddUserOperationInput, DisplayUser, EditUserOperationInput, User, UserCallerPrivileges,
     },
     repositories::USER_GROUP_REPOSITORY,
 };
@@ -17,7 +17,7 @@ use ic_canister_core::{
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
 use uuid::Uuid;
-use wallet_api::{BasicUserDTO, UserDTO, UserPrivilege};
+use wallet_api::{BasicUserDTO, DisplayUserDTO, UserDTO, UserPrivilege};
 
 #[derive(Default, Clone, Debug)]
 pub struct UserMapper {}
@@ -63,6 +63,15 @@ impl From<User> for BasicUserDTO {
             id: Uuid::from_bytes(user.id).hyphenated().to_string(),
             name: user.name.unwrap_or("".to_string()),
             status: user.status.into(),
+        }
+    }
+}
+
+impl From<DisplayUser> for DisplayUserDTO {
+    fn from(user: DisplayUser) -> Self {
+        DisplayUserDTO {
+            id: Uuid::from_bytes(user.id).hyphenated().to_string(),
+            name: user.name,
         }
     }
 }

@@ -1,5 +1,6 @@
 use super::{
-    EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote, ProposalVoteStatus, UserId,
+    DisplayUser, EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote,
+    ProposalVoteStatus, UserId,
 };
 use crate::core::evaluation::{
     Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER, PROPOSAL_POSSIBLE_VOTERS_CRITERIA_EVALUATOR,
@@ -73,6 +74,7 @@ pub struct ProposalCallerPrivileges {
 pub struct ProposalAdditionalInfo {
     pub id: UUID,
     pub proposer_name: Option<String>,
+    pub voters: Vec<DisplayUser>,
 }
 
 fn validate_title(title: &str) -> ModelValidatorResult<ProposalError> {

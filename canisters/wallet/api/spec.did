@@ -680,6 +680,8 @@ type ProposalAdditionalInfo = record {
   id : UUID;
   // The proposer name (e.g. "John Doe").
   proposer_name : opt text;
+  // Display information for the voters.
+  voters : vec DisplayUser;
 };
 
 // A record type that can be used to represent a proposed operation in the wallet.
@@ -1485,6 +1487,14 @@ type BasicUser = record {
   name : text;
   // The status of the user (e.g. `Active`).
   status : UserStatus;
+};
+
+// A minimal user record that is meant to aid displaying users on the client.
+type DisplayUser = record {
+  // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+  id : UUID;
+  // The user name (e.g. "John Doe").
+  name : opt text;
 };
 
 // Result type for listing access policies.

@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import TransferDialog from './TransferDialog.vue';
 import { Account, GetProposalResult, Proposal, Transfer } from '~/generated/wallet/wallet.did';
-import DataLoaderVue from '../DataLoader.vue';
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
@@ -45,7 +44,7 @@ describe('TransferDialog', () => {
     await flushPromises();
     await wrapper.vm.$nextTick();
 
-    const dataLoader = wrapper.findComponent(DataLoaderVue);
+    const dataLoader = wrapper.findComponent({ name: 'DataLoader' });
     const form = dataLoader.find(`[data-test-id="transfer-dialog-form"]`);
 
     const transferId = form.find(`[data-test-id="transfer-form-transfer-id"]`);
@@ -84,7 +83,7 @@ describe('TransferDialog', () => {
     await flushPromises();
     await wrapper.vm.$nextTick();
 
-    const dataLoader = wrapper.findComponent(DataLoaderVue);
+    const dataLoader = wrapper.findComponent({ name: 'DataLoader' });
     const form = dataLoader.find(`[data-test-id="transfer-dialog-form"]`);
 
     const amount = form.find(`[data-test-id="transfer-form-amount"]`);
@@ -149,7 +148,7 @@ describe('TransferDialog', () => {
       proposal_id: 'proposal-id',
     });
 
-    const dataLoader = wrapper.findComponent(DataLoaderVue);
+    const dataLoader = wrapper.findComponent({ name: 'DataLoader' });
     const form = dataLoader.find(`[data-test-id="transfer-dialog-form"]`);
 
     const transferId = form.find(`[data-test-id="transfer-form-transfer-id"]`);

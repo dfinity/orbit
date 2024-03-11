@@ -32,6 +32,12 @@ pub struct BasicUserDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct DisplayUserDTO {
+    pub id: UuidDTO,
+    pub name: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetUserInput {
     pub user_id: UuidDTO,
 }
