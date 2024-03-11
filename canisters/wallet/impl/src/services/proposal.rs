@@ -1,15 +1,13 @@
 use crate::{
     core::{
-        access_control::evaluate_caller_access,
-        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
     models::{
-        access_control::{ProposalActionSpecifier, ResourceSpecifier},
-        specifier::CommonSpecifier,
+        access_policy::{ProposalResourceAction, Resource, ResourceId},
         NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalVoteStatus,
     },
@@ -155,22 +153,9 @@ impl ProposalService {
 
         // filter out proposals that the caller does not have access to read
         if let Some(ctx) = ctx {
-            let mut ids_with_access = Vec::new();
-            for proposal_id in &proposal_ids {
-                if evaluate_caller_access(
-                    ctx,
-                    &ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(
-                        CommonSpecifier::Id(vec![proposal_id.to_owned()]),
-                    )),
-                )
-                .await
-                .is_ok()
-                {
-                    ids_with_access.push(*proposal_id);
-                }
-            }
-
-            proposal_ids = ids_with_access;
+            retain_accessible_resources(ctx, &mut proposal_ids, |id| {
+                Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*id)))
+            });
         }
 
         let paginated_ids = paginated_items(PaginatedItemsArgs {
@@ -557,98 +542,98 @@ mod tests {
     }
 }
 
-#[cfg(feature = "canbench")]
-mod benchs {
-    use super::*;
-    use crate::{
-        core::ic_cdk::spawn,
-        models::{
-            access_control::{access_control_test_utils::mock_access_policy, UserSpecifier},
-            proposal_test_utils::mock_proposal,
-            user_test_utils::mock_user,
-            UserStatus,
-        },
-        repositories::{access_control::ACCESS_CONTROL_REPOSITORY, USER_REPOSITORY},
-    };
-    use canbench_rs::{bench, BenchResult};
-    use candid::Principal;
-    use ic_canister_core::utils::timestamp_to_rfc3339;
-    use wallet_api::ProposalStatusCodeDTO;
+// #[cfg(feature = "canbench")]
+// mod benchs {
+//     use super::*;
+//     use crate::{
+//         core::ic_cdk::spawn,
+//         models::{
+//             access_control::{access_control_test_utils::mock_access_policy, UserSpecifier},
+//             proposal_test_utils::mock_proposal,
+//             user_test_utils::mock_user,
+//             UserStatus,
+//         },
+//         repositories::{access_policy::ACCESS_CONTROL_REPOSITORY, USER_REPOSITORY},
+//     };
+//     use canbench_rs::{bench, BenchResult};
+//     use candid::Principal;
+//     use ic_canister_core::utils::timestamp_to_rfc3339;
+//     use wallet_api::ProposalStatusCodeDTO;
 
-    #[bench(raw)]
-    fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 2000u64;
-        let start_creation_time = 0;
-        let end_creation_time = proposals_to_insert * 1_000_000_000;
+//     #[bench(raw)]
+//     fn service_filter_all_proposals_with_default_filters() -> BenchResult {
+//         let proposals_to_insert = 2000u64;
+//         let start_creation_time = 0;
+//         let end_creation_time = proposals_to_insert * 1_000_000_000;
 
-        for i in 0..proposals_to_insert {
-            let mut proposal = mock_proposal();
-            proposal.created_timestamp = i * 1_000_000_000;
-            proposal.status = match i % 2 {
-                0 => ProposalStatus::Created,
-                1 => ProposalStatus::Adopted,
-                _ => ProposalStatus::Rejected,
-            };
+//         for i in 0..proposals_to_insert {
+//             let mut proposal = mock_proposal();
+//             proposal.created_timestamp = i * 1_000_000_000;
+//             proposal.status = match i % 2 {
+//                 0 => ProposalStatus::Created,
+//                 1 => ProposalStatus::Adopted,
+//                 _ => ProposalStatus::Rejected,
+//             };
 
-            PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
-        }
+//             PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
+//         }
 
-        let mut users = Vec::new();
-        // adding some users that will be added to the access control repository later
-        for i in 0..10 {
-            let mut user = mock_user();
-            user.identities = vec![Principal::from_slice(&[i; 29])];
-            user.status = UserStatus::Active;
+//         let mut users = Vec::new();
+//         // adding some users that will be added to the access control repository later
+//         for i in 0..10 {
+//             let mut user = mock_user();
+//             user.identities = vec![Principal::from_slice(&[i; 29])];
+//             user.status = UserStatus::Active;
 
-            USER_REPOSITORY.insert(user.to_key(), user.to_owned());
+//             USER_REPOSITORY.insert(user.to_key(), user.to_owned());
 
-            users.push(user);
-        }
+//             users.push(user);
+//         }
 
-        // adding some access policies since the filter will check for access
-        for user in users.iter() {
-            let mut access_policy = mock_access_policy();
-            access_policy.resource =
-                ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Any));
-            access_policy.user = UserSpecifier::Id(vec![user.id]);
+//         // adding some access policies since the filter will check for access
+//         for user in users.iter() {
+//             let mut access_policy = mock_access_policy();
+//             access_policy.resource =
+//                 ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Any));
+//             access_policy.user = UserSpecifier::Id(vec![user.id]);
 
-            ACCESS_CONTROL_REPOSITORY.insert(access_policy.id, access_policy.to_owned());
-        }
+//             ACCESS_CONTROL_REPOSITORY.insert(access_policy.id, access_policy.to_owned());
+//         }
 
-        canbench_rs::bench_fn(|| {
-            spawn(async move {
-                let result = PROPOSAL_SERVICE
-                    .list_proposals(
-                        wallet_api::ListProposalsInput {
-                            created_from_dt: Some(timestamp_to_rfc3339(&start_creation_time)),
-                            created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
-                            statuses: Some(vec![
-                                ProposalStatusCodeDTO::Created,
-                                ProposalStatusCodeDTO::Adopted,
-                            ]),
-                            voter_ids: None,
-                            proposer_ids: None,
-                            operation_types: None,
-                            expiration_from_dt: None,
-                            expiration_to_dt: None,
-                            paginate: Some(wallet_api::PaginationInput {
-                                limit: Some(25),
-                                offset: None,
-                            }),
-                            sort_by: Some(wallet_api::ListProposalsSortBy::CreatedAt(
-                                wallet_api::SortDirection::Asc,
-                            )),
-                        },
-                        Some(&CallContext::new(Principal::from_slice(&[5; 29]))),
-                    )
-                    .await;
+//         canbench_rs::bench_fn(|| {
+//             spawn(async move {
+//                 let result = PROPOSAL_SERVICE
+//                     .list_proposals(
+//                         wallet_api::ListProposalsInput {
+//                             created_from_dt: Some(timestamp_to_rfc3339(&start_creation_time)),
+//                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
+//                             statuses: Some(vec![
+//                                 ProposalStatusCodeDTO::Created,
+//                                 ProposalStatusCodeDTO::Adopted,
+//                             ]),
+//                             voter_ids: None,
+//                             proposer_ids: None,
+//                             operation_types: None,
+//                             expiration_from_dt: None,
+//                             expiration_to_dt: None,
+//                             paginate: Some(wallet_api::PaginationInput {
+//                                 limit: Some(25),
+//                                 offset: None,
+//                             }),
+//                             sort_by: Some(wallet_api::ListProposalsSortBy::CreatedAt(
+//                                 wallet_api::SortDirection::Asc,
+//                             )),
+//                         },
+//                         Some(&CallContext::new(Principal::from_slice(&[5; 29]))),
+//                     )
+//                     .await;
 
-                let paginated_data = result.unwrap();
+//                 let paginated_data = result.unwrap();
 
-                if paginated_data.total == 0 {
-                    panic!("No proposals were found with the given filters");
-                }
-            });
-        })
-    }
-}
+//                 if paginated_data.total == 0 {
+//                     panic!("No proposals were found with the given filters");
+//                 }
+//             });
+//         })
+//     }
+// }

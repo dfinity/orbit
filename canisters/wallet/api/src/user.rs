@@ -94,7 +94,6 @@ pub enum UserPrivilege {
     ListUserGroups,
     AddUserGroup,
     ListAccessPolicies,
-    AddAccessPolicy,
     ListProposalPolicies,
     AddProposalPolicy,
     ListAddressBookEntries,

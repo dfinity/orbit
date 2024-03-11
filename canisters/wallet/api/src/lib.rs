@@ -41,6 +41,9 @@ pub use change_canister::*;
 mod policy;
 pub use policy::*;
 
+mod access_policy;
+pub use access_policy::*;
+
 // Http Interface (for metrics)
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::mappers::HelperMapper;
-use crate::models::access_control::{AccountActionSpecifier, ResourceSpecifier, ResourceType};
+use crate::models::access_policy::{AccountResourceAction, Resource};
 use crate::{
     core::middlewares::{authorize, call_context},
     services::AccountService,
@@ -46,12 +46,7 @@ impl AccountController {
         Self { account_service }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
     async fn get_account(&self, input: GetAccountInput) -> ApiResult<GetAccountResponse> {
         let ctx = call_context();
         let account = self
@@ -72,8 +67,7 @@ impl AccountController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [ResourceSpecifier::Common(ResourceType::Account, AccountActionSpecifier::List)],
-        is_async = true
+        args = [Resource::Account(AccountResourceAction::List)]
     )]
     async fn list_accounts(&self, input: ListAccountsInput) -> ApiResult<ListAccountsResponse> {
         let ctx = call_context();
@@ -107,8 +101,7 @@ impl AccountController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
+        args = [Resource::from(mappers::access_policy::FetchAccountBalancesInputRef(&input))].into()
     )]
     async fn fetch_account_balances(
         &self,

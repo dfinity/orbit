@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_control::ResourceSpecifier,
+    models::access_policy::Resource,
     services::TransferService,
 };
 use ic_canister_core::api::{ApiError, ApiResult};
@@ -44,8 +44,7 @@ impl TransferController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
+        args = [Resource::from(access_policy::GetTransfersInputRef(&input))].into()
     )]
     async fn get_transfers(&self, input: GetTransfersInput) -> ApiResult<GetTransfersResponse> {
         let ids: Vec<_> = input
@@ -64,12 +63,7 @@ impl TransferController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
     async fn list_account_transfers(
         &self,
         input: ListAccountTransfersInput,

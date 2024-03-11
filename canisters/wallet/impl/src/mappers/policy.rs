@@ -1,10 +1,5 @@
 use super::HelperMapper;
 use crate::models::{
-    access_control::{
-        AccessControlPolicy, CanisterSettingsActionSpecifier, ChangeCanisterActionSpecifier,
-        CommonActionSpecifier, ProposalActionSpecifier, ResourceSpecifier, ResourceType,
-        TransferActionSpecifier,
-    },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier},
     ProposalPolicy, ProposalPolicyCallerPrivileges,
@@ -108,114 +103,6 @@ impl From<UserSpecifier> for UserSpecifierDTO {
     }
 }
 
-impl AccessControlPolicy {
-    pub fn to_dto(self) -> wallet_api::AccessPolicyDTO {
-        wallet_api::AccessPolicyDTO {
-            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
-            user: self.user.into(),
-            resource: self.resource.into(),
-        }
-    }
-}
-
-impl From<ResourceSpecifier> for wallet_api::ResourceSpecifierDTO {
-    fn from(specifier: ResourceSpecifier) -> Self {
-        match specifier {
-            ResourceSpecifier::Transfer(action) => {
-                wallet_api::ResourceSpecifierDTO::Transfer(action.into())
-            }
-            ResourceSpecifier::Proposal(action) => {
-                wallet_api::ResourceSpecifierDTO::Proposal(action.into())
-            }
-            ResourceSpecifier::CanisterSettings(action) => {
-                wallet_api::ResourceSpecifierDTO::CanisterSettings(action.into())
-            }
-            ResourceSpecifier::ChangeCanister(action) => {
-                wallet_api::ResourceSpecifierDTO::ChangeCanister(action.into())
-            }
-            ResourceSpecifier::Common(resource, action) => match resource {
-                ResourceType::Account => wallet_api::ResourceSpecifierDTO::Account(action.into()),
-                ResourceType::User => wallet_api::ResourceSpecifierDTO::User(action.into()),
-                ResourceType::UserGroup => {
-                    wallet_api::ResourceSpecifierDTO::UserGroup(action.into())
-                }
-                ResourceType::AddressBook => {
-                    wallet_api::ResourceSpecifierDTO::AddressBook(action.into())
-                }
-                ResourceType::AccessPolicy => {
-                    wallet_api::ResourceSpecifierDTO::AccessPolicy(action.into())
-                }
-                ResourceType::ProposalPolicy => {
-                    wallet_api::ResourceSpecifierDTO::ProposalPolicy(action.into())
-                }
-            },
-        }
-    }
-}
-
-impl From<wallet_api::ResourceSpecifierDTO> for ResourceSpecifier {
-    fn from(dto: wallet_api::ResourceSpecifierDTO) -> Self {
-        match dto {
-            wallet_api::ResourceSpecifierDTO::Transfer(action) => {
-                ResourceSpecifier::Transfer(action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::Proposal(action) => {
-                ResourceSpecifier::Proposal(action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::CanisterSettings(action) => {
-                ResourceSpecifier::CanisterSettings(action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::ChangeCanister(action) => {
-                ResourceSpecifier::ChangeCanister(action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::Account(action) => {
-                ResourceSpecifier::Common(ResourceType::Account, action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::User(action) => {
-                ResourceSpecifier::Common(ResourceType::User, action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::UserGroup(action) => {
-                ResourceSpecifier::Common(ResourceType::UserGroup, action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::AddressBook(action) => {
-                ResourceSpecifier::Common(ResourceType::AddressBook, action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::AccessPolicy(action) => {
-                ResourceSpecifier::Common(ResourceType::AccessPolicy, action.into())
-            }
-            wallet_api::ResourceSpecifierDTO::ProposalPolicy(action) => {
-                ResourceSpecifier::Common(ResourceType::ProposalPolicy, action.into())
-            }
-        }
-    }
-}
-
-impl From<ResourceType> for wallet_api::ResourceTypeDTO {
-    fn from(resource_type: ResourceType) -> Self {
-        match resource_type {
-            ResourceType::Account => wallet_api::ResourceTypeDTO::Account,
-            ResourceType::User => wallet_api::ResourceTypeDTO::User,
-            ResourceType::UserGroup => wallet_api::ResourceTypeDTO::UserGroup,
-            ResourceType::AddressBook => wallet_api::ResourceTypeDTO::AddressBook,
-            ResourceType::AccessPolicy => wallet_api::ResourceTypeDTO::AccessPolicy,
-            ResourceType::ProposalPolicy => wallet_api::ResourceTypeDTO::ProposalPolicy,
-        }
-    }
-}
-
-impl From<wallet_api::ResourceTypeDTO> for ResourceType {
-    fn from(dto: wallet_api::ResourceTypeDTO) -> Self {
-        match dto {
-            wallet_api::ResourceTypeDTO::Account => ResourceType::Account,
-            wallet_api::ResourceTypeDTO::User => ResourceType::User,
-            wallet_api::ResourceTypeDTO::UserGroup => ResourceType::UserGroup,
-            wallet_api::ResourceTypeDTO::AddressBook => ResourceType::AddressBook,
-            wallet_api::ResourceTypeDTO::AccessPolicy => ResourceType::AccessPolicy,
-            wallet_api::ResourceTypeDTO::ProposalPolicy => ResourceType::ProposalPolicy,
-        }
-    }
-}
-
 impl From<CommonSpecifier> for wallet_api::CommonSpecifierDTO {
     fn from(specifier: CommonSpecifier) -> Self {
         match specifier {
@@ -260,148 +147,6 @@ impl From<wallet_api::CommonSpecifierDTO> for CommonSpecifier {
     }
 }
 
-impl From<TransferActionSpecifier> for wallet_api::TransferActionSpecifierDTO {
-    fn from(specifier: TransferActionSpecifier) -> Self {
-        match specifier {
-            TransferActionSpecifier::Create(account) => {
-                wallet_api::TransferActionSpecifierDTO::Create(TransferSpecifierDTO {
-                    account: account.into(),
-                })
-            }
-            TransferActionSpecifier::Read(account) => {
-                wallet_api::TransferActionSpecifierDTO::Read(TransferSpecifierDTO {
-                    account: account.into(),
-                })
-            }
-            TransferActionSpecifier::Delete(account) => {
-                wallet_api::TransferActionSpecifierDTO::Delete(TransferSpecifierDTO {
-                    account: account.into(),
-                })
-            }
-        }
-    }
-}
-
-impl From<wallet_api::TransferActionSpecifierDTO> for TransferActionSpecifier {
-    fn from(dto: wallet_api::TransferActionSpecifierDTO) -> Self {
-        match dto {
-            wallet_api::TransferActionSpecifierDTO::Create(transfer_specifier) => {
-                TransferActionSpecifier::Create(transfer_specifier.account.into())
-            }
-            wallet_api::TransferActionSpecifierDTO::Read(transfer_specifier) => {
-                TransferActionSpecifier::Read(transfer_specifier.account.into())
-            }
-            wallet_api::TransferActionSpecifierDTO::Delete(transfer_specifier) => {
-                TransferActionSpecifier::Delete(transfer_specifier.account.into())
-            }
-        }
-    }
-}
-
-impl From<ProposalActionSpecifier> for wallet_api::ProposalActionSpecifierDTO {
-    fn from(specifier: ProposalActionSpecifier) -> Self {
-        match specifier {
-            ProposalActionSpecifier::List => wallet_api::ProposalActionSpecifierDTO::List,
-            ProposalActionSpecifier::Read(common_specifier) => {
-                wallet_api::ProposalActionSpecifierDTO::Read(common_specifier.into())
-            }
-        }
-    }
-}
-
-impl From<wallet_api::ProposalActionSpecifierDTO> for ProposalActionSpecifier {
-    fn from(dto: wallet_api::ProposalActionSpecifierDTO) -> Self {
-        match dto {
-            wallet_api::ProposalActionSpecifierDTO::List => ProposalActionSpecifier::List,
-            wallet_api::ProposalActionSpecifierDTO::Read(common_specifier) => {
-                ProposalActionSpecifier::Read(common_specifier.into())
-            }
-        }
-    }
-}
-
-impl From<CanisterSettingsActionSpecifier> for wallet_api::CanisterSettingsActionSpecifierDTO {
-    fn from(specifier: CanisterSettingsActionSpecifier) -> Self {
-        match specifier {
-            CanisterSettingsActionSpecifier::Read => {
-                wallet_api::CanisterSettingsActionSpecifierDTO::Read
-            }
-            CanisterSettingsActionSpecifier::ReadConfig => {
-                wallet_api::CanisterSettingsActionSpecifierDTO::ReadConfig
-            }
-        }
-    }
-}
-
-impl From<wallet_api::CanisterSettingsActionSpecifierDTO> for CanisterSettingsActionSpecifier {
-    fn from(dto: wallet_api::CanisterSettingsActionSpecifierDTO) -> Self {
-        match dto {
-            wallet_api::CanisterSettingsActionSpecifierDTO::Read => {
-                CanisterSettingsActionSpecifier::Read
-            }
-            wallet_api::CanisterSettingsActionSpecifierDTO::ReadConfig => {
-                CanisterSettingsActionSpecifier::ReadConfig
-            }
-        }
-    }
-}
-
-impl From<ChangeCanisterActionSpecifier> for wallet_api::ChangeCanisterActionSpecifierDTO {
-    fn from(specifier: ChangeCanisterActionSpecifier) -> Self {
-        match specifier {
-            ChangeCanisterActionSpecifier::Create => {
-                wallet_api::ChangeCanisterActionSpecifierDTO::Create
-            }
-        }
-    }
-}
-
-impl From<wallet_api::ChangeCanisterActionSpecifierDTO> for ChangeCanisterActionSpecifier {
-    fn from(dto: wallet_api::ChangeCanisterActionSpecifierDTO) -> Self {
-        match dto {
-            wallet_api::ChangeCanisterActionSpecifierDTO::Create => {
-                ChangeCanisterActionSpecifier::Create
-            }
-        }
-    }
-}
-
-impl From<CommonActionSpecifier> for wallet_api::CommonActionSpecifierDTO {
-    fn from(specifier: CommonActionSpecifier) -> Self {
-        match specifier {
-            CommonActionSpecifier::List => wallet_api::CommonActionSpecifierDTO::List,
-            CommonActionSpecifier::Create => wallet_api::CommonActionSpecifierDTO::Create,
-            CommonActionSpecifier::Read(common_specifier) => {
-                wallet_api::CommonActionSpecifierDTO::Read(common_specifier.into())
-            }
-            CommonActionSpecifier::Update(common_specifier) => {
-                wallet_api::CommonActionSpecifierDTO::Update(common_specifier.into())
-            }
-            CommonActionSpecifier::Delete(common_specifier) => {
-                wallet_api::CommonActionSpecifierDTO::Delete(common_specifier.into())
-            }
-        }
-    }
-}
-
-impl From<wallet_api::CommonActionSpecifierDTO> for CommonActionSpecifier {
-    fn from(dto: wallet_api::CommonActionSpecifierDTO) -> Self {
-        match dto {
-            wallet_api::CommonActionSpecifierDTO::List => CommonActionSpecifier::List,
-            wallet_api::CommonActionSpecifierDTO::Create => CommonActionSpecifier::Create,
-            wallet_api::CommonActionSpecifierDTO::Read(common_specifier) => {
-                CommonActionSpecifier::Read(common_specifier.into())
-            }
-            wallet_api::CommonActionSpecifierDTO::Update(common_specifier) => {
-                CommonActionSpecifier::Update(common_specifier.into())
-            }
-            wallet_api::CommonActionSpecifierDTO::Delete(common_specifier) => {
-                CommonActionSpecifier::Delete(common_specifier.into())
-            }
-        }
-    }
-}
-
 impl ProposalPolicy {
     pub fn to_dto(self) -> wallet_api::ProposalPolicyDTO {
         wallet_api::ProposalPolicyDTO {
@@ -438,12 +183,8 @@ impl From<ProposalSpecifier> for wallet_api::ProposalSpecifierDTO {
                 })
             }
             ProposalSpecifier::ChangeCanister => wallet_api::ProposalSpecifierDTO::ChangeCanister,
-            ProposalSpecifier::AddAccessPolicy => wallet_api::ProposalSpecifierDTO::AddAccessPolicy,
             ProposalSpecifier::EditAccessPolicy(policy) => {
                 wallet_api::ProposalSpecifierDTO::EditAccessPolicy(policy.into())
-            }
-            ProposalSpecifier::RemoveAccessPolicy(policy) => {
-                wallet_api::ProposalSpecifierDTO::RemoveAccessPolicy(policy.into())
             }
             ProposalSpecifier::AddProposalPolicy => {
                 wallet_api::ProposalSpecifierDTO::AddProposalPolicy
@@ -489,12 +230,8 @@ impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
                 ProposalSpecifier::Transfer(transfer_specifier.account.into())
             }
             wallet_api::ProposalSpecifierDTO::ChangeCanister => ProposalSpecifier::ChangeCanister,
-            wallet_api::ProposalSpecifierDTO::AddAccessPolicy => ProposalSpecifier::AddAccessPolicy,
             wallet_api::ProposalSpecifierDTO::EditAccessPolicy(policy) => {
                 ProposalSpecifier::EditAccessPolicy(policy.into())
-            }
-            wallet_api::ProposalSpecifierDTO::RemoveAccessPolicy(policy) => {
-                ProposalSpecifier::RemoveAccessPolicy(policy.into())
             }
             wallet_api::ProposalSpecifierDTO::AddProposalPolicy => {
                 ProposalSpecifier::AddProposalPolicy

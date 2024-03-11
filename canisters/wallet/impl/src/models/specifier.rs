@@ -40,9 +40,7 @@ pub enum ProposalSpecifier {
     RemoveAddressBookEntry(CommonSpecifier),
     Transfer(AccountSpecifier),
     ChangeCanister,
-    AddAccessPolicy,
     EditAccessPolicy(CommonSpecifier),
-    RemoveAccessPolicy(CommonSpecifier),
     AddProposalPolicy,
     EditProposalPolicy(CommonSpecifier),
     RemoveProposalPolicy(CommonSpecifier),
@@ -66,9 +64,7 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
                 ProposalOperationType::RemoveAddressBookEntry
             }
             ProposalSpecifier::Transfer(_) => ProposalOperationType::Transfer,
-            ProposalSpecifier::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
             ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
-            ProposalSpecifier::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
             ProposalSpecifier::ChangeCanister => ProposalOperationType::ChangeCanister,
             ProposalSpecifier::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
             ProposalSpecifier::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
@@ -223,23 +219,12 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
                     .await?
             }
             (ProposalOperation::ChangeCanister(_), ProposalSpecifier::ChangeCanister) => true,
-            (ProposalOperation::AddAccessPolicy(_), ProposalSpecifier::AddAccessPolicy) => true,
             (ProposalOperation::AddUserGroup(_), ProposalSpecifier::AddUserGroup) => true,
             (
                 ProposalOperation::EditAccessPolicy(operation),
                 ProposalSpecifier::EditAccessPolicy(specifier),
             ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.policy_id, specifier))
-                    .await?
-            }
-            (
-                ProposalOperation::RemoveAccessPolicy(operation),
-                ProposalSpecifier::RemoveAccessPolicy(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.policy_id, specifier))
-                    .await?
+                todo!()
             }
             (ProposalOperation::AddProposalPolicy(_), ProposalSpecifier::AddProposalPolicy) => true,
             (
@@ -283,13 +268,11 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             | (ProposalOperation::EditAddressBookEntry(_), _)
             | (ProposalOperation::RemoveAddressBookEntry(_), _)
             | (ProposalOperation::ChangeCanister(_), _)
-            | (ProposalOperation::AddAccessPolicy(_), _)
             | (ProposalOperation::AddProposalPolicy(_), _)
             | (ProposalOperation::EditProposalPolicy(_), _)
             | (ProposalOperation::EditAccessPolicy(_), _)
             | (ProposalOperation::EditUserGroup(_), _)
             | (ProposalOperation::RemoveUserGroup(_), _)
-            | (ProposalOperation::RemoveAccessPolicy(_), _)
             | (ProposalOperation::RemoveProposalPolicy(_), _)
             | (ProposalOperation::AddUserGroup(_), _)
             | (ProposalOperation::Transfer(_), _) => false,

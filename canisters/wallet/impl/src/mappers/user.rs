@@ -3,9 +3,9 @@ use crate::{
     core::ic_cdk::api::time,
     errors::UserError,
     models::{
-        access_control::{
-            ChangeCanisterActionSpecifier, CommonActionSpecifier, ProposalActionSpecifier,
-            ResourceSpecifier, ResourceType,
+        access_policy::{
+            AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+            ProposalResourceAction, Resource, ResourceAction, UserResourceAction,
         },
         AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges,
     },
@@ -90,13 +90,12 @@ impl From<UserDTO> for User {
     }
 }
 
-pub const USER_PRIVILEGES: [UserPrivilege; 14] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 13] = [
     UserPrivilege::ListUsers,
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
     UserPrivilege::AddAccount,
     UserPrivilege::ListAccessPolicies,
-    UserPrivilege::AddAccessPolicy,
     UserPrivilege::ListProposalPolicies,
     UserPrivilege::AddProposalPolicy,
     UserPrivilege::ListUserGroups,
@@ -107,52 +106,26 @@ pub const USER_PRIVILEGES: [UserPrivilege; 14] = [
     UserPrivilege::ListProposals,
 ];
 
-impl From<UserPrivilege> for ResourceSpecifier {
+impl From<UserPrivilege> for Resource {
     fn from(privilege: UserPrivilege) -> Self {
         match privilege {
-            UserPrivilege::ListUsers => {
-                ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::List)
-            }
-            UserPrivilege::AddUser => {
-                ResourceSpecifier::Common(ResourceType::User, CommonActionSpecifier::Create)
-            }
-            UserPrivilege::ListAccounts => {
-                ResourceSpecifier::Common(ResourceType::Account, CommonActionSpecifier::List)
-            }
-            UserPrivilege::AddAccount => {
-                ResourceSpecifier::Common(ResourceType::Account, CommonActionSpecifier::Create)
-            }
+            UserPrivilege::ListUsers => Resource::User(UserResourceAction::List),
+            UserPrivilege::AddUser => Resource::User(UserResourceAction::Create),
+            UserPrivilege::ListAccounts => Resource::Account(AccountResourceAction::List),
+            UserPrivilege::AddAccount => Resource::Account(AccountResourceAction::Create),
             UserPrivilege::ListAccessPolicies => {
-                ResourceSpecifier::Common(ResourceType::AccessPolicy, CommonActionSpecifier::List)
+                Resource::AccessPolicy(AccessPolicyResourceAction::List)
             }
-            UserPrivilege::AddAccessPolicy => {
-                ResourceSpecifier::Common(ResourceType::AccessPolicy, CommonActionSpecifier::Create)
-            }
-            UserPrivilege::ListProposalPolicies => {
-                ResourceSpecifier::Common(ResourceType::ProposalPolicy, CommonActionSpecifier::List)
-            }
-            UserPrivilege::AddProposalPolicy => ResourceSpecifier::Common(
-                ResourceType::ProposalPolicy,
-                CommonActionSpecifier::Create,
-            ),
-            UserPrivilege::ListUserGroups => {
-                ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::List)
-            }
-            UserPrivilege::AddUserGroup => {
-                ResourceSpecifier::Common(ResourceType::UserGroup, CommonActionSpecifier::Create)
-            }
-            UserPrivilege::ListAddressBookEntries => {
-                ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::List)
-            }
-            UserPrivilege::AddAddressBookEntry => {
-                ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::Create)
-            }
+            UserPrivilege::ListProposalPolicies => Resource::ProposalPolicy(ResourceAction::List),
+            UserPrivilege::AddProposalPolicy => Resource::ProposalPolicy(ResourceAction::Create),
+            UserPrivilege::ListUserGroups => Resource::UserGroup(ResourceAction::List),
+            UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
+            UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
+            UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
             UserPrivilege::ChangeCanister => {
-                ResourceSpecifier::ChangeCanister(ChangeCanisterActionSpecifier::Create)
+                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
-            UserPrivilege::ListProposals => {
-                ResourceSpecifier::Proposal(ProposalActionSpecifier::List)
-            }
+            UserPrivilege::ListProposals => Resource::Proposal(ProposalResourceAction::List),
         }
     }
 }

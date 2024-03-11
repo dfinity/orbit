@@ -28,8 +28,7 @@ impl From<NotificationType> for NotificationTypeDTO {
                 let account_id = match &proposal.operation {
                     ProposalOperation::Transfer(operation) => Some(operation.input.from_account_id),
                     ProposalOperation::EditAccount(operation) => Some(operation.input.account_id),
-                    ProposalOperation::AddAccessPolicy(_)
-                    | ProposalOperation::AddAccount(_)
+                    ProposalOperation::AddAccount(_)
                     | ProposalOperation::AddAddressBookEntry(_)
                     | ProposalOperation::EditAddressBookEntry(_)
                     | ProposalOperation::RemoveAddressBookEntry(_)
@@ -40,7 +39,6 @@ impl From<NotificationType> for NotificationTypeDTO {
                     | ProposalOperation::EditAccessPolicy(_)
                     | ProposalOperation::EditProposalPolicy(_)
                     | ProposalOperation::EditUserGroup(_)
-                    | ProposalOperation::RemoveAccessPolicy(_)
                     | ProposalOperation::RemoveProposalPolicy(_)
                     | ProposalOperation::RemoveUserGroup(_)
                     | ProposalOperation::ChangeCanister(_) => None,
@@ -48,8 +46,7 @@ impl From<NotificationType> for NotificationTypeDTO {
 
                 let user_id: Option<[u8; 16]> = match &proposal.operation {
                     ProposalOperation::EditUser(operation) => Some(operation.input.user_id),
-                    ProposalOperation::AddAccessPolicy(_)
-                    | ProposalOperation::AddAccount(_)
+                    ProposalOperation::AddAccount(_)
                     | ProposalOperation::AddAddressBookEntry(_)
                     | ProposalOperation::AddProposalPolicy(_)
                     | ProposalOperation::AddUser(_)
@@ -60,7 +57,6 @@ impl From<NotificationType> for NotificationTypeDTO {
                     | ProposalOperation::RemoveAddressBookEntry(_)
                     | ProposalOperation::EditProposalPolicy(_)
                     | ProposalOperation::EditUserGroup(_)
-                    | ProposalOperation::RemoveAccessPolicy(_)
                     | ProposalOperation::RemoveProposalPolicy(_)
                     | ProposalOperation::RemoveUserGroup(_)
                     | ProposalOperation::Transfer(_)

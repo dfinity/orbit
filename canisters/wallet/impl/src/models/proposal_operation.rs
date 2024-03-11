@@ -1,5 +1,5 @@
 use super::{
-    access_control::{ResourceSpecifier, UserSpecifier},
+    access_policy::{Allow, AllowKey, Resource},
     criteria::Criteria,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
@@ -21,9 +21,7 @@ pub enum ProposalOperation {
     RemoveAddressBookEntry(RemoveAddressBookEntryOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
-    AddAccessPolicy(AddAccessPolicyOperation),
     EditAccessPolicy(EditAccessPolicyOperation),
-    RemoveAccessPolicy(RemoveAccessPolicyOperation),
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
@@ -232,42 +230,23 @@ pub struct ChangeCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AddAccessPolicyOperationInput {
-    pub user: UserSpecifier,
-    pub resource: ResourceSpecifier,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AddAccessPolicyOperation {
-    pub policy_id: Option<UUID>,
-    pub input: AddAccessPolicyOperationInput,
+pub enum ResourceAccess {
+    Deny(AllowKey),
+    Allow(Allow),
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccessPolicyOperationInput {
-    pub policy_id: UUID,
-    pub user: Option<UserSpecifier>,
-    pub resource: Option<ResourceSpecifier>,
+    pub access: ResourceAccess,
+    pub resource: Resource,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccessPolicyOperation {
+    pub policy_id: Option<UUID>,
     pub input: EditAccessPolicyOperationInput,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct RemoveAccessPolicyOperationInput {
-    pub policy_id: UUID,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct RemoveAccessPolicyOperation {
-    pub input: RemoveAccessPolicyOperationInput,
 }
 
 #[storable]

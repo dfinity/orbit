@@ -40,7 +40,6 @@ pub struct UserKey {
 pub struct UserCallerPrivileges {
     pub id: UUID,
     pub can_edit: bool,
-    pub can_delete: bool,
 }
 
 impl User {
@@ -55,6 +54,10 @@ impl User {
 
     pub fn to_key(&self) -> UserKey {
         User::key(self.id)
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.status == UserStatus::Active
     }
 }
 

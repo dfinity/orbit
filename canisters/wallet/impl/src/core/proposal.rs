@@ -252,7 +252,6 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                             ProposalOperation::AddAccount(_)
                             | ProposalOperation::AddAddressBookEntry(_)
                             | ProposalOperation::AddProposalPolicy(_)
-                            | ProposalOperation::AddAccessPolicy(_)
                             | ProposalOperation::AddUser(_)
                             | ProposalOperation::AddUserGroup(_)
                             | ProposalOperation::EditAddressBookEntry(_)
@@ -260,7 +259,6 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                             | ProposalOperation::EditAccessPolicy(_)
                             | ProposalOperation::EditProposalPolicy(_)
                             | ProposalOperation::EditUserGroup(_)
-                            | ProposalOperation::RemoveAccessPolicy(_)
                             | ProposalOperation::RemoveProposalPolicy(_)
                             | ProposalOperation::RemoveUserGroup(_)
                             | ProposalOperation::ChangeCanister(_) => {}

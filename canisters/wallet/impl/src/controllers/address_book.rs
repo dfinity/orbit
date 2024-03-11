@@ -1,5 +1,5 @@
 use crate::mappers::HelperMapper;
-use crate::models::access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType};
+use crate::models::access_policy::{Resource, ResourceAction};
 use crate::models::ListAddressBookEntriesInput;
 use crate::{
     core::middlewares::{authorize, call_context},
@@ -48,12 +48,7 @@ impl AddressBookController {
         }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
     async fn get_address_book_entry(
         &self,
         input: GetAddressBookEntryInputDTO,
@@ -79,8 +74,7 @@ impl AddressBookController {
     #[with_middleware(
         guard = "authorize",
         context = "call_context",
-        args = [ResourceSpecifier::Common(ResourceType::AddressBook, CommonActionSpecifier::List)],
-        is_async = true
+        args = [Resource::AddressBook(ResourceAction::List)]
     )]
     async fn list_address_book_entries(
         &self,

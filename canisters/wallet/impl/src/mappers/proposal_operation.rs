@@ -1,13 +1,13 @@
 use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
-        Account, AccountPoliciesInput, AddAccessPolicyOperation, AddAccessPolicyOperationInput,
-        AddAccountOperation, AddAddressBookEntryOperation, AddAddressBookEntryOperationInput,
-        AddProposalPolicyOperation, AddProposalPolicyOperationInput, AddUserOperation,
-        AddressBookEntry, ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
-        EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
-        EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserOperation,
-        ProposalOperation, RemoveAccessPolicyOperation, RemoveAccessPolicyOperationInput,
+        Account, AccountPoliciesInput, AddAccountOperation, AddAddressBookEntryOperation,
+        AddAddressBookEntryOperationInput, AddProposalPolicyOperation,
+        AddProposalPolicyOperationInput, AddUserOperation, AddressBookEntry,
+        ChangeCanisterOperation, ChangeCanisterTarget, EditAccountOperation,
+        EditAddressBookEntryOperation, EditProposalPolicyOperation,
+        EditProposalPolicyOperationInput, EditUserOperation, ResourceAccess,
+        EditAccessPolicyOperation, EditAccessPolicyOperationInput, ProposalOperation,
         RemoveAddressBookEntryOperation, RemoveProposalPolicyOperation,
         RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
@@ -352,53 +352,50 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     }
 }
 
-impl From<AddAccessPolicyOperationInput> for wallet_api::AddAccessPolicyOperationInput {
-    fn from(input: AddAccessPolicyOperationInput) -> wallet_api::AddAccessPolicyOperationInput {
-        wallet_api::AddAccessPolicyOperationInput {
-            user: input.user.into(),
-            resource: input.resource.into(),
+impl From<ResourceAccess> for wallet_api::ResourceAccessDTO {
+    fn from(value: ResourceAccess) -> wallet_api::ResourceAccessDTO {
+        match value {
+            ResourceAccess::Allow(allowed) => {
+                wallet_api::ResourceAccessDTO::Allow(allowed.into())
+            }
+            ResourceAccess::Deny(denied) => {
+                wallet_api::ResourceAccessDTO::Deny(denied.into())
+            }
         }
     }
 }
 
-impl From<wallet_api::AddAccessPolicyOperationInput> for AddAccessPolicyOperationInput {
-    fn from(input: wallet_api::AddAccessPolicyOperationInput) -> AddAccessPolicyOperationInput {
-        AddAccessPolicyOperationInput {
-            user: input.user.into(),
-            resource: input.resource.into(),
-        }
-    }
-}
-
-impl From<AddAccessPolicyOperation> for wallet_api::AddAccessPolicyOperationDTO {
-    fn from(operation: AddAccessPolicyOperation) -> wallet_api::AddAccessPolicyOperationDTO {
-        wallet_api::AddAccessPolicyOperationDTO {
-            policy_id: operation
-                .policy_id
-                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
-            input: operation.input.into(),
+impl From<wallet_api::ResourceAccessDTO> for ResourceAccess {
+    fn from(value: wallet_api::ResourceAccessDTO) -> ResourceAccess {
+        match value {
+            wallet_api::ResourceAccessDTO::Allow(allowed) => {
+                ResourceAccess::Allow(allowed.into())
+            }
+            wallet_api::ResourceAccessDTO::Deny(denied) => {
+                ResourceAccess::Deny(denied.into())
+            }
         }
     }
 }
 
 impl From<EditAccessPolicyOperationInput> for wallet_api::EditAccessPolicyOperationInput {
-    fn from(input: EditAccessPolicyOperationInput) -> wallet_api::EditAccessPolicyOperationInput {
+    fn from(
+        input: EditAccessPolicyOperationInput,
+    ) -> wallet_api::EditAccessPolicyOperationInput {
         wallet_api::EditAccessPolicyOperationInput {
-            policy_id: Uuid::from_bytes(input.policy_id).hyphenated().to_string(),
-            user: input.user.map(|user| user.into()),
-            resource: input.resource.map(|resource| resource.into()),
+            access: input.access.into(),
+            resource: input.resource.into(),
         }
     }
 }
 
 impl From<wallet_api::EditAccessPolicyOperationInput> for EditAccessPolicyOperationInput {
-    fn from(input: wallet_api::EditAccessPolicyOperationInput) -> EditAccessPolicyOperationInput {
+    fn from(
+        input: wallet_api::EditAccessPolicyOperationInput,
+    ) -> EditAccessPolicyOperationInput {
         EditAccessPolicyOperationInput {
-            policy_id: *HelperMapper::to_uuid(input.policy_id)
-                .expect("Invalid policy id")
-                .as_bytes(),
-            user: input.user.map(|user| user.into()),
-            resource: input.resource.map(|resource| resource.into()),
+            access: input.access.into(),
+            resource: input.resource.into(),
         }
     }
 }
@@ -406,36 +403,9 @@ impl From<wallet_api::EditAccessPolicyOperationInput> for EditAccessPolicyOperat
 impl From<EditAccessPolicyOperation> for wallet_api::EditAccessPolicyOperationDTO {
     fn from(operation: EditAccessPolicyOperation) -> wallet_api::EditAccessPolicyOperationDTO {
         wallet_api::EditAccessPolicyOperationDTO {
-            input: operation.input.into(),
-        }
-    }
-}
-
-impl From<RemoveAccessPolicyOperationInput> for wallet_api::RemoveAccessPolicyOperationInput {
-    fn from(
-        input: RemoveAccessPolicyOperationInput,
-    ) -> wallet_api::RemoveAccessPolicyOperationInput {
-        wallet_api::RemoveAccessPolicyOperationInput {
-            policy_id: Uuid::from_bytes(input.policy_id).hyphenated().to_string(),
-        }
-    }
-}
-
-impl From<wallet_api::RemoveAccessPolicyOperationInput> for RemoveAccessPolicyOperationInput {
-    fn from(
-        input: wallet_api::RemoveAccessPolicyOperationInput,
-    ) -> RemoveAccessPolicyOperationInput {
-        RemoveAccessPolicyOperationInput {
-            policy_id: *HelperMapper::to_uuid(input.policy_id)
-                .expect("Invalid policy id")
-                .as_bytes(),
-        }
-    }
-}
-
-impl From<RemoveAccessPolicyOperation> for wallet_api::RemoveAccessPolicyOperationDTO {
-    fn from(operation: RemoveAccessPolicyOperation) -> wallet_api::RemoveAccessPolicyOperationDTO {
-        wallet_api::RemoveAccessPolicyOperationDTO {
+            policy_id: operation
+                .policy_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
             input: operation.input.into(),
         }
     }
@@ -596,14 +566,8 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             ProposalOperation::ChangeCanister(operation) => {
                 ProposalOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
-            ProposalOperation::AddAccessPolicy(operation) => {
-                ProposalOperationDTO::AddAccessPolicy(Box::new(operation.into()))
-            }
             ProposalOperation::EditAccessPolicy(operation) => {
                 ProposalOperationDTO::EditAccessPolicy(Box::new(operation.into()))
-            }
-            ProposalOperation::RemoveAccessPolicy(operation) => {
-                ProposalOperationDTO::RemoveAccessPolicy(Box::new(operation.into()))
             }
             ProposalOperation::AddProposalPolicy(operation) => {
                 ProposalOperationDTO::AddProposalPolicy(Box::new(operation.into()))
