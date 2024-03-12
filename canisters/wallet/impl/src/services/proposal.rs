@@ -320,11 +320,11 @@ mod tests {
 
         let caller_principal = Principal::from_slice(&[9; 29]);
         let mut user = mock_user();
-        user.identities = vec![caller_principal.clone()];
+        user.identities = vec![caller_principal];
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        let call_context = CallContext::new(caller_principal.clone());
+        let call_context = CallContext::new(caller_principal);
 
         TestContext {
             repository: ProposalRepository::default(),

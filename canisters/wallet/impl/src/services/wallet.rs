@@ -246,7 +246,8 @@ mod install_canister_handlers {
     use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{
-        AddProposalPolicyOperationInput, AddUserOperationInput, EditAccessPolicyOperationInput, ResourceAccess, UserStatus
+        AddProposalPolicyOperationInput, AddUserOperationInput, EditAccessPolicyOperationInput,
+        ResourceAccess, UserStatus,
     };
     use crate::services::PROPOSAL_POLICY_SERVICE;
     use crate::services::{access_policy::ACCESS_POLICY_SERVICE, USER_SERVICE};
