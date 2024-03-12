@@ -194,204 +194,195 @@ impl UserService {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use wallet_api::PaginationInput;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::test_utils,
+        models::{
+            access_policy::Allow, user_test_utils, EditAccessPolicyOperationInput, ResourceAccess,
+            UserStatus,
+        },
+        services::access_policy::ACCESS_POLICY_SERVICE,
+    };
+    use wallet_api::PaginationInput;
 
-//     use super::*;
-//     use crate::{
-//         core::test_utils,
-//         models::{
-//             access_control::{
-//                 CommonActionSpecifier, ResourceSpecifier, ResourceType, UserSpecifier,
-//             },
-//             user_test_utils, AddAccessPolicyOperationInput, UserStatus,
-//         },
-//         services::POLICY_SERVICE,
-//     };
+    struct TestContext {
+        service: UserService,
+        repository: UserRepository,
+        call_context: CallContext,
+    }
 
-//     struct TestContext {
-//         service: UserService,
-//         repository: UserRepository,
-//         call_context: CallContext,
-//     }
+    fn setup() -> TestContext {
+        test_utils::init_canister_config();
 
-//     fn setup() -> TestContext {
-//         test_utils::init_canister_config();
+        TestContext {
+            repository: UserRepository::default(),
+            service: UserService::default(),
+            call_context: CallContext::new(Principal::from_slice(&[9; 29])),
+        }
+    }
 
-//         TestContext {
-//             repository: UserRepository::default(),
-//             service: UserService::default(),
-//             call_context: CallContext::new(Principal::from_slice(&[9; 29])),
-//         }
-//     }
+    #[test]
+    fn get_user() {
+        let ctx: TestContext = setup();
+        let mut user = user_test_utils::mock_user();
+        user.identities = vec![ctx.call_context.caller()];
 
-//     #[test]
-//     fn get_user() {
-//         let ctx: TestContext = setup();
-//         let mut user = user_test_utils::mock_user();
-//         user.identities = vec![ctx.call_context.caller()];
+        ctx.repository.insert(user.to_key(), user.clone());
 
-//         ctx.repository.insert(user.to_key(), user.clone());
+        let result = ctx.service.get_user(&user.id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), user);
+    }
 
-//         let result = ctx.service.get_user(&user.id);
-//         assert!(result.is_ok());
-//         assert_eq!(result.unwrap(), user);
-//     }
+    #[test]
+    fn get_user_by_identity() {
+        let ctx: TestContext = setup();
+        let mut user = user_test_utils::mock_user();
+        user.identities = vec![ctx.call_context.caller()];
 
-//     #[test]
-//     fn get_user_by_identity() {
-//         let ctx: TestContext = setup();
-//         let mut user = user_test_utils::mock_user();
-//         user.identities = vec![ctx.call_context.caller()];
+        ctx.repository.insert(user.to_key(), user.clone());
 
-//         ctx.repository.insert(user.to_key(), user.clone());
+        let result = ctx.service.get_user_by_identity(&user.identities[0]);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), user);
+    }
 
-//         let result = ctx.service.get_user_by_identity(&user.identities[0]);
-//         assert!(result.is_ok());
-//         assert_eq!(result.unwrap(), user);
-//     }
+    #[tokio::test]
+    async fn can_remove_admin() {
+        let ctx: TestContext = setup();
+        let mut caller = user_test_utils::mock_user();
+        caller.identities = vec![ctx.call_context.caller()];
+        caller.groups = vec![*ADMIN_GROUP_ID];
+        let mut admin = user_test_utils::mock_user();
+        admin.identities = vec![Principal::from_slice(&[255; 29])];
+        admin.groups = vec![*ADMIN_GROUP_ID, [1; 16]];
 
-//     #[tokio::test]
-//     async fn can_remove_admin() {
-//         let ctx: TestContext = setup();
-//         let mut caller = user_test_utils::mock_user();
-//         caller.identities = vec![ctx.call_context.caller()];
-//         caller.groups = vec![*ADMIN_GROUP_ID];
-//         let mut admin = user_test_utils::mock_user();
-//         admin.identities = vec![Principal::from_slice(&[255; 29])];
-//         admin.groups = vec![*ADMIN_GROUP_ID, [1; 16]];
+        ctx.repository.insert(caller.to_key(), caller.clone());
+        ctx.repository.insert(admin.to_key(), admin.clone());
 
-//         ctx.repository.insert(caller.to_key(), caller.clone());
-//         ctx.repository.insert(admin.to_key(), admin.clone());
+        let result = ctx
+            .service
+            .remove_admin(&admin.identities[0], &ctx.call_context)
+            .await;
+        assert!(result.is_ok());
 
-//         let result = ctx
-//             .service
-//             .remove_admin(&admin.identities[0], &ctx.call_context)
-//             .await;
-//         assert!(result.is_ok());
+        let admin = ctx.repository.get(&admin.to_key()).unwrap();
+        assert_eq!(admin.groups, vec![[1; 16]]);
+    }
 
-//         let admin = ctx.repository.get(&admin.to_key()).unwrap();
-//         assert_eq!(admin.groups, vec![[1; 16]]);
-//     }
+    #[tokio::test]
+    async fn fail_remove_self_admin() {
+        let ctx: TestContext = setup();
+        let mut admin = user_test_utils::mock_user();
+        admin.identities = vec![ctx.call_context.caller()];
+        admin.groups = vec![*ADMIN_GROUP_ID];
 
-//     #[tokio::test]
-//     async fn fail_remove_self_admin() {
-//         let ctx: TestContext = setup();
-//         let mut admin = user_test_utils::mock_user();
-//         admin.identities = vec![ctx.call_context.caller()];
-//         admin.groups = vec![*ADMIN_GROUP_ID];
+        ctx.repository.insert(admin.to_key(), admin.clone());
 
-//         ctx.repository.insert(admin.to_key(), admin.clone());
+        let result = ctx
+            .service
+            .remove_admin(&admin.identities[0], &ctx.call_context)
+            .await;
+        assert!(result.is_err());
+    }
 
-//         let result = ctx
-//             .service
-//             .remove_admin(&admin.identities[0], &ctx.call_context)
-//             .await;
-//         assert!(result.is_err());
-//     }
+    #[tokio::test]
+    async fn add_user_happy_path() {
+        let ctx: TestContext = setup();
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: None,
+        };
 
-//     #[tokio::test]
-//     async fn add_user_happy_path() {
-//         let ctx: TestContext = setup();
-//         let input = AddUserOperationInput {
-//             identities: vec![Principal::from_slice(&[2; 29])],
-//             groups: vec![*ADMIN_GROUP_ID],
-//             status: UserStatus::Active,
-//             name: None,
-//         };
+        let result = ctx.service.add_user(input).await;
+        assert!(result.is_ok());
 
-//         let result = ctx.service.add_user(input).await;
-//         assert!(result.is_ok());
+        let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
+        assert_eq!(user.identities, vec![Principal::from_slice(&[2; 29])]);
+        assert_eq!(user.groups, vec![*ADMIN_GROUP_ID]);
+    }
 
-//         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-//         assert_eq!(user.identities, vec![Principal::from_slice(&[2; 29])]);
-//         assert_eq!(user.groups, vec![*ADMIN_GROUP_ID]);
-//     }
+    #[tokio::test]
+    async fn edit_user_happy_path() {
+        let ctx: TestContext = setup();
+        let mut user = user_test_utils::mock_user();
+        user.identities = vec![Principal::anonymous()];
 
-//     #[tokio::test]
-//     async fn edit_user_happy_path() {
-//         let ctx: TestContext = setup();
-//         let mut user = user_test_utils::mock_user();
-//         user.identities = vec![Principal::anonymous()];
+        ctx.repository.insert(user.to_key(), user.clone());
 
-//         ctx.repository.insert(user.to_key(), user.clone());
+        let input = EditUserOperationInput {
+            user_id: user.id,
+            identities: Some(vec![ctx.call_context.caller()]),
+            groups: None,
+            name: None,
+            status: None,
+        };
 
-//         let input = EditUserOperationInput {
-//             user_id: user.id,
-//             identities: Some(vec![ctx.call_context.caller()]),
-//             groups: None,
-//             name: None,
-//             status: None,
-//         };
+        let result = ctx.service.edit_user(input).await;
+        assert!(result.is_ok());
 
-//         let result = ctx.service.edit_user(input).await;
-//         assert!(result.is_ok());
+        let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
+        assert_eq!(user.identities, vec![ctx.call_context.caller()]);
+    }
 
-//         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
-//         assert_eq!(user.identities, vec![ctx.call_context.caller()]);
-//     }
+    #[tokio::test]
+    async fn list_users_should_use_offset_and_limit() {
+        let ctx: TestContext = setup();
+        for i in 0..50 {
+            let mut user = user_test_utils::mock_user();
+            user.id = [i; 16];
+            user.identities = vec![Principal::from_slice(&[i; 29])];
+            ctx.repository.insert(user.to_key(), user.clone());
+        }
 
-//     #[tokio::test]
-//     async fn list_users_should_use_offset_and_limit() {
-//         let ctx: TestContext = setup();
-//         for i in 0..50 {
-//             let mut user = user_test_utils::mock_user();
-//             user.id = [i; 16];
-//             user.identities = vec![Principal::from_slice(&[i; 29])];
-//             ctx.repository.insert(user.to_key(), user.clone());
-//         }
+        let input = ListUsersInput {
+            search_term: None,
+            statuses: None,
+            paginate: Some(PaginationInput {
+                offset: Some(10),
+                limit: Some(30),
+            }),
+        };
 
-//         let input = ListUsersInput {
-//             search_term: None,
-//             statuses: None,
-//             paginate: Some(PaginationInput {
-//                 offset: Some(10),
-//                 limit: Some(30),
-//             }),
-//         };
+        let result = ctx.service.list_users(input, None).await.unwrap();
+        assert_eq!(result.items.len(), 30);
+        assert_eq!(result.next_offset, Some(40));
+    }
 
-//         let result = ctx.service.list_users(input, None).await.unwrap();
-//         assert_eq!(result.items.len(), 30);
-//         assert_eq!(result.next_offset, Some(40));
-//     }
+    #[tokio::test]
+    async fn get_user_privileges_by_identity() {
+        let ctx: TestContext = setup();
+        let mut user = user_test_utils::mock_user();
+        user.identities = vec![ctx.call_context.caller()];
+        ctx.repository.insert(user.to_key(), user.clone());
 
-//     #[tokio::test]
-//     async fn get_user_privileges_by_identity() {
-//         let ctx: TestContext = setup();
-//         let mut user = user_test_utils::mock_user();
-//         user.identities = vec![ctx.call_context.caller()];
-//         ctx.repository.insert(user.to_key(), user.clone());
+        ACCESS_POLICY_SERVICE
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                access: ResourceAccess::Allow(Allow::Users(vec![user.id])),
+                resource: Resource::User(UserResourceAction::List),
+            })
+            .await
+            .unwrap();
+        ACCESS_POLICY_SERVICE
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                access: ResourceAccess::Allow(Allow::Authenticated),
+                resource: Resource::User(UserResourceAction::Create),
+            })
+            .await
+            .unwrap();
 
-//         POLICY_SERVICE
-//             .add_access_policy(AddAccessPolicyOperationInput {
-//                 user: UserSpecifier::Id(vec![user.id]),
-//                 resource: ResourceSpecifier::Common(
-//                     ResourceType::User,
-//                     CommonActionSpecifier::List,
-//                 ),
-//             })
-//             .await
-//             .unwrap();
-//         POLICY_SERVICE
-//             .add_access_policy(AddAccessPolicyOperationInput {
-//                 user: UserSpecifier::Any,
-//                 resource: ResourceSpecifier::Common(
-//                     ResourceType::User,
-//                     CommonActionSpecifier::Create,
-//                 ),
-//             })
-//             .await
-//             .unwrap();
+        let privileges = ctx
+            .service
+            .get_user_privileges_by_identity(&user.identities[0])
+            .await
+            .unwrap();
 
-//         let privileges = ctx
-//             .service
-//             .get_user_privileges_by_identity(&user.identities[0])
-//             .await
-//             .unwrap();
-
-//         assert_eq!(privileges.len(), 2);
-//         assert!(privileges.contains(&UserPrivilege::ListUsers));
-//         assert!(privileges.contains(&UserPrivilege::AddUser));
-//     }
-// }
+        assert_eq!(privileges.len(), 2);
+        assert!(privileges.contains(&UserPrivilege::ListUsers));
+        assert!(privileges.contains(&UserPrivilege::AddUser));
+    }
+}

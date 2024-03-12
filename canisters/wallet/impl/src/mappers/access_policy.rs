@@ -4,9 +4,11 @@ use crate::{
     models::{
         access_policy::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction,
-            AccountResourceAction, Allow, AllowLevel, ChangeCanisterResourceAction,
-            ProposalResourceAction, Resource, ResourceAction, ResourceActionType, ResourceId,
-            ResourceType, ResourceTypeId, SettingsResourceAction, UserResourceAction,
+            AccessPolicyResourceActionType, AccountResourceAction, AccountResourceActionType,
+            Allow, AllowLevel, ChangeCanisterResourceAction, ChangeCanisterResourceActionType,
+            ProposalResourceAction, ProposalResourceActionType, Resource, ResourceAction,
+            ResourceActionType, ResourceId, ResourceType, ResourceTypeId, SettingsResourceAction,
+            SettingsResourceActionType, UserResourceAction, UserResourceActionType,
         },
         Transfer,
     },
@@ -583,6 +585,16 @@ impl From<ResourceType> for wallet_api::ResourceTypeDTO {
             ResourceType::UserGroup(action) => {
                 wallet_api::ResourceTypeDTO::UserGroup(action.into())
             }
+            ResourceType::Account(action) => wallet_api::ResourceTypeDTO::Account(action.into()),
+            ResourceType::ChangeCanister(action) => {
+                wallet_api::ResourceTypeDTO::ChangeCanister(action.into())
+            }
+            ResourceType::Proposal(action) => wallet_api::ResourceTypeDTO::Proposal(action.into()),
+            ResourceType::Settings(action) => wallet_api::ResourceTypeDTO::Settings(action.into()),
+            ResourceType::User(action) => wallet_api::ResourceTypeDTO::User(action.into()),
+            ResourceType::AccessPolicy(action) => {
+                wallet_api::ResourceTypeDTO::AccessPolicy(action.into())
+            }
         }
     }
 }
@@ -598,6 +610,48 @@ impl From<wallet_api::ResourceTypeDTO> for ResourceType {
             }
             wallet_api::ResourceTypeDTO::UserGroup(action) => {
                 ResourceType::UserGroup(action.into())
+            }
+            wallet_api::ResourceTypeDTO::Account(action) => ResourceType::Account(action.into()),
+            wallet_api::ResourceTypeDTO::ChangeCanister(action) => {
+                ResourceType::ChangeCanister(action.into())
+            }
+            wallet_api::ResourceTypeDTO::Proposal(action) => ResourceType::Proposal(action.into()),
+            wallet_api::ResourceTypeDTO::Settings(action) => ResourceType::Settings(action.into()),
+            wallet_api::ResourceTypeDTO::User(action) => ResourceType::User(action.into()),
+            wallet_api::ResourceTypeDTO::AccessPolicy(action) => {
+                ResourceType::AccessPolicy(action.into())
+            }
+        }
+    }
+}
+
+impl From<wallet_api::AccessPolicyResourceActionTypeDTO> for AccessPolicyResourceActionType {
+    fn from(dto: wallet_api::AccessPolicyResourceActionTypeDTO) -> Self {
+        match dto {
+            wallet_api::AccessPolicyResourceActionTypeDTO::List => {
+                AccessPolicyResourceActionType::List
+            }
+            wallet_api::AccessPolicyResourceActionTypeDTO::Read => {
+                AccessPolicyResourceActionType::Read
+            }
+            wallet_api::AccessPolicyResourceActionTypeDTO::Edit => {
+                AccessPolicyResourceActionType::Edit
+            }
+        }
+    }
+}
+
+impl From<AccessPolicyResourceActionType> for wallet_api::AccessPolicyResourceActionTypeDTO {
+    fn from(action: AccessPolicyResourceActionType) -> Self {
+        match action {
+            AccessPolicyResourceActionType::List => {
+                wallet_api::AccessPolicyResourceActionTypeDTO::List
+            }
+            AccessPolicyResourceActionType::Read => {
+                wallet_api::AccessPolicyResourceActionTypeDTO::Read
+            }
+            AccessPolicyResourceActionType::Edit => {
+                wallet_api::AccessPolicyResourceActionTypeDTO::Edit
             }
         }
     }
@@ -635,6 +689,165 @@ impl From<ResourceAction> for ResourceActionType {
             ResourceAction::Read(_) => ResourceActionType::Read,
             ResourceAction::Update(_) => ResourceActionType::Update,
             ResourceAction::Delete(_) => ResourceActionType::Delete,
+        }
+    }
+}
+
+impl From<AccountResourceAction> for AccountResourceActionType {
+    fn from(action: AccountResourceAction) -> Self {
+        match action {
+            AccountResourceAction::List => AccountResourceActionType::List,
+            AccountResourceAction::Create => AccountResourceActionType::Create,
+            AccountResourceAction::Transfer(_) => AccountResourceActionType::Transfer,
+            AccountResourceAction::Read(_) => AccountResourceActionType::Read,
+            AccountResourceAction::Update(_) => AccountResourceActionType::Update,
+        }
+    }
+}
+
+impl From<UserResourceAction> for UserResourceActionType {
+    fn from(action: UserResourceAction) -> Self {
+        match action {
+            UserResourceAction::List => UserResourceActionType::List,
+            UserResourceAction::Create => UserResourceActionType::Create,
+            UserResourceAction::Read(_) => UserResourceActionType::Read,
+            UserResourceAction::Update(_) => UserResourceActionType::Update,
+        }
+    }
+}
+
+impl From<AccessPolicyResourceAction> for AccessPolicyResourceActionType {
+    fn from(action: AccessPolicyResourceAction) -> Self {
+        match action {
+            AccessPolicyResourceAction::List => AccessPolicyResourceActionType::List,
+            AccessPolicyResourceAction::Read(_) => AccessPolicyResourceActionType::Read,
+            AccessPolicyResourceAction::Edit(_) => AccessPolicyResourceActionType::Edit,
+        }
+    }
+}
+
+impl From<SettingsResourceAction> for SettingsResourceActionType {
+    fn from(action: SettingsResourceAction) -> Self {
+        match action {
+            SettingsResourceAction::Read => SettingsResourceActionType::Read,
+            SettingsResourceAction::ReadConfig => SettingsResourceActionType::ReadConfig,
+        }
+    }
+}
+
+impl From<ChangeCanisterResourceAction> for ChangeCanisterResourceActionType {
+    fn from(_: ChangeCanisterResourceAction) -> Self {
+        ChangeCanisterResourceActionType::Create
+    }
+}
+
+impl From<ProposalResourceAction> for ProposalResourceActionType {
+    fn from(action: ProposalResourceAction) -> Self {
+        match action {
+            ProposalResourceAction::List => ProposalResourceActionType::List,
+            ProposalResourceAction::Read(_) => ProposalResourceActionType::Read,
+        }
+    }
+}
+
+impl From<wallet_api::UserResourceActionTypeDTO> for UserResourceActionType {
+    fn from(dto: wallet_api::UserResourceActionTypeDTO) -> Self {
+        match dto {
+            wallet_api::UserResourceActionTypeDTO::List => UserResourceActionType::List,
+            wallet_api::UserResourceActionTypeDTO::Create => UserResourceActionType::Create,
+            wallet_api::UserResourceActionTypeDTO::Read => UserResourceActionType::Read,
+            wallet_api::UserResourceActionTypeDTO::Update => UserResourceActionType::Update,
+        }
+    }
+}
+
+impl From<UserResourceActionType> for wallet_api::UserResourceActionTypeDTO {
+    fn from(action: UserResourceActionType) -> Self {
+        match action {
+            UserResourceActionType::List => wallet_api::UserResourceActionTypeDTO::List,
+            UserResourceActionType::Create => wallet_api::UserResourceActionTypeDTO::Create,
+            UserResourceActionType::Read => wallet_api::UserResourceActionTypeDTO::Read,
+            UserResourceActionType::Update => wallet_api::UserResourceActionTypeDTO::Update,
+        }
+    }
+}
+
+impl From<wallet_api::AccountResourceActionTypeDTO> for AccountResourceActionType {
+    fn from(dto: wallet_api::AccountResourceActionTypeDTO) -> Self {
+        match dto {
+            wallet_api::AccountResourceActionTypeDTO::List => AccountResourceActionType::List,
+            wallet_api::AccountResourceActionTypeDTO::Create => AccountResourceActionType::Create,
+            wallet_api::AccountResourceActionTypeDTO::Transfer => {
+                AccountResourceActionType::Transfer
+            }
+            wallet_api::AccountResourceActionTypeDTO::Read => AccountResourceActionType::Read,
+            wallet_api::AccountResourceActionTypeDTO::Update => AccountResourceActionType::Update,
+        }
+    }
+}
+
+impl From<AccountResourceActionType> for wallet_api::AccountResourceActionTypeDTO {
+    fn from(action: AccountResourceActionType) -> Self {
+        match action {
+            AccountResourceActionType::List => wallet_api::AccountResourceActionTypeDTO::List,
+            AccountResourceActionType::Create => wallet_api::AccountResourceActionTypeDTO::Create,
+            AccountResourceActionType::Transfer => {
+                wallet_api::AccountResourceActionTypeDTO::Transfer
+            }
+            AccountResourceActionType::Read => wallet_api::AccountResourceActionTypeDTO::Read,
+            AccountResourceActionType::Update => wallet_api::AccountResourceActionTypeDTO::Update,
+        }
+    }
+}
+
+impl From<wallet_api::SettingsResourceActionTypeDTO> for SettingsResourceActionType {
+    fn from(dto: wallet_api::SettingsResourceActionTypeDTO) -> Self {
+        match dto {
+            wallet_api::SettingsResourceActionTypeDTO::Read => SettingsResourceActionType::Read,
+            wallet_api::SettingsResourceActionTypeDTO::ReadConfig => {
+                SettingsResourceActionType::ReadConfig
+            }
+        }
+    }
+}
+
+impl From<SettingsResourceActionType> for wallet_api::SettingsResourceActionTypeDTO {
+    fn from(action: SettingsResourceActionType) -> Self {
+        match action {
+            SettingsResourceActionType::Read => wallet_api::SettingsResourceActionTypeDTO::Read,
+            SettingsResourceActionType::ReadConfig => {
+                wallet_api::SettingsResourceActionTypeDTO::ReadConfig
+            }
+        }
+    }
+}
+
+impl From<wallet_api::ChangeCanisterResourceActionTypeDTO> for ChangeCanisterResourceActionType {
+    fn from(_: wallet_api::ChangeCanisterResourceActionTypeDTO) -> Self {
+        ChangeCanisterResourceActionType::Create
+    }
+}
+
+impl From<ChangeCanisterResourceActionType> for wallet_api::ChangeCanisterResourceActionTypeDTO {
+    fn from(_: ChangeCanisterResourceActionType) -> Self {
+        wallet_api::ChangeCanisterResourceActionTypeDTO::Create
+    }
+}
+
+impl From<wallet_api::ProposalResourceActionTypeDTO> for ProposalResourceActionType {
+    fn from(dto: wallet_api::ProposalResourceActionTypeDTO) -> Self {
+        match dto {
+            wallet_api::ProposalResourceActionTypeDTO::List => ProposalResourceActionType::List,
+            wallet_api::ProposalResourceActionTypeDTO::Read => ProposalResourceActionType::Read,
+        }
+    }
+}
+
+impl From<ProposalResourceActionType> for wallet_api::ProposalResourceActionTypeDTO {
+    fn from(action: ProposalResourceActionType) -> Self {
+        match action {
+            ProposalResourceActionType::List => wallet_api::ProposalResourceActionTypeDTO::List,
+            ProposalResourceActionType::Read => wallet_api::ProposalResourceActionTypeDTO::Read,
         }
     }
 }

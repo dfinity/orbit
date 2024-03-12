@@ -49,13 +49,14 @@ pub enum ResourceTypeIdDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceTypeDTO {
-    // Account(AccountResourceActionTypeDTO),
+    AccessPolicy(AccessPolicyResourceActionTypeDTO),
+    Account(AccountResourceActionTypeDTO),
     AddressBook(ResourceActionTypeDTO),
-    // ChangeCanister(ChangeCanisterResourceActionTypeDTO),
-    // Proposal(ProposalResourceActionTypeDTO),
+    ChangeCanister(ChangeCanisterResourceActionTypeDTO),
+    Proposal(ProposalResourceActionTypeDTO),
     ProposalPolicy(ResourceActionTypeDTO),
-    // Settings(SettingsResourceActionTypeDTO),
-    // User(UserResourceActionTypeDTO),
+    Settings(SettingsResourceActionTypeDTO),
+    User(UserResourceActionTypeDTO),
     UserGroup(ResourceActionTypeDTO),
 }
 
@@ -91,11 +92,26 @@ pub enum AccessPolicyResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum AccessPolicyResourceActionTypeDTO {
+    List,
+    Read,
+    Edit,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum UserResourceActionDTO {
     List,
     Create,
     Read(ResourceIdDTO),
     Update(ResourceIdDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum UserResourceActionTypeDTO {
+    List,
+    Create,
+    Read,
+    Update,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -108,7 +124,22 @@ pub enum AccountResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum AccountResourceActionTypeDTO {
+    List,
+    Create,
+    Transfer,
+    Read,
+    Update,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum SettingsResourceActionDTO {
+    Read,
+    ReadConfig,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum SettingsResourceActionTypeDTO {
     Read,
     ReadConfig,
 }
@@ -119,9 +150,20 @@ pub enum ChangeCanisterResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ChangeCanisterResourceActionTypeDTO {
+    Create,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalResourceActionDTO {
     List,
     Read(ResourceIdDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ProposalResourceActionTypeDTO {
+    List,
+    Read,
 }
 
 pub type ListAccessPoliciesInput = PaginationInput;

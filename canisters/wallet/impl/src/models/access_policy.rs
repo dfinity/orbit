@@ -119,13 +119,14 @@ pub enum ResourceTypeId {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceType {
-    // Account(AccountResourceAction),
+    AccessPolicy(AccessPolicyResourceActionType),
+    Account(AccountResourceActionType),
     AddressBook(ResourceActionType),
-    // ChangeCanister(ChangeCanisterResourceAction),
-    // Proposal(ProposalResourceAction),
+    ChangeCanister(ChangeCanisterResourceActionType),
+    Proposal(ProposalResourceActionType),
     ProposalPolicy(ResourceActionType),
-    // Settings(SettingsResourceAction),
-    // User(UserResourceAction),
+    Settings(SettingsResourceActionType),
+    User(UserResourceActionType),
     UserGroup(ResourceActionType),
 }
 
@@ -159,11 +160,28 @@ pub enum AccessPolicyResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum AccessPolicyResourceActionType {
+    List = 1,
+    Read = 2,
+    Edit = 3,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum UserResourceAction {
     List,
     Create,
     Read(ResourceId),
     Update(ResourceId),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum UserResourceActionType {
+    List = 1,
+    Create = 2,
+    Read = 3,
+    Update = 4,
 }
 
 #[storable]
@@ -178,9 +196,26 @@ pub enum AccountResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum AccountResourceActionType {
+    List = 1,
+    Create = 2,
+    Transfer = 3,
+    Read = 4,
+    Update = 5,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SettingsResourceAction {
     Read,
     ReadConfig,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum SettingsResourceActionType {
+    Read = 1,
+    ReadConfig = 2,
 }
 
 #[storable]
@@ -191,9 +226,22 @@ pub enum ChangeCanisterResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeCanisterResourceActionType {
+    Create,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalResourceAction {
     List,
     Read(ResourceId),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ProposalResourceActionType {
+    List = 1,
+    Read = 2,
 }
 
 #[storable]
@@ -447,7 +495,12 @@ impl Resource {
             Resource::AddressBook(action) => ResourceType::AddressBook(action.into()),
             Resource::ProposalPolicy(action) => ResourceType::ProposalPolicy(action.into()),
             Resource::UserGroup(action) => ResourceType::UserGroup(action.into()),
-            _ => unimplemented!(),
+            Resource::Account(action) => ResourceType::Account(action.into()),
+            Resource::ChangeCanister(action) => ResourceType::ChangeCanister(action.into()),
+            Resource::Proposal(action) => ResourceType::Proposal(action.into()),
+            Resource::Settings(action) => ResourceType::Settings(action.into()),
+            Resource::User(action) => ResourceType::User(action.into()),
+            Resource::AccessPolicy(action) => ResourceType::AccessPolicy(action.into()),
         }
     }
 }
