@@ -246,10 +246,10 @@ mod install_canister_handlers {
     use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{
-        AddAccessPolicyOperationInput, AddProposalPolicyOperationInput, AddUserOperationInput,
-        UserStatus,
+        AddProposalPolicyOperationInput, AddUserOperationInput, EditAccessPolicyOperationInput, ResourceAccess, UserStatus
     };
-    use crate::services::{POLICY_SERVICE, USER_SERVICE};
+    use crate::services::PROPOSAL_POLICY_SERVICE;
+    use crate::services::{access_policy::ACCESS_POLICY_SERVICE, USER_SERVICE};
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
         repositories::USER_GROUP_REPOSITORY,
@@ -275,7 +275,7 @@ mod install_canister_handlers {
 
         // adds the default proposal policies which sets safe defaults for the canister
         for policy in DEFAULT_PROPOSAL_POLICIES.iter() {
-            POLICY_SERVICE
+            PROPOSAL_POLICY_SERVICE
                 .add_proposal_policy(AddProposalPolicyOperationInput {
                     specifier: policy.0.to_owned(),
                     criteria: policy.1.to_owned(),
@@ -286,9 +286,9 @@ mod install_canister_handlers {
 
         // adds the default access control policies which sets safe defaults for the canister
         for policy in DEFAULT_ACCESS_CONTROL_POLICIES.iter() {
-            POLICY_SERVICE
-                .add_access_policy(AddAccessPolicyOperationInput {
-                    user: policy.0.to_owned(),
+            ACCESS_POLICY_SERVICE
+                .edit_access_policy(EditAccessPolicyOperationInput {
+                    access: ResourceAccess::Allow(policy.0.to_owned()),
                     resource: policy.1.to_owned(),
                 })
                 .await

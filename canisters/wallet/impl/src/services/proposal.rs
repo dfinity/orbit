@@ -301,8 +301,8 @@ mod tests {
             User, UserStatus,
         },
         repositories::{
-            policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository,
-            NOTIFICATION_REPOSITORY, USER_REPOSITORY,
+            policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, NOTIFICATION_REPOSITORY,
+            USER_REPOSITORY,
         },
     };
     use candid::Principal;
@@ -318,11 +318,13 @@ mod tests {
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
-        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+        let caller_principal = Principal::from_slice(&[9; 29]);
         let mut user = mock_user();
-        user.identities = vec![call_context.caller()];
+        user.identities = vec![caller_principal.clone()];
 
-        UserRepository::default().insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let call_context = CallContext::new(caller_principal.clone());
 
         TestContext {
             repository: ProposalRepository::default(),

@@ -7,7 +7,7 @@ use crate::{
             ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
             UserResourceAction,
         },
-        Account, User, UserStatus, ADMIN_GROUP_ID,
+        Account, User, ADMIN_GROUP_ID,
     },
     repositories::{
         access_policy::ACCESS_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
@@ -37,31 +37,33 @@ impl Authorization {
             return true;
         }
 
-        // If the user is not active, then the access is denied.
-        if !USER_REPOSITORY.exists_by_identity_and_status(&ctx.caller(), &UserStatus::Active) {
-            return false;
-        }
+        if let Some(user) = ctx.user() {
+            // If the user is not active, then the access is denied.
+            if !user.is_active() {
+                return false;
+            }
 
-        // If the resource is available to authenticated users, then the access is granted.
-        if resources.iter().any(|resource| {
-            ACCESS_POLICY_REPOSITORY
-                .exists_by_resource_and_allow_level(resource.clone(), AllowLevel::Authenticated)
-        }) {
-            return true;
-        }
+            // If the resource is available to authenticated users, then the access is granted.
+            if resources.iter().any(|resource| {
+                ACCESS_POLICY_REPOSITORY
+                    .exists_by_resource_and_allow_level(resource.clone(), AllowLevel::Authenticated)
+            }) {
+                return true;
+            }
 
-        let user = USER_REPOSITORY.find_by_identity(&ctx.caller()).unwrap();
+            let user = USER_REPOSITORY.find_by_identity(&ctx.caller()).unwrap();
 
-        // Validades if the user has access to the resource based on the default rules (non-policy based).
-        if resources
-            .iter()
-            .any(|resource| has_default_resource_access(&user, resource))
-        {
-            return true;
-        }
+            // Validades if the user has access to the resource based on the default rules (non-policy based).
+            if resources
+                .iter()
+                .any(|resource| has_default_resource_access(&user, resource))
+            {
+                return true;
+            }
 
-        if is_user_group_allowed(&user, &resources) || is_user_allowed(&user, &resources) {
-            return true;
+            if is_user_group_allowed(&user, &resources) || is_user_allowed(&user, &resources) {
+                return true;
+            }
         }
 
         false
@@ -170,7 +172,7 @@ mod tests {
         access_policy::{AccessPolicy, Allow},
         account_test_utils, user_group_test_utils,
         user_test_utils::{self, mock_user},
-        UserGroup, ADMIN_GROUP_ID,
+        UserGroup, UserStatus, ADMIN_GROUP_ID,
     };
     use candid::Principal;
     use ic_canister_core::{model::ModelKey, repository::Repository};
@@ -234,6 +236,8 @@ mod tests {
             test_context.finance_user.to_key(),
             test_context.finance_user.clone(),
         );
+
+        let ctx = CallContext::new(test_context.finance_user.identities[0]);
 
         assert!(!Authorization::is_allowed(
             &ctx,
