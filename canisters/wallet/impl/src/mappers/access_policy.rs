@@ -4,9 +4,9 @@ use crate::{
     models::{
         access_policy::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction,
-            AccountResourceAction, Allow, AllowKey, ChangeCanisterResourceAction,
-            ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
-            UserResourceAction,
+            AccountResourceAction, Allow, AllowLevel, ChangeCanisterResourceAction,
+            ProposalResourceAction, Resource, ResourceAction, ResourceActionType, ResourceId,
+            ResourceType, ResourceTypeId, SettingsResourceAction, UserResourceAction,
         },
         Transfer,
     },
@@ -20,9 +20,6 @@ use wallet_api::ProposalOperationInput;
 impl From<AccessPolicyCallerPrivileges> for wallet_api::AccessPolicyCallerPrivilegesDTO {
     fn from(privileges: AccessPolicyCallerPrivileges) -> Self {
         wallet_api::AccessPolicyCallerPrivilegesDTO {
-            policy_id: Uuid::from_bytes(privileges.policy_id)
-                .hyphenated()
-                .to_string(),
             can_edit: privileges.can_edit,
         }
     }
@@ -70,10 +67,8 @@ impl From<&wallet_api::GetProposalInput> for Resource {
 
 impl From<&wallet_api::GetAccessPolicyInput> for Resource {
     fn from(input: &wallet_api::GetAccessPolicyInput) -> Self {
-        Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceId::Id(
-            *HelperMapper::to_uuid(input.id.to_owned())
-                .expect("Invalid access policy id")
-                .as_bytes(),
+        Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Resource(
+            Resource::from(input.resource.clone()).to_type(),
         )))
     }
 }
@@ -182,8 +177,9 @@ impl From<&wallet_api::CreateProposalInput> for Resource {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
             ProposalOperationInput::EditAccessPolicy(input) => {
-                // TODO: Fix mapping of access policy to resource, removing te id from the resource
-                Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceId::Any))
+                Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Resource(
+                    Resource::from(input.resource.clone()).to_type(),
+                )))
             }
             ProposalOperationInput::AddProposalPolicy(_) => {
                 Resource::ProposalPolicy(ResourceAction::Create)
@@ -318,24 +314,24 @@ impl From<Allow> for wallet_api::AllowDTO {
     }
 }
 
-impl From<wallet_api::AllowKeyDTO> for AllowKey {
-    fn from(dto: wallet_api::AllowKeyDTO) -> Self {
+impl From<wallet_api::AllowLevelDTO> for AllowLevel {
+    fn from(dto: wallet_api::AllowLevelDTO) -> Self {
         match dto {
-            wallet_api::AllowKeyDTO::Any => AllowKey::Any,
-            wallet_api::AllowKeyDTO::Authenticated => AllowKey::Authenticated,
-            wallet_api::AllowKeyDTO::Users => AllowKey::Users,
-            wallet_api::AllowKeyDTO::UserGroups => AllowKey::UserGroups,
+            wallet_api::AllowLevelDTO::Any => AllowLevel::Any,
+            wallet_api::AllowLevelDTO::Authenticated => AllowLevel::Authenticated,
+            wallet_api::AllowLevelDTO::Users => AllowLevel::Users,
+            wallet_api::AllowLevelDTO::UserGroups => AllowLevel::UserGroups,
         }
     }
 }
 
-impl From<AllowKey> for wallet_api::AllowKeyDTO {
-    fn from(key: AllowKey) -> Self {
+impl From<AllowLevel> for wallet_api::AllowLevelDTO {
+    fn from(key: AllowLevel) -> Self {
         match key {
-            AllowKey::Any => wallet_api::AllowKeyDTO::Any,
-            AllowKey::Authenticated => wallet_api::AllowKeyDTO::Authenticated,
-            AllowKey::Users => wallet_api::AllowKeyDTO::Users,
-            AllowKey::UserGroups => wallet_api::AllowKeyDTO::UserGroups,
+            AllowLevel::Any => wallet_api::AllowLevelDTO::Any,
+            AllowLevel::Authenticated => wallet_api::AllowLevelDTO::Authenticated,
+            AllowLevel::Users => wallet_api::AllowLevelDTO::Users,
+            AllowLevel::UserGroups => wallet_api::AllowLevelDTO::UserGroups,
         }
     }
 }
@@ -392,11 +388,11 @@ impl From<wallet_api::AccessPolicyResourceActionDTO> for AccessPolicyResourceAct
     fn from(dto: wallet_api::AccessPolicyResourceActionDTO) -> Self {
         match dto {
             wallet_api::AccessPolicyResourceActionDTO::List => AccessPolicyResourceAction::List,
-            wallet_api::AccessPolicyResourceActionDTO::Read(id) => {
-                AccessPolicyResourceAction::Read(id.into())
+            wallet_api::AccessPolicyResourceActionDTO::Read(rtype) => {
+                AccessPolicyResourceAction::Read(rtype.into())
             }
-            wallet_api::AccessPolicyResourceActionDTO::Edit(id) => {
-                AccessPolicyResourceAction::Edit(id.into())
+            wallet_api::AccessPolicyResourceActionDTO::Edit(rtype) => {
+                AccessPolicyResourceAction::Edit(rtype.into())
             }
         }
     }
@@ -569,9 +565,98 @@ impl From<Resource> for wallet_api::ResourceDTO {
 impl From<AccessPolicy> for wallet_api::AccessPolicyDTO {
     fn from(policy: AccessPolicy) -> Self {
         wallet_api::AccessPolicyDTO {
-            id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
             resource: policy.resource.into(),
             allow: policy.allow.into(),
+        }
+    }
+}
+
+impl From<ResourceType> for wallet_api::ResourceTypeDTO {
+    fn from(resource_type: ResourceType) -> Self {
+        match resource_type {
+            ResourceType::AddressBook(action) => {
+                wallet_api::ResourceTypeDTO::AddressBook(action.into())
+            }
+            ResourceType::ProposalPolicy(action) => {
+                wallet_api::ResourceTypeDTO::ProposalPolicy(action.into())
+            }
+            ResourceType::UserGroup(action) => {
+                wallet_api::ResourceTypeDTO::UserGroup(action.into())
+            }
+        }
+    }
+}
+
+impl From<wallet_api::ResourceTypeDTO> for ResourceType {
+    fn from(dto: wallet_api::ResourceTypeDTO) -> Self {
+        match dto {
+            wallet_api::ResourceTypeDTO::AddressBook(action) => {
+                ResourceType::AddressBook(action.into())
+            }
+            wallet_api::ResourceTypeDTO::ProposalPolicy(action) => {
+                ResourceType::ProposalPolicy(action.into())
+            }
+            wallet_api::ResourceTypeDTO::UserGroup(action) => {
+                ResourceType::UserGroup(action.into())
+            }
+        }
+    }
+}
+
+impl From<ResourceActionType> for wallet_api::ResourceActionTypeDTO {
+    fn from(action_type: ResourceActionType) -> Self {
+        match action_type {
+            ResourceActionType::List => wallet_api::ResourceActionTypeDTO::List,
+            ResourceActionType::Create => wallet_api::ResourceActionTypeDTO::Create,
+            ResourceActionType::Read => wallet_api::ResourceActionTypeDTO::Read,
+            ResourceActionType::Update => wallet_api::ResourceActionTypeDTO::Update,
+            ResourceActionType::Delete => wallet_api::ResourceActionTypeDTO::Delete,
+        }
+    }
+}
+
+impl From<wallet_api::ResourceActionTypeDTO> for ResourceActionType {
+    fn from(dto: wallet_api::ResourceActionTypeDTO) -> Self {
+        match dto {
+            wallet_api::ResourceActionTypeDTO::List => ResourceActionType::List,
+            wallet_api::ResourceActionTypeDTO::Create => ResourceActionType::Create,
+            wallet_api::ResourceActionTypeDTO::Read => ResourceActionType::Read,
+            wallet_api::ResourceActionTypeDTO::Update => ResourceActionType::Update,
+            wallet_api::ResourceActionTypeDTO::Delete => ResourceActionType::Delete,
+        }
+    }
+}
+
+impl From<ResourceAction> for ResourceActionType {
+    fn from(action: ResourceAction) -> Self {
+        match action {
+            ResourceAction::List => ResourceActionType::List,
+            ResourceAction::Create => ResourceActionType::Create,
+            ResourceAction::Read(_) => ResourceActionType::Read,
+            ResourceAction::Update(_) => ResourceActionType::Update,
+            ResourceAction::Delete(_) => ResourceActionType::Delete,
+        }
+    }
+}
+
+impl From<ResourceTypeId> for wallet_api::ResourceTypeIdDTO {
+    fn from(resource_type_id: ResourceTypeId) -> Self {
+        match resource_type_id {
+            ResourceTypeId::Any => wallet_api::ResourceTypeIdDTO::Any,
+            ResourceTypeId::Resource(resource_type) => {
+                wallet_api::ResourceTypeIdDTO::Resource(resource_type.into())
+            }
+        }
+    }
+}
+
+impl From<wallet_api::ResourceTypeIdDTO> for ResourceTypeId {
+    fn from(dto: wallet_api::ResourceTypeIdDTO) -> Self {
+        match dto {
+            wallet_api::ResourceTypeIdDTO::Any => ResourceTypeId::Any,
+            wallet_api::ResourceTypeIdDTO::Resource(resource_type) => {
+                ResourceTypeId::Resource(resource_type.into())
+            }
         }
     }
 }

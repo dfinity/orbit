@@ -1,11 +1,14 @@
 use crate::models::{
     access_policy::{
         AccessPolicyResourceAction, AccountResourceAction, Allow, ChangeCanisterResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
-        UserResourceAction,
+        ProposalResourceAction, Resource, ResourceAction, ResourceId, ResourceTypeId,
+        SettingsResourceAction, UserResourceAction,
     },
     criteria::{Criteria, Percentage},
-    specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier as ProposalUserSpecifier},
+    specifier::{
+        CommonSpecifier, ProposalSpecifier, ResourceSpecifier,
+        UserSpecifier as ProposalUserSpecifier,
+    },
     ADMIN_GROUP_ID,
 };
 use lazy_static::lazy_static;
@@ -62,11 +65,11 @@ lazy_static! {
         ),
         (
             Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceId::Any)),
+            Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Any)),
         ),
         (
             Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceId::Any)),
+            Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Any)),
         ),
         // proposal policies
         (
@@ -179,7 +182,7 @@ lazy_static! {
         ),
         // access policies
         (
-            ProposalSpecifier::EditAccessPolicy(CommonSpecifier::Any),
+            ProposalSpecifier::EditAccessPolicy(ResourceSpecifier::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)

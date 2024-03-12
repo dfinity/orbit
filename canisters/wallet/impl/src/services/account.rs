@@ -85,7 +85,7 @@ impl AccountService {
             ),
             can_transfer: Authorization::is_allowed(
                 ctx,
-                &&Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*account_id))),
+                &Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*account_id))),
             ),
         })
     }

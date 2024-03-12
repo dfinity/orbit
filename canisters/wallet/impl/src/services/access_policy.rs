@@ -4,11 +4,10 @@ use crate::{
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
-    errors::RepositoryError,
     models::{
         access_policy::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction, Allow,
-            Resource, ResourceId,
+            Resource, ResourceType, ResourceTypeId,
         },
         EditAccessPolicyOperationInput, ResourceAccess, User, UserGroup,
     },
@@ -17,10 +16,9 @@ use crate::{
 };
 use candid::CandidType;
 use ic_canister_core::repository::Repository;
-use ic_canister_core::{api::ServiceResult, types::UUID};
+use ic_canister_core::{api::ServiceResult, model::ModelKey};
 use lazy_static::lazy_static;
 use std::{collections::HashSet, sync::Arc};
-use uuid::Uuid;
 use wallet_api::ListAccessPoliciesInput;
 
 lazy_static! {
@@ -61,29 +59,25 @@ impl AccessPolicyService {
         }
     }
 
-    pub fn get_access_policy(&self, id: &UUID) -> ServiceResult<AccessPolicy> {
-        let policy =
-            self.access_policy_repository
-                .get(id)
-                .ok_or(RepositoryError::EntityNotFound {
-                    entity: "access_policy".to_string(),
-                    entity_id: Uuid::from_bytes(*id).hyphenated().to_string(),
-                })?;
+    pub fn get_access_policy(&self, resource: &Resource) -> ServiceResult<Vec<AccessPolicy>> {
+        let policies = self
+            .access_policy_repository
+            .find_by_resource(resource.clone());
 
-        Ok(policy)
+        Ok(policies)
     }
 
     pub async fn edit_access_policy(
         &self,
         input: EditAccessPolicyOperationInput,
-    ) -> ServiceResult<AccessPolicy> {
-        let allowed_type = match &input.access {
+    ) -> ServiceResult<()> {
+        let allow_level = match &input.access {
             ResourceAccess::Allow(allow) => allow.to_owned().into(),
             ResourceAccess::Deny(allow) => allow.to_owned(),
         };
         let policy = self
             .access_policy_repository
-            .find_by_resource_and_allowed_type(&input.resource, &allowed_type);
+            .find_by_resource_and_allow_level(input.resource.clone(), allow_level);
 
         match input.access {
             ResourceAccess::Allow(allow) => {
@@ -92,30 +86,29 @@ impl AccessPolicyService {
                 policy.allow = allow;
 
                 self.access_policy_repository
-                    .insert(policy.id, policy.clone());
+                    .insert(policy.key(), policy.clone());
             }
             ResourceAccess::Deny(_) => {
                 if let Some(policy) = policy {
-                    self.access_policy_repository.remove(&policy.id);
+                    self.access_policy_repository.remove(&policy.key());
                 }
             }
-        }
+        };
 
-        todo!()
+        Ok(())
     }
 
     pub async fn get_caller_privileges_for_access_policy(
         &self,
-        policy_id: &UUID,
+        resource_type: &ResourceType,
         ctx: &CallContext,
     ) -> ServiceResult<AccessPolicyCallerPrivileges> {
         Ok(AccessPolicyCallerPrivileges {
-            policy_id: *policy_id,
             can_edit: Authorization::is_allowed(
                 ctx,
-                &Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceId::Id(
-                    *policy_id,
-                ))),
+                &Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
+                    ResourceTypeId::Resource(resource_type.clone()),
+                )),
             ),
         })
     }
@@ -128,7 +121,9 @@ impl AccessPolicyService {
         let mut policies = self.access_policy_repository.list();
 
         retain_accessible_resources(ctx, &mut policies, |policy| {
-            Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceId::Id(policy.id)))
+            Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Resource(
+                policy.resource.to_type(),
+            )))
         });
 
         let result = paginated_items(PaginatedItemsArgs {

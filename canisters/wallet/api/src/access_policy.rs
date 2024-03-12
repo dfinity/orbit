@@ -3,13 +3,11 @@ use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccessPolicyCallerPrivilegesDTO {
-    pub policy_id: UuidDTO,
     pub can_edit: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccessPolicyDTO {
-    pub id: UuidDTO,
     pub allow: AllowDTO,
     pub resource: ResourceDTO,
 }
@@ -23,7 +21,7 @@ pub enum AllowDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AllowKeyDTO {
+pub enum AllowLevelDTO {
     Any = 1,
     Authenticated = 2,
     Users = 3,
@@ -44,6 +42,24 @@ pub enum ResourceDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ResourceTypeIdDTO {
+    Any,
+    Resource(ResourceTypeDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ResourceTypeDTO {
+    // Account(AccountResourceActionTypeDTO),
+    AddressBook(ResourceActionTypeDTO),
+    // ChangeCanister(ChangeCanisterResourceActionTypeDTO),
+    // Proposal(ProposalResourceActionTypeDTO),
+    ProposalPolicy(ResourceActionTypeDTO),
+    // Settings(SettingsResourceActionTypeDTO),
+    // User(UserResourceActionTypeDTO),
+    UserGroup(ResourceActionTypeDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceIdDTO {
     Any,
     Id(UuidDTO),
@@ -59,10 +75,19 @@ pub enum ResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ResourceActionTypeDTO {
+    List,
+    Create,
+    Read,
+    Update,
+    Delete,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum AccessPolicyResourceActionDTO {
     List,
-    Read(ResourceIdDTO),
-    Edit(ResourceIdDTO),
+    Read(ResourceTypeIdDTO),
+    Edit(ResourceTypeIdDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -113,24 +138,23 @@ pub struct ListAccessPoliciesResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyInput {
-    pub id: UuidDTO,
+    pub resource: ResourceDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyResponse {
-    pub policy: AccessPolicyDTO,
-    pub privileges: AccessPolicyCallerPrivilegesDTO,
+    pub policies: Vec<AccessPolicyDTO>,
+    pub privileges: Vec<AccessPolicyCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditAccessPolicyOperationDTO {
-    pub policy_id: Option<UuidDTO>,
     pub input: EditAccessPolicyOperationInput,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceAccessDTO {
-    Deny(AllowKeyDTO),
+    Deny(AllowLevelDTO),
     Allow(AllowDTO),
 }
 

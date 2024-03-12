@@ -22,7 +22,6 @@ impl Create<wallet_api::EditAccessPolicyOperationInput> for EditAccessPolicyProp
             proposed_by_user,
             Proposal::default_expiration_dt_ns(),
             ProposalOperation::EditAccessPolicy(EditAccessPolicyOperation {
-                policy_id: None,
                 input: operation_input.into(),
             }),
             input

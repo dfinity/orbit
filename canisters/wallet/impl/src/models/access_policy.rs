@@ -3,25 +3,19 @@ use candid::CandidType;
 use ic_canister_core::{model::ModelKey, types::UUID};
 use ic_canister_macros::storable;
 use serde::Deserialize;
-use uuid::Uuid;
 
 /// The user gorup id, which is a UUID.
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccessPolicyCallerPrivileges {
-    pub policy_id: AccessPolicyId,
     pub can_edit: bool,
 }
-
-/// The access policy id, which is a UUID.
-pub type AccessPolicyId = UUID;
 
 /// Represents an access policy within the system.
 ///
 /// An access policy is a rule that defines who can access a resource and what they can do with it.
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd)]
 pub struct AccessPolicy {
-    pub id: AccessPolicyId,
     /// The users who can access the resource.
     ///
     /// It can be a list of specific users, user groups, or any user.
@@ -30,25 +24,34 @@ pub struct AccessPolicy {
     pub resource: Resource,
 }
 
+/// The unique identifier of an access policy.
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct AccessPolicyKey {
+    /// The resource that the user can access.
     pub resource: Resource,
-    pub allow: AllowKey,
+    /// The user level who can access the resource.
+    pub allow_level: AllowLevel,
 }
 
 impl Ord for AccessPolicyKey {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.resource
             .cmp(&other.resource)
-            .then(self.allow.cmp(&other.allow))
+            .then(self.allow_level.cmp(&other.allow_level))
+    }
+}
+
+impl PartialOrd for AccessPolicyKey {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl ModelKey<AccessPolicyKey> for AccessPolicy {
     fn key(&self) -> AccessPolicyKey {
         AccessPolicyKey {
-            allow: self.allow.clone().into(),
+            allow_level: self.allow.clone().into(),
             resource: self.resource.clone(),
         }
     }
@@ -59,11 +62,7 @@ impl AccessPolicy {
     ///
     /// The id is generated automatically.
     pub fn new(allow: Allow, resource: Resource) -> Self {
-        Self {
-            id: *Uuid::new_v4().as_bytes(),
-            allow,
-            resource,
-        }
+        Self { allow, resource }
     }
 }
 
@@ -78,20 +77,20 @@ pub enum Allow {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AllowKey {
+pub enum AllowLevel {
     Any = 1,
     Authenticated = 2,
     Users = 3,
     UserGroups = 4,
 }
 
-impl From<Allow> for AllowKey {
+impl From<Allow> for AllowLevel {
     fn from(allow: Allow) -> Self {
         match allow {
-            Allow::Any => AllowKey::Any,
-            Allow::Authenticated => AllowKey::Authenticated,
-            Allow::Users(_) => AllowKey::Users,
-            Allow::UserGroups(_) => AllowKey::UserGroups,
+            Allow::Any => AllowLevel::Any,
+            Allow::Authenticated => AllowLevel::Authenticated,
+            Allow::Users(_) => AllowLevel::Users,
+            Allow::UserGroups(_) => AllowLevel::UserGroups,
         }
     }
 }
@@ -112,6 +111,26 @@ pub enum Resource {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceTypeId {
+    Any,
+    Resource(ResourceType),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceType {
+    // Account(AccountResourceAction),
+    AddressBook(ResourceActionType),
+    // ChangeCanister(ChangeCanisterResourceAction),
+    // Proposal(ProposalResourceAction),
+    ProposalPolicy(ResourceActionType),
+    // Settings(SettingsResourceAction),
+    // User(UserResourceAction),
+    UserGroup(ResourceActionType),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceAction {
     List,
     Create,
@@ -122,10 +141,20 @@ pub enum ResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceActionType {
+    List = 1,
+    Create = 2,
+    Read = 3,
+    Update = 4,
+    Delete = 5,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AccessPolicyResourceAction {
     List,
-    Read(ResourceId),
-    Edit(ResourceId),
+    Read(ResourceTypeId),
+    Edit(ResourceTypeId),
 }
 
 #[storable]
@@ -223,30 +252,34 @@ impl Resource {
                 AccessPolicyResourceAction::List => {
                     vec![Resource::AccessPolicy(AccessPolicyResourceAction::List)]
                 }
-                AccessPolicyResourceAction::Read(ResourceId::Id(ids)) => {
+                AccessPolicyResourceAction::Read(ResourceTypeId::Resource(rtype)) => {
                     vec![
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceId::Id(
-                            *ids,
-                        ))),
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceId::Any)),
+                        Resource::AccessPolicy(AccessPolicyResourceAction::Read(
+                            ResourceTypeId::Resource(rtype.clone()),
+                        )),
+                        Resource::AccessPolicy(AccessPolicyResourceAction::Read(
+                            ResourceTypeId::Any,
+                        )),
                     ]
                 }
-                AccessPolicyResourceAction::Edit(ResourceId::Id(ids)) => {
+                AccessPolicyResourceAction::Edit(ResourceTypeId::Resource(rtype)) => {
                     vec![
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceId::Id(
-                            *ids,
-                        ))),
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceId::Any)),
+                        Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
+                            ResourceTypeId::Resource(rtype.clone()),
+                        )),
+                        Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
+                            ResourceTypeId::Any,
+                        )),
                     ]
                 }
-                AccessPolicyResourceAction::Read(ResourceId::Any) => {
+                AccessPolicyResourceAction::Read(ResourceTypeId::Any) => {
                     vec![Resource::AccessPolicy(AccessPolicyResourceAction::Read(
-                        ResourceId::Any,
+                        ResourceTypeId::Any,
                     ))]
                 }
-                AccessPolicyResourceAction::Edit(ResourceId::Any) => {
+                AccessPolicyResourceAction::Edit(ResourceTypeId::Any) => {
                     vec![Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
-                        ResourceId::Any,
+                        ResourceTypeId::Any,
                     ))]
                 }
             },
@@ -408,6 +441,15 @@ impl Resource {
             },
         }
     }
+
+    pub fn to_type(&self) -> ResourceType {
+        match self.to_owned() {
+            Resource::AddressBook(action) => ResourceType::AddressBook(action.into()),
+            Resource::ProposalPolicy(action) => ResourceType::ProposalPolicy(action.into()),
+            Resource::UserGroup(action) => ResourceType::UserGroup(action.into()),
+            _ => unimplemented!(),
+        }
+    }
 }
 
 impl AccessPolicy {
@@ -454,11 +496,11 @@ pub mod access_policy_test_utils {
             ),
             6 => AccessPolicy::new(
                 Allow::Any,
-                Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceId::Any)),
+                Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Any)),
             ),
             7 => AccessPolicy::new(
                 Allow::Any,
-                Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceId::Any)),
+                Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Any)),
             ),
             8 => AccessPolicy::new(Allow::Any, Resource::AddressBook(ResourceAction::Create)),
             9 => AccessPolicy::new(

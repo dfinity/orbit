@@ -1,6 +1,5 @@
 use crate::{
     core::middlewares::{authorize, call_context},
-    mappers::HelperMapper,
     models::access_policy::{AccessPolicyResourceAction, Resource},
     services::access_policy::{AccessPolicyService, ACCESS_POLICY_SERVICE},
 };
@@ -50,17 +49,24 @@ impl AccessPolicyController {
         &self,
         input: GetAccessPolicyInput,
     ) -> ApiResult<GetAccessPolicyResponse> {
-        let access_policy = self
+        let ctx = call_context();
+        let policies = self
             .access_policy_service
-            .get_access_policy(HelperMapper::to_uuid(input.id)?.as_bytes())?;
-        let privileges = self
-            .access_policy_service
-            .get_caller_privileges_for_access_policy(&access_policy.id, &call_context())
-            .await?;
+            .get_access_policy(&Resource::from(input.resource))?;
+
+        let mut privileges = Vec::new();
+        for policy in &policies {
+            let privilege = self
+                .access_policy_service
+                .get_caller_privileges_for_access_policy(&policy.resource.to_type(), &ctx)
+                .await?;
+
+            privileges.push(AccessPolicyCallerPrivilegesDTO::from(privilege));
+        }
 
         Ok(GetAccessPolicyResponse {
-            policy: access_policy.into(),
-            privileges: privileges.into(),
+            policies: policies.into_iter().map(|p| p.into()).collect(),
+            privileges,
         })
     }
 
@@ -86,7 +92,7 @@ impl AccessPolicyController {
         for policy in &result.items {
             let privilege = self
                 .access_policy_service
-                .get_caller_privileges_for_access_policy(&policy.id, &ctx)
+                .get_caller_privileges_for_access_policy(&policy.resource.to_type(), &ctx)
                 .await?;
 
             privileges.push(AccessPolicyCallerPrivilegesDTO::from(privilege));

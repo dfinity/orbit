@@ -138,224 +138,97 @@ impl ProposalPolicyService {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::{
-//         core::ic_cdk::api::id as self_canister_id,
-//         models::{
-//             access_control::{
-//                 access_control_test_utils::mock_access_policy, ProposalActionSpecifier,
-//                 ResourceSpecifier, UserSpecifier,
-//             },
-//             criteria::Criteria,
-//             proposal_policy_test_utils::mock_proposal_policy,
-//             specifier::ProposalSpecifier,
-//             user_group_test_utils::mock_user_group,
-//             user_test_utils::mock_user,
-//         },
-//         repositories::{USER_GROUP_REPOSITORY, USER_REPOSITORY},
-//     };
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::ic_cdk::api::id as self_canister_id,
+        models::{
+            criteria::Criteria, proposal_policy_test_utils::mock_proposal_policy,
+            specifier::ProposalSpecifier,
+        },
+    };
 
-//     #[tokio::test]
-//     async fn test_proposal_policy_operations() {
-//         let service = POLICY_SERVICE.clone();
-//         let policy = service
-//             .add_proposal_policy(AddProposalPolicyOperationInput {
-//                 specifier: ProposalSpecifier::AddAccount,
-//                 criteria: Criteria::AutoAdopted,
-//             })
-//             .await;
+    #[tokio::test]
+    async fn test_proposal_policy_operations() {
+        let service = PROPOSAL_POLICY_SERVICE.clone();
+        let policy = service
+            .add_proposal_policy(AddProposalPolicyOperationInput {
+                specifier: ProposalSpecifier::AddAccount,
+                criteria: Criteria::AutoAdopted,
+            })
+            .await;
 
-//         assert!(policy.is_ok());
+        assert!(policy.is_ok());
 
-//         let policy = policy.unwrap();
-//         let fetched_policy = service.get_proposal_policy(&policy.id).unwrap();
+        let policy = policy.unwrap();
+        let fetched_policy = service.get_proposal_policy(&policy.id).unwrap();
 
-//         assert_eq!(fetched_policy.specifier, policy.specifier);
-//         assert_eq!(fetched_policy.criteria, policy.criteria);
+        assert_eq!(fetched_policy.specifier, policy.specifier);
+        assert_eq!(fetched_policy.criteria, policy.criteria);
 
-//         let policy = service
-//             .edit_proposal_policy(EditProposalPolicyOperationInput {
-//                 policy_id: policy.id,
-//                 specifier: Some(ProposalSpecifier::AddAccount),
-//                 criteria: Some(Criteria::AutoAdopted),
-//             })
-//             .await;
+        let policy = service
+            .edit_proposal_policy(EditProposalPolicyOperationInput {
+                policy_id: policy.id,
+                specifier: Some(ProposalSpecifier::AddAccount),
+                criteria: Some(Criteria::AutoAdopted),
+            })
+            .await;
 
-//         assert!(policy.is_ok());
+        assert!(policy.is_ok());
 
-//         let policy = policy.unwrap();
-//         let updated_policy = service.get_proposal_policy(&policy.id).unwrap();
+        let policy = policy.unwrap();
+        let updated_policy = service.get_proposal_policy(&policy.id).unwrap();
 
-//         assert_eq!(updated_policy.specifier, policy.specifier);
-//         assert_eq!(updated_policy.criteria, policy.criteria);
-//     }
+        assert_eq!(updated_policy.specifier, policy.specifier);
+        assert_eq!(updated_policy.criteria, policy.criteria);
+    }
 
-//     #[tokio::test]
-//     async fn test_access_policy_operations() {
-//         let service = POLICY_SERVICE.clone();
-//         let policy = service
-//             .add_access_policy(AddAccessPolicyOperationInput {
-//                 user: UserSpecifier::Any,
-//                 resource: ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
-//             })
-//             .await;
+    #[test]
+    fn test_get_proposal_policy_not_found() {
+        let service = PROPOSAL_POLICY_SERVICE.clone();
+        let result = service.get_proposal_policy(&[1; 16]);
 
-//         assert!(policy.is_ok());
+        assert!(result.is_err());
+    }
 
-//         let policy = policy.unwrap();
-//         let fetched_policy = service.get_access_policy(&policy.id).unwrap();
+    #[tokio::test]
+    async fn list_proposal_policies_should_use_offset_and_limit() {
+        for i in 0..50 {
+            let mut policy = mock_proposal_policy();
+            policy.id = [i; 16];
+            policy.specifier = ProposalSpecifier::AddAccount;
+            PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.to_owned());
+        }
 
-//         assert_eq!(fetched_policy.user, policy.user);
-//         assert_eq!(fetched_policy.resource, policy.resource);
+        let input = ListProposalPoliciesInput {
+            offset: Some(15),
+            limit: Some(30),
+        };
 
-//         let policy = service
-//             .edit_access_policy(EditAccessPolicyOperationInput {
-//                 policy_id: policy.id,
-//                 user: Some(UserSpecifier::Id(vec![[1; 16]])),
-//                 resource: Some(ResourceSpecifier::Proposal(ProposalActionSpecifier::List)),
-//             })
-//             .await;
+        let result = PROPOSAL_POLICY_SERVICE
+            .list_proposal_policies(input, &CallContext::new(self_canister_id()))
+            .await
+            .unwrap();
+        assert_eq!(result.items.len(), 30);
+        assert_eq!(result.next_offset, Some(45));
+    }
 
-//         assert!(policy.is_ok());
+    #[tokio::test]
+    async fn test_remove_proposal_policy() {
+        let service = PROPOSAL_POLICY_SERVICE.clone();
+        let policy = service
+            .add_proposal_policy(AddProposalPolicyOperationInput {
+                specifier: ProposalSpecifier::AddAccount,
+                criteria: Criteria::AutoAdopted,
+            })
+            .await
+            .unwrap();
 
-//         let policy = policy.unwrap();
-//         let updated_policy = service.get_access_policy(&policy.id).unwrap();
+        assert!(service.get_proposal_policy(&policy.id).is_ok());
 
-//         assert_eq!(updated_policy.user, policy.user);
-//         assert_eq!(updated_policy.resource, policy.resource);
-//     }
+        service.remove_proposal_policy(&policy.id).await.unwrap();
 
-//     #[test]
-//     fn test_get_proposal_policy_not_found() {
-//         let service = POLICY_SERVICE.clone();
-//         let result = service.get_proposal_policy(&[1; 16]);
-
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_get_access_policy_not_found() {
-//         let service = POLICY_SERVICE.clone();
-//         let result = service.get_access_policy(&[1; 16]);
-
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn get_access_policy_dependencies_finds_users() {
-//         let service = POLICY_SERVICE.clone();
-//         let mut policy = mock_access_policy();
-//         policy.user = UserSpecifier::Id(vec![[1; 16]]);
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
-//         let mut user = mock_user();
-//         user.id = [1; 16];
-//         USER_REPOSITORY.insert(user.to_key(), user.to_owned());
-
-//         let result = service
-//             .get_access_policies_dependencies(&vec![policy.to_owned()])
-//             .unwrap();
-
-//         assert_eq!(result.users.len(), 1);
-//         assert_eq!(result.groups.len(), 0);
-//     }
-
-//     #[test]
-//     fn get_access_policy_dependencies_finds_groups() {
-//         let service = POLICY_SERVICE.clone();
-//         let mut policy = mock_access_policy();
-//         policy.user = UserSpecifier::Group(vec![[1; 16]]);
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
-//         let mut group = mock_user_group();
-//         group.id = [1; 16];
-//         USER_GROUP_REPOSITORY.insert(group.id, group.to_owned());
-
-//         let result = service
-//             .get_access_policies_dependencies(&vec![policy.to_owned()])
-//             .unwrap();
-
-//         assert_eq!(result.users.len(), 0);
-//         assert_eq!(result.groups.len(), 1);
-//     }
-
-//     #[tokio::test]
-//     async fn list_access_policies_should_use_offset_and_limit() {
-//         for i in 0..50 {
-//             let mut policy = mock_access_policy();
-//             policy.id = [i; 16];
-//             policy.user = UserSpecifier::Id(vec![[i; 16]]);
-//             ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
-//         }
-
-//         let input = ListAccessPoliciesInput {
-//             offset: Some(15),
-//             limit: Some(30),
-//         };
-
-//         let result = POLICY_SERVICE
-//             .list_access_policies(input, &CallContext::new(self_canister_id()))
-//             .await
-//             .unwrap();
-//         assert_eq!(result.items.len(), 30);
-//         assert_eq!(result.next_offset, Some(45));
-//     }
-
-//     #[tokio::test]
-//     async fn list_proposal_policies_should_use_offset_and_limit() {
-//         for i in 0..50 {
-//             let mut policy = mock_proposal_policy();
-//             policy.id = [i; 16];
-//             policy.specifier = ProposalSpecifier::AddAccount;
-//             PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.to_owned());
-//         }
-
-//         let input = ListProposalPoliciesInput {
-//             offset: Some(15),
-//             limit: Some(30),
-//         };
-
-//         let result = POLICY_SERVICE
-//             .list_proposal_policies(input, &CallContext::new(self_canister_id()))
-//             .await
-//             .unwrap();
-//         assert_eq!(result.items.len(), 30);
-//         assert_eq!(result.next_offset, Some(45));
-//     }
-
-//     #[tokio::test]
-//     async fn test_remove_access_policy() {
-//         let service = POLICY_SERVICE.clone();
-//         let policy = service
-//             .add_access_policy(AddAccessPolicyOperationInput {
-//                 user: UserSpecifier::Any,
-//                 resource: ResourceSpecifier::Proposal(ProposalActionSpecifier::List),
-//             })
-//             .await
-//             .unwrap();
-
-//         assert!(service.get_access_policy(&policy.id).is_ok());
-
-//         service.remove_access_policy(&policy.id).await.unwrap();
-
-//         assert!(service.get_access_policy(&policy.id).is_err());
-//     }
-
-//     #[tokio::test]
-//     async fn test_remove_proposal_policy() {
-//         let service = POLICY_SERVICE.clone();
-//         let policy = service
-//             .add_proposal_policy(AddProposalPolicyOperationInput {
-//                 specifier: ProposalSpecifier::AddAccount,
-//                 criteria: Criteria::AutoAdopted,
-//             })
-//             .await
-//             .unwrap();
-
-//         assert!(service.get_proposal_policy(&policy.id).is_ok());
-
-//         service.remove_proposal_policy(&policy.id).await.unwrap();
-
-//         assert!(service.get_proposal_policy(&policy.id).is_err());
-//     }
-// }
+        assert!(service.get_proposal_policy(&policy.id).is_err());
+    }
+}

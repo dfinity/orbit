@@ -1,7 +1,7 @@
 use super::HelperMapper;
 use crate::models::{
     criteria::{Criteria, Percentage},
-    specifier::{CommonSpecifier, ProposalSpecifier, UserSpecifier},
+    specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
     ProposalPolicy, ProposalPolicyCallerPrivileges,
 };
 use uuid::Uuid;
@@ -143,6 +143,28 @@ impl From<wallet_api::CommonSpecifierDTO> for CommonSpecifier {
                     })
                     .collect(),
             ),
+        }
+    }
+}
+
+impl From<wallet_api::ResourceSpecifierDTO> for ResourceSpecifier {
+    fn from(dto: wallet_api::ResourceSpecifierDTO) -> Self {
+        match dto {
+            wallet_api::ResourceSpecifierDTO::Any => ResourceSpecifier::Any,
+            wallet_api::ResourceSpecifierDTO::Resource(resource) => {
+                ResourceSpecifier::Resource(resource.into())
+            }
+        }
+    }
+}
+
+impl From<ResourceSpecifier> for wallet_api::ResourceSpecifierDTO {
+    fn from(specifier: ResourceSpecifier) -> Self {
+        match specifier {
+            ResourceSpecifier::Any => wallet_api::ResourceSpecifierDTO::Any,
+            ResourceSpecifier::Resource(resource) => {
+                wallet_api::ResourceSpecifierDTO::Resource(resource.into())
+            }
         }
     }
 }

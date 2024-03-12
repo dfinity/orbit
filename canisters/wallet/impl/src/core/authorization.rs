@@ -3,8 +3,9 @@ use crate::{
     errors::AuthorizationError,
     models::{
         access_policy::{
-            AccountResourceAction, AllowKey, ChangeCanisterResourceAction, ProposalResourceAction,
-            Resource, ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
+            AccountResourceAction, AllowLevel, ChangeCanisterResourceAction,
+            ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
+            UserResourceAction,
         },
         Account, User, UserStatus, ADMIN_GROUP_ID,
     },
@@ -30,7 +31,8 @@ impl Authorization {
 
         // Checks if the resource is public, if so, then the access is granted.
         if resources.iter().any(|resource| {
-            ACCESS_POLICY_REPOSITORY.exists_by_resource_and_allowed_type(&resource, &AllowKey::Any)
+            ACCESS_POLICY_REPOSITORY
+                .exists_by_resource_and_allow_level(resource.clone(), AllowLevel::Any)
         }) {
             return true;
         }
@@ -43,7 +45,7 @@ impl Authorization {
         // If the resource is available to authenticated users, then the access is granted.
         if resources.iter().any(|resource| {
             ACCESS_POLICY_REPOSITORY
-                .exists_by_resource_and_allowed_type(&resource, &AllowKey::Authenticated)
+                .exists_by_resource_and_allow_level(resource.clone(), AllowLevel::Authenticated)
         }) {
             return true;
         }
@@ -53,7 +55,7 @@ impl Authorization {
         // Validades if the user has access to the resource based on the default rules (non-policy based).
         if resources
             .iter()
-            .any(|resource| has_default_resource_access(&user, &resource))
+            .any(|resource| has_default_resource_access(&user, resource))
         {
             return true;
         }
@@ -71,9 +73,9 @@ impl Authorization {
 fn is_user_group_allowed(user: &User, resource: &Vec<Resource>) -> bool {
     for resource in resource {
         if let Some(policy) = ACCESS_POLICY_REPOSITORY
-            .find_by_resource_and_allowed_type(&resource, &AllowKey::UserGroups)
+            .find_by_resource_and_allow_level(resource.clone(), AllowLevel::UserGroups)
         {
-            if policy.is_allowed(&user) {
+            if policy.is_allowed(user) {
                 return true;
             }
         }
@@ -86,10 +88,10 @@ fn is_user_group_allowed(user: &User, resource: &Vec<Resource>) -> bool {
 /// specific user id associated with the resource access policy.
 fn is_user_allowed(user: &User, resource: &Vec<Resource>) -> bool {
     for resource in resource {
-        if let Some(policy) =
-            ACCESS_POLICY_REPOSITORY.find_by_resource_and_allowed_type(&resource, &AllowKey::Users)
+        if let Some(policy) = ACCESS_POLICY_REPOSITORY
+            .find_by_resource_and_allow_level(resource.clone(), AllowLevel::Users)
         {
-            if policy.is_allowed(&user) {
+            if policy.is_allowed(user) {
                 return true;
             }
         }

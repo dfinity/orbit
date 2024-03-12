@@ -1,3 +1,4 @@
+use super::access_policy::Resource;
 use super::{Account, MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
 use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};
@@ -30,6 +31,13 @@ pub enum UserSpecifier {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceSpecifier {
+    Any,
+    Resource(Resource),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalSpecifier {
     AddAccount,
     AddUser,
@@ -40,7 +48,7 @@ pub enum ProposalSpecifier {
     RemoveAddressBookEntry(CommonSpecifier),
     Transfer(AccountSpecifier),
     ChangeCanister,
-    EditAccessPolicy(CommonSpecifier),
+    EditAccessPolicy(ResourceSpecifier),
     AddProposalPolicy,
     EditProposalPolicy(CommonSpecifier),
     RemoveProposalPolicy(CommonSpecifier),
@@ -223,9 +231,10 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             (
                 ProposalOperation::EditAccessPolicy(operation),
                 ProposalSpecifier::EditAccessPolicy(specifier),
-            ) => {
-                todo!()
-            }
+            ) => match specifier {
+                ResourceSpecifier::Any => true,
+                ResourceSpecifier::Resource(resource) => resource == operation.input.resource,
+            },
             (ProposalOperation::AddProposalPolicy(_), ProposalSpecifier::AddProposalPolicy) => true,
             (
                 ProposalOperation::EditProposalPolicy(operation),

@@ -1,5 +1,5 @@
 use super::{
-    access_policy::{Allow, AllowKey, Resource},
+    access_policy::{Allow, AllowLevel, Resource},
     criteria::Criteria,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
@@ -231,7 +231,7 @@ pub struct ChangeCanisterOperation {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceAccess {
-    Deny(AllowKey),
+    Deny(AllowLevel),
     Allow(Allow),
 }
 
@@ -245,7 +245,6 @@ pub struct EditAccessPolicyOperationInput {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccessPolicyOperation {
-    pub policy_id: Option<UUID>,
     pub input: EditAccessPolicyOperationInput,
 }
 
