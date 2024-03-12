@@ -163,399 +163,261 @@ pub async fn evaluate_caller_access(
     Ok(())
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::models::{
-//         access_control::{
-//             access_control_test_utils::mock_access_policy, AddressBookActionSpecifier,
-//         },
-//         account_test_utils::{self},
-//         user_group_test_utils,
-//         user_test_utils::{self, mock_user},
-//         UserGroup, ADMIN_GROUP_ID,
-//     };
-//     use candid::Principal;
-//     use ic_canister_core::repository::Repository;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{
+        access_policy::{AccessPolicy, Allow},
+        account_test_utils, user_group_test_utils,
+        user_test_utils::{self, mock_user},
+        UserGroup, ADMIN_GROUP_ID,
+    };
+    use candid::Principal;
+    use ic_canister_core::{model::ModelKey, repository::Repository};
 
-//     struct TestContext {
-//         admin_user_group: UserGroup,
-//         finance_user_group: UserGroup,
-//         finance_user: User,
-//         hr_user: User,
-//     }
+    struct TestContext {
+        finance_user_group: UserGroup,
+        finance_user: User,
+    }
 
-//     fn setup() -> TestContext {
-//         let admin_user_group = UserGroup {
-//             id: *ADMIN_GROUP_ID,
-//             name: "Admin".to_string(),
-//             last_modification_timestamp: 0,
-//         };
-//         let finance_user_group = user_group_test_utils::add_group("finance");
-//         let hr_user_group = user_group_test_utils::add_group("hr");
-//         let mut admin_user = mock_user();
-//         admin_user.id = [0; 16];
-//         admin_user.identities = vec![Principal::from_slice(&[1; 29])];
-//         admin_user.groups = vec![admin_user_group.id];
-//         let mut finance_user = mock_user();
-//         finance_user.id = [2; 16];
-//         finance_user.identities = vec![Principal::from_slice(&[2; 29])];
-//         finance_user.groups = vec![finance_user_group.id];
-//         let mut hr_user = mock_user();
-//         hr_user.id = [3; 16];
-//         hr_user.identities = vec![Principal::from_slice(&[3; 29])];
-//         hr_user.groups = vec![hr_user_group.id];
+    fn setup() -> TestContext {
+        let admin_user_group = UserGroup {
+            id: *ADMIN_GROUP_ID,
+            name: "Admin".to_string(),
+            last_modification_timestamp: 0,
+        };
+        let finance_user_group = user_group_test_utils::add_group("finance");
+        let hr_user_group = user_group_test_utils::add_group("hr");
+        let mut admin_user = mock_user();
+        admin_user.id = [0; 16];
+        admin_user.identities = vec![Principal::from_slice(&[1; 29])];
+        admin_user.groups = vec![admin_user_group.id];
+        let mut finance_user = mock_user();
+        finance_user.id = [2; 16];
+        finance_user.identities = vec![Principal::from_slice(&[2; 29])];
+        finance_user.groups = vec![finance_user_group.id];
+        let mut hr_user = mock_user();
+        hr_user.id = [3; 16];
+        hr_user.identities = vec![Principal::from_slice(&[3; 29])];
+        hr_user.groups = vec![hr_user_group.id];
 
-//         USER_REPOSITORY.insert(admin_user.to_key(), admin_user.to_owned());
-//         USER_REPOSITORY.insert(finance_user.to_key(), finance_user.to_owned());
-//         USER_REPOSITORY.insert(hr_user.to_key(), hr_user.to_owned());
+        USER_REPOSITORY.insert(admin_user.to_key(), admin_user.to_owned());
+        USER_REPOSITORY.insert(finance_user.to_key(), finance_user.to_owned());
+        USER_REPOSITORY.insert(hr_user.to_key(), hr_user.to_owned());
 
-//         TestContext {
-//             admin_user_group,
-//             finance_user_group,
-//             finance_user,
-//             hr_user,
-//         }
-//     }
+        TestContext {
+            finance_user_group,
+            finance_user,
+        }
+    }
 
-//     #[tokio::test]
-//     async fn inactive_user_has_no_access() {
-//         let mut test_context = setup();
-//         let mut policy = mock_access_policy();
-//         policy.id = [10; 16];
-//         policy.user = UserSpecifier::Id(vec![test_context.finance_user.id]);
-//         policy.resource = ResourceSpecifier::Common(
-//             ResourceType::Account,
-//             CommonActionSpecifier::Read(CommonSpecifier::Any),
-//         );
+    #[tokio::test]
+    async fn inactive_user_has_no_access() {
+        let mut test_context = setup();
+        let policy = AccessPolicy::new(
+            Allow::Users(vec![test_context.finance_user.id]),
+            Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
+        );
 
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
 
-//         let ctx = CallContext::new(test_context.finance_user.identities[0]);
+        let ctx = CallContext::new(test_context.finance_user.identities[0]);
 
-//         assert!(evaluate_caller_access(
-//             &ctx,
-//             &ResourceSpecifier::Common(
-//                 ResourceType::Account,
-//                 CommonActionSpecifier::Read(CommonSpecifier::Any),
-//             ),
-//         )
-//         .await
-//         .is_ok());
+        assert!(Authorization::is_allowed(
+            &ctx,
+            &Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
+        ));
 
-//         test_context.finance_user.status = UserStatus::Inactive;
+        test_context.finance_user.status = UserStatus::Inactive;
 
-//         USER_REPOSITORY.insert(
-//             test_context.finance_user.to_key(),
-//             test_context.finance_user.clone(),
-//         );
+        USER_REPOSITORY.insert(
+            test_context.finance_user.to_key(),
+            test_context.finance_user.clone(),
+        );
 
-//         assert!(evaluate_caller_access(
-//             &ctx,
-//             &ResourceSpecifier::Common(
-//                 ResourceType::Account,
-//                 CommonActionSpecifier::Read(CommonSpecifier::Any),
-//             ),
-//         )
-//         .await
-//         .is_err());
-//     }
+        assert!(!Authorization::is_allowed(
+            &ctx,
+            &Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
+        ));
+    }
 
-//     #[tokio::test]
-//     async fn fail_user_has_access_to_admin_resource() {
-//         let mut admin_access = mock_access_policy();
-//         admin_access.user = UserSpecifier::Group(vec![*ADMIN_GROUP_ID]);
-//         admin_access.resource = ResourceSpecifier::Common(
-//             ResourceType::AddressBook,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//         );
+    #[tokio::test]
+    async fn fail_user_has_access_to_admin_resource() {
+        let admin_access = AccessPolicy::new(
+            Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
+            Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         ACCESS_CONTROL_REPOSITORY.insert(admin_access.id, admin_access.to_owned());
+        ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
-//         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-//         let mut user = mock_user();
-//         user.identities = vec![caller];
-//         user.groups = vec![];
+        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let mut user = mock_user();
+        user.identities = vec![caller];
+        user.groups = vec![];
 
-//         USER_REPOSITORY.insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-//         let ctx = CallContext::new(caller);
-//         let has_access = evaluate_caller_access(
-//             &ctx,
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             ),
-//         )
-//         .await;
+        let ctx = CallContext::new(caller);
+        let has_access = Authorization::is_allowed(
+            &ctx,
+            &Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         assert!(has_access.is_err());
-//     }
+        assert!(!has_access);
+    }
 
-//     #[tokio::test]
-//     async fn admin_user_has_access_to_admin_resource() {
-//         let mut admin_access = mock_access_policy();
-//         admin_access.user = UserSpecifier::Group(vec![*ADMIN_GROUP_ID]);
-//         admin_access.resource = ResourceSpecifier::Common(
-//             ResourceType::AddressBook,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//         );
+    #[tokio::test]
+    async fn admin_user_has_access_to_admin_resource() {
+        let admin_access = AccessPolicy::new(
+            Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
+            Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         ACCESS_CONTROL_REPOSITORY.insert(admin_access.id, admin_access.to_owned());
+        ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
-//         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-//         let mut user = mock_user();
-//         user.identities = vec![caller];
-//         user.groups = vec![*ADMIN_GROUP_ID];
+        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let mut user = mock_user();
+        user.identities = vec![caller];
+        user.groups = vec![*ADMIN_GROUP_ID];
 
-//         USER_REPOSITORY.insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-//         let ctx = CallContext::new(caller);
-//         let has_access = evaluate_caller_access(
-//             &ctx,
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             ),
-//         )
-//         .await;
+        let ctx = CallContext::new(caller);
+        let has_access = Authorization::is_allowed(
+            &ctx,
+            &Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         assert!(has_access.is_ok());
-//     }
+        assert!(has_access);
+    }
 
-//     #[tokio::test]
-//     async fn user_has_access_to_admin_resource() {
-//         let mut admin_access = mock_access_policy();
-//         admin_access.user = UserSpecifier::Group(vec![*ADMIN_GROUP_ID]);
-//         admin_access.resource = ResourceSpecifier::Common(
-//             ResourceType::AddressBook,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//         );
+    #[tokio::test]
+    async fn user_has_access_to_admin_resource() {
+        let admin_access = AccessPolicy::new(
+            Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
+            Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         ACCESS_CONTROL_REPOSITORY.insert(admin_access.id, admin_access.to_owned());
+        ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
-//         let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
-//         let mut user = mock_user();
-//         user.identities = vec![caller];
-//         user.groups = vec![*ADMIN_GROUP_ID];
+        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let mut user = mock_user();
+        user.identities = vec![caller];
+        user.groups = vec![*ADMIN_GROUP_ID];
 
-//         USER_REPOSITORY.insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-//         let ctx = CallContext::new(caller);
-//         let has_access = evaluate_caller_access(
-//             &ctx,
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             ),
-//         )
-//         .await;
+        let ctx = CallContext::new(caller);
+        let has_access = Authorization::is_allowed(
+            &ctx,
+            &Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         assert!(has_access.is_ok());
-//     }
+        assert!(has_access);
+    }
 
-//     #[tokio::test]
-//     async fn group_with_read_access_should_not_have_other_access() {
-//         let test_context = setup();
+    #[tokio::test]
+    async fn group_with_read_access_should_not_have_other_access() {
+        let test_context = setup();
 
-//         // add finance read access to address book
-//         let mut policy = mock_access_policy();
-//         policy.id = [10; 16];
-//         policy.user = UserSpecifier::Group(vec![test_context.finance_user_group.id]);
-//         policy.resource = ResourceSpecifier::Common(
-//             ResourceType::AddressBook,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//         );
+        // add finance read access to address book
+        let policy = AccessPolicy::new(
+            Allow::UserGroups(vec![test_context.finance_user_group.id]),
+            Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+        );
 
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
 
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Update(CommonSpecifier::Any),
-//             )
-//         )
-//         .await
-//         .is_err());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Delete(CommonSpecifier::Any),
-//             )
-//         )
-//         .await
-//         .is_err());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::AddressBook,
-//                 AddressBookActionSpecifier::Create,
-//             )
-//         )
-//         .await
-//         .is_err());
-//     }
+        assert!(Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::AddressBook(ResourceAction::Read(ResourceId::Any))
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::AddressBook(ResourceAction::Update(ResourceId::Any))
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::AddressBook(ResourceAction::Create)
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::AddressBook(ResourceAction::Delete(ResourceId::Any))
+        ));
+    }
 
-//     #[tokio::test]
-//     async fn group_has_access_to_resource_by_id() {
-//         let test_context = setup();
+    #[tokio::test]
+    async fn group_has_access_to_resource_by_id() {
+        let test_context = setup();
+        let policy = AccessPolicy::new(
+            Allow::UserGroups(vec![test_context.finance_user_group.id]),
+            Resource::Account(AccountResourceAction::Read(ResourceId::Id([1; 16]))),
+        );
 
-//         // group should have acess
-//         let mut policy = mock_access_policy();
-//         policy.id = [10; 16];
-//         policy.user = UserSpecifier::Group(vec![test_context.finance_user_group.id]);
-//         policy.resource = ResourceSpecifier::Common(
-//             ResourceType::Account,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
-//         );
+        account_test_utils::add_account(&[1; 16]);
+        account_test_utils::add_account(&[2; 16]);
 
-//         account_test_utils::add_account(&[1; 16]);
-//         account_test_utils::add_account(&[2; 16]);
+        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
 
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        assert!(Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::Account(AccountResourceAction::Read(ResourceId::Id([1; 16])))
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::Account(AccountResourceAction::Read(ResourceId::Id([2; 16])))
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(test_context.finance_user.identities[0]),
+            &Resource::Account(AccountResourceAction::Read(ResourceId::Any))
+        ));
+    }
 
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::Account,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16],])),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::Account,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[2; 16],])),
-//             )
-//         )
-//         .await
-//         .is_err());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.finance_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::Account,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             )
-//         )
-//         .await
-//         .is_err());
-//     }
+    #[tokio::test]
+    async fn user_has_access_to_resource_by_id() {
+        let user = user_test_utils::add_user(&[1; 16]);
+        let policy = AccessPolicy::new(
+            Allow::Users(vec![user.id]),
+            Resource::User(UserResourceAction::Read(ResourceId::Id([1; 16]))),
+        );
 
-//     #[tokio::test]
-//     async fn user_has_access_to_resource_by_id() {
-//         let test_context = setup();
+        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
 
-//         // group should have acess
-//         let mut policy = mock_access_policy();
-//         policy.id = [10; 16];
-//         policy.user = UserSpecifier::Id(vec![test_context.hr_user.id]);
-//         policy.resource = ResourceSpecifier::Common(
-//             ResourceType::User,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
-//         );
+        assert!(Authorization::is_allowed(
+            &CallContext::new(user.identities[0]),
+            &Resource::User(UserResourceAction::Read(ResourceId::Id([1; 16])))
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(user.identities[0]),
+            &Resource::User(UserResourceAction::Read(ResourceId::Id([2; 16])))
+        ));
+        assert!(!Authorization::is_allowed(
+            &CallContext::new(user.identities[0]),
+            &Resource::User(UserResourceAction::Read(ResourceId::Any))
+        ));
+    }
 
-//         user_test_utils::add_user(&[1; 16]);
-//         user_test_utils::add_user(&[2; 16]);
+    #[tokio::test]
+    async fn user_has_access_to_any() {
+        let user = user_test_utils::add_user(&[1; 16]);
+        let policy = AccessPolicy::new(
+            Allow::Users(vec![user.id]),
+            Resource::User(UserResourceAction::Read(ResourceId::Any)),
+        );
 
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
 
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[2; 16]])),
-//             )
-//         )
-//         .await
-//         .is_err());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             )
-//         )
-//         .await
-//         .is_err());
-//     }
-
-//     #[tokio::test]
-//     async fn user_has_access_to_any() {
-//         let test_context = setup();
-
-//         // group should have acess
-//         let mut policy = mock_access_policy();
-//         policy.id = [10; 16];
-//         policy.user = UserSpecifier::Id(vec![test_context.hr_user.id]);
-//         policy.resource = ResourceSpecifier::Common(
-//             ResourceType::User,
-//             AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//         );
-
-//         user_test_utils::add_user(&[1; 16]);
-//         user_test_utils::add_user(&[2; 16]);
-
-//         ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
-
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[1; 16]])),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Id(vec![[2; 16]])),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Group(vec![
-//                     test_context.admin_user_group.id
-//                 ])),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//         assert!(evaluate_caller_access(
-//             &CallContext::new(test_context.hr_user.identities[0]),
-//             &ResourceSpecifier::Common(
-//                 ResourceType::User,
-//                 AddressBookActionSpecifier::Read(CommonSpecifier::Any),
-//             )
-//         )
-//         .await
-//         .is_ok());
-//     }
-// }
+        assert!(Authorization::is_allowed(
+            &CallContext::new(user.identities[0]),
+            &Resource::User(UserResourceAction::Read(ResourceId::Id([1; 16])))
+        ));
+        assert!(Authorization::is_allowed(
+            &CallContext::new(user.identities[0]),
+            &Resource::User(UserResourceAction::Read(ResourceId::Id([2; 16])))
+        ));
+        assert!(Authorization::is_allowed(
+            &CallContext::new(user.identities[0]),
+            &Resource::User(UserResourceAction::Read(ResourceId::Any))
+        ));
+    }
+}
