@@ -120,6 +120,7 @@ impl AccessPolicyService {
         ctx: &CallContext,
     ) -> ServiceResult<AccessPolicyCallerPrivileges> {
         Ok(AccessPolicyCallerPrivileges {
+            resource_type: resource_type.clone(),
             can_edit: Authorization::is_allowed(
                 ctx,
                 &Resource::AccessPolicy(AccessPolicyResourceAction::Edit(

@@ -22,6 +22,7 @@ use wallet_api::ProposalOperationInput;
 impl From<AccessPolicyCallerPrivileges> for wallet_api::AccessPolicyCallerPrivilegesDTO {
     fn from(privileges: AccessPolicyCallerPrivileges) -> Self {
         wallet_api::AccessPolicyCallerPrivilegesDTO {
+            resource_type: privileges.resource_type.into(),
             can_edit: privileges.can_edit,
         }
     }

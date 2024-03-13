@@ -1,15 +1,12 @@
-use std::fmt::{Display, Formatter};
-
 use super::{User, UserGroupId, UserId};
-use candid::CandidType;
 use ic_canister_core::{model::ModelKey, types::UUID};
 use ic_canister_macros::storable;
-use serde::Deserialize;
+use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
-/// The user gorup id, which is a UUID.
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct AccessPolicyCallerPrivileges {
+    pub resource_type: ResourceType,
     pub can_edit: bool,
 }
 

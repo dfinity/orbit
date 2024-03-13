@@ -44,9 +44,7 @@ type ProposalSpecifier = variant {
   EditAddressBookEntry : CommonSpecifier;
   RemoveAddressBookEntry : CommonSpecifier;
   ChangeCanister;
-  AddAccessPolicy;
-  EditAccessPolicy : CommonSpecifier;
-  RemoveAccessPolicy : CommonSpecifier;
+  EditAccessPolicy : ResourceSpecifier;
   AddProposalPolicy;
   EditProposalPolicy : CommonSpecifier;
   RemoveProposalPolicy : CommonSpecifier;
@@ -92,6 +90,11 @@ type UserSpecifier = variant {
 };
 
 type AccountSpecifier = CommonSpecifier;
+
+type ResourceSpecifier = variant {
+  Any;
+  Resource : Resource;
+};
 
 // Defines the various states that a notification can be in.
 type NotificationStatus = variant {
@@ -461,42 +464,16 @@ type ChangeCanisterOperation = record {
   arg_checksum : opt blob;
 };
 
-type AddAccessPolicyOperationInput = record {
-  // The user that will be allowed access to the resource.
-  user : AccessControlUserSpecifier;
-  // The resource that this policy will apply to.
-  resource : ResourceSpecifier;
-};
-
-type AddAccessPolicyOperation = record {
-  // The access policy that was created by the proposal (only available after the proposal is executed).
-  policy_id : opt UUID;
-  // The input to the proposal to add an access policy.
-  input : AddAccessPolicyOperationInput;
-};
-
 type EditAccessPolicyOperationInput = record {
-  // The access policy id that will be edited.
-  policy_id : UUID;
-  // The updated user selector that will be allowed access to the resource.
-  user : opt AccessControlUserSpecifier;
+  // The updated access level that this policy will apply to.
+  access : ResourceAccess;
   // The updated resource that this policy will apply to.
-  resource : opt ResourceSpecifier;
+  resource : Resource;
 };
 
 type EditAccessPolicyOperation = record {
   // The input to the proposal to edit an access policy.
   input : EditAccessPolicyOperationInput;
-};
-
-type RemoveAccessPolicyOperationInput = record {
-  // The access policy id that will be removed.
-  policy_id : UUID;
-};
-
-type RemoveAccessPolicyOperation = record {
-  // The input to the proposal to remove an access policy.
-  input : RemoveAccessPolicyOperationInput;
 };
 
 type AddProposalPolicyOperationInput = record {
@@ -562,12 +539,8 @@ type ProposalOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperation;
-  // An operation for adding an access policy.
-  AddAccessPolicy : AddAccessPolicyOperation;
   // An operation for editing an access policy.
   EditAccessPolicy : EditAccessPolicyOperation;
-  // An operation for removing an access policy.
-  RemoveAccessPolicy : RemoveAccessPolicyOperation;
   // An operation for adding a proposal policy.
   AddProposalPolicy : AddProposalPolicyOperation;
   // An operation for editing a proposal policy.
@@ -601,12 +574,8 @@ type ProposalOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperationInput;
-  // An operation for adding an access policy.
-  AddAccessPolicy : AddAccessPolicyOperationInput;
   // An operation for editing an access policy.
   EditAccessPolicy : EditAccessPolicyOperationInput;
-  // An operation for removing an access policy.
-  RemoveAccessPolicy : RemoveAccessPolicyOperationInput;
   // An operation for adding a proposal policy.
   AddProposalPolicy : AddProposalPolicyOperationInput;
   // An operation for editing a proposal policy.
@@ -640,12 +609,8 @@ type ProposalOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for adding an access policy.
-  AddAccessPolicy;
   // An operation for editing an access policy.
   EditAccessPolicy;
-  // An operation for removing an access policy.
-  RemoveAccessPolicy;
   // An operation for adding a proposal policy.
   AddProposalPolicy;
   // An operation for editing a proposal policy.
@@ -757,12 +722,8 @@ type ListProposalsOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for adding an access policy.
-  AddAccessPolicy;
   // An operation for editing an access policy.
   EditAccessPolicy;
-  // An operation for removing an access policy.
-  RemoveAccessPolicy;
   // An operation for adding a proposal policy.
   AddProposalPolicy;
   // An operation for editing a proposal policy.
@@ -1401,32 +1362,136 @@ type CommonSpecifier = variant {
 // The access control user specifier, used to specify the user that has access to a resource.
 type AccessControlUserSpecifier = CommonSpecifier;
 
-// The common action specifier, used to specify the action that is performed on a resource.
-//
-// Common actions are actions that are supported by most resources (e.g. list, create, read, update, delete).
-type CommonActionSpecifier = variant {
+// The record id of a resource, used to specify the resource that is being accessed.
+type ResourceId = variant {
+  Any;
+  Id : UUID;
+};
+
+// The type of access privileges to enforce for the resource access.
+type ResourceAccess = variant {
+  Deny : AllowLevel;
+  Allow : Allow;
+};
+
+// The users that are allowed to access the resource.
+type Allow = variant {
+  // Any user can access the resource, even if not authenticated.
+  Any;
+  // Only authenticated users can access the resource.
+  Authenticated;
+  // Only the specified users can access the resource.
+  Users : vec UUID;
+  // Only the specified user groups can access the resource.
+  UserGroups : vec UUID;
+};
+
+// The allow level for who can access the resource.
+type AllowLevel = variant {
+  // Any user can access the resource, even if not authenticated.
+  Any;
+  // Only authenticated users can access the resource.
+  Authenticated;
+  // Only specified users can access the resource.
+  Users;
+  // Only specified user groups can access the resource.
+  UserGroups;
+};
+
+// The resource actions, used to specify the action that is performed on a resource.
+type ResourceAction = variant {
   List;
   Create;
-  Read : CommonSpecifier;
-  Update : CommonSpecifier;
-  Delete : CommonSpecifier;
+  Read : ResourceId;
+  Update : ResourceId;
+  Delete : ResourceId;
+};
+
+type ResourceActionType = variant {
+  List;
+  Create;
+  Read;
+  Update;
+  Delete;
+};
+
+// The actions that are available for accounts.
+type AccountResourceAction = variant {
+  List;
+  Create;
+  Transfer : ResourceId;
+  Read : ResourceId;
+  Update : ResourceId;
+};
+
+type AccountResourceActionType = variant {
+  List;
+  Create;
+  Transfer;
+  Read;
+  Update;
 };
 
 // The actions that are available for canister changes.
-type ChangeCanisterActionSpecifier = variant {
+type ChangeCanisterResourceAction = variant {
+  Create;
+};
+
+type ChangeCanisterResourceActionType = variant {
   Create;
 };
 
 // The actions that are available for proposals.
-type ProposalActionSpecifier = variant {
+type ProposalResourceAction = variant {
   List;
-  Read : CommonSpecifier;
+  Read : ResourceId;
+};
+
+type ProposalResourceActionType = variant {
+  List;
+  Read;
 };
 
 // The actions that are available for canister settings.
-type CanisterSettingsActionSpecifier = variant {
+type SettingsResourceAction = variant {
   Read;
   ReadConfig;
+};
+
+type SettingsResourceActionType = SettingsResourceAction;
+
+// The actions that are available for users.
+type UserResourceAction = variant {
+  List;
+  Create;
+  Read : ResourceId;
+  Update : ResourceId;
+};
+
+type UserResourceActionType = variant {
+  List;
+  Create;
+  Read;
+  Update;
+};
+
+// The actions that are available for access policies.
+type AccessPolicyResourceAction = variant {
+  List;
+  Read : ResourceTypeId;
+  Edit : ResourceTypeId;
+};
+
+type AccessPolicyResourceActionType = variant {
+  List;
+  Read;
+  Edit;
+};
+
+// The specific resource types that can be used in the access policies.
+type ResourceTypeId = variant {
+  Any;
+  Resource : ResourceType;
 };
 
 // The specifier for transfers, used to specify the transfer in the context of an account.
@@ -1435,43 +1500,47 @@ type TransferSpecifier = record {
   account : CommonSpecifier;
 };
 
-// The actions that are available for transfers.
-type TransferActionSpecifier = variant {
-  Create : TransferSpecifier;
-  Read : TransferSpecifier;
-  Delete : TransferSpecifier;
+// The access control resource, used to specify the resource that is being accessed.
+type Resource = variant {
+  AccessPolicy : AccessPolicyResourceAction;
+  Account : AccountResourceAction;
+  AddressBook : ResourceAction;
+  ChangeCanister : ChangeCanisterResourceAction;
+  Proposal : ProposalResourceAction;
+  ProposalPolicy : ResourceAction;
+  Settings : SettingsResourceAction;
+  User : UserResourceAction;
+  UserGroup : ResourceAction;
 };
 
-// The access control resource specifier, used to specify the resource that is being accessed.
-type ResourceSpecifier = variant {
-  Transfer : TransferActionSpecifier;
-  ChangeCanister : ChangeCanisterActionSpecifier;
-  CanisterSettings : CanisterSettingsActionSpecifier;
-  Proposal : ProposalActionSpecifier;
-  Account : CommonActionSpecifier;
-  User : CommonActionSpecifier;
-  UserGroup : CommonActionSpecifier;
-  AddressBook : CommonActionSpecifier;
-  AccessPolicy : CommonActionSpecifier;
-  ProposalPolicy : CommonActionSpecifier;
+// The resource type, used to specify the type of the resource that is being accessed.
+type ResourceType = variant {
+  AccessPolicy : AccessPolicyResourceActionType;
+  Account : AccountResourceActionType;
+  AddressBook : ResourceActionType;
+  ChangeCanister : ChangeCanisterResourceActionType;
+  Proposal : ProposalResourceActionType;
+  ProposalPolicy : ResourceActionType;
+  Settings : SettingsResourceActionType;
+  User : UserResourceActionType;
+  UserGroup : ResourceActionType;
 };
 
 // A record type that can be used to represent the caller privileges for a given access policy.
 type AccessPolicyCallerPrivileges = record {
-  // The access policy id.
-  id : UUID;
+  // The resource type that the caller has privileges for.
+  resource_type: ResourceType;
   // Wether or not the caller can edit the resource.
   can_edit : bool;
-  // Wether or not the caller can delete the resource.
-  can_delete : bool;
 };
 
 // The access control policy, used to specify the access control rules for
 // users when interacting with resources.
 type AccessPolicy = record {
-  id : UUID;
-  user : AccessControlUserSpecifier;
-  resource : ResourceSpecifier;
+  // The allowed users and user groups for the resource.
+  allow : Allow;
+  // The resource that the access policy is for.
+  resource : Resource;
 };
 
 // Input type for listing access policies with the given pagination parameters.
@@ -1509,17 +1578,17 @@ type ListAccessPoliciesResult = variant {
 };
 
 type GetAccessPolicyInput = record {
-  // The id of the access policy to retrieve.
-  id : UUID;
+  // The resource to retrive policies for.
+  resource : Resource;
 };
 
 type GetAccessPolicyResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The access policy that was retrieved.
-    policy : AccessPolicy;
+    policies : vec AccessPolicy;
     // The privileges of the caller for the access policy.
-    privileges : AccessPolicyCallerPrivileges;
+    privileges : vec AccessPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
@@ -1612,7 +1681,6 @@ type UserPrivilege = variant {
   ListUserGroups;
   AddUserGroup;
   ListAccessPolicies;
-  AddAccessPolicy;
   ListProposalPolicies;
   AddProposalPolicy;
   ListAddressBookEntries;

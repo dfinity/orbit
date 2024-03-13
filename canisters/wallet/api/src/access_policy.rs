@@ -3,6 +3,7 @@ use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccessPolicyCallerPrivilegesDTO {
+    pub resource_type: ResourceTypeDTO,
     pub can_edit: bool,
 }
 
