@@ -68,6 +68,7 @@ const getDetails = (proposal: Proposal): ProposalDetails => {
   return {
     can_vote: !!privileges?.can_vote,
     proposer_name: info?.proposer_name?.[0] ?? '',
+    voters: info?.voters ?? [],
   };
 };
 </script>

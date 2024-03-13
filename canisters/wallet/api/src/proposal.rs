@@ -5,7 +5,7 @@ use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
     AddAddressBookEntryOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
     AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
-    ChangeCanisterOperationInput, CriteriaDTO, EditAccessPolicyOperationDTO,
+    ChangeCanisterOperationInput, CriteriaDTO, DisplayUserDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
     EditAddressBookEntryOperationInput, EditUserGroupOperationDTO, EditUserGroupOperationInput,
     EditUserOperationDTO, EditUserOperationInput, PaginationInput, ProposalSpecifierDTO,
@@ -142,6 +142,7 @@ pub struct ProposalCallerPrivilegesDTO {
 pub struct ProposalAdditionalInfoDTO {
     pub id: UuidDTO,
     pub proposer_name: Option<String>,
+    pub voters: Vec<DisplayUserDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

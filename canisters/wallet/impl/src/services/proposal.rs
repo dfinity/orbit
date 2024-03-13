@@ -8,7 +8,7 @@ use crate::{
     mappers::HelperMapper,
     models::{
         access_policy::{ProposalResourceAction, Resource, ResourceId},
-        NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
+        DisplayUser, NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalVoteStatus,
     },
     repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
@@ -94,10 +94,27 @@ impl ProposalService {
             .get_user(&proposal.proposed_by)
             .map(|user| user.name)
             .unwrap_or(None);
+        let voters = proposal
+            .votes
+            .iter()
+            .map(|vote| {
+                self.user_service
+                    .get_user(&vote.user_id)
+                    .map(|user| DisplayUser {
+                        name: user.name,
+                        id: user.id,
+                    })
+                    .unwrap_or(DisplayUser {
+                        id: vote.user_id,
+                        name: None,
+                    })
+            })
+            .collect();
 
         Ok(ProposalAdditionalInfo {
             id: proposal.id,
             proposer_name: proposer,
+            voters,
         })
     }
 
@@ -212,11 +229,7 @@ impl ProposalService {
         proposal.validate()?;
 
         if proposal.can_vote(&proposer.id).await {
-            proposal.add_vote(
-                proposer.id,
-                ProposalVoteStatus::Accepted,
-                Some("Proposal automatically approved by the proposer".to_string()),
-            );
+            proposal.add_vote(proposer.id, ProposalVoteStatus::Accepted, None);
         }
 
         // When a proposal is created, it is immediately evaluated to determine its status.

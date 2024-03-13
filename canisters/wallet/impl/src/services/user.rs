@@ -161,16 +161,14 @@ impl UserService {
     }
 
     /// Returns the user privileges from the given user.
-    pub async fn get_user_privileges_by_identity(
+    pub async fn get_caller_privileges(
         &self,
-        user_identity: &Principal,
+        ctx: &CallContext,
     ) -> ServiceResult<Vec<UserPrivilege>> {
         let mut privileges = Vec::new();
+
         for privilege in USER_PRIVILEGES.into_iter() {
-            let is_allowed = Authorization::is_allowed(
-                &CallContext::new(user_identity.to_owned()),
-                &privilege.to_owned().into(),
-            );
+            let is_allowed: bool = Authorization::is_allowed(ctx, &privilege.to_owned().into());
 
             if is_allowed {
                 privileges.push(privilege.to_owned());
@@ -203,6 +201,7 @@ mod tests {
             access_policy::Allow, user_test_utils, EditAccessPolicyOperationInput, ResourceAccess,
             UserStatus,
         },
+        repositories::USER_REPOSITORY,
         services::access_policy::ACCESS_POLICY_SERVICE,
     };
     use wallet_api::PaginationInput;
@@ -355,10 +354,10 @@ mod tests {
 
     #[tokio::test]
     async fn get_user_privileges_by_identity() {
-        let ctx: TestContext = setup();
-        let mut user = user_test_utils::mock_user();
-        user.identities = vec![ctx.call_context.caller()];
-        ctx.repository.insert(user.to_key(), user.clone());
+        let user = user_test_utils::mock_user();
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let ctx = CallContext::new(user.identities[0]);
 
         ACCESS_POLICY_SERVICE
             .edit_access_policy(EditAccessPolicyOperationInput {
@@ -375,11 +374,7 @@ mod tests {
             .await
             .unwrap();
 
-        let privileges = ctx
-            .service
-            .get_user_privileges_by_identity(&user.identities[0])
-            .await
-            .unwrap();
+        let privileges = USER_SERVICE.get_caller_privileges(&ctx).await.unwrap();
 
         assert_eq!(privileges.len(), 2);
         assert!(privileges.contains(&UserPrivilege::ListUsers));

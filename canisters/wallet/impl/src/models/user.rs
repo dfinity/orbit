@@ -42,6 +42,12 @@ pub struct UserCallerPrivileges {
     pub can_edit: bool,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct DisplayUser {
+    pub id: UUID,
+    pub name: Option<String>,
+}
+
 impl User {
     pub const IDENTITIES_RANGE: (u8, u8) = (1, 10);
     pub const MAX_USER_GROUPS: u8 = 25;
@@ -212,7 +218,7 @@ pub mod user_test_utils {
     pub fn mock_user() -> User {
         User {
             id: *Uuid::new_v4().as_bytes(),
-            identities: vec![Principal::anonymous()],
+            identities: vec![Principal::from_slice(&[24; 29])],
             groups: vec![],
             name: None,
             status: UserStatus::Active,
