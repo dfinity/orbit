@@ -33,6 +33,7 @@ fn validate_allow_list_entry_email(entry: &AllowListEntry) -> ModelValidatorResu
             ),
         });
     }
+
     Ok(())
 }
 
@@ -49,6 +50,7 @@ fn validate_allow_list_entry_wallets(
             ),
         });
     }
+
     for existing in entry.existing_wallets.iter() {
         if entry.removed_wallets.contains(existing) {
             return Err(AllowListError::ValidationError {
@@ -59,6 +61,7 @@ fn validate_allow_list_entry_wallets(
             });
         }
     }
+
     if let Some(main_wallet) = entry.main_wallet {
         if !entry.existing_wallets.contains(&main_wallet) {
             return Err(AllowListError::ValidationError {
@@ -69,6 +72,7 @@ fn validate_allow_list_entry_wallets(
             });
         }
     }
+
     Ok(())
 }
 
@@ -200,7 +204,7 @@ mod tests {
                 String::from_utf8(vec![b'j'; AllowListEntry::MAX_EMAIL_LEN_RANGE - 12]).unwrap()
             ),
             existing_wallets: vec![Principal::from_slice(&[1; 29])],
-            removed_wallets: vec![],
+            removed_wallets: vec![Principal::from_slice(&[0; 29])],
             main_wallet: Some(Principal::from_slice(&[0; 29])),
         };
 
