@@ -1,4 +1,5 @@
 use crate::errors::AllowListError;
+use crate::models::UserWallet;
 use candid::Principal;
 use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
 use ic_canister_macros::storable;
@@ -11,7 +12,7 @@ pub struct AllowListEntry {
     /// The e-mail address of the user.
     pub email: String,
     /// The existing wallets of the user.
-    pub existing_wallets: Vec<Principal>,
+    pub existing_wallets: Vec<UserWallet>,
     /// The removed wallets of the user.
     pub removed_wallets: Vec<Principal>,
     /// The main wallet of the user.
@@ -52,18 +53,35 @@ fn validate_allow_list_entry_wallets(
     }
 
     for existing in entry.existing_wallets.iter() {
-        if entry.removed_wallets.contains(existing) {
+        if let Err(e) = existing.validate() {
+            return Err(AllowListError::ValidationError {
+                info: format!("Existing wallet validation failed: {:?}", e,),
+            });
+        }
+    }
+
+    for existing in entry.existing_wallets.iter() {
+        if entry.removed_wallets.contains(&existing.canister_id) {
             return Err(AllowListError::ValidationError {
                 info: format!(
                     "The existing wallet {} is listed among removed wallets.",
-                    existing,
+                    existing
+                        .name
+                        .clone()
+                        .unwrap_or(existing.canister_id.to_string()),
                 ),
             });
         }
     }
 
     if let Some(main_wallet) = entry.main_wallet {
-        if !entry.existing_wallets.contains(&main_wallet) {
+        if !entry
+            .existing_wallets
+            .iter()
+            .map(|w| w.canister_id)
+            .collect::<Vec<_>>()
+            .contains(&main_wallet)
+        {
             return Err(AllowListError::ValidationError {
                 info: format!(
                     "Main wallet {} is not contained among existing wallets.",
@@ -90,14 +108,21 @@ mod tests {
     use super::*;
     use ic_stable_structures::Storable;
 
+    fn user_wallet(canister_id: Principal) -> UserWallet {
+        UserWallet {
+            canister_id,
+            name: None,
+        }
+    }
+
     #[test]
     fn valid_model_serialization() {
         let model = AllowListEntry {
             id: Principal::from_slice(&[u8::MAX; 29]),
             email: "john@example.com".to_string(),
             existing_wallets: vec![
-                Principal::from_slice(&[0; 29]),
-                Principal::from_slice(&[1; 29]),
+                user_wallet(Principal::from_slice(&[0; 29])),
+                user_wallet(Principal::from_slice(&[1; 29])),
             ],
             removed_wallets: vec![
                 Principal::from_slice(&[2; 29]),
@@ -124,11 +149,9 @@ mod tests {
                 "{}@example.com",
                 String::from_utf8(vec![b'j'; AllowListEntry::MAX_EMAIL_LEN_RANGE - 12]).unwrap()
             ),
-            existing_wallets: (0..AllowListEntry::MAX_WALLETS - 1)
-                .map(|i| Principal::from_slice(&[(i + 1) as u8; 29]))
-                .collect(),
-            removed_wallets: vec![Principal::from_slice(&[0; 29])],
-            main_wallet: Some(Principal::from_slice(&[1; 29])),
+            existing_wallets: vec![],
+            removed_wallets: vec![],
+            main_wallet: None,
         };
 
         assert!(validate_allow_list_entry_email(&entry).is_ok());
@@ -145,11 +168,9 @@ mod tests {
                 String::from_utf8(vec![b'j'; AllowListEntry::MAX_EMAIL_LEN_RANGE - 12 + 1])
                     .unwrap()
             ),
-            existing_wallets: (0..AllowListEntry::MAX_WALLETS - 1)
-                .map(|i| Principal::from_slice(&[(i + 1) as u8; 29]))
-                .collect(),
-            removed_wallets: vec![Principal::from_slice(&[0; 29])],
-            main_wallet: Some(Principal::from_slice(&[1; 29])),
+            existing_wallets: vec![],
+            removed_wallets: vec![],
+            main_wallet: None,
         };
 
         assert!(validate_allow_list_entry_email(&entry).is_err());
@@ -158,15 +179,30 @@ mod tests {
     }
 
     #[test]
+    fn invalid_allow_list_entry_user_wallet() {
+        let entry = AllowListEntry {
+            id: Principal::from_slice(&[u8::MAX; 29]),
+            email: "john@example.com".to_string(),
+            existing_wallets: vec![UserWallet {
+                canister_id: Principal::from_slice(&[0; 29]),
+                name: Some("".to_string()),
+            }],
+            removed_wallets: vec![],
+            main_wallet: None,
+        };
+
+        assert!(validate_allow_list_entry_email(&entry).is_ok());
+        assert!(validate_allow_list_entry_wallets(&entry).is_err());
+        assert!(entry.validate().is_err());
+    }
+
+    #[test]
     fn too_many_allow_list_entry_wallets() {
         let entry = AllowListEntry {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: format!(
-                "{}@example.com",
-                String::from_utf8(vec![b'j'; AllowListEntry::MAX_EMAIL_LEN_RANGE - 12]).unwrap()
-            ),
+            email: "john@example.com".to_string(),
             existing_wallets: (0..AllowListEntry::MAX_WALLETS)
-                .map(|i| Principal::from_slice(&[(i + 1) as u8; 29]))
+                .map(|i| user_wallet(Principal::from_slice(&[(i + 1) as u8; 29])))
                 .collect(),
             removed_wallets: vec![Principal::from_slice(&[0; 29])],
             main_wallet: None,
@@ -181,11 +217,8 @@ mod tests {
     fn allow_list_entry_wallets_disjointness() {
         let entry = AllowListEntry {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: format!(
-                "{}@example.com",
-                String::from_utf8(vec![b'j'; AllowListEntry::MAX_EMAIL_LEN_RANGE - 12]).unwrap()
-            ),
-            existing_wallets: vec![Principal::from_slice(&[0; 29])],
+            email: "john@example.com".to_string(),
+            existing_wallets: vec![user_wallet(Principal::from_slice(&[0; 29]))],
             removed_wallets: vec![Principal::from_slice(&[0; 29])],
             main_wallet: None,
         };
@@ -199,11 +232,8 @@ mod tests {
     fn invalid_allow_list_entry_main_wallet() {
         let entry = AllowListEntry {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: format!(
-                "{}@example.com",
-                String::from_utf8(vec![b'j'; AllowListEntry::MAX_EMAIL_LEN_RANGE - 12]).unwrap()
-            ),
-            existing_wallets: vec![Principal::from_slice(&[1; 29])],
+            email: "john@example.com".to_string(),
+            existing_wallets: vec![user_wallet(Principal::from_slice(&[1; 29]))],
             removed_wallets: vec![Principal::from_slice(&[0; 29])],
             main_wallet: Some(Principal::from_slice(&[0; 29])),
         };
