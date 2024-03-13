@@ -44,7 +44,7 @@ impl UserController {
         Self { user_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
         let ctx = call_context();
         let user = self
@@ -61,11 +61,7 @@ impl UserController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::User(UserResourceAction::List)]
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::User(UserResourceAction::List)]))]
     async fn list_users(&self, input: ListUsersInput) -> ApiResult<ListUsersResponse> {
         let ctx = call_context();
         let list = self.user_service.list_users(input, Some(&ctx)).await?;

@@ -100,11 +100,7 @@ impl WalletController {
             });
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::Settings(SettingsResourceAction::ReadConfig)]
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Settings(SettingsResourceAction::ReadConfig)]))]
     async fn get_config(&self) -> ApiResult<GetConfigResponse> {
         let config = self.wallet_service.get_config()?;
 
@@ -113,11 +109,7 @@ impl WalletController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::Settings(SettingsResourceAction::Read)]
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Settings(SettingsResourceAction::Read)]))]
     async fn wallet_settings(&self) -> ApiResult<WalletSettingsResponse> {
         let settings = self.wallet_service.get_wallet_settings()?;
 

@@ -38,7 +38,7 @@ impl UserGroupController {
         Self { user_group_service }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_user_group(&self, input: GetUserGroupInput) -> ApiResult<GetUserGroupResponse> {
         let ctx = call_context();
         let user_group = self
@@ -55,11 +55,7 @@ impl UserGroupController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::UserGroup(ResourceAction::List)]
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::UserGroup(ResourceAction::List)]))]
     async fn list_user_groups(
         &self,
         input: ListUserGroupsInput,

@@ -1,6 +1,6 @@
 use crate::{
     core::middlewares::{authorize, call_context},
-    mappers::HelperMapper,
+    mappers::{access_policy::GetTransfersInputRef, HelperMapper},
     models::access_policy::Resource,
     services::TransferService,
 };
@@ -42,9 +42,7 @@ impl TransferController {
     }
 
     #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::from(access_policy::GetTransfersInputRef(&input))].into()
+        guard = authorize(&call_context(), &GetTransfersInputRef(&input).to_resources())
     )]
     async fn get_transfers(&self, input: GetTransfersInput) -> ApiResult<GetTransfersResponse> {
         let ids: Vec<_> = input
@@ -63,7 +61,7 @@ impl TransferController {
         })
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn list_account_transfers(
         &self,
         input: ListAccountTransfersInput,

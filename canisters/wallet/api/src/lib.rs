@@ -38,8 +38,8 @@ pub use user_group::*;
 mod change_canister;
 pub use change_canister::*;
 
-mod policy;
-pub use policy::*;
+mod proposal_policy;
+pub use proposal_policy::*;
 
 mod access_policy;
 pub use access_policy::*;

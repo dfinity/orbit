@@ -157,8 +157,7 @@ pub async fn evaluate_caller_access(
 
     if !has_access {
         return Err(AuthorizationError::Unauthorized {
-            // todo: add resource name
-            resource: "".to_string(),
+            resource: resource.to_string(),
         });
     }
 

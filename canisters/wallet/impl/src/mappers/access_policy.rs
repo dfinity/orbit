@@ -206,9 +206,9 @@ impl From<&wallet_api::CreateProposalInput> for Resource {
 
 pub(crate) struct FetchAccountBalancesInputRef<'a>(pub &'a wallet_api::FetchAccountBalancesInput);
 
-impl From<FetchAccountBalancesInputRef<'_>> for Vec<Resource> {
-    fn from(input: FetchAccountBalancesInputRef) -> Self {
-        let account_ids = input
+impl FetchAccountBalancesInputRef<'_> {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        let account_ids = self
             .0
             .account_ids
             .iter()
@@ -232,9 +232,9 @@ impl From<FetchAccountBalancesInputRef<'_>> for Vec<Resource> {
 
 pub(crate) struct GetTransfersInputRef<'a>(pub &'a wallet_api::GetTransfersInput);
 
-impl From<GetTransfersInputRef<'_>> for Vec<Resource> {
-    fn from(input: GetTransfersInputRef) -> Self {
-        let transfer_ids = input
+impl GetTransfersInputRef<'_> {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        let transfer_ids = self
             .0
             .transfer_ids
             .iter()

@@ -48,7 +48,7 @@ impl AddressBookController {
         }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_address_book_entry(
         &self,
         input: GetAddressBookEntryInputDTO,
@@ -71,11 +71,7 @@ impl AddressBookController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::AddressBook(ResourceAction::List)]
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::AddressBook(ResourceAction::List)]))]
     async fn list_address_book_entries(
         &self,
         input_dto: ListAddressBookEntriesInputDTO,

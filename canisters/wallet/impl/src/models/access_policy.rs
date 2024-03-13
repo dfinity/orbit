@@ -1,8 +1,11 @@
+use std::fmt::{Display, Formatter};
+
 use super::{User, UserGroupId, UserId};
 use candid::CandidType;
 use ic_canister_core::{model::ModelKey, types::UUID};
 use ic_canister_macros::storable;
 use serde::Deserialize;
+use uuid::Uuid;
 
 /// The user gorup id, which is a UUID.
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -513,6 +516,200 @@ impl AccessPolicy {
             Allow::Authenticated => user.is_active(),
             Allow::Users(ids) => ids.contains(&user.id),
             Allow::UserGroups(ids) => user.groups.iter().any(|group| ids.contains(group)),
+        }
+    }
+}
+
+impl Display for Resource {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Resource::AccessPolicy(action) => write!(f, "AccessPolicy({})", action),
+            Resource::Account(action) => write!(f, "Account({})", action),
+            Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
+            Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
+            Resource::Proposal(action) => write!(f, "Proposal({})", action),
+            Resource::ProposalPolicy(action) => write!(f, "ProposalPolicy({})", action),
+            Resource::Settings(action) => write!(f, "Settings({})", action),
+            Resource::User(action) => write!(f, "User({})", action),
+            Resource::UserGroup(action) => write!(f, "UserGroup({})", action),
+        }
+    }
+}
+
+impl Display for ResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceAction::List => write!(f, "List"),
+            ResourceAction::Create => write!(f, "Create"),
+            ResourceAction::Read(id) => write!(f, "Read({})", id),
+            ResourceAction::Update(id) => write!(f, "Update({})", id),
+            ResourceAction::Delete(id) => write!(f, "Delete({})", id),
+        }
+    }
+}
+
+impl Display for AccessPolicyResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AccessPolicyResourceAction::List => write!(f, "List"),
+            AccessPolicyResourceAction::Read(id) => write!(f, "Read({})", id),
+            AccessPolicyResourceAction::Edit(id) => write!(f, "Edit({})", id),
+        }
+    }
+}
+
+impl Display for AccountResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AccountResourceAction::List => write!(f, "List"),
+            AccountResourceAction::Create => write!(f, "Create"),
+            AccountResourceAction::Transfer(id) => write!(f, "Transfer({})", id),
+            AccountResourceAction::Read(id) => write!(f, "Read({})", id),
+            AccountResourceAction::Update(id) => write!(f, "Update({})", id),
+        }
+    }
+}
+
+impl Display for ChangeCanisterResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChangeCanisterResourceAction::Create => write!(f, "Create"),
+        }
+    }
+}
+
+impl Display for ProposalResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProposalResourceAction::List => write!(f, "List"),
+            ProposalResourceAction::Read(id) => write!(f, "Read({})", id),
+        }
+    }
+}
+
+impl Display for SettingsResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SettingsResourceAction::Read => write!(f, "Read"),
+            SettingsResourceAction::ReadConfig => write!(f, "ReadConfig"),
+        }
+    }
+}
+
+impl Display for UserResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserResourceAction::List => write!(f, "List"),
+            UserResourceAction::Create => write!(f, "Create"),
+            UserResourceAction::Read(id) => write!(f, "Read({})", id),
+            UserResourceAction::Update(id) => write!(f, "Update({})", id),
+        }
+    }
+}
+
+impl Display for ResourceId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceId::Any => write!(f, "Any"),
+            ResourceId::Id(id) => {
+                write!(f, "Id({})", Uuid::from_bytes(*id).hyphenated())
+            }
+        }
+    }
+}
+
+impl Display for ResourceTypeId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceTypeId::Any => write!(f, "Any"),
+            ResourceTypeId::Resource(rtype) => write!(f, "Resource({})", rtype),
+        }
+    }
+}
+
+impl Display for ResourceType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceType::AccessPolicy(action) => write!(f, "AccessPolicy({})", action),
+            ResourceType::Account(action) => write!(f, "Account({})", action),
+            ResourceType::AddressBook(action) => write!(f, "AddressBook({})", action),
+            ResourceType::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
+            ResourceType::Proposal(action) => write!(f, "Proposal({})", action),
+            ResourceType::ProposalPolicy(action) => write!(f, "ProposalPolicy({})", action),
+            ResourceType::Settings(action) => write!(f, "Settings({})", action),
+            ResourceType::User(action) => write!(f, "User({})", action),
+            ResourceType::UserGroup(action) => write!(f, "UserGroup({})", action),
+        }
+    }
+}
+
+impl Display for AccessPolicyResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AccessPolicyResourceActionType::List => write!(f, "List"),
+            AccessPolicyResourceActionType::Read => write!(f, "Read"),
+            AccessPolicyResourceActionType::Edit => write!(f, "Edit"),
+        }
+    }
+}
+
+impl Display for AccountResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AccountResourceActionType::List => write!(f, "List"),
+            AccountResourceActionType::Create => write!(f, "Create"),
+            AccountResourceActionType::Transfer => write!(f, "Transfer"),
+            AccountResourceActionType::Read => write!(f, "Read"),
+            AccountResourceActionType::Update => write!(f, "Update"),
+        }
+    }
+}
+
+impl Display for ResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceActionType::List => write!(f, "List"),
+            ResourceActionType::Create => write!(f, "Create"),
+            ResourceActionType::Read => write!(f, "Read"),
+            ResourceActionType::Update => write!(f, "Update"),
+            ResourceActionType::Delete => write!(f, "Delete"),
+        }
+    }
+}
+
+impl Display for ChangeCanisterResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChangeCanisterResourceActionType::Create => write!(f, "Create"),
+        }
+    }
+}
+
+impl Display for ProposalResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProposalResourceActionType::List => write!(f, "List"),
+            ProposalResourceActionType::Read => write!(f, "Read"),
+        }
+    }
+}
+
+impl Display for SettingsResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SettingsResourceActionType::Read => write!(f, "Read"),
+            SettingsResourceActionType::ReadConfig => write!(f, "ReadConfig"),
+        }
+    }
+}
+
+impl Display for UserResourceActionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserResourceActionType::List => write!(f, "List"),
+            UserResourceActionType::Create => write!(f, "Create"),
+            UserResourceActionType::Read => write!(f, "Read"),
+            UserResourceActionType::Update => write!(f, "Update"),
         }
     }
 }

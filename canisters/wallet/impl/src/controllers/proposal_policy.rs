@@ -47,7 +47,7 @@ impl ProposalPolicyController {
         }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_proposal_policy(
         &self,
         input: GetProposalPolicyInput,
@@ -67,11 +67,7 @@ impl ProposalPolicyController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::ProposalPolicy(ResourceAction::List)]
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ProposalPolicy(ResourceAction::List)]))]
     async fn list_proposal_policies(
         &self,
         input: ListProposalPoliciesInput,

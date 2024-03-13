@@ -44,7 +44,7 @@ impl AccessPolicyController {
         }
     }
 
-    #[with_middleware(guard = "authorize", context = "call_context", args = [Resource::from(&input)])]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_access_policy(
         &self,
         input: GetAccessPolicyInput,
@@ -70,11 +70,7 @@ impl AccessPolicyController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [Resource::AccessPolicy(AccessPolicyResourceAction::List)],
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::AccessPolicy(AccessPolicyResourceAction::List)]))]
     async fn list_access_policies(
         &self,
         input: ListAccessPoliciesInput,
