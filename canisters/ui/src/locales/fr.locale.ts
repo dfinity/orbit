@@ -432,6 +432,7 @@ export default {
     user_groups: "Groupes d'Usagers",
     all: 'Tout',
     subset: 'sous-ensemble',
+    skip: 'Sauter',
   },
   forms: {
     create: 'Créer',

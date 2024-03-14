@@ -484,13 +484,42 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const ListProposalsOperationType = IDL.Variant({
+    'EditAccessPolicy' : IDL.Null,
+    'AddUserGroup' : IDL.Null,
+    'RemoveProposalPolicy' : IDL.Null,
+    'AddUser' : IDL.Null,
+    'EditUserGroup' : IDL.Null,
+    'RemoveAddressBookEntry' : IDL.Null,
+    'EditAddressBookEntry' : IDL.Null,
+    'AddProposalPolicy' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
+    'EditProposalPolicy' : IDL.Null,
+    'EditUser' : IDL.Null,
+    'Transfer' : IDL.Opt(UUID),
+    'EditAccount' : IDL.Null,
+    'AddAddressBookEntry' : IDL.Null,
+    'AddAccessPolicy' : IDL.Null,
+    'RemoveAccessPolicy' : IDL.Null,
+    'RemoveUserGroup' : IDL.Null,
+    'AddAccount' : IDL.Null,
+  });
+  const GetNextVotableProposalInput = IDL.Record({
+    'excluded_proposal_ids' : IDL.Vec(UUID),
+    'operation_types' : IDL.Opt(IDL.Vec(ListProposalsOperationType)),
+  });
+  const GetProposalResultData = IDL.Record({
+    'privileges' : ProposalCallerPrivileges,
+    'proposal' : Proposal,
+    'additional_info' : ProposalAdditionalInfo,
+  });
+  const GetNextVotableProposalResponse = IDL.Variant({
+    'Ok' : IDL.Opt(GetProposalResultData),
+    'Err' : Error,
+  });
   const GetProposalInput = IDL.Record({ 'proposal_id' : UUID });
   const GetProposalResult = IDL.Variant({
-    'Ok' : IDL.Record({
-      'privileges' : ProposalCallerPrivileges,
-      'proposal' : Proposal,
-      'additional_info' : ProposalAdditionalInfo,
-    }),
+    'Ok' : GetProposalResultData,
     'Err' : Error,
   });
   const GetProposalPolicyInput = IDL.Record({ 'id' : UUID });
@@ -732,32 +761,13 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Null,
     'Completed' : IDL.Null,
   });
-  const ListProposalsOperationType = IDL.Variant({
-    'EditAccessPolicy' : IDL.Null,
-    'AddUserGroup' : IDL.Null,
-    'RemoveProposalPolicy' : IDL.Null,
-    'AddUser' : IDL.Null,
-    'EditUserGroup' : IDL.Null,
-    'RemoveAddressBookEntry' : IDL.Null,
-    'EditAddressBookEntry' : IDL.Null,
-    'AddProposalPolicy' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
-    'EditProposalPolicy' : IDL.Null,
-    'EditUser' : IDL.Null,
-    'Transfer' : IDL.Opt(UUID),
-    'EditAccount' : IDL.Null,
-    'AddAddressBookEntry' : IDL.Null,
-    'AddAccessPolicy' : IDL.Null,
-    'RemoveAccessPolicy' : IDL.Null,
-    'RemoveUserGroup' : IDL.Null,
-    'AddAccount' : IDL.Null,
-  });
   const ListProposalsInput = IDL.Record({
     'sort_by' : IDL.Opt(ListProposalsSortBy),
     'voter_ids' : IDL.Opt(IDL.Vec(UUID)),
     'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
     'created_to_dt' : IDL.Opt(TimestampRFC3339),
     'statuses' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
+    'only_votable' : IDL.Bool,
     'proposer_ids' : IDL.Opt(IDL.Vec(UUID)),
     'expiration_to_dt' : IDL.Opt(TimestampRFC3339),
     'paginate' : IDL.Opt(PaginationInput),
@@ -871,6 +881,11 @@ export const idlFactory = ({ IDL }) => {
     'get_address_book_entry' : IDL.Func(
         [GetAddressBookEntryInput],
         [GetAddressBookEntryResult],
+        ['query'],
+      ),
+    'get_next_votable_proposal' : IDL.Func(
+        [GetNextVotableProposalInput],
+        [GetNextVotableProposalResponse],
         ['query'],
       ),
     'get_proposal' : IDL.Func(

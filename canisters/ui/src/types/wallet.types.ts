@@ -65,6 +65,12 @@ export interface ListProposalsArgs {
     | {
         lastModified: SortDirection;
       };
+  onlyVotable?: boolean;
+}
+
+export interface GetNextVotableProposalArgs {
+  types?: ListProposalsOperationType[];
+  excludedProposalIds?: UUID[];
 }
 
 export enum ProposalDomains {

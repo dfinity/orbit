@@ -227,6 +227,7 @@ pub struct ListProposalsInput {
     pub created_to_dt: Option<TimestampRfc3339>,
     pub paginate: Option<PaginationInput>,
     pub sort_by: Option<ListProposalsSortBy>,
+    pub only_votable: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -237,6 +238,14 @@ pub struct ListProposalsResponse {
     pub privileges: Vec<ProposalCallerPrivilegesDTO>,
     pub additional_info: Vec<ProposalAdditionalInfoDTO>,
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct GetNextVotableProposalInput {
+    pub excluded_proposal_ids: Vec<UuidDTO>,
+    pub operation_types: Option<Vec<ListProposalsOperationTypeDTO>>,
+}
+
+pub type GetNextVotableProposalResponse = Option<GetProposalResponse>;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct CreateProposalResponse {

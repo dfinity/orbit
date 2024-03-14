@@ -428,6 +428,7 @@ export default {
     user_groups: 'Grupos de usuários',
     all: 'Todos',
     subset: 'Subconjunto',
+    skip: 'Saltar',
   },
   forms: {
     create: 'Criar',

@@ -10,13 +10,7 @@
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}
         </section>
-        <VBtn
-          color="secondary"
-          rounded
-          width="300"
-          :loading="isAuthenticating"
-          @click.prevent="performLogin"
-        >
+        <VBtn color="secondary" rounded width="300" :loading="isAuthenticating" @click.prevent="performLogin">
           {{ $t('terms.signin') }}
         </VBtn>
       </div>
@@ -29,13 +23,7 @@
         <section class="signin__action__slogan">
           {{ $t('login.signin_slogan') }}
         </section>
-        <VBtn
-          color="secondary"
-          rounded
-          width="300"
-          :loading="isAuthenticating"
-          @click.prevent="performLogin"
-        >
+        <VBtn color="secondary" rounded width="300" :loading="isAuthenticating" @click.prevent="performLogin">
           {{ $t('terms.signin') }}
         </VBtn>
       </div>

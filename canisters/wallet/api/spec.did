@@ -811,6 +811,8 @@ type ListProposalsInput = record {
   paginate : opt PaginationInput;
   // The sorting parameters.
   sort_by : opt ListProposalsSortBy;
+  // The sorting parameters.
+  only_votable : bool;
 };
 
 // The result type for getting the list of proposals.
@@ -838,17 +840,35 @@ type GetProposalInput = record {
   proposal_id : UUID;
 };
 
+type GetProposalResultData = record {
+  // The proposal that was requested.
+  proposal : Proposal;
+  // The privileges of the caller.
+  privileges : ProposalCallerPrivileges;
+  // The additional info about the proposal.
+  additional_info : ProposalAdditionalInfo;
+};
+
 // Result type for retrieving a proposal.
 type GetProposalResult = variant {
   // The result data for a successful execution.
-  Ok : record {
-    // The proposal that was requested.
-    proposal : Proposal;
-    // The privileges of the caller.
-    privileges : ProposalCallerPrivileges;
-    // The additional info about the proposal.
-    additional_info : ProposalAdditionalInfo;
-  };
+  Ok : GetProposalResultData;
+  // The error that occurred (e.g. the user does not have the necessary access rights).
+  Err : Error;
+};
+
+// The input type for getting the list of proposals based on the given filters.
+type GetNextVotableProposalInput = record {
+  // The type of the proposal (e.g. "transfer").
+  operation_types : opt vec ListProposalsOperationType;
+  // Exclude proposals the user indicated to skip.
+  excluded_proposal_ids : vec UUID;
+};
+
+// Result type for retrieving a proposal.
+type GetNextVotableProposalResponse = variant {
+  // The result data for a successful execution.
+  Ok : opt GetProposalResultData;
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
@@ -1728,6 +1748,8 @@ service : (opt WalletInstall) -> {
   list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
   // Get the proposal by id.
   get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
+  // Record the vote of the user on the proposal.
+  get_next_votable_proposal : (input : GetNextVotableProposalInput) -> (GetNextVotableProposalResponse) query;
   // Record the vote of the user on the proposal.
   vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
   // Get the user associated with the user id provided.

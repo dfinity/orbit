@@ -428,6 +428,7 @@ export default {
     user_groups: 'User Groups',
     all: 'All',
     subset: 'Subset',
+    skip: 'Skip',
   },
   forms: {
     create: 'Create',
