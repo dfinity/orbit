@@ -35,51 +35,118 @@ export const idlFactory = ({ IDL }) => {
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
-  const UUID = IDL.Text;
-  const CommonSpecifier = IDL.Variant({
-    'Id' : IDL.Vec(UUID),
+  const AllowLevel = IDL.Variant({
     'Any' : IDL.Null,
-    'Group' : IDL.Vec(UUID),
+    'UserGroups' : IDL.Null,
+    'Authenticated' : IDL.Null,
+    'Users' : IDL.Null,
   });
-  const CommonActionSpecifier = IDL.Variant({
+  const UserAuthentication = IDL.Variant({
+    'None' : IDL.Null,
+    'Required' : IDL.Null,
+  });
+  const UUID = IDL.Text;
+  const Allow = IDL.Record({
+    'authentication' : IDL.Opt(UserAuthentication),
+    'user_groups' : IDL.Opt(IDL.Vec(UUID)),
+    'users' : IDL.Opt(IDL.Vec(UUID)),
+  });
+  const ResourceAccess = IDL.Variant({ 'Deny' : AllowLevel, 'Allow' : Allow });
+  const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
+  const UserResourceAction = IDL.Variant({
     'List' : IDL.Null,
-    'Read' : CommonSpecifier,
-    'Delete' : CommonSpecifier,
+    'Read' : ResourceId,
     'Create' : IDL.Null,
-    'Update' : CommonSpecifier,
+    'Update' : ResourceId,
   });
-  const ProposalActionSpecifier = IDL.Variant({
+  const ResourceAction = IDL.Variant({
     'List' : IDL.Null,
-    'Read' : CommonSpecifier,
+    'Read' : ResourceId,
+    'Delete' : ResourceId,
+    'Create' : IDL.Null,
+    'Update' : ResourceId,
   });
-  const ChangeCanisterActionSpecifier = IDL.Variant({ 'Create' : IDL.Null });
-  const TransferSpecifier = IDL.Record({ 'account' : CommonSpecifier });
-  const TransferActionSpecifier = IDL.Variant({
-    'Read' : TransferSpecifier,
-    'Delete' : TransferSpecifier,
-    'Create' : TransferSpecifier,
-  });
-  const CanisterSettingsActionSpecifier = IDL.Variant({
+  const SettingsResourceAction = IDL.Variant({
     'Read' : IDL.Null,
     'ReadConfig' : IDL.Null,
   });
-  const ResourceSpecifier = IDL.Variant({
-    'User' : CommonActionSpecifier,
-    'ProposalPolicy' : CommonActionSpecifier,
-    'Account' : CommonActionSpecifier,
-    'AddressBook' : CommonActionSpecifier,
-    'Proposal' : ProposalActionSpecifier,
-    'ChangeCanister' : ChangeCanisterActionSpecifier,
-    'AccessPolicy' : CommonActionSpecifier,
-    'Transfer' : TransferActionSpecifier,
-    'UserGroup' : CommonActionSpecifier,
-    'CanisterSettings' : CanisterSettingsActionSpecifier,
+  const AccountResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+    'Create' : IDL.Null,
+    'Transfer' : ResourceId,
+    'Update' : ResourceId,
   });
-  const AccessControlUserSpecifier = CommonSpecifier;
+  const ProposalResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+  });
+  const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
+  const UserResourceActionType = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : IDL.Null,
+    'Create' : IDL.Null,
+    'Update' : IDL.Null,
+  });
+  const ResourceActionType = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : IDL.Null,
+    'Delete' : IDL.Null,
+    'Create' : IDL.Null,
+    'Update' : IDL.Null,
+  });
+  const SettingsResourceActionType = SettingsResourceAction;
+  const AccountResourceActionType = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : IDL.Null,
+    'Create' : IDL.Null,
+    'Transfer' : IDL.Null,
+    'Update' : IDL.Null,
+  });
+  const ProposalResourceActionType = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : IDL.Null,
+  });
+  const ChangeCanisterResourceActionType = IDL.Variant({ 'Create' : IDL.Null });
+  const AccessPolicyResourceActionType = IDL.Variant({
+    'Edit' : IDL.Null,
+    'List' : IDL.Null,
+    'Read' : IDL.Null,
+  });
+  const ResourceType = IDL.Variant({
+    'User' : UserResourceActionType,
+    'ProposalPolicy' : ResourceActionType,
+    'Settings' : SettingsResourceActionType,
+    'Account' : AccountResourceActionType,
+    'AddressBook' : ResourceActionType,
+    'Proposal' : ProposalResourceActionType,
+    'ChangeCanister' : ChangeCanisterResourceActionType,
+    'AccessPolicy' : AccessPolicyResourceActionType,
+    'UserGroup' : ResourceActionType,
+  });
+  const ResourceTypeId = IDL.Variant({
+    'Any' : IDL.Null,
+    'Resource' : ResourceType,
+  });
+  const AccessPolicyResourceAction = IDL.Variant({
+    'Edit' : ResourceTypeId,
+    'List' : IDL.Null,
+    'Read' : ResourceTypeId,
+  });
+  const Resource = IDL.Variant({
+    'User' : UserResourceAction,
+    'ProposalPolicy' : ResourceAction,
+    'Settings' : SettingsResourceAction,
+    'Account' : AccountResourceAction,
+    'AddressBook' : ResourceAction,
+    'Proposal' : ProposalResourceAction,
+    'ChangeCanister' : ChangeCanisterResourceAction,
+    'AccessPolicy' : AccessPolicyResourceAction,
+    'UserGroup' : ResourceAction,
+  });
   const EditAccessPolicyOperationInput = IDL.Record({
-    'resource' : IDL.Opt(ResourceSpecifier),
-    'user' : IDL.Opt(AccessControlUserSpecifier),
-    'policy_id' : UUID,
+    'access' : ResourceAccess,
+    'resource' : Resource,
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
   const RemoveProposalPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
@@ -114,6 +181,15 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
   });
+  const ResourceSpecifier = IDL.Variant({
+    'Any' : IDL.Null,
+    'Resource' : Resource,
+  });
+  const CommonSpecifier = IDL.Variant({
+    'Id' : IDL.Vec(UUID),
+    'Any' : IDL.Null,
+    'Group' : IDL.Vec(UUID),
+  });
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -121,9 +197,10 @@ export const idlFactory = ({ IDL }) => {
     'Proposer' : IDL.Null,
     'Owner' : IDL.Null,
   });
+  const TransferSpecifier = IDL.Record({ 'account' : CommonSpecifier });
   const AccountSpecifier = CommonSpecifier;
   const ProposalSpecifier = IDL.Variant({
-    'EditAccessPolicy' : CommonSpecifier,
+    'EditAccessPolicy' : ResourceSpecifier,
     'AddUserGroup' : IDL.Null,
     'RemoveProposalPolicy' : CommonSpecifier,
     'AddUser' : IDL.Null,
@@ -137,8 +214,6 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : TransferSpecifier,
     'EditAccount' : AccountSpecifier,
     'AddAddressBookEntry' : IDL.Null,
-    'AddAccessPolicy' : IDL.Null,
-    'RemoveAccessPolicy' : CommonSpecifier,
     'RemoveUserGroup' : CommonSpecifier,
     'AddAccount' : IDL.Null,
   });
@@ -216,11 +291,6 @@ export const idlFactory = ({ IDL }) => {
     'address_owner' : IDL.Text,
     'standard' : IDL.Text,
   });
-  const AddAccessPolicyOperationInput = IDL.Record({
-    'resource' : ResourceSpecifier,
-    'user' : AccessControlUserSpecifier,
-  });
-  const RemoveAccessPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
   const RemoveUserGroupOperationInput = IDL.Record({ 'user_group_id' : UUID });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AddAccountOperationInput = IDL.Record({
@@ -246,8 +316,6 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : TransferOperationInput,
     'EditAccount' : EditAccountOperationInput,
     'AddAddressBookEntry' : AddAddressBookEntryOperationInput,
-    'AddAccessPolicy' : AddAccessPolicyOperationInput,
-    'RemoveAccessPolicy' : RemoveAccessPolicyOperationInput,
     'RemoveUserGroup' : RemoveUserGroupOperationInput,
     'AddAccount' : AddAccountOperationInput,
   });
@@ -367,13 +435,6 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry' : IDL.Opt(AddressBookEntry),
     'input' : AddAddressBookEntryOperationInput,
   });
-  const AddAccessPolicyOperation = IDL.Record({
-    'input' : AddAccessPolicyOperationInput,
-    'policy_id' : IDL.Opt(UUID),
-  });
-  const RemoveAccessPolicyOperation = IDL.Record({
-    'input' : RemoveAccessPolicyOperationInput,
-  });
   const RemoveUserGroupOperation = IDL.Record({
     'input' : RemoveUserGroupOperationInput,
   });
@@ -396,8 +457,6 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : TransferOperation,
     'EditAccount' : EditAccountOperation,
     'AddAddressBookEntry' : AddAddressBookEntryOperation,
-    'AddAccessPolicy' : AddAccessPolicyOperation,
-    'RemoveAccessPolicy' : RemoveAccessPolicyOperation,
     'RemoveUserGroup' : RemoveUserGroupOperation,
     'AddAccount' : AddAccountOperation,
   });
@@ -440,17 +499,12 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'balances' : IDL.Vec(AccountBalance) }),
     'Err' : Error,
   });
-  const GetAccessPolicyInput = IDL.Record({ 'id' : UUID });
+  const GetAccessPolicyInput = IDL.Record({ 'resource' : Resource });
   const AccessPolicyCallerPrivileges = IDL.Record({
-    'id' : UUID,
-    'can_delete' : IDL.Bool,
+    'resource_type' : ResourceType,
     'can_edit' : IDL.Bool,
   });
-  const AccessPolicy = IDL.Record({
-    'id' : UUID,
-    'resource' : ResourceSpecifier,
-    'user' : AccessControlUserSpecifier,
-  });
+  const AccessPolicy = IDL.Record({ 'resource' : Resource, 'allow' : Allow });
   const GetAccessPolicyResult = IDL.Variant({
     'Ok' : IDL.Record({
       'privileges' : AccessPolicyCallerPrivileges,
@@ -681,8 +735,6 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : IDL.Null,
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
-    'AddAccessPolicy' : IDL.Null,
-    'RemoveAccessPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
@@ -749,8 +801,6 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : IDL.Opt(UUID),
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
-    'AddAccessPolicy' : IDL.Null,
-    'RemoveAccessPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
@@ -823,7 +873,6 @@ export const idlFactory = ({ IDL }) => {
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
     'ListAccessPolicies' : IDL.Null,
-    'AddAccessPolicy' : IDL.Null,
     'ListAddressBookEntries' : IDL.Null,
     'AddAccount' : IDL.Null,
   });

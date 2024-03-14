@@ -50,23 +50,18 @@ impl AccessPolicyController {
         input: GetAccessPolicyInput,
     ) -> ApiResult<GetAccessPolicyResponse> {
         let ctx = call_context();
-        let policies = self
+        let policy = self
             .access_policy_service
             .get_access_policy(&Resource::from(input.resource))?;
 
-        let mut privileges = Vec::new();
-        for policy in &policies {
-            let privilege = self
-                .access_policy_service
-                .get_caller_privileges_for_access_policy(&policy.resource.to_type(), &ctx)
-                .await?;
-
-            privileges.push(AccessPolicyCallerPrivilegesDTO::from(privilege));
-        }
+        let privilege = self
+            .access_policy_service
+            .get_caller_privileges_for_access_policy(&policy.resource.to_type(), &ctx)
+            .await?;
 
         Ok(GetAccessPolicyResponse {
-            policies: policies.into_iter().map(|p| p.into()).collect(),
-            privileges,
+            policy: policy.into(),
+            privileges: privilege.into(),
         })
     }
 

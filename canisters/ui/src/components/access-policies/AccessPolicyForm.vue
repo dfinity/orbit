@@ -1,41 +1,30 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
-    <VTextField
-      v-if="model.id && props.display.value.id"
-      v-model="model.id"
-      name="id"
-      :label="$t('terms.id')"
-      variant="plain"
-      density="compact"
-      disabled
-    />
-
     <ResourceSpecifierField
       v-if="model.resource"
       :mode="props.mode.value"
       :model-value="model.resource"
     />
 
-    <template v-if="model.user">
+    <template v-if="model.allow">
       <SpecificUsersForm
-        v-if="variantIs(model.user, 'Id')"
+        v-if="variantIs(model.allow, 'Users')"
         :mode="props.mode.value"
         :model-value="{
-          policyId: null,
-          userIds: model.user.Id,
+          userIds: model.allow.Users,
         }"
       />
       <MembersOfGroupForm
-        v-else-if="variantIs(model.user, 'Group')"
+        v-else-if="variantIs(model.allow, 'UserGroups')"
         :mode="props.mode.value"
         :model-value="{
-          policyId: null,
-          groupIds: model.user.Group,
+          groupIds: model.allow.UserGroups,
         }"
       />
+      <!-- todo: add specific authenticated vs any rule -->
       <VCheckbox
-        v-else
-        v-model="model.user.Any"
+        v-else-if="variantIs(model.allow, 'Any')"
+        v-model="model.allow.Any"
         :label="$t('terms.everyone')"
         variant="plain"
         density="compact"

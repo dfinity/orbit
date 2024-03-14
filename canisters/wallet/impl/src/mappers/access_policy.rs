@@ -5,11 +5,13 @@ use crate::{
         access_policy::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction,
             AccessPolicyResourceActionType, AccountResourceAction, AccountResourceActionType,
-            Allow, AllowLevel, ChangeCanisterResourceAction, ChangeCanisterResourceActionType,
+            Allow, ChangeCanisterResourceAction, ChangeCanisterResourceActionType,
             ProposalResourceAction, ProposalResourceActionType, Resource, ResourceAction,
             ResourceActionType, ResourceId, ResourceType, ResourceTypeId, SettingsResourceAction,
-            SettingsResourceActionType, UserResourceAction, UserResourceActionType,
+            SettingsResourceActionType, UserAuthentication, UserResourceAction,
+            UserResourceActionType,
         },
+        indexes::access_policy_allow_level_index::AllowLevel,
         Transfer,
     },
     repositories::TRANSFER_REPOSITORY,
@@ -271,48 +273,56 @@ impl GetTransfersInputRef<'_> {
     }
 }
 
+impl From<wallet_api::UserAuthenticationDTO> for UserAuthentication {
+    fn from(dto: wallet_api::UserAuthenticationDTO) -> Self {
+        match dto {
+            wallet_api::UserAuthenticationDTO::None => UserAuthentication::None,
+            wallet_api::UserAuthenticationDTO::Required => UserAuthentication::Required,
+        }
+    }
+}
+
+impl From<UserAuthentication> for wallet_api::UserAuthenticationDTO {
+    fn from(auth: UserAuthentication) -> Self {
+        match auth {
+            UserAuthentication::None => wallet_api::UserAuthenticationDTO::None,
+            UserAuthentication::Required => wallet_api::UserAuthenticationDTO::Required,
+        }
+    }
+}
+
 impl From<wallet_api::AllowDTO> for Allow {
     fn from(dto: wallet_api::AllowDTO) -> Self {
-        match dto {
-            wallet_api::AllowDTO::Any => Allow::Any,
-            wallet_api::AllowDTO::Authenticated => Allow::Authenticated,
-            wallet_api::AllowDTO::Users(ids) => Allow::Users(
-                ids.into_iter()
-                    .map(|id| {
-                        *HelperMapper::to_uuid(id.to_owned())
-                            .expect("Invalid user id")
-                            .as_bytes()
-                    })
-                    .collect(),
-            ),
-            wallet_api::AllowDTO::UserGroups(ids) => Allow::UserGroups(
-                ids.into_iter()
-                    .map(|id| {
-                        *HelperMapper::to_uuid(id.to_owned())
-                            .expect("Invalid user group id")
-                            .as_bytes()
-                    })
-                    .collect(),
-            ),
+        Allow {
+            authentication: dto.authentication.map(UserAuthentication::from),
+            users: dto.users.map(|ids| {
+                ids.iter()
+                    .map(|id| *HelperMapper::to_uuid(id.to_owned()).unwrap().as_bytes())
+                    .collect()
+            }),
+            user_groups: dto.user_groups.map(|ids| {
+                ids.iter()
+                    .map(|id| *HelperMapper::to_uuid(id.to_owned()).unwrap().as_bytes())
+                    .collect()
+            }),
         }
     }
 }
 
 impl From<Allow> for wallet_api::AllowDTO {
     fn from(allow: Allow) -> Self {
-        match allow {
-            Allow::Any => wallet_api::AllowDTO::Any,
-            Allow::Authenticated => wallet_api::AllowDTO::Authenticated,
-            Allow::Users(ids) => wallet_api::AllowDTO::Users(
+        wallet_api::AllowDTO {
+            authentication: allow.authentication.map(UserAuthentication::into),
+            users: allow.users.map(|ids| {
                 ids.iter()
                     .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
-                    .collect(),
-            ),
-            Allow::UserGroups(ids) => wallet_api::AllowDTO::UserGroups(
+                    .collect()
+            }),
+            user_groups: allow.user_groups.map(|ids| {
                 ids.iter()
                     .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
-                    .collect(),
-            ),
+                    .collect()
+            }),
         }
     }
 }

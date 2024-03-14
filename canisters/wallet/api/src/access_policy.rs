@@ -14,11 +14,16 @@ pub struct AccessPolicyDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AllowDTO {
-    Any,
-    Authenticated,
-    Users(Vec<UuidDTO>),
-    UserGroups(Vec<UuidDTO>),
+pub struct AllowDTO {
+    pub authentication: Option<UserAuthenticationDTO>,
+    pub users: Option<Vec<UuidDTO>>,
+    pub user_groups: Option<Vec<UuidDTO>>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum UserAuthenticationDTO {
+    None = 1,
+    Required = 2,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -186,8 +191,8 @@ pub struct GetAccessPolicyInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct GetAccessPolicyResponse {
-    pub policies: Vec<AccessPolicyDTO>,
-    pub privileges: Vec<AccessPolicyCallerPrivilegesDTO>,
+    pub policy: AccessPolicyDTO,
+    pub privileges: AccessPolicyCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -196,13 +201,13 @@ pub struct EditAccessPolicyOperationDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ResourceAccessDTO {
-    Deny(AllowLevelDTO),
-    Allow(AllowDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditAccessPolicyOperationInput {
     pub resource: ResourceDTO,
     pub access: ResourceAccessDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ResourceAccessDTO {
+    Deny(AllowLevelDTO),
+    Allow(AllowDTO),
 }

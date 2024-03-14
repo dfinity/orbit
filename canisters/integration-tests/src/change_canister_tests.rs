@@ -38,7 +38,11 @@ fn successful_four_eyes_upgrade() {
     // allow anyone to create change canister proposals
     let add_access_policy =
         ProposalOperationInput::EditAccessPolicy(EditAccessPolicyOperationInput {
-            access: wallet_api::ResourceAccessDTO::Allow(wallet_api::AllowDTO::Authenticated),
+            access: wallet_api::ResourceAccessDTO::Allow(wallet_api::AllowDTO {
+                authentication: Some(wallet_api::UserAuthenticationDTO::Required),
+                user_groups: None,
+                users: None,
+            }),
             resource: wallet_api::ResourceDTO::ChangeCanister(
                 wallet_api::ChangeCanisterResourceActionDTO::Create,
             ),

@@ -3,15 +3,14 @@ use crate::{
     errors::AuthorizationError,
     models::{
         access_policy::{
-            AccountResourceAction, AllowLevel, ChangeCanisterResourceAction,
-            ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
-            UserResourceAction,
+            AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
+            ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
         },
+        indexes::access_policy_allow_level_index::AllowLevel,
         Account, User, ADMIN_GROUP_ID,
     },
     repositories::{
         access_policy::ACCESS_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
-        USER_REPOSITORY,
     },
 };
 use ic_canister_core::repository::Repository;
@@ -51,55 +50,26 @@ impl Authorization {
                 return true;
             }
 
-            let user = USER_REPOSITORY.find_by_identity(&ctx.caller()).unwrap();
-
             // Validades if the user has access to the resource based on the default rules (non-policy based).
             if resources
                 .iter()
-                .any(|resource| has_default_resource_access(&user, resource))
+                .any(|resource| has_default_resource_access(user, resource))
             {
                 return true;
             }
 
-            if is_user_group_allowed(&user, &resources) || is_user_allowed(&user, &resources) {
-                return true;
-            }
+            return resources.iter().any(|resource| {
+                let access_policy = ACCESS_POLICY_REPOSITORY.get(resource);
+
+                match access_policy {
+                    Some(policy) => policy.is_allowed(user),
+                    None => false,
+                }
+            });
         }
 
         false
     }
-}
-
-/// Checks if the user is allowed to access any of the provided resources based on the
-/// user groups associated with the user.
-fn is_user_group_allowed(user: &User, resource: &Vec<Resource>) -> bool {
-    for resource in resource {
-        if let Some(policy) = ACCESS_POLICY_REPOSITORY
-            .find_by_resource_and_allow_level(resource.clone(), AllowLevel::UserGroups)
-        {
-            if policy.is_allowed(user) {
-                return true;
-            }
-        }
-    }
-
-    false
-}
-
-/// Checks if the user is allowed to access the any of the provided resources, based on the
-/// specific user id associated with the resource access policy.
-fn is_user_allowed(user: &User, resource: &Vec<Resource>) -> bool {
-    for resource in resource {
-        if let Some(policy) = ACCESS_POLICY_REPOSITORY
-            .find_by_resource_and_allow_level(resource.clone(), AllowLevel::Users)
-        {
-            if policy.is_allowed(user) {
-                return true;
-            }
-        }
-    }
-
-    false
 }
 
 /// Checks if the user had access to the resource based on default rules (non-policy based).
@@ -167,11 +137,14 @@ pub async fn evaluate_caller_access(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{
-        access_policy::{AccessPolicy, Allow},
-        account_test_utils, user_group_test_utils,
-        user_test_utils::{self, mock_user},
-        UserGroup, UserStatus, ADMIN_GROUP_ID,
+    use crate::{
+        models::{
+            access_policy::{AccessPolicy, Allow},
+            account_test_utils, user_group_test_utils,
+            user_test_utils::{self, mock_user},
+            UserGroup, UserStatus, ADMIN_GROUP_ID,
+        },
+        repositories::USER_REPOSITORY,
     };
     use candid::Principal;
     use ic_canister_core::{model::ModelKey, repository::Repository};
@@ -216,7 +189,7 @@ mod tests {
     async fn inactive_user_has_no_access() {
         let mut test_context = setup();
         let policy = AccessPolicy::new(
-            Allow::Users(vec![test_context.finance_user.id]),
+            Allow::users(vec![test_context.finance_user.id]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
         );
 
@@ -247,7 +220,7 @@ mod tests {
     #[tokio::test]
     async fn fail_user_has_access_to_admin_resource() {
         let admin_access = AccessPolicy::new(
-            Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
@@ -272,7 +245,7 @@ mod tests {
     #[tokio::test]
     async fn admin_user_has_access_to_admin_resource() {
         let admin_access = AccessPolicy::new(
-            Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
@@ -297,7 +270,7 @@ mod tests {
     #[tokio::test]
     async fn user_has_access_to_admin_resource() {
         let admin_access = AccessPolicy::new(
-            Allow::UserGroups(vec![*ADMIN_GROUP_ID]),
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
@@ -325,7 +298,7 @@ mod tests {
 
         // add finance read access to address book
         let policy = AccessPolicy::new(
-            Allow::UserGroups(vec![test_context.finance_user_group.id]),
+            Allow::user_groups(vec![test_context.finance_user_group.id]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
@@ -353,7 +326,7 @@ mod tests {
     async fn group_has_access_to_resource_by_id() {
         let test_context = setup();
         let policy = AccessPolicy::new(
-            Allow::UserGroups(vec![test_context.finance_user_group.id]),
+            Allow::user_groups(vec![test_context.finance_user_group.id]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Id([1; 16]))),
         );
 
@@ -380,7 +353,7 @@ mod tests {
     async fn user_has_access_to_resource_by_id() {
         let user = user_test_utils::add_user(&[1; 16]);
         let policy = AccessPolicy::new(
-            Allow::Users(vec![user.id]),
+            Allow::users(vec![user.id]),
             Resource::User(UserResourceAction::Read(ResourceId::Id([1; 16]))),
         );
 
@@ -404,7 +377,7 @@ mod tests {
     async fn user_has_access_to_any() {
         let user = user_test_utils::add_user(&[1; 16]);
         let policy = AccessPolicy::new(
-            Allow::Users(vec![user.id]),
+            Allow::users(vec![user.id]),
             Resource::User(UserResourceAction::Read(ResourceId::Any)),
         );
 

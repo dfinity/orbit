@@ -168,7 +168,7 @@ impl UserService {
         let mut privileges = Vec::new();
 
         for privilege in USER_PRIVILEGES.into_iter() {
-            let is_allowed: bool = Authorization::is_allowed(ctx, &privilege.to_owned().into());
+            let is_allowed = Authorization::is_allowed(ctx, &privilege.to_owned().into());
 
             if is_allowed {
                 privileges.push(privilege.to_owned());
@@ -354,21 +354,23 @@ mod tests {
 
     #[tokio::test]
     async fn get_user_privileges_by_identity() {
-        let user = user_test_utils::mock_user();
+        let mut user = user_test_utils::mock_user();
+        user.groups = Vec::new();
+
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
         let ctx = CallContext::new(user.identities[0]);
 
         ACCESS_POLICY_SERVICE
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::Users(vec![user.id])),
+                access: ResourceAccess::Allow(Allow::users(vec![user.id])),
                 resource: Resource::User(UserResourceAction::List),
             })
             .await
             .unwrap();
         ACCESS_POLICY_SERVICE
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::Authenticated),
+                access: ResourceAccess::Allow(Allow::authenticated()),
                 resource: Resource::User(UserResourceAction::Create),
             })
             .await

@@ -36,13 +36,14 @@
 
 <script lang="ts" setup>
 import { computed, toRefs } from 'vue';
-import { defaultUserSpecifiers } from '~/configs/access-policies.config';
+import { defaultAllowLevels } from '~/configs/access-policies.config';
 import { logger } from '~/core/logger.core';
 import { variantIs } from '~/utils/helper.utils';
 import {
   AccessPolicy,
   AccessPolicyCallerPrivileges,
   BasicUser,
+  Resource,
   UUID,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
@@ -83,37 +84,35 @@ const users = computed<Record<UUID, BasicUser>>(() => {
   }, {});
 });
 
-const hasEditPrivilege = (accessPolicyId: string): boolean => {
-  return privileges.value.find(privilege => privilege.id === accessPolicyId)?.can_edit ?? false;
-};
-
-const hasDeletePrivilege = (accessPolicyId: string): boolean => {
-  return privileges.value.find(privilege => privilege.id === accessPolicyId)?.can_delete ?? false;
+const hasEditPrivilege = (resource: Resource): boolean => {
+  // todo: add logic to check if user has edit privilege
+  return true;
+  // return (
+  //   privileges.value.find(privilege => privilege.resource_type === resource)?.can_edit ?? false
+  // );
 };
 
 const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
   const resourceAccessPolicies = resources.value.map(resource => ({
     match: resource.match,
     resourceType: resource.resourceType,
-    specifiers: resource.specifiers.map(specifier => ({
-      ...specifier,
-      users: defaultUserSpecifiers(),
+    resources: resource.resources.map(resource => ({
+      ...resource,
+      users: defaultAllowLevels(),
     })),
   }));
 
   for (const policy of accessPolicies.value) {
     for (const resource of resourceAccessPolicies) {
-      for (const resourceSpecifier of resource.specifiers) {
-        if (resource.match(resourceSpecifier.specifier, policy)) {
-          if (variantIs(policy.user, 'Any')) {
-            resourceSpecifier.users.allUsers.policy.id = policy.id;
-            resourceSpecifier.users.allUsers.policy.canEdit = hasEditPrivilege(policy.id);
-            resourceSpecifier.users.allUsers.policy.canRemove = hasDeletePrivilege(policy.id);
-          } else if (variantIs(policy.user, 'Id')) {
-            resourceSpecifier.users.specificUsers.policy.id = policy.id;
-            resourceSpecifier.users.specificUsers.policy.canEdit = hasEditPrivilege(policy.id);
-            resourceSpecifier.users.specificUsers.policy.canRemove = hasDeletePrivilege(policy.id);
-            resourceSpecifier.users.specificUsers.users = policy.user.Id.map(id => {
+      for (const resourceSpecifier of resource.resources) {
+        if (resource.match(resourceSpecifier.resource, policy)) {
+          if (variantIs(policy.allow, 'Any')) {
+            resourceSpecifier.users.allUsers.policy.canEdit = hasEditPrivilege(policy.resource);
+          } else if (variantIs(policy.allow, 'Users')) {
+            resourceSpecifier.users.specificUsers.policy.canEdit = hasEditPrivilege(
+              policy.resource,
+            );
+            resourceSpecifier.users.specificUsers.users = policy.allow.Users.map(id => {
               const user = users.value[id];
               if (!user) {
                 logger.warn(
@@ -122,11 +121,11 @@ const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() =>
               }
               return user;
             });
-          } else if (variantIs(policy.user, 'Group')) {
-            resourceSpecifier.users.membersOfGroup.policy.id = policy.id;
-            resourceSpecifier.users.membersOfGroup.policy.canEdit = hasEditPrivilege(policy.id);
-            resourceSpecifier.users.membersOfGroup.policy.canRemove = hasDeletePrivilege(policy.id);
-            resourceSpecifier.users.membersOfGroup.groups = policy.user.Group.map(id => {
+          } else if (variantIs(policy.allow, 'UserGroups')) {
+            resourceSpecifier.users.membersOfGroup.policy.canEdit = hasEditPrivilege(
+              policy.resource,
+            );
+            resourceSpecifier.users.membersOfGroup.groups = policy.allow.UserGroups.map(id => {
               const group = userGroups.value[id];
               if (!group) {
                 logger.warn(

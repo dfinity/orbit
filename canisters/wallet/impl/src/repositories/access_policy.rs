@@ -1,11 +1,16 @@
 use crate::{
     core::{with_memory_manager, Memory, ACCESS_POLICY_MEMORY_ID},
-    models::access_policy::{AccessPolicy, AccessPolicyKey, AllowLevel, Resource},
+    models::{
+        access_policy::{AccessPolicy, AccessPolicyKey, Resource},
+        indexes::access_policy_allow_level_index::{AccessPolicyAllowLevelIndex, AllowLevel},
+    },
 };
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{IndexRepository, RefreshIndexMode, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
+
+use super::indexes::access_policy_allow_level_index::AccessPolicyAllowLevelIndexRepository;
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<AccessPolicyKey, AccessPolicy, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -22,7 +27,9 @@ lazy_static! {
 
 /// A repository that enables managing access policies in stable memory.
 #[derive(Default, Debug)]
-pub struct AccessPolicyRepository {}
+pub struct AccessPolicyRepository {
+    allow_level_index: AccessPolicyAllowLevelIndexRepository,
+}
 
 impl Repository<AccessPolicyKey, AccessPolicy> for AccessPolicyRepository {
     fn list(&self) -> Vec<AccessPolicy> {
@@ -34,11 +41,32 @@ impl Repository<AccessPolicyKey, AccessPolicy> for AccessPolicyRepository {
     }
 
     fn insert(&self, key: AccessPolicyKey, value: AccessPolicy) -> Option<AccessPolicy> {
-        DB.with(|m| m.borrow_mut().insert(key, value.clone()))
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+            self.allow_level_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_by_allow_levels()),
+                    current: value.to_index_by_allow_levels(),
+                });
+
+            prev
+        })
     }
 
     fn remove(&self, key: &AccessPolicyKey) -> Option<AccessPolicy> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.allow_level_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_by_allow_levels()),
+                });
+
+            prev
+        })
     }
 
     fn len(&self) -> usize {
@@ -47,45 +75,14 @@ impl Repository<AccessPolicyKey, AccessPolicy> for AccessPolicyRepository {
 }
 
 impl AccessPolicyRepository {
-    pub fn find_by_resource_and_allow_level(
-        &self,
-        resource: Resource,
-        allow: AllowLevel,
-    ) -> Option<AccessPolicy> {
-        self.get(&AccessPolicyKey {
-            resource,
-            allow_level: allow,
-        })
-    }
-
     pub fn exists_by_resource_and_allow_level(
         &self,
         resource: Resource,
         allow: AllowLevel,
     ) -> bool {
-        DB.with(|m| {
-            m.borrow().contains_key(&AccessPolicyKey {
-                resource,
-                allow_level: allow,
-            })
-        })
-    }
-
-    pub fn find_by_resource(&self, resource: Resource) -> Vec<AccessPolicy> {
-        DB.with(|db| {
-            let start_key = AccessPolicyKey {
-                resource: resource.to_owned(),
-                allow_level: AllowLevel::Any,
-            };
-            let end_key = AccessPolicyKey {
-                resource,
-                allow_level: AllowLevel::UserGroups,
-            };
-
-            db.borrow()
-                .range(start_key..=end_key)
-                .map(|(_, policy)| policy)
-                .collect::<Vec<_>>()
+        self.allow_level_index.exists(&AccessPolicyAllowLevelIndex {
+            allow_level: allow,
+            access_policy_key: resource,
         })
     }
 }
@@ -124,10 +121,12 @@ mod tests {
 
         ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.clone());
 
-        let policies = ACCESS_POLICY_REPOSITORY
-            .find_by_resource(Resource::AddressBook(ResourceAction::Read(ResourceId::Any)));
+        let access_policy = ACCESS_POLICY_REPOSITORY
+            .get(&Resource::AddressBook(ResourceAction::Read(
+                ResourceId::Any,
+            )))
+            .unwrap();
 
-        assert_eq!(policies.len(), 1);
-        assert_eq!(policies[0], policy);
+        assert_eq!(access_policy, policy);
     }
 }

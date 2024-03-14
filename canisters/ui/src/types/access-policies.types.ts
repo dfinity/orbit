@@ -1,8 +1,8 @@
 import {
   AccessPolicy,
   BasicUser,
-  ResourceSpecifier,
-  UUID,
+  Resource,
+  ResourceType,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
 
@@ -14,7 +14,7 @@ export enum ResourceTypeEnum {
   AccessPolicy = 'AccessPolicy',
   ProposalPolicy = 'ProposalPolicy',
   ChangeCanister = 'ChangeCanister',
-  CanisterSettings = 'CanisterSettings',
+  Settings = 'Settings',
   Proposal = 'Proposal',
   AddressBook = 'AddressBook',
 }
@@ -25,14 +25,14 @@ export enum ResourceActionEnum {
   Read = 'Read',
   Update = 'Update',
   Delete = 'Delete',
+  Transfer = 'Transfer',
   ReadSensitiveConfig = 'ReadSensitiveConfig',
   ReadPublicConfig = 'ReadPublicConfig',
 }
 
 export interface AccessPolicyItemInfo {
-  id: UUID | null;
+  resource: ResourceType | null;
   canEdit: boolean;
-  canRemove: boolean;
 }
 
 export interface AccessPolicyForMembersOfGroup {
@@ -49,7 +49,7 @@ export interface AccessPolicyForAllUsers {
   policy: AccessPolicyItemInfo;
 }
 
-export interface ResourceAccessUserSpecifiers {
+export interface ResourceAccessAllowLevels {
   allUsers: AccessPolicyForAllUsers;
   membersOfGroup: AccessPolicyForMembersOfGroup;
   specificUsers: AccessPolicyForSpecificUsers;
@@ -57,12 +57,12 @@ export interface ResourceAccessUserSpecifiers {
 
 export interface ResourceAccessPolicySpecifier {
   action: ResourceActionEnum;
-  specifier: ResourceSpecifier;
-  users: ResourceAccessUserSpecifiers;
+  resource: Resource;
+  allow: ResourceAccessAllowLevels;
 }
 
 export interface AggregatedResouceAccessPolicies {
   resourceType: ResourceTypeEnum;
-  specifiers: ResourceAccessPolicySpecifier[];
-  match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean;
+  resources: ResourceAccessPolicySpecifier[];
+  match(specifier: Resource, policy: AccessPolicy): boolean;
 }

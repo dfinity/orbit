@@ -607,7 +607,7 @@ mod benchs {
 
         // adding some access policies since the filter will check for access
         let access_policy = AccessPolicy::new(
-            Allow::Users(users.iter().map(|u| u.id).collect()),
+            Allow::users(users.iter().map(|u| u.id).collect()),
             Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
         );
 

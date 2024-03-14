@@ -160,9 +160,11 @@ pub mod edit_access_policy_test_utils {
             resource: wallet_api::ResourceDTO::AccessPolicy(
                 wallet_api::AccessPolicyResourceActionDTO::List,
             ),
-            access: wallet_api::ResourceAccessDTO::Allow(wallet_api::AllowDTO::Users(vec![
-                Uuid::from_bytes([1u8; 16]).hyphenated().to_string(),
-            ])),
+            access: wallet_api::ResourceAccessDTO::Allow(wallet_api::AllowDTO {
+                authentication: None,
+                user_groups: None,
+                users: Some(vec![Uuid::from_bytes([1u8; 16]).hyphenated().to_string()]),
+            }),
         }
     }
 

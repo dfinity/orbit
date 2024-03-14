@@ -10,50 +10,126 @@ pub struct AccessPolicyCallerPrivileges {
     pub can_edit: bool,
 }
 
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub struct Allow {
+    pub authentication: Option<UserAuthentication>,
+    pub users: Option<Vec<UserId>>,
+    pub user_groups: Option<Vec<UserGroupId>>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum UserAuthentication {
+    None = 1,
+    Required = 2,
+}
+
+impl Default for UserAuthentication {
+    fn default() -> Self {
+        Self::Required
+    }
+}
+
 /// Represents an access policy within the system.
 ///
 /// An access policy is a rule that defines who can access a resource and what they can do with it.
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd)]
 pub struct AccessPolicy {
+    /// The resource that the user can access.
+    pub resource: Resource,
     /// The users who can access the resource.
     ///
     /// It can be a list of specific users, user groups, or any user.
     pub allow: Allow,
-    /// The resource that the user can access.
-    pub resource: Resource,
+}
+
+impl AccessPolicy {
+    pub fn allowed_any(&self) -> bool {
+        if let Some(auth) = &self.allow.authentication {
+            return *auth == UserAuthentication::None;
+        }
+
+        false
+    }
+
+    pub fn allowed_authenticated(&self) -> bool {
+        if let Some(auth) = &self.allow.authentication {
+            return *auth == UserAuthentication::Required;
+        }
+
+        false
+    }
+
+    pub fn allowed_users(&self) -> Vec<UserId> {
+        self.allow.users.clone().unwrap_or_default()
+    }
+
+    pub fn allowed_user_groups(&self) -> Vec<UserGroupId> {
+        self.allow.user_groups.clone().unwrap_or_default()
+    }
+
+    /// Checks if the user is allowed to access the resource according to the policy.
+    pub fn is_allowed(&self, user: &User) -> bool {
+        if self.allowed_any() {
+            return true;
+        }
+
+        if !user.is_active() {
+            return false;
+        }
+
+        if self.allowed_authenticated() {
+            return true;
+        }
+
+        if self.allowed_users().contains(&user.id) {
+            return true;
+        }
+
+        self.allowed_user_groups()
+            .iter()
+            .any(|group| user.groups.contains(group))
+    }
+}
+
+impl Allow {
+    pub fn any() -> Self {
+        Self {
+            authentication: Some(UserAuthentication::None),
+            ..Default::default()
+        }
+    }
+
+    pub fn authenticated() -> Self {
+        Self {
+            authentication: Some(UserAuthentication::Required),
+            ..Default::default()
+        }
+    }
+
+    pub fn users(users: Vec<UserId>) -> Self {
+        Self {
+            users: Some(users),
+            ..Default::default()
+        }
+    }
+
+    pub fn user_groups(groups: Vec<UserGroupId>) -> Self {
+        Self {
+            user_groups: Some(groups),
+            ..Default::default()
+        }
+    }
 }
 
 /// The unique identifier of an access policy.
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct AccessPolicyKey {
-    /// The resource that the user can access.
-    pub resource: Resource,
-    /// The user level who can access the resource.
-    pub allow_level: AllowLevel,
-}
-
-impl Ord for AccessPolicyKey {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.resource
-            .cmp(&other.resource)
-            .then(self.allow_level.cmp(&other.allow_level))
-    }
-}
-
-impl PartialOrd for AccessPolicyKey {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
+pub type AccessPolicyKey = Resource;
 
 impl ModelKey<AccessPolicyKey> for AccessPolicy {
-    fn key(&self) -> AccessPolicyKey {
-        AccessPolicyKey {
-            allow_level: self.allow.clone().into(),
-            resource: self.resource.clone(),
-        }
+    fn key(&self) -> Resource {
+        self.resource.clone()
     }
 }
 
@@ -63,35 +139,6 @@ impl AccessPolicy {
     /// The id is generated automatically.
     pub fn new(allow: Allow, resource: Resource) -> Self {
         Self { allow, resource }
-    }
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum Allow {
-    Any,
-    Authenticated,
-    Users(Vec<UserId>),
-    UserGroups(Vec<UserGroupId>),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AllowLevel {
-    Any = 1,
-    Authenticated = 2,
-    Users = 3,
-    UserGroups = 4,
-}
-
-impl From<Allow> for AllowLevel {
-    fn from(allow: Allow) -> Self {
-        match allow {
-            Allow::Any => AllowLevel::Any,
-            Allow::Authenticated => AllowLevel::Authenticated,
-            Allow::Users(_) => AllowLevel::Users,
-            Allow::UserGroups(_) => AllowLevel::UserGroups,
-        }
     }
 }
 
@@ -107,6 +154,16 @@ pub enum Resource {
     Settings(SettingsResourceAction),
     User(UserResourceAction),
     UserGroup(ResourceAction),
+}
+
+impl Resource {
+    pub fn min() -> Self {
+        Resource::AccessPolicy(AccessPolicyResourceAction::List)
+    }
+
+    pub fn max() -> Self {
+        Resource::UserGroup(ResourceAction::Update(ResourceId::Any))
+    }
 }
 
 #[storable]
@@ -505,18 +562,6 @@ impl Resource {
     }
 }
 
-impl AccessPolicy {
-    /// Checks if the user is allowed to access the resource according to the policy.
-    pub fn is_allowed(&self, user: &User) -> bool {
-        match &self.allow {
-            Allow::Any => true,
-            Allow::Authenticated => user.is_active(),
-            Allow::Users(ids) => ids.contains(&user.id),
-            Allow::UserGroups(ids) => user.groups.iter().any(|group| ids.contains(group)),
-        }
-    }
-}
-
 impl Display for Resource {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -723,73 +768,79 @@ pub mod access_policy_test_utils {
     /// Generates a random access policy for testing purposes.
     pub fn mock_access_policy() -> AccessPolicy {
         let policy = match RANDOM_MOCKED_POLICY.with(|num| *num.borrow()) {
-            0 => AccessPolicy::new(Allow::Any, Resource::Account(AccountResourceAction::Create)),
-            1 => AccessPolicy::new(Allow::Any, Resource::Account(AccountResourceAction::List)),
+            0 => AccessPolicy::new(
+                Allow::any(),
+                Resource::Account(AccountResourceAction::Create),
+            ),
+            1 => AccessPolicy::new(Allow::any(), Resource::Account(AccountResourceAction::List)),
             2 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
             ),
             3 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
             ),
             4 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
             ),
             5 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::AccessPolicy(AccessPolicyResourceAction::List),
             ),
             6 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Any)),
             ),
             7 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Any)),
             ),
-            8 => AccessPolicy::new(Allow::Any, Resource::AddressBook(ResourceAction::Create)),
+            8 => AccessPolicy::new(Allow::any(), Resource::AddressBook(ResourceAction::Create)),
             9 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             ),
-            10 => AccessPolicy::new(Allow::Any, Resource::AddressBook(ResourceAction::List)),
+            10 => AccessPolicy::new(Allow::any(), Resource::AddressBook(ResourceAction::List)),
             11 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             ),
             12 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             ),
-            13 => AccessPolicy::new(Allow::Any, Resource::User(UserResourceAction::Create)),
-            14 => AccessPolicy::new(Allow::Any, Resource::User(UserResourceAction::List)),
+            13 => AccessPolicy::new(Allow::any(), Resource::User(UserResourceAction::Create)),
+            14 => AccessPolicy::new(Allow::any(), Resource::User(UserResourceAction::List)),
             15 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::User(UserResourceAction::Read(ResourceId::Any)),
             ),
             16 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::User(UserResourceAction::Update(ResourceId::Any)),
             ),
-            17 => AccessPolicy::new(Allow::Any, Resource::UserGroup(ResourceAction::Create)),
+            17 => AccessPolicy::new(Allow::any(), Resource::UserGroup(ResourceAction::Create)),
             18 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
             ),
-            19 => AccessPolicy::new(Allow::Any, Resource::UserGroup(ResourceAction::List)),
+            19 => AccessPolicy::new(Allow::any(), Resource::UserGroup(ResourceAction::List)),
             20 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::UserGroup(ResourceAction::Read(ResourceId::Any)),
             ),
             21 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
             ),
-            22 => AccessPolicy::new(Allow::Any, Resource::Proposal(ProposalResourceAction::List)),
+            22 => AccessPolicy::new(
+                Allow::any(),
+                Resource::Proposal(ProposalResourceAction::List),
+            ),
             23 => AccessPolicy::new(
-                Allow::Any,
+                Allow::any(),
                 Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
             ),
             _ => panic!("Invalid random mocked policy"),

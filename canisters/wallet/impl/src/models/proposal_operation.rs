@@ -1,6 +1,7 @@
 use super::{
-    access_policy::{Allow, AllowLevel, Resource},
+    access_policy::{Allow, Resource},
     criteria::Criteria,
+    indexes::access_policy_allow_level_index::AllowLevel,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
     UserId, UserStatus,

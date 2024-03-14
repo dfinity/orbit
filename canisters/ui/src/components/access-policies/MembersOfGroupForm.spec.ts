@@ -27,7 +27,6 @@ describe('MembersOfGroupForm', () => {
     const wrapper = mount(MembersOfGroupForm, {
       props: {
         modelValue: {
-          policyId: null,
           groupIds: [],
           prefilledGroups: [],
         },
@@ -42,7 +41,6 @@ describe('MembersOfGroupForm', () => {
     const wrapper = mount(MembersOfGroupForm, {
       props: {
         modelValue: {
-          policyId: null,
           groupIds: [],
           prefilledGroups: [
             { id: '1', name: 'Test1' },

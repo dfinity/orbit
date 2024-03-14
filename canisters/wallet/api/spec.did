@@ -1377,15 +1377,20 @@ type ResourceAccess = variant {
 };
 
 // The users that are allowed to access the resource.
-type Allow = variant {
-  // Any user can access the resource, even if not authenticated.
-  Any;
-  // Only authenticated users can access the resource.
-  Authenticated;
+type Allow = record {
+  // Required authentication level for accessing the resource.
+  authentication : opt UserAuthentication;
   // Only the specified users can access the resource.
-  Users : vec UUID;
+  users : opt vec UUID;
   // Only the specified user groups can access the resource.
-  UserGroups : vec UUID;
+  user_groups : opt vec UUID;
+};
+
+// The user authentication level, used to specify the authentication level that is required for
+// accessing the resource.
+type UserAuthentication = variant {
+  None;
+  Required;
 };
 
 // The allow level for who can access the resource.
@@ -1531,7 +1536,7 @@ type ResourceType = variant {
 // A record type that can be used to represent the caller privileges for a given access policy.
 type AccessPolicyCallerPrivileges = record {
   // The resource type that the caller has privileges for.
-  resource_type: ResourceType;
+  resource_type : ResourceType;
   // Wether or not the caller can edit the resource.
   can_edit : bool;
 };
@@ -1596,9 +1601,9 @@ type GetAccessPolicyResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The access policy that was retrieved.
-    policies : vec AccessPolicy;
+    policy : AccessPolicy;
     // The privileges of the caller for the access policy.
-    privileges : vec AccessPolicyCallerPrivileges;
+    privileges : AccessPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;

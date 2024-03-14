@@ -1,7 +1,7 @@
 <template>
   <ShortValues
-    v-if="!showActionBtn"
-    :values="specifier.users.membersOfGroup.groups.map(g => g.name)"
+    v-if="!canEdit"
+    :values="specifier.allow.membersOfGroup.groups.map(g => g.name)"
     empty="-"
   />
   <template v-else>
@@ -27,12 +27,12 @@
       </template>
       <template #actions="{ submit, loading: saving, model: elem }">
         <VSpacer />
-        <VBtn :loading="saving" :disabled="shouldDisableSubmitBtn(elem.value)" @click="submit">
+        <VBtn :loading="saving" :disabled="!elem.value.valid" @click="submit">
           {{ $t('terms.edit') }}
         </VBtn>
       </template>
     </ActionBtn>
-    <ShortValues :values="specifier.users.membersOfGroup.groups.map(g => g.name)" />
+    <ShortValues :values="specifier.allow.membersOfGroup.groups.map(g => g.name)" />
   </template>
 </template>
 
@@ -47,8 +47,6 @@ import {
 } from '~/composables/notifications.composable';
 import { Proposal } from '~/generated/wallet/wallet.did';
 import { ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
-import { Privilege } from '~/types/auth.types';
-import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import MembersOfGroupForm, { MembersOfGroupFormProps } from './MembersOfGroupForm.vue';
 
 const props = defineProps<{
@@ -69,33 +67,5 @@ const emit = defineEmits<{
   (event: 'update:modelValue', payload: MembersOfGroupFormProps): void;
 }>();
 
-const canAdd = computed(
-  () =>
-    hasRequiredPrivilege({
-      anyOf: [Privilege.AddAccessPolicy],
-    }) && !specifier.value.users.membersOfGroup.policy.id,
-);
-const canEdit = computed(
-  () =>
-    !!specifier.value.users.membersOfGroup.policy.id &&
-    specifier.value.users.membersOfGroup.policy.canEdit,
-);
-const canRemove = computed(
-  () =>
-    !!specifier.value.users.membersOfGroup.policy.id &&
-    specifier.value.users.membersOfGroup.policy.canRemove,
-);
-const showActionBtn = computed(() => canAdd.value || canEdit.value || canRemove.value);
-
-const shouldDisableSubmitBtn = (elem: MembersOfGroupFormProps) => {
-  if (!elem.modelValue.groupIds?.length && !canRemove.value) {
-    return true;
-  }
-
-  if (!!elem.modelValue.policyId && elem.modelValue.groupIds?.length && !canEdit.value) {
-    return true;
-  }
-
-  return !elem.valid;
-};
+const canEdit = computed(() => specifier.value.allow.membersOfGroup.policy.canEdit);
 </script>

@@ -27,7 +27,6 @@ describe('SpecificUsersForm', () => {
     const wrapper = mount(SpecificUsersForm, {
       props: {
         modelValue: {
-          policyId: null,
           userIds: [],
           prefilledUsers: [],
         },
@@ -42,7 +41,6 @@ describe('SpecificUsersForm', () => {
     const wrapper = mount(SpecificUsersForm, {
       props: {
         modelValue: {
-          policyId: null,
           userIds: [],
           prefilledUsers: [
             { id: '1', name: 'Test1', status: { Active: null } },
