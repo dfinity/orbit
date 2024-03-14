@@ -7,7 +7,7 @@ use crate::{
     models::{
         access_policy::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction, Allow,
-            Resource, ResourceType, ResourceTypeId,
+            Resource, ResourceTypeId,
         },
         indexes::access_policy_allow_level_index::AllowLevel,
         EditAccessPolicyOperationInput, ResourceAccess, User, UserGroup,
@@ -108,15 +108,15 @@ impl AccessPolicyService {
 
     pub async fn get_caller_privileges_for_access_policy(
         &self,
-        resource_type: &ResourceType,
+        resource: &Resource,
         ctx: &CallContext,
     ) -> ServiceResult<AccessPolicyCallerPrivileges> {
         Ok(AccessPolicyCallerPrivileges {
-            resource_type: resource_type.clone(),
+            resource: resource.clone(),
             can_edit: Authorization::is_allowed(
                 ctx,
                 &Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
-                    ResourceTypeId::Resource(resource_type.clone()),
+                    ResourceTypeId::Resource(resource.to_type()),
                 )),
             ),
         })
@@ -127,7 +127,13 @@ impl AccessPolicyService {
         input: ListAccessPoliciesInput,
         ctx: &CallContext,
     ) -> ServiceResult<PaginatedData<AccessPolicy>> {
-        let mut policies = self.access_policy_repository.list();
+        let mut policies = match input.resources {
+            Some(resources) => resources
+                .into_iter()
+                .map(|r| self.get_access_policy(&r.into()))
+                .collect::<Result<Vec<_>, _>>()?,
+            None => self.access_policy_repository.list(),
+        };
 
         retain_accessible_resources(ctx, &mut policies, |policy| {
             Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Resource(
@@ -136,8 +142,8 @@ impl AccessPolicyService {
         });
 
         let result = paginated_items(PaginatedItemsArgs {
-            offset: input.offset,
-            limit: input.limit,
+            offset: input.paginate.as_ref().and_then(|p| p.offset),
+            limit: input.paginate.as_ref().and_then(|p| p.limit),
             default_limit: Some(Self::DEFAULT_POLICIES_LIMIT),
             max_limit: Some(Self::MAX_LIST_POLICIES_LIMIT),
             items: &policies,
@@ -285,8 +291,11 @@ mod tests {
         }
 
         let input = ListAccessPoliciesInput {
-            offset: Some(5),
-            limit: Some(10),
+            resources: None,
+            paginate: Some(wallet_api::PaginationInput {
+                offset: Some(5),
+                limit: Some(10),
+            }),
         };
 
         let result = ACCESS_POLICY_SERVICE

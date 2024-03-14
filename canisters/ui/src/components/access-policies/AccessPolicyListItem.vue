@@ -137,7 +137,7 @@ const getMembersOfGroupForm = (
     return membersOfGroupModels.value[idx];
   }
 
-  const groups = [...specifier.allow.membersOfGroup.groups];
+  const groups = [...specifier.allow.membersOfGroup];
   return {
     valid: true,
     modelValue: {
@@ -165,7 +165,9 @@ const onMembersOfGroupFormSubmit = (
   return wallet.service.editAccessPolicy({
     access: {
       Allow: {
-        UserGroups: form.modelValue.groupIds,
+        authentication: [],
+        users: [],
+        user_groups: [form.modelValue.groupIds],
       },
     },
     resource,
@@ -185,7 +187,7 @@ const getSpecificUsersForm = (
     return specificUsersModels.value[idx];
   }
 
-  const users = [...specifier.allow.specificUsers.users];
+  const users = [...specifier.allow.specificUsers];
   return {
     valid: true,
     modelValue: {
@@ -213,7 +215,9 @@ const onSpecificUsersFormSubmit = (
   return wallet.service.editAccessPolicy({
     access: {
       Allow: {
-        Users: form.modelValue.userIds,
+        authentication: [],
+        user_groups: [],
+        users: [form.modelValue.userIds],
       },
     },
     resource,

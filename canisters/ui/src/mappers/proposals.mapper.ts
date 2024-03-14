@@ -41,11 +41,7 @@ export const mapProposalsOperationTypeToGroup = (
     return ListProposalsOperationTypeGroup.ProposalPolicy;
   }
 
-  if (
-    variantIs(operationType, 'AddAccessPolicy') ||
-    variantIs(operationType, 'EditAccessPolicy') ||
-    variantIs(operationType, 'RemoveAccessPolicy')
-  ) {
+  if (variantIs(operationType, 'EditAccessPolicy')) {
     return ListProposalsOperationTypeGroup.AccessPolicy;
   }
 
@@ -187,14 +183,8 @@ export const mapProposalOperationToTypeEnum = (
   if (variantIs(operation, 'RemoveProposalPolicy')) {
     return ProposalOperationEnum.RemoveProposalPolicy;
   }
-  if (variantIs(operation, 'AddAccessPolicy')) {
-    return ProposalOperationEnum.AddAccessPolicy;
-  }
   if (variantIs(operation, 'EditAccessPolicy')) {
     return ProposalOperationEnum.EditAccessPolicy;
-  }
-  if (variantIs(operation, 'RemoveAccessPolicy')) {
-    return ProposalOperationEnum.RemoveAccessPolicy;
   }
   if (variantIs(operation, 'ChangeCanister')) {
     return ProposalOperationEnum.ChangeCanister;
@@ -257,10 +247,6 @@ export const mapListProposalsOperationTypeGroupToCsvHeaders = (
   }
 
   if (group === ListProposalsOperationTypeGroup.ProposalPolicy) {
-    headers.policy_id = 'Policy ID';
-  }
-
-  if (group === ListProposalsOperationTypeGroup.AccessPolicy) {
     headers.policy_id = 'Policy ID';
   }
 
@@ -434,23 +420,9 @@ const mapProposalToProposalPolicyCsvRow = (proposal: Proposal): CsvRow => {
 };
 
 const mapProposalToAccessPolicyCsvRow = (proposal: Proposal): CsvRow => {
-  if (variantIs(proposal.operation, 'AddAccessPolicy')) {
-    return {
-      policy_id: proposal.operation.AddAccessPolicy.policy_id?.[0] ?? '',
-      details: stringify(proposal.operation.AddAccessPolicy.input),
-    };
-  }
-
   if (variantIs(proposal.operation, 'EditAccessPolicy')) {
     return {
-      policy_id: proposal.operation.EditAccessPolicy.input.policy_id,
       details: stringify(proposal.operation.EditAccessPolicy.input),
-    };
-  }
-
-  if (variantIs(proposal.operation, 'RemoveAccessPolicy')) {
-    return {
-      policy_id: proposal.operation.RemoveAccessPolicy.input.policy_id,
     };
   }
 

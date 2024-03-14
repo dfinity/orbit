@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccessPolicyCallerPrivilegesDTO {
-    pub resource_type: ResourceTypeDTO,
+    pub resource: ResourceDTO,
     pub can_edit: bool,
 }
 
@@ -172,7 +172,11 @@ pub enum ProposalResourceActionTypeDTO {
     Read,
 }
 
-pub type ListAccessPoliciesInput = PaginationInput;
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ListAccessPoliciesInput {
+    pub resources: Option<Vec<ResourceDTO>>,
+    pub paginate: Option<PaginationInput>,
+}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAccessPoliciesResponse {

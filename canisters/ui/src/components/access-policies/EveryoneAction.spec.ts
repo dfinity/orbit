@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultUserSpecifiers } from '~/configs/access-policies.config';
-import { ResourceActionEnum } from '~/types/access-policies.types';
+import { defaultAllowLevels } from '~/configs/access-policies.config';
+import { AccessPolicyForAllUsers, ResourceActionEnum } from '~/types/access-policies.types';
 import { mount } from '~/test.utils';
 import EveryoneAction from './EveryoneAction.vue';
 
@@ -10,10 +10,11 @@ describe('MembersOfGroupAction', () => {
       props: {
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Edit: { Any: null } },
           },
-          users: defaultUserSpecifiers(),
+          allow: defaultAllowLevels(),
+          canEdit: true,
         },
       },
     });
@@ -28,25 +29,19 @@ describe('MembersOfGroupAction', () => {
         props: {
           specifier: {
             action: ResourceActionEnum.Create,
-            specifier: {
-              AccessPolicy: { Create: null },
+            resource: {
+              AccessPolicy: { Edit: { Any: null } },
             },
-            users: {
-              ...defaultUserSpecifiers(),
-              allUsers: {
-                policy: {
-                  id: '1',
-                  canEdit: true,
-                  canRemove: true,
-                },
-              },
+            canEdit: true,
+            allow: {
+              ...defaultAllowLevels(),
+              allUsers: AccessPolicyForAllUsers.AuthenticationRequired,
             },
           },
         },
       },
       {
         initialPiniaState: {
-          wallet: { privileges: [{ AddAccessPolicy: null }] },
           session: { isAuthenticated: true },
         },
       },
@@ -61,18 +56,13 @@ describe('MembersOfGroupAction', () => {
       props: {
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Edit: { Any: null } },
           },
-          users: {
-            ...defaultUserSpecifiers(),
-            allUsers: {
-              policy: {
-                id: '1',
-                canEdit: false,
-                canRemove: false,
-              },
-            },
+          canEdit: true,
+          allow: {
+            ...defaultAllowLevels(),
+            allUsers: AccessPolicyForAllUsers.AuthenticationRequired,
           },
         },
       },

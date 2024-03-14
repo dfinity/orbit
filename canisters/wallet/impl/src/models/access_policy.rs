@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct AccessPolicyCallerPrivileges {
-    pub resource_type: ResourceType,
+    pub resource: Resource,
     pub can_edit: bool,
 }
 

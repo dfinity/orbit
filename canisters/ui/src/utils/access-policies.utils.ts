@@ -126,6 +126,10 @@ export const isAccountResourceActionContained = (
     return true;
   }
 
+  if (variantIs(a, 'Create') && variantIs(b, 'Create')) {
+    return true;
+  }
+
   if (variantIs(a, 'Read') && variantIs(b, 'Read')) {
     return isResourceIdContained(a.Read, b.Read);
   }

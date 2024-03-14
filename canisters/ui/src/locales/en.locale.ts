@@ -167,10 +167,6 @@ export default {
         title: 'Add user',
         request_title: 'Add user request',
       },
-      addaccesspolicy: {
-        title: 'Add access policy',
-        request_title: 'Add access policy request',
-      },
       addaddressbookentry: {
         title: 'Add address book entry',
         request_title: 'Add address book entry request',
@@ -182,10 +178,6 @@ export default {
       removeproposalpolicy: {
         title: 'Remove approval policy',
         request_title: 'Remove approval policy request',
-      },
-      removeaccesspolicy: {
-        title: 'Remove access policy',
-        request_title: 'Remove access policy request',
       },
       removeusergroup: {
         title: 'Remove user group',
@@ -586,6 +578,12 @@ export default {
       readpublicconfig: 'Read public configuration',
       readsensitiveconfig: 'Read sensitive configuration',
     },
+    allow: {
+      everyone_edit_label: 'Allow access to the resource for:',
+      anyone: 'Anyone',
+      authenticated: 'Authenticated',
+      notset: 'Not set',
+    },
   },
   proposal_policies: {
     user_type_select: 'User type',
@@ -622,8 +620,6 @@ export default {
       transfer: 'Transfer',
       editaccount: 'Edit account',
       addaddressbookentry: 'Add address book entry',
-      addaccesspolicy: 'Add permission',
-      removeaccesspolicy: 'Remove permission',
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
     },

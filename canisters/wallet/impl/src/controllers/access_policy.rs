@@ -56,7 +56,7 @@ impl AccessPolicyController {
 
         let privilege = self
             .access_policy_service
-            .get_caller_privileges_for_access_policy(&policy.resource.to_type(), &ctx)
+            .get_caller_privileges_for_access_policy(&policy.resource, &ctx)
             .await?;
 
         Ok(GetAccessPolicyResponse {
@@ -83,7 +83,7 @@ impl AccessPolicyController {
         for policy in &result.items {
             let privilege = self
                 .access_policy_service
-                .get_caller_privileges_for_access_policy(&policy.resource.to_type(), &ctx)
+                .get_caller_privileges_for_access_policy(&policy.resource, &ctx)
                 .await?;
 
             privileges.push(AccessPolicyCallerPrivilegesDTO::from(privilege));

@@ -501,7 +501,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetAccessPolicyInput = IDL.Record({ 'resource' : Resource });
   const AccessPolicyCallerPrivileges = IDL.Record({
-    'resource_type' : ResourceType,
+    'resource' : Resource,
     'can_edit' : IDL.Bool,
   });
   const AccessPolicy = IDL.Record({ 'resource' : Resource, 'allow' : Allow });
@@ -635,7 +635,10 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Opt(IDL.Nat64),
     'limit' : IDL.Opt(IDL.Nat16),
   });
-  const ListAccessPoliciesInput = PaginationInput;
+  const ListAccessPoliciesInput = IDL.Record({
+    'resources' : IDL.Opt(IDL.Vec(Resource)),
+    'paginate' : IDL.Opt(PaginationInput),
+  });
   const BasicUser = IDL.Record({
     'id' : UUID,
     'status' : UserStatus,

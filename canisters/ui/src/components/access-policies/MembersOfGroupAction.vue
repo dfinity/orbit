@@ -1,7 +1,7 @@
 <template>
   <ShortValues
     v-if="!canEdit"
-    :values="specifier.allow.membersOfGroup.groups.map(g => g.name)"
+    :values="specifier.allow.membersOfGroup.map(g => g.name)"
     empty="-"
   />
   <template v-else>
@@ -32,7 +32,7 @@
         </VBtn>
       </template>
     </ActionBtn>
-    <ShortValues :values="specifier.allow.membersOfGroup.groups.map(g => g.name)" />
+    <ShortValues :values="specifier.allow.membersOfGroup.map(g => g.name)" />
   </template>
 </template>
 
@@ -67,5 +67,5 @@ const emit = defineEmits<{
   (event: 'update:modelValue', payload: MembersOfGroupFormProps): void;
 }>();
 
-const canEdit = computed(() => specifier.value.allow.membersOfGroup.policy.canEdit);
+const canEdit = computed(() => specifier.value.canEdit);
 </script>

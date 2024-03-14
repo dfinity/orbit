@@ -3,7 +3,6 @@ import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/wallet';
 import {
   AccountBalance,
-  AddAccessPolicyOperationInput,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
   AddProposalPolicyOperationInput,
@@ -33,6 +32,7 @@ import {
   GetUserGroupResult,
   GetUserInput,
   GetUserResult,
+  ListAccessPoliciesInput,
   ListAccessPoliciesResult,
   ListAccountTransfersInput,
   ListAccountsResult,
@@ -47,7 +47,6 @@ import {
   Notification,
   PaginationInput,
   Proposal,
-  RemoveAccessPolicyOperationInput,
   RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
@@ -544,7 +543,9 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async listAccessPolicies(input: PaginationInput): Promise<ExtractOk<ListAccessPoliciesResult>> {
+  async listAccessPolicies(
+    input: ListAccessPoliciesInput,
+  ): Promise<ExtractOk<ListAccessPoliciesResult>> {
     const result = await this.actor.list_access_policies(input);
 
     if (variantIs(result, 'Err')) {
@@ -552,36 +553,6 @@ export class WalletService {
     }
 
     return result.Ok;
-  }
-
-  async addAccessPolicy(input: AddAccessPolicyOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
-      execution_plan: [{ Immediate: null }],
-      title: [],
-      summary: [],
-      operation: { AddAccessPolicy: input },
-    });
-
-    if (variantIs(result, 'Err')) {
-      throw result.Err;
-    }
-
-    return result.Ok.proposal;
-  }
-
-  async removeAccessPolicy(input: RemoveAccessPolicyOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
-      execution_plan: [{ Immediate: null }],
-      title: [],
-      summary: [],
-      operation: { RemoveAccessPolicy: input },
-    });
-
-    if (variantIs(result, 'Err')) {
-      throw result.Err;
-    }
-
-    return result.Ok.proposal;
   }
 
   async editAccessPolicy(input: EditAccessPolicyOperationInput): Promise<Proposal> {

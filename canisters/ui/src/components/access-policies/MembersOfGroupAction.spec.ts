@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { defaultUserSpecifiers } from '~/configs/access-policies.config';
+import { defaultAllowLevels } from '~/configs/access-policies.config';
 import { ResourceActionEnum } from '~/types/access-policies.types';
 import { mount } from '~/test.utils';
 import MembersOfGroupAction from './MembersOfGroupAction.vue';
@@ -10,7 +10,6 @@ describe('MembersOfGroupAction', () => {
       props: {
         modelValue: {
           modelValue: {
-            policyId: null,
             groupIds: [],
             prefilledGroups: [],
           },
@@ -18,10 +17,11 @@ describe('MembersOfGroupAction', () => {
         },
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Edit: { Any: null } },
           },
-          users: defaultUserSpecifiers(),
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
         submitCb: vi.fn(),
       },
@@ -35,7 +35,6 @@ describe('MembersOfGroupAction', () => {
       props: {
         modelValue: {
           modelValue: {
-            policyId: null,
             groupIds: [],
             prefilledGroups: [],
           },
@@ -43,19 +42,13 @@ describe('MembersOfGroupAction', () => {
         },
         specifier: {
           action: ResourceActionEnum.Create,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Edit: { Any: null } },
           },
-          users: {
-            ...defaultUserSpecifiers(),
-            membersOfGroup: {
-              policy: {
-                id: '1',
-                canEdit: true,
-                canRemove: true,
-              },
-              groups: [],
-            },
+          canEdit: true,
+          allow: {
+            ...defaultAllowLevels(),
+            membersOfGroup: [],
           },
         },
         submitCb: vi.fn(),
@@ -71,7 +64,6 @@ describe('MembersOfGroupAction', () => {
       props: {
         modelValue: {
           modelValue: {
-            policyId: null,
             groupIds: [],
             prefilledGroups: [],
           },
@@ -79,19 +71,13 @@ describe('MembersOfGroupAction', () => {
         },
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Edit: { Any: null } },
           },
-          users: {
-            ...defaultUserSpecifiers(),
-            membersOfGroup: {
-              policy: {
-                id: '1',
-                canEdit: false,
-                canRemove: false,
-              },
-              groups: [],
-            },
+          canEdit: true,
+          allow: {
+            ...defaultAllowLevels(),
+            membersOfGroup: [],
           },
         },
         submitCb: vi.fn(),

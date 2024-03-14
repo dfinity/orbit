@@ -1535,8 +1535,8 @@ type ResourceType = variant {
 
 // A record type that can be used to represent the caller privileges for a given access policy.
 type AccessPolicyCallerPrivileges = record {
-  // The resource type that the caller has privileges for.
-  resource_type : ResourceType;
+  // The resource that the caller has privileges for.
+  resource : Resource;
   // Wether or not the caller can edit the resource.
   can_edit : bool;
 };
@@ -1551,7 +1551,12 @@ type AccessPolicy = record {
 };
 
 // Input type for listing access policies with the given pagination parameters.
-type ListAccessPoliciesInput = PaginationInput;
+type ListAccessPoliciesInput = record {
+  // The resources to retrieve policies for.
+  resources : opt vec Resource;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
 
 // A basic user record that can be used to represent a user in the wallet.
 type BasicUser = record {

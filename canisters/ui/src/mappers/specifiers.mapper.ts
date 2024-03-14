@@ -3,16 +3,8 @@ import { ProposalCriteriaUserSpecifierEnum, ProposalSpecifierEnum } from '~/type
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapProposalSpecifierToEnum = (specifier: ProposalSpecifier): ProposalSpecifierEnum => {
-  if (variantIs(specifier, 'AddAccessPolicy')) {
-    return ProposalSpecifierEnum.AddAccessPolicy;
-  }
-
   if (variantIs(specifier, 'EditAccessPolicy')) {
     return ProposalSpecifierEnum.EditAccessPolicy;
-  }
-
-  if (variantIs(specifier, 'RemoveAccessPolicy')) {
-    return ProposalSpecifierEnum.RemoveAccessPolicy;
   }
 
   if (variantIs(specifier, 'AddProposalPolicy')) {

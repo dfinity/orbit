@@ -149,7 +149,6 @@ import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ProposalMetadata from './ProposalMetadata.vue';
 import ProposalStatusChip from './ProposalStatusChip.vue';
-import AddAccessPolicyOperation from './operations/AddAccessPolicyOperation.vue';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
 import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.vue';
@@ -162,7 +161,6 @@ import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOper
 import EditProposalPolicyOperation from './operations/EditProposalPolicyOperation.vue';
 import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
 import EditUserOperation from './operations/EditUserOperation.vue';
-import RemoveAccessPolicyOperation from './operations/RemoveAccessPolicyOperation.vue';
 import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
 import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
@@ -203,8 +201,6 @@ const componentsMap: {
   EditProposalPolicy: EditProposalPolicyOperation,
   RemoveProposalPolicy: RemoveProposalPolicyOperation,
   ChangeCanister: ChangeCanisterOperation,
-  AddAccessPolicy: AddAccessPolicyOperation,
-  RemoveAccessPolicy: RemoveAccessPolicyOperation,
   EditAccessPolicy: EditAccessPolicyOperation,
 };
 

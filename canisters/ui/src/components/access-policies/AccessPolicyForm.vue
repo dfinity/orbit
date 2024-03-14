@@ -8,28 +8,28 @@
 
     <template v-if="model.allow">
       <SpecificUsersForm
-        v-if="variantIs(model.allow, 'Users')"
+        v-if="model.allow.users[0]"
         :mode="props.mode.value"
         :model-value="{
-          userIds: model.allow.Users,
+          userIds: model.allow.users[0],
         }"
       />
       <MembersOfGroupForm
-        v-else-if="variantIs(model.allow, 'UserGroups')"
+        v-else-if="model.allow.user_groups[0]"
         :mode="props.mode.value"
         :model-value="{
-          groupIds: model.allow.UserGroups,
+          groupIds: model.allow.user_groups[0],
         }"
       />
       <!-- todo: add specific authenticated vs any rule -->
-      <VCheckbox
+      <!-- <VCheckbox
         v-else-if="variantIs(model.allow, 'Any')"
         v-model="model.allow.Any"
         :label="$t('terms.everyone')"
         variant="plain"
         density="compact"
         disabled
-      />
+      /> -->
     </template>
   </VForm>
 </template>

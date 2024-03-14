@@ -21,10 +21,10 @@
               </td>
             </tr>
             <AccessPolicyListItem
-              v-for="(resourcePolicies, idx) in resourceAccessPolicies"
+              v-for="(resourceAccessPolicy, idx) in aggregatedAccessPolicies"
               v-else
               :key="idx"
-              :resource="resourcePolicies"
+              :resource="resourceAccessPolicy"
               @editing="emit('editing', $event)"
             />
           </tbody>
@@ -38,7 +38,6 @@
 import { computed, toRefs } from 'vue';
 import { defaultAllowLevels } from '~/configs/access-policies.config';
 import { logger } from '~/core/logger.core';
-import { variantIs } from '~/utils/helper.utils';
 import {
   AccessPolicy,
   AccessPolicyCallerPrivileges,
@@ -47,9 +46,13 @@ import {
   UUID,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
+import {
+  AccessPolicyForAllUsers,
+  AggregatedResouceAccessPolicies,
+} from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
 import AccessPolicyListItem from './AccessPolicyListItem.vue';
+import { variantIs } from '~/utils/helper.utils';
 
 const app = useAppStore();
 const props = withDefaults(
@@ -68,7 +71,8 @@ const props = withDefaults(
   },
 );
 
-const { preloadUserGroups, preloadUsers, accessPolicies, resources, privileges } = toRefs(props);
+const { preloadUserGroups, preloadUsers, accessPolicies, resources, privileges, loading } =
+  toRefs(props);
 
 const userGroups = computed<Record<UUID, UserGroup>>(() => {
   return preloadUserGroups.value.reduce<Record<UUID, UserGroup>>((acc, group) => {
@@ -85,14 +89,14 @@ const users = computed<Record<UUID, BasicUser>>(() => {
 });
 
 const hasEditPrivilege = (resource: Resource): boolean => {
-  // todo: add logic to check if user has edit privilege
-  return true;
-  // return (
-  //   privileges.value.find(privilege => privilege.resource_type === resource)?.can_edit ?? false
-  // );
+  const privilege = privileges.value.find(
+    privilege => JSON.stringify(privilege.resource) === JSON.stringify(resource),
+  );
+
+  return privilege?.can_edit ?? false;
 };
 
-const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
+const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
   const resourceAccessPolicies = resources.value.map(resource => ({
     match: resource.match,
     resourceType: resource.resourceType,
@@ -102,41 +106,52 @@ const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() =>
     })),
   }));
 
-  for (const policy of accessPolicies.value) {
-    for (const resource of resourceAccessPolicies) {
-      for (const resourceSpecifier of resource.resources) {
-        if (resource.match(resourceSpecifier.resource, policy)) {
-          if (variantIs(policy.allow, 'Any')) {
-            resourceSpecifier.users.allUsers.policy.canEdit = hasEditPrivilege(policy.resource);
-          } else if (variantIs(policy.allow, 'Users')) {
-            resourceSpecifier.users.specificUsers.policy.canEdit = hasEditPrivilege(
-              policy.resource,
-            );
-            resourceSpecifier.users.specificUsers.users = policy.allow.Users.map(id => {
-              const user = users.value[id];
-              if (!user) {
-                logger.warn(
-                  `User with id ${id} not found in preload data. This should not happen.`,
-                );
-              }
-              return user;
-            });
-          } else if (variantIs(policy.allow, 'UserGroups')) {
-            resourceSpecifier.users.membersOfGroup.policy.canEdit = hasEditPrivilege(
-              policy.resource,
-            );
-            resourceSpecifier.users.membersOfGroup.groups = policy.allow.UserGroups.map(id => {
-              const group = userGroups.value[id];
-              if (!group) {
-                logger.warn(
-                  `Group with id ${id} not found in preload data. This should not happen.`,
-                );
-              }
-              return group;
-            });
-          }
+  const hasAccessPolicies = accessPolicies.value.length > 0;
+  if (!hasAccessPolicies) {
+    return resourceAccessPolicies;
+  }
+
+  for (const aggregatedResource of resourceAccessPolicies) {
+    for (const resource of aggregatedResource.resources) {
+      let policy = accessPolicies.value.find(policy =>
+        aggregatedResource.match(resource.resource, policy.resource),
+      );
+      if (!policy) {
+        logger.warn(
+          `No match found for policy. This should not happen. Policy: ${JSON.stringify(resource.resource)}`,
+        );
+
+        continue;
+      }
+
+      resource.canEdit = hasEditPrivilege(resource.resource);
+
+      if (policy.allow.authentication?.length) {
+        let authentication = policy.allow.authentication[0];
+        if (variantIs(authentication, 'Required')) {
+          resource.allow.allUsers = AccessPolicyForAllUsers.AuthenticationRequired;
+        } else if (variantIs(authentication, 'None')) {
+          resource.allow.allUsers = AccessPolicyForAllUsers.Public;
         }
       }
+
+      resource.allow.specificUsers =
+        policy.allow.users?.[0]?.map(id => {
+          const user = users.value[id];
+          if (!user) {
+            logger.warn(`User with id ${id} not found in preload data. This should not happen.`);
+          }
+          return user;
+        }) ?? [];
+
+      resource.allow.membersOfGroup =
+        policy.allow.user_groups?.[0]?.map(id => {
+          const group = userGroups.value[id];
+          if (!group) {
+            logger.warn(`Group with id ${id} not found in preload data. This should not happen.`);
+          }
+          return group;
+        }) ?? [];
     }
   }
 

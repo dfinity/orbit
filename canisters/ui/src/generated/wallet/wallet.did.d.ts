@@ -5,7 +5,7 @@ import type { IDL } from '@dfinity/candid';
 export type AccessControlUserSpecifier = CommonSpecifier;
 export interface AccessPolicy { 'resource' : Resource, 'allow' : Allow }
 export interface AccessPolicyCallerPrivileges {
-  'resource_type' : ResourceType,
+  'resource' : Resource,
   'can_edit' : boolean,
 }
 export type AccessPolicyResourceAction = { 'Edit' : ResourceTypeId } |
@@ -306,7 +306,10 @@ export interface HttpResponse {
   'headers' : Array<HeaderField>,
   'status_code' : number,
 }
-export type ListAccessPoliciesInput = PaginationInput;
+export interface ListAccessPoliciesInput {
+  'resources' : [] | [Array<Resource>],
+  'paginate' : [] | [PaginationInput],
+}
 export type ListAccessPoliciesResult = {
     'Ok' : {
       'total' : bigint,
