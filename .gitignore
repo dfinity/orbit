@@ -64,6 +64,7 @@ dist
 coverage
 .dfx
 canisters/integration-tests/pocket-ic
+canisters/ui/src/generated/control-panel/control_panel.did
 ic-wasm
 wasms/*.wasm.gz
 /src

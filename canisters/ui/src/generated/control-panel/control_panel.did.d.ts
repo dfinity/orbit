@@ -43,7 +43,10 @@ export interface ManageUserInput {
 }
 export type ManageUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export interface RegisterUserInput { 'wallet_id' : [] | [Principal] }
+export interface RegisterUserInput {
+  'email' : string,
+  'wallet_id' : [] | [Principal],
+}
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
@@ -69,4 +72,4 @@ export interface _SERVICE {
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
