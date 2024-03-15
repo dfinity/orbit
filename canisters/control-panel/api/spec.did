@@ -93,6 +93,8 @@ type GetUserResult = variant {
 type RegisterUserInput = record {
   // A wallet canister to use for this user.
   wallet_id : opt principal;
+  // The e-mail address of this user.
+  email : text;
 };
 
 // The result of registering an user.

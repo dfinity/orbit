@@ -4,7 +4,7 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserKey, UserWallet},
+    models::{User, UserAuthorizationStatus, UserKey, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
@@ -162,7 +162,10 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
+            email: "john@example.com".to_string(),
+            authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
+            deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -182,7 +185,10 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
+            email: "john@example.com".to_string(),
+            authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
+            deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -203,6 +209,7 @@ mod tests {
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: Some(Principal::from_slice(&[2; 29])),
+            email: "john@example.com".to_string(),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -216,8 +223,14 @@ mod tests {
 
         let ctx = CallContext::default();
         let service = UserService::default();
-        let input = RegisterUserInput { wallet_id: None };
-        let duplicated_user_input = RegisterUserInput { wallet_id: None };
+        let input = RegisterUserInput {
+            wallet_id: None,
+            email: "john@example.com".to_string(),
+        };
+        let duplicated_user_input = RegisterUserInput {
+            wallet_id: None,
+            email: "john@example.com".to_string(),
+        };
 
         let result = service.register_user(input.clone(), &ctx).await;
         let duplicated_user_result = service
@@ -238,7 +251,10 @@ mod tests {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
             id: user_id,
+            email: "john@example.com".to_string(),
+            authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
+            deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
