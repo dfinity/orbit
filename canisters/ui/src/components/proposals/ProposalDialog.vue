@@ -7,10 +7,12 @@
     :max-width="props.dialogMaxWidth.value"
   >
     <DataLoader
+      v-if="currentProposalId"
+      :key="currentProposalId"
       v-slot="{ data }"
-      :key="props.proposalId.value"
       :load="loadProposal"
       @loading="loading = $event"
+      @loaded="onProposalLoaded"
     >
       <ProposalDetailView
         v-if="data"
@@ -27,28 +29,66 @@
         @reject="reason => onVote(false, reason)"
       >
         <template #top-actions>
+          <VSwitch
+            v-if="data.privileges.can_vote"
+            v-model="loadNext"
+            data-test-id="load-next-proposal-switch"
+            :label="$t('proposals.load_next')"
+            class="flex-0-1"
+            :hide-details="true"
+            color="primary"
+            :disabled="voting"
+          ></VSwitch>
+
           <VBtn :disabled="voting" :icon="mdiClose" dark @click="openModel = false" />
+        </template>
+        <template v-if="loadNext" #bottom-actions>
+          <VBtn variant="plain" :disabled="voting" class="ma-0" @click="skip">
+            {{ $t('terms.skip') }}
+          </VBtn>
         </template>
       </ProposalDetailView>
     </DataLoader>
+    <div v-else>
+      <VCard class="text-center" flat data-test-id="no-more-proposals">
+        <VCardText class="text-body-1 mt-10">
+          <VIcon :icon="mdiCheckCircle" size="x-large" />
+          {{ $t('proposals.no_more_requests_to_approve') }}
+        </VCardText>
+        <VCardActions class="pa-4 d-flex flex-md-row ga-2 justify-end">
+          <VBtn variant="outlined" :disabled="loading" @click="openModel = false">
+            {{ $t('terms.close') }}
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </div>
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiClose } from '@mdi/js';
-import { computed, ref, toRefs } from 'vue';
+import { mdiCheckCircle, mdiClose } from '@mdi/js';
+import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataLoader from '~/components/DataLoader.vue';
 import logger from '~/core/logger.core';
 import {
+  GetProposalResultData,
+  ListProposalsOperationType,
   Proposal,
-  ProposalAdditionalInfo,
-  ProposalCallerPrivileges,
   UUID,
 } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import ProposalDetailView from './ProposalDetailView.vue';
 import { variantIs } from '~/utils/helper.utils';
+import { mapProposalOperationToListProposalsOperationType } from '~/mappers/proposals.mapper';
+import { VBtn, VCardActions, VIcon, VSwitch } from 'vuetify/components';
+import { services } from '~/plugins/services.plugin';
+
+type DataType = {
+  proposal: GetProposalResultData['proposal'];
+  privileges: GetProposalResultData['privileges'];
+  additionalInfo: GetProposalResultData['additional_info'];
+};
 
 const input = withDefaults(
   defineProps<{
@@ -69,9 +109,26 @@ const emit = defineEmits<{
   (event: 'voted'): void;
   (event: 'closed'): void;
   (event: 'opened'): void;
+  (event: 'proposal-changed', payload: UUID): void;
 }>();
+const currentProposalId = ref<UUID | null>(props.proposalId.value);
+const preloadedData = ref<DataType | null>(null);
 const voting = ref(false);
 const loading = ref(false);
+const skippedProposalIds = ref<UUID[]>([]);
+
+const proposalType = ref<ListProposalsOperationType | undefined>();
+const loadNext = ref(false);
+
+watch(props.open, isOpen => {
+  if (isOpen) {
+    currentProposalId.value = props.proposalId.value;
+    skippedProposalIds.value = [];
+    preloadedData.value = null;
+    loadNext.value = false;
+  }
+});
+
 const openModel = computed({
   get: () => props.open.value,
   set: value => {
@@ -88,51 +145,108 @@ const i18n = useI18n();
 const app = useAppStore();
 const wallet = useWalletStore();
 
-const loadProposal = async (): Promise<{
-  proposal: Proposal;
-  privileges: ProposalCallerPrivileges;
-  additionalInfo: ProposalAdditionalInfo;
-}> => {
+const loadProposal = async (): Promise<DataType> => {
   wallet.notifications.items.forEach(notification => {
     if (
       !notification.loading &&
       variantIs(notification.data.notification_type, 'ProposalCreated') &&
       !variantIs(notification.data.status, 'Read') &&
-      notification.data.notification_type.ProposalCreated.proposal_id === props.proposalId.value
+      notification.data.notification_type.ProposalCreated.proposal_id === currentProposalId.value
     ) {
       wallet.markNotificationRead(notification.data.id, true);
     }
   });
 
-  const result = await wallet.service.getProposal({ proposal_id: props.proposalId.value });
+  if (preloadedData.value && preloadedData.value.proposal.id === currentProposalId.value) {
+    return {
+      proposal: preloadedData.value.proposal as Proposal,
+      privileges: preloadedData.value.privileges,
+      additionalInfo: preloadedData.value.additionalInfo,
+    };
+  } else {
+    const result = await services().wallet.getProposal({ proposal_id: currentProposalId.value! });
+    return {
+      proposal: result.proposal,
+      privileges: result.privileges,
+      additionalInfo: result.additional_info,
+    };
+  }
+};
+
+const skip = async (): Promise<void> => {
+  voting.value = true;
+  skippedProposalIds.value.push(currentProposalId.value!);
+
+  preloadedData.value = await loadNextProposal();
+
+  if (preloadedData.value) {
+    currentProposalId.value = preloadedData.value.proposal.id;
+    emit('proposal-changed', currentProposalId.value);
+  } else {
+    currentProposalId.value = null;
+  }
+
+  voting.value = false;
+};
+
+const onProposalLoaded = (data: Awaited<ReturnType<typeof loadProposal>>): void => {
+  proposalType.value = mapProposalOperationToListProposalsOperationType(data.proposal.operation);
+};
+
+const loadNextProposal = async (): Promise<DataType | null> => {
+  const nextProposal = await services().wallet.getNextVotableProposal({
+    types: [proposalType.value!],
+    excludedProposalIds: skippedProposalIds.value,
+  });
+
+  if (nextProposal.length === 0) {
+    return null;
+  }
+
   return {
-    proposal: result.proposal,
-    privileges: result.privileges,
-    additionalInfo: result.additional_info,
+    proposal: nextProposal[0].proposal,
+    privileges: nextProposal[0].privileges,
+    additionalInfo: nextProposal[0].additional_info,
   };
 };
 
 const onVote = async (approve: boolean, reason?: string): Promise<void> => {
+  if (currentProposalId.value === null) {
+    return;
+  }
+
   voting.value = true;
 
   return wallet.service
     .voteOnProposal({
-      proposal_id: props.proposalId.value,
+      proposal_id: currentProposalId.value,
       approve,
       reason: reason && reason.length ? [reason] : [],
     })
-    .then(() => {
-      openModel.value = false;
-
+    .then(async () => {
       app.sendNotification({
         type: 'success',
         message: i18n.t('app.action_save_success'),
       });
 
-      emit('voted');
+      if (loadNext.value) {
+        // keep open, load next
+
+        preloadedData.value = await loadNextProposal();
+
+        if (preloadedData.value) {
+          currentProposalId.value = preloadedData.value.proposal.id;
+          emit('proposal-changed', currentProposalId.value);
+        } else {
+          currentProposalId.value = null;
+        }
+      } else {
+        emit('voted');
+        openModel.value = false;
+      }
     })
     .catch(err => {
-      logger.error(`Failed to vote on proposal: ${err}`);
+      logger.error(`Failed to vote on proposal:`, err);
 
       app.sendNotification({
         type: 'error',

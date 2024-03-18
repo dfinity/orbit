@@ -1,7 +1,7 @@
 <template v-if="proposalReviewComponent">
   <VCard :loading="props.loading">
     <VToolbar color="transparent">
-      <VToolbarTitle>
+      <VToolbarTitle class="flex-fill">
         <span class="text-body-2 font-weight-light">
           {{ $t(`proposals.types.${proposalType}.request_title`) }}
         </span>
@@ -22,7 +22,6 @@
           </VTooltip>
         </span>
       </VToolbarTitle>
-      <VSpacer />
       <slot name="top-actions"></slot>
     </VToolbar>
     <VCardText class="px-4 pt-2">
@@ -130,6 +129,7 @@
           >
             {{ $t('terms.reject') }}
           </VBtn>
+          <slot name="bottom-actions"></slot>
         </template>
         <template v-else>
           <ProposalStatusChip :status="proposal.status" />

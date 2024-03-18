@@ -92,6 +92,8 @@ export default {
     proposer_id: 'Identifiant du proposeur: {id}',
     title_info_message: 'Titre choisis par le proposeur.',
     no_results_found: 'Aucun resultat trouvé.',
+    no_more_requests_to_approve: 'Pas de demandes à approuver.',
+    load_next: 'Charger le suivant',
     status: {
       created: 'En Attente',
       cancelled: 'Annulé',
@@ -435,6 +437,7 @@ export default {
     user_groups: "Groupes d'Usagers",
     all: 'Tout',
     subset: 'sous-ensemble',
+    skip: 'Sauter',
   },
   forms: {
     create: 'Créer',

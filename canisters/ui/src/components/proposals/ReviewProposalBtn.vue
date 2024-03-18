@@ -6,26 +6,25 @@
     :variant="props.variant"
     :icon="props.icon && !btnText"
     :color="props.color"
-    @click="open = true"
+    @click="openDialog"
   >
     <slot name="default">
       {{ btnText }}
     </slot>
   </VBtn>
-
-  <ProposalDialog v-model:open="open" :proposal-id="props.proposal.id" @voted="emit('voted')" />
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import ProposalDialog from '~/components/proposals/ProposalDialog.vue';
-import { Proposal } from '~/generated/wallet/wallet.did';
-import { ProposalDetails } from '~/types/wallet.types';
+import { useProposalOverlay } from '~/composables/proposal.composable';
+import { UUID } from '~/generated/wallet/wallet.did';
+
+const proposalOverlay = useProposalOverlay();
 
 const props = withDefaults(
   defineProps<{
-    proposal: Proposal;
-    details: ProposalDetails;
+    proposalId: UUID;
+    canVote: boolean;
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
@@ -34,6 +33,8 @@ const props = withDefaults(
     readonly?: boolean;
   }>(),
   {
+    proposal: undefined,
+    canVote: false,
     icon: undefined,
     text: undefined,
     size: 'small',
@@ -43,26 +44,18 @@ const props = withDefaults(
   },
 );
 
-const emit = defineEmits<{
+defineEmits<{
   (event: 'voted'): void;
   (event: 'closed'): void;
   (event: 'opened'): void;
 }>();
 
-const open = ref(false);
 const i18n = useI18n();
 const btnText = computed(
-  () => props.text || (props.details?.can_vote ? i18n.t('terms.review') : i18n.t('terms.view')),
+  () => props.text || (props.canVote ? i18n.t('terms.review') : i18n.t('terms.view')),
 );
 
-watch(
-  () => open.value,
-  open => {
-    if (open) {
-      emit('opened');
-    } else {
-      emit('closed');
-    }
-  },
-);
+function openDialog() {
+  proposalOverlay.open(props.proposalId);
+}
 </script>

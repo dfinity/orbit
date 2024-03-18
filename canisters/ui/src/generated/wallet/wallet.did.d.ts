@@ -254,6 +254,14 @@ export type GetAddressBookEntryResult = {
   { 'Err' : Error };
 export type GetConfigResult = { 'Ok' : { 'config' : Config } } |
   { 'Err' : Error };
+export interface GetNextVotableProposalInput {
+  'excluded_proposal_ids' : Array<UUID>,
+  'operation_types' : [] | [Array<ListProposalsOperationType>],
+}
+export type GetNextVotableProposalResponse = {
+    'Ok' : [] | [GetProposalResultData]
+  } |
+  { 'Err' : Error };
 export interface GetProposalInput { 'proposal_id' : UUID }
 export interface GetProposalPolicyInput { 'id' : UUID }
 export type GetProposalPolicyResult = {
@@ -263,14 +271,13 @@ export type GetProposalPolicyResult = {
     }
   } |
   { 'Err' : Error };
-export type GetProposalResult = {
-    'Ok' : {
-      'privileges' : ProposalCallerPrivileges,
-      'proposal' : Proposal,
-      'additional_info' : ProposalAdditionalInfo,
-    }
-  } |
+export type GetProposalResult = { 'Ok' : GetProposalResultData } |
   { 'Err' : Error };
+export interface GetProposalResultData {
+  'privileges' : ProposalCallerPrivileges,
+  'proposal' : Proposal,
+  'additional_info' : ProposalAdditionalInfo,
+}
 export interface GetTransfersInput { 'transfer_ids' : Array<UUID> }
 export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
   { 'Err' : Error };
@@ -377,6 +384,7 @@ export interface ListProposalsInput {
   'expiration_from_dt' : [] | [TimestampRFC3339],
   'created_to_dt' : [] | [TimestampRFC3339],
   'statuses' : [] | [Array<ProposalStatusCode>],
+  'only_votable' : boolean,
   'proposer_ids' : [] | [Array<UUID>],
   'expiration_to_dt' : [] | [TimestampRFC3339],
   'paginate' : [] | [PaginationInput],
@@ -787,6 +795,10 @@ export interface _SERVICE {
   'get_address_book_entry' : ActorMethod<
     [GetAddressBookEntryInput],
     GetAddressBookEntryResult
+  >,
+  'get_next_votable_proposal' : ActorMethod<
+    [GetNextVotableProposalInput],
+    GetNextVotableProposalResponse
   >,
   'get_proposal' : ActorMethod<[GetProposalInput], GetProposalResult>,
   'get_proposal_policy' : ActorMethod<
