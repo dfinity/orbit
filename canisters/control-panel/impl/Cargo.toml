@@ -30,6 +30,7 @@ thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
 control_panel_api = { path = "../api" }
 wallet_api = { path = "../../wallet/api" }
+email_address = "0.2.4"
 
 [dev-dependencies]
 candid_parser = { workspace = true }

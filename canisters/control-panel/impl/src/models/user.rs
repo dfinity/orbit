@@ -1,11 +1,13 @@
 use super::UserWallet;
 use crate::errors::UserError;
 use candid::Principal;
+use email_address::EmailAddress;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::Timestamp,
 };
 use ic_canister_macros::storable;
+use std::str::FromStr;
 
 /// The authorization status of an user.
 #[storable(serializer = "candid")]
@@ -65,6 +67,11 @@ fn validate_email(email: &str) -> ModelValidatorResult<UserError> {
                 User::EMAIL_LEN_RANGE.0,
                 User::EMAIL_LEN_RANGE.1,
             ),
+        });
+    }
+    if let Err(e) = EmailAddress::from_str(email) {
+        return Err(UserError::ValidationError {
+            info: format!("Email validation failed: {}", e,),
         });
     }
 
@@ -233,6 +240,7 @@ mod tests {
 
     #[rstest]
     #[case::empty_name(&"")]
+    #[case::invalid_email(&"john")]
     #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMKufYuimeCebnHWgQXeSzkeqcFLqSVxpdNeSGADkpvvjZHCYXLmM")]
     fn invalid_email(#[case] email: &str) {
         assert!(validate_email(email).is_err());
