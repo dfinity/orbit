@@ -83,22 +83,6 @@ const completedProposalResponse = {
   //...
 } as ExtractOk<GetProposalResult>;
 
-// vi.mock('~/services/wallet.service', () => ({
-//   WalletService: vi.fn().mockImplementation(() => {
-//     return {
-//       getProposal: vi.fn((_: GetProposalInput) => {
-//         return Promise.resolve(votableProposalResponse);
-//       }),
-
-//       getNextVotableProposal: vi.fn((_: GetNextVotableProposalArgs = {}) => {
-//         return Promise.resolve({
-//           //...
-//         } as ExtractOk<GetNextVotableProposalResponse>);
-//       }),
-//     };
-//   }),
-// }));
-
 describe('ProposalDialog', () => {
   it('renders properly', () => {
     const wrapper = mount(ProposalDialog, {
