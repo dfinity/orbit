@@ -62,7 +62,7 @@ const nextVotableProposalResponse = {
     votes: [] as ProposalVote[],
   },
   additional_info: {
-    id: 'proposerid',
+    id: 'next-id',
     proposer_name: [],
   },
   //...
