@@ -1,12 +1,12 @@
-use candid::{CandidType, Deserialize};
-use ic_stable_structures::{storable::Bound, Storable};
+use candid::CandidType;
+use ic_canister_macros::storable;
 use std::{
-    borrow::Cow,
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum UserStatus {
     Active = 0,
@@ -50,20 +50,6 @@ impl Display for UserStatus {
             UserStatus::Inactive => write!(f, "inactive"),
         }
     }
-}
-
-impl Storable for UserStatus {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let user_status: u8 = self.to_owned().into();
-        Cow::Owned(user_status.to_bytes().to_vec())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let user_status = u8::from_bytes(bytes);
-        UserStatus::try_from(user_status).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]

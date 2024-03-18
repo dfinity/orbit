@@ -1,18 +1,17 @@
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::fmt::{Display, Formatter};
 use wallet_api::{PROPOSAL_CREATED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE};
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum NotificationType {
     SystemMessage,
     ProposalCreated(ProposalCreatedNotification),
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalCreatedNotification {
     pub proposal_id: UUID,
 }

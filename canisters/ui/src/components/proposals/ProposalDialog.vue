@@ -19,13 +19,14 @@
         :proposal="data.proposal"
         :details="{
           can_vote: data.privileges.can_vote,
-          proposer_name: data.additionalInfo.proposer_name?.[0] ?? undefined,
+          proposer_name: data.additionalInfo.proposer_name[0],
+          voters: data.additionalInfo.voters,
         }"
         :loading="voting || loading"
         @closed="openModel = false"
         @opened="openModel = true"
-        @approve="onVote(true)"
-        @reject="onVote(false)"
+        @approve="reason => onVote(true, reason)"
+        @reject="reason => onVote(false, reason)"
       >
         <template #top-actions>
           <VSwitch

@@ -1,4 +1,5 @@
 import {
+  DisplayUser,
   ListProposalsOperationType,
   ProposalStatusCode,
   UUID,
@@ -146,6 +147,7 @@ export type MetadataItem = { key: string; value: string };
 export interface ProposalDetails {
   can_vote: boolean;
   proposer_name?: string;
+  voters: DisplayUser[];
 }
 
 export enum ProposalOperationEnum {

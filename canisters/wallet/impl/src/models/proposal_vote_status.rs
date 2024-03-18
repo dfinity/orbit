@@ -1,12 +1,11 @@
-use candid::{CandidType, Deserialize};
-use ic_stable_structures::{storable::Bound, Storable};
+use ic_canister_macros::storable;
 use std::{
-    borrow::Cow,
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum ProposalVoteStatus {
     Accepted = 0,
@@ -50,20 +49,6 @@ impl Display for ProposalVoteStatus {
             ProposalVoteStatus::Rejected => write!(f, "rejected"),
         }
     }
-}
-
-impl Storable for ProposalVoteStatus {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let proposal_vote_status_unit: u8 = self.to_owned().into();
-        Cow::Owned(proposal_vote_status_unit.to_bytes().to_vec())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let proposal_vote_status_unit = u8::from_bytes(bytes);
-        ProposalVoteStatus::try_from(proposal_vote_status_unit).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]

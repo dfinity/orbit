@@ -5,6 +5,7 @@ import {
   GetProposalResult,
   GetProposalResultData,
   ProposalOperation,
+  ProposalVote,
 } from '~/generated/wallet/wallet.did';
 import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
@@ -43,6 +44,7 @@ const votableProposalResponse = {
     id: 'first-id',
     status: { Created: null },
     operation: transferOperation1,
+    votes: [] as ProposalVote[],
   },
   additional_info: {
     id: 'proposerid',
@@ -57,6 +59,7 @@ const nextVotableProposalResponse = {
     id: 'next-id',
     status: { Created: null },
     operation: transferOperation2,
+    votes: [] as ProposalVote[],
   },
   additional_info: {
     id: 'proposerid',
@@ -69,6 +72,7 @@ const completedProposalResponse = {
   privileges: { can_vote: false },
   proposal: {
     id: 'first-id',
+    votes: [] as ProposalVote[],
     status: { Completed: { completed_at: '' } },
     operation: transferOperation1,
   },
@@ -176,7 +180,7 @@ describe('ProposalDialog', () => {
     await flushPromises();
     const contents = wrapper.findComponent(VCard);
 
-    const approveBtn = contents.find('[data-test-id="approve-btn"]');
+    const approveBtn = contents.find('[data-test-id="proposal-details-approve"]');
     await approveBtn.trigger('click');
 
     expect(wrapper.emitted('voted')).toBeTruthy();
@@ -210,7 +214,7 @@ describe('ProposalDialog', () => {
     ).toBe('toaddress1');
 
     await contents.find('[data-test-id="load-next-proposal-switch"] input').trigger('click');
-    await contents.find('[data-test-id="approve-btn"]').trigger('click');
+    await contents.find('[data-test-id="proposal-details-approve"]').trigger('click');
 
     expect(wrapper.emitted('voted')).toBeFalsy();
     expect(wrapper.emitted('closed')).toBeFalsy();
@@ -247,7 +251,7 @@ describe('ProposalDialog', () => {
     let contents = wrapper.findComponent(VCard);
 
     await contents.find('[data-test-id="load-next-proposal-switch"] input').trigger('click');
-    await contents.find('[data-test-id="approve-btn"]').trigger('click');
+    await contents.find('[data-test-id="proposal-details-approve"]').trigger('click');
 
     await flushPromises();
 

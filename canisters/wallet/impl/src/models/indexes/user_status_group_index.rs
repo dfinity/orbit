@@ -1,11 +1,10 @@
 use crate::models::{User, UserStatus};
-use candid::{CandidType, Deserialize};
 use ic_canister_core::types::UUID;
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// Represents an index to facilitate the search of a user by the group and the user status.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserStatusGroupIndex {
     pub group_id: UUID,
     pub user_status: UserStatus,

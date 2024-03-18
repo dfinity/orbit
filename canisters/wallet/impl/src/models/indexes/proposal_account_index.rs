@@ -1,10 +1,9 @@
 use crate::models::{AccountId, Proposal, ProposalId, ProposalOperation};
-use candid::{CandidType, Deserialize};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
 /// Index of proposals by account id.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalAccountIndex {
     /// The account id that is associated with this proposal.
     pub account_id: AccountId,

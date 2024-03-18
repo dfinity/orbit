@@ -10,7 +10,7 @@ use crate::{
     models::{
         access_control::{ProposalActionSpecifier, ResourceSpecifier},
         specifier::CommonSpecifier,
-        NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
+        DisplayUser, NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalStatusCode, ProposalVoteStatus,
     },
     repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
@@ -98,10 +98,27 @@ impl ProposalService {
             .get_user(&proposal.proposed_by)
             .map(|user| user.name)
             .unwrap_or(None);
+        let voters = proposal
+            .votes
+            .iter()
+            .map(|vote| {
+                self.user_service
+                    .get_user(&vote.user_id)
+                    .map(|user| DisplayUser {
+                        name: user.name,
+                        id: user.id,
+                    })
+                    .unwrap_or(DisplayUser {
+                        id: vote.user_id,
+                        name: None,
+                    })
+            })
+            .collect();
 
         Ok(ProposalAdditionalInfo {
             id: proposal.id,
             proposer_name: proposer,
+            voters,
         })
     }
 
@@ -304,11 +321,7 @@ impl ProposalService {
         proposal.validate()?;
 
         if proposal.can_vote(&proposer.id).await {
-            proposal.add_vote(
-                proposer.id,
-                ProposalVoteStatus::Accepted,
-                Some("Proposal automatically approved by the proposer".to_string()),
-            );
+            proposal.add_vote(proposer.id, ProposalVoteStatus::Accepted, None);
         }
 
         // When a proposal is created, it is immediately evaluated to determine its status.
@@ -860,7 +873,7 @@ mod benchs {
 
     #[bench(raw)]
     fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 1000u64;
+        let proposals_to_insert = 16000u64;
         let end_creation_time = proposals_to_insert * 1_000_000_000;
         // this emulates a real world scenario where the proposals are created in a time span and
         // the filter is used to fetch the proposals created in the last half of the time span

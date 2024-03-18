@@ -102,10 +102,7 @@ impl UserController {
         let ctx = call_context();
         let user = self.user_service.get_user_by_identity(&ctx.caller())?;
 
-        let privileges = self
-            .user_service
-            .get_user_privileges_by_identity(&ctx.caller())
-            .await?;
+        let privileges = self.user_service.get_caller_privileges(&ctx).await?;
 
         Ok(MeResponse {
             me: user.into(),

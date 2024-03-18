@@ -6,15 +6,15 @@ use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use std::{collections::HashMap, hash::Hash};
 
 /// The address book entry id, which is a UUID.
 pub type AddressBookEntryId = UUID;
 
 /// Represents an address book entry in the system.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddressBookEntry {
     /// The address book entry id, which is a UUID.
     pub id: AddressBookEntryId,
@@ -32,8 +32,8 @@ pub struct AddressBookEntry {
     pub last_modification_timestamp: Timestamp,
 }
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddressBookEntryKey {
     /// The address book entry id, which is a UUID.
     pub id: AddressBookEntryId,

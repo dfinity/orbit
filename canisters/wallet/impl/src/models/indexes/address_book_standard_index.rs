@@ -1,9 +1,8 @@
 use crate::models::{AddressBookEntry, AddressBookEntryId, Blockchain, BlockchainStandard};
-use candid::{CandidType, Deserialize};
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddressBookStandardIndex {
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
     pub blockchain: Blockchain,

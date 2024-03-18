@@ -4,14 +4,14 @@ use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::stable_object;
+use ic_canister_macros::storable;
 use uuid::Uuid;
 
 pub const ADMIN_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452352).as_bytes();
 
 /// Represents a user group within the system.
-#[stable_object]
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserGroup {
     /// The user group id, which is a UUID.
     pub id: UUID,
