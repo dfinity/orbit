@@ -4,18 +4,26 @@
     v-model:open="open"
     :proposal-id="proposalId"
     @voted="open = false"
+    @proposal-changed="updateProposalId"
   />
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import ProposalDialog from '~/components/proposals/ProposalDialog.vue';
+import { useProposalOverlay } from '~/composables/proposal.composable';
 import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
+import { UUID } from '~/generated/control-panel/control_panel.did';
 import { isValidUUID } from '~/utils/helper.utils';
 
+const proposalOverlay = useProposalOverlay();
 const open = ref(false);
 const router = useRouter();
 const proposalId = ref<string | null>(null);
+
+function updateProposalId(proposalId: UUID) {
+  proposalOverlay.replaceQueryId(proposalId);
+}
 
 watch(
   () => router.currentRoute.value,
@@ -46,12 +54,7 @@ watch(
     if (!open) {
       // Delay to allow the dialog to close before removing the query param
       setTimeout(() => {
-        const query = Object.assign({}, router.currentRoute.value.query);
-        if (query[PROPOSAL_DIALOG_QUERY_PARAM] !== undefined) {
-          delete query[PROPOSAL_DIALOG_QUERY_PARAM];
-        }
-
-        router.replace({ query });
+        proposalOverlay.replaceQueryId(undefined);
       }, 100);
     }
   },

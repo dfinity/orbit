@@ -23,8 +23,8 @@
       <ProposalStatusChip size="small" :status="props.proposal.status" />
       <VSpacer />
       <ReviewProposalBtn
-        :proposal="props.proposal"
-        :details="props.details"
+        :proposal-id="props.proposal.id"
+        :can-vote="props.details.can_vote"
         @voted="$emit('voted')"
         @opened="$emit('opened')"
         @closed="$emit('closed')"

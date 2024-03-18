@@ -43,8 +43,8 @@
       :model-value="account.name"
       variant="plain"
       :label="$t('terms.account')"
-      disabled
       :prepend-icon="mdiWallet"
+      readonly
     />
     <TransferForm :model-value="formValue" :account="account" mode="view" />
   </div>

@@ -228,6 +228,50 @@ export const mapListProposalsOperationTypeToGroups = (
   return groups;
 };
 
+export const mapProposalOperationToListProposalsOperationType = (
+  proposalOperation: ProposalOperation,
+): ListProposalsOperationType => {
+  if (variantIs(proposalOperation, 'AddAccount')) {
+    return { AddAccount: null };
+  } else if (variantIs(proposalOperation, 'EditAccount')) {
+    return { EditAccount: null };
+  } else if (variantIs(proposalOperation, 'Transfer')) {
+    return { Transfer: [] };
+  } else if (variantIs(proposalOperation, 'AddUser')) {
+    return { AddUser: null };
+  } else if (variantIs(proposalOperation, 'EditUser')) {
+    return { EditUser: null };
+  } else if (variantIs(proposalOperation, 'AddAddressBookEntry')) {
+    return { AddAddressBookEntry: null };
+  } else if (variantIs(proposalOperation, 'EditAddressBookEntry')) {
+    return { EditAddressBookEntry: null };
+  } else if (variantIs(proposalOperation, 'RemoveAddressBookEntry')) {
+    return { RemoveAddressBookEntry: null };
+  } else if (variantIs(proposalOperation, 'AddProposalPolicy')) {
+    return { AddProposalPolicy: null };
+  } else if (variantIs(proposalOperation, 'EditProposalPolicy')) {
+    return { EditProposalPolicy: null };
+  } else if (variantIs(proposalOperation, 'RemoveProposalPolicy')) {
+    return { RemoveProposalPolicy: null };
+  } else if (variantIs(proposalOperation, 'AddAccessPolicy')) {
+    return { AddAccessPolicy: null };
+  } else if (variantIs(proposalOperation, 'EditAccessPolicy')) {
+    return { EditAccessPolicy: null };
+  } else if (variantIs(proposalOperation, 'RemoveAccessPolicy')) {
+    return { RemoveAccessPolicy: null };
+  } else if (variantIs(proposalOperation, 'ChangeCanister')) {
+    return { ChangeCanister: null };
+  } else if (variantIs(proposalOperation, 'AddUserGroup')) {
+    return { AddUserGroup: null };
+  } else if (variantIs(proposalOperation, 'EditUserGroup')) {
+    return { EditUserGroup: null };
+  } else if (variantIs(proposalOperation, 'RemoveUserGroup')) {
+    return { RemoveUserGroup: null };
+  } else {
+    return unreachable(proposalOperation);
+  }
+};
+
 export const mapListProposalsOperationTypeGroupToCsvHeaders = (
   group: ListProposalsOperationTypeGroup,
 ): CsvRow => {
