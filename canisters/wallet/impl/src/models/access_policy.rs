@@ -4,12 +4,6 @@ use ic_canister_macros::storable;
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
-pub struct AccessPolicyCallerPrivileges {
-    pub resource: Resource,
-    pub can_edit: bool,
-}
-
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AuthScope {
@@ -158,37 +152,6 @@ pub enum Resource {
     UserGroup(ResourceAction),
 }
 
-impl Resource {
-    pub fn min() -> Self {
-        Resource::AccessPolicy(AccessPolicyResourceAction::List)
-    }
-
-    pub fn max() -> Self {
-        Resource::UserGroup(ResourceAction::Update(ResourceId::Any))
-    }
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ResourceTypeId {
-    Any,
-    Resource(ResourceType),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ResourceType {
-    AccessPolicy(AccessPolicyResourceActionType),
-    Account(AccountResourceActionType),
-    AddressBook(ResourceActionType),
-    ChangeCanister(ChangeCanisterResourceActionType),
-    Proposal(ProposalResourceActionType),
-    ProposalPolicy(ResourceActionType),
-    Settings(SettingsResourceActionType),
-    User(UserResourceActionType),
-    UserGroup(ResourceActionType),
-}
-
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceAction {
@@ -201,28 +164,9 @@ pub enum ResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ResourceActionType {
-    List = 1,
-    Create = 2,
-    Read = 3,
-    Update = 4,
-    Delete = 5,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AccessPolicyResourceAction {
-    List,
-    Read(ResourceTypeId),
-    Edit(ResourceTypeId),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AccessPolicyResourceActionType {
-    List = 1,
-    Read = 2,
-    Edit = 3,
+    Read,
+    Update,
 }
 
 #[storable]
@@ -232,15 +176,6 @@ pub enum UserResourceAction {
     Create,
     Read(ResourceId),
     Update(ResourceId),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum UserResourceActionType {
-    List = 1,
-    Create = 2,
-    Read = 3,
-    Update = 4,
 }
 
 #[storable]
@@ -255,26 +190,9 @@ pub enum AccountResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AccountResourceActionType {
-    List = 1,
-    Create = 2,
-    Transfer = 3,
-    Read = 4,
-    Update = 5,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SettingsResourceAction {
     Read,
     ReadConfig,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum SettingsResourceActionType {
-    Read = 1,
-    ReadConfig = 2,
 }
 
 #[storable]
@@ -285,22 +203,9 @@ pub enum ChangeCanisterResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ChangeCanisterResourceActionType {
-    Create,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalResourceAction {
     List,
     Read(ResourceId),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ProposalResourceActionType {
-    List = 1,
-    Read = 2,
 }
 
 #[storable]
@@ -356,38 +261,14 @@ impl Resource {
                 }
             },
             Resource::AccessPolicy(action) => match action {
-                AccessPolicyResourceAction::List => {
-                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::List)]
-                }
-                AccessPolicyResourceAction::Read(ResourceTypeId::Resource(rtype)) => {
+                AccessPolicyResourceAction::Read => {
                     vec![
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Read(
-                            ResourceTypeId::Resource(rtype.clone()),
-                        )),
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Read(
-                            ResourceTypeId::Any,
-                        )),
+                        Resource::AccessPolicy(AccessPolicyResourceAction::Read),
+                        Resource::AccessPolicy(AccessPolicyResourceAction::Update),
                     ]
                 }
-                AccessPolicyResourceAction::Edit(ResourceTypeId::Resource(rtype)) => {
-                    vec![
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
-                            ResourceTypeId::Resource(rtype.clone()),
-                        )),
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
-                            ResourceTypeId::Any,
-                        )),
-                    ]
-                }
-                AccessPolicyResourceAction::Read(ResourceTypeId::Any) => {
-                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::Read(
-                        ResourceTypeId::Any,
-                    ))]
-                }
-                AccessPolicyResourceAction::Edit(ResourceTypeId::Any) => {
-                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
-                        ResourceTypeId::Any,
-                    ))]
+                AccessPolicyResourceAction::Update => {
+                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
                 }
             },
             Resource::AddressBook(action) => match action {
@@ -548,20 +429,6 @@ impl Resource {
             },
         }
     }
-
-    pub fn to_type(&self) -> ResourceType {
-        match self.to_owned() {
-            Resource::AddressBook(action) => ResourceType::AddressBook(action.into()),
-            Resource::ProposalPolicy(action) => ResourceType::ProposalPolicy(action.into()),
-            Resource::UserGroup(action) => ResourceType::UserGroup(action.into()),
-            Resource::Account(action) => ResourceType::Account(action.into()),
-            Resource::ChangeCanister(action) => ResourceType::ChangeCanister(action.into()),
-            Resource::Proposal(action) => ResourceType::Proposal(action.into()),
-            Resource::Settings(action) => ResourceType::Settings(action.into()),
-            Resource::User(action) => ResourceType::User(action.into()),
-            Resource::AccessPolicy(action) => ResourceType::AccessPolicy(action.into()),
-        }
-    }
 }
 
 impl Display for Resource {
@@ -595,9 +462,8 @@ impl Display for ResourceAction {
 impl Display for AccessPolicyResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            AccessPolicyResourceAction::List => write!(f, "List"),
-            AccessPolicyResourceAction::Read(id) => write!(f, "Read({})", id),
-            AccessPolicyResourceAction::Edit(id) => write!(f, "Edit({})", id),
+            AccessPolicyResourceAction::Read => write!(f, "Read"),
+            AccessPolicyResourceAction::Update => write!(f, "Update"),
         }
     }
 }
@@ -662,102 +528,6 @@ impl Display for ResourceId {
     }
 }
 
-impl Display for ResourceTypeId {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ResourceTypeId::Any => write!(f, "Any"),
-            ResourceTypeId::Resource(rtype) => write!(f, "Resource({})", rtype),
-        }
-    }
-}
-
-impl Display for ResourceType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ResourceType::AccessPolicy(action) => write!(f, "AccessPolicy({})", action),
-            ResourceType::Account(action) => write!(f, "Account({})", action),
-            ResourceType::AddressBook(action) => write!(f, "AddressBook({})", action),
-            ResourceType::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
-            ResourceType::Proposal(action) => write!(f, "Proposal({})", action),
-            ResourceType::ProposalPolicy(action) => write!(f, "ProposalPolicy({})", action),
-            ResourceType::Settings(action) => write!(f, "Settings({})", action),
-            ResourceType::User(action) => write!(f, "User({})", action),
-            ResourceType::UserGroup(action) => write!(f, "UserGroup({})", action),
-        }
-    }
-}
-
-impl Display for AccessPolicyResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AccessPolicyResourceActionType::List => write!(f, "List"),
-            AccessPolicyResourceActionType::Read => write!(f, "Read"),
-            AccessPolicyResourceActionType::Edit => write!(f, "Edit"),
-        }
-    }
-}
-
-impl Display for AccountResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AccountResourceActionType::List => write!(f, "List"),
-            AccountResourceActionType::Create => write!(f, "Create"),
-            AccountResourceActionType::Transfer => write!(f, "Transfer"),
-            AccountResourceActionType::Read => write!(f, "Read"),
-            AccountResourceActionType::Update => write!(f, "Update"),
-        }
-    }
-}
-
-impl Display for ResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ResourceActionType::List => write!(f, "List"),
-            ResourceActionType::Create => write!(f, "Create"),
-            ResourceActionType::Read => write!(f, "Read"),
-            ResourceActionType::Update => write!(f, "Update"),
-            ResourceActionType::Delete => write!(f, "Delete"),
-        }
-    }
-}
-
-impl Display for ChangeCanisterResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChangeCanisterResourceActionType::Create => write!(f, "Create"),
-        }
-    }
-}
-
-impl Display for ProposalResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ProposalResourceActionType::List => write!(f, "List"),
-            ProposalResourceActionType::Read => write!(f, "Read"),
-        }
-    }
-}
-
-impl Display for SettingsResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SettingsResourceActionType::Read => write!(f, "Read"),
-            SettingsResourceActionType::ReadConfig => write!(f, "ReadConfig"),
-        }
-    }
-}
-
-impl Display for UserResourceActionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            UserResourceActionType::List => write!(f, "List"),
-            UserResourceActionType::Create => write!(f, "Create"),
-            UserResourceActionType::Read => write!(f, "Read"),
-            UserResourceActionType::Update => write!(f, "Update"),
-        }
-    }
-}
-
 #[cfg(any(test, feature = "canbench"))]
 pub mod access_policy_test_utils {
     use super::*;
@@ -765,109 +535,112 @@ pub mod access_policy_test_utils {
 
     thread_local! {
         static RANDOM_MOCKED_POLICY: RefCell<u8> = RefCell::new(0);
+        static AVAILABLE_POLICIES: RefCell<Vec<AccessPolicy>> = RefCell::new(vec![
+            AccessPolicy::new(
+                Allow::public(),
+                Resource::Account(AccountResourceAction::Create),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Account(AccountResourceAction::List),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AccessPolicy(AccessPolicyResourceAction::Read),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::Create),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::List),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::User(UserResourceAction::Create),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::User(UserResourceAction::List),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::User(UserResourceAction::Read(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::User(UserResourceAction::Update(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::Create),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::List),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::Read(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Proposal(ProposalResourceAction::List),
+            ),
+            AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
+            ),
+        ]);
+
     }
 
     /// Generates a random access policy for testing purposes.
     pub fn mock_access_policy() -> AccessPolicy {
-        let policy = match RANDOM_MOCKED_POLICY.with(|num| *num.borrow()) {
-            0 => AccessPolicy::new(
-                Allow::public(),
-                Resource::Account(AccountResourceAction::Create),
-            ),
-            1 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::Account(AccountResourceAction::List),
-            ),
-            2 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
-            ),
-            3 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
-            ),
-            4 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
-            ),
-            5 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AccessPolicy(AccessPolicyResourceAction::List),
-            ),
-            6 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Any)),
-            ),
-            7 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Any)),
-            ),
-            8 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AddressBook(ResourceAction::Create),
-            ),
-            9 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
-            ),
-            10 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AddressBook(ResourceAction::List),
-            ),
-            11 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
-            ),
-            12 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
-            ),
-            13 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::User(UserResourceAction::Create),
-            ),
-            14 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::User(UserResourceAction::List),
-            ),
-            15 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::User(UserResourceAction::Read(ResourceId::Any)),
-            ),
-            16 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::User(UserResourceAction::Update(ResourceId::Any)),
-            ),
-            17 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::UserGroup(ResourceAction::Create),
-            ),
-            18 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
-            ),
-            19 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::UserGroup(ResourceAction::List),
-            ),
-            20 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::UserGroup(ResourceAction::Read(ResourceId::Any)),
-            ),
-            21 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
-            ),
-            22 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::Proposal(ProposalResourceAction::List),
-            ),
-            23 => AccessPolicy::new(
-                Allow::authenticated(),
-                Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
-            ),
-            _ => panic!("Invalid random mocked policy"),
-        };
+        let policy = RANDOM_MOCKED_POLICY.with(|num| {
+            let num = *num.borrow();
+            AVAILABLE_POLICIES.with(|policies| {
+                let policies = &mut *policies.borrow_mut();
+                policies[num as usize].clone()
+            })
+        });
 
         RANDOM_MOCKED_POLICY.with(|num| {
             *num.borrow_mut() += 1;

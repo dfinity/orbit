@@ -41,25 +41,6 @@ pub enum ResourceDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ResourceTypeIdDTO {
-    Any,
-    Resource(ResourceTypeDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ResourceTypeDTO {
-    AccessPolicy(AccessPolicyResourceActionTypeDTO),
-    Account(AccountResourceActionTypeDTO),
-    AddressBook(ResourceActionTypeDTO),
-    ChangeCanister(ChangeCanisterResourceActionTypeDTO),
-    Proposal(ProposalResourceActionTypeDTO),
-    ProposalPolicy(ResourceActionTypeDTO),
-    Settings(SettingsResourceActionTypeDTO),
-    User(UserResourceActionTypeDTO),
-    UserGroup(ResourceActionTypeDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceIdDTO {
     Any,
     Id(UuidDTO),
@@ -75,26 +56,9 @@ pub enum ResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ResourceActionTypeDTO {
-    List,
-    Create,
+pub enum AccessPolicyResourceActionDTO {
     Read,
     Update,
-    Delete,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AccessPolicyResourceActionDTO {
-    List,
-    Read(ResourceTypeIdDTO),
-    Edit(ResourceTypeIdDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AccessPolicyResourceActionTypeDTO {
-    List,
-    Read,
-    Edit,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -103,14 +67,6 @@ pub enum UserResourceActionDTO {
     Create,
     Read(ResourceIdDTO),
     Update(ResourceIdDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum UserResourceActionTypeDTO {
-    List,
-    Create,
-    Read,
-    Update,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -123,22 +79,7 @@ pub enum AccountResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AccountResourceActionTypeDTO {
-    List,
-    Create,
-    Transfer,
-    Read,
-    Update,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum SettingsResourceActionDTO {
-    Read,
-    ReadConfig,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum SettingsResourceActionTypeDTO {
     Read,
     ReadConfig,
 }
@@ -149,20 +90,9 @@ pub enum ChangeCanisterResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ChangeCanisterResourceActionTypeDTO {
-    Create,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalResourceActionDTO {
     List,
     Read(ResourceIdDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalResourceActionTypeDTO {
-    List,
-    Read,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

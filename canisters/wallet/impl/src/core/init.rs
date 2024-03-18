@@ -1,8 +1,8 @@
 use crate::models::{
     access_policy::{
         AccessPolicyResourceAction, AccountResourceAction, Allow, ChangeCanisterResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, ResourceTypeId,
-        SettingsResourceAction, UserResourceAction,
+        ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
+        UserResourceAction,
     },
     criteria::{Criteria, Percentage},
     specifier::{
@@ -61,15 +61,11 @@ lazy_static! {
         // access policies
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::List),
+            Resource::AccessPolicy(AccessPolicyResourceAction::Read),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Any)),
-        ),
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Any)),
+            Resource::AccessPolicy(AccessPolicyResourceAction::Update),
         ),
         // proposal policies
         (

@@ -190,20 +190,14 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
     resourceType: ResourceTypeEnum.AccessPolicy,
     resources: [
       {
-        action: ResourceActionEnum.List,
-        resource: { AccessPolicy: { List: null } },
-        allow: defaultAllowLevels(),
-        canEdit: false,
-      },
-      {
         action: ResourceActionEnum.Read,
-        resource: { AccessPolicy: { Read: { Any: null } } },
+        resource: { AccessPolicy: { Read: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        resource: { AccessPolicy: { Edit: { Any: null } } },
+        resource: { AccessPolicy: { Update: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },

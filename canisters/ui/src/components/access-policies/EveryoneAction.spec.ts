@@ -11,7 +11,7 @@ describe('MembersOfGroupAction', () => {
         specifier: {
           action: ResourceActionEnum.Read,
           resource: {
-            AccessPolicy: { Edit: { Any: null } },
+            AccessPolicy: { Update: null },
           },
           allow: defaultAllowLevels(),
           canEdit: true,
@@ -30,7 +30,7 @@ describe('MembersOfGroupAction', () => {
           specifier: {
             action: ResourceActionEnum.Create,
             resource: {
-              AccessPolicy: { Edit: { Any: null } },
+              AccessPolicy: { Update: null },
             },
             canEdit: true,
             allow: {
@@ -57,7 +57,7 @@ describe('MembersOfGroupAction', () => {
         specifier: {
           action: ResourceActionEnum.Read,
           resource: {
-            AccessPolicy: { Edit: { Any: null } },
+            AccessPolicy: { Update: null },
           },
           canEdit: false,
           allow: {

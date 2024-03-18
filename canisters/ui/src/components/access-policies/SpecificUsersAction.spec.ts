@@ -19,7 +19,7 @@ describe('SpecificUsersAction', () => {
           action: ResourceActionEnum.Read,
           canEdit: true,
           resource: {
-            AccessPolicy: { Edit: { Any: null } },
+            AccessPolicy: { Update: null },
           },
           allow: defaultAllowLevels(),
         },
@@ -43,7 +43,7 @@ describe('SpecificUsersAction', () => {
         specifier: {
           action: ResourceActionEnum.Create,
           resource: {
-            AccessPolicy: { Edit: { Any: null } },
+            AccessPolicy: { Update: null },
           },
           canEdit: true,
           allow: {
@@ -72,7 +72,7 @@ describe('SpecificUsersAction', () => {
         specifier: {
           action: ResourceActionEnum.Read,
           resource: {
-            AccessPolicy: { Edit: { Any: null } },
+            AccessPolicy: { Update: null },
           },
           canEdit: false,
           allow: {

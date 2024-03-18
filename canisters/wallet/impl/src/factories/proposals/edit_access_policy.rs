@@ -158,7 +158,7 @@ pub mod edit_access_policy_test_utils {
     pub fn mock_edit_access_policy_api_input() -> wallet_api::EditAccessPolicyOperationInput {
         wallet_api::EditAccessPolicyOperationInput {
             resource: wallet_api::ResourceDTO::AccessPolicy(
-                wallet_api::AccessPolicyResourceActionDTO::List,
+                wallet_api::AccessPolicyResourceActionDTO::Read,
             ),
             auth_scope: None,
             user_groups: None,

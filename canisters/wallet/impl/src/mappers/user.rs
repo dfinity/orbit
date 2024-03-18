@@ -123,7 +123,7 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListAccounts => Resource::Account(AccountResourceAction::List),
             UserPrivilege::AddAccount => Resource::Account(AccountResourceAction::Create),
             UserPrivilege::ListAccessPolicies => {
-                Resource::AccessPolicy(AccessPolicyResourceAction::List)
+                Resource::AccessPolicy(AccessPolicyResourceAction::Read)
             }
             UserPrivilege::ListProposalPolicies => Resource::ProposalPolicy(ResourceAction::List),
             UserPrivilege::AddProposalPolicy => Resource::ProposalPolicy(ResourceAction::Create),

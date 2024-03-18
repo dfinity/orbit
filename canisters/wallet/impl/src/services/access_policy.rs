@@ -1,14 +1,7 @@
 use crate::{
-    core::{
-        authorization::Authorization,
-        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
-        CallContext,
-    },
+    core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
     models::{
-        access_policy::{
-            AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction, Allow,
-            Resource, ResourceTypeId,
-        },
+        access_policy::{AccessPolicy, Allow, Resource},
         EditAccessPolicyOperationInput, User, UserGroup,
     },
     repositories::access_policy::{AccessPolicyRepository, ACCESS_POLICY_REPOSITORY},
@@ -90,40 +83,17 @@ impl AccessPolicyService {
         Ok(access_policy)
     }
 
-    pub async fn get_caller_privileges_for_access_policy(
-        &self,
-        resource: &Resource,
-        ctx: &CallContext,
-    ) -> ServiceResult<AccessPolicyCallerPrivileges> {
-        Ok(AccessPolicyCallerPrivileges {
-            resource: resource.clone(),
-            can_edit: Authorization::is_allowed(
-                ctx,
-                &Resource::AccessPolicy(AccessPolicyResourceAction::Edit(
-                    ResourceTypeId::Resource(resource.to_type()),
-                )),
-            ),
-        })
-    }
-
     pub async fn list_access_policies(
         &self,
         input: ListAccessPoliciesInput,
-        ctx: &CallContext,
     ) -> ServiceResult<PaginatedData<AccessPolicy>> {
-        let mut policies = match input.resources {
+        let policies = match input.resources {
             Some(resources) => resources
                 .into_iter()
                 .map(|r| self.get_access_policy(&r.into()))
                 .collect::<Result<Vec<_>, _>>()?,
             None => self.access_policy_repository.list(),
         };
-
-        retain_accessible_resources(ctx, &mut policies, |policy| {
-            Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Resource(
-                policy.resource.to_type(),
-            )))
-        });
 
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.paginate.as_ref().and_then(|p| p.offset),
@@ -169,7 +139,6 @@ impl AccessPolicyService {
 mod tests {
     use super::*;
     use crate::{
-        core::ic_cdk::api::id as self_canister_id,
         models::{
             access_policy::{
                 access_policy_test_utils::mock_access_policy, AuthScope, ProposalResourceAction,
@@ -284,7 +253,7 @@ mod tests {
         };
 
         let result = ACCESS_POLICY_SERVICE
-            .list_access_policies(input, &CallContext::new(self_canister_id()))
+            .list_access_policies(input)
             .await
             .unwrap();
         assert_eq!(result.items.len(), 10);

@@ -5,7 +5,6 @@ import {
   ProposalResourceAction,
   ResourceAction,
   ResourceId,
-  ResourceTypeId,
   SettingsResourceAction,
   UserResourceAction,
 } from '~/generated/wallet/wallet.did';
@@ -149,28 +148,12 @@ export const isAccessPolicyResourceActionContained = (
   a: AccessPolicyResourceAction,
   b: AccessPolicyResourceAction,
 ) => {
-  if (variantIs(a, 'List') && variantIs(b, 'List')) {
-    return true;
-  }
-
-  if (variantIs(a, 'Edit') && variantIs(b, 'Edit')) {
-    return isResourceTypeIdContained(a.Edit, b.Edit);
-  }
-
   if (variantIs(a, 'Read') && variantIs(b, 'Read')) {
-    return isResourceTypeIdContained(a.Read, b.Read);
-  }
-
-  return false;
-};
-
-export const isResourceTypeIdContained = (a: ResourceTypeId, b: ResourceTypeId) => {
-  if (variantIs(a, 'Any') && variantIs(b, 'Any')) {
     return true;
   }
 
-  if (variantIs(a, 'Resource') && variantIs(b, 'Resource')) {
-    return a.Resource === b.Resource;
+  if (variantIs(a, 'Update') && variantIs(b, 'Update')) {
+    return true;
   }
 
   return false;

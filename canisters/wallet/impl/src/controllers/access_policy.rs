@@ -1,5 +1,8 @@
 use crate::{
-    core::middlewares::{authorize, call_context},
+    core::{
+        authorization::Authorization,
+        middlewares::{authorize, call_context},
+    },
     models::access_policy::{AccessPolicyResourceAction, Resource},
     services::access_policy::{AccessPolicyService, ACCESS_POLICY_SERVICE},
 };
@@ -44,7 +47,7 @@ impl AccessPolicyController {
         }
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::AccessPolicy(AccessPolicyResourceAction::Read)]))]
     async fn get_access_policy(
         &self,
         input: GetAccessPolicyInput,
@@ -54,18 +57,19 @@ impl AccessPolicyController {
             .access_policy_service
             .get_access_policy(&Resource::from(input.resource))?;
 
-        let privilege = self
-            .access_policy_service
-            .get_caller_privileges_for_access_policy(&policy.resource, &ctx)
-            .await?;
-
         Ok(GetAccessPolicyResponse {
-            policy: policy.into(),
-            privileges: privilege.into(),
+            policy: policy.clone().into(),
+            privileges: wallet_api::AccessPolicyCallerPrivilegesDTO {
+                can_edit: Authorization::is_allowed(
+                    &ctx,
+                    &Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+                ),
+                resource: policy.resource.into(),
+            },
         })
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::AccessPolicy(AccessPolicyResourceAction::List)]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::AccessPolicy(AccessPolicyResourceAction::Read)]))]
     async fn list_access_policies(
         &self,
         input: ListAccessPoliciesInput,
@@ -73,20 +77,22 @@ impl AccessPolicyController {
         let ctx = call_context();
         let result = self
             .access_policy_service
-            .list_access_policies(input, &ctx)
+            .list_access_policies(input)
             .await?;
         let deps = self
             .access_policy_service
             .get_access_policies_dependencies(&result.items)?;
 
+        let can_edit = Authorization::is_allowed(
+            &ctx,
+            &Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+        );
         let mut privileges = Vec::new();
         for policy in &result.items {
-            let privilege = self
-                .access_policy_service
-                .get_caller_privileges_for_access_policy(&policy.resource, &ctx)
-                .await?;
-
-            privileges.push(AccessPolicyCallerPrivilegesDTO::from(privilege));
+            privileges.push(AccessPolicyCallerPrivilegesDTO {
+                can_edit,
+                resource: policy.resource.clone().into(),
+            });
         }
 
         Ok(ListAccessPoliciesResponse {

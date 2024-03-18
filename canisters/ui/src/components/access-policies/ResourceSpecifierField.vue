@@ -260,13 +260,7 @@ const toSettingsResourceActionText = (specifier: SettingsResourceAction): string
 };
 
 const toAccessPolicyResourceActionTest = (specifier: AccessPolicyResourceAction): string => {
-  // TODO: Add individual resource types
-
-  if (variantIs(specifier, 'List')) {
-    return i18n.t('access_policies.actions.list');
-  }
-
-  if (variantIs(specifier, 'Edit')) {
+  if (variantIs(specifier, 'Update')) {
     return i18n.t('access_policies.actions.update');
   }
 

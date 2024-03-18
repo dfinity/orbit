@@ -8,12 +8,8 @@ export interface AccessPolicyCallerPrivileges {
   'resource' : Resource,
   'can_edit' : boolean,
 }
-export type AccessPolicyResourceAction = { 'Edit' : ResourceTypeId } |
-  { 'List' : null } |
-  { 'Read' : ResourceTypeId };
-export type AccessPolicyResourceActionType = { 'Edit' : null } |
-  { 'List' : null } |
-  { 'Read' : null };
+export type AccessPolicyResourceAction = { 'Read' : null } |
+  { 'Update' : null };
 export interface Account {
   'id' : UUID,
   'decimals' : number,
@@ -54,11 +50,6 @@ export type AccountResourceAction = { 'List' : null } |
   { 'Create' : null } |
   { 'Transfer' : ResourceId } |
   { 'Update' : ResourceId };
-export type AccountResourceActionType = { 'List' : null } |
-  { 'Read' : null } |
-  { 'Create' : null } |
-  { 'Transfer' : null } |
-  { 'Update' : null };
 export type AccountSpecifier = CommonSpecifier;
 export interface AddAccountOperation {
   'account' : [] | [Account],
@@ -157,7 +148,6 @@ export interface ChangeCanisterOperationInput {
   'module' : Uint8Array | number[],
 }
 export type ChangeCanisterResourceAction = { 'Create' : null };
-export type ChangeCanisterResourceActionType = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeCanister' : Principal } |
   { 'UpgradeWallet' : null };
@@ -578,8 +568,6 @@ export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'AutoAdopted' : null };
 export type ProposalResourceAction = { 'List' : null } |
   { 'Read' : ResourceId };
-export type ProposalResourceActionType = { 'List' : null } |
-  { 'Read' : null };
 export type ProposalSpecifier = { 'EditAccessPolicy' : ResourceSpecifier } |
   { 'AddUserGroup' : null } |
   { 'RemoveProposalPolicy' : CommonSpecifier } |
@@ -648,29 +636,12 @@ export type ResourceAction = { 'List' : null } |
   { 'Delete' : ResourceId } |
   { 'Create' : null } |
   { 'Update' : ResourceId };
-export type ResourceActionType = { 'List' : null } |
-  { 'Read' : null } |
-  { 'Delete' : null } |
-  { 'Create' : null } |
-  { 'Update' : null };
 export type ResourceId = { 'Id' : UUID } |
   { 'Any' : null };
 export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
-export type ResourceType = { 'User' : UserResourceActionType } |
-  { 'ProposalPolicy' : ResourceActionType } |
-  { 'Settings' : SettingsResourceActionType } |
-  { 'Account' : AccountResourceActionType } |
-  { 'AddressBook' : ResourceActionType } |
-  { 'Proposal' : ProposalResourceActionType } |
-  { 'ChangeCanister' : ChangeCanisterResourceActionType } |
-  { 'AccessPolicy' : AccessPolicyResourceActionType } |
-  { 'UserGroup' : ResourceActionType };
-export type ResourceTypeId = { 'Any' : null } |
-  { 'Resource' : ResourceType };
 export type SettingsResourceAction = { 'Read' : null } |
   { 'ReadConfig' : null };
-export type SettingsResourceActionType = SettingsResourceAction;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export type TimestampRFC3339 = string;
@@ -756,10 +727,6 @@ export type UserResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
   { 'Create' : null } |
   { 'Update' : ResourceId };
-export type UserResourceActionType = { 'List' : null } |
-  { 'Read' : null } |
-  { 'Create' : null } |
-  { 'Update' : null };
 export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> } |

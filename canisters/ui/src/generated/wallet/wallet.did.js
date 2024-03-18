@@ -66,56 +66,9 @@ export const idlFactory = ({ IDL }) => {
     'Read' : ResourceId,
   });
   const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
-  const UserResourceActionType = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : IDL.Null,
-    'Create' : IDL.Null,
-    'Update' : IDL.Null,
-  });
-  const ResourceActionType = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : IDL.Null,
-    'Delete' : IDL.Null,
-    'Create' : IDL.Null,
-    'Update' : IDL.Null,
-  });
-  const SettingsResourceActionType = SettingsResourceAction;
-  const AccountResourceActionType = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : IDL.Null,
-    'Create' : IDL.Null,
-    'Transfer' : IDL.Null,
-    'Update' : IDL.Null,
-  });
-  const ProposalResourceActionType = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : IDL.Null,
-  });
-  const ChangeCanisterResourceActionType = IDL.Variant({ 'Create' : IDL.Null });
-  const AccessPolicyResourceActionType = IDL.Variant({
-    'Edit' : IDL.Null,
-    'List' : IDL.Null,
-    'Read' : IDL.Null,
-  });
-  const ResourceType = IDL.Variant({
-    'User' : UserResourceActionType,
-    'ProposalPolicy' : ResourceActionType,
-    'Settings' : SettingsResourceActionType,
-    'Account' : AccountResourceActionType,
-    'AddressBook' : ResourceActionType,
-    'Proposal' : ProposalResourceActionType,
-    'ChangeCanister' : ChangeCanisterResourceActionType,
-    'AccessPolicy' : AccessPolicyResourceActionType,
-    'UserGroup' : ResourceActionType,
-  });
-  const ResourceTypeId = IDL.Variant({
-    'Any' : IDL.Null,
-    'Resource' : ResourceType,
-  });
   const AccessPolicyResourceAction = IDL.Variant({
-    'Edit' : ResourceTypeId,
-    'List' : IDL.Null,
-    'Read' : ResourceTypeId,
+    'Read' : IDL.Null,
+    'Update' : IDL.Null,
   });
   const Resource = IDL.Variant({
     'User' : UserResourceAction,

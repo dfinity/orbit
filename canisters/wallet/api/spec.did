@@ -1403,14 +1403,6 @@ type ResourceAction = variant {
   Delete : ResourceId;
 };
 
-type ResourceActionType = variant {
-  List;
-  Create;
-  Read;
-  Update;
-  Delete;
-};
-
 // The actions that are available for accounts.
 type AccountResourceAction = variant {
   List;
@@ -1420,20 +1412,8 @@ type AccountResourceAction = variant {
   Update : ResourceId;
 };
 
-type AccountResourceActionType = variant {
-  List;
-  Create;
-  Transfer;
-  Read;
-  Update;
-};
-
 // The actions that are available for canister changes.
 type ChangeCanisterResourceAction = variant {
-  Create;
-};
-
-type ChangeCanisterResourceActionType = variant {
   Create;
 };
 
@@ -1443,18 +1423,11 @@ type ProposalResourceAction = variant {
   Read : ResourceId;
 };
 
-type ProposalResourceActionType = variant {
-  List;
-  Read;
-};
-
 // The actions that are available for canister settings.
 type SettingsResourceAction = variant {
   Read;
   ReadConfig;
 };
-
-type SettingsResourceActionType = SettingsResourceAction;
 
 // The actions that are available for users.
 type UserResourceAction = variant {
@@ -1464,30 +1437,10 @@ type UserResourceAction = variant {
   Update : ResourceId;
 };
 
-type UserResourceActionType = variant {
-  List;
-  Create;
-  Read;
-  Update;
-};
-
 // The actions that are available for access policies.
 type AccessPolicyResourceAction = variant {
-  List;
-  Read : ResourceTypeId;
-  Edit : ResourceTypeId;
-};
-
-type AccessPolicyResourceActionType = variant {
-  List;
   Read;
-  Edit;
-};
-
-// The specific resource types that can be used in the access policies.
-type ResourceTypeId = variant {
-  Any;
-  Resource : ResourceType;
+  Update;
 };
 
 // The specifier for transfers, used to specify the transfer in the context of an account.
@@ -1507,19 +1460,6 @@ type Resource = variant {
   Settings : SettingsResourceAction;
   User : UserResourceAction;
   UserGroup : ResourceAction;
-};
-
-// The resource type, used to specify the type of the resource that is being accessed.
-type ResourceType = variant {
-  AccessPolicy : AccessPolicyResourceActionType;
-  Account : AccountResourceActionType;
-  AddressBook : ResourceActionType;
-  ChangeCanister : ChangeCanisterResourceActionType;
-  Proposal : ProposalResourceActionType;
-  ProposalPolicy : ResourceActionType;
-  Settings : SettingsResourceActionType;
-  User : UserResourceActionType;
-  UserGroup : ResourceActionType;
 };
 
 // A record type that can be used to represent the caller privileges for a given access policy.
