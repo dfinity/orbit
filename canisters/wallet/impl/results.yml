@@ -19,8 +19,8 @@ benches:
     scopes: {}
   service_filter_all_proposals_with_default_filters:
     total:
-      instructions: 4409096443
+      instructions: 3599970415
       heap_increase: 3
-      stable_memory_increase: 128
+      stable_memory_increase: 0
     scopes: {}
 version: 0.1.1
