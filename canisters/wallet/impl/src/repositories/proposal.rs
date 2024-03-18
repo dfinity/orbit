@@ -1105,6 +1105,8 @@ mod benchs {
                     voters: Vec::new(),
                     not_voters: vec![],
                     statuses: vec![ProposalStatusCode::Created],
+                    excluded_ids: vec![],
+                    not_proposers: vec![],
                 },
                 None,
             );

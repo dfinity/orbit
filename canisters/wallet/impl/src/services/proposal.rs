@@ -933,6 +933,7 @@ mod benchs {
                             sort_by: Some(wallet_api::ListProposalsSortBy::CreatedAt(
                                 wallet_api::SortDirection::Asc,
                             )),
+                            only_votable: false,
                         },
                         None,
                     )
