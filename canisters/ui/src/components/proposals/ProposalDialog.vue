@@ -52,13 +52,13 @@
     <div v-else>
       <VCard class="text-center" flat data-test-id="no-more-proposals">
         <VCardText class="text-body-1 mt-10">
-          <!-- md icon check mark -->
           <VIcon :icon="mdiCheckCircle" size="x-large" />
-
           {{ $t('proposals.no_more_requests_to_approve') }}
         </VCardText>
         <VCardActions class="pa-4 d-flex flex-md-row ga-2 justify-end">
-          <VBtn variant="outlined" :disabled="loading" @click="openModel = false">Close</VBtn>
+          <VBtn variant="outlined" :disabled="loading" @click="openModel = false">
+            {{ $t('terms.close') }}
+          </VBtn>
         </VCardActions>
       </VCard>
     </div>

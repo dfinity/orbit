@@ -325,20 +325,6 @@ export class WalletService {
       ];
     }
 
-    console.log({
-      statuses: statuses ? [statuses] : [],
-      created_from_dt: created_dt?.fromDt ? [created_dt.fromDt.toISOString()] : [],
-      created_to_dt: created_dt?.toDt ? [created_dt.toDt.toISOString()] : [],
-      expiration_from_dt: expiration_dt?.fromDt ? [expiration_dt.fromDt.toISOString()] : [],
-      expiration_to_dt: expiration_dt?.toDt ? [expiration_dt.toDt.toISOString()] : [],
-      operation_types: types ? [types] : [],
-      proposer_ids: proposerIds ? [proposerIds] : [],
-      voter_ids: voterIds ? [voterIds] : [],
-      paginate: [paginate],
-      sort_by: sortingCriteria,
-      only_votable: !!onlyVotable,
-    });
-
     const result = await this.actor.list_proposals({
       statuses: statuses ? [statuses] : [],
       created_from_dt: created_dt?.fromDt ? [created_dt.fromDt.toISOString()] : [],

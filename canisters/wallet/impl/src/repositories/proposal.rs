@@ -293,9 +293,6 @@ impl ProposalRepository {
         sort_by: Option<ListProposalsSortBy>,
     ) -> Result<Vec<UUID>, RepositoryError> {
         let filters = self.build_where_filtering_strategy(condition);
-
-        println!("Filters: {:#?}", filters.len());
-
         let proposal_ids = self.find_with_filters(filters);
         let mut ids = proposal_ids.into_iter().collect::<Vec<_>>();
 

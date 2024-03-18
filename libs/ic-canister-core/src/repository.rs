@@ -241,8 +241,6 @@ impl<'a> SelectionFilter<'a> for NotSelectionFilter<'a> {
     type IdType = UUID;
 
     fn apply(&self, existing_ids: Option<&HashSet<Self::IdType>>) -> HashSet<Self::IdType> {
-        println!("NotSelectionFilter existing_ids: {:?}", existing_ids);
-
         match existing_ids {
             None => Default::default(),
             Some(ids) => {

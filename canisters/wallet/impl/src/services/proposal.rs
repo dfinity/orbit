@@ -186,8 +186,6 @@ impl ProposalService {
             input.sort_by,
         )?;
 
-        println!("proposal_ids: {:?}", proposal_ids);
-
         // filter out proposals that the caller does not have access to read
         if let Some(ctx) = ctx {
             let mut ids_with_access = Vec::new();
