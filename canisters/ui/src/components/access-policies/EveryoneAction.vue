@@ -8,7 +8,6 @@
     :model-value="{
       everyone: specifier.allow.allUsers,
     }"
-    dialog-content-class="pa-0"
     :disabled="!specifier.canEdit"
     :text="everyone.label"
     :icon="everyone.icon"

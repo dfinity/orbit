@@ -1,6 +1,10 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
-    <VRadioGroup v-model="model" :label="$t('access_policies.allow.everyone_edit_label')">
+    <VRadioGroup
+      v-model="model"
+      :label="$t('access_policies.allow.everyone_edit_label')"
+      class="everyone_radio_group"
+    >
       <VRadio
         :disabled="isViewMode"
         :label="$t('access_policies.allow.notset')"
@@ -65,3 +69,15 @@ const submit = async () => {
   }
 };
 </script>
+
+<style lang="scss">
+.everyone_radio_group.v-radio-group {
+  & > .v-input__control > .v-label + .v-selection-control-group {
+    padding-inline-start: 0px;
+  }
+
+  & > .v-input__control > .v-label {
+    margin-inline-start: 0px;
+  }
+}
+</style>

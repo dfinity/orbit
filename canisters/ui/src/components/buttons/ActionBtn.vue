@@ -39,7 +39,7 @@
         </VToolbarTitle>
         <VBtn :disabled="loading" :icon="mdiClose" dark @click="close" />
       </VToolbar>
-      <VCardText :class="props.dialogContentClass">
+      <VCardText>
         <slot name="default" :model="{ value: intervalValue }" :loading="loading" :submit="submit">
           <p>{{ props.content }}</p>
         </slot>
@@ -88,7 +88,6 @@ const props = withDefaults(
     modelValue?: M;
     dialogMaxWidth?: string | number;
     dialogToolbarColor?: string;
-    dialogContentClass?: string;
     submit?: (model: M) => Promise<T> | T;
     confirmCloseDelayMs?: number;
     clone?: (model: M) => M;
@@ -110,7 +109,6 @@ const props = withDefaults(
     disabled: false,
     dialogMaxWidth: 800,
     dialogToolbarColor: 'surface',
-    dialogContentClass: undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modelValue: null as any,
     submit: undefined,
