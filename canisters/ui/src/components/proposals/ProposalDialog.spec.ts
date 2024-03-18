@@ -77,7 +77,7 @@ const completedProposalResponse = {
     operation: transferOperation1,
   },
   additional_info: {
-    id: 'proposerid',
+    id: 'first-id',
     proposer_name: [],
   },
   //...
