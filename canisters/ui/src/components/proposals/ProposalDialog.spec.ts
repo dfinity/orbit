@@ -233,7 +233,7 @@ describe('ProposalDialog', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows a messages when there are no votable proposals left', async () => {
+  it('shows a message when there are no votable proposals left', async () => {
     vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
     vi.spyOn(services().wallet, 'voteOnProposal').mockResolvedValueOnce(
       completedProposalResponse.proposal,
