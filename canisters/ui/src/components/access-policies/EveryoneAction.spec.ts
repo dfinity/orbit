@@ -59,7 +59,7 @@ describe('MembersOfGroupAction', () => {
           resource: {
             AccessPolicy: { Edit: { Any: null } },
           },
-          canEdit: true,
+          canEdit: false,
           allow: {
             ...defaultAllowLevels(),
             allUsers: AccessPolicyForAllUsers.AuthenticationRequired,
@@ -69,6 +69,6 @@ describe('MembersOfGroupAction', () => {
     });
 
     const actionBtn = wrapper.find('[data-test-id="everyone-action-btn"]');
-    expect(actionBtn.exists()).toBe(false);
+    expect(actionBtn.attributes()['disabled'] !== undefined).toBeTruthy();
   });
 });

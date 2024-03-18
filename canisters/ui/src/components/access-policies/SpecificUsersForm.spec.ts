@@ -70,7 +70,6 @@ describe('SpecificUsersForm', () => {
     expect(wrapper.emitted('submit')).toEqual([
       [
         {
-          policyId: null,
           prefilledUsers: [
             { id: '1', name: 'Test1', status: { Active: null } },
             { id: '2', name: 'Test2', status: { Active: null } },

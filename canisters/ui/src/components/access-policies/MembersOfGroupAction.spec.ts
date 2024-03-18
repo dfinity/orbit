@@ -74,7 +74,7 @@ describe('MembersOfGroupAction', () => {
           resource: {
             AccessPolicy: { Edit: { Any: null } },
           },
-          canEdit: true,
+          canEdit: false,
           allow: {
             ...defaultAllowLevels(),
             membersOfGroup: [],

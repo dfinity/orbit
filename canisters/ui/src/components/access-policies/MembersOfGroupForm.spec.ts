@@ -70,7 +70,6 @@ describe('MembersOfGroupForm', () => {
     expect(wrapper.emitted('submit')).toEqual([
       [
         {
-          policyId: null,
           prefilledGroups: [
             { id: '1', name: 'Test1' },
             { id: '2', name: 'Test2' },
