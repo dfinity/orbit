@@ -23,6 +23,7 @@ export enum ResourceActionEnum {
   ReadSensitiveConfig = 'ReadSensitiveConfig',
   ReadPublicConfig = 'ReadPublicConfig',
 }
+
 export enum AccessPolicyForAllUsers {
   NotSet = 'NotSet',
   Public = 'Public',

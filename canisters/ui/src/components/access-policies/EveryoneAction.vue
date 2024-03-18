@@ -1,6 +1,6 @@
 <template>
   <ActionBtn
-    v-slot="{ model: elem }"
+    v-slot="{ model: elem, submit }"
     size="small"
     density="comfortable"
     data-test-id="everyone-action-btn"
@@ -8,6 +8,7 @@
     :model-value="{
       everyone: specifier.allow.allUsers,
     }"
+    dialog-content-class="pa-0"
     :disabled="!specifier.canEdit"
     :text="everyone.label"
     :icon="everyone.icon"
@@ -37,23 +38,7 @@
     @failed="useOnFailedOperation"
     @submitted="useOnSuccessfulOperation"
   >
-    <VRadioGroup
-      v-model="elem.value.everyone"
-      :label="$t('access_policies.allow.everyone_edit_label')"
-    >
-      <VRadio
-        :label="$t('access_policies.allow.notset')"
-        :value="AccessPolicyForAllUsers.NotSet"
-      ></VRadio>
-      <VRadio
-        :label="$t('access_policies.allow.authenticated')"
-        :value="AccessPolicyForAllUsers.AuthenticationRequired"
-      ></VRadio>
-      <VRadio
-        :label="$t('access_policies.allow.anyone')"
-        :value="AccessPolicyForAllUsers.Public"
-      ></VRadio>
-    </VRadioGroup>
+    <EveryoneForm v-model="elem.value.everyone" @submit="submit" />
   </ActionBtn>
 </template>
 
@@ -61,18 +46,18 @@
 import { mdiAccountKey, mdiEarth, mdiPencil } from '@mdi/js';
 import { computed, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VRadio, VRadioGroup } from 'vuetify/components';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { UserAuthentication } from '~/generated/wallet/wallet.did';
+import { toUserAuthentication } from '~/mappers/access-policies.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
 import {
   AccessPolicyForAllUsers,
   ResourceAccessPolicySpecifier,
 } from '~/types/access-policies.types';
+import EveryoneForm from './EveryoneForm.vue';
 
 const wallet = useWalletStore();
 const props = defineProps<{
@@ -93,18 +78,6 @@ const everyone = computed(() => {
 
   return { icon: mdiPencil };
 });
-
-const toUserAuthentication = (everyone: AccessPolicyForAllUsers): UserAuthentication | null => {
-  if (everyone === AccessPolicyForAllUsers.Public) {
-    return { None: null };
-  }
-
-  if (everyone === AccessPolicyForAllUsers.AuthenticationRequired) {
-    return { Required: null };
-  }
-
-  return null;
-};
 
 const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
