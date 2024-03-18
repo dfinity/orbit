@@ -163,7 +163,7 @@ mod tests {
         let user = User {
             id: user_id,
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -186,7 +186,7 @@ mod tests {
         let user = User {
             id: user_id,
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -252,7 +252,7 @@ mod tests {
         let user = User {
             id: user_id,
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,

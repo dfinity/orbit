@@ -26,7 +26,7 @@ impl UserMapper {
         User {
             id: user_id,
             email: input.email,
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: wallets
                 .into_iter()
                 .map(|canister_id| UserWallet {

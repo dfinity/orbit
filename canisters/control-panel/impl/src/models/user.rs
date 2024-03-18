@@ -11,9 +11,10 @@ use ic_canister_macros::storable;
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum UserAuthorizationStatus {
+    Unauthorized,
     Pending,
     Authorized,
-    Unauthorized,
+    Blacklisted,
 }
 
 /// The identity of an user.
@@ -136,7 +137,7 @@ mod tests {
         let model = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -166,7 +167,7 @@ mod tests {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -199,7 +200,7 @@ mod tests {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![UserWallet {
                 canister_id: Principal::anonymous(),
                 name: None,
@@ -217,7 +218,7 @@ mod tests {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
             email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Pending,
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![UserWallet {
                 canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 name: None,
