@@ -11,9 +11,16 @@
       </template>
     </MobileLayout>
     <VSnackbar
-v-model="app.notification.show" :absolute="true" :close-on-content-click="true"
-      :color="app.notification.type" style="opacity: 0.9" variant="elevated" :location="notificationPosition"
-      timeout="4000" transition="slide-x-reverse-transition">
+      v-model="app.notification.show"
+      :absolute="true"
+      :close-on-content-click="true"
+      :color="app.notification.type"
+      style="opacity: 0.9"
+      variant="elevated"
+      :location="notificationPosition"
+      timeout="4000"
+      transition="slide-x-reverse-transition"
+    >
       {{ app.notification.message }}
       <template #actions>
         <v-btn variant="text" @click="app.notification.show = false">
