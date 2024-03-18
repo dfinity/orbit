@@ -134,7 +134,7 @@ where
 
     /// Applies the filter to the existing set of IDs and returns the new set of IDs
     fn apply(&self, existing_ids: Option<&HashSet<Self::IdType>>) -> HashSet<Self::IdType> {
-        match (existing_ids, false) {
+        match (existing_ids, self.is_selective()) {
             (Some(ids), true) => {
                 let new_ids = self.select();
                 new_ids.intersection(ids).cloned().collect()
@@ -153,6 +153,13 @@ where
     /// rely on other filters to do the actual filtering.
     fn matches(&self, _item_id: &Self::IdType) -> bool {
         true
+    }
+
+    /// Returns true if the filter is meant to select rather than filter down
+    ///
+    /// By default it is false
+    fn is_selective(&self) -> bool {
+        false
     }
 
     /// Returns the initial set of IDs for the filter
