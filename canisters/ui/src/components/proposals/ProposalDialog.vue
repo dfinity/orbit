@@ -224,7 +224,6 @@ const onVote = async (approve: boolean, reason?: string): Promise<void> => {
       reason: reason && reason.length ? [reason] : [],
     })
     .then(async () => {
-      //
 
       app.sendNotification({
         type: 'success',
