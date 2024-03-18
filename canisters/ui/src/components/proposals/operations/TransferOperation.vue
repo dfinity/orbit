@@ -3,22 +3,33 @@
     <ProposalOperationListRow v-if="formValue.from_account_id && formValue.to && formValue.amount">
       <div class="d-flex flex-row flex-wrap ga-2">
         <div class="d-flex align-center text-no-wrap">
-          <VBtn :append-icon="mdiOpenInApp" size="x-small" class="px-1" variant="text" :to="{
-    name: Routes.Account,
-    params: { id: formValue.from_account_id },
-  }">
+          <VBtn
+            :append-icon="mdiOpenInApp"
+            size="x-small"
+            class="px-1"
+            variant="text"
+            :to="{
+              name: Routes.Account,
+              params: { id: formValue.from_account_id },
+            }"
+          >
             <TextOverflow :text="account?.name ?? formValue.from_account_id" :max-length="12" />
           </VBtn>
           <VIcon :icon="mdiArrowRight" size="x-small" class="ml-1" />
         </div>
         <div class="d-flex align-center text-no-wrap">
           <TextOverflow :text="formValue.to" />
-          <VBtn size="x-small" variant="text" :icon="mdiContentCopy" @click="
-    copyToClipboard({
-      textToCopy: formValue.to,
-      sendNotification: true,
-    })
-    " />
+          <VBtn
+            size="x-small"
+            variant="text"
+            :icon="mdiContentCopy"
+            @click="
+              copyToClipboard({
+                textToCopy: formValue.to,
+                sendNotification: true,
+              })
+            "
+          />
         </div>
         <div class="d-flex align-center text-no-wrap flex-grow-1">
           {{ account ? formatBalance(formValue.amount, account.decimals) : '-' }}
@@ -28,8 +39,13 @@
     </ProposalOperationListRow>
   </div>
   <div v-else-if="account">
-    <VTextField :model-value="account.name" variant="plain" :label="$t('terms.account')" :prepend-icon="mdiWallet"
-      readonly />
+    <VTextField
+      :model-value="account.name"
+      variant="plain"
+      :label="$t('terms.account')"
+      :prepend-icon="mdiWallet"
+      readonly
+    />
     <TransferForm :model-value="formValue" :account="account" mode="view" />
   </div>
 </template>

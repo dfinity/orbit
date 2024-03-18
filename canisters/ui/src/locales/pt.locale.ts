@@ -101,6 +101,8 @@ export default {
       unknown: 'Desconhecido',
     },
     no_results_found: 'Nenhum resultado encontrado.',
+    no_more_requests_to_approve: 'Não há mais pedidos para aprovar.',
+    load_next: 'Carregar próximo',
     processing_started_at: 'Processamento iniciado em {dt}',
     processing_completed_at: 'Processamento concluído em {dt}',
     processing_scheduled_at: 'Processamento agendado para {dt}',

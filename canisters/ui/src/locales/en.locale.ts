@@ -89,6 +89,8 @@ export default {
     proposer_id: 'Proposer ID: {id}',
     title_info_message: 'The title set by the proposer.',
     no_results_found: 'No requests found.',
+    no_more_requests_to_approve: 'No more requests to approve.',
+    load_next: 'Load next',
     status: {
       created: 'Pending',
       cancelled: 'Cancelled',

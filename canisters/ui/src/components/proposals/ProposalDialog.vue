@@ -6,57 +6,66 @@
     scrollable
     :max-width="props.dialogMaxWidth.value"
   >
-    <!-- <div class="proposal-transition-container"> -->
-    <Transition>
-      <!-- <div :key="currentProposalId!"> -->
-      <DataLoader
-        :key="currentProposalId!"
-        v-slot="{ data }"
-        :load="loadProposal"
-        @loading="loading = $event"
-        @loaded="onProposalLoaded"
+    <DataLoader
+      v-if="currentProposalId"
+      :key="currentProposalId"
+      v-slot="{ data }"
+      :load="loadProposal"
+      @loading="loading = $event"
+      @loaded="onProposalLoaded"
+    >
+      <ProposalDetailView
+        v-if="data"
+        :proposal="data.proposal"
+        :details="{
+          can_vote: data.privileges.can_vote,
+          proposer_name: data.additionalInfo.proposer_name?.[0] ?? undefined,
+        }"
+        :loading="voting || loading"
+        @closed="openModel = false"
+        @opened="openModel = true"
+        @approve="onVote(true)"
+        @reject="onVote(false)"
       >
-        <ProposalDetailView
-          v-if="data"
-          :proposal="data.proposal"
-          :details="{
-            can_vote: data.privileges.can_vote,
-            proposer_name: data.additionalInfo.proposer_name?.[0] ?? undefined,
-          }"
-          :loading="voting || loading"
-          @closed="openModel = false"
-          @opened="openModel = true"
-          @approve="onVote(true)"
-          @reject="onVote(false)"
-        >
-          <template #top-actions>
-            <VSwitch
-              label="Load next"
-              class="flex-0-1"
-              :hide-details="true"
-              color="primary"
-              v-model="loadNext"
-              :disabled="voting"
-              v-if="data.privileges.can_vote"
-            ></VSwitch>
+        <template #top-actions>
+          <VSwitch
+            v-if="data.privileges.can_vote"
+            v-model="loadNext"
+            data-test-id="load-next-proposal-switch"
+            :label="$t('proposals.load_next')"
+            class="flex-0-1"
+            :hide-details="true"
+            color="primary"
+            :disabled="voting"
+          ></VSwitch>
 
-            <VBtn :disabled="voting" :icon="mdiClose" dark @click="openModel = false" />
-          </template>
-          <template #bottom-actions v-if="loadNext">
-            <VBtn variant="plain" :disabled="voting" class="ma-0" @click="skip">
-              {{ $t('terms.skip') }}
-            </VBtn>
-          </template>
-        </ProposalDetailView>
-      </DataLoader>
-      <!-- </div> -->
-    </Transition>
-    <!-- </div> -->
+          <VBtn :disabled="voting" :icon="mdiClose" dark @click="openModel = false" />
+        </template>
+        <template v-if="loadNext" #bottom-actions>
+          <VBtn variant="plain" :disabled="voting" class="ma-0" @click="skip">
+            {{ $t('terms.skip') }}
+          </VBtn>
+        </template>
+      </ProposalDetailView>
+    </DataLoader>
+    <div v-else>
+      <VCard class="text-center" flat data-test-id="no-more-proposals">
+        <VCardText class="text-body-1 mt-10">
+          <!-- md icon check mark -->
+          <VIcon :icon="mdiCheckCircle" size="x-large" />
+
+          {{ $t('proposals.no_more_requests_to_approve') }}
+        </VCardText>
+        <VCardActions class="pa-4 d-flex flex-md-row ga-2 justify-end">
+          <VBtn variant="outlined" :disabled="loading" @click="openModel = false">Close</VBtn>
+        </VCardActions>
+      </VCard>
+    </div>
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiClose } from '@mdi/js';
-import { computed, ref, toRefs } from 'vue';
+import { mdiCheckCircle, mdiClose } from '@mdi/js';
+import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DataLoader from '~/components/DataLoader.vue';
 import logger from '~/core/logger.core';
@@ -71,9 +80,9 @@ import { useWalletStore } from '~/stores/wallet.store';
 import ProposalDetailView from './ProposalDetailView.vue';
 import { variantIs } from '~/utils/helper.utils';
 import { mapProposalOperationToListProposalsOperationType } from '~/mappers/proposals.mapper';
-import { VBtn, VSwitch } from 'vuetify/components';
+import { VBtn, VCardActions, VIcon, VSwitch } from 'vuetify/components';
+import { services } from '~/plugins/services.plugin';
 
-// type DataType = Awaited<ReturnType<WalletService['getProposal']>>;
 type DataType = {
   proposal: GetProposalResultData['proposal'];
   privileges: GetProposalResultData['privileges'];
@@ -99,6 +108,7 @@ const emit = defineEmits<{
   (event: 'voted'): void;
   (event: 'closed'): void;
   (event: 'opened'): void;
+  (event: 'proposal-changed', payload: UUID): void;
 }>();
 const currentProposalId = ref<UUID | null>(props.proposalId.value);
 const preloadedData = ref<DataType | null>(null);
@@ -108,6 +118,15 @@ const skippedProposalIds = ref<UUID[]>([]);
 
 const proposalType = ref<ListProposalsOperationType | undefined>();
 const loadNext = ref(false);
+
+watch(props.open, isOpen => {
+  if (isOpen) {
+    currentProposalId.value = props.proposalId.value;
+    skippedProposalIds.value = [];
+    preloadedData.value = null;
+    loadNext.value = false;
+  }
+});
 
 const openModel = computed({
   get: () => props.open.value,
@@ -144,7 +163,7 @@ const loadProposal = async (): Promise<DataType> => {
       additionalInfo: preloadedData.value.additionalInfo,
     };
   } else {
-    const result = await wallet.service.getProposal({ proposal_id: currentProposalId.value! });
+    const result = await services().wallet.getProposal({ proposal_id: currentProposalId.value! });
     return {
       proposal: result.proposal,
       privileges: result.privileges,
@@ -161,6 +180,7 @@ const skip = async (): Promise<void> => {
 
   if (preloadedData.value) {
     currentProposalId.value = preloadedData.value.proposal.id;
+    emit('proposal-changed', currentProposalId.value);
   } else {
     currentProposalId.value = null;
   }
@@ -173,7 +193,7 @@ const onProposalLoaded = (data: Awaited<ReturnType<typeof loadProposal>>): void 
 };
 
 const loadNextProposal = async (): Promise<DataType | null> => {
-  const nextProposal = await wallet.service.getNextVotableProposal({
+  const nextProposal = await services().wallet.getNextVotableProposal({
     types: [proposalType.value!],
     excludedProposalIds: skippedProposalIds.value,
   });
@@ -196,7 +216,6 @@ const onVote = async (approve: boolean, reason?: string): Promise<void> => {
 
   voting.value = true;
 
-  // return
   return wallet.service
     .voteOnProposal({
       proposal_id: currentProposalId.value,
@@ -211,8 +230,6 @@ const onVote = async (approve: boolean, reason?: string): Promise<void> => {
         message: i18n.t('app.action_save_success'),
       });
 
-      emit('voted');
-
       if (loadNext.value) {
         // keep open, load next
 
@@ -220,10 +237,12 @@ const onVote = async (approve: boolean, reason?: string): Promise<void> => {
 
         if (preloadedData.value) {
           currentProposalId.value = preloadedData.value.proposal.id;
+          emit('proposal-changed', currentProposalId.value);
         } else {
           currentProposalId.value = null;
         }
       } else {
+        emit('voted');
         openModel.value = false;
       }
     })
@@ -240,33 +259,3 @@ const onVote = async (approve: boolean, reason?: string): Promise<void> => {
     });
 };
 </script>
-
-<style lang="scss" scoped>
-.proposal-transition-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-
-  > * {
-    grid-column: 1;
-    grid-row: 1;
-  }
-}
-
-.v-enter-active,
-.v-leave-active {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
-}
-
-.v-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.v-leave-to {
-  opacity: 0;
-  transform: translateX(-100%);
-}
-</style>

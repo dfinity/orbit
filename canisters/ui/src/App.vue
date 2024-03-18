@@ -29,11 +29,10 @@ watch(
 watch(
   () => app.loading,
   loading => {
-
     if (!loading) {
       statusCode.value = app.routeStatusCode;
     }
-  }
+  },
 );
 
 onMounted(async () => await initWorkers());

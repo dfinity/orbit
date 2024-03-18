@@ -55,7 +55,6 @@ watch(
   },
 );
 
-
 const session = useSessionStore();
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;

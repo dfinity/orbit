@@ -164,6 +164,7 @@ impl ProposalService {
                 voters: filter_by_voters.unwrap_or_default(),
                 not_voters: filter_by_votable.clone(),
                 not_proposers: filter_by_votable,
+                excluded_ids: vec![],
             },
             input.sort_by,
         )?;
@@ -224,6 +225,13 @@ impl ProposalService {
             vec![]
         };
 
+        let exclude_proposal_ids = input
+            .excluded_proposal_ids
+            .into_iter()
+            .map(HelperMapper::to_uuid)
+            .map(|res| res.map(|uuid| *uuid.as_bytes()))
+            .collect::<Result<Vec<UUID>, _>>()?; // Convert to Result<Vec<UUID>, Error>
+
         let proposal_ids = self.proposal_repository.find_ids_where(
             ProposalWhereClause {
                 created_dt_from: None,
@@ -236,6 +244,7 @@ impl ProposalService {
                 voters: vec![],
                 not_voters: filter_by_votable.clone(),
                 not_proposers: filter_by_votable,
+                excluded_ids: exclude_proposal_ids,
             },
             None,
         )?;

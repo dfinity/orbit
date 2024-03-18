@@ -251,8 +251,8 @@ impl<'a> SelectionFilter<'a> for NotSelectionFilter<'a> {
 
 /// A filter that selects a pre-determined set of IDs.
 #[derive(Debug, Clone)]
-pub(crate) struct IdentitySelectionFilter {
-    pub(crate) ids: HashSet<UUID>,
+pub struct IdentitySelectionFilter {
+    pub ids: HashSet<UUID>,
 }
 
 impl<'a> SelectionFilter<'a> for IdentitySelectionFilter {

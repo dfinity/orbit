@@ -8,8 +8,13 @@
         <br />
         <span v-if="props.proposal.title">
           {{ props.proposal.title }}
-          <VTooltip v-model="titleTooltip" location="bottom" :open-on-hover="false" :open-on-click="true"
-            @click:outside="titleTooltip = false">
+          <VTooltip
+            v-model="titleTooltip"
+            location="bottom"
+            :open-on-hover="false"
+            :open-on-click="true"
+            @click:outside="titleTooltip = false"
+          >
             <template #activator="{ props: infoProps }">
               <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
             </template>
@@ -23,8 +28,16 @@
       <VContainer class="px-0">
         <VRow v-if="props.proposal.summary?.[0]">
           <VCol cols="12" class="text-h6 font-weight-bold">
-            <VTextarea :model-value="props.proposal.summary[0]" :label="$t('terms.summary')" variant="plain" readonly
-              hide-details rows="1" auto-grow class="my-2" />
+            <VTextarea
+              :model-value="props.proposal.summary[0]"
+              :label="$t('terms.summary')"
+              variant="plain"
+              readonly
+              hide-details
+              rows="1"
+              auto-grow
+              class="my-2"
+            />
           </VCol>
         </VRow>
         <VRow>
@@ -34,21 +47,41 @@
         </VRow>
         <VRow>
           <VCol cols="12">
-            <component :is="detailView?.component" v-if="detailView" :proposal="proposal"
-              :operation="detailView.operation" mode="detail" />
+            <component
+              :is="detailView?.component"
+              v-if="detailView"
+              :proposal="proposal"
+              :operation="detailView.operation"
+              mode="detail"
+            />
           </VCol>
         </VRow>
       </VContainer>
     </VCardText>
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-md-row ga-2">
-      <ProposalMetadata :proposal="props.proposal" :details="props.details" class="flex-grow-0 mt-md-0"
-        :class="{ 'mt-8': props.details.can_vote }" />
+      <ProposalMetadata
+        :proposal="props.proposal"
+        :details="props.details"
+        class="flex-grow-0 mt-md-0"
+        :class="{ 'mt-8': props.details.can_vote }"
+      />
       <div class="d-flex flex-column flex-md-row ga-2 justify-end flex-grow-1 w-100 w-md-auto">
         <template v-if="props.details.can_vote">
-          <VBtn variant="outlined" :disabled="props.loading" @click="$emit('approve')">
+          <VBtn
+            variant="outlined"
+            :disabled="props.loading"
+            data-test-id="approve-btn"
+            @click="$emit('approve')"
+          >
             {{ $t('terms.approve') }}
           </VBtn>
-          <VBtn variant="outlined" :disabled="props.loading" class="ma-0" @click="$emit('reject')">
+          <VBtn
+            variant="outlined"
+            :disabled="props.loading"
+            class="ma-0"
+            data-test-id="reject-btn"
+            @click="$emit('reject')"
+          >
             {{ $t('terms.reject') }}
           </VBtn>
           <slot name="bottom-actions"></slot>

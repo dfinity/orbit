@@ -29,7 +29,6 @@ import {
   GetProposalInput,
   GetProposalPolicyResult,
   GetProposalResult,
-  GetProposalResultData,
   GetTransfersInput,
   GetUserGroupInput,
   GetUserGroupResult,

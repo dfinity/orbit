@@ -34,12 +34,11 @@ use crate::{
 };
 use ic_canister_core::{
     repository::{
-        IndexRepository, NotSelectionFilter, OrSelectionFilter, RefreshIndexMode, Repository,
-        SelectionFilter, SortDirection, SortingStrategy,
+        IdentitySelectionFilter, IndexRepository, NotSelectionFilter, OrSelectionFilter,
+        RefreshIndexMode, Repository, SelectionFilter, SortDirection, SortingStrategy,
     },
     types::{Timestamp, UUID},
 };
-use ic_cdk::print;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
@@ -370,7 +369,6 @@ impl ProposalRepository {
         let mut filters = Vec::new();
 
         if condition.created_dt_from.is_some() || condition.created_dt_to.is_some() {
-            print("adding creation filter");
             filters.push(Box::new(CreationDtSelectionFilter {
                 repository: &self.creation_dt_index,
                 prefixed_repository: &self.prefixed_creation_time_index,
@@ -380,7 +378,6 @@ impl ProposalRepository {
         }
 
         if condition.expiration_dt_from.is_some() || condition.expiration_dt_to.is_some() {
-            print("adding expiration filter");
             filters.push(Box::new(ExpirationDtSelectionFilter {
                 repository: &self.expiration_dt_index,
                 prefixed_repository: &self.prefixed_expiration_time_index,
@@ -390,7 +387,6 @@ impl ProposalRepository {
         }
 
         if !condition.statuses.is_empty() {
-            print("adding status filter");
             let includes_status = Box::new(OrSelectionFilter {
                 filters: condition
                     .statuses
@@ -408,7 +404,6 @@ impl ProposalRepository {
         }
 
         if !condition.account_ids().unwrap_or_default().is_empty() {
-            print("adding account filter");
             let includes_account = Box::new(OrSelectionFilter {
                 filters: condition
                     .account_ids()
@@ -427,7 +422,6 @@ impl ProposalRepository {
         }
 
         if !condition.voters.is_empty() {
-            print("adding voter filter");
             let includes_voter = Box::new(OrSelectionFilter {
                 filters: condition
                     .voters
@@ -444,8 +438,45 @@ impl ProposalRepository {
             filters.push(includes_voter);
         }
 
+        if !condition.proposers.is_empty() {
+            let includes_proposer = Box::new(OrSelectionFilter {
+                filters: condition
+                    .proposers
+                    .iter()
+                    .map(|proposer_id| {
+                        Box::new(ProposerSelectionFilter {
+                            repository: &self.proposer_index,
+                            proposer_id: *proposer_id,
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+
+            filters.push(includes_proposer);
+        }
+
+        if filters.is_empty() {
+            // If no filters are provided, return all
+            filters.push(Box::new(CreationDtSelectionFilter {
+                repository: &self.creation_dt_index,
+                prefixed_repository: &self.prefixed_creation_time_index,
+                from: None,
+                to: None,
+            }) as Box<dyn SelectionFilter<IdType = UUID>>);
+        }
+
+        // NotSelectionFilter doesn't select anything, only filters
+        if !condition.excluded_ids.is_empty() {
+            let excludes_ids = Box::new(NotSelectionFilter {
+                input: Box::new(IdentitySelectionFilter {
+                    ids: condition.excluded_ids.iter().cloned().collect(),
+                }),
+            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+
+            filters.push(excludes_ids);
+        }
+
         if !condition.not_voters.is_empty() {
-            print("adding not voter filter");
             let excludes_voter = Box::new(NotSelectionFilter {
                 input: Box::new(OrSelectionFilter {
                     filters: condition
@@ -465,26 +496,7 @@ impl ProposalRepository {
             filters.push(excludes_voter);
         }
 
-        if !condition.proposers.is_empty() {
-            print("adding proposer filter");
-            let includes_proposer = Box::new(OrSelectionFilter {
-                filters: condition
-                    .proposers
-                    .iter()
-                    .map(|proposer_id| {
-                        Box::new(ProposerSelectionFilter {
-                            repository: &self.proposer_index,
-                            proposer_id: *proposer_id,
-                        }) as Box<dyn SelectionFilter<IdType = UUID>>
-                    })
-                    .collect(),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
-
-            filters.push(includes_proposer);
-        }
-
         if !condition.not_proposers.is_empty() {
-            print("adding not proposer filter");
             let excludes_proposer = Box::new(NotSelectionFilter {
                 input: Box::new(OrSelectionFilter {
                     filters: condition
@@ -504,17 +516,6 @@ impl ProposalRepository {
             filters.push(excludes_proposer);
         }
 
-        if filters.is_empty() {
-            print("adding default filter");
-            // If no filters are provided, return all
-            filters.push(Box::new(CreationDtSelectionFilter {
-                repository: &self.creation_dt_index,
-                prefixed_repository: &self.prefixed_creation_time_index,
-                from: None,
-                to: None,
-            }) as Box<dyn SelectionFilter<IdType = UUID>>);
-        }
-
         filters
     }
 }
@@ -531,6 +532,7 @@ pub struct ProposalWhereClause {
     pub not_voters: Vec<UUID>,
     pub proposers: Vec<UUID>,
     pub not_proposers: Vec<UUID>,
+    pub excluded_ids: Vec<UUID>,
 }
 
 impl ProposalWhereClause {
@@ -856,6 +858,7 @@ mod tests {
             not_voters: vec![],
             proposers: vec![],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -904,6 +907,7 @@ mod tests {
             not_voters: vec![],
             proposers: vec![],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -955,6 +959,7 @@ mod tests {
             not_voters: vec![],
             statuses: vec![ProposalStatusCode::Created],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -974,6 +979,7 @@ mod tests {
             not_voters: vec![],
             statuses: vec![ProposalStatusCode::Adopted],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -993,6 +999,7 @@ mod tests {
             not_voters: vec![],
             statuses: vec![ProposalStatusCode::Adopted, ProposalStatusCode::Created],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -1012,6 +1019,7 @@ mod tests {
             not_voters: vec![],
             statuses: vec![ProposalStatusCode::Adopted],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
@@ -1036,6 +1044,7 @@ mod tests {
             not_voters: vec![],
             proposers: vec![],
             not_proposers: vec![],
+            excluded_ids: vec![],
         };
 
         let proposals = PROPOSAL_REPOSITORY
