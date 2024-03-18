@@ -23,7 +23,7 @@ pub struct User {
     /// The UUID that identifies the user.
     pub id: Principal,
     /// The e-mail address of the user.
-    pub email: String,
+    pub email: Option<String>,
     /// The authorization status of the user.
     pub authorization_status: UserAuthorizationStatus,
     /// All the wallets that the user has access to (including the main wallet).
@@ -115,7 +115,9 @@ fn validate_main_wallet(
 
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
-        validate_email(&self.email)?;
+        if let Some(ref email) = self.email {
+            validate_email(email)?;
+        }
         validate_wallets(&self.wallets)?;
         validate_main_wallet(&self.main_wallet, &self.wallets)?;
 
@@ -133,7 +135,7 @@ mod tests {
     fn valid_model_serialization() {
         let model = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -163,7 +165,7 @@ mod tests {
     fn check_wallets_validation() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -196,7 +198,7 @@ mod tests {
     fn valid_main_wallet() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![UserWallet {
                 canister_id: Principal::anonymous(),
@@ -214,7 +216,7 @@ mod tests {
     fn invalid_main_wallet() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![UserWallet {
                 canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),

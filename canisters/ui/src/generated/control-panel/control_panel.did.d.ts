@@ -44,7 +44,7 @@ export interface ManageUserInput {
 export type ManageUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export interface RegisterUserInput {
-  'email' : string,
+  'email' : [] | [string],
   'wallet_id' : [] | [Principal],
 }
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |

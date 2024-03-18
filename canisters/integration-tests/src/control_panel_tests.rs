@@ -31,7 +31,7 @@ fn register_user_successful() {
     // register user
     let register_args = RegisterUserInput {
         wallet_id: Some(canister_ids.wallet),
-        email: "john@example.com".to_string(),
+        email: Some("john@example.com".to_string()),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
@@ -68,7 +68,7 @@ fn deploy_user_wallet() {
     // register user
     let register_args = RegisterUserInput {
         wallet_id: None,
-        email: "john@example.com".to_string(),
+        email: Some("john@example.com".to_string()),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,

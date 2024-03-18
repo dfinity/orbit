@@ -77,7 +77,7 @@ mod tests {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let input = RegisterUserInput {
             wallet_id: None,
-            email: "john@example.com".to_string(),
+            email: None,
         };
 
         let user = UserMapper::from_register_input(input, user_id);
@@ -93,7 +93,7 @@ mod tests {
         let main_wallet = Principal::from_slice(&[2; 29]);
         let input = RegisterUserInput {
             wallet_id: Some(main_wallet),
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
         };
 
         let user = UserMapper::from_register_input(input, user_id);

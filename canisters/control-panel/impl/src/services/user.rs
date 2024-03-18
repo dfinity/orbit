@@ -162,7 +162,7 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -185,7 +185,7 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -209,7 +209,7 @@ mod tests {
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: Some(Principal::from_slice(&[2; 29])),
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -225,11 +225,11 @@ mod tests {
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: None,
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
         };
         let duplicated_user_input = RegisterUserInput {
             wallet_id: None,
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -251,7 +251,7 @@ mod tests {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
             id: user_id,
-            email: "john@example.com".to_string(),
+            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Pending,
             wallets: vec![],
             deployed_wallets: vec![],

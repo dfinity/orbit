@@ -28,7 +28,7 @@ pub struct RegisterUserWalletSharedInput {
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegisterUserInput {
     pub wallet_id: Option<Principal>,
-    pub email: String,
+    pub email: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
