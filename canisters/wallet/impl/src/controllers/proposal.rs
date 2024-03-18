@@ -10,9 +10,10 @@ use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use wallet_api::{
-    CreateProposalInput, CreateProposalResponse, GetProposalInput, GetProposalResponse,
-    ListProposalsInput, ListProposalsResponse, ProposalAdditionalInfoDTO,
-    ProposalCallerPrivilegesDTO, VoteOnProposalInput, VoteOnProposalResponse,
+    CreateProposalInput, CreateProposalResponse, GetNextVotableProposalInput,
+    GetNextVotableProposalResponse, GetProposalInput, GetProposalResponse, ListProposalsInput,
+    ListProposalsResponse, ProposalAdditionalInfoDTO, ProposalCallerPrivilegesDTO,
+    VoteOnProposalInput, VoteOnProposalResponse,
 };
 
 // Canister entrypoints for the controller.
@@ -24,6 +25,13 @@ async fn list_proposals(input: ListProposalsInput) -> ApiResult<ListProposalsRes
 #[query(name = "get_proposal")]
 async fn get_proposal(input: GetProposalInput) -> ApiResult<GetProposalResponse> {
     CONTROLLER.get_proposal(input).await
+}
+
+#[query(name = "get_next_votable_proposal")]
+async fn get_next_votable_proposal(
+    input: GetNextVotableProposalInput,
+) -> ApiResult<GetNextVotableProposalResponse> {
+    CONTROLLER.get_next_votable_proposal(input).await
 }
 
 #[update(name = "vote_on_proposal")]
@@ -127,6 +135,37 @@ impl ProposalController {
             privileges,
             additional_info: additionals,
         })
+    }
+
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Proposal(ProposalResourceAction::List)]))]
+    async fn get_next_votable_proposal(
+        &self,
+        input: GetNextVotableProposalInput,
+    ) -> ApiResult<GetNextVotableProposalResponse> {
+        let ctx = call_context();
+        let result = self
+            .proposal_service
+            .get_next_votable_proposal(input, Some(&ctx))
+            .await?;
+
+        if let Some(proposal) = result {
+            let privileges = self
+                .proposal_service
+                .get_caller_privileges_for_proposal(&proposal.id, &ctx)
+                .await?;
+
+            let additional_info = self
+                .proposal_service
+                .get_proposal_additional_info(&proposal)?;
+
+            Ok(Some(GetProposalResponse {
+                proposal: proposal.to_dto(),
+                privileges: privileges.into(),
+                additional_info: additional_info.into(),
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]

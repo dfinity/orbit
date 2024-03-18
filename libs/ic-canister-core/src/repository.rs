@@ -231,6 +231,46 @@ impl<'a> SelectionFilter<'a> for OrSelectionFilter<'a> {
     }
 }
 
+/// A filter that negates the result of another filter.
+pub struct NotSelectionFilter<'a> {
+    pub input: Box<dyn SelectionFilter<'a, IdType = UUID> + 'a>,
+}
+
+impl<'a> SelectionFilter<'a> for NotSelectionFilter<'a> {
+    type IdType = UUID;
+
+    fn apply(&self, existing_ids: Option<&HashSet<Self::IdType>>) -> HashSet<Self::IdType> {
+        match existing_ids {
+            None => Default::default(),
+            Some(ids) => {
+                let matching_ids = self.input.apply(Some(ids));
+                ids.iter()
+                    .filter(|id| !matching_ids.contains(*id))
+                    .cloned()
+                    .collect()
+            }
+        }
+    }
+}
+
+/// A filter that selects a pre-determined set of IDs.
+#[derive(Debug, Clone)]
+pub struct IdentitySelectionFilter {
+    pub ids: HashSet<UUID>,
+}
+
+impl<'a> SelectionFilter<'a> for IdentitySelectionFilter {
+    type IdType = UUID;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.ids.contains(id)
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.ids.clone()
+    }
+}
+
 /// The sorting direction for a list of items in a repository.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SortDirection {
@@ -262,5 +302,37 @@ impl<'a> SortingStrategy<'a> for DefaultSortingStrategy {
             SortDirection::Ascending => a.cmp(b),
             SortDirection::Descending => b.cmp(a),
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use crate::repository::{IdentitySelectionFilter, NotSelectionFilter, SelectionFilter};
+
+    #[test]
+    fn test_not_selection_filter() {
+        let filter: Box<dyn SelectionFilter<IdType = [u8; 16]> + '_> =
+            Box::new(NotSelectionFilter {
+                input: Box::new(IdentitySelectionFilter {
+                    ids: vec![[0u8; 16], [2u8; 16]]
+                        .into_iter()
+                        .collect::<HashSet<[u8; 16]>>(),
+                }),
+            });
+
+        let empty_result = filter.apply(None);
+        assert_eq!(empty_result, Default::default());
+
+        let non_empty_result = filter.apply(Some(
+            &vec![[0u8; 16], [1u8; 16], [2u8; 16]]
+                .into_iter()
+                .collect::<HashSet<[u8; 16]>>(),
+        ));
+        assert_eq!(
+            non_empty_result,
+            vec![[1u8; 16]].into_iter().collect::<HashSet<[u8; 16]>>()
+        );
     }
 }

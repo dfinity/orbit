@@ -209,6 +209,7 @@ export const useAvailableOProposalSpecifiers = (): SelectItem[] => {
 export const useProposalOverlay = (): {
   open: (proposalId: UUID) => void;
   close: () => void;
+  replaceQueryId: (id: UUID | undefined) => void;
 } => {
   const router = useRouter();
 
@@ -216,19 +217,25 @@ export const useProposalOverlay = (): {
     router.push({ query: { [PROPOSAL_DIALOG_QUERY_PARAM]: proposalId } });
   };
 
+  const replaceQueryId = (id: UUID | undefined): void => {
+    const query = Object.assign({}, router.currentRoute.value.query);
+    if (id) {
+      query[PROPOSAL_DIALOG_QUERY_PARAM] = id;
+    } else {
+      delete query[PROPOSAL_DIALOG_QUERY_PARAM];
+    }
+
+    router.replace({ query });
+  };
+
   const close = (): void => {
     // Delay to allow the dialog to close before removing the query param
     setTimeout(() => {
-      const query = Object.assign({}, router.currentRoute.value.query);
-      if (query[PROPOSAL_DIALOG_QUERY_PARAM] !== undefined) {
-        delete query[PROPOSAL_DIALOG_QUERY_PARAM];
-      }
-
-      router.replace({ query });
+      replaceQueryId(undefined);
     }, 100);
   };
 
-  return { open, close };
+  return { open, close, replaceQueryId };
 };
 
 export interface DownloadItem {

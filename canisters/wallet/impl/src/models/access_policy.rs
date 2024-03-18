@@ -226,21 +226,21 @@ impl Resource {
                 AccountResourceAction::Create => {
                     vec![Resource::Account(AccountResourceAction::Create)]
                 }
-                AccountResourceAction::Transfer(ResourceId::Id(ids)) => {
+                AccountResourceAction::Transfer(ResourceId::Id(id)) => {
                     vec![
-                        Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*ids))),
+                        Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*id))),
                         Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
                     ]
                 }
-                AccountResourceAction::Read(ResourceId::Id(ids)) => {
+                AccountResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::Account(AccountResourceAction::Read(ResourceId::Id(*ids))),
+                        Resource::Account(AccountResourceAction::Read(ResourceId::Id(*id))),
                         Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
                     ]
                 }
-                AccountResourceAction::Update(ResourceId::Id(ids)) => {
+                AccountResourceAction::Update(ResourceId::Id(id)) => {
                     vec![
-                        Resource::Account(AccountResourceAction::Update(ResourceId::Id(*ids))),
+                        Resource::Account(AccountResourceAction::Update(ResourceId::Id(*id))),
                         Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
                     ]
                 }
@@ -273,22 +273,22 @@ impl Resource {
             },
             Resource::AddressBook(action) => match action {
                 ResourceAction::Create => vec![Resource::AddressBook(ResourceAction::Create)],
-                ResourceAction::Delete(ResourceId::Id(ids)) => {
+                ResourceAction::Delete(ResourceId::Id(id)) => {
                     vec![
-                        Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*ids))),
+                        Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))),
                         Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
                     ]
                 }
                 ResourceAction::List => vec![Resource::AddressBook(ResourceAction::List)],
-                ResourceAction::Read(ResourceId::Id(ids)) => {
+                ResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::AddressBook(ResourceAction::Read(ResourceId::Id(*ids))),
+                        Resource::AddressBook(ResourceAction::Read(ResourceId::Id(*id))),
                         Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
                     ]
                 }
-                ResourceAction::Update(ResourceId::Id(ids)) => {
+                ResourceAction::Update(ResourceId::Id(id)) => {
                     vec![
-                        Resource::AddressBook(ResourceAction::Update(ResourceId::Id(*ids))),
+                        Resource::AddressBook(ResourceAction::Update(ResourceId::Id(*id))),
                         Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
                     ]
                 }
@@ -317,9 +317,9 @@ impl Resource {
                 ProposalResourceAction::List => {
                     vec![Resource::Proposal(ProposalResourceAction::List)]
                 }
-                ProposalResourceAction::Read(ResourceId::Id(ids)) => {
+                ProposalResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*ids))),
+                        Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*id))),
                         Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
                     ]
                 }
@@ -331,22 +331,22 @@ impl Resource {
             },
             Resource::ProposalPolicy(action) => match action {
                 ResourceAction::Create => vec![Resource::ProposalPolicy(ResourceAction::Create)],
-                ResourceAction::Delete(ResourceId::Id(ids)) => {
+                ResourceAction::Delete(ResourceId::Id(id)) => {
                     vec![
-                        Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(*ids))),
+                        Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(*id))),
                         Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Any)),
                     ]
                 }
                 ResourceAction::List => vec![Resource::ProposalPolicy(ResourceAction::List)],
-                ResourceAction::Read(ResourceId::Id(ids)) => {
+                ResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Id(*ids))),
+                        Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Id(*id))),
                         Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Any)),
                     ]
                 }
-                ResourceAction::Update(ResourceId::Id(ids)) => {
+                ResourceAction::Update(ResourceId::Id(id)) => {
                     vec![
-                        Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(*ids))),
+                        Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(*id))),
                         Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Any)),
                     ]
                 }
@@ -377,15 +377,15 @@ impl Resource {
             Resource::User(action) => match action {
                 UserResourceAction::Create => vec![Resource::User(UserResourceAction::Create)],
                 UserResourceAction::List => vec![Resource::User(UserResourceAction::List)],
-                UserResourceAction::Read(ResourceId::Id(ids)) => {
+                UserResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::User(UserResourceAction::Read(ResourceId::Id(*ids))),
+                        Resource::User(UserResourceAction::Read(ResourceId::Id(*id))),
                         Resource::User(UserResourceAction::Read(ResourceId::Any)),
                     ]
                 }
-                UserResourceAction::Update(ResourceId::Id(ids)) => {
+                UserResourceAction::Update(ResourceId::Id(id)) => {
                     vec![
-                        Resource::User(UserResourceAction::Update(ResourceId::Id(*ids))),
+                        Resource::User(UserResourceAction::Update(ResourceId::Id(*id))),
                         Resource::User(UserResourceAction::Update(ResourceId::Any)),
                     ]
                 }
@@ -398,22 +398,22 @@ impl Resource {
             },
             Resource::UserGroup(action) => match action {
                 ResourceAction::Create => vec![Resource::UserGroup(ResourceAction::Create)],
-                ResourceAction::Delete(ResourceId::Id(ids)) => {
+                ResourceAction::Delete(ResourceId::Id(id)) => {
                     vec![
-                        Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(*ids))),
+                        Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(*id))),
                         Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                     ]
                 }
                 ResourceAction::List => vec![Resource::UserGroup(ResourceAction::List)],
-                ResourceAction::Read(ResourceId::Id(ids)) => {
+                ResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::UserGroup(ResourceAction::Read(ResourceId::Id(*ids))),
+                        Resource::UserGroup(ResourceAction::Read(ResourceId::Id(*id))),
                         Resource::UserGroup(ResourceAction::Read(ResourceId::Any)),
                     ]
                 }
-                ResourceAction::Update(ResourceId::Id(ids)) => {
+                ResourceAction::Update(ResourceId::Id(id)) => {
                     vec![
-                        Resource::UserGroup(ResourceAction::Update(ResourceId::Id(*ids))),
+                        Resource::UserGroup(ResourceAction::Update(ResourceId::Id(*id))),
                         Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
                     ]
                 }

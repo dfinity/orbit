@@ -24,6 +24,7 @@ import {
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
+  GetNextVotableProposalResponse,
   GetProposalInput,
   GetProposalPolicyResult,
   GetProposalResult,
@@ -60,6 +61,7 @@ import {
 } from '~/generated/wallet/wallet.did';
 import { ExtractOk } from '~/types/helper.types';
 import {
+  GetNextVotableProposalArgs,
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
   ListProposalsArgs,
@@ -300,6 +302,7 @@ export class WalletService {
     types,
     voterIds,
     sortBy,
+    onlyVotable,
   }: ListProposalsArgs = {}): Promise<ExtractOk<ListProposalsResult>> {
     const paginate: PaginationInput = {
       limit: limit ? [limit] : [],
@@ -332,6 +335,23 @@ export class WalletService {
       voter_ids: voterIds ? [voterIds] : [],
       paginate: [paginate],
       sort_by: sortingCriteria,
+      only_votable: !!onlyVotable,
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getNextVotableProposal({
+    types,
+    excludedProposalIds,
+  }: GetNextVotableProposalArgs = {}): Promise<ExtractOk<GetNextVotableProposalResponse>> {
+    const result = await this.actor.get_next_votable_proposal({
+      operation_types: types ? [types] : [],
+      excluded_proposal_ids: excludedProposalIds ?? [],
     });
 
     if (variantIs(result, 'Err')) {
