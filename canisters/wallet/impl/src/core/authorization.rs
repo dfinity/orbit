@@ -6,12 +6,10 @@ use crate::{
             AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
             ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
         },
-        indexes::access_policy_allow_level_index::AllowLevel,
         Account, User, ADMIN_GROUP_ID,
     },
-    repositories::{
-        access_policy::ACCESS_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
-    },
+    repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY},
+    services::access_policy::ACCESS_POLICY_SERVICE,
 };
 use ic_canister_core::repository::Repository;
 
@@ -28,47 +26,37 @@ impl Authorization {
         // e.g. if the resource is for account(1), then the list will expand to [account(1), account(any)]
         let resources = resource.to_expanded_list();
 
-        // Checks if the resource is public, if so, then the access is granted.
-        if resources.iter().any(|resource| {
-            ACCESS_POLICY_REPOSITORY
-                .exists_by_resource_and_allow_level(resource.clone(), AllowLevel::Any)
-        }) {
-            return true;
-        }
+        // Checks if the caller has access to the requested resource.
+        resources.iter().any(|resource| {
+            let access_policy = ACCESS_POLICY_SERVICE.get_access_policy(resource).unwrap();
 
-        if let Some(user) = ctx.user() {
-            // If the user is not active, then the access is denied.
-            if !user.is_active() {
-                return false;
-            }
-
-            // If the resource is available to authenticated users, then the access is granted.
-            if resources.iter().any(|resource| {
-                ACCESS_POLICY_REPOSITORY
-                    .exists_by_resource_and_allow_level(resource.clone(), AllowLevel::Authenticated)
-            }) {
+            // Checks if the resource is public, if so, then the access is granted.
+            if access_policy.allowed_public() {
                 return true;
             }
 
-            // Validades if the user has access to the resource based on the default rules (non-policy based).
-            if resources
-                .iter()
-                .any(|resource| has_default_resource_access(user, resource))
-            {
-                return true;
-            }
-
-            return resources.iter().any(|resource| {
-                let access_policy = ACCESS_POLICY_REPOSITORY.get(resource);
-
-                match access_policy {
-                    Some(policy) => policy.is_allowed(user),
-                    None => false,
+            if let Some(user) = ctx.user() {
+                // If the user is not active, then the access is denied.
+                if !user.is_active() {
+                    return false;
                 }
-            });
-        }
 
-        false
+                // If the resource is available to authenticated users, then the access is granted.
+                if access_policy.allowed_authenticated() {
+                    return true;
+                }
+
+                // Validades if the user has access to the resource based on the default rules (non-policy based).
+                if has_default_resource_access(user, resource) {
+                    return true;
+                }
+
+                // Checks if the user has access to the resource based on the access policy.
+                return access_policy.is_allowed(user);
+            }
+
+            false
+        })
     }
 }
 
@@ -144,7 +132,7 @@ mod tests {
             user_test_utils::{self, mock_user},
             UserGroup, UserStatus, ADMIN_GROUP_ID,
         },
-        repositories::USER_REPOSITORY,
+        repositories::{access_policy::ACCESS_POLICY_REPOSITORY, USER_REPOSITORY},
     };
     use candid::Principal;
     use ic_canister_core::{model::ModelKey, repository::Repository};

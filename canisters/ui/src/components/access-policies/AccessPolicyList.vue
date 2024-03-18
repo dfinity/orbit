@@ -46,13 +46,10 @@ import {
   UUID,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
-import {
-  AccessPolicyForAllUsers,
-  AggregatedResouceAccessPolicies,
-} from '~/types/access-policies.types';
+import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
 import AccessPolicyListItem from './AccessPolicyListItem.vue';
-import { variantIs } from '~/utils/helper.utils';
+import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
 
 const app = useAppStore();
 const props = withDefaults(
@@ -125,18 +122,9 @@ const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() 
       }
 
       resource.canEdit = hasEditPrivilege(resource.resource);
-
-      if (policy.allow.authentication?.length) {
-        let authentication = policy.allow.authentication[0];
-        if (variantIs(authentication, 'Required')) {
-          resource.allow.allUsers = AccessPolicyForAllUsers.AuthenticationRequired;
-        } else if (variantIs(authentication, 'None')) {
-          resource.allow.allUsers = AccessPolicyForAllUsers.Public;
-        }
-      }
-
+      resource.allow.authScope = toAuthScopeEnum(policy.allow.auth_scope);
       resource.allow.specificUsers =
-        policy.allow.users?.[0]?.map(id => {
+        policy.allow.users.map(id => {
           const user = users.value[id];
           if (!user) {
             logger.warn(`User with id ${id} not found in preload data. This should not happen.`);
@@ -145,7 +133,7 @@ const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() 
         }) ?? [];
 
       resource.allow.membersOfGroup =
-        policy.allow.user_groups?.[0]?.map(id => {
+        policy.allow.user_groups.map(id => {
           const group = userGroups.value[id];
           if (!group) {
             logger.warn(`Group with id ${id} not found in preload data. This should not happen.`);

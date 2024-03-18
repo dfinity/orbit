@@ -465,10 +465,14 @@ type ChangeCanisterOperation = record {
 };
 
 type EditAccessPolicyOperationInput = record {
-  // The updated access level that this policy will apply to.
-  access : ResourceAccess;
   // The updated resource that this policy will apply to.
   resource : Resource;
+  // The updated authorization scope for the resource.
+  auth_scope : opt AuthScope;
+  // The updated list of users that have access to the resource.
+  users : opt vec UUID;
+  // The updated list of user groups that have access to the resource.
+  user_groups : opt vec UUID;
 };
 
 type EditAccessPolicyOperation = record {
@@ -1370,39 +1374,24 @@ type ResourceId = variant {
   Id : UUID;
 };
 
-// The type of access privileges to enforce for the resource access.
-type ResourceAccess = variant {
-  Deny : AllowLevel;
-  Allow : Allow;
-};
-
-// The users that are allowed to access the resource.
+// The allow rules for who can access the resource.
 type Allow = record {
   // Required authentication level for accessing the resource.
-  authentication : opt UserAuthentication;
+  auth_scope : AuthScope;
   // Only the specified users can access the resource.
-  users : opt vec UUID;
+  users : vec UUID;
   // Only the specified user groups can access the resource.
-  user_groups : opt vec UUID;
+  user_groups : vec UUID;
 };
 
-// The user authentication level, used to specify the authentication level that is required for
-// accessing the resource.
-type UserAuthentication = variant {
-  None;
-  Required;
-};
-
-// The allow level for who can access the resource.
-type AllowLevel = variant {
-  // Any user can access the resource, even if not authenticated.
-  Any;
-  // Only authenticated users can access the resource.
+// The authorization scope the caller must have, used to specify the required scope for accessing a resource.
+type AuthScope = variant {
+  // Allows access to the resource without requiring any authentication.
+  Public;
+  // Requires to be an authenticated user to access the resource.
   Authenticated;
-  // Only specified users can access the resource.
-  Users;
-  // Only specified user groups can access the resource.
-  UserGroups;
+  // Requires the caller to have direct access to the resource through user groups or user ids.
+  Restricted;
 };
 
 // The resource actions, used to specify the action that is performed on a resource.

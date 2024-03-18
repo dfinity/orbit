@@ -122,20 +122,19 @@ export interface AddressBookEntryCallerPrivileges {
 }
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
 export interface Allow {
-  'authentication' : [] | [UserAuthentication],
-  'user_groups' : [] | [Array<UUID>],
-  'users' : [] | [Array<UUID>],
+  'user_groups' : Array<UUID>,
+  'auth_scope' : AuthScope,
+  'users' : Array<UUID>,
 }
-export type AllowLevel = { 'Any' : null } |
-  { 'UserGroups' : null } |
-  { 'Authenticated' : null } |
-  { 'Users' : null };
 export interface ApprovalThreshold {
   'threshold' : number,
   'voters' : UserSpecifier,
 }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
+export type AuthScope = { 'Authenticated' : null } |
+  { 'Public' : null } |
+  { 'Restricted' : null };
 export interface BasicUser {
   'id' : UUID,
   'status' : UserStatus,
@@ -185,8 +184,10 @@ export interface EditAccessPolicyOperation {
   'input' : EditAccessPolicyOperationInput,
 }
 export interface EditAccessPolicyOperationInput {
-  'access' : ResourceAccess,
   'resource' : Resource,
+  'user_groups' : [] | [Array<UUID>],
+  'auth_scope' : [] | [AuthScope],
+  'users' : [] | [Array<UUID>],
 }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
@@ -642,8 +643,6 @@ export type Resource = { 'User' : UserResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'AccessPolicy' : AccessPolicyResourceAction } |
   { 'UserGroup' : ResourceAction };
-export type ResourceAccess = { 'Deny' : AllowLevel } |
-  { 'Allow' : Allow };
 export type ResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
   { 'Delete' : ResourceId } |
@@ -733,8 +732,6 @@ export interface User {
   'last_modification_timestamp' : TimestampRFC3339,
   'identities' : Array<Principal>,
 }
-export type UserAuthentication = { 'None' : null } |
-  { 'Required' : null };
 export interface UserCallerPrivileges { 'id' : UUID, 'can_edit' : boolean }
 export interface UserGroup { 'id' : UUID, 'name' : string }
 export interface UserGroupCallerPrivileges {

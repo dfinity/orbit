@@ -11,23 +11,24 @@ pub struct AccessPolicyCallerPrivileges {
 }
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
-pub struct Allow {
-    pub authentication: Option<UserAuthentication>,
-    pub users: Option<Vec<UserId>>,
-    pub user_groups: Option<Vec<UserGroupId>>,
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum AuthScope {
+    Public = 1,
+    Authenticated = 2,
+    Restricted = 3,
 }
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum UserAuthentication {
-    None = 1,
-    Required = 2,
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub struct Allow {
+    pub auth_scope: AuthScope,
+    pub users: Vec<UserId>,
+    pub user_groups: Vec<UserGroupId>,
 }
 
-impl Default for UserAuthentication {
+impl Default for AuthScope {
     fn default() -> Self {
-        Self::Required
+        Self::Restricted
     }
 }
 
@@ -46,33 +47,25 @@ pub struct AccessPolicy {
 }
 
 impl AccessPolicy {
-    pub fn allowed_any(&self) -> bool {
-        if let Some(auth) = &self.allow.authentication {
-            return *auth == UserAuthentication::None;
-        }
-
-        false
+    pub fn allowed_public(&self) -> bool {
+        AuthScope::Public == self.allow.auth_scope
     }
 
     pub fn allowed_authenticated(&self) -> bool {
-        if let Some(auth) = &self.allow.authentication {
-            return *auth == UserAuthentication::Required;
-        }
-
-        false
+        AuthScope::Authenticated == self.allow.auth_scope
     }
 
     pub fn allowed_users(&self) -> Vec<UserId> {
-        self.allow.users.clone().unwrap_or_default()
+        self.allow.users.clone()
     }
 
     pub fn allowed_user_groups(&self) -> Vec<UserGroupId> {
-        self.allow.user_groups.clone().unwrap_or_default()
+        self.allow.user_groups.clone()
     }
 
     /// Checks if the user is allowed to access the resource according to the policy.
     pub fn is_allowed(&self, user: &User) -> bool {
-        if self.allowed_any() {
+        if self.allowed_public() {
             return true;
         }
 
@@ -95,30 +88,39 @@ impl AccessPolicy {
 }
 
 impl Allow {
-    pub fn any() -> Self {
+    pub fn public() -> Self {
         Self {
-            authentication: Some(UserAuthentication::None),
+            auth_scope: AuthScope::Public,
             ..Default::default()
         }
     }
 
     pub fn authenticated() -> Self {
         Self {
-            authentication: Some(UserAuthentication::Required),
+            auth_scope: AuthScope::Authenticated,
+            ..Default::default()
+        }
+    }
+
+    pub fn restricted() -> Self {
+        Self {
+            auth_scope: AuthScope::Restricted,
             ..Default::default()
         }
     }
 
     pub fn users(users: Vec<UserId>) -> Self {
         Self {
-            users: Some(users),
+            auth_scope: AuthScope::Restricted,
+            users,
             ..Default::default()
         }
     }
 
-    pub fn user_groups(groups: Vec<UserGroupId>) -> Self {
+    pub fn user_groups(user_groups: Vec<UserGroupId>) -> Self {
         Self {
-            user_groups: Some(groups),
+            auth_scope: AuthScope::Restricted,
+            user_groups,
             ..Default::default()
         }
     }
@@ -769,78 +771,99 @@ pub mod access_policy_test_utils {
     pub fn mock_access_policy() -> AccessPolicy {
         let policy = match RANDOM_MOCKED_POLICY.with(|num| *num.borrow()) {
             0 => AccessPolicy::new(
-                Allow::any(),
+                Allow::public(),
                 Resource::Account(AccountResourceAction::Create),
             ),
-            1 => AccessPolicy::new(Allow::any(), Resource::Account(AccountResourceAction::List)),
+            1 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::Account(AccountResourceAction::List),
+            ),
             2 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
             ),
             3 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
             ),
             4 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
             ),
             5 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::AccessPolicy(AccessPolicyResourceAction::List),
             ),
             6 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::AccessPolicy(AccessPolicyResourceAction::Edit(ResourceTypeId::Any)),
             ),
             7 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::AccessPolicy(AccessPolicyResourceAction::Read(ResourceTypeId::Any)),
             ),
-            8 => AccessPolicy::new(Allow::any(), Resource::AddressBook(ResourceAction::Create)),
+            8 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::Create),
+            ),
             9 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             ),
-            10 => AccessPolicy::new(Allow::any(), Resource::AddressBook(ResourceAction::List)),
+            10 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::AddressBook(ResourceAction::List),
+            ),
             11 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             ),
             12 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             ),
-            13 => AccessPolicy::new(Allow::any(), Resource::User(UserResourceAction::Create)),
-            14 => AccessPolicy::new(Allow::any(), Resource::User(UserResourceAction::List)),
+            13 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::User(UserResourceAction::Create),
+            ),
+            14 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::User(UserResourceAction::List),
+            ),
             15 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::User(UserResourceAction::Read(ResourceId::Any)),
             ),
             16 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::User(UserResourceAction::Update(ResourceId::Any)),
             ),
-            17 => AccessPolicy::new(Allow::any(), Resource::UserGroup(ResourceAction::Create)),
+            17 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::Create),
+            ),
             18 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
             ),
-            19 => AccessPolicy::new(Allow::any(), Resource::UserGroup(ResourceAction::List)),
+            19 => AccessPolicy::new(
+                Allow::authenticated(),
+                Resource::UserGroup(ResourceAction::List),
+            ),
             20 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Read(ResourceId::Any)),
             ),
             21 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
             ),
             22 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::Proposal(ProposalResourceAction::List),
             ),
             23 => AccessPolicy::new(
-                Allow::any(),
+                Allow::authenticated(),
                 Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
             ),
             _ => panic!("Invalid random mocked policy"),

@@ -6,28 +6,17 @@
     data-test-id="everyone-action-btn"
     :class="{ 'ml-1': !everyone.label }"
     :model-value="{
-      everyone: specifier.allow.allUsers,
+      everyone: specifier.allow.authScope,
     }"
     :disabled="!specifier.canEdit"
     :text="everyone.label"
     :icon="everyone.icon"
     :submit="
-      ({ everyone }) => {
-        const userAuthentication = toUserAuthentication(everyone);
-        if (!userAuthentication) {
-          const deny =
-            specifier.allow.allUsers === AccessPolicyForAllUsers.AuthenticationRequired
-              ? { Authenticated: null }
-              : { Any: null };
-
-          return wallet.service.editAccessPolicy({
-            access: { Deny: deny },
-            resource: specifier.resource,
-          });
-        }
-
+      ({ everyone: authScope }) => {
         return wallet.service.editAccessPolicy({
-          access: { Allow: { user_groups: [], users: [], authentication: [userAuthentication] } },
+          auth_scope: [toAuthScope(authScope)],
+          user_groups: [],
+          users: [],
           resource: specifier.resource,
         });
       }
@@ -50,13 +39,10 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { toUserAuthentication } from '~/mappers/access-policies.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
-import {
-  AccessPolicyForAllUsers,
-  ResourceAccessPolicySpecifier,
-} from '~/types/access-policies.types';
+import { AuthScopeEnum, ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
 import EveryoneForm from './EveryoneForm.vue';
+import { toAuthScope } from '~/mappers/access-policies.mapper';
 
 const wallet = useWalletStore();
 const props = defineProps<{
@@ -67,11 +53,11 @@ const { specifier } = toRefs(props);
 const i18n = useI18n();
 
 const everyone = computed(() => {
-  if (specifier.value.allow.allUsers === AccessPolicyForAllUsers.Public) {
+  if (specifier.value.allow.authScope === AuthScopeEnum.Public) {
     return { icon: mdiEarth, label: i18n.t('access_policies.allow.anyone') };
   }
 
-  if (specifier.value.allow.allUsers === AccessPolicyForAllUsers.AuthenticationRequired) {
+  if (specifier.value.allow.authScope === AuthScopeEnum.Authenticated) {
     return { icon: mdiAccountKey, label: i18n.t('access_policies.allow.authenticated') };
   }
 

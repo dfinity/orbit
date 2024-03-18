@@ -151,25 +151,10 @@ const onMembersOfGroupFormSubmit = (
   resource: Resource,
   form: MembersOfGroupFormProps,
 ): Promise<Proposal> => {
-  if (form.modelValue.groupIds.length === 0) {
-    return wallet.service.editAccessPolicy({
-      access: {
-        Deny: {
-          UserGroups: null,
-        },
-      },
-      resource,
-    });
-  }
-
   return wallet.service.editAccessPolicy({
-    access: {
-      Allow: {
-        authentication: [],
-        users: [],
-        user_groups: [form.modelValue.groupIds],
-      },
-    },
+    auth_scope: [],
+    user_groups: [form.modelValue.groupIds],
+    users: [],
     resource,
   });
 };
@@ -201,25 +186,10 @@ const onSpecificUsersFormSubmit = (
   resource: Resource,
   form: SpecificUsersFormProps,
 ): Promise<Proposal> => {
-  if (form.modelValue.userIds.length === 0) {
-    return wallet.service.editAccessPolicy({
-      access: {
-        Deny: {
-          Users: null,
-        },
-      },
-      resource,
-    });
-  }
-
   return wallet.service.editAccessPolicy({
-    access: {
-      Allow: {
-        authentication: [],
-        user_groups: [],
-        users: [form.modelValue.userIds],
-      },
-    },
+    auth_scope: [],
+    user_groups: [],
+    users: [form.modelValue.userIds],
     resource,
   });
 };

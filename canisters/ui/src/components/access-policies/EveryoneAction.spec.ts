@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultAllowLevels } from '~/configs/access-policies.config';
-import { AccessPolicyForAllUsers, ResourceActionEnum } from '~/types/access-policies.types';
+import { AuthScopeEnum, ResourceActionEnum } from '~/types/access-policies.types';
 import { mount } from '~/test.utils';
 import EveryoneAction from './EveryoneAction.vue';
 
@@ -35,7 +35,7 @@ describe('MembersOfGroupAction', () => {
             canEdit: true,
             allow: {
               ...defaultAllowLevels(),
-              allUsers: AccessPolicyForAllUsers.AuthenticationRequired,
+              authScope: AuthScopeEnum.Authenticated,
             },
           },
         },
@@ -62,7 +62,7 @@ describe('MembersOfGroupAction', () => {
           canEdit: false,
           allow: {
             ...defaultAllowLevels(),
-            allUsers: AccessPolicyForAllUsers.AuthenticationRequired,
+            authScope: AuthScopeEnum.Authenticated,
           },
         },
       },

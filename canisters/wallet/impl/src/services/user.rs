@@ -198,8 +198,7 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            access_policy::Allow, user_test_utils, EditAccessPolicyOperationInput, ResourceAccess,
-            UserStatus,
+            access_policy::AuthScope, user_test_utils, EditAccessPolicyOperationInput, UserStatus,
         },
         repositories::USER_REPOSITORY,
         services::access_policy::ACCESS_POLICY_SERVICE,
@@ -363,14 +362,18 @@ mod tests {
 
         ACCESS_POLICY_SERVICE
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::users(vec![user.id])),
+                auth_scope: Some(AuthScope::Restricted),
+                user_groups: None,
+                users: Some(vec![user.id]),
                 resource: Resource::User(UserResourceAction::List),
             })
             .await
             .unwrap();
         ACCESS_POLICY_SERVICE
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::authenticated()),
+                auth_scope: Some(AuthScope::Authenticated),
+                user_groups: None,
+                users: Some(Vec::new()),
                 resource: Resource::User(UserResourceAction::Create),
             })
             .await

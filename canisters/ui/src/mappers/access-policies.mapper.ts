@@ -1,5 +1,5 @@
-import { Resource, UserAuthentication } from '~/generated/wallet/wallet.did';
-import { AccessPolicyForAllUsers, ResourceTypeEnum } from '~/types/access-policies.types';
+import { AuthScope, Resource } from '~/generated/wallet/wallet.did';
+import { AuthScopeEnum, ResourceTypeEnum } from '~/types/access-policies.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum => {
@@ -42,34 +42,31 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
   return unreachable(resource);
 };
 
-export const toUserAuthentication = (
-  everyone: AccessPolicyForAllUsers,
-): UserAuthentication | null => {
-  if (everyone === AccessPolicyForAllUsers.Public) {
-    return { None: null };
+export const toAuthScope = (authScope: AuthScopeEnum): AuthScope => {
+  switch (authScope) {
+    case AuthScopeEnum.Public:
+      return { Public: null };
+    case AuthScopeEnum.Authenticated:
+      return { Authenticated: null };
+    case AuthScopeEnum.Restrictred:
+      return { Restricted: null };
+    default:
+      return unreachable(authScope);
   }
-
-  if (everyone === AccessPolicyForAllUsers.AuthenticationRequired) {
-    return { Required: null };
-  }
-
-  return null;
 };
 
-export const fromUserAuthentication = (
-  userAuthentication: UserAuthentication | null,
-): AccessPolicyForAllUsers => {
-  if (userAuthentication === null) {
-    return AccessPolicyForAllUsers.NotSet;
+export const toAuthScopeEnum = (authScope: AuthScope): AuthScopeEnum => {
+  if (variantIs(authScope, 'Public')) {
+    return AuthScopeEnum.Public;
   }
 
-  if (variantIs(userAuthentication, 'None')) {
-    return AccessPolicyForAllUsers.Public;
+  if (variantIs(authScope, 'Authenticated')) {
+    return AuthScopeEnum.Authenticated;
   }
 
-  if (variantIs(userAuthentication, 'Required')) {
-    return AccessPolicyForAllUsers.AuthenticationRequired;
+  if (variantIs(authScope, 'Restricted')) {
+    return AuthScopeEnum.Restrictred;
   }
 
-  return unreachable(userAuthentication);
+  return unreachable(authScope);
 };

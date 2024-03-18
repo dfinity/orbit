@@ -5,13 +5,11 @@ use crate::{
         access_policy::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction,
             AccessPolicyResourceActionType, AccountResourceAction, AccountResourceActionType,
-            Allow, ChangeCanisterResourceAction, ChangeCanisterResourceActionType,
+            Allow, AuthScope, ChangeCanisterResourceAction, ChangeCanisterResourceActionType,
             ProposalResourceAction, ProposalResourceActionType, Resource, ResourceAction,
             ResourceActionType, ResourceId, ResourceType, ResourceTypeId, SettingsResourceAction,
-            SettingsResourceActionType, UserAuthentication, UserResourceAction,
-            UserResourceActionType,
+            SettingsResourceActionType, UserResourceAction, UserResourceActionType,
         },
-        indexes::access_policy_allow_level_index::AllowLevel,
         Transfer,
     },
     repositories::TRANSFER_REPOSITORY,
@@ -273,20 +271,22 @@ impl GetTransfersInputRef<'_> {
     }
 }
 
-impl From<wallet_api::UserAuthenticationDTO> for UserAuthentication {
-    fn from(dto: wallet_api::UserAuthenticationDTO) -> Self {
+impl From<wallet_api::AuthScopeDTO> for AuthScope {
+    fn from(dto: wallet_api::AuthScopeDTO) -> Self {
         match dto {
-            wallet_api::UserAuthenticationDTO::None => UserAuthentication::None,
-            wallet_api::UserAuthenticationDTO::Required => UserAuthentication::Required,
+            wallet_api::AuthScopeDTO::Public => AuthScope::Public,
+            wallet_api::AuthScopeDTO::Authenticated => AuthScope::Authenticated,
+            wallet_api::AuthScopeDTO::Restricted => AuthScope::Restricted,
         }
     }
 }
 
-impl From<UserAuthentication> for wallet_api::UserAuthenticationDTO {
-    fn from(auth: UserAuthentication) -> Self {
+impl From<AuthScope> for wallet_api::AuthScopeDTO {
+    fn from(auth: AuthScope) -> Self {
         match auth {
-            UserAuthentication::None => wallet_api::UserAuthenticationDTO::None,
-            UserAuthentication::Required => wallet_api::UserAuthenticationDTO::Required,
+            AuthScope::Public => wallet_api::AuthScopeDTO::Public,
+            AuthScope::Authenticated => wallet_api::AuthScopeDTO::Authenticated,
+            AuthScope::Restricted => wallet_api::AuthScopeDTO::Restricted,
         }
     }
 }
@@ -294,17 +294,25 @@ impl From<UserAuthentication> for wallet_api::UserAuthenticationDTO {
 impl From<wallet_api::AllowDTO> for Allow {
     fn from(dto: wallet_api::AllowDTO) -> Self {
         Allow {
-            authentication: dto.authentication.map(UserAuthentication::from),
-            users: dto.users.map(|ids| {
-                ids.iter()
-                    .map(|id| *HelperMapper::to_uuid(id.to_owned()).unwrap().as_bytes())
-                    .collect()
-            }),
-            user_groups: dto.user_groups.map(|ids| {
-                ids.iter()
-                    .map(|id| *HelperMapper::to_uuid(id.to_owned()).unwrap().as_bytes())
-                    .collect()
-            }),
+            auth_scope: dto.auth_scope.into(),
+            users: dto
+                .users
+                .iter()
+                .map(|id| {
+                    *HelperMapper::to_uuid(id.to_owned())
+                        .expect("Invalid user id")
+                        .as_bytes()
+                })
+                .collect(),
+            user_groups: dto
+                .user_groups
+                .iter()
+                .map(|id| {
+                    *HelperMapper::to_uuid(id.to_owned())
+                        .expect("Invalid user group id")
+                        .as_bytes()
+                })
+                .collect(),
         }
     }
 }
@@ -312,39 +320,17 @@ impl From<wallet_api::AllowDTO> for Allow {
 impl From<Allow> for wallet_api::AllowDTO {
     fn from(allow: Allow) -> Self {
         wallet_api::AllowDTO {
-            authentication: allow.authentication.map(UserAuthentication::into),
-            users: allow.users.map(|ids| {
-                ids.iter()
-                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
-                    .collect()
-            }),
-            user_groups: allow.user_groups.map(|ids| {
-                ids.iter()
-                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
-                    .collect()
-            }),
-        }
-    }
-}
-
-impl From<wallet_api::AllowLevelDTO> for AllowLevel {
-    fn from(dto: wallet_api::AllowLevelDTO) -> Self {
-        match dto {
-            wallet_api::AllowLevelDTO::Any => AllowLevel::Any,
-            wallet_api::AllowLevelDTO::Authenticated => AllowLevel::Authenticated,
-            wallet_api::AllowLevelDTO::Users => AllowLevel::Users,
-            wallet_api::AllowLevelDTO::UserGroups => AllowLevel::UserGroups,
-        }
-    }
-}
-
-impl From<AllowLevel> for wallet_api::AllowLevelDTO {
-    fn from(key: AllowLevel) -> Self {
-        match key {
-            AllowLevel::Any => wallet_api::AllowLevelDTO::Any,
-            AllowLevel::Authenticated => wallet_api::AllowLevelDTO::Authenticated,
-            AllowLevel::Users => wallet_api::AllowLevelDTO::Users,
-            AllowLevel::UserGroups => wallet_api::AllowLevelDTO::UserGroups,
+            auth_scope: allow.auth_scope.into(),
+            users: allow
+                .users
+                .iter()
+                .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                .collect(),
+            user_groups: allow
+                .user_groups
+                .iter()
+                .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                .collect(),
         }
     }
 }

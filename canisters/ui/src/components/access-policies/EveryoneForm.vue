@@ -8,17 +8,17 @@
       <VRadio
         :disabled="isViewMode"
         :label="$t('access_policies.allow.notset')"
-        :value="AccessPolicyForAllUsers.NotSet"
+        :value="AuthScopeEnum.Restrictred"
       />
       <VRadio
         :disabled="isViewMode"
         :label="$t('access_policies.allow.authenticated')"
-        :value="AccessPolicyForAllUsers.AuthenticationRequired"
+        :value="AuthScopeEnum.Authenticated"
       />
       <VRadio
         :disabled="isViewMode"
         :label="$t('access_policies.allow.anyone')"
-        :value="AccessPolicyForAllUsers.Public"
+        :value="AuthScopeEnum.Public"
       />
     </VRadioGroup>
   </VForm>
@@ -26,11 +26,11 @@
 
 <script lang="ts" setup>
 import { computed, ref, toRefs, watch } from 'vue';
-import { AccessPolicyForAllUsers } from '~/types/access-policies.types';
+import { AuthScopeEnum } from '~/types/access-policies.types';
 import { VFormValidation } from '~/types/helper.types';
 
 export type EveryoneFormProps = {
-  modelValue: AccessPolicyForAllUsers;
+  modelValue: AuthScopeEnum;
   valid?: boolean;
   mode?: 'view' | 'edit';
 };

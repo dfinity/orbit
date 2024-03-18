@@ -35,23 +35,7 @@ export const idlFactory = ({ IDL }) => {
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
-  const AllowLevel = IDL.Variant({
-    'Any' : IDL.Null,
-    'UserGroups' : IDL.Null,
-    'Authenticated' : IDL.Null,
-    'Users' : IDL.Null,
-  });
-  const UserAuthentication = IDL.Variant({
-    'None' : IDL.Null,
-    'Required' : IDL.Null,
-  });
   const UUID = IDL.Text;
-  const Allow = IDL.Record({
-    'authentication' : IDL.Opt(UserAuthentication),
-    'user_groups' : IDL.Opt(IDL.Vec(UUID)),
-    'users' : IDL.Opt(IDL.Vec(UUID)),
-  });
-  const ResourceAccess = IDL.Variant({ 'Deny' : AllowLevel, 'Allow' : Allow });
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const UserResourceAction = IDL.Variant({
     'List' : IDL.Null,
@@ -144,9 +128,16 @@ export const idlFactory = ({ IDL }) => {
     'AccessPolicy' : AccessPolicyResourceAction,
     'UserGroup' : ResourceAction,
   });
+  const AuthScope = IDL.Variant({
+    'Authenticated' : IDL.Null,
+    'Public' : IDL.Null,
+    'Restricted' : IDL.Null,
+  });
   const EditAccessPolicyOperationInput = IDL.Record({
-    'access' : ResourceAccess,
     'resource' : Resource,
+    'user_groups' : IDL.Opt(IDL.Vec(UUID)),
+    'auth_scope' : IDL.Opt(AuthScope),
+    'users' : IDL.Opt(IDL.Vec(UUID)),
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
   const RemoveProposalPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
@@ -503,6 +494,11 @@ export const idlFactory = ({ IDL }) => {
   const AccessPolicyCallerPrivileges = IDL.Record({
     'resource' : Resource,
     'can_edit' : IDL.Bool,
+  });
+  const Allow = IDL.Record({
+    'user_groups' : IDL.Vec(UUID),
+    'auth_scope' : AuthScope,
+    'users' : IDL.Vec(UUID),
   });
   const AccessPolicy = IDL.Record({ 'resource' : Resource, 'allow' : Allow });
   const GetAccessPolicyResult = IDL.Variant({

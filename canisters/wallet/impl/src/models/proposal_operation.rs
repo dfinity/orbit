@@ -1,10 +1,9 @@
 use super::{
-    access_policy::{Allow, Resource},
+    access_policy::{AuthScope, Resource},
     criteria::Criteria,
-    indexes::access_policy_allow_level_index::AllowLevel,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
-    UserId, UserStatus,
+    UserGroupId, UserId, UserStatus,
 };
 use crate::models::Metadata;
 use candid::Principal;
@@ -231,16 +230,11 @@ pub struct ChangeCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ResourceAccess {
-    Deny(AllowLevel),
-    Allow(Allow),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccessPolicyOperationInput {
-    pub access: ResourceAccess,
     pub resource: Resource,
+    pub auth_scope: Option<AuthScope>,
+    pub users: Option<Vec<UserId>>,
+    pub user_groups: Option<Vec<UserGroupId>>,
 }
 
 #[storable]

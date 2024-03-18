@@ -37,7 +37,6 @@ pub const PROPOSAL_KEY_CREATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2
 pub const PROPOSAL_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(26);
 pub const PROPOSAL_SORT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
 pub const PROPOSAL_STATUS_MODIFICATION_INDEX_MEMORY_ID: MemoryId = MemoryId::new(28);
-pub const ACCESS_POLICY_ALLOW_LEVEL_INDEX: MemoryId = MemoryId::new(29);
 
 thread_local! {
   /// Static configuration of the canister.

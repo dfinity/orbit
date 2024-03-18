@@ -8,23 +8,20 @@
 
     <template v-if="model.allow">
       <SpecificUsersForm
-        v-if="model.allow.users[0]"
         :mode="props.mode.value"
         :model-value="{
-          userIds: model.allow.users[0],
+          userIds: model.allow.users,
         }"
       />
       <MembersOfGroupForm
-        v-if="model.allow.user_groups[0]"
         :mode="props.mode.value"
         :model-value="{
-          groupIds: model.allow.user_groups[0],
+          groupIds: model.allow.user_groups,
         }"
       />
       <EveryoneForm
-        v-if="model.allow.authentication?.[0]"
         :mode="props.mode.value"
-        :model-value="fromUserAuthentication(model.allow.authentication[0])"
+        :model-value="toAuthScopeEnum(model.allow.auth_scope)"
       />
     </template>
   </VForm>
@@ -36,7 +33,7 @@ import MembersOfGroupForm from '~/components/access-policies/MembersOfGroupForm.
 import ResourceSpecifierField from '~/components/access-policies/ResourceSpecifierField.vue';
 import SpecificUsersForm from '~/components/access-policies/SpecificUsersForm.vue';
 import { AccessPolicy } from '~/generated/wallet/wallet.did';
-import { fromUserAuthentication } from '~/mappers/access-policies.mapper';
+import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
 import { VFormValidation } from '~/types/helper.types';
 import EveryoneForm from './EveryoneForm.vue';
 

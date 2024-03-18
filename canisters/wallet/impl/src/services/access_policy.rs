@@ -9,8 +9,7 @@ use crate::{
             AccessPolicy, AccessPolicyCallerPrivileges, AccessPolicyResourceAction, Allow,
             Resource, ResourceTypeId,
         },
-        indexes::access_policy_allow_level_index::AllowLevel,
-        EditAccessPolicyOperationInput, ResourceAccess, User, UserGroup,
+        EditAccessPolicyOperationInput, User, UserGroup,
     },
     repositories::access_policy::{AccessPolicyRepository, ACCESS_POLICY_REPOSITORY},
     services::{UserGroupService, UserService, USER_GROUP_SERVICE, USER_SERVICE},
@@ -75,30 +74,15 @@ impl AccessPolicyService {
     ) -> ServiceResult<AccessPolicy> {
         let mut access_policy = self.get_access_policy(&input.resource)?;
 
-        match &input.access {
-            ResourceAccess::Allow(allow) => {
-                if let Some(user_groups) = &allow.user_groups {
-                    access_policy.allow.user_groups = Some(user_groups.clone());
-                }
-                if let Some(users) = &allow.users {
-                    access_policy.allow.users = Some(users.clone());
-                }
-                if let Some(authentication) = &allow.authentication {
-                    access_policy.allow.authentication = Some(authentication.clone());
-                }
-            }
-            ResourceAccess::Deny(level) => match level {
-                AllowLevel::Any | AllowLevel::Authenticated => {
-                    access_policy.allow.authentication = None;
-                }
-                AllowLevel::UserGroups => {
-                    access_policy.allow.user_groups = None;
-                }
-                AllowLevel::Users => {
-                    access_policy.allow.users = None;
-                }
-            },
-        };
+        if let Some(scope) = input.auth_scope {
+            access_policy.allow.auth_scope = scope;
+        }
+        if let Some(users) = input.users {
+            access_policy.allow.users = users;
+        }
+        if let Some(user_groups) = input.user_groups {
+            access_policy.allow.user_groups = user_groups;
+        }
 
         self.access_policy_repository
             .insert(access_policy.key(), access_policy.to_owned());
@@ -159,13 +143,8 @@ impl AccessPolicyService {
         let mut user_ids = HashSet::new();
         let mut group_ids = HashSet::new();
         for policy in policies {
-            if let Some(user_groups) = &policy.allow.user_groups {
-                group_ids.extend(user_groups);
-            }
-
-            if let Some(users) = &policy.allow.users {
-                user_ids.extend(users);
-            }
+            group_ids.extend(policy.allow.user_groups.clone());
+            user_ids.extend(policy.allow.users.clone());
         }
 
         let mut groups = Vec::new();
@@ -192,7 +171,9 @@ mod tests {
     use crate::{
         core::ic_cdk::api::id as self_canister_id,
         models::{
-            access_policy::{access_policy_test_utils::mock_access_policy, ProposalResourceAction},
+            access_policy::{
+                access_policy_test_utils::mock_access_policy, AuthScope, ProposalResourceAction,
+            },
             user_group_test_utils::mock_user_group,
             user_test_utils::mock_user,
         },
@@ -204,7 +185,9 @@ mod tests {
         let service = ACCESS_POLICY_SERVICE.clone();
         let result = service
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::authenticated()),
+                auth_scope: Some(AuthScope::Authenticated),
+                user_groups: None,
+                users: None,
                 resource: Resource::Proposal(ProposalResourceAction::List),
             })
             .await;
@@ -216,7 +199,9 @@ mod tests {
 
         let result = service
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::any()),
+                auth_scope: Some(AuthScope::Public),
+                user_groups: None,
+                users: None,
                 resource: Resource::Proposal(ProposalResourceAction::List),
             })
             .await;
@@ -225,7 +210,7 @@ mod tests {
 
         let policy = result.unwrap();
 
-        assert!(policy.allowed_any());
+        assert!(policy.allowed_public());
     }
 
     #[test]
@@ -307,30 +292,37 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_remove_access_policy() {
+    async fn test_override_access_policy_auth_scope() {
         let service = ACCESS_POLICY_SERVICE.clone();
         let resource = Resource::Proposal(ProposalResourceAction::List);
         let _ = service
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Allow(Allow::any()),
+                auth_scope: Some(AuthScope::Public),
+                user_groups: None,
+                users: None,
                 resource: resource.clone(),
             })
             .await
             .unwrap();
 
-        assert_eq!(
-            service.get_access_policy(&resource).unwrap().allow,
-            Allow::any()
-        );
+        assert!(service
+            .get_access_policy(&resource)
+            .unwrap()
+            .allowed_public());
 
         service
             .edit_access_policy(EditAccessPolicyOperationInput {
-                access: ResourceAccess::Deny(AllowLevel::Any),
+                auth_scope: Some(AuthScope::Authenticated),
+                user_groups: None,
+                users: None,
                 resource: resource.clone(),
             })
             .await
             .unwrap();
 
-        assert!(!service.get_access_policy(&resource).unwrap().allowed_any());
+        assert!(service
+            .get_access_policy(&resource)
+            .unwrap()
+            .allowed_authenticated());
     }
 }

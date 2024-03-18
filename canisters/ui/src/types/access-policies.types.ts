@@ -24,14 +24,14 @@ export enum ResourceActionEnum {
   ReadPublicConfig = 'ReadPublicConfig',
 }
 
-export enum AccessPolicyForAllUsers {
-  NotSet = 'NotSet',
+export enum AuthScopeEnum {
   Public = 'Public',
-  AuthenticationRequired = 'AuthenticationRequired',
+  Authenticated = 'Authenticated',
+  Restrictred = 'Restrictred',
 }
 
 export interface ResourceAccessAllowLevels {
-  allUsers: AccessPolicyForAllUsers;
+  authScope: AuthScopeEnum;
   membersOfGroup: UserGroup[];
   specificUsers: BasicUser[];
 }

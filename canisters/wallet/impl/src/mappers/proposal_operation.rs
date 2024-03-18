@@ -8,7 +8,7 @@ use crate::{
         EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
         EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserOperation,
         ProposalOperation, RemoveAddressBookEntryOperation, RemoveProposalPolicyOperation,
-        RemoveProposalPolicyOperationInput, ResourceAccess, TransferOperation, User,
+        RemoveProposalPolicyOperationInput, TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -351,28 +351,20 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     }
 }
 
-impl From<ResourceAccess> for wallet_api::ResourceAccessDTO {
-    fn from(value: ResourceAccess) -> wallet_api::ResourceAccessDTO {
-        match value {
-            ResourceAccess::Allow(allowed) => wallet_api::ResourceAccessDTO::Allow(allowed.into()),
-            ResourceAccess::Deny(denied) => wallet_api::ResourceAccessDTO::Deny(denied.into()),
-        }
-    }
-}
-
-impl From<wallet_api::ResourceAccessDTO> for ResourceAccess {
-    fn from(value: wallet_api::ResourceAccessDTO) -> ResourceAccess {
-        match value {
-            wallet_api::ResourceAccessDTO::Allow(allowed) => ResourceAccess::Allow(allowed.into()),
-            wallet_api::ResourceAccessDTO::Deny(denied) => ResourceAccess::Deny(denied.into()),
-        }
-    }
-}
-
 impl From<EditAccessPolicyOperationInput> for wallet_api::EditAccessPolicyOperationInput {
     fn from(input: EditAccessPolicyOperationInput) -> wallet_api::EditAccessPolicyOperationInput {
         wallet_api::EditAccessPolicyOperationInput {
-            access: input.access.into(),
+            auth_scope: input.auth_scope.map(|auth_scope| auth_scope.into()),
+            user_groups: input.user_groups.map(|ids| {
+                ids.iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect::<Vec<String>>()
+            }),
+            users: input.users.map(|ids| {
+                ids.iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect()
+            }),
             resource: input.resource.into(),
         }
     }
@@ -381,7 +373,25 @@ impl From<EditAccessPolicyOperationInput> for wallet_api::EditAccessPolicyOperat
 impl From<wallet_api::EditAccessPolicyOperationInput> for EditAccessPolicyOperationInput {
     fn from(input: wallet_api::EditAccessPolicyOperationInput) -> EditAccessPolicyOperationInput {
         EditAccessPolicyOperationInput {
-            access: input.access.into(),
+            auth_scope: input.auth_scope.map(|auth_scope| auth_scope.into()),
+            user_groups: input.user_groups.map(|ids| {
+                ids.into_iter()
+                    .map(|id| {
+                        *HelperMapper::to_uuid(id)
+                            .expect("Invalid user group id")
+                            .as_bytes()
+                    })
+                    .collect()
+            }),
+            users: input.users.map(|ids| {
+                ids.into_iter()
+                    .map(|id| {
+                        *HelperMapper::to_uuid(id)
+                            .expect("Invalid user id")
+                            .as_bytes()
+                    })
+                    .collect()
+            }),
             resource: input.resource.into(),
         }
     }

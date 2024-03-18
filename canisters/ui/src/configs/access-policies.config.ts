@@ -1,7 +1,7 @@
 import { Resource, UUID } from '~/generated/wallet/wallet.did';
 import {
-  AccessPolicyForAllUsers,
   AggregatedResouceAccessPolicies,
+  AuthScopeEnum,
   ResourceAccessAllowLevels,
   ResourceActionEnum,
   ResourceTypeEnum,
@@ -18,7 +18,7 @@ import {
 import { variantIs } from '~/utils/helper.utils';
 
 export const defaultAllowLevels = (): ResourceAccessAllowLevels => ({
-  allUsers: AccessPolicyForAllUsers.NotSet,
+  authScope: AuthScopeEnum.Restrictred,
   membersOfGroup: [],
   specificUsers: [],
 });
