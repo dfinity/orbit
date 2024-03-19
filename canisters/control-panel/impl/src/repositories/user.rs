@@ -1,6 +1,6 @@
 use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
-    models::{User, UserKey},
+    models::{User, UserAuthorizationStatus, UserKey},
 };
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -55,7 +55,10 @@ mod tests {
         let repository = UserRepository::default();
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
+            email: Some("john@example.com".to_string()),
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
+            deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -71,7 +74,10 @@ mod tests {
         let repository = UserRepository::default();
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
+            email: Some("john@example.com".to_string()),
+            authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
+            deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };

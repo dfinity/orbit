@@ -309,6 +309,8 @@ export const useSessionStore = defineStore('session', {
         await controlPanelService.register({
           // a new user is created with an empty list of wallets, they can add them later
           wallet_id: [],
+          // no e-mail of the user by default
+          email: [],
         });
       }
 
