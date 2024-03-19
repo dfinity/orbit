@@ -243,12 +243,8 @@ export const mapProposalOperationToListProposalsOperationType = (
     return { EditProposalPolicy: null };
   } else if (variantIs(proposalOperation, 'RemoveProposalPolicy')) {
     return { RemoveProposalPolicy: null };
-  } else if (variantIs(proposalOperation, 'AddAccessPolicy')) {
-    return { AddAccessPolicy: null };
   } else if (variantIs(proposalOperation, 'EditAccessPolicy')) {
     return { EditAccessPolicy: null };
-  } else if (variantIs(proposalOperation, 'RemoveAccessPolicy')) {
-    return { RemoveAccessPolicy: null };
   } else if (variantIs(proposalOperation, 'ChangeCanister')) {
     return { ChangeCanister: null };
   } else if (variantIs(proposalOperation, 'AddUserGroup')) {
