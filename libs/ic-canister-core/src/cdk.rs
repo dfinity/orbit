@@ -34,10 +34,11 @@ pub mod mocks {
 
     pub fn next_time() -> u64 {
         // removes the ns precision of the current time to simulate a round time in nanoseconds
-        let round_duration_ns = crate::utils::MAX_TIME_INCREMENT_NS;
-        let round_time_ns = api::time() / round_duration_ns * round_duration_ns;
+        let similated_round_duration_ns = 50_000_000;
+        let similated_round_time_ns =
+            api::time() / similated_round_duration_ns * similated_round_duration_ns;
 
-        crate::utils::next_time(round_time_ns)
+        crate::utils::next_time(similated_round_time_ns)
     }
 
     pub mod api {

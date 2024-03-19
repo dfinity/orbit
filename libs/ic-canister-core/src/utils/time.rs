@@ -21,43 +21,22 @@ pub fn rfc3339_to_timestamp(rfc3339: &str) -> Timestamp {
 }
 
 thread_local! {
-    static SAVED_TIME: RefCell<u64> = RefCell::new(0);
-    static TIME_INCREMENT: RefCell<u64> = RefCell::new(0);
+    static CURRENT_TIME: RefCell<u64> = RefCell::new(0);
 }
-
-// The maximum time increment that can be added to the current time. This allows time to be incremented by at
-// most 50ms in a single round, which means 50M calls to `time` can be made in a single round.
-pub const MAX_TIME_INCREMENT_NS: u64 = 50_000_000;
 
 /// This function increments the time by 1ns for each call in the same round.
 ///
 /// Panics if the time increment exceeds the maximum value for the current round (50ms).
 pub fn next_time(ic_round_time: u64) -> u64 {
-    SAVED_TIME.with(|saved_time| {
-        let mut saved_time = saved_time.borrow_mut();
-
-        if ic_round_time != *saved_time {
-            *saved_time = ic_round_time;
-            TIME_INCREMENT.with(|time_increment| {
-                *time_increment.borrow_mut() = 0;
-            });
-
-            ic_round_time
+    CURRENT_TIME.with(|current_time| {
+        let mut current_time = current_time.borrow_mut();
+        if *current_time < ic_round_time {
+            *current_time = ic_round_time;
         } else {
-            let increment = TIME_INCREMENT.with(|time_increment| {
-                *time_increment.borrow_mut() += 1;
-
-                *time_increment.borrow()
-            });
-
-            if increment > MAX_TIME_INCREMENT_NS {
-                ic_cdk::api::trap(
-                    "Time increment has exceeded the maximum value for the current round.",
-                );
-            }
-
-            ic_round_time + increment
+            *current_time = current_time.saturating_add(1);
         }
+
+        *current_time
     })
 }
 
