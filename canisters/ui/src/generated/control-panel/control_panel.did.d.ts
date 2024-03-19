@@ -51,6 +51,8 @@ export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
+export type RequestUserAuthorizationResult = { 'Ok' : null } |
+  { 'Err' : ApiError };
 export type UUID = string;
 export interface User {
   'id' : Principal,
@@ -70,6 +72,10 @@ export interface _SERVICE {
   'list_wallets' : ActorMethod<[], ListWalletsResult>,
   'manage_user' : ActorMethod<[ManageUserInput], ManageUserResult>,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
+  'request_user_authorization' : ActorMethod<
+    [],
+    RequestUserAuthorizationResult
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

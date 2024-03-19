@@ -5,6 +5,7 @@ use std::sync::Arc;
 use crate::controllers::USER_REGISTRATION_RATE;
 use crate::core::metrics::{
     COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
+    COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL,
 };
 use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::services::USER_SERVICE;
@@ -65,6 +66,24 @@ async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
     let out = CONTROLLER.manage_user(input).await;
 
     COUNTER_MANAGE_USER_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
+}
+
+#[update(name = "request_user_authorization")]
+async fn request_user_authorization() -> ApiResult<()> {
+    let out = CONTROLLER.request_user_authorization().await;
+
+    COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL.with(|c| {
         c.borrow()
             .with(&labels! {
                 "status" => match &out {
@@ -142,6 +161,15 @@ impl UserController {
         Ok(ManageUserResponse {
             user: UserDTO::from(user),
         })
+    }
+
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    async fn request_user_authorization(&self) -> ApiResult<()> {
+        let ctx: CallContext = CallContext::get();
+        self.user_service.request_user_authorization(&ctx).await?;
+
+        Ok(())
     }
 
     #[with_middleware(guard = "log_call", when = "before", context = "call_context")]

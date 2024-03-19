@@ -104,6 +104,35 @@ impl UserService {
         Ok(user)
     }
 
+    pub async fn request_user_authorization(&self, ctx: &CallContext) -> ServiceResult<User> {
+        let mut user = self.get_user(&ctx.caller(), ctx)?;
+
+        if user.email.is_none() {
+            return Err(UserError::MissingEmailAddress {
+                user: user.id.to_text(),
+            }
+            .into());
+        }
+
+        match user.authorization_status {
+            UserAuthorizationStatus::Pending | UserAuthorizationStatus::Authorized => {
+                return Err(UserError::BadUserAuthorizationStatus {
+                    authorization_status: user.authorization_status,
+                }
+                .into());
+            }
+            UserAuthorizationStatus::Unauthorized | UserAuthorizationStatus::Blacklisted => {
+                user.authorization_status = UserAuthorizationStatus::Pending;
+            }
+        };
+
+        user.validate()?;
+
+        self.user_repository.insert(user.to_key(), user.clone());
+
+        Ok(user)
+    }
+
     /// Checks if the caller has access to the given user.
     ///
     /// Admins have access to all users.

@@ -48,6 +48,14 @@ type ManageUserResult = variant {
   Err : ApiError;
 };
 
+// The result of requesting authorization for an user.
+type RequestUserAuthorizationResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The wallet information.
 type UserWallet = record {
   // The id associated with the wallet.
@@ -173,6 +181,8 @@ service : (opt CanisterInstall) -> {
   get_user : () -> (GetUserResult) query;
   // Manage the user associated with the caller.
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
+  // Request authorization for the user associated with the caller.
+  request_user_authorization : () -> (RequestUserAuthorizationResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.

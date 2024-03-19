@@ -19,6 +19,17 @@ pub enum UserAuthorizationStatus {
     Blacklisted,
 }
 
+impl std::fmt::Display for UserAuthorizationStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            UserAuthorizationStatus::Unauthorized => write!(f, "unauthorized"),
+            UserAuthorizationStatus::Pending => write!(f, "pending"),
+            UserAuthorizationStatus::Authorized => write!(f, "authorized"),
+            UserAuthorizationStatus::Blacklisted => write!(f, "blacklisted"),
+        }
+    }
+}
+
 /// The identity of an user.
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]

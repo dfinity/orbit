@@ -19,6 +19,13 @@ thread_local! {
         ), &["status"]).unwrap()
     });
 
+    pub static COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL: RefCell<CounterVec> = RefCell::new({
+        CounterVec::new(Opts::new(
+            format!("{SERVICE_NAME}_request_user_authorization_total"), // name
+            "number of times request_user_authorization was called", // help
+        ), &["status"]).unwrap()
+    });
+
     pub static COUNTER_DELETE_USER_TOTAL: RefCell<CounterVec> = RefCell::new({
         CounterVec::new(Opts::new(
             format!("{SERVICE_NAME}_delete_user_total"), // name
