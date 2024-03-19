@@ -38,6 +38,7 @@ export interface HttpResponse {
 export type ListWalletsResult = { 'Ok' : { 'wallets' : Array<UserWallet> } } |
   { 'Err' : ApiError };
 export interface ManageUserInput {
+  'email' : [] | [string],
   'wallets' : [] | [Array<UserWallet>],
   'main_wallet' : [] | [WalletID],
 }

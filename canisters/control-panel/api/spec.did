@@ -29,6 +29,8 @@ type User = record {
 
 // The result of managing an user.
 type ManageUserInput = record {
+  // The email associated with the user.
+  email : opt text;
   // The main wallet to use for this user.
   //
   // If specified and the wallet is not already associated with the user it will be added.
