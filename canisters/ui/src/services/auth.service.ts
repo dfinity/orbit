@@ -4,8 +4,8 @@ import { DelegationChain } from '@dfinity/identity';
 import { appInitConfig } from '~/configs/init.config';
 
 export class AuthService {
-  // 1 hour in nanoseconds
-  static readonly maxAuthTTL = BigInt(60 * 60 * 1000 * 1000 * 1000);
+  // 8 hours in nanoseconds
+  static readonly maxAuthTTL = BigInt(8 * 60 * 60 * 1000 * 1000 * 1000);
 
   constructor(private authClient?: AuthClient) {}
 
