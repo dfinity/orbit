@@ -40,6 +40,9 @@ pub enum UserError {
     /// The deploy wallet quota was exceeded.
     #[error(r#"Deploy wallet quota exceeded."#)]
     DeployWalletQuotaExceeded,
+    /// Concurrent wallet canister deployment.
+    #[error(r#"Concurrent wallet canister deployment is not allowed."#)]
+    ConcurrentWalletDeployment,
 }
 
 impl DetailableError for UserError {
