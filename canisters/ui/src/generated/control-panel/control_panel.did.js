@@ -11,6 +11,15 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : CanisterUpgrade,
     'Init' : CanisterInit,
   });
+  const ApiError = IDL.Record({
+    'code' : IDL.Text,
+    'message' : IDL.Opt(IDL.Text),
+    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
+  });
+  const CanDeployWalletResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : ApiError,
+  });
   const WalletID = IDL.Principal;
   const UserWallet = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
@@ -20,11 +29,6 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Principal,
     'wallets' : IDL.Vec(UserWallet),
     'main_wallet' : IDL.Opt(WalletID),
-  });
-  const ApiError = IDL.Record({
-    'code' : IDL.Text,
-    'message' : IDL.Opt(IDL.Text),
-    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
   });
   const RemoveUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
@@ -76,6 +80,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   return IDL.Service({
+    'can_deploy_wallet' : IDL.Func([], [CanDeployWalletResult], ['query']),
     'delete_user' : IDL.Func([], [RemoveUserResult], []),
     'deploy_wallet' : IDL.Func([], [DeployWalletResult], []),
     'get_main_wallet' : IDL.Func([], [GetMainWalletResult], ['query']),

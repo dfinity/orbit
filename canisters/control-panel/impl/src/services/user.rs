@@ -120,6 +120,13 @@ impl UserService {
         Ok(user)
     }
 
+    /// Checks if a user can deploy a wallet.
+    pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<()> {
+        let user = self.get_user(&ctx.caller(), ctx)?;
+
+        user.can_deploy_wallet()
+    }
+
     /// Checks if the caller has access to the given user.
     ///
     /// Admins have access to all users.

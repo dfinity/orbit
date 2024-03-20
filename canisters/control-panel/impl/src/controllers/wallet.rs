@@ -1,7 +1,7 @@
 //! Wallet services.
 use std::sync::Arc;
 
-use crate::core::metrics::COUNTER_DEPLOY_WALLET_TOTAL;
+use crate::core::metrics::{COUNTER_CAN_DEPLOY_WALLET_TOTAL, COUNTER_DEPLOY_WALLET_TOTAL};
 use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
@@ -30,6 +30,24 @@ async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
     let out = CONTROLLER.deploy_wallet().await;
 
     COUNTER_DEPLOY_WALLET_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
+}
+
+#[query(name = "can_deploy_wallet")]
+async fn can_deploy_wallet() -> ApiResult<()> {
+    let out = CONTROLLER.can_deploy_wallet().await;
+
+    COUNTER_CAN_DEPLOY_WALLET_TOTAL.with(|c| {
         c.borrow()
             .with(&labels! {
                 "status" => match &out {
@@ -98,5 +116,13 @@ impl WalletController {
         Ok(DeployWalletResponse {
             canister_id: deployed_wallet_id,
         })
+    }
+
+    /// Checks if the user can deploy a new wallet.
+    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
+    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    async fn can_deploy_wallet(&self) -> ApiResult<()> {
+        let ctx = CallContext::get();
+        self.user_service.can_deploy_wallet(&ctx).await
     }
 }

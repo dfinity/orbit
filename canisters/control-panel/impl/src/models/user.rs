@@ -3,6 +3,7 @@ use crate::errors::UserError;
 use candid::Principal;
 use email_address::EmailAddress;
 use ic_canister_core::{
+    api::ServiceResult,
     model::{ModelValidator, ModelValidatorResult},
     types::Timestamp,
 };
@@ -54,6 +55,14 @@ impl User {
 
     pub fn to_key(&self) -> UserKey {
         UserKey(self.id)
+    }
+
+    pub fn can_deploy_wallet(&self) -> ServiceResult<()> {
+        let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
+        if self.deployed_wallets.len() >= max_deployed_wallets {
+            return Err(UserError::DeployWalletQuotaExceeded)?;
+        }
+        Ok(())
     }
 }
 

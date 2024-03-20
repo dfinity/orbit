@@ -33,6 +33,13 @@ thread_local! {
         ), &["status"]).unwrap()
     });
 
+    pub static COUNTER_CAN_DEPLOY_WALLET_TOTAL: RefCell<CounterVec> = RefCell::new({
+        CounterVec::new(Opts::new(
+            format!("{SERVICE_NAME}_can_deploy_wallet_total"), // name
+            "number of times can_deploy_wallet was called", // help
+        ), &["status"]).unwrap()
+    });
+
     pub static GAUGE_USERS_TOTAL: RefCell<Gauge> = RefCell::new({
         Gauge::new(
             format!("{SERVICE_NAME}_users_total"), // name
