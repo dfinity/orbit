@@ -11,7 +11,6 @@ use crate::{
 };
 use anyhow::Context;
 use async_trait::async_trait;
-use futures::{stream, StreamExt, TryStreamExt};
 use ic_canister_core::{repository::Repository, types::UUID};
 use std::{collections::HashSet, sync::Arc};
 
@@ -43,7 +42,6 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
             if self
                 .proposal_matcher
                 .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
-                .await
                 .context("failed to match proposal")?
             {
                 matching_policies.push(policy.to_owned());
@@ -64,7 +62,6 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
             let evaluation_status = self
                 .criteria_evaluator
                 .evaluate((proposal.to_owned(), Arc::new(policy.criteria)))
-                .await
                 .context("failed to evaluate criteria")?;
 
             evaluation_statuses.push(evaluation_status.to_owned());
@@ -132,7 +129,6 @@ impl Evaluate<HashSet<UUID>> for ProposalPossibleVotersFinder<'_> {
             if self
                 .proposal_matcher
                 .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
-                .await
                 .context("failed to match proposal")?
             {
                 matching_policies.push(policy.to_owned());
@@ -140,13 +136,10 @@ impl Evaluate<HashSet<UUID>> for ProposalPossibleVotersFinder<'_> {
         }
 
         for policy in matching_policies {
-            let result = self
-                .possible_voters_criteria_evaluator
-                .evaluate((
-                    Arc::new(self.proposal.to_owned()),
-                    Arc::new(policy.criteria.to_owned()),
-                ))
-                .await?;
+            let result = self.possible_voters_criteria_evaluator.evaluate((
+                Arc::new(self.proposal.to_owned()),
+                Arc::new(policy.criteria.to_owned()),
+            ))?;
 
             if result.match_all {
                 return Ok(USER_REPOSITORY
@@ -193,11 +186,10 @@ impl Evaluate<HashSet<UUID>> for ProposalPossibleVotersFinder<'_> {
 
 pub struct ProposalPossibleVotersCriteriaEvaluator;
 
-#[async_trait]
 impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateError>
     for ProposalPossibleVotersCriteriaEvaluator
 {
-    async fn evaluate(
+    fn evaluate(
         &self,
         (proposal, criteria): (Arc<Proposal>, Arc<Criteria>),
     ) -> Result<PossibleVoters, EvaluateError> {
@@ -271,9 +263,7 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
             Criteria::HasAddressBookMetadata(_) => Ok(possible_voters),
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 for criteria in criterias.iter() {
-                    let result = self
-                        .evaluate((proposal.clone(), Arc::new(criteria.clone())))
-                        .await;
+                    let result = self.evaluate((proposal.clone(), Arc::new(criteria.clone())));
 
                     match result {
                         Ok(evaluated) => {
@@ -292,9 +282,8 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                 Ok(possible_voters)
             }
             Criteria::Not(criteria) => {
-                let result = self
-                    .evaluate((proposal.to_owned(), Arc::new(criteria.as_ref().to_owned())))
-                    .await?;
+                let result =
+                    self.evaluate((proposal.to_owned(), Arc::new(criteria.as_ref().to_owned())))?;
 
                 if result.match_all {
                     possible_voters.match_all = true;
@@ -357,7 +346,6 @@ impl Evaluate<bool> for ProposalVoteRightsEvaluator<'_> {
             if self
                 .proposal_matcher
                 .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
-                .await
                 .context("failed to match proposal")?
             {
                 matching_policies.push(policy.to_owned());
@@ -365,15 +353,11 @@ impl Evaluate<bool> for ProposalVoteRightsEvaluator<'_> {
         }
 
         for policy in matching_policies {
-            if self
-                .vote_rights_evaluator
-                .evaluate((
-                    Arc::new(self.proposal.to_owned()),
-                    Arc::new(self.voter_id),
-                    Arc::new(policy.criteria.to_owned()),
-                ))
-                .await?
-            {
+            if self.vote_rights_evaluator.evaluate((
+                Arc::new(self.proposal.to_owned()),
+                Arc::new(self.voter_id),
+                Arc::new(policy.criteria.to_owned()),
+            ))? {
                 return Ok(true);
             }
         }
@@ -386,11 +370,10 @@ pub struct ProposalVoteRightsCriteriaEvaluator {
     pub voter_matcher: Arc<dyn Match<(Proposal, UserId, UserSpecifier)>>,
 }
 
-#[async_trait]
 impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), EvaluateError>
     for ProposalVoteRightsCriteriaEvaluator
 {
-    async fn evaluate(
+    fn evaluate(
         &self,
         (proposal, voter_id, criteria): (Arc<Proposal>, Arc<UserId>, Arc<Criteria>),
     ) -> Result<bool, EvaluateError> {
@@ -404,7 +387,6 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
                         voter_id.as_ref().to_owned(),
                         voter_specifier.to_owned(),
                     ))
-                    .await
                     .context("failed to match proposal voters")?;
 
                 Ok(can_vote)
@@ -413,28 +395,27 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 let proposal = &proposal;
                 let voter_id = &voter_id;
-                let vote_evaluations = stream::iter(criterias.iter())
-                    .then(|criteria| async move {
-                        self.evaluate((
-                            proposal.to_owned(),
-                            voter_id.to_owned(),
-                            Arc::new(criteria.to_owned()),
-                        ))
-                        .await
-                    })
-                    .try_collect::<Vec<bool>>()
-                    .await?;
 
-                Ok(vote_evaluations.contains(&true))
-            }
-            Criteria::Not(criteria) => {
-                let can_vote = self
-                    .evaluate((
+                for criteria in criterias.iter() {
+                    let can_vote = self.evaluate((
                         proposal.to_owned(),
                         voter_id.to_owned(),
-                        Arc::new(criteria.as_ref().to_owned()),
-                    ))
-                    .await?;
+                        Arc::new(criteria.to_owned()),
+                    ))?;
+
+                    if can_vote {
+                        return Ok(true);
+                    }
+                }
+
+                Ok(false)
+            }
+            Criteria::Not(criteria) => {
+                let can_vote = self.evaluate((
+                    proposal.to_owned(),
+                    voter_id.to_owned(),
+                    Arc::new(criteria.as_ref().to_owned()),
+                ))?;
 
                 Ok(can_vote)
             }
