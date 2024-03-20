@@ -100,7 +100,7 @@ impl UserService {
     /// This method should only be called by a system call (self canister call or controller).
     pub async fn add_user(&self, input: AddUserOperationInput) -> ServiceResult<User> {
         for identity in input.identities.iter() {
-            self.assert_identity_has_no_associated_user(identity)?;
+            self.assert_identity_has_no_associated_user(identity, None)?;
         }
 
         let user_id = generate_uuid_v4().await;
@@ -118,6 +118,12 @@ impl UserService {
     /// This method should only be called by a system call (self canister call or controller).
     pub async fn edit_user(&self, input: EditUserOperationInput) -> ServiceResult<User> {
         let mut user = self.get_user(&input.user_id)?;
+
+        if let Some(identities) = &input.identities {
+            for identity in identities.iter() {
+                self.assert_identity_has_no_associated_user(identity, Some(user.id))?;
+            }
+        }
 
         user.update_with(input)?;
         user.validate()?;
@@ -179,10 +185,20 @@ impl UserService {
     }
 
     /// Asserts that the given identity does not have an associated user.
-    fn assert_identity_has_no_associated_user(&self, identity: &Principal) -> ServiceResult<()> {
+    fn assert_identity_has_no_associated_user(
+        &self,
+        identity: &Principal,
+        skip_user_id: Option<UserId>,
+    ) -> ServiceResult<()> {
         let user = self.user_repository.find_by_identity(identity);
 
         if let Some(user) = user {
+            if let Some(skip_user_id) = skip_user_id {
+                if user.id == skip_user_id {
+                    return Ok(());
+                }
+            }
+
             Err(UserError::IdentityAlreadyHasUser {
                 user: Uuid::from_bytes(user.id).hyphenated().to_string(),
             })?
@@ -305,6 +321,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn add_user_with_identity_of_existing_user_should_fail() {
+        let ctx: TestContext = setup();
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: Some("Jane Doe".to_string()),
+        };
+
+        let result = ctx.service.add_user(input).await;
+        assert!(result.is_ok());
+
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: Some("John Doe".to_string()),
+        };
+
+        let result = ctx.service.add_user(input).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "IDENTITY_ALREADY_HAS_USER: The identity already has an associated user."
+        );
+    }
+
+    #[tokio::test]
     async fn edit_user_happy_path() {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
@@ -325,6 +369,32 @@ mod tests {
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
         assert_eq!(user.identities, vec![ctx.call_context.caller()]);
+    }
+
+    #[tokio::test]
+    async fn edit_user_should_fail_for_identity_of_existing_user() {
+        let mut user = user_test_utils::mock_user();
+        user.identities = vec![Principal::from_slice(&[2; 29])];
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let mut another_user = user_test_utils::mock_user();
+        another_user.identities = vec![Principal::from_slice(&[3; 29])];
+        USER_REPOSITORY.insert(another_user.to_key(), another_user.clone());
+
+        let input = EditUserOperationInput {
+            user_id: user.id,
+            identities: Some(vec![Principal::from_slice(&[3; 29])]),
+            groups: None,
+            name: None,
+            status: None,
+        };
+
+        let result = USER_SERVICE.edit_user(input).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "IDENTITY_ALREADY_HAS_USER: The identity already has an associated user."
+        );
     }
 
     #[tokio::test]
