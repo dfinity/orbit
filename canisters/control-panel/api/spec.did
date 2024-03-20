@@ -49,7 +49,7 @@ type ManageUserResult = variant {
 };
 
 // The result of requesting authorization for an user.
-type RequestUserAuthorizationResult = variant {
+type SubscribeToWaitingListResult = variant {
   // Successfull operation result.
   Ok;
   // The error that occurred during the operation.
@@ -181,7 +181,7 @@ service : (opt CanisterInstall) -> {
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
   // Request authorization for the user associated with the caller.
   // Takes the user's e-mail address to which notifications can be pushed.
-  subscribe_to_waiting_list : (text) -> (RequestUserAuthorizationResult);
+  subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.

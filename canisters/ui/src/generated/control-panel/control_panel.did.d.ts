@@ -48,7 +48,7 @@ export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export type RequestUserAuthorizationResult = { 'Ok' : null } |
+export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type UUID = string;
 export interface User {
@@ -71,7 +71,7 @@ export interface _SERVICE {
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'subscribe_to_waiting_list' : ActorMethod<
     [string],
-    RequestUserAuthorizationResult
+    SubscribeToWaitingListResult
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

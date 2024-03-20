@@ -73,7 +73,7 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const RequestUserAuthorizationResult = IDL.Variant({
+  const SubscribeToWaitingListResult = IDL.Variant({
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
@@ -88,7 +88,7 @@ export const idlFactory = ({ IDL }) => {
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'subscribe_to_waiting_list' : IDL.Func(
         [IDL.Text],
-        [RequestUserAuthorizationResult],
+        [SubscribeToWaitingListResult],
         [],
       ),
   });
