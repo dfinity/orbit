@@ -123,8 +123,7 @@ const updateComputedCanisterModule = async (): Promise<void> => {
   if (modelValue.value.wasmModule && modelValue.value.wasmModule.length > 0) {
     const file = modelValue.value.wasmModule[0];
     const fileBuffer = await readFileAsArrayBuffer(file);
-    const hash = await crypto.subtle.digest('SHA-256', fileBuffer);
-    const hashHex = await arrayBufferToHashHex(hash);
+    const hashHex = await arrayBufferToHashHex(fileBuffer);
 
     moduleChecksum.value = hashHex;
     return;
