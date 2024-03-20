@@ -137,14 +137,13 @@ export type ChangeAddressBookMetadata = {
   { 'RemoveKeys' : Array<string> } |
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
 export interface ChangeCanisterOperation {
+  'module_checksum' : Sha256Hash,
   'target' : ChangeCanisterTarget,
-  'arg_checksum' : [] | [Uint8Array | number[]],
-  'checksum' : Uint8Array | number[],
+  'arg_checksum' : [] | [Sha256Hash],
 }
 export interface ChangeCanisterOperationInput {
   'arg' : [] | [Uint8Array | number[]],
   'target' : ChangeCanisterTarget,
-  'checksum' : Uint8Array | number[],
   'module' : Uint8Array | number[],
 }
 export type ChangeCanisterResourceAction = { 'Create' : null };
@@ -650,6 +649,7 @@ export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
 export type SettingsResourceAction = { 'Read' : null } |
   { 'ReadConfig' : null };
+export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export type TimestampRFC3339 = string;

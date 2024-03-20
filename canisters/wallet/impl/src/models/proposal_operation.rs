@@ -218,12 +218,12 @@ pub struct ChangeCanisterOperationInput {
     pub target: ChangeCanisterTarget,
     pub module: Vec<u8>,
     pub arg: Option<Vec<u8>>,
-    pub checksum: Vec<u8>,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ChangeCanisterOperation {
+    pub module_checksum: Vec<u8>,
     pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeCanisterOperationInput,
 }
