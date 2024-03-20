@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 pub type TimestampRfc3339 = String;
 pub type UuidDTO = String;
+pub type Sha256HashDTO = String;
 
 /// Generic error type used for calls.
 #[derive(CandidType, Deserialize, Clone, Debug)]

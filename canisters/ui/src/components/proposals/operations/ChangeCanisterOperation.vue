@@ -9,13 +9,13 @@
     <ProposalOperationListRow>
       <template #name>{{ $t('terms.wasm') }}</template>
       <template #content>
-        {{ checksum }}
+        {{ props.operation.module_checksum }}
       </template>
     </ProposalOperationListRow>
-    <ProposalOperationListRow v-if="!isListMode && argChecksum">
+    <ProposalOperationListRow v-if="props.operation.arg_checksum?.[0]">
       <template #name>{{ $t('terms.arg') }}</template>
       <template #content>
-        {{ argChecksum }}
+        {{ props.operation.arg_checksum[0] }}
       </template>
     </ProposalOperationListRow>
   </div>
@@ -40,7 +40,6 @@ const props = withDefaults(
 );
 
 const i18n = useI18n();
-const isListMode = computed(() => props.mode === 'list');
 
 const target = computed(() => {
   if (variantIs(props.operation.target, 'UpgradeWallet')) {
@@ -52,17 +51,5 @@ const target = computed(() => {
   }
 
   return props.operation.target.UpgradeCanister.toText();
-});
-
-const checksum = computed(() => {
-  return Buffer.from(props.operation.checksum).toString('hex');
-});
-
-const argChecksum = computed(() => {
-  if (!props.operation.arg_checksum?.[0]) {
-    return undefined;
-  }
-
-  return Buffer.from(props.operation.arg_checksum[0]).toString('hex');
 });
 </script>
