@@ -352,7 +352,7 @@ mod tests {
     async fn edit_user_happy_path() {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![Principal::anonymous()];
+        user.identities = vec![Principal::from_slice(&[1; 29])];
 
         ctx.repository.insert(user.to_key(), user.clone());
 

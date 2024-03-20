@@ -64,7 +64,7 @@ mod tests {
     fn test_user_identity_index_repository() {
         let repository = UserIdentityIndexRepository::default();
         let index = UserIdentityIndex {
-            identity_id: Principal::anonymous(),
+            identity_id: Principal::from_slice(&[1; 29]),
             user_id: [1; 16],
         };
 
@@ -81,14 +81,14 @@ mod tests {
     fn test_find_by_identity() {
         let repository = UserIdentityIndexRepository::default();
         let index = UserIdentityIndex {
-            identity_id: Principal::anonymous(),
+            identity_id: Principal::from_slice(&[1; 29]),
             user_id: [1; 16],
         };
 
         repository.insert(index.clone());
 
         let result = repository.find_by_criteria(UserIdentityIndexCriteria {
-            identity_id: Principal::anonymous(),
+            identity_id: Principal::from_slice(&[1; 29]),
         });
 
         assert!(!result.is_empty());

@@ -379,11 +379,11 @@ mod tests {
         let mut config = test_utils::init_canister_config();
         let call_context = CallContext::new(self_canister_id());
 
-        config.owners = vec![Principal::anonymous()];
+        config.owners = vec![Principal::from_slice(&[1; 29])];
         write_canister_config(config.to_owned());
 
         let init = WalletInit {
-            owners: Some(vec![Principal::anonymous()]),
+            owners: Some(vec![Principal::from_slice(&[1; 29])]),
             upgrader_wasm_module: vec![],
         };
 
@@ -394,6 +394,6 @@ mod tests {
 
         let canister_config = canister_config();
         assert_eq!(canister_config.owners.len(), 1);
-        assert_eq!(canister_config.owners[0], Principal::anonymous());
+        assert_eq!(canister_config.owners[0], Principal::from_slice(&[1; 29]));
     }
 }

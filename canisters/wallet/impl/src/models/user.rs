@@ -78,6 +78,14 @@ fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserErr
         });
     }
 
+    for identity in identities {
+        if Principal::anonymous() == *identity {
+            return Err(UserError::IdentityNotAllowed {
+                identity: identity.to_text(),
+            });
+        }
+    }
+
     Ok(())
 }
 
@@ -132,7 +140,8 @@ mod tests {
     #[test]
     fn fail_user_too_many_identities() {
         let mut user = mock_user();
-        user.identities = vec![Principal::anonymous(); User::IDENTITIES_RANGE.1 as usize + 1];
+        user.identities =
+            vec![Principal::from_slice(&[1; 29]); User::IDENTITIES_RANGE.1 as usize + 1];
 
         let result = validate_identities(&user.identities);
 
@@ -148,11 +157,27 @@ mod tests {
     #[test]
     fn test_user_identities_validation() {
         let mut user = mock_user();
-        user.identities = vec![Principal::anonymous(); 5];
+        user.identities = vec![Principal::from_slice(&[1; 29]); 5];
 
         let result = validate_identities(&user.identities);
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_identity_not_allowed() {
+        let mut user = mock_user();
+        user.identities = vec![Principal::anonymous()];
+
+        let result = validate_identities(&user.identities);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            UserError::IdentityNotAllowed {
+                identity: Principal::anonymous().to_text()
+            }
+        );
     }
 
     #[test]
