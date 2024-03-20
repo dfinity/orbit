@@ -66,12 +66,10 @@ const upgradeModel = ref<ChangeCanisterFormProps>({
 const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Proposal> => {
   const wasmModule = assertAndReturn(model.wasmModule?.[0], 'model.wasmModule is required');
   const fileBuffer = await readFileAsArrayBuffer(wasmModule);
-  const checksum = await crypto.subtle.digest('SHA-256', fileBuffer);
 
   return wallet.service.changeCanister({
     arg:
       model.arg && model.arg.length > 0 ? [new Uint8Array(hexStringToArrayBuffer(model.arg))] : [],
-    checksum: new Uint8Array(checksum),
     module: new Uint8Array(fileBuffer),
     target: assertAndReturn(model.target),
   });

@@ -1,8 +1,8 @@
 use crate::{
     hash::{Hash, Sha256Hasher},
     upgrade::{
-        CheckController, Upgrade, Upgrader, VerifyChecksum, WithAuthorization, WithBackground,
-        WithLogs, WithStart, WithStop,
+        CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
+        WithStop,
     },
 };
 use candid::Principal;
@@ -65,8 +65,6 @@ lazy_static! {
         let u = WithStart(u, &TARGET_CANISTER_ID);
         let u = WithLogs(u, "upgrade".to_string());
         let u = WithBackground(Arc::new(u));
-
-        let u = VerifyChecksum(u, &HASHER);
         let u = CheckController(u, &TARGET_CANISTER_ID);
         let u = WithAuthorization(u, &TARGET_CANISTER_ID);
         let u = WithLogs(u, "trigger_upgrade".to_string());
@@ -79,7 +77,6 @@ async fn trigger_upgrade(params: UpgradeParams) -> TriggerUpgradeResponse {
     match UPGRADER.upgrade(params).await {
         Ok(()) => TriggerUpgradeResponse::Ok,
         Err(err) => TriggerUpgradeResponse::Err(match err {
-            UpgradeError::ChecksumMismatch => TriggerUpgradeError::ChecksumMismatch,
             UpgradeError::NotController => TriggerUpgradeError::NotController,
             UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
             UpgradeError::UnexpectedError(err) => {

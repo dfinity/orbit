@@ -4,7 +4,7 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserAuthorizationStatus, UserKey, UserWallet},
+    models::{User, UserKey, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
@@ -153,6 +153,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::UserAuthorizationStatus;
 
     #[test]
     fn get_user_returns_not_found_err() {

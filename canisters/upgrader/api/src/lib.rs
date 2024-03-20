@@ -4,7 +4,6 @@ use candid::{CandidType, Deserialize, Principal};
 pub struct UpgradeParams {
     pub module: Vec<u8>,
     pub arg: Vec<u8>,
-    pub checksum: Vec<u8>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -14,7 +13,6 @@ pub struct InitArg {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum TriggerUpgradeError {
-    ChecksumMismatch,
     NotController,
     Unauthorized,
     UnexpectedError(String),

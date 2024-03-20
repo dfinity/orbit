@@ -173,7 +173,6 @@ export const idlFactory = ({ IDL }) => {
   const ChangeCanisterOperationInput = IDL.Record({
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'target' : ChangeCanisterTarget,
-    'checksum' : IDL.Vec(IDL.Nat8),
     'module' : IDL.Vec(IDL.Nat8),
   });
   const EditProposalPolicyOperationInput = IDL.Record({
@@ -317,10 +316,11 @@ export const idlFactory = ({ IDL }) => {
     'input' : AddProposalPolicyOperationInput,
     'policy_id' : IDL.Opt(UUID),
   });
+  const Sha256Hash = IDL.Text;
   const ChangeCanisterOperation = IDL.Record({
+    'module_checksum' : Sha256Hash,
     'target' : ChangeCanisterTarget,
-    'arg_checksum' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'checksum' : IDL.Vec(IDL.Nat8),
+    'arg_checksum' : IDL.Opt(Sha256Hash),
   });
   const EditProposalPolicyOperation = IDL.Record({
     'input' : EditProposalPolicyOperationInput,

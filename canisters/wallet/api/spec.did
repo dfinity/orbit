@@ -6,6 +6,8 @@ type NetworkId = text;
 type UUID = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
+// The hash string representation for sha256.
+type Sha256Hash = text;
 
 type PaginationInput = record {
   // The offset to use for pagination.
@@ -448,17 +450,15 @@ type ChangeCanisterOperationInput = record {
   module : blob;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
-  // The checksum of the wasm module.
-  checksum : blob;
 };
 
 type ChangeCanisterOperation = record {
   // The target to change.
   target : ChangeCanisterTarget;
   // The checksum of the wasm module.
-  checksum : blob;
+  module_checksum : Sha256Hash;
   // The checksum of the arg blob.
-  arg_checksum : opt blob;
+  arg_checksum : opt Sha256Hash;
 };
 
 type AddAccessPolicyOperationInput = record {
