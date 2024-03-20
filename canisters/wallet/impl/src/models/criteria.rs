@@ -9,8 +9,6 @@ use crate::{
     repositories::{UserWhereClause, USER_REPOSITORY},
 };
 use anyhow::{anyhow, Error};
-use async_trait::async_trait;
-use futures::{stream, StreamExt, TryStreamExt};
 use ic_canister_macros::storable;
 use std::sync::Arc;
 use std::{cmp, hash::Hash};
@@ -58,14 +56,13 @@ impl From<ProposalVoteStatus> for EvaluationStatus {
     }
 }
 
-#[async_trait]
 pub trait EvaluateCriteria<
     Status = EvaluationStatus,
     Context = (Arc<Proposal>, Arc<Criteria>),
     Error = EvaluateError,
 >: Sync + Send
 {
-    async fn evaluate(&self, ctx: Context) -> Result<Status, Error>;
+    fn evaluate(&self, ctx: Context) -> Result<Status, Error>;
 }
 
 #[derive(Clone)]
@@ -107,21 +104,18 @@ impl ProposalVoteSummary {
 }
 
 impl CriteriaEvaluator {
-    async fn evaluate_criterias(
+    fn evaluate_criterias(
         &self,
         proposal: &Arc<Proposal>,
         criterias: &[Criteria],
     ) -> Result<Vec<EvaluationStatus>, EvaluateError> {
-        stream::iter(criterias.iter())
-            .then(|criteria| async move {
-                self.evaluate((proposal.to_owned(), Arc::new(criteria.to_owned())))
-                    .await
-            })
-            .try_collect::<Vec<EvaluationStatus>>()
-            .await
+        criterias
+            .iter()
+            .map(|criteria| self.evaluate((proposal.to_owned(), Arc::new(criteria.to_owned()))))
+            .collect()
     }
 
-    async fn find_matching_users<UserMatchReturn>(
+    fn find_matching_users<UserMatchReturn>(
         &self,
         proposal: &Arc<Proposal>,
         users: &[(UserId, UserMatchReturn)],
@@ -130,47 +124,36 @@ impl CriteriaEvaluator {
     where
         UserMatchReturn: Clone,
     {
-        stream::iter(users.iter())
-            .then(|(user_id, match_return)| {
-                let match_return = match_return.clone();
-                async move {
-                    match self
-                        .user_matcher
-                        .is_match((
-                            proposal.as_ref().to_owned(),
-                            user_id.to_owned(),
-                            user_specifier.to_owned(),
-                        ))
-                        .await
-                    {
-                        Ok(true) => Ok(Some(match_return)),
-                        Ok(false) => Ok(None),
-                        Err(e) => Err(e),
-                    }
-                }
-            })
-            .try_filter_map(|result| async move { Ok(result) })
-            .try_collect()
-            .await
+        let mut result = vec![];
+
+        for (user_id, match_return) in users {
+            if self.user_matcher.is_match((
+                proposal.as_ref().to_owned(),
+                user_id.to_owned(),
+                user_specifier.to_owned(),
+            ))? {
+                result.push(match_return.clone());
+            }
+        }
+
+        Ok(result)
     }
 
-    async fn calculate_votes(
+    fn calculate_votes(
         &self,
         proposal: &Arc<Proposal>,
         user_specifier: &UserSpecifier,
     ) -> Result<ProposalVoteSummary, MatchError> {
-        let casted_votes = self
-            .find_matching_users::<ProposalVoteStatus>(
-                proposal,
-                proposal
-                    .votes
-                    .iter()
-                    .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
-                    .collect::<Vec<(UserId, ProposalVoteStatus)>>()
-                    .as_slice(),
-                user_specifier,
-            )
-            .await?;
+        let casted_votes = self.find_matching_users::<ProposalVoteStatus>(
+            proposal,
+            proposal
+                .votes
+                .iter()
+                .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
+                .collect::<Vec<(UserId, ProposalVoteStatus)>>()
+                .as_slice(),
+            user_specifier,
+        )?;
 
         let mut total_possible_votes = self
             .find_matching_users::<()>(
@@ -185,8 +168,7 @@ impl CriteriaEvaluator {
                     .collect::<Vec<(UserId, ())>>()
                     .as_slice(),
                 user_specifier,
-            )
-            .await?
+            )?
             .len();
 
         // This is to ensure that the if users become inactive or the criteria is misconfigured
@@ -207,23 +189,22 @@ impl CriteriaEvaluator {
     }
 }
 
-#[async_trait]
 impl EvaluateCriteria for CriteriaEvaluator {
-    async fn evaluate(
+    fn evaluate(
         &self,
         (proposal, c): (Arc<Proposal>, Arc<Criteria>),
     ) -> Result<EvaluationStatus, EvaluateError> {
         match c.as_ref() {
             Criteria::AutoAdopted => Ok(EvaluationStatus::Adopted),
             Criteria::ApprovalThreshold(user_specifier, percentage) => {
-                let votes = self.calculate_votes(&proposal, user_specifier).await?;
+                let votes = self.calculate_votes(&proposal, user_specifier)?;
                 let min_votes =
                     calculate_minimum_threshold(percentage, &votes.total_possible_votes);
 
                 Ok(votes.evaluate(&min_votes))
             }
             Criteria::MinimumVotes(user_specifier, min_votes) => {
-                let votes = self.calculate_votes(&proposal, user_specifier).await?;
+                let votes = self.calculate_votes(&proposal, user_specifier)?;
                 let min_votes = *min_votes as usize;
 
                 Ok(votes.evaluate(&min_votes))
@@ -231,8 +212,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
             Criteria::HasAddressBookMetadata(metadata) => {
                 let is_match = self
                     .address_book_metadata_matcher
-                    .is_match((proposal.as_ref().to_owned(), metadata.clone()))
-                    .await?;
+                    .is_match((proposal.as_ref().to_owned(), metadata.clone()))?;
                 if is_match {
                     Ok(EvaluationStatus::Adopted)
                 } else {
@@ -240,7 +220,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 }
             }
             Criteria::And(criterias) => {
-                let evaluation_statuses = self.evaluate_criterias(&proposal, criterias).await?;
+                let evaluation_statuses = self.evaluate_criterias(&proposal, criterias)?;
 
                 if evaluation_statuses
                     .iter()
@@ -259,7 +239,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 Ok(EvaluationStatus::Pending)
             }
             Criteria::Or(criterias) => {
-                let evaluation_statuses = self.evaluate_criterias(&proposal, criterias).await?;
+                let evaluation_statuses = self.evaluate_criterias(&proposal, criterias)?;
 
                 if evaluation_statuses
                     .iter()
@@ -278,10 +258,7 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 Ok(EvaluationStatus::Pending)
             }
             Criteria::Not(criteria) => Ok(
-                match self
-                    .evaluate((proposal, Arc::new(criteria.as_ref().to_owned())))
-                    .await?
-                {
+                match self.evaluate((proposal, Arc::new(criteria.as_ref().to_owned())))? {
                     EvaluationStatus::Pending => EvaluationStatus::Pending,
                     EvaluationStatus::Adopted => EvaluationStatus::Rejected,
                     EvaluationStatus::Rejected => EvaluationStatus::Adopted,

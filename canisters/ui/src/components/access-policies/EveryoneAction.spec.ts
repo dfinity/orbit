@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultUserSpecifiers } from '~/configs/access-policies.config';
-import { ResourceActionEnum } from '~/types/access-policies.types';
+import { defaultAllowLevels } from '~/configs/access-policies.config';
+import { AuthScopeEnum, ResourceActionEnum } from '~/types/access-policies.types';
 import { mount } from '~/test.utils';
 import EveryoneAction from './EveryoneAction.vue';
 
@@ -10,10 +10,11 @@ describe('MembersOfGroupAction', () => {
       props: {
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Update: null },
           },
-          users: defaultUserSpecifiers(),
+          allow: defaultAllowLevels(),
+          canEdit: true,
         },
       },
     });
@@ -28,25 +29,19 @@ describe('MembersOfGroupAction', () => {
         props: {
           specifier: {
             action: ResourceActionEnum.Create,
-            specifier: {
-              AccessPolicy: { Create: null },
+            resource: {
+              AccessPolicy: { Update: null },
             },
-            users: {
-              ...defaultUserSpecifiers(),
-              allUsers: {
-                policy: {
-                  id: '1',
-                  canEdit: true,
-                  canRemove: true,
-                },
-              },
+            canEdit: true,
+            allow: {
+              ...defaultAllowLevels(),
+              authScope: AuthScopeEnum.Authenticated,
             },
           },
         },
       },
       {
         initialPiniaState: {
-          wallet: { privileges: [{ AddAccessPolicy: null }] },
           session: { isAuthenticated: true },
         },
       },
@@ -61,24 +56,19 @@ describe('MembersOfGroupAction', () => {
       props: {
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Update: null },
           },
-          users: {
-            ...defaultUserSpecifiers(),
-            allUsers: {
-              policy: {
-                id: '1',
-                canEdit: false,
-                canRemove: false,
-              },
-            },
+          canEdit: false,
+          allow: {
+            ...defaultAllowLevels(),
+            authScope: AuthScopeEnum.Authenticated,
           },
         },
       },
     });
 
     const actionBtn = wrapper.find('[data-test-id="everyone-action-btn"]');
-    expect(actionBtn.exists()).toBe(false);
+    expect(actionBtn.attributes()['disabled'] !== undefined).toBeTruthy();
   });
 });

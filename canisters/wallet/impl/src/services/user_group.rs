@@ -1,15 +1,15 @@
-use crate::core::access_control::evaluate_caller_access;
+use crate::core::authorization::Authorization;
 use crate::core::ic_cdk::api::time;
-use crate::core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs};
+use crate::core::utils::{
+    paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs,
+};
 use crate::core::{generate_uuid_v4, CallContext};
 use crate::errors::UserGroupError;
-use crate::models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier};
-use crate::models::specifier::CommonSpecifier;
+use crate::models::access_policy::{Resource, ResourceAction, ResourceId};
 use crate::models::{
     AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup, UserGroupCallerPrivileges,
 };
 use crate::repositories::{UseGroupWhereClause, UserGroupRepository};
-use futures::{stream, StreamExt};
 use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
@@ -49,30 +49,16 @@ impl UserGroupService {
         user_group_id: &UUID,
         ctx: &CallContext,
     ) -> ServiceResult<UserGroupCallerPrivileges> {
-        let can_edit = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::UserGroup,
-                UserGroupActionSpecifier::Update(CommonSpecifier::Id(vec![*user_group_id])),
-            ),
-        )
-        .await
-        .is_ok();
-
-        let can_delete = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::UserGroup,
-                UserGroupActionSpecifier::Delete(CommonSpecifier::Id(vec![*user_group_id])),
-            ),
-        )
-        .await
-        .is_ok();
-
         Ok(UserGroupCallerPrivileges {
             id: *user_group_id,
-            can_edit,
-            can_delete,
+            can_edit: Authorization::is_allowed(
+                ctx,
+                &Resource::UserGroup(ResourceAction::Update(ResourceId::Id(*user_group_id))),
+            ),
+            can_delete: Authorization::is_allowed(
+                ctx,
+                &Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(*user_group_id))),
+            ),
         })
     }
 
@@ -87,25 +73,9 @@ impl UserGroupService {
 
         // filter out user groups that the caller does not have access to read
         if let Some(ctx) = ctx {
-            user_groups = stream::iter(user_groups.iter())
-                .filter_map(|user_group| async move {
-                    match evaluate_caller_access(
-                        ctx,
-                        &ResourceSpecifier::Common(
-                            ResourceType::UserGroup,
-                            UserGroupActionSpecifier::Read(CommonSpecifier::Id(vec![user_group
-                                .id
-                                .to_owned()])),
-                        ),
-                    )
-                    .await
-                    {
-                        Ok(_) => Some(user_group.to_owned()),
-                        Err(_) => None,
-                    }
-                })
-                .collect()
-                .await
+            retain_accessible_resources(ctx, &mut user_groups, |user_group| {
+                Resource::UserGroup(ResourceAction::Read(ResourceId::Id(user_group.id)))
+            });
         }
 
         let result = paginated_items(PaginatedItemsArgs {

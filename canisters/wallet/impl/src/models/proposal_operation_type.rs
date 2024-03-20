@@ -1,13 +1,11 @@
-use candid::{CandidType, Deserialize};
-use ic_stable_structures::{storable::Bound, Storable};
+use ic_canister_macros::storable;
 use std::{
-    borrow::Cow,
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[repr(u8)]
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalOperationType {
     Transfer = 0,
     AddAccount = 1,
@@ -18,49 +16,13 @@ pub enum ProposalOperationType {
     EditUserGroup = 7,
     RemoveUserGroup = 8,
     ChangeCanister = 9,
-    AddAccessPolicy = 10,
     EditAccessPolicy = 11,
-    RemoveAccessPolicy = 12,
     AddProposalPolicy = 13,
     EditProposalPolicy = 14,
     RemoveProposalPolicy = 15,
     AddAddressBookEntry = 16,
     EditAddressBookEntry = 17,
     RemoveAddressBookEntry = 18,
-}
-
-impl From<ProposalOperationType> for u8 {
-    fn from(role: ProposalOperationType) -> Self {
-        role as u8
-    }
-}
-
-impl TryFrom<u8> for ProposalOperationType {
-    type Error = ();
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(ProposalOperationType::Transfer),
-            1 => Ok(ProposalOperationType::AddAccount),
-            2 => Ok(ProposalOperationType::EditAccount),
-            3 => Ok(ProposalOperationType::AddUser),
-            4 => Ok(ProposalOperationType::EditUser),
-            6 => Ok(ProposalOperationType::AddUserGroup),
-            7 => Ok(ProposalOperationType::EditUserGroup),
-            8 => Ok(ProposalOperationType::RemoveUserGroup),
-            9 => Ok(ProposalOperationType::ChangeCanister),
-            10 => Ok(ProposalOperationType::AddAccessPolicy),
-            11 => Ok(ProposalOperationType::EditAccessPolicy),
-            12 => Ok(ProposalOperationType::RemoveAccessPolicy),
-            13 => Ok(ProposalOperationType::AddProposalPolicy),
-            14 => Ok(ProposalOperationType::EditProposalPolicy),
-            15 => Ok(ProposalOperationType::RemoveProposalPolicy),
-            16 => Ok(ProposalOperationType::AddAddressBookEntry),
-            17 => Ok(ProposalOperationType::EditAddressBookEntry),
-            18 => Ok(ProposalOperationType::RemoveAddressBookEntry),
-            _ => Err(()),
-        }
-    }
 }
 
 impl FromStr for ProposalOperationType {
@@ -80,9 +42,7 @@ impl FromStr for ProposalOperationType {
             "edit_user_group" => Ok(ProposalOperationType::EditUserGroup),
             "remove_user_group" => Ok(ProposalOperationType::RemoveUserGroup),
             "change_canister" => Ok(ProposalOperationType::ChangeCanister),
-            "add_access_policy" => Ok(ProposalOperationType::AddAccessPolicy),
             "edit_access_policy" => Ok(ProposalOperationType::EditAccessPolicy),
-            "remove_access_policy" => Ok(ProposalOperationType::RemoveAccessPolicy),
             "add_proposal_policy" => Ok(ProposalOperationType::AddProposalPolicy),
             "edit_proposal_policy" => Ok(ProposalOperationType::EditProposalPolicy),
             "remove_proposal_policy" => Ok(ProposalOperationType::RemoveProposalPolicy),
@@ -106,28 +66,12 @@ impl Display for ProposalOperationType {
             ProposalOperationType::EditUserGroup => write!(f, "edit_user_group"),
             ProposalOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
             ProposalOperationType::ChangeCanister => write!(f, "change_canister"),
-            ProposalOperationType::AddAccessPolicy => write!(f, "add_access_policy"),
             ProposalOperationType::EditAccessPolicy => write!(f, "edit_access_policy"),
-            ProposalOperationType::RemoveAccessPolicy => write!(f, "remove_access_policy"),
             ProposalOperationType::AddProposalPolicy => write!(f, "add_proposal_policy"),
             ProposalOperationType::EditProposalPolicy => write!(f, "edit_proposal_policy"),
             ProposalOperationType::RemoveProposalPolicy => write!(f, "remove_proposal_policy"),
         }
     }
-}
-
-impl Storable for ProposalOperationType {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let operation_code_unit: u8 = self.to_owned().into();
-        Cow::Owned(operation_code_unit.to_bytes().to_vec())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let operation_code_unit = u8::from_bytes(bytes);
-        ProposalOperationType::try_from(operation_code_unit).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]
@@ -217,16 +161,8 @@ mod tests {
             ProposalOperationType::ChangeCanister
         );
         assert_eq!(
-            ProposalOperationType::from_str("add_access_policy").unwrap(),
-            ProposalOperationType::AddAccessPolicy
-        );
-        assert_eq!(
             ProposalOperationType::from_str("edit_access_policy").unwrap(),
             ProposalOperationType::EditAccessPolicy
-        );
-        assert_eq!(
-            ProposalOperationType::from_str("remove_access_policy").unwrap(),
-            ProposalOperationType::RemoveAccessPolicy
         );
         assert_eq!(
             ProposalOperationType::from_str("add_proposal_policy").unwrap(),
@@ -239,100 +175,6 @@ mod tests {
         assert_eq!(
             ProposalOperationType::from_str("remove_proposal_policy").unwrap(),
             ProposalOperationType::RemoveProposalPolicy
-        );
-    }
-
-    #[test]
-    fn operation_code_match_number_representation() {
-        assert_eq!(ProposalOperationType::Transfer as u8, 0);
-        assert_eq!(
-            ProposalOperationType::try_from(0).unwrap(),
-            ProposalOperationType::Transfer
-        );
-        assert_eq!(ProposalOperationType::AddAccount as u8, 1);
-        assert_eq!(
-            ProposalOperationType::try_from(1).unwrap(),
-            ProposalOperationType::AddAccount
-        );
-        assert_eq!(ProposalOperationType::EditAccount as u8, 2);
-        assert_eq!(
-            ProposalOperationType::try_from(2).unwrap(),
-            ProposalOperationType::EditAccount
-        );
-        assert_eq!(ProposalOperationType::AddUser as u8, 3);
-        assert_eq!(
-            ProposalOperationType::try_from(3).unwrap(),
-            ProposalOperationType::AddUser
-        );
-        assert_eq!(ProposalOperationType::EditUser as u8, 4);
-        assert_eq!(
-            ProposalOperationType::try_from(4).unwrap(),
-            ProposalOperationType::EditUser
-        );
-        assert_eq!(ProposalOperationType::AddUserGroup as u8, 6);
-        assert_eq!(
-            ProposalOperationType::try_from(6).unwrap(),
-            ProposalOperationType::AddUserGroup
-        );
-        assert_eq!(ProposalOperationType::EditUserGroup as u8, 7);
-        assert_eq!(
-            ProposalOperationType::try_from(7).unwrap(),
-            ProposalOperationType::EditUserGroup
-        );
-        assert_eq!(ProposalOperationType::RemoveUserGroup as u8, 8);
-        assert_eq!(
-            ProposalOperationType::try_from(8).unwrap(),
-            ProposalOperationType::RemoveUserGroup
-        );
-        assert_eq!(ProposalOperationType::ChangeCanister as u8, 9);
-        assert_eq!(
-            ProposalOperationType::try_from(9).unwrap(),
-            ProposalOperationType::ChangeCanister
-        );
-        assert_eq!(ProposalOperationType::AddAccessPolicy as u8, 10);
-        assert_eq!(
-            ProposalOperationType::try_from(10).unwrap(),
-            ProposalOperationType::AddAccessPolicy
-        );
-        assert_eq!(ProposalOperationType::EditAccessPolicy as u8, 11);
-        assert_eq!(
-            ProposalOperationType::try_from(11).unwrap(),
-            ProposalOperationType::EditAccessPolicy
-        );
-        assert_eq!(ProposalOperationType::RemoveAccessPolicy as u8, 12);
-        assert_eq!(
-            ProposalOperationType::try_from(12).unwrap(),
-            ProposalOperationType::RemoveAccessPolicy
-        );
-        assert_eq!(ProposalOperationType::AddProposalPolicy as u8, 13);
-        assert_eq!(
-            ProposalOperationType::try_from(13).unwrap(),
-            ProposalOperationType::AddProposalPolicy
-        );
-        assert_eq!(ProposalOperationType::EditProposalPolicy as u8, 14);
-        assert_eq!(
-            ProposalOperationType::try_from(14).unwrap(),
-            ProposalOperationType::EditProposalPolicy
-        );
-        assert_eq!(ProposalOperationType::RemoveProposalPolicy as u8, 15);
-        assert_eq!(
-            ProposalOperationType::try_from(15).unwrap(),
-            ProposalOperationType::RemoveProposalPolicy
-        );
-        assert_eq!(ProposalOperationType::AddAddressBookEntry as u8, 16);
-        assert_eq!(
-            ProposalOperationType::try_from(16).unwrap(),
-            ProposalOperationType::AddAddressBookEntry
-        );
-        assert_eq!(ProposalOperationType::EditAddressBookEntry as u8, 17);
-        assert_eq!(
-            ProposalOperationType::try_from(17).unwrap(),
-            ProposalOperationType::EditAddressBookEntry
-        );
-        assert_eq!(ProposalOperationType::RemoveAddressBookEntry as u8, 18);
-        assert_eq!(
-            ProposalOperationType::try_from(18).unwrap(),
-            ProposalOperationType::RemoveAddressBookEntry
         );
     }
 }

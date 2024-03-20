@@ -1,4 +1,4 @@
-use crate::{hash::Hash, LocalRef, StableValue, StorablePrincipal};
+use crate::{LocalRef, StableValue, StorablePrincipal};
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
@@ -10,8 +10,6 @@ use upgrader_api::UpgradeParams;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
-    #[error("upgrade checksum mismatch")]
-    ChecksumMismatch,
     #[error("canister is not a controller of target canister")]
     NotController,
     #[error("unauthorized")]
@@ -154,19 +152,6 @@ impl<T: Upgrade> Upgrade for CheckController<T> {
     }
 }
 
-pub struct VerifyChecksum<T, H>(pub T, pub H);
-
-#[async_trait]
-impl<T: Upgrade, H: Hash> Upgrade for VerifyChecksum<T, H> {
-    async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        if !self.1.hash(&ps.module).eq(&ps.checksum) {
-            return Err(UpgradeError::ChecksumMismatch);
-        }
-
-        self.0.upgrade(ps).await
-    }
-}
-
 pub struct WithLogs<T>(pub T, pub String);
 
 #[async_trait]
@@ -187,79 +172,5 @@ impl<T: Upgrade> Upgrade for WithLogs<T> {
         );
 
         out
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use anyhow::Error;
-    use mockall::predicate;
-
-    use super::*;
-    use crate::hash::MockHash;
-
-    #[tokio::test]
-    async fn verify_checksum_invalid() -> Result<(), Error> {
-        // Hash
-        let mut h = MockHash::new();
-        h.expect_hash()
-            .times(1)
-            .with(predicate::eq("module".as_bytes().to_vec()))
-            .return_const("other".as_bytes().to_vec());
-
-        // Upgrade
-        let mut u = MockUpgrade::new();
-        u.expect_upgrade().times(0);
-
-        let out = VerifyChecksum(u, h)
-            .upgrade(UpgradeParams {
-                module: "module".as_bytes().to_vec(),
-                arg: "arg".as_bytes().to_vec(),
-                checksum: "hash".as_bytes().to_vec(),
-            })
-            .await;
-
-        match out {
-            Err(UpgradeError::ChecksumMismatch) => {}
-            _ => return Err(anyhow!("expected a checksum mismatch but none occurred")),
-        }
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn verify_checksum_valid() -> Result<(), Error> {
-        // Hash
-        let mut h = MockHash::new();
-        h.expect_hash()
-            .times(1)
-            .with(predicate::eq("module".as_bytes().to_vec()))
-            .return_const("hash".as_bytes().to_vec());
-
-        // Upgrade
-        let mut u = MockUpgrade::new();
-        u.expect_upgrade()
-            .times(1)
-            .with(predicate::eq(UpgradeParams {
-                module: "module".as_bytes().to_vec(),
-                arg: "arg".as_bytes().to_vec(),
-                checksum: "hash".as_bytes().to_vec(),
-            }))
-            .returning(|_| Ok(()));
-
-        let out = VerifyChecksum(u, h)
-            .upgrade(UpgradeParams {
-                module: "module".as_bytes().to_vec(),
-                arg: "arg".as_bytes().to_vec(),
-                checksum: "hash".as_bytes().to_vec(),
-            })
-            .await;
-
-        match out {
-            Ok(()) => {}
-            _ => return Err(anyhow!("expected checksum verification to succeed")),
-        }
-
-        Ok(())
     }
 }

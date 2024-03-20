@@ -1,23 +1,20 @@
 use crate::{
     core::{
-        access_control::evaluate_caller_access,
+        authorization::Authorization,
         generate_uuid_v4,
-        ic_cdk::api::print,
-        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
-    errors::{AccessControlError, UserError},
+    errors::UserError,
     mappers::{UserMapper, USER_PRIVILEGES},
     models::{
-        access_control::{ResourceSpecifier, ResourceType, UserActionSpecifier},
-        specifier::CommonSpecifier,
+        access_policy::{Resource, ResourceId, UserResourceAction},
         AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges, UserId,
         ADMIN_GROUP_ID,
     },
     repositories::{UserRepository, UserWhereClause},
 };
 use candid::Principal;
-use futures::{stream, StreamExt};
 use ic_canister_core::api::ServiceResult;
 use ic_canister_core::model::ModelValidator;
 use ic_canister_core::repository::Repository;
@@ -63,30 +60,12 @@ impl UserService {
         user_id: &UserId,
         ctx: &CallContext,
     ) -> ServiceResult<UserCallerPrivileges> {
-        let can_edit = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::User,
-                UserActionSpecifier::Update(CommonSpecifier::Id(vec![user_id.to_owned()])),
-            ),
-        )
-        .await
-        .is_ok();
-
-        let can_delete = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::User,
-                UserActionSpecifier::Delete(CommonSpecifier::Id(vec![user_id.to_owned()])),
-            ),
-        )
-        .await
-        .is_ok();
-
         Ok(UserCallerPrivileges {
             id: user_id.to_owned(),
-            can_edit,
-            can_delete,
+            can_edit: Authorization::is_allowed(
+                ctx,
+                &Resource::User(UserResourceAction::Update(ResourceId::Id(*user_id))),
+            ),
         })
     }
 
@@ -121,7 +100,7 @@ impl UserService {
     /// This method should only be called by a system call (self canister call or controller).
     pub async fn add_user(&self, input: AddUserOperationInput) -> ServiceResult<User> {
         for identity in input.identities.iter() {
-            self.assert_identity_has_no_associated_user(identity)?;
+            self.assert_identity_has_no_associated_user(identity, None)?;
         }
 
         let user_id = generate_uuid_v4().await;
@@ -139,6 +118,12 @@ impl UserService {
     /// This method should only be called by a system call (self canister call or controller).
     pub async fn edit_user(&self, input: EditUserOperationInput) -> ServiceResult<User> {
         let mut user = self.get_user(&input.user_id)?;
+
+        if let Some(identities) = &input.identities {
+            for identity in identities.iter() {
+                self.assert_identity_has_no_associated_user(identity, Some(user.id))?;
+            }
+        }
 
         user.update_with(input)?;
         user.validate()?;
@@ -165,25 +150,9 @@ impl UserService {
 
         // filter out users that the caller does not have access to read
         if let Some(ctx) = ctx {
-            users = stream::iter(users.iter())
-                .filter_map(|user| async move {
-                    match evaluate_caller_access(
-                        ctx,
-                        &ResourceSpecifier::Common(
-                            ResourceType::User,
-                            UserActionSpecifier::Read(CommonSpecifier::Id(vec![user
-                                .id
-                                .to_owned()])),
-                        ),
-                    )
-                    .await
-                    {
-                        Ok(_) => Some(user.to_owned()),
-                        Err(_) => None,
-                    }
-                })
-                .collect()
-                .await
+            retain_accessible_resources(ctx, &mut users, |user| {
+                Resource::User(UserResourceAction::Read(ResourceId::Id(user.id)))
+            });
         }
 
         let result = paginated_items(PaginatedItemsArgs {
@@ -205,17 +174,10 @@ impl UserService {
         let mut privileges = Vec::new();
 
         for privilege in USER_PRIVILEGES.into_iter() {
-            let evaluated_access = evaluate_caller_access(ctx, &privilege.to_owned().into()).await;
+            let is_allowed = Authorization::is_allowed(ctx, &privilege.to_owned().into());
 
-            match evaluated_access {
-                Ok(_) => privileges.push(privilege),
-                Err(AccessControlError::Unauthorized { .. }) => {}
-                Err(err) => {
-                    // We do not fail the entire operation if there is an error
-                    // to still return the valid privileges that were evaluated,
-                    // this enables clients to still use the valid evaluated privileges.
-                    print(format!("Error evaluating user access: {:?}", err));
-                }
+            if is_allowed {
+                privileges.push(privilege.to_owned());
             }
         }
 
@@ -223,10 +185,20 @@ impl UserService {
     }
 
     /// Asserts that the given identity does not have an associated user.
-    fn assert_identity_has_no_associated_user(&self, identity: &Principal) -> ServiceResult<()> {
+    fn assert_identity_has_no_associated_user(
+        &self,
+        identity: &Principal,
+        skip_user_id: Option<UserId>,
+    ) -> ServiceResult<()> {
         let user = self.user_repository.find_by_identity(identity);
 
         if let Some(user) = user {
+            if let Some(skip_user_id) = skip_user_id {
+                if user.id == skip_user_id {
+                    return Ok(());
+                }
+            }
+
             Err(UserError::IdentityAlreadyHasUser {
                 user: Uuid::from_bytes(user.id).hyphenated().to_string(),
             })?
@@ -238,19 +210,16 @@ impl UserService {
 
 #[cfg(test)]
 mod tests {
-    use wallet_api::PaginationInput;
-
     use super::*;
     use crate::{
         core::test_utils,
         models::{
-            access_control::{
-                CommonActionSpecifier, ResourceSpecifier, ResourceType, UserSpecifier,
-            },
-            user_test_utils, AddAccessPolicyOperationInput, UserStatus,
+            access_policy::AuthScope, user_test_utils, EditAccessPolicyOperationInput, UserStatus,
         },
-        services::POLICY_SERVICE,
+        repositories::USER_REPOSITORY,
+        services::access_policy::ACCESS_POLICY_SERVICE,
     };
+    use wallet_api::PaginationInput;
 
     struct TestContext {
         service: UserService,
@@ -352,10 +321,38 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn add_user_with_identity_of_existing_user_should_fail() {
+        let ctx: TestContext = setup();
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: Some("Jane Doe".to_string()),
+        };
+
+        let result = ctx.service.add_user(input).await;
+        assert!(result.is_ok());
+
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: Some("John Doe".to_string()),
+        };
+
+        let result = ctx.service.add_user(input).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "IDENTITY_ALREADY_HAS_USER: The identity already has an associated user."
+        );
+    }
+
+    #[tokio::test]
     async fn edit_user_happy_path() {
         let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![Principal::anonymous()];
+        user.identities = vec![Principal::from_slice(&[1; 29])];
 
         ctx.repository.insert(user.to_key(), user.clone());
 
@@ -372,6 +369,32 @@ mod tests {
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
         assert_eq!(user.identities, vec![ctx.call_context.caller()]);
+    }
+
+    #[tokio::test]
+    async fn edit_user_should_fail_for_identity_of_existing_user() {
+        let mut user = user_test_utils::mock_user();
+        user.identities = vec![Principal::from_slice(&[2; 29])];
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let mut another_user = user_test_utils::mock_user();
+        another_user.identities = vec![Principal::from_slice(&[3; 29])];
+        USER_REPOSITORY.insert(another_user.to_key(), another_user.clone());
+
+        let input = EditUserOperationInput {
+            user_id: user.id,
+            identities: Some(vec![Principal::from_slice(&[3; 29])]),
+            groups: None,
+            name: None,
+            status: None,
+        };
+
+        let result = USER_SERVICE.edit_user(input).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "IDENTITY_ALREADY_HAS_USER: The identity already has an associated user."
+        );
     }
 
     #[tokio::test]
@@ -400,37 +423,33 @@ mod tests {
 
     #[tokio::test]
     async fn get_user_privileges_by_identity() {
-        let ctx: TestContext = setup();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![ctx.call_context.caller()];
-        ctx.repository.insert(user.to_key(), user.clone());
+        user.groups = Vec::new();
 
-        POLICY_SERVICE
-            .add_access_policy(AddAccessPolicyOperationInput {
-                user: UserSpecifier::Id(vec![user.id]),
-                resource: ResourceSpecifier::Common(
-                    ResourceType::User,
-                    CommonActionSpecifier::List,
-                ),
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let ctx = CallContext::new(user.identities[0]);
+
+        ACCESS_POLICY_SERVICE
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                auth_scope: Some(AuthScope::Restricted),
+                user_groups: None,
+                users: Some(vec![user.id]),
+                resource: Resource::User(UserResourceAction::List),
             })
             .await
             .unwrap();
-        POLICY_SERVICE
-            .add_access_policy(AddAccessPolicyOperationInput {
-                user: UserSpecifier::Any,
-                resource: ResourceSpecifier::Common(
-                    ResourceType::User,
-                    CommonActionSpecifier::Create,
-                ),
+        ACCESS_POLICY_SERVICE
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                auth_scope: Some(AuthScope::Authenticated),
+                user_groups: None,
+                users: Some(Vec::new()),
+                resource: Resource::User(UserResourceAction::Create),
             })
             .await
             .unwrap();
 
-        let privileges = ctx
-            .service
-            .get_caller_privileges(&ctx.call_context)
-            .await
-            .unwrap();
+        let privileges = USER_SERVICE.get_caller_privileges(&ctx).await.unwrap();
 
         assert_eq!(privileges.len(), 2);
         assert!(privileges.contains(&UserPrivilege::ListUsers));

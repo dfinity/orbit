@@ -40,7 +40,6 @@ pub struct UserKey {
 pub struct UserCallerPrivileges {
     pub id: UUID,
     pub can_edit: bool,
-    pub can_delete: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -62,6 +61,10 @@ impl User {
     pub fn to_key(&self) -> UserKey {
         User::key(self.id)
     }
+
+    pub fn is_active(&self) -> bool {
+        self.status == UserStatus::Active
+    }
 }
 
 fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserError> {
@@ -73,6 +76,14 @@ fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserErr
         return Err(UserError::TooManyIdentities {
             max_identities: User::IDENTITIES_RANGE.1,
         });
+    }
+
+    for identity in identities {
+        if Principal::anonymous() == *identity {
+            return Err(UserError::IdentityNotAllowed {
+                identity: identity.to_text(),
+            });
+        }
     }
 
     Ok(())
@@ -129,7 +140,8 @@ mod tests {
     #[test]
     fn fail_user_too_many_identities() {
         let mut user = mock_user();
-        user.identities = vec![Principal::anonymous(); User::IDENTITIES_RANGE.1 as usize + 1];
+        user.identities =
+            vec![Principal::from_slice(&[1; 29]); User::IDENTITIES_RANGE.1 as usize + 1];
 
         let result = validate_identities(&user.identities);
 
@@ -145,11 +157,27 @@ mod tests {
     #[test]
     fn test_user_identities_validation() {
         let mut user = mock_user();
-        user.identities = vec![Principal::anonymous(); 5];
+        user.identities = vec![Principal::from_slice(&[1; 29]); 5];
 
         let result = validate_identities(&user.identities);
 
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_identity_not_allowed() {
+        let mut user = mock_user();
+        user.identities = vec![Principal::anonymous()];
+
+        let result = validate_identities(&user.identities);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            UserError::IdentityNotAllowed {
+                identity: Principal::anonymous().to_text()
+            }
+        );
     }
 
     #[test]
@@ -215,7 +243,7 @@ pub mod user_test_utils {
     pub fn mock_user() -> User {
         User {
             id: *Uuid::new_v4().as_bytes(),
-            identities: vec![Principal::anonymous()],
+            identities: vec![Principal::from_slice(&[24; 29])],
             groups: vec![],
             name: None,
             status: UserStatus::Active,

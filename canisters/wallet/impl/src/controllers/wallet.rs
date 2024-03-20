@@ -4,7 +4,7 @@ use crate::{
         is_canister_initialized,
         middlewares::{authorize, call_context},
     },
-    models::access_control::{CanisterSettingsActionSpecifier, ResourceSpecifier},
+    models::access_policy::{Resource, SettingsResourceAction},
     services::{WalletService, WALLET_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
@@ -100,12 +100,7 @@ impl WalletController {
             });
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::ReadConfig)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Settings(SettingsResourceAction::ReadConfig)]))]
     async fn get_config(&self) -> ApiResult<GetConfigResponse> {
         let config = self.wallet_service.get_config()?;
 
@@ -114,12 +109,7 @@ impl WalletController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::CanisterSettings(CanisterSettingsActionSpecifier::Read)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Settings(SettingsResourceAction::Read)]))]
     async fn wallet_settings(&self) -> ApiResult<WalletSettingsResponse> {
         let settings = self.wallet_service.get_wallet_settings()?;
 

@@ -1,12 +1,11 @@
 //! Canister controller entrypoints.
-
-/// User entrypoints.
-mod user;
-
 use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
 use ic_canister_core::{cdk::api::trap, repository::Repository};
 use ic_cdk_macros::query;
 use prometheus::{Encoder, TextEncoder};
+
+/// User entrypoints.
+mod user;
 pub use user::*;
 
 /// Canister lifecycle hooks.

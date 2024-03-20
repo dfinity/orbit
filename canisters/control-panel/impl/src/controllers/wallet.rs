@@ -1,8 +1,6 @@
 //! Wallet services.
-use std::sync::Arc;
-
 use crate::core::metrics::{COUNTER_CAN_DEPLOY_WALLET_TOTAL, COUNTER_DEPLOY_WALLET_TOTAL};
-use crate::core::middlewares::{call_context, log_call, log_call_result};
+use crate::core::middlewares::{call_context, logger};
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
@@ -14,6 +12,7 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use prometheus::labels;
+use std::sync::Arc;
 
 // Canister entrypoints for the controller.
 #[query(name = "list_wallets")]
@@ -83,8 +82,11 @@ impl WalletController {
     }
 
     /// Returns list of wallets associated with the user.
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn list_wallets(&self) -> ApiResult<ListWalletsResponse> {
         let ctx = CallContext::get();
         let user = self
@@ -96,8 +98,11 @@ impl WalletController {
         })
     }
     /// Returns main wallet associated with the user if any.
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn get_main_wallet(&self) -> ApiResult<GetMainWalletResponse> {
         let ctx = CallContext::get();
         let main_wallet = self.user_service.get_main_wallet(&ctx)?;
@@ -108,8 +113,11 @@ impl WalletController {
     }
 
     /// Deploys a new wallet for the user and returns its id.
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn deploy_wallet(&self) -> ApiResult<DeployWalletResponse> {
         let ctx = CallContext::get();
         let deployed_wallet_id = self.deploy_service.deploy_wallet(&ctx).await?;
@@ -120,8 +128,11 @@ impl WalletController {
     }
 
     /// Checks if the user can deploy a new wallet.
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn can_deploy_wallet(&self) -> ApiResult<CanDeployWalletResponse> {
         let ctx = CallContext::get();
         self.user_service.can_deploy_wallet(&ctx).await

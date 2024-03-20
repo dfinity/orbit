@@ -47,8 +47,8 @@ pub use evaluate::*;
 mod specifier;
 pub use specifier::*;
 
-mod access_control;
-pub use access_control::*;
+mod authorization;
+pub use authorization::*;
 
 mod pagination;
 pub use pagination::*;

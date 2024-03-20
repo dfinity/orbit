@@ -14,7 +14,7 @@
   <DataLoader
     v-if="selectedAccountId"
     v-slot="{ data, loading }"
-    :load="fetchPolicies"
+    :load="() => fetchPolicies(useResourcesFromAggregatedView(resources))"
     :refresh-interval-ms="5000"
     :disable-refresh="disableRefresh"
   >
@@ -39,15 +39,17 @@ import type {
   AccessPolicy,
   AccessPolicyCallerPrivileges,
   BasicUser,
+  Resource,
   UUID,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
+import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
 
 const props = withDefaults(
   defineProps<{
-    fetchPolicies?: () => Promise<{
+    fetchPolicies?: (resources: Resource[]) => Promise<{
       policies: AccessPolicy[];
       userGroups: UserGroup[];
       users: BasicUser[];

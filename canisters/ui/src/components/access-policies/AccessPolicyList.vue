@@ -21,10 +21,10 @@
               </td>
             </tr>
             <AccessPolicyListItem
-              v-for="(resourcePolicies, idx) in resourceAccessPolicies"
+              v-for="(resourceAccessPolicy, idx) in aggregatedAccessPolicies"
               v-else
               :key="idx"
-              :resource="resourcePolicies"
+              :resource="resourceAccessPolicy"
               @editing="emit('editing', $event)"
             />
           </tbody>
@@ -36,19 +36,20 @@
 
 <script lang="ts" setup>
 import { computed, toRefs } from 'vue';
-import { defaultUserSpecifiers } from '~/configs/access-policies.config';
+import { defaultAllowLevels } from '~/configs/access-policies.config';
 import { logger } from '~/core/logger.core';
-import { variantIs } from '~/utils/helper.utils';
 import {
   AccessPolicy,
   AccessPolicyCallerPrivileges,
   BasicUser,
+  Resource,
   UUID,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
 import AccessPolicyListItem from './AccessPolicyListItem.vue';
+import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
 
 const app = useAppStore();
 const props = withDefaults(
@@ -67,7 +68,8 @@ const props = withDefaults(
   },
 );
 
-const { preloadUserGroups, preloadUsers, accessPolicies, resources, privileges } = toRefs(props);
+const { preloadUserGroups, preloadUsers, accessPolicies, resources, privileges, loading } =
+  toRefs(props);
 
 const userGroups = computed<Record<UUID, UserGroup>>(() => {
   return preloadUserGroups.value.reduce<Record<UUID, UserGroup>>((acc, group) => {
@@ -83,61 +85,61 @@ const users = computed<Record<UUID, BasicUser>>(() => {
   }, {});
 });
 
-const hasEditPrivilege = (accessPolicyId: string): boolean => {
-  return privileges.value.find(privilege => privilege.id === accessPolicyId)?.can_edit ?? false;
+const hasEditPrivilege = (resource: Resource): boolean => {
+  const privilege = privileges.value.find(
+    privilege => JSON.stringify(privilege.resource) === JSON.stringify(resource),
+  );
+
+  return privilege?.can_edit ?? false;
 };
 
-const hasDeletePrivilege = (accessPolicyId: string): boolean => {
-  return privileges.value.find(privilege => privilege.id === accessPolicyId)?.can_delete ?? false;
-};
-
-const resourceAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
+const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
   const resourceAccessPolicies = resources.value.map(resource => ({
     match: resource.match,
     resourceType: resource.resourceType,
-    specifiers: resource.specifiers.map(specifier => ({
-      ...specifier,
-      users: defaultUserSpecifiers(),
+    resources: resource.resources.map(resource => ({
+      ...resource,
+      users: defaultAllowLevels(),
     })),
   }));
 
-  for (const policy of accessPolicies.value) {
-    for (const resource of resourceAccessPolicies) {
-      for (const resourceSpecifier of resource.specifiers) {
-        if (resource.match(resourceSpecifier.specifier, policy)) {
-          if (variantIs(policy.user, 'Any')) {
-            resourceSpecifier.users.allUsers.policy.id = policy.id;
-            resourceSpecifier.users.allUsers.policy.canEdit = hasEditPrivilege(policy.id);
-            resourceSpecifier.users.allUsers.policy.canRemove = hasDeletePrivilege(policy.id);
-          } else if (variantIs(policy.user, 'Id')) {
-            resourceSpecifier.users.specificUsers.policy.id = policy.id;
-            resourceSpecifier.users.specificUsers.policy.canEdit = hasEditPrivilege(policy.id);
-            resourceSpecifier.users.specificUsers.policy.canRemove = hasDeletePrivilege(policy.id);
-            resourceSpecifier.users.specificUsers.users = policy.user.Id.map(id => {
-              const user = users.value[id];
-              if (!user) {
-                logger.warn(
-                  `User with id ${id} not found in preload data. This should not happen.`,
-                );
-              }
-              return user;
-            });
-          } else if (variantIs(policy.user, 'Group')) {
-            resourceSpecifier.users.membersOfGroup.policy.id = policy.id;
-            resourceSpecifier.users.membersOfGroup.policy.canEdit = hasEditPrivilege(policy.id);
-            resourceSpecifier.users.membersOfGroup.policy.canRemove = hasDeletePrivilege(policy.id);
-            resourceSpecifier.users.membersOfGroup.groups = policy.user.Group.map(id => {
-              const group = userGroups.value[id];
-              if (!group) {
-                logger.warn(
-                  `Group with id ${id} not found in preload data. This should not happen.`,
-                );
-              }
-              return group;
-            });
-          }
-        }
+  const hasAccessPolicies = accessPolicies.value.length > 0;
+  if (!hasAccessPolicies) {
+    return resourceAccessPolicies;
+  }
+
+  for (const aggregatedResource of resourceAccessPolicies) {
+    for (const resource of aggregatedResource.resources) {
+      let policy = accessPolicies.value.find(policy =>
+        aggregatedResource.match(resource.resource, policy.resource),
+      );
+      if (!policy) {
+        logger.warn(
+          `No match found for policy. This should not happen. Policy: ${JSON.stringify(resource.resource)}`,
+        );
+
+        continue;
       }
+
+      resource.canEdit = hasEditPrivilege(resource.resource);
+      resource.allow.authScope = toAuthScopeEnum(policy.allow.auth_scope);
+      resource.allow.specificUsers =
+        policy.allow.users.map(id => {
+          const user = users.value[id];
+          if (!user) {
+            logger.warn(`User with id ${id} not found in preload data. This should not happen.`);
+          }
+          return user;
+        }) ?? [];
+
+      resource.allow.membersOfGroup =
+        policy.allow.user_groups.map(id => {
+          const group = userGroups.value[id];
+          if (!group) {
+            logger.warn(`Group with id ${id} not found in preload data. This should not happen.`);
+          }
+          return group;
+        }) ?? [];
     }
   }
 

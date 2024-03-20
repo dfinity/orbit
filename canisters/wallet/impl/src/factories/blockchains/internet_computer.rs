@@ -4,7 +4,7 @@ use super::{
     TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
 };
 use crate::{
-    core::ic_cdk::api::id as wallet_canister_self_id,
+    core::ic_cdk::api::{id as wallet_canister_self_id, print},
     errors::BlockchainApiError,
     mappers::HelperMapper,
     models::{
@@ -16,7 +16,7 @@ use byteorder::{BigEndian, ByteOrder};
 use candid::Principal;
 use ic_canister_core::{
     api::ApiError,
-    cdk::{self, api::print},
+    cdk::{self},
 };
 use ic_ledger_types::{
     account_balance, query_blocks, transfer, AccountBalanceArgs, AccountIdentifier, GetBlocksArgs,
@@ -211,10 +211,12 @@ impl InternetComputer {
                     .first()
                     .map(|block| Self::hash_transaction(&block.transaction));
 
-                print(format!(
-                    "Error: no ICP ledger block found at height {}",
-                    block_height
-                ));
+                if maybe_transaction_hash.is_none() {
+                    print(format!(
+                        "Error: no ICP ledger block found at height {}",
+                        block_height
+                    ));
+                }
 
                 maybe_transaction_hash
             }

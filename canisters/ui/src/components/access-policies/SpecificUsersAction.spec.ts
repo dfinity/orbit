@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { defaultUserSpecifiers } from '~/configs/access-policies.config';
-import { ResourceActionEnum } from '~/types/access-policies.types';
+import { defaultAllowLevels } from '~/configs/access-policies.config';
 import { mount } from '~/test.utils';
+import { ResourceActionEnum } from '~/types/access-policies.types';
 import SpecificUsersAction from './SpecificUsersAction.vue';
 
 describe('SpecificUsersAction', () => {
@@ -10,7 +10,6 @@ describe('SpecificUsersAction', () => {
       props: {
         modelValue: {
           modelValue: {
-            policyId: null,
             userIds: [],
             prefilledUsers: [],
           },
@@ -18,10 +17,11 @@ describe('SpecificUsersAction', () => {
         },
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          canEdit: true,
+          resource: {
+            AccessPolicy: { Update: null },
           },
-          users: defaultUserSpecifiers(),
+          allow: defaultAllowLevels(),
         },
         submitCb: vi.fn(),
       },
@@ -35,7 +35,6 @@ describe('SpecificUsersAction', () => {
       props: {
         modelValue: {
           modelValue: {
-            policyId: null,
             userIds: [],
             prefilledUsers: [],
           },
@@ -43,19 +42,13 @@ describe('SpecificUsersAction', () => {
         },
         specifier: {
           action: ResourceActionEnum.Create,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Update: null },
           },
-          users: {
-            ...defaultUserSpecifiers(),
-            specificUsers: {
-              policy: {
-                id: '1',
-                canEdit: true,
-                canRemove: true,
-              },
-              users: [],
-            },
+          canEdit: true,
+          allow: {
+            ...defaultAllowLevels(),
+            specificUsers: [],
           },
         },
         submitCb: vi.fn(),
@@ -71,7 +64,6 @@ describe('SpecificUsersAction', () => {
       props: {
         modelValue: {
           modelValue: {
-            policyId: null,
             userIds: [],
             prefilledUsers: [],
           },
@@ -79,19 +71,13 @@ describe('SpecificUsersAction', () => {
         },
         specifier: {
           action: ResourceActionEnum.Read,
-          specifier: {
-            AccessPolicy: { Create: null },
+          resource: {
+            AccessPolicy: { Update: null },
           },
-          users: {
-            ...defaultUserSpecifiers(),
-            specificUsers: {
-              policy: {
-                id: '1',
-                canEdit: false,
-                canRemove: false,
-              },
-              users: [],
-            },
+          canEdit: false,
+          allow: {
+            ...defaultAllowLevels(),
+            specificUsers: [],
           },
         },
         submitCb: vi.fn(),

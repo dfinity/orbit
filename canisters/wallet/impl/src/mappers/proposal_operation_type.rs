@@ -23,11 +23,7 @@ impl From<ProposalOperationTypeDTO> for ProposalOperationType {
             ProposalOperationTypeDTO::EditUserGroup => ProposalOperationType::EditUserGroup,
             ProposalOperationTypeDTO::RemoveUserGroup => ProposalOperationType::RemoveUserGroup,
             ProposalOperationTypeDTO::ChangeCanister => ProposalOperationType::ChangeCanister,
-            ProposalOperationTypeDTO::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
             ProposalOperationTypeDTO::EditAccessPolicy => ProposalOperationType::EditAccessPolicy,
-            ProposalOperationTypeDTO::RemoveAccessPolicy => {
-                ProposalOperationType::RemoveAccessPolicy
-            }
             ProposalOperationTypeDTO::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
             ProposalOperationTypeDTO::EditProposalPolicy => {
                 ProposalOperationType::EditProposalPolicy
@@ -60,11 +56,7 @@ impl From<ProposalOperationType> for ProposalOperationTypeDTO {
             ProposalOperationType::EditUserGroup => ProposalOperationTypeDTO::EditUserGroup,
             ProposalOperationType::RemoveUserGroup => ProposalOperationTypeDTO::RemoveUserGroup,
             ProposalOperationType::ChangeCanister => ProposalOperationTypeDTO::ChangeCanister,
-            ProposalOperationType::AddAccessPolicy => ProposalOperationTypeDTO::AddAccessPolicy,
             ProposalOperationType::EditAccessPolicy => ProposalOperationTypeDTO::EditAccessPolicy,
-            ProposalOperationType::RemoveAccessPolicy => {
-                ProposalOperationTypeDTO::RemoveAccessPolicy
-            }
             ProposalOperationType::AddProposalPolicy => ProposalOperationTypeDTO::AddProposalPolicy,
             ProposalOperationType::EditProposalPolicy => {
                 ProposalOperationTypeDTO::EditProposalPolicy
@@ -95,9 +87,7 @@ impl From<ProposalOperation> for ProposalOperationType {
             ProposalOperation::EditUserGroup(_) => ProposalOperationType::EditUserGroup,
             ProposalOperation::RemoveUserGroup(_) => ProposalOperationType::RemoveUserGroup,
             ProposalOperation::ChangeCanister(_) => ProposalOperationType::ChangeCanister,
-            ProposalOperation::AddAccessPolicy(_) => ProposalOperationType::AddAccessPolicy,
             ProposalOperation::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
-            ProposalOperation::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
             ProposalOperation::AddProposalPolicy(_) => ProposalOperationType::AddProposalPolicy,
             ProposalOperation::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
             ProposalOperation::RemoveProposalPolicy(_) => {
@@ -152,16 +142,8 @@ impl ProposalOperation {
                 ListProposalsOperationTypeDTO::ChangeCanister,
             ) => true,
             (
-                ProposalOperation::AddAccessPolicy(_),
-                ListProposalsOperationTypeDTO::AddAccessPolicy,
-            ) => true,
-            (
                 ProposalOperation::EditAccessPolicy(_),
                 ListProposalsOperationTypeDTO::EditAccessPolicy,
-            ) => true,
-            (
-                ProposalOperation::RemoveAccessPolicy(_),
-                ListProposalsOperationTypeDTO::RemoveAccessPolicy,
             ) => true,
             (
                 ProposalOperation::AddProposalPolicy(_),

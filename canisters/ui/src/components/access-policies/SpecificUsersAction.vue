@@ -1,9 +1,5 @@
 <template>
-  <ShortValues
-    v-if="!showActionBtn"
-    :values="specifier.users.specificUsers.users.map(u => u.name)"
-    empty="-"
-  />
+  <ShortValues v-if="!canEdit" :values="specifier.allow.specificUsers.map(u => u.name)" empty="-" />
   <template v-else>
     <ActionBtn
       v-model="model"
@@ -27,12 +23,12 @@
       </template>
       <template #actions="{ submit, loading: saving, model: elem }">
         <VSpacer />
-        <VBtn :loading="saving" :disabled="shouldDisableSubmitBtn(elem.value)" @click="submit">
+        <VBtn :loading="saving" :disabled="!elem.value.valid" @click="submit">
           {{ $t('terms.edit') }}
         </VBtn>
       </template>
     </ActionBtn>
-    <ShortValues :values="specifier.users.specificUsers.users.map(u => u.name)" />
+    <ShortValues :values="specifier.allow.specificUsers.map(u => u.name)" />
   </template>
 </template>
 
@@ -47,8 +43,6 @@ import {
 } from '~/composables/notifications.composable';
 import { Proposal } from '~/generated/wallet/wallet.did';
 import { ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
-import { Privilege } from '~/types/auth.types';
-import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import SpecificUsersForm, { SpecificUsersFormProps } from './SpecificUsersForm.vue';
 
 const props = defineProps<{
@@ -69,33 +63,5 @@ const emit = defineEmits<{
   (event: 'update:modelValue', payload: SpecificUsersFormProps): void;
 }>();
 
-const canAdd = computed(
-  () =>
-    hasRequiredPrivilege({
-      anyOf: [Privilege.AddAccessPolicy],
-    }) && !specifier.value.users.specificUsers.policy.id,
-);
-const canEdit = computed(
-  () =>
-    !!specifier.value.users.specificUsers.policy.id &&
-    specifier.value.users.specificUsers.policy.canEdit,
-);
-const canRemove = computed(
-  () =>
-    !!specifier.value.users.specificUsers.policy.id &&
-    specifier.value.users.specificUsers.policy.canRemove,
-);
-const showActionBtn = computed(() => canAdd.value || canEdit.value || canRemove.value);
-
-const shouldDisableSubmitBtn = (elem: SpecificUsersFormProps) => {
-  if (!elem.modelValue.userIds?.length && !canRemove.value) {
-    return true;
-  }
-
-  if (!!elem.modelValue.policyId && elem.modelValue.userIds?.length && !canEdit.value) {
-    return true;
-  }
-
-  return !elem.valid;
-};
+const canEdit = computed(() => specifier.value.canEdit);
 </script>

@@ -15,18 +15,16 @@
                   name: Routes.Proposals,
                   query: { group_by: ProposalDomains.System },
                 }"
-                :types="[
-                  { AddAccessPolicy: null },
-                  { EditAccessPolicy: null },
-                  { RemoveAccessPolicy: null },
-                ]"
+                :types="[{ EditAccessPolicy: null }]"
                 hide-not-found
               />
             </VCol>
             <VCol cols="12">
               <DataLoader
                 v-slot="{ data, loading }"
-                :load="fetchAccessPolicies"
+                :load="
+                  () => fetchAccessPolicies(useResourcesFromAggregatedView(resourceAccessPolicies))
+                "
                 :refresh-interval-ms="5000"
                 :disable-refresh="disableRefresh"
               >
@@ -86,12 +84,14 @@ import IndividualUserGroupAccessPolicies from '~/components/access-policies/Indi
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
 import { globalAccessPolicies } from '~/configs/access-policies.config';
 import { Routes } from '~/configs/routes.config';
 import {
   AccessPolicy,
   AccessPolicyCallerPrivileges,
   BasicUser,
+  Resource,
   UserGroup,
 } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
@@ -123,7 +123,9 @@ const individualResources = computed(() => {
   }));
 });
 
-const fetchAccessPolicies = async (): Promise<{
+const fetchAccessPolicies = async (
+  resources: Resource[],
+): Promise<{
   policies: AccessPolicy[];
   privileges: AccessPolicyCallerPrivileges[];
   userGroups: UserGroup[];
@@ -133,7 +135,7 @@ const fetchAccessPolicies = async (): Promise<{
   const users: BasicUser[] = [];
   let policies: AccessPolicy[] = [];
   let privileges: AccessPolicyCallerPrivileges[] = [];
-  let limit = 500;
+  let limit = 250;
   let nextOffset = BigInt(0);
   let maxOffsetFound = nextOffset;
 
@@ -142,8 +144,13 @@ const fetchAccessPolicies = async (): Promise<{
     maxOffsetFound = nextOffset;
 
     const result = await wallet.service.listAccessPolicies({
-      limit: [limit],
-      offset: [nextOffset],
+      resources: [resources],
+      paginate: [
+        {
+          limit: [limit],
+          offset: [nextOffset],
+        },
+      ],
     });
 
     userGroups.push(...result.user_groups);

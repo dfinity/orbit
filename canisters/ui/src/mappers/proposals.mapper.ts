@@ -41,11 +41,7 @@ export const mapProposalsOperationTypeToGroup = (
     return ListProposalsOperationTypeGroup.ProposalPolicy;
   }
 
-  if (
-    variantIs(operationType, 'AddAccessPolicy') ||
-    variantIs(operationType, 'EditAccessPolicy') ||
-    variantIs(operationType, 'RemoveAccessPolicy')
-  ) {
+  if (variantIs(operationType, 'EditAccessPolicy')) {
     return ListProposalsOperationTypeGroup.AccessPolicy;
   }
 
@@ -187,14 +183,8 @@ export const mapProposalOperationToTypeEnum = (
   if (variantIs(operation, 'RemoveProposalPolicy')) {
     return ProposalOperationEnum.RemoveProposalPolicy;
   }
-  if (variantIs(operation, 'AddAccessPolicy')) {
-    return ProposalOperationEnum.AddAccessPolicy;
-  }
   if (variantIs(operation, 'EditAccessPolicy')) {
     return ProposalOperationEnum.EditAccessPolicy;
-  }
-  if (variantIs(operation, 'RemoveAccessPolicy')) {
-    return ProposalOperationEnum.RemoveAccessPolicy;
   }
   if (variantIs(operation, 'ChangeCanister')) {
     return ProposalOperationEnum.ChangeCanister;
@@ -253,12 +243,8 @@ export const mapProposalOperationToListProposalsOperationType = (
     return { EditProposalPolicy: null };
   } else if (variantIs(proposalOperation, 'RemoveProposalPolicy')) {
     return { RemoveProposalPolicy: null };
-  } else if (variantIs(proposalOperation, 'AddAccessPolicy')) {
-    return { AddAccessPolicy: null };
   } else if (variantIs(proposalOperation, 'EditAccessPolicy')) {
     return { EditAccessPolicy: null };
-  } else if (variantIs(proposalOperation, 'RemoveAccessPolicy')) {
-    return { RemoveAccessPolicy: null };
   } else if (variantIs(proposalOperation, 'ChangeCanister')) {
     return { ChangeCanister: null };
   } else if (variantIs(proposalOperation, 'AddUserGroup')) {
@@ -301,10 +287,6 @@ export const mapListProposalsOperationTypeGroupToCsvHeaders = (
   }
 
   if (group === ListProposalsOperationTypeGroup.ProposalPolicy) {
-    headers.policy_id = 'Policy ID';
-  }
-
-  if (group === ListProposalsOperationTypeGroup.AccessPolicy) {
     headers.policy_id = 'Policy ID';
   }
 
@@ -478,23 +460,9 @@ const mapProposalToProposalPolicyCsvRow = (proposal: Proposal): CsvRow => {
 };
 
 const mapProposalToAccessPolicyCsvRow = (proposal: Proposal): CsvRow => {
-  if (variantIs(proposal.operation, 'AddAccessPolicy')) {
-    return {
-      policy_id: proposal.operation.AddAccessPolicy.policy_id?.[0] ?? '',
-      details: stringify(proposal.operation.AddAccessPolicy.input),
-    };
-  }
-
   if (variantIs(proposal.operation, 'EditAccessPolicy')) {
     return {
-      policy_id: proposal.operation.EditAccessPolicy.input.policy_id,
       details: stringify(proposal.operation.EditAccessPolicy.input),
-    };
-  }
-
-  if (variantIs(proposal.operation, 'RemoveAccessPolicy')) {
-    return {
-      policy_id: proposal.operation.RemoveAccessPolicy.input.policy_id,
     };
   }
 
@@ -503,15 +471,14 @@ const mapProposalToAccessPolicyCsvRow = (proposal: Proposal): CsvRow => {
 
 const mapProposalToChangeCanisterCsvRow = (proposal: Proposal): CsvRow => {
   if (variantIs(proposal.operation, 'ChangeCanister')) {
-    const checksum = Buffer.from(proposal.operation.ChangeCanister.checksum).toString('hex');
     const args = proposal.operation.ChangeCanister.arg_checksum[0]
-      ? Buffer.from(proposal.operation.ChangeCanister.arg_checksum[0]).toString('hex')
+      ? proposal.operation.ChangeCanister.arg_checksum[0]
       : '';
 
     if (variantIs(proposal.operation.ChangeCanister.target, 'UpgradeWallet')) {
       return {
         change_target: 'wallet',
-        wasm_checksum: checksum,
+        wasm_checksum: proposal.operation.ChangeCanister.module_checksum,
         details: stringify({ args }),
       };
     }
@@ -519,7 +486,7 @@ const mapProposalToChangeCanisterCsvRow = (proposal: Proposal): CsvRow => {
     if (variantIs(proposal.operation.ChangeCanister.target, 'UpgradeUpgrader')) {
       return {
         change_target: 'upgrader',
-        wasm_checksum: checksum,
+        wasm_checksum: proposal.operation.ChangeCanister.module_checksum,
         details: stringify({ args }),
       };
     }
@@ -527,7 +494,7 @@ const mapProposalToChangeCanisterCsvRow = (proposal: Proposal): CsvRow => {
     if (variantIs(proposal.operation.ChangeCanister.target, 'UpgradeCanister')) {
       return {
         change_target: proposal.operation.ChangeCanister.target.UpgradeCanister.toText(),
-        wasm_checksum: checksum,
+        wasm_checksum: proposal.operation.ChangeCanister.module_checksum,
         details: stringify({ args }),
       };
     }

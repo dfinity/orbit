@@ -34,6 +34,11 @@ impl Create<ChangeCanisterOperationInput> for ChangeCanisterProposalCreate {
                     hasher.update(arg);
                     hasher.finalize().to_vec()
                 }),
+                module_checksum: {
+                    let mut hasher = Sha256::new();
+                    hasher.update(&operation_input.module);
+                    hasher.finalize().to_vec()
+                },
                 input: operation_input.into(),
             }),
             input
@@ -75,11 +80,7 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
                 let default_arg = Encode!(&()).unwrap();
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
                 let out = CHANGE_CANISTER_SERVICE
-                    .upgrade_wallet(
-                        &self.operation.input.module,
-                        arg,
-                        &self.operation.input.checksum,
-                    )
+                    .upgrade_wallet(&self.operation.input.module, arg)
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {
                         reason: format!("failed to upgrade wallet: {}", err),

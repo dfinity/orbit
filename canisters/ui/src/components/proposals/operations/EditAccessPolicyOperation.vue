@@ -1,21 +1,27 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListRow v-if="formValue.id">
-      <template #name>{{ $t('terms.id') }}</template>
+    <ProposalOperationListRow v-if="operation.input.resource">
+      <template #name>{{ $t('terms.resource') }}</template>
       <template #content>
-        {{ formValue.id }}
+        {{
+          $t(
+            `access_policies.resources.${fromResourceToResourceEnum(operation.input.resource).toLowerCase()}`,
+          )
+        }}
       </template>
     </ProposalOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
-  <AccessPolicyForm v-else :model-value="formValue" mode="view" />
+  <AccessPolicyForm v-else :model-value="accessPolicy" mode="view" />
 </template>
 
 <script setup lang="ts">
-import { Ref, computed, onBeforeMount, ref } from 'vue';
+import { computed, onBeforeMount, ref } from 'vue';
+import { VProgressCircular } from 'vuetify/components';
 import AccessPolicyForm from '~/components/access-policies/AccessPolicyForm.vue';
 import logger from '~/core/logger.core';
 import { AccessPolicy, EditAccessPolicyOperation, Proposal } from '~/generated/wallet/wallet.did';
+import { fromResourceToResourceEnum } from '~/mappers/access-policies.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
@@ -31,9 +37,9 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
-const formValue: Ref<Partial<AccessPolicy>> = ref({});
-const loading = ref(false);
 const wallet = useWalletStore();
+const accessPolicy = ref<Partial<AccessPolicy>>({});
+const loading = ref(false);
 
 const fetchDetails = async () => {
   try {
@@ -42,19 +48,15 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await wallet.service.getAccessPolicy({
-      id: props.operation.input.policy_id,
+    const { policy } = await wallet.service.getAccessPolicy({
+      resource: props.operation.input.resource,
     });
 
-    if (formValue.value.user) {
-      currentEntry.policy.user = formValue.value.user;
-    }
+    policy.allow.auth_scope = props.operation.input.auth_scope?.[0] ?? policy.allow.auth_scope;
+    policy.allow.users = props.operation.input.users?.[0] ?? policy.allow.users;
+    policy.allow.user_groups = props.operation.input.user_groups?.[0] ?? policy.allow.user_groups;
 
-    if (formValue.value.resource) {
-      currentEntry.policy.resource = formValue.value.resource;
-    }
-
-    formValue.value = currentEntry.policy;
+    accessPolicy.value = policy;
   } catch (e) {
     logger.error('Failed to fetch access policy details', e);
   } finally {
@@ -63,17 +65,6 @@ const fetchDetails = async () => {
 };
 
 onBeforeMount(() => {
-  const entry: Partial<AccessPolicy> = {};
-  entry.id = props.operation.input.policy_id;
-  if (props.operation.input.resource?.[0]) {
-    entry.resource = props.operation.input.resource[0];
-  }
-  if (props.operation.input.user?.[0]) {
-    entry.user = props.operation.input.user[0];
-  }
-
-  formValue.value = entry;
-
   fetchDetails();
 });
 </script>

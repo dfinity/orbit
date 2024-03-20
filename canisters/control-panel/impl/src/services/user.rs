@@ -4,7 +4,7 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserAuthorizationStatus, UserKey, UserWallet},
+    models::{User, UserKey, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
@@ -69,6 +69,12 @@ impl UserService {
         ctx: &CallContext,
     ) -> ServiceResult<User, ApiError> {
         self.assert_identity_is_unregistered(&ctx.caller())?;
+
+        if ctx.caller() == Principal::anonymous() {
+            Err(UserError::ValidationError {
+                info: "The caller identity cannot be anonymous.".to_string(),
+            })?
+        }
 
         let user_id = ctx.caller();
         let user = UserMapper::from_register_input(input.clone(), user_id);
@@ -163,6 +169,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::UserAuthorizationStatus;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -231,7 +238,7 @@ mod tests {
     async fn success_register_new_user() {
         crate::core::test_utils::init_canister_config();
 
-        let ctx = CallContext::default();
+        let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: Some(Principal::from_slice(&[2; 29])),
@@ -244,10 +251,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn fail_registering_new_user_with_anonymous_identity() {
+        crate::core::test_utils::init_canister_config();
+
+        let ctx = CallContext::new(Principal::anonymous());
+        let service = UserService::default();
+        let input = RegisterUserInput {
+            wallet_id: Some(Principal::from_slice(&[2; 29])),
+            email: None,
+        };
+
+        let result = service.register_user(input.clone(), &ctx).await;
+
+        assert!(result.is_err());
+
+        let error = result.unwrap_err();
+        assert_eq!(
+            error,
+            ApiError::from(UserError::ValidationError {
+                info: "The caller identity cannot be anonymous.".to_string()
+            })
+        );
+    }
+
+    #[tokio::test]
     async fn failed_registering_new_user_with_same_identity() {
         crate::core::test_utils::init_canister_config();
 
-        let ctx = CallContext::default();
+        let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: None,

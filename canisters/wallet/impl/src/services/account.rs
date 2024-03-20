@@ -1,27 +1,24 @@
 use crate::{
     core::{
-        access_control::evaluate_caller_access,
+        authorization::Authorization,
         generate_uuid_v4,
         ic_cdk::api::time,
-        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
-        access_control::{
-            AccountActionSpecifier, ResourceSpecifier, ResourceType, TransferActionSpecifier,
-        },
-        specifier::{AccountSpecifier, CommonSpecifier, ProposalSpecifier},
+        access_policy::{AccountResourceAction, Resource, ResourceId},
+        specifier::{AccountSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
         EditProposalPolicyOperationInput,
     },
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
-    services::{PolicyService, UserService, POLICY_SERVICE, USER_SERVICE},
+    services::{ProposalPolicyService, UserService, PROPOSAL_POLICY_SERVICE, USER_SERVICE},
 };
-use futures::{stream, StreamExt};
 use ic_canister_core::{
     api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
 };
@@ -33,7 +30,7 @@ use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
         Arc::clone(&USER_SERVICE),
-        Arc::clone(&POLICY_SERVICE),
+        Arc::clone(&PROPOSAL_POLICY_SERVICE),
         Arc::clone(&ACCOUNT_REPOSITORY),
     ));
 }
@@ -41,7 +38,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct AccountService {
     user_service: Arc<UserService>,
-    policy_service: Arc<PolicyService>,
+    proposal_policy_service: Arc<ProposalPolicyService>,
     account_repository: Arc<AccountRepository>,
 }
 
@@ -51,12 +48,12 @@ impl AccountService {
 
     pub fn new(
         user_service: Arc<UserService>,
-        policy_service: Arc<PolicyService>,
+        proposal_policy_service: Arc<ProposalPolicyService>,
         account_repository: Arc<AccountRepository>,
     ) -> Self {
         Self {
             user_service,
-            policy_service,
+            proposal_policy_service,
             account_repository,
         }
     }
@@ -80,29 +77,16 @@ impl AccountService {
         account_id: &UUID,
         ctx: &CallContext,
     ) -> ServiceResult<AccountCallerPrivileges> {
-        let can_edit = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::Account,
-                AccountActionSpecifier::Update(CommonSpecifier::Id(vec![*account_id])),
-            ),
-        )
-        .await
-        .is_ok();
-
-        let can_transfer = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Transfer(TransferActionSpecifier::Create(AccountSpecifier::Id(
-                vec![*account_id],
-            ))),
-        )
-        .await
-        .is_ok();
-
         Ok(AccountCallerPrivileges {
             id: *account_id,
-            can_edit,
-            can_transfer,
+            can_edit: Authorization::is_allowed(
+                ctx,
+                &Resource::Account(AccountResourceAction::Update(ResourceId::Id(*account_id))),
+            ),
+            can_transfer: Authorization::is_allowed(
+                ctx,
+                &Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*account_id))),
+            ),
         })
     }
 
@@ -128,25 +112,9 @@ impl AccountService {
 
         // filter out accounts that the caller does not have access to read
         if let Some(ctx) = ctx {
-            accounts = stream::iter(accounts.iter())
-                .filter_map(|account| async move {
-                    match evaluate_caller_access(
-                        ctx,
-                        &ResourceSpecifier::Common(
-                            ResourceType::Account,
-                            AccountActionSpecifier::Read(CommonSpecifier::Id(vec![account
-                                .id
-                                .to_owned()])),
-                        ),
-                    )
-                    .await
-                    {
-                        Ok(_) => Some(account.to_owned()),
-                        Err(_) => None,
-                    }
-                })
-                .collect()
-                .await
+            retain_accessible_resources(ctx, &mut accounts, |account: &Account| {
+                Resource::Account(AccountResourceAction::Read(ResourceId::Id(account.id)))
+            });
         }
 
         let result = paginated_items(PaginatedItemsArgs {
@@ -193,7 +161,7 @@ impl AccountService {
         // adds the associated transfer policy based on the transfer criteria
         if let Some(transfer_criteria) = input.policies.transfer {
             let policy = self
-                .policy_service
+                .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
                     specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
                         *uuid.as_bytes()
@@ -208,7 +176,7 @@ impl AccountService {
         // adds the associated edit policy based on the edit criteria
         if let Some(edit_criteria) = input.policies.edit {
             let policy = self
-                .policy_service
+                .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
                     specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
                         *uuid.as_bytes()
@@ -249,7 +217,7 @@ impl AccountService {
         if let Some(policies) = input.policies {
             match (account.policies.transfer_policy_id, policies.transfer) {
                 (Some(id), Some(criteria)) => {
-                    self.policy_service
+                    self.proposal_policy_service
                         .edit_proposal_policy(EditProposalPolicyOperationInput {
                             policy_id: id,
                             specifier: Some(ProposalSpecifier::Transfer(AccountSpecifier::Id(
@@ -261,7 +229,7 @@ impl AccountService {
                 }
                 (None, Some(criteria)) => {
                     let policy = self
-                        .policy_service
+                        .proposal_policy_service
                         .add_proposal_policy(AddProposalPolicyOperationInput {
                             specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
                                 account.id,
@@ -277,7 +245,7 @@ impl AccountService {
 
             match (account.policies.edit_policy_id, policies.edit) {
                 (Some(id), Some(criteria)) => {
-                    self.policy_service
+                    self.proposal_policy_service
                         .edit_proposal_policy(EditProposalPolicyOperationInput {
                             policy_id: id,
                             specifier: Some(ProposalSpecifier::EditAccount(AccountSpecifier::Id(
@@ -289,7 +257,7 @@ impl AccountService {
                 }
                 (None, Some(criteria)) => {
                     let policy = self
-                        .policy_service
+                        .proposal_policy_service
                         .add_proposal_policy(AddProposalPolicyOperationInput {
                             specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
                                 account.id,

@@ -170,10 +170,6 @@ export default {
         title: 'Adicionar usuário',
         request_title: 'Pedido de adição de usuário',
       },
-      addaccesspolicy: {
-        title: 'Adicionar regra de acesso',
-        request_title: 'Pedido de adição de regra de acesso',
-      },
       addaddressbookentry: {
         title: 'Adicionar novo endereço',
         request_title: 'Pedido de adição de endereço',
@@ -185,10 +181,6 @@ export default {
       removeproposalpolicy: {
         title: 'Remover regra de aprovação',
         request_title: 'Pedido de remoção de regra de aprovação',
-      },
-      removeaccesspolicy: {
-        title: 'Remover regra de acesso',
-        request_title: 'Pedido de remoção de regra de acesso',
       },
       removeusergroup: {
         title: 'Remover grupo de usuários',
@@ -576,7 +568,7 @@ export default {
       usergroup: 'Grupo de usuários',
       accesspolicy: 'Regra de acesso',
       proposalpolicy: 'Regra para pedidos',
-      canistersettings: 'Configuraçōes do canister',
+      settings: 'Sistema',
       changecanister: 'Alterar canister',
       transfer: 'Transfência',
       proposal: 'Pedido',
@@ -588,8 +580,15 @@ export default {
       read: 'Ler',
       update: 'Atualizar',
       delete: 'Remover',
+      transfer: 'Transferência',
       readpublicconfig: 'Ler configuração pública',
       readsensitiveconfig: 'Ler configuração sensível',
+    },
+    allow: {
+      everyone_edit_label: 'Permitir que os seguintes usuários acessem:',
+      anyone: 'Acesso público',
+      authenticated: 'Autenticado',
+      notset: 'Não definido',
     },
   },
   proposal_policies: {
@@ -627,8 +626,6 @@ export default {
       transfer: 'Transferência',
       editaccount: 'Editar conta',
       addaddressbookentry: 'Adicionar entrada no livro de endereços',
-      addaccesspolicy: 'Adicionar permissão',
-      removeaccesspolicy: 'Remover permissão',
       removeusergroup: 'Remove grupo de usuários',
       addaccount: 'Adicionar conta',
     },
