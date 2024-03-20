@@ -181,7 +181,7 @@ service : (opt CanisterInstall) -> {
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
   // Request authorization for the user associated with the caller.
   // Takes the user's e-mail address to which notifications can be pushed.
-  request_user_authorization : (text) -> (RequestUserAuthorizationResult);
+  subscribe_to_waiting_list : (text) -> (RequestUserAuthorizationResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.

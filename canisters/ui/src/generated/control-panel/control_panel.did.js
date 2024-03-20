@@ -59,7 +59,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const ManageUserInput = IDL.Record({
-    'email' : IDL.Opt(IDL.Text),
     'wallets' : IDL.Opt(IDL.Vec(UserWallet)),
     'main_wallet' : IDL.Opt(WalletID),
   });
@@ -68,7 +67,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const RegisterUserInput = IDL.Record({
-    'email' : IDL.Opt(IDL.Text),
     'wallet_id' : IDL.Opt(IDL.Principal),
   });
   const RegisterUserResult = IDL.Variant({
@@ -88,8 +86,8 @@ export const idlFactory = ({ IDL }) => {
     'list_wallets' : IDL.Func([], [ListWalletsResult], ['query']),
     'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
-    'request_user_authorization' : IDL.Func(
-        [],
+    'subscribe_to_waiting_list' : IDL.Func(
+        [IDL.Text],
         [RequestUserAuthorizationResult],
         [],
       ),

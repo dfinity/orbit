@@ -19,10 +19,10 @@ thread_local! {
         ), &["status"]).unwrap()
     });
 
-    pub static COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL: RefCell<CounterVec> = RefCell::new({
+    pub static COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL: RefCell<CounterVec> = RefCell::new({
         CounterVec::new(Opts::new(
-            format!("{SERVICE_NAME}_request_user_authorization_total"), // name
-            "number of times request_user_authorization was called", // help
+            format!("{SERVICE_NAME}_subscribe_to_waiting_list_total"), // name
+            "number of times subscribe_to_waiting_list was called", // help
         ), &["status"]).unwrap()
     });
 

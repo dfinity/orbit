@@ -110,7 +110,7 @@ impl UserService {
         Ok(user)
     }
 
-    pub async fn request_user_authorization(
+    pub async fn subscribe_to_waiting_list(
         &self,
         email: String,
         ctx: &CallContext,

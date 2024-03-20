@@ -2,7 +2,7 @@
 use crate::controllers::USER_REGISTRATION_RATE;
 use crate::core::metrics::{
     COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
-    COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL,
+    COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL,
 };
 use crate::core::middlewares::{call_context, logger};
 use crate::services::USER_SERVICE;
@@ -78,11 +78,11 @@ async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
     out
 }
 
-#[update(name = "request_user_authorization")]
-async fn request_user_authorization(email: String) -> ApiResult<()> {
-    let out = CONTROLLER.request_user_authorization(email).await;
+#[update(name = "subscribe_to_waiting_list")]
+async fn subscribe_to_waiting_list(email: String) -> ApiResult<()> {
+    let out = CONTROLLER.subscribe_to_waiting_list(email).await;
 
-    COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL.with(|c| {
+    COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL.with(|c| {
         c.borrow()
             .with(&labels! {
                 "status" => match &out {
@@ -176,10 +176,10 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    async fn request_user_authorization(&self, email: String) -> ApiResult<()> {
+    async fn subscribe_to_waiting_list(&self, email: String) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
         self.user_service
-            .request_user_authorization(email, &ctx)
+            .subscribe_to_waiting_list(email, &ctx)
             .await?;
 
         Ok(())
