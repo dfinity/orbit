@@ -5,7 +5,7 @@ use crate::{
         EditProposalPolicyOperation, EditProposalPolicyOperationInput, Proposal,
         ProposalExecutionPlan, ProposalOperation,
     },
-    services::{PolicyService, POLICY_SERVICE},
+    services::{ProposalPolicyService, PROPOSAL_POLICY_SERVICE},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -22,7 +22,7 @@ impl Create<wallet_api::EditProposalPolicyOperationInput> for EditProposalPolicy
         operation_input: wallet_api::EditProposalPolicyOperationInput,
     ) -> Result<Proposal, ProposalError> {
         let operation_input = EditProposalPolicyOperationInput::from(operation_input);
-        POLICY_SERVICE
+        PROPOSAL_POLICY_SERVICE
             .get_proposal_policy(&operation_input.policy_id)
             .map_err(|_| ProposalError::ValidationError {
                 info: format!(
@@ -55,14 +55,14 @@ impl Create<wallet_api::EditProposalPolicyOperationInput> for EditProposalPolicy
 pub struct EditProposalPolicyProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o EditProposalPolicyOperation,
-    policy_service: Arc<PolicyService>,
+    policy_service: Arc<ProposalPolicyService>,
 }
 
 impl<'p, 'o> EditProposalPolicyProposalExecute<'p, 'o> {
     pub fn new(
         proposal: &'p Proposal,
         operation: &'o EditProposalPolicyOperation,
-        policy_service: Arc<PolicyService>,
+        policy_service: Arc<ProposalPolicyService>,
     ) -> Self {
         Self {
             proposal,
@@ -94,7 +94,6 @@ mod tests {
     use crate::{
         models::proposal_policy_test_utils::mock_proposal_policy,
         repositories::{policy::PROPOSAL_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
-        services::POLICY_SERVICE,
     };
     use ic_canister_core::repository::Repository;
     use std::str::FromStr;
@@ -162,7 +161,7 @@ mod tests {
             let stage = EditProposalPolicyProposalExecute::new(
                 &proposal,
                 operation,
-                Arc::clone(&POLICY_SERVICE),
+                Arc::clone(&PROPOSAL_POLICY_SERVICE),
             )
             .execute()
             .await
@@ -212,7 +211,7 @@ mod tests {
             let stage = EditProposalPolicyProposalExecute::new(
                 &proposal,
                 operation,
-                Arc::clone(&POLICY_SERVICE),
+                Arc::clone(&PROPOSAL_POLICY_SERVICE),
             )
             .execute()
             .await;

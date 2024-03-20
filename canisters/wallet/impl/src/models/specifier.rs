@@ -1,9 +1,9 @@
+use super::access_policy::Resource;
 use super::{Account, MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
 use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
-use async_trait::async_trait;
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::storable;
 use std::sync::Arc;
@@ -30,6 +30,13 @@ pub enum UserSpecifier {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceSpecifier {
+    Any,
+    Resource(Resource),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ProposalSpecifier {
     AddAccount,
     AddUser,
@@ -40,9 +47,7 @@ pub enum ProposalSpecifier {
     RemoveAddressBookEntry(CommonSpecifier),
     Transfer(AccountSpecifier),
     ChangeCanister,
-    AddAccessPolicy,
-    EditAccessPolicy(CommonSpecifier),
-    RemoveAccessPolicy(CommonSpecifier),
+    EditAccessPolicy(ResourceSpecifier),
     AddProposalPolicy,
     EditProposalPolicy(CommonSpecifier),
     RemoveProposalPolicy(CommonSpecifier),
@@ -66,9 +71,7 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
                 ProposalOperationType::RemoveAddressBookEntry
             }
             ProposalSpecifier::Transfer(_) => ProposalOperationType::Transfer,
-            ProposalSpecifier::AddAccessPolicy => ProposalOperationType::AddAccessPolicy,
             ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
-            ProposalSpecifier::RemoveAccessPolicy(_) => ProposalOperationType::RemoveAccessPolicy,
             ProposalSpecifier::ChangeCanister => ProposalOperationType::ChangeCanister,
             ProposalSpecifier::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
             ProposalSpecifier::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
@@ -82,17 +85,15 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
     }
 }
 
-#[async_trait]
 pub trait Match<T>: Sync + Send {
-    async fn is_match(&self, v: T) -> Result<bool, MatchError>;
+    fn is_match(&self, v: T) -> Result<bool, MatchError>;
 }
 
 #[derive(Clone)]
 pub struct AccountMatcher;
 
-#[async_trait]
 impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
-    async fn is_match(&self, v: (Proposal, UUID, AccountSpecifier)) -> Result<bool, MatchError> {
+    fn is_match(&self, v: (Proposal, UUID, AccountSpecifier)) -> Result<bool, MatchError> {
         let (_, account_id, specifier) = v;
 
         match specifier {
@@ -107,9 +108,8 @@ impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
 #[derive(Clone)]
 pub struct CommonIdMatcher;
 
-#[async_trait]
 impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
-    async fn is_match(&self, v: (Proposal, UUID, CommonSpecifier)) -> Result<bool, MatchError> {
+    fn is_match(&self, v: (Proposal, UUID, CommonSpecifier)) -> Result<bool, MatchError> {
         let (_, entity_id, specifier) = v;
 
         match specifier {
@@ -129,9 +129,8 @@ pub struct UserMatcher;
 pub type VoterId = UUID;
 pub type ProposalHasVoterInUserSpecifier = (Proposal, VoterId, UserSpecifier);
 
-#[async_trait]
 impl Match<ProposalHasVoterInUserSpecifier> for UserMatcher {
-    async fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
+    fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
         let (proposal, voter_id, specifier) = v;
 
         match specifier {
@@ -180,9 +179,8 @@ pub struct ProposalMatcher {
     pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, CommonSpecifier)>>,
 }
 
-#[async_trait]
 impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
-    async fn is_match(&self, v: (Proposal, ProposalSpecifier)) -> Result<bool, MatchError> {
+    fn is_match(&self, v: (Proposal, ProposalSpecifier)) -> Result<bool, MatchError> {
         let (p, s) = v;
 
         Ok(match (p.operation.to_owned(), s.to_owned()) {
@@ -190,90 +188,67 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             (ProposalOperation::AddUser(_), ProposalSpecifier::AddUser) => true,
             (ProposalOperation::EditAccount(params), ProposalSpecifier::EditAccount(account)) => {
                 self.account_matcher
-                    .is_match((p, params.input.account_id, account))
-                    .await?
+                    .is_match((p, params.input.account_id, account))?
             }
-            (ProposalOperation::EditUser(params), ProposalSpecifier::EditUser(user)) => {
-                self.user_matcher
-                    .is_match((p, params.input.user_id, user))
-                    .await?
-            }
+            (ProposalOperation::EditUser(params), ProposalSpecifier::EditUser(user)) => self
+                .user_matcher
+                .is_match((p, params.input.user_id, user))?,
             (ProposalOperation::AddAddressBookEntry(_), ProposalSpecifier::AddAddressBookEntry) => {
                 true
             }
             (
                 ProposalOperation::EditAddressBookEntry(params),
                 ProposalSpecifier::EditAddressBookEntry(address_book_entry),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, params.input.address_book_entry_id, address_book_entry))
-                    .await?
-            }
+            ) => self.common_id_matcher.is_match((
+                p,
+                params.input.address_book_entry_id,
+                address_book_entry,
+            ))?,
             (
                 ProposalOperation::RemoveAddressBookEntry(params),
                 ProposalSpecifier::RemoveAddressBookEntry(address_book_entry),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, params.input.address_book_entry_id, address_book_entry))
-                    .await?
-            }
-            (ProposalOperation::Transfer(params), ProposalSpecifier::Transfer(account)) => {
-                self.account_matcher
-                    .is_match((p.clone(), params.input.from_account_id, account))
-                    .await?
-            }
+            ) => self.common_id_matcher.is_match((
+                p,
+                params.input.address_book_entry_id,
+                address_book_entry,
+            ))?,
+            (ProposalOperation::Transfer(params), ProposalSpecifier::Transfer(account)) => self
+                .account_matcher
+                .is_match((p.clone(), params.input.from_account_id, account))?,
             (ProposalOperation::ChangeCanister(_), ProposalSpecifier::ChangeCanister) => true,
-            (ProposalOperation::AddAccessPolicy(_), ProposalSpecifier::AddAccessPolicy) => true,
             (ProposalOperation::AddUserGroup(_), ProposalSpecifier::AddUserGroup) => true,
             (
                 ProposalOperation::EditAccessPolicy(operation),
                 ProposalSpecifier::EditAccessPolicy(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.policy_id, specifier))
-                    .await?
-            }
-            (
-                ProposalOperation::RemoveAccessPolicy(operation),
-                ProposalSpecifier::RemoveAccessPolicy(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.policy_id, specifier))
-                    .await?
-            }
+            ) => match specifier {
+                ResourceSpecifier::Any => true,
+                ResourceSpecifier::Resource(resource) => resource == operation.input.resource,
+            },
             (ProposalOperation::AddProposalPolicy(_), ProposalSpecifier::AddProposalPolicy) => true,
             (
                 ProposalOperation::EditProposalPolicy(operation),
                 ProposalSpecifier::EditProposalPolicy(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.policy_id, specifier))
-                    .await?
-            }
+            ) => self
+                .common_id_matcher
+                .is_match((p, operation.input.policy_id, specifier))?,
             (
                 ProposalOperation::RemoveProposalPolicy(operation),
                 ProposalSpecifier::RemoveProposalPolicy(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.policy_id, specifier))
-                    .await?
-            }
+            ) => self
+                .common_id_matcher
+                .is_match((p, operation.input.policy_id, specifier))?,
             (
                 ProposalOperation::EditUserGroup(operation),
                 ProposalSpecifier::EditUserGroup(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.user_group_id, specifier))
-                    .await?
-            }
+            ) => self
+                .common_id_matcher
+                .is_match((p, operation.input.user_group_id, specifier))?,
             (
                 ProposalOperation::RemoveUserGroup(operation),
                 ProposalSpecifier::RemoveUserGroup(specifier),
-            ) => {
-                self.common_id_matcher
-                    .is_match((p, operation.input.user_group_id, specifier))
-                    .await?
-            }
+            ) => self
+                .common_id_matcher
+                .is_match((p, operation.input.user_group_id, specifier))?,
             // this is here to make sure that new operations are not added without updating this
             (ProposalOperation::AddAccount(_), _)
             | (ProposalOperation::AddUser(_), _)
@@ -283,13 +258,11 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             | (ProposalOperation::EditAddressBookEntry(_), _)
             | (ProposalOperation::RemoveAddressBookEntry(_), _)
             | (ProposalOperation::ChangeCanister(_), _)
-            | (ProposalOperation::AddAccessPolicy(_), _)
             | (ProposalOperation::AddProposalPolicy(_), _)
             | (ProposalOperation::EditProposalPolicy(_), _)
             | (ProposalOperation::EditAccessPolicy(_), _)
             | (ProposalOperation::EditUserGroup(_), _)
             | (ProposalOperation::RemoveUserGroup(_), _)
-            | (ProposalOperation::RemoveAccessPolicy(_), _)
             | (ProposalOperation::RemoveProposalPolicy(_), _)
             | (ProposalOperation::AddUserGroup(_), _)
             | (ProposalOperation::Transfer(_), _) => false,
@@ -302,9 +275,8 @@ pub struct AddressBookMetadataMatcher;
 
 pub type ProposalHasMetadata = (Proposal, MetadataItem);
 
-#[async_trait]
 impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
-    async fn is_match(&self, v: ProposalHasMetadata) -> Result<bool, MatchError> {
+    fn is_match(&self, v: ProposalHasMetadata) -> Result<bool, MatchError> {
         let (proposal, metadata) = v;
 
         Ok(match proposal.operation.to_owned() {
@@ -429,7 +401,7 @@ mod tests {
 
             let specifier = tc.1;
 
-            if !m.is_match((proposal, specifier)).await? {
+            if !m.is_match((proposal, specifier))? {
                 return Err(anyhow!("expected true but got false"));
             }
         }
@@ -466,7 +438,7 @@ mod tests {
             let voter = tc.1;
             let specifier = tc.2;
 
-            if !m.is_match((proposal, voter, specifier)).await? {
+            if !m.is_match((proposal, voter, specifier))? {
                 return Err(anyhow!("expected true but got false"));
             };
         }

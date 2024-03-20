@@ -172,10 +172,6 @@ export default {
         title: 'Ajouter un user',
         request_title: "Demander l'ajout d'un usager",
       },
-      addaccesspolicy: {
-        title: "Ajouter une police d'accés",
-        request_title: "Demander l'ajout d'une police d'accés ",
-      },
       addaddressbookentry: {
         title: "Ajouter une entrée de carnet d'adresses",
         request_title: "Demander l'ajout d'une entrée de carnet d'adresses",
@@ -187,10 +183,6 @@ export default {
       removeproposalpolicy: {
         title: "Supprimer police d'aprobation",
         request_title: "Supprimer police d'aprobation request",
-      },
-      removeaccesspolicy: {
-        title: "Supprimer une police d'accès",
-        request_title: "Demande de supprimer une police d'accès",
       },
       removeusergroup: {
         title: "Supprimer un groupe d'usagers",
@@ -581,7 +573,7 @@ export default {
       usergroup: "Groupe d'Usagers",
       accesspolicy: "Police d'Accés",
       proposalpolicy: 'Police de Demande',
-      canistersettings: 'Paramètre de Canister',
+      settings: 'Système',
       changecanister: 'Modification de Canister',
       transfer: 'Transfert',
       proposal: 'Demande',
@@ -593,8 +585,15 @@ export default {
       read: 'Lire',
       update: 'Modifier',
       delete: 'Éffacer',
+      transfer: 'Transfert',
       readpublicconfig: 'Lire les paramètres publiques',
       readsensitiveconfig: 'Lire les paramètres sensibles',
+    },
+    allow: {
+      everyone_edit_label: 'Tout le monde peut accéder à cette resource:',
+      anyone: "N'importe qui",
+      authenticated: 'Authentifié',
+      notset: 'Non défini',
     },
   },
   proposal_policies: {
@@ -632,8 +631,6 @@ export default {
       transfer: 'Transfert',
       editaccount: 'Modifier un compte',
       addaddressbookentry: "Ajouter une entrée dans le carnet d'adresses",
-      addaccesspolicy: 'Ajouter une permission',
-      removeaccesspolicy: 'Éffacer une permission',
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
     },

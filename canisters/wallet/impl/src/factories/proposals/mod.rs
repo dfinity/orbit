@@ -2,14 +2,13 @@ use crate::{
     core::generate_uuid_v4,
     errors::{ProposalError, ProposalExecuteError},
     models::{Proposal, ProposalOperation},
-    services::POLICY_SERVICE,
+    services::{access_policy::ACCESS_POLICY_SERVICE, PROPOSAL_POLICY_SERVICE},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
 use std::sync::Arc;
 use wallet_api::{CreateProposalInput, ProposalOperationInput};
 
-mod add_access_policy;
 mod add_account;
 mod add_address_book_entry;
 mod add_proposal_policy;
@@ -22,14 +21,12 @@ mod edit_address_book_entry;
 mod edit_proposal_policy;
 mod edit_user;
 mod edit_user_group;
-mod remove_access_policy;
 mod remove_address_book_entry;
 mod remove_proposal_policy;
 mod remove_user_group;
 mod transfer;
 
 use self::{
-    add_access_policy::{AddAccessPolicyProposalCreate, AddAccessPolicyProposalExecute},
     add_account::{AddAccountProposalCreate, AddAccountProposalExecute},
     add_address_book_entry::{
         AddAddressBookEntryProposalCreate, AddAddressBookEntryProposalExecute,
@@ -46,7 +43,6 @@ use self::{
     edit_proposal_policy::{EditProposalPolicyProposalCreate, EditProposalPolicyProposalExecute},
     edit_user::{EditUserProposalCreate, EditUserProposalExecute},
     edit_user_group::{EditUserGroupProposalCreate, EditUserGroupProposalExecute},
-    remove_access_policy::{RemoveAccessPolicyProposalCreate, RemoveAccessPolicyProposalExecute},
     remove_address_book_entry::{
         RemoveAddressBookEntryProposalCreate, RemoveAddressBookEntryProposalExecute,
     },
@@ -186,22 +182,10 @@ impl ProposalFactory {
                     ChangeCanisterProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
-            ProposalOperationInput::AddAccessPolicy(operation) => {
-                create_proposal::<
-                    wallet_api::AddAccessPolicyOperationInput,
-                    AddAccessPolicyProposalCreate,
-                >(id, proposed_by_user, input.clone(), operation.clone())
-            }
             ProposalOperationInput::EditAccessPolicy(operation) => {
                 create_proposal::<
                     wallet_api::EditAccessPolicyOperationInput,
                     EditAccessPolicyProposalCreate,
-                >(id, proposed_by_user, input.clone(), operation.clone())
-            }
-            ProposalOperationInput::RemoveAccessPolicy(operation) => {
-                create_proposal::<
-                    wallet_api::RemoveAccessPolicyOperationInput,
-                    RemoveAccessPolicyProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
             ProposalOperationInput::AddProposalPolicy(operation) => {
@@ -263,46 +247,32 @@ impl ProposalFactory {
             ProposalOperation::ChangeCanister(operation) => {
                 Box::new(ChangeCanisterProposalExecute::new(proposal, operation))
             }
-            ProposalOperation::AddAccessPolicy(operation) => {
-                Box::new(AddAccessPolicyProposalExecute::new(
-                    proposal,
-                    operation,
-                    Arc::clone(&POLICY_SERVICE),
-                ))
-            }
             ProposalOperation::EditAccessPolicy(operation) => {
                 Box::new(EditAccessPolicyProposalExecute::new(
                     proposal,
                     operation,
-                    Arc::clone(&POLICY_SERVICE),
-                ))
-            }
-            ProposalOperation::RemoveAccessPolicy(operation) => {
-                Box::new(RemoveAccessPolicyProposalExecute::new(
-                    proposal,
-                    operation,
-                    Arc::clone(&POLICY_SERVICE),
+                    Arc::clone(&ACCESS_POLICY_SERVICE),
                 ))
             }
             ProposalOperation::AddProposalPolicy(operation) => {
                 Box::new(AddProposalPolicyProposalExecute::new(
                     proposal,
                     operation,
-                    Arc::clone(&POLICY_SERVICE),
+                    Arc::clone(&PROPOSAL_POLICY_SERVICE),
                 ))
             }
             ProposalOperation::EditProposalPolicy(operation) => {
                 Box::new(EditProposalPolicyProposalExecute::new(
                     proposal,
                     operation,
-                    Arc::clone(&POLICY_SERVICE),
+                    Arc::clone(&PROPOSAL_POLICY_SERVICE),
                 ))
             }
             ProposalOperation::RemoveProposalPolicy(operation) => {
                 Box::new(RemoveProposalPolicyProposalExecute::new(
                     proposal,
                     operation,
-                    Arc::clone(&POLICY_SERVICE),
+                    Arc::clone(&PROPOSAL_POLICY_SERVICE),
                 ))
             }
         }

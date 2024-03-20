@@ -40,7 +40,6 @@ pub struct UserKey {
 pub struct UserCallerPrivileges {
     pub id: UUID,
     pub can_edit: bool,
-    pub can_delete: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -61,6 +60,10 @@ impl User {
 
     pub fn to_key(&self) -> UserKey {
         User::key(self.id)
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.status == UserStatus::Active
     }
 }
 
@@ -215,7 +218,7 @@ pub mod user_test_utils {
     pub fn mock_user() -> User {
         User {
             id: *Uuid::new_v4().as_bytes(),
-            identities: vec![Principal::anonymous()],
+            identities: vec![Principal::from_slice(&[24; 29])],
             groups: vec![],
             name: None,
             status: UserStatus::Active,

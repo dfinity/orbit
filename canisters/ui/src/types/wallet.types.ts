@@ -109,8 +109,6 @@ export enum ProposalSpecifierEnum {
   Transfer = 'Transfer',
   EditAccount = 'EditAccount',
   AddAddressBookEntry = 'AddAddressBookEntry',
-  AddAccessPolicy = 'AddAccessPolicy',
-  RemoveAccessPolicy = 'RemoveAccessPolicy',
   RemoveUserGroup = 'RemoveUserGroup',
   AddAccount = 'AddAccount',
 }
@@ -164,9 +162,7 @@ export enum ProposalOperationEnum {
   AddProposalPolicy = 'AddProposalPolicy',
   EditProposalPolicy = 'EditProposalPolicy',
   RemoveProposalPolicy = 'RemoveProposalPolicy',
-  AddAccessPolicy = 'AddAccessPolicy',
   EditAccessPolicy = 'EditAccessPolicy',
-  RemoveAccessPolicy = 'RemoveAccessPolicy',
   ChangeCanister = 'ChangeCanister',
   Transfer = 'Transfer',
 }

@@ -9,7 +9,7 @@ describe('AccessPolicyListItem', () => {
       props: {
         resource: {
           match: vi.fn().mockReturnValue(false),
-          specifiers: [],
+          resources: [],
           resourceType: ResourceTypeEnum.AccessPolicy,
         },
       },
@@ -25,7 +25,7 @@ describe('AccessPolicyListItem', () => {
         props: {
           resource: {
             match: vi.fn().mockReturnValue(false),
-            specifiers: [],
+            resources: [],
             resourceType: ResourceTypeEnum.AccessPolicy,
           },
         },
@@ -50,7 +50,7 @@ describe('AccessPolicyListItem', () => {
         props: {
           resource: {
             match: vi.fn().mockReturnValue(false),
-            specifiers: [],
+            resources: [],
             resourceType: ResourceTypeEnum.AccessPolicy,
           },
         },

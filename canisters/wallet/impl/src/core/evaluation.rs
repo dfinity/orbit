@@ -1,9 +1,5 @@
-use super::{
-    access_control::{
-        AccessControlDefaultAccessMatcher, AccessControlPolicyAccountMatcher,
-        AccessControlPolicyMatcher, AccessControlPolicyUserMatcher, AccessControlUserMatcher,
-    },
-    proposal::{ProposalPossibleVotersCriteriaEvaluator, ProposalVoteRightsCriteriaEvaluator},
+use super::proposal::{
+    ProposalPossibleVotersCriteriaEvaluator, ProposalVoteRightsCriteriaEvaluator,
 };
 use crate::{
     errors::EvaluateError,
@@ -15,7 +11,6 @@ use crate::{
         },
     },
 };
-use async_trait::async_trait;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 
@@ -39,24 +34,8 @@ lazy_static! {
     pub static ref PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR: Arc<ProposalVoteRightsCriteriaEvaluator> = Arc::new(ProposalVoteRightsCriteriaEvaluator {
         voter_matcher: PROPOSAL_USER_MATCHER.clone(),
     });
-    // access control evaluation
-    pub static ref ACCESS_CONTROL_USER_MATCHER: Arc<AccessControlUserMatcher> =
-        Arc::new(AccessControlUserMatcher);
-    pub static ref ACCESS_CONTROL_POLICY_USER_MATCHER: Arc<AccessControlPolicyUserMatcher> =
-        Arc::new(AccessControlPolicyUserMatcher);
-    pub static ref ACCESS_CONTROL_POLICY_ACCOUNT_MATCHER: Arc<AccessControlPolicyAccountMatcher> =
-        Arc::new(AccessControlPolicyAccountMatcher);
-    pub static ref ACCESS_CONTROL_MATCHER: Arc<AccessControlPolicyMatcher> =
-        Arc::new(AccessControlPolicyMatcher {
-            user_matcher: ACCESS_CONTROL_USER_MATCHER.clone(),
-            policy_user_matcher: ACCESS_CONTROL_POLICY_USER_MATCHER.clone(),
-            policy_account_matcher: ACCESS_CONTROL_POLICY_ACCOUNT_MATCHER.clone(),
-        });
-    pub static ref ACCESS_CONTROL_DEFAULT_ACCESS_MATCHER: Arc<AccessControlDefaultAccessMatcher> =
-        Arc::new(AccessControlDefaultAccessMatcher);
 }
 
-#[async_trait]
 pub trait Evaluate<T, E = EvaluateError>: Send + Sync {
-    async fn evaluate(&self) -> Result<T, E>;
+    fn evaluate(&self) -> Result<T, E>;
 }

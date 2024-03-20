@@ -1,4 +1,3 @@
-pub mod access_control_resource_index;
 pub mod account_user_index;
 pub mod address_book_index;
 pub mod address_book_standard_index;

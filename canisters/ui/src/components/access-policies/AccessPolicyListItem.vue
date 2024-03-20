@@ -3,7 +3,7 @@
     <div class="text-body-2 font-weight-bold pl-4 pt-2">
       {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
     </div>
-    <VCard v-for="(specifier, idx) in resource.specifiers" :key="idx" variant="text" class="mb-1">
+    <VCard v-for="(specifier, idx) in resource.resources" :key="idx" variant="text" class="mb-1">
       <VCardTitle class="text-body-1 py-0">
         {{ $t(`access_policies.actions.${specifier.action.toLowerCase()}`) }}
       </VCardTitle>
@@ -17,7 +17,7 @@
               <MembersOfGroupAction
                 :specifier="specifier"
                 :model-value="getMembersOfGroupForm(idx, specifier)"
-                :submit-cb="form => onMembersOfGroupFormSubmit(specifier.specifier, form)"
+                :submit-cb="form => onMembersOfGroupFormSubmit(specifier.resource, form)"
                 @update:model-value="model => updateMembersOfGroupModel(idx, model)"
                 @editing="emit('editing', $event)"
               />
@@ -31,7 +31,7 @@
               <SpecificUsersAction
                 :specifier="specifier"
                 :model-value="getSpecificUsersForm(idx, specifier)"
-                :submit-cb="form => onSpecificUsersFormSubmit(specifier.specifier, form)"
+                :submit-cb="form => onSpecificUsersFormSubmit(specifier.resource, form)"
                 @update:model-value="model => updateSpecificUsersModel(idx, model)"
                 @editing="emit('editing', $event)"
               />
@@ -56,7 +56,7 @@
         {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
       </td>
     </tr>
-    <tr v-for="(specifier, idx) in resource.specifiers" :key="idx">
+    <tr v-for="(specifier, idx) in resource.resources" :key="idx">
       <td class="bb-none">
         {{ $t(`access_policies.actions.${specifier.action.toLowerCase()}`) }}
       </td>
@@ -64,7 +64,7 @@
         <MembersOfGroupAction
           :specifier="specifier"
           :model-value="getMembersOfGroupForm(idx, specifier)"
-          :submit-cb="form => onMembersOfGroupFormSubmit(specifier.specifier, form)"
+          :submit-cb="form => onMembersOfGroupFormSubmit(specifier.resource, form)"
           @update:model-value="model => updateMembersOfGroupModel(idx, model)"
           @editing="emit('editing', $event)"
         />
@@ -73,7 +73,7 @@
         <SpecificUsersAction
           :specifier="specifier"
           :model-value="getSpecificUsersForm(idx, specifier)"
-          :submit-cb="form => onSpecificUsersFormSubmit(specifier.specifier, form)"
+          :submit-cb="form => onSpecificUsersFormSubmit(specifier.resource, form)"
           @update:model-value="model => updateSpecificUsersModel(idx, model)"
           @editing="emit('editing', $event)"
         />
@@ -87,7 +87,7 @@
 
 <script lang="ts" setup>
 import { ref, toRefs, watch } from 'vue';
-import { Proposal, ResourceSpecifier } from '~/generated/wallet/wallet.did';
+import { Proposal, Resource } from '~/generated/wallet/wallet.did';
 import {
   AggregatedResouceAccessPolicies,
   ResourceAccessPolicySpecifier,
@@ -137,11 +137,10 @@ const getMembersOfGroupForm = (
     return membersOfGroupModels.value[idx];
   }
 
-  const groups = [...specifier.users.membersOfGroup.groups];
+  const groups = [...specifier.allow.membersOfGroup];
   return {
     valid: true,
     modelValue: {
-      policyId: specifier.users.membersOfGroup.policy.id,
       groupIds: groups.map(g => g.id),
       prefilledGroups: groups,
     },
@@ -149,26 +148,14 @@ const getMembersOfGroupForm = (
 };
 
 const onMembersOfGroupFormSubmit = (
-  resource: ResourceSpecifier,
+  resource: Resource,
   form: MembersOfGroupFormProps,
 ): Promise<Proposal> => {
-  if (form.modelValue.policyId === null) {
-    return wallet.service.addAccessPolicy({
-      user: { Group: form.modelValue.groupIds },
-      resource,
-    });
-  }
-
-  if (form.modelValue.groupIds.length === 0) {
-    return wallet.service.removeAccessPolicy({
-      policy_id: form.modelValue.policyId,
-    });
-  }
-
   return wallet.service.editAccessPolicy({
-    policy_id: form.modelValue.policyId,
-    user: [{ Group: form.modelValue.groupIds }],
-    resource: [],
+    auth_scope: [],
+    user_groups: [form.modelValue.groupIds],
+    users: [],
+    resource,
   });
 };
 
@@ -185,11 +172,10 @@ const getSpecificUsersForm = (
     return specificUsersModels.value[idx];
   }
 
-  const users = [...specifier.users.specificUsers.users];
+  const users = [...specifier.allow.specificUsers];
   return {
     valid: true,
     modelValue: {
-      policyId: specifier.users.specificUsers.policy.id,
       userIds: users.map(g => g.id),
       prefilledUsers: users,
     },
@@ -197,24 +183,14 @@ const getSpecificUsersForm = (
 };
 
 const onSpecificUsersFormSubmit = (
-  resource: ResourceSpecifier,
+  resource: Resource,
   form: SpecificUsersFormProps,
 ): Promise<Proposal> => {
-  if (form.modelValue.policyId === null) {
-    return wallet.service.addAccessPolicy({
-      user: { Id: form.modelValue.userIds },
-      resource,
-    });
-  }
-
-  if (form.modelValue.userIds.length === 0) {
-    return wallet.service.removeAccessPolicy({ policy_id: form.modelValue.policyId });
-  }
-
   return wallet.service.editAccessPolicy({
-    policy_id: form.modelValue.policyId,
-    user: [{ Id: form.modelValue.userIds }],
-    resource: [],
+    auth_scope: [],
+    user_groups: [],
+    users: [form.modelValue.userIds],
+    resource,
   });
 };
 </script>

@@ -1,15 +1,14 @@
 use crate::{
     core::{
-        access_control::evaluate_caller_access,
-        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        authorization::Authorization,
+        utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
     errors::ProposalError,
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
     models::{
-        access_control::{ProposalActionSpecifier, ResourceSpecifier},
-        specifier::CommonSpecifier,
+        access_policy::{ProposalResourceAction, Resource, ResourceId},
         DisplayUser, NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalStatusCode, ProposalVoteStatus,
     },
@@ -188,22 +187,9 @@ impl ProposalService {
 
         // filter out proposals that the caller does not have access to read
         if let Some(ctx) = ctx {
-            let mut ids_with_access = Vec::new();
-            for proposal_id in &proposal_ids {
-                if evaluate_caller_access(
-                    ctx,
-                    &ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(
-                        CommonSpecifier::Id(vec![proposal_id.to_owned()]),
-                    )),
-                )
-                .await
-                .is_ok()
-                {
-                    ids_with_access.push(*proposal_id);
-                }
-            }
-
-            proposal_ids = ids_with_access;
+            retain_accessible_resources(ctx, &mut proposal_ids, |id| {
+                Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*id)))
+            });
         }
 
         // users have access to a proposal if they can vote on it, or have already voted on it
@@ -267,15 +253,12 @@ impl ProposalService {
         // filter out proposals that the caller does not have access to read
         if let Some(ctx) = ctx {
             for proposal_id in &proposal_ids {
-                if evaluate_caller_access(
+                if Authorization::is_allowed(
                     ctx,
-                    &ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(
-                        CommonSpecifier::Id(vec![proposal_id.to_owned()]),
-                    )),
-                )
-                .await
-                .is_ok()
-                {
+                    &Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(
+                        proposal_id.to_owned(),
+                    ))),
+                ) {
                     return Ok(Some(self.get_proposal(proposal_id)?));
                 }
             }
@@ -406,8 +389,8 @@ mod tests {
             UserStatus,
         },
         repositories::{
-            policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, UserRepository,
-            NOTIFICATION_REPOSITORY, USER_REPOSITORY,
+            policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, NOTIFICATION_REPOSITORY,
+            USER_REPOSITORY,
         },
         services::AccountService,
     };
@@ -426,11 +409,13 @@ mod tests {
     fn setup() -> TestContext {
         test_utils::init_canister_config();
 
-        let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
+        let caller_principal = Principal::from_slice(&[9; 29]);
         let mut user = mock_user();
-        user.identities = vec![call_context.caller()];
+        user.identities = vec![caller_principal];
 
-        UserRepository::default().insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let call_context = CallContext::new(caller_principal);
 
         TestContext {
             repository: ProposalRepository::default(),
@@ -657,14 +642,14 @@ mod tests {
 
         let mut transfer_requester_user = mock_user();
         transfer_requester_user.identities = vec![Principal::from_slice(&[1; 29])];
-        UserRepository::default().insert(
+        USER_REPOSITORY.insert(
             transfer_requester_user.to_key(),
             transfer_requester_user.clone(),
         );
 
         let mut no_access_user = mock_user();
         no_access_user.identities = vec![Principal::from_slice(&[2; 29])];
-        UserRepository::default().insert(no_access_user.to_key(), no_access_user.clone());
+        USER_REPOSITORY.insert(no_access_user.to_key(), no_access_user.clone());
 
         // create account
         let account = ctx
@@ -686,12 +671,12 @@ mod tests {
             .await
             .expect("Failed to create account");
 
-        let mut irrelevalt_proposal = mock_proposal();
+        let mut irrelevant_proposal = mock_proposal();
 
-        irrelevalt_proposal.id = [99; 16];
-        irrelevalt_proposal.proposed_by = transfer_requester_user.id;
-        irrelevalt_proposal.status = ProposalStatus::Created;
-        irrelevalt_proposal.operation = ProposalOperation::AddUser(AddUserOperation {
+        irrelevant_proposal.id = [99; 16];
+        irrelevant_proposal.proposed_by = transfer_requester_user.id;
+        irrelevant_proposal.status = ProposalStatus::Created;
+        irrelevant_proposal.operation = ProposalOperation::AddUser(AddUserOperation {
             user_id: None,
             input: AddUserOperationInput {
                 groups: vec![],
@@ -702,7 +687,7 @@ mod tests {
         });
 
         ctx.repository
-            .insert(irrelevalt_proposal.to_key(), irrelevalt_proposal.to_owned());
+            .insert(irrelevant_proposal.to_key(), irrelevant_proposal.to_owned());
 
         const TRANSFER_COUNT: usize = 3;
         // create transfer requests
@@ -857,25 +842,23 @@ mod benchs {
     use crate::{
         core::ic_cdk::spawn,
         models::{
-            access_control::{access_control_test_utils::mock_access_policy, UserSpecifier},
+            access_policy::{AccessPolicy, Allow},
             proposal_test_utils::mock_proposal,
             user_test_utils::mock_user,
             UserStatus,
         },
-        repositories::{access_control::ACCESS_CONTROL_REPOSITORY, USER_REPOSITORY},
+        repositories::{access_policy::ACCESS_POLICY_REPOSITORY, USER_REPOSITORY},
     };
     use canbench_rs::{bench, BenchResult};
     use candid::Principal;
-    use ic_canister_core::utils::timestamp_to_rfc3339;
+    use ic_canister_core::{model::ModelKey, utils::timestamp_to_rfc3339};
     use wallet_api::ProposalStatusCodeDTO;
 
     #[bench(raw)]
     fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 16000u64;
+        let proposals_to_insert = 2000u64;
+        let start_creation_time = 0;
         let end_creation_time = proposals_to_insert * 1_000_000_000;
-        // this emulates a real world scenario where the proposals are created in a time span and
-        // the filter is used to fetch the proposals created in the last half of the time span
-        let start_creation_time = end_creation_time / 2;
 
         for i in 0..proposals_to_insert {
             let mut proposal = mock_proposal();
@@ -902,14 +885,12 @@ mod benchs {
         }
 
         // adding some access policies since the filter will check for access
-        for user in users.iter() {
-            let mut access_policy = mock_access_policy();
-            access_policy.resource =
-                ResourceSpecifier::Proposal(ProposalActionSpecifier::Read(CommonSpecifier::Any));
-            access_policy.user = UserSpecifier::Id(vec![user.id]);
+        let access_policy = AccessPolicy::new(
+            Allow::users(users.iter().map(|u| u.id).collect()),
+            Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
+        );
 
-            ACCESS_CONTROL_REPOSITORY.insert(access_policy.id, access_policy.to_owned());
-        }
+        ACCESS_POLICY_REPOSITORY.insert(access_policy.key(), access_policy.to_owned());
 
         canbench_rs::bench_fn(|| {
             spawn(async move {
@@ -918,7 +899,10 @@ mod benchs {
                         wallet_api::ListProposalsInput {
                             created_from_dt: Some(timestamp_to_rfc3339(&start_creation_time)),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
-                            statuses: Some(vec![ProposalStatusCodeDTO::Created]),
+                            statuses: Some(vec![
+                                ProposalStatusCodeDTO::Created,
+                                ProposalStatusCodeDTO::Adopted,
+                            ]),
                             voter_ids: None,
                             proposer_ids: None,
                             operation_types: None,
@@ -933,7 +917,7 @@ mod benchs {
                             )),
                             only_votable: false,
                         },
-                        None,
+                        Some(&CallContext::new(Principal::from_slice(&[5; 29]))),
                     )
                     .await;
 

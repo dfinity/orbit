@@ -1,9 +1,9 @@
 use super::{
-    access_control::{ResourceSpecifier, UserSpecifier},
+    access_policy::{AuthScope, Resource},
     criteria::Criteria,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
-    UserId, UserStatus,
+    UserGroupId, UserId, UserStatus,
 };
 use crate::models::Metadata;
 use candid::Principal;
@@ -21,9 +21,7 @@ pub enum ProposalOperation {
     RemoveAddressBookEntry(RemoveAddressBookEntryOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
-    AddAccessPolicy(AddAccessPolicyOperation),
     EditAccessPolicy(EditAccessPolicyOperation),
-    RemoveAccessPolicy(RemoveAccessPolicyOperation),
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
@@ -232,42 +230,17 @@ pub struct ChangeCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AddAccessPolicyOperationInput {
-    pub user: UserSpecifier,
-    pub resource: ResourceSpecifier,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AddAccessPolicyOperation {
-    pub policy_id: Option<UUID>,
-    pub input: AddAccessPolicyOperationInput,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccessPolicyOperationInput {
-    pub policy_id: UUID,
-    pub user: Option<UserSpecifier>,
-    pub resource: Option<ResourceSpecifier>,
+    pub resource: Resource,
+    pub auth_scope: Option<AuthScope>,
+    pub users: Option<Vec<UserId>>,
+    pub user_groups: Option<Vec<UserGroupId>>,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccessPolicyOperation {
     pub input: EditAccessPolicyOperationInput,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct RemoveAccessPolicyOperationInput {
-    pub policy_id: UUID,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct RemoveAccessPolicyOperation {
-    pub input: RemoveAccessPolicyOperationInput,
 }
 
 #[storable]

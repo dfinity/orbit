@@ -1,14 +1,5 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
-    <VTextField
-      v-if="model.policyId"
-      v-model="model.policyId"
-      name="id"
-      :label="$t('terms.id')"
-      variant="plain"
-      density="compact"
-      readonly
-    />
     <VAutocomplete
       v-model="model.groupIds"
       name="group_ids"
@@ -32,7 +23,7 @@ import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
 import { VFormValidation } from '~/types/helper.types';
 
 export type MembersOfGroupFormProps = {
-  modelValue: { policyId: UUID | null; groupIds: UUID[]; prefilledGroups?: UserGroup[] };
+  modelValue: { groupIds: UUID[]; prefilledGroups?: UserGroup[] };
   valid?: boolean;
   mode?: 'view' | 'edit';
 };

@@ -29,7 +29,7 @@ use crate::{
             proposal_status_modification_index::ProposalStatusModificationIndexCriteria,
             proposal_voter_index::{ProposalVoterIndex, ProposalVoterIndexCriteria},
         },
-        AccountId, Proposal, ProposalKey, ProposalStatusCode,
+        AccountId, Proposal, ProposalId, ProposalKey, ProposalStatusCode, UserId,
     },
 };
 use ic_canister_core::{
@@ -285,6 +285,22 @@ impl ProposalRepository {
             .iter()
             .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect::<Vec<Proposal>>()
+    }
+
+    /// Checks if the user has voted on the proposal.
+    pub fn exists_voter(&self, proposal_id: &ProposalId, voter_id: &UserId) -> bool {
+        self.voter_index.exists(&ProposalVoterIndex {
+            voter_id: *voter_id,
+            proposal_id: *proposal_id,
+        })
+    }
+
+    /// Checks if the user has proposed the proposal.
+    pub fn exists_proposer(&self, proposal_id: &ProposalId, proposer_id: &UserId) -> bool {
+        self.proposer_index.exists(&ProposalProposerIndex {
+            proposer_id: *proposer_id,
+            proposal_id: *proposal_id,
+        })
     }
 
     pub fn find_ids_where(

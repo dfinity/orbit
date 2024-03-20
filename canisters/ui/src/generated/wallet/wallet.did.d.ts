@@ -3,16 +3,13 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export type AccessControlUserSpecifier = CommonSpecifier;
-export interface AccessPolicy {
-  'id' : UUID,
-  'resource' : ResourceSpecifier,
-  'user' : AccessControlUserSpecifier,
-}
+export interface AccessPolicy { 'resource' : Resource, 'allow' : Allow }
 export interface AccessPolicyCallerPrivileges {
-  'id' : UUID,
-  'can_delete' : boolean,
+  'resource' : Resource,
   'can_edit' : boolean,
 }
+export type AccessPolicyResourceAction = { 'Read' : null } |
+  { 'Update' : null };
 export interface Account {
   'id' : UUID,
   'decimals' : number,
@@ -48,15 +45,12 @@ export interface AccountPolicies {
   'edit' : [] | [ProposalPolicyCriteria],
   'transfer' : [] | [ProposalPolicyCriteria],
 }
+export type AccountResourceAction = { 'List' : null } |
+  { 'Read' : ResourceId } |
+  { 'Create' : null } |
+  { 'Transfer' : ResourceId } |
+  { 'Update' : ResourceId };
 export type AccountSpecifier = CommonSpecifier;
-export interface AddAccessPolicyOperation {
-  'input' : AddAccessPolicyOperationInput,
-  'policy_id' : [] | [UUID],
-}
-export interface AddAccessPolicyOperationInput {
-  'resource' : ResourceSpecifier,
-  'user' : AccessControlUserSpecifier,
-}
 export interface AddAccountOperation {
   'account' : [] | [Account],
   'input' : AddAccountOperationInput,
@@ -118,25 +112,30 @@ export interface AddressBookEntryCallerPrivileges {
   'can_edit' : boolean,
 }
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
+export interface Allow {
+  'user_groups' : Array<UUID>,
+  'auth_scope' : AuthScope,
+  'users' : Array<UUID>,
+}
 export interface ApprovalThreshold {
   'threshold' : number,
   'voters' : UserSpecifier,
 }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
+export type AuthScope = { 'Authenticated' : null } |
+  { 'Public' : null } |
+  { 'Restricted' : null };
 export interface BasicUser {
   'id' : UUID,
   'status' : UserStatus,
   'name' : string,
 }
-export type CanisterSettingsActionSpecifier = { 'Read' : null } |
-  { 'ReadConfig' : null };
 export type ChangeAddressBookMetadata = {
     'OverrideSpecifiedBy' : Array<AddressBookMetadata>
   } |
   { 'RemoveKeys' : Array<string> } |
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
-export type ChangeCanisterActionSpecifier = { 'Create' : null };
 export interface ChangeCanisterOperation {
   'module_checksum' : Sha256Hash,
   'target' : ChangeCanisterTarget,
@@ -147,14 +146,10 @@ export interface ChangeCanisterOperationInput {
   'target' : ChangeCanisterTarget,
   'module' : Uint8Array | number[],
 }
+export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeCanister' : Principal } |
   { 'UpgradeWallet' : null };
-export type CommonActionSpecifier = { 'List' : null } |
-  { 'Read' : CommonSpecifier } |
-  { 'Delete' : CommonSpecifier } |
-  { 'Create' : null } |
-  { 'Update' : CommonSpecifier };
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
@@ -178,9 +173,10 @@ export interface EditAccessPolicyOperation {
   'input' : EditAccessPolicyOperationInput,
 }
 export interface EditAccessPolicyOperationInput {
-  'resource' : [] | [ResourceSpecifier],
-  'user' : [] | [AccessControlUserSpecifier],
-  'policy_id' : UUID,
+  'resource' : Resource,
+  'user_groups' : [] | [Array<UUID>],
+  'auth_scope' : [] | [AuthScope],
+  'users' : [] | [Array<UUID>],
 }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
@@ -230,7 +226,7 @@ export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
   } |
   { 'Err' : Error };
-export interface GetAccessPolicyInput { 'id' : UUID }
+export interface GetAccessPolicyInput { 'resource' : Resource }
 export type GetAccessPolicyResult = {
     'Ok' : {
       'privileges' : AccessPolicyCallerPrivileges,
@@ -307,7 +303,10 @@ export interface HttpResponse {
   'headers' : Array<HeaderField>,
   'status_code' : number,
 }
-export type ListAccessPoliciesInput = PaginationInput;
+export interface ListAccessPoliciesInput {
+  'resources' : [] | [Array<Resource>],
+  'paginate' : [] | [PaginationInput],
+}
 export type ListAccessPoliciesResult = {
     'Ok' : {
       'total' : bigint,
@@ -404,8 +403,6 @@ export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
-  { 'AddAccessPolicy' : null } |
-  { 'RemoveAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
 export type ListProposalsResult = {
@@ -499,8 +496,6 @@ export interface Proposal {
   'operation' : ProposalOperation,
   'proposed_by' : UUID,
 }
-export type ProposalActionSpecifier = { 'List' : null } |
-  { 'Read' : CommonSpecifier };
 export interface ProposalAdditionalInfo {
   'id' : UUID,
   'voters' : Array<DisplayUser>,
@@ -525,8 +520,6 @@ export type ProposalOperation = {
   { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
-  { 'AddAccessPolicy' : AddAccessPolicyOperation } |
-  { 'RemoveAccessPolicy' : RemoveAccessPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type ProposalOperationInput = {
@@ -545,8 +538,6 @@ export type ProposalOperationInput = {
   { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
-  { 'AddAccessPolicy' : AddAccessPolicyOperationInput } |
-  { 'RemoveAccessPolicy' : RemoveAccessPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type ProposalOperationType = { 'EditAccessPolicy' : null } |
@@ -563,8 +554,6 @@ export type ProposalOperationType = { 'EditAccessPolicy' : null } |
   { 'Transfer' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
-  { 'AddAccessPolicy' : null } |
-  { 'RemoveAccessPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
 export interface ProposalPolicy {
@@ -584,7 +573,9 @@ export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'MinimumVotes' : MinimumVotes } |
   { 'ApprovalThreshold' : ApprovalThreshold } |
   { 'AutoAdopted' : null };
-export type ProposalSpecifier = { 'EditAccessPolicy' : CommonSpecifier } |
+export type ProposalResourceAction = { 'List' : null } |
+  { 'Read' : ResourceId };
+export type ProposalSpecifier = { 'EditAccessPolicy' : ResourceSpecifier } |
   { 'AddUserGroup' : null } |
   { 'RemoveProposalPolicy' : CommonSpecifier } |
   { 'AddUser' : null } |
@@ -598,8 +589,6 @@ export type ProposalSpecifier = { 'EditAccessPolicy' : CommonSpecifier } |
   { 'Transfer' : TransferSpecifier } |
   { 'EditAccount' : AccountSpecifier } |
   { 'AddAddressBookEntry' : null } |
-  { 'AddAccessPolicy' : null } |
-  { 'RemoveAccessPolicy' : CommonSpecifier } |
   { 'RemoveUserGroup' : CommonSpecifier } |
   { 'AddAccount' : null };
 export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
@@ -626,10 +615,6 @@ export interface ProposalVote {
 }
 export type ProposalVoteStatus = { 'Rejected' : null } |
   { 'Accepted' : null };
-export interface RemoveAccessPolicyOperation {
-  'input' : RemoveAccessPolicyOperationInput,
-}
-export interface RemoveAccessPolicyOperationInput { 'policy_id' : UUID }
 export interface RemoveAddressBookEntryOperation {
   'input' : RemoveAddressBookEntryOperationInput,
 }
@@ -644,16 +629,26 @@ export interface RemoveUserGroupOperation {
   'input' : RemoveUserGroupOperationInput,
 }
 export interface RemoveUserGroupOperationInput { 'user_group_id' : UUID }
-export type ResourceSpecifier = { 'User' : CommonActionSpecifier } |
-  { 'ProposalPolicy' : CommonActionSpecifier } |
-  { 'Account' : CommonActionSpecifier } |
-  { 'AddressBook' : CommonActionSpecifier } |
-  { 'Proposal' : ProposalActionSpecifier } |
-  { 'ChangeCanister' : ChangeCanisterActionSpecifier } |
-  { 'AccessPolicy' : CommonActionSpecifier } |
-  { 'Transfer' : TransferActionSpecifier } |
-  { 'UserGroup' : CommonActionSpecifier } |
-  { 'CanisterSettings' : CanisterSettingsActionSpecifier };
+export type Resource = { 'User' : UserResourceAction } |
+  { 'ProposalPolicy' : ResourceAction } |
+  { 'Settings' : SettingsResourceAction } |
+  { 'Account' : AccountResourceAction } |
+  { 'AddressBook' : ResourceAction } |
+  { 'Proposal' : ProposalResourceAction } |
+  { 'ChangeCanister' : ChangeCanisterResourceAction } |
+  { 'AccessPolicy' : AccessPolicyResourceAction } |
+  { 'UserGroup' : ResourceAction };
+export type ResourceAction = { 'List' : null } |
+  { 'Read' : ResourceId } |
+  { 'Delete' : ResourceId } |
+  { 'Create' : null } |
+  { 'Update' : ResourceId };
+export type ResourceId = { 'Id' : UUID } |
+  { 'Any' : null };
+export type ResourceSpecifier = { 'Any' : null } |
+  { 'Resource' : Resource };
+export type SettingsResourceAction = { 'Read' : null } |
+  { 'ReadConfig' : null };
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
@@ -669,9 +664,6 @@ export interface Transfer {
   'proposal_id' : UUID,
   'amount' : bigint,
 }
-export type TransferActionSpecifier = { 'Read' : TransferSpecifier } |
-  { 'Delete' : TransferSpecifier } |
-  { 'Create' : TransferSpecifier };
 export interface TransferListItem {
   'to' : string,
   'status' : TransferStatus,
@@ -737,9 +729,12 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
   { 'ListAccessPolicies' : null } |
-  { 'AddAccessPolicy' : null } |
   { 'ListAddressBookEntries' : null } |
   { 'AddAccount' : null };
+export type UserResourceAction = { 'List' : null } |
+  { 'Read' : ResourceId } |
+  { 'Create' : null } |
+  { 'Update' : ResourceId };
 export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> } |

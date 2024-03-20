@@ -4,7 +4,7 @@ use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{AddProposalPolicyOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
-    services::PolicyService,
+    services::ProposalPolicyService,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -43,14 +43,14 @@ impl Create<wallet_api::AddProposalPolicyOperationInput> for AddProposalPolicyPr
 pub struct AddProposalPolicyProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o AddProposalPolicyOperation,
-    policy_service: Arc<PolicyService>,
+    policy_service: Arc<ProposalPolicyService>,
 }
 
 impl<'p, 'o> AddProposalPolicyProposalExecute<'p, 'o> {
     pub fn new(
         proposal: &'p Proposal,
         operation: &'o AddProposalPolicyOperation,
-        policy_service: Arc<PolicyService>,
+        policy_service: Arc<ProposalPolicyService>,
     ) -> Self {
         Self {
             proposal,
@@ -84,7 +84,7 @@ impl Execute for AddProposalPolicyProposalExecute<'_, '_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::PROPOSAL_REPOSITORY, services::POLICY_SERVICE};
+    use crate::{repositories::PROPOSAL_REPOSITORY, services::PROPOSAL_POLICY_SERVICE};
     use ic_canister_core::repository::Repository;
 
     #[test]
@@ -132,7 +132,7 @@ mod tests {
             let stage = AddProposalPolicyProposalExecute::new(
                 &proposal,
                 operation,
-                Arc::clone(&POLICY_SERVICE),
+                Arc::clone(&PROPOSAL_POLICY_SERVICE),
             )
             .execute()
             .await
