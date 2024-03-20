@@ -110,25 +110,24 @@ impl UserService {
         Ok(user)
     }
 
-    pub async fn request_user_authorization(&self, ctx: &CallContext) -> ServiceResult<User> {
+    pub async fn request_user_authorization(
+        &self,
+        email: String,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
         let mut user = self.get_user(&ctx.caller(), ctx)?;
 
-        if user.email.is_none() {
-            return Err(UserError::MissingEmailAddress {
-                user: user.id.to_text(),
-            }
-            .into());
-        }
-
         match user.authorization_status {
-            UserAuthorizationStatus::Pending | UserAuthorizationStatus::Authorized => {
+            UserAuthorizationStatus::Pending(_)
+            | UserAuthorizationStatus::Authorized
+            | UserAuthorizationStatus::Denylisted => {
                 return Err(UserError::BadUserAuthorizationStatus {
                     authorization_status: user.authorization_status,
                 }
                 .into());
             }
-            UserAuthorizationStatus::Unauthorized | UserAuthorizationStatus::Denylisted => {
-                user.authorization_status = UserAuthorizationStatus::Pending;
+            UserAuthorizationStatus::Unauthorized => {
+                user.authorization_status = UserAuthorizationStatus::Pending(email);
             }
         };
 
@@ -214,7 +213,6 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -237,7 +235,6 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -261,7 +258,6 @@ mod tests {
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: Some(Principal::from_slice(&[2; 29])),
-            email: Some("john@example.com".to_string()),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -277,7 +273,6 @@ mod tests {
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: Some(Principal::from_slice(&[2; 29])),
-            email: None,
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -299,14 +294,8 @@ mod tests {
 
         let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
-        let input = RegisterUserInput {
-            wallet_id: None,
-            email: Some("john@example.com".to_string()),
-        };
-        let duplicated_user_input = RegisterUserInput {
-            wallet_id: None,
-            email: Some("john@example.com".to_string()),
-        };
+        let input = RegisterUserInput { wallet_id: None };
+        let duplicated_user_input = RegisterUserInput { wallet_id: None };
 
         let result = service.register_user(input.clone(), &ctx).await;
         let duplicated_user_result = service
@@ -327,7 +316,6 @@ mod tests {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
             id: user_id,
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],

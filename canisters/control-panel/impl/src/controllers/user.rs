@@ -79,8 +79,8 @@ async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
 }
 
 #[update(name = "request_user_authorization")]
-async fn request_user_authorization() -> ApiResult<()> {
-    let out = CONTROLLER.request_user_authorization().await;
+async fn request_user_authorization(email: String) -> ApiResult<()> {
+    let out = CONTROLLER.request_user_authorization(email).await;
 
     COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL.with(|c| {
         c.borrow()
@@ -176,9 +176,11 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    async fn request_user_authorization(&self) -> ApiResult<()> {
+    async fn request_user_authorization(&self, email: String) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
-        self.user_service.request_user_authorization(&ctx).await?;
+        self.user_service
+            .request_user_authorization(email, &ctx)
+            .await?;
 
         Ok(())
     }

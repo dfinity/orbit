@@ -14,7 +14,7 @@ use std::str::FromStr;
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum UserAuthorizationStatus {
     Unauthorized,
-    Pending,
+    Pending(String), // e-mail address to push notification to
     Authorized,
     Denylisted,
 }
@@ -23,7 +23,7 @@ impl std::fmt::Display for UserAuthorizationStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             UserAuthorizationStatus::Unauthorized => write!(f, "unauthorized"),
-            UserAuthorizationStatus::Pending => write!(f, "pending"),
+            UserAuthorizationStatus::Pending(_) => write!(f, "pending"),
             UserAuthorizationStatus::Authorized => write!(f, "authorized"),
             UserAuthorizationStatus::Denylisted => write!(f, "denylisted"),
         }
@@ -36,8 +36,6 @@ impl std::fmt::Display for UserAuthorizationStatus {
 pub struct User {
     /// The UUID that identifies the user.
     pub id: Principal,
-    /// The e-mail address of the user.
-    pub email: Option<String>,
     /// The authorization status of the user.
     pub authorization_status: UserAuthorizationStatus,
     /// All the wallets that the user has access to (including the main wallet).
@@ -134,7 +132,7 @@ fn validate_main_wallet(
 
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
-        if let Some(ref email) = self.email {
+        if let UserAuthorizationStatus::Pending(email) = &self.authorization_status {
             validate_email(email)?;
         }
         validate_wallets(&self.wallets)?;
@@ -154,7 +152,6 @@ mod tests {
     fn valid_model_serialization() {
         let model = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -166,7 +163,6 @@ mod tests {
         let deserialized_model = User::from_bytes(serialized_model);
 
         assert_eq!(model.id, deserialized_model.id);
-        assert_eq!(model.email, deserialized_model.email);
         assert_eq!(
             model.authorization_status,
             deserialized_model.authorization_status
@@ -184,7 +180,6 @@ mod tests {
     fn check_wallets_validation() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -217,7 +212,6 @@ mod tests {
     fn valid_main_wallet() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![UserWallet {
                 canister_id: Principal::anonymous(),
@@ -235,7 +229,6 @@ mod tests {
     fn invalid_main_wallet() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
             authorization_status: UserAuthorizationStatus::Unauthorized,
             wallets: vec![UserWallet {
                 canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),

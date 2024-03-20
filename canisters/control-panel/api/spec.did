@@ -29,8 +29,6 @@ type User = record {
 
 // The result of managing an user.
 type ManageUserInput = record {
-  // The email associated with the user.
-  email : opt text;
   // The main wallet to use for this user.
   //
   // If specified and the wallet is not already associated with the user it will be added.
@@ -103,8 +101,6 @@ type GetUserResult = variant {
 type RegisterUserInput = record {
   // A wallet canister to use for this user.
   wallet_id : opt principal;
-  // The e-mail address of this user.
-  email : opt text;
 };
 
 // The result of registering an user.
@@ -184,7 +180,8 @@ service : (opt CanisterInstall) -> {
   // Manage the user associated with the caller.
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
   // Request authorization for the user associated with the caller.
-  request_user_authorization : () -> (RequestUserAuthorizationResult);
+  // Takes the user's e-mail address to which notifications can be pushed.
+  request_user_authorization : (text) -> (RequestUserAuthorizationResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.
