@@ -11,13 +11,24 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : CanisterUpgrade,
     'Init' : CanisterInit,
   });
+  const UserAuthorizationStatus = IDL.Variant({
+    'Authorized' : IDL.Null,
+    'Unauthorized' : IDL.Null,
+    'Blacklisted' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
+  const CanDeployWalletResponse = IDL.Variant({
+    'NotAllowed' : UserAuthorizationStatus,
+    'Allowed' : IDL.Nat64,
+    'QuotaExceeded' : IDL.Null,
+  });
   const ApiError = IDL.Record({
     'code' : IDL.Text,
     'message' : IDL.Opt(IDL.Text),
     'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
   });
   const CanDeployWalletResult = IDL.Variant({
-    'Ok' : IDL.Null,
+    'Ok' : CanDeployWalletResponse,
     'Err' : ApiError,
   });
   const WalletID = IDL.Principal;

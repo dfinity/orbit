@@ -7,7 +7,12 @@ export interface ApiError {
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
-export type CanDeployWalletResult = { 'Ok' : null } |
+export type CanDeployWalletResponse = {
+    'NotAllowed' : UserAuthorizationStatus
+  } |
+  { 'Allowed' : bigint } |
+  { 'QuotaExceeded' : null };
+export type CanDeployWalletResult = { 'Ok' : CanDeployWalletResponse } |
   { 'Err' : ApiError };
 export interface CanisterInit {
   'upgrader_wasm_module' : Uint8Array | number[],
@@ -60,6 +65,10 @@ export interface User {
   'wallets' : Array<UserWallet>,
   'main_wallet' : [] | [WalletID],
 }
+export type UserAuthorizationStatus = { 'Authorized' : null } |
+  { 'Unauthorized' : null } |
+  { 'Blacklisted' : null } |
+  { 'Pending' : null };
 export type UserId = UUID;
 export type UserIdentityID = Principal;
 export interface UserWallet { 'name' : [] | [string], 'canister_id' : WalletID }
