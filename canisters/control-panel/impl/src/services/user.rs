@@ -4,7 +4,7 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserAuthorizationStatus, UserKey, UserWallet},
+    models::{User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
@@ -117,17 +117,17 @@ impl UserService {
     ) -> ServiceResult<User> {
         let mut user = self.get_user(&ctx.caller(), ctx)?;
 
-        match user.authorization_status {
-            UserAuthorizationStatus::Pending(_)
-            | UserAuthorizationStatus::Authorized
-            | UserAuthorizationStatus::Denylisted => {
-                return Err(UserError::BadUserAuthorizationStatus {
-                    authorization_status: user.authorization_status,
+        match user.subscription_status {
+            UserSubscriptionStatus::Pending(_)
+            | UserSubscriptionStatus::Approved
+            | UserSubscriptionStatus::Denylisted => {
+                return Err(UserError::BadUserSubscriptionStatus {
+                    subscription_status: user.subscription_status,
                 }
                 .into());
             }
-            UserAuthorizationStatus::Unauthorized => {
-                user.authorization_status = UserAuthorizationStatus::Pending(email);
+            UserSubscriptionStatus::Unsubscribed => {
+                user.subscription_status = UserSubscriptionStatus::Pending(email);
             }
         };
 
@@ -187,7 +187,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserAuthorizationStatus;
+    use crate::models::UserSubscriptionStatus;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -213,7 +213,7 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -235,7 +235,7 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -316,7 +316,7 @@ mod tests {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
             id: user_id,
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
