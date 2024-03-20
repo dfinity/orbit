@@ -179,7 +179,7 @@ service : (opt CanisterInstall) -> {
   get_user : () -> (GetUserResult) query;
   // Manage the user associated with the caller.
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
-  // Request authorization for the user associated with the caller.
+  // Subscribe the user associated with the caller to the waiting list.
   // Takes the user's e-mail address to which notifications can be pushed.
   subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
   // Create a new user for the caller.
