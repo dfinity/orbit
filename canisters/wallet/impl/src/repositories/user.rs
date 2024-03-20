@@ -106,6 +106,22 @@ impl UserRepository {
             .find_map(|id| self.get(&User::key(*id)))
     }
 
+    /// Returns true if a user with the given identity and status exists.
+    pub fn exists_by_identity_and_status(&self, identity: &Principal, status: &UserStatus) -> bool {
+        self.identity_index
+            .find_by_criteria(UserIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+            })
+            .iter()
+            .any(|id| {
+                if let Some(user) = self.get(&User::key(*id)) {
+                    user.status == *status
+                } else {
+                    false
+                }
+            })
+    }
+
     /// Returns the users associated with the given group and their user status if they exist.
     pub fn find_by_group_and_status(&self, group_id: &UUID, status: &UserStatus) -> Vec<User> {
         self.group_status_index
@@ -169,10 +185,10 @@ mod tests {
     fn test_find_by_identity() {
         let repository = UserRepository::default();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![Principal::anonymous()];
+        user.identities = vec![Principal::from_slice(&[1; 29])];
         repository.insert(user.to_key(), user.clone());
 
-        let result = repository.find_by_identity(&Principal::anonymous());
+        let result = repository.find_by_identity(&Principal::from_slice(&[1; 29]));
 
         assert!(result.is_some());
     }

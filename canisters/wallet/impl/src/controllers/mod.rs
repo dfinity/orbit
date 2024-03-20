@@ -27,8 +27,11 @@ pub use proposal::*;
 mod user;
 pub use user::*;
 
-mod policy;
-pub use policy::*;
+mod proposal_policy;
+pub use proposal_policy::*;
+
+mod access_policy;
+pub use access_policy::*;
 
 mod user_group;
 pub use user_group::*;

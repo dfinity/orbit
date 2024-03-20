@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_control::{ResourceSpecifier, ResourceType, UserActionSpecifier},
+    models::access_policy::{Resource, UserResourceAction},
     services::UserService,
 };
 use ic_canister_core::api::ApiResult;
@@ -44,12 +44,7 @@ impl UserController {
         Self { user_service }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_user(&self, input: GetUserInput) -> ApiResult<GetUserResponse> {
         let ctx = call_context();
         let user = self
@@ -66,12 +61,7 @@ impl UserController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::Common(ResourceType::User, UserActionSpecifier::List)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::User(UserResourceAction::List)]))]
     async fn list_users(&self, input: ListUsersInput) -> ApiResult<ListUsersResponse> {
         let ctx = call_context();
         let list = self.user_service.list_users(input, Some(&ctx)).await?;

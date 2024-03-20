@@ -1,6 +1,6 @@
 use crate::{
     core::{
-        access_control::evaluate_caller_access,
+        authorization::Authorization,
         generate_uuid_v4,
         utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
         CallContext,
@@ -8,8 +8,7 @@ use crate::{
     errors::AddressBookError,
     mappers::address_book::AddressBookMapper,
     models::{
-        access_control::{CommonActionSpecifier, ResourceSpecifier, ResourceType},
-        specifier::CommonSpecifier,
+        access_policy::{Resource, ResourceAction, ResourceId},
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
         AddressBookEntryId, EditAddressBookEntryOperationInput, ListAddressBookEntriesInput,
         RemoveAddressBookEntryOperationInput,
@@ -62,30 +61,16 @@ impl AddressBookService {
         id: &AddressBookEntryId,
         ctx: &CallContext,
     ) -> ServiceResult<AddressBookEntryCallerPrivileges> {
-        let can_edit = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::AddressBook,
-                CommonActionSpecifier::Update(CommonSpecifier::Id(vec![*id])),
-            ),
-        )
-        .await
-        .is_ok();
-
-        let can_delete = evaluate_caller_access(
-            ctx,
-            &ResourceSpecifier::Common(
-                ResourceType::AddressBook,
-                CommonActionSpecifier::Delete(CommonSpecifier::Id(vec![*id])),
-            ),
-        )
-        .await
-        .is_ok();
-
         Ok(AddressBookEntryCallerPrivileges {
             id: *id,
-            can_edit,
-            can_delete,
+            can_edit: Authorization::is_allowed(
+                ctx,
+                &Resource::AddressBook(ResourceAction::Update(ResourceId::Id(*id))),
+            ),
+            can_delete: Authorization::is_allowed(
+                ctx,
+                &Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))),
+            ),
         })
     }
 

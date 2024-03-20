@@ -1,13 +1,10 @@
 //! User services.
-use std::cell::RefCell;
-use std::sync::Arc;
-
 use crate::controllers::USER_REGISTRATION_RATE;
 use crate::core::metrics::{
     COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
     COUNTER_REQUEST_USER_AUTHORIZATION_TOTAL,
 };
-use crate::core::middlewares::{call_context, log_call, log_call_result};
+use crate::core::middlewares::{call_context, logger};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
@@ -19,6 +16,8 @@ use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use prometheus::labels;
+use std::cell::RefCell;
+use std::sync::Arc;
 
 thread_local! {
     pub static AVAILABLE_TOKENS_USER_REGISTRATION: RefCell<u32> = RefCell::new(USER_REGISTRATION_RATE);
@@ -130,8 +129,11 @@ impl UserController {
         Self { user_service }
     }
 
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn get_user(&self) -> ApiResult<GetUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
@@ -141,8 +143,11 @@ impl UserController {
         })
     }
 
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn register_user(&self, input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.register_user(input, &ctx).await?;
@@ -152,8 +157,11 @@ impl UserController {
         })
     }
 
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn manage_user(&self, input: ManageUserInput) -> ApiResult<ManageUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.manage_user(input, &ctx).await?;
@@ -163,8 +171,11 @@ impl UserController {
         })
     }
 
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn request_user_authorization(&self) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
         self.user_service.request_user_authorization(&ctx).await?;
@@ -172,8 +183,11 @@ impl UserController {
         Ok(())
     }
 
-    #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
-    #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
     async fn delete_user(&self) -> ApiResult<DeleteUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.get_user(&ctx.caller(), &ctx)?;

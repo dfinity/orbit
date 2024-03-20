@@ -9,7 +9,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.AccessPolicy)"
+      :model-value="toAccessPolicyResourceActionTest(model.AccessPolicy)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -26,7 +26,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.Account)"
+      :model-value="toAccountResourceActionText(model.Account)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -43,7 +43,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.AddressBook)"
+      :model-value="toResourceActionText(model.AddressBook)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -60,7 +60,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.ProposalPolicy)"
+      :model-value="toResourceActionText(model.ProposalPolicy)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -77,7 +77,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.User)"
+      :model-value="toResourceActionText(model.User)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -94,7 +94,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.UserGroup)"
+      :model-value="toResourceActionText(model.UserGroup)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -111,16 +111,16 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.Proposal)"
+      :model-value="toResourceActionText(model.Proposal)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
       disabled
     />
   </template>
-  <template v-else-if="variantIs(model, 'CanisterSettings')">
+  <template v-else-if="variantIs(model, 'Settings')">
     <VTextField
-      :model-value="$t('access_policies.resources.canistersettings')"
+      :model-value="$t('access_policies.resources.settings')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -128,7 +128,7 @@
     />
 
     <VTextField
-      :model-value="toCanisterSettingsSpecifierText(model.CanisterSettings)"
+      :model-value="toSettingsResourceActionText(model.Settings)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -145,24 +145,7 @@
     />
 
     <VTextField
-      :model-value="toCommonActionSpecfierText(model.ChangeCanister)"
-      :label="$t('terms.action')"
-      variant="plain"
-      density="compact"
-      disabled
-    />
-  </template>
-  <template v-else-if="variantIs(model, 'Transfer')">
-    <VTextField
-      :model-value="$t('access_policies.resources.transfer')"
-      :label="$t('terms.resource')"
-      variant="plain"
-      density="compact"
-      disabled
-    />
-
-    <VTextField
-      :model-value="toTransferActionSpecifierText(model.Transfer)"
+      :model-value="toResourceActionText(model.ChangeCanister)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -175,16 +158,17 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
-  CanisterSettingsActionSpecifier,
-  CommonActionSpecifier,
-  CommonSpecifier,
-  ResourceSpecifier,
-  TransferActionSpecifier,
+  AccessPolicyResourceAction,
+  AccountResourceAction,
+  Resource,
+  ResourceAction,
+  ResourceId,
+  SettingsResourceAction,
 } from '~/generated/wallet/wallet.did';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export type ResourceSpecifierFieldProps = {
-  modelValue: ResourceSpecifier;
+  modelValue: Resource;
   mode?: 'view' | 'edit';
 };
 
@@ -203,23 +187,19 @@ const model = computed({
 
 const i18n = useI18n();
 
-const toCommonSpecifierText = (specifier: CommonSpecifier): string => {
+const toResourceIdText = (specifier: ResourceId): string => {
   if (variantIs(specifier, 'Any')) {
     return i18n.t('terms.any');
   }
 
   if (variantIs(specifier, 'Id')) {
-    return specifier.Id.join(', ');
-  }
-
-  if (variantIs(specifier, 'Group')) {
-    return specifier.Group.join(', ');
+    return specifier.Id;
   }
 
   return unreachable(specifier);
 };
 
-const toCommonActionSpecfierText = (action: CommonActionSpecifier): string => {
+const toResourceActionText = (action: ResourceAction): string => {
   if (variantIs(action, 'List')) {
     return i18n.t('access_policies.actions.list');
   }
@@ -229,51 +209,63 @@ const toCommonActionSpecfierText = (action: CommonActionSpecifier): string => {
   }
 
   if (variantIs(action, 'Read')) {
-    return i18n.t('access_policies.actions.read') + ` (${toCommonSpecifierText(action.Read)})`;
+    return i18n.t('access_policies.actions.read') + ` (${toResourceIdText(action.Read)})`;
   }
 
   if (variantIs(action, 'Update')) {
-    return i18n.t('access_policies.actions.update') + ` (${toCommonSpecifierText(action.Update)})`;
+    return i18n.t('access_policies.actions.update') + ` (${toResourceIdText(action.Update)})`;
   }
 
   if (variantIs(action, 'Delete')) {
-    return i18n.t('access_policies.actions.delete') + ` (${toCommonSpecifierText(action.Delete)})`;
+    return i18n.t('access_policies.actions.delete') + ` (${toResourceIdText(action.Delete)})`;
   }
 
   return unreachable(action);
 };
 
-const toTransferActionSpecifierText = (action: TransferActionSpecifier): string => {
+const toAccountResourceActionText = (action: AccountResourceAction): string => {
   if (variantIs(action, 'Create')) {
-    return (
-      i18n.t('access_policies.actions.create') +
-      ` (${toCommonSpecifierText(action.Create.account)})`
-    );
+    return i18n.t('access_policies.actions.create');
+  }
+
+  if (variantIs(action, 'List')) {
+    return i18n.t('access_policies.actions.list');
   }
 
   if (variantIs(action, 'Read')) {
-    return (
-      i18n.t('access_policies.actions.read') + ` (${toCommonSpecifierText(action.Read.account)})`
-    );
+    return i18n.t('access_policies.actions.read') + ` (${toResourceIdText(action.Read)})`;
   }
 
-  if (variantIs(action, 'Delete')) {
-    return (
-      i18n.t('access_policies.actions.update') +
-      ` (${toCommonSpecifierText(action.Delete.account)})`
-    );
+  if (variantIs(action, 'Update')) {
+    return i18n.t('access_policies.actions.update') + ` (${toResourceIdText(action.Update)})`;
+  }
+
+  if (variantIs(action, 'Transfer')) {
+    return i18n.t('access_policies.actions.update') + ` (${toResourceIdText(action.Transfer)})`;
   }
 
   return unreachable(action);
 };
 
-const toCanisterSettingsSpecifierText = (specifier: CanisterSettingsActionSpecifier): string => {
+const toSettingsResourceActionText = (specifier: SettingsResourceAction): string => {
   if (variantIs(specifier, 'Read')) {
     return i18n.t('access_policies.actions.readpublicconfig');
   }
 
   if (variantIs(specifier, 'ReadConfig')) {
     return i18n.t('access_policies.actions.readsensitiveconfig');
+  }
+
+  return unreachable(specifier);
+};
+
+const toAccessPolicyResourceActionTest = (specifier: AccessPolicyResourceAction): string => {
+  if (variantIs(specifier, 'Update')) {
+    return i18n.t('access_policies.actions.update');
+  }
+
+  if (variantIs(specifier, 'Read')) {
+    return i18n.t('access_policies.actions.read');
   }
 
   return unreachable(specifier);

@@ -155,7 +155,7 @@ impl Proposal {
             vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
         };
 
-        match validator.evaluate().await {
+        match validator.evaluate() {
             Ok(can_vote) => can_vote,
             Err(_) => {
                 print(format!(
@@ -191,7 +191,7 @@ impl Proposal {
                 criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
             };
 
-            let evaluation_status = evaluator.evaluate().await?;
+            let evaluation_status = evaluator.evaluate()?;
 
             if evaluation_status == EvaluationStatus::Adopted {
                 self.status = ProposalStatus::Adopted;
@@ -211,7 +211,7 @@ impl Proposal {
                 .to_owned(),
         };
 
-        evaluator.evaluate().await
+        evaluator.evaluate()
     }
 }
 

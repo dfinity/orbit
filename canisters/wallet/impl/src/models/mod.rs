@@ -73,7 +73,7 @@ pub use configuration::*;
 
 pub mod criteria;
 
-pub mod access_control;
+pub mod access_policy;
 
 pub mod indexes;
 

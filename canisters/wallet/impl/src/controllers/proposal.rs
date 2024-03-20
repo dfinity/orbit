@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_control::{ProposalActionSpecifier, ResourceSpecifier},
+    models::access_policy::{ProposalResourceAction, Resource},
     services::{ProposalService, PROPOSAL_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
@@ -60,12 +60,7 @@ impl ProposalController {
         Self { proposal_service }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn create_proposal(
         &self,
         input: CreateProposalInput,
@@ -87,12 +82,7 @@ impl ProposalController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_proposal(&self, input: GetProposalInput) -> ApiResult<GetProposalResponse> {
         let ctx = &call_context();
         let proposal = self
@@ -113,12 +103,7 @@ impl ProposalController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::Proposal(ProposalActionSpecifier::List)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Proposal(ProposalResourceAction::List)]))]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let ctx = call_context();
         let result = self
@@ -152,12 +137,7 @@ impl ProposalController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::Proposal(ProposalActionSpecifier::List)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::Proposal(ProposalResourceAction::List)]))]
     async fn get_next_votable_proposal(
         &self,
         input: GetNextVotableProposalInput,
@@ -188,12 +168,7 @@ impl ProposalController {
         }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn vote_on_proposal(
         &self,
         input: VoteOnProposalInput,

@@ -2,7 +2,7 @@ use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
     models::{EditAccessPolicyOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
-    services::PolicyService,
+    services::access_policy::AccessPolicyService,
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -41,14 +41,14 @@ impl Create<wallet_api::EditAccessPolicyOperationInput> for EditAccessPolicyProp
 pub struct EditAccessPolicyProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o EditAccessPolicyOperation,
-    policy_service: Arc<PolicyService>,
+    policy_service: Arc<AccessPolicyService>,
 }
 
 impl<'p, 'o> EditAccessPolicyProposalExecute<'p, 'o> {
     pub fn new(
         proposal: &'p Proposal,
         operation: &'o EditAccessPolicyOperation,
-        policy_service: Arc<PolicyService>,
+        policy_service: Arc<AccessPolicyService>,
     ) -> Self {
         Self {
             proposal,
@@ -78,11 +78,11 @@ impl Execute for EditAccessPolicyProposalExecute<'_, '_> {
 mod tests {
     use super::*;
     use crate::{
-        models::access_control::access_control_test_utils::mock_access_policy,
-        repositories::{access_control::ACCESS_CONTROL_REPOSITORY, PROPOSAL_REPOSITORY},
-        services::POLICY_SERVICE,
+        models::access_policy::access_policy_test_utils::mock_access_policy,
+        repositories::{access_policy::ACCESS_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
+        services::access_policy::ACCESS_POLICY_SERVICE,
     };
-    use ic_canister_core::repository::Repository;
+    use ic_canister_core::{model::ModelKey, repository::Repository};
 
     #[test]
     fn test_create_proposal() {
@@ -126,14 +126,13 @@ mod tests {
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
 
         if let ProposalOperation::EditAccessPolicy(operation) = &proposal.operation {
-            let mut policy = mock_access_policy();
-            policy.id = operation.input.policy_id;
-            ACCESS_CONTROL_REPOSITORY.insert(policy.id, policy.to_owned());
+            let policy = mock_access_policy();
+            ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
 
             let stage = EditAccessPolicyProposalExecute::new(
                 &proposal,
                 operation,
-                Arc::clone(&POLICY_SERVICE),
+                Arc::clone(&ACCESS_POLICY_SERVICE),
             )
             .execute()
             .await
@@ -150,43 +149,6 @@ mod tests {
             );
         }
     }
-
-    #[tokio::test]
-    async fn test_execute_proposal_should_fail_non_existant_policy() {
-        let proposal_id = [0u8; 16];
-        let proposed_by_user = [1u8; 16];
-        let operation_input = edit_access_policy_test_utils::mock_edit_access_policy_api_input();
-        let mut proposal_input = edit_access_policy_test_utils::mock_proposal_api_input();
-        proposal_input.operation =
-            wallet_api::ProposalOperationInput::EditAccessPolicy(operation_input.clone());
-
-        let proposal = EditAccessPolicyProposalCreate::create(
-            proposal_id,
-            proposed_by_user,
-            proposal_input,
-            operation_input,
-        )
-        .unwrap();
-
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
-
-        if let ProposalOperation::EditAccessPolicy(operation) = &proposal.operation {
-            let stage = EditAccessPolicyProposalExecute::new(
-                &proposal,
-                operation,
-                Arc::clone(&POLICY_SERVICE),
-            )
-            .execute()
-            .await;
-
-            assert!(stage.is_err());
-        } else {
-            panic!(
-                "Expected EditAccessPolicy operation, got {:?}",
-                proposal.operation
-            );
-        }
-    }
 }
 
 #[cfg(test)]
@@ -195,13 +157,12 @@ pub mod edit_access_policy_test_utils {
 
     pub fn mock_edit_access_policy_api_input() -> wallet_api::EditAccessPolicyOperationInput {
         wallet_api::EditAccessPolicyOperationInput {
-            policy_id: Uuid::from_bytes([0u8; 16]).hyphenated().to_string(),
-            resource: Some(wallet_api::ResourceSpecifierDTO::AccessPolicy(
-                wallet_api::CommonActionSpecifierDTO::Create,
-            )),
-            user: Some(wallet_api::AccessControlUserSpecifierDTO::Id(vec![
-                Uuid::from_bytes([1u8; 16]).hyphenated().to_string(),
-            ])),
+            resource: wallet_api::ResourceDTO::AccessPolicy(
+                wallet_api::AccessPolicyResourceActionDTO::Read,
+            ),
+            auth_scope: None,
+            user_groups: None,
+            users: Some(vec![Uuid::from_bytes([1u8; 16]).hyphenated().to_string()]),
         }
     }
 

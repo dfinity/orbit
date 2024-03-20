@@ -12,7 +12,13 @@
     :disabled="props.disabled"
     @click="open = true"
   >
-    <VIcon v-if="props.icon && typeof props.icon === 'string'" :icon="props.icon" />
+    <VIcon
+      v-if="props.icon && typeof props.icon === 'string'"
+      :icon="props.icon"
+      :class="{
+        'mr-1': props.text,
+      }"
+    />
     <span v-if="props.text">{{ props.text }}</span>
   </VBtn>
 

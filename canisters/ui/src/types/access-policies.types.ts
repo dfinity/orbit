@@ -1,10 +1,4 @@
-import {
-  AccessPolicy,
-  BasicUser,
-  ResourceSpecifier,
-  UUID,
-  UserGroup,
-} from '~/generated/wallet/wallet.did';
+import { BasicUser, Resource, UserGroup } from '~/generated/wallet/wallet.did';
 
 export enum ResourceTypeEnum {
   User = 'User',
@@ -14,7 +8,7 @@ export enum ResourceTypeEnum {
   AccessPolicy = 'AccessPolicy',
   ProposalPolicy = 'ProposalPolicy',
   ChangeCanister = 'ChangeCanister',
-  CanisterSettings = 'CanisterSettings',
+  Settings = 'Settings',
   Proposal = 'Proposal',
   AddressBook = 'AddressBook',
 }
@@ -25,44 +19,32 @@ export enum ResourceActionEnum {
   Read = 'Read',
   Update = 'Update',
   Delete = 'Delete',
+  Transfer = 'Transfer',
   ReadSensitiveConfig = 'ReadSensitiveConfig',
   ReadPublicConfig = 'ReadPublicConfig',
 }
 
-export interface AccessPolicyItemInfo {
-  id: UUID | null;
-  canEdit: boolean;
-  canRemove: boolean;
+export enum AuthScopeEnum {
+  Public = 'Public',
+  Authenticated = 'Authenticated',
+  Restrictred = 'Restrictred',
 }
 
-export interface AccessPolicyForMembersOfGroup {
-  policy: AccessPolicyItemInfo;
-  groups: UserGroup[];
-}
-
-export interface AccessPolicyForSpecificUsers {
-  policy: AccessPolicyItemInfo;
-  users: BasicUser[];
-}
-
-export interface AccessPolicyForAllUsers {
-  policy: AccessPolicyItemInfo;
-}
-
-export interface ResourceAccessUserSpecifiers {
-  allUsers: AccessPolicyForAllUsers;
-  membersOfGroup: AccessPolicyForMembersOfGroup;
-  specificUsers: AccessPolicyForSpecificUsers;
+export interface ResourceAccessAllowLevels {
+  authScope: AuthScopeEnum;
+  membersOfGroup: UserGroup[];
+  specificUsers: BasicUser[];
 }
 
 export interface ResourceAccessPolicySpecifier {
   action: ResourceActionEnum;
-  specifier: ResourceSpecifier;
-  users: ResourceAccessUserSpecifiers;
+  resource: Resource;
+  allow: ResourceAccessAllowLevels;
+  canEdit: boolean;
 }
 
 export interface AggregatedResouceAccessPolicies {
   resourceType: ResourceTypeEnum;
-  specifiers: ResourceAccessPolicySpecifier[];
-  match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean;
+  resources: ResourceAccessPolicySpecifier[];
+  match(a: Resource, b: Resource): boolean;
 }

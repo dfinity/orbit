@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_control::{ResourceSpecifier, ResourceType, UserGroupActionSpecifier},
+    models::access_policy::{Resource, ResourceAction},
     services::UserGroupService,
 };
 use ic_canister_core::api::ApiResult;
@@ -38,12 +38,7 @@ impl UserGroupController {
         Self { user_group_service }
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::from(&input)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn get_user_group(&self, input: GetUserGroupInput) -> ApiResult<GetUserGroupResponse> {
         let ctx = call_context();
         let user_group = self
@@ -60,12 +55,7 @@ impl UserGroupController {
         })
     }
 
-    #[with_middleware(
-        guard = "authorize",
-        context = "call_context",
-        args = [ResourceSpecifier::Common(ResourceType::UserGroup, UserGroupActionSpecifier::List)],
-        is_async = true
-    )]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::UserGroup(ResourceAction::List)]))]
     async fn list_user_groups(
         &self,
         input: ListUserGroupsInput,

@@ -1,6 +1,6 @@
-use super::access_control::evaluate_caller_access;
+use super::authorization::Authorization;
 use super::CallContext;
-use crate::models::access_control::ResourceSpecifier;
+use crate::models::access_policy::Resource;
 use crate::{errors::PaginationError, models::criteria::Percentage};
 
 pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
@@ -85,23 +85,23 @@ pub fn calculate_minimum_threshold(percentage: &Percentage, total_value: &usize)
 ///
 /// This function will evaluate the access control for each item in the list and retain only the
 /// items for which the access control evaluation is successful.
-pub(crate) async fn retain_accessible_resources<T, F>(
+pub(crate) fn retain_accessible_resources<T, F>(
     ctx: &CallContext,
     items: &mut Vec<T>,
-    to_resource_specifier: F,
+    to_resource: F,
 ) where
     T: Clone,
-    F: Fn(&T) -> ResourceSpecifier,
+    F: Fn(&T) -> Resource,
 {
     let mut i = 0;
     while i < items.len() {
         let item = &items[i];
-        let resource_specifier = to_resource_specifier(item);
-        let result = evaluate_caller_access(ctx, &resource_specifier).await;
+        let resource = to_resource(item);
+        let is_allowed = Authorization::is_allowed(ctx, &resource);
 
-        match result {
-            Ok(_) => i += 1,
-            Err(_) => {
+        match is_allowed {
+            true => i += 1,
+            false => {
                 items.remove(i);
             }
         }

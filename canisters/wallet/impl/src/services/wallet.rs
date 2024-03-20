@@ -246,10 +246,11 @@ mod install_canister_handlers {
     use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{
-        AddAccessPolicyOperationInput, AddProposalPolicyOperationInput, AddUserOperationInput,
+        AddProposalPolicyOperationInput, AddUserOperationInput, EditAccessPolicyOperationInput,
         UserStatus,
     };
-    use crate::services::{POLICY_SERVICE, USER_SERVICE};
+    use crate::services::PROPOSAL_POLICY_SERVICE;
+    use crate::services::{access_policy::ACCESS_POLICY_SERVICE, USER_SERVICE};
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
         repositories::USER_GROUP_REPOSITORY,
@@ -275,7 +276,7 @@ mod install_canister_handlers {
 
         // adds the default proposal policies which sets safe defaults for the canister
         for policy in DEFAULT_PROPOSAL_POLICIES.iter() {
-            POLICY_SERVICE
+            PROPOSAL_POLICY_SERVICE
                 .add_proposal_policy(AddProposalPolicyOperationInput {
                     specifier: policy.0.to_owned(),
                     criteria: policy.1.to_owned(),
@@ -286,9 +287,12 @@ mod install_canister_handlers {
 
         // adds the default access control policies which sets safe defaults for the canister
         for policy in DEFAULT_ACCESS_CONTROL_POLICIES.iter() {
-            POLICY_SERVICE
-                .add_access_policy(AddAccessPolicyOperationInput {
-                    user: policy.0.to_owned(),
+            let allow = policy.0.to_owned();
+            ACCESS_POLICY_SERVICE
+                .edit_access_policy(EditAccessPolicyOperationInput {
+                    auth_scope: Some(allow.auth_scope),
+                    user_groups: Some(allow.user_groups),
+                    users: Some(allow.users),
                     resource: policy.1.to_owned(),
                 })
                 .await
@@ -375,11 +379,11 @@ mod tests {
         let mut config = test_utils::init_canister_config();
         let call_context = CallContext::new(self_canister_id());
 
-        config.owners = vec![Principal::anonymous()];
+        config.owners = vec![Principal::from_slice(&[1; 29])];
         write_canister_config(config.to_owned());
 
         let init = WalletInit {
-            owners: Some(vec![Principal::anonymous()]),
+            owners: Some(vec![Principal::from_slice(&[1; 29])]),
             upgrader_wasm_module: vec![],
         };
 
@@ -390,6 +394,6 @@ mod tests {
 
         let canister_config = canister_config();
         assert_eq!(canister_config.owners.len(), 1);
-        assert_eq!(canister_config.owners[0], Principal::anonymous());
+        assert_eq!(canister_config.owners[0], Principal::from_slice(&[1; 29]));
     }
 }

@@ -9,6 +9,9 @@ use uuid::Uuid;
 
 pub const ADMIN_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452352).as_bytes();
 
+/// The user gorup id, which is a UUID.
+pub type UserGroupId = UUID;
+
 /// Represents a user group within the system.
 #[storable]
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

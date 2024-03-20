@@ -70,14 +70,12 @@ const componentsMap: {
 } = {
   AddUser: null,
   AddUserGroup: null,
-  AddAccessPolicy: null,
   AddAccount: null,
   AddProposalPolicy: null,
   AddAddressBookEntry: null,
   ChangeCanister: null,
   // below variants require more specific specifier model
   EditAccessPolicy: UnsupportedSpecifier,
-  RemoveAccessPolicy: UnsupportedSpecifier,
   EditProposalPolicy: UnsupportedSpecifier,
   RemoveProposalPolicy: UnsupportedSpecifier,
   Transfer: TransferSpecifier,
@@ -183,9 +181,6 @@ watch(
       case ProposalSpecifierEnum.AddAddressBookEntry:
         model.value = { [specifier.value]: null };
         break;
-      case ProposalSpecifierEnum.AddAccessPolicy:
-        model.value = { [specifier.value]: null };
-        break;
       case ProposalSpecifierEnum.AddProposalPolicy:
         model.value = { [specifier.value]: null };
         break;
@@ -205,9 +200,6 @@ watch(
         model.value = { [specifier.value]: { Any: null } };
         break;
       case ProposalSpecifierEnum.RemoveUserGroup:
-        model.value = { [specifier.value]: { Any: null } };
-        break;
-      case ProposalSpecifierEnum.RemoveAccessPolicy:
         model.value = { [specifier.value]: { Any: null } };
         break;
       case ProposalSpecifierEnum.RemoveProposalPolicy:

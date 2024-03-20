@@ -13,6 +13,9 @@ pub enum UserError {
         /// The maximum number of identities allowed.
         max_identities: u8,
     },
+    /// Identity not allowed to be added to the user.
+    #[error(r#"Identity not allowed to be added to the user."#)]
+    IdentityNotAllowed { identity: String },
     /// The user has too many unconfirmed identities.
     #[error(r#"The user has too many unconfirmed identities, it cannot have more than {max_identities}."#)]
     TooManyUnconfirmedIdentities {
@@ -106,6 +109,10 @@ impl DetailableError for UserError {
             }
             UserError::InvalidUserListLimit { max } => {
                 details.insert("max".to_string(), max.to_string());
+                Some(details)
+            }
+            UserError::IdentityNotAllowed { identity } => {
+                details.insert("identity".to_string(), identity.to_string());
                 Some(details)
             }
             _ => None,

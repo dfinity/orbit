@@ -1,58 +1,60 @@
-import { AccessPolicy, ResourceSpecifier, UUID } from '~/generated/wallet/wallet.did';
+import { Resource, UUID } from '~/generated/wallet/wallet.did';
 import {
   AggregatedResouceAccessPolicies,
-  ResourceAccessUserSpecifiers,
+  AuthScopeEnum,
+  ResourceAccessAllowLevels,
   ResourceActionEnum,
   ResourceTypeEnum,
 } from '~/types/access-policies.types';
 import {
-  isCanisterSettingsActionSpecifier,
-  isChangeCanisterActionSpecifier,
-  isCommonActionSpecifierContained,
-  isProposalActionSpecifier,
-  isTransferActionSpecifier,
+  isAccessPolicyResourceActionContained,
+  isAccountResourceActionContained,
+  isChangeCanisterResourceActionContained,
+  isProposalResourceActionContained,
+  isResourceActionContained,
+  isSettingsResourceActionContained,
+  isUserResourceActionContained,
 } from '~/utils/access-policies.utils';
 import { variantIs } from '~/utils/helper.utils';
 
-export const defaultUserSpecifiers = (): ResourceAccessUserSpecifiers => ({
-  allUsers: { policy: { id: null, canEdit: false, canRemove: false } },
-  membersOfGroup: { policy: { id: null, canEdit: false, canRemove: false }, groups: [] },
-  specificUsers: { policy: { id: null, canEdit: false, canRemove: false }, users: [] },
+export const defaultAllowLevels = (): ResourceAccessAllowLevels => ({
+  authScope: AuthScopeEnum.Restrictred,
+  membersOfGroup: [],
+  specificUsers: [],
 });
 
 export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   {
     resourceType: ResourceTypeEnum.User,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.List,
-        specifier: { User: { List: null } },
-        users: defaultUserSpecifiers(),
+        resource: { User: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Create,
-        specifier: { User: { Create: null } },
-        users: defaultUserSpecifiers(),
+        resource: { User: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        specifier: { User: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { User: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        specifier: { User: { Update: { Any: null } } },
-        users: defaultUserSpecifiers(),
-      },
-      {
-        action: ResourceActionEnum.Delete,
-        specifier: { User: { Delete: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { User: { Update: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'User') && variantIs(policy.resource, 'User')) {
-        return isCommonActionSpecifierContained(specifier.User, policy.resource.User);
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'User') && variantIs(resource, 'User')) {
+        return isUserResourceActionContained(specifier.User, resource.User);
       }
 
       return false;
@@ -60,36 +62,41 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
   {
     resourceType: ResourceTypeEnum.UserGroup,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.List,
-        specifier: { UserGroup: { List: null } },
-        users: defaultUserSpecifiers(),
+        resource: { UserGroup: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Create,
-        specifier: { UserGroup: { Create: null } },
-        users: defaultUserSpecifiers(),
+        resource: { UserGroup: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        specifier: { UserGroup: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { UserGroup: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        specifier: { UserGroup: { Update: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { UserGroup: { Update: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Delete,
-        specifier: { UserGroup: { Delete: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { UserGroup: { Delete: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'UserGroup') && variantIs(policy.resource, 'UserGroup')) {
-        return isCommonActionSpecifierContained(specifier.UserGroup, policy.resource.UserGroup);
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'UserGroup') && variantIs(resource, 'UserGroup')) {
+        return isResourceActionContained(specifier.UserGroup, resource.UserGroup);
       }
 
       return false;
@@ -97,36 +104,41 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
   {
     resourceType: ResourceTypeEnum.Account,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.List,
-        specifier: { Account: { List: null } },
-        users: defaultUserSpecifiers(),
+        resource: { Account: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Create,
-        specifier: { Account: { Create: null } },
-        users: defaultUserSpecifiers(),
+        resource: { Account: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        specifier: { Account: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { Account: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        specifier: { Account: { Update: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { Account: { Update: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
-        action: ResourceActionEnum.Delete,
-        specifier: { Account: { Delete: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        action: ResourceActionEnum.Transfer,
+        resource: { Account: { Transfer: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'Account') && variantIs(policy.resource, 'Account')) {
-        return isCommonActionSpecifierContained(specifier.Account, policy.resource.Account);
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'Account') && variantIs(resource, 'Account')) {
+        return isAccountResourceActionContained(specifier.Account, resource.Account);
       }
 
       return false;
@@ -134,36 +146,41 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
   {
     resourceType: ResourceTypeEnum.AddressBook,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.List,
-        specifier: { AddressBook: { List: null } },
-        users: defaultUserSpecifiers(),
+        resource: { AddressBook: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Create,
-        specifier: { AddressBook: { Create: null } },
-        users: defaultUserSpecifiers(),
+        resource: { AddressBook: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        specifier: { AddressBook: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { AddressBook: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        specifier: { AddressBook: { Update: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { AddressBook: { Update: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Delete,
-        specifier: { AddressBook: { Delete: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { AddressBook: { Delete: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'AddressBook') && variantIs(policy.resource, 'AddressBook')) {
-        return isCommonActionSpecifierContained(specifier.AddressBook, policy.resource.AddressBook);
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'AddressBook') && variantIs(resource, 'AddressBook')) {
+        return isResourceActionContained(specifier.AddressBook, resource.AddressBook);
       }
 
       return false;
@@ -171,39 +188,23 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
   {
     resourceType: ResourceTypeEnum.AccessPolicy,
-    specifiers: [
-      {
-        action: ResourceActionEnum.List,
-        specifier: { AccessPolicy: { List: null } },
-        users: defaultUserSpecifiers(),
-      },
-      {
-        action: ResourceActionEnum.Create,
-        specifier: { AccessPolicy: { Create: null } },
-        users: defaultUserSpecifiers(),
-      },
+    resources: [
       {
         action: ResourceActionEnum.Read,
-        specifier: { AccessPolicy: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { AccessPolicy: { Read: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        specifier: { AccessPolicy: { Update: { Any: null } } },
-        users: defaultUserSpecifiers(),
-      },
-      {
-        action: ResourceActionEnum.Delete,
-        specifier: { AccessPolicy: { Delete: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { AccessPolicy: { Update: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'AccessPolicy') && variantIs(policy.resource, 'AccessPolicy')) {
-        return isCommonActionSpecifierContained(
-          specifier.AccessPolicy,
-          policy.resource.AccessPolicy,
-        );
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'AccessPolicy') && variantIs(resource, 'AccessPolicy')) {
+        return isAccessPolicyResourceActionContained(specifier.AccessPolicy, resource.AccessPolicy);
       }
 
       return false;
@@ -211,67 +212,65 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
   {
     resourceType: ResourceTypeEnum.ProposalPolicy,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.List,
-        specifier: { ProposalPolicy: { List: null } },
-        users: defaultUserSpecifiers(),
+        resource: { ProposalPolicy: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Create,
-        specifier: { ProposalPolicy: { Create: null } },
-        users: defaultUserSpecifiers(),
+        resource: { ProposalPolicy: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        specifier: { ProposalPolicy: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { ProposalPolicy: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        specifier: { ProposalPolicy: { Update: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { ProposalPolicy: { Update: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Delete,
-        specifier: { ProposalPolicy: { Delete: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { ProposalPolicy: { Delete: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'ProposalPolicy') && variantIs(policy.resource, 'ProposalPolicy')) {
-        return isCommonActionSpecifierContained(
-          specifier.ProposalPolicy,
-          policy.resource.ProposalPolicy,
-        );
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'ProposalPolicy') && variantIs(resource, 'ProposalPolicy')) {
+        return isResourceActionContained(specifier.ProposalPolicy, resource.ProposalPolicy);
       }
 
       return false;
     },
   },
   {
-    resourceType: ResourceTypeEnum.CanisterSettings,
-    specifiers: [
+    resourceType: ResourceTypeEnum.Settings,
+    resources: [
       {
         action: ResourceActionEnum.ReadSensitiveConfig,
-        specifier: { CanisterSettings: { Read: null } },
-        users: defaultUserSpecifiers(),
+        resource: { Settings: { Read: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.ReadPublicConfig,
-        specifier: { CanisterSettings: { ReadConfig: null } },
-        users: defaultUserSpecifiers(),
+        resource: { Settings: { ReadConfig: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (
-        variantIs(specifier, 'CanisterSettings') &&
-        variantIs(policy.resource, 'CanisterSettings')
-      ) {
-        return isCanisterSettingsActionSpecifier(
-          specifier.CanisterSettings,
-          policy.resource.CanisterSettings,
-        );
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'Settings') && variantIs(resource, 'Settings')) {
+        return isSettingsResourceActionContained(specifier.Settings, resource.Settings);
       }
 
       return false;
@@ -279,18 +278,19 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
   {
     resourceType: ResourceTypeEnum.ChangeCanister,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.Create,
-        specifier: { ChangeCanister: { Create: null } },
-        users: defaultUserSpecifiers(),
+        resource: { ChangeCanister: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'ChangeCanister') && variantIs(policy.resource, 'ChangeCanister')) {
-        return isChangeCanisterActionSpecifier(
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'ChangeCanister') && variantIs(resource, 'ChangeCanister')) {
+        return isChangeCanisterResourceActionContained(
           specifier.ChangeCanister,
-          policy.resource.ChangeCanister,
+          resource.ChangeCanister,
         );
       }
 
@@ -298,49 +298,24 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
     },
   },
   {
-    resourceType: ResourceTypeEnum.Transfer,
-    specifiers: [
-      {
-        action: ResourceActionEnum.Create,
-        specifier: { Transfer: { Create: { account: { Any: null } } } },
-        users: defaultUserSpecifiers(),
-      },
-      {
-        action: ResourceActionEnum.Read,
-        specifier: { Transfer: { Read: { account: { Any: null } } } },
-        users: defaultUserSpecifiers(),
-      },
-      {
-        action: ResourceActionEnum.Delete,
-        specifier: { Transfer: { Delete: { account: { Any: null } } } },
-        users: defaultUserSpecifiers(),
-      },
-    ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'Transfer') && variantIs(policy.resource, 'Transfer')) {
-        return isTransferActionSpecifier(specifier.Transfer, policy.resource.Transfer);
-      }
-
-      return false;
-    },
-  },
-  {
     resourceType: ResourceTypeEnum.Proposal,
-    specifiers: [
+    resources: [
       {
         action: ResourceActionEnum.List,
-        specifier: { Proposal: { List: null } },
-        users: defaultUserSpecifiers(),
+        resource: { Proposal: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        specifier: { Proposal: { Read: { Any: null } } },
-        users: defaultUserSpecifiers(),
+        resource: { Proposal: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
       },
     ],
-    match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-      if (variantIs(specifier, 'Proposal') && variantIs(policy.resource, 'Proposal')) {
-        return isProposalActionSpecifier(specifier.Proposal, policy.resource.Proposal);
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'Proposal') && variantIs(resource, 'Proposal')) {
+        return isProposalResourceActionContained(specifier.Proposal, resource.Proposal);
       }
 
       return false;
@@ -352,53 +327,29 @@ export const getAccountAccessPolicies = (accountId: UUID): AggregatedResouceAcce
   return [
     {
       resourceType: ResourceTypeEnum.Account,
-      specifiers: [
+      resources: [
         {
           action: ResourceActionEnum.Read,
-          specifier: { Account: { Read: { Id: [accountId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { Account: { Read: { Id: accountId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
         {
           action: ResourceActionEnum.Update,
-          specifier: { Account: { Update: { Id: [accountId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { Account: { Update: { Id: accountId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
         {
-          action: ResourceActionEnum.Delete,
-          specifier: { Account: { Delete: { Id: [accountId] } } },
-          users: defaultUserSpecifiers(),
+          action: ResourceActionEnum.Transfer,
+          resource: { Account: { Update: { Id: accountId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
       ],
-      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-        if (variantIs(specifier, 'Account') && variantIs(policy.resource, 'Account')) {
-          return isCommonActionSpecifierContained(specifier.Account, policy.resource.Account);
-        }
-
-        return false;
-      },
-    },
-    {
-      resourceType: ResourceTypeEnum.Transfer,
-      specifiers: [
-        {
-          action: ResourceActionEnum.Create,
-          specifier: { Transfer: { Create: { account: { Id: [accountId] } } } },
-          users: defaultUserSpecifiers(),
-        },
-        {
-          action: ResourceActionEnum.Read,
-          specifier: { Transfer: { Read: { account: { Id: [accountId] } } } },
-          users: defaultUserSpecifiers(),
-        },
-        {
-          action: ResourceActionEnum.Delete,
-          specifier: { Transfer: { Delete: { account: { Id: [accountId] } } } },
-          users: defaultUserSpecifiers(),
-        },
-      ],
-      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-        if (variantIs(specifier, 'Transfer') && variantIs(policy.resource, 'Transfer')) {
-          return isTransferActionSpecifier(specifier.Transfer, policy.resource.Transfer);
+      match(specifier: Resource, resource: Resource): boolean {
+        if (variantIs(specifier, 'Account') && variantIs(resource, 'Account')) {
+          return isAccountResourceActionContained(specifier.Account, resource.Account);
         }
 
         return false;
@@ -411,26 +362,23 @@ export const getUserAccessPolicies = (userId: UUID): AggregatedResouceAccessPoli
   return [
     {
       resourceType: ResourceTypeEnum.User,
-      specifiers: [
+      resources: [
         {
           action: ResourceActionEnum.Read,
-          specifier: { User: { Read: { Id: [userId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { User: { Read: { Id: userId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
         {
           action: ResourceActionEnum.Update,
-          specifier: { User: { Update: { Id: [userId] } } },
-          users: defaultUserSpecifiers(),
-        },
-        {
-          action: ResourceActionEnum.Delete,
-          specifier: { User: { Delete: { Id: [userId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { User: { Update: { Id: userId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
       ],
-      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-        if (variantIs(specifier, 'User') && variantIs(policy.resource, 'User')) {
-          return isCommonActionSpecifierContained(specifier.User, policy.resource.User);
+      match(specifier: Resource, resource: Resource): boolean {
+        if (variantIs(specifier, 'User') && variantIs(resource, 'User')) {
+          return isUserResourceActionContained(specifier.User, resource.User);
         }
 
         return false;
@@ -443,26 +391,29 @@ export const getUserGroupAccessPolicies = (groupId: UUID): AggregatedResouceAcce
   return [
     {
       resourceType: ResourceTypeEnum.UserGroup,
-      specifiers: [
+      resources: [
         {
           action: ResourceActionEnum.Read,
-          specifier: { UserGroup: { Read: { Id: [groupId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { UserGroup: { Read: { Id: groupId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
         {
           action: ResourceActionEnum.Update,
-          specifier: { UserGroup: { Update: { Id: [groupId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { UserGroup: { Update: { Id: groupId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
         {
           action: ResourceActionEnum.Delete,
-          specifier: { UserGroup: { Delete: { Id: [groupId] } } },
-          users: defaultUserSpecifiers(),
+          resource: { UserGroup: { Delete: { Id: groupId } } },
+          allow: defaultAllowLevels(),
+          canEdit: false,
         },
       ],
-      match(specifier: ResourceSpecifier, policy: AccessPolicy): boolean {
-        if (variantIs(specifier, 'UserGroup') && variantIs(policy.resource, 'UserGroup')) {
-          return isCommonActionSpecifierContained(specifier.UserGroup, policy.resource.UserGroup);
+      match(specifier: Resource, resource: Resource): boolean {
+        if (variantIs(specifier, 'UserGroup') && variantIs(resource, 'UserGroup')) {
+          return isResourceActionContained(specifier.UserGroup, resource.UserGroup);
         }
 
         return false;
