@@ -4,7 +4,9 @@ use crate::{
     models::{User, UserAuthorizationStatus, UserWallet},
 };
 use candid::Principal;
-use control_panel_api::{ManageUserInput, RegisterUserInput, UserDTO, UserWalletDTO};
+use control_panel_api::{
+    ManageUserInput, RegisterUserInput, UserAuthorizationStatusDTO, UserDTO, UserWalletDTO,
+};
 
 #[derive(Default)]
 pub struct UserMapper {}
@@ -69,6 +71,28 @@ impl User {
         }
 
         Ok(())
+    }
+}
+
+impl From<UserAuthorizationStatusDTO> for UserAuthorizationStatus {
+    fn from(authorization_status: UserAuthorizationStatusDTO) -> Self {
+        match authorization_status {
+            UserAuthorizationStatusDTO::Unauthorized => UserAuthorizationStatus::Unauthorized,
+            UserAuthorizationStatusDTO::Pending => UserAuthorizationStatus::Pending,
+            UserAuthorizationStatusDTO::Authorized => UserAuthorizationStatus::Authorized,
+            UserAuthorizationStatusDTO::Blacklisted => UserAuthorizationStatus::Blacklisted,
+        }
+    }
+}
+
+impl From<UserAuthorizationStatus> for UserAuthorizationStatusDTO {
+    fn from(authorization_status: UserAuthorizationStatus) -> Self {
+        match authorization_status {
+            UserAuthorizationStatus::Unauthorized => UserAuthorizationStatusDTO::Unauthorized,
+            UserAuthorizationStatus::Pending => UserAuthorizationStatusDTO::Pending,
+            UserAuthorizationStatus::Authorized => UserAuthorizationStatusDTO::Authorized,
+            UserAuthorizationStatus::Blacklisted => UserAuthorizationStatusDTO::Blacklisted,
+        }
     }
 }
 

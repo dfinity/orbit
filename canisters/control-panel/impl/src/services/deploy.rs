@@ -1,11 +1,11 @@
 use super::UserService;
 use crate::{
     core::{canister_config, CallContext, INITIAL_WALLET_CYCLES},
-    errors::DeployError,
+    errors::{DeployError, UserError},
     services::USER_SERVICE,
 };
 use candid::{Encode, Principal};
-use control_panel_api::{ManageUserInput, UserWalletDTO};
+use control_panel_api::{CanDeployWalletResponse, ManageUserInput, UserWalletDTO};
 use ic_canister_core::api::ServiceResult;
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
@@ -31,7 +31,18 @@ impl DeployService {
     pub async fn deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<Principal> {
         let user = self.user_service.get_user(&ctx.caller(), ctx)?;
 
-        user.can_deploy_wallet()?;
+        let can_deploy_wallet_response = user.can_deploy_wallet()?;
+        match can_deploy_wallet_response {
+            CanDeployWalletResponse::Allowed(_) => {}
+            CanDeployWalletResponse::QuotaExceeded => {
+                return Err(UserError::DeployWalletQuotaExceeded)?;
+            }
+            CanDeployWalletResponse::NotAllowed(authorization_status) => {
+                return Err(UserError::BadUserAuthorizationStatus {
+                    authorization_status,
+                })?;
+            }
+        }
 
         // Creates the wallet canister with some initial cycles
         let (wallet_canister,) = mgmt::create_canister(

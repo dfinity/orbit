@@ -132,11 +132,24 @@ type DeployWalletResult = variant {
   Err : ApiError;
 };
 
+type UserAuthorizationStatus = variant {
+  Unauthorized;
+  Pending;
+  Authorized;
+  Blacklisted;
+};
+
+type CanDeployWalletResponse = variant {
+  NotAllowed : UserAuthorizationStatus;
+  Allowed : nat64;
+  QuotaExceeded;
+};
+
 // The result of checking if the caller can deploy a wallet canister.
 type CanDeployWalletResult = variant {
-  // The caller can deploy a wallet canister.
-  Ok;
-  // The error that prevents the caller from deploying a wallet canister.
+  // Successfull operation result.
+  Ok : CanDeployWalletResponse;
+  // The error that occurred during the operation.
   Err : ApiError;
 };
 

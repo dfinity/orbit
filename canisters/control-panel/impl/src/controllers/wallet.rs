@@ -6,7 +6,8 @@ use crate::core::middlewares::{call_context, log_call, log_call_result};
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
-    DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse, UserWalletDTO,
+    CanDeployWalletResponse, DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse,
+    UserWalletDTO,
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
@@ -44,7 +45,7 @@ async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
 }
 
 #[query(name = "can_deploy_wallet")]
-async fn can_deploy_wallet() -> ApiResult<()> {
+async fn can_deploy_wallet() -> ApiResult<CanDeployWalletResponse> {
     let out = CONTROLLER.can_deploy_wallet().await;
 
     COUNTER_CAN_DEPLOY_WALLET_TOTAL.with(|c| {
@@ -121,7 +122,7 @@ impl WalletController {
     /// Checks if the user can deploy a new wallet.
     #[with_middleware(guard = "log_call", when = "before", context = "call_context")]
     #[with_middleware(guard = "log_call_result", when = "after", context = "call_context")]
-    async fn can_deploy_wallet(&self) -> ApiResult<()> {
+    async fn can_deploy_wallet(&self) -> ApiResult<CanDeployWalletResponse> {
         let ctx = CallContext::get();
         self.user_service.can_deploy_wallet(&ctx).await
     }

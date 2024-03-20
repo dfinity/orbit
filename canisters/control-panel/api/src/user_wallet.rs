@@ -20,3 +20,29 @@ pub struct GetMainWalletResponse {
 pub struct DeployWalletResponse {
     pub canister_id: Principal,
 }
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum UserAuthorizationStatusDTO {
+    Unauthorized,
+    Pending,
+    Authorized,
+    Blacklisted,
+}
+
+impl std::fmt::Display for UserAuthorizationStatusDTO {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            UserAuthorizationStatusDTO::Unauthorized => write!(f, "unauthorized"),
+            UserAuthorizationStatusDTO::Pending => write!(f, "pending"),
+            UserAuthorizationStatusDTO::Authorized => write!(f, "authorized"),
+            UserAuthorizationStatusDTO::Blacklisted => write!(f, "blacklisted"),
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum CanDeployWalletResponse {
+    NotAllowed(UserAuthorizationStatusDTO),
+    Allowed(usize),
+    QuotaExceeded,
+}

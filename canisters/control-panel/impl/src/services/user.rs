@@ -8,7 +8,7 @@ use crate::{
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
-use control_panel_api::{ManageUserInput, RegisterUserInput};
+use control_panel_api::{CanDeployWalletResponse, ManageUserInput, RegisterUserInput};
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     api::{ApiError, ServiceResult},
@@ -121,7 +121,10 @@ impl UserService {
     }
 
     /// Checks if a user can deploy a wallet.
-    pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<()> {
+    pub async fn can_deploy_wallet(
+        &self,
+        ctx: &CallContext,
+    ) -> ServiceResult<CanDeployWalletResponse> {
         let user = self.get_user(&ctx.caller(), ctx)?;
 
         user.can_deploy_wallet()

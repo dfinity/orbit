@@ -1,6 +1,7 @@
 use super::UserWallet;
 use crate::errors::UserError;
 use candid::Principal;
+use control_panel_api::CanDeployWalletResponse;
 use email_address::EmailAddress;
 use ic_canister_core::{
     api::ServiceResult,
@@ -57,12 +58,15 @@ impl User {
         UserKey(self.id)
     }
 
-    pub fn can_deploy_wallet(&self) -> ServiceResult<()> {
+    pub fn can_deploy_wallet(&self) -> ServiceResult<CanDeployWalletResponse> {
+        // TODO: check authorization status once the authorization flow is fully supported
         let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
         if self.deployed_wallets.len() >= max_deployed_wallets {
-            return Err(UserError::DeployWalletQuotaExceeded)?;
+            return Ok(CanDeployWalletResponse::QuotaExceeded);
         }
-        Ok(())
+        Ok(CanDeployWalletResponse::Allowed(
+            max_deployed_wallets - self.deployed_wallets.len(),
+        ))
     }
 }
 
