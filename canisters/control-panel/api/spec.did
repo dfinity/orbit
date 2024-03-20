@@ -48,7 +48,7 @@ type ManageUserResult = variant {
   Err : ApiError;
 };
 
-// The result of requesting authorization for an user.
+// The result of subscribing to the waiting list.
 type SubscribeToWaitingListResult = variant {
   // Successfull operation result.
   Ok;
