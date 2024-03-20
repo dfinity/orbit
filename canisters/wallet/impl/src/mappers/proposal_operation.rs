@@ -1,6 +1,10 @@
 use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
+        access_policy::{
+            AccessPolicyResourceAction, AccountResourceAction, Resource, ResourceAction,
+            ResourceId, UserResourceAction,
+        },
         Account, AccountPoliciesInput, AddAccountOperation, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddProposalPolicyOperation,
         AddProposalPolicyOperationInput, AddUserOperation, AddressBookEntry,
@@ -570,6 +574,47 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             ProposalOperation::RemoveProposalPolicy(operation) => {
                 ProposalOperationDTO::RemoveProposalPolicy(Box::new(operation.into()))
             }
+        }
+    }
+}
+
+impl ProposalOperation {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        match self {
+            ProposalOperation::AddAccount(_) => {
+                vec![Resource::Account(AccountResourceAction::Create)]
+            }
+            ProposalOperation::AddAddressBookEntry(_) => {
+                vec![Resource::AddressBook(ResourceAction::Create)]
+            }
+            ProposalOperation::AddUser(_) => vec![Resource::User(UserResourceAction::Create)],
+            ProposalOperation::AddUserGroup(_) => vec![Resource::UserGroup(ResourceAction::Create)],
+
+            ProposalOperation::AddProposalPolicy(_) => {
+                vec![Resource::ProposalPolicy(ResourceAction::Create)]
+            }
+            ProposalOperation::EditAccessPolicy(_) => {
+                vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
+            }
+
+            ProposalOperation::Transfer(transfer) => {
+                vec![
+                    Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
+                        transfer.input.from_account_id,
+                    ))),
+                    Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+                ]
+            }
+
+            ProposalOperation::EditAccount(_) => todo!(),
+            ProposalOperation::EditAddressBookEntry(_) => todo!(),
+            ProposalOperation::RemoveAddressBookEntry(_) => todo!(),
+            ProposalOperation::EditUser(_) => todo!(),
+            ProposalOperation::EditUserGroup(_) => todo!(),
+            ProposalOperation::RemoveUserGroup(_) => todo!(),
+            ProposalOperation::ChangeCanister(_) => todo!(),
+            ProposalOperation::EditProposalPolicy(_) => todo!(),
+            ProposalOperation::RemoveProposalPolicy(_) => todo!(),
         }
     }
 }

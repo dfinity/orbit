@@ -152,6 +152,17 @@ pub enum Resource {
     UserGroup(ResourceAction),
 }
 
+/// Enables Resource be used in range queries in indexes.
+/// Takes advantage of lexicographical ordering implemented by Ord.
+impl Resource {
+    pub fn min() -> Self {
+        Resource::AccessPolicy(AccessPolicyResourceAction::Read)
+    }
+    pub fn max() -> Self {
+        Resource::UserGroup(ResourceAction::Delete(ResourceId::Id([u8::MAX; 16])))
+    }
+}
+
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceAction {

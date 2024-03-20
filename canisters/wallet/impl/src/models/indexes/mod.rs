@@ -8,6 +8,7 @@ pub mod proposal_expiration_time_index;
 pub mod proposal_key_creation_time_index;
 pub mod proposal_key_expiration_time_index;
 pub mod proposal_proposer_index;
+pub mod proposal_resource_index;
 pub mod proposal_scheduled_index;
 pub mod proposal_sort_index;
 pub mod proposal_status_index;

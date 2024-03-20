@@ -5,6 +5,7 @@ use super::indexes::{
     proposal_key_creation_time_index::ProposalKeyCreationTimeIndexRepository,
     proposal_key_expiration_time_index::ProposalKeyExpirationTimeIndexRepository,
     proposal_proposer_index::ProposalProposerIndexRepository,
+    proposal_resource_index::ProposalResourceIndexRepository,
     proposal_scheduled_index::ProposalScheduledIndexRepository,
     proposal_sort_index::ProposalSortIndexRepository,
     proposal_status_index::ProposalStatusIndexRepository,
@@ -71,6 +72,7 @@ pub struct ProposalRepository {
     prefixed_creation_time_index: ProposalKeyCreationTimeIndexRepository,
     prefixed_expiration_time_index: ProposalKeyExpirationTimeIndexRepository,
     sort_index: ProposalSortIndexRepository,
+    resource_index: ProposalResourceIndexRepository,
 }
 
 impl Repository<ProposalKey, Proposal> for ProposalRepository {
@@ -149,6 +151,15 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                     current: Some(value.to_index_by_status_and_modification()),
                 });
 
+            self.resource_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map(|prev| prev.to_index_for_resource())
+                        .unwrap_or_default(),
+                    current: value.to_index_for_resource(),
+                });
+
             prev
         })
     }
@@ -208,6 +219,14 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                     current: prev
                         .clone()
                         .map(|prev| prev.to_index_by_status_and_modification()),
+                });
+
+            self.resource_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map(|prev| prev.to_index_for_resource())
+                        .unwrap_or_default(),
                 });
 
             prev
@@ -774,8 +793,10 @@ impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
 mod tests {
     use super::*;
     use crate::models::{
+        access_policy::{AccountResourceAction, Resource, ResourceId},
+        indexes::proposal_resource_index::ProposalResourceIndex,
         proposal_test_utils::{self, mock_proposal},
-        ProposalStatus,
+        ProposalOperation, ProposalStatus, TransferOperation, TransferOperationInput,
     };
     use uuid::Uuid;
 
@@ -1065,6 +1086,43 @@ mod tests {
             .unwrap();
 
         assert_eq!(proposals.len(), 100);
+    }
+
+    #[test]
+    fn update_resource_index_on_proposal_creation() {
+        let proposal = mock_proposal();
+
+        let ProposalOperation::Transfer(TransferOperation {
+            input: TransferOperationInput {
+                from_account_id, ..
+            },
+            ..
+        }) = proposal.operation
+        else {
+            panic!("Expected transfer operation");
+        };
+
+        assert!(matches!(proposal.operation, ProposalOperation::Transfer(_)));
+
+        PROPOSAL_REPOSITORY.insert(ProposalKey { id: proposal.id }, proposal.clone());
+
+        PROPOSAL_REPOSITORY
+            .resource_index
+            .exists(&ProposalResourceIndex {
+                proposal_id: proposal.id,
+                proposal_specifier: Resource::Account(AccountResourceAction::Transfer(
+                    ResourceId::Any,
+                )),
+            });
+
+        PROPOSAL_REPOSITORY
+            .resource_index
+            .exists(&ProposalResourceIndex {
+                proposal_id: proposal.id,
+                proposal_specifier: Resource::Account(AccountResourceAction::Transfer(
+                    ResourceId::Id(from_account_id),
+                )),
+            });
     }
 }
 
