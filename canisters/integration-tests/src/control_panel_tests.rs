@@ -175,6 +175,7 @@ fn deploy_too_many_wallets() {
 
     // reset all but one deployed wallet
     let manage_user_args = ManageUserInput {
+        email: None,
         main_wallet: Some(wallets[0]),
         wallets: Some(vec![UserWalletDTO {
             canister_id: wallets[0],

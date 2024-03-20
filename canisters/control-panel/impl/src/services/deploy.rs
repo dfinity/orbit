@@ -81,6 +81,7 @@ impl DeployService {
         self.user_service
             .manage_user(
                 ManageUserInput {
+                    email: None,
                     main_wallet: Some(wallet_canister.canister_id),
                     wallets: Some(vec![UserWalletDTO {
                         canister_id: wallet_canister.canister_id,

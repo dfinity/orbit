@@ -4,9 +4,11 @@ use candid::{CandidType, Deserialize, Principal};
 /// The input to manage an user.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ManageUserInput {
+    /// Set e-mail to use for the user.
+    pub email: Option<String>,
     /// The main wallet to use for the user.
     pub main_wallet: Option<Principal>,
-    /// The operation to perform on the wallets.
+    /// Set wallets to use for the user.
     pub wallets: Option<Vec<UserWalletDTO>>,
 }
 

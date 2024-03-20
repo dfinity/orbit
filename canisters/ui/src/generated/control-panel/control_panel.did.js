@@ -59,6 +59,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const ManageUserInput = IDL.Record({
+    'email' : IDL.Opt(IDL.Text),
     'wallets' : IDL.Opt(IDL.Vec(UserWallet)),
     'main_wallet' : IDL.Opt(WalletID),
   });
