@@ -1,4 +1,8 @@
-use super::CallContext;
+use super::{
+    evaluation::{Evaluate, PROPOSAL_MATCHER, PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR},
+    proposal::ProposalVoteRightsEvaluator,
+    CallContext,
+};
 use crate::{
     errors::AuthorizationError,
     models::{
@@ -6,7 +10,7 @@ use crate::{
             AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
             ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
         },
-        Account, User, ADMIN_GROUP_ID,
+        Account, ProposalKey, User, ADMIN_GROUP_ID,
     },
     repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY},
     services::access_policy::ACCESS_POLICY_SERVICE,
@@ -72,9 +76,18 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
                 return true;
             }
 
-            // TODO: add check if the user has voting rights on the proposal.
+            if let Some(proposal) = PROPOSAL_REPOSITORY.get(&ProposalKey { id: *proposal_id }) {
+                let validator = ProposalVoteRightsEvaluator {
+                    proposal: &proposal,
+                    voter_id: user.id,
+                    proposal_matcher: PROPOSAL_MATCHER.to_owned(),
+                    vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
+                };
 
-            false
+                validator.evaluate().unwrap_or(false)
+            } else {
+                false
+            }
         }
         Resource::User(UserResourceAction::Read(ResourceId::Id(user_id))) => {
             // The user has access to their own user record.
