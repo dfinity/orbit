@@ -326,7 +326,6 @@ impl From<crate::models::ChangeCanisterOperationInput> for ChangeCanisterOperati
             target: input.target.into(),
             module: input.module,
             arg: input.arg,
-            checksum: input.checksum,
         }
     }
 }
@@ -337,7 +336,6 @@ impl From<ChangeCanisterOperationInput> for crate::models::ChangeCanisterOperati
             target: input.target.into(),
             module: input.module,
             arg: input.arg,
-            checksum: input.checksum,
         }
     }
 }
@@ -346,8 +344,8 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     fn from(operation: ChangeCanisterOperation) -> ChangeCanisterOperationDTO {
         ChangeCanisterOperationDTO {
             target: operation.input.target.into(),
-            checksum: operation.input.checksum,
-            arg_checksum: operation.arg_checksum,
+            module_checksum: hex::encode(operation.module_checksum),
+            arg_checksum: operation.arg_checksum.map(hex::encode),
         }
     }
 }

@@ -53,6 +53,10 @@ impl From<User> for UserDTO {
 
 impl User {
     pub fn update_with(&mut self, input: ManageUserInput) -> Result<(), UserError> {
+        if let Some(email) = input.email {
+            self.email = Some(email);
+        }
+
         if let Some(wallet) = input.main_wallet {
             self.main_wallet = Some(wallet);
         }

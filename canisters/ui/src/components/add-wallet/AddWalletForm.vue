@@ -91,6 +91,7 @@ async function addNewWallet() {
 
     try {
       const user = await controlPanelService.editUser({
+        email: [], // do not change the e-mail address
         main_wallet: session.mainWallet ? [session.mainWallet] : [],
         wallets: [
           [

@@ -1,6 +1,6 @@
 use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
-    models::{User, UserAuthorizationStatus, UserKey},
+    models::{User, UserKey},
 };
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -48,6 +48,7 @@ impl Repository<UserKey, User> for UserRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::UserAuthorizationStatus;
     use candid::Principal;
 
     #[test]

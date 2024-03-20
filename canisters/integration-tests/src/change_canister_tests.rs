@@ -85,7 +85,6 @@ fn successful_four_eyes_upgrade() {
             target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
             module: new_module_bytes,
             arg: None,
-            checksum: new_module_hash.clone(),
         });
     let change_canister_operation_proposal =
         submit_proposal(&env, user_a, canister_ids.wallet, change_canister_operation);

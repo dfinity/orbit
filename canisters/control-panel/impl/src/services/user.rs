@@ -133,6 +133,22 @@ impl UserService {
         Ok(user)
     }
 
+    pub async fn add_deployed_wallet(
+        &self,
+        wallet_canister_id: Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let mut user = self.get_user(&ctx.caller(), ctx)?;
+
+        user.deployed_wallets.push(wallet_canister_id);
+
+        user.validate()?;
+
+        self.user_repository.insert(user.to_key(), user.clone());
+
+        Ok(user)
+    }
+
     /// Checks if the caller has access to the given user.
     ///
     /// Admins have access to all users.
@@ -166,6 +182,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::UserAuthorizationStatus;
 
     #[test]
     fn get_user_returns_not_found_err() {
