@@ -16,7 +16,7 @@ pub enum UserAuthorizationStatus {
     Unauthorized,
     Pending,
     Authorized,
-    Blacklisted,
+    Denylisted,
 }
 
 impl std::fmt::Display for UserAuthorizationStatus {
@@ -25,7 +25,7 @@ impl std::fmt::Display for UserAuthorizationStatus {
             UserAuthorizationStatus::Unauthorized => write!(f, "unauthorized"),
             UserAuthorizationStatus::Pending => write!(f, "pending"),
             UserAuthorizationStatus::Authorized => write!(f, "authorized"),
-            UserAuthorizationStatus::Blacklisted => write!(f, "blacklisted"),
+            UserAuthorizationStatus::Denylisted => write!(f, "denylisted"),
         }
     }
 }

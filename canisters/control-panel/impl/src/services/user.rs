@@ -121,7 +121,7 @@ impl UserService {
                 }
                 .into());
             }
-            UserAuthorizationStatus::Unauthorized | UserAuthorizationStatus::Blacklisted => {
+            UserAuthorizationStatus::Unauthorized | UserAuthorizationStatus::Denylisted => {
                 user.authorization_status = UserAuthorizationStatus::Pending;
             }
         };
