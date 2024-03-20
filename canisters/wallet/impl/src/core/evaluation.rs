@@ -11,7 +11,6 @@ use crate::{
         },
     },
 };
-use async_trait::async_trait;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 
@@ -37,7 +36,6 @@ lazy_static! {
     });
 }
 
-#[async_trait]
 pub trait Evaluate<T, E = EvaluateError>: Send + Sync {
-    async fn evaluate(&self) -> Result<T, E>;
+    fn evaluate(&self) -> Result<T, E>;
 }
