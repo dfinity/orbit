@@ -185,10 +185,10 @@ mod tests {
     fn test_find_by_identity() {
         let repository = UserRepository::default();
         let mut user = user_test_utils::mock_user();
-        user.identities = vec![Principal::anonymous()];
+        user.identities = vec![Principal::from_slice(&[1; 29])];
         repository.insert(user.to_key(), user.clone());
 
-        let result = repository.find_by_identity(&Principal::anonymous());
+        let result = repository.find_by_identity(&Principal::from_slice(&[1; 29]));
 
         assert!(result.is_some());
     }

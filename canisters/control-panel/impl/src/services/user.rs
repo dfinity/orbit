@@ -4,7 +4,7 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserKey, UserWallet},
+    models::{User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
@@ -70,6 +70,12 @@ impl UserService {
     ) -> ServiceResult<User, ApiError> {
         self.assert_identity_is_unregistered(&ctx.caller())?;
 
+        if ctx.caller() == Principal::anonymous() {
+            Err(UserError::ValidationError {
+                info: "The caller identity cannot be anonymous.".to_string(),
+            })?
+        }
+
         let user_id = ctx.caller();
         let user = UserMapper::from_register_input(input.clone(), user_id);
 
@@ -97,6 +103,34 @@ impl UserService {
         let mut user = self.get_user(&ctx.caller(), ctx)?;
 
         user.update_with(input)?;
+        user.validate()?;
+
+        self.user_repository.insert(user.to_key(), user.clone());
+
+        Ok(user)
+    }
+
+    pub async fn subscribe_to_waiting_list(
+        &self,
+        email: String,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let mut user = self.get_user(&ctx.caller(), ctx)?;
+
+        match user.subscription_status {
+            UserSubscriptionStatus::Pending(_)
+            | UserSubscriptionStatus::Approved
+            | UserSubscriptionStatus::Denylisted => {
+                return Err(UserError::BadUserSubscriptionStatus {
+                    subscription_status: user.subscription_status,
+                }
+                .into());
+            }
+            UserSubscriptionStatus::Unsubscribed => {
+                user.subscription_status = UserSubscriptionStatus::Pending(email);
+            }
+        };
+
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.clone());
@@ -153,7 +187,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserAuthorizationStatus;
+    use crate::models::UserSubscriptionStatus;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -179,8 +213,7 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -202,8 +235,7 @@ mod tests {
         let service = UserService::default();
         let user = User {
             id: user_id,
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -222,11 +254,10 @@ mod tests {
     async fn success_register_new_user() {
         crate::core::test_utils::init_canister_config();
 
-        let ctx = CallContext::default();
+        let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
         let input = RegisterUserInput {
             wallet_id: Some(Principal::from_slice(&[2; 29])),
-            email: Some("john@example.com".to_string()),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -235,19 +266,36 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn fail_registering_new_user_with_anonymous_identity() {
+        crate::core::test_utils::init_canister_config();
+
+        let ctx = CallContext::new(Principal::anonymous());
+        let service = UserService::default();
+        let input = RegisterUserInput {
+            wallet_id: Some(Principal::from_slice(&[2; 29])),
+        };
+
+        let result = service.register_user(input.clone(), &ctx).await;
+
+        assert!(result.is_err());
+
+        let error = result.unwrap_err();
+        assert_eq!(
+            error,
+            ApiError::from(UserError::ValidationError {
+                info: "The caller identity cannot be anonymous.".to_string()
+            })
+        );
+    }
+
+    #[tokio::test]
     async fn failed_registering_new_user_with_same_identity() {
         crate::core::test_utils::init_canister_config();
 
-        let ctx = CallContext::default();
+        let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
-        let input = RegisterUserInput {
-            wallet_id: None,
-            email: Some("john@example.com".to_string()),
-        };
-        let duplicated_user_input = RegisterUserInput {
-            wallet_id: None,
-            email: Some("john@example.com".to_string()),
-        };
+        let input = RegisterUserInput { wallet_id: None };
+        let duplicated_user_input = RegisterUserInput { wallet_id: None };
 
         let result = service.register_user(input.clone(), &ctx).await;
         let duplicated_user_result = service
@@ -268,8 +316,7 @@ mod tests {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
             id: user_id,
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,

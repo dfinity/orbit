@@ -1,7 +1,7 @@
 use crate::core::ic_cdk::api::time;
 use crate::{
     errors::UserError,
-    models::{User, UserAuthorizationStatus, UserWallet},
+    models::{User, UserSubscriptionStatus, UserWallet},
 };
 use candid::Principal;
 use control_panel_api::{ManageUserInput, RegisterUserInput, UserDTO, UserWalletDTO};
@@ -25,8 +25,7 @@ impl UserMapper {
 
         User {
             id: user_id,
-            email: input.email,
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: wallets
                 .into_iter()
                 .map(|canister_id| UserWallet {
@@ -53,10 +52,6 @@ impl From<User> for UserDTO {
 
 impl User {
     pub fn update_with(&mut self, input: ManageUserInput) -> Result<(), UserError> {
-        if let Some(email) = input.email {
-            self.email = Some(email);
-        }
-
         if let Some(wallet) = input.main_wallet {
             self.main_wallet = Some(wallet);
         }
@@ -79,10 +74,7 @@ mod tests {
     #[test]
     fn mapped_user_registration_with_no_wallet() {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let input = RegisterUserInput {
-            wallet_id: None,
-            email: None,
-        };
+        let input = RegisterUserInput { wallet_id: None };
 
         let user = UserMapper::from_register_input(input, user_id);
 
@@ -97,7 +89,6 @@ mod tests {
         let main_wallet = Principal::from_slice(&[2; 29]);
         let input = RegisterUserInput {
             wallet_id: Some(main_wallet),
-            email: Some("john@example.com".to_string()),
         };
 
         let user = UserMapper::from_register_input(input, user_id);

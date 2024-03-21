@@ -38,19 +38,17 @@ export interface HttpResponse {
 export type ListWalletsResult = { 'Ok' : { 'wallets' : Array<UserWallet> } } |
   { 'Err' : ApiError };
 export interface ManageUserInput {
-  'email' : [] | [string],
   'wallets' : [] | [Array<UserWallet>],
   'main_wallet' : [] | [WalletID],
 }
 export type ManageUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export interface RegisterUserInput {
-  'email' : [] | [string],
-  'wallet_id' : [] | [Principal],
-}
+export interface RegisterUserInput { 'wallet_id' : [] | [Principal] }
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
+  { 'Err' : ApiError };
+export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type UUID = string;
 export interface User {
@@ -71,6 +69,10 @@ export interface _SERVICE {
   'list_wallets' : ActorMethod<[], ListWalletsResult>,
   'manage_user' : ActorMethod<[ManageUserInput], ManageUserResult>,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
+  'subscribe_to_waiting_list' : ActorMethod<
+    [string],
+    SubscribeToWaitingListResult
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
