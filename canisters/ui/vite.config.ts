@@ -55,7 +55,7 @@ const resolveCanisterIds = (
 const getContentSecurityPolicy = (isProduction: boolean): string => {
   const csp: Record<string, string[]> = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-eval'", "'strict-dynamic'"],
+    'script-src': ["'self'", "'unsafe-eval'"],
     'connect-src': ["'self'", 'https://icp-api.io', 'https://ic0.app', 'https://icp0.io'],
     'img-src': ["'self'", 'data:'],
     'font-src': ["'self'"],
@@ -69,7 +69,7 @@ const getContentSecurityPolicy = (isProduction: boolean): string => {
   };
 
   if (!isProduction) {
-    csp['connect-src'].push('https://localhost:4943');
+    csp['connect-src'].push('localhost:4943');
   }
 
   return Object.entries(csp)
