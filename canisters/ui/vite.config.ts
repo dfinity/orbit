@@ -1,6 +1,6 @@
 import vue from '@vitejs/plugin-vue';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
 import { defineConfig } from 'vite';
 import vuetify from 'vite-plugin-vuetify';
@@ -52,6 +52,64 @@ const resolveCanisterIds = (
   return availableCanisters;
 };
 
+const getContentSecurityPolicy = (isProduction: boolean): string => {
+  const csp: Record<string, string[]> = {
+    'default-src': ["'self'"],
+    'script-src': ["'self'", "'unsafe-eval'", "'strict-dynamic'"],
+    'connect-src': ["'self'", 'https://icp-api.io', 'https://ic0.app', 'https://icp0.io'],
+    'img-src': ["'self'", 'data:'],
+    'font-src': ["'self'"],
+    'object-src': ["'none'"],
+    'base-uri': ["'self'"],
+    'style-src': ["'self'", "'unsafe-inline'"],
+    'media-src': ["'self'", 'data:', 'blob:'],
+    'form-action': ["'self'"],
+    'frame-ancestors': ["'none'"],
+    'upgrade-insecure-requests': [],
+  };
+
+  if (!isProduction) {
+    csp['connect-src'].push('https://localhost:4943');
+  }
+
+  return Object.entries(csp)
+    .map(([key, value]) => {
+      return `${key} ${value.join(' ')}`;
+    })
+    .join('; ');
+};
+
+const createICAssetsJson = (
+  isProduction: boolean,
+  assetsDir = 'public',
+  fileName = '.ic-assets.json',
+) => {
+  const assetsJsonDir = resolve(__dirname, assetsDir, fileName);
+  const assetsConfig = {
+    well_known: {
+      match: '.well-known',
+      ignore: false,
+    },
+    all: {
+      match: '**/*',
+      headers: {
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'same-origin',
+        'Content-Security-Policy': getContentSecurityPolicy(isProduction),
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'X-XSS-Protection': '1; mode=block',
+      },
+      allow_raw_access: false,
+    },
+  };
+
+  const icAssetsJson = Object.values(assetsConfig);
+  writeFileSync(assetsJsonDir, JSON.stringify(icAssetsJson, null, 2), {
+    encoding: 'utf-8',
+  });
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isDevelopment =
@@ -63,6 +121,8 @@ export default defineConfig(({ mode }) => {
   const localesPath = resolve(__dirname, 'src/locales');
   const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.locale.ts'));
   const canisters = resolveCanisterIds();
+
+  createICAssetsJson(isProduction);
 
   return {
     mode,
