@@ -165,16 +165,16 @@ export default defineConfig(({ mode }) => {
 
             if (
               isNodeModule &&
-              [
-                '/@vue/',
-                '/vue/',
-                '/vue-router/',
-                '/vue-demi/',
-                '/pinia/',
-                '/vuetify/',
-                '/vue-i18n/',
-                '/@intlify/',
-              ].some(vendor => folder.includes(vendor))
+              ['/vue-i18n/', '/@intlify/'].some(vendor => folder.includes(vendor))
+            ) {
+              return 'localization';
+            }
+
+            if (
+              isNodeModule &&
+              ['/vue-router/', '/pinia/', '/vuetify/', '/vue-i18n/', '/@intlify/'].some(vendor =>
+                folder.includes(vendor),
+              )
             ) {
               return 'vendor';
             }
