@@ -1,5 +1,8 @@
 use crate::{
-    core::{with_memory_manager, Memory, NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID},
+    core::{
+        utils::format_unique_string, with_memory_manager, Memory,
+        NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID,
+    },
     models::{
         indexes::name_to_account_id_index::{NameToAccountIdIndex, NameToAccountIdIndexCriteria},
         AccountId,
@@ -38,12 +41,13 @@ impl IndexRepository<NameToAccountIdIndex, AccountId> for NameToAccountIdIndexRe
 
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<AccountId> {
         DB.with(|db| {
+            let name = format_unique_string(&criteria.name);
             let start_key = NameToAccountIdIndex {
-                name: criteria.name.clone(),
+                name: name.clone(),
                 account_id: [u8::MIN; 16],
             };
             let end_key = NameToAccountIdIndex {
-                name: criteria.name,
+                name,
                 account_id: [u8::MAX; 16],
             };
 
@@ -63,7 +67,7 @@ mod tests {
     fn test_repository_crud() {
         let repository = NameToAccountIdIndexRepository::default();
         let index = NameToAccountIdIndex {
-            name: "Test Account".to_string(),
+            name: "testaccount".to_string(),
             account_id: [2; 16],
         };
 
@@ -80,29 +84,29 @@ mod tests {
     fn test_find_by_criteria() {
         let repository = NameToAccountIdIndexRepository::default();
         repository.insert(NameToAccountIdIndex {
-            name: "Test Accou".to_string(),
+            name: "testaccou".to_string(),
             account_id: [1; 16],
         });
 
         repository.insert(NameToAccountIdIndex {
-            name: "Test Accoun".to_string(),
+            name: "testaccoun".to_string(),
             account_id: [2; 16],
         });
 
         repository.insert(NameToAccountIdIndex {
-            name: "Test Account".to_string(),
+            name: "testaccount".to_string(),
             account_id: [3; 16],
         });
 
         let result = repository.find_by_criteria(NameToAccountIdIndexCriteria {
-            name: "Test Accoun".to_string(),
+            name: "testaccoun".to_string(),
         });
 
         assert_eq!(result.len(), 1);
         assert!(result.contains(&[2; 16]));
 
         let result = repository.find_by_criteria(NameToAccountIdIndexCriteria {
-            name: "Test Account".to_string(),
+            name: "testaccount".to_string(),
         });
 
         assert_eq!(result.len(), 1);
