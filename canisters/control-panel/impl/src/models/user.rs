@@ -11,14 +11,25 @@ use ic_canister_core::{
 use ic_canister_macros::storable;
 use std::str::FromStr;
 
-/// The authorization status of an user.
+/// The subscription status of an user.
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum UserAuthorizationStatus {
-    Unauthorized,
-    Pending,
-    Authorized,
-    Blacklisted,
+pub enum UserSubscriptionStatus {
+    Unsubscribed,
+    Pending(String), // e-mail address to push notification to
+    Approved,
+    Denylisted,
+}
+
+impl std::fmt::Display for UserSubscriptionStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            UserSubscriptionStatus::Unsubscribed => write!(f, "unsubscribed"),
+            UserSubscriptionStatus::Pending(_) => write!(f, "pending"),
+            UserSubscriptionStatus::Approved => write!(f, "approved"),
+            UserSubscriptionStatus::Denylisted => write!(f, "denylisted"),
+        }
+    }
 }
 
 /// The identity of an user.
@@ -27,10 +38,8 @@ pub enum UserAuthorizationStatus {
 pub struct User {
     /// The UUID that identifies the user.
     pub id: Principal,
-    /// The e-mail address of the user.
-    pub email: Option<String>,
-    /// The authorization status of the user.
-    pub authorization_status: UserAuthorizationStatus,
+    /// The subscription status of the user.
+    pub subscription_status: UserSubscriptionStatus,
     /// All the wallets that the user has access to (including the main wallet).
     ///
     /// The user can optionally give a name to each wallet to make it easier to identify them.
@@ -136,7 +145,7 @@ fn validate_main_wallet(
 
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
-        if let Some(ref email) = self.email {
+        if let UserSubscriptionStatus::Pending(email) = &self.subscription_status {
             validate_email(email)?;
         }
         validate_wallets(&self.wallets)?;
@@ -156,8 +165,7 @@ mod tests {
     fn valid_model_serialization() {
         let model = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -168,10 +176,9 @@ mod tests {
         let deserialized_model = User::from_bytes(serialized_model);
 
         assert_eq!(model.id, deserialized_model.id);
-        assert_eq!(model.email, deserialized_model.email);
         assert_eq!(
-            model.authorization_status,
-            deserialized_model.authorization_status
+            model.subscription_status,
+            deserialized_model.subscription_status
         );
         assert_eq!(model.wallets, deserialized_model.wallets);
         assert_eq!(model.deployed_wallets, deserialized_model.deployed_wallets);
@@ -186,8 +193,7 @@ mod tests {
     fn check_wallets_validation() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -219,8 +225,7 @@ mod tests {
     fn valid_main_wallet() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
                 canister_id: Principal::anonymous(),
                 name: None,
@@ -237,8 +242,7 @@ mod tests {
     fn invalid_main_wallet() {
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
                 canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
                 name: None,

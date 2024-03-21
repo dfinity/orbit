@@ -22,27 +22,27 @@ pub struct DeployWalletResponse {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum UserAuthorizationStatusDTO {
-    Unauthorized,
+pub enum UserSubscriptionStatusDTO {
+    Unsubscribed,
     Pending,
-    Authorized,
-    Blacklisted,
+    Approved,
+    Denylisted,
 }
 
-impl std::fmt::Display for UserAuthorizationStatusDTO {
+impl std::fmt::Display for UserSubscriptionStatusDTO {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            UserAuthorizationStatusDTO::Unauthorized => write!(f, "unauthorized"),
-            UserAuthorizationStatusDTO::Pending => write!(f, "pending"),
-            UserAuthorizationStatusDTO::Authorized => write!(f, "authorized"),
-            UserAuthorizationStatusDTO::Blacklisted => write!(f, "blacklisted"),
+            UserSubscriptionStatusDTO::Unsubscribed => write!(f, "unsubscribed"),
+            UserSubscriptionStatusDTO::Pending => write!(f, "pending"),
+            UserSubscriptionStatusDTO::Approved => write!(f, "approved"),
+            UserSubscriptionStatusDTO::Denylisted => write!(f, "denylisted"),
         }
     }
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum CanDeployWalletResponse {
-    NotAllowed(UserAuthorizationStatusDTO),
+    NotAllowed(UserSubscriptionStatusDTO),
     Allowed(usize),
     QuotaExceeded,
 }

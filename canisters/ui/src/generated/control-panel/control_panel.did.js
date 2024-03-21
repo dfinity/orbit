@@ -11,14 +11,14 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : CanisterUpgrade,
     'Init' : CanisterInit,
   });
-  const UserAuthorizationStatus = IDL.Variant({
-    'Authorized' : IDL.Null,
-    'Unauthorized' : IDL.Null,
-    'Blacklisted' : IDL.Null,
+  const UserSubscriptionStatus = IDL.Variant({
+    'Unsubscribed' : IDL.Null,
+    'Approved' : IDL.Null,
+    'Denylisted' : IDL.Null,
     'Pending' : IDL.Null,
   });
   const CanDeployWalletResponse = IDL.Variant({
-    'NotAllowed' : UserAuthorizationStatus,
+    'NotAllowed' : UserSubscriptionStatus,
     'Allowed' : IDL.Nat64,
     'QuotaExceeded' : IDL.Null,
   });
@@ -74,7 +74,6 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const ManageUserInput = IDL.Record({
-    'email' : IDL.Opt(IDL.Text),
     'wallets' : IDL.Opt(IDL.Vec(UserWallet)),
     'main_wallet' : IDL.Opt(WalletID),
   });
@@ -83,11 +82,14 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const RegisterUserInput = IDL.Record({
-    'email' : IDL.Opt(IDL.Text),
     'wallet_id' : IDL.Opt(IDL.Principal),
   });
   const RegisterUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
+    'Err' : ApiError,
+  });
+  const SubscribeToWaitingListResult = IDL.Variant({
+    'Ok' : IDL.Null,
     'Err' : ApiError,
   });
   return IDL.Service({
@@ -100,6 +102,11 @@ export const idlFactory = ({ IDL }) => {
     'list_wallets' : IDL.Func([], [ListWalletsResult], ['query']),
     'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
+    'subscribe_to_waiting_list' : IDL.Func(
+        [IDL.Text],
+        [SubscribeToWaitingListResult],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => {

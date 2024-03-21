@@ -29,8 +29,6 @@ type User = record {
 
 // The result of managing an user.
 type ManageUserInput = record {
-  // The email associated with the user.
-  email : opt text;
   // The main wallet to use for this user.
   //
   // If specified and the wallet is not already associated with the user it will be added.
@@ -46,6 +44,14 @@ type ManageUserResult = variant {
     // The updated user information.
     user : User;
   };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of subscribing to the waiting list.
+type SubscribeToWaitingListResult = variant {
+  // Successfull operation result.
+  Ok;
   // The error that occurred during the operation.
   Err : ApiError;
 };
@@ -95,8 +101,6 @@ type GetUserResult = variant {
 type RegisterUserInput = record {
   // A wallet canister to use for this user.
   wallet_id : opt principal;
-  // The e-mail address of this user.
-  email : opt text;
 };
 
 // The result of registering an user.
@@ -132,15 +136,15 @@ type DeployWalletResult = variant {
   Err : ApiError;
 };
 
-type UserAuthorizationStatus = variant {
-  Unauthorized;
+type UserSubscriptionStatus = variant {
+  Unsubscribed;
   Pending;
-  Authorized;
-  Blacklisted;
+  Approved;
+  Denylisted;
 };
 
 type CanDeployWalletResponse = variant {
-  NotAllowed : UserAuthorizationStatus;
+  NotAllowed : UserSubscriptionStatus;
   Allowed : nat64;
   QuotaExceeded;
 };
@@ -196,6 +200,9 @@ service : (opt CanisterInstall) -> {
   get_user : () -> (GetUserResult) query;
   // Manage the user associated with the caller.
   manage_user : (input : ManageUserInput) -> (ManageUserResult);
+  // Subscribe the user associated with the caller to the waiting list.
+  // Takes the user's e-mail address to which notifications can be pushed.
+  subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.

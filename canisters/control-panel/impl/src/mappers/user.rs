@@ -1,11 +1,11 @@
 use crate::core::ic_cdk::api::time;
 use crate::{
     errors::UserError,
-    models::{User, UserAuthorizationStatus, UserWallet},
+    models::{User, UserSubscriptionStatus, UserWallet},
 };
 use candid::Principal;
 use control_panel_api::{
-    ManageUserInput, RegisterUserInput, UserAuthorizationStatusDTO, UserDTO, UserWalletDTO,
+    ManageUserInput, RegisterUserInput, UserDTO, UserSubscriptionStatusDTO, UserWalletDTO,
 };
 
 #[derive(Default)]
@@ -27,8 +27,7 @@ impl UserMapper {
 
         User {
             id: user_id,
-            email: input.email,
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: wallets
                 .into_iter()
                 .map(|canister_id| UserWallet {
@@ -55,10 +54,6 @@ impl From<User> for UserDTO {
 
 impl User {
     pub fn update_with(&mut self, input: ManageUserInput) -> Result<(), UserError> {
-        if let Some(email) = input.email {
-            self.email = Some(email);
-        }
-
         if let Some(wallet) = input.main_wallet {
             self.main_wallet = Some(wallet);
         }
@@ -74,24 +69,13 @@ impl User {
     }
 }
 
-impl From<UserAuthorizationStatusDTO> for UserAuthorizationStatus {
-    fn from(authorization_status: UserAuthorizationStatusDTO) -> Self {
+impl From<UserSubscriptionStatus> for UserSubscriptionStatusDTO {
+    fn from(authorization_status: UserSubscriptionStatus) -> Self {
         match authorization_status {
-            UserAuthorizationStatusDTO::Unauthorized => UserAuthorizationStatus::Unauthorized,
-            UserAuthorizationStatusDTO::Pending => UserAuthorizationStatus::Pending,
-            UserAuthorizationStatusDTO::Authorized => UserAuthorizationStatus::Authorized,
-            UserAuthorizationStatusDTO::Blacklisted => UserAuthorizationStatus::Blacklisted,
-        }
-    }
-}
-
-impl From<UserAuthorizationStatus> for UserAuthorizationStatusDTO {
-    fn from(authorization_status: UserAuthorizationStatus) -> Self {
-        match authorization_status {
-            UserAuthorizationStatus::Unauthorized => UserAuthorizationStatusDTO::Unauthorized,
-            UserAuthorizationStatus::Pending => UserAuthorizationStatusDTO::Pending,
-            UserAuthorizationStatus::Authorized => UserAuthorizationStatusDTO::Authorized,
-            UserAuthorizationStatus::Blacklisted => UserAuthorizationStatusDTO::Blacklisted,
+            UserSubscriptionStatus::Unsubscribed => UserSubscriptionStatusDTO::Unsubscribed,
+            UserSubscriptionStatus::Pending(_) => UserSubscriptionStatusDTO::Pending,
+            UserSubscriptionStatus::Approved => UserSubscriptionStatusDTO::Approved,
+            UserSubscriptionStatus::Denylisted => UserSubscriptionStatusDTO::Denylisted,
         }
     }
 }
@@ -103,10 +87,7 @@ mod tests {
     #[test]
     fn mapped_user_registration_with_no_wallet() {
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let input = RegisterUserInput {
-            wallet_id: None,
-            email: None,
-        };
+        let input = RegisterUserInput { wallet_id: None };
 
         let user = UserMapper::from_register_input(input, user_id);
 
@@ -121,7 +102,6 @@ mod tests {
         let main_wallet = Principal::from_slice(&[2; 29]);
         let input = RegisterUserInput {
             wallet_id: Some(main_wallet),
-            email: Some("john@example.com".to_string()),
         };
 
         let user = UserMapper::from_register_input(input, user_id);

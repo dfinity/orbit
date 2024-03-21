@@ -32,7 +32,6 @@ fn register_user_successful() {
     // register user
     let register_args = RegisterUserInput {
         wallet_id: Some(canister_ids.wallet),
-        email: Some("john@example.com".to_string()),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
@@ -67,10 +66,7 @@ fn deploy_user_wallet() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput {
-        wallet_id: None,
-        email: Some("john@example.com".to_string()),
-    };
+    let register_args = RegisterUserInput { wallet_id: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -144,10 +140,7 @@ fn deploy_too_many_wallets() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput {
-        wallet_id: None,
-        email: Some("john@example.com".to_string()),
-    };
+    let register_args = RegisterUserInput { wallet_id: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -175,7 +168,6 @@ fn deploy_too_many_wallets() {
 
     // reset all but one deployed wallet
     let manage_user_args = ManageUserInput {
-        email: None,
         main_wallet: Some(wallets[0]),
         wallets: Some(vec![UserWalletDTO {
             canister_id: wallets[0],

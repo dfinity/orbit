@@ -1,4 +1,4 @@
-use control_panel_api::UserAuthorizationStatusDTO;
+use control_panel_api::UserSubscriptionStatusDTO;
 use ic_canister_core::api::DetailableError;
 use thiserror::Error;
 
@@ -41,10 +41,10 @@ pub enum UserError {
     /// The deploy wallet quota was exceeded.
     #[error(r#"Deploy wallet quota exceeded."#)]
     DeployWalletQuotaExceeded,
-    /// The user has an inappropriate authorization status for the operation.
-    #[error(r#"The user has an inappropriate authorization status for the operation."#)]
-    BadUserAuthorizationStatus {
-        authorization_status: UserAuthorizationStatusDTO,
+    /// The user has an inappropriate subscription status for the operation.
+    #[error(r#"The user has an inappropriate subscription status for the operation."#)]
+    BadUserSubscriptionStatus {
+        subscription_status: UserSubscriptionStatusDTO,
     },
 }
 
@@ -72,12 +72,12 @@ impl DetailableError for UserError {
                 details.insert("identity".to_string(), identity.to_string());
                 Some(details)
             }
-            UserError::BadUserAuthorizationStatus {
-                authorization_status,
+            UserError::BadUserSubscriptionStatus {
+                subscription_status,
             } => {
                 details.insert(
-                    "authorization_status".to_string(),
-                    authorization_status.to_string(),
+                    "subscription_status".to_string(),
+                    subscription_status.to_string(),
                 );
                 Some(details)
             }

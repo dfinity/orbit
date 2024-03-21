@@ -37,9 +37,9 @@ impl DeployService {
             CanDeployWalletResponse::QuotaExceeded => {
                 return Err(UserError::DeployWalletQuotaExceeded)?;
             }
-            CanDeployWalletResponse::NotAllowed(authorization_status) => {
-                return Err(UserError::BadUserAuthorizationStatus {
-                    authorization_status,
+            CanDeployWalletResponse::NotAllowed(subscription_status) => {
+                return Err(UserError::BadUserSubscriptionStatus {
+                    subscription_status,
                 })?;
             }
         }
@@ -89,7 +89,6 @@ impl DeployService {
         self.user_service
             .manage_user(
                 ManageUserInput {
-                    email: None,
                     main_wallet: Some(wallet_canister.canister_id),
                     wallets: Some(vec![UserWalletDTO {
                         canister_id: wallet_canister.canister_id,

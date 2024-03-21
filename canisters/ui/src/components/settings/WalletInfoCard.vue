@@ -111,7 +111,6 @@ async function removeWallet(): Promise<void> {
   }
 
   const updatedUser = await services().controlPanel.editUser({
-    email: [], // do not change the e-mail address
     main_wallet: [], // do not change the main wallet
     wallets: [
       session.data.wallets
@@ -170,7 +169,6 @@ const save = async ({ model }: { valid: boolean; model: WalletInfoModel }): Prom
     }) ?? [];
 
   const user = await controlPanelService.editUser({
-    email: [], // do not change the e-mail address
     main_wallet: mainWallet ? [mainWallet] : [],
     wallets: updatedWallets.length ? [updatedWallets] : [],
   });
