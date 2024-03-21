@@ -159,6 +159,10 @@ export default defineConfig(({ mode }) => {
               return `locale-${localeName}`;
             }
 
+            if (isNodeModule && folder.includes('/@dfinity')) {
+              return 'ic-libs';
+            }
+
             if (
               isNodeModule &&
               [
