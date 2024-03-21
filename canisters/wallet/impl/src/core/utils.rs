@@ -108,37 +108,8 @@ pub(crate) fn retain_accessible_resources<T, F>(
     }
 }
 
-pub(crate) fn remove_accents(text: &str) -> String {
-    let mut result = String::new();
-    for c in text.chars() {
-        match c {
-            // Lowercase
-            'á' | 'à' | 'â' | 'ä' => result.push('a'),
-            'é' | 'è' | 'ê' | 'ë' => result.push('e'),
-            'í' | 'ì' | 'î' | 'ï' => result.push('i'),
-            'ó' | 'ò' | 'ô' | 'ö' => result.push('o'),
-            'ú' | 'ù' | 'û' | 'ü' => result.push('u'),
-            'ñ' => result.push('n'),
-            'ç' => result.push('c'),
-            // Uppercase
-            'Á' | 'À' | 'Â' | 'Ä' => result.push('A'),
-            'É' | 'È' | 'Ê' | 'Ë' => result.push('E'),
-            'Í' | 'Ì' | 'Î' | 'Ï' => result.push('I'),
-            'Ó' | 'Ò' | 'Ô' | 'Ö' => result.push('O'),
-            'Ú' | 'Ù' | 'Û' | 'Ü' => result.push('U'),
-            'Ñ' => result.push('N'),
-            'Ç' => result.push('C'),
-            _ => result.push(c),
-        }
-    }
-
-    result
-}
-
 pub(crate) fn format_unique_string(text: &str) -> String {
-    let text = text.to_lowercase().replace(' ', "");
-
-    remove_accents(&text)
+    any_ascii::any_ascii(text).to_lowercase().replace(' ', "")
 }
 
 #[cfg(test)]
@@ -218,18 +189,6 @@ mod tests {
     }
 
     #[test]
-    fn should_remove_accents() {
-        // lowercase
-        assert_eq!(remove_accents("áéíóúñç"), "aeiounc");
-        assert_eq!(remove_accents("àèìòù"), "aeiou");
-        assert_eq!(remove_accents("âêîôû"), "aeiou");
-        assert_eq!(remove_accents("äëïöü"), "aeiou");
-        // uppercase
-        assert_eq!(remove_accents("ÁÉÍÓÚÑÇ"), "AEIOUNC");
-        assert_eq!(remove_accents("ÀÈÌÒÙ"), "AEIOU");
-    }
-
-    #[test]
     fn should_format_unique_string() {
         assert_eq!(format_unique_string("áéíóúñç"), "aeiounc");
         assert_eq!(format_unique_string("àèìòù"), "aeiou");
@@ -239,5 +198,8 @@ mod tests {
         assert_eq!(format_unique_string("ÀÈÌÒÙ"), "aeiou");
         assert_eq!(format_unique_string("ÂÊÎÔÛ"), "aeiou");
         assert_eq!(format_unique_string("ÄËÏÖÜ"), "aeiou");
+        assert_eq!(format_unique_string("Hello, World!"), "hello,world!");
+        assert_eq!(format_unique_string("Hello,  World!"), "hello,world!");
+        assert_eq!(format_unique_string("Hello, World! "), "hello,world!");
     }
 }

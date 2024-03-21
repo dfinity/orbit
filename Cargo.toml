@@ -19,6 +19,7 @@ codegen-units = 1
 
 [workspace.dependencies]
 anyhow = "1.0.75"
+any_ascii = "0.3.2"
 async-trait = "0.1"
 byteorder = "1.5"
 canbench-rs = "0.1.1"
