@@ -36,6 +36,9 @@ pub enum AccountError {
     /// The account has failed validation.
     #[error(r#"The account has failed validation."#)]
     ValidationError { info: String },
+    /// An account with the given name already exists.
+    #[error(r#"An account with the given name already exists."#)]
+    AccountNameAlreadyExists,
 }
 
 impl DetailableError for AccountError {

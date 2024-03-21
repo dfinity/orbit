@@ -1,12 +1,18 @@
-use super::indexes::account_user_index::AccountUserIndexRepository;
+use super::indexes::{
+    account_user_index::AccountUserIndexRepository,
+    name_to_account_id_index::NameToAccountIdIndexRepository,
+};
 use crate::{
     core::{with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
     models::{
-        indexes::account_user_index::AccountUserIndexCriteria, Account, AccountId, AccountKey,
-        UserId,
+        indexes::{
+            account_user_index::AccountUserIndexCriteria,
+            name_to_account_id_index::NameToAccountIdIndexCriteria,
+        },
+        Account, AccountId, AccountKey, UserId,
     },
 };
-use ic_canister_core::repository::Repository;
+use ic_canister_core::repository::{RefreshIndexMode, Repository};
 use ic_canister_core::{repository::IndexRepository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -30,6 +36,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct AccountRepository {
     user_index: AccountUserIndexRepository,
+    name_index: NameToAccountIdIndexRepository,
 }
 
 impl Repository<AccountKey, Account> for AccountRepository {
@@ -42,42 +49,43 @@ impl Repository<AccountKey, Account> for AccountRepository {
     }
 
     fn insert(&self, key: AccountKey, value: Account) -> Option<Account> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_users = prev.to_index_by_users();
-                let curr_users = value.to_index_by_users();
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
 
-                if prev_users != curr_users {
-                    prev_users.iter().for_each(|index| {
-                        self.user_index.remove(index);
-                    });
-                    curr_users.iter().for_each(|index| {
-                        self.user_index.insert(index.to_owned());
-                    });
-                }
-
-                Some(prev)
-            }
-            None => {
-                value.to_index_by_users().iter().for_each(|index| {
-                    self.user_index.insert(index.to_owned());
+            self.user_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_by_users()),
+                    current: value.to_index_by_users(),
                 });
 
-                None
-            }
+            self.name_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
+                    current: Some(value.to_index_by_name()),
+                });
+
+            prev
         })
     }
 
     fn remove(&self, key: &AccountKey) -> Option<Account> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(account) => {
-                account.to_index_by_users().iter().for_each(|index| {
-                    self.user_index.remove(index);
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+
+            self.user_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_by_users()),
+                });
+            self.name_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().map(|prev| prev.to_index_by_name()),
                 });
 
-                Some(account)
-            }
-            None => None,
+            prev
         })
     }
 
@@ -128,6 +136,15 @@ impl AccountRepository {
         accounts.sort();
 
         accounts
+    }
+
+    pub fn find_account_id_by_name(&self, name: &str) -> Option<AccountId> {
+        self.name_index
+            .find_by_criteria(NameToAccountIdIndexCriteria {
+                name: name.to_owned(),
+            })
+            .into_iter()
+            .next()
     }
 }
 
