@@ -137,6 +137,14 @@ impl AccountService {
             self.user_service.get_user(user_id)?;
         }
 
+        if self
+            .account_repository
+            .find_account_id_by_name(&input.name)
+            .is_some()
+        {
+            Err(AccountError::AccountNameAlreadyExists)?
+        }
+
         let uuid = generate_uuid_v4().await;
         let key = Account::key(*uuid.as_bytes());
         let blockchain_api =
@@ -204,6 +212,14 @@ impl AccountService {
 
         if let Some(name) = &input.name {
             account.name = name.to_owned();
+
+            if self
+                .account_repository
+                .find_account_id_by_name(name)
+                .is_some_and(|id| id != account.id)
+            {
+                Err(AccountError::AccountNameAlreadyExists)?
+            }
         }
 
         if let Some(owners) = &input.owners {
@@ -416,6 +432,35 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn add_account_with_existing_name_should_fail() {
+        let ctx = setup();
+        let mut account = mock_account();
+        account.owners.push(ctx.caller_user.id);
+        account.name = "foo".to_string();
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let operation = AddAccountOperation {
+            account_id: None,
+            input: AddAccountOperationInput {
+                name: account.name,
+                owners: vec![ctx.caller_user.id],
+                blockchain: Blockchain::InternetComputer,
+                standard: BlockchainStandard::Native,
+                metadata: Metadata::default(),
+                policies: AccountPoliciesInput {
+                    transfer: Some(Criteria::AutoAdopted),
+                    edit: Some(Criteria::AutoAdopted),
+                },
+            },
+        };
+
+        let result = ctx.service.create_account(operation.input).await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
     async fn edit_account() {
         let ctx = setup();
         let mut account = mock_account();
@@ -438,6 +483,29 @@ mod tests {
 
         assert_eq!(updated_account.name, "test_edit");
         assert_eq!(updated_account.owners, vec![ctx.caller_user.id]);
+    }
+
+    #[tokio::test]
+    async fn edit_account_with_duplicate_name_should_fail() {
+        let ctx = setup();
+        let mut account = mock_account();
+        account.name = "foo".to_string();
+        let mut second_account = mock_account();
+        second_account.name = "bar".to_string();
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+        ACCOUNT_REPOSITORY.insert(second_account.to_key(), second_account.clone());
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: Some("bar".to_string()),
+            owners: None,
+            policies: None,
+        };
+
+        let result = ctx.service.edit_account(operation).await;
+
+        assert!(result.is_err());
     }
 
     #[tokio::test]
