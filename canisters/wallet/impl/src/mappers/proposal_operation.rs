@@ -2,17 +2,18 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         access_policy::{
-            AccessPolicyResourceAction, AccountResourceAction, Resource, ResourceAction,
-            ResourceId, UserResourceAction,
+            AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+            Resource, ResourceAction, ResourceId, UserResourceAction,
         },
         Account, AccountPoliciesInput, AddAccountOperation, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddProposalPolicyOperation,
         AddProposalPolicyOperationInput, AddUserOperation, AddressBookEntry,
         ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
         EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
-        EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserOperation,
-        ProposalOperation, RemoveAddressBookEntryOperation, RemoveProposalPolicyOperation,
-        RemoveProposalPolicyOperationInput, TransferOperation, User,
+        EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserGroupOperation,
+        EditUserOperation, ProposalOperation, RemoveAddressBookEntryOperation,
+        RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput,
+        RemoveUserGroupOperation, TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -606,15 +607,78 @@ impl ProposalOperation {
                 ]
             }
 
-            ProposalOperation::EditAccount(_) => todo!(),
-            ProposalOperation::EditAddressBookEntry(_) => todo!(),
-            ProposalOperation::RemoveAddressBookEntry(_) => todo!(),
-            ProposalOperation::EditUser(_) => todo!(),
-            ProposalOperation::EditUserGroup(_) => todo!(),
-            ProposalOperation::RemoveUserGroup(_) => todo!(),
-            ProposalOperation::ChangeCanister(_) => todo!(),
-            ProposalOperation::EditProposalPolicy(_) => todo!(),
-            ProposalOperation::RemoveProposalPolicy(_) => todo!(),
+            ProposalOperation::EditAccount(EditAccountOperation { input }) => {
+                vec![
+                    Resource::Account(AccountResourceAction::Update(ResourceId::Id(
+                        input.account_id,
+                    ))),
+                    Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::EditAddressBookEntry(EditAddressBookEntryOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::AddressBook(ResourceAction::Update(ResourceId::Id(
+                        input.address_book_entry_id,
+                    ))),
+                    Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::RemoveAddressBookEntry(RemoveAddressBookEntryOperation {
+                input,
+            }) => {
+                vec![
+                    Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(
+                        input.address_book_entry_id,
+                    ))),
+                    Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::EditUser(EditUserOperation { input }) => {
+                vec![
+                    Resource::User(UserResourceAction::Update(ResourceId::Id(input.user_id))),
+                    Resource::User(UserResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::EditUserGroup(EditUserGroupOperation { input }) => {
+                vec![
+                    Resource::UserGroup(ResourceAction::Update(ResourceId::Id(
+                        input.user_group_id,
+                    ))),
+                    Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::RemoveUserGroup(RemoveUserGroupOperation { input }) => {
+                vec![
+                    Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(
+                        input.user_group_id,
+                    ))),
+                    Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::ChangeCanister(_) => {
+                vec![Resource::ChangeCanister(
+                    ChangeCanisterResourceAction::Create,
+                )]
+            }
+            ProposalOperation::EditProposalPolicy(EditProposalPolicyOperation { input }) => {
+                vec![
+                    Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(
+                        input.policy_id,
+                    ))),
+                    Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::RemoveProposalPolicy(RemoveProposalPolicyOperation { input }) => {
+                vec![
+                    Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(
+                        input.policy_id,
+                    ))),
+                    Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Any)),
+                ]
+            }
         }
     }
 }
