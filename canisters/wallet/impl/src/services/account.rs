@@ -10,8 +10,8 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
-        access_policy::{AccountResourceAction, Resource, ResourceId},
-        specifier::{AccountSpecifier, ProposalSpecifier},
+        access_policy::{AccountResourceAction, Resource, ResourceId, ResourceIds},
+        specifier::ProposalSpecifier,
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
         EditProposalPolicyOperationInput,
@@ -163,9 +163,9 @@ impl AccountService {
             let policy = self
                 .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
-                    specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
-                        *uuid.as_bytes()
-                    ])),
+                    specifier: ProposalSpecifier::Transfer(ResourceIds::Ids(
+                        vec![*uuid.as_bytes()],
+                    )),
                     criteria: transfer_criteria.to_owned(),
                 })
                 .await?;
@@ -178,7 +178,7 @@ impl AccountService {
             let policy = self
                 .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
-                    specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                    specifier: ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![
                         *uuid.as_bytes()
                     ])),
                     criteria: edit_criteria.to_owned(),
@@ -220,9 +220,9 @@ impl AccountService {
                     self.proposal_policy_service
                         .edit_proposal_policy(EditProposalPolicyOperationInput {
                             policy_id: id,
-                            specifier: Some(ProposalSpecifier::Transfer(AccountSpecifier::Id(
-                                vec![account.id],
-                            ))),
+                            specifier: Some(ProposalSpecifier::Transfer(ResourceIds::Ids(vec![
+                                account.id,
+                            ]))),
                             criteria: Some(criteria.to_owned()),
                         })
                         .await?;
@@ -231,7 +231,7 @@ impl AccountService {
                     let policy = self
                         .proposal_policy_service
                         .add_proposal_policy(AddProposalPolicyOperationInput {
-                            specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
+                            specifier: ProposalSpecifier::Transfer(ResourceIds::Ids(vec![
                                 account.id,
                             ])),
                             criteria: criteria.to_owned(),
@@ -248,7 +248,7 @@ impl AccountService {
                     self.proposal_policy_service
                         .edit_proposal_policy(EditProposalPolicyOperationInput {
                             policy_id: id,
-                            specifier: Some(ProposalSpecifier::EditAccount(AccountSpecifier::Id(
+                            specifier: Some(ProposalSpecifier::EditAccount(ResourceIds::Ids(
                                 vec![account.id],
                             ))),
                             criteria: Some(criteria.to_owned()),
@@ -259,7 +259,7 @@ impl AccountService {
                     let policy = self
                         .proposal_policy_service
                         .add_proposal_policy(AddProposalPolicyOperationInput {
-                            specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                            specifier: ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![
                                 account.id,
                             ])),
                             criteria: criteria.to_owned(),

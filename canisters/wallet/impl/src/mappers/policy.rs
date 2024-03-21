@@ -1,13 +1,15 @@
 use super::HelperMapper;
 use crate::models::{
+    access_policy::{
+        AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction, Resource,
+        ResourceAction, ResourceId, ResourceIds, UserResourceAction,
+    },
     criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
     ProposalPolicy, ProposalPolicyCallerPrivileges,
 };
 use uuid::Uuid;
-use wallet_api::{
-    ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, TransferSpecifierDTO, UserSpecifierDTO,
-};
+use wallet_api::{ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, UserSpecifierDTO};
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
@@ -200,9 +202,7 @@ impl From<ProposalSpecifier> for wallet_api::ProposalSpecifierDTO {
                 wallet_api::ProposalSpecifierDTO::RemoveAddressBookEntry(address_book_entry.into())
             }
             ProposalSpecifier::Transfer(account) => {
-                wallet_api::ProposalSpecifierDTO::Transfer(TransferSpecifierDTO {
-                    account: account.into(),
-                })
+                wallet_api::ProposalSpecifierDTO::Transfer(account.into())
             }
             ProposalSpecifier::ChangeCanister => wallet_api::ProposalSpecifierDTO::ChangeCanister,
             ProposalSpecifier::EditAccessPolicy(policy) => {
@@ -249,7 +249,7 @@ impl From<wallet_api::ProposalSpecifierDTO> for ProposalSpecifier {
                 ProposalSpecifier::RemoveAddressBookEntry(address_book_entry.into())
             }
             wallet_api::ProposalSpecifierDTO::Transfer(transfer_specifier) => {
-                ProposalSpecifier::Transfer(transfer_specifier.account.into())
+                ProposalSpecifier::Transfer(transfer_specifier.into())
             }
             wallet_api::ProposalSpecifierDTO::ChangeCanister => ProposalSpecifier::ChangeCanister,
             wallet_api::ProposalSpecifierDTO::EditAccessPolicy(policy) => {
@@ -281,6 +281,120 @@ impl From<ProposalPolicyCallerPrivileges> for wallet_api::ProposalPolicyCallerPr
             id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
             can_delete: privileges.can_delete,
             can_edit: privileges.can_edit,
+        }
+    }
+}
+
+impl ProposalSpecifier {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        match self {
+            ProposalSpecifier::AddAccount => vec![Resource::Account(AccountResourceAction::Create)],
+            ProposalSpecifier::AddUser => vec![Resource::User(UserResourceAction::Create)],
+
+            ProposalSpecifier::Transfer(account_specifier) => match account_specifier {
+                ResourceIds::Any => vec![Resource::Account(AccountResourceAction::Transfer(
+                    ResourceId::Any,
+                ))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| {
+                        Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*id)))
+                    })
+                    .collect::<_>(),
+            },
+
+            ProposalSpecifier::EditUser(user_spec) => match user_spec {
+                ResourceIds::Any => {
+                    vec![Resource::User(UserResourceAction::Update(ResourceId::Any))]
+                }
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| {
+                        Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(*id)))
+                    })
+                    .collect::<_>(),
+            },
+
+            ProposalSpecifier::EditAccount(resource_ids) => match resource_ids {
+                ResourceIds::Any => vec![Resource::Account(AccountResourceAction::Update(
+                    ResourceId::Any,
+                ))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::Account(AccountResourceAction::Update(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            ProposalSpecifier::AddAddressBookEntry => {
+                vec![Resource::AddressBook(ResourceAction::Create)]
+            }
+
+            ProposalSpecifier::EditAddressBookEntry(resource_ids) => match resource_ids {
+                ResourceIds::Any => vec![Resource::AddressBook(ResourceAction::Update(
+                    ResourceId::Any,
+                ))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::AddressBook(ResourceAction::Update(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            ProposalSpecifier::RemoveAddressBookEntry(resource_ids) => match resource_ids {
+                ResourceIds::Any => vec![Resource::AddressBook(ResourceAction::Delete(
+                    ResourceId::Any,
+                ))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            ProposalSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create,
+            )],
+            ProposalSpecifier::EditAccessPolicy(resource_specifier) => match resource_specifier {
+                ResourceSpecifier::Any => {
+                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
+                }
+                ResourceSpecifier::Resource(resource) => vec![resource.clone()],
+            },
+            ProposalSpecifier::AddProposalPolicy => {
+                vec![Resource::ProposalPolicy(ResourceAction::Create)]
+            }
+            ProposalSpecifier::EditProposalPolicy(resources) => match resources {
+                ResourceIds::Any => vec![Resource::ProposalPolicy(ResourceAction::Update(
+                    ResourceId::Any,
+                ))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            ProposalSpecifier::RemoveProposalPolicy(resources) => match resources {
+                ResourceIds::Any => vec![Resource::ProposalPolicy(ResourceAction::Delete(
+                    ResourceId::Any,
+                ))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            ProposalSpecifier::AddUserGroup => vec![Resource::UserGroup(ResourceAction::Create)],
+            ProposalSpecifier::EditUserGroup(resources) => match resources {
+                ResourceIds::Any => {
+                    vec![Resource::UserGroup(ResourceAction::Update(ResourceId::Any))]
+                }
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::UserGroup(ResourceAction::Update(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            ProposalSpecifier::RemoveUserGroup(resources) => match resources {
+                ResourceIds::Any => {
+                    vec![Resource::UserGroup(ResourceAction::Delete(ResourceId::Any))]
+                }
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
         }
     }
 }

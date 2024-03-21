@@ -46,6 +46,13 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
             }
         }
 
+        // let policies = self.proposal.to_index_for_resource().iter().map(|entry| {
+        //     // let policy = PROPOSAL_POLICY_REPOSITORY.get();
+        //     self.proposal_matcher
+        //         .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
+        //         .context("failed to match proposal")?
+        // });
+
         if matching_policies.is_empty() {
             // Since proposals handle security critical operations, we want to reject them by default if
             // they don't match any policy. Users need to explicitly add the necessary policies to evaluate them.

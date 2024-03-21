@@ -221,6 +221,22 @@ pub enum ProposalResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceIds {
+    Any,
+    Ids(Vec<UUID>),
+}
+
+impl ResourceIds {
+    pub fn to_vec(&self) -> Vec<ResourceId> {
+        match self {
+            ResourceIds::Any => vec![],
+            ResourceIds::Ids(ids) => ids.iter().map(|id| ResourceId::Id(*id)).collect(),
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ResourceId {
     Any,
     Id(UUID),

@@ -1,5 +1,5 @@
 use crate::{
-    core::{with_memory_manager, Memory, PROPOSAL_OPERATION_SPECIFIER_INDEX_MEMORY_ID},
+    core::{with_memory_manager, Memory, PROPOSAL_RESOURCE_INDEX_MEMORY_ID},
     models::{
         access_policy::Resource,
         indexes::proposal_resource_index::{ProposalResourceIndex, ProposalResourceIndexCriteria},
@@ -12,7 +12,7 @@ use std::{cell::RefCell, collections::HashSet};
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalResourceIndex, (), VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(PROPOSAL_OPERATION_SPECIFIER_INDEX_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(PROPOSAL_RESOURCE_INDEX_MEMORY_ID))
     )
   })
 }
@@ -40,11 +40,11 @@ impl IndexRepository<ProposalResourceIndex, UUID> for ProposalResourceIndexRepos
         DB.with(|db| {
             let start_key = ProposalResourceIndex {
                 proposal_id: criteria.proposal_id,
-                proposal_specifier: Resource::min(),
+                resource: Resource::min(),
             };
             let end_key = ProposalResourceIndex {
                 proposal_id: criteria.proposal_id,
-                proposal_specifier: Resource::max(),
+                resource: Resource::max(),
             };
 
             db.borrow()
@@ -66,7 +66,7 @@ mod tests {
         let repository = ProposalResourceIndexRepository::default();
         let index = ProposalResourceIndex {
             proposal_id: [0; 16],
-            proposal_specifier: Resource::User(UserResourceAction::Create),
+            resource: Resource::User(UserResourceAction::Create),
         };
 
         assert!(!repository.exists(&index));
@@ -83,7 +83,7 @@ mod tests {
         let repository = ProposalResourceIndexRepository::default();
         let index = ProposalResourceIndex {
             proposal_id: [0; 16],
-            proposal_specifier: Resource::User(UserResourceAction::Create),
+            resource: Resource::User(UserResourceAction::Create),
         };
 
         repository.insert(index.clone());

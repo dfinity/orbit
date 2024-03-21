@@ -5,7 +5,7 @@ use crate::{
         access_policy::{
             AccessPolicy, AccessPolicyResourceAction, AccountResourceAction, Allow, AuthScope,
             ChangeCanisterResourceAction, ProposalResourceAction, Resource, ResourceAction,
-            ResourceId, SettingsResourceAction, UserResourceAction,
+            ResourceId, ResourceIds, SettingsResourceAction, UserResourceAction,
         },
         Transfer,
     },
@@ -357,6 +357,36 @@ impl From<ResourceId> for wallet_api::ResourceIdDTO {
             ResourceId::Id(id) => {
                 wallet_api::ResourceIdDTO::Id(Uuid::from_bytes(id).hyphenated().to_string())
             }
+        }
+    }
+}
+
+impl From<wallet_api::ResourceIdsDTO> for ResourceIds {
+    fn from(dto: wallet_api::ResourceIdsDTO) -> Self {
+        match dto {
+            wallet_api::ResourceIdsDTO::Any => ResourceIds::Any,
+            wallet_api::ResourceIdsDTO::Ids(ids) => ResourceIds::Ids(
+                ids.iter()
+                    .map(|id| {
+                        *HelperMapper::to_uuid(id.to_owned())
+                            .expect("Invalid resource id")
+                            .as_bytes()
+                    })
+                    .collect::<Vec<UUID>>(),
+            ),
+        }
+    }
+}
+
+impl From<ResourceIds> for wallet_api::ResourceIdsDTO {
+    fn from(id: ResourceIds) -> Self {
+        match id {
+            ResourceIds::Any => wallet_api::ResourceIdsDTO::Any,
+            ResourceIds::Ids(ids) => wallet_api::ResourceIdsDTO::Ids(
+                ids.iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+            ),
         }
     }
 }

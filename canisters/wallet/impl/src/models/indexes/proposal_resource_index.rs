@@ -2,13 +2,14 @@ use crate::models::{access_policy::Resource, Proposal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
 
-/// Index of proposals by the proposer user id.
+/// Index of proposals by the resource derived from the proposal operation.
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ProposalResourceIndex {
     /// The proposal id, which is a UUID.
     pub proposal_id: UUID,
-    pub proposal_specifier: Resource,
+    /// The resource derived from the proposal operation.
+    pub resource: Resource,
 }
 
 #[derive(Clone, Debug)]
@@ -23,7 +24,7 @@ impl Proposal {
             .iter()
             .map(|resource| ProposalResourceIndex {
                 proposal_id: self.id.to_owned(),
-                proposal_specifier: resource.to_owned(),
+                resource: resource.to_owned(),
             })
             .collect()
     }
@@ -43,7 +44,7 @@ mod tests {
         let proposal_id = [1; 16];
         let model = ProposalResourceIndex {
             proposal_id,
-            proposal_specifier: Resource::User(UserResourceAction::Create),
+            resource: Resource::User(UserResourceAction::Create),
         };
 
         let serialized_model = model.to_bytes();
@@ -51,13 +52,13 @@ mod tests {
 
         assert_eq!(model.proposal_id, deserialized_model.proposal_id);
         assert!(matches!(
-            deserialized_model.proposal_specifier,
+            deserialized_model.resource,
             Resource::User(UserResourceAction::Create)
         ));
     }
 
     #[test]
-    fn valid_user_proposal_indexes() {
+    fn valid_proposal_resource_indexes() {
         let mut proposal = mock_proposal();
         proposal.id = [1; 16];
         proposal.proposed_by = [u8::MAX; 16];
@@ -76,7 +77,7 @@ mod tests {
         assert_eq!(index_entries.len(), 1);
         assert_eq!(index_entries[0].proposal_id, proposal.id);
         assert!(matches!(
-            index_entries[0].proposal_specifier,
+            index_entries[0].resource,
             Resource::User(UserResourceAction::Create)
         ));
     }

@@ -1,4 +1,4 @@
-use super::access_policy::Resource;
+use super::access_policy::{Resource, ResourceIds};
 use super::{Account, MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
 use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};
@@ -40,20 +40,20 @@ pub enum ResourceSpecifier {
 pub enum ProposalSpecifier {
     AddAccount,
     AddUser,
-    EditAccount(AccountSpecifier),
-    EditUser(UserSpecifier),
+    EditAccount(ResourceIds),
+    EditUser(ResourceIds),
     AddAddressBookEntry,
-    EditAddressBookEntry(CommonSpecifier),
-    RemoveAddressBookEntry(CommonSpecifier),
-    Transfer(AccountSpecifier),
+    EditAddressBookEntry(ResourceIds),
+    RemoveAddressBookEntry(ResourceIds),
+    Transfer(ResourceIds),
     ChangeCanister,
     EditAccessPolicy(ResourceSpecifier),
     AddProposalPolicy,
-    EditProposalPolicy(CommonSpecifier),
-    RemoveProposalPolicy(CommonSpecifier),
+    EditProposalPolicy(ResourceIds),
+    RemoveProposalPolicy(ResourceIds),
     AddUserGroup,
-    EditUserGroup(CommonSpecifier),
-    RemoveUserGroup(CommonSpecifier),
+    EditUserGroup(ResourceIds),
+    RemoveUserGroup(ResourceIds),
 }
 
 impl From<&ProposalSpecifier> for ProposalOperationType {
@@ -92,15 +92,13 @@ pub trait Match<T>: Sync + Send {
 #[derive(Clone)]
 pub struct AccountMatcher;
 
-impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
-    fn is_match(&self, v: (Proposal, UUID, AccountSpecifier)) -> Result<bool, MatchError> {
+impl Match<(Proposal, UUID, ResourceIds)> for AccountMatcher {
+    fn is_match(&self, v: (Proposal, UUID, ResourceIds)) -> Result<bool, MatchError> {
         let (_, account_id, specifier) = v;
 
         match specifier {
-            AccountSpecifier::Any => Ok(true),
-            // TODO: Add once account groups are implemented
-            AccountSpecifier::Group(_ids) => todo!(),
-            AccountSpecifier::Id(ids) => Ok(ids.contains(&account_id)),
+            ResourceIds::Any => Ok(true),
+            ResourceIds::Ids(ids) => Ok(ids.contains(&account_id)),
         }
     }
 }
@@ -108,17 +106,13 @@ impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
 #[derive(Clone)]
 pub struct CommonIdMatcher;
 
-impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
-    fn is_match(&self, v: (Proposal, UUID, CommonSpecifier)) -> Result<bool, MatchError> {
+impl Match<(Proposal, UUID, ResourceIds)> for CommonIdMatcher {
+    fn is_match(&self, v: (Proposal, UUID, ResourceIds)) -> Result<bool, MatchError> {
         let (_, entity_id, specifier) = v;
 
         match specifier {
-            CommonSpecifier::Any => Ok(true),
-            CommonSpecifier::Id(ids) => Ok(ids.contains(&entity_id)),
-            CommonSpecifier::Group(_) => {
-                // Common id matcher does not support groups
-                Ok(false)
-            }
+            ResourceIds::Any => Ok(true),
+            ResourceIds::Ids(ids) => Ok(ids.contains(&entity_id)),
         }
     }
 }
@@ -174,9 +168,9 @@ impl Match<ProposalHasVoterInUserSpecifier> for UserMatcher {
 
 #[derive(Clone)]
 pub struct ProposalMatcher {
-    pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
+    pub account_matcher: Arc<dyn Match<(Proposal, UUID, ResourceIds)>>,
     pub user_matcher: Arc<dyn Match<ProposalHasVoterInUserSpecifier>>,
-    pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, CommonSpecifier)>>,
+    pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, ResourceIds)>>,
 }
 
 impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
@@ -190,9 +184,16 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
                 self.account_matcher
                     .is_match((p, params.input.account_id, account))?
             }
-            (ProposalOperation::EditUser(params), ProposalSpecifier::EditUser(user)) => self
-                .user_matcher
-                .is_match((p, params.input.user_id, user))?,
+            (ProposalOperation::EditUser(params), ProposalSpecifier::EditUser(user)) => {
+                self.user_matcher.is_match((
+                    p,
+                    params.input.user_id,
+                    match user {
+                        ResourceIds::Any => UserSpecifier::Any,
+                        ResourceIds::Ids(ids) => UserSpecifier::Id(ids),
+                    },
+                ))?
+            }
             (ProposalOperation::AddAddressBookEntry(_), ProposalSpecifier::AddAddressBookEntry) => {
                 true
             }
@@ -303,11 +304,11 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
 #[cfg(test)]
 mod tests {
     use crate::models::{
+        access_policy::ResourceIds,
         criteria::Criteria,
         proposal_test_utils::mock_proposal,
         specifier::{
-            AccountMatcher, AccountSpecifier, Match, ProposalMatcher, ProposalSpecifier,
-            UserMatcher, UserSpecifier,
+            AccountMatcher, Match, ProposalMatcher, ProposalSpecifier, UserMatcher, UserSpecifier,
         },
         AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
         AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
@@ -365,7 +366,7 @@ mod tests {
                         name: None,
                     },
                 }),
-                ProposalSpecifier::EditAccount(AccountSpecifier::Any),
+                ProposalSpecifier::EditAccount(ResourceIds::Any),
             ),
             (
                 ProposalOperation::EditUser(EditUserOperation {
@@ -377,7 +378,7 @@ mod tests {
                         status: None,
                     },
                 }),
-                ProposalSpecifier::EditUser(UserSpecifier::Any),
+                ProposalSpecifier::EditUser(ResourceIds::Any),
             ),
             (
                 ProposalOperation::Transfer(TransferOperation {
@@ -391,7 +392,7 @@ mod tests {
                         fee: None,
                     },
                 }),
-                ProposalSpecifier::Transfer(AccountSpecifier::Any),
+                ProposalSpecifier::Transfer(ResourceIds::Any),
             ),
         ];
 

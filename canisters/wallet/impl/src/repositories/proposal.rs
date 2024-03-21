@@ -1106,23 +1106,21 @@ mod tests {
 
         PROPOSAL_REPOSITORY.insert(ProposalKey { id: proposal.id }, proposal.clone());
 
-        PROPOSAL_REPOSITORY
+        assert!(PROPOSAL_REPOSITORY
             .resource_index
             .exists(&ProposalResourceIndex {
                 proposal_id: proposal.id,
-                proposal_specifier: Resource::Account(AccountResourceAction::Transfer(
-                    ResourceId::Any,
-                )),
-            });
+                resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+            }));
 
-        PROPOSAL_REPOSITORY
+        assert!(PROPOSAL_REPOSITORY
             .resource_index
             .exists(&ProposalResourceIndex {
                 proposal_id: proposal.id,
-                proposal_specifier: Resource::Account(AccountResourceAction::Transfer(
-                    ResourceId::Id(from_account_id),
-                )),
-            });
+                resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
+                    from_account_id,
+                ))),
+            }));
     }
 }
 

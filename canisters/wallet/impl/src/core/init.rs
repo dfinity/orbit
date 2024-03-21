@@ -1,14 +1,11 @@
 use crate::models::{
     access_policy::{
         AccessPolicyResourceAction, AccountResourceAction, Allow, ChangeCanisterResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
-        UserResourceAction,
+        ProposalResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SettingsResourceAction, UserResourceAction,
     },
     criteria::{Criteria, Percentage},
-    specifier::{
-        CommonSpecifier, ProposalSpecifier, ResourceSpecifier,
-        UserSpecifier as ProposalUserSpecifier,
-    },
+    specifier::{ProposalSpecifier, ResourceSpecifier, UserSpecifier as ProposalUserSpecifier},
     ADMIN_GROUP_ID,
 };
 use lazy_static::lazy_static;
@@ -148,7 +145,7 @@ lazy_static! {
             )])
         ),
         (
-            ProposalSpecifier::EditUser(ProposalUserSpecifier::Any),
+            ProposalSpecifier::EditUser(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
@@ -163,14 +160,14 @@ lazy_static! {
             )])
         ),
         (
-            ProposalSpecifier::EditAddressBookEntry(CommonSpecifier::Any),
+            ProposalSpecifier::EditAddressBookEntry(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
             )])
         ),
         (
-            ProposalSpecifier::RemoveAddressBookEntry(CommonSpecifier::Any),
+            ProposalSpecifier::RemoveAddressBookEntry(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
@@ -193,14 +190,14 @@ lazy_static! {
             )])
         ),
         (
-            ProposalSpecifier::EditProposalPolicy(CommonSpecifier::Any),
+            ProposalSpecifier::EditProposalPolicy(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
             )])
         ),
         (
-            ProposalSpecifier::RemoveProposalPolicy(CommonSpecifier::Any),
+            ProposalSpecifier::RemoveProposalPolicy(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
@@ -215,14 +212,14 @@ lazy_static! {
             )])
         ),
         (
-            ProposalSpecifier::EditUserGroup(CommonSpecifier::Any),
+            ProposalSpecifier::EditUserGroup(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)
             )])
         ),
         (
-            ProposalSpecifier::RemoveUserGroup(CommonSpecifier::Any),
+            ProposalSpecifier::RemoveUserGroup(ResourceIds::Any),
             Criteria::And(vec![Criteria::ApprovalThreshold(
                 ProposalUserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
                 Percentage(51)

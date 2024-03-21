@@ -39,20 +39,20 @@ type ProposalPolicy = record {
 type ProposalSpecifier = variant {
   AddAccount;
   AddUser;
-  EditAccount : AccountSpecifier;
-  EditUser : UserSpecifier;
-  Transfer : TransferSpecifier;
+  EditAccount : ResourceIds;
+  EditUser : ResourceIds;
+  Transfer : ResourceIds;
   AddAddressBookEntry;
-  EditAddressBookEntry : CommonSpecifier;
-  RemoveAddressBookEntry : CommonSpecifier;
+  EditAddressBookEntry : ResourceIds;
+  RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
   EditAccessPolicy : ResourceSpecifier;
   AddProposalPolicy;
-  EditProposalPolicy : CommonSpecifier;
-  RemoveProposalPolicy : CommonSpecifier;
+  EditProposalPolicy : ResourceIds;
+  RemoveProposalPolicy : ResourceIds;
   AddUserGroup;
-  EditUserGroup : CommonSpecifier;
-  RemoveUserGroup : CommonSpecifier;
+  EditUserGroup : ResourceIds;
+  RemoveUserGroup : ResourceIds;
 };
 
 // A record type that can be used to represent an approval threshold.
@@ -1392,6 +1392,12 @@ type AccessControlUserSpecifier = CommonSpecifier;
 type ResourceId = variant {
   Any;
   Id : UUID;
+};
+
+// The record ids of a resource, used to specify the resources that are being accessed.
+type ResourceIds = variant {
+  Any;
+  Ids : vec UUID;
 };
 
 // The allow rules for who can access the resource.

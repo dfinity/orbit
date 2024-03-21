@@ -1,24 +1,24 @@
-use crate::{MetadataDTO, PaginationInput, ResourceDTO, UuidDTO};
+use crate::{MetadataDTO, PaginationInput, ResourceDTO, ResourceIdsDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ProposalSpecifierDTO {
     AddAccount,
     AddUser,
-    EditAccount(AccountSpecifierDTO),
-    EditUser(UserSpecifierDTO),
+    EditAccount(ResourceIdsDTO),
+    EditUser(ResourceIdsDTO),
     AddAddressBookEntry,
-    EditAddressBookEntry(CommonSpecifierDTO),
-    RemoveAddressBookEntry(CommonSpecifierDTO),
-    Transfer(TransferSpecifierDTO),
+    EditAddressBookEntry(ResourceIdsDTO),
+    RemoveAddressBookEntry(ResourceIdsDTO),
+    Transfer(ResourceIdsDTO),
     ChangeCanister,
     EditAccessPolicy(ResourceSpecifierDTO),
     AddProposalPolicy,
-    EditProposalPolicy(CommonSpecifierDTO),
-    RemoveProposalPolicy(CommonSpecifierDTO),
+    EditProposalPolicy(ResourceIdsDTO),
+    RemoveProposalPolicy(ResourceIdsDTO),
     AddUserGroup,
-    EditUserGroup(CommonSpecifierDTO),
-    RemoveUserGroup(CommonSpecifierDTO),
+    EditUserGroup(ResourceIdsDTO),
+    RemoveUserGroup(ResourceIdsDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
