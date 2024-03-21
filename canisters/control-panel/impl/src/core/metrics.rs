@@ -19,6 +19,13 @@ thread_local! {
         ), &["status"]).unwrap()
     });
 
+    pub static COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL: RefCell<CounterVec> = RefCell::new({
+        CounterVec::new(Opts::new(
+            format!("{SERVICE_NAME}_subscribe_to_waiting_list_total"), // name
+            "number of times subscribe_to_waiting_list was called", // help
+        ), &["status"]).unwrap()
+    });
+
     pub static COUNTER_DELETE_USER_TOTAL: RefCell<CounterVec> = RefCell::new({
         CounterVec::new(Opts::new(
             format!("{SERVICE_NAME}_delete_user_total"), // name

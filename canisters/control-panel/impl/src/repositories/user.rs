@@ -48,7 +48,7 @@ impl Repository<UserKey, User> for UserRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserAuthorizationStatus;
+    use crate::models::UserSubscriptionStatus;
     use candid::Principal;
 
     #[test]
@@ -56,8 +56,7 @@ mod tests {
         let repository = UserRepository::default();
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
@@ -75,8 +74,7 @@ mod tests {
         let repository = UserRepository::default();
         let user = User {
             id: Principal::from_slice(&[u8::MAX; 29]),
-            email: Some("john@example.com".to_string()),
-            authorization_status: UserAuthorizationStatus::Unauthorized,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
