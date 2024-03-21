@@ -79,7 +79,7 @@ const getContentSecurityPolicy = (isProduction: boolean): string => {
     .join('; ');
 };
 
-const createICAssetsJson = (
+const generateICAssetsJson = (
   isProduction: boolean,
   assetsDir = 'public',
   fileName = '.ic-assets.json',
@@ -122,7 +122,8 @@ export default defineConfig(({ mode }) => {
   const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.locale.ts'));
   const canisters = resolveCanisterIds();
 
-  createICAssetsJson(isProduction);
+  // Generate .ic-assets.json file, which is used to configure the asset canister headers.
+  generateICAssetsJson(isProduction);
 
   return {
     mode,
