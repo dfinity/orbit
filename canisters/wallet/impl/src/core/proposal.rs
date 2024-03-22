@@ -3,11 +3,16 @@ use crate::{
     errors::EvaluateError,
     models::{
         criteria::{Criteria, EvaluateCriteria},
-        specifier::{Match, ProposalSpecifier, UserSpecifier},
-        Account, EvaluationStatus, Proposal, ProposalOperation, ProposalStatus, User, UserId,
-        UserStatus,
+        specifier::{
+            Match, ProposalSpecifier, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
+        },
+        Account, EvaluationStatus, Proposal, ProposalId, ProposalKey, ProposalOperation,
+        ProposalStatusCode, User, UserId, UserStatus,
     },
-    repositories::{policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, USER_REPOSITORY},
+    repositories::{
+        policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
+        USER_REPOSITORY,
+    },
 };
 use anyhow::Context;
 use ic_canister_core::{repository::Repository, types::UUID};
@@ -35,23 +40,13 @@ impl ProposalEvaluator {
 
 impl Evaluate<EvaluationStatus> for ProposalEvaluator {
     fn evaluate(&self) -> Result<EvaluationStatus, EvaluateError> {
-        let mut matching_policies = Vec::new();
-        for policy in PROPOSAL_POLICY_REPOSITORY.list() {
-            if self
-                .proposal_matcher
-                .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
-                .context("failed to match proposal")?
-            {
-                matching_policies.push(policy.to_owned());
-            }
-        }
-
-        // let policies = self.proposal.to_index_for_resource().iter().map(|entry| {
-        //     // let policy = PROPOSAL_POLICY_REPOSITORY.get();
-        //     self.proposal_matcher
-        //         .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
-        //         .context("failed to match proposal")?
-        // });
+        let matching_policies = self
+            .proposal
+            .operation
+            .to_resources()
+            .iter()
+            .flat_map(|resource| PROPOSAL_POLICY_REPOSITORY.find_by_resource(resource.to_owned()))
+            .collect::<Vec<_>>();
 
         if matching_policies.is_empty() {
             // Since proposals handle security critical operations, we want to reject them by default if
@@ -308,54 +303,53 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
 /// - The proposal is not adopted or rejected
 /// - There are matching policies for the proposal and the user is a part of the group that is allowed to vote
 /// - The user has not already voted on the proposal
-pub struct ProposalVoteRightsEvaluator<'p> {
+pub struct ProposalVoteRightsEvaluator {
     pub proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
     pub vote_rights_evaluator: Arc<VoteRightsEvaluate>,
     pub voter_id: UserId,
-    pub proposal: &'p Proposal,
+    pub proposal_id: ProposalId,
 }
 
 pub type VoteRightsEvaluate =
-    dyn EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), EvaluateError>;
+    dyn EvaluateCriteria<bool, (Arc<ProposalId>, Arc<UserId>, Arc<Criteria>), EvaluateError>;
 
-impl<'p> ProposalVoteRightsEvaluator<'p> {
+impl ProposalVoteRightsEvaluator {
     pub fn new(
         proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
         vote_rights_evaluator: Arc<VoteRightsEvaluate>,
         voter_id: UserId,
-        proposal: &'p Proposal,
+        proposal_id: ProposalId,
     ) -> Self {
         Self {
             proposal_matcher,
             vote_rights_evaluator,
             voter_id,
-            proposal,
+            proposal_id,
         }
     }
 }
 
-impl Evaluate<bool> for ProposalVoteRightsEvaluator<'_> {
+impl Evaluate<bool> for ProposalVoteRightsEvaluator {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
-        if self.proposal.voters().contains(&self.voter_id)
-            || self.proposal.status != ProposalStatus::Created
+        if PROPOSAL_REPOSITORY.exists_voter(&self.proposal_id, &self.voter_id)
+            || (PROPOSAL_REPOSITORY.exists(&ProposalKey {
+                id: self.proposal_id,
+            }) && {
+                !PROPOSAL_REPOSITORY.exists_status(&self.proposal_id, ProposalStatusCode::Created)
+            })
         {
             return Ok(false);
         }
 
-        let mut matching_policies = Vec::new();
-        for policy in PROPOSAL_POLICY_REPOSITORY.list() {
-            if self
-                .proposal_matcher
-                .is_match((self.proposal.to_owned(), policy.specifier.to_owned()))
-                .context("failed to match proposal")?
-            {
-                matching_policies.push(policy.to_owned());
-            }
-        }
+        let matching_policies = PROPOSAL_REPOSITORY
+            .get_resources(&self.proposal_id)
+            .iter()
+            .flat_map(|resource| PROPOSAL_POLICY_REPOSITORY.find_by_resource(resource.to_owned()))
+            .collect::<Vec<_>>();
 
         for policy in matching_policies {
             if self.vote_rights_evaluator.evaluate((
-                Arc::new(self.proposal.to_owned()),
+                Arc::new(self.proposal_id.to_owned()),
                 Arc::new(self.voter_id),
                 Arc::new(policy.criteria.to_owned()),
             ))? {
@@ -368,33 +362,35 @@ impl Evaluate<bool> for ProposalVoteRightsEvaluator<'_> {
 }
 
 pub struct ProposalVoteRightsCriteriaEvaluator {
-    pub voter_matcher: Arc<dyn Match<(Proposal, UserId, UserSpecifier)>>,
+    pub voter_matcher: Arc<dyn Match<UserInvolvedInCriteriaForProposalResource>>,
 }
 
-impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), EvaluateError>
+impl EvaluateCriteria<bool, (Arc<ProposalId>, Arc<UserId>, Arc<Criteria>), EvaluateError>
     for ProposalVoteRightsCriteriaEvaluator
 {
     fn evaluate(
         &self,
-        (proposal, voter_id, criteria): (Arc<Proposal>, Arc<UserId>, Arc<Criteria>),
+        (proposal_id, voter_id, criteria): (Arc<ProposalId>, Arc<UserId>, Arc<Criteria>),
     ) -> Result<bool, EvaluateError> {
         match criteria.as_ref() {
             Criteria::ApprovalThreshold(voter_specifier, _)
             | Criteria::MinimumVotes(voter_specifier, _) => {
                 let can_vote = self
                     .voter_matcher
-                    .is_match((
-                        proposal.as_ref().to_owned(),
-                        voter_id.as_ref().to_owned(),
-                        voter_specifier.to_owned(),
-                    ))
+                    .is_match(UserInvolvedInCriteriaForProposalResource {
+                        proposal_operation_resources: PROPOSAL_REPOSITORY
+                            .get_resources(&proposal_id),
+                        policy_criteria_user_specifier: voter_specifier.to_owned(),
+                        user_id: voter_id.as_ref().to_owned(),
+                        proposal_id: proposal_id.as_ref().to_owned(),
+                    })
                     .context("failed to match proposal voters")?;
 
                 Ok(can_vote)
             }
             Criteria::HasAddressBookMetadata(_) => Ok(false),
             Criteria::And(criterias) | Criteria::Or(criterias) => {
-                let proposal = &proposal;
+                let proposal = &proposal_id;
                 let voter_id = &voter_id;
 
                 for criteria in criterias.iter() {
@@ -413,7 +409,7 @@ impl EvaluateCriteria<bool, (Arc<Proposal>, Arc<UserId>, Arc<Criteria>), Evaluat
             }
             Criteria::Not(criteria) => {
                 let can_vote = self.evaluate((
-                    proposal.to_owned(),
+                    proposal_id.to_owned(),
                     voter_id.to_owned(),
                     Arc::new(criteria.as_ref().to_owned()),
                 ))?;

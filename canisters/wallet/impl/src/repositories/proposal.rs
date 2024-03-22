@@ -17,6 +17,7 @@ use crate::{
     errors::{MapperError, RepositoryError},
     mappers::HelperMapper,
     models::{
+        access_policy::Resource,
         indexes::{
             proposal_account_index::{ProposalAccountIndex, ProposalAccountIndexCriteria},
             proposal_creation_time_index::ProposalCreationTimeIndexCriteria,
@@ -24,6 +25,7 @@ use crate::{
             proposal_key_creation_time_index::ProposalKeyCreationTimeIndexCriteria,
             proposal_key_expiration_time_index::ProposalKeyExpirationTimeIndexCriteria,
             proposal_proposer_index::{ProposalProposerIndex, ProposalProposerIndexCriteria},
+            proposal_resource_index::ProposalResourceIndexCriteria,
             proposal_scheduled_index::ProposalScheduledIndexCriteria,
             proposal_sort_index::ProposalSortIndexKey,
             proposal_status_index::{ProposalStatusIndex, ProposalStatusIndexCriteria},
@@ -220,7 +222,6 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                         .clone()
                         .map(|prev| prev.to_index_by_status_and_modification()),
                 });
-
             self.resource_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
                     current: prev
@@ -239,6 +240,10 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
 }
 
 impl ProposalRepository {
+    pub fn exists(&self, key: &ProposalKey) -> bool {
+        DB.with(|m| m.borrow().contains_key(key))
+    }
+
     pub fn find_by_expiration_dt_and_status(
         &self,
         expiration_dt_from: Option<Timestamp>,
@@ -304,6 +309,24 @@ impl ProposalRepository {
             .iter()
             .filter_map(|id| self.get(&Proposal::key(*id)))
             .collect::<Vec<Proposal>>()
+    }
+
+    /// Checks if the proposal is of the provided status.
+    pub fn exists_status(&self, proposal_id: &ProposalId, status: ProposalStatusCode) -> bool {
+        self.status_index.exists(&ProposalStatusIndex {
+            proposal_id: *proposal_id,
+            status,
+        })
+    }
+
+    /// Get the list of Resource for a proposal id.
+    pub fn get_resources(&self, proposal_id: &ProposalId) -> Vec<Resource> {
+        self.resource_index
+            .find_by_criteria(ProposalResourceIndexCriteria {
+                proposal_id: *proposal_id,
+            })
+            .into_iter()
+            .collect()
     }
 
     /// Checks if the user has voted on the proposal.

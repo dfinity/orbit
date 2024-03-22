@@ -1,6 +1,9 @@
 use crate::{
     core::{with_memory_manager, Memory, PROPOSAL_POLICIES_MEMORY_ID},
-    models::ProposalPolicy,
+    models::{
+        access_policy::Resource, indexes::policy_resource_index::PolicyResourceIndexCriteria,
+        ProposalPolicy,
+    },
 };
 use ic_canister_core::repository::{IndexRepository, RefreshIndexMode, Repository};
 use ic_canister_core::types::UUID;
@@ -74,6 +77,16 @@ impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
 
     fn len(&self) -> usize {
         DB.with(|m| m.borrow().len()) as usize
+    }
+}
+
+impl ProposalPolicyRepository {
+    pub fn find_by_resource(&self, resource: Resource) -> Vec<ProposalPolicy> {
+        let ids = self
+            .resource_index
+            .find_by_criteria(PolicyResourceIndexCriteria { resource });
+
+        ids.iter().filter_map(|id| self.get(id)).collect()
     }
 }
 

@@ -5,7 +5,7 @@ use crate::{
         indexes::proposal_resource_index::{ProposalResourceIndex, ProposalResourceIndexCriteria},
     },
 };
-use ic_canister_core::{repository::IndexRepository, types::UUID};
+use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
@@ -21,7 +21,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct ProposalResourceIndexRepository {}
 
-impl IndexRepository<ProposalResourceIndex, UUID> for ProposalResourceIndexRepository {
+impl IndexRepository<ProposalResourceIndex, Resource> for ProposalResourceIndexRepository {
     type FindByCriteria = ProposalResourceIndexCriteria;
 
     fn exists(&self, index: &ProposalResourceIndex) -> bool {
@@ -36,7 +36,7 @@ impl IndexRepository<ProposalResourceIndex, UUID> for ProposalResourceIndexRepos
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<UUID> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<Resource> {
         DB.with(|db| {
             let start_key = ProposalResourceIndex {
                 proposal_id: criteria.proposal_id,
@@ -49,8 +49,8 @@ impl IndexRepository<ProposalResourceIndex, UUID> for ProposalResourceIndexRepos
 
             db.borrow()
                 .range(start_key..=end_key)
-                .map(|(index, _)| index.proposal_id)
-                .collect::<HashSet<UUID>>()
+                .map(|(index, _)| index.resource)
+                .collect::<HashSet<Resource>>()
         })
     }
 }
@@ -95,6 +95,6 @@ mod tests {
         let result = repository.find_by_criteria(criteria);
 
         assert_eq!(result.len(), 1);
-        assert!(result.contains(&index.proposal_id));
+        assert!(result.contains(&Resource::User(UserResourceAction::Create)));
     }
 }

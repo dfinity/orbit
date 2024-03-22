@@ -10,7 +10,7 @@ use crate::{
             AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
             ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
         },
-        Account, ProposalKey, User, ADMIN_GROUP_ID,
+        Account, User, ADMIN_GROUP_ID,
     },
     repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY},
     services::access_policy::ACCESS_POLICY_SERVICE,
@@ -76,18 +76,14 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
                 return true;
             }
 
-            if let Some(proposal) = PROPOSAL_REPOSITORY.get(&ProposalKey { id: *proposal_id }) {
-                let validator = ProposalVoteRightsEvaluator {
-                    proposal: &proposal,
-                    voter_id: user.id,
-                    proposal_matcher: PROPOSAL_MATCHER.to_owned(),
-                    vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
-                };
+            let validator = ProposalVoteRightsEvaluator::new(
+                PROPOSAL_MATCHER.to_owned(),
+                PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
+                user.id,
+                *proposal_id,
+            );
 
-                validator.evaluate().unwrap_or(false)
-            } else {
-                false
-            }
+            validator.evaluate().unwrap_or(false)
         }
         Resource::User(UserResourceAction::Read(ResourceId::Id(user_id))) => {
             // The user has access to their own user record.
