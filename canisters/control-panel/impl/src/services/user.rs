@@ -145,6 +145,10 @@ impl UserService {
     ) -> ServiceResult<User> {
         let mut user = self.get_user(&ctx.caller(), ctx)?;
 
+        user.wallets.push(UserWallet {
+            canister_id: wallet_canister_id,
+            name: None,
+        });
         user.deployed_wallets.push(wallet_canister_id);
 
         user.validate()?;
