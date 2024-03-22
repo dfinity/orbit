@@ -16,7 +16,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use wallet_api::{WalletInit as WalletInitArg, WalletInstall as WalletInstallArg};
+use wallet_api::{SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -143,8 +143,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Some(controller),
     );
 
-    let wallet_init_args = WalletInstallArg::Init(WalletInitArg {
-        owners: Some(vec![WALLET_ADMIN_USER]),
+    let wallet_init_args = SystemInstallArg::Init(SystemInitArg {
+        admins: Some(vec![WALLET_ADMIN_USER]),
         upgrader_wasm_module: upgrader_wasm,
     });
     env.install_canister(

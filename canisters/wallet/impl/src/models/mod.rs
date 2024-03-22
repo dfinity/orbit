@@ -65,8 +65,7 @@ pub use proposal_vote::*;
 mod wallet_asset;
 pub use wallet_asset::*;
 
-mod wallet_settings;
-pub use wallet_settings::*;
+pub mod system;
 
 mod configuration;
 pub use configuration::*;

@@ -407,7 +407,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         let caller_principal = Principal::from_slice(&[9; 29]);
         let mut user = mock_user();

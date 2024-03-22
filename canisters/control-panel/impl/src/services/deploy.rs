@@ -65,8 +65,8 @@ impl DeployService {
             mode: mgmt::CanisterInstallMode::Install,
             canister_id: wallet_canister.canister_id,
             wasm_module: config.wallet_wasm_module,
-            arg: Encode!(&wallet_api::WalletInstall::Init(wallet_api::WalletInit {
-                owners: Some(vec![user.id]),
+            arg: Encode!(&wallet_api::SystemInstall::Init(wallet_api::SystemInit {
+                admins: Some(vec![user.id]),
                 upgrader_wasm_module: config.upgrader_wasm_module,
             }))
             .map_err(|err| DeployError::Failed {

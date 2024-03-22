@@ -3,11 +3,15 @@
 //! These entrypoints are used to handle the necessary business logic for the wallet canister and expose
 //! the functionality to the clients.
 
-mod wallet;
 use ic_canister_core::cdk::api::trap;
 use ic_cdk_macros::query;
 use prometheus::{Encoder, TextEncoder};
-pub use wallet::*;
+
+mod system;
+pub use system::*;
+
+mod capabilities;
+pub use capabilities::*;
 
 mod account;
 pub use account::*;

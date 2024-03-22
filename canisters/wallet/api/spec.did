@@ -1305,29 +1305,48 @@ type WalletAsset = record {
   metadata : vec AssetMetadata;
 };
 
-// A record type that can be used to represent the wallet features.
-type Config = record {
+// A record type that is used to show the current capabilities of the canister.
+//
+// This is used to show the supported assets and others.
+type Capabilities = record {
+  // Version of the canister.
+  version : text;
   // The list of supported assets.
   supported_assets : vec WalletAsset;
 };
 
 // Result type for getting the current config.
-type GetConfigResult = variant {
+type CapabilitiesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The config.
-    config : Config;
+    capabilities : Capabilities;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
-// The settings of the wallet.
-type WalletSettings = record {
-  // The list of admin users associated with the wallet.
-  owners : vec User;
-  // The time at which the wallet was last upgraded.
+// The canister system information.
+type SystemInfo = record {
+  // The canister version.
+  version : text;
+  // The upgrader principal id.
+  upgrader_id : principal;
+  // Cycle balance of the canister.
+  cycles : nat64;
+  // The time at which the canister was last upgraded.
   last_upgrade_timestamp : TimestampRFC3339;
+};
+
+// Result type for getting the canister system information.
+type SystemInfoResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The system information.
+    system : SystemInfo;
+  };
+  // The error that occurred (e.g. the caller does not have sufficient privileges).
+  Err : Error;
 };
 
 // Input type for retrieving a user.
@@ -1445,8 +1464,8 @@ type ProposalResourceAction = variant {
 
 // The actions that are available for canister settings.
 type SettingsResourceAction = variant {
-  Read;
-  ReadConfig;
+  SystemInfo;
+  Capabilities;
 };
 
 // The actions that are available for users.
@@ -1668,39 +1687,30 @@ type MeResult = variant {
   Err : Error;
 };
 
-// Result type for getting the wallet settings.
-type WalletSettingsResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The wallet settings.
-    settings : WalletSettings;
-  };
-  // The error that occurred (e.g. the caller is not an admin).
-  Err : Error;
-};
-
-// The init configuration for the wallet.
-type WalletInit = record {
+// The init configuration for the canister.
+//
+// Only used when installing the canister for the first time.
+type SystemInit = record {
   // The list of admin principals to be associated with the wallet.
   //
   // When not specified, the caller will be added as the admin.
-  owners : opt vec principal;
+  admins : opt vec principal;
   // The wasm module of the wallet upgrader canister.
   upgrader_wasm_module : blob;
 };
 
-// The upgrade configuration for the wallet.
-type WalletUpgrade = record {
-  // The updated list of admin principals to be associated with the wallet.
-  owners : opt vec principal;
+// The upgrade configuration for the canister.
+type SystemUpgrade = record {
+  // The updated upgrader wasm module to use for the canister.
+  upgrader_wasm_module : opt blob;
 };
 
-// The input type for the wallet canister install method (e.g. init or upgrade).
-type WalletInstall = variant {
-  // The configuration to use when initializing the wallet.
-  Init : WalletInit;
-  // The configuration to use when upgrading the wallet.
-  Upgrade : WalletUpgrade;
+// The input type for the canister install method (e.g. init or upgrade).
+type SystemInstall = variant {
+  // The configuration to use when initializing the canister.
+  Init : SystemInit;
+  // The configuration to use when upgrading the canister.
+  Upgrade : SystemUpgrade;
 };
 
 type HealthStatus = variant {
@@ -1724,13 +1734,20 @@ type HttpResponse = record {
 };
 
 // The Wallet service definition.
-service : (opt WalletInstall) -> {
+service : (opt SystemInstall) -> {
   // Check if the wallet is healthy and ready to be used.
   health_status : () -> (HealthStatus) query;
+  // Get the system information of the canister (e.g. version, cycles, etc.).
+  //
+  // This method contains sensitive information and is up to the canister owner to
+  // decide who can access it (e.g. only admins).
+  system_info : () -> (SystemInfoResult) query;
+  // This method exposes the supported assets and other capabilities of the canister.
+  //
+  // By default can be accessed by any active user.
+  capabilities : () -> (CapabilitiesResult) query;
   // Get the authenticated user and its privileges from the caller.
   me : () -> (MeResult) query;
-  // Get the wallet config (e.g. supported assets, user groups, ...).
-  config : () -> (GetConfigResult) query;
   // Get the list of notifications associated with the caller.
   list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
   // Mark the notifications as read.
@@ -1787,8 +1804,6 @@ service : (opt WalletInstall) -> {
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
   // List all user groups of the wallet.
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
-  // Get the wallet settings.
-  wallet_settings : () -> (WalletSettingsResult) query;
   // Metrics (Http Interface)
   http_request : (HttpRequest) -> (HttpResponse) query;
 };

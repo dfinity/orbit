@@ -80,8 +80,8 @@ pub enum AccountResourceActionDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum SettingsResourceActionDTO {
-    Read,
-    ReadConfig,
+    SystemInfo,
+    Capabilities,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

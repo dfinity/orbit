@@ -1,18 +1,18 @@
 use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
-    core::{canister_config, write_canister_config, CanisterConfig},
     errors::{ProposalError, ProposalExecuteError},
     models::{
         ChangeCanisterOperation, ChangeCanisterTarget, Proposal, ProposalExecutionPlan,
         ProposalOperation,
     },
-    services::CHANGE_CANISTER_SERVICE,
+    services::{SystemService, CHANGE_CANISTER_SERVICE},
 };
 use async_trait::async_trait;
 use candid::Encode;
 use ic_canister_core::types::UUID;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use sha2::{Digest, Sha256};
+use std::sync::Arc;
 use wallet_api::{ChangeCanisterOperationInput, CreateProposalInput};
 
 pub struct ChangeCanisterProposalCreate;
@@ -56,13 +56,19 @@ impl Create<ChangeCanisterOperationInput> for ChangeCanisterProposalCreate {
 pub struct ChangeCanisterProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o ChangeCanisterOperation,
+    system_service: Arc<SystemService>,
 }
 
 impl<'p, 'o> ChangeCanisterProposalExecute<'p, 'o> {
-    pub fn new(proposal: &'p Proposal, operation: &'o ChangeCanisterOperation) -> Self {
+    pub fn new(
+        proposal: &'p Proposal,
+        operation: &'o ChangeCanisterOperation,
+        system_service: Arc<SystemService>,
+    ) -> Self {
         Self {
             proposal,
             operation,
+            system_service,
         }
     }
 }
@@ -72,10 +78,8 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         match self.operation.input.target {
             ChangeCanisterTarget::UpgradeWallet => {
-                write_canister_config(CanisterConfig {
-                    change_canister_proposal: Some(self.proposal.id.to_owned()),
-                    ..canister_config()
-                });
+                self.system_service
+                    .set_self_upgrade_proposal(Some(self.proposal.id.to_owned()));
 
                 let default_arg = Encode!(&()).unwrap();
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
@@ -87,10 +91,7 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
                     });
 
                 if out.is_err() {
-                    write_canister_config(CanisterConfig {
-                        change_canister_proposal: None,
-                        ..canister_config()
-                    });
+                    self.system_service.set_self_upgrade_proposal(None);
                 }
 
                 out?;

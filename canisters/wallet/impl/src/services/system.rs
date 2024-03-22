@@ -1,73 +1,66 @@
 use crate::{
     core::{
-        canister_config,
         ic_cdk::api::{print, time},
-        CallContext, CanisterConfig, WALLET_ASSETS,
+        read_system_info, read_system_state, write_system_info, CallContext,
     },
     errors::InstallError,
-    models::{Configuration, ProposalStatus, User, WalletSettings},
-    repositories::{UserRepository, USER_REPOSITORY},
-    services::{ChangeCanisterService, UserService, CHANGE_CANISTER_SERVICE, USER_SERVICE},
+    models::{
+        system::{SystemInfo, SystemState},
+        ProposalId, ProposalStatus,
+    },
+    services::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
 };
 use candid::Principal;
 use ic_canister_core::api::ServiceResult;
 use lazy_static::lazy_static;
 use std::sync::Arc;
-use wallet_api::{WalletInit, WalletInstall, WalletUpgrade};
+use wallet_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 
 lazy_static! {
-    pub static ref WALLET_SERVICE: Arc<WalletService> = Arc::new(WalletService::new(
-        Arc::clone(&USER_REPOSITORY),
-        Arc::clone(&USER_SERVICE),
-        Arc::clone(&CHANGE_CANISTER_SERVICE),
-    ));
+    pub static ref SYSTEM_SERVICE: Arc<SystemService> =
+        Arc::new(SystemService::new(Arc::clone(&CHANGE_CANISTER_SERVICE),));
 }
 
 #[derive(Debug)]
-pub struct WalletService {
-    user_repository: Arc<UserRepository>,
-    user_service: Arc<UserService>,
+pub struct SystemService {
     change_canister_service: Arc<ChangeCanisterService>,
 }
 
-impl WalletService {
-    pub fn new(
-        user_repository: Arc<UserRepository>,
-        user_service: Arc<UserService>,
-        change_canister_service: Arc<ChangeCanisterService>,
-    ) -> Self {
+impl SystemService {
+    pub fn new(change_canister_service: Arc<ChangeCanisterService>) -> Self {
         Self {
-            user_repository,
-            user_service,
             change_canister_service,
         }
     }
 
-    pub fn get_config(&self) -> ServiceResult<Configuration> {
-        let assets = WALLET_ASSETS.with(|wallet_assets| wallet_assets.borrow().clone());
-
-        Ok(Configuration {
-            supported_assets: assets.into_iter().collect::<Vec<_>>(),
-        })
+    /// Gets the system information of the current canister.
+    pub fn get_system_info(&self) -> SystemInfo {
+        read_system_info()
     }
 
-    /// Gets the wallet settings including the canister config and the owner users.
-    pub fn get_wallet_settings(&self) -> ServiceResult<WalletSettings> {
-        let canister_config = canister_config();
-        let mut owners: Vec<User> = vec![];
-        for owner_principal in canister_config.owners.iter() {
-            let owner_user = self
-                .user_repository
-                .find_by_identity(owner_principal)
-                .expect("Owner user not found");
+    pub fn set_self_upgrade_proposal(&self, self_upgrade_proposal_id: Option<ProposalId>) {
+        let mut system_info = self.get_system_info();
+        system_info.change_canister_proposal = self_upgrade_proposal_id;
+        system_info.last_upgrade_timestamp = time();
 
-            owners.push(owner_user);
+        write_system_info(system_info);
+    }
+
+    pub fn health_status(&self) -> HealthStatus {
+        let state = read_system_state();
+
+        match state {
+            SystemState::Initialized(_) => HealthStatus::Healthy,
+            SystemState::Uninitialized => HealthStatus::Uninitialized,
         }
+    }
 
-        Ok(WalletSettings {
-            config: canister_config,
-            owners,
-        })
+    pub fn is_healthy(&self) -> bool {
+        self.health_status() == HealthStatus::Healthy
+    }
+
+    pub fn get_upgrader_canister_id(&self) -> Principal {
+        read_system_info().upgrader_canister_id
     }
 
     // init calls can't perform inter-canister calls so we need to delay tasks such as user registration
@@ -78,23 +71,23 @@ impl WalletService {
     // currently this is not a problem because the admins would simply get an access denied error but if more
     // complex/required business logic is added to the timer a locking mechanism should be added.
     #[allow(unused_variables, unused_mut)]
-    fn install_canister_post_process(
-        &self,
-        mut config: CanisterConfig,
-        new_owners: Vec<Principal>,
-        install: WalletInstall,
-    ) {
+    fn install_canister_post_process(&self, mut system_info: SystemInfo, install: SystemInstall) {
         #[cfg(target_arch = "wasm32")]
         ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
             use crate::core::ic_cdk::api::id as self_canister_id;
             use crate::core::ic_cdk::spawn;
-            use crate::core::write_canister_config;
+            use crate::core::write_system_info;
             use crate::core::NNS_ROOT_CANISTER_ID;
             use crate::jobs::register_jobs;
+            use ic_canister_core::utils::maybe_initialize_rng;
 
             spawn(async move {
-                if let WalletInstall::Init(init) = install {
-                    let wallet_canister_id = self_canister_id();
+                // initializes the random number generator if it has not been initialized yet
+                // uses `raw_rand`` to generate a seed for the random number generator
+                maybe_initialize_rng().await;
+
+                if let SystemInstall::Init(init) = install {
+                    let canister_id = self_canister_id();
 
                     // registers the default canister configurations such as policies and user groups.
                     print("Adding initial canister configurations");
@@ -103,24 +96,24 @@ impl WalletService {
                     print("Deploying upgrader canister");
                     let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
                         init.upgrader_wasm_module,
-                        vec![wallet_canister_id, NNS_ROOT_CANISTER_ID],
+                        vec![canister_id, NNS_ROOT_CANISTER_ID],
                     )
                     .await;
-                    config.upgrader_canister_id = upgrader_canister_id;
+                    system_info.upgrader_canister_id = upgrader_canister_id;
 
                     // sets the upgrader as a controller of the wallet canister
                     print("Updating canister settings to set the upgrader as the controller");
-                    install_canister_handlers::set_wallet_controllers(vec![
+                    install_canister_handlers::set_controllers(vec![
                         upgrader_canister_id,
                         NNS_ROOT_CANISTER_ID,
                     ])
                     .await;
+
+                    install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await;
                 }
 
-                install_canister_handlers::add_new_owners(new_owners).await;
-
-                config.last_upgrade_timestamp = time();
-                write_canister_config(config.to_owned());
+                system_info.last_upgrade_timestamp = time();
+                write_system_info(system_info.to_owned());
 
                 // register the jobs after the canister is fully initialized
                 register_jobs().await;
@@ -128,63 +121,24 @@ impl WalletService {
         });
     }
 
-    /// Retains the new owners and removes the unassigned ones.
-    ///
-    /// The config is updated with the new owners but is not added to stable memory yet, this is done
-    /// at a later stage in the post install process.
-    async fn retain_new_owners(
-        &self,
-        config: &mut CanisterConfig,
-        owners: &Option<Vec<Principal>>,
-        ctx: &CallContext,
-    ) -> ServiceResult<Vec<Principal>> {
-        let mut new_owners: Vec<Principal> = vec![];
-        let mut removed_owners = vec![];
-        if let Some(owners) = &owners {
-            removed_owners = config
-                .owners
-                .iter()
-                .filter(|owner| !owners.contains(owner))
-                .collect::<Vec<_>>();
-
-            new_owners = owners.to_owned();
-            new_owners.retain(|owner| !config.owners.contains(owner));
-        }
-
-        for unassigned_admin in removed_owners {
-            self.user_service
-                .remove_admin(unassigned_admin, ctx)
-                .await
-                .expect("Failed to unregister admin user");
-        }
-
-        config.update_with(owners.to_owned());
-
-        Ok(new_owners)
-    }
-
     /// Initializes the canister with the given owners and settings.
     ///
     /// Must only be called within a canister init call.
-    pub async fn init_canister(&self, input: WalletInit, ctx: &CallContext) -> ServiceResult<()> {
-        let mut config = CanisterConfig::default();
-        let owners = match &input.owners {
-            Some(owners) => owners.to_owned(),
+    pub async fn init_canister(&self, input: SystemInit, ctx: &CallContext) -> ServiceResult<()> {
+        let system_info = SystemInfo::default();
+        let admins = match &input.admins {
+            Some(admins) => admins.to_owned(),
             None => vec![ctx.caller()],
         };
 
-        if owners.is_empty() {
-            return Err(InstallError::NoOwnersSpecified)?;
+        if admins.is_empty() {
+            return Err(InstallError::NoAdminsSpecified)?;
         }
-
-        let wallet_owners = self
-            .retain_new_owners(&mut config, &Some(owners), ctx)
-            .await?;
 
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the wallet upgrader and makes sure
         // there are no unintended controllers of the canister.
-        self.install_canister_post_process(config, wallet_owners, WalletInstall::Init(input));
+        self.install_canister_post_process(system_info, SystemInstall::Init(input));
 
         Ok(())
     }
@@ -192,27 +146,20 @@ impl WalletService {
     /// Updates the canister with the given owners and settings.
     ///
     /// Must only be called within a canister post_upgrade call.
-    pub async fn upgrade_canister(
-        &self,
-        input: Option<WalletUpgrade>,
-        ctx: &CallContext,
-    ) -> ServiceResult<()> {
-        let mut config = canister_config();
+    pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
+        let mut system_info = read_system_info();
         let input = match input {
             Some(input) => input,
-            None => WalletUpgrade { owners: None },
+            None => SystemUpgrade {
+                upgrader_wasm_module: None,
+            },
         };
-
-        let new_owners = input.owners.to_owned();
-        let new_wallet_owners = self
-            .retain_new_owners(&mut config, &new_owners, ctx)
-            .await?;
 
         // verifies that the upgrade proposal exists and marks it as completed
         if let Err(err) = self
             .change_canister_service
             .update_change_canister_proposal_status(
-                &config,
+                &system_info,
                 ProposalStatus::Completed {
                     completed_at: time(),
                 },
@@ -226,15 +173,11 @@ impl WalletService {
         }
 
         // clears the change canister proposal from the config to avoid it being used again
-        config.change_canister_proposal = None;
+        system_info.change_canister_proposal = None;
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
         // this updates the list of admins of the canister.
-        self.install_canister_post_process(
-            config,
-            new_wallet_owners,
-            WalletInstall::Upgrade(input),
-        );
+        self.install_canister_post_process(system_info, SystemInstall::Upgrade(input));
 
         Ok(())
     }
@@ -332,8 +275,8 @@ mod install_canister_handlers {
         upgrader_canister.canister_id
     }
 
-    /// Sets the only controller of the wallet canister.
-    pub async fn set_wallet_controllers(controllers: Vec<Principal>) {
+    /// Sets the only controller of the canister.
+    pub async fn set_controllers(controllers: Vec<Principal>) {
         mgmt::update_settings(mgmt::UpdateSettingsArgument {
             canister_id: self_canister_id(),
             settings: mgmt::CanisterSettings {
@@ -346,9 +289,9 @@ mod install_canister_handlers {
     }
 
     /// Registers the newly added admins of the canister.
-    pub async fn add_new_owners(new_owners: Vec<Principal>) {
-        print(&format!("Registering {:?} admin users", new_owners.len()));
-        for admin in new_owners {
+    pub async fn set_admins(admins: Vec<Principal>) {
+        print(&format!("Registering {:?} admin users", admins.len()));
+        for admin in admins {
             let user = USER_SERVICE
                 .add_user(AddUserOperationInput {
                     identities: vec![admin.to_owned()],
@@ -371,29 +314,27 @@ mod install_canister_handlers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils, write_canister_config};
+    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils, write_system_info};
     use candid::Principal;
 
     #[tokio::test]
     async fn canister_upgrade() {
-        let mut config = test_utils::init_canister_config();
+        let system_info = test_utils::init_canister_system();
         let call_context = CallContext::new(self_canister_id());
 
-        config.owners = vec![Principal::from_slice(&[1; 29])];
-        write_canister_config(config.to_owned());
+        write_system_info(system_info.to_owned());
 
-        let init = WalletInit {
-            owners: Some(vec![Principal::from_slice(&[1; 29])]),
-            upgrader_wasm_module: vec![],
+        let init = SystemInit {
+            admins: Some(vec![Principal::from_slice(&[1; 29])]),
+            upgrader_wasm_module: vec![1],
         };
 
-        WALLET_SERVICE
+        SYSTEM_SERVICE
             .init_canister(init, &call_context)
             .await
             .expect("Failed to init canister");
 
-        let canister_config = canister_config();
-        assert_eq!(canister_config.owners.len(), 1);
-        assert_eq!(canister_config.owners[0], Principal::from_slice(&[1; 29]));
+        let system_info = read_system_info();
+        assert_eq!(system_info.upgrader_wasm_module, vec![1]);
     }
 }

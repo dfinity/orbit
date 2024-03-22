@@ -8,7 +8,7 @@ use crate::{
     models::{
         access_policy::{
             AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
-            ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
+            ResourceAction, ResourceId, UserResourceAction,
         },
         Account, ProposalKey, User, ADMIN_GROUP_ID,
     },
@@ -105,8 +105,6 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
         }
         Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
         | Resource::User(UserResourceAction::Create)
-        | Resource::Settings(SettingsResourceAction::Read)
-        | Resource::Settings(SettingsResourceAction::ReadConfig)
         | Resource::UserGroup(ResourceAction::List)
         | Resource::UserGroup(ResourceAction::Read(_))
         | Resource::Account(AccountResourceAction::List) => {

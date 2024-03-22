@@ -191,8 +191,8 @@ pub enum AccountResourceAction {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SettingsResourceAction {
-    Read,
-    ReadConfig,
+    SystemInfo,
+    Capabilities,
 }
 
 #[storable]
@@ -367,11 +367,11 @@ impl Resource {
                 }
             },
             Resource::Settings(action) => match action {
-                SettingsResourceAction::Read => {
-                    vec![Resource::Settings(SettingsResourceAction::Read)]
+                SettingsResourceAction::SystemInfo => {
+                    vec![Resource::Settings(SettingsResourceAction::SystemInfo)]
                 }
-                SettingsResourceAction::ReadConfig => {
-                    vec![Resource::Settings(SettingsResourceAction::ReadConfig)]
+                SettingsResourceAction::Capabilities => {
+                    vec![Resource::Settings(SettingsResourceAction::Capabilities)]
                 }
             },
             Resource::User(action) => match action {
@@ -500,8 +500,8 @@ impl Display for ProposalResourceAction {
 impl Display for SettingsResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            SettingsResourceAction::Read => write!(f, "Read"),
-            SettingsResourceAction::ReadConfig => write!(f, "ReadConfig"),
+            SettingsResourceAction::SystemInfo => write!(f, "SystemInfo"),
+            SettingsResourceAction::Capabilities => write!(f, "Capabilities"),
         }
     }
 }

@@ -260,7 +260,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         TestContext {
             repository: UserRepository::default(),

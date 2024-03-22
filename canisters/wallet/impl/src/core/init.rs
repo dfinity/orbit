@@ -15,10 +15,15 @@ use lazy_static::lazy_static;
 
 lazy_static! {
     pub static ref DEFAULT_ACCESS_CONTROL_POLICIES: Vec<(Allow, Resource)> = vec![
-        // config
+        // all authenticated users can read the capabilities of the canister
         (
             Allow::authenticated(),
-            Resource::Settings(SettingsResourceAction::ReadConfig),
+            Resource::Settings(SettingsResourceAction::Capabilities),
+        ),
+        // Admins can read the system info which includes the canister's version, cycles, etc.
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Settings(SettingsResourceAction::SystemInfo),
         ),
         // users
         (

@@ -440,8 +440,10 @@ impl From<AccountResourceAction> for wallet_api::AccountResourceActionDTO {
 impl From<wallet_api::SettingsResourceActionDTO> for SettingsResourceAction {
     fn from(dto: wallet_api::SettingsResourceActionDTO) -> Self {
         match dto {
-            wallet_api::SettingsResourceActionDTO::Read => SettingsResourceAction::Read,
-            wallet_api::SettingsResourceActionDTO::ReadConfig => SettingsResourceAction::ReadConfig,
+            wallet_api::SettingsResourceActionDTO::SystemInfo => SettingsResourceAction::SystemInfo,
+            wallet_api::SettingsResourceActionDTO::Capabilities => {
+                SettingsResourceAction::Capabilities
+            }
         }
     }
 }
@@ -449,8 +451,10 @@ impl From<wallet_api::SettingsResourceActionDTO> for SettingsResourceAction {
 impl From<SettingsResourceAction> for wallet_api::SettingsResourceActionDTO {
     fn from(action: SettingsResourceAction) -> Self {
         match action {
-            SettingsResourceAction::Read => wallet_api::SettingsResourceActionDTO::Read,
-            SettingsResourceAction::ReadConfig => wallet_api::SettingsResourceActionDTO::ReadConfig,
+            SettingsResourceAction::SystemInfo => wallet_api::SettingsResourceActionDTO::SystemInfo,
+            SettingsResourceAction::Capabilities => {
+                wallet_api::SettingsResourceActionDTO::Capabilities
+            }
         }
     }
 }
