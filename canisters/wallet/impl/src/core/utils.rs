@@ -108,6 +108,10 @@ pub(crate) fn retain_accessible_resources<T, F>(
     }
 }
 
+pub(crate) fn format_unique_string(text: &str) -> String {
+    any_ascii::any_ascii(text).to_lowercase().replace(' ', "")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -182,5 +186,20 @@ mod tests {
 
         assert_eq!(result.items.len(), 4);
         assert_eq!(result.next_offset, None);
+    }
+
+    #[test]
+    fn should_format_unique_string() {
+        assert_eq!(format_unique_string("áéíóúñç"), "aeiounc");
+        assert_eq!(format_unique_string("àèìòù"), "aeiou");
+        assert_eq!(format_unique_string("âêîôû"), "aeiou");
+        assert_eq!(format_unique_string("äëïöü"), "aeiou");
+        assert_eq!(format_unique_string("ÁÉÍÓÚÑÇ"), "aeiounc");
+        assert_eq!(format_unique_string("ÀÈÌÒÙ"), "aeiou");
+        assert_eq!(format_unique_string("ÂÊÎÔÛ"), "aeiou");
+        assert_eq!(format_unique_string("ÄËÏÖÜ"), "aeiou");
+        assert_eq!(format_unique_string("Hello, World!"), "hello,world!");
+        assert_eq!(format_unique_string("Hello,  World!"), "hello,world!");
+        assert_eq!(format_unique_string("Hello, World! "), "hello,world!");
     }
 }

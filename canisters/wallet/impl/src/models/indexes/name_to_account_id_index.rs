@@ -1,4 +1,7 @@
-use crate::models::{Account, AccountId};
+use crate::{
+    core::utils::format_unique_string,
+    models::{Account, AccountId},
+};
 use ic_canister_macros::storable;
 
 #[storable]
@@ -18,7 +21,7 @@ pub struct NameToAccountIdIndexCriteria {
 impl Account {
     pub fn to_index_by_name(&self) -> NameToAccountIdIndex {
         NameToAccountIdIndex {
-            name: self.name.to_owned(),
+            name: format_unique_string(&self.name),
             account_id: self.id,
         }
     }
@@ -32,11 +35,22 @@ mod tests {
     fn test_name_to_account_id_association() {
         let mut account = mock_account();
         account.id = [0; 16];
-        account.name = "Test Account".to_string();
+        account.name = "testaccount".to_string();
 
         let index = account.to_index_by_name();
 
         assert_eq!(index.name, account.name);
         assert_eq!(index.account_id, account.id);
+    }
+
+    #[test]
+    fn test_name_is_formatted() {
+        let mut account = mock_account();
+        account.id = [0; 16];
+        account.name = "Test Account".to_string();
+
+        let index = account.to_index_by_name();
+
+        assert_eq!(index.name, "testaccount");
     }
 }

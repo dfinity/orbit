@@ -103,6 +103,10 @@ impl UserService {
             self.assert_identity_has_no_associated_user(identity, None)?;
         }
 
+        if let Some(name) = &input.name {
+            self.assert_name_has_no_associated_user(name, None)?;
+        }
+
         let user_id = generate_uuid_v4().await;
         let user = UserMapper::from_create_input(*user_id.as_bytes(), input);
 
@@ -123,6 +127,10 @@ impl UserService {
             for identity in identities.iter() {
                 self.assert_identity_has_no_associated_user(identity, Some(user.id))?;
             }
+        }
+
+        if let Some(name) = &input.name {
+            self.assert_name_has_no_associated_user(name, Some(user.id))?;
         }
 
         user.update_with(input)?;
@@ -206,6 +214,28 @@ impl UserService {
 
         Ok(())
     }
+
+    fn assert_name_has_no_associated_user(
+        &self,
+        name: &str,
+        skip_user_id: Option<UserId>,
+    ) -> ServiceResult<()> {
+        let user = self.user_repository.find_by_name(name);
+
+        if let Some(id) = user {
+            if let Some(skip_user_id) = skip_user_id {
+                if id == skip_user_id {
+                    return Ok(());
+                }
+            }
+
+            Err(UserError::NameAlreadyHasUser {
+                user: Uuid::from_bytes(id).hyphenated().to_string(),
+            })?
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -214,7 +244,9 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            access_policy::AuthScope, user_test_utils, EditAccessPolicyOperationInput, UserStatus,
+            access_policy::AuthScope,
+            user_test_utils::{self, mock_user},
+            EditAccessPolicyOperationInput, UserStatus,
         },
         repositories::USER_REPOSITORY,
         services::access_policy::ACCESS_POLICY_SERVICE,
@@ -345,6 +377,56 @@ mod tests {
         assert_eq!(
             result.unwrap_err().to_string(),
             "IDENTITY_ALREADY_HAS_USER: The identity already has an associated user."
+        );
+    }
+
+    #[tokio::test]
+    async fn add_user_with_existing_name_should_fail() {
+        let mut user = mock_user();
+        user.name = Some("Jane Doe".to_string());
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[3; 29])],
+            groups: vec![*ADMIN_GROUP_ID],
+            status: UserStatus::Active,
+            name: Some("Jane Doe".to_string()),
+        };
+
+        let result = USER_SERVICE.add_user(input).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "NAME_ALREADY_HAS_USER: The name already has an associated user."
+        );
+    }
+
+    #[tokio::test]
+    async fn edit_user_with_existing_name_should_fail() {
+        let mut user = mock_user();
+        user.name = Some("Jane Doe".to_string());
+        let mut another_user = mock_user();
+        another_user.name = Some("John Doe".to_string());
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+        USER_REPOSITORY.insert(another_user.to_key(), another_user.clone());
+
+        let input = EditUserOperationInput {
+            user_id: user.id,
+            name: another_user.name,
+            identities: None,
+            groups: None,
+            status: None,
+        };
+
+        let result = USER_SERVICE.edit_user(input).await;
+
+        assert!(result.is_err());
+
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "NAME_ALREADY_HAS_USER: The name already has an associated user."
         );
     }
 

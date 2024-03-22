@@ -40,6 +40,12 @@ pub enum UserError {
         /// The associated user of the identity.
         user: String,
     },
+    // The name already has an associated user.
+    #[error(r#"The name already has an associated user."#)]
+    NameAlreadyHasUser {
+        /// The associated user of the name.
+        user: String,
+    },
     /// The requested user was not found.
     #[error(r#"The requested user was not found."#)]
     NotFoundUser {
@@ -113,6 +119,10 @@ impl DetailableError for UserError {
             }
             UserError::IdentityNotAllowed { identity } => {
                 details.insert("identity".to_string(), identity.to_string());
+                Some(details)
+            }
+            UserError::NameAlreadyHasUser { user } => {
+                details.insert("user".to_string(), user.to_string());
                 Some(details)
             }
             _ => None,
