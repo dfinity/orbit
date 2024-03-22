@@ -8,51 +8,18 @@ use control_panel_api::{
     DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse, UserWalletDTO,
 };
 use ic_canister_core::api::ApiResult;
+use ic_canister_core::utils::{CallerGuard, State};
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use prometheus::labels;
 use std::cell::RefCell;
-use std::collections::BTreeSet;
+use std::rc::Rc;
 use std::sync::Arc;
 
-// The following code implementing canister locks is taken from
-// https://internetcomputer.org/docs/current/developer-docs/security/rust-canister-development-security-best-practices#recommendation-10
-
-pub struct State {
-    pending_requests: BTreeSet<Principal>,
-}
-
 thread_local! {
-    static STATE: RefCell<State> = RefCell::new(State{pending_requests: BTreeSet::new()});
+    static STATE: Rc<RefCell<State<Principal>>> = Rc::new(RefCell::new(State::default()));
 }
-
-pub struct CallerGuard {
-    principal: Principal,
-}
-
-impl CallerGuard {
-    pub fn new(principal: Principal) -> ApiResult<Self> {
-        STATE.with(|state| {
-            let pending_requests = &mut state.borrow_mut().pending_requests;
-            if pending_requests.contains(&principal) {
-                return Err(UserError::ConcurrentWalletDeployment)?;
-            }
-            pending_requests.insert(principal);
-            Ok(Self { principal })
-        })
-    }
-}
-
-impl Drop for CallerGuard {
-    fn drop(&mut self) {
-        STATE.with(|state| {
-            state.borrow_mut().pending_requests.remove(&self.principal);
-        })
-    }
-}
-
-// end of canister locking code
 
 // Canister entrypoints for the controller.
 #[query(name = "list_wallets")]
@@ -68,7 +35,9 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
 #[update(name = "deploy_wallet")]
 async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
     let caller = ic_cdk::caller();
-    let _ = CallerGuard::new(caller)?;
+    let _lock = STATE
+        .with(|state| CallerGuard::new(state.clone(), caller))
+        .ok_or(UserError::ConcurrentWalletDeployment)?;
 
     let out = CONTROLLER.deploy_wallet().await;
 
