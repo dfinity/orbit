@@ -27,7 +27,7 @@ mod tests {
     #[test]
     fn correct_dto_to_model_mapping() {
         let dto = UserWalletDTO {
-            canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
             name: Some("Wallet".to_string()),
         };
 
@@ -40,7 +40,7 @@ mod tests {
     #[test]
     fn correct_model_to_dto_mapping() {
         let model = UserWallet {
-            canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
             name: Some("Wallet".to_string()),
         };
 

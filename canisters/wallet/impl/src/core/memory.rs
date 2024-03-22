@@ -40,6 +40,7 @@ pub const PROPOSAL_STATUS_MODIFICATION_INDEX_MEMORY_ID: MemoryId = MemoryId::new
 pub const PROPOSAL_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(29);
 pub const POLICY_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
 pub const NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(31);
+pub const NAME_TO_USER_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(32);
 
 thread_local! {
   /// Static configuration of the canister.

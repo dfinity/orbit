@@ -46,10 +46,10 @@ To access wallet interface and avoid issues, please add to your `/etc/hosts` fil
 
 ```
 # Orbit Wallet UI and Internet Identity
-127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost asrmz-lmaaa-aaaaa-qaaeq-cai.localhost
+127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost werw6-ayaaa-aaaaa-774aa-cai.localhost
 ```
 
-After adding this line, you can access the wallet interface at [http://asrmz-lmaaa-aaaaa-qaaeq-cai.localhost:4943](http://asrmz-lmaaa-aaaaa-qaaeq-cai.localhost:4943).
+After adding this line, you can access the wallet interface at [http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943](http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943).
 
 For a faster frontend development experience, you can run the following commands to enable hot-reloading and use it through locahost:
 
