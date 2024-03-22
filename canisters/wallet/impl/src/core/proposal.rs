@@ -332,11 +332,7 @@ impl ProposalVoteRightsEvaluator {
 impl Evaluate<bool> for ProposalVoteRightsEvaluator {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
         if PROPOSAL_REPOSITORY.exists_voter(&self.proposal_id, &self.voter_id)
-            || (PROPOSAL_REPOSITORY.exists(&ProposalKey {
-                id: self.proposal_id,
-            }) && {
-                !PROPOSAL_REPOSITORY.exists_status(&self.proposal_id, ProposalStatusCode::Created)
-            })
+            || !PROPOSAL_REPOSITORY.exists_status(&self.proposal_id, ProposalStatusCode::Created)
         {
             return Ok(false);
         }
