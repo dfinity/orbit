@@ -81,9 +81,11 @@ impl DeployService {
             .add_deployed_wallet(wallet_canister.canister_id, ctx)
             .await?;
 
-        self.user_service
-            .set_main_wallet(wallet_canister.canister_id, ctx)
-            .await?;
+        if user.main_wallet.is_none() {
+            self.user_service
+                .set_main_wallet(wallet_canister.canister_id, ctx)
+                .await?;
+        }
 
         Ok(wallet_canister.canister_id)
     }

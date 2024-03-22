@@ -166,12 +166,12 @@ fn deploy_too_many_wallets() {
         wallets.push(res.0.unwrap().canister_id);
     }
 
-    // check that the user has 10 wallets and the last wallet is the main wallet
+    // check that the user has 10 wallets and the first deployed wallet is the main wallet
     let res: (ApiResult<ManageUserResponse>,) =
         update_candid_as(&env, canister_ids.control_panel, user_id, "get_user", ()).unwrap();
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.wallets.len(), 10);
-    assert_eq!(user_dto.main_wallet, Some(wallets[9]));
+    assert_eq!(user_dto.main_wallet, Some(wallets[0]));
 
     // reset all but one deployed wallet
     let manage_user_args = ManageUserInput {
