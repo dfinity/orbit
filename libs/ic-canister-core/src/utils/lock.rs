@@ -20,24 +20,24 @@ impl<T: Ord> Default for State<T> {
 
 pub struct CallerGuard<T: Ord> {
     state: Rc<RefCell<State<T>>>,
-    t: T,
+    lock: T,
 }
 
 impl<T: Clone + Ord> CallerGuard<T> {
-    pub fn new(state: Rc<RefCell<State<T>>>, t: T) -> Option<Self> {
+    pub fn new(state: Rc<RefCell<State<T>>>, lock: T) -> Option<Self> {
         {
             let pending_requests = &mut state.borrow_mut().pending_requests;
-            if pending_requests.contains(&t) {
+            if pending_requests.contains(&lock) {
                 return None;
             }
-            pending_requests.insert(t.clone());
+            pending_requests.insert(lock.clone());
         }
-        Some(Self { state, t })
+        Some(Self { state, lock })
     }
 }
 
 impl<T: Ord> Drop for CallerGuard<T> {
     fn drop(&mut self) {
-        self.state.borrow_mut().pending_requests.remove(&self.t);
+        self.state.borrow_mut().pending_requests.remove(&self.lock);
     }
 }
