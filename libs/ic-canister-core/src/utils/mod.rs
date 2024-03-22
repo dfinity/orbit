@@ -1,5 +1,8 @@
 //! Core common features to be used by IC Canisters.
 
+mod lock;
+pub use lock::*;
+
 /// Utilities to interact with random numbers and UUIDs safely within the canister.
 mod random;
 pub use random::*;
