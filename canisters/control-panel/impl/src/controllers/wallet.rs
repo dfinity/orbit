@@ -2,16 +2,24 @@
 use crate::core::metrics::COUNTER_DEPLOY_WALLET_TOTAL;
 use crate::core::middlewares::{call_context, logger};
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
-use crate::{core::CallContext, services::UserService};
+use crate::{core::CallContext, errors::UserError, services::UserService};
+use candid::Principal;
 use control_panel_api::{
     DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse, UserWalletDTO,
 };
 use ic_canister_core::api::ApiResult;
+use ic_canister_core::utils::{CallerGuard, State};
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use prometheus::labels;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::Arc;
+
+thread_local! {
+    static STATE: Rc<RefCell<State<Principal>>> = Rc::new(RefCell::new(State::default()));
+}
 
 // Canister entrypoints for the controller.
 #[query(name = "list_wallets")]
@@ -26,6 +34,11 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
 
 #[update(name = "deploy_wallet")]
 async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
+    let caller = ic_cdk::caller();
+    let _lock = STATE
+        .with(|state| CallerGuard::new(state.clone(), caller))
+        .ok_or(UserError::ConcurrentWalletDeployment)?;
+
     let out = CONTROLLER.deploy_wallet().await;
 
     COUNTER_DEPLOY_WALLET_TOTAL.with(|c| {
