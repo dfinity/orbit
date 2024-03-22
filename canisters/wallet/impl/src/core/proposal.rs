@@ -6,8 +6,8 @@ use crate::{
         specifier::{
             Match, ProposalSpecifier, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
         },
-        Account, EvaluationStatus, Proposal, ProposalId, ProposalKey, ProposalOperation,
-        ProposalStatusCode, User, UserId, UserStatus,
+        Account, EvaluationStatus, Proposal, ProposalId, ProposalOperation, ProposalStatusCode,
+        User, UserId, UserStatus,
     },
     repositories::{
         policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,

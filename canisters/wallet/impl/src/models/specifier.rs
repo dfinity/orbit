@@ -474,12 +474,7 @@ mod tests {
         for tc in tcs {
             let mut proposal = mock_proposal();
             proposal.proposed_by = tc.0;
-            PROPOSAL_REPOSITORY.insert(
-                ProposalKey {
-                    id: proposal.id.clone(),
-                },
-                proposal.clone(),
-            );
+            PROPOSAL_REPOSITORY.insert(ProposalKey { id: proposal.id }, proposal.clone());
 
             let voter = tc.1;
             let specifier = tc.2;

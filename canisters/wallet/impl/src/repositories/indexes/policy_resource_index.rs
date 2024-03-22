@@ -24,6 +24,10 @@ impl PolicyResourceIndexRepository {
         DB.with(|m| m.borrow().len() as usize)
     }
 
+    pub fn is_empty(&self) -> bool {
+        DB.with(|m| m.borrow().is_empty())
+    }
+
     pub fn list(&self) -> Vec<PolicyResourceIndex> {
         DB.with(|m| m.borrow().iter().map(|(k, _)| k.clone()).collect())
     }

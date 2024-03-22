@@ -608,7 +608,7 @@ mod tests {
             )]),
         };
 
-        PROPOSAL_POLICY_REPOSITORY.insert(policy.id.clone(), policy);
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy);
 
         let proposal = ctx
             .service

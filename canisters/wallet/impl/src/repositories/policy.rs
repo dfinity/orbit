@@ -121,7 +121,7 @@ mod tests {
 
         let policy = mock_proposal_policy();
 
-        repository.insert(policy.id.clone(), policy.clone());
+        repository.insert(policy.id, policy.clone());
 
         assert!(repository.resource_index.len() == 1);
 
@@ -138,7 +138,7 @@ mod tests {
             ])),
         };
 
-        repository.insert(other_policy.id.clone(), other_policy.clone());
+        repository.insert(other_policy.id, other_policy.clone());
 
         assert!(repository.resource_index.len() == 4);
 
@@ -162,7 +162,7 @@ mod tests {
         other_policy.specifier =
             ProposalSpecifier::Transfer(ResourceIds::Ids(vec![[13; 16], [14; 16]]));
 
-        repository.insert(other_policy.id.clone(), other_policy.clone());
+        repository.insert(other_policy.id, other_policy.clone());
 
         assert!(repository.resource_index.len() == 3);
 
