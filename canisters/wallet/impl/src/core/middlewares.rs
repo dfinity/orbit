@@ -15,9 +15,7 @@ pub fn call_context() -> CallContext {
 ///
 /// If the provided list of resources is empty, the caller is by default unauthorized.
 pub fn authorize(ctx: &CallContext, resources: &[Resource]) {
-    if SYSTEM_SERVICE.is_healthy() {
-        trap("Canister is not ready yet. Please try again later.");
-    }
+    SYSTEM_SERVICE.assert_system_readiness();
 
     if resources.is_empty() {
         trap("Unauthorized access: no resource provided");

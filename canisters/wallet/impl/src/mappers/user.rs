@@ -5,7 +5,8 @@ use crate::{
     models::{
         access_policy::{
             AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
-            ProposalResourceAction, Resource, ResourceAction, UserResourceAction,
+            ProposalResourceAction, Resource, ResourceAction, SettingsResourceAction,
+            UserResourceAction,
         },
         AddUserOperationInput, DisplayUser, EditUserOperationInput, User, UserCallerPrivileges,
     },
@@ -99,7 +100,9 @@ impl From<UserDTO> for User {
     }
 }
 
-pub const USER_PRIVILEGES: [UserPrivilege; 13] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
+    UserPrivilege::Capabilities,
+    UserPrivilege::SystemInfo,
     UserPrivilege::ListUsers,
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
@@ -118,6 +121,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 13] = [
 impl From<UserPrivilege> for Resource {
     fn from(privilege: UserPrivilege) -> Self {
         match privilege {
+            UserPrivilege::Capabilities => Resource::Settings(SettingsResourceAction::Capabilities),
+            UserPrivilege::SystemInfo => Resource::Settings(SettingsResourceAction::SystemInfo),
             UserPrivilege::ListUsers => Resource::User(UserResourceAction::List),
             UserPrivilege::AddUser => Resource::User(UserResourceAction::Create),
             UserPrivilege::ListAccounts => Resource::Account(AccountResourceAction::List),

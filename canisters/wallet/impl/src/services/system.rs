@@ -1,6 +1,6 @@
 use crate::{
     core::{
-        ic_cdk::api::{print, time},
+        ic_cdk::api::{print, time, trap},
         read_system_info, read_system_state, write_system_info, CallContext,
     },
     errors::InstallError,
@@ -63,6 +63,12 @@ impl SystemService {
 
     pub fn get_upgrader_canister_id(&self) -> Principal {
         read_system_info().upgrader_canister_id
+    }
+
+    pub fn assert_system_readiness(&self) {
+        if !self.is_healthy() {
+            trap("Canister is not healthy, it must be initialized first.");
+        }
     }
 
     // init calls can't perform inter-canister calls so we need to delay tasks such as user registration
