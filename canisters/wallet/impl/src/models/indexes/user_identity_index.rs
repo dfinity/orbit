@@ -38,7 +38,7 @@ mod tests {
     #[test]
     fn valid_model_serialization() {
         let model = UserIdentityIndex {
-            identity_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            identity_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
             user_id: [u8::MAX; 16],
         };
 
@@ -55,8 +55,8 @@ mod tests {
         let mut user = mock_user();
         user.id = user_id;
         user.identities = vec![
-            Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
-            Principal::from_text("asrmz-lmaaa-aaaaa-qaaeq-cai").unwrap(),
+            Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
+            Principal::from_text("werw6-ayaaa-aaaaa-774aa-cai").unwrap(),
         ];
 
         let indexes = user.to_index_for_identities();
@@ -64,11 +64,11 @@ mod tests {
         assert_eq!(indexes.len(), 2);
         assert_eq!(
             indexes[0].identity_id,
-            Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap()
+            Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap()
         );
         assert_eq!(
             indexes[1].identity_id,
-            Principal::from_text("asrmz-lmaaa-aaaaa-qaaeq-cai").unwrap()
+            Principal::from_text("werw6-ayaaa-aaaaa-774aa-cai").unwrap()
         );
         assert_eq!(indexes[0].user_id, user_id);
         assert_eq!(indexes[1].user_id, user_id);

@@ -231,7 +231,7 @@ mod tests {
             id: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
-                canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+                canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
                 name: None,
             }],
             deployed_wallets: vec![],
