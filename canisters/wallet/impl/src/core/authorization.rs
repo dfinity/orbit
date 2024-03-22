@@ -227,7 +227,7 @@ mod tests {
 
         ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
         user.identities = vec![caller];
         user.groups = vec![];
@@ -252,7 +252,7 @@ mod tests {
 
         ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
         user.identities = vec![caller];
         user.groups = vec![*ADMIN_GROUP_ID];
@@ -277,7 +277,7 @@ mod tests {
 
         ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
         user.identities = vec![caller];
         user.groups = vec![*ADMIN_GROUP_ID];

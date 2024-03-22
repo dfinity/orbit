@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn valid_model_serialization() {
         let user_wallet = UserWallet {
-            canister_id: Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap(),
+            canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
             name: Some("Wallet 1".to_string()),
         };
 
