@@ -319,6 +319,11 @@ impl ProposalService {
 
     /// Handles post processing logic like sending notifications.
     async fn created_proposal_hook(&self, proposal: &Proposal) {
+        if let ProposalStatus::Rejected = &proposal.status {
+            // No need to send notifications for proposals that are rejected upon creation.
+            return;
+        }
+
         let mut possible_voters = proposal
             .find_all_possible_voters()
             .await
@@ -532,9 +537,7 @@ mod tests {
         USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
 
         // creates the account for the transfer
-        let account_id = Uuid::new_v4();
         let mut account = mock_account();
-        account.id = *account_id.as_bytes();
         account.owners = vec![ctx.caller_user.id];
 
         ctx.account_repository

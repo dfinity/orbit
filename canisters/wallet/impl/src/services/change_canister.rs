@@ -1,8 +1,6 @@
-use super::ProposalEditInput;
 use crate::{
     errors::ChangeCanisterError,
-    models::{system::SystemInfo, ProposalStatus},
-    services::{ProposalService, SystemService, PROPOSAL_SERVICE, SYSTEM_SERVICE},
+    services::{SystemService, SYSTEM_SERVICE},
 };
 use candid::CandidType;
 use candid::Principal;
@@ -15,15 +13,13 @@ use lazy_static::lazy_static;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref CHANGE_CANISTER_SERVICE: Arc<ChangeCanisterService> = Arc::new(
-        ChangeCanisterService::new(Arc::clone(&SYSTEM_SERVICE), Arc::clone(&PROPOSAL_SERVICE))
-    );
+    pub static ref CHANGE_CANISTER_SERVICE: Arc<ChangeCanisterService> =
+        Arc::new(ChangeCanisterService::new(Arc::clone(&SYSTEM_SERVICE)));
 }
 
 #[derive(Debug)]
 pub struct ChangeCanisterService {
     system_service: Arc<SystemService>,
-    proposal_service: Arc<ProposalService>,
 }
 
 #[derive(Clone, CandidType)]
@@ -33,11 +29,8 @@ struct ChangeCanisterParams {
 }
 
 impl ChangeCanisterService {
-    pub fn new(system_service: Arc<SystemService>, proposal_service: Arc<ProposalService>) -> Self {
-        Self {
-            system_service,
-            proposal_service,
-        }
+    pub fn new(system_service: Arc<SystemService>) -> Self {
+        Self { system_service }
     }
 
     /// Execute an upgrade of the wallet by requesting the upgrader to perform it on our behalf.
@@ -131,25 +124,5 @@ impl ChangeCanisterService {
         })?;
 
         install_code_result
-    }
-
-    /// Verify and mark an upgrade as being performed successfully.
-    pub async fn update_change_canister_proposal_status(
-        &self,
-        system_info: &SystemInfo,
-        status: ProposalStatus,
-    ) -> ServiceResult<()> {
-        let proposal_id = system_info
-            .change_canister_proposal
-            .ok_or(ChangeCanisterError::MissingChangeCanisterProposal)?;
-
-        self.proposal_service
-            .edit_proposal(ProposalEditInput {
-                proposal_id,
-                status: Some(status),
-            })
-            .await?;
-
-        Ok(())
     }
 }

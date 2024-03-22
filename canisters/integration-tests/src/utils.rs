@@ -272,7 +272,6 @@ pub fn get_core_canister_health_status(
 ) -> HealthStatus {
     let res: (HealthStatus,) =
         update_candid_as(env, canister_id, user_id, "health_status", ((),)).unwrap();
-    let health_status = res.0;
 
-    health_status
+    res.0
 }

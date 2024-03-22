@@ -6,30 +6,32 @@ use crate::{
     errors::InstallError,
     models::{
         system::{SystemInfo, SystemState},
-        ProposalId, ProposalStatus,
+        ProposalId, ProposalKey, ProposalStatus,
     },
-    services::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
+    repositories::{ProposalRepository, PROPOSAL_REPOSITORY},
 };
 use candid::Principal;
 use ic_canister_core::api::ServiceResult;
+use ic_canister_core::repository::Repository;
 use lazy_static::lazy_static;
 use std::sync::Arc;
+use uuid::Uuid;
 use wallet_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
-        Arc::new(SystemService::new(Arc::clone(&CHANGE_CANISTER_SERVICE),));
+        Arc::new(SystemService::new(Arc::clone(&PROPOSAL_REPOSITORY)));
 }
 
 #[derive(Debug)]
 pub struct SystemService {
-    change_canister_service: Arc<ChangeCanisterService>,
+    proposal_repository: Arc<ProposalRepository>,
 }
 
 impl SystemService {
-    pub fn new(change_canister_service: Arc<ChangeCanisterService>) -> Self {
+    pub fn new(proposal_repository: Arc<ProposalRepository>) -> Self {
         Self {
-            change_canister_service,
+            proposal_repository,
         }
     }
 
@@ -76,7 +78,6 @@ impl SystemService {
         ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
             use crate::core::ic_cdk::api::id as self_canister_id;
             use crate::core::ic_cdk::spawn;
-            use crate::core::write_system_info;
             use crate::core::NNS_ROOT_CANISTER_ID;
             use crate::jobs::register_jobs;
             use ic_canister_core::utils::maybe_initialize_rng;
@@ -156,24 +157,35 @@ impl SystemService {
         };
 
         // verifies that the upgrade proposal exists and marks it as completed
-        if let Err(err) = self
-            .change_canister_service
-            .update_change_canister_proposal_status(
-                &system_info,
-                ProposalStatus::Completed {
-                    completed_at: time(),
-                },
-            )
-            .await
-        {
-            // Do not fail the upgrade if the proposal is not found, even though this should never happen
-            // it's not a critical error and failling the upgrade would leave the canister without being able to
-            // be upgraded again.
-            print(format!("Error: verifying upgrade failed {err}"));
-        }
+        if let Some(proposal_id) = &system_info.change_canister_proposal {
+            match self
+                .proposal_repository
+                .get(&ProposalKey { id: *proposal_id })
+            {
+                Some(mut proposal) => {
+                    proposal.status = ProposalStatus::Completed {
+                        completed_at: time(),
+                    };
 
-        // clears the change canister proposal from the config to avoid it being used again
-        system_info.change_canister_proposal = None;
+                    self.proposal_repository.insert(proposal.to_key(), proposal);
+                }
+                None => {
+                    // Do not fail the upgrade if the proposal is not found, even though this should never happen
+                    // it's not a critical error and failling the upgrade would leave the canister without being able to
+                    // be upgraded again.
+                    print(format!(
+                        "Error: verifying upgrade failed, proposal not found {}",
+                        Uuid::from_bytes(*proposal_id).hyphenated()
+                    ));
+                }
+            };
+
+            // clears the change canister proposal from the config to avoid it being used again
+            system_info.change_canister_proposal = None;
+            system_info.last_upgrade_timestamp = time();
+
+            write_system_info(system_info.clone());
+        }
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
         // this updates the list of admins of the canister.
@@ -313,28 +325,50 @@ mod install_canister_handlers {
 
 #[cfg(test)]
 mod tests {
+    use crate::models::proposal_test_utils::mock_proposal;
+
     use super::*;
-    use crate::core::{ic_cdk::api::id as self_canister_id, test_utils, write_system_info};
     use candid::Principal;
 
     #[tokio::test]
-    async fn canister_upgrade() {
-        let system_info = test_utils::init_canister_system();
-        let call_context = CallContext::new(self_canister_id());
+    async fn canister_init() {
+        let caller = Principal::from_slice(&[1; 29]);
+        let ctx = CallContext::new(caller);
 
-        write_system_info(system_info.to_owned());
+        let result = SYSTEM_SERVICE
+            .init_canister(
+                SystemInit {
+                    admins: Some(vec![Principal::from_slice(&[1; 29])]),
+                    upgrader_wasm_module: vec![],
+                },
+                &ctx,
+            )
+            .await;
 
-        let init = SystemInit {
-            admins: Some(vec![Principal::from_slice(&[1; 29])]),
-            upgrader_wasm_module: vec![1],
-        };
+        assert!(result.is_ok());
+    }
 
-        SYSTEM_SERVICE
-            .init_canister(init, &call_context)
-            .await
-            .expect("Failed to init canister");
+    #[tokio::test]
+    async fn canister_upgrade_marks_proposal_completed_and_clears_it() {
+        let mut proposal = mock_proposal();
+        proposal.status = ProposalStatus::Processing { started_at: time() };
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        write_system_info(SystemInfo {
+            change_canister_proposal: Some(proposal.id),
+            ..Default::default()
+        });
+
+        let result = SYSTEM_SERVICE.upgrade_canister(None).await;
+
+        assert!(result.is_ok());
+
+        let proposal = PROPOSAL_REPOSITORY.get(&proposal.to_key()).unwrap();
+        assert!(matches!(proposal.status, ProposalStatus::Completed { .. }));
 
         let system_info = read_system_info();
-        assert_eq!(system_info.upgrader_wasm_module, vec![1]);
+
+        assert!(system_info.change_canister_proposal.is_none());
     }
 }

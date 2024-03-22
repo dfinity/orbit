@@ -5,6 +5,7 @@ use crate::{
     },
     models::access_policy::{Resource, SettingsResourceAction},
     services::{SystemService, SYSTEM_SERVICE},
+    SYSTEM_VERSION,
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
@@ -98,7 +99,7 @@ impl SystemController {
         let cycles = canister_balance();
 
         Ok(SystemInfoResponse {
-            system: system_info.to_dto(&cycles, env!("CARGO_PKG_VERSION")),
+            system: system_info.to_dto(&cycles, SYSTEM_VERSION),
         })
     }
 }

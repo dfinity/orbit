@@ -4,6 +4,7 @@ use crate::{
         WALLET_ASSETS,
     },
     models::access_policy::{Resource, SettingsResourceAction},
+    SYSTEM_VERSION,
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_macros::with_middleware;
@@ -35,7 +36,7 @@ impl CapabilitiesController {
 
         Ok(CapabilitiesResponse {
             capabilities: CapabilitiesDTO {
-                version: env!("CARGO_PKG_VERSION").to_string(),
+                version: SYSTEM_VERSION.to_string(),
                 supported_assets: assets.into_iter().map(|asset| asset.into()).collect(),
             },
         })

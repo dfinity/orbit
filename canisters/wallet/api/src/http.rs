@@ -1,4 +1,4 @@
-///! HTTP interface types for the canister.
+//! HTTP interface types for the canister.
 use candid::{CandidType, Deserialize};
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
