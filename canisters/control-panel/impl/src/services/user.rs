@@ -145,6 +145,10 @@ impl UserService {
     ) -> ServiceResult<User> {
         let mut user = self.get_user(&ctx.caller(), ctx)?;
 
+        user.wallets.push(UserWallet {
+            canister_id: wallet_canister_id,
+            name: None,
+        });
         user.deployed_wallets.push(wallet_canister_id);
 
         user.validate()?;
@@ -162,6 +166,22 @@ impl UserService {
         let user = self.get_user(&ctx.caller(), ctx)?;
 
         user.can_deploy_wallet()
+    }
+
+    pub async fn set_main_wallet(
+        &self,
+        wallet_canister_id: Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let mut user = self.get_user(&ctx.caller(), ctx)?;
+
+        user.main_wallet = Some(wallet_canister_id);
+
+        user.validate()?;
+
+        self.user_repository.insert(user.to_key(), user.clone());
+
+        Ok(user)
     }
 
     /// Checks if the caller has access to the given user.

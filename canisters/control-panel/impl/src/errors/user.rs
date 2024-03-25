@@ -46,6 +46,9 @@ pub enum UserError {
     BadUserSubscriptionStatus {
         subscription_status: UserSubscriptionStatusDTO,
     },
+    /// Concurrent wallet canister deployment.
+    #[error(r#"Concurrent wallet canister deployment is not allowed."#)]
+    ConcurrentWalletDeployment,
 }
 
 impl DetailableError for UserError {

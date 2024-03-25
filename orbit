@@ -10,12 +10,12 @@ export NVM_DIR="$HOME/.nvm"
 
 MINTER_IDENTITY_NAME="minter"
 WHOAMI=$(dfx identity whoami)
-CANISTER_ID_CONTROL_PANEL="bw4dl-smaaa-aaaaa-qaacq-cai"
+CANISTER_ID_CONTROL_PANEL="wdqqk-naaaa-aaaaa-774aq-cai"
 CANISTER_ID_ICP_INDEX="qhbym-qaaaa-aaaaa-aaafq-cai"
 CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
-CANISTER_ID_UI="asrmz-lmaaa-aaaaa-qaaeq-cai"
-CANISTER_ID_WALLET="avqkn-guaaa-aaaaa-qaaea-cai"
+CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
+CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
 
 #############################################
 # USAGE                                     #

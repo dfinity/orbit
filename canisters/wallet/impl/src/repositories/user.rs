@@ -1,4 +1,5 @@
 use super::indexes::{
+    name_to_user_id_index::NameToUserIdIndexRepository,
     user_identity_index::UserIdentityIndexRepository,
     user_status_group_index::UserStatusGroupIndexRepository,
 };
@@ -6,10 +7,11 @@ use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
     models::{
         indexes::{
+            name_to_user_id_index::NameToUserIdIndexCriteria,
             user_identity_index::UserIdentityIndexCriteria,
             user_status_group_index::UserStatusGroupIndexCriteria,
         },
-        User, UserKey, UserStatus,
+        User, UserId, UserKey, UserStatus,
     },
 };
 use candid::Principal;
@@ -36,6 +38,7 @@ lazy_static! {
 pub struct UserRepository {
     identity_index: UserIdentityIndexRepository,
     group_status_index: UserStatusGroupIndexRepository,
+    name_index: NameToUserIdIndexRepository,
 }
 
 impl Repository<UserKey, User> for UserRepository {
@@ -65,6 +68,11 @@ impl Repository<UserKey, User> for UserRepository {
                         .map_or(Vec::new(), |prev| prev.to_index_for_groups()),
                     current: value.to_index_for_groups(),
                 });
+            self.name_index
+                .refresh_index_on_modification(RefreshIndexMode::Value {
+                    previous: prev.clone().and_then(|prev| prev.to_index_by_name()),
+                    current: value.to_index_by_name(),
+                });
 
             prev
         })
@@ -84,6 +92,10 @@ impl Repository<UserKey, User> for UserRepository {
                     current: prev
                         .clone()
                         .map_or(Vec::new(), |prev| prev.to_index_for_groups()),
+                });
+            self.name_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
+                    current: prev.clone().and_then(|prev| prev.to_index_by_name()),
                 });
 
             prev
@@ -120,6 +132,16 @@ impl UserRepository {
                     false
                 }
             })
+    }
+
+    // Returns the user associated with the given name if it exists.
+    pub fn find_by_name(&self, name: &str) -> Option<UserId> {
+        self.name_index
+            .find_by_criteria(NameToUserIdIndexCriteria {
+                name: name.to_owned(),
+            })
+            .into_iter()
+            .next()
     }
 
     /// Returns the users associated with the given group and their user status if they exist.

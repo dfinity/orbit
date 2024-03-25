@@ -63,7 +63,7 @@ pub mod tests {
 
     #[test]
     fn check_caller_is_not_controller() {
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
         user.identities = vec![caller];
         user.groups = vec![];
@@ -76,7 +76,7 @@ pub mod tests {
 
     #[test]
     fn check_caller_is_not_self() {
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
         user.identities = vec![caller];
         user.groups = vec![ADMIN_GROUP_ID.to_owned()];
@@ -95,14 +95,14 @@ pub mod tests {
 
     #[test]
     fn check_user_is_none() {
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let call_context = CallContext::new(caller);
         assert!(call_context.user().is_none());
     }
 
     #[test]
     fn check_user_is_some() {
-        let caller = Principal::from_text("avqkn-guaaa-aaaaa-qaaea-cai").unwrap();
+        let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
         user.identities = vec![caller];
         user.groups = vec![ADMIN_GROUP_ID.to_owned()];

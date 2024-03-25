@@ -87,21 +87,14 @@ impl DeployService {
         })?;
 
         self.user_service
-            .manage_user(
-                ManageUserInput {
-                    main_wallet: Some(wallet_canister.canister_id),
-                    wallets: Some(vec![UserWalletDTO {
-                        canister_id: wallet_canister.canister_id,
-                        name: None,
-                    }]),
-                },
-                ctx,
-            )
-            .await?;
-
-        self.user_service
             .add_deployed_wallet(wallet_canister.canister_id, ctx)
             .await?;
+
+        if user.main_wallet.is_none() {
+            self.user_service
+                .set_main_wallet(wallet_canister.canister_id, ctx)
+                .await?;
+        }
 
         Ok(wallet_canister.canister_id)
     }

@@ -18,6 +18,7 @@ canbench = ["canbench-rs"]
 
 [dependencies]
 anyhow = { workspace = true }
+any_ascii = { workspace = true }
 async-trait = { workspace = true }
 byteorder = { workspace = true }
 canbench-rs = { workspace = true, optional = true }
