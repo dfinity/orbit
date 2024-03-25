@@ -8,7 +8,7 @@ use crate::{
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
-use control_panel_api::{ManageUserInput, RegisterUserInput};
+use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     api::{ApiError, ServiceResult},
@@ -138,6 +138,26 @@ impl UserService {
         Ok(user)
     }
 
+    pub fn update_waiting_list(
+        &self,
+        input: UpdateWaitingListInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<()> {
+        self.assert_controller(ctx)?;
+
+        for user_principal in input.users {
+            let mut user = self.get_user(&user_principal, ctx)?;
+
+            user.subscription_status = input.new_status.clone().try_into()?;
+
+            user.validate()?;
+
+            self.user_repository.insert(user.to_key(), user.clone());
+        }
+
+        Ok(())
+    }
+
     pub async fn add_deployed_wallet(
         &self,
         wallet_canister_id: Principal,
@@ -174,12 +194,23 @@ impl UserService {
         Ok(user)
     }
 
+    /// Checks if the caller is a controller.
+    fn assert_controller(&self, ctx: &CallContext) -> ServiceResult<()> {
+        if !ctx.is_controller() {
+            Err(UserError::Forbidden {
+                user: ctx.caller().to_text(),
+            })?
+        }
+
+        Ok(())
+    }
+
     /// Checks if the caller has access to the given user.
     ///
-    /// Admins have access to all users.
+    /// Admins and controllers have access to all users.
     fn assert_user_access(&self, user: &User, ctx: &CallContext) -> ServiceResult<()> {
         let is_user_owner = user.id == ctx.caller();
-        if !is_user_owner && !ctx.is_admin() {
+        if !is_user_owner && !ctx.is_admin() && !ctx.is_controller() {
             Err(UserError::Forbidden {
                 user: user.id.to_text(),
             })?
@@ -208,6 +239,8 @@ impl UserService {
 mod tests {
     use super::*;
     use crate::models::UserSubscriptionStatus;
+    use control_panel_api::UserSubscriptionStatusDTO;
+    use ic_canister_core::cdk::mocks::CONTROLLER_ID;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -324,6 +357,53 @@ mod tests {
 
         assert!(result.is_ok());
         assert!(duplicated_user_result.is_err());
+    }
+
+    #[test]
+    fn update_waiting_list() {
+        let user_id = Principal::from_slice(&[u8::MAX; 29]);
+        let ctx = CallContext::new(user_id);
+        let service = UserService::default();
+        let user = User {
+            id: user_id,
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
+            wallets: vec![],
+            deployed_wallets: vec![],
+            main_wallet: None,
+            last_update_timestamp: 0,
+        };
+
+        service.user_repository.insert(user.to_key(), user.clone());
+
+        let input = UpdateWaitingListInput {
+            users: vec![user_id],
+            new_status: UserSubscriptionStatusDTO::Approved,
+        };
+
+        // only controllers can update waiting list
+        service
+            .update_waiting_list(input.clone(), &ctx)
+            .unwrap_err();
+
+        let ctrl_ctx = CallContext::new(CONTROLLER_ID);
+
+        service
+            .update_waiting_list(input.clone(), &ctrl_ctx)
+            .unwrap();
+
+        let result = service.get_user(&user_id, &ctx);
+        assert!(matches!(
+            result.unwrap().subscription_status,
+            UserSubscriptionStatus::Approved
+        ));
+
+        let mut bad_input = input;
+        bad_input.new_status = UserSubscriptionStatusDTO::Pending;
+
+        // status cannot be set to Pending
+        service
+            .update_waiting_list(bad_input, &ctrl_ctx)
+            .unwrap_err();
     }
 
     #[tokio::test]
