@@ -86,6 +86,7 @@ impl SystemService {
             use crate::core::ic_cdk::spawn;
             use crate::core::NNS_ROOT_CANISTER_ID;
             use crate::jobs::register_jobs;
+            use crate::services::CHANGE_CANISTER_SERVICE;
             use ic_canister_core::utils::maybe_initialize_rng;
 
             spawn(async move {
@@ -93,31 +94,42 @@ impl SystemService {
                 // uses `raw_rand`` to generate a seed for the random number generator
                 maybe_initialize_rng().await;
 
-                if let SystemInstall::Init(init) = install {
-                    let canister_id = self_canister_id();
+                match install {
+                    SystemInstall::Init(init) => {
+                        let canister_id = self_canister_id();
 
-                    // registers the default canister configurations such as policies and user groups.
-                    print("Adding initial canister configurations");
-                    install_canister_handlers::init_post_process().await;
+                        // registers the default canister configurations such as policies and user groups.
+                        print("Adding initial canister configurations");
+                        install_canister_handlers::init_post_process().await;
 
-                    print("Deploying upgrader canister");
-                    let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
-                        init.upgrader_wasm_module,
-                        vec![canister_id, NNS_ROOT_CANISTER_ID],
-                    )
-                    .await;
-                    system_info.upgrader_canister_id = upgrader_canister_id;
+                        print("Deploying upgrader canister");
+                        let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
+                            init.upgrader_wasm_module,
+                            vec![canister_id, NNS_ROOT_CANISTER_ID],
+                        )
+                        .await;
+                        system_info.upgrader_canister_id = upgrader_canister_id;
 
-                    // sets the upgrader as a controller of the wallet canister
-                    print("Updating canister settings to set the upgrader as the controller");
-                    install_canister_handlers::set_controllers(vec![
-                        upgrader_canister_id,
-                        NNS_ROOT_CANISTER_ID,
-                    ])
-                    .await;
+                        // sets the upgrader as a controller of the wallet canister
+                        print("Updating canister settings to set the upgrader as the controller");
+                        install_canister_handlers::set_controllers(vec![
+                            upgrader_canister_id,
+                            NNS_ROOT_CANISTER_ID,
+                        ])
+                        .await;
 
-                    install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await;
-                }
+                        install_canister_handlers::set_admins(init.admins.unwrap_or_default())
+                            .await;
+                    }
+                    SystemInstall::Upgrade(upgrade) => {
+                        if let Some(new_upgrader_wasm) = &upgrade.upgrader_wasm_module {
+                            CHANGE_CANISTER_SERVICE
+                                .upgrade_upgrader(new_upgrader_wasm, None)
+                                .await
+                                .expect("Failed to upgrade upgrader canister");
+                        }
+                    }
+                };
 
                 system_info.last_upgrade_timestamp = time();
                 write_system_info(system_info.to_owned());
