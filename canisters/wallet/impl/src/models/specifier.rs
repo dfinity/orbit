@@ -1,7 +1,7 @@
 use super::resource::Resource;
-use super::{Account, MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
+use super::{MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
-use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};
+use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use ic_canister_core::{repository::Repository, types::UUID};
@@ -144,26 +144,9 @@ impl Match<ProposalHasVoterInUserSpecifier> for UserMatcher {
             }
             UserSpecifier::Id(ids) => Ok(ids.contains(&voter_id)),
             UserSpecifier::Owner => {
-                match proposal.operation {
-                    ProposalOperation::Transfer(operation) => {
-                        if let Some(account) =
-                            ACCOUNT_REPOSITORY.get(&Account::key(operation.input.from_account_id))
-                        {
-                            return Ok(account.owners.contains(&voter_id));
-                        }
-                    }
-                    ProposalOperation::EditUser(operation) => {
-                        return Ok(operation.input.user_id == voter_id);
-                    }
-                    ProposalOperation::EditAccount(operation) => {
-                        if let Some(account) =
-                            ACCOUNT_REPOSITORY.get(&Account::key(operation.input.account_id))
-                        {
-                            return Ok(account.owners.contains(&voter_id));
-                        }
-                    }
-                    _ => {}
-                };
+                if let ProposalOperation::EditUser(operation) = proposal.operation {
+                    return Ok(operation.input.user_id == voter_id);
+                }
 
                 Ok(false)
             }
@@ -303,15 +286,16 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
 #[cfg(test)]
 mod tests {
     use crate::models::{
+        access_policy::Allow,
         criteria::Criteria,
         proposal_test_utils::mock_proposal,
         specifier::{
             AccountMatcher, AccountSpecifier, Match, ProposalMatcher, ProposalSpecifier,
             UserMatcher, UserSpecifier,
         },
-        AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
-        AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
-        EditUserOperation, EditUserOperationInput, Metadata, ProposalOperation, TransferOperation,
+        AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
+        Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
+        EditUserOperationInput, Metadata, ProposalOperation, TransferOperation,
         TransferOperationInput, UserStatus,
     };
     use anyhow::{anyhow, Error};
@@ -332,14 +316,14 @@ mod tests {
                     account_id: None,
                     input: AddAccountOperationInput {
                         name: "account-1".into(),
-                        owners: vec![],
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: Metadata::default(),
-                        policies: AccountPoliciesInput {
-                            transfer: Some(Criteria::AutoAdopted),
-                            edit: Some(Criteria::AutoAdopted),
-                        },
+                        transfer_approval_policy: Criteria::AutoAdopted,
+                        update_approval_policy: Criteria::AutoAdopted,
+                        read_access_policy: Allow::authenticated(),
+                        update_access_policy: Allow::authenticated(),
+                        transfer_access_policy: Allow::authenticated(),
                     },
                 }),
                 ProposalSpecifier::AddAccount,
@@ -360,9 +344,12 @@ mod tests {
                 ProposalOperation::EditAccount(EditAccountOperation {
                     input: EditAccountOperationInput {
                         account_id: [0; 16],
-                        owners: None,
-                        policies: None,
                         name: None,
+                        read_access_policy: None,
+                        update_access_policy: None,
+                        transfer_access_policy: None,
+                        transfer_approval_policy: None,
+                        update_approval_policy: None,
                     },
                 }),
                 ProposalSpecifier::EditAccount(AccountSpecifier::Any),
