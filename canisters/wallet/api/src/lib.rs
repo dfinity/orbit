@@ -45,3 +45,6 @@ pub use proposal_policy::*;
 
 mod access_policy;
 pub use access_policy::*;
+
+mod resource;
+pub use resource::*;

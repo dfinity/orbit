@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
-    mappers::{access_policy::GetTransfersInputRef, HelperMapper},
-    models::access_policy::Resource,
+    mappers::{authorization::GetTransfersInputRef, HelperMapper},
+    models::resource::Resource,
     services::TransferService,
 };
 use ic_canister_core::api::{ApiError, ApiResult};

@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_policy::{Resource, ResourceAction},
+    models::resource::{Resource, ResourceAction},
     services::UserGroupService,
 };
 use ic_canister_core::api::ApiResult;

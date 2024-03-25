@@ -74,6 +74,8 @@ pub mod criteria;
 
 pub mod access_policy;
 
+pub mod resource;
+
 pub mod indexes;
 
 pub mod specifier;

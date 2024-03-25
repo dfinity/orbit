@@ -1,10 +1,11 @@
 use crate::models::{
-    access_policy::{
-        AccessPolicyResourceAction, AccountResourceAction, Allow, ChangeCanisterResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, SettingsResourceAction,
+    access_policy::Allow,
+    criteria::{Criteria, Percentage},
+    resource::{
+        AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+        ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
         UserResourceAction,
     },
-    criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
     ADMIN_GROUP_ID,
 };
@@ -15,12 +16,12 @@ lazy_static! {
         // all authenticated users can read the capabilities of the canister
         (
             Allow::authenticated(),
-            Resource::Settings(SettingsResourceAction::Capabilities),
+            Resource::System(SystemResourceAction::Capabilities),
         ),
         // Admins can read the system info which includes the canister's version, cycles, etc.
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::Settings(SettingsResourceAction::SystemInfo),
+            Resource::System(SystemResourceAction::SystemInfo),
         ),
         // users
         (

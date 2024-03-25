@@ -49,3 +49,7 @@ mod proposal_vote;
 pub mod access_policy;
 
 pub mod metadata;
+
+pub mod resource;
+
+pub mod authorization;

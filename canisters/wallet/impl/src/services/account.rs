@@ -10,7 +10,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
-        access_policy::{AccountResourceAction, Resource, ResourceId},
+        resource::{AccountResourceAction, Resource, ResourceId},
         specifier::{AccountSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,

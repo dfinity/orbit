@@ -426,6 +426,7 @@ export default {
     all: 'Todos',
     subset: 'Subconjunto',
     skip: 'Saltar',
+    version: 'Versão',
   },
   forms: {
     create: 'Criar',
@@ -568,7 +569,7 @@ export default {
       usergroup: 'Grupo de usuários',
       accesspolicy: 'Regra de acesso',
       proposalpolicy: 'Regra para pedidos',
-      settings: 'Sistema',
+      system: 'Sistema',
       changecanister: 'Alterar canister',
       transfer: 'Transfência',
       proposal: 'Pedido',
@@ -581,8 +582,8 @@ export default {
       update: 'Atualizar',
       delete: 'Remover',
       transfer: 'Transferência',
-      readpublicconfig: 'Ler configuração pública',
-      readsensitiveconfig: 'Ler configuração sensível',
+      capabilities: 'Capacidades',
+      systeminfo: 'Informações do sistema',
     },
     allow: {
       everyone_edit_label: 'Permitir que os seguintes usuários acessem:',

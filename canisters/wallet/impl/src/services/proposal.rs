@@ -8,7 +8,7 @@ use crate::{
     factories::proposals::ProposalFactory,
     mappers::HelperMapper,
     models::{
-        access_policy::{ProposalResourceAction, Resource, ResourceId},
+        resource::{ProposalResourceAction, Resource, ResourceId},
         DisplayUser, NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalStatusCode, ProposalVoteStatus,
     },

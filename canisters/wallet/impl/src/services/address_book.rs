@@ -8,7 +8,7 @@ use crate::{
     errors::AddressBookError,
     mappers::address_book::AddressBookMapper,
     models::{
-        access_policy::{Resource, ResourceAction, ResourceId},
+        resource::{Resource, ResourceAction, ResourceId},
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
         AddressBookEntryId, EditAddressBookEntryOperationInput, ListAddressBookEntriesInput,
         RemoveAddressBookEntryOperationInput,

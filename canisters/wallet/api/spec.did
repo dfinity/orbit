@@ -1462,8 +1462,8 @@ type ProposalResourceAction = variant {
   Read : ResourceId;
 };
 
-// The actions that are available for canister settings.
-type SettingsResourceAction = variant {
+// The actions that are available for the system.
+type SystemResourceAction = variant {
   SystemInfo;
   Capabilities;
 };
@@ -1496,7 +1496,7 @@ type Resource = variant {
   ChangeCanister : ChangeCanisterResourceAction;
   Proposal : ProposalResourceAction;
   ProposalPolicy : ResourceAction;
-  Settings : SettingsResourceAction;
+  System : SystemResourceAction;
   User : UserResourceAction;
   UserGroup : ResourceAction;
 };

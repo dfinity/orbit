@@ -3,7 +3,7 @@ use crate::{
         authorization::Authorization,
         middlewares::{authorize, call_context},
     },
-    models::access_policy::{AccessPolicyResourceAction, Resource},
+    models::resource::{AccessPolicyResourceAction, Resource},
     services::access_policy::{AccessPolicyService, ACCESS_POLICY_SERVICE},
 };
 use ic_canister_core::api::ApiResult;

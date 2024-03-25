@@ -6,7 +6,7 @@ use super::{
 use crate::{
     errors::AuthorizationError,
     models::{
-        access_policy::{
+        resource::{
             AccountResourceAction, ProposalResourceAction, Resource, ResourceId, UserResourceAction,
         },
         Account, ProposalKey, User,
@@ -129,8 +129,10 @@ mod tests {
     use super::*;
     use crate::{
         models::{
-            access_policy::{AccessPolicy, Allow, ResourceAction},
-            account_test_utils, user_group_test_utils,
+            access_policy::{AccessPolicy, Allow},
+            account_test_utils,
+            resource::ResourceAction,
+            user_group_test_utils,
             user_test_utils::{self, mock_user},
             UserGroup, UserStatus, ADMIN_GROUP_ID,
         },

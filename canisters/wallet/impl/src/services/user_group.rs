@@ -5,7 +5,7 @@ use crate::core::utils::{
 };
 use crate::core::{generate_uuid_v4, CallContext};
 use crate::errors::UserGroupError;
-use crate::models::access_policy::{Resource, ResourceAction, ResourceId};
+use crate::models::resource::{Resource, ResourceAction, ResourceId};
 use crate::models::{
     AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup, UserGroupCallerPrivileges,
 };

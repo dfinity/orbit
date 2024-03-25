@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_policy::{ProposalResourceAction, Resource},
+    models::resource::{ProposalResourceAction, Resource},
     services::{ProposalService, PROPOSAL_SERVICE},
 };
 use ic_canister_core::api::ApiResult;

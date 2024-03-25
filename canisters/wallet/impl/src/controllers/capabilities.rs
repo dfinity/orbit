@@ -3,7 +3,7 @@ use crate::{
         middlewares::{authorize, call_context},
         WALLET_ASSETS,
     },
-    models::access_policy::{Resource, SettingsResourceAction},
+    models::resource::{Resource, SystemResourceAction},
     SYSTEM_VERSION,
 };
 use ic_canister_core::api::ApiResult;
@@ -30,7 +30,7 @@ impl CapabilitiesController {
         Self {}
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::Settings(SettingsResourceAction::Capabilities)]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::System(SystemResourceAction::Capabilities)]))]
     async fn capabilities(&self) -> ApiResult<CapabilitiesResponse> {
         let assets = WALLET_ASSETS.with(|wallet_assets| wallet_assets.borrow().clone());
 

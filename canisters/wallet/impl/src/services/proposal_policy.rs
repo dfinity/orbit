@@ -7,7 +7,7 @@ use crate::{
     },
     errors::ProposalError,
     models::{
-        access_policy::{Resource, ResourceAction, ResourceId},
+        resource::{Resource, ResourceAction, ResourceId},
         AddProposalPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy,
         ProposalPolicyCallerPrivileges,
     },

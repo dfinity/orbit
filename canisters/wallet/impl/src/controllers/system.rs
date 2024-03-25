@@ -3,7 +3,7 @@ use crate::{
         ic_cdk::api::{canister_balance, trap},
         middlewares::{authorize, call_context},
     },
-    models::access_policy::{Resource, SettingsResourceAction},
+    models::resource::{Resource, SystemResourceAction},
     services::{SystemService, SYSTEM_SERVICE},
     SYSTEM_VERSION,
 };
@@ -93,7 +93,7 @@ impl SystemController {
         self.system_service.health_status()
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::Settings(SettingsResourceAction::SystemInfo)]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::System(SystemResourceAction::SystemInfo)]))]
     async fn system_info(&self) -> ApiResult<SystemInfoResponse> {
         let system_info = self.system_service.get_system_info();
         let cycles = canister_balance();
