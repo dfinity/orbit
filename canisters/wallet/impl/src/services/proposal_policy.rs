@@ -189,10 +189,20 @@ pub enum PolicyChangeResult {
 }
 
 impl PolicyChangeResult {
-    pub fn on_created<F: FnOnce(UUID)>(&self, callback: F) {
+    pub fn on_created<F: FnOnce(UUID)>(&self, callback: F) -> &PolicyChangeResult {
         if let PolicyChangeResult::Created(policy) = self {
             callback(policy.id);
         }
+
+        self
+    }
+
+    pub fn on_removed<F: FnOnce()>(&self, callback: F) -> &PolicyChangeResult {
+        if let PolicyChangeResult::Removed = self {
+            callback();
+        }
+
+        self
     }
 }
 

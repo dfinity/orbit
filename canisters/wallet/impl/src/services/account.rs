@@ -247,7 +247,8 @@ impl AccountService {
                     account.transfer_approval_policy_id,
                 )
                 .await?
-                .on_created(|policy_id| account.transfer_approval_policy_id = Some(policy_id));
+                .on_created(|policy_id| account.transfer_approval_policy_id = Some(policy_id))
+                .on_removed(|| account.update_approval_policy_id = None);
         }
 
         if let Some(update_approval_policy_input) = input.update_approval_policy {
@@ -258,7 +259,8 @@ impl AccountService {
                     account.update_approval_policy_id,
                 )
                 .await?
-                .on_created(|policy_id| account.update_approval_policy_id = Some(policy_id));
+                .on_created(|policy_id| account.update_approval_policy_id = Some(policy_id))
+                .on_removed(|| account.update_approval_policy_id = None);
         }
 
         account.validate()?;
