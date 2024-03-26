@@ -14,7 +14,8 @@ export interface Account {
   'id' : UUID,
   'decimals' : number,
   'balance' : [] | [AccountBalanceInfo],
-  'owners' : Array<UUID>,
+  'update_approval_policy' : [] | [ProposalPolicyCriteria],
+  'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
   'blockchain' : string,
@@ -22,7 +23,6 @@ export interface Account {
   'last_modification_timestamp' : TimestampRFC3339,
   'standard' : string,
   'symbol' : AssetSymbol,
-  'policies' : AccountPolicies,
 }
 export interface AccountBalance {
   'account_id' : UUID,
@@ -41,10 +41,6 @@ export interface AccountCallerPrivileges {
   'can_edit' : boolean,
 }
 export interface AccountMetadata { 'key' : string, 'value' : string }
-export interface AccountPolicies {
-  'edit' : [] | [ProposalPolicyCriteria],
-  'transfer' : [] | [ProposalPolicyCriteria],
-}
 export type AccountResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
   { 'Create' : null } |
@@ -56,12 +52,15 @@ export interface AddAccountOperation {
   'input' : AddAccountOperationInput,
 }
 export interface AddAccountOperationInput {
-  'owners' : Array<UUID>,
+  'transfer_access_policy' : Allow,
+  'update_approval_policy' : [] | [ProposalPolicyCriteria],
+  'read_access_policy' : Allow,
+  'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
+  'update_access_policy' : Allow,
   'blockchain' : string,
   'standard' : string,
-  'policies' : AccountPolicies,
 }
 export interface AddAddressBookEntryOperation {
   'address_book_entry' : [] | [AddressBookEntry],
@@ -117,6 +116,8 @@ export interface Allow {
   'auth_scope' : AuthScope,
   'users' : Array<UUID>,
 }
+export type ApprovalPolicyCriteriaInput = { 'Set' : ProposalPolicyCriteria } |
+  { 'Remove' : null };
 export interface ApprovalThreshold {
   'threshold' : number,
   'voters' : UserSpecifier,
@@ -186,9 +187,12 @@ export interface EditAccessPolicyOperationInput {
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
   'account_id' : UUID,
-  'owners' : [] | [Array<UUID>],
+  'transfer_access_policy' : [] | [Allow],
+  'update_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
+  'read_access_policy' : [] | [Allow],
+  'transfer_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
   'name' : [] | [string],
-  'policies' : [] | [AccountPolicies],
+  'update_access_policy' : [] | [Allow],
 }
 export interface EditAddressBookEntryOperation {
   'input' : EditAddressBookEntryOperationInput,
