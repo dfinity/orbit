@@ -248,7 +248,7 @@ impl AccountService {
                 )
                 .await?
                 .on_created(|policy_id| account.transfer_approval_policy_id = Some(policy_id))
-                .on_removed(|| account.update_approval_policy_id = None);
+                .on_removed(|| account.transfer_approval_policy_id = None);
         }
 
         if let Some(update_approval_policy_input) = input.update_approval_policy {
