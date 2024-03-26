@@ -92,12 +92,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
-  const UserSubscriptionStatus = IDL.Variant({
-    'Unsubscribed' : IDL.Null,
-    'Approved' : IDL.Null,
-    'Denylisted' : IDL.Null,
-    'Pending' : IDL.Null,
-  });
   const UpdateWaitingListInput = IDL.Record({
     'users' : IDL.Vec(IDL.Principal),
     'new_status' : UserSubscriptionStatus,
