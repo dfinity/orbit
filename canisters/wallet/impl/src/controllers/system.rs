@@ -20,7 +20,7 @@ use wallet_api::{HealthStatus, SystemInfoResponse, SystemInstall, SystemUpgrade}
 async fn initialize(input: Option<SystemInstall>) {
     match input {
         Some(SystemInstall::Init(input)) => CONTROLLER.initialize(input).await,
-        _ => trap("Invalid init args to install canister"),
+        Some(SystemInstall::Upgrade(_)) | None => trap("Invalid args to initialize canister"),
     }
 }
 
@@ -40,7 +40,7 @@ async fn post_upgrade(input: Option<SystemInstall>) {
     match input {
         None => CONTROLLER.post_upgrade(None).await,
         Some(SystemInstall::Upgrade(input)) => CONTROLLER.post_upgrade(Some(input)).await,
-        _ => trap("Wrong upgrade args for canister upgrade"),
+        Some(SystemInstall::Init(_)) => trap("Invalid args to upgrade canister"),
     }
 }
 
