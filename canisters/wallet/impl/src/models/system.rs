@@ -22,13 +22,13 @@ pub const SYSTEM_STATE_MEMORY_SIZE: u32 = WASM_PAGE_SIZE * SYSTEM_STATE_WASM_PAG
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemInfo {
     /// Last time the canister was upgraded or initialized.
-    pub last_upgrade_timestamp: Timestamp,
+    last_upgrade_timestamp: Timestamp,
     /// An optionally pending change canister proposal.
-    pub change_canister_proposal: Option<UUID>,
+    change_canister_proposal: Option<UUID>,
     /// The upgrader canister id that is allowed to upgrade this canister.
-    pub upgrader_canister_id: Principal,
+    upgrader_canister_id: Option<Principal>,
     /// The upgrader canister wasm module.
-    pub upgrader_wasm_module: Vec<u8>,
+    upgrader_wasm_module: Option<Vec<u8>>,
 }
 
 impl Default for SystemInfo {
@@ -36,21 +36,60 @@ impl Default for SystemInfo {
         Self {
             last_upgrade_timestamp: time(),
             change_canister_proposal: None,
-            upgrader_canister_id: Principal::management_canister(),
-            upgrader_wasm_module: Vec::new(),
+            upgrader_canister_id: None,
+            upgrader_wasm_module: None,
         }
     }
 }
 
 impl SystemInfo {
-    /// The maximum size of each field in stable memory.
-    pub const MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP: u32 = std::mem::size_of::<u64>() as u32;
+    pub fn new(upgrader_canister_id: Principal, upgrader_wasm_module: Vec<u8>) -> Self {
+        Self {
+            upgrader_canister_id: Some(upgrader_canister_id),
+            upgrader_wasm_module: Some(upgrader_wasm_module),
+            ..Default::default()
+        }
+    }
 
-    /// The maximum size of the system information in stable memory.
-    pub const MAX_BYTE_SIZE: u32 = SYSTEM_STATE_MEMORY_SIZE;
+    pub fn get_last_upgrade_timestamp(&self) -> Timestamp {
+        self.last_upgrade_timestamp
+    }
 
-    /// If this overflows then the stable memory layout will be broken.
-    pub const SPARE_BYTES: u32 = Self::MAX_BYTE_SIZE - Self::MAX_BYTE_SIZE_LAST_UPGRADE_TIMESTAMP;
+    pub fn get_change_canister_proposal(&self) -> Option<&UUID> {
+        self.change_canister_proposal.as_ref()
+    }
+
+    pub fn get_upgrader_canister_id(&self) -> &Principal {
+        self.upgrader_canister_id
+            .as_ref()
+            .expect("upgrader_canister_id is not set")
+    }
+
+    pub fn get_upgrader_wasm_module(&self) -> &[u8] {
+        self.upgrader_wasm_module
+            .as_deref()
+            .expect("upgrader_wasm_module is not set")
+    }
+
+    pub fn set_change_canister_proposal(&mut self, proposal: UUID) {
+        self.change_canister_proposal = Some(proposal);
+    }
+
+    pub fn set_upgrader_canister_id(&mut self, canister_id: Principal) {
+        self.upgrader_canister_id = Some(canister_id);
+    }
+
+    pub fn set_upgrader_wasm_module(&mut self, wasm_module: Vec<u8>) {
+        self.upgrader_wasm_module = Some(wasm_module);
+    }
+
+    pub fn update_last_upgrade_timestamp(&mut self) {
+        self.last_upgrade_timestamp = time();
+    }
+
+    pub fn clear_change_canister_proposal(&mut self) {
+        self.change_canister_proposal = None;
+    }
 }
 
 impl SystemState {

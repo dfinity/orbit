@@ -79,7 +79,7 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
         match self.operation.input.target {
             ChangeCanisterTarget::UpgradeWallet => {
                 self.system_service
-                    .set_self_upgrade_proposal(Some(self.proposal.id.to_owned()));
+                    .set_self_upgrade_proposal(self.proposal.id.clone());
 
                 let default_arg = Encode!(&()).unwrap();
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
@@ -91,7 +91,7 @@ impl Execute for ChangeCanisterProposalExecute<'_, '_> {
                     });
 
                 if out.is_err() {
-                    self.system_service.set_self_upgrade_proposal(None);
+                    self.system_service.clear_self_upgrade_proposal();
                 }
 
                 out?;

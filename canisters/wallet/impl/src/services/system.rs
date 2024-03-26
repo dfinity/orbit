@@ -40,10 +40,16 @@ impl SystemService {
         read_system_info()
     }
 
-    pub fn set_self_upgrade_proposal(&self, self_upgrade_proposal_id: Option<ProposalId>) {
+    pub fn clear_self_upgrade_proposal(&self) {
         let mut system_info = self.get_system_info();
-        system_info.change_canister_proposal = self_upgrade_proposal_id;
-        system_info.last_upgrade_timestamp = time();
+        system_info.clear_change_canister_proposal();
+
+        write_system_info(system_info);
+    }
+
+    pub fn set_self_upgrade_proposal(&self, self_upgrade_proposal_id: ProposalId) {
+        let mut system_info = self.get_system_info();
+        system_info.set_change_canister_proposal(self_upgrade_proposal_id);
 
         write_system_info(system_info);
     }
@@ -62,7 +68,7 @@ impl SystemService {
     }
 
     pub fn get_upgrader_canister_id(&self) -> Principal {
-        read_system_info().upgrader_canister_id
+        *read_system_info().get_upgrader_canister_id()
     }
 
     pub fn assert_system_readiness(&self) {
@@ -175,7 +181,7 @@ impl SystemService {
         };
 
         // verifies that the upgrade proposal exists and marks it as completed
-        if let Some(proposal_id) = &system_info.change_canister_proposal {
+        if let Some(proposal_id) = system_info.get_change_canister_proposal() {
             match self
                 .proposal_repository
                 .get(&ProposalKey { id: *proposal_id })
@@ -199,8 +205,7 @@ impl SystemService {
             };
 
             // clears the change canister proposal from the config to avoid it being used again
-            system_info.change_canister_proposal = None;
-            system_info.last_upgrade_timestamp = time();
+            system_info.clear_change_canister_proposal();
 
             write_system_info(system_info.clone());
         }
@@ -373,10 +378,10 @@ mod tests {
 
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
 
-        write_system_info(SystemInfo {
-            change_canister_proposal: Some(proposal.id),
-            ..Default::default()
-        });
+        let mut system_info = SystemInfo::new(Principal::management_canister(), Vec::new());
+        system_info.set_change_canister_proposal(proposal.id);
+
+        write_system_info(system_info);
 
         let result = SYSTEM_SERVICE.upgrade_canister(None).await;
 
@@ -387,6 +392,6 @@ mod tests {
 
         let system_info = read_system_info();
 
-        assert!(system_info.change_canister_proposal.is_none());
+        assert!(system_info.get_change_canister_proposal().is_none());
     }
 }
