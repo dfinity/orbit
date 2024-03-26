@@ -10,7 +10,7 @@ use std::borrow::Cow;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SystemState {
-    Uninitialized, // This state is only used between wasm module initialization and init().
+    Uninitialized, // This state is only used between wasm module instantiation and init().
     Initialized(SystemInfo),
 }
 
