@@ -244,11 +244,9 @@ impl AccountService {
                 .handle_policy_change(
                     ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![account.id])),
                     transfer_approval_policy_input,
-                    account.transfer_approval_policy_id,
+                    &mut account.transfer_approval_policy_id,
                 )
-                .await?
-                .on_created(|policy_id| account.transfer_approval_policy_id = Some(policy_id))
-                .on_removed(|| account.transfer_approval_policy_id = None);
+                .await?;
         }
 
         if let Some(update_approval_policy_input) = input.update_approval_policy {
@@ -256,11 +254,9 @@ impl AccountService {
                 .handle_policy_change(
                     ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![account.id])),
                     update_approval_policy_input,
-                    account.update_approval_policy_id,
+                    &mut account.update_approval_policy_id,
                 )
-                .await?
-                .on_created(|policy_id| account.update_approval_policy_id = Some(policy_id))
-                .on_removed(|| account.update_approval_policy_id = None);
+                .await?;
         }
 
         account.validate()?;
