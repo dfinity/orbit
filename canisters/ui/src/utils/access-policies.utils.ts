@@ -5,7 +5,7 @@ import {
   ProposalResourceAction,
   ResourceAction,
   ResourceId,
-  SettingsResourceAction,
+  SystemResourceAction,
   UserResourceAction,
 } from '~/generated/wallet/wallet.did';
 import { variantIs } from '~/utils/helper.utils';
@@ -56,15 +56,15 @@ export const isResourceActionContained = (a: ResourceAction, b: ResourceAction) 
   return false;
 };
 
-export const isSettingsResourceActionContained = (
-  a: SettingsResourceAction,
-  b: SettingsResourceAction,
+export const isSystemResourceActionContained = (
+  a: SystemResourceAction,
+  b: SystemResourceAction,
 ) => {
-  if (variantIs(a, 'Read') && variantIs(b, 'Read')) {
+  if (variantIs(a, 'Capabilities') && variantIs(b, 'Capabilities')) {
     return true;
   }
 
-  if (variantIs(a, 'ReadConfig') && variantIs(b, 'ReadConfig')) {
+  if (variantIs(a, 'SystemInfo') && variantIs(b, 'SystemInfo')) {
     return true;
   }
 

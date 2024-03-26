@@ -12,7 +12,7 @@ import {
   isChangeCanisterResourceActionContained,
   isProposalResourceActionContained,
   isResourceActionContained,
-  isSettingsResourceActionContained,
+  isSystemResourceActionContained,
   isUserResourceActionContained,
 } from '~/utils/access-policies.utils';
 import { variantIs } from '~/utils/helper.utils';
@@ -253,24 +253,24 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
     },
   },
   {
-    resourceType: ResourceTypeEnum.Settings,
+    resourceType: ResourceTypeEnum.System,
     resources: [
       {
         action: ResourceActionEnum.ReadSensitiveConfig,
-        resource: { Settings: { Read: null } },
+        resource: { System: { Capabilities: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.ReadPublicConfig,
-        resource: { Settings: { ReadConfig: null } },
+        resource: { System: { SystemInfo: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
     ],
     match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'Settings') && variantIs(resource, 'Settings')) {
-        return isSettingsResourceActionContained(specifier.Settings, resource.Settings);
+      if (variantIs(specifier, 'System') && variantIs(resource, 'System')) {
+        return isSystemResourceActionContained(specifier.System, resource.System);
       }
 
       return false;

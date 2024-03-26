@@ -10,7 +10,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
-        access_policy::{AccountResourceAction, Resource, ResourceId},
+        resource::{AccountResourceAction, Resource, ResourceId},
         specifier::{AccountSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccountOperationInput,
@@ -380,7 +380,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
         let mut user = mock_user();

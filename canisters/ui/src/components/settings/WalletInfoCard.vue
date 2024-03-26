@@ -29,6 +29,12 @@
           <VListItemSubtitle data-test-id="wallet-name">{{ wallet.name ?? '-' }}</VListItemSubtitle>
         </VListItem>
         <VListItem class="px-0">
+          <VListItemTitle class="font-weight-bold">{{ $t(`terms.version`) }}</VListItemTitle>
+          <VListItemSubtitle>{{
+            wallet.configuration.details?.version ? wallet.configuration.details.version : '-'
+          }}</VListItemSubtitle>
+        </VListItem>
+        <VListItem class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.main`) }}</VListItemTitle>
           <VListItemSubtitle>{{
             isMainWallet ? $t(`terms.yes`) : $t(`terms.no`)

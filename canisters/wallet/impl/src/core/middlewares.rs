@@ -1,7 +1,8 @@
 use super::authorization::Authorization;
-use super::{is_canister_initialized, CallContext};
+use super::CallContext;
 use crate::core::ic_cdk::api::trap;
-use crate::models::access_policy::Resource;
+use crate::models::resource::Resource;
+use crate::services::SYSTEM_SERVICE;
 
 /// Creates the call context of the current request
 pub fn call_context() -> CallContext {
@@ -14,9 +15,7 @@ pub fn call_context() -> CallContext {
 ///
 /// If the provided list of resources is empty, the caller is by default unauthorized.
 pub fn authorize(ctx: &CallContext, resources: &[Resource]) {
-    if !is_canister_initialized() {
-        trap("Canister is not initialized");
-    }
+    SYSTEM_SERVICE.assert_system_readiness();
 
     if resources.is_empty() {
         trap("Unauthorized access: no resource provided");

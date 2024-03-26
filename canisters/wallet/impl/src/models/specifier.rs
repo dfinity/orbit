@@ -1,4 +1,4 @@
-use super::access_policy::Resource;
+use super::resource::Resource;
 use super::{Account, MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
 use crate::models::user::User;
 use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY};

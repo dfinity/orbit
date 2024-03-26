@@ -65,8 +65,7 @@ pub use proposal_vote::*;
 mod wallet_asset;
 pub use wallet_asset::*;
 
-mod wallet_settings;
-pub use wallet_settings::*;
+pub mod system;
 
 mod configuration;
 pub use configuration::*;
@@ -74,6 +73,8 @@ pub use configuration::*;
 pub mod criteria;
 
 pub mod access_policy;
+
+pub mod resource;
 
 pub mod indexes;
 

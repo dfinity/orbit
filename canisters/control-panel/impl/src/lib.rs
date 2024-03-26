@@ -2,6 +2,8 @@
 //!
 //! The control panel canister is responsible for providing helper functions for the Orbit Wallet user interface.
 
+pub const SYSTEM_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub mod controllers;
 pub mod core;
 pub mod errors;

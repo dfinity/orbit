@@ -1,7 +1,8 @@
 use crate::{
     core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
     models::{
-        access_policy::{AccessPolicy, Allow, Resource},
+        access_policy::{AccessPolicy, Allow},
+        resource::Resource,
         EditAccessPolicyOperationInput, User, UserGroup,
     },
     repositories::access_policy::{AccessPolicyRepository, ACCESS_POLICY_REPOSITORY},
@@ -140,9 +141,8 @@ mod tests {
     use super::*;
     use crate::{
         models::{
-            access_policy::{
-                access_policy_test_utils::mock_access_policy, AuthScope, ProposalResourceAction,
-            },
+            access_policy::{access_policy_test_utils::mock_access_policy, AuthScope},
+            resource::ProposalResourceAction,
             user_group_test_utils::mock_user_group,
             user_test_utils::mock_user,
         },

@@ -1,7 +1,5 @@
 use super::{
-    access_policy::{AuthScope, Resource},
-    criteria::Criteria,
-    specifier::ProposalSpecifier,
+    access_policy::AuthScope, criteria::Criteria, resource::Resource, specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
     UserGroupId, UserId, UserStatus,
 };

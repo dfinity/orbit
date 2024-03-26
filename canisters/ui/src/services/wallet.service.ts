@@ -9,7 +9,7 @@ import {
   AddUserGroupOperationInput,
   AddUserOperationInput,
   ChangeCanisterOperationInput,
-  Config,
+  Capabilities,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
   EditAccountOperationInput,
@@ -272,14 +272,14 @@ export class WalletService {
     return result.Ok;
   }
 
-  async config(): Promise<Config> {
-    const result = await this.actor.config();
+  async capabilities(): Promise<Capabilities> {
+    const result = await this.actor.capabilities();
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.config;
+    return result.Ok.capabilities;
   }
 
   async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {

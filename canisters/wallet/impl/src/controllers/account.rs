@@ -1,6 +1,6 @@
-use crate::mappers::access_policy::FetchAccountBalancesInputRef;
+use crate::mappers::authorization::FetchAccountBalancesInputRef;
 use crate::mappers::HelperMapper;
-use crate::models::access_policy::{AccountResourceAction, Resource};
+use crate::models::resource::{AccountResourceAction, Resource};
 use crate::{
     core::middlewares::{authorize, call_context},
     services::AccountService,

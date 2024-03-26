@@ -430,6 +430,7 @@ export default {
     all: 'Tout',
     subset: 'sous-ensemble',
     skip: 'Sauter',
+    version: 'Version',
   },
   forms: {
     create: 'Créer',
@@ -573,7 +574,7 @@ export default {
       usergroup: "Groupe d'Usagers",
       accesspolicy: "Police d'Accés",
       proposalpolicy: 'Police de Demande',
-      settings: 'Système',
+      system: 'Système',
       changecanister: 'Modification de Canister',
       transfer: 'Transfert',
       proposal: 'Demande',
@@ -586,8 +587,8 @@ export default {
       update: 'Modifier',
       delete: 'Éffacer',
       transfer: 'Transfert',
-      readpublicconfig: 'Lire les paramètres publiques',
-      readsensitiveconfig: 'Lire les paramètres sensibles',
+      capabilities: 'Capacités',
+      systeminfo: 'Information Système',
     },
     allow: {
       everyone_edit_label: 'Tout le monde peut accéder à cette resource:',

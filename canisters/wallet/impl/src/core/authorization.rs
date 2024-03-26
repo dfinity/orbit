@@ -6,11 +6,10 @@ use super::{
 use crate::{
     errors::AuthorizationError,
     models::{
-        access_policy::{
-            AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
-            ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
+        resource::{
+            AccountResourceAction, ProposalResourceAction, Resource, ResourceId, UserResourceAction,
         },
-        Account, ProposalKey, User, ADMIN_GROUP_ID,
+        Account, ProposalKey, User,
     },
     repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY},
     services::access_policy::ACCESS_POLICY_SERVICE,
@@ -103,16 +102,6 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
 
             false
         }
-        Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
-        | Resource::User(UserResourceAction::Create)
-        | Resource::Settings(SettingsResourceAction::Read)
-        | Resource::Settings(SettingsResourceAction::ReadConfig)
-        | Resource::UserGroup(ResourceAction::List)
-        | Resource::UserGroup(ResourceAction::Read(_))
-        | Resource::Account(AccountResourceAction::List) => {
-            // admins have access to these resources by default
-            user.groups.contains(ADMIN_GROUP_ID)
-        }
         _ => false,
     }
 }
@@ -141,7 +130,9 @@ mod tests {
     use crate::{
         models::{
             access_policy::{AccessPolicy, Allow},
-            account_test_utils, user_group_test_utils,
+            account_test_utils,
+            resource::ResourceAction,
+            user_group_test_utils,
             user_test_utils::{self, mock_user},
             UserGroup, UserStatus, ADMIN_GROUP_ID,
         },

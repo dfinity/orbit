@@ -118,9 +118,9 @@
       disabled
     />
   </template>
-  <template v-else-if="variantIs(model, 'Settings')">
+  <template v-else-if="variantIs(model, 'System')">
     <VTextField
-      :model-value="$t('access_policies.resources.settings')"
+      :model-value="$t('access_policies.resources.system')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -128,7 +128,7 @@
     />
 
     <VTextField
-      :model-value="toSettingsResourceActionText(model.Settings)"
+      :model-value="toSystemResourceActionText(model.System)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -163,7 +163,7 @@ import {
   Resource,
   ResourceAction,
   ResourceId,
-  SettingsResourceAction,
+  SystemResourceAction,
 } from '~/generated/wallet/wallet.did';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
@@ -247,13 +247,13 @@ const toAccountResourceActionText = (action: AccountResourceAction): string => {
   return unreachable(action);
 };
 
-const toSettingsResourceActionText = (specifier: SettingsResourceAction): string => {
-  if (variantIs(specifier, 'Read')) {
-    return i18n.t('access_policies.actions.readpublicconfig');
+const toSystemResourceActionText = (specifier: SystemResourceAction): string => {
+  if (variantIs(specifier, 'Capabilities')) {
+    return i18n.t('access_policies.actions.capabilities');
   }
 
-  if (variantIs(specifier, 'ReadConfig')) {
-    return i18n.t('access_policies.actions.readsensitiveconfig');
+  if (variantIs(specifier, 'SystemInfo')) {
+    return i18n.t('access_policies.actions.systeminfo');
   }
 
   return unreachable(specifier);

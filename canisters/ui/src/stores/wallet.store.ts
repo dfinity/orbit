@@ -2,7 +2,7 @@ import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { logger } from '~/core/logger.core';
 import {
-  Config,
+  Capabilities,
   Notification,
   Proposal,
   UUID,
@@ -36,7 +36,7 @@ export interface WalletStoreState {
   privileges: UserPrivilege[];
   configuration: {
     loading: boolean;
-    details: Config;
+    details: Capabilities;
   };
   notifications: {
     loading: boolean;
@@ -85,6 +85,7 @@ const initialStoreState = (): WalletStoreState => {
     configuration: {
       loading: false,
       details: {
+        version: '',
         supported_assets: [],
       },
     },
@@ -162,7 +163,7 @@ export const useWalletStore = defineStore('wallet', {
         this.privileges = myUser.privileges;
 
         // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
-        this.loadConfiguration();
+        this.loadCapabilities();
 
         startWalletWorkers(walletId);
 
@@ -265,10 +266,10 @@ export const useWalletStore = defineStore('wallet', {
 
       return null;
     },
-    async loadConfiguration(): Promise<void> {
+    async loadCapabilities(): Promise<void> {
       try {
         this.configuration.loading = true;
-        this.configuration.details = await this.service.config();
+        this.configuration.details = await this.service.capabilities();
       } finally {
         this.configuration.loading = false;
       }

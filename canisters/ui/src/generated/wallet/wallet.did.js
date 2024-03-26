@@ -1,15 +1,15 @@
 export const idlFactory = ({ IDL }) => {
   const ProposalPolicyCriteria = IDL.Rec();
-  const WalletUpgrade = IDL.Record({
-    'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  const SystemUpgrade = IDL.Record({
+    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const WalletInit = IDL.Record({
-    'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  const SystemInit = IDL.Record({
+    'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });
-  const WalletInstall = IDL.Variant({
-    'Upgrade' : WalletUpgrade,
-    'Init' : WalletInit,
+  const SystemInstall = IDL.Variant({
+    'Upgrade' : SystemUpgrade,
+    'Init' : SystemInit,
   });
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
@@ -20,20 +20,27 @@ export const idlFactory = ({ IDL }) => {
     'standard' : IDL.Text,
     'symbol' : AssetSymbol,
   });
-  const Config = IDL.Record({ 'supported_assets' : IDL.Vec(WalletAsset) });
+  const Capabilities = IDL.Record({
+    'version' : IDL.Text,
+    'supported_assets' : IDL.Vec(WalletAsset),
+  });
   const Error = IDL.Record({
     'code' : IDL.Text,
     'message' : IDL.Opt(IDL.Text),
     'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
   });
-  const GetConfigResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'config' : Config }),
+  const CapabilitiesResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'capabilities' : Capabilities }),
     'Err' : Error,
   });
   const TimestampRFC3339 = IDL.Text;
   const ProposalExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
+  });
+  const SystemResourceAction = IDL.Variant({
+    'SystemInfo' : IDL.Null,
+    'Capabilities' : IDL.Null,
   });
   const UUID = IDL.Text;
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
@@ -49,10 +56,6 @@ export const idlFactory = ({ IDL }) => {
     'Delete' : ResourceId,
     'Create' : IDL.Null,
     'Update' : ResourceId,
-  });
-  const SettingsResourceAction = IDL.Variant({
-    'Read' : IDL.Null,
-    'ReadConfig' : IDL.Null,
   });
   const AccountResourceAction = IDL.Variant({
     'List' : IDL.Null,
@@ -71,9 +74,9 @@ export const idlFactory = ({ IDL }) => {
     'Update' : IDL.Null,
   });
   const Resource = IDL.Variant({
+    'System' : SystemResourceAction,
     'User' : UserResourceAction,
     'ProposalPolicy' : ResourceAction,
-    'Settings' : SettingsResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
     'Proposal' : ProposalResourceAction,
@@ -836,10 +839,22 @@ export const idlFactory = ({ IDL }) => {
     'ListAccounts' : IDL.Null,
     'ListAccessPolicies' : IDL.Null,
     'ListAddressBookEntries' : IDL.Null,
+    'SystemInfo' : IDL.Null,
+    'Capabilities' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const MeResult = IDL.Variant({
     'Ok' : IDL.Record({ 'me' : User, 'privileges' : IDL.Vec(UserPrivilege) }),
+    'Err' : Error,
+  });
+  const SystemInfo = IDL.Record({
+    'last_upgrade_timestamp' : TimestampRFC3339,
+    'version' : IDL.Text,
+    'cycles' : IDL.Nat64,
+    'upgrader_id' : IDL.Principal,
+  });
+  const SystemInfoResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'system' : SystemInfo }),
     'Err' : Error,
   });
   const VoteOnProposalInput = IDL.Record({
@@ -855,16 +870,8 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const WalletSettings = IDL.Record({
-    'owners' : IDL.Vec(User),
-    'last_upgrade_timestamp' : TimestampRFC3339,
-  });
-  const WalletSettingsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'settings' : WalletSettings }),
-    'Err' : Error,
-  });
   return IDL.Service({
-    'config' : IDL.Func([], [GetConfigResult], ['query']),
+    'capabilities' : IDL.Func([], [CapabilitiesResult], ['query']),
     'create_proposal' : IDL.Func(
         [CreateProposalInput],
         [CreateProposalResult],
@@ -961,25 +968,25 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'me' : IDL.Func([], [MeResult], ['query']),
+    'system_info' : IDL.Func([], [SystemInfoResult], ['query']),
     'vote_on_proposal' : IDL.Func(
         [VoteOnProposalInput],
         [VoteOnProposalResult],
         [],
       ),
-    'wallet_settings' : IDL.Func([], [WalletSettingsResult], ['query']),
   });
 };
 export const init = ({ IDL }) => {
-  const WalletUpgrade = IDL.Record({
-    'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  const SystemUpgrade = IDL.Record({
+    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const WalletInit = IDL.Record({
-    'owners' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  const SystemInit = IDL.Record({
+    'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });
-  const WalletInstall = IDL.Variant({
-    'Upgrade' : WalletUpgrade,
-    'Init' : WalletInit,
+  const SystemInstall = IDL.Variant({
+    'Upgrade' : SystemUpgrade,
+    'Init' : SystemInit,
   });
-  return [IDL.Opt(WalletInstall)];
+  return [IDL.Opt(SystemInstall)];
 };

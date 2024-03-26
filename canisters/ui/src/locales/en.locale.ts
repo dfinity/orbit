@@ -426,6 +426,7 @@ export default {
     all: 'All',
     subset: 'Subset',
     skip: 'Skip',
+    version: 'Version',
   },
   forms: {
     create: 'Create',
@@ -565,7 +566,7 @@ export default {
       usergroup: 'User Group',
       accesspolicy: 'Access Policy',
       proposalpolicy: 'Proposal Policy',
-      settings: 'System',
+      system: 'System',
       changecanister: 'Change Canister',
       transfer: 'Transfer',
       proposal: 'Request',
@@ -578,8 +579,8 @@ export default {
       update: 'Update',
       delete: 'Delete',
       transfer: 'Transfer',
-      readpublicconfig: 'Read public configuration',
-      readsensitiveconfig: 'Read sensitive configuration',
+      capabilities: 'Capabilities',
+      systeminfo: 'System info',
     },
     allow: {
       everyone_edit_label: 'Allow access to the resource for:',

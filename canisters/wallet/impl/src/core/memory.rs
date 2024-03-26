@@ -1,5 +1,5 @@
-use super::{CanisterConfig, CanisterState, MAX_WASM_PAGES};
-use candid::Principal;
+use super::MAX_WASM_PAGES;
+use crate::models::system::{SystemInfo, SystemState, SYSTEM_STATE_WASM_PAGES};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     Cell, DefaultMemoryImpl, RestrictedMemory,
@@ -7,7 +7,7 @@ use ic_stable_structures::{
 use std::cell::RefCell;
 
 pub type Memory = RestrictedMemory<DefaultMemoryImpl>;
-pub type ConfigCell = Cell<CanisterState, Memory>;
+pub type ConfigCell = Cell<SystemState, Memory>;
 
 pub const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 pub const ACCOUNT_MEMORY_ID: MemoryId = MemoryId::new(2);
@@ -42,7 +42,7 @@ pub const NAME_TO_USER_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
 
 thread_local! {
   /// Static configuration of the canister.
-  static CONFIG: RefCell<ConfigCell> = RefCell::new(ConfigCell::init(config_memory(), CanisterState::Uninitialized)
+  static CONFIG: RefCell<ConfigCell> = RefCell::new(ConfigCell::init(system_state_memory(), SystemState::Uninitialized)
     .expect("failed to initialize stable cell"));
 
   // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
@@ -57,39 +57,33 @@ pub fn with_memory_manager<R>(f: impl FnOnce(&MemoryManager<Memory>) -> R) -> R 
 }
 
 /// Reserve the first stable memory page for the configuration stable cell.
-pub fn config_memory() -> Memory {
-    RestrictedMemory::new(DefaultMemoryImpl::default(), 0..1)
-}
-
-/// A helper function to access the canister configuration.
-pub fn canister_config() -> CanisterConfig {
-    CONFIG.with(|m| m.borrow().get().get().clone())
-}
-
-/// A helper function to check if the canister is initialized.
-pub fn is_canister_initialized() -> bool {
-    CONFIG.with(|m| m.borrow().get().is_initialized())
-}
-
-/// A helper function to access the canister configuration and mutate it.
-pub fn canister_config_mut() -> CanisterConfig {
-    CONFIG.with(|m| m.borrow_mut().get().get().clone())
-}
-
-pub fn upgrader_canister_id() -> Principal {
-    canister_config().upgrader_canister_id
+pub fn system_state_memory() -> Memory {
+    RestrictedMemory::new(DefaultMemoryImpl::default(), 0..SYSTEM_STATE_WASM_PAGES)
 }
 
 /// All the memory after the initial config page is managed by the [MemoryManager].
 pub fn managed_memory() -> Memory {
-    RestrictedMemory::new(DefaultMemoryImpl::default(), 1..MAX_WASM_PAGES)
+    RestrictedMemory::new(
+        DefaultMemoryImpl::default(),
+        SYSTEM_STATE_WASM_PAGES..MAX_WASM_PAGES,
+    )
 }
 
-/// A helper function to write the canister configuration.
-pub fn write_canister_config(config: CanisterConfig) {
+/// A helper function to access the system information.
+pub fn read_system_info() -> SystemInfo {
+    CONFIG.with(|m| m.borrow().get().get().clone())
+}
+
+/// A helper function to write the system information to stable memory.
+pub fn write_system_info(config: SystemInfo) {
     CONFIG.with(|cell| {
         cell.borrow_mut()
-            .set(CanisterState::Initialized(config))
-            .expect("failed to write canister config");
+            .set(SystemState::Initialized(config))
+            .expect("failed to write system information");
     });
+}
+
+// A helper function to read the system state, which can be uninitialized.
+pub fn read_system_state() -> SystemState {
+    CONFIG.with(|m| m.borrow().get().clone())
 }
