@@ -92,6 +92,20 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
+  const UserSubscriptionStatus = IDL.Variant({
+    'Unsubscribed' : IDL.Null,
+    'Approved' : IDL.Null,
+    'Denylisted' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
+  const UpdateWaitingListInput = IDL.Record({
+    'users' : IDL.Vec(IDL.Principal),
+    'new_status' : UserSubscriptionStatus,
+  });
+  const UpdateWaitingListResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : ApiError,
+  });
   return IDL.Service({
     'can_deploy_wallet' : IDL.Func([], [CanDeployWalletResult], ['query']),
     'delete_user' : IDL.Func([], [RemoveUserResult], []),
@@ -105,6 +119,11 @@ export const idlFactory = ({ IDL }) => {
     'subscribe_to_waiting_list' : IDL.Func(
         [IDL.Text],
         [SubscribeToWaitingListResult],
+        [],
+      ),
+    'update_waiting_list' : IDL.Func(
+        [UpdateWaitingListInput],
+        [UpdateWaitingListResult],
         [],
       ),
   });

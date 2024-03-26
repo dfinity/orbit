@@ -7,6 +7,7 @@ use candid::Principal;
 use control_panel_api::{
     ManageUserInput, RegisterUserInput, UserDTO, UserSubscriptionStatusDTO, UserWalletDTO,
 };
+use ic_canister_core::api::ApiError;
 
 #[derive(Default)]
 pub struct UserMapper {}
@@ -76,6 +77,22 @@ impl From<UserSubscriptionStatus> for UserSubscriptionStatusDTO {
             UserSubscriptionStatus::Pending(_) => UserSubscriptionStatusDTO::Pending,
             UserSubscriptionStatus::Approved => UserSubscriptionStatusDTO::Approved,
             UserSubscriptionStatus::Denylisted => UserSubscriptionStatusDTO::Denylisted,
+        }
+    }
+}
+
+impl TryFrom<UserSubscriptionStatusDTO> for UserSubscriptionStatus {
+    type Error = ApiError;
+
+    fn try_from(authorization_status: UserSubscriptionStatusDTO) -> Result<Self, Self::Error> {
+        match authorization_status {
+            UserSubscriptionStatusDTO::Unsubscribed => Ok(UserSubscriptionStatus::Unsubscribed),
+            UserSubscriptionStatusDTO::Pending => Err(UserError::ValidationError {
+                info: "Invalid user subscription status: Pending.".to_string(),
+            }
+            .into()),
+            UserSubscriptionStatusDTO::Approved => Ok(UserSubscriptionStatus::Approved),
+            UserSubscriptionStatusDTO::Denylisted => Ok(UserSubscriptionStatus::Denylisted),
         }
     }
 }

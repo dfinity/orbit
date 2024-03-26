@@ -2,14 +2,14 @@
 use crate::controllers::USER_REGISTRATION_RATE;
 use crate::core::metrics::{
     COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
-    COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL,
+    COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL, COUNTER_UPDATE_WAITING_LIST_TOTAL,
 };
 use crate::core::middlewares::{call_context, logger};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
     DeleteUserResponse, GetUserResponse, ManageUserInput, ManageUserResponse, RegisterUserInput,
-    RegisterUserResponse, UserDTO,
+    RegisterUserResponse, UpdateWaitingListInput, UserDTO,
 };
 use ic_canister_core::api::{ApiError, ApiResult};
 use ic_canister_macros::with_middleware;
@@ -83,6 +83,24 @@ async fn subscribe_to_waiting_list(email: String) -> ApiResult<()> {
     let out = CONTROLLER.subscribe_to_waiting_list(email).await;
 
     COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL.with(|c| {
+        c.borrow()
+            .with(&labels! {
+                "status" => match &out {
+                    Ok(_) => "ok",
+                    Err(_) => "fail",
+                }
+            })
+            .inc()
+    });
+
+    out
+}
+
+#[update(name = "update_waiting_list")]
+async fn update_waiting_list(input: UpdateWaitingListInput) -> ApiResult<()> {
+    let out = CONTROLLER.update_waiting_list(input).await;
+
+    COUNTER_UPDATE_WAITING_LIST_TOTAL.with(|c| {
         c.borrow()
             .with(&labels! {
                 "status" => match &out {
@@ -181,6 +199,18 @@ impl UserController {
         self.user_service
             .subscribe_to_waiting_list(email, &ctx)
             .await?;
+
+        Ok(())
+    }
+
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
+    async fn update_waiting_list(&self, input: UpdateWaitingListInput) -> ApiResult<()> {
+        let ctx: CallContext = CallContext::get();
+        self.user_service.update_waiting_list(input, &ctx)?;
 
         Ok(())
     }

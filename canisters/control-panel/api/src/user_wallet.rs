@@ -1,3 +1,4 @@
+use crate::UserSubscriptionStatusDTO;
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -19,25 +20,6 @@ pub struct GetMainWalletResponse {
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct DeployWalletResponse {
     pub canister_id: Principal,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum UserSubscriptionStatusDTO {
-    Unsubscribed,
-    Pending,
-    Approved,
-    Denylisted,
-}
-
-impl std::fmt::Display for UserSubscriptionStatusDTO {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            UserSubscriptionStatusDTO::Unsubscribed => write!(f, "unsubscribed"),
-            UserSubscriptionStatusDTO::Pending => write!(f, "pending"),
-            UserSubscriptionStatusDTO::Approved => write!(f, "approved"),
-            UserSubscriptionStatusDTO::Denylisted => write!(f, "denylisted"),
-        }
-    }
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
