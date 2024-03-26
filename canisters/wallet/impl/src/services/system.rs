@@ -237,7 +237,7 @@ mod install_canister_handlers {
     ///
     /// Is used for canister init, however, it's executed through a one-off timer to allow for inter canister calls.
     pub async fn init_post_process() {
-        // adds the admin group, this is the only group that can't be removed
+        // adds the admin group which is used as the default group for admins during the canister instantiation
         USER_GROUP_REPOSITORY.insert(
             ADMIN_GROUP_ID.to_owned(),
             UserGroup {

@@ -8,7 +8,7 @@ pub enum InstallError {
     /// The initialization of the canister failed.
     #[error(r#"The initialization of the canister failed due to {reason}"#)]
     InitFailed { reason: String },
-    #[error(r#"The wallet needs at least one owner"#)]
+    #[error(r#"The wallet needs at least one admin"#)]
     NoAdminsSpecified,
 }
 
