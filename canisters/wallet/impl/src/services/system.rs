@@ -114,7 +114,7 @@ impl SystemService {
                             vec![canister_id, NNS_ROOT_CANISTER_ID],
                         )
                         .await;
-                        system_info.upgrader_canister_id = upgrader_canister_id;
+                        system_info.set_upgrader_canister_id(upgrader_canister_id);
 
                         // sets the upgrader as a controller of the wallet canister
                         print("Updating canister settings to set the upgrader as the controller");
@@ -137,7 +137,7 @@ impl SystemService {
                     }
                 };
 
-                system_info.last_upgrade_timestamp = time();
+                system_info.update_last_upgrade_timestamp();
                 write_system_info(system_info.to_owned());
 
                 // register the jobs after the canister is fully initialized

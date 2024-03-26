@@ -77,9 +77,6 @@ pub fn read_system_info() -> SystemInfo {
 /// A helper function to write the system information to stable memory.
 pub fn write_system_info(config: SystemInfo) {
     CONFIG.with(|cell| {
-        let mut config = config;
-        config.update_last_upgrade_timestamp();
-
         cell.borrow_mut()
             .set(SystemState::Initialized(config))
             .expect("failed to write system information");
