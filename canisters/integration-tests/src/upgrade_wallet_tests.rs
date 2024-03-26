@@ -1,7 +1,7 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     canister_status, execute_proposal_with_extra_ticks, get_core_canister_health_status,
-    NNS_ROOT_CANISTER_ID,
+    get_system_info, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::Encode;
@@ -50,10 +50,39 @@ fn successful_wallet_upgrade() {
     )
     .unwrap();
 
-    // check the stus after the upgrade
+    // check the status after the upgrade
     let health_status =
         get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.wallet);
     assert_eq!(health_status, HealthStatus::Healthy);
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    let last_uprade_timestamp = system_info.last_upgrade_timestamp;
+
+    // submit one more wallet upgrade proposal with no changes
+    let wallet_upgrade_operation =
+        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+            target: ChangeCanisterTargetDTO::UpgradeWallet,
+            module: wallet_wasm.clone(),
+            arg: None,
+        });
+
+    execute_proposal_with_extra_ticks(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.wallet,
+        wallet_upgrade_operation,
+        10,
+    )
+    .unwrap();
+
+    // check the status after the upgrade
+    let health_status =
+        get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    assert_eq!(health_status, HealthStatus::Healthy);
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    // check if the last upgrade timestamp is updated
+    assert!(system_info.last_upgrade_timestamp > last_uprade_timestamp);
 
     let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.wallet);
     assert_eq!(status.module_hash.unwrap(), wallet_wasm_hash);

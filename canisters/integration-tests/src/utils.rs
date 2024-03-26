@@ -11,7 +11,8 @@ use wallet_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
     GetProposalInput, GetProposalResponse, HealthStatus, MeResponse, ProposalDTO,
     ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
-    UserDTO, UserStatusDTO, VoteOnProposalInput, VoteOnProposalResponse,
+    SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO, VoteOnProposalInput,
+    VoteOnProposalResponse,
 };
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
@@ -191,6 +192,16 @@ pub fn vote_on_proposal(
     )
     .unwrap();
     res.0.unwrap();
+}
+
+pub fn get_system_info(
+    env: &PocketIc,
+    user_id: Principal,
+    wallet_canister_id: CanisterId,
+) -> SystemInfoDTO {
+    let res: (ApiResult<SystemInfoResponse>,) =
+        update_candid_as(env, wallet_canister_id, user_id, "system_info", ()).unwrap();
+    res.0.unwrap().system
 }
 
 pub fn add_user(
