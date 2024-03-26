@@ -162,7 +162,7 @@ impl SystemService {
         Ok(())
     }
 
-    /// Updates the canister with the given owners and settings.
+    /// Updates the canister with the given settings.
     ///
     /// Must only be called within a canister post_upgrade call.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
