@@ -1305,9 +1305,7 @@ type WalletAsset = record {
   metadata : vec AssetMetadata;
 };
 
-// A record type that is used to show the current capabilities of the canister.
-//
-// This is used to show the supported assets and others.
+// A record type that is used to show the current capabilities of the canister and it's version.
 type Capabilities = record {
   // Version of the canister.
   version : text;
