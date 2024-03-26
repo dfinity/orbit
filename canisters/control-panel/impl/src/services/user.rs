@@ -240,7 +240,7 @@ mod tests {
     use super::*;
     use crate::models::UserSubscriptionStatus;
     use control_panel_api::UserSubscriptionStatusDTO;
-    use ic_canister_core::cdk::mocks::CONTROLLER_ID;
+    use ic_canister_core::cdk::mocks::TEST_CONTROLLER_ID;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -385,7 +385,7 @@ mod tests {
             .update_waiting_list(input.clone(), &ctx)
             .unwrap_err();
 
-        let ctrl_ctx = CallContext::new(CONTROLLER_ID);
+        let ctrl_ctx = CallContext::new(TEST_CONTROLLER_ID);
 
         service
             .update_waiting_list(input.clone(), &ctrl_ctx)
