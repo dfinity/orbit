@@ -7,7 +7,9 @@ use crate::{
     },
     errors::ProposalError,
     models::{
+        criteria::ApprovalCriteriaInput,
         resource::{Resource, ResourceAction, ResourceId},
+        specifier::ProposalSpecifier,
         AddProposalPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy,
         ProposalPolicyCallerPrivileges,
     },
@@ -67,6 +69,47 @@ impl ProposalPolicyService {
             .insert(policy.id, policy.clone());
 
         Ok(policy)
+    }
+
+    /// Handles the policy change operation.
+    ///
+    /// If the policy_id is provided, it will edit the policy with the given id.
+    /// If the policy_id is not provided, it will add a new policy.
+    /// If the criteria is set to `ApprovalCriteriaInput::Remove`, it will remove the policy with the given id.
+    pub async fn handle_policy_change(
+        &self,
+        specifier: ProposalSpecifier,
+        criteria: ApprovalCriteriaInput,
+        policy_id: Option<UUID>,
+    ) -> ServiceResult<PolicyChangeResult> {
+        match (criteria, policy_id) {
+            (ApprovalCriteriaInput::Remove, Some(policy_id)) => {
+                self.remove_proposal_policy(&policy_id).await?;
+
+                Ok(PolicyChangeResult::Removed)
+            }
+            (ApprovalCriteriaInput::Remove, None) => Ok(PolicyChangeResult::Removed),
+            (ApprovalCriteriaInput::Set(criteria), None) => {
+                let policy = self
+                    .add_proposal_policy(AddProposalPolicyOperationInput {
+                        specifier,
+                        criteria,
+                    })
+                    .await?;
+
+                Ok(PolicyChangeResult::Created(policy))
+            }
+            (ApprovalCriteriaInput::Set(criteria), Some(policy_id)) => {
+                self.edit_proposal_policy(EditProposalPolicyOperationInput {
+                    policy_id,
+                    specifier: Some(specifier),
+                    criteria: Some(criteria),
+                })
+                .await?;
+
+                Ok(PolicyChangeResult::Edited)
+            }
+        }
     }
 
     pub async fn edit_proposal_policy(
@@ -135,6 +178,21 @@ impl ProposalPolicyService {
         })?;
 
         Ok(result)
+    }
+}
+
+#[derive(Debug)]
+pub enum PolicyChangeResult {
+    Created(ProposalPolicy),
+    Edited,
+    Removed,
+}
+
+impl PolicyChangeResult {
+    pub fn on_created<F: FnOnce(UUID)>(&self, callback: F) {
+        if let PolicyChangeResult::Created(policy) = self {
+            callback(policy.id);
+        }
     }
 }
 
