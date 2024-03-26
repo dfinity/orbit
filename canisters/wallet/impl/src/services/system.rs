@@ -206,7 +206,7 @@ impl SystemService {
         }
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
-        // this updates the list of admins of the canister.
+        // this upgrades the upgrader canister if a new upgrader module is provided .
         self.install_canister_post_process(system_info, SystemInstall::Upgrade(input));
 
         Ok(())
