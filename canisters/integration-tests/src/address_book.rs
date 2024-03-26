@@ -277,11 +277,11 @@ fn check_address_book_for_transfer() {
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },
-        update_approval_policy: CriteriaDTO::AutoAdopted,
-        transfer_approval_policy: CriteriaDTO::HasAddressBookMetadata(MetadataDTO {
+        update_approval_policy: Some(CriteriaDTO::AutoAdopted),
+        transfer_approval_policy: Some(CriteriaDTO::HasAddressBookMetadata(MetadataDTO {
             key: "kyc".to_string(),
             value: "true".to_string(),
-        }),
+        })),
         metadata: vec![],
     });
     let add_account_proposal =

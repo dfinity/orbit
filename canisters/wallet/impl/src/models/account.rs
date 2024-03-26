@@ -8,7 +8,6 @@ use ic_canister_core::{
 };
 use ic_canister_macros::storable;
 use std::{collections::HashMap, hash::Hash};
-use uuid::Uuid;
 
 /// The account metadata key for the asset symbol;
 pub const ACCOUNT_METADATA_SYMBOL_KEY: &str = "symbol";
@@ -47,12 +46,12 @@ pub struct Account {
     ///
     /// This policy is non exaustive, this means that the account can have other policies that are enforced
     /// by the system that are globally defined.
-    pub transfer_approval_policy_id: UUID,
+    pub transfer_approval_policy_id: Option<UUID>,
     /// The account update policy id, which is a UUID.
     ///
     /// This policy is non exaustive, this means that the account can have other policies that are enforced
     /// by the system that are globally defined.
-    pub update_approval_policy_id: UUID,
+    pub update_approval_policy_id: Option<UUID>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -87,26 +86,6 @@ fn validate_symbol(symbol: &str) -> ModelValidatorResult<AccountError> {
     Ok(())
 }
 
-fn validate_transfer_approval_policy(policy_id: &UUID) -> ModelValidatorResult<AccountError> {
-    if *policy_id == *Uuid::nil().as_bytes() {
-        return Err(AccountError::ValidationError {
-            info: "Transfer approval policy id cannot be nil".to_string(),
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_update_approval_policy(policy_id: &UUID) -> ModelValidatorResult<AccountError> {
-    if *policy_id == *Uuid::nil().as_bytes() {
-        return Err(AccountError::ValidationError {
-            info: "Update approval policy id cannot be nil".to_string(),
-        });
-    }
-
-    Ok(())
-}
-
 fn validate_address(address: &str) -> ModelValidatorResult<AccountError> {
     if (address.len() < Account::ADDRESS_RANGE.0 as usize)
         || (address.len() > Account::ADDRESS_RANGE.1 as usize)
@@ -125,8 +104,6 @@ impl ModelValidator<AccountError> for Account {
         self.metadata.validate()?;
         validate_symbol(&self.symbol)?;
         validate_address(&self.address)?;
-        validate_transfer_approval_policy(&self.transfer_approval_policy_id)?;
-        validate_update_approval_policy(&self.update_approval_policy_id)?;
 
         Ok(())
     }
@@ -242,46 +219,6 @@ mod tests {
 
         assert!(result.is_ok());
     }
-
-    #[test]
-    fn fail_transfer_approval_policy_validation() {
-        let mut account = mock_account();
-        account.transfer_approval_policy_id = *Uuid::nil().as_bytes();
-
-        let result = validate_transfer_approval_policy(&account.transfer_approval_policy_id);
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_transfer_approval_policy_validation() {
-        let mut account = mock_account();
-        account.transfer_approval_policy_id = *Uuid::new_v4().as_bytes();
-
-        let result = validate_transfer_approval_policy(&account.transfer_approval_policy_id);
-
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn fail_update_approval_policy_validation() {
-        let mut account = mock_account();
-        account.update_approval_policy_id = *Uuid::nil().as_bytes();
-
-        let result = validate_update_approval_policy(&account.update_approval_policy_id);
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_update_approval_policy_validation() {
-        let mut account = mock_account();
-        account.update_approval_policy_id = *Uuid::new_v4().as_bytes();
-
-        let result = validate_update_approval_policy(&account.update_approval_policy_id);
-
-        assert!(result.is_ok());
-    }
 }
 
 #[cfg(test)]
@@ -303,8 +240,8 @@ pub mod account_test_utils {
             last_modification_timestamp: 0,
             metadata: Metadata::mock(),
             symbol: "ICP".to_string(),
-            transfer_approval_policy_id: *Uuid::new_v4().as_bytes(),
-            update_approval_policy_id: *Uuid::new_v4().as_bytes(),
+            transfer_approval_policy_id: None,
+            update_approval_policy_id: None,
         }
     }
 

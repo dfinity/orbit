@@ -10,6 +10,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
+        criteria::ApprovalCriteriaInput,
         resource::{AccountResourceAction, Resource, ResourceId},
         specifier::{AccountSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
@@ -148,30 +149,34 @@ impl AccountService {
         new_account.decimals = blockchain_api.decimals(&new_account).await?;
 
         // adds the associated transfer policy based on the transfer criteria
-        let transfer_approval_policy = self
-            .proposal_policy_service
-            .add_proposal_policy(AddProposalPolicyOperationInput {
-                specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(
-                    vec![*uuid.as_bytes()],
-                )),
-                criteria: input.transfer_approval_policy.to_owned(),
-            })
-            .await?;
+        if let Some(criteria) = &input.transfer_approval_policy {
+            let transfer_approval_policy = self
+                .proposal_policy_service
+                .add_proposal_policy(AddProposalPolicyOperationInput {
+                    specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
+                        *uuid.as_bytes()
+                    ])),
+                    criteria: criteria.clone(),
+                })
+                .await?;
 
-        new_account.transfer_approval_policy_id = transfer_approval_policy.id;
+            new_account.transfer_approval_policy_id = Some(transfer_approval_policy.id);
+        }
 
         // adds the associated edit policy based on the edit criteria
-        let update_approval_policy = self
-            .proposal_policy_service
-            .add_proposal_policy(AddProposalPolicyOperationInput {
-                specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
-                    *uuid.as_bytes()
-                ])),
-                criteria: input.update_approval_policy.to_owned(),
-            })
-            .await?;
+        if let Some(criteria) = &input.update_approval_policy {
+            let update_approval_policy = self
+                .proposal_policy_service
+                .add_proposal_policy(AddProposalPolicyOperationInput {
+                    specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                        *uuid.as_bytes()
+                    ])),
+                    criteria: criteria.to_owned(),
+                })
+                .await?;
 
-        new_account.update_approval_policy_id = update_approval_policy.id;
+            new_account.update_approval_policy_id = Some(update_approval_policy.id);
+        }
 
         // Validations happen after all the fields are set in the account to avoid partial data in the repository.
         new_account.validate()?;
@@ -236,28 +241,85 @@ impl AccountService {
             }
         }
 
-        if let Some(transfer_approval_policy) = input.transfer_approval_policy {
-            self.proposal_policy_service
-                .edit_proposal_policy(EditProposalPolicyOperationInput {
-                    policy_id: account.transfer_approval_policy_id,
-                    specifier: Some(ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
-                        account.id,
-                    ]))),
-                    criteria: Some(transfer_approval_policy.to_owned()),
-                })
-                .await?;
+        if let Some(transfer_approval_policy) = &input.transfer_approval_policy {
+            match (
+                transfer_approval_policy,
+                &account.transfer_approval_policy_id,
+            ) {
+                (ApprovalCriteriaInput::Remove, Some(policy_id)) => {
+                    self.proposal_policy_service
+                        .remove_proposal_policy(policy_id)
+                        .await?;
+
+                    account.transfer_approval_policy_id = None;
+                }
+                (ApprovalCriteriaInput::Remove, None) => {
+                    // Do nothing, there is no policy to remove.
+                }
+                (ApprovalCriteriaInput::Set(criteria), Some(policy_id)) => {
+                    self.proposal_policy_service
+                        .edit_proposal_policy(EditProposalPolicyOperationInput {
+                            policy_id: *policy_id,
+                            specifier: Some(ProposalSpecifier::Transfer(AccountSpecifier::Id(
+                                vec![account.id],
+                            ))),
+                            criteria: Some(criteria.to_owned()),
+                        })
+                        .await?;
+                }
+                (ApprovalCriteriaInput::Set(criteria), None) => {
+                    let transfer_approval_policy = self
+                        .proposal_policy_service
+                        .add_proposal_policy(AddProposalPolicyOperationInput {
+                            specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
+                                account.id,
+                            ])),
+                            criteria: criteria.to_owned(),
+                        })
+                        .await?;
+
+                    account.transfer_approval_policy_id = Some(transfer_approval_policy.id);
+                }
+            }
         }
 
         if let Some(update_approval_policy) = input.update_approval_policy {
-            self.proposal_policy_service
-                .edit_proposal_policy(EditProposalPolicyOperationInput {
-                    policy_id: account.update_approval_policy_id,
-                    specifier: Some(ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
-                        account.id,
-                    ]))),
-                    criteria: Some(update_approval_policy.to_owned()),
-                })
-                .await?;
+            match (update_approval_policy, &account.update_approval_policy_id) {
+                (ApprovalCriteriaInput::Remove, Some(policy_id)) => {
+                    self.proposal_policy_service
+                        .remove_proposal_policy(policy_id)
+                        .await?;
+
+                    account.update_approval_policy_id = None;
+                }
+                (ApprovalCriteriaInput::Remove, None) => {
+                    // Do nothing, there is no policy to remove.
+                }
+                (ApprovalCriteriaInput::Set(criteria), Some(policy_id)) => {
+                    self.proposal_policy_service
+                        .edit_proposal_policy(EditProposalPolicyOperationInput {
+                            policy_id: *policy_id,
+                            specifier: Some(ProposalSpecifier::EditAccount(AccountSpecifier::Id(
+                                vec![account.id],
+                            ))),
+                            criteria: Some(criteria.to_owned()),
+                        })
+                        .await?;
+                }
+                (ApprovalCriteriaInput::Set(criteria), None) => {
+                    let update_approval_policy = self
+                        .proposal_policy_service
+                        .add_proposal_policy(AddProposalPolicyOperationInput {
+                            specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                                account.id,
+                            ])),
+                            criteria: criteria.to_owned(),
+                        })
+                        .await?;
+
+                    account.update_approval_policy_id = Some(update_approval_policy.id);
+                }
+            }
         }
 
         account.validate()?;
@@ -432,8 +494,8 @@ mod tests {
                 read_access_policy: Allow::users(vec![ctx.caller_user.id]),
                 update_access_policy: Allow::users(vec![ctx.caller_user.id]),
                 transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                update_approval_policy: Criteria::AutoAdopted,
-                transfer_approval_policy: Criteria::AutoAdopted,
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
         };
 
@@ -460,8 +522,8 @@ mod tests {
                 read_access_policy: Allow::users(vec![ctx.caller_user.id]),
                 update_access_policy: Allow::users(vec![ctx.caller_user.id]),
                 transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                update_approval_policy: Criteria::AutoAdopted,
-                transfer_approval_policy: Criteria::AutoAdopted,
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
         };
 
@@ -535,8 +597,8 @@ mod tests {
                 read_access_policy: Allow::users(vec![ctx.caller_user.id]),
                 update_access_policy: Allow::users(vec![ctx.caller_user.id]),
                 transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                update_approval_policy: Criteria::AutoAdopted,
-                transfer_approval_policy: Criteria::AutoAdopted,
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
         };
 

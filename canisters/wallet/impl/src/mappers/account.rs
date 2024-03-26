@@ -35,16 +35,20 @@ impl AccountMapper {
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata.into_vec_dto(),
-            transfer_approval_policy: PROPOSAL_POLICY_REPOSITORY
-                .get(&account.transfer_approval_policy_id)
-                .expect("Transfer policy not found")
-                .criteria
-                .into(),
-            update_approval_policy: PROPOSAL_POLICY_REPOSITORY
-                .get(&account.update_approval_policy_id)
-                .expect("Update policy not found")
-                .criteria
-                .into(),
+            transfer_approval_policy: account.transfer_approval_policy_id.map(|policy_id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&policy_id)
+                    .expect("Transfer policy not found")
+                    .criteria
+                    .into()
+            }),
+            update_approval_policy: account.update_approval_policy_id.map(|policy_id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&policy_id)
+                    .expect("Update policy not found")
+                    .criteria
+                    .into()
+            }),
             last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
         }
     }
@@ -97,8 +101,8 @@ impl AccountMapper {
             address: address.unwrap_or("".to_string()),
             decimals: 0,
             symbol,
-            transfer_approval_policy_id: *Uuid::nil().as_bytes(),
-            update_approval_policy_id: *Uuid::nil().as_bytes(),
+            transfer_approval_policy_id: None,
+            update_approval_policy_id: None,
             balance: None,
             metadata: input.metadata,
             last_modification_timestamp: time(),

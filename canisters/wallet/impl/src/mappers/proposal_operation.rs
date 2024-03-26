@@ -63,9 +63,9 @@ impl AddAccountOperation {
                 metadata: self.input.metadata.into_vec_dto(),
                 read_access_policy: self.input.read_access_policy.into(),
                 transfer_access_policy: self.input.transfer_access_policy.into(),
-                transfer_approval_policy: self.input.transfer_approval_policy.into(),
                 update_access_policy: self.input.update_access_policy.into(),
-                update_approval_policy: self.input.update_approval_policy.into(),
+                transfer_approval_policy: self.input.transfer_approval_policy.map(Into::into),
+                update_approval_policy: self.input.update_approval_policy.map(Into::into),
             },
         }
     }
@@ -96,8 +96,8 @@ impl From<wallet_api::AddAccountOperationInput> for AddAccountOperationInput {
             read_access_policy: input.read_access_policy.into(),
             update_access_policy: input.update_access_policy.into(),
             transfer_access_policy: input.transfer_access_policy.into(),
-            transfer_approval_policy: input.transfer_approval_policy.into(),
-            update_approval_policy: input.update_approval_policy.into(),
+            transfer_approval_policy: input.transfer_approval_policy.map(Into::into),
+            update_approval_policy: input.update_approval_policy.map(Into::into),
         }
     }
 }

@@ -71,6 +71,11 @@ type MinimumVotes = record {
   minimum : nat16;
 };
 
+type ApprovalPolicyCriteriaInput = variant {
+  Remove;
+  Set : ProposalPolicyCriteria;
+};
+
 // Defines the various types criterias that can be used in a proposal evaluation.
 type ProposalPolicyCriteria = variant {
   AutoAdopted;
@@ -277,9 +282,9 @@ type EditAccountOperationInput = record {
   // Who can request transfers from the account.
   transfer_access_policy : opt Allow;
   // The approval policy for updates to the account.
-  update_approval_policy : opt ProposalPolicyCriteria;
+  update_approval_policy : opt ApprovalPolicyCriteriaInput;
   // The approval policy for transfers from the account.
-  transfer_approval_policy : opt ProposalPolicyCriteria;
+  transfer_approval_policy : opt ApprovalPolicyCriteriaInput;
 };
 
 type EditAccountOperation = record {
@@ -304,9 +309,9 @@ type AddAccountOperationInput = record {
   // Who can request transfers from the account.
   transfer_access_policy : Allow;
   // The approval policy for updates to the account.
-  update_approval_policy : ProposalPolicyCriteria;
+  update_approval_policy : opt ProposalPolicyCriteria;
   // The approval policy for transfers from the account.
-  transfer_approval_policy : ProposalPolicyCriteria;
+  transfer_approval_policy : opt ProposalPolicyCriteria;
 };
 
 type AddAccountOperation = record {
@@ -1139,11 +1144,11 @@ type Account = record {
   // The transfer approval policy for the account.
   //
   // The transfer approval policy defines the criteria that must be met for a transfer to be approved.
-  transfer_approval_policy : ProposalPolicyCriteria;
+  transfer_approval_policy : opt ProposalPolicyCriteria;
   // The update approval policy for the account.
   //
   // The update approval policy defines the criteria that must be met for the account to be updated.
-  update_approval_policy : ProposalPolicyCriteria;
+  update_approval_policy : opt ProposalPolicyCriteria;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };

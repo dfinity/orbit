@@ -52,14 +52,14 @@ fn make_transfer_successful() {
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
-        transfer_approval_policy: CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+        transfer_approval_policy: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
             voters: UserSpecifierDTO::Owner,
             threshold: 100,
-        }),
-        update_approval_policy: CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+        })),
+        update_approval_policy: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
             voters: UserSpecifierDTO::Owner,
             threshold: 100,
-        }),
+        })),
         metadata: vec![],
     };
     let add_account_proposal = CreateProposalInput {

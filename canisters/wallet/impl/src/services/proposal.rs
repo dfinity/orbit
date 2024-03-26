@@ -660,11 +660,11 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                transfer_approval_policy: Criteria::ApprovalThreshold(
+                transfer_approval_policy: Some(Criteria::ApprovalThreshold(
                     UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),
                     Percentage(100),
-                ),
-                update_approval_policy: Criteria::AutoAdopted,
+                )),
+                update_approval_policy: Some(Criteria::AutoAdopted),
                 read_access_policy: Allow::users(account_owners.clone()),
                 update_access_policy: Allow::users(account_owners.clone()),
                 transfer_access_policy: Allow::users(account_owners.clone()),

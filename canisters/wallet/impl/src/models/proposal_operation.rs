@@ -1,6 +1,6 @@
 use super::{
     access_policy::{Allow, AuthScope},
-    criteria::Criteria,
+    criteria::{ApprovalCriteriaInput, Criteria},
     resource::Resource,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
@@ -68,8 +68,8 @@ pub struct AddAccountOperationInput {
     pub read_access_policy: Allow,
     pub update_access_policy: Allow,
     pub transfer_access_policy: Allow,
-    pub update_approval_policy: Criteria,
-    pub transfer_approval_policy: Criteria,
+    pub update_approval_policy: Option<Criteria>,
+    pub transfer_approval_policy: Option<Criteria>,
 }
 
 #[storable]
@@ -86,8 +86,8 @@ pub struct EditAccountOperationInput {
     pub read_access_policy: Option<Allow>,
     pub update_access_policy: Option<Allow>,
     pub transfer_access_policy: Option<Allow>,
-    pub update_approval_policy: Option<Criteria>,
-    pub transfer_approval_policy: Option<Criteria>,
+    pub update_approval_policy: Option<ApprovalCriteriaInput>,
+    pub transfer_approval_policy: Option<ApprovalCriteriaInput>,
 }
 
 #[storable]

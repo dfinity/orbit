@@ -46,6 +46,13 @@ pub enum Criteria {
     Not(Box<Criteria>),
 }
 
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ApprovalCriteriaInput {
+    Remove,
+    Set(Criteria),
+}
+
 impl From<ProposalVoteStatus> for EvaluationStatus {
     fn from(value: ProposalVoteStatus) -> Self {
         match value {
