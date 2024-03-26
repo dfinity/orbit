@@ -9,11 +9,11 @@ use ic_ledger_types::AccountIdentifier;
 use pocket_ic::{query_candid_as, update_candid_as};
 use std::time::Duration;
 use wallet_api::{
-    AccountPoliciesDTO, AddAccountOperationInput, ApiErrorDTO, ApprovalThresholdDTO,
-    CreateProposalInput, CreateProposalResponse, CriteriaDTO, GetProposalInput,
-    GetProposalResponse, GetTransfersInput, GetTransfersResponse, ListAccountTransfersInput,
-    ListAccountTransfersResponse, MeResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO,
-    ProposalOperationInput, ProposalStatusDTO, TransferOperationInput, UserSpecifierDTO,
+    AddAccountOperationInput, AllowDTO, ApiErrorDTO, ApprovalThresholdDTO, CreateProposalInput,
+    CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, GetTransfersInput,
+    GetTransfersResponse, ListAccountTransfersInput, ListAccountTransfersResponse, MeResponse,
+    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
+    TransferOperationInput, UserSpecifierDTO,
 };
 
 #[test]
@@ -34,20 +34,32 @@ fn make_transfer_successful() {
 
     // create account
     let create_account_args = AddAccountOperationInput {
-        owners: vec![user_dto.id],
         name: "test".to_string(),
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
-        policies: AccountPoliciesDTO {
-            transfer: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
-                voters: UserSpecifierDTO::Owner,
-                threshold: 100,
-            })),
-            edit: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
-                voters: UserSpecifierDTO::Owner,
-                threshold: 100,
-            })),
+        read_access_policy: AllowDTO {
+            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![user_dto.id.clone()],
         },
+        update_access_policy: AllowDTO {
+            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![user_dto.id.clone()],
+        },
+        transfer_access_policy: AllowDTO {
+            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![user_dto.id.clone()],
+        },
+        transfer_approval_policy: CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+            voters: UserSpecifierDTO::Owner,
+            threshold: 100,
+        }),
+        update_approval_policy: CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
+            voters: UserSpecifierDTO::Owner,
+            threshold: 100,
+        }),
         metadata: vec![],
     };
     let add_account_proposal = CreateProposalInput {

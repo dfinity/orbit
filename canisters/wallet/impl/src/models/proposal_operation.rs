@@ -1,5 +1,8 @@
 use super::{
-    access_policy::AuthScope, criteria::Criteria, resource::Resource, specifier::ProposalSpecifier,
+    access_policy::{Allow, AuthScope},
+    criteria::Criteria,
+    resource::Resource,
+    specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
     UserGroupId, UserId, UserStatus,
 };
@@ -49,13 +52,6 @@ pub struct TransferOperationInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AccountPoliciesInput {
-    pub transfer: Option<Criteria>,
-    pub edit: Option<Criteria>,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperation {
     /// The account id is only available after the operation is executed.
     pub account_id: Option<AccountId>,
@@ -66,11 +62,14 @@ pub struct AddAccountOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    pub owners: Vec<UserId>,
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
     pub metadata: Metadata,
-    pub policies: AccountPoliciesInput,
+    pub read_access_policy: Allow,
+    pub update_access_policy: Allow,
+    pub transfer_access_policy: Allow,
+    pub update_approval_policy: Criteria,
+    pub transfer_approval_policy: Criteria,
 }
 
 #[storable]
@@ -83,9 +82,12 @@ pub struct EditAccountOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
-    pub owners: Option<Vec<UserId>>,
-    pub policies: Option<AccountPoliciesInput>,
     pub name: Option<String>,
+    pub read_access_policy: Option<Allow>,
+    pub update_access_policy: Option<Allow>,
+    pub transfer_access_policy: Option<Allow>,
+    pub update_approval_policy: Option<Criteria>,
+    pub transfer_approval_policy: Option<Criteria>,
 }
 
 #[storable]
