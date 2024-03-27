@@ -15,6 +15,7 @@ import { Ref, computed, onBeforeMount, ref } from 'vue';
 import AccountForm from '~/components/accounts/AccountConfigForm.vue';
 import { Account, EditAccountOperation, Proposal } from '~/generated/wallet/wallet.did';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
+import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -36,11 +37,21 @@ onBeforeMount(() => {
   if (props.operation.input.name?.[0]) {
     account.name = props.operation.input.name[0];
   }
-  if (props.operation.input.owners?.[0]) {
-    account.owners = props.operation.input.owners[0];
+
+  if (props.operation.input.transfer_approval_policy?.[0]) {
+    if (variantIs(props.operation.input.transfer_approval_policy[0], 'Set')) {
+      account.transfer_approval_policy = [props.operation.input.transfer_approval_policy[0].Set];
+    } else if (variantIs(props.operation.input.transfer_approval_policy[0], 'Remove')) {
+      account.transfer_approval_policy = [];
+    }
   }
-  if (props.operation.input.policies?.[0]) {
-    account.policies = props.operation.input.policies[0];
+
+  if (props.operation.input.update_approval_policy?.[0]) {
+    if (variantIs(props.operation.input.update_approval_policy[0], 'Set')) {
+      account.update_approval_policy = [props.operation.input.update_approval_policy[0].Set];
+    } else if (variantIs(props.operation.input.update_approval_policy[0], 'Remove')) {
+      account.update_approval_policy = [];
+    }
   }
 
   formValue.value = account;

@@ -1,9 +1,12 @@
 import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { AccountSetupWizardModel } from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import logger from '~/core/logger.core';
+import { UUID } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
+import { BlockchainStandard, BlockchainType, TokenSymbol } from '~/types/chain.types';
 import { parseDate } from '~/utils/date.utils';
 
 export type Filters = {
@@ -71,4 +74,36 @@ export const useSavedFilters = (): Ref<Filters> => {
 
     return ref(defaultFilters);
   }
+};
+
+export const useDefaultAccountSetupWizardModel = ({
+  prefilledUserIds,
+}: {
+  prefilledUserIds?: UUID[];
+} = {}): AccountSetupWizardModel => {
+  return {
+    configuration: {
+      blockchain: BlockchainType.InternetComputer,
+      standard: BlockchainStandard.Native,
+      symbol: TokenSymbol.ICP,
+    },
+    access_policy: {
+      read: {
+        auth_scope: { Restricted: null },
+        user_groups: [],
+        users: prefilledUserIds ? prefilledUserIds : [],
+      },
+      configuration: {
+        auth_scope: { Restricted: null },
+        user_groups: [],
+        users: prefilledUserIds ? prefilledUserIds : [],
+      },
+      transfer: {
+        auth_scope: { Restricted: null },
+        user_groups: [],
+        users: prefilledUserIds ? prefilledUserIds : [],
+      },
+    },
+    approval_policy: {},
+  };
 };

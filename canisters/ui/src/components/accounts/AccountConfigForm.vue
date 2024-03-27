@@ -32,17 +32,6 @@
       :disabled="isViewMode"
       @selected-asset="onSelectedAsset"
     />
-    <UserAutocomplete
-      v-model="model.owners"
-      :label="$t('terms.owners')"
-      variant="underlined"
-      class="mb-2"
-      density="comfortable"
-      :disabled="isViewMode"
-      :rules="[requiredRule]"
-      multiple
-      :prepend-icon="mdiAccountGroup"
-    />
     <VTabs v-model="tab" grow bg-color="background" density="comfortable">
       <VTab value="edit">{{ $t('terms.edit') }}</VTab>
       <VTab value="transfers">{{ $t('terms.transfers') }}</VTab>
@@ -75,10 +64,9 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiAccountGroup, mdiKeyChainVariant, mdiWallet } from '@mdi/js';
+import { mdiKeyChainVariant, mdiWallet } from '@mdi/js';
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
-import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import CriteriaBuilder from '~/components/proposal-policies/criteria/CriteriaBuilder.vue';
 import { Account, WalletAsset } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
@@ -122,31 +110,21 @@ const model = computed(() => props.modelValue.value);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
 
 const editPolicy = computed({
-  get: () => props.modelValue.value.policies?.edit?.[0],
+  get: () => props.modelValue.value.update_approval_policy?.[0],
   set: value => {
     emit('update:modelValue', {
       ...props.modelValue.value,
-      policies: {
-        edit: value ? [value] : [],
-        transfer: props.modelValue.value.policies?.transfer?.[0]
-          ? [props.modelValue.value.policies?.transfer?.[0]]
-          : [],
-      },
+      update_approval_policy: value ? [value] : [],
     });
   },
 });
 
 const transferPolicy = computed({
-  get: () => props.modelValue.value.policies?.transfer?.[0],
+  get: () => props.modelValue.value.transfer_approval_policy?.[0],
   set: value => {
     emit('update:modelValue', {
       ...props.modelValue.value,
-      policies: {
-        transfer: value ? [value] : [],
-        edit: props.modelValue.value.policies?.edit?.[0]
-          ? [props.modelValue.value.policies?.edit?.[0]]
-          : [],
-      },
+      transfer_approval_policy: value ? [value] : [],
     });
   },
 });

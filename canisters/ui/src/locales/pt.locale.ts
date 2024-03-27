@@ -46,8 +46,6 @@ export default {
     destination_source: 'Destino / Origem',
     amount_token: 'Quantidade, {token}',
     no_transfers: 'Nenhuma transferência disponível.',
-    account_dialog_edit_criteria_hint: '* Critérios de aprovação para alterações de conta',
-    account_dialog_transfers_criteria_hint: '* Critérios de aprovação para transferências',
     address_book_entry: 'Entrada do livro de endereços',
     notifications_panel_title: 'Notificações',
     notifications_panel_no_results: 'Sem notificações por ler.',
@@ -58,6 +56,22 @@ export default {
     download_error: 'Erro ao baixar o ficheiro, por favor, tente novamente.',
     leave_page_warning:
       'Tem a certeza que pretende sair? As alterações não gravadas serão perdidas.',
+    loading_details: 'Carregando detalhes ...',
+    account_dialog_create_new_title: 'Criar nova conta',
+    account_dialog_view_title: 'Conta',
+    account_dialog_access_read: 'Ler',
+    account_dialog_access_read_hint: 'Acesso somente leitura à conta.',
+    account_dialog_access_configuration: 'Alterar configurações da conta',
+    account_dialog_access_configuration_hint:
+      'Acesso para alterar as configurações da conta, como nome da conta, políticas, etc.',
+    account_dialog_access_transfer: 'Transferir fundos',
+    account_dialog_access_transfer_hint: 'Acesso para transferir fundos da conta.',
+    account_dialog_approval_policy_configuration: 'Alterar configurações da conta',
+    account_dialog_approval_policy_configuration_hint:
+      'A política que precisa ser aprovada para alterar as configurações da conta.',
+    account_dialog_approval_policy_transfer: 'Transferir fundos',
+    account_dialog_approval_policy_transfer_hint:
+      'A política que precisa ser aprovada para transferir fundos.',
   },
   change_canister: {
     targets: {
@@ -309,6 +323,7 @@ export default {
     all_done: 'Tudo pronto',
     destination_address: 'Endereço de destino',
     search: 'Procurar',
+    details: 'Detalhes',
     proposals: 'Propostas',
     withdraw_requests: 'Pedidos de retirada',
     approve: 'Aprovar',
@@ -316,10 +331,14 @@ export default {
     any: 'Qualquer',
     everyone: 'Todos',
     action: 'Ação',
+    previous: 'Anterior',
+    next: 'Próximo',
     wasm: 'Wasm',
     download: 'Baixar',
     arg: 'Arg',
     target: 'Alvo',
+    permissions: 'Permissões',
+    approval_policies: 'Políticas de Aprovação',
     upgrader: 'Atualizador',
     resource: 'Recurso',
     submit: 'Submeter',
@@ -586,10 +605,9 @@ export default {
       systeminfo: 'Informações do sistema',
     },
     allow: {
-      everyone_edit_label: 'Permitir que os seguintes usuários acessem:',
-      anyone: 'Acesso público',
+      public: 'Acesso público',
       authenticated: 'Autenticado',
-      notset: 'Não definido',
+      restricted: 'Restrito',
     },
   },
   proposal_policies: {

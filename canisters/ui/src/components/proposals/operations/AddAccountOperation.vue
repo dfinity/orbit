@@ -40,10 +40,10 @@ onBeforeMount(() => {
   const account: Partial<Account> = {};
   account.name = props.operation.input.name;
   account.blockchain = props.operation.input.blockchain;
-  account.owners = props.operation.input.owners;
   account.standard = props.operation.input.standard;
-  account.policies = props.operation.input.policies;
   account.metadata = props.operation.input.metadata;
+  account.update_approval_policy = props.operation.input.update_approval_policy;
+  account.transfer_approval_policy = props.operation.input.transfer_approval_policy;
 
   formValue.value = account;
 });
