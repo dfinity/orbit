@@ -73,6 +73,7 @@ export default {
     account_dialog_approval_policy_transfer: 'Transférer des fonds',
     account_dialog_approval_policy_transfer_hint:
       'La politique qui doit être approuvée pour transférer des fonds.',
+    criteria_builder_no_criteria: 'Pas de critères',
   },
   blockchains: {
     icp: {

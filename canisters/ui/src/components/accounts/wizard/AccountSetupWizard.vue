@@ -134,10 +134,13 @@ const step = ref(props.step);
 const form = ref<VFormValidation | null>(null);
 const valid = ref(true);
 
+const isViewMode = computed(() => props.mode === 'view');
 const canAdvance = computed(() => step.value < AccountSetupStep.ApprovalPolicy);
 const canReturn = computed(() => step.value > AccountSetupStep.Configuration && !props.saving);
 const canSubmit = computed(() => valid.value);
-const showSubmit = computed(() => step.value === AccountSetupStep.ApprovalPolicy);
+const showSubmit = computed(
+  () => step.value === AccountSetupStep.ApprovalPolicy && !isViewMode.value,
+);
 const isCreationMode = computed(() => !props.modelValue.configuration.id);
 const fieldsWithErrors = ref<string[]>([]);
 const hasConfigurationErrors = computed(() => fieldsWithErrors.value.includes('name'));

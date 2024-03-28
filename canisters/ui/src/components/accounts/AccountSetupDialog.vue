@@ -35,9 +35,8 @@
           @submit="save"
         />
 
-        <VCardText v-if="loading" class="py-8 d-flex">
-          <VProgressCircular indeterminate color="primary" class="mr-2" :size="20" :width="2" />
-          <span class="text-medium-emphasis">{{ $t('app.loading_details') }}</span>
+        <VCardText v-if="loading" class="py-8">
+          <LoadingMessage />
         </VCardText>
       </VCard>
     </DataLoader>
@@ -52,16 +51,19 @@ import {
   VCardText,
   VDialog,
   VDivider,
-  VProgressCircular,
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
+import LoadingMessage from '~/components/LoadingMessage.vue';
 import AccountSetupWizard, {
   AccountSetupWizardModel,
 } from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import ErrorCard from '~/components/errors/ErrorCard.vue';
-import { useDefaultAccountSetupWizardModel } from '~/composables/account.composable';
+import {
+  useDefaultAccountSetupWizardModel,
+  useLoadAccountSetupWizardModel,
+} from '~/composables/account.composable';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
@@ -112,45 +114,7 @@ const load = async (): Promise<AccountSetupWizardModel> => {
     });
   }
 
-  // load the individual account details and access policies in parallel
-  const [account, read, configuration, transfer] = await Promise.all([
-    wallet.service.getAccount({ account_id: props.accountId }).then(({ account }) => account),
-    wallet.service
-      .getAccessPolicy({
-        resource: { Account: { Read: { Id: props.accountId } } },
-      })
-      .then(({ policy }) => policy.allow),
-    wallet.service
-      .getAccessPolicy({
-        resource: { Account: { Update: { Id: props.accountId } } },
-      })
-      .then(({ policy }) => policy.allow),
-    await wallet.service
-      .getAccessPolicy({
-        resource: { Account: { Transfer: { Id: props.accountId } } },
-      })
-      .then(({ policy }) => policy.allow),
-  ]);
-
-  return {
-    configuration: {
-      id: account.id,
-      name: account.name,
-      blockchain: account.blockchain,
-      lastModified: account.last_modification_timestamp,
-      standard: account.standard,
-      symbol: account.symbol,
-    },
-    access_policy: {
-      read,
-      configuration,
-      transfer,
-    },
-    approval_policy: {
-      configurationCriteria: account.update_approval_policy?.[0],
-      transferCriteria: account.transfer_approval_policy?.[0],
-    },
-  };
+  return useLoadAccountSetupWizardModel(props.accountId);
 };
 
 const save = async (): Promise<void> => {

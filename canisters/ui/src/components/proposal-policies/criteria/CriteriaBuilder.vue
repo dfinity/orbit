@@ -50,6 +50,9 @@
       @remove="emit('remove')"
     />
   </template>
+  <template v-else>
+    <p class="text-medium-emphasis">{{ $t('app.criteria_builder_no_criteria') }}</p>
+  </template>
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';

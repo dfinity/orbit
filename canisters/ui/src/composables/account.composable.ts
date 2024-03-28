@@ -6,6 +6,7 @@ import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import logger from '~/core/logger.core';
 import { UUID } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
+import { useWalletStore } from '~/stores/wallet.store';
 import { BlockchainStandard, BlockchainType, TokenSymbol } from '~/types/chain.types';
 import { parseDate } from '~/utils/date.utils';
 
@@ -105,5 +106,51 @@ export const useDefaultAccountSetupWizardModel = ({
       },
     },
     approval_policy: {},
+  };
+};
+
+export const useLoadAccountSetupWizardModel = async (
+  accountId: UUID,
+): Promise<AccountSetupWizardModel> => {
+  const wallet = useWalletStore();
+
+  // load the individual account details and access policies in parallel
+  const [account, read, configuration, transfer] = await Promise.all([
+    wallet.service.getAccount({ account_id: accountId }).then(({ account }) => account),
+    wallet.service
+      .getAccessPolicy({
+        resource: { Account: { Read: { Id: accountId } } },
+      })
+      .then(({ policy }) => policy.allow),
+    wallet.service
+      .getAccessPolicy({
+        resource: { Account: { Update: { Id: accountId } } },
+      })
+      .then(({ policy }) => policy.allow),
+    await wallet.service
+      .getAccessPolicy({
+        resource: { Account: { Transfer: { Id: accountId } } },
+      })
+      .then(({ policy }) => policy.allow),
+  ]);
+
+  return {
+    configuration: {
+      id: account.id,
+      name: account.name,
+      blockchain: account.blockchain,
+      lastModified: account.last_modification_timestamp,
+      standard: account.standard,
+      symbol: account.symbol,
+    },
+    access_policy: {
+      read,
+      configuration,
+      transfer,
+    },
+    approval_policy: {
+      configurationCriteria: account.update_approval_policy?.[0],
+      transferCriteria: account.transfer_approval_policy?.[0],
+    },
   };
 };

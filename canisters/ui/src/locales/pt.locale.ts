@@ -72,6 +72,7 @@ export default {
     account_dialog_approval_policy_transfer: 'Transferir fundos',
     account_dialog_approval_policy_transfer_hint:
       'A política que precisa ser aprovada para transferir fundos.',
+    criteria_builder_no_criteria: 'Nenhum critério definido.',
   },
   change_canister: {
     targets: {

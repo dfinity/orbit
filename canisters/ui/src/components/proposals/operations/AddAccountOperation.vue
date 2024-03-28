@@ -1,25 +1,28 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <ProposalOperationListRow v-if="formValue.name">
+    <ProposalOperationListRow v-if="accountSetup.configuration.name">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
-        {{ formValue.name ?? '-' }}
+        {{ accountSetup.configuration.name ?? '-' }}
       </template>
     </ProposalOperationListRow>
-    <ProposalOperationListRow v-if="formValue.blockchain">
+    <ProposalOperationListRow v-if="accountSetup.configuration.blockchain">
       <template #name>{{ $t('terms.blockchain') }}</template>
       <template #content>
-        {{ $t(`blockchains.${formValue.blockchain}.name`) }}
+        {{ $t(`blockchains.${accountSetup.configuration.blockchain}.name`) }}
       </template>
     </ProposalOperationListRow>
   </div>
-  <AccountForm v-else :model-value="formValue" mode="view" />
+  <AccountSetupWizard v-else :model-value="accountSetup" mode="view" />
 </template>
 
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
-import AccountForm from '~/components/accounts/AccountConfigForm.vue';
-import { Account, AddAccountOperation, Proposal } from '~/generated/wallet/wallet.did';
+import AccountSetupWizard, {
+  AccountSetupWizardModel,
+} from '~/components/accounts/wizard/AccountSetupWizard.vue';
+import { useDefaultAccountSetupWizardModel } from '~/composables/account.composable';
+import { AddAccountOperation, Proposal } from '~/generated/wallet/wallet.did';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
@@ -34,17 +37,19 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
-const formValue: Ref<Partial<Account>> = ref({});
+const accountSetup: Ref<AccountSetupWizardModel> = ref(useDefaultAccountSetupWizardModel());
 
 onBeforeMount(() => {
-  const account: Partial<Account> = {};
-  account.name = props.operation.input.name;
-  account.blockchain = props.operation.input.blockchain;
-  account.standard = props.operation.input.standard;
-  account.metadata = props.operation.input.metadata;
-  account.update_approval_policy = props.operation.input.update_approval_policy;
-  account.transfer_approval_policy = props.operation.input.transfer_approval_policy;
+  const model: AccountSetupWizardModel = useDefaultAccountSetupWizardModel();
+  model.configuration.name = props.operation.input.name;
+  model.configuration.blockchain = props.operation.input.blockchain;
+  model.configuration.standard = props.operation.input.standard;
+  model.approval_policy.configurationCriteria = props.operation.input.update_approval_policy?.[0];
+  model.approval_policy.transferCriteria = props.operation.input.transfer_approval_policy?.[0];
+  model.access_policy.configuration = props.operation.input.update_access_policy;
+  model.access_policy.transfer = props.operation.input.transfer_access_policy;
+  model.access_policy.read = props.operation.input.read_access_policy;
 
-  formValue.value = account;
+  accountSetup.value = model;
 });
 </script>
