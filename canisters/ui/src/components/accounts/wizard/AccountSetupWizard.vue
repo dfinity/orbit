@@ -50,7 +50,7 @@
             {{ $t('terms.previous') }}
           </VBtn>
           <VSpacer />
-          <VBtn v-if="canAdvance" variant="tonal" @click="step++">
+          <VBtn v-if="canAdvance" variant="tonal" color="primary-variant" @click="step++">
             {{ $t('terms.next') }}
           </VBtn>
           <VBtn

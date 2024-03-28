@@ -16,6 +16,7 @@
           <VExpansionPanels flat variant="accordion">
             <VExpansionPanel
               class="text-body-2"
+              data-test-id="error-details-panel"
               :title="$t('terms.details')"
               :text="props.errorDetails"
             />

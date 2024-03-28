@@ -11,6 +11,7 @@
     <template #activator="{ props: infoProps }">
       <VBtn
         :icon="mdiInformationVariantCircleOutline"
+        data-test-id="open-tooltip-button"
         density="compact"
         variant="text"
         size="small"

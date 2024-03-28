@@ -1,21 +1,23 @@
 <template>
   <VRow>
     <VCol cols="12" class="py-2 pl-0">
-      <VRadioGroup v-model="model.auth_scope" inline hide-details>
+      <VRadioGroup v-model="model.auth_scope" :inline="!app.isMobile" hide-details>
         <VRadio
           :disabled="isViewMode"
-          :label="$t('access_policies.allow.restricted')"
-          :value="{ Restricted: null }"
+          :label="$t('access_policies.allow.public')"
+          :value="{ Public: null }"
         />
         <VRadio
+          :class="{ 'ml-2': !app.isMobile }"
           :disabled="isViewMode"
           :label="$t('access_policies.allow.authenticated')"
           :value="{ Authenticated: null }"
         />
         <VRadio
+          :class="{ 'ml-2': !app.isMobile }"
           :disabled="isViewMode"
-          :label="$t('access_policies.allow.public')"
-          :value="{ Public: null }"
+          :label="$t('access_policies.allow.restricted')"
+          :value="{ Restricted: null }"
         />
       </VRadioGroup>
     </VCol>
@@ -45,10 +47,11 @@
 
 <script lang="ts" setup>
 import { computed, watch } from 'vue';
-import { VRadioGroup } from 'vuetify/components';
+import { VCol, VRadio, VRadioGroup, VRow } from 'vuetify/components';
 import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { Allow } from '~/generated/wallet/wallet.did';
+import { useAppStore } from '~/stores/app.store';
 import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
@@ -71,6 +74,7 @@ const model = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const app = useAppStore();
 const isViewMode = computed(() => props.mode === 'view');
 
 const emit = defineEmits<{

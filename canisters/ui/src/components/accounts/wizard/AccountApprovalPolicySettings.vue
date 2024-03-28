@@ -2,7 +2,7 @@
   <VRow>
     <VCol cols="12" class="px-0">
       <VCard flat>
-        <VCardTitle>
+        <VCardTitle data-test-id="update-approval-policy">
           <TextLabel
             :label="$t('app.account_dialog_approval_policy_configuration')"
             :tooltip="$t('app.account_dialog_approval_policy_configuration_hint')"
@@ -21,7 +21,7 @@
     <VDivider />
     <VCol cols="12" class="px-0">
       <VCard flat>
-        <VCardTitle>
+        <VCardTitle data-test-id="transfer-approval-policy">
           <TextLabel
             :label="$t('app.account_dialog_approval_policy_transfer')"
             :tooltip="$t('app.account_dialog_approval_policy_transfer_hint')"
@@ -43,7 +43,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { VCard, VCardText, VCardTitle, VCol, VDivider, VRow } from 'vuetify/components';
-import TextLabel from '~/components/TextLabel.vue';
+import TextLabel from '~/components/ui/TextLabel.vue';
 import CriteriaBuilder from '~/components/proposal-policies/criteria/CriteriaBuilder.vue';
 import { ProposalPolicyCriteria } from '~/generated/wallet/wallet.did';
 

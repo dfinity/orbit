@@ -59,7 +59,7 @@ import LoadingMessage from '~/components/LoadingMessage.vue';
 import AccountSetupWizard, {
   AccountSetupWizardModel,
 } from '~/components/accounts/wizard/AccountSetupWizard.vue';
-import ErrorCard from '~/components/errors/ErrorCard.vue';
+import ErrorCard from '~/components/ui/ErrorCard.vue';
 import {
   useDefaultAccountSetupWizardModel,
   useLoadAccountSetupWizardModel,
