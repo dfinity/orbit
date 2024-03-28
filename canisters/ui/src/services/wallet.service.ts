@@ -111,6 +111,30 @@ export class WalletService {
     return result.Ok;
   }
 
+  async getAccountAccessPolicies(accountId: UUID): Promise<ExtractOk<ListAccessPoliciesResult>> {
+    const result = await this.actor.list_access_policies({
+      resources: [
+        [
+          { Account: { Read: { Id: accountId } } },
+          { Account: { Transfer: { Id: accountId } } },
+          { Account: { Update: { Id: accountId } } },
+        ],
+      ],
+      paginate: [
+        {
+          limit: [3],
+          offset: [],
+        },
+      ],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
   async getUserGroup(input: GetUserGroupInput): Promise<ExtractOk<GetUserGroupResult>> {
     const result = await this.actor.get_user_group(input);
     if (variantIs(result, 'Err')) {

@@ -366,7 +366,8 @@ const mapProposalToAccountCsvRow = (proposal: Proposal): CsvRow => {
       details: stringify({
         metadata: proposal.operation.AddAccount.input.metadata,
         standard: proposal.operation.AddAccount.input.standard,
-        policies: proposal.operation.AddAccount.input.policies,
+        update_approval_policy: proposal.operation.AddAccount.input.update_approval_policy,
+        transfer_approval_policy: proposal.operation.AddAccount.input.transfer_approval_policy,
       }),
     };
   }
@@ -376,7 +377,8 @@ const mapProposalToAccountCsvRow = (proposal: Proposal): CsvRow => {
       account_id: proposal.operation.EditAccount.input.account_id,
       account_name: proposal.operation.EditAccount.input.name?.[0] ?? '',
       details: stringify({
-        policies: proposal.operation.EditAccount.input.policies,
+        update_approval_policy: proposal.operation.EditAccount.input.update_approval_policy,
+        transfer_approval_policy: proposal.operation.EditAccount.input.transfer_approval_policy,
       }),
     };
   }

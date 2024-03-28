@@ -79,3 +79,5 @@ pub mod resource;
 pub mod indexes;
 
 pub mod specifier;
+
+pub mod proposal_operation_filter_type;

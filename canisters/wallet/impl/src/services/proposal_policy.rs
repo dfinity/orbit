@@ -7,7 +7,9 @@ use crate::{
     },
     errors::ProposalError,
     models::{
+        criteria::ApprovalCriteriaInput,
         resource::{Resource, ResourceAction, ResourceId},
+        specifier::ProposalSpecifier,
         AddProposalPolicyOperationInput, EditProposalPolicyOperationInput, ProposalPolicy,
         ProposalPolicyCallerPrivileges,
     },
@@ -67,6 +69,53 @@ impl ProposalPolicyService {
             .insert(policy.id, policy.clone());
 
         Ok(policy)
+    }
+
+    /// Handles the policy change operation.
+    ///
+    /// Removes the existing policy if the criteria is `Remove`, otherwise edits the existing policy or adds a new one.
+    pub async fn handle_policy_change(
+        &self,
+        specifier: ProposalSpecifier,
+        criteria: ApprovalCriteriaInput,
+        editable_policy_id: &mut Option<UUID>,
+    ) -> ServiceResult<()> {
+        match criteria {
+            ApprovalCriteriaInput::Remove => {
+                if let Some(existing_policy_id) = editable_policy_id {
+                    self.remove_proposal_policy(existing_policy_id).await?;
+
+                    // Directly modify the policy_id in place
+                    *editable_policy_id = None;
+                }
+            }
+            ApprovalCriteriaInput::Set(criteria) => {
+                match editable_policy_id {
+                    Some(existing_policy_id) => {
+                        // If there's an existing policy, edit it
+                        self.edit_proposal_policy(EditProposalPolicyOperationInput {
+                            policy_id: *existing_policy_id,
+                            specifier: Some(specifier),
+                            criteria: Some(criteria),
+                        })
+                        .await?;
+                    }
+                    None => {
+                        // If there's no existing policy, add a new one
+                        let policy = self
+                            .add_proposal_policy(AddProposalPolicyOperationInput {
+                                specifier,
+                                criteria,
+                            })
+                            .await?;
+
+                        *editable_policy_id = Some(policy.id);
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub async fn edit_proposal_policy(
@@ -144,8 +193,10 @@ mod tests {
     use crate::{
         core::ic_cdk::api::id as self_canister_id,
         models::{
-            criteria::Criteria, proposal_policy_test_utils::mock_proposal_policy,
-            specifier::ProposalSpecifier,
+            account_test_utils::mock_account,
+            criteria::Criteria,
+            proposal_policy_test_utils::mock_proposal_policy,
+            specifier::{CommonSpecifier, ProposalSpecifier},
         },
     };
 
@@ -230,5 +281,33 @@ mod tests {
         service.remove_proposal_policy(&policy.id).await.unwrap();
 
         assert!(service.get_proposal_policy(&policy.id).is_err());
+    }
+
+    #[tokio::test]
+    async fn test_handle_policy_change() {
+        let mut account = mock_account();
+        account.update_approval_policy_id = None;
+
+        PROPOSAL_POLICY_SERVICE
+            .handle_policy_change(
+                ProposalSpecifier::EditAccount(CommonSpecifier::Id(vec![account.id])),
+                ApprovalCriteriaInput::Set(Criteria::AutoAdopted),
+                &mut account.update_approval_policy_id,
+            )
+            .await
+            .unwrap();
+
+        assert!(account.update_approval_policy_id.is_some());
+
+        PROPOSAL_POLICY_SERVICE
+            .handle_policy_change(
+                ProposalSpecifier::EditAccount(CommonSpecifier::Id(vec![account.id])),
+                ApprovalCriteriaInput::Remove,
+                &mut account.update_approval_policy_id,
+            )
+            .await
+            .unwrap();
+
+        assert!(account.update_approval_policy_id.is_none());
     }
 }

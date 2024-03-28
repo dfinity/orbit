@@ -71,6 +71,11 @@ type MinimumVotes = record {
   minimum : nat16;
 };
 
+type ApprovalPolicyCriteriaInput = variant {
+  Remove;
+  Set : ProposalPolicyCriteria;
+};
+
 // Defines the various types criterias that can be used in a proposal evaluation.
 type ProposalPolicyCriteria = variant {
   AutoAdopted;
@@ -268,12 +273,18 @@ type TransferOperation = record {
 type EditAccountOperationInput = record {
   // The account id that will be edited.
   account_id : UUID;
-  // The updated list of users that own the account.
-  owners : opt vec UUID;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
-  // The updated policies applied to the account by the account owners.
-  policies : opt AccountPolicies;
+  // Who can read the account information.
+  read_access_policy : opt Allow;
+  // Who can request updates to the account.
+  update_access_policy : opt Allow;
+  // Who can request transfers from the account.
+  transfer_access_policy : opt Allow;
+  // The approval policy for updates to the account.
+  update_approval_policy : opt ApprovalPolicyCriteriaInput;
+  // The approval policy for transfers from the account.
+  transfer_approval_policy : opt ApprovalPolicyCriteriaInput;
 };
 
 type EditAccountOperation = record {
@@ -285,16 +296,22 @@ type EditAccountOperation = record {
 type AddAccountOperationInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : text;
-  // The list of users that own of the account.
-  owners : vec UUID;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
-  // The policies applied to the account by the account owners.
-  policies : AccountPolicies;
+  // Who can read the account information.
+  read_access_policy : Allow;
+  // Who can request updates to the account.
+  update_access_policy : Allow;
+  // Who can request transfers from the account.
+  transfer_access_policy : Allow;
+  // The approval policy for updates to the account.
+  update_approval_policy : opt ProposalPolicyCriteria;
+  // The approval policy for transfers from the account.
+  transfer_approval_policy : opt ProposalPolicyCriteria;
 };
 
 type AddAccountOperation = record {
@@ -1084,14 +1101,6 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
-// The policies applied to the account by the account owners.
-type AccountPolicies = record {
-  // The criterias to use for withdrawing funds from the account.
-  transfer : opt ProposalPolicyCriteria;
-  // The criterias to use when editing the account.
-  edit : opt ProposalPolicyCriteria;
-};
-
 // Account can have additional information attached to them,
 // this type can be used to represent the additional info.
 type AccountMetadata = record {
@@ -1128,14 +1137,18 @@ type Account = record {
   decimals : nat32;
   // A friendly name for the account.
   name : text;
-  // The list of users that own the account.
-  owners : vec UUID;
   // Account balance when available.
   balance : opt AccountBalanceInfo;
-  // The policies to enforce when interacting with the account.
-  policies : AccountPolicies;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
+  // The transfer approval policy for the account.
+  //
+  // The transfer approval policy defines the criteria that must be met for a transfer to be approved.
+  transfer_approval_policy : opt ProposalPolicyCriteria;
+  // The update approval policy for the account.
+  //
+  // The update approval policy defines the criteria that must be met for the account to be updated.
+  update_approval_policy : opt ProposalPolicyCriteria;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };

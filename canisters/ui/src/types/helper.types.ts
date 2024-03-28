@@ -9,5 +9,9 @@ export interface LoadableItem<T> {
 
 export type FormValidationRuleFn = (value: unknown) => boolean | string;
 export type FormValidationRules = FormValidationRuleFn[];
-export type VFormValidation = { validate: () => Promise<{ valid: boolean }>; isValid: boolean };
+export type VFormValidation = {
+  validate: () => Promise<{ valid: boolean; errors: Array<{ id: string }> }>;
+  isValid: boolean;
+  errors: Array<{ id: string }>;
+};
 export type SelectItem<T = unknown> = { value: T; text: string };

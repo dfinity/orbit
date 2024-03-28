@@ -54,6 +54,12 @@ pub struct MinimumVotesDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ApprovalCriteriaInput {
+    Remove,
+    Set(CriteriaDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CriteriaDTO {
     AutoAdopted,
     ApprovalThreshold(ApprovalThresholdDTO),

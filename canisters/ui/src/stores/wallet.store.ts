@@ -58,11 +58,23 @@ export const createUserInitialAccount = async (
         blockchain: BlockchainType.InternetComputer,
         standard: BlockchainStandard.Native,
         metadata: [],
-        owners: [userId],
-        policies: {
-          edit: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
-          transfer: [{ ApprovalThreshold: { threshold: 100, voters: { Owner: null } } }],
+        read_access_policy: { auth_scope: { Restricted: null }, user_groups: [], users: [userId] },
+        transfer_access_policy: {
+          auth_scope: { Restricted: null },
+          user_groups: [],
+          users: [userId],
         },
+        update_access_policy: {
+          auth_scope: { Restricted: null },
+          user_groups: [],
+          users: [userId],
+        },
+        update_approval_policy: [
+          { ApprovalThreshold: { threshold: 100, voters: { Owner: null } } },
+        ],
+        transfer_approval_policy: [
+          { ApprovalThreshold: { threshold: 100, voters: { Owner: null } } },
+        ],
       },
     },
   });

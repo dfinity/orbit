@@ -2,7 +2,7 @@
   <VAutocomplete
     v-model="model"
     :multiple="props.multiple.value"
-    :label="props.label.value"
+    :label="dropdownLabel"
     item-value="value"
     item-title="text"
     :items="items"
@@ -15,6 +15,7 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID } from '~/generated/wallet/wallet.did';
 import { SelectItem } from '~/types/helper.types';
@@ -23,7 +24,7 @@ const input = withDefaults(
   defineProps<{
     modelValue?: UUID[] | UUID;
     label?: string;
-    variant?: 'underlined' | 'outlined' | 'plain';
+    variant?: 'underlined' | 'outlined' | 'plain' | 'filled';
     density?: 'comfortable' | 'compact';
     multiple?: boolean;
     readonly?: boolean;
@@ -41,6 +42,7 @@ const input = withDefaults(
 );
 
 const props = toRefs(input);
+const i18n = useI18n();
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: UUID[] | UUID): void;
@@ -70,6 +72,8 @@ const updateAvailableItemsList = (results: SelectItem[] = []) => {
 
   items.value = results;
 };
+
+const dropdownLabel = computed(() => props.label.value ?? i18n.t('terms.user_groups'));
 
 onMounted(() => {
   updateAvailableItemsList();

@@ -47,9 +47,6 @@ export default {
     destination_source: 'Destination / Source',
     amount_token: 'Montant, {token}',
     no_transfers: 'Aucun transfert trouvé.',
-    account_dialog_edit_criteria_hint:
-      "* Critères d'aprobation pour la mise à jour de la configuration du compte",
-    account_dialog_transfers_criteria_hint: "* Critères d'aprobation des transferts",
     address_book_entry: "Entrée de carnet d'adresses",
     notifications_panel_title: 'Notifications',
     notifications_panel_no_results: 'Vous êtes à jour.',
@@ -60,6 +57,23 @@ export default {
     download_error: 'Échec de téléchargement du fichier, veuillez essayer de nouveau.',
     leave_page_warning:
       'Êtes vous sûrs de vouloir quitter? Certains changements pourraient être perdus.',
+    loading_details: 'Chargement des détails...',
+    account_dialog_create_new_title: 'Créer un nouveau compte',
+    account_dialog_view_title: 'Compte',
+    account_dialog_access_read: 'Lire',
+    account_dialog_access_read_hint: 'Accès en lecture seule au compte.',
+    account_dialog_access_configuration: 'Modifier les paramètres du compte',
+    account_dialog_access_configuration_hint:
+      'Accès pour modifier les paramètres du compte, tels que le nom du compte, les politiques, etc.',
+    account_dialog_access_transfer: 'Transférer des fonds',
+    account_dialog_access_transfer_hint: 'Accès pour transférer des fonds depuis le compte.',
+    account_dialog_approval_policy_configuration: 'Modifier les paramètres du compte',
+    account_dialog_approval_policy_configuration_hint:
+      'La politique qui doit être approuvée pour modifier les paramètres du compte.',
+    account_dialog_approval_policy_transfer: 'Transférer des fonds',
+    account_dialog_approval_policy_transfer_hint:
+      'La politique qui doit être approuvée pour transférer des fonds.',
+    criteria_builder_no_criteria: 'Pas de critères',
   },
   blockchains: {
     icp: {
@@ -312,6 +326,7 @@ export default {
     wallet: 'Portefeuille',
     all_done: 'Tout terminé',
     approve: 'Aprouver',
+    details: 'Détails',
     create: 'Créer',
     review: 'Revoir',
     type: 'Type',
@@ -320,6 +335,10 @@ export default {
     wasm: 'Wasm',
     arg: 'Paramètre',
     target: 'Cible',
+    previous: 'Précédent',
+    next: 'Suivant',
+    permissions: 'Permissions',
+    approval_policies: "Politiques d'approbation",
     download: 'Télécharger',
     upgrader: 'Metteur à jour',
     view: 'Voir',
@@ -591,10 +610,9 @@ export default {
       systeminfo: 'Information Système',
     },
     allow: {
-      everyone_edit_label: 'Tout le monde peut accéder à cette resource:',
-      anyone: "N'importe qui",
+      public: "N'importe qui",
       authenticated: 'Authentifié',
-      notset: 'Non défini',
+      restricted: 'Restreint',
     },
   },
   proposal_policies: {

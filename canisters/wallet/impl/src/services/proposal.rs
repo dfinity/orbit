@@ -124,7 +124,7 @@ impl ProposalService {
     pub async fn list_proposals(
         &self,
         input: ListProposalsInput,
-        ctx: Option<&CallContext>,
+        ctx: &CallContext,
     ) -> ServiceResult<PaginatedData<Proposal>> {
         let filter_by_proposers = input
             .proposer_ids
@@ -147,12 +147,8 @@ impl ProposalService {
             .transpose()?;
 
         let filter_by_votable = if input.only_votable {
-            if let Some(ctx) = ctx {
-                let user = self.user_service.get_user_by_identity(&ctx.caller())?;
-                vec![user.id]
-            } else {
-                vec![]
-            }
+            let user = self.user_service.get_user_by_identity(&ctx.caller())?;
+            vec![user.id]
         } else {
             vec![]
         };
@@ -171,7 +167,15 @@ impl ProposalService {
                 expiration_dt_to: input
                     .expiration_to_dt
                     .map(|dt| rfc3339_to_timestamp(dt.as_str())),
-                operation_types: input.operation_types.unwrap_or_default(),
+                operation_types: input
+                    .operation_types
+                    .map(|types| {
+                        types
+                            .into_iter()
+                            .map(|operation_type| operation_type.into())
+                            .collect::<_>()
+                    })
+                    .unwrap_or_default(),
                 statuses: input
                     .statuses
                     .map(|statuses| statuses.into_iter().map(Into::into).collect::<_>())
@@ -186,11 +190,9 @@ impl ProposalService {
         )?;
 
         // filter out proposals that the caller does not have access to read
-        if let Some(ctx) = ctx {
-            retain_accessible_resources(ctx, &mut proposal_ids, |id| {
-                Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*id)))
-            });
-        }
+        retain_accessible_resources(ctx, &mut proposal_ids, |id| {
+            Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*id)))
+        });
 
         // users have access to a proposal if they can vote on it, or have already voted on it
         // to see if a user can vote on a proposal no further filtering is necessary
@@ -239,7 +241,15 @@ impl ProposalService {
                 created_dt_to: None,
                 expiration_dt_from: None,
                 expiration_dt_to: None,
-                operation_types: input.operation_types.unwrap_or_default(),
+                operation_types: input
+                    .operation_types
+                    .map(|types| {
+                        types
+                            .into_iter()
+                            .map(|operation_type| operation_type.into())
+                            .collect::<_>()
+                    })
+                    .unwrap_or_default(),
                 statuses: vec![ProposalStatusCode::Created],
                 proposers: vec![],
                 voters: vec![],
@@ -382,16 +392,16 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
+            access_policy::Allow,
             account_test_utils::mock_account,
             criteria::{Criteria, Percentage},
             proposal_policy_test_utils::mock_proposal_policy,
             proposal_test_utils::mock_proposal,
             specifier::{AccountSpecifier, ProposalSpecifier, UserSpecifier},
             user_test_utils::mock_user,
-            AccountPoliciesInput, AddAccountOperationInput, AddUserOperation,
-            AddUserOperationInput, Blockchain, BlockchainStandard, Metadata, ProposalOperation,
-            ProposalStatus, ProposalVote, TransferOperation, TransferOperationInput, User,
-            UserStatus,
+            AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
+            BlockchainStandard, Metadata, ProposalOperation, ProposalStatus, ProposalVote,
+            TransferOperation, TransferOperationInput, User, UserStatus,
         },
         repositories::{
             policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, NOTIFICATION_REPOSITORY,
@@ -438,7 +448,6 @@ mod tests {
         let account_id = Uuid::new_v4();
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
-        account.owners = vec![[2; 16]];
         let mut proposal = mock_proposal();
         proposal.proposed_by = ctx.caller_user.id;
         proposal.operation = ProposalOperation::Transfer(TransferOperation {
@@ -469,7 +478,6 @@ mod tests {
         let account_id = Uuid::new_v4();
         let mut account = mock_account();
         account.id = *account_id.as_bytes();
-        account.owners = vec![ctx.caller_user.id];
         let mut proposal = mock_proposal();
         proposal.proposed_by = [8; 16];
         proposal.status = ProposalStatus::Created;
@@ -537,8 +545,7 @@ mod tests {
         USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
 
         // creates the account for the transfer
-        let mut account = mock_account();
-        account.owners = vec![ctx.caller_user.id];
+        let account = mock_account();
 
         ctx.account_repository
             .insert(account.to_key(), account.clone());
@@ -631,7 +638,7 @@ mod tests {
                     sort_by: None,
                     only_votable: false,
                 },
-                Some(&ctx.call_context),
+                &ctx.call_context,
             )
             .await;
 
@@ -655,21 +662,22 @@ mod tests {
         USER_REPOSITORY.insert(no_access_user.to_key(), no_access_user.clone());
 
         // create account
+        let account_owners = vec![ctx.caller_user.id, transfer_requester_user.id];
         let account = ctx
             .account_service
             .create_account(AddAccountOperationInput {
                 name: "foo".to_string(),
-                owners: vec![ctx.caller_user.id, transfer_requester_user.id],
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                policies: AccountPoliciesInput {
-                    transfer: Some(Criteria::ApprovalThreshold(
-                        UserSpecifier::Owner,
-                        Percentage(100),
-                    )),
-                    edit: Some(Criteria::AutoAdopted),
-                },
+                transfer_approval_policy: Some(Criteria::ApprovalThreshold(
+                    UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),
+                    Percentage(100),
+                )),
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                read_access_policy: Allow::users(account_owners.clone()),
+                update_access_policy: Allow::users(account_owners.clone()),
+                transfer_access_policy: Allow::users(account_owners.clone()),
             })
             .await
             .expect("Failed to create account");
@@ -743,7 +751,7 @@ mod tests {
                     sort_by: None,
                     only_votable: true,
                 },
-                Some(&ctx.call_context),
+                &ctx.call_context,
             )
             .await
             .expect("Failed to list only_votable proposals by co-owner user");
@@ -767,7 +775,7 @@ mod tests {
                     sort_by: None,
                     only_votable: true,
                 },
-                Some(&CallContext::new(transfer_requester_user.identities[0])),
+                &CallContext::new(transfer_requester_user.identities[0]),
             )
             .await
             .expect("Failed to list only_votable proposals by transfer proposer");
@@ -790,7 +798,7 @@ mod tests {
                     sort_by: None,
                     only_votable: true,
                 },
-                Some(&CallContext::new(no_access_user.identities[0])),
+                &CallContext::new(no_access_user.identities[0]),
             )
             .await
             .expect("Failed to list only_votable proposals by non-owner user");
@@ -828,7 +836,7 @@ mod tests {
                     sort_by: None,
                     only_votable: true,
                 },
-                Some(&ctx.call_context),
+                &ctx.call_context,
             )
             .await
             .expect("Failed to list only_votable proposals after voting");
@@ -920,7 +928,7 @@ mod benchs {
                             )),
                             only_votable: false,
                         },
-                        Some(&CallContext::new(Principal::from_slice(&[5; 29]))),
+                        &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
                     .await;
 

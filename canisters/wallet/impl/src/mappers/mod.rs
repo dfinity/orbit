@@ -10,6 +10,8 @@ pub mod address_book;
 
 pub mod blockchain;
 
+pub mod criteria;
+
 pub mod policy;
 
 pub mod notification;

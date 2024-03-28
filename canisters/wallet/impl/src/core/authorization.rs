@@ -6,12 +6,10 @@ use super::{
 use crate::{
     errors::AuthorizationError,
     models::{
-        resource::{
-            AccountResourceAction, ProposalResourceAction, Resource, ResourceId, UserResourceAction,
-        },
-        Account, ProposalKey, User,
+        resource::{ProposalResourceAction, Resource, ResourceId, UserResourceAction},
+        ProposalKey, User,
     },
-    repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY},
+    repositories::PROPOSAL_REPOSITORY,
     services::access_policy::ACCESS_POLICY_SERVICE,
 };
 use ic_canister_core::repository::Repository;
@@ -92,16 +90,6 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
             // The user has access to their own user record.
             *user_id == user.id
         }
-        Resource::Account(AccountResourceAction::Read(ResourceId::Id(account_id)))
-        | Resource::Account(AccountResourceAction::Update(ResourceId::Id(account_id)))
-        | Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(account_id))) => {
-            // The user has access to their own account.
-            if let Some(account) = ACCOUNT_REPOSITORY.get(&Account::key(account_id.to_owned())) {
-                return account.owners.contains(&user.id);
-            }
-
-            false
-        }
         _ => false,
     }
 }
@@ -131,7 +119,7 @@ mod tests {
         models::{
             access_policy::{AccessPolicy, Allow},
             account_test_utils,
-            resource::ResourceAction,
+            resource::{AccountResourceAction, ResourceAction},
             user_group_test_utils,
             user_test_utils::{self, mock_user},
             UserGroup, UserStatus, ADMIN_GROUP_ID,

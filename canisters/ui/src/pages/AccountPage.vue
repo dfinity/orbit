@@ -31,7 +31,7 @@
         </div>
         <PageHeader v-else :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
           <template #title-toolbar>
-            <AccountConfigBtn
+            <AccountSetupAction
               :account-id="account.id"
               class="px-1"
               size="small"
@@ -41,7 +41,7 @@
               :append-icon="mdiTuneVariant"
             >
               {{ account.name }}
-            </AccountConfigBtn>
+            </AccountSetupAction>
           </template>
           <template #subtitle>
             <small><TextOverflow :max-length="32" :text="account.address" /></small>
@@ -208,7 +208,7 @@ import { useRouter } from 'vue-router';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
-import AccountConfigBtn from '~/components/accounts/AccountConfigBtn.vue';
+import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
 import BatchTransfersActionBtn from '~/components/accounts/BatchTransfersActionBtn.vue';
 import TransferBtn from '~/components/accounts/TransferBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';

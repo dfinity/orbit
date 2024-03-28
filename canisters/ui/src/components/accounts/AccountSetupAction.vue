@@ -1,23 +1,24 @@
 <template>
   <VBtn
     v-bind="$attrs"
-    :size="props.size.value"
-    :variant="props.variant.value"
-    :icon="props.icon.value && !props.text.value"
-    :color="props.color.value"
+    :size="props.size"
+    :variant="props.variant"
+    :icon="props.icon && !props.text"
+    :color="props.color"
     @click="open = true"
   >
-    <VIcon v-if="props.icon.value" class="mr-1" :icon="props.icon.value" />
+    <VIcon v-if="props.icon" class="mr-1" :icon="props.icon" />
     <slot name="default">
-      <span v-if="props.text">{{ props.text.value }}</span>
+      <span v-if="props.text">{{ props.text }}</span>
     </slot>
-    <VIcon v-if="props.appendIcon.value" class="ml-1" :icon="props.appendIcon.value" />
+    <VIcon v-if="props.appendIcon" class="ml-1" :icon="props.appendIcon" />
   </VBtn>
 
-  <AccountConfigDialog
+  <AccountSetupDialog
     :open="open"
-    :account-id="props.accountId.value"
-    :readonly="props.readonly.value"
+    :account-id="props.accountId"
+    :readonly="props.readonly"
+    :dialog-max-width="800"
     @update:open="
       openEvent => {
         open = openEvent;
@@ -28,11 +29,12 @@
   />
 </template>
 <script lang="ts" setup>
-import { ref, toRefs } from 'vue';
-import AccountConfigDialog from '~/components/accounts/AccountConfigDialog.vue';
+import { ref } from 'vue';
+import { VBtn } from 'vuetify/components';
+import AccountSetupDialog from '~/components/accounts/AccountSetupDialog.vue';
 import { UUID } from '~/generated/wallet/wallet.did';
 
-const input = withDefaults(
+const props = withDefaults(
   defineProps<{
     accountId?: UUID;
     icon?: string;
@@ -60,6 +62,4 @@ const open = ref(false);
 const emit = defineEmits<{
   (event: 'opened', payload: boolean): void;
 }>();
-
-const props = toRefs(input);
 </script>

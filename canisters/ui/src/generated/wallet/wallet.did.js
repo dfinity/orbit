@@ -220,15 +220,23 @@ export const idlFactory = ({ IDL }) => {
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
   });
-  const AccountPolicies = IDL.Record({
-    'edit' : IDL.Opt(ProposalPolicyCriteria),
-    'transfer' : IDL.Opt(ProposalPolicyCriteria),
+  const Allow = IDL.Record({
+    'user_groups' : IDL.Vec(UUID),
+    'auth_scope' : AuthScope,
+    'users' : IDL.Vec(UUID),
+  });
+  const ApprovalPolicyCriteriaInput = IDL.Variant({
+    'Set' : ProposalPolicyCriteria,
+    'Remove' : IDL.Null,
   });
   const EditAccountOperationInput = IDL.Record({
     'account_id' : UUID,
-    'owners' : IDL.Opt(IDL.Vec(UUID)),
+    'transfer_access_policy' : IDL.Opt(Allow),
+    'update_approval_policy' : IDL.Opt(ApprovalPolicyCriteriaInput),
+    'read_access_policy' : IDL.Opt(Allow),
+    'transfer_approval_policy' : IDL.Opt(ApprovalPolicyCriteriaInput),
     'name' : IDL.Opt(IDL.Text),
-    'policies' : IDL.Opt(AccountPolicies),
+    'update_access_policy' : IDL.Opt(Allow),
   });
   const AddAddressBookEntryOperationInput = IDL.Record({
     'metadata' : IDL.Vec(AddressBookMetadata),
@@ -240,12 +248,15 @@ export const idlFactory = ({ IDL }) => {
   const RemoveUserGroupOperationInput = IDL.Record({ 'user_group_id' : UUID });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AddAccountOperationInput = IDL.Record({
-    'owners' : IDL.Vec(UUID),
+    'transfer_access_policy' : Allow,
+    'update_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
+    'read_access_policy' : Allow,
+    'transfer_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
+    'update_access_policy' : Allow,
     'blockchain' : IDL.Text,
     'standard' : IDL.Text,
-    'policies' : AccountPolicies,
   });
   const ProposalOperationInput = IDL.Variant({
     'EditAccessPolicy' : EditAccessPolicyOperationInput,
@@ -350,7 +361,8 @@ export const idlFactory = ({ IDL }) => {
     'id' : UUID,
     'decimals' : IDL.Nat32,
     'balance' : IDL.Opt(AccountBalanceInfo),
-    'owners' : IDL.Vec(UUID),
+    'update_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
+    'transfer_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
@@ -358,7 +370,6 @@ export const idlFactory = ({ IDL }) => {
     'last_modification_timestamp' : TimestampRFC3339,
     'standard' : IDL.Text,
     'symbol' : AssetSymbol,
-    'policies' : AccountPolicies,
   });
   const TransferOperation = IDL.Record({
     'network' : Network,
@@ -450,11 +461,6 @@ export const idlFactory = ({ IDL }) => {
   const AccessPolicyCallerPrivileges = IDL.Record({
     'resource' : Resource,
     'can_edit' : IDL.Bool,
-  });
-  const Allow = IDL.Record({
-    'user_groups' : IDL.Vec(UUID),
-    'auth_scope' : AuthScope,
-    'users' : IDL.Vec(UUID),
   });
   const AccessPolicy = IDL.Record({ 'resource' : Resource, 'allow' : Allow });
   const GetAccessPolicyResult = IDL.Variant({
