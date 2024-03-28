@@ -1,5 +1,7 @@
 use super::CallContext;
-use crate::core::ic_cdk;
+use crate::{core::ic_cdk, SERVICE_NAME};
+use ic_canister_core::{api::ApiResult, metrics::with_service_metric_store};
+use prometheus::labels;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -42,4 +44,19 @@ where
             );
         }
     }
+}
+
+pub fn use_counter_metric<T>(metric_key: &str, result: &ApiResult<T>)
+where
+    T: std::fmt::Debug,
+{
+    with_service_metric_store(&SERVICE_NAME, |store| {
+        let counter = store.status_counter_mut(metric_key);
+        let status = match result {
+            Ok(_) => "ok",
+            Err(_) => "fail",
+        };
+
+        counter.with(&labels! { "status" => status }).inc();
+    });
 }

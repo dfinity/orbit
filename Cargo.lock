@@ -786,6 +786,7 @@ dependencies = [
  "ic-canister-macros",
  "ic-cdk 0.13.1",
  "ic-stable-structures",
+ "prometheus",
  "rand_chacha",
  "serde",
  "serde_cbor",

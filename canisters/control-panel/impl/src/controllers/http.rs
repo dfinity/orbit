@@ -1,0 +1,78 @@
+use crate::{core::ic_cdk::api::canister_balance, repositories::USER_REPOSITORY, SERVICE_NAME};
+use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
+use ic_canister_core::{metrics::with_service_metric_store, repository::Repository};
+use ic_cdk_macros::query;
+use lazy_static::lazy_static;
+
+// Canister entrypoints for the controller.
+#[query(name = "http_request")]
+async fn http_request(request: HttpRequest) -> HttpResponse {
+    CONTROLLER.router(request).await
+}
+
+// Controller initialization and implementation.
+lazy_static! {
+    static ref CONTROLLER: HttpController = HttpController::new();
+}
+
+#[derive(Debug)]
+pub struct HttpController {}
+
+impl HttpController {
+    fn new() -> Self {
+        Self {}
+    }
+
+    async fn router(&self, request: HttpRequest) -> HttpResponse {
+        if request.url == "/metrics" || request.url == "/metrics/" {
+            return self.metrics(request).await;
+        }
+
+        return HttpResponse {
+            status_code: 404,
+            headers: vec![],
+            body: "404 Not Found".as_bytes().to_owned(),
+        };
+    }
+
+    async fn metrics(&self, request: HttpRequest) -> HttpResponse {
+        if request.method.to_lowercase() != "get" {
+            return HttpResponse {
+                status_code: 405,
+                headers: vec![HeaderField("Allow".into(), "GET".into())],
+                body: "405 Method Not Allowed".as_bytes().to_owned(),
+            };
+        }
+
+        // Register dynamic metrics, those are dropped after the request since
+        // query calls don't have save state changes
+        with_service_metric_store(&SERVICE_NAME, |store| {
+            store
+                .gauge_mut("users_total", "registered users")
+                .set(USER_REPOSITORY.len() as f64);
+            store
+                .gauge_mut(
+                    "canister_cycles_balance",
+                    "cycles balance available to the canister",
+                )
+                .set(canister_balance() as f64);
+        });
+
+        let response = with_service_metric_store(&SERVICE_NAME, |store| store.export_metrics());
+
+        match response {
+            Ok(metrics) => HttpResponse {
+                status_code: 200,
+                headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
+                body: metrics,
+            },
+            Err(err) => HttpResponse {
+                status_code: 500,
+                headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
+                body: format!("500 Internal Server Error: {}", err)
+                    .as_bytes()
+                    .to_owned(),
+            },
+        }
+    }
+}
