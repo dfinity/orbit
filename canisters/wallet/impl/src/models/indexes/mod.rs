@@ -3,7 +3,7 @@ pub mod address_book_standard_index;
 pub mod name_to_account_id_index;
 pub mod name_to_user_id_index;
 pub mod notification_user_index;
-pub mod proposal_account_index;
+pub mod operation_type_to_proposal_id_index;
 pub mod proposal_creation_time_index;
 pub mod proposal_expiration_time_index;
 pub mod proposal_key_creation_time_index;

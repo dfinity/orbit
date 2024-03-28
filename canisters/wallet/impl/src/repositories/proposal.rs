@@ -1,5 +1,5 @@
 use super::indexes::{
-    proposal_account_index::ProposalAccountIndexRepository,
+    operation_type_to_proposal_id_index::OperationTypeToProposalIdIndexRepository,
     proposal_creation_time_index::ProposalCreationTimeIndexRepository,
     proposal_expiration_time_index::ProposalExpirationTimeIndexRepository,
     proposal_key_creation_time_index::ProposalKeyCreationTimeIndexRepository,
@@ -13,11 +13,12 @@ use super::indexes::{
 };
 use crate::{
     core::{with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
-    errors::{MapperError, RepositoryError},
-    mappers::HelperMapper,
+    errors::RepositoryError,
     models::{
         indexes::{
-            proposal_account_index::{ProposalAccountIndex, ProposalAccountIndexCriteria},
+            operation_type_to_proposal_id_index::{
+                OperationTypeToProposalIdIndex, OperationTypeToProposalIdIndexCriteria,
+            },
             proposal_creation_time_index::ProposalCreationTimeIndexCriteria,
             proposal_expiration_time_index::ProposalExpirationTimeIndexCriteria,
             proposal_key_creation_time_index::ProposalKeyCreationTimeIndexCriteria,
@@ -29,7 +30,8 @@ use crate::{
             proposal_status_modification_index::ProposalStatusModificationIndexCriteria,
             proposal_voter_index::{ProposalVoterIndex, ProposalVoterIndexCriteria},
         },
-        AccountId, Proposal, ProposalId, ProposalKey, ProposalStatusCode, UserId,
+        proposal_operation_filter_type::ProposalOperationFilterType,
+        Proposal, ProposalId, ProposalKey, ProposalStatusCode, UserId,
     },
 };
 use ic_canister_core::{
@@ -42,7 +44,7 @@ use ic_canister_core::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
-use wallet_api::{ListProposalsOperationTypeDTO, ListProposalsSortBy};
+use wallet_api::ListProposalsSortBy;
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<ProposalKey, Proposal, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -61,7 +63,6 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct ProposalRepository {
     voter_index: ProposalVoterIndexRepository,
-    account_index: ProposalAccountIndexRepository,
     creation_dt_index: ProposalCreationTimeIndexRepository,
     expiration_dt_index: ProposalExpirationTimeIndexRepository,
     status_index: ProposalStatusIndexRepository,
@@ -71,6 +72,7 @@ pub struct ProposalRepository {
     prefixed_creation_time_index: ProposalKeyCreationTimeIndexRepository,
     prefixed_expiration_time_index: ProposalKeyExpirationTimeIndexRepository,
     sort_index: ProposalSortIndexRepository,
+    operation_type_index: OperationTypeToProposalIdIndexRepository,
 }
 
 impl Repository<ProposalKey, Proposal> for ProposalRepository {
@@ -92,15 +94,17 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                         .map_or(Vec::new(), |prev| prev.to_index_for_voters()),
                     current: value.to_index_for_voters(),
                 });
+            self.operation_type_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_by_operation_types()),
+                    current: value.to_index_by_operation_types(),
+                });
             self.proposer_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index_for_proposer()),
                     current: Some(value.to_index_for_proposer()),
-                });
-            self.account_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().and_then(|prev| prev.to_index_for_account()),
-                    current: value.to_index_for_account(),
                 });
             self.scheduled_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
@@ -162,13 +166,16 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                         .clone()
                         .map_or(Vec::new(), |prev| prev.to_index_for_voters()),
                 });
+            self.operation_type_index.refresh_index_on_modification(
+                RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| prev.to_index_by_operation_types()),
+                },
+            );
             self.proposer_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index_for_proposer()),
-                });
-            self.account_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().and_then(|prev| prev.to_index_for_account()),
                 });
             self.scheduled_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
@@ -416,22 +423,21 @@ impl ProposalRepository {
             filters.push(includes_status);
         }
 
-        if !condition.account_ids().unwrap_or_default().is_empty() {
-            let includes_account = Box::new(OrSelectionFilter {
+        if !condition.operation_types.is_empty() {
+            let includes_operation_type = Box::new(OrSelectionFilter {
                 filters: condition
-                    .account_ids()
-                    .unwrap_or_default()
+                    .operation_types
                     .iter()
-                    .map(|account_id| {
-                        Box::new(AccountSelectionFilter {
-                            repository: &self.account_index,
-                            account_id: *account_id,
+                    .map(|operation_type| {
+                        Box::new(OperationTypeSelectionFilter {
+                            repository: &self.operation_type_index,
+                            operation_type: operation_type.to_owned(),
                         }) as Box<dyn SelectionFilter<IdType = UUID>>
                     })
                     .collect(),
             }) as Box<dyn SelectionFilter<IdType = UUID>>;
 
-            filters.push(includes_account);
+            filters.push(includes_operation_type);
         }
 
         if !condition.voters.is_empty() {
@@ -539,29 +545,13 @@ pub struct ProposalWhereClause {
     pub created_dt_to: Option<Timestamp>,
     pub expiration_dt_from: Option<Timestamp>,
     pub expiration_dt_to: Option<Timestamp>,
-    pub operation_types: Vec<ListProposalsOperationTypeDTO>,
+    pub operation_types: Vec<ProposalOperationFilterType>,
     pub statuses: Vec<ProposalStatusCode>,
     pub voters: Vec<UUID>,
     pub not_voters: Vec<UUID>,
     pub proposers: Vec<UUID>,
     pub not_proposers: Vec<UUID>,
     pub excluded_ids: Vec<UUID>,
-}
-
-impl ProposalWhereClause {
-    fn account_ids(&self) -> Result<HashSet<UUID>, MapperError> {
-        let mut account_ids = HashSet::<UUID>::new();
-        for operation_type in &self.operation_types {
-            if let ListProposalsOperationTypeDTO::Transfer(Some(account_id)) = operation_type {
-                match HelperMapper::to_uuid(account_id.to_owned()) {
-                    Ok(account_id) => account_ids.insert(*account_id.as_bytes()),
-                    Err(e) => return Err(e),
-                };
-            }
-        }
-
-        Ok(account_ids)
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -623,25 +613,25 @@ impl<'a> SelectionFilter<'a> for ExpirationDtSelectionFilter<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct AccountSelectionFilter<'a> {
-    repository: &'a ProposalAccountIndexRepository,
-    account_id: AccountId,
+pub(crate) struct OperationTypeSelectionFilter<'a> {
+    repository: &'a OperationTypeToProposalIdIndexRepository,
+    operation_type: ProposalOperationFilterType,
 }
 
-impl<'a> SelectionFilter<'a> for AccountSelectionFilter<'a> {
+impl<'a> SelectionFilter<'a> for OperationTypeSelectionFilter<'a> {
     type IdType = UUID;
 
     fn matches(&self, id: &Self::IdType) -> bool {
-        self.repository.exists(&ProposalAccountIndex {
-            account_id: self.account_id,
+        self.repository.exists(&OperationTypeToProposalIdIndex {
+            operation_type: self.operation_type.clone(),
             proposal_id: *id,
         })
     }
 
     fn select(&self) -> HashSet<Self::IdType> {
         self.repository
-            .find_by_criteria(ProposalAccountIndexCriteria {
-                account_id: self.account_id,
+            .find_by_criteria(OperationTypeToProposalIdIndexCriteria {
+                operation_type: self.operation_type.clone(),
             })
     }
 }
@@ -775,7 +765,8 @@ mod tests {
     use super::*;
     use crate::models::{
         proposal_test_utils::{self, mock_proposal},
-        ProposalStatus,
+        AddUserGroupOperation, AddUserGroupOperationInput, EditUserGroupOperation,
+        EditUserGroupOperationInput, ProposalOperation, ProposalStatus,
     };
     use uuid::Uuid;
 
@@ -1065,6 +1056,52 @@ mod tests {
             .unwrap();
 
         assert_eq!(proposals.len(), 100);
+    }
+
+    #[test]
+    fn find_only_specified_types() {
+        let mut add_group_proposal = mock_proposal();
+        add_group_proposal.last_modification_timestamp = 1;
+        add_group_proposal.status = ProposalStatus::Adopted;
+        add_group_proposal.operation = ProposalOperation::AddUserGroup(AddUserGroupOperation {
+            user_group_id: None,
+            input: AddUserGroupOperationInput {
+                name: "foo".to_string(),
+            },
+        });
+        PROPOSAL_REPOSITORY.insert(add_group_proposal.to_key(), add_group_proposal.clone());
+
+        let mut edit_group_proposal = mock_proposal();
+        edit_group_proposal.last_modification_timestamp = 2;
+        add_group_proposal.status = ProposalStatus::Adopted;
+        edit_group_proposal.operation = ProposalOperation::EditUserGroup(EditUserGroupOperation {
+            input: EditUserGroupOperationInput {
+                user_group_id: *Uuid::new_v4().as_bytes(),
+                name: "bar".to_string(),
+            },
+        });
+        PROPOSAL_REPOSITORY.insert(edit_group_proposal.to_key(), edit_group_proposal.clone());
+
+        let condition = ProposalWhereClause {
+            created_dt_from: Some(0),
+            created_dt_to: Some(100),
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![ProposalOperationFilterType::AddUserGroup],
+            proposers: Vec::new(),
+            voters: Vec::new(),
+            not_voters: vec![],
+            statuses: vec![ProposalStatusCode::Adopted],
+            not_proposers: vec![],
+            excluded_ids: vec![],
+        };
+
+        let proposals = PROPOSAL_REPOSITORY
+            .find_ids_where(condition.clone(), None)
+            .unwrap();
+
+        assert_eq!(proposals.len(), 1);
+        assert_eq!(proposals[0], add_group_proposal.id);
     }
 }
 
