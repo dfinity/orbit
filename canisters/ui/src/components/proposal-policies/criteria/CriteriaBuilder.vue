@@ -17,6 +17,11 @@
       :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
+    <HasAddressInAddressBookCriteria
+      v-else-if="variantIs(model, 'HasAddressInAddressBook')"
+      :disabled="props.disabled.value"
+      @remove="emit('remove')"
+    />
     <MinimumVotesCriteria
       v-else-if="variantIs(model, 'MinimumVotes')"
       v-model="model.MinimumVotes"
@@ -63,6 +68,7 @@ import AndCriteria from './AndCriteria.vue';
 import ApprovalThresholdCriteria from './ApprovalThresholdCriteria.vue';
 import AutoAdoptedCriteria from './AutoAdoptedCriteria.vue';
 import HasAddressBookMetadataCriteria from './HasAddressBookMetadataCriteria.vue';
+import HasAddressInAddressBookCriteria from './HasAddressInAddressBookCriteria.vue';
 import MinimumVotesCriteria from './MinimumVotesCriteria.vue';
 import NotCriteria from './NotCriteria.vue';
 import OrCriteria from './OrCriteria.vue';

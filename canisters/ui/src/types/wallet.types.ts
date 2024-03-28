@@ -116,6 +116,7 @@ export enum ProposalSpecifierEnum {
 export enum ProposalCriteriaEnum {
   AutoAdopted = 'AutoAdopted',
   HasAddressBookMetadata = 'HasAddressBookMetadata',
+  HasAddressInAddressBook = 'HasAddressInAddressBook',
   MinimumVotes = 'MinimumVotes',
   ApprovalThreshold = 'ApprovalThreshold',
   And = 'And',

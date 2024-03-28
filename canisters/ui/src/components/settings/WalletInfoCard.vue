@@ -6,7 +6,7 @@
     <VCardText class="pb-0">
       <VList lines="two" class="bg-background">
         <VListItem v-if="wallet.canisterId" class="px-0">
-          <VListItemTitle class="font-weight-bold">{{ $t(`terms.canister_id`) }}</VListItemTitle>
+          <VListItemTitle class="font-weight-bold">{{ $t(`terms.wallet_id`) }}</VListItemTitle>
           <VListItemSubtitle>
             <span>
               {{ wallet.canisterId }}

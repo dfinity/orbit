@@ -53,6 +53,9 @@ const onAddCriteria = (value: ProposalCriteriaEnum | null): void => {
     case ProposalCriteriaEnum.AutoAdopted:
       emit('add', { AutoAdopted: null });
       break;
+    case ProposalCriteriaEnum.HasAddressInAddressBook:
+      emit('add', { HasAddressInAddressBook: null });
+      break;
     case ProposalCriteriaEnum.MinimumVotes:
       emit('add', {
         MinimumVotes: {

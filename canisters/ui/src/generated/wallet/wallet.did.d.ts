@@ -576,6 +576,7 @@ export interface ProposalPolicyCallerPrivileges {
 export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'And' : Array<ProposalPolicyCriteria> } |
   { 'Not' : ProposalPolicyCriteria } |
+  { 'HasAddressInAddressBook' : null } |
   { 'HasAddressBookMetadata' : AddressBookMetadata } |
   { 'MinimumVotes' : MinimumVotes } |
   { 'ApprovalThreshold' : ApprovalThreshold } |

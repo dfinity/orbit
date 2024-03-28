@@ -322,6 +322,7 @@ export default {
     deposits: 'Deposits',
     wallet: 'Wallet',
     all_done: 'All done',
+    wallet_id: 'Wallet ID',
     details: 'Details',
     approve: 'Approve',
     create: 'Create',
@@ -628,6 +629,7 @@ export default {
       minimumvotes: 'Minimum votes',
       approvalthreshold: 'Approval threshold',
       hasaddressbookmetadata: 'Has address book metadata',
+      hasaddressinaddressbook: 'Has address in address book',
     },
     specifier: {
       editaccesspolicy: 'Edit permission',

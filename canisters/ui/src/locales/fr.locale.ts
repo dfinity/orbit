@@ -326,6 +326,7 @@ export default {
     wallet: 'Portefeuille',
     all_done: 'Tout terminé',
     approve: 'Aprouver',
+    wallet_id: 'ID du Portefeuille',
     details: 'Détails',
     create: 'Créer',
     review: 'Revoir',
@@ -634,6 +635,7 @@ export default {
       minimumvotes: 'Votes minimum',
       approvalthreshold: "Seuil d'Aprobation",
       hasaddressbookmetadata: "Possède un attribut dans le carnet d'adresses",
+      hasaddressinaddressbook: "Adresse dans le carnet d'adresses",
     },
     specifier: {
       editaccesspolicy: 'Modifier les permissions',
