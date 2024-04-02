@@ -1,5 +1,5 @@
 //! Wallet services.
-use crate::core::middlewares::{call_context, logger, use_counter_metric};
+use crate::core::middlewares::{call_context, logger, use_status_metric};
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
 use candid::Principal;
@@ -92,7 +92,7 @@ impl WalletController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_counter_metric("deploy_wallet", &result))]
+    #[with_middleware(tail = use_status_metric("deploy_wallet", &result))]
     async fn deploy_wallet(&self) -> ApiResult<DeployWalletResponse> {
         let ctx = CallContext::get();
         let deployed_wallet_id = self.deploy_service.deploy_wallet(&ctx).await?;

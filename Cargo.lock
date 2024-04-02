@@ -309,7 +309,6 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "lazy_static",
- "prometheus",
  "rstest",
  "serde",
  "serde_cbor",

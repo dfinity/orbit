@@ -2,6 +2,7 @@
 //!
 //! The wallet canister provides a comphehensive set of APIs for managing crypto assets.
 
+pub const SERVICE_NAME: &str = "station";
 pub const SYSTEM_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod controllers;

@@ -1,8 +1,8 @@
 use crate::{core::ic_cdk::api::canister_balance, repositories::USER_REPOSITORY, SERVICE_NAME};
-use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
 use ic_canister_core::{metrics::with_metrics_registry, repository::Repository};
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
+use wallet_api::{HeaderField, HttpRequest, HttpResponse};
 
 // Canister entrypoints for the controller.
 #[query(name = "http_request")]
