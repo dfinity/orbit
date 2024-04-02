@@ -53,6 +53,9 @@
             <template #item.blockchain="{ item: addressBookEntry }">
               {{ $t(`blockchains.${addressBookEntry.blockchain.toLowerCase()}.name`) }}
             </template>
+            <template #item.name="{ item: addressBookEntry }">
+              {{ addressBookEntry.address_owner }}
+            </template>
             <template #item.address="{ item: addressBookEntry }">
               <div class="d-flex align-center flex-no-wrap">
                 <TextOverflow
@@ -153,7 +156,7 @@ const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const headers = ref<TableHeader[]>([
   { title: i18n.t('terms.blockchain'), key: 'blockchain', sortable: false },
-  { title: i18n.t('terms.address_owner'), key: 'address_owner', sortable: false },
+  { title: i18n.t('terms.name'), key: 'name', sortable: false },
   { title: i18n.t('terms.address'), key: 'address', sortable: false },
   { title: '', key: 'actions', sortable: false },
 ]);
