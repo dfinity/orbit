@@ -231,24 +231,26 @@ impl EvaluateCriteria for CriteriaEvaluator {
             Criteria::HasAddressInAddressBook => {
                 if let ProposalOperation::Transfer(transfer) = &proposal.operation {
                     let account = ACCOUNT_SERVICE.get_account(&transfer.input.from_account_id);
-                    if let Err(e) = account {
-                        print(format!(
-                            "Criteria rejected due to account not being found: {:?}",
-                            e
-                        ));
+                    match account {
+                        Err(e) => {
+                            print(format!(
+                                "Criteria rejected due to account not being found: {:?}",
+                                e
+                            ));
 
-                        return Ok(EvaluationStatus::Rejected);
-                    }
+                            return Ok(EvaluationStatus::Rejected);
+                        }
+                        Ok(account) => {
+                            let is_in_address_book = ADDRESS_BOOK_REPOSITORY.exists(
+                                account.blockchain,
+                                account.standard,
+                                transfer.input.to.clone(),
+                            );
 
-                    let account = account.unwrap();
-                    let is_in_address_book = ADDRESS_BOOK_REPOSITORY.exists(
-                        account.blockchain,
-                        account.standard,
-                        transfer.input.to.clone(),
-                    );
-
-                    if is_in_address_book {
-                        return Ok(EvaluationStatus::Adopted);
+                            if is_in_address_book {
+                                return Ok(EvaluationStatus::Adopted);
+                            }
+                        }
                     }
                 }
 
