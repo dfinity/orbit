@@ -45,7 +45,7 @@ impl HttpController {
         }
 
         // Add dynamic metrics, dropped after the request since query calls don't save state changes.
-        with_metrics_registry(&SERVICE_NAME, |registry| {
+        with_metrics_registry(SERVICE_NAME, |registry| {
             registry
                 .gauge_mut("users_total", "registered users")
                 .set(USER_REPOSITORY.len() as f64);
@@ -57,7 +57,7 @@ impl HttpController {
                 .set(canister_balance() as f64);
         });
 
-        let response = with_metrics_registry(&SERVICE_NAME, |registry| registry.export_metrics());
+        let response = with_metrics_registry(SERVICE_NAME, |registry| registry.export_metrics());
 
         match response {
             Ok(metrics) => HttpResponse {

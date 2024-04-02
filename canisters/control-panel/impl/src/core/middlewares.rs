@@ -52,7 +52,7 @@ pub fn use_status_metric<T>(metric_key: &str, result: &ApiResult<T>)
 where
     T: std::fmt::Debug,
 {
-    with_metrics_registry(&SERVICE_NAME, |registry| {
+    with_metrics_registry(SERVICE_NAME, |registry| {
         let counter = registry.counter_vec_mut(metric_key, &["status"]);
         let status = match result {
             Ok(_) => "ok",
