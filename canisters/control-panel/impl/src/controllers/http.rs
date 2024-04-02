@@ -30,7 +30,7 @@ impl HttpController {
 
         return HttpResponse {
             status_code: 404,
-            headers: vec![],
+            headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
             body: "404 Not Found".as_bytes().to_owned(),
         };
     }
