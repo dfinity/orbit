@@ -82,6 +82,7 @@ type ProposalPolicyCriteria = variant {
   ApprovalThreshold : ApprovalThreshold;
   MinimumVotes : MinimumVotes;
   HasAddressBookMetadata : AddressBookMetadata;
+  HasAddressInAddressBook;
   Or : vec ProposalPolicyCriteria;
   And : vec ProposalPolicyCriteria;
   Not : ProposalPolicyCriteria;

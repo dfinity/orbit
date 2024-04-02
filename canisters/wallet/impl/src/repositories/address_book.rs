@@ -100,6 +100,22 @@ impl AddressBookRepository {
             .find_map(|id| self.get(&AddressBookEntry::key(*id)))
     }
 
+    pub fn exists(
+        &self,
+        blockchain: Blockchain,
+        standard: BlockchainStandard,
+        address: String,
+    ) -> bool {
+        !self
+            .index
+            .find_by_criteria(AddressBookIndexCriteria {
+                blockchain,
+                standard,
+                address,
+            })
+            .is_empty()
+    }
+
     pub fn find_by_blockchain_standard(
         &self,
         blockchain: Blockchain,

@@ -65,6 +65,7 @@ pub enum CriteriaDTO {
     ApprovalThreshold(ApprovalThresholdDTO),
     MinimumVotes(MinimumVotesDTO),
     HasAddressBookMetadata(MetadataDTO),
+    HasAddressInAddressBook,
     Or(Vec<CriteriaDTO>),
     And(Vec<CriteriaDTO>),
     Not(Box<CriteriaDTO>),

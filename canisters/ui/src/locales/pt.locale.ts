@@ -323,6 +323,7 @@ export default {
     wallet: 'Carteira',
     all_done: 'Tudo pronto',
     destination_address: 'Endereço de destino',
+    wallet_id: 'ID da carteira',
     search: 'Procurar',
     details: 'Detalhes',
     proposals: 'Propostas',
@@ -630,6 +631,7 @@ export default {
       minimumvotes: 'Mínimo de votos',
       approvalthreshold: 'Aprovação por porcentagem',
       hasaddressbookmetadata: 'Tem metadados no livro de endereços',
+      hasaddressinaddressbook: 'Endereço no livro de endereços',
     },
     specifier: {
       editaccesspolicy: 'Editar permissão',
