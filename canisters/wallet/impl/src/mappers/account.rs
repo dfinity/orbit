@@ -2,14 +2,14 @@ use crate::{
     core::ic_cdk::api::time,
     errors::MapperError,
     models::{
-        Account, AccountBalance, AccountCallerPrivileges, AccountId, AccountPolicies,
-        AddAccountOperationInput, BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
+        Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
+        BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
 use ic_canister_core::{repository::Repository, utils::timestamp_to_rfc3339};
 use uuid::Uuid;
-use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO, CriteriaDTO};
+use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO};
 
 #[derive(Default, Clone, Debug)]
 pub struct AccountMapper {}
@@ -30,17 +30,25 @@ impl AccountMapper {
                 }),
                 None => None,
             },
-            policies: account.policies.into(),
             symbol: account.symbol,
             address: account.address,
-            owners: account
-                .owners
-                .into_iter()
-                .map(|owner_id| Uuid::from_bytes(owner_id).hyphenated().to_string())
-                .collect(),
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata.into_vec_dto(),
+            transfer_approval_policy: account.transfer_approval_policy_id.map(|policy_id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&policy_id)
+                    .expect("Transfer policy not found")
+                    .criteria
+                    .into()
+            }),
+            update_approval_policy: account.update_approval_policy_id.map(|policy_id| {
+                PROPOSAL_POLICY_REPOSITORY
+                    .get(&policy_id)
+                    .expect("Update policy not found")
+                    .criteria
+                    .into()
+            }),
             last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
         }
     }
@@ -91,13 +99,10 @@ impl AccountMapper {
             standard: input.standard,
             name: input.name,
             address: address.unwrap_or("".to_string()),
-            owners: input.owners.to_vec(),
             decimals: 0,
             symbol,
-            policies: AccountPolicies {
-                transfer_policy_id: None,
-                edit_policy_id: None,
-            },
+            transfer_approval_policy_id: None,
+            update_approval_policy_id: None,
             balance: None,
             metadata: input.metadata,
             last_modification_timestamp: time(),
@@ -123,23 +128,6 @@ impl AccountMapper {
 impl Account {
     pub fn to_dto(self) -> AccountDTO {
         AccountMapper::to_dto(self)
-    }
-}
-
-impl From<AccountPolicies> for wallet_api::AccountPoliciesDTO {
-    fn from(policies: AccountPolicies) -> Self {
-        Self {
-            transfer: policies.transfer_policy_id.and_then(|policy_id| {
-                PROPOSAL_POLICY_REPOSITORY
-                    .get(&policy_id)
-                    .map(|policy| CriteriaDTO::from(policy.criteria))
-            }),
-            edit: policies.edit_policy_id.and_then(|policy_id| {
-                PROPOSAL_POLICY_REPOSITORY
-                    .get(&policy_id)
-                    .map(|policy| CriteriaDTO::from(policy.criteria))
-            }),
-        }
     }
 }
 

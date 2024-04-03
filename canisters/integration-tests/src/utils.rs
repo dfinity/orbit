@@ -9,9 +9,10 @@ use pocket_ic::{update_candid_as, PocketIc};
 use std::time::Duration;
 use wallet_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
-    GetProposalInput, GetProposalResponse, MeResponse, ProposalDTO, ProposalExecutionScheduleDTO,
-    ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO, UserDTO, UserStatusDTO,
-    VoteOnProposalInput, VoteOnProposalResponse, WalletSettingsResponse,
+    GetProposalInput, GetProposalResponse, HealthStatus, MeResponse, ProposalDTO,
+    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
+    SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO, VoteOnProposalInput,
+    VoteOnProposalResponse,
 };
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
@@ -193,6 +194,16 @@ pub fn vote_on_proposal(
     res.0.unwrap();
 }
 
+pub fn get_system_info(
+    env: &PocketIc,
+    user_id: Principal,
+    wallet_canister_id: CanisterId,
+) -> SystemInfoDTO {
+    let res: (ApiResult<SystemInfoResponse>,) =
+        update_candid_as(env, wallet_canister_id, user_id, "system_info", ()).unwrap();
+    res.0.unwrap().system
+}
+
 pub fn add_user(
     env: &PocketIc,
     user_id: Principal,
@@ -265,17 +276,13 @@ pub fn update_canister_settings(
     .unwrap();
 }
 
-pub fn get_wallet_owners(
+pub fn get_core_canister_health_status(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: Principal,
-) -> Vec<Principal> {
-    let res: (ApiResult<WalletSettingsResponse>,) =
-        update_candid_as(env, wallet_canister_id, user_id, "wallet_settings", ((),)).unwrap();
-    let wallet_settings = res.0.unwrap().settings;
-    wallet_settings
-        .owners
-        .into_iter()
-        .flat_map(|u| u.identities)
-        .collect()
+    canister_id: Principal,
+) -> HealthStatus {
+    let res: (HealthStatus,) =
+        update_candid_as(env, canister_id, user_id, "health_status", ((),)).unwrap();
+
+    res.0
 }

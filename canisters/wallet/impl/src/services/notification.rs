@@ -172,7 +172,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
         let mut user: User = mock_user();

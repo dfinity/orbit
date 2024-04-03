@@ -1,4 +1,6 @@
 export enum Privilege {
+  Capabilities = 'Capabilities',
+  SystemInfo = 'SystemInfo',
   AddUserGroup = 'AddUserGroup',
   ListUserGroups = 'ListUserGroups',
   AddUser = 'AddUser',

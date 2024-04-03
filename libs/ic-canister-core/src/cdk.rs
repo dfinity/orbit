@@ -47,10 +47,17 @@ pub mod mocks {
         use std::time::{SystemTime, UNIX_EPOCH};
 
         static mut IC_TIME: SystemTime = UNIX_EPOCH;
+        static mut IC_CANISTER_BALANCE: u64 = 100_000_000_000;
 
         pub fn set_mock_ic_time(time: SystemTime) {
             unsafe {
                 IC_TIME = time;
+            }
+        }
+
+        pub fn set_mock_canister_balance(balance: u64) {
+            unsafe {
+                IC_CANISTER_BALANCE = balance;
             }
         }
 
@@ -72,6 +79,10 @@ pub mod mocks {
 
         pub fn print<S: AsRef<str>>(s: S) {
             println!("{}", s.as_ref());
+        }
+
+        pub fn canister_balance() -> u64 {
+            unsafe { IC_CANISTER_BALANCE }
         }
 
         pub mod management_canister {

@@ -2,7 +2,7 @@ use crate::{
     core::{
         authorization::Authorization,
         generate_uuid_v4,
-        ic_cdk::api::time,
+        ic_cdk::next_time,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
@@ -10,14 +10,16 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
-        access_policy::{AccountResourceAction, Resource, ResourceId},
+        resource::{AccountResourceAction, Resource, ResourceId},
         specifier::{AccountSpecifier, ProposalSpecifier},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddProposalPolicyOperationInput, EditAccountOperationInput,
-        EditProposalPolicyOperationInput,
+        AddProposalPolicyOperationInput, EditAccessPolicyOperationInput, EditAccountOperationInput,
     },
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
-    services::{ProposalPolicyService, UserService, PROPOSAL_POLICY_SERVICE, USER_SERVICE},
+    services::{
+        access_policy::{AccessPolicyService, ACCESS_POLICY_SERVICE},
+        ProposalPolicyService, PROPOSAL_POLICY_SERVICE,
+    },
 };
 use ic_canister_core::{
     api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
@@ -29,16 +31,16 @@ use wallet_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput
 
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
-        Arc::clone(&USER_SERVICE),
         Arc::clone(&PROPOSAL_POLICY_SERVICE),
+        Arc::clone(&ACCESS_POLICY_SERVICE),
         Arc::clone(&ACCOUNT_REPOSITORY),
     ));
 }
 
 #[derive(Default, Debug)]
 pub struct AccountService {
-    user_service: Arc<UserService>,
     proposal_policy_service: Arc<ProposalPolicyService>,
+    access_policy_service: Arc<AccessPolicyService>,
     account_repository: Arc<AccountRepository>,
 }
 
@@ -47,13 +49,13 @@ impl AccountService {
     const MAX_ACCOUNT_LIST_LIMIT: u16 = 1000;
 
     pub fn new(
-        user_service: Arc<UserService>,
         proposal_policy_service: Arc<ProposalPolicyService>,
+        access_policy_service: Arc<AccessPolicyService>,
         account_repository: Arc<AccountRepository>,
     ) -> Self {
         Self {
-            user_service,
             proposal_policy_service,
+            access_policy_service,
             account_repository,
         }
     }
@@ -94,28 +96,16 @@ impl AccountService {
     pub async fn list_accounts(
         &self,
         input: ListAccountsInput,
-        ctx: Option<&CallContext>,
+        ctx: &CallContext,
     ) -> ServiceResult<PaginatedData<Account>> {
-        let owner_ids = match ctx {
-            Some(context) => Some(vec![
-                self.user_service
-                    .get_user_by_identity(&context.caller())?
-                    .id,
-            ]),
-            None => None,
-        };
-
-        let mut accounts = self.account_repository.find_where(AccountWhereClause {
-            owner_user_ids: owner_ids,
-            search_term: None,
-        });
+        let mut accounts = self
+            .account_repository
+            .find_where(AccountWhereClause { search_term: None });
 
         // filter out accounts that the caller does not have access to read
-        if let Some(ctx) = ctx {
-            retain_accessible_resources(ctx, &mut accounts, |account: &Account| {
-                Resource::Account(AccountResourceAction::Read(ResourceId::Id(account.id)))
-            });
-        }
+        retain_accessible_resources(ctx, &mut accounts, |account: &Account| {
+            Resource::Account(AccountResourceAction::Read(ResourceId::Id(account.id)))
+        });
 
         let result = paginated_items(PaginatedItemsArgs {
             offset: input.paginate.to_owned().and_then(|p| p.offset),
@@ -128,15 +118,8 @@ impl AccountService {
         Ok(result)
     }
 
-    /// Creates a new account, if the caller has not added itself as one of the owners of the account,
-    /// it will be added automatically.
-    ///
-    /// This operation will fail if an account owner does not have an associated user.
+    /// Creates a new account.
     pub async fn create_account(&self, input: AddAccountOperationInput) -> ServiceResult<Account> {
-        for user_id in input.owners.iter() {
-            self.user_service.get_user(user_id)?;
-        }
-
         if self
             .account_repository
             .find_account_id_by_name(&input.name)
@@ -163,43 +146,77 @@ impl AccountService {
         // depending on the blockchain standard used by the account the decimals used by each asset can vary.
         new_account.decimals = blockchain_api.decimals(&new_account).await?;
 
-        // Validations happen after all the fields are set in the account to avoid partial data in the repository.
-        new_account.validate()?;
-
         // adds the associated transfer policy based on the transfer criteria
-        if let Some(transfer_criteria) = input.policies.transfer {
-            let policy = self
+        if let Some(criteria) = &input.transfer_approval_policy {
+            let transfer_approval_policy = self
                 .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
                     specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
                         *uuid.as_bytes()
                     ])),
-                    criteria: transfer_criteria.to_owned(),
+                    criteria: criteria.clone(),
                 })
                 .await?;
 
-            new_account.policies.transfer_policy_id = Some(policy.id);
+            new_account.transfer_approval_policy_id = Some(transfer_approval_policy.id);
         }
 
         // adds the associated edit policy based on the edit criteria
-        if let Some(edit_criteria) = input.policies.edit {
-            let policy = self
+        if let Some(criteria) = &input.update_approval_policy {
+            let update_approval_policy = self
                 .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
                     specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
                         *uuid.as_bytes()
                     ])),
-                    criteria: edit_criteria.to_owned(),
+                    criteria: criteria.to_owned(),
                 })
                 .await?;
 
-            new_account.policies.edit_policy_id = Some(policy.id);
+            new_account.update_approval_policy_id = Some(update_approval_policy.id);
         }
+
+        // Validations happen after all the fields are set in the account to avoid partial data in the repository.
+        new_account.validate()?;
 
         // Inserting the account into the repository and its associations is the last step of the account creation
         // process to avoid potential consistency issues due to the fact that some of the calls to create the account
         // happen in an asynchronous way.
         self.account_repository.insert(key, new_account.clone());
+
+        // Adds the access policies for the account.
+        self.access_policy_service
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                auth_scope: Some(input.read_access_policy.auth_scope),
+                users: Some(input.read_access_policy.users),
+                user_groups: Some(input.read_access_policy.user_groups),
+                resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
+                    *uuid.as_bytes(),
+                ))),
+            })
+            .await?;
+
+        self.access_policy_service
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                auth_scope: Some(input.update_access_policy.auth_scope),
+                users: Some(input.update_access_policy.users),
+                user_groups: Some(input.update_access_policy.user_groups),
+                resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
+                    *uuid.as_bytes(),
+                ))),
+            })
+            .await?;
+
+        self.access_policy_service
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                auth_scope: Some(input.transfer_access_policy.auth_scope),
+                users: Some(input.transfer_access_policy.users),
+                user_groups: Some(input.transfer_access_policy.user_groups),
+                resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
+                    *uuid.as_bytes(),
+                ))),
+            })
+            .await?;
 
         Ok(new_account)
     }
@@ -222,77 +239,71 @@ impl AccountService {
             }
         }
 
-        if let Some(owners) = &input.owners {
-            for user_id in owners.iter() {
-                self.user_service.get_user(user_id)?;
-            }
-
-            account.owners = owners.to_owned();
+        if let Some(transfer_approval_policy_input) = input.transfer_approval_policy {
+            self.proposal_policy_service
+                .handle_policy_change(
+                    ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![account.id])),
+                    transfer_approval_policy_input,
+                    &mut account.transfer_approval_policy_id,
+                )
+                .await?;
         }
 
-        if let Some(policies) = input.policies {
-            match (account.policies.transfer_policy_id, policies.transfer) {
-                (Some(id), Some(criteria)) => {
-                    self.proposal_policy_service
-                        .edit_proposal_policy(EditProposalPolicyOperationInput {
-                            policy_id: id,
-                            specifier: Some(ProposalSpecifier::Transfer(AccountSpecifier::Id(
-                                vec![account.id],
-                            ))),
-                            criteria: Some(criteria.to_owned()),
-                        })
-                        .await?;
-                }
-                (None, Some(criteria)) => {
-                    let policy = self
-                        .proposal_policy_service
-                        .add_proposal_policy(AddProposalPolicyOperationInput {
-                            specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
-                                account.id,
-                            ])),
-                            criteria: criteria.to_owned(),
-                        })
-                        .await?;
-
-                    account.policies.transfer_policy_id = Some(policy.id);
-                }
-                _ => {}
-            }
-
-            match (account.policies.edit_policy_id, policies.edit) {
-                (Some(id), Some(criteria)) => {
-                    self.proposal_policy_service
-                        .edit_proposal_policy(EditProposalPolicyOperationInput {
-                            policy_id: id,
-                            specifier: Some(ProposalSpecifier::EditAccount(AccountSpecifier::Id(
-                                vec![account.id],
-                            ))),
-                            criteria: Some(criteria.to_owned()),
-                        })
-                        .await?;
-                }
-                (None, Some(criteria)) => {
-                    let policy = self
-                        .proposal_policy_service
-                        .add_proposal_policy(AddProposalPolicyOperationInput {
-                            specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
-                                account.id,
-                            ])),
-                            criteria: criteria.to_owned(),
-                        })
-                        .await?;
-
-                    account.policies.edit_policy_id = Some(policy.id);
-                }
-                _ => {}
-            }
+        if let Some(update_approval_policy_input) = input.update_approval_policy {
+            self.proposal_policy_service
+                .handle_policy_change(
+                    ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![account.id])),
+                    update_approval_policy_input,
+                    &mut account.update_approval_policy_id,
+                )
+                .await?;
         }
 
         account.validate()?;
 
-        account.last_modification_timestamp = time();
+        account.last_modification_timestamp = next_time();
         self.account_repository
             .insert(account.to_key(), account.to_owned());
+
+        // Updates the access policies for the account.
+        if let Some(read_access_policy) = input.read_access_policy {
+            self.access_policy_service
+                .edit_access_policy(EditAccessPolicyOperationInput {
+                    auth_scope: Some(read_access_policy.auth_scope),
+                    users: Some(read_access_policy.users),
+                    user_groups: Some(read_access_policy.user_groups),
+                    resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
+                        account.id,
+                    ))),
+                })
+                .await?;
+        }
+
+        if let Some(update_access_policy) = input.update_access_policy {
+            self.access_policy_service
+                .edit_access_policy(EditAccessPolicyOperationInput {
+                    auth_scope: Some(update_access_policy.auth_scope),
+                    users: Some(update_access_policy.users),
+                    user_groups: Some(update_access_policy.user_groups),
+                    resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
+                        account.id,
+                    ))),
+                })
+                .await?;
+        }
+
+        if let Some(transfer_access_policy) = input.transfer_access_policy {
+            self.access_policy_service
+                .edit_access_policy(EditAccessPolicyOperationInput {
+                    auth_scope: Some(transfer_access_policy.auth_scope),
+                    users: Some(transfer_access_policy.users),
+                    user_groups: Some(transfer_access_policy.user_groups),
+                    resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
+                        account.id,
+                    ))),
+                })
+                .await?;
+        }
 
         Ok(account)
     }
@@ -322,7 +333,7 @@ impl AccountService {
         for mut account in accounts {
             let balance_considered_fresh = match &account.balance {
                 Some(balance) => {
-                    let balance_age_ns = time() - balance.last_modification_timestamp;
+                    let balance_age_ns = next_time() - balance.last_modification_timestamp;
                     (balance_age_ns / 1_000_000) < ACCOUNT_BALANCE_FRESHNESS_IN_MS
                 }
                 None => false,
@@ -334,7 +345,7 @@ impl AccountService {
                     let fetched_balance = blockchain_api.balance(&account).await?;
                     let new_balance = AccountBalance {
                         balance: candid::Nat(fetched_balance),
-                        last_modification_timestamp: time(),
+                        last_modification_timestamp: next_time(),
                     };
 
                     account.balance = Some(new_balance.clone());
@@ -366,8 +377,8 @@ mod tests {
     use crate::{
         core::{test_utils, CallContext},
         models::{
-            account_test_utils::mock_account, criteria::Criteria, user_test_utils::mock_user,
-            AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, Blockchain,
+            access_policy::Allow, account_test_utils::mock_account, criteria::Criteria,
+            user_test_utils::mock_user, AddAccountOperation, AddAccountOperationInput, Blockchain,
             BlockchainStandard, Metadata, User,
         },
         repositories::UserRepository,
@@ -380,7 +391,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
         let mut user = mock_user();
@@ -398,8 +409,7 @@ mod tests {
     #[test]
     fn get_account() {
         let ctx = setup();
-        let mut account = mock_account();
-        account.owners.push(ctx.caller_user.id);
+        let account = mock_account();
 
         ctx.repository.insert(account.to_key(), account.clone());
 
@@ -415,14 +425,14 @@ mod tests {
             account_id: None,
             input: AddAccountOperationInput {
                 name: "foo".to_string(),
-                owners: vec![ctx.caller_user.id],
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                policies: AccountPoliciesInput {
-                    transfer: Some(Criteria::AutoAdopted),
-                    edit: Some(Criteria::AutoAdopted),
-                },
+                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
         };
 
@@ -435,7 +445,6 @@ mod tests {
     async fn add_account_with_existing_name_should_fail() {
         let ctx = setup();
         let mut account = mock_account();
-        account.owners.push(ctx.caller_user.id);
         account.name = "foo".to_string();
 
         ctx.repository.insert(account.to_key(), account.clone());
@@ -444,14 +453,14 @@ mod tests {
             account_id: None,
             input: AddAccountOperationInput {
                 name: account.name,
-                owners: vec![ctx.caller_user.id],
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                policies: AccountPoliciesInput {
-                    transfer: Some(Criteria::AutoAdopted),
-                    edit: Some(Criteria::AutoAdopted),
-                },
+                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
         };
 
@@ -463,16 +472,18 @@ mod tests {
     #[tokio::test]
     async fn edit_account() {
         let ctx = setup();
-        let mut account = mock_account();
-        account.owners.push(ctx.caller_user.id);
+        let account = mock_account();
 
         ctx.repository.insert(account.to_key(), account.clone());
 
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
-            owners: Some(vec![ctx.caller_user.id]),
-            policies: None,
+            read_access_policy: None,
+            transfer_access_policy: None,
+            update_access_policy: None,
+            transfer_approval_policy: None,
+            update_approval_policy: None,
         };
 
         let result = ctx.service.edit_account(operation).await;
@@ -482,7 +493,6 @@ mod tests {
         let updated_account = result.unwrap();
 
         assert_eq!(updated_account.name, "test_edit");
-        assert_eq!(updated_account.owners, vec![ctx.caller_user.id]);
     }
 
     #[tokio::test]
@@ -499,8 +509,11 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("bar".to_string()),
-            owners: None,
-            policies: None,
+            read_access_policy: None,
+            transfer_access_policy: None,
+            update_access_policy: None,
+            transfer_approval_policy: None,
+            update_approval_policy: None,
         };
 
         let result = ctx.service.edit_account(operation).await;
@@ -515,14 +528,14 @@ mod tests {
             account_id: None,
             input: AddAccountOperationInput {
                 name: "foo".to_string(),
-                owners: vec![ctx.caller_user.id],
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::ERC20,
                 metadata: Metadata::default(),
-                policies: AccountPoliciesInput {
-                    transfer: Some(Criteria::AutoAdopted),
-                    edit: Some(Criteria::AutoAdopted),
-                },
+                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
         };
 

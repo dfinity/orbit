@@ -21,8 +21,8 @@ pub use user_group::*;
 mod proposal;
 pub use proposal::*;
 
-mod wallet;
-pub use wallet::*;
+mod system;
+pub use system::*;
 
 mod proposal_policy;
 pub use proposal_policy::*;

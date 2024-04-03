@@ -1,12 +1,13 @@
 use super::{
     specifier::{Match, ProposalHasMetadata, ProposalHasVoterInUserSpecifier, UserSpecifier},
-    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalVoteStatus, UserId,
-    UserStatus,
+    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalOperation, ProposalVoteStatus,
+    UserId, UserStatus,
 };
 use crate::{
-    core::utils::calculate_minimum_threshold,
+    core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
     errors::MatchError,
-    repositories::{UserWhereClause, USER_REPOSITORY},
+    repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, USER_REPOSITORY},
+    services::ACCOUNT_SERVICE,
 };
 use anyhow::{anyhow, Error};
 use ic_canister_macros::storable;
@@ -40,10 +41,18 @@ pub enum Criteria {
     ApprovalThreshold(UserSpecifier, Percentage),
     MinimumVotes(UserSpecifier, u16),
     HasAddressBookMetadata(MetadataItem),
+    HasAddressInAddressBook,
     // Logical
     Or(Vec<Criteria>),
     And(Vec<Criteria>),
     Not(Box<Criteria>),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ApprovalCriteriaInput {
+    Remove,
+    Set(Criteria),
 }
 
 impl From<ProposalVoteStatus> for EvaluationStatus {
@@ -218,6 +227,34 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 } else {
                     Ok(EvaluationStatus::Rejected)
                 }
+            }
+            Criteria::HasAddressInAddressBook => {
+                if let ProposalOperation::Transfer(transfer) = &proposal.operation {
+                    let account = ACCOUNT_SERVICE.get_account(&transfer.input.from_account_id);
+                    match account {
+                        Err(e) => {
+                            print(format!(
+                                "Criteria rejected due to account not being found: {:?}",
+                                e
+                            ));
+
+                            return Ok(EvaluationStatus::Rejected);
+                        }
+                        Ok(account) => {
+                            let is_in_address_book = ADDRESS_BOOK_REPOSITORY.exists(
+                                account.blockchain,
+                                account.standard,
+                                transfer.input.to.clone(),
+                            );
+
+                            if is_in_address_book {
+                                return Ok(EvaluationStatus::Adopted);
+                            }
+                        }
+                    }
+                }
+
+                Ok(EvaluationStatus::Rejected)
             }
             Criteria::And(criterias) => {
                 let evaluation_statuses = self.evaluate_criterias(&proposal, criterias)?;

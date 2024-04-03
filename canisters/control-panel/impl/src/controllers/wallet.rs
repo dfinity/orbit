@@ -1,8 +1,8 @@
 //! Wallet services.
-use crate::core::metrics::{COUNTER_CAN_DEPLOY_WALLET_TOTAL, COUNTER_DEPLOY_WALLET_TOTAL};
-use crate::core::middlewares::{call_context, logger};
+use crate::core::middlewares::{call_context, logger, use_status_metric};
+use crate::errors::UserError;
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
-use crate::{core::CallContext, errors::UserError, services::UserService};
+use crate::{core::CallContext, services::UserService};
 use candid::Principal;
 use control_panel_api::{
     CanDeployWalletResponse, DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse,
@@ -13,7 +13,6 @@ use ic_canister_core::utils::{CallerGuard, State};
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
-use prometheus::labels;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -35,43 +34,12 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
 
 #[update(name = "deploy_wallet")]
 async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
-    let caller = ic_cdk::caller();
-    let _lock = STATE
-        .with(|state| CallerGuard::new(state.clone(), caller))
-        .ok_or(UserError::ConcurrentWalletDeployment)?;
-
-    let out = CONTROLLER.deploy_wallet().await;
-
-    COUNTER_DEPLOY_WALLET_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.deploy_wallet().await
 }
 
 #[query(name = "can_deploy_wallet")]
 async fn can_deploy_wallet() -> ApiResult<CanDeployWalletResponse> {
-    let out = CONTROLLER.can_deploy_wallet().await;
-
-    COUNTER_CAN_DEPLOY_WALLET_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.can_deploy_wallet().await
 }
 
 // Controller initialization and implementation.
@@ -131,8 +99,13 @@ impl WalletController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("deploy_wallet", &result))]
     async fn deploy_wallet(&self) -> ApiResult<DeployWalletResponse> {
         let ctx = CallContext::get();
+        let _lock = STATE
+            .with(|state| CallerGuard::new(state.clone(), ctx.caller()))
+            .ok_or(UserError::ConcurrentWalletDeployment)?;
+
         let deployed_wallet_id = self.deploy_service.deploy_wallet(&ctx).await?;
 
         Ok(DeployWalletResponse {
@@ -146,6 +119,7 @@ impl WalletController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("can_deploy_wallet", &result))]
     async fn can_deploy_wallet(&self) -> ApiResult<CanDeployWalletResponse> {
         let ctx = CallContext::get();
         self.user_service.can_deploy_wallet(&ctx).await

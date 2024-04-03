@@ -6,13 +6,10 @@ use super::{
 use crate::{
     errors::AuthorizationError,
     models::{
-        access_policy::{
-            AccountResourceAction, ChangeCanisterResourceAction, ProposalResourceAction, Resource,
-            ResourceAction, ResourceId, SettingsResourceAction, UserResourceAction,
-        },
-        Account, ProposalKey, User, ADMIN_GROUP_ID,
+        resource::{ProposalResourceAction, Resource, ResourceId, UserResourceAction},
+        ProposalKey, User,
     },
-    repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY},
+    repositories::PROPOSAL_REPOSITORY,
     services::access_policy::ACCESS_POLICY_SERVICE,
 };
 use ic_canister_core::repository::Repository;
@@ -93,26 +90,6 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
             // The user has access to their own user record.
             *user_id == user.id
         }
-        Resource::Account(AccountResourceAction::Read(ResourceId::Id(account_id)))
-        | Resource::Account(AccountResourceAction::Update(ResourceId::Id(account_id)))
-        | Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(account_id))) => {
-            // The user has access to their own account.
-            if let Some(account) = ACCOUNT_REPOSITORY.get(&Account::key(account_id.to_owned())) {
-                return account.owners.contains(&user.id);
-            }
-
-            false
-        }
-        Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
-        | Resource::User(UserResourceAction::Create)
-        | Resource::Settings(SettingsResourceAction::Read)
-        | Resource::Settings(SettingsResourceAction::ReadConfig)
-        | Resource::UserGroup(ResourceAction::List)
-        | Resource::UserGroup(ResourceAction::Read(_))
-        | Resource::Account(AccountResourceAction::List) => {
-            // admins have access to these resources by default
-            user.groups.contains(ADMIN_GROUP_ID)
-        }
         _ => false,
     }
 }
@@ -141,7 +118,9 @@ mod tests {
     use crate::{
         models::{
             access_policy::{AccessPolicy, Allow},
-            account_test_utils, user_group_test_utils,
+            account_test_utils,
+            resource::{AccountResourceAction, ResourceAction},
+            user_group_test_utils,
             user_test_utils::{self, mock_user},
             UserGroup, UserStatus, ADMIN_GROUP_ID,
         },

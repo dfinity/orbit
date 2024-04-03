@@ -49,9 +49,8 @@ impl Repository<AccessPolicyKey, AccessPolicy> for AccessPolicyRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_policy::{
-        access_policy_test_utils::mock_access_policy, Resource, ResourceAction, ResourceId,
-    };
+    use crate::models::access_policy::access_policy_test_utils::mock_access_policy;
+    use crate::models::resource::{Resource, ResourceAction, ResourceId};
     use ic_canister_core::model::ModelKey;
 
     #[test]

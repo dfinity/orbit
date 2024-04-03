@@ -5,7 +5,7 @@ use crate::{
     services::USER_SERVICE,
 };
 use candid::{Encode, Principal};
-use control_panel_api::{CanDeployWalletResponse, ManageUserInput, UserWalletDTO};
+use control_panel_api::CanDeployWalletResponse;
 use ic_canister_core::api::ServiceResult;
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
@@ -73,8 +73,8 @@ impl DeployService {
             mode: mgmt::CanisterInstallMode::Install,
             canister_id: wallet_canister.canister_id,
             wasm_module: config.wallet_wasm_module,
-            arg: Encode!(&wallet_api::WalletInstall::Init(wallet_api::WalletInit {
-                owners: Some(vec![user.id]),
+            arg: Encode!(&wallet_api::SystemInstall::Init(wallet_api::SystemInit {
+                admins: Some(vec![user.id]),
                 upgrader_wasm_module: config.upgrader_wasm_module,
             }))
             .map_err(|err| DeployError::Failed {

@@ -4,7 +4,7 @@
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddAccount]">
-            <AccountConfigBtn :text="$t('terms.new_account')" variant="outlined" />
+            <AccountSetupAction :text="$t('terms.new_account')" />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -112,7 +112,7 @@ import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
-import AccountConfigBtn from '~/components/accounts/AccountConfigBtn.vue';
+import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';

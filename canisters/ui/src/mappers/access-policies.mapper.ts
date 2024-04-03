@@ -27,8 +27,8 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.ChangeCanister;
   }
 
-  if (variantIs(resource, 'Settings')) {
-    return ResourceTypeEnum.Settings;
+  if (variantIs(resource, 'System')) {
+    return ResourceTypeEnum.System;
   }
 
   if (variantIs(resource, 'Proposal')) {

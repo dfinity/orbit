@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     mappers::HelperMapper,
-    models::access_policy::{ProposalResourceAction, Resource},
+    models::resource::{ProposalResourceAction, Resource},
     services::{ProposalService, PROPOSAL_SERVICE},
 };
 use ic_canister_core::api::ApiResult;
@@ -106,10 +106,7 @@ impl ProposalController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::Proposal(ProposalResourceAction::List)]))]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let ctx = call_context();
-        let result = self
-            .proposal_service
-            .list_proposals(input, Some(&ctx))
-            .await?;
+        let result = self.proposal_service.list_proposals(input, &ctx).await?;
 
         let mut privileges = Vec::new();
         let mut additionals = Vec::new();

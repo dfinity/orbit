@@ -1,4 +1,5 @@
 use crate::mappers::HelperMapper;
+use crate::models::proposal_operation_filter_type::ProposalOperationFilterType;
 use crate::models::{ProposalOperation, ProposalOperationType};
 use wallet_api::{ListProposalsOperationTypeDTO, ProposalOperationTypeDTO};
 
@@ -158,6 +159,65 @@ impl ProposalOperation {
                 ListProposalsOperationTypeDTO::RemoveProposalPolicy,
             ) => true,
             _ => false,
+        }
+    }
+}
+
+impl From<wallet_api::ListProposalsOperationTypeDTO> for ProposalOperationFilterType {
+    fn from(dto: wallet_api::ListProposalsOperationTypeDTO) -> Self {
+        match dto {
+            wallet_api::ListProposalsOperationTypeDTO::Transfer(from_account_id) => {
+                ProposalOperationFilterType::Transfer(from_account_id.map(|id| {
+                    *HelperMapper::to_uuid(id)
+                        .expect("Invalid account id")
+                        .as_bytes()
+                }))
+            }
+            wallet_api::ListProposalsOperationTypeDTO::AddAccount => {
+                ProposalOperationFilterType::AddAccount
+            }
+            wallet_api::ListProposalsOperationTypeDTO::EditAccount => {
+                ProposalOperationFilterType::EditAccount
+            }
+            wallet_api::ListProposalsOperationTypeDTO::AddAddressBookEntry => {
+                ProposalOperationFilterType::AddAddressBookEntry
+            }
+            wallet_api::ListProposalsOperationTypeDTO::EditAddressBookEntry => {
+                ProposalOperationFilterType::EditAddressBookEntry
+            }
+            wallet_api::ListProposalsOperationTypeDTO::RemoveAddressBookEntry => {
+                ProposalOperationFilterType::RemoveAddressBookEntry
+            }
+            wallet_api::ListProposalsOperationTypeDTO::AddUser => {
+                ProposalOperationFilterType::AddUser
+            }
+            wallet_api::ListProposalsOperationTypeDTO::EditUser => {
+                ProposalOperationFilterType::EditUser
+            }
+            wallet_api::ListProposalsOperationTypeDTO::AddUserGroup => {
+                ProposalOperationFilterType::AddUserGroup
+            }
+            wallet_api::ListProposalsOperationTypeDTO::EditUserGroup => {
+                ProposalOperationFilterType::EditUserGroup
+            }
+            wallet_api::ListProposalsOperationTypeDTO::RemoveUserGroup => {
+                ProposalOperationFilterType::RemoveUserGroup
+            }
+            wallet_api::ListProposalsOperationTypeDTO::ChangeCanister => {
+                ProposalOperationFilterType::ChangeCanister
+            }
+            wallet_api::ListProposalsOperationTypeDTO::EditAccessPolicy => {
+                ProposalOperationFilterType::EditAccessPolicy
+            }
+            wallet_api::ListProposalsOperationTypeDTO::AddProposalPolicy => {
+                ProposalOperationFilterType::AddProposalPolicy
+            }
+            wallet_api::ListProposalsOperationTypeDTO::EditProposalPolicy => {
+                ProposalOperationFilterType::EditProposalPolicy
+            }
+            wallet_api::ListProposalsOperationTypeDTO::RemoveProposalPolicy => {
+                ProposalOperationFilterType::RemoveProposalPolicy
+            }
         }
     }
 }
