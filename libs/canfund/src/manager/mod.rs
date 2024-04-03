@@ -53,6 +53,38 @@ impl FundManager {
         }
     }
 
+    /// Configures the fund manager with the specified options.
+    pub fn with_options(&mut self, options: FundManagerOptions) -> &mut Self {
+        self.inner.borrow_mut().options = options;
+
+        self
+    }
+
+    /// Registers a canister to be monitored by the fund manager.
+    pub fn register(&mut self, canister_id: CanisterId) -> &mut Self {
+        self.inner.borrow_mut().register(canister_id);
+
+        self
+    }
+
+    /// Unregisters a canister from being monitored by the fund manager.
+    pub fn unregister(&mut self, canister_id: CanisterId) -> &mut Self {
+        self.inner.borrow_mut().unregister(canister_id);
+
+        self
+    }
+
+    /// Returns the canisters that are being monitored by the fund manager.
+    pub fn get_canisters(&self) -> HashMap<CanisterId, CanisterRecord> {
+        self.inner.borrow().canisters.clone()
+    }
+
+    /// Returns the options for the fund manager.
+    pub fn get_options(&self) -> FundManagerOptions {
+        self.inner.borrow().options.clone()
+    }
+
+    /// Configures the fund manager to use the specified cycles fetcher to get the canister cycles balance.
     pub fn with_cycles_fetcher(
         &mut self,
         cycles_fetcher: Arc<dyn FetchCyclesBalance>,
