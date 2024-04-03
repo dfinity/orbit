@@ -17,9 +17,11 @@ convert_case = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
+prometheus = { workspace = true }
 rand_chacha = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_bytes = { workspace = true }
 time = { workspace = true, features = ["formatting", "parsing"] }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
