@@ -1,10 +1,6 @@
 //! User services.
 use crate::controllers::USER_REGISTRATION_RATE;
-use crate::core::metrics::{
-    COUNTER_DELETE_USER_TOTAL, COUNTER_MANAGE_USER_TOTAL, COUNTER_REGISTER_USER_TOTAL,
-    COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL, COUNTER_UPDATE_WAITING_LIST_TOTAL,
-};
-use crate::core::middlewares::{call_context, logger};
+use crate::core::middlewares::{call_context, logger, use_status_metric};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
@@ -15,7 +11,6 @@ use ic_canister_core::api::{ApiError, ApiResult};
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
-use prometheus::labels;
 use std::cell::RefCell;
 use std::sync::Arc;
 
@@ -44,92 +39,27 @@ async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserRespon
         Ok(())
     })?;
 
-    let out = CONTROLLER.register_user(input).await;
-
-    COUNTER_REGISTER_USER_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.register_user(input).await
 }
 
 #[update(name = "manage_user")]
 async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
-    let out = CONTROLLER.manage_user(input).await;
-
-    COUNTER_MANAGE_USER_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.manage_user(input).await
 }
 
 #[update(name = "subscribe_to_waiting_list")]
 async fn subscribe_to_waiting_list(email: String) -> ApiResult<()> {
-    let out = CONTROLLER.subscribe_to_waiting_list(email).await;
-
-    COUNTER_SUBSCRIBE_TO_WAITING_LIST_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.subscribe_to_waiting_list(email).await
 }
 
 #[update(name = "update_waiting_list")]
 async fn update_waiting_list(input: UpdateWaitingListInput) -> ApiResult<()> {
-    let out = CONTROLLER.update_waiting_list(input).await;
-
-    COUNTER_UPDATE_WAITING_LIST_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.update_waiting_list(input).await
 }
 
 #[update(name = "delete_user")]
 async fn delete_user() -> ApiResult<DeleteUserResponse> {
-    let out = CONTROLLER.delete_user().await;
-
-    COUNTER_DELETE_USER_TOTAL.with(|c| {
-        c.borrow()
-            .with(&labels! {
-                "status" => match &out {
-                    Ok(_) => "ok",
-                    Err(_) => "fail",
-                }
-            })
-            .inc()
-    });
-
-    out
+    CONTROLLER.delete_user().await
 }
 
 // Controller initialization and implementation.
@@ -166,6 +96,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("register_user", &result))]
     async fn register_user(&self, input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.register_user(input, &ctx).await?;
@@ -180,6 +111,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("manage_user", &result))]
     async fn manage_user(&self, input: ManageUserInput) -> ApiResult<ManageUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.manage_user(input, &ctx).await?;
@@ -194,6 +126,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("subscribe_to_waiting_list", &result))]
     async fn subscribe_to_waiting_list(&self, email: String) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
         self.user_service
@@ -208,6 +141,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("update_waiting_list", &result))]
     async fn update_waiting_list(&self, input: UpdateWaitingListInput) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
         self.user_service.update_waiting_list(input, &ctx)?;
@@ -220,6 +154,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
+    #[with_middleware(tail = use_status_metric("delete_user", &result))]
     async fn delete_user(&self) -> ApiResult<DeleteUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
