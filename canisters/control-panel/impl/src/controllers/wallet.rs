@@ -1,5 +1,6 @@
 //! Wallet services.
 use crate::core::middlewares::{call_context, logger, use_status_metric};
+use crate::errors::UserError;
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
 use candid::Principal;
@@ -7,7 +8,7 @@ use control_panel_api::{
     DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse, UserWalletDTO,
 };
 use ic_canister_core::api::ApiResult;
-use ic_canister_core::utils::State;
+use ic_canister_core::utils::{CallerGuard, State};
 use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -95,6 +96,10 @@ impl WalletController {
     #[with_middleware(tail = use_status_metric("deploy_wallet", &result))]
     async fn deploy_wallet(&self) -> ApiResult<DeployWalletResponse> {
         let ctx = CallContext::get();
+        let _lock = STATE
+            .with(|state| CallerGuard::new(state.clone(), ctx.caller()))
+            .ok_or(UserError::ConcurrentWalletDeployment)?;
+
         let deployed_wallet_id = self.deploy_service.deploy_wallet(&ctx).await?;
 
         Ok(DeployWalletResponse {
