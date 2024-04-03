@@ -3,12 +3,13 @@
 name = "canfund"
 version = "0.1.0"
 edition = "2021"
+description = "This library provides a simple interface to monitor and add cycles to canisters on the Internet Computer."
 authors = ["DFINITY Stiftung"]
 license = "Apache-2.0"
 include = ["src", "Cargo.toml"]
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
 bench = false
 
 [dependencies]
