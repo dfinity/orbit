@@ -4,9 +4,12 @@ use crate::{
     utils::{cycles_nat_to_u128, cycles_str_to_u128},
 };
 use ic_cdk::{
-    api::management_canister::{
-        http_request::HttpResponse,
-        main::{canister_status, CanisterId, CanisterIdRecord, CanisterStatusResponse},
+    api::{
+        call::RejectionCode,
+        management_canister::{
+            http_request::HttpResponse,
+            main::{canister_status, CanisterId, CanisterIdRecord, CanisterStatusResponse},
+        },
     },
     call,
 };
@@ -14,7 +17,7 @@ use num_bigint::BigUint;
 
 /// The trait for fetching the canister cycles balance.
 #[async_trait::async_trait]
-pub trait FetchCyclesBalance: 'static + Sync + Send {
+pub trait FetchCyclesBalance: Sync + Send {
     async fn fetch_cycles_balance(&self, canister_id: CanisterId) -> Result<u128, Error>;
 }
 
@@ -22,6 +25,7 @@ pub trait FetchCyclesBalance: 'static + Sync + Send {
 ///
 /// This fetcher is only suitable if the caller has the permission to call the `canister_status` method
 /// on the management canister, which is restricted to controllers of the target canister.
+#[derive(Clone)]
 pub struct FetchCyclesBalanceFromCanisterStatus;
 
 #[async_trait::async_trait]
@@ -29,14 +33,31 @@ impl FetchCyclesBalance for FetchCyclesBalanceFromCanisterStatus {
     async fn fetch_cycles_balance(&self, canister_id: CanisterId) -> Result<u128, Error> {
         match canister_status(CanisterIdRecord { canister_id }).await {
             Ok((CanisterStatusResponse { cycles, .. },)) => cycles_nat_to_u128(cycles),
-            Err((_err_code, _err_msg)) => Err(Error::GetCanisterCycleBalanceFailed),
+            Err((RejectionCode::CanisterError, err_msg)) => {
+                // If the canister run out of cycles, we return zero cycles since the canister is frozen.
+                //
+                // Out of cycles error message is taken from:
+                // https://github.com/dfinity/ic/blob/b0039508c4f39aa69f3f32e4969e6bf1996fe10b/rs/interfaces/src/execution_environment/errors.rs#L61
+                if err_msg.to_lowercase().contains("out of cycles") {
+                    return Ok(0);
+                }
+
+                Err(Error::GetCanisterCycleBalanceFailed {
+                    rejection_code: RejectionCode::CanisterError,
+                    rejection_message: err_msg,
+                })
+            }
+            Err((err_code, err_msg)) => Err(Error::GetCanisterCycleBalanceFailed {
+                rejection_code: err_code,
+                rejection_message: err_msg,
+            }),
         }
     }
 }
 
 /// Fetches the canister cycles balance by leveraging prometheus metrics
 /// exposed by the canister through an HTTP endpoint.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct FetchCyclesBalanceFromPrometheusMetrics {
     /// The path to the prometheus metrics endpoint.
     path: String,

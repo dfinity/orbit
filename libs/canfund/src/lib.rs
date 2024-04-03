@@ -12,3 +12,5 @@ pub mod fetch;
 pub mod manager;
 pub mod types;
 pub mod utils;
+
+pub use manager::FundManager;

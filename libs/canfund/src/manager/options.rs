@@ -158,7 +158,7 @@ impl Default for FundStrategy {
 }
 
 /// The options when initializing the fund manager.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FundManagerOptions {
     /// The interval in ms to track the canister balance.
     interval_ms: u64,

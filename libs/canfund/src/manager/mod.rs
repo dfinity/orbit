@@ -5,7 +5,6 @@ use self::{
     record::{CanisterRecord, CyclesBalance},
 };
 use crate::{
-    errors::Error,
     fetch::cycles::{FetchCyclesBalance, FetchCyclesBalanceFromCanisterStatus},
     utils::calc_estimated_cycles_per_sec,
 };
@@ -19,6 +18,7 @@ use std::{
     cmp,
     collections::{hash_map::Entry, HashMap},
     rc::Rc,
+    sync::Arc,
     time::Duration,
 };
 
@@ -30,7 +30,7 @@ pub struct FundManagerCore {
     /// The canisters that are being monitored by the fund manager.
     canisters: HashMap<CanisterId, CanisterRecord>,
     options: FundManagerOptions,
-    cycles_fetcher: Box<dyn FetchCyclesBalance>,
+    cycles_fetcher: Arc<dyn FetchCyclesBalance>,
     tracker: Option<TimerId>,
 }
 
@@ -55,7 +55,7 @@ impl FundManager {
 
     pub fn with_cycles_fetcher(
         &mut self,
-        cycles_fetcher: Box<dyn FetchCyclesBalance>,
+        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
     ) -> &mut Self {
         self.inner.borrow_mut().set_cycles_fetcher(cycles_fetcher);
 
@@ -85,81 +85,105 @@ impl FundManager {
     fn create_tracker(manager: Rc<RefCell<FundManagerCore>>, delay: Duration) -> TimerId {
         ic_cdk_timers::set_timer(delay, move || {
             spawn(async move {
-                let manager_ref = manager.borrow();
-                let canisters = manager_ref.canisters.clone();
-                let chunk_size = manager_ref.options().chunk_size();
-                let canister_ids: Vec<CanisterId> = canisters.keys().cloned().collect();
-                let chunked_ids_to_monitor = canister_ids.chunks(cmp::max(1, chunk_size as usize));
-
-                for canister_ids in chunked_ids_to_monitor {
-                    let requests = canister_ids.iter().map(|&canister_id| {
-                        manager_ref.cycles_fetcher.fetch_cycles_balance(canister_id)
-                    });
-
-                    let results = futures::future::join_all(requests).await;
-                    let manager_ref = manager.borrow();
-                    let current_time = ic_cdk::api::time();
-                    for i in 0..canister_ids.len() {
-                        let canister_id = canister_ids[i];
-                        match manager.borrow_mut().canisters.entry(canister_id) {
-                            Entry::Occupied(mut entry) => {
-                                let canister_record = entry.get_mut();
-                                match &results[i] {
-                                    Ok(cycles_balance) => {
-                                        canister_record.set_cycles(CyclesBalance::new(
-                                            *cycles_balance,
-                                            current_time,
-                                        ));
-
-                                        let needed_cycles = calc_needed_cycles(
-                                            &canister_record
-                                                .get_cycles()
-                                                .clone()
-                                                .unwrap_or_default(),
-                                            canister_record.get_previous_cycles(),
-                                            manager_ref.options().strategy(),
-                                        );
-
-                                        if needed_cycles > 0 {
-                                            if let Err(error) = manager
-                                                .borrow()
-                                                .fund(canister_id, needed_cycles)
-                                                .await
-                                            {
-                                                print(format!(
-                                                    "Failed to top up canister {} with {} cycles, err: {:?}",
-                                                    canister_id.to_text(), needed_cycles, error
-                                                ));
-                                            }
-                                        }
-                                    }
-                                    Err(error) => {
-                                        print(format!(
-                                            "Failed to fetch cycles balance for canister {}, err: {:?}",
-                                            canister_id.to_text(),
-                                            error
-                                        ));
-                                    }
-                                }
-                            }
-                            Entry::Vacant(_) => {
-                                // The canister was removed while we were fetching the cycles balance.
-                                continue;
-                            }
-                        }
-                    }
-                }
+                Self::execute_scheduled_monitoring(Rc::clone(&manager)).await;
 
                 // Reschedules the next execution of the tracker, we do this manually to avoid having to setup
                 // a locking mechanism to prevent concurrent execution of the tracker and to have the ability to
                 // change the interval dynamically.
                 let delay_ms = manager.borrow().options().interval_ms();
-                let tracker =
-                    FundManager::create_tracker(manager.clone(), Duration::from_millis(delay_ms));
+                let tracker = FundManager::create_tracker(
+                    Rc::clone(&manager),
+                    Duration::from_millis(delay_ms),
+                );
 
                 manager.borrow_mut().set_tracker(tracker);
             });
         })
+    }
+
+    /// Executes the scheduled monitoring of the canisters and fund them if needed.
+    async fn execute_scheduled_monitoring(manager: Rc<RefCell<FundManagerCore>>) {
+        let (all_canister_ids, chunk_size, cycles_fetcher) = {
+            let manager_ref = manager.borrow();
+            let all_canister_ids: Vec<CanisterId> = manager_ref.canisters.keys().cloned().collect();
+            let chunk_size = manager_ref.options.chunk_size();
+            let cycles_fetcher = Arc::clone(&manager_ref.cycles_fetcher);
+            (all_canister_ids, chunk_size, cycles_fetcher)
+        };
+
+        for canister_ids in all_canister_ids.chunks(cmp::max(1, chunk_size as usize)) {
+            let canisters_to_fund = Self::monitor_specified_canisters(
+                Rc::clone(&manager),
+                canister_ids,
+                cycles_fetcher.clone(),
+            )
+            .await;
+
+            // Funds the canisters with the needed cycles.
+            for (canister_id, needed_cycles) in canisters_to_fund {
+                if let Err(err) =
+                    deposit_cycles(CanisterIdRecord { canister_id }, needed_cycles).await
+                {
+                    print(format!(
+                        "Failed to top up canister {} with {} cycles, err: {:?}",
+                        canister_id.to_text(),
+                        needed_cycles,
+                        err
+                    ));
+                }
+            }
+        }
+    }
+
+    /// Fetches the cycles balance for the provided canisters and calculates the needed cycles to fund them.
+    ///
+    /// Returns a list of canister ids and the cycles needed to fund them, if any.
+    async fn monitor_specified_canisters(
+        manager: Rc<RefCell<FundManagerCore>>,
+        canister_ids: &[CanisterId],
+        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
+    ) -> Vec<(CanisterId, u128)> {
+        let mut canisters_to_fund = Vec::new();
+        let options = manager.borrow().options().clone();
+        let requests = canister_ids
+            .iter()
+            .map(|&canister_id| cycles_fetcher.fetch_cycles_balance(canister_id));
+
+        let results = futures::future::join_all(requests).await;
+        let current_time = ic_cdk::api::time();
+
+        for (i, canister_id) in canister_ids.iter().enumerate() {
+            match &results[i] {
+                Ok(cycles_balance) => {
+                    let mut manager_mut = manager.borrow_mut();
+                    if let Entry::Occupied(mut entry) = manager_mut.canisters.entry(*canister_id) {
+                        let canister_record = entry.get_mut();
+
+                        canister_record
+                            .set_cycles(CyclesBalance::new(*cycles_balance, current_time));
+
+                        let needed_cycles = calc_needed_cycles(
+                            &canister_record.get_cycles().clone().unwrap_or_default(),
+                            canister_record.get_previous_cycles(),
+                            options.strategy(),
+                        );
+
+                        if needed_cycles > 0 {
+                            canisters_to_fund.push((*canister_id, needed_cycles));
+                        }
+                    }
+                }
+                Err(error) => {
+                    print(format!(
+                        "Failed to fetch cycles balance for canister {}, err: {:?}",
+                        canister_id.to_text(),
+                        error
+                    ));
+                }
+            }
+        }
+
+        canisters_to_fund
     }
 }
 
@@ -168,7 +192,7 @@ impl FundManagerCore {
         Rc::new(RefCell::new(FundManagerCore {
             canisters: HashMap::new(),
             options: FundManagerOptions::default(),
-            cycles_fetcher: Box::new(FetchCyclesBalanceFromCanisterStatus),
+            cycles_fetcher: Arc::new(FetchCyclesBalanceFromCanisterStatus),
             tracker: None,
         }))
     }
@@ -198,7 +222,7 @@ impl FundManagerCore {
     }
 
     /// Configures the fund manager to use the specified cycles fetcher to get the canister cyclesbalance.
-    pub fn set_cycles_fetcher(&mut self, cycles_fetcher: Box<dyn FetchCyclesBalance>) {
+    pub fn set_cycles_fetcher(&mut self, cycles_fetcher: Arc<dyn FetchCyclesBalance>) {
         self.cycles_fetcher = cycles_fetcher;
     }
 
@@ -221,16 +245,6 @@ impl FundManagerCore {
     /// Returns the canister record if it was found.
     pub fn unregister(&mut self, canister_id: CanisterId) -> Option<CanisterRecord> {
         self.canisters.remove(&canister_id)
-    }
-
-    /// Funds the provided canister with the specified cycles.
-    ///
-    /// If the top up fails, an error is returned.
-    async fn fund(&self, canister_id: CanisterId, cycles: u128) -> Result<(), Error> {
-        match deposit_cycles(CanisterIdRecord { canister_id }, cycles).await {
-            Ok(()) => Ok(()),
-            Err(_) => Err(Error::FundOperationFailed),
-        }
     }
 }
 
