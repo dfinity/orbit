@@ -23,6 +23,11 @@ export type GetMainWalletResult = { 'Ok' : { 'wallet' : [] | [UserWallet] } } |
   { 'Err' : ApiError };
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
+export interface GetWaitingListResponse {
+  'subscribed_users' : Array<SubscribedUser>,
+}
+export type GetWaitingListResult = { 'Ok' : GetWaitingListResponse } |
+  { 'Err' : ApiError };
 export type HeaderField = [string, string];
 export interface HttpRequest {
   'url' : string,
@@ -50,6 +55,10 @@ export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
+export interface SubscribedUser {
+  'user_principal' : Principal,
+  'email' : string,
+}
 export type UUID = string;
 export interface UpdateWaitingListInput {
   'users' : Array<Principal>,
@@ -75,6 +84,7 @@ export interface _SERVICE {
   'deploy_wallet' : ActorMethod<[], DeployWalletResult>,
   'get_main_wallet' : ActorMethod<[], GetMainWalletResult>,
   'get_user' : ActorMethod<[], GetUserResult>,
+  'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'list_wallets' : ActorMethod<[], ListWalletsResult>,
   'manage_user' : ActorMethod<[ManageUserInput], ManageUserResult>,
