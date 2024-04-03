@@ -1,4 +1,8 @@
-use crate::{core::ic_cdk::api::canister_balance, repositories::USER_REPOSITORY, SERVICE_NAME};
+use crate::{
+    core::ic_cdk::api::{canister_balance, print},
+    repositories::USER_REPOSITORY,
+    SERVICE_NAME,
+};
 use ic_canister_core::{metrics::with_metrics_registry, repository::Repository};
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
@@ -65,13 +69,15 @@ impl HttpController {
                 headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
                 body: metrics,
             },
-            Err(err) => HttpResponse {
-                status_code: 500,
-                headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-                body: format!("500 Internal Server Error: {}", err)
-                    .as_bytes()
-                    .to_owned(),
-            },
+            Err(err) => {
+                print(format!("Error exporting metrics: {:?}", err));
+
+                HttpResponse {
+                    status_code: 500,
+                    headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
+                    body: format!("500 Internal Server Error").as_bytes().to_owned(),
+                }
+            }
         }
     }
 }
