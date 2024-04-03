@@ -34,7 +34,7 @@ pub struct FundManagerCore {
     tracker: Option<TimerId>,
 }
 
-/// The fund manager that monitors and tops up canister cycles based on the configuration.
+/// The fund manager that monitors and funds canisters with cycles based on the configuration.
 pub struct FundManager {
     inner: Rc<RefCell<FundManagerCore>>,
 }
@@ -62,7 +62,7 @@ impl FundManager {
         self
     }
 
-    /// Starts the fund manager to monitor and top up the canisters based on the configuration.
+    /// Starts the fund manager to monitor and fund the canisters based on the configuration.
     pub fn start(&self) {
         let mut manager = self.inner.borrow_mut();
         if manager.is_running() {
@@ -75,13 +75,13 @@ impl FundManager {
         ));
     }
 
-    /// Stops the fund manager from monitoring and topping up the canisters.
+    /// Stops the fund manager from monitoring and funding the canisters.
     pub fn stop(&mut self) {
         let mut manager = self.inner.borrow_mut();
         manager.clear_tracker();
     }
 
-    /// Creates a timer to track the canisters and top them up based on the configuration.
+    /// Creates a timer to track the canisters and fund them based on the configuration.
     fn create_tracker(manager: Rc<RefCell<FundManagerCore>>, delay: Duration) -> TimerId {
         ic_cdk_timers::set_timer(delay, move || {
             spawn(async move {
@@ -121,14 +121,15 @@ impl FundManager {
 
             // Funds the canisters with the needed cycles.
             for (canister_id, needed_cycles) in canisters_to_fund {
-                if let Err(err) =
+                if let Err((err_code, err_msg)) =
                     deposit_cycles(CanisterIdRecord { canister_id }, needed_cycles).await
                 {
                     print(format!(
-                        "Failed to top up canister {} with {} cycles, err: {:?}",
+                        "Failed to fund canister {} with {} cycles, code: {:?} and reason: {:?}",
                         canister_id.to_text(),
                         needed_cycles,
-                        err
+                        err_code,
+                        err_msg
                     ));
                 }
             }

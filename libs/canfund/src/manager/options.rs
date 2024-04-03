@@ -13,7 +13,7 @@ pub struct EstimatedRuntime {
 }
 
 impl Default for EstimatedRuntime {
-    /// The default is to top up the canister when the estimated runtime is 2 days.
+    /// The default is to fund the canister when the estimated runtime is 2 days.
     ///
     /// When the estimated runtime is not available, the fallback threshold is 250B cycles.
     fn default() -> Self {
@@ -33,7 +33,7 @@ impl EstimatedRuntime {
         Self::default()
     }
 
-    /// Sets the estimated runtime in seconds to top up the canister.
+    /// Sets the estimated runtime in seconds to fund the canister if it is below it.
     pub fn with_min_runtime_secs(mut self, min_runtime_secs: u64) -> Self {
         self.min_runtime_secs = min_runtime_secs;
         self
@@ -101,7 +101,7 @@ pub struct CyclesThreshold {
 impl Default for CyclesThreshold {
     /// The default is to fund the canister when the balance is below the threshold of 250B cycles.
     ///
-    /// The canister is topped up with 500B cycles.
+    /// The canister is funded with 500B cycles.
     fn default() -> Self {
         Self {
             min_cycles: 250_000_000_000,  // 250B cycles
@@ -139,7 +139,7 @@ impl CyclesThreshold {
     }
 }
 
-/// The strategy to use when topping up the canister.
+/// The strategy to use for funding the canister.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FundStrategy {
     /// Fund the canister when the balance is below the threshold.
@@ -164,7 +164,7 @@ pub struct FundManagerOptions {
     interval_ms: u64,
     /// Chunk size for when doing a batched fetch of canister balances.
     chunk_size: u8,
-    /// The fund configuration to use when topping up the canister.
+    /// The fund configuration to use for canisters.
     ///
     /// The default is to fund the canister when the balance is below the threshold.
     strategy: FundStrategy,
@@ -192,7 +192,7 @@ impl FundManagerOptions {
         self
     }
 
-    /// Set the fund strategy to use when topping up the canister.
+    /// Set the strategy to use when funding the canister.
     pub fn with_strategy(mut self, strategy: FundStrategy) -> Self {
         self.strategy = strategy;
         self
@@ -209,7 +209,7 @@ impl FundManagerOptions {
         self.interval_ms
     }
 
-    /// Get the fund strategy to use when topping up the canister.
+    /// Get the strategy to use when funding the canister.
     pub fn strategy(&self) -> &FundStrategy {
         &self.strategy
     }
