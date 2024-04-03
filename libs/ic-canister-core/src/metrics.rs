@@ -3,27 +3,12 @@ use std::cell::RefCell;
 use std::collections::{hash_map::Entry, HashMap};
 
 thread_local! {
-  /// The default service name for metrics collection.
-  static DEFAULT_SERVICE_NAME : RefCell<String> = RefCell::new("default".to_string());
-
   /// The metric registries for each service name.
   static REGISTRIES : RefCell<HashMap<String, MetricsRegistry>> = RefCell::new(HashMap::new());
 }
 
 // Exported prometheus types.
 pub use prometheus::labels;
-
-/// Sets the default service name for metrics collection.
-pub fn set_default_service_name(name: &str) {
-    DEFAULT_SERVICE_NAME.with(|default_name| {
-        *default_name.borrow_mut() = name.to_string();
-    });
-}
-
-/// Returns the default service name for metrics collection.
-pub fn get_default_service_name() -> String {
-    DEFAULT_SERVICE_NAME.with(|default_name| default_name.borrow().clone())
-}
 
 /// Executes the given closure with the metric store for the given service name.
 pub fn with_metrics_registry<T, F>(service_name: &str, f: F) -> T
@@ -38,16 +23,6 @@ where
 
         f(registry)
     })
-}
-
-/// Executes the given closure with the default metric store.
-pub fn with_default_metrics_registry<T, F>(f: F) -> T
-where
-    F: FnOnce(&mut MetricsRegistry) -> T,
-{
-    let service_name = DEFAULT_SERVICE_NAME.with(|name| name.borrow().clone());
-
-    with_metrics_registry(&service_name, f)
 }
 
 /// A registry for metrics collection.
@@ -76,12 +51,7 @@ impl MetricsRegistry {
     /// Returns a counter vec metric with the given name and set of label names.
     pub fn counter_vec_mut(&mut self, name: &str, label_names: &[&str]) -> &mut CounterVec {
         match self.metric_counter_vecs.entry(name.to_string()) {
-            Entry::Occupied(entry) => {
-                let counter = entry.into_mut();
-                counter.with_label_values(label_names);
-
-                counter
-            }
+            Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let counter = CounterVec::new(
                     Opts::new(
@@ -184,22 +154,6 @@ mod tests {
     }
 
     #[test]
-    fn test_with_default_metrics_registry() {
-        set_default_service_name("default_registry");
-
-        let result = with_default_metrics_registry(|registry| {
-            let gauge = registry.gauge_mut("test_gauge", "test gauge");
-            gauge.set(10.0);
-
-            registry.export_metrics().unwrap()
-        });
-
-        let output = String::from_utf8(result).unwrap();
-
-        assert!(output.contains("default_registry_test_gauge 10"));
-    }
-
-    #[test]
     fn test_registries_are_independent() {
         with_metrics_registry("first_registry", |registry| {
             let gauge = registry.gauge_mut("test_gauge", "test gauge");
@@ -227,18 +181,16 @@ mod tests {
     }
 
     #[test]
-    fn test_set_default_service_name() {
-        set_default_service_name("default_registry");
-
-        assert_eq!(get_default_service_name(), "default_registry");
-    }
-
-    #[test]
     fn test_remove_counter_vec() {
         let mut registry = MetricsRegistry::new("default".to_string());
 
         let counter = registry.counter_vec_mut("test_counter", &["status"]);
         counter.with(&labels! { "status" => "ok" }).inc();
+
+        let buffer = registry.export_metrics().unwrap();
+        let output = String::from_utf8(buffer).unwrap();
+
+        assert!(output.contains("default_test_counter{status=\"ok\"} 1"));
 
         registry.remove_counter_vec("test_counter");
 
@@ -254,6 +206,11 @@ mod tests {
 
         let gauge = registry.gauge_mut("test_gauge", "test gauge");
         gauge.set(42.0);
+
+        let buffer = registry.export_metrics().unwrap();
+        let output = String::from_utf8(buffer).unwrap();
+
+        assert!(output.contains("default_test_gauge 42"));
 
         registry.remove_gauge("test_gauge");
 
