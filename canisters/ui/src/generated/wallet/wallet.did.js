@@ -129,10 +129,24 @@ export const idlFactory = ({ IDL }) => {
     'Any' : IDL.Null,
     'Resource' : Resource,
   });
-  const CommonSpecifier = IDL.Variant({
-    'Id' : IDL.Vec(UUID),
-    'Any' : IDL.Null,
-    'Group' : IDL.Vec(UUID),
+  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
+  const ProposalSpecifier = IDL.Variant({
+    'EditAccessPolicy' : ResourceSpecifier,
+    'AddUserGroup' : IDL.Null,
+    'RemoveProposalPolicy' : ResourceIds,
+    'AddUser' : IDL.Null,
+    'EditUserGroup' : ResourceIds,
+    'RemoveAddressBookEntry' : ResourceIds,
+    'EditAddressBookEntry' : ResourceIds,
+    'AddProposalPolicy' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
+    'EditProposalPolicy' : ResourceIds,
+    'EditUser' : ResourceIds,
+    'Transfer' : ResourceIds,
+    'EditAccount' : ResourceIds,
+    'AddAddressBookEntry' : IDL.Null,
+    'RemoveUserGroup' : ResourceIds,
+    'AddAccount' : IDL.Null,
   });
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
@@ -140,26 +154,6 @@ export const idlFactory = ({ IDL }) => {
     'Group' : IDL.Vec(UUID),
     'Proposer' : IDL.Null,
     'Owner' : IDL.Null,
-  });
-  const TransferSpecifier = IDL.Record({ 'account' : CommonSpecifier });
-  const AccountSpecifier = CommonSpecifier;
-  const ProposalSpecifier = IDL.Variant({
-    'EditAccessPolicy' : ResourceSpecifier,
-    'AddUserGroup' : IDL.Null,
-    'RemoveProposalPolicy' : CommonSpecifier,
-    'AddUser' : IDL.Null,
-    'EditUserGroup' : CommonSpecifier,
-    'RemoveAddressBookEntry' : CommonSpecifier,
-    'EditAddressBookEntry' : CommonSpecifier,
-    'AddProposalPolicy' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
-    'EditProposalPolicy' : CommonSpecifier,
-    'EditUser' : UserSpecifier,
-    'Transfer' : TransferSpecifier,
-    'EditAccount' : AccountSpecifier,
-    'AddAddressBookEntry' : IDL.Null,
-    'RemoveUserGroup' : CommonSpecifier,
-    'AddAccount' : IDL.Null,
   });
   const MinimumVotes = IDL.Record({
     'minimum' : IDL.Nat16,

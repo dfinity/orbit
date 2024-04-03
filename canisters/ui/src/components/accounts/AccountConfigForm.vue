@@ -64,7 +64,7 @@
           <small class="pt-2">{{ $t('app.account_dialog_transfers_criteria_hint') }}</small>
           <CriteriaBuilder
             v-model="transferPolicy"
-            :specifier="{ Transfer: { account: { Any: null } } }"
+            :specifier="{ Transfer: { Any: null } }"
             :disabled="isViewMode"
             @remove="transferPolicy = undefined"
           />

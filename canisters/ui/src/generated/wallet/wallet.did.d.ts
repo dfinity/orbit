@@ -577,19 +577,19 @@ export type ProposalResourceAction = { 'List' : null } |
   { 'Read' : ResourceId };
 export type ProposalSpecifier = { 'EditAccessPolicy' : ResourceSpecifier } |
   { 'AddUserGroup' : null } |
-  { 'RemoveProposalPolicy' : CommonSpecifier } |
+  { 'RemoveProposalPolicy' : ResourceIds } |
   { 'AddUser' : null } |
-  { 'EditUserGroup' : CommonSpecifier } |
-  { 'RemoveAddressBookEntry' : CommonSpecifier } |
-  { 'EditAddressBookEntry' : CommonSpecifier } |
+  { 'EditUserGroup' : ResourceIds } |
+  { 'RemoveAddressBookEntry' : ResourceIds } |
+  { 'EditAddressBookEntry' : ResourceIds } |
   { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
-  { 'EditProposalPolicy' : CommonSpecifier } |
-  { 'EditUser' : UserSpecifier } |
-  { 'Transfer' : TransferSpecifier } |
-  { 'EditAccount' : AccountSpecifier } |
+  { 'EditProposalPolicy' : ResourceIds } |
+  { 'EditUser' : ResourceIds } |
+  { 'Transfer' : ResourceIds } |
+  { 'EditAccount' : ResourceIds } |
   { 'AddAddressBookEntry' : null } |
-  { 'RemoveUserGroup' : CommonSpecifier } |
+  { 'RemoveUserGroup' : ResourceIds } |
   { 'AddAccount' : null };
 export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Rejected' : null } |
@@ -645,6 +645,8 @@ export type ResourceAction = { 'List' : null } |
   { 'Update' : ResourceId };
 export type ResourceId = { 'Id' : UUID } |
   { 'Any' : null };
+export type ResourceIds = { 'Any' : null } |
+  { 'Ids' : Array<UUID> };
 export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
 export type SettingsResourceAction = { 'Read' : null } |
