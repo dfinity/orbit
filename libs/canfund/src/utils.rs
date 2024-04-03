@@ -81,11 +81,11 @@ mod tests {
     #[test]
     fn test_calc_estimated_cycles_per_sec() {
         let previous_cycles = CyclesBalance {
-            amount: 50_000_000_000,
+            amount: 75_000_000_000,
             timestamp: 10 * 1000 * 1_000_000,
         };
         let current_cycles = CyclesBalance {
-            amount: 75_000_000_000,
+            amount: 50_000_000_000,
             timestamp: 15 * 1000 * 1_000_000,
         };
 
@@ -149,11 +149,11 @@ mod tests {
     #[test]
     fn test_calc_estimated_cycles_per_sec_zero_previous_cycles() {
         let previous_cycles = CyclesBalance {
-            amount: 0,
+            amount: 50_000_000_000,
             timestamp: 0,
         };
         let current_cycles = CyclesBalance {
-            amount: 50_000_000_000,
+            amount: 0,
             timestamp: 10 * 1000 * 1_000_000,
         };
 
