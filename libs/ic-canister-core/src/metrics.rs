@@ -10,6 +10,9 @@ thread_local! {
 // Exported prometheus types.
 pub use prometheus::labels;
 
+use crate::api::{HeaderField, HttpResponse};
+use crate::cdk::api::print;
+
 /// Executes the given closure with the metric store for the given service name.
 pub fn with_metrics_registry<T, F>(service_name: &str, f: F) -> T
 where
@@ -78,12 +81,14 @@ impl MetricsRegistry {
         }
     }
 
-    /// Returns a gauge metric with the given name and helper.
-    pub fn gauge_mut(&mut self, name: &str, helper: &str) -> &mut Gauge {
+    /// Returns a gauge metric with the given name and helper message that explains what
+    /// the gauge is measuring or tracking.
+    pub fn gauge_mut(&mut self, name: &str, helper_message: &str) -> &mut Gauge {
         match self.metric_gauges.entry(name.to_string()) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
-                let gauge = Gauge::new(format!("{}_{}", self.service_name, name), helper).unwrap();
+                let gauge =
+                    Gauge::new(format!("{}_{}", self.service_name, name), helper_message).unwrap();
 
                 self.registry.register(Box::new(gauge.clone())).unwrap();
 
@@ -112,6 +117,34 @@ impl MetricsRegistry {
         encoder.encode(&metrics_family, &mut buffer)?;
 
         Ok(buffer)
+    }
+
+    /// Exports the metrics in the registry to an HTTP response.
+    pub fn export_metrics_as_http_response(&self) -> HttpResponse {
+        let metrics_result = self.export_metrics();
+
+        match metrics_result {
+            Ok(metrics) => HttpResponse {
+                status_code: 200,
+                headers: vec![HeaderField(
+                    "Content-Type".to_string(),
+                    "text/plain".to_string(),
+                )],
+                body: metrics,
+            },
+            Err(err) => {
+                print(format!("Error exporting metrics: {:?}", err));
+
+                HttpResponse {
+                    status_code: 500,
+                    headers: vec![HeaderField(
+                        "Content-Type".to_string(),
+                        "text/plain".to_string(),
+                    )],
+                    body: "500 Internal Server Error".as_bytes().to_owned(),
+                }
+            }
+        }
     }
 }
 

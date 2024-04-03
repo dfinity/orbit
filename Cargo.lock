@@ -788,6 +788,7 @@ dependencies = [
  "prometheus",
  "rand_chacha",
  "serde",
+ "serde_bytes",
  "serde_cbor",
  "serde_json",
  "thiserror",

@@ -19,7 +19,7 @@ pub use http::*;
 #[cfg(test)]
 mod tests {
     use control_panel_api::*;
-    use ic_canister_core::api::ApiResult;
+    use ic_canister_core::api::*;
 
     #[test]
     fn check_candid_interface() {

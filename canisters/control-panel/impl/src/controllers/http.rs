@@ -1,9 +1,5 @@
-use crate::{
-    core::ic_cdk::api::{canister_balance, print},
-    repositories::USER_REPOSITORY,
-    SERVICE_NAME,
-};
-use control_panel_api::{HeaderField, HttpRequest, HttpResponse};
+use crate::{core::ic_cdk::api::canister_balance, repositories::USER_REPOSITORY, SERVICE_NAME};
+use ic_canister_core::api::{HeaderField, HttpRequest, HttpResponse};
 use ic_canister_core::{metrics::with_metrics_registry, repository::Repository};
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
@@ -61,26 +57,8 @@ impl HttpController {
                 .set(canister_balance() as f64);
         });
 
-        let response = with_metrics_registry(SERVICE_NAME, |registry| registry.export_metrics());
-
-        match response {
-            Ok(metrics) => HttpResponse {
-                status_code: 200,
-                headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-                body: metrics,
-            },
-            Err(err) => {
-                print(format!("Error exporting metrics: {:?}", err));
-
-                HttpResponse {
-                    status_code: 500,
-                    headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-                    body: "500 Internal Server Error"
-                        .to_string()
-                        .as_bytes()
-                        .to_owned(),
-                }
-            }
-        }
+        with_metrics_registry(SERVICE_NAME, |registry| {
+            registry.export_metrics_as_http_response()
+        })
     }
 }

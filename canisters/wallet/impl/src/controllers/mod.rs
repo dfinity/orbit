@@ -41,7 +41,7 @@ pub use http::*;
 
 #[cfg(test)]
 mod tests {
-    use ic_canister_core::api::ApiResult;
+    use ic_canister_core::api::*;
     use wallet_api::*;
 
     #[test]
