@@ -68,7 +68,16 @@ impl User {
     }
 
     pub fn can_deploy_wallet(&self) -> ServiceResult<CanDeployWalletResponse> {
-        // TODO: check authorization status once the authorization flow is fully supported
+        match self.subscription_status {
+            UserSubscriptionStatus::Approved => (),
+            UserSubscriptionStatus::Unsubscribed
+            | UserSubscriptionStatus::Pending(_)
+            | UserSubscriptionStatus::Denylisted => {
+                return Ok(CanDeployWalletResponse::NotAllowed(
+                    self.subscription_status.clone().into(),
+                ));
+            }
+        };
         let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
         if self.deployed_wallets.len() >= max_deployed_wallets {
             return Ok(CanDeployWalletResponse::QuotaExceeded);
