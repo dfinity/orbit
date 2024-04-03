@@ -122,7 +122,10 @@ mod tests {
             main_wallet: None,
             last_update_timestamp: 0,
         };
-        repository.insert(UserKey(another_subscribed_user.id), another_subscribed_user.clone());
+        repository.insert(
+            UserKey(another_subscribed_user.id),
+            another_subscribed_user.clone(),
+        );
 
         let all_users = repository.list();
         assert_eq!(all_users.len(), 3);
@@ -130,13 +133,13 @@ mod tests {
         let subscribed_users = repository.get_subscribed_users();
         assert_eq!(subscribed_users.len(), 2);
         let subscribed = SubscribedUser {
-          user_principal: subscribed_user.id,
-          email,
+            user_principal: subscribed_user.id,
+            email,
         };
         assert!(subscribed_users.contains(&subscribed));
         let another_subscribed = SubscribedUser {
-          user_principal: another_subscribed_user.id,
-          email: another_email,
+            user_principal: another_subscribed_user.id,
+            email: another_email,
         };
         assert!(subscribed_users.contains(&another_subscribed));
     }
