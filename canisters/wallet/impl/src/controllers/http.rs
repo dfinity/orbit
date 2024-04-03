@@ -75,7 +75,10 @@ impl HttpController {
                 HttpResponse {
                     status_code: 500,
                     headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-                    body: format!("500 Internal Server Error").as_bytes().to_owned(),
+                    body: "500 Internal Server Error"
+                        .to_string()
+                        .as_bytes()
+                        .to_owned(),
                 }
             }
         }
