@@ -910,12 +910,8 @@ mod benchs {
     use ic_canister_core::{model::ModelKey, utils::timestamp_to_rfc3339};
     use wallet_api::ProposalStatusCodeDTO;
 
-    #[bench(raw)]
-    fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 2000u64;
-        let start_creation_time = 0;
+    fn create_test_proposals(proposals_to_insert: u64) -> u64 {
         let end_creation_time = proposals_to_insert * 1_000_000_000;
-
         for i in 0..proposals_to_insert {
             let mut proposal = mock_proposal();
             proposal.created_timestamp = i * 1_000_000_000;
@@ -948,12 +944,65 @@ mod benchs {
 
         ACCESS_POLICY_REPOSITORY.insert(access_policy.key(), access_policy.to_owned());
 
+        end_creation_time
+    }
+
+    #[bench(raw)]
+    fn service_filter_all_proposals_with_default_filters() -> BenchResult {
+        let end_creation_time = create_test_proposals(2000u64);
+
         canbench_rs::bench_fn(|| {
             spawn(async move {
                 let result = PROPOSAL_SERVICE
                     .list_proposals(
                         wallet_api::ListProposalsInput {
-                            created_from_dt: Some(timestamp_to_rfc3339(&start_creation_time)),
+                            created_from_dt: Some(timestamp_to_rfc3339(&0)),
+                            created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
+                            statuses: Some(vec![
+                                ProposalStatusCodeDTO::Created,
+                                ProposalStatusCodeDTO::Adopted,
+                            ]),
+                            voter_ids: None,
+                            proposer_ids: None,
+                            operation_types: None,
+                            expiration_from_dt: None,
+                            expiration_to_dt: None,
+                            paginate: Some(wallet_api::PaginationInput {
+                                limit: Some(25),
+                                offset: None,
+                            }),
+                            sort_by: Some(wallet_api::ListProposalsSortBy::CreatedAt(
+                                wallet_api::SortDirection::Asc,
+                            )),
+                            only_votable: false,
+                        },
+                        Some(&CallContext::new(Principal::from_slice(&[5; 29]))),
+                    )
+                    .await;
+
+                let paginated_data = result.unwrap();
+
+                if paginated_data.total == 0 {
+                    panic!("No proposals were found with the given filters");
+                }
+            });
+        })
+    }
+
+    #[bench(raw)]
+    fn service_filter_all_proposals_with_creation_time_filters() -> BenchResult {
+        let end_creation_time = create_test_proposals(20000u64);
+
+        // test list_proposals that that 300 proposals as initial set
+
+        canbench_rs::bench_fn(|| {
+            spawn(async move {
+                let result = PROPOSAL_SERVICE
+                    .list_proposals(
+                        wallet_api::ListProposalsInput {
+                            created_from_dt: Some(timestamp_to_rfc3339(
+                                &(end_creation_time - 300 * 1_000_000_000),
+                            )),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
                             statuses: Some(vec![
                                 ProposalStatusCodeDTO::Created,
