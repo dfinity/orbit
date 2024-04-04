@@ -155,6 +155,10 @@ type DeployWalletResult = variant {
   Err : ApiError;
 };
 
+/// The successful result of checking if the caller can deploy a wallet canister.
+/// Returns the remaining number of wallet canisters the caller can still deploy
+/// or a reason why the caller cannot deploy a wallet canister
+/// (bad subscription status or exceeded quota).
 type CanDeployWalletResponse = variant {
   NotAllowed : UserSubscriptionStatus;
   Allowed : nat64;
