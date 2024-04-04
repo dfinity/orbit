@@ -2,10 +2,10 @@ use super::UserService;
 use crate::{
     core::{canister_config, CallContext, INITIAL_WALLET_CYCLES},
     errors::{DeployError, UserError},
+    models::CanDeployWallet,
     services::USER_SERVICE,
 };
 use candid::{Encode, Principal};
-use control_panel_api::CanDeployWalletResponse;
 use ic_canister_core::api::ServiceResult;
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
@@ -33,13 +33,13 @@ impl DeployService {
 
         let can_deploy_wallet_response = user.can_deploy_wallet()?;
         match can_deploy_wallet_response {
-            CanDeployWalletResponse::Allowed(_) => {}
-            CanDeployWalletResponse::QuotaExceeded => {
+            CanDeployWallet::Allowed(_) => {}
+            CanDeployWallet::QuotaExceeded => {
                 return Err(UserError::DeployWalletQuotaExceeded)?;
             }
-            CanDeployWalletResponse::NotAllowed(subscription_status) => {
+            CanDeployWallet::NotAllowed(subscription_status) => {
                 return Err(UserError::BadUserSubscriptionStatus {
-                    subscription_status,
+                    subscription_status: subscription_status.into(),
                 })?;
             }
         }

@@ -1,7 +1,6 @@
 use super::UserWallet;
 use crate::errors::UserError;
 use candid::Principal;
-use control_panel_api::CanDeployWalletResponse;
 use email_address::EmailAddress;
 use ic_canister_core::{
     api::ServiceResult,
@@ -19,6 +18,13 @@ pub enum UserSubscriptionStatus {
     Pending(String), // e-mail address to push notification to
     Approved,
     Denylisted,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum CanDeployWallet {
+    NotAllowed(UserSubscriptionStatus),
+    Allowed(usize),
+    QuotaExceeded,
 }
 
 impl std::fmt::Display for UserSubscriptionStatus {
@@ -67,22 +73,22 @@ impl User {
         UserKey(self.id)
     }
 
-    pub fn can_deploy_wallet(&self) -> ServiceResult<CanDeployWalletResponse> {
+    pub fn can_deploy_wallet(&self) -> ServiceResult<CanDeployWallet> {
         match self.subscription_status {
             UserSubscriptionStatus::Approved => (),
             UserSubscriptionStatus::Unsubscribed
             | UserSubscriptionStatus::Pending(_)
             | UserSubscriptionStatus::Denylisted => {
-                return Ok(CanDeployWalletResponse::NotAllowed(
-                    self.subscription_status.clone().into(),
+                return Ok(CanDeployWallet::NotAllowed(
+                    self.subscription_status.clone(),
                 ));
             }
         };
         let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
         if self.deployed_wallets.len() >= max_deployed_wallets {
-            return Ok(CanDeployWalletResponse::QuotaExceeded);
+            return Ok(CanDeployWallet::QuotaExceeded);
         }
-        Ok(CanDeployWalletResponse::Allowed(
+        Ok(CanDeployWallet::Allowed(
             max_deployed_wallets - self.deployed_wallets.len(),
         ))
     }

@@ -188,6 +188,7 @@ impl UserService {
         let user = self.get_user(&ctx.caller(), ctx)?;
 
         user.can_deploy_wallet()
+            .map(|can_deploy_wallet| can_deploy_wallet.into())
     }
 
     pub async fn set_main_wallet(
