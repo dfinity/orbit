@@ -1,6 +1,7 @@
 //! The fund manager that monitors and funds canister cycles based on the configuration.
 
 use self::{
+    lock::ProcessExecutionLock,
     options::{FundManagerOptions, FundStrategy},
     record::{CanisterRecord, CyclesBalance},
 };
@@ -9,7 +10,10 @@ use crate::{
     utils::calc_estimated_cycles_per_sec,
 };
 use ic_cdk::{
-    api::management_canister::main::{deposit_cycles, CanisterId, CanisterIdRecord},
+    api::{
+        management_canister::main::{deposit_cycles, CanisterId, CanisterIdRecord},
+        time,
+    },
     print, spawn,
 };
 use ic_cdk_timers::TimerId;
@@ -22,21 +26,23 @@ use std::{
     time::Duration,
 };
 
+pub mod lock;
 pub mod options;
 pub mod record;
 
 /// The core features of the fund manager.
 pub struct FundManagerCore {
     /// The canisters that are being monitored by the fund manager.
+    lock: ProcessExecutionLock,
     canisters: HashMap<CanisterId, CanisterRecord>,
     options: FundManagerOptions,
     cycles_fetcher: Arc<dyn FetchCyclesBalance>,
-    tracker: Option<TimerId>,
 }
 
 /// The fund manager that monitors and funds canisters with cycles based on the configuration.
 pub struct FundManager {
     inner: Rc<RefCell<FundManagerCore>>,
+    tracker: Option<TimerId>,
 }
 
 impl Default for FundManager {
@@ -50,6 +56,7 @@ impl FundManager {
     pub fn new() -> Self {
         FundManager {
             inner: FundManagerCore::new(),
+            tracker: None,
         }
     }
 
@@ -94,47 +101,80 @@ impl FundManager {
         self
     }
 
+    /// Returns whether the fund manager has started tracking the canisters.
+    pub fn is_running(&self) -> bool {
+        self.tracker.is_some()
+    }
+
     /// Starts the fund manager to monitor and fund the canisters based on the configuration.
-    pub fn start(&self) {
-        let mut manager = self.inner.borrow_mut();
-        if manager.is_running() {
+    pub fn start(&mut self) {
+        let (is_running, interval_secs) = {
+            let inner = self.inner.borrow();
+            (self.is_running(), inner.options.interval_secs())
+        };
+
+        if is_running {
             return;
         }
 
-        manager.set_tracker(FundManager::create_tracker(
+        self.tracker = Some(FundManager::create_tracker(
             Rc::clone(&self.inner),
-            Duration::from_secs(0),
+            Duration::from_secs(interval_secs),
         ));
     }
 
-    /// Stops the fund manager from monitoring and funding the canisters.
+    /// Stops the fund manager from monitoring and funding the canisters, if it is running.
     pub fn stop(&mut self) {
-        let mut manager = self.inner.borrow_mut();
-        manager.clear_tracker();
+        if let Some(tracker) = self.tracker.take() {
+            ic_cdk_timers::clear_timer(tracker);
+        }
     }
 
     /// Creates a timer to track the canisters and fund them based on the configuration.
-    fn create_tracker(manager: Rc<RefCell<FundManagerCore>>, delay: Duration) -> TimerId {
-        ic_cdk_timers::set_timer(delay, move || {
+    fn create_tracker(manager: Rc<RefCell<FundManagerCore>>, interval: Duration) -> TimerId {
+        let start_immediately = {
+            match interval.is_zero() {
+                true => false,
+                false => !manager.borrow().options.delayed_start(),
+            }
+        };
+
+        if start_immediately {
+            let manager = Rc::clone(&manager);
+            ic_cdk_timers::set_timer(Duration::from_secs(0), move || {
+                spawn(async move {
+                    Self::execute_scheduled_monitoring(manager).await;
+                });
+            });
+        }
+
+        // Schedule the timer to run the monitoring at the specified interval.
+        ic_cdk_timers::set_timer_interval(interval, move || {
+            let manager = Rc::clone(&manager);
             spawn(async move {
-                Self::execute_scheduled_monitoring(Rc::clone(&manager)).await;
-
-                // Reschedules the next execution of the tracker, we do this manually to avoid having to setup
-                // a locking mechanism to prevent concurrent execution of the tracker and to have the ability to
-                // change the interval dynamically.
-                let delay_ms = manager.borrow().options().interval_ms();
-                let tracker = FundManager::create_tracker(
-                    Rc::clone(&manager),
-                    Duration::from_millis(delay_ms),
-                );
-
-                manager.borrow_mut().set_tracker(tracker);
+                Self::execute_scheduled_monitoring(manager).await;
             });
         })
     }
 
     /// Executes the scheduled monitoring of the canisters and fund them if needed.
     async fn execute_scheduled_monitoring(manager: Rc<RefCell<FundManagerCore>>) {
+        // Lock the process execution to prevent concurrent executions, it is dropped automatically
+        // when it goes out of scope.
+        let _lock = {
+            manager.borrow_mut().lock.lock(
+                "execute_scheduled_monitoring"
+                    .to_string()
+                    .as_bytes()
+                    .to_vec(),
+            )
+        };
+
+        if _lock.is_none() {
+            print("Failed to acquire lock for `execute_scheduled_monitoring`, another process is running");
+            return;
+        }
+
         let (all_canister_ids, chunk_size, cycles_fetcher) = {
             let manager_ref = manager.borrow();
             let all_canister_ids: Vec<CanisterId> = manager_ref.canisters.keys().cloned().collect();
@@ -183,7 +223,7 @@ impl FundManager {
             .map(|&canister_id| cycles_fetcher.fetch_cycles_balance(canister_id));
 
         let results = futures::future::join_all(requests).await;
-        let current_time = ic_cdk::api::time();
+        let current_time = time();
 
         for (i, canister_id) in canister_ids.iter().enumerate() {
             match &results[i] {
@@ -226,32 +266,13 @@ impl FundManagerCore {
             canisters: HashMap::new(),
             options: FundManagerOptions::default(),
             cycles_fetcher: Arc::new(FetchCyclesBalanceFromCanisterStatus),
-            tracker: None,
+            lock: ProcessExecutionLock::new(),
         }))
-    }
-
-    /// Returns whether the fund manager has started tracking the canisters.
-    pub fn is_running(&self) -> bool {
-        self.tracker.is_some()
-    }
-
-    /// Sets the tracker for the fund manager.
-    pub fn set_tracker(&mut self, tracker: TimerId) {
-        self.tracker = Some(tracker);
     }
 
     /// Returns the options for the fund manager.
     pub fn options(&self) -> &FundManagerOptions {
         &self.options
-    }
-
-    /// Clears the tracker for the fund manager if it exists.
-    pub fn clear_tracker(&mut self) {
-        if let Some(tracker) = self.tracker.take() {
-            ic_cdk_timers::clear_timer(tracker);
-
-            self.tracker = None;
-        }
     }
 
     /// Configures the fund manager to use the specified cycles fetcher to get the canister cyclesbalance.
@@ -312,6 +333,12 @@ fn calc_needed_cycles(
                 } else {
                     return 0;
                 }
+            }
+
+            // If the current cycles balance is below the min cycles threshold,
+            // fund the canister with the fallback cycles amount.
+            if current.amount <= estimated_runtime.fallback_min_cycles() {
+                return estimated_runtime.fallback_fund_cycles();
             }
 
             // Fund the canister with the cycles needed to run for the estimated runtime, but cap it to the
@@ -378,7 +405,8 @@ mod tests {
         let strategy = FundStrategy::BelowEstimatedRuntime(
             EstimatedRuntime::new()
                 .with_min_runtime_secs(10)
-                .with_fund_runtime_secs(10),
+                .with_fund_runtime_secs(10)
+                .with_fallback_min_cycles(0),
         );
         assert_eq!(calc_needed_cycles(&current, &previous, &strategy), 50);
 
@@ -386,7 +414,8 @@ mod tests {
             EstimatedRuntime::new()
                 .with_min_runtime_secs(10)
                 .with_fund_runtime_secs(10)
-                .with_max_runtime_cycles_fund(30),
+                .with_max_runtime_cycles_fund(30)
+                .with_fallback_min_cycles(0),
         );
         assert_eq!(calc_needed_cycles(&current, &previous, &strategy), 30);
     }

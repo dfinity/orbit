@@ -6,9 +6,11 @@ pub struct EstimatedRuntime {
     fund_runtime_secs: u64,
     /// The maximum cycles to fund the canister with, only used when the estimated runtime is available.
     max_runtime_cycles_fund: u128,
-    /// The fallback min cycles to trigger the funding operation when the estimated runtime is not available.
+    /// The fallback min cycles to trigger the funding operation when the estimated runtime is not available,
+    /// or the cycles balance is below the threshold.
     fallback_min_cycles: u128,
-    /// The fallback cycles to fund the canister with when the estimated runtime is not available.
+    /// The fallback cycles to fund the canister with when the estimated runtime is not available,
+    /// or the cycles balance is below the threshold.
     fallback_fund_cycles: u128,
 }
 
@@ -21,8 +23,8 @@ impl Default for EstimatedRuntime {
             min_runtime_secs: 60 * 60 * 24 * 2,         // 2 days
             fund_runtime_secs: 60 * 60 * 24 * 7,        // 7 days
             max_runtime_cycles_fund: 5_000_000_000_000, // 5T cycles
-            fallback_min_cycles: 250_000_000_000,       // 250B cycles
-            fallback_fund_cycles: 500_000_000_000,      // 500B cycles
+            fallback_min_cycles: 125_000_000_000,       // 125B cycles
+            fallback_fund_cycles: 250_000_000_000,      // 250B cycles
         }
     }
 }
@@ -160,8 +162,10 @@ impl Default for FundStrategy {
 /// The options when initializing the fund manager.
 #[derive(Debug, Clone)]
 pub struct FundManagerOptions {
-    /// The interval in ms to track the canister balance.
-    interval_ms: u64,
+    /// The interval in secs to track the canister balance.
+    interval_secs: u64,
+    /// If the fund manager should start immediately or wait for the interval to pass upon calling `start`.
+    delayed_start: bool,
     /// Chunk size for when doing a batched fetch of canister balances.
     chunk_size: u8,
     /// The fund configuration to use for canisters.
@@ -174,9 +178,10 @@ impl Default for FundManagerOptions {
     /// The default is to track the canister balance daily and use the default fund strategy.
     fn default() -> Self {
         FundManagerOptions {
-            interval_ms: 1_000 * 60 * 60 * 24,
+            interval_secs: 60 * 60 * 24,
             chunk_size: 20,
             strategy: FundStrategy::default(),
+            delayed_start: false,
         }
     }
 }
@@ -186,9 +191,9 @@ impl FundManagerOptions {
         FundManagerOptions::default()
     }
 
-    /// Set the interval in ms to track the canister balance.
-    pub fn with_interval_ms(mut self, interval_ms: u64) -> Self {
-        self.interval_ms = interval_ms;
+    /// Set the interval in secs to track the canister balance.
+    pub fn with_interval_secs(mut self, interval_secs: u64) -> Self {
+        self.interval_secs = interval_secs;
         self
     }
 
@@ -204,9 +209,15 @@ impl FundManagerOptions {
         self
     }
 
-    /// Get the interval in ms to track the canister balance.
-    pub fn interval_ms(&self) -> u64 {
-        self.interval_ms
+    /// Set if the fund manager should start immediately or wait for the interval to pass upon calling `start`.
+    pub fn with_delayed_start(mut self, delayed_start: bool) -> Self {
+        self.delayed_start = delayed_start;
+        self
+    }
+
+    /// Get the interval in secs to track the canister balance.
+    pub fn interval_secs(&self) -> u64 {
+        self.interval_secs
     }
 
     /// Get the strategy to use when funding the canister.
@@ -217,6 +228,11 @@ impl FundManagerOptions {
     /// Get the chunk size for when doing a batched fetch of canister balances.
     pub fn chunk_size(&self) -> u8 {
         self.chunk_size
+    }
+
+    /// Get if the fund manager should start immediately or wait for the interval to pass upon calling `start`.
+    pub fn delayed_start(&self) -> bool {
+        self.delayed_start
     }
 }
 
@@ -236,17 +252,17 @@ mod tests {
     #[test]
     fn test_default_fund_manager_options() {
         let options = FundManagerOptions::default();
-        assert_eq!(options.interval_ms, 1_000 * 60 * 60 * 24);
+        assert_eq!(options.interval_secs, 60 * 60 * 24);
         assert_eq!(options.strategy, FundStrategy::default());
     }
 
     #[test]
     fn test_fund_manager_options_builder() {
         let options = FundManagerOptions::new()
-            .with_interval_ms(1_000 * 60 * 60)
+            .with_interval_secs(60 * 60)
             .with_strategy(FundStrategy::BelowEstimatedRuntime(EstimatedRuntime::new()));
 
-        assert_eq!(options.interval_ms, 1_000 * 60 * 60);
+        assert_eq!(options.interval_secs, 60 * 60);
         assert_eq!(
             options.strategy,
             FundStrategy::BelowEstimatedRuntime(EstimatedRuntime::new())
@@ -266,8 +282,8 @@ mod tests {
         assert_eq!(runtime.min_runtime_secs, 60 * 60 * 24 * 2);
         assert_eq!(runtime.fund_runtime_secs, 60 * 60 * 24 * 7);
         assert_eq!(runtime.max_runtime_cycles_fund, 5_000_000_000_000);
-        assert_eq!(runtime.fallback_min_cycles, 250_000_000_000);
-        assert_eq!(runtime.fallback_fund_cycles, 500_000_000_000);
+        assert_eq!(runtime.fallback_min_cycles, 125_000_000_000);
+        assert_eq!(runtime.fallback_fund_cycles, 250_000_000_000);
     }
 
     #[test]
