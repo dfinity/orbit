@@ -18,14 +18,16 @@ pub struct WalletAssetDTO {
     pub metadata: Vec<MetadataDTO>,
 }
 
-/// Wallet configuration data transfer object (DTO).
+/// The capabilities of the wallet canister.
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ConfigDTO {
+pub struct CapabilitiesDTO {
+    /// The current version of the canister.
+    pub version: String,
     /// The list of assets that are supported by the wallet canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
     pub supported_assets: Vec<WalletAssetDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GetConfigResponse {
-    pub config: ConfigDTO,
+pub struct CapabilitiesResponse {
+    pub capabilities: CapabilitiesDTO,
 }

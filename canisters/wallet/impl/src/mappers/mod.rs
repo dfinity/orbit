@@ -1,12 +1,16 @@
 //! Mappers are used to facilitate the conversion between api types and internal types.
 
-pub mod wallet;
+pub mod system;
 
 pub mod account;
+
+pub mod asset;
 
 pub mod address_book;
 
 pub mod blockchain;
+
+pub mod criteria;
 
 pub mod policy;
 
@@ -47,3 +51,7 @@ mod proposal_vote;
 pub mod access_policy;
 
 pub mod metadata;
+
+pub mod resource;
+
+pub mod authorization;

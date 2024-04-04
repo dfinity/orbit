@@ -1,6 +1,6 @@
-use crate::mappers::access_policy::FetchAccountBalancesInputRef;
+use crate::mappers::authorization::FetchAccountBalancesInputRef;
 use crate::mappers::HelperMapper;
-use crate::models::access_policy::{AccountResourceAction, Resource};
+use crate::models::resource::{AccountResourceAction, Resource};
 use crate::{
     core::middlewares::{authorize, call_context},
     services::AccountService,
@@ -68,10 +68,7 @@ impl AccountController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::Account(AccountResourceAction::List)]))]
     async fn list_accounts(&self, input: ListAccountsInput) -> ApiResult<ListAccountsResponse> {
         let ctx = call_context();
-        let result = self
-            .account_service
-            .list_accounts(input, Some(&ctx))
-            .await?;
+        let result = self.account_service.list_accounts(input, &ctx).await?;
 
         let mut privileges = Vec::new();
         for account in &result.items {

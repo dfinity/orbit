@@ -1,4 +1,4 @@
-use crate::models::{access_policy::Resource, Proposal};
+use crate::models::{resource::Resource, Proposal};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
 
@@ -34,7 +34,7 @@ impl Proposal {
 mod tests {
     use super::*;
     use crate::models::{
-        access_policy::UserResourceAction, proposal_test_utils::mock_proposal, AddUserOperation,
+        proposal_test_utils::mock_proposal, resource::UserResourceAction, AddUserOperation,
         AddUserOperationInput, ProposalOperation, UserStatus,
     };
     use ic_stable_structures::Storable;

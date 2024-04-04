@@ -1,5 +1,5 @@
 use crate::mappers::HelperMapper;
-use crate::models::access_policy::{Resource, ResourceAction};
+use crate::models::resource::{Resource, ResourceAction};
 use crate::models::ListAddressBookEntriesInput;
 use crate::{
     core::middlewares::{authorize, call_context},

@@ -8,7 +8,7 @@ use crate::{
     errors::AddressBookError,
     mappers::address_book::AddressBookMapper,
     models::{
-        access_policy::{Resource, ResourceAction, ResourceId},
+        resource::{Resource, ResourceAction, ResourceId},
         AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
         AddressBookEntryId, EditAddressBookEntryOperationInput, ListAddressBookEntriesInput,
         RemoveAddressBookEntryOperationInput,
@@ -181,7 +181,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         TestContext {
             repository: AddressBookRepository::default(),

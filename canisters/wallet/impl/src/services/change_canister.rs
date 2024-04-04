@@ -1,9 +1,6 @@
-use super::ProposalEditInput;
 use crate::{
-    core::{upgrader_canister_id, CanisterConfig},
     errors::ChangeCanisterError,
-    models::ProposalStatus,
-    services::{ProposalService, PROPOSAL_SERVICE},
+    services::{SystemService, SYSTEM_SERVICE},
 };
 use candid::CandidType;
 use candid::Principal;
@@ -17,12 +14,12 @@ use std::sync::Arc;
 
 lazy_static! {
     pub static ref CHANGE_CANISTER_SERVICE: Arc<ChangeCanisterService> =
-        Arc::new(ChangeCanisterService::new(Arc::clone(&PROPOSAL_SERVICE)));
+        Arc::new(ChangeCanisterService::new(Arc::clone(&SYSTEM_SERVICE)));
 }
 
 #[derive(Debug)]
 pub struct ChangeCanisterService {
-    proposal_service: Arc<ProposalService>,
+    system_service: Arc<SystemService>,
 }
 
 #[derive(Clone, CandidType)]
@@ -32,13 +29,13 @@ struct ChangeCanisterParams {
 }
 
 impl ChangeCanisterService {
-    pub fn new(proposal_service: Arc<ProposalService>) -> Self {
-        Self { proposal_service }
+    pub fn new(system_service: Arc<SystemService>) -> Self {
+        Self { system_service }
     }
 
     /// Execute an upgrade of the wallet by requesting the upgrader to perform it on our behalf.
     pub async fn upgrade_wallet(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
-        let upgrader_canister_id = upgrader_canister_id();
+        let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
 
         ic_cdk::call(
             upgrader_canister_id,
@@ -62,7 +59,7 @@ impl ChangeCanisterService {
         module: &[u8],
         arg: Option<Vec<u8>>,
     ) -> ServiceResult<(), ChangeCanisterError> {
-        let upgrader_canister_id = upgrader_canister_id();
+        let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
         self.install_canister(
             upgrader_canister_id,
             CanisterInstallMode::Upgrade,
@@ -127,25 +124,5 @@ impl ChangeCanisterService {
         })?;
 
         install_code_result
-    }
-
-    /// Verify and mark an upgrade as being performed successfully.
-    pub async fn update_change_canister_proposal_status(
-        &self,
-        cfg: &CanisterConfig,
-        status: ProposalStatus,
-    ) -> ServiceResult<()> {
-        let proposal_id = cfg
-            .change_canister_proposal
-            .ok_or(ChangeCanisterError::MissingChangeCanisterProposal)?;
-
-        self.proposal_service
-            .edit_proposal(ProposalEditInput {
-                proposal_id,
-                status: Some(status),
-            })
-            .await?;
-
-        Ok(())
     }
 }

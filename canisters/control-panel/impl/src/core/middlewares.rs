@@ -1,5 +1,9 @@
 use super::CallContext;
-use crate::core::ic_cdk;
+use crate::{core::ic_cdk, SERVICE_NAME};
+use ic_canister_core::{
+    api::ApiResult,
+    metrics::{labels, with_metrics_registry},
+};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -42,4 +46,19 @@ where
             );
         }
     }
+}
+
+pub fn use_status_metric<T>(metric_key: &str, result: &ApiResult<T>)
+where
+    T: std::fmt::Debug,
+{
+    with_metrics_registry(SERVICE_NAME, |registry| {
+        let counter = registry.counter_vec_mut(metric_key, &["status"]);
+        let status = match result {
+            Ok(_) => "ok",
+            Err(_) => "fail",
+        };
+
+        counter.with(&labels! { "status" => status }).inc();
+    });
 }

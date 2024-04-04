@@ -1,4 +1,7 @@
-use crate::core::ic_cdk::{api::id as self_canister_id, caller};
+use crate::core::ic_cdk::{
+    api::{id as self_canister_id, is_controller},
+    caller,
+};
 use candid::Principal;
 
 #[derive(Clone, Debug)]
@@ -32,5 +35,10 @@ impl CallContext {
     /// Checks if the caller is an admin.
     pub fn is_admin(&self) -> bool {
         self._caller == self_canister_id()
+    }
+
+    /// Checks if the caller is a controller.
+    pub fn is_controller(&self) -> bool {
+        is_controller(&self._caller)
     }
 }

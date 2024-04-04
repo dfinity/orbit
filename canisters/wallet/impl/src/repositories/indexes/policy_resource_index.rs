@@ -69,7 +69,7 @@ impl IndexRepository<PolicyResourceIndex, UUID> for PolicyResourceIndexRepositor
 
 #[cfg(test)]
 mod tests {
-    use crate::models::access_policy::{Resource, UserResourceAction};
+    use crate::models::resource::{Resource, UserResourceAction};
 
     use super::*;
 

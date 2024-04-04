@@ -22,7 +22,7 @@
     <VTextField
       v-model="model.address_owner"
       name="name"
-      :label="$t('terms.address_owner')"
+      :label="$t('terms.name')"
       variant="underlined"
       :rules="[requiredRule]"
       class="mb-2"

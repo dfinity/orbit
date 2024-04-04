@@ -1,4 +1,4 @@
-use crate::{CriteriaDTO, MetadataDTO, PaginationInput, UuidDTO};
+use crate::{AllowDTO, ApprovalCriteriaInput, CriteriaDTO, MetadataDTO, PaginationInput, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -11,31 +11,28 @@ pub struct AccountCallerPrivilegesDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
     pub id: UuidDTO,
-    pub owners: Vec<UuidDTO>,
     pub name: String,
     pub address: String,
     pub blockchain: String,
     pub standard: String,
     pub symbol: String,
     pub decimals: u32,
-    pub policies: AccountPoliciesDTO,
     pub balance: Option<AccountBalanceInfoDTO>,
     pub metadata: Vec<MetadataDTO>,
+    pub transfer_approval_policy: Option<CriteriaDTO>,
+    pub update_approval_policy: Option<CriteriaDTO>,
     pub last_modification_timestamp: String,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccountPoliciesDTO {
-    pub transfer: Option<CriteriaDTO>,
-    pub edit: Option<CriteriaDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationInput {
     pub account_id: UuidDTO,
-    pub owners: Option<Vec<UuidDTO>>,
-    pub policies: Option<AccountPoliciesDTO>,
     pub name: Option<String>,
+    pub read_access_policy: Option<AllowDTO>,
+    pub update_access_policy: Option<AllowDTO>,
+    pub transfer_access_policy: Option<AllowDTO>,
+    pub update_approval_policy: Option<ApprovalCriteriaInput>,
+    pub transfer_approval_policy: Option<ApprovalCriteriaInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -46,11 +43,14 @@ pub struct EditAccountOperationDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    pub owners: Vec<UuidDTO>,
-    pub policies: AccountPoliciesDTO,
     pub blockchain: String,
     pub standard: String,
     pub metadata: Vec<MetadataDTO>,
+    pub read_access_policy: AllowDTO,
+    pub update_access_policy: AllowDTO,
+    pub transfer_access_policy: AllowDTO,
+    pub update_approval_policy: Option<CriteriaDTO>,
+    pub transfer_approval_policy: Option<CriteriaDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

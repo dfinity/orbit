@@ -6,13 +6,10 @@ use crate::{
         specifier::{
             Match, ProposalSpecifier, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
         },
-        Account, EvaluationStatus, Proposal, ProposalId, ProposalOperation, ProposalStatusCode,
-        User, UserId, UserStatus,
+        EvaluationStatus, Proposal, ProposalId, ProposalOperation, ProposalStatusCode, User,
+        UserId, UserStatus,
     },
-    repositories::{
-        policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY,
-        USER_REPOSITORY,
-    },
+    repositories::{policy::PROPOSAL_POLICY_REPOSITORY, PROPOSAL_REPOSITORY, USER_REPOSITORY},
 };
 use anyhow::Context;
 use ic_canister_core::{repository::Repository, types::UUID};
@@ -220,26 +217,14 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                 }
                 UserSpecifier::Owner => {
                     match &proposal.operation {
-                        ProposalOperation::Transfer(operation) => {
-                            if let Some(account) = ACCOUNT_REPOSITORY
-                                .get(&Account::key(operation.input.from_account_id))
-                            {
-                                possible_voters.users.extend(account.owners.to_owned());
-                            }
-                        }
                         ProposalOperation::EditUser(operation) => {
                             possible_voters
                                 .users
                                 .insert(operation.input.user_id.to_owned());
                         }
-                        ProposalOperation::EditAccount(operation) => {
-                            if let Some(account) =
-                                ACCOUNT_REPOSITORY.get(&Account::key(operation.input.account_id))
-                            {
-                                possible_voters.users.extend(account.owners.to_owned());
-                            }
-                        }
-                        ProposalOperation::AddAccount(_)
+                        ProposalOperation::EditAccount(_)
+                        | ProposalOperation::Transfer(_)
+                        | ProposalOperation::AddAccount(_)
                         | ProposalOperation::AddAddressBookEntry(_)
                         | ProposalOperation::AddProposalPolicy(_)
                         | ProposalOperation::AddUser(_)
@@ -257,7 +242,9 @@ impl EvaluateCriteria<PossibleVoters, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                     Ok(possible_voters)
                 }
             },
-            Criteria::HasAddressBookMetadata(_) => Ok(possible_voters),
+            Criteria::HasAddressInAddressBook | Criteria::HasAddressBookMetadata(_) => {
+                Ok(possible_voters)
+            }
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 for criteria in criterias.iter() {
                     let result = self.evaluate((proposal.clone(), Arc::new(criteria.clone())));
@@ -384,7 +371,7 @@ impl EvaluateCriteria<bool, (Arc<ProposalId>, Arc<UserId>, Arc<Criteria>), Evalu
 
                 Ok(can_vote)
             }
-            Criteria::HasAddressBookMetadata(_) => Ok(false),
+            Criteria::HasAddressInAddressBook | Criteria::HasAddressBookMetadata(_) => Ok(false),
             Criteria::And(criterias) | Criteria::Or(criterias) => {
                 let proposal = &proposal_id;
                 let voter_id = &voter_id;

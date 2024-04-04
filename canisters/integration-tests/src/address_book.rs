@@ -5,10 +5,9 @@ use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
 use pocket_ic::update_candid_as;
 use wallet_api::{
-    AccountPoliciesDTO, AddAccountOperationInput, AddAddressBookEntryOperationInput,
-    AddressChainInput, ApiErrorDTO, ChangeMetadataDTO, CriteriaDTO,
-    EditAddressBookEntryOperationInput, GetAddressBookEntryInputDTO,
-    GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
+    AddAccountOperationInput, AddAddressBookEntryOperationInput, AddressChainInput, AllowDTO,
+    ApiErrorDTO, ChangeMetadataDTO, CriteriaDTO, EditAddressBookEntryOperationInput,
+    GetAddressBookEntryInputDTO, GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
     ListAddressBookEntriesResponseDTO, MetadataDTO, ProposalOperationDTO, ProposalOperationInput,
     ProposalStatusDTO, RemoveAddressBookEntryOperationInput, TransferOperationInput,
 };
@@ -260,17 +259,29 @@ fn check_address_book_for_transfer() {
 
     // create account for admin user
     let add_account = ProposalOperationInput::AddAccount(AddAccountOperationInput {
-        owners: vec![admin_user.id],
         name: "admin".to_string(),
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
-        policies: AccountPoliciesDTO {
-            transfer: Some(CriteriaDTO::HasAddressBookMetadata(MetadataDTO {
-                key: "kyc".to_string(),
-                value: "true".to_string(),
-            })),
-            edit: None,
+        read_access_policy: AllowDTO {
+            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![admin_user.id.clone()],
         },
+        update_access_policy: AllowDTO {
+            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![admin_user.id.clone()],
+        },
+        transfer_access_policy: AllowDTO {
+            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![admin_user.id.clone()],
+        },
+        update_approval_policy: Some(CriteriaDTO::AutoAdopted),
+        transfer_approval_policy: Some(CriteriaDTO::HasAddressBookMetadata(MetadataDTO {
+            key: "kyc".to_string(),
+            value: "true".to_string(),
+        })),
         metadata: vec![],
     });
     let add_account_proposal =

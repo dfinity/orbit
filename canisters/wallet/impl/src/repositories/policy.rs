@@ -1,7 +1,7 @@
 use crate::{
     core::{with_memory_manager, Memory, PROPOSAL_POLICIES_MEMORY_ID},
     models::{
-        access_policy::Resource, indexes::policy_resource_index::PolicyResourceIndexCriteria,
+        indexes::policy_resource_index::PolicyResourceIndexCriteria, resource::Resource,
         ProposalPolicy,
     },
 };
@@ -94,10 +94,10 @@ impl ProposalPolicyRepository {
 mod tests {
     use super::*;
     use crate::models::{
-        access_policy::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         criteria::Criteria,
         indexes::policy_resource_index::PolicyResourceIndex,
         proposal_policy_test_utils::mock_proposal_policy,
+        resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         specifier::ProposalSpecifier,
     };
 

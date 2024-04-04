@@ -1,5 +1,5 @@
 <template>
-  <slot v-if="failed" name="error">
+  <slot v-if="failed" name="error" :error-msg="props.errorMsg" :error-details="errorDetails">
     <VAlert type="error" variant="tonal" density="compact">
       {{ props.errorMsg }}
     </VAlert>
@@ -16,6 +16,7 @@ const loading = ref<boolean>(false);
 const failed = ref<boolean>(false);
 const data = ref<T | undefined>();
 const reloading = ref<boolean>(false);
+const errorDetails = ref<string>();
 
 const props = withDefaults(
   defineProps<{
@@ -121,6 +122,7 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
       failed.value = true;
     }
 
+    errorDetails.value = `${err}`;
     emit('failed', err);
   } finally {
     working.value = false;

@@ -1,10 +1,10 @@
 use super::HelperMapper;
 use crate::models::{
-    access_policy::{
+    criteria::{Criteria, Percentage},
+    resource::{
         AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction, Resource,
         ResourceAction, ResourceId, ResourceIds, UserResourceAction,
     },
-    criteria::{Criteria, Percentage},
     specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
     ProposalPolicy, ProposalPolicyCallerPrivileges,
 };
@@ -30,6 +30,7 @@ impl From<Criteria> for CriteriaDTO {
             Criteria::HasAddressBookMetadata(metadata) => {
                 CriteriaDTO::HasAddressBookMetadata(metadata.into())
             }
+            Criteria::HasAddressInAddressBook => CriteriaDTO::HasAddressInAddressBook,
             Criteria::Or(criterias) => {
                 CriteriaDTO::Or(criterias.into_iter().map(Into::into).collect())
             }
@@ -54,6 +55,7 @@ impl From<CriteriaDTO> for Criteria {
             CriteriaDTO::HasAddressBookMetadata(metadata) => {
                 Criteria::HasAddressBookMetadata(metadata.into())
             }
+            CriteriaDTO::HasAddressInAddressBook => Criteria::HasAddressInAddressBook,
             CriteriaDTO::Or(criterias) => {
                 Criteria::Or(criterias.into_iter().map(Into::into).collect())
             }

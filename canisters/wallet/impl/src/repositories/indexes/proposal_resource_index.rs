@@ -1,8 +1,8 @@
 use crate::{
     core::{with_memory_manager, Memory, PROPOSAL_RESOURCE_INDEX_MEMORY_ID},
     models::{
-        access_policy::Resource,
         indexes::proposal_resource_index::{ProposalResourceIndex, ProposalResourceIndexCriteria},
+        resource::Resource,
     },
 };
 use ic_canister_core::repository::IndexRepository;
@@ -57,7 +57,7 @@ impl IndexRepository<ProposalResourceIndex, Resource> for ProposalResourceIndexR
 
 #[cfg(test)]
 mod tests {
-    use crate::models::access_policy::UserResourceAction;
+    use crate::models::resource::UserResourceAction;
 
     use super::*;
 

@@ -1,4 +1,4 @@
-use crate::models::{access_policy::Resource, ProposalPolicy};
+use crate::models::{resource::Resource, ProposalPolicy};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
 
@@ -32,8 +32,8 @@ impl ProposalPolicy {
 mod tests {
     use super::*;
     use crate::models::{
-        access_policy::{AccountResourceAction, UserResourceAction},
         proposal_policy_test_utils::mock_proposal_policy,
+        resource::{AccountResourceAction, UserResourceAction},
     };
     use ic_stable_structures::Storable;
 

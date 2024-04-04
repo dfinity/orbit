@@ -93,6 +93,8 @@ pub struct ListUsersResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum UserPrivilege {
+    Capabilities,
+    SystemInfo,
     ListAccounts,
     AddAccount,
     ListUsers,

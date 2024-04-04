@@ -9,7 +9,7 @@ import {
   AddUserGroupOperationInput,
   AddUserOperationInput,
   ChangeCanisterOperationInput,
-  Config,
+  Capabilities,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
   EditAccountOperationInput,
@@ -104,6 +104,30 @@ export class WalletService {
 
   async getAccessPolicy(input: GetAccessPolicyInput): Promise<ExtractOk<GetAccessPolicyResult>> {
     const result = await this.actor.get_access_policy(input);
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getAccountAccessPolicies(accountId: UUID): Promise<ExtractOk<ListAccessPoliciesResult>> {
+    const result = await this.actor.list_access_policies({
+      resources: [
+        [
+          { Account: { Read: { Id: accountId } } },
+          { Account: { Transfer: { Id: accountId } } },
+          { Account: { Update: { Id: accountId } } },
+        ],
+      ],
+      paginate: [
+        {
+          limit: [3],
+          offset: [],
+        },
+      ],
+    });
+
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
@@ -272,14 +296,14 @@ export class WalletService {
     return result.Ok;
   }
 
-  async config(): Promise<Config> {
-    const result = await this.actor.config();
+  async capabilities(): Promise<Capabilities> {
+    const result = await this.actor.capabilities();
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.config;
+    return result.Ok.capabilities;
   }
 
   async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {

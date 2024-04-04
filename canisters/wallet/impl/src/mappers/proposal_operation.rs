@@ -1,17 +1,18 @@
 use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
-        access_policy::{
+        resource::{
             AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
             Resource, ResourceAction, ResourceId, UserResourceAction,
         },
-        Account, AccountPoliciesInput, AddAccountOperation, AddAddressBookEntryOperation,
+        Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddProposalPolicyOperation,
-        AddProposalPolicyOperationInput, AddUserOperation, AddressBookEntry,
-        ChangeCanisterOperation, ChangeCanisterTarget, EditAccessPolicyOperation,
-        EditAccessPolicyOperationInput, EditAccountOperation, EditAddressBookEntryOperation,
-        EditProposalPolicyOperation, EditProposalPolicyOperationInput, EditUserGroupOperation,
-        EditUserOperation, ProposalOperation, RemoveAddressBookEntryOperation,
+        AddProposalPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
+        ChangeCanisterOperation, ChangeCanisterOperationInput, ChangeCanisterTarget,
+        EditAccessPolicyOperation, EditAccessPolicyOperationInput, EditAccountOperation,
+        EditAccountOperationInput, EditAddressBookEntryOperation, EditProposalPolicyOperation,
+        EditProposalPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
+        EditUserOperationInput, ProposalOperation, RemoveAddressBookEntryOperation,
         RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput,
         RemoveUserGroupOperation, TransferOperation, User,
     },
@@ -22,13 +23,10 @@ use crate::{
 use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{
-    AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
-    AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
-    ChangeCanisterOperationInput, ChangeCanisterTargetDTO, EditAccountOperationDTO,
-    EditAccountOperationInput, EditAddressBookEntryOperationDTO,
-    EditAddressBookEntryOperationInput, EditUserOperationDTO, EditUserOperationInput, NetworkDTO,
-    ProposalOperationDTO, RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
-    TransferOperationDTO, TransferOperationInput,
+    AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
+    ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, EditAccountOperationDTO,
+    EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO, ProposalOperationDTO,
+    RemoveAddressBookEntryOperationDTO, TransferOperationDTO,
 };
 
 impl TransferOperation {
@@ -39,7 +37,7 @@ impl TransferOperation {
                 id: self.input.network.clone(),
                 name: self.input.network.clone(),
             },
-            input: TransferOperationInput {
+            input: wallet_api::TransferOperationInput {
                 from_account_id: Uuid::from_bytes(self.input.from_account_id)
                     .hyphenated()
                     .to_string(),
@@ -59,40 +57,20 @@ impl TransferOperation {
     }
 }
 
-impl From<AccountPoliciesInput> for wallet_api::AccountPoliciesDTO {
-    fn from(input: AccountPoliciesInput) -> wallet_api::AccountPoliciesDTO {
-        wallet_api::AccountPoliciesDTO {
-            transfer: input.transfer.map(|criteria| criteria.into()),
-            edit: input.edit.map(|criteria| criteria.into()),
-        }
-    }
-}
-
-impl From<wallet_api::AccountPoliciesDTO> for AccountPoliciesInput {
-    fn from(input: wallet_api::AccountPoliciesDTO) -> AccountPoliciesInput {
-        AccountPoliciesInput {
-            transfer: input.transfer.map(|criteria| criteria.into()),
-            edit: input.edit.map(|criteria| criteria.into()),
-        }
-    }
-}
-
 impl AddAccountOperation {
     pub fn to_dto(self, account: Option<Account>) -> AddAccountOperationDTO {
         AddAccountOperationDTO {
             account: account.map(|account: Account| account.to_dto()),
-            input: AddAccountOperationInput {
+            input: wallet_api::AddAccountOperationInput {
                 name: self.input.name,
-                owners: self
-                    .input
-                    .owners
-                    .iter()
-                    .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
-                    .collect(),
-                policies: self.input.policies.into(),
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
                 metadata: self.input.metadata.into_vec_dto(),
+                read_access_policy: self.input.read_access_policy.into(),
+                transfer_access_policy: self.input.transfer_access_policy.into(),
+                update_access_policy: self.input.update_access_policy.into(),
+                transfer_approval_policy: self.input.transfer_approval_policy.map(Into::into),
+                update_approval_policy: self.input.update_approval_policy.map(Into::into),
             },
         }
     }
@@ -111,25 +89,20 @@ impl From<AddAccountOperationDTO> for AddAccountOperation {
     }
 }
 
-impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput {
-    fn from(input: AddAccountOperationInput) -> crate::models::AddAccountOperationInput {
-        crate::models::AddAccountOperationInput {
+impl From<wallet_api::AddAccountOperationInput> for AddAccountOperationInput {
+    fn from(input: wallet_api::AddAccountOperationInput) -> AddAccountOperationInput {
+        AddAccountOperationInput {
             name: input.name,
-            owners: input
-                .owners
-                .iter()
-                .map(|owner| {
-                    *HelperMapper::to_uuid(owner.clone())
-                        .expect("Invalid owner id")
-                        .as_bytes()
-                })
-                .collect(),
-            policies: input.policies.into(),
             blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
                 .expect("Invalid blockchain"),
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
                 .expect("Invalid blockchain standard"),
             metadata: input.metadata.into(),
+            read_access_policy: input.read_access_policy.into(),
+            update_access_policy: input.update_access_policy.into(),
+            transfer_access_policy: input.transfer_access_policy.into(),
+            transfer_approval_policy: input.transfer_approval_policy.map(Into::into),
+            update_approval_policy: input.update_approval_policy.map(Into::into),
         }
     }
 }
@@ -137,19 +110,48 @@ impl From<AddAccountOperationInput> for crate::models::AddAccountOperationInput 
 impl From<EditAccountOperation> for EditAccountOperationDTO {
     fn from(operation: EditAccountOperation) -> EditAccountOperationDTO {
         EditAccountOperationDTO {
-            input: EditAccountOperationInput {
+            input: wallet_api::EditAccountOperationInput {
                 account_id: Uuid::from_bytes(operation.input.account_id)
                     .hyphenated()
                     .to_string(),
                 name: operation.input.name,
-                owners: operation.input.owners.map(|owners| {
-                    owners
-                        .iter()
-                        .map(|owner| Uuid::from_bytes(*owner).hyphenated().to_string())
-                        .collect()
-                }),
-                policies: operation.input.policies.map(|policies| policies.into()),
+                read_access_policy: operation
+                    .input
+                    .read_access_policy
+                    .map(|policy| policy.into()),
+                transfer_access_policy: operation
+                    .input
+                    .transfer_access_policy
+                    .map(|policy| policy.into()),
+                update_access_policy: operation
+                    .input
+                    .update_access_policy
+                    .map(|policy| policy.into()),
+                transfer_approval_policy: operation
+                    .input
+                    .transfer_approval_policy
+                    .map(|policy| policy.into()),
+                update_approval_policy: operation
+                    .input
+                    .update_approval_policy
+                    .map(|policy| policy.into()),
             },
+        }
+    }
+}
+
+impl From<wallet_api::EditAccountOperationInput> for EditAccountOperationInput {
+    fn from(input: wallet_api::EditAccountOperationInput) -> EditAccountOperationInput {
+        EditAccountOperationInput {
+            account_id: *HelperMapper::to_uuid(input.account_id)
+                .expect("Invalid account id")
+                .as_bytes(),
+            name: input.name,
+            read_access_policy: input.read_access_policy.map(|policy| policy.into()),
+            transfer_access_policy: input.transfer_access_policy.map(|policy| policy.into()),
+            update_access_policy: input.update_access_policy.map(|policy| policy.into()),
+            transfer_approval_policy: input.transfer_approval_policy.map(|policy| policy.into()),
+            update_approval_policy: input.update_approval_policy.map(|policy| policy.into()),
         }
     }
 }
@@ -192,7 +194,7 @@ impl From<wallet_api::AddAddressBookEntryOperationInput> for AddAddressBookEntry
 impl From<EditAddressBookEntryOperation> for EditAddressBookEntryOperationDTO {
     fn from(operation: EditAddressBookEntryOperation) -> EditAddressBookEntryOperationDTO {
         EditAddressBookEntryOperationDTO {
-            input: EditAddressBookEntryOperationInput {
+            input: wallet_api::EditAddressBookEntryOperationInput {
                 address_book_entry_id: Uuid::from_bytes(operation.input.address_book_entry_id)
                     .hyphenated()
                     .to_string(),
@@ -209,7 +211,7 @@ impl From<EditAddressBookEntryOperation> for EditAddressBookEntryOperationDTO {
 impl From<RemoveAddressBookEntryOperation> for RemoveAddressBookEntryOperationDTO {
     fn from(operation: RemoveAddressBookEntryOperation) -> RemoveAddressBookEntryOperationDTO {
         RemoveAddressBookEntryOperationDTO {
-            input: RemoveAddressBookEntryOperationInput {
+            input: wallet_api::RemoveAddressBookEntryOperationInput {
                 address_book_entry_id: Uuid::from_bytes(operation.input.address_book_entry_id)
                     .hyphenated()
                     .to_string(),
@@ -222,7 +224,7 @@ impl AddUserOperation {
     pub fn to_dto(self, user: Option<User>) -> AddUserOperationDTO {
         AddUserOperationDTO {
             user: user.map(|user| user.into()),
-            input: AddUserOperationInput {
+            input: wallet_api::AddUserOperationInput {
                 name: self.input.name,
                 identities: self.input.identities,
                 groups: self
@@ -240,7 +242,7 @@ impl AddUserOperation {
 impl From<EditUserOperation> for EditUserOperationDTO {
     fn from(operation: EditUserOperation) -> EditUserOperationDTO {
         EditUserOperationDTO {
-            input: EditUserOperationInput {
+            input: wallet_api::EditUserOperationInput {
                 id: Uuid::from_bytes(operation.input.user_id)
                     .hyphenated()
                     .to_string(),
@@ -258,9 +260,9 @@ impl From<EditUserOperation> for EditUserOperationDTO {
     }
 }
 
-impl From<AddUserOperationInput> for crate::models::AddUserOperationInput {
-    fn from(input: AddUserOperationInput) -> crate::models::AddUserOperationInput {
-        crate::models::AddUserOperationInput {
+impl From<wallet_api::AddUserOperationInput> for AddUserOperationInput {
+    fn from(input: wallet_api::AddUserOperationInput) -> AddUserOperationInput {
+        AddUserOperationInput {
             name: input.name,
             identities: input.identities,
             groups: input
@@ -277,9 +279,9 @@ impl From<AddUserOperationInput> for crate::models::AddUserOperationInput {
     }
 }
 
-impl From<EditUserOperationInput> for crate::models::EditUserOperationInput {
-    fn from(input: EditUserOperationInput) -> crate::models::EditUserOperationInput {
-        crate::models::EditUserOperationInput {
+impl From<wallet_api::EditUserOperationInput> for EditUserOperationInput {
+    fn from(input: wallet_api::EditUserOperationInput) -> EditUserOperationInput {
+        EditUserOperationInput {
             user_id: *HelperMapper::to_uuid(input.id)
                 .expect("Invalid user id")
                 .as_bytes(),
@@ -324,9 +326,9 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
     }
 }
 
-impl From<crate::models::ChangeCanisterOperationInput> for ChangeCanisterOperationInput {
-    fn from(input: crate::models::ChangeCanisterOperationInput) -> ChangeCanisterOperationInput {
-        ChangeCanisterOperationInput {
+impl From<ChangeCanisterOperationInput> for wallet_api::ChangeCanisterOperationInput {
+    fn from(input: ChangeCanisterOperationInput) -> wallet_api::ChangeCanisterOperationInput {
+        wallet_api::ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
             arg: input.arg,
@@ -334,9 +336,9 @@ impl From<crate::models::ChangeCanisterOperationInput> for ChangeCanisterOperati
     }
 }
 
-impl From<ChangeCanisterOperationInput> for crate::models::ChangeCanisterOperationInput {
-    fn from(input: ChangeCanisterOperationInput) -> crate::models::ChangeCanisterOperationInput {
-        crate::models::ChangeCanisterOperationInput {
+impl From<wallet_api::ChangeCanisterOperationInput> for ChangeCanisterOperationInput {
+    fn from(input: wallet_api::ChangeCanisterOperationInput) -> ChangeCanisterOperationInput {
+        ChangeCanisterOperationInput {
             target: input.target.into(),
             module: input.module,
             arg: input.arg,

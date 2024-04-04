@@ -1,12 +1,10 @@
-use super::access_policy::{
-    AccountResourceAction, Resource, ResourceId, ResourceIds, UserResourceAction,
-};
+use super::resource::{Resource, ResourceId, ResourceIds, UserResourceAction};
 use super::{
-    Account, MetadataItem, Proposal, ProposalId, ProposalKey, ProposalOperation,
-    ProposalOperationType,
+    MetadataItem, Proposal, ProposalId, ProposalKey, ProposalOperation, ProposalOperationType,
 };
 use crate::models::user::User;
-use crate::repositories::{ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY};
+use crate::repositories::{ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY};
+
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use anyhow::anyhow;
@@ -151,25 +149,6 @@ impl Match<UserInvolvedInCriteriaForProposalResource> for UserMatcher {
             UserSpecifier::Owner => {
                 for resource in input.proposal_operation_resources {
                     let is_match = match resource {
-                        Resource::Account(action) => match action {
-                            AccountResourceAction::Transfer(account_resource)
-                            | AccountResourceAction::Update(account_resource) => {
-                                match account_resource {
-                                    ResourceId::Any => false, // not a real match
-                                    ResourceId::Id(from_account_id) => {
-                                        match ACCOUNT_REPOSITORY.get(&Account::key(from_account_id))
-                                        {
-                                            Some(account) => {
-                                                account.owners.contains(&input.user_id)
-                                            }
-                                            None => false,
-                                        }
-                                    }
-                                }
-                            }
-
-                            _ => false,
-                        },
                         Resource::User(UserResourceAction::Update(user_resource)) => {
                             match user_resource {
                                 ResourceId::Any => false, // not a real match
@@ -337,19 +316,21 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
 
 #[cfg(test)]
 mod tests {
+
     use crate::{
         models::{
-            access_policy::ResourceIds,
+            access_policy::Allow,
             criteria::Criteria,
             proposal_test_utils::mock_proposal,
+            resource::ResourceIds,
             specifier::{
                 AccountMatcher, Match, ProposalMatcher, ProposalSpecifier,
                 UserInvolvedInCriteriaForProposalResource, UserMatcher, UserSpecifier,
             },
-            AccountPoliciesInput, AddAccountOperation, AddAccountOperationInput, AddUserOperation,
-            AddUserOperationInput, Blockchain, EditAccountOperation, EditAccountOperationInput,
-            EditUserOperation, EditUserOperationInput, Metadata, ProposalKey, ProposalOperation,
-            TransferOperation, TransferOperationInput, UserStatus,
+            AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
+            Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
+            EditUserOperationInput, Metadata, ProposalKey, ProposalOperation, TransferOperation,
+            TransferOperationInput, UserStatus,
         },
         repositories::PROPOSAL_REPOSITORY,
     };
@@ -372,14 +353,14 @@ mod tests {
                     account_id: None,
                     input: AddAccountOperationInput {
                         name: "account-1".into(),
-                        owners: vec![],
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: Metadata::default(),
-                        policies: AccountPoliciesInput {
-                            transfer: Some(Criteria::AutoAdopted),
-                            edit: Some(Criteria::AutoAdopted),
-                        },
+                        transfer_approval_policy: Some(Criteria::AutoAdopted),
+                        update_approval_policy: Some(Criteria::AutoAdopted),
+                        read_access_policy: Allow::authenticated(),
+                        update_access_policy: Allow::authenticated(),
+                        transfer_access_policy: Allow::authenticated(),
                     },
                 }),
                 ProposalSpecifier::AddAccount,
@@ -400,9 +381,12 @@ mod tests {
                 ProposalOperation::EditAccount(EditAccountOperation {
                     input: EditAccountOperationInput {
                         account_id: [0; 16],
-                        owners: None,
-                        policies: None,
                         name: None,
+                        read_access_policy: None,
+                        update_access_policy: None,
+                        transfer_access_policy: None,
+                        transfer_approval_policy: None,
+                        update_approval_policy: None,
                     },
                 }),
                 ProposalSpecifier::EditAccount(ResourceIds::Any),

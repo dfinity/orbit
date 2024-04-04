@@ -6,9 +6,9 @@ use crate::{
         CallContext,
     },
     errors::UserError,
-    mappers::{UserMapper, USER_PRIVILEGES},
+    mappers::{authorization::USER_PRIVILEGES, UserMapper},
     models::{
-        access_policy::{Resource, ResourceId, UserResourceAction},
+        resource::{Resource, ResourceId, UserResourceAction},
         AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges, UserId,
         ADMIN_GROUP_ID,
     },
@@ -260,7 +260,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         TestContext {
             repository: UserRepository::default(),

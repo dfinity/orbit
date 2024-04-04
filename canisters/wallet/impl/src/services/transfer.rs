@@ -1,10 +1,13 @@
 use super::{AccountService, UserService};
 use crate::{
-    core::CallContext,
+    core::{authorization::Authorization, CallContext},
     errors::{AccountError, TransferError},
     mappers::HelperMapper,
-    models::{Account, Transfer, TransferId},
-    repositories::{AccountRepository, TransferRepository},
+    models::{
+        resource::{AccountResourceAction, Resource, ResourceId},
+        Transfer, TransferId,
+    },
+    repositories::TransferRepository,
 };
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, utils::rfc3339_to_timestamp};
@@ -15,7 +18,6 @@ use wallet_api::ListAccountTransfersInput;
 pub struct TransferService {
     user_service: UserService,
     account_service: AccountService,
-    account_repository: AccountRepository,
     transfer_repository: TransferRepository,
 }
 
@@ -72,17 +74,14 @@ impl TransferService {
 
     fn assert_transfer_access(&self, transfer: &Transfer, ctx: &CallContext) -> ServiceResult<()> {
         let caller_user = self.user_service.get_user_by_identity(&ctx.caller())?;
-        let account_key = Account::key(transfer.from_account);
-        let account = self.account_repository.get(&account_key).ok_or({
-            AccountError::AccountNotFound {
-                id: Uuid::from_bytes(transfer.from_account)
-                    .hyphenated()
-                    .to_string(),
-            }
-        })?;
         let is_transfer_creator = caller_user.id == transfer.initiator_user;
-        let is_account_owner = account.owners.contains(&caller_user.id);
-        if !is_transfer_creator && !is_account_owner {
+        let has_account_access = Authorization::is_allowed(
+            ctx,
+            &Resource::Account(AccountResourceAction::Read(ResourceId::Id(
+                transfer.from_account,
+            ))),
+        );
+        if !is_transfer_creator && !has_account_access {
             Err(AccountError::Forbidden)?
         }
 
@@ -97,7 +96,7 @@ mod tests {
         core::test_utils,
         models::{
             account_test_utils::mock_account, transfer_test_utils::mock_transfer,
-            user_test_utils::mock_user, User,
+            user_test_utils::mock_user, Account, User,
         },
         repositories::{ACCOUNT_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY},
     };
@@ -112,7 +111,7 @@ mod tests {
     }
 
     fn setup() -> TestContext {
-        test_utils::init_canister_config();
+        test_utils::init_canister_system();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
         let mut user = mock_user();
@@ -120,8 +119,7 @@ mod tests {
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        let mut account = mock_account();
-        account.owners.push(user.id);
+        let account = mock_account();
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 
@@ -156,8 +154,7 @@ mod tests {
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        let mut account = mock_account();
-        account.owners.push(user.id);
+        let account = mock_account();
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 

@@ -1,7 +1,7 @@
 //! Core utility features for the wallet canister.
 
-mod config;
-pub use config::*;
+mod assets;
+pub use assets::*;
 
 mod constants;
 pub use constants::*;
@@ -13,8 +13,6 @@ mod call_context;
 pub use call_context::*;
 
 pub mod middlewares;
-
-pub mod metrics;
 
 #[cfg(not(test))]
 pub use ic_canister_core::cdk as ic_cdk;
@@ -33,3 +31,16 @@ pub mod evaluation;
 pub mod init;
 pub mod proposal;
 pub mod utils;
+
+#[cfg(test)]
+pub mod test_utils {
+    use crate::core::write_system_info;
+    use crate::models::system::SystemInfo;
+
+    pub fn init_canister_system() -> SystemInfo {
+        let system = SystemInfo::default();
+        write_system_info(system.clone());
+
+        system
+    }
+}

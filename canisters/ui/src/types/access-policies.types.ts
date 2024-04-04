@@ -8,7 +8,7 @@ export enum ResourceTypeEnum {
   AccessPolicy = 'AccessPolicy',
   ProposalPolicy = 'ProposalPolicy',
   ChangeCanister = 'ChangeCanister',
-  Settings = 'Settings',
+  System = 'System',
   Proposal = 'Proposal',
   AddressBook = 'AddressBook',
 }

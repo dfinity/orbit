@@ -51,6 +51,12 @@ export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type UUID = string;
+export interface UpdateWaitingListInput {
+  'users' : Array<Principal>,
+  'new_status' : UserSubscriptionStatus,
+}
+export type UpdateWaitingListResult = { 'Ok' : null } |
+  { 'Err' : ApiError };
 export interface User {
   'id' : Principal,
   'wallets' : Array<UserWallet>,
@@ -58,6 +64,10 @@ export interface User {
 }
 export type UserId = UUID;
 export type UserIdentityID = Principal;
+export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
+  { 'Approved' : null } |
+  { 'Denylisted' : null } |
+  { 'Pending' : null };
 export interface UserWallet { 'name' : [] | [string], 'canister_id' : WalletID }
 export type WalletID = Principal;
 export interface _SERVICE {
@@ -72,6 +82,10 @@ export interface _SERVICE {
   'subscribe_to_waiting_list' : ActorMethod<
     [string],
     SubscribeToWaitingListResult
+  >,
+  'update_waiting_list' : ActorMethod<
+    [UpdateWaitingListInput],
+    UpdateWaitingListResult
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

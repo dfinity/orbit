@@ -56,6 +56,25 @@ type SubscribeToWaitingListResult = variant {
   Err : ApiError;
 };
 
+type UserSubscriptionStatus = variant {
+  Unsubscribed;
+  Pending;
+  Approved;
+  Denylisted;
+};
+
+type UpdateWaitingListInput = record {
+  users : vec principal;
+  new_status : UserSubscriptionStatus;
+};
+
+type UpdateWaitingListResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The wallet information.
 type UserWallet = record {
   // The id associated with the wallet.
@@ -182,6 +201,8 @@ service : (opt CanisterInstall) -> {
   // Subscribe the user associated with the caller to the waiting list.
   // Takes the user's e-mail address to which notifications can be pushed.
   subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
+  // Updates the status of users on the waiting list.
+  update_waiting_list : (input : UpdateWaitingListInput) -> (UpdateWaitingListResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.

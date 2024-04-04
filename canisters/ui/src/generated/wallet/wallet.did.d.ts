@@ -14,7 +14,8 @@ export interface Account {
   'id' : UUID,
   'decimals' : number,
   'balance' : [] | [AccountBalanceInfo],
-  'owners' : Array<UUID>,
+  'update_approval_policy' : [] | [ProposalPolicyCriteria],
+  'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
   'blockchain' : string,
@@ -22,7 +23,6 @@ export interface Account {
   'last_modification_timestamp' : TimestampRFC3339,
   'standard' : string,
   'symbol' : AssetSymbol,
-  'policies' : AccountPolicies,
 }
 export interface AccountBalance {
   'account_id' : UUID,
@@ -41,10 +41,6 @@ export interface AccountCallerPrivileges {
   'can_edit' : boolean,
 }
 export interface AccountMetadata { 'key' : string, 'value' : string }
-export interface AccountPolicies {
-  'edit' : [] | [ProposalPolicyCriteria],
-  'transfer' : [] | [ProposalPolicyCriteria],
-}
 export type AccountResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
   { 'Create' : null } |
@@ -56,12 +52,15 @@ export interface AddAccountOperation {
   'input' : AddAccountOperationInput,
 }
 export interface AddAccountOperationInput {
-  'owners' : Array<UUID>,
+  'transfer_access_policy' : Allow,
+  'update_approval_policy' : [] | [ProposalPolicyCriteria],
+  'read_access_policy' : Allow,
+  'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
+  'update_access_policy' : Allow,
   'blockchain' : string,
   'standard' : string,
-  'policies' : AccountPolicies,
 }
 export interface AddAddressBookEntryOperation {
   'address_book_entry' : [] | [AddressBookEntry],
@@ -117,6 +116,8 @@ export interface Allow {
   'auth_scope' : AuthScope,
   'users' : Array<UUID>,
 }
+export type ApprovalPolicyCriteriaInput = { 'Set' : ProposalPolicyCriteria } |
+  { 'Remove' : null };
 export interface ApprovalThreshold {
   'threshold' : number,
   'voters' : UserSpecifier,
@@ -131,6 +132,12 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
+export interface Capabilities {
+  'version' : string,
+  'supported_assets' : Array<WalletAsset>,
+}
+export type CapabilitiesResult = { 'Ok' : { 'capabilities' : Capabilities } } |
+  { 'Err' : Error };
 export type ChangeAddressBookMetadata = {
     'OverrideSpecifiedBy' : Array<AddressBookMetadata>
   } |
@@ -153,7 +160,6 @@ export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
-export interface Config { 'supported_assets' : Array<WalletAsset> }
 export interface CreateProposalInput {
   'title' : [] | [string],
   'execution_plan' : [] | [ProposalExecutionSchedule],
@@ -181,9 +187,12 @@ export interface EditAccessPolicyOperationInput {
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
   'account_id' : UUID,
-  'owners' : [] | [Array<UUID>],
+  'transfer_access_policy' : [] | [Allow],
+  'update_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
+  'read_access_policy' : [] | [Allow],
+  'transfer_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
   'name' : [] | [string],
-  'policies' : [] | [AccountPolicies],
+  'update_access_policy' : [] | [Allow],
 }
 export interface EditAddressBookEntryOperation {
   'input' : EditAddressBookEntryOperationInput,
@@ -246,8 +255,6 @@ export type GetAddressBookEntryResult = {
       'address_book_entry' : AddressBookEntry,
     }
   } |
-  { 'Err' : Error };
-export type GetConfigResult = { 'Ok' : { 'config' : Config } } |
   { 'Err' : Error };
 export interface GetNextVotableProposalInput {
   'excluded_proposal_ids' : Array<UUID>,
@@ -569,6 +576,7 @@ export interface ProposalPolicyCallerPrivileges {
 export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'And' : Array<ProposalPolicyCriteria> } |
   { 'Not' : ProposalPolicyCriteria } |
+  { 'HasAddressInAddressBook' : null } |
   { 'HasAddressBookMetadata' : AddressBookMetadata } |
   { 'MinimumVotes' : MinimumVotes } |
   { 'ApprovalThreshold' : ApprovalThreshold } |
@@ -629,9 +637,9 @@ export interface RemoveUserGroupOperation {
   'input' : RemoveUserGroupOperationInput,
 }
 export interface RemoveUserGroupOperationInput { 'user_group_id' : UUID }
-export type Resource = { 'User' : UserResourceAction } |
+export type Resource = { 'System' : SystemResourceAction } |
+  { 'User' : UserResourceAction } |
   { 'ProposalPolicy' : ResourceAction } |
-  { 'Settings' : SettingsResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'Proposal' : ProposalResourceAction } |
@@ -649,11 +657,28 @@ export type ResourceIds = { 'Any' : null } |
   { 'Ids' : Array<UUID> };
 export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
-export type SettingsResourceAction = { 'Read' : null } |
-  { 'ReadConfig' : null };
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
+export interface SystemInfo {
+  'last_upgrade_timestamp' : TimestampRFC3339,
+  'version' : string,
+  'cycles' : bigint,
+  'upgrader_id' : Principal,
+}
+export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
+  { 'Err' : Error };
+export interface SystemInit {
+  'admins' : [] | [Array<Principal>],
+  'upgrader_wasm_module' : Uint8Array | number[],
+}
+export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
+  { 'Init' : SystemInit };
+export type SystemResourceAction = { 'SystemInfo' : null } |
+  { 'Capabilities' : null };
+export interface SystemUpgrade {
+  'upgrader_wasm_module' : [] | [Uint8Array | number[]],
+}
 export type TimestampRFC3339 = string;
 export interface Transfer {
   'id' : UUID,
@@ -732,6 +757,8 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListAccounts' : null } |
   { 'ListAccessPolicies' : null } |
   { 'ListAddressBookEntries' : null } |
+  { 'SystemInfo' : null } |
+  { 'Capabilities' : null } |
   { 'AddAccount' : null };
 export type UserResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
@@ -764,21 +791,8 @@ export interface WalletAsset {
   'standard' : string,
   'symbol' : AssetSymbol,
 }
-export interface WalletInit {
-  'owners' : [] | [Array<Principal>],
-  'upgrader_wasm_module' : Uint8Array | number[],
-}
-export type WalletInstall = { 'Upgrade' : WalletUpgrade } |
-  { 'Init' : WalletInit };
-export interface WalletSettings {
-  'owners' : Array<User>,
-  'last_upgrade_timestamp' : TimestampRFC3339,
-}
-export type WalletSettingsResult = { 'Ok' : { 'settings' : WalletSettings } } |
-  { 'Err' : Error };
-export interface WalletUpgrade { 'owners' : [] | [Array<Principal>] }
 export interface _SERVICE {
-  'config' : ActorMethod<[], GetConfigResult>,
+  'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,
   'fetch_account_balances' : ActorMethod<
     [FetchAccountBalancesInput],
@@ -836,8 +850,8 @@ export interface _SERVICE {
     MarkNotificationReadResult
   >,
   'me' : ActorMethod<[], MeResult>,
+  'system_info' : ActorMethod<[], SystemInfoResult>,
   'vote_on_proposal' : ActorMethod<[VoteOnProposalInput], VoteOnProposalResult>,
-  'wallet_settings' : ActorMethod<[], WalletSettingsResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

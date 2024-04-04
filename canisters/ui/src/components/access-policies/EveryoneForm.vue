@@ -1,13 +1,9 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
-    <VRadioGroup
-      v-model="model"
-      :label="$t('access_policies.allow.everyone_edit_label')"
-      class="everyone_radio_group"
-    >
+    <VRadioGroup v-model="model" class="everyone_radio_group">
       <VRadio
         :disabled="isViewMode"
-        :label="$t('access_policies.allow.notset')"
+        :label="$t('access_policies.allow.restricted')"
         :value="AuthScopeEnum.Restrictred"
       />
       <VRadio
@@ -17,7 +13,7 @@
       />
       <VRadio
         :disabled="isViewMode"
-        :label="$t('access_policies.allow.anyone')"
+        :label="$t('access_policies.allow.public')"
         :value="AuthScopeEnum.Public"
       />
     </VRadioGroup>

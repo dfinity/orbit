@@ -1,4 +1,4 @@
-use super::{AccountBalance, Blockchain, BlockchainStandard, UserId};
+use super::{AccountBalance, Blockchain, BlockchainStandard};
 use crate::errors::AccountError;
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
@@ -36,31 +36,24 @@ pub struct Account {
     pub decimals: u32,
     /// The account name (e.g. `My Main Account`)
     pub name: String,
-    /// The account policies to enforce when interacting with the account.
-    ///
-    /// Policies here are non exaustive, this means that the account can have other policies that are enforced
-    /// by the system that are globally defined.
-    pub policies: AccountPolicies,
-    /// The account owners, which are a list of user ids.
-    ///
-    /// If the account has no owners, it means that it is a system account and
-    /// only admins of the system can operate on it.
-    pub owners: Vec<UserId>,
     /// The account balance, which is the amount of the asset that the account holds.
     pub balance: Option<AccountBalance>,
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
     pub metadata: Metadata,
+    /// The account transfer policy id, which is a UUID.
+    ///
+    /// This policy is non exaustive, this means that the account can have other policies that are enforced
+    /// by the system that are globally defined.
+    pub transfer_approval_policy_id: Option<UUID>,
+    /// The account update policy id, which is a UUID.
+    ///
+    /// This policy is non exaustive, this means that the account can have other policies that are enforced
+    /// by the system that are globally defined.
+    pub update_approval_policy_id: Option<UUID>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AccountPolicies {
-    pub transfer_policy_id: Option<UUID>,
-    pub edit_policy_id: Option<UUID>,
 }
 
 #[storable]
@@ -93,19 +86,6 @@ fn validate_symbol(symbol: &str) -> ModelValidatorResult<AccountError> {
     Ok(())
 }
 
-fn validate_owners(owners: &[UUID]) -> ModelValidatorResult<AccountError> {
-    if (owners.len() < Account::OWNERS_RANGE.0 as usize)
-        || (owners.len() > Account::OWNERS_RANGE.1 as usize)
-    {
-        return Err(AccountError::InvalidOwnersRange {
-            min_owners: Account::OWNERS_RANGE.0,
-            max_owners: Account::OWNERS_RANGE.1,
-        });
-    }
-
-    Ok(())
-}
-
 fn validate_address(address: &str) -> ModelValidatorResult<AccountError> {
     if (address.len() < Account::ADDRESS_RANGE.0 as usize)
         || (address.len() > Account::ADDRESS_RANGE.1 as usize)
@@ -124,7 +104,6 @@ impl ModelValidator<AccountError> for Account {
         self.metadata.validate()?;
         validate_symbol(&self.symbol)?;
         validate_address(&self.address)?;
-        validate_owners(&self.owners)?;
 
         Ok(())
     }
@@ -240,50 +219,6 @@ mod tests {
 
         assert!(result.is_ok());
     }
-
-    #[test]
-    fn fail_owners_too_many_entries() {
-        let mut account = mock_account();
-        account.owners = vec![[0; 16]; Account::OWNERS_RANGE.1 as usize + 1];
-
-        let result = validate_owners(&account.owners);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AccountError::InvalidOwnersRange {
-                min_owners: 1,
-                max_owners: 10
-            }
-        );
-    }
-
-    #[test]
-    fn fail_owners_too_little_entries() {
-        let mut account = mock_account();
-        account.owners = vec![[0; 16]; Account::OWNERS_RANGE.0 as usize - 1];
-
-        let result = validate_owners(&account.owners);
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AccountError::InvalidOwnersRange {
-                min_owners: 1,
-                max_owners: 10
-            }
-        );
-    }
-
-    #[test]
-    fn test_owners_validation() {
-        let mut account = mock_account();
-        account.owners = vec![[0; 16]];
-
-        let result = validate_owners(&account.owners);
-
-        assert!(result.is_ok());
-    }
 }
 
 #[cfg(test)]
@@ -301,15 +236,12 @@ pub mod account_test_utils {
             blockchain: Blockchain::InternetComputer,
             decimals: 0u32,
             name: "foo".to_string(),
-            owners: vec![],
-            policies: AccountPolicies {
-                transfer_policy_id: None,
-                edit_policy_id: None,
-            },
             standard: BlockchainStandard::Native,
             last_modification_timestamp: 0,
             metadata: Metadata::mock(),
             symbol: "ICP".to_string(),
+            transfer_approval_policy_id: None,
+            update_approval_policy_id: None,
         }
     }
 

@@ -1,5 +1,5 @@
 use crate::types::UUID;
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Debug};
 
 /// A repository is a generic interface for storing and retrieving data.
 pub trait Repository<Key, Value> {

@@ -1,4 +1,4 @@
-use crate::{MetadataDTO, PaginationInput, ResourceDTO, ResourceIdsDTO, UuidDTO};
+use crate::{resource::ResourceDTO, MetadataDTO, PaginationInput, ResourceIdsDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -54,11 +54,18 @@ pub struct MinimumVotesDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ApprovalCriteriaInput {
+    Remove,
+    Set(CriteriaDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CriteriaDTO {
     AutoAdopted,
     ApprovalThreshold(ApprovalThresholdDTO),
     MinimumVotes(MinimumVotesDTO),
     HasAddressBookMetadata(MetadataDTO),
+    HasAddressInAddressBook,
     Or(Vec<CriteriaDTO>),
     And(Vec<CriteriaDTO>),
     Not(Box<CriteriaDTO>),

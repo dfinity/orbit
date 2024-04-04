@@ -3,10 +3,6 @@ use crate::{
     core::ic_cdk::api::time,
     errors::UserError,
     models::{
-        access_policy::{
-            AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
-            ProposalResourceAction, Resource, ResourceAction, UserResourceAction,
-        },
         AddUserOperationInput, DisplayUser, EditUserOperationInput, User, UserCallerPrivileges,
     },
     repositories::USER_GROUP_REPOSITORY,
@@ -17,7 +13,7 @@ use ic_canister_core::{
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
 use uuid::Uuid;
-use wallet_api::{BasicUserDTO, DisplayUserDTO, UserDTO, UserPrivilege};
+use wallet_api::{BasicUserDTO, DisplayUserDTO, UserDTO};
 
 #[derive(Default, Clone, Debug)]
 pub struct UserMapper {}
@@ -95,46 +91,6 @@ impl From<UserDTO> for User {
             last_modification_timestamp: rfc3339_to_timestamp(
                 user.last_modification_timestamp.as_str(),
             ),
-        }
-    }
-}
-
-pub const USER_PRIVILEGES: [UserPrivilege; 13] = [
-    UserPrivilege::ListUsers,
-    UserPrivilege::AddUser,
-    UserPrivilege::ListAccounts,
-    UserPrivilege::AddAccount,
-    UserPrivilege::ListAccessPolicies,
-    UserPrivilege::ListProposalPolicies,
-    UserPrivilege::AddProposalPolicy,
-    UserPrivilege::ListUserGroups,
-    UserPrivilege::AddUserGroup,
-    UserPrivilege::ListAddressBookEntries,
-    UserPrivilege::AddAddressBookEntry,
-    UserPrivilege::ChangeCanister,
-    UserPrivilege::ListProposals,
-];
-
-impl From<UserPrivilege> for Resource {
-    fn from(privilege: UserPrivilege) -> Self {
-        match privilege {
-            UserPrivilege::ListUsers => Resource::User(UserResourceAction::List),
-            UserPrivilege::AddUser => Resource::User(UserResourceAction::Create),
-            UserPrivilege::ListAccounts => Resource::Account(AccountResourceAction::List),
-            UserPrivilege::AddAccount => Resource::Account(AccountResourceAction::Create),
-            UserPrivilege::ListAccessPolicies => {
-                Resource::AccessPolicy(AccessPolicyResourceAction::Read)
-            }
-            UserPrivilege::ListProposalPolicies => Resource::ProposalPolicy(ResourceAction::List),
-            UserPrivilege::AddProposalPolicy => Resource::ProposalPolicy(ResourceAction::Create),
-            UserPrivilege::ListUserGroups => Resource::UserGroup(ResourceAction::List),
-            UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
-            UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
-            UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
-            UserPrivilege::ChangeCanister => {
-                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
-            }
-            UserPrivilege::ListProposals => Resource::Proposal(ProposalResourceAction::List),
         }
     }
 }

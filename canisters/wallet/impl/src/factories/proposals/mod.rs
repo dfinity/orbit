@@ -2,7 +2,7 @@ use crate::{
     core::generate_uuid_v4,
     errors::{ProposalError, ProposalExecuteError},
     models::{Proposal, ProposalOperation},
-    services::{access_policy::ACCESS_POLICY_SERVICE, PROPOSAL_POLICY_SERVICE},
+    services::{access_policy::ACCESS_POLICY_SERVICE, PROPOSAL_POLICY_SERVICE, SYSTEM_SERVICE},
 };
 use async_trait::async_trait;
 use ic_canister_core::types::UUID;
@@ -245,7 +245,11 @@ impl ProposalFactory {
                 Box::new(EditUserProposalExecute::new(proposal, operation))
             }
             ProposalOperation::ChangeCanister(operation) => {
-                Box::new(ChangeCanisterProposalExecute::new(proposal, operation))
+                Box::new(ChangeCanisterProposalExecute::new(
+                    proposal,
+                    operation,
+                    Arc::clone(&SYSTEM_SERVICE),
+                ))
             }
             ProposalOperation::EditAccessPolicy(operation) => {
                 Box::new(EditAccessPolicyProposalExecute::new(

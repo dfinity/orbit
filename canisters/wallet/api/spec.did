@@ -71,12 +71,18 @@ type MinimumVotes = record {
   minimum : nat16;
 };
 
+type ApprovalPolicyCriteriaInput = variant {
+  Remove;
+  Set : ProposalPolicyCriteria;
+};
+
 // Defines the various types criterias that can be used in a proposal evaluation.
 type ProposalPolicyCriteria = variant {
   AutoAdopted;
   ApprovalThreshold : ApprovalThreshold;
   MinimumVotes : MinimumVotes;
   HasAddressBookMetadata : AddressBookMetadata;
+  HasAddressInAddressBook;
   Or : vec ProposalPolicyCriteria;
   And : vec ProposalPolicyCriteria;
   Not : ProposalPolicyCriteria;
@@ -268,12 +274,18 @@ type TransferOperation = record {
 type EditAccountOperationInput = record {
   // The account id that will be edited.
   account_id : UUID;
-  // The updated list of users that own the account.
-  owners : opt vec UUID;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
-  // The updated policies applied to the account by the account owners.
-  policies : opt AccountPolicies;
+  // Who can read the account information.
+  read_access_policy : opt Allow;
+  // Who can request updates to the account.
+  update_access_policy : opt Allow;
+  // Who can request transfers from the account.
+  transfer_access_policy : opt Allow;
+  // The approval policy for updates to the account.
+  update_approval_policy : opt ApprovalPolicyCriteriaInput;
+  // The approval policy for transfers from the account.
+  transfer_approval_policy : opt ApprovalPolicyCriteriaInput;
 };
 
 type EditAccountOperation = record {
@@ -285,16 +297,22 @@ type EditAccountOperation = record {
 type AddAccountOperationInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : text;
-  // The list of users that own of the account.
-  owners : vec UUID;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
   standard : text;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
-  // The policies applied to the account by the account owners.
-  policies : AccountPolicies;
+  // Who can read the account information.
+  read_access_policy : Allow;
+  // Who can request updates to the account.
+  update_access_policy : Allow;
+  // Who can request transfers from the account.
+  transfer_access_policy : Allow;
+  // The approval policy for updates to the account.
+  update_approval_policy : opt ProposalPolicyCriteria;
+  // The approval policy for transfers from the account.
+  transfer_approval_policy : opt ProposalPolicyCriteria;
 };
 
 type AddAccountOperation = record {
@@ -1084,14 +1102,6 @@ type Error = record {
   details : opt vec record { text; text };
 };
 
-// The policies applied to the account by the account owners.
-type AccountPolicies = record {
-  // The criterias to use for withdrawing funds from the account.
-  transfer : opt ProposalPolicyCriteria;
-  // The criterias to use when editing the account.
-  edit : opt ProposalPolicyCriteria;
-};
-
 // Account can have additional information attached to them,
 // this type can be used to represent the additional info.
 type AccountMetadata = record {
@@ -1128,14 +1138,18 @@ type Account = record {
   decimals : nat32;
   // A friendly name for the account.
   name : text;
-  // The list of users that own the account.
-  owners : vec UUID;
   // Account balance when available.
   balance : opt AccountBalanceInfo;
-  // The policies to enforce when interacting with the account.
-  policies : AccountPolicies;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
+  // The transfer approval policy for the account.
+  //
+  // The transfer approval policy defines the criteria that must be met for a transfer to be approved.
+  transfer_approval_policy : opt ProposalPolicyCriteria;
+  // The update approval policy for the account.
+  //
+  // The update approval policy defines the criteria that must be met for the account to be updated.
+  update_approval_policy : opt ProposalPolicyCriteria;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
@@ -1305,29 +1319,46 @@ type WalletAsset = record {
   metadata : vec AssetMetadata;
 };
 
-// A record type that can be used to represent the wallet features.
-type Config = record {
+// A record type that is used to show the current capabilities of the canister and it's version.
+type Capabilities = record {
+  // Version of the canister.
+  version : text;
   // The list of supported assets.
   supported_assets : vec WalletAsset;
 };
 
 // Result type for getting the current config.
-type GetConfigResult = variant {
+type CapabilitiesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The config.
-    config : Config;
+    capabilities : Capabilities;
   };
   // The error that occurred (e.g. the user does not have the necessary access rights).
   Err : Error;
 };
 
-// The settings of the wallet.
-type WalletSettings = record {
-  // The list of admin users associated with the wallet.
-  owners : vec User;
-  // The time at which the wallet was last upgraded.
+// The canister system information.
+type SystemInfo = record {
+  // The canister version.
+  version : text;
+  // The upgrader principal id.
+  upgrader_id : principal;
+  // Cycle balance of the canister.
+  cycles : nat64;
+  // The time at which the canister was last upgraded.
   last_upgrade_timestamp : TimestampRFC3339;
+};
+
+// Result type for getting the canister system information.
+type SystemInfoResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The system information.
+    system : SystemInfo;
+  };
+  // The error that occurred (e.g. the caller does not have sufficient privileges).
+  Err : Error;
 };
 
 // Input type for retrieving a user.
@@ -1449,10 +1480,10 @@ type ProposalResourceAction = variant {
   Read : ResourceId;
 };
 
-// The actions that are available for canister settings.
-type SettingsResourceAction = variant {
-  Read;
-  ReadConfig;
+// The actions that are available for the system.
+type SystemResourceAction = variant {
+  SystemInfo;
+  Capabilities;
 };
 
 // The actions that are available for users.
@@ -1483,7 +1514,7 @@ type Resource = variant {
   ChangeCanister : ChangeCanisterResourceAction;
   Proposal : ProposalResourceAction;
   ProposalPolicy : ResourceAction;
-  Settings : SettingsResourceAction;
+  System : SystemResourceAction;
   User : UserResourceAction;
   UserGroup : ResourceAction;
 };
@@ -1649,6 +1680,8 @@ type ListProposalPoliciesResult = variant {
 
 // The top level privileges that the user has when making calls to the canister.
 type UserPrivilege = variant {
+  Capabilities;
+  SystemInfo;
   ListAccounts;
   AddAccount;
   ListUsers;
@@ -1674,39 +1707,30 @@ type MeResult = variant {
   Err : Error;
 };
 
-// Result type for getting the wallet settings.
-type WalletSettingsResult = variant {
-  // The result data for a successful execution.
-  Ok : record {
-    // The wallet settings.
-    settings : WalletSettings;
-  };
-  // The error that occurred (e.g. the caller is not an admin).
-  Err : Error;
-};
-
-// The init configuration for the wallet.
-type WalletInit = record {
+// The init configuration for the canister.
+//
+// Only used when installing the canister for the first time.
+type SystemInit = record {
   // The list of admin principals to be associated with the wallet.
   //
   // When not specified, the caller will be added as the admin.
-  owners : opt vec principal;
+  admins : opt vec principal;
   // The wasm module of the wallet upgrader canister.
   upgrader_wasm_module : blob;
 };
 
-// The upgrade configuration for the wallet.
-type WalletUpgrade = record {
-  // The updated list of admin principals to be associated with the wallet.
-  owners : opt vec principal;
+// The upgrade configuration for the canister.
+type SystemUpgrade = record {
+  // The updated upgrader wasm module to use for the canister.
+  upgrader_wasm_module : opt blob;
 };
 
-// The input type for the wallet canister install method (e.g. init or upgrade).
-type WalletInstall = variant {
-  // The configuration to use when initializing the wallet.
-  Init : WalletInit;
-  // The configuration to use when upgrading the wallet.
-  Upgrade : WalletUpgrade;
+// The input type for the canister install method (e.g. init or upgrade).
+type SystemInstall = variant {
+  // The configuration to use when initializing the canister.
+  Init : SystemInit;
+  // The configuration to use when upgrading the canister.
+  Upgrade : SystemUpgrade;
 };
 
 type HealthStatus = variant {
@@ -1730,13 +1754,20 @@ type HttpResponse = record {
 };
 
 // The Wallet service definition.
-service : (opt WalletInstall) -> {
+service : (opt SystemInstall) -> {
   // Check if the wallet is healthy and ready to be used.
   health_status : () -> (HealthStatus) query;
+  // Get the system information of the canister (e.g. version, cycles, etc.).
+  //
+  // This method contains sensitive information and is up to the canister owner to
+  // decide who can access it (e.g. only admins).
+  system_info : () -> (SystemInfoResult) query;
+  // This method exposes the supported assets and other capabilities of the canister.
+  //
+  // By default can be accessed by any active user.
+  capabilities : () -> (CapabilitiesResult) query;
   // Get the authenticated user and its privileges from the caller.
   me : () -> (MeResult) query;
-  // Get the wallet config (e.g. supported assets, user groups, ...).
-  config : () -> (GetConfigResult) query;
   // Get the list of notifications associated with the caller.
   list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
   // Mark the notifications as read.
@@ -1793,8 +1824,6 @@ service : (opt WalletInstall) -> {
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
   // List all user groups of the wallet.
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
-  // Get the wallet settings.
-  wallet_settings : () -> (WalletSettingsResult) query;
   // Metrics (Http Interface)
   http_request : (HttpRequest) -> (HttpResponse) query;
 };

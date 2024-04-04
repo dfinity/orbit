@@ -8,6 +8,10 @@ export enum BlockchainStandard {
   Native = 'native',
 }
 
+export enum TokenSymbol {
+  ICP = 'ICP',
+}
+
 export interface FetchTransfersInput {
   fromDt?: Date;
   toDt?: Date;

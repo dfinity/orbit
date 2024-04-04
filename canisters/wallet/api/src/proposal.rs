@@ -181,7 +181,7 @@ pub struct GetProposalResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ListProposalsOperationTypeDTO {
-    Transfer(Option<String>),
+    Transfer(Option<UuidDTO>),
     AddAccount,
     EditAccount,
     AddAddressBookEntry,
