@@ -30,7 +30,7 @@
         <VCardText>
           <CriteriaBuilder
             v-model="model.transferCriteria"
-            :specifier="{ Transfer: { account: { Any: null } } }"
+            :specifier="{ Transfer: { Any: null } }"
             :disabled="isViewMode"
             @remove="model.transferCriteria = undefined"
           />
