@@ -140,6 +140,10 @@ impl SystemService {
                 system_info.update_last_upgrade_timestamp();
                 write_system_info(system_info.to_owned());
 
+                install_canister_handlers::monitor_upgrader_cycles(
+                    *system_info.get_upgrader_canister_id(),
+                );
+
                 // register the jobs after the canister is fully initialized
                 register_jobs().await;
             });
@@ -234,9 +238,18 @@ mod install_canister_handlers {
         repositories::USER_GROUP_REPOSITORY,
     };
     use candid::{Encode, Principal};
+    use canfund::fetch::cycles::FetchCyclesBalanceFromCanisterStatus;
+    use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
+    use canfund::FundManager;
     use ic_canister_core::repository::Repository;
     use ic_cdk::api::management_canister::main::{self as mgmt};
+    use std::cell::RefCell;
+    use std::sync::Arc;
     use uuid::Uuid;
+
+    thread_local! {
+        pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
+    }
 
     /// Registers the default configurations for the canister.
     ///
@@ -343,6 +356,35 @@ mod install_canister_handlers {
                 Uuid::from_bytes(user.id).hyphenated().to_string()
             ));
         }
+    }
+
+    /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
+    pub fn monitor_upgrader_cycles(upgrader_id: Principal) {
+        print(format!(
+            "Starting fund manager to monitor upgrader canister {} cycles",
+            upgrader_id.to_text()
+        ));
+
+        FUND_MANAGER.with(|fund_manager| {
+            let mut fund_manager = fund_manager.borrow_mut();
+
+            fund_manager.with_options(
+                FundManagerOptions::new()
+                    .with_interval_secs(24 * 60 * 60) // daily
+                    .with_strategy(FundStrategy::BelowEstimatedRuntime(
+                        EstimatedRuntime::new()
+                            .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
+                            .with_fund_runtime_secs(30 * 24 * 60 * 60) // 30 days
+                            .with_max_runtime_cycles_fund(1_000_000_000_000)
+                            .with_fallback_min_cycles(125_000_000_000)
+                            .with_fallback_fund_cycles(250_000_000_000),
+                    )),
+            );
+            fund_manager.with_cycles_fetcher(Arc::new(FetchCyclesBalanceFromCanisterStatus));
+            fund_manager.register(upgrader_id);
+
+            fund_manager.start();
+        });
     }
 }
 

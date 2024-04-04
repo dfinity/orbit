@@ -172,6 +172,7 @@ fn make_transfer_successful() {
     env.advance_time(Duration::from_secs(5));
     env.tick();
     env.tick();
+    env.tick();
 
     // check transfer proposal status
     let get_proposal_args = GetProposalInput {
