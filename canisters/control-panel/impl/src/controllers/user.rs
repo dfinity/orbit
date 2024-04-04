@@ -149,7 +149,9 @@ impl UserController {
     #[with_middleware(tail = use_status_metric("get_waiting_list", &result))]
     async fn get_waiting_list(&self) -> ApiResult<GetWaitingListResponse> {
         let ctx: CallContext = CallContext::get();
-        self.user_service.get_waiting_list(&ctx)
+        self.user_service
+            .get_waiting_list(&ctx)
+            .map(|subscribed_users| GetWaitingListResponse { subscribed_users })
     }
 
     #[with_middleware(

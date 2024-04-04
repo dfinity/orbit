@@ -9,7 +9,7 @@ use crate::{
 };
 use candid::Principal;
 use control_panel_api::{
-    GetWaitingListResponse, ManageUserInput, RegisterUserInput, UpdateWaitingListInput,
+    ManageUserInput, RegisterUserInput, SubscribedUser, UpdateWaitingListInput,
 };
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{
@@ -140,12 +140,10 @@ impl UserService {
         Ok(user)
     }
 
-    pub fn get_waiting_list(&self, ctx: &CallContext) -> ServiceResult<GetWaitingListResponse> {
+    pub fn get_waiting_list(&self, ctx: &CallContext) -> ServiceResult<Vec<SubscribedUser>> {
         self.assert_controller(ctx)?;
 
-        let subscribed_users = self.user_repository.get_subscribed_users();
-
-        Ok(GetWaitingListResponse { subscribed_users })
+        Ok(self.user_repository.get_subscribed_users())
     }
 
     pub fn update_waiting_list(
