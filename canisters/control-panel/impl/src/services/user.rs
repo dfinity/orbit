@@ -4,13 +4,11 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
-    models::{User, UserKey, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployWallet, User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
 };
 use candid::Principal;
-use control_panel_api::{
-    CanDeployWalletResponse, ManageUserInput, RegisterUserInput, UpdateWaitingListInput,
-};
+use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     api::{ApiError, ServiceResult},
@@ -181,14 +179,10 @@ impl UserService {
     }
 
     /// Checks if a user can deploy a wallet.
-    pub async fn can_deploy_wallet(
-        &self,
-        ctx: &CallContext,
-    ) -> ServiceResult<CanDeployWalletResponse> {
+    pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<CanDeployWallet> {
         let user = self.get_user(&ctx.caller(), ctx)?;
 
         user.can_deploy_wallet()
-            .map(|can_deploy_wallet| can_deploy_wallet.into())
     }
 
     pub async fn set_main_wallet(

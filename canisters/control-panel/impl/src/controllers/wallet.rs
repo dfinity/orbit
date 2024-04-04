@@ -122,6 +122,9 @@ impl WalletController {
     #[with_middleware(tail = use_status_metric("can_deploy_wallet", &result))]
     async fn can_deploy_wallet(&self) -> ApiResult<CanDeployWalletResponse> {
         let ctx = CallContext::get();
-        self.user_service.can_deploy_wallet(&ctx).await
+        self.user_service
+            .can_deploy_wallet(&ctx)
+            .await
+            .map(|can_deploy_wallet| can_deploy_wallet.into())
     }
 }
