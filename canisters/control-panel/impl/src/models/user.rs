@@ -3,7 +3,6 @@ use crate::errors::UserError;
 use candid::Principal;
 use email_address::EmailAddress;
 use ic_canister_core::{
-    api::ServiceResult,
     model::{ModelValidator, ModelValidatorResult},
     types::Timestamp,
 };
@@ -73,24 +72,20 @@ impl User {
         UserKey(self.id)
     }
 
-    pub fn can_deploy_wallet(&self) -> ServiceResult<CanDeployWallet> {
+    pub fn can_deploy_wallet(&self) -> CanDeployWallet {
         match self.subscription_status {
             UserSubscriptionStatus::Approved => (),
             UserSubscriptionStatus::Unsubscribed
             | UserSubscriptionStatus::Pending(_)
             | UserSubscriptionStatus::Denylisted => {
-                return Ok(CanDeployWallet::NotAllowed(
-                    self.subscription_status.clone(),
-                ));
+                return CanDeployWallet::NotAllowed(self.subscription_status.clone());
             }
         };
         let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
         if self.deployed_wallets.len() >= max_deployed_wallets {
-            return Ok(CanDeployWallet::QuotaExceeded);
+            return CanDeployWallet::QuotaExceeded;
         }
-        Ok(CanDeployWallet::Allowed(
-            max_deployed_wallets - self.deployed_wallets.len(),
-        ))
+        CanDeployWallet::Allowed(max_deployed_wallets - self.deployed_wallets.len())
     }
 }
 

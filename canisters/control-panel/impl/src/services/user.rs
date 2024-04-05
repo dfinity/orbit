@@ -182,7 +182,7 @@ impl UserService {
     pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<CanDeployWallet> {
         let user = self.get_user(&ctx.caller(), ctx)?;
 
-        user.can_deploy_wallet()
+        Ok(user.can_deploy_wallet())
     }
 
     pub async fn set_main_wallet(
