@@ -11,6 +11,26 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : CanisterUpgrade,
     'Init' : CanisterInit,
   });
+  const UserSubscriptionStatus = IDL.Variant({
+    'Unsubscribed' : IDL.Null,
+    'Approved' : IDL.Null,
+    'Denylisted' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
+  const CanDeployWalletResponse = IDL.Variant({
+    'NotAllowed' : UserSubscriptionStatus,
+    'Allowed' : IDL.Nat64,
+    'QuotaExceeded' : IDL.Null,
+  });
+  const ApiError = IDL.Record({
+    'code' : IDL.Text,
+    'message' : IDL.Opt(IDL.Text),
+    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
+  });
+  const CanDeployWalletResult = IDL.Variant({
+    'Ok' : CanDeployWalletResponse,
+    'Err' : ApiError,
+  });
   const WalletID = IDL.Principal;
   const UserWallet = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
@@ -20,11 +40,6 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Principal,
     'wallets' : IDL.Vec(UserWallet),
     'main_wallet' : IDL.Opt(WalletID),
-  });
-  const ApiError = IDL.Record({
-    'code' : IDL.Text,
-    'message' : IDL.Opt(IDL.Text),
-    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
   });
   const RemoveUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
@@ -88,12 +103,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
-  const UserSubscriptionStatus = IDL.Variant({
-    'Unsubscribed' : IDL.Null,
-    'Approved' : IDL.Null,
-    'Denylisted' : IDL.Null,
-    'Pending' : IDL.Null,
-  });
   const UpdateWaitingListInput = IDL.Record({
     'users' : IDL.Vec(IDL.Principal),
     'new_status' : UserSubscriptionStatus,
@@ -103,6 +112,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   return IDL.Service({
+    'can_deploy_wallet' : IDL.Func([], [CanDeployWalletResult], ['query']),
     'delete_user' : IDL.Func([], [RemoveUserResult], []),
     'deploy_wallet' : IDL.Func([], [DeployWalletResult], []),
     'get_main_wallet' : IDL.Func([], [GetMainWalletResult], ['query']),

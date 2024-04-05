@@ -1,9 +1,10 @@
 use crate::setup::setup_new_env;
-use crate::utils::user_test_id;
+use crate::utils::{controller_test_id, user_test_id};
 use crate::TestEnv;
 use control_panel_api::{
     DeployWalletResponse, GetMainWalletResponse, ManageUserInput, ManageUserResponse,
-    RegisterUserInput, RegisterUserResponse, UserWalletDTO,
+    RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserSubscriptionStatusDTO,
+    UserWalletDTO,
 };
 use ic_canister_core::api::ApiResult;
 use pocket_ic::update_candid_as;
@@ -78,6 +79,65 @@ fn deploy_user_wallet() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.id, user_id);
 
+    // user can't deploy wallet before being approved
+    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "deploy_wallet",
+        (),
+    )
+    .unwrap();
+    res.0.unwrap_err();
+
+    // subscribe to waiting list
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "subscribe_to_waiting_list",
+        ("john@example.com".to_string(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // user can't deploy wallet before being approved
+    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "deploy_wallet",
+        (),
+    )
+    .unwrap();
+    res.0.unwrap_err();
+
+    // only canister controllers can approve users
+    let update_waiting_list_args = UpdateWaitingListInput {
+        users: vec![user_id],
+        new_status: UserSubscriptionStatusDTO::Approved,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "update_waiting_list",
+        (update_waiting_list_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap_err();
+
+    // approve user
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller_test_id(),
+        "update_waiting_list",
+        (update_waiting_list_args,),
+    )
+    .unwrap();
+    res.0.unwrap();
+
     // deploy user wallet
     let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
         &env,
@@ -151,6 +211,21 @@ fn deploy_too_many_wallets() {
     .unwrap();
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.id, user_id);
+
+    // approve user
+    let update_waiting_list_args = UpdateWaitingListInput {
+        users: vec![user_id],
+        new_status: UserSubscriptionStatusDTO::Approved,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller_test_id(),
+        "update_waiting_list",
+        (update_waiting_list_args,),
+    )
+    .unwrap();
+    res.0.unwrap();
 
     // deploy the maximum amount of user wallets
     let mut wallets = vec![];

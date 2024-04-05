@@ -1,4 +1,4 @@
-use crate::models::UserSubscriptionStatus;
+use control_panel_api::UserSubscriptionStatusDTO;
 use ic_canister_core::api::DetailableError;
 use thiserror::Error;
 
@@ -44,7 +44,7 @@ pub enum UserError {
     /// The user has an inappropriate subscription status for the operation.
     #[error(r#"The user has an inappropriate subscription status for the operation."#)]
     BadUserSubscriptionStatus {
-        subscription_status: UserSubscriptionStatus,
+        subscription_status: UserSubscriptionStatusDTO,
     },
     /// Concurrent wallet canister deployment.
     #[error(r#"Concurrent wallet canister deployment is not allowed."#)]

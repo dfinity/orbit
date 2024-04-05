@@ -2,7 +2,7 @@ use crate::{
     core::CallContext,
     errors::UserError,
     mappers::{SubscribedUser, UserMapper},
-    models::{User, UserKey, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployWallet, User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
 };
@@ -122,7 +122,7 @@ impl UserService {
             | UserSubscriptionStatus::Approved
             | UserSubscriptionStatus::Denylisted => {
                 return Err(UserError::BadUserSubscriptionStatus {
-                    subscription_status: user.subscription_status,
+                    subscription_status: user.subscription_status.into(),
                 }
                 .into());
             }
@@ -186,6 +186,13 @@ impl UserService {
         });
 
         Ok(user)
+    }
+
+    /// Checks if a user can deploy a wallet.
+    pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<CanDeployWallet> {
+        let user = self.get_user(&ctx.caller(), ctx)?;
+
+        Ok(user.can_deploy_wallet())
     }
 
     pub async fn set_main_wallet(

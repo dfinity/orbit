@@ -5,7 +5,8 @@ use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
 use candid::Principal;
 use control_panel_api::{
-    DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse, UserWalletDTO,
+    CanDeployWalletResponse, DeployWalletResponse, GetMainWalletResponse, ListWalletsResponse,
+    UserWalletDTO,
 };
 use ic_canister_core::api::ApiResult;
 use ic_canister_core::utils::{CallerGuard, State};
@@ -34,6 +35,11 @@ async fn get_main_wallet() -> ApiResult<GetMainWalletResponse> {
 #[update(name = "deploy_wallet")]
 async fn deploy_wallet() -> ApiResult<DeployWalletResponse> {
     CONTROLLER.deploy_wallet().await
+}
+
+#[query(name = "can_deploy_wallet")]
+async fn can_deploy_wallet() -> ApiResult<CanDeployWalletResponse> {
+    CONTROLLER.can_deploy_wallet().await
 }
 
 // Controller initialization and implementation.
@@ -105,5 +111,20 @@ impl WalletController {
         Ok(DeployWalletResponse {
             canister_id: deployed_wallet_id,
         })
+    }
+
+    /// Checks if the user can deploy a new wallet.
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
+    #[with_middleware(tail = use_status_metric("can_deploy_wallet", &result))]
+    async fn can_deploy_wallet(&self) -> ApiResult<CanDeployWalletResponse> {
+        let ctx = CallContext::get();
+        self.user_service
+            .can_deploy_wallet(&ctx)
+            .await
+            .map(|can_deploy_wallet| can_deploy_wallet.into())
     }
 }
