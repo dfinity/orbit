@@ -5,8 +5,8 @@ use crate::{
 };
 use candid::Principal;
 use control_panel_api::{
-    CanDeployWalletResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO, UserSubscriptionStatusDTO,
-    UserWalletDTO,
+    CanDeployWalletResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO,
+    UserSubscriptionStatusDTO, UserWalletDTO,
 };
 use ic_canister_core::api::ApiError;
 
