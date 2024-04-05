@@ -57,6 +57,17 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
+  const SubscribedUser = IDL.Record({
+    'user_principal' : IDL.Principal,
+    'email' : IDL.Text,
+  });
+  const GetWaitingListResponse = IDL.Record({
+    'subscribed_users' : IDL.Vec(SubscribedUser),
+  });
+  const GetWaitingListResult = IDL.Variant({
+    'Ok' : GetWaitingListResponse,
+    'Err' : ApiError,
+  });
   const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
   const HttpRequest = IDL.Record({
     'url' : IDL.Text,
@@ -106,6 +117,7 @@ export const idlFactory = ({ IDL }) => {
     'deploy_wallet' : IDL.Func([], [DeployWalletResult], []),
     'get_main_wallet' : IDL.Func([], [GetMainWalletResult], ['query']),
     'get_user' : IDL.Func([], [GetUserResult], ['query']),
+    'get_waiting_list' : IDL.Func([], [GetWaitingListResult], []),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'list_wallets' : IDL.Func([], [ListWalletsResult], ['query']),
     'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
