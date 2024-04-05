@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     advance_time_to_burn_cycles, get_core_canister_health_status, get_system_info, user_test_id,
@@ -10,6 +8,7 @@ use control_panel_api::{DeployWalletResponse, RegisterUserInput, RegisterUserRes
 use ic_canister_core::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
+use std::time::Duration;
 use wallet_api::HealthStatus;
 
 #[test]
