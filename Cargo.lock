@@ -315,6 +315,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_parser",
+ "canfund",
  "control_panel_api",
  "email_address",
  "ic-canister-core",
@@ -966,6 +967,7 @@ dependencies = [
  "ic-cdk 0.13.1",
  "ic-ledger-types",
  "lazy_static",
+ "num-bigint",
  "pocket-ic",
  "serde",
  "sha2",
@@ -2394,6 +2396,7 @@ dependencies = [
  "canbench-rs",
  "candid",
  "candid_parser",
+ "canfund",
  "futures",
  "hex",
  "ic-canister-core",

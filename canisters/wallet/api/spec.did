@@ -1818,6 +1818,6 @@ service : (opt SystemInstall) -> {
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
   // List all user groups of the wallet.
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
-  // Metrics (Http Interface)
+  // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
 };
