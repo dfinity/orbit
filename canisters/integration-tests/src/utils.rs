@@ -286,3 +286,49 @@ pub fn get_core_canister_health_status(
 
     res.0
 }
+
+pub fn advance_time_to_burn_cycles(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: Principal,
+    target_cycles: u128,
+) {
+    if env.cycle_balance(canister_id) < target_cycles {
+        return;
+    }
+
+    // Stops to prevent side effects like timers or heartbeats
+    env.stop_canister(canister_id, Some(sender)).unwrap();
+    let canister_cycles = env.cycle_balance(canister_id);
+    let jump_secs = 10;
+    let cycles_to_burn = canister_cycles.saturating_sub(target_cycles);
+
+    // advance time one step to get an estimate of the burned cycles per advance
+    env.advance_time(Duration::from_secs(jump_secs));
+    env.tick();
+
+    let burned_cycles = canister_cycles.saturating_sub(env.cycle_balance(canister_id));
+    if burned_cycles == 0 {
+        panic!("Canister did not burn any cycles, this should not happen.");
+    }
+
+    // advance time to burn the remaining cycles
+    let advance_times_to_burn_cycles = (cycles_to_burn + burned_cycles - 1) / burned_cycles;
+    let burn_duration = Duration::from_secs(jump_secs * advance_times_to_burn_cycles as u64);
+    env.advance_time(burn_duration);
+    env.tick();
+
+    // restart the canister
+    env.start_canister(canister_id, Some(sender)).unwrap();
+    // wait for the canister to start
+    for _ in 0..2 {
+        env.tick();
+    }
+
+    // adds cycles to be as close as possible to the target
+    let canister_cycles = env.cycle_balance(canister_id);
+    let add_cycles = target_cycles.saturating_sub(canister_cycles);
+    if add_cycles > 0 {
+        env.add_cycles(canister_id, add_cycles);
+    }
+}

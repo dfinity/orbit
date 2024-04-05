@@ -1,11 +1,10 @@
-use std::sync::Arc;
-
 use crate::{
     core::CallContext,
     errors::UserError,
     mappers::UserMapper,
     models::{CanDeployWallet, User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
+    services::canister::FUND_MANAGER,
 };
 use candid::Principal;
 use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
@@ -15,6 +14,7 @@ use ic_canister_core::{
     model::ModelValidator,
 };
 use lazy_static::lazy_static;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref USER_SERVICE: Arc<UserService> =
@@ -174,6 +174,10 @@ impl UserService {
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.clone());
+
+        FUND_MANAGER.with(|fund_manager| {
+            fund_manager.borrow_mut().register(wallet_canister_id);
+        });
 
         Ok(user)
     }
