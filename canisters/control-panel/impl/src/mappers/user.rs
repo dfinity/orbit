@@ -5,9 +5,12 @@ use crate::{
 };
 use candid::Principal;
 use control_panel_api::{
-    ManageUserInput, RegisterUserInput, UserDTO, UserSubscriptionStatusDTO, UserWalletDTO,
+    ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO, UserSubscriptionStatusDTO,
+    UserWalletDTO,
 };
 use ic_canister_core::api::ApiError;
+
+pub type SubscribedUser = SubscribedUserDTO;
 
 #[derive(Default)]
 pub struct UserMapper {}

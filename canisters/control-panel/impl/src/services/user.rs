@@ -1,15 +1,13 @@
 use crate::{
     core::CallContext,
     errors::UserError,
-    mappers::UserMapper,
+    mappers::{SubscribedUser, UserMapper},
     models::{User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
 };
 use candid::Principal;
-use control_panel_api::{
-    ManageUserInput, RegisterUserInput, SubscribedUser, UpdateWaitingListInput,
-};
+use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
 use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     api::{ApiError, ServiceResult},

@@ -14,14 +14,14 @@ pub struct GetUserResponse {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct SubscribedUser {
+pub struct SubscribedUserDTO {
     pub user_principal: Principal,
     pub email: String,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct GetWaitingListResponse {
-    pub subscribed_users: Vec<SubscribedUser>,
+    pub subscribed_users: Vec<SubscribedUserDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

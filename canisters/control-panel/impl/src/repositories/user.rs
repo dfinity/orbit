@@ -1,8 +1,8 @@
 use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
+    mappers::SubscribedUser,
     models::{User, UserKey, UserSubscriptionStatus},
 };
-use control_panel_api::SubscribedUser;
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
