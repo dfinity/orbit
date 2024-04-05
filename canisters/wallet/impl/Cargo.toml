@@ -23,6 +23,7 @@ async-trait = { workspace = true }
 byteorder = { workspace = true }
 canbench-rs = { workspace = true, optional = true }
 candid = { workspace = true }
+canfund = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 ic-canister-core = { workspace = true }

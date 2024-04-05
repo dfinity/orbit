@@ -193,19 +193,19 @@ type CanisterInstall = variant {
   Upgrade : CanisterUpgrade;
 };
 
-type HeaderField = record { text; text; };
+type HeaderField = record { text; text };
 
 type HttpRequest = record {
-  method: text;
-  url: text;
-  headers: vec HeaderField;
-  body: blob;
+  method : text;
+  url : text;
+  headers : vec HeaderField;
+  body : blob;
 };
 
 type HttpResponse = record {
-  status_code: nat16;
-  headers: vec HeaderField;
-  body: blob;
+  status_code : nat16;
+  headers : vec HeaderField;
+  body : blob;
 };
 
 // The control panel service definition.
@@ -231,7 +231,6 @@ service : (opt CanisterInstall) -> {
   get_main_wallet : () -> (GetMainWalletResult) query;
   // Deploys a new wallet canister for the caller.
   deploy_wallet : () -> (DeployWalletResult);
-
-  // Metrics (Http Interface)
-  http_request: (HttpRequest) -> (HttpResponse) query;
+  // HTTP Protocol interface.
+  http_request : (HttpRequest) -> (HttpResponse) query;
 };

@@ -6,6 +6,7 @@ use pocket_ic::PocketIc;
 mod address_book;
 mod change_canister_tests;
 mod control_panel_tests;
+mod cycles_monitor_tests;
 mod interfaces;
 mod register_tests;
 mod setup;
