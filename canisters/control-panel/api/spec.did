@@ -155,6 +155,24 @@ type DeployWalletResult = variant {
   Err : ApiError;
 };
 
+/// The successful result of checking if the caller can deploy a wallet canister.
+/// Returns the remaining number of wallet canisters the caller can still deploy
+/// or a reason why the caller cannot deploy a wallet canister
+/// (bad subscription status or exceeded quota).
+type CanDeployWalletResponse = variant {
+  NotAllowed : UserSubscriptionStatus;
+  Allowed : nat64;
+  QuotaExceeded;
+};
+
+// The result of checking if the caller can deploy a wallet canister.
+type CanDeployWalletResult = variant {
+  // Successfull operation result.
+  Ok : CanDeployWalletResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The init configuration for the control panel.
 type CanisterInit = record {
   // The upgrader wasm module to use for the wallet canister.
@@ -213,6 +231,9 @@ service : (opt CanisterInstall) -> {
   get_main_wallet : () -> (GetMainWalletResult) query;
   // Deploys a new wallet canister for the caller.
   deploy_wallet : () -> (DeployWalletResult);
+  // Checks if the caller can deploy a new wallet canister.
+  can_deploy_wallet : () -> (CanDeployWalletResult) query;
+
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
 };
