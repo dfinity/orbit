@@ -19,6 +19,13 @@ pub enum UserSubscriptionStatus {
     Denylisted,
 }
 
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum CanDeployWallet {
+    NotAllowed(UserSubscriptionStatus),
+    Allowed(usize),
+    QuotaExceeded,
+}
+
 impl std::fmt::Display for UserSubscriptionStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -63,6 +70,22 @@ impl User {
 
     pub fn to_key(&self) -> UserKey {
         UserKey(self.id)
+    }
+
+    pub fn can_deploy_wallet(&self) -> CanDeployWallet {
+        match self.subscription_status {
+            UserSubscriptionStatus::Approved => (),
+            UserSubscriptionStatus::Unsubscribed
+            | UserSubscriptionStatus::Pending(_)
+            | UserSubscriptionStatus::Denylisted => {
+                return CanDeployWallet::NotAllowed(self.subscription_status.clone());
+            }
+        };
+        let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
+        if self.deployed_wallets.len() >= max_deployed_wallets {
+            return CanDeployWallet::QuotaExceeded;
+        }
+        CanDeployWallet::Allowed(max_deployed_wallets - self.deployed_wallets.len())
     }
 }
 

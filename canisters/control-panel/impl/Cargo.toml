@@ -15,6 +15,7 @@ bench = false
 
 [dependencies]
 candid = { workspace = true }
+canfund = { workspace = true }
 ic-canister-core = { workspace = true }
 ic-canister-macros = { workspace = true }
 ic-cdk = { workspace = true }

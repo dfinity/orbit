@@ -315,6 +315,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_parser",
+ "canfund",
  "control_panel_api",
  "email_address",
  "ic-canister-core",
@@ -677,9 +678,9 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "h2"
-version = "0.3.24"
+version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb2c4422095b67ee78da96fbb51a4cc413b3b25883c7717ff7ca1ab31022c9c9"
+checksum = "81fe527a889e1532da5c525686d96d4c2e74cdd345badf8dfef9f6b39dd5f5e8"
 dependencies = [
  "bytes",
  "fnv",
@@ -966,6 +967,7 @@ dependencies = [
  "ic-cdk 0.13.1",
  "ic-ledger-types",
  "lazy_static",
+ "num-bigint",
  "pocket-ic",
  "serde",
  "sha2",
@@ -2394,6 +2396,7 @@ dependencies = [
  "canbench-rs",
  "candid",
  "candid_parser",
+ "canfund",
  "futures",
  "hex",
  "ic-canister-core",

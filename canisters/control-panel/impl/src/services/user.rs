@@ -1,11 +1,10 @@
-use std::sync::Arc;
-
 use crate::{
     core::CallContext,
     errors::UserError,
-    mappers::UserMapper,
-    models::{User, UserKey, UserSubscriptionStatus, UserWallet},
+    mappers::{SubscribedUser, UserMapper},
+    models::{CanDeployWallet, User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
+    services::canister::FUND_MANAGER,
 };
 use candid::Principal;
 use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
@@ -15,6 +14,7 @@ use ic_canister_core::{
     model::ModelValidator,
 };
 use lazy_static::lazy_static;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref USER_SERVICE: Arc<UserService> =
@@ -122,7 +122,7 @@ impl UserService {
             | UserSubscriptionStatus::Approved
             | UserSubscriptionStatus::Denylisted => {
                 return Err(UserError::BadUserSubscriptionStatus {
-                    subscription_status: user.subscription_status,
+                    subscription_status: user.subscription_status.into(),
                 }
                 .into());
             }
@@ -136,6 +136,12 @@ impl UserService {
         self.user_repository.insert(user.to_key(), user.clone());
 
         Ok(user)
+    }
+
+    pub fn get_waiting_list(&self, ctx: &CallContext) -> ServiceResult<Vec<SubscribedUser>> {
+        self.assert_controller(ctx)?;
+
+        Ok(self.user_repository.get_subscribed_users())
     }
 
     pub fn update_waiting_list(
@@ -175,7 +181,18 @@ impl UserService {
 
         self.user_repository.insert(user.to_key(), user.clone());
 
+        FUND_MANAGER.with(|fund_manager| {
+            fund_manager.borrow_mut().register(wallet_canister_id);
+        });
+
         Ok(user)
+    }
+
+    /// Checks if a user can deploy a wallet.
+    pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<CanDeployWallet> {
+        let user = self.get_user(&ctx.caller(), ctx)?;
+
+        Ok(user.can_deploy_wallet())
     }
 
     pub async fn set_main_wallet(

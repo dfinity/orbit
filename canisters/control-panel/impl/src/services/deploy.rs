@@ -2,7 +2,7 @@ use super::UserService;
 use crate::{
     core::{canister_config, CallContext, INITIAL_WALLET_CYCLES},
     errors::{DeployError, UserError},
-    models::User,
+    models::CanDeployWallet,
     services::USER_SERVICE,
 };
 use candid::{Encode, Principal};
@@ -30,9 +30,18 @@ impl DeployService {
     /// Deploys a wallet canister for the user.
     pub async fn deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<Principal> {
         let user = self.user_service.get_user(&ctx.caller(), ctx)?;
-        let max_deployed_wallets: usize = User::MAX_DEPLOYED_WALLETS.into();
-        if user.deployed_wallets.len() >= max_deployed_wallets {
-            return Err(UserError::DeployWalletQuotaExceeded)?;
+
+        let can_deploy_wallet_response = user.can_deploy_wallet();
+        match can_deploy_wallet_response {
+            CanDeployWallet::Allowed(_) => {}
+            CanDeployWallet::QuotaExceeded => {
+                return Err(UserError::DeployWalletQuotaExceeded)?;
+            }
+            CanDeployWallet::NotAllowed(subscription_status) => {
+                return Err(UserError::BadUserSubscriptionStatus {
+                    subscription_status: subscription_status.into(),
+                })?;
+            }
         }
 
         // Creates the wallet canister with some initial cycles

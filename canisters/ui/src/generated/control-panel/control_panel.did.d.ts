@@ -7,6 +7,13 @@ export interface ApiError {
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
+export type CanDeployWalletResponse = {
+    'NotAllowed' : UserSubscriptionStatus
+  } |
+  { 'Allowed' : bigint } |
+  { 'QuotaExceeded' : null };
+export type CanDeployWalletResult = { 'Ok' : CanDeployWalletResponse } |
+  { 'Err' : ApiError };
 export interface CanisterInit {
   'upgrader_wasm_module' : Uint8Array | number[],
   'wallet_wasm_module' : Uint8Array | number[],
@@ -22,6 +29,11 @@ export type DeployWalletResult = { 'Ok' : { 'canister_id' : WalletID } } |
 export type GetMainWalletResult = { 'Ok' : { 'wallet' : [] | [UserWallet] } } |
   { 'Err' : ApiError };
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
+  { 'Err' : ApiError };
+export interface GetWaitingListResponse {
+  'subscribed_users' : Array<SubscribedUser>,
+}
+export type GetWaitingListResult = { 'Ok' : GetWaitingListResponse } |
   { 'Err' : ApiError };
 export type HeaderField = [string, string];
 export interface HttpRequest {
@@ -50,6 +62,10 @@ export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
+export interface SubscribedUser {
+  'user_principal' : Principal,
+  'email' : string,
+}
 export type UUID = string;
 export interface UpdateWaitingListInput {
   'users' : Array<Principal>,
@@ -71,10 +87,12 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
 export interface UserWallet { 'name' : [] | [string], 'canister_id' : WalletID }
 export type WalletID = Principal;
 export interface _SERVICE {
+  'can_deploy_wallet' : ActorMethod<[], CanDeployWalletResult>,
   'delete_user' : ActorMethod<[], RemoveUserResult>,
   'deploy_wallet' : ActorMethod<[], DeployWalletResult>,
   'get_main_wallet' : ActorMethod<[], GetMainWalletResult>,
   'get_user' : ActorMethod<[], GetUserResult>,
+  'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'list_wallets' : ActorMethod<[], ListWalletsResult>,
   'manage_user' : ActorMethod<[ManageUserInput], ManageUserResult>,
