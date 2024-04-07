@@ -1,3 +1,4 @@
+use crate::UserSubscriptionStatusDTO;
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -19,4 +20,11 @@ pub struct GetMainWalletResponse {
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct DeployWalletResponse {
     pub canister_id: Principal,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum CanDeployWalletResponse {
+    NotAllowed(UserSubscriptionStatusDTO),
+    Allowed(usize),
+    QuotaExceeded,
 }

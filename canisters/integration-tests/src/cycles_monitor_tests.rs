@@ -1,10 +1,13 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    advance_time_to_burn_cycles, get_core_canister_health_status, get_system_info, user_test_id,
-    NNS_ROOT_CANISTER_ID,
+    advance_time_to_burn_cycles, controller_test_id, get_core_canister_health_status,
+    get_system_info, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
-use control_panel_api::{DeployWalletResponse, RegisterUserInput, RegisterUserResponse};
+use control_panel_api::{
+    DeployWalletResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
+    UserSubscriptionStatusDTO,
+};
 use ic_canister_core::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
@@ -82,6 +85,21 @@ fn successful_monitors_wallets_and_tops_up() {
     .unwrap();
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.id, user_id);
+
+    // approve user
+    let update_waiting_list_args = UpdateWaitingListInput {
+        users: vec![user_id],
+        new_status: UserSubscriptionStatusDTO::Approved,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller_test_id(),
+        "update_waiting_list",
+        (update_waiting_list_args,),
+    )
+    .unwrap();
+    res.0.unwrap();
 
     // deploy user wallet
     let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(

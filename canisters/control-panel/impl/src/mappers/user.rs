@@ -1,13 +1,16 @@
 use crate::core::ic_cdk::api::time;
 use crate::{
     errors::UserError,
-    models::{User, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployWallet, User, UserSubscriptionStatus, UserWallet},
 };
 use candid::Principal;
 use control_panel_api::{
-    ManageUserInput, RegisterUserInput, UserDTO, UserSubscriptionStatusDTO, UserWalletDTO,
+    CanDeployWalletResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO,
+    UserSubscriptionStatusDTO, UserWalletDTO,
 };
 use ic_canister_core::api::ApiError;
+
+pub type SubscribedUser = SubscribedUserDTO;
 
 #[derive(Default)]
 pub struct UserMapper {}
@@ -70,6 +73,17 @@ impl User {
     }
 }
 
+impl From<UserSubscriptionStatus> for UserSubscriptionStatusDTO {
+    fn from(authorization_status: UserSubscriptionStatus) -> Self {
+        match authorization_status {
+            UserSubscriptionStatus::Unsubscribed => UserSubscriptionStatusDTO::Unsubscribed,
+            UserSubscriptionStatus::Pending(_) => UserSubscriptionStatusDTO::Pending,
+            UserSubscriptionStatus::Approved => UserSubscriptionStatusDTO::Approved,
+            UserSubscriptionStatus::Denylisted => UserSubscriptionStatusDTO::Denylisted,
+        }
+    }
+}
+
 impl TryFrom<UserSubscriptionStatusDTO> for UserSubscriptionStatus {
     type Error = ApiError;
 
@@ -82,6 +96,20 @@ impl TryFrom<UserSubscriptionStatusDTO> for UserSubscriptionStatus {
             .into()),
             UserSubscriptionStatusDTO::Approved => Ok(UserSubscriptionStatus::Approved),
             UserSubscriptionStatusDTO::Denylisted => Ok(UserSubscriptionStatus::Denylisted),
+        }
+    }
+}
+
+impl From<CanDeployWallet> for CanDeployWalletResponse {
+    fn from(can_deploy_wallet: CanDeployWallet) -> Self {
+        match can_deploy_wallet {
+            CanDeployWallet::NotAllowed(user_subscription_status) => {
+                CanDeployWalletResponse::NotAllowed(user_subscription_status.into())
+            }
+            CanDeployWallet::Allowed(remaining_wallets) => {
+                CanDeployWalletResponse::Allowed(remaining_wallets)
+            }
+            CanDeployWallet::QuotaExceeded => CanDeployWalletResponse::QuotaExceeded,
         }
     }
 }
