@@ -2,11 +2,11 @@
   <PageLayout>
     <template #sidebar-nav><div /></template>
     <template #main-body>
-      <div class="screens">
+      <div class="screens" data-test-id="split-screen">
         <TransitionGroup :name="transitionDestinationNames[initializationStep]">
           <div
-            class="mx-auto w-50 mt-16"
             v-if="initializationStep == InitializationStep.ChooseOption"
+            class="mx-auto w-50 mt-16"
           >
             <h1 class="text-h4 mb-6">{{ $t('pages.initialization.join_title') }}</h1>
 
@@ -14,14 +14,21 @@
               <VRadio
                 :label="$t('pages.initialization.option_join_existing_wallet')"
                 :value="UserOptions.JoinExisting"
+                data-test-id="join-existing-wallet-radio"
               ></VRadio>
               <VRadio
                 :label="$t('pages.initialization.option_deploy_new_wallet')"
                 :value="UserOptions.CreateNew"
+                data-test-id="deploy-new-wallet-radio"
               ></VRadio>
             </VRadioGroup>
 
-            <VBtn color="primary" class="mt-2" @click="onInitializationOptionChosen">
+            <VBtn
+              color="primary"
+              class="mt-2"
+              data-test-id="continue-button"
+              @click="onInitializationOptionChosen"
+            >
               {{ $t('terms.continue') }}
             </VBtn>
           </div>

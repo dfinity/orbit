@@ -1,10 +1,10 @@
 <template>
-  <div class="mx-auto w-50 mt-16">
-    <VBtn variant="flat" @click="emit('back')" :disabled="working">
+  <div class="mx-auto w-50 mt-16" data-test-id="join-wallet-screen">
+    <VBtn variant="flat" :disabled="working" data-test-id="back-button" @click="emit('back')">
       <VIcon :icon="mdiChevronLeft" size="x-large"></VIcon>
       {{ $t('terms.back') }}</VBtn
     >
-    <VForm ref="form" @submit.prevent="addNewWallet" class="mt-12">
+    <VForm ref="form" class="mt-12" @submit.prevent="addNewWallet">
       <h2 class="text-h4 mb-6">{{ $t('pages.initialization.join_wallet_title') }}</h2>
       <p class="text-body-1 mb-6">
         {{ $t('pages.initialization.join_wallet_body') }}
@@ -22,7 +22,7 @@
       <VTextField
         v-model.trim="name"
         :label="$t('pages.initialization.join_wallet_name')"
-        data-test-id="join-wallet-form-name"
+        data-test-id="join-wallet-form-canister-name"
         variant="outlined"
         :disabled="working"
       />
@@ -31,9 +31,9 @@
         <VBtn
           color="primary"
           type="submit"
-          @click="addNewWallet"
           :loading="working"
           :disabled="working || !isFormValid"
+          @click="addNewWallet"
           >{{ $t('pages.initialization.join_wallet') }}</VBtn
         >
       </div>
@@ -51,9 +51,11 @@ import { computed } from 'vue';
 import { requiredRule, validCanisterId } from '~/utils/form.utils';
 import { useRouter } from 'vue-router';
 import { defaultHomeRoute } from '~/configs/routes.config';
+import { useAppStore } from '~/stores/app.store';
 
 const session = useSessionStore();
 const router = useRouter();
+const app = useAppStore();
 
 const working = ref(false);
 const canisterId = ref('');
@@ -78,7 +80,9 @@ async function addNewWallet() {
     try {
       await session.addWallet(canisterId.value, name.value);
       await router.push({ name: defaultHomeRoute });
-    } catch {}
+    } catch (e: unknown) {
+      app.sendErrorNotification(e);
+    }
     working.value = false;
   }
 }

@@ -1,11 +1,15 @@
 <template>
-  <div class="mx-auto w-50 mt-16" v-if="waitlistStatus !== WaitlistStatus.Approved">
-    <VBtn variant="flat" @click="emit('back')" :disabled="working">
+  <div
+    v-if="waitlistStatus !== WaitlistStatus.Approved"
+    class="mx-auto w-50 mt-16"
+    data-test-id="deploy-wallet-screen"
+  >
+    <VBtn variant="flat" :disabled="working" data-test-id="back-button" @click="emit('back')">
       <VIcon :icon="mdiChevronLeft" size="x-large"></VIcon>
       {{ $t('terms.back') }}</VBtn
     >
 
-    <div class="text-center mt-12" v-if="waitlistStatus === WaitlistStatus.CheckPermissions">
+    <div v-if="waitlistStatus === WaitlistStatus.CheckPermissions" class="text-center mt-12">
       <h2 class="text-h4">
         {{ $t('pages.initialization.check_permissions_title') }}
       </h2>
@@ -13,9 +17,10 @@
     </div>
 
     <VForm
+      v-else-if="waitlistStatus === WaitlistStatus.Join"
       ref="form"
       class="mt-12"
-      v-else-if="waitlistStatus === WaitlistStatus.Join"
+      data-test-id="join-waitlist-form"
       @submit.prevent="joinWaitlist"
     >
       <h2 class="mb-6 text-h4">
@@ -26,13 +31,14 @@
       </p>
 
       <VTextField
-        type="email"
         v-model="email"
+        type="email"
         :rules="[requiredRule]"
         :label="$t('pages.initialization.join_waitlist_email_field')"
         :variant="'outlined'"
         hide-details="auto"
         :disabled="working"
+        data-test-id="join-waitlist-form-email"
       />
       <div class="d-flex align-center ga-4 mt-6">
         <VBtn
@@ -47,7 +53,11 @@
       </div>
     </VForm>
 
-    <div class="mt-12" v-else-if="waitlistStatus === WaitlistStatus.Pending">
+    <div
+      v-else-if="waitlistStatus === WaitlistStatus.Pending"
+      class="mt-12"
+      data-test-id="join-waitlist-pending"
+    >
       <h2 class="mb-6 text-h4">
         {{ $t('pages.initialization.waitlist_pending_title') }}
       </h2>
@@ -55,7 +65,11 @@
         {{ $t('pages.initialization.waitlist_pending_body') }}
       </p>
     </div>
-    <div class="mt-12" v-else-if="waitlistStatus === WaitlistStatus.Denied">
+    <div
+      v-else-if="waitlistStatus === WaitlistStatus.Denied"
+      class="mt-12"
+      data-test-id="join-waitlist-denied"
+    >
       <h2 class="mb-6 text-h4">
         {{ $t('pages.initialization.waitlist_denied_title') }}
       </h2>
@@ -64,7 +78,11 @@
       </p>
     </div>
 
-    <div class="mt-12" v-else-if="waitlistStatus === WaitlistStatus.CheckError">
+    <div
+      v-else-if="waitlistStatus === WaitlistStatus.CheckError"
+      class="mt-12"
+      data-test-id="join-waitlist-check-error"
+    >
       <h2 class="mb-6 text-h4">
         {{ $t('pages.initialization.waitlist_check_error_title') }}
       </h2>
@@ -76,7 +94,7 @@
     <template v-else>{{ unreachable(waitlistStatus) }}</template>
   </div>
 
-  <VContainer class="pl-8 pr-8 mt-12" fluid v-else>
+  <VContainer v-else class="pl-8 pr-8 mt-12" fluid data-test-id="deploying-wallet">
     <VRow>
       <VCol cols="12" class="text-center">
         <VProgressCircular class="my-16" color="primary" indeterminate size="90" width="8" />
