@@ -193,10 +193,9 @@ mod tests {
     use crate::{
         core::ic_cdk::api::id as self_canister_id,
         models::{
-            account_test_utils::mock_account,
-            criteria::Criteria,
-            proposal_policy_test_utils::mock_proposal_policy,
-            specifier::{CommonSpecifier, ProposalSpecifier},
+            account_test_utils::mock_account, criteria::Criteria,
+            proposal_policy_test_utils::mock_proposal_policy, resource::ResourceIds,
+            specifier::ProposalSpecifier,
         },
     };
 
@@ -290,7 +289,7 @@ mod tests {
 
         PROPOSAL_POLICY_SERVICE
             .handle_policy_change(
-                ProposalSpecifier::EditAccount(CommonSpecifier::Id(vec![account.id])),
+                ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
                 ApprovalCriteriaInput::Set(Criteria::AutoAdopted),
                 &mut account.update_approval_policy_id,
             )
@@ -301,7 +300,7 @@ mod tests {
 
         PROPOSAL_POLICY_SERVICE
             .handle_policy_change(
-                ProposalSpecifier::EditAccount(CommonSpecifier::Id(vec![account.id])),
+                ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
                 ApprovalCriteriaInput::Remove,
                 &mut account.update_approval_policy_id,
             )

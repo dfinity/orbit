@@ -1,5 +1,7 @@
 use super::{
-    specifier::{Match, ProposalHasMetadata, ProposalHasVoterInUserSpecifier, UserSpecifier},
+    specifier::{
+        Match, ProposalHasMetadata, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
+    },
     EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalOperation, ProposalVoteStatus,
     UserId, UserStatus,
 };
@@ -76,7 +78,7 @@ pub trait EvaluateCriteria<
 
 #[derive(Clone)]
 pub struct CriteriaEvaluator {
-    pub user_matcher: Arc<dyn Match<ProposalHasVoterInUserSpecifier>>,
+    pub user_matcher: Arc<dyn Match<UserInvolvedInCriteriaForProposalResource>>,
     pub address_book_metadata_matcher: Arc<dyn Match<ProposalHasMetadata>>,
 }
 
@@ -136,11 +138,15 @@ impl CriteriaEvaluator {
         let mut result = vec![];
 
         for (user_id, match_return) in users {
-            if self.user_matcher.is_match((
-                proposal.as_ref().to_owned(),
-                user_id.to_owned(),
-                user_specifier.to_owned(),
-            ))? {
+            if self
+                .user_matcher
+                .is_match(UserInvolvedInCriteriaForProposalResource {
+                    proposal_operation_resources: proposal.operation.to_resources(),
+                    policy_criteria_user_specifier: user_specifier.to_owned(),
+                    user_id: user_id.to_owned(),
+                    proposal_id: proposal.id,
+                })?
+            {
                 result.push(match_return.clone());
             }
         }

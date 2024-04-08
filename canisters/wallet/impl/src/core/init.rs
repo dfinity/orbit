@@ -3,10 +3,10 @@ use crate::models::{
     criteria::{Criteria, Percentage},
     resource::{
         AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-        UserResourceAction,
+        ProposalResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SystemResourceAction, UserResourceAction,
     },
-    specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
+    specifier::{ProposalSpecifier, ResourceSpecifier, UserSpecifier},
     ADMIN_GROUP_ID,
 };
 use lazy_static::lazy_static;
@@ -153,8 +153,8 @@ lazy_static! {
             Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
         ),
         (
-            ProposalSpecifier::EditUser(UserSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::EditUser(ResourceIds::Any),
+            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),Percentage(51))
         ),
         // address book
         (
@@ -162,12 +162,19 @@ lazy_static! {
             Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
         ),
         (
-            ProposalSpecifier::EditAddressBookEntry(CommonSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::EditAddressBookEntry(ResourceIds::Any),
+            Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )
         ),
         (
-            ProposalSpecifier::RemoveAddressBookEntry(CommonSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::RemoveAddressBookEntry(ResourceIds::Any),
+            Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )
+
         ),
         // access policies
         (
@@ -180,12 +187,19 @@ lazy_static! {
             Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
         ),
         (
-            ProposalSpecifier::EditProposalPolicy(CommonSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::EditProposalPolicy(ResourceIds::Any),
+            Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )
         ),
         (
-            ProposalSpecifier::RemoveProposalPolicy(CommonSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::RemoveProposalPolicy(ResourceIds::Any),
+            Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )
+
         ),
         // user groups
         (
@@ -193,12 +207,19 @@ lazy_static! {
             Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
         ),
         (
-            ProposalSpecifier::EditUserGroup(CommonSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::EditUserGroup(ResourceIds::Any),
+            Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )
         ),
         (
-            ProposalSpecifier::RemoveUserGroup(CommonSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            ProposalSpecifier::RemoveUserGroup(ResourceIds::Any),
+            Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51)
+            )
+
         ),
         // change canister
         (

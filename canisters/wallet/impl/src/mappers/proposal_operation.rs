@@ -1,15 +1,20 @@
 use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
+        resource::{
+            AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+            Resource, ResourceAction, ResourceId, UserResourceAction,
+        },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddProposalPolicyOperation,
         AddProposalPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
         ChangeCanisterOperation, ChangeCanisterOperationInput, ChangeCanisterTarget,
         EditAccessPolicyOperation, EditAccessPolicyOperationInput, EditAccountOperation,
         EditAccountOperationInput, EditAddressBookEntryOperation, EditProposalPolicyOperation,
-        EditProposalPolicyOperationInput, EditUserOperation, EditUserOperationInput,
-        ProposalOperation, RemoveAddressBookEntryOperation, RemoveProposalPolicyOperation,
-        RemoveProposalPolicyOperationInput, TransferOperation, User,
+        EditProposalPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
+        EditUserOperationInput, ProposalOperation, RemoveAddressBookEntryOperation,
+        RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput,
+        RemoveUserGroupOperation, TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -571,6 +576,110 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             }
             ProposalOperation::RemoveProposalPolicy(operation) => {
                 ProposalOperationDTO::RemoveProposalPolicy(Box::new(operation.into()))
+            }
+        }
+    }
+}
+
+impl ProposalOperation {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        match self {
+            ProposalOperation::AddAccount(_) => {
+                vec![Resource::Account(AccountResourceAction::Create)]
+            }
+            ProposalOperation::AddAddressBookEntry(_) => {
+                vec![Resource::AddressBook(ResourceAction::Create)]
+            }
+            ProposalOperation::AddUser(_) => vec![Resource::User(UserResourceAction::Create)],
+            ProposalOperation::AddUserGroup(_) => vec![Resource::UserGroup(ResourceAction::Create)],
+
+            ProposalOperation::AddProposalPolicy(_) => {
+                vec![Resource::ProposalPolicy(ResourceAction::Create)]
+            }
+            ProposalOperation::EditAccessPolicy(_) => {
+                vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
+            }
+
+            ProposalOperation::Transfer(transfer) => {
+                vec![
+                    Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
+                        transfer.input.from_account_id,
+                    ))),
+                    Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+                ]
+            }
+
+            ProposalOperation::EditAccount(EditAccountOperation { input }) => {
+                vec![
+                    Resource::Account(AccountResourceAction::Update(ResourceId::Id(
+                        input.account_id,
+                    ))),
+                    Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::EditAddressBookEntry(EditAddressBookEntryOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::AddressBook(ResourceAction::Update(ResourceId::Id(
+                        input.address_book_entry_id,
+                    ))),
+                    Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::RemoveAddressBookEntry(RemoveAddressBookEntryOperation {
+                input,
+            }) => {
+                vec![
+                    Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(
+                        input.address_book_entry_id,
+                    ))),
+                    Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::EditUser(EditUserOperation { input }) => {
+                vec![
+                    Resource::User(UserResourceAction::Update(ResourceId::Id(input.user_id))),
+                    Resource::User(UserResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::EditUserGroup(EditUserGroupOperation { input }) => {
+                vec![
+                    Resource::UserGroup(ResourceAction::Update(ResourceId::Id(
+                        input.user_group_id,
+                    ))),
+                    Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::RemoveUserGroup(RemoveUserGroupOperation { input }) => {
+                vec![
+                    Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(
+                        input.user_group_id,
+                    ))),
+                    Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::ChangeCanister(_) => {
+                vec![Resource::ChangeCanister(
+                    ChangeCanisterResourceAction::Create,
+                )]
+            }
+            ProposalOperation::EditProposalPolicy(EditProposalPolicyOperation { input }) => {
+                vec![
+                    Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(
+                        input.policy_id,
+                    ))),
+                    Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            ProposalOperation::RemoveProposalPolicy(RemoveProposalPolicyOperation { input }) => {
+                vec![
+                    Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(
+                        input.policy_id,
+                    ))),
+                    Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Any)),
+                ]
             }
         }
     }

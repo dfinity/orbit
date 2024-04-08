@@ -235,7 +235,7 @@ pub mod edit_proposal_policy_test_utils {
             policy_id: Uuid::from_bytes([0u8; 16]).hyphenated().to_string(),
             criteria: Some(wallet_api::CriteriaDTO::AutoAdopted),
             specifier: Some(wallet_api::ProposalSpecifierDTO::EditProposalPolicy(
-                wallet_api::CommonSpecifierDTO::Any,
+                wallet_api::ResourceIdsDTO::Any,
             )),
         }
     }

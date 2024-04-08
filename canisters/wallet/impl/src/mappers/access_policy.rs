@@ -1,5 +1,9 @@
 use super::HelperMapper;
-use crate::models::access_policy::{AccessPolicy, Allow, AuthScope};
+use crate::models::{
+    access_policy::{AccessPolicy, Allow, AuthScope},
+    resource::ResourceIds,
+};
+use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
 impl From<wallet_api::AuthScopeDTO> for AuthScope {
@@ -62,6 +66,36 @@ impl From<Allow> for wallet_api::AllowDTO {
                 .iter()
                 .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
                 .collect(),
+        }
+    }
+}
+
+impl From<wallet_api::ResourceIdsDTO> for ResourceIds {
+    fn from(dto: wallet_api::ResourceIdsDTO) -> Self {
+        match dto {
+            wallet_api::ResourceIdsDTO::Any => ResourceIds::Any,
+            wallet_api::ResourceIdsDTO::Ids(ids) => ResourceIds::Ids(
+                ids.iter()
+                    .map(|id| {
+                        *HelperMapper::to_uuid(id.to_owned())
+                            .expect("Invalid resource id")
+                            .as_bytes()
+                    })
+                    .collect::<Vec<UUID>>(),
+            ),
+        }
+    }
+}
+
+impl From<ResourceIds> for wallet_api::ResourceIdsDTO {
+    fn from(id: ResourceIds) -> Self {
+        match id {
+            ResourceIds::Any => wallet_api::ResourceIdsDTO::Any,
+            ResourceIds::Ids(ids) => wallet_api::ResourceIdsDTO::Ids(
+                ids.iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+            ),
         }
     }
 }

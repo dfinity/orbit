@@ -311,6 +311,11 @@ impl ProposalService {
         // Different proposal types may have different validation rules.
         proposal.validate()?;
 
+        // Insert the proposal into the repository before adding votes so checks that depend on the
+        // proposal being in the repository pass.
+        self.proposal_repository
+            .insert(proposal.to_key(), proposal.to_owned());
+
         if proposal.can_vote(&proposer.id).await {
             proposal.add_vote(proposer.id, ProposalVoteStatus::Accepted, None);
         }
@@ -397,15 +402,17 @@ mod tests {
             criteria::{Criteria, Percentage},
             proposal_policy_test_utils::mock_proposal_policy,
             proposal_test_utils::mock_proposal,
-            specifier::{AccountSpecifier, ProposalSpecifier, UserSpecifier},
+            resource::ResourceIds,
+            specifier::{ProposalSpecifier, UserSpecifier},
             user_test_utils::mock_user,
             AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
-            BlockchainStandard, Metadata, ProposalOperation, ProposalStatus, ProposalVote,
-            TransferOperation, TransferOperationInput, User, UserStatus,
+            BlockchainStandard, Metadata, ProposalOperation, ProposalPolicy, ProposalStatus,
+            ProposalVote, TransferOperation, TransferOperationInput, User, UserGroup, UserStatus,
+            ADMIN_GROUP_ID,
         },
         repositories::{
             policy::PROPOSAL_POLICY_REPOSITORY, AccountRepository, NOTIFICATION_REPOSITORY,
-            USER_REPOSITORY,
+            USER_GROUP_REPOSITORY, USER_REPOSITORY,
         },
         services::AccountService,
     };
@@ -424,9 +431,19 @@ mod tests {
     fn setup() -> TestContext {
         test_utils::init_canister_system();
 
+        USER_GROUP_REPOSITORY.insert(
+            ADMIN_GROUP_ID.to_owned(),
+            UserGroup {
+                id: ADMIN_GROUP_ID.to_owned(),
+                name: "Admin".to_owned(),
+                last_modification_timestamp: 0,
+            },
+        );
+
         let caller_principal = Principal::from_slice(&[9; 29]);
         let mut user = mock_user();
         user.identities = vec![caller_principal];
+        user.groups.push(ADMIN_GROUP_ID.to_owned());
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
@@ -494,7 +511,7 @@ mod tests {
         });
         proposal.votes = vec![];
         let mut proposal_policy = mock_proposal_policy();
-        proposal_policy.specifier = ProposalSpecifier::Transfer(AccountSpecifier::Any);
+        proposal_policy.specifier = ProposalSpecifier::Transfer(ResourceIds::Any);
         proposal_policy.criteria = Criteria::ApprovalThreshold(
             UserSpecifier::Id(vec![ctx.caller_user.id]),
             Percentage(100),
@@ -552,7 +569,7 @@ mod tests {
 
         // creates a proposal policy that will match the new proposal
         let mut proposal_policy = mock_proposal_policy();
-        proposal_policy.specifier = ProposalSpecifier::Transfer(AccountSpecifier::Any);
+        proposal_policy.specifier = ProposalSpecifier::Transfer(ResourceIds::Any);
         proposal_policy.criteria = Criteria::ApprovalThreshold(
             UserSpecifier::Id(vec![ctx.caller_user.id, related_user.id]),
             Percentage(100),
@@ -587,6 +604,46 @@ mod tests {
         let notifications = NOTIFICATION_REPOSITORY.list();
         assert_eq!(notifications.len(), 1);
         assert_eq!(notifications[0].target_user_id, related_user.id);
+    }
+
+    #[tokio::test]
+    async fn user_votes_on_their_own_proposal() {
+        let ctx = setup();
+
+        let policy = ProposalPolicy {
+            id: [0; 16],
+            specifier: ProposalSpecifier::AddAddressBookEntry,
+            criteria: Criteria::And(vec![Criteria::ApprovalThreshold(
+                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                Percentage(51),
+            )]),
+        };
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy);
+
+        let proposal = ctx
+            .service
+            .create_proposal(
+                CreateProposalInput {
+                    operation: wallet_api::ProposalOperationInput::AddAddressBookEntry(
+                        wallet_api::AddAddressBookEntryOperationInput {
+                            address_owner: "".to_owned(),
+                            address: "abc".to_owned(),
+                            blockchain: "icp".to_owned(),
+                            standard: "native".to_owned(),
+                            metadata: vec![],
+                        },
+                    ),
+                    title: None,
+                    summary: None,
+                    execution_plan: Some(wallet_api::ProposalExecutionScheduleDTO::Immediate),
+                },
+                &ctx.call_context,
+            )
+            .await
+            .unwrap();
+
+        assert!(!proposal.votes.is_empty());
     }
 
     #[tokio::test]
@@ -865,12 +922,8 @@ mod benchs {
     use ic_canister_core::{model::ModelKey, utils::timestamp_to_rfc3339};
     use wallet_api::ProposalStatusCodeDTO;
 
-    #[bench(raw)]
-    fn service_filter_all_proposals_with_default_filters() -> BenchResult {
-        let proposals_to_insert = 2000u64;
-        let start_creation_time = 0;
+    fn create_test_proposals(proposals_to_insert: u64) -> u64 {
         let end_creation_time = proposals_to_insert * 1_000_000_000;
-
         for i in 0..proposals_to_insert {
             let mut proposal = mock_proposal();
             proposal.created_timestamp = i * 1_000_000_000;
@@ -903,12 +956,65 @@ mod benchs {
 
         ACCESS_POLICY_REPOSITORY.insert(access_policy.key(), access_policy.to_owned());
 
+        end_creation_time
+    }
+
+    #[bench(raw)]
+    fn service_filter_all_proposals_with_default_filters() -> BenchResult {
+        let end_creation_time = create_test_proposals(2000u64);
+
         canbench_rs::bench_fn(|| {
             spawn(async move {
                 let result = PROPOSAL_SERVICE
                     .list_proposals(
                         wallet_api::ListProposalsInput {
-                            created_from_dt: Some(timestamp_to_rfc3339(&start_creation_time)),
+                            created_from_dt: Some(timestamp_to_rfc3339(&0)),
+                            created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
+                            statuses: Some(vec![
+                                ProposalStatusCodeDTO::Created,
+                                ProposalStatusCodeDTO::Adopted,
+                            ]),
+                            voter_ids: None,
+                            proposer_ids: None,
+                            operation_types: None,
+                            expiration_from_dt: None,
+                            expiration_to_dt: None,
+                            paginate: Some(wallet_api::PaginationInput {
+                                limit: Some(25),
+                                offset: None,
+                            }),
+                            sort_by: Some(wallet_api::ListProposalsSortBy::CreatedAt(
+                                wallet_api::SortDirection::Asc,
+                            )),
+                            only_votable: false,
+                        },
+                        &CallContext::new(Principal::from_slice(&[5; 29])),
+                    )
+                    .await;
+
+                let paginated_data = result.unwrap();
+
+                if paginated_data.total == 0 {
+                    panic!("No proposals were found with the given filters");
+                }
+            });
+        })
+    }
+
+    #[bench(raw)]
+    fn service_filter_all_proposals_with_creation_time_filters() -> BenchResult {
+        let end_creation_time = create_test_proposals(20000u64);
+
+        // test list_proposals that that 300 proposals as initial set
+
+        canbench_rs::bench_fn(|| {
+            spawn(async move {
+                let result = PROPOSAL_SERVICE
+                    .list_proposals(
+                        wallet_api::ListProposalsInput {
+                            created_from_dt: Some(timestamp_to_rfc3339(
+                                &(end_creation_time - 300 * 1_000_000_000),
+                            )),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
                             statuses: Some(vec![
                                 ProposalStatusCodeDTO::Created,

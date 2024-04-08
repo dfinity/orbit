@@ -209,7 +209,7 @@ watch(
         model.value = { [specifier.value]: { Any: null } };
         break;
       case ProposalSpecifierEnum.Transfer:
-        model.value = { [specifier.value]: { account: { Any: null } } };
+        model.value = { [specifier.value]: { Any: null } };
         break;
       case ProposalSpecifierEnum.ChangeCanister:
         model.value = { [specifier.value]: null };
