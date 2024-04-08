@@ -2,7 +2,7 @@ use crate::models::{resource::Resource, ProposalPolicy};
 use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
 
-/// Index of policy specifiers by the policy id.
+/// Index of resources to their matching policy ids.
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct PolicyResourceIndex {
