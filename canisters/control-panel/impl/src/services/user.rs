@@ -1,7 +1,7 @@
 use crate::{
     core::CallContext,
     errors::UserError,
-    mappers::UserMapper,
+    mappers::{SubscribedUser, UserMapper},
     models::{CanDeployWallet, User, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
@@ -136,6 +136,12 @@ impl UserService {
         self.user_repository.insert(user.to_key(), user.clone());
 
         Ok(user)
+    }
+
+    pub fn get_waiting_list(&self, ctx: &CallContext) -> ServiceResult<Vec<SubscribedUser>> {
+        self.assert_controller(ctx)?;
+
+        Ok(self.user_repository.get_subscribed_users())
     }
 
     pub fn update_waiting_list(

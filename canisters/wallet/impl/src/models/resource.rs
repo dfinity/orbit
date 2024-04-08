@@ -81,7 +81,32 @@ pub enum ResourceId {
     Id(UUID),
 }
 
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ResourceIds {
+    Any,
+    Ids(Vec<UUID>),
+}
+
+impl ResourceIds {
+    pub fn to_vec(&self) -> Vec<ResourceId> {
+        match self {
+            ResourceIds::Any => vec![],
+            ResourceIds::Ids(ids) => ids.iter().map(|id| ResourceId::Id(*id)).collect(),
+        }
+    }
+}
+
 impl Resource {
+    /// Enables Resource be used in range queries in indexes.
+    /// Takes advantage of lexicographical ordering implemented by Ord.
+    pub fn min() -> Self {
+        Resource::AccessPolicy(AccessPolicyResourceAction::Read)
+    }
+    pub fn max() -> Self {
+        Resource::UserGroup(ResourceAction::Delete(ResourceId::Id([u8::MAX; 16])))
+    }
+
     /// Returns the expanded list of resources that the resource represents.
     ///
     /// E.g. if the resource is for account_id = 1, it will also return the resource for account_id = any.

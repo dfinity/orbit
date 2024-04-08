@@ -1,9 +1,13 @@
-use super::resource::Resource;
-use super::{MetadataItem, Proposal, ProposalOperation, ProposalOperationType};
+use super::resource::{Resource, ResourceId, ResourceIds, UserResourceAction};
+use super::{
+    MetadataItem, Proposal, ProposalId, ProposalKey, ProposalOperation, ProposalOperationType,
+};
 use crate::models::user::User;
-use crate::repositories::ADDRESS_BOOK_REPOSITORY;
+use crate::repositories::{ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY};
+
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
+use anyhow::anyhow;
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_canister_macros::storable;
 use std::sync::Arc;
@@ -40,20 +44,20 @@ pub enum ResourceSpecifier {
 pub enum ProposalSpecifier {
     AddAccount,
     AddUser,
-    EditAccount(AccountSpecifier),
-    EditUser(UserSpecifier),
+    EditAccount(ResourceIds),
+    EditUser(ResourceIds),
     AddAddressBookEntry,
-    EditAddressBookEntry(CommonSpecifier),
-    RemoveAddressBookEntry(CommonSpecifier),
-    Transfer(AccountSpecifier),
+    EditAddressBookEntry(ResourceIds),
+    RemoveAddressBookEntry(ResourceIds),
+    Transfer(ResourceIds),
     ChangeCanister,
     EditAccessPolicy(ResourceSpecifier),
     AddProposalPolicy,
-    EditProposalPolicy(CommonSpecifier),
-    RemoveProposalPolicy(CommonSpecifier),
+    EditProposalPolicy(ResourceIds),
+    RemoveProposalPolicy(ResourceIds),
     AddUserGroup,
-    EditUserGroup(CommonSpecifier),
-    RemoveUserGroup(CommonSpecifier),
+    EditUserGroup(ResourceIds),
+    RemoveUserGroup(ResourceIds),
 }
 
 impl From<&ProposalSpecifier> for ProposalOperationType {
@@ -92,15 +96,13 @@ pub trait Match<T>: Sync + Send {
 #[derive(Clone)]
 pub struct AccountMatcher;
 
-impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
-    fn is_match(&self, v: (Proposal, UUID, AccountSpecifier)) -> Result<bool, MatchError> {
+impl Match<(Proposal, UUID, ResourceIds)> for AccountMatcher {
+    fn is_match(&self, v: (Proposal, UUID, ResourceIds)) -> Result<bool, MatchError> {
         let (_, account_id, specifier) = v;
 
         match specifier {
-            AccountSpecifier::Any => Ok(true),
-            // TODO: Add once account groups are implemented
-            AccountSpecifier::Group(_ids) => todo!(),
-            AccountSpecifier::Id(ids) => Ok(ids.contains(&account_id)),
+            ResourceIds::Any => Ok(true),
+            ResourceIds::Ids(ids) => Ok(ids.contains(&account_id)),
         }
     }
 }
@@ -108,17 +110,13 @@ impl Match<(Proposal, UUID, AccountSpecifier)> for AccountMatcher {
 #[derive(Clone)]
 pub struct CommonIdMatcher;
 
-impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
-    fn is_match(&self, v: (Proposal, UUID, CommonSpecifier)) -> Result<bool, MatchError> {
+impl Match<(Proposal, UUID, ResourceIds)> for CommonIdMatcher {
+    fn is_match(&self, v: (Proposal, UUID, ResourceIds)) -> Result<bool, MatchError> {
         let (_, entity_id, specifier) = v;
 
         match specifier {
-            CommonSpecifier::Any => Ok(true),
-            CommonSpecifier::Id(ids) => Ok(ids.contains(&entity_id)),
-            CommonSpecifier::Group(_) => {
-                // Common id matcher does not support groups
-                Ok(false)
-            }
+            ResourceIds::Any => Ok(true),
+            ResourceIds::Ids(ids) => Ok(ids.contains(&entity_id)),
         }
     }
 }
@@ -126,40 +124,65 @@ impl Match<(Proposal, UUID, CommonSpecifier)> for CommonIdMatcher {
 #[derive(Clone)]
 pub struct UserMatcher;
 
-pub type VoterId = UUID;
-pub type ProposalHasVoterInUserSpecifier = (Proposal, VoterId, UserSpecifier);
+pub struct UserInvolvedInCriteriaForProposalResource {
+    pub proposal_operation_resources: Vec<Resource>,
+    pub policy_criteria_user_specifier: UserSpecifier,
+    pub user_id: UUID,
+    pub proposal_id: ProposalId,
+}
 
-impl Match<ProposalHasVoterInUserSpecifier> for UserMatcher {
-    fn is_match(&self, v: (Proposal, VoterId, UserSpecifier)) -> Result<bool, MatchError> {
-        let (proposal, voter_id, specifier) = v;
-
-        match specifier {
+impl Match<UserInvolvedInCriteriaForProposalResource> for UserMatcher {
+    fn is_match(
+        &self,
+        input: UserInvolvedInCriteriaForProposalResource,
+    ) -> Result<bool, MatchError> {
+        match input.policy_criteria_user_specifier {
             UserSpecifier::Any => Ok(true),
             UserSpecifier::Group(ids) => {
-                if let Some(user) = USER_REPOSITORY.get(&User::key(voter_id)) {
+                if let Some(user) = USER_REPOSITORY.get(&User::key(input.user_id)) {
                     return Ok(user.groups.iter().any(|g| ids.contains(g)));
                 }
 
                 Ok(false)
             }
-            UserSpecifier::Id(ids) => Ok(ids.contains(&voter_id)),
+            UserSpecifier::Id(ids) => Ok(ids.contains(&input.user_id)),
             UserSpecifier::Owner => {
-                if let ProposalOperation::EditUser(operation) = proposal.operation {
-                    return Ok(operation.input.user_id == voter_id);
+                for resource in input.proposal_operation_resources {
+                    let is_match = match resource {
+                        Resource::User(UserResourceAction::Update(user_resource)) => {
+                            match user_resource {
+                                ResourceId::Any => false, // not a real match
+                                ResourceId::Id(edit_user_id) => edit_user_id == input.user_id,
+                            }
+                        }
+                        _ => false,
+                    };
+
+                    if is_match {
+                        return Ok(true);
+                    }
                 }
 
                 Ok(false)
             }
-            UserSpecifier::Proposer => Ok(proposal.proposed_by == voter_id),
+            UserSpecifier::Proposer => {
+                if let Some(proposal) = PROPOSAL_REPOSITORY.get(&ProposalKey {
+                    id: input.proposal_id,
+                }) {
+                    Ok(proposal.proposed_by == input.user_id)
+                } else {
+                    Err(MatchError::UnexpectedError(anyhow!("Proposal not found")))
+                }
+            }
         }
     }
 }
 
 #[derive(Clone)]
 pub struct ProposalMatcher {
-    pub account_matcher: Arc<dyn Match<(Proposal, UUID, AccountSpecifier)>>,
-    pub user_matcher: Arc<dyn Match<ProposalHasVoterInUserSpecifier>>,
-    pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, CommonSpecifier)>>,
+    pub account_matcher: Arc<dyn Match<(Proposal, UUID, ResourceIds)>>,
+    pub user_matcher: Arc<dyn Match<UserInvolvedInCriteriaForProposalResource>>,
+    pub common_id_matcher: Arc<dyn Match<(Proposal, UUID, ResourceIds)>>,
 }
 
 impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
@@ -175,7 +198,15 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             }
             (ProposalOperation::EditUser(params), ProposalSpecifier::EditUser(user)) => self
                 .user_matcher
-                .is_match((p, params.input.user_id, user))?,
+                .is_match(UserInvolvedInCriteriaForProposalResource {
+                    proposal_operation_resources: p.operation.to_resources(),
+                    policy_criteria_user_specifier: match user {
+                        ResourceIds::Any => UserSpecifier::Any,
+                        ResourceIds::Ids(ids) => UserSpecifier::Id(ids),
+                    },
+                    user_id: params.input.user_id,
+                    proposal_id: p.id,
+                })?,
             (ProposalOperation::AddAddressBookEntry(_), ProposalSpecifier::AddAddressBookEntry) => {
                 true
             }
@@ -285,21 +316,27 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::{
-        access_policy::Allow,
-        criteria::Criteria,
-        proposal_test_utils::mock_proposal,
-        specifier::{
-            AccountMatcher, AccountSpecifier, Match, ProposalMatcher, ProposalSpecifier,
-            UserMatcher, UserSpecifier,
+
+    use crate::{
+        models::{
+            access_policy::Allow,
+            criteria::Criteria,
+            proposal_test_utils::mock_proposal,
+            resource::ResourceIds,
+            specifier::{
+                AccountMatcher, Match, ProposalMatcher, ProposalSpecifier,
+                UserInvolvedInCriteriaForProposalResource, UserMatcher, UserSpecifier,
+            },
+            AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
+            Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
+            EditUserOperationInput, Metadata, ProposalKey, ProposalOperation, TransferOperation,
+            TransferOperationInput, UserStatus,
         },
-        AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
-        Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
-        EditUserOperationInput, Metadata, ProposalOperation, TransferOperation,
-        TransferOperationInput, UserStatus,
+        repositories::PROPOSAL_REPOSITORY,
     };
     use anyhow::{anyhow, Error};
     use candid::Nat;
+    use ic_canister_core::repository::Repository;
     use std::sync::Arc;
 
     #[tokio::test]
@@ -352,7 +389,7 @@ mod tests {
                         update_approval_policy: None,
                     },
                 }),
-                ProposalSpecifier::EditAccount(AccountSpecifier::Any),
+                ProposalSpecifier::EditAccount(ResourceIds::Any),
             ),
             (
                 ProposalOperation::EditUser(EditUserOperation {
@@ -364,7 +401,7 @@ mod tests {
                         status: None,
                     },
                 }),
-                ProposalSpecifier::EditUser(UserSpecifier::Any),
+                ProposalSpecifier::EditUser(ResourceIds::Any),
             ),
             (
                 ProposalOperation::Transfer(TransferOperation {
@@ -378,7 +415,7 @@ mod tests {
                         fee: None,
                     },
                 }),
-                ProposalSpecifier::Transfer(AccountSpecifier::Any),
+                ProposalSpecifier::Transfer(ResourceIds::Any),
             ),
         ];
 
@@ -397,7 +434,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_user_matcher() -> Result<(), Error> {
+    async fn test_user_matcher() {
         let m = UserMatcher;
 
         let tcs = vec![
@@ -421,15 +458,19 @@ mod tests {
         for tc in tcs {
             let mut proposal = mock_proposal();
             proposal.proposed_by = tc.0;
+            PROPOSAL_REPOSITORY.insert(ProposalKey { id: proposal.id }, proposal.clone());
 
             let voter = tc.1;
             let specifier = tc.2;
 
-            if !m.is_match((proposal, voter, specifier))? {
-                return Err(anyhow!("expected true but got false"));
-            };
+            assert!(m
+                .is_match(UserInvolvedInCriteriaForProposalResource {
+                    proposal_operation_resources: proposal.operation.to_resources(),
+                    policy_criteria_user_specifier: specifier,
+                    user_id: voter,
+                    proposal_id: proposal.id,
+                })
+                .expect("Could not test user matcher"));
         }
-
-        Ok(())
     }
 }

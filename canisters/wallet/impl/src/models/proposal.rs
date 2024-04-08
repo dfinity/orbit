@@ -149,7 +149,7 @@ impl Proposal {
 
     pub async fn can_vote(&self, user_id: &UUID) -> bool {
         let validator = ProposalVoteRightsEvaluator {
-            proposal: self,
+            proposal_id: self.id,
             voter_id: *user_id,
             proposal_matcher: PROPOSAL_MATCHER.to_owned(),
             vote_rights_evaluator: PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),

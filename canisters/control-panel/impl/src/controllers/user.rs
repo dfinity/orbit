@@ -4,8 +4,8 @@ use crate::core::middlewares::{call_context, logger, use_status_metric};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
-    DeleteUserResponse, GetUserResponse, ManageUserInput, ManageUserResponse, RegisterUserInput,
-    RegisterUserResponse, UpdateWaitingListInput, UserDTO,
+    DeleteUserResponse, GetUserResponse, GetWaitingListResponse, ManageUserInput,
+    ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserDTO,
 };
 use ic_canister_core::api::{ApiError, ApiResult};
 use ic_canister_macros::with_middleware;
@@ -50,6 +50,11 @@ async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
 #[update(name = "subscribe_to_waiting_list")]
 async fn subscribe_to_waiting_list(email: String) -> ApiResult<()> {
     CONTROLLER.subscribe_to_waiting_list(email).await
+}
+
+#[update(name = "get_waiting_list")]
+async fn get_waiting_list() -> ApiResult<GetWaitingListResponse> {
+    CONTROLLER.get_waiting_list().await
 }
 
 #[update(name = "update_waiting_list")]
@@ -134,6 +139,19 @@ impl UserController {
             .await?;
 
         Ok(())
+    }
+
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
+    #[with_middleware(tail = use_status_metric("get_waiting_list", &result))]
+    async fn get_waiting_list(&self) -> ApiResult<GetWaitingListResponse> {
+        let ctx: CallContext = CallContext::get();
+        self.user_service
+            .get_waiting_list(&ctx)
+            .map(|subscribed_users| GetWaitingListResponse { subscribed_users })
     }
 
     #[with_middleware(

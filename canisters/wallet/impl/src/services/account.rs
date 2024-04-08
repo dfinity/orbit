@@ -10,8 +10,8 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
-        resource::{AccountResourceAction, Resource, ResourceId},
-        specifier::{AccountSpecifier, ProposalSpecifier},
+        resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
+        specifier::ProposalSpecifier,
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddProposalPolicyOperationInput, EditAccessPolicyOperationInput, EditAccountOperationInput,
     },
@@ -151,9 +151,9 @@ impl AccountService {
             let transfer_approval_policy = self
                 .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
-                    specifier: ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![
-                        *uuid.as_bytes()
-                    ])),
+                    specifier: ProposalSpecifier::Transfer(ResourceIds::Ids(
+                        vec![*uuid.as_bytes()],
+                    )),
                     criteria: criteria.clone(),
                 })
                 .await?;
@@ -166,7 +166,7 @@ impl AccountService {
             let update_approval_policy = self
                 .proposal_policy_service
                 .add_proposal_policy(AddProposalPolicyOperationInput {
-                    specifier: ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![
+                    specifier: ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![
                         *uuid.as_bytes()
                     ])),
                     criteria: criteria.to_owned(),
@@ -242,7 +242,7 @@ impl AccountService {
         if let Some(transfer_approval_policy_input) = input.transfer_approval_policy {
             self.proposal_policy_service
                 .handle_policy_change(
-                    ProposalSpecifier::Transfer(AccountSpecifier::Id(vec![account.id])),
+                    ProposalSpecifier::Transfer(ResourceIds::Ids(vec![account.id])),
                     transfer_approval_policy_input,
                     &mut account.transfer_approval_policy_id,
                 )
@@ -252,7 +252,7 @@ impl AccountService {
         if let Some(update_approval_policy_input) = input.update_approval_policy {
             self.proposal_policy_service
                 .handle_policy_change(
-                    ProposalSpecifier::EditAccount(AccountSpecifier::Id(vec![account.id])),
+                    ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
                     update_approval_policy_input,
                     &mut account.update_approval_policy_id,
                 )

@@ -1,6 +1,7 @@
 use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
-    models::{User, UserKey},
+    mappers::SubscribedUser,
+    models::{User, UserKey, UserSubscriptionStatus},
 };
 use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -45,6 +46,24 @@ impl Repository<UserKey, User> for UserRepository {
     }
 }
 
+impl UserRepository {
+    pub fn get_subscribed_users(&self) -> Vec<SubscribedUser> {
+        self.list()
+            .into_iter()
+            .filter_map(|u| {
+                if let UserSubscriptionStatus::Pending(email) = u.subscription_status {
+                    Some(SubscribedUser {
+                        user_principal: u.id,
+                        email,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -67,6 +86,62 @@ mod tests {
 
         repository.insert(UserKey(user.id), user.clone());
         assert_eq!(repository.get(&UserKey(user.id)), Some(user));
+    }
+
+    #[test]
+    fn get_subscribed_users() {
+        let repository = UserRepository::default();
+
+        let unsubscribed_user = User {
+            id: Principal::from_slice(&[0; 29]),
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
+            wallets: vec![],
+            deployed_wallets: vec![],
+            main_wallet: None,
+            last_update_timestamp: 0,
+        };
+        repository.insert(UserKey(unsubscribed_user.id), unsubscribed_user.clone());
+
+        let email = "john@example.com".to_string();
+        let subscribed_user = User {
+            id: Principal::from_slice(&[1; 29]),
+            subscription_status: UserSubscriptionStatus::Pending(email.clone()),
+            wallets: vec![],
+            deployed_wallets: vec![],
+            main_wallet: None,
+            last_update_timestamp: 0,
+        };
+        repository.insert(UserKey(subscribed_user.id), subscribed_user.clone());
+
+        let another_email = "martin@example.com".to_string();
+        let another_subscribed_user = User {
+            id: Principal::from_slice(&[2; 29]),
+            subscription_status: UserSubscriptionStatus::Pending(another_email.clone()),
+            wallets: vec![],
+            deployed_wallets: vec![],
+            main_wallet: None,
+            last_update_timestamp: 0,
+        };
+        repository.insert(
+            UserKey(another_subscribed_user.id),
+            another_subscribed_user.clone(),
+        );
+
+        let all_users = repository.list();
+        assert_eq!(all_users.len(), 3);
+
+        let subscribed_users = repository.get_subscribed_users();
+        assert_eq!(subscribed_users.len(), 2);
+        let subscribed = SubscribedUser {
+            user_principal: subscribed_user.id,
+            email,
+        };
+        assert!(subscribed_users.contains(&subscribed));
+        let another_subscribed = SubscribedUser {
+            user_principal: another_subscribed_user.id,
+            email: another_email,
+        };
+        assert!(subscribed_users.contains(&another_subscribed));
     }
 
     #[test]

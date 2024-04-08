@@ -22,6 +22,12 @@ pub enum ResourceIdDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ResourceIdsDTO {
+    Any,
+    Ids(Vec<UuidDTO>),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceActionDTO {
     List,
     Create,
