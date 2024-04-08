@@ -1,110 +1,122 @@
 <template>
-  <PageLayout hide-sidebar>
-    <template #main-header>
-      <VContainer class="pl-8 pr-8" fluid>
-        <VRow>
-          <VCol cols="12" class="text-center">
-            <VProgressCircular class="my-16" color="primary" indeterminate size="90" width="8" />
-            <header class="text-h4">
-              {{ $t(`pages.initialization.status_${status}`) }}
-            </header>
-          </VCol>
-        </VRow>
-      </VContainer>
+  <PageLayout>
+    <template #sidebar-nav><div /></template>
+    <template #main-body>
+      <div class="screens">
+        <TransitionGroup :name="transitionDestinationNames[initializationStep]">
+          <div
+            class="mx-auto w-50 mt-16"
+            v-if="initializationStep == InitializationStep.ChooseOption"
+          >
+            <h1 class="text-h4 mb-6">{{ $t('pages.initialization.join_title') }}</h1>
+
+            <VRadioGroup v-model="userChoice">
+              <VRadio
+                :label="$t('pages.initialization.option_join_existing_wallet')"
+                :value="UserOptions.JoinExisting"
+              ></VRadio>
+              <VRadio
+                :label="$t('pages.initialization.option_deploy_new_wallet')"
+                :value="UserOptions.CreateNew"
+              ></VRadio>
+            </VRadioGroup>
+
+            <VBtn color="primary" class="mt-2" @click="onInitializationOptionChosen">
+              {{ $t('terms.continue') }}
+            </VBtn>
+          </div>
+
+          <JoinWallet
+            v-if="initializationStep == InitializationStep.JoinWallet"
+            @back="initializationStep = InitializationStep.ChooseOption"
+          ></JoinWallet>
+          <DeployWallet
+            v-if="initializationStep == InitializationStep.DeployWallet"
+            @back="initializationStep = InitializationStep.ChooseOption"
+          />
+        </TransitionGroup>
+      </div>
     </template>
   </PageLayout>
 </template>
 
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import PageLayout from '~/components/PageLayout.vue';
-import { defaultHomeRoute } from '~/configs/routes.config';
-import { logger } from '~/core/logger.core';
-import { services } from '~/plugins/services.plugin';
-import { useSessionStore } from '~/stores/session.store';
-import { createUserInitialAccount, useWalletStore } from '~/stores/wallet.store';
-import { wait } from '~/utils/helper.utils';
+import DeployWallet from '~/components/initialization/DeployWallet.vue';
+import JoinWallet from '~/components/initialization/JoinWallet.vue';
+import { VBtn, VRadio, VRadioGroup } from 'vuetify/components';
+import { unreachable } from '~/utils/helper.utils';
 
-enum InitializationStatus {
-  Starting = 'starting',
-  Deploying = 'deploying',
-  WaitingForCanisterInitialization = 'waiting_for_canister_initialization',
-  CreatingInitialAccount = 'creating_initial_account',
-  Completed = 'completed',
-  Failed = 'failed',
+enum UserOptions {
+  JoinExisting = 'join-existing',
+  CreateNew = 'create-new',
+}
+const userChoice = ref<UserOptions>(UserOptions.JoinExisting);
+
+enum InitializationStep {
+  ChooseOption = 'choose-option',
+  DeployWallet = 'deploy-wallet',
+  JoinWallet = 'join-wallet',
+}
+const initializationStep = ref<InitializationStep>(InitializationStep.ChooseOption);
+
+const transitionDestinationNames: Record<InitializationStep, string> = {
+  [InitializationStep.ChooseOption]: 'left',
+  [InitializationStep.DeployWallet]: 'right',
+  [InitializationStep.JoinWallet]: 'right',
+};
+
+function onInitializationOptionChosen() {
+  if (userChoice.value === UserOptions.CreateNew) {
+    initializationStep.value = InitializationStep.DeployWallet;
+  } else if (userChoice.value === UserOptions.JoinExisting) {
+    initializationStep.value = InitializationStep.JoinWallet;
+  } else {
+    unreachable(userChoice.value);
+  }
+}
+</script>
+
+<style scoped>
+.left-enter-active,
+.left-leave-active,
+.right-enter-active,
+.right-leave-active {
+  transition: all 250ms ease;
 }
 
-const router = useRouter();
-const session = useSessionStore();
-const wallet = useWalletStore();
-const status = ref<InitializationStatus>(InitializationStatus.Starting);
+.left-enter-from,
+.right-enter-from {
+  opacity: 0;
+}
 
-const waitUntilWalletIsInitialized = async (
-  walletId: Principal,
-  { retries, retryWaitMs }: { retries?: number; retryWaitMs?: number } = {},
-): Promise<void> => {
-  const walletService = services().wallet;
-  let maxRetries = retries ?? 30;
-  const waitBetweenTriesMs = retryWaitMs ?? 1000;
+.left-leave-to,
+.right-leave-to {
+  opacity: 0;
+}
 
-  while (maxRetries > 0) {
-    if (
-      await walletService
-        .withWalletId(walletId)
-        .isHealthy()
-        .catch(e => {
-          logger.error(`Failed to check wallet health, due to ${e}`);
+.left-enter-from {
+  transform: translateX(-100%);
+}
+.left-leave-to {
+  transform: translateX(100%);
+}
 
-          return false;
-        })
-    ) {
-      return;
-    }
+.right-enter-from {
+  transform: translateX(100%);
+}
+.right-leave-to {
+  transform: translateX(-100%);
+}
+.screens {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
 
-    await wait(waitBetweenTriesMs);
-    --maxRetries;
-  }
-
-  throw new Error('Wallet did not initialize in time');
-};
-
-const deployInitialWallet = async (): Promise<void> => {
-  try {
-    const controlPanelService = services().controlPanel;
-
-    status.value = InitializationStatus.Deploying;
-    const walletId = await controlPanelService.deployWallet();
-    const controlPanelUser = await controlPanelService.getCurrentUser();
-
-    // wait for the wallet to be initialized, this requires one round of consensus
-    status.value = InitializationStatus.WaitingForCanisterInitialization;
-
-    await waitUntilWalletIsInitialized(walletId);
-
-    session.populateUser(controlPanelUser);
-
-    await session.connectWallet(walletId);
-
-    if (wallet.user) {
-      status.value = InitializationStatus.CreatingInitialAccount;
-      await createUserInitialAccount(wallet.user.id);
-    }
-
-    status.value = InitializationStatus.Completed;
-
-    // this wait is here to make sure the user has a chance to see the completed status
-    await wait(2000);
-
-    router.push({ name: defaultHomeRoute });
-  } catch (err) {
-    logger.error('Failed initialization', { err });
-    status.value = InitializationStatus.Failed;
-  }
-};
-
-onMounted(async () => {
-  await deployInitialWallet();
-});
-</script>
+.screens > * {
+  grid-column: 1;
+  grid-row: 1;
+}
+</style>

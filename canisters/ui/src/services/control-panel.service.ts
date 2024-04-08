@@ -30,6 +30,14 @@ export class ControlPanelService {
     return result.Ok.user ?? null;
   }
 
+  async subscribeToWaitlist(email: string): Promise<void> {
+    const result = await this.actor.subscribe_to_waiting_list(email);
+
+    if ('Err' in result) {
+      throw result.Err;
+    }
+  }
+
   async hasRegistration(): Promise<boolean> {
     return await this.getCurrentUser()
       .then(_ => true)

@@ -335,6 +335,7 @@ export default {
     access: 'Access',
     previous: 'Previous',
     next: 'Next',
+    back: 'Back',
     permissions: 'Permissions',
     approval_policies: 'Approval Policies',
     target: 'Target',
@@ -449,6 +450,7 @@ export default {
     subset: 'Subset',
     skip: 'Skip',
     version: 'Version',
+    continue: 'Continue',
   },
   forms: {
     create: 'Create',
@@ -533,6 +535,33 @@ export default {
       create_new_group_title: 'Create new user group',
     },
     initialization: {
+      join_title: 'Welcome! How would you like to join Orbit?',
+      option_join_existing_wallet: 'Join existing wallet on Orbit',
+      option_deploy_new_wallet: 'Create your own wallet',
+
+      join_wallet_title: 'Join existing wallet',
+      join_wallet_body: 'Contact the owner of the wallet to get their Wallet ID to sign up.',
+      join_wallet_canister_id: 'Wallet Canister ID',
+      join_wallet_name: 'Wallet Name (optional)',
+      join_wallet: 'Join wallet',
+
+      check_permissions_title: 'Checking waiting list status...',
+      join_waitlist_title: 'Join waiting list',
+      join_waitlist_body:
+        "Join Orbit's waiting list! Enter your email to get early access and exclusive updates. Your journey starts now.",
+      join_waitlist_email_field: 'Enter your email address',
+      join_waitlist: 'Sign up now',
+
+      waitlist_pending_title: 'You are on the waiting list!',
+      waitlist_pending_body:
+        'Please wait for the approval. You will receive an email once your request is approved.',
+
+      waitlist_check_error_title: 'Failed to check waiting list status',
+      waitlist_check_error_body: 'Failed to check waiting list status, please try again.',
+
+      waitlist_denied_title: "You've been denied access.",
+      waitlist_denied_body: 'Unfortunately, you are not eligible to join the waiting list.',
+
       status_starting: 'Initializing, please wait ...',
       status_deploying: 'Deploying your wallet to the Internet Computer ...',
       status_waiting_for_canister_initialization: 'Waiting for deployment to complete ...',

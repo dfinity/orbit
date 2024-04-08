@@ -4,7 +4,7 @@
       <VCol cols="12">
         <BrandLogo variation="dark" />
       </VCol>
-      <VCol v-if="session.isAuthenticated" cols="12">
+      <VCol v-if="session.isAuthenticated && session.hasWallets" cols="12">
         <WalletSelector />
       </VCol>
     </VRow>

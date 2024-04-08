@@ -338,6 +338,7 @@ export default {
     target: 'Cible',
     previous: 'Précédent',
     next: 'Suivant',
+    back: 'Retour',
     permissions: 'Permissions',
     approval_policies: "Politiques d'approbation",
     download: 'Télécharger',
@@ -451,6 +452,7 @@ export default {
     subset: 'sous-ensemble',
     skip: 'Sauter',
     version: 'Version',
+    continue: 'Continuer',
   },
   forms: {
     create: 'Créer',
@@ -539,6 +541,35 @@ export default {
       create_new_group_title: "Ajouter un nouveau groupe d'usagers",
     },
     initialization: {
+      join_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
+      option_join_existing_wallet: 'Rejoindre un portefeuille existant',
+      option_deploy_new_wallet: 'Déployer un nouveau portefeuille',
+
+      check_permissions_title: 'Vérification du statut de la liste d attente...',
+      join_waitlist_title: 'Rejoindre la liste d attente',
+      join_waitlist_body:
+        "Rejoignez la liste d'attente d'Orbit! Entrez votre email pour obtenir un accès anticipé et des mises à jour exclusives. Votre voyage commence maintenant.",
+      join_waitlist_email_field: 'Entrez votre adresse e-mail',
+      join_waitlist: "S'inscrire maintenant",
+
+      waitlist_pending_title: 'Vous êtes sur la liste d attente!',
+      waitlist_pending_body:
+        'Veuillez attendre l approbation. Vous recevrez un email une fois votre demande approuvée.',
+      waitlist_denied_title: 'Vous avez été refusé l accès.',
+      waitlist_denied_body:
+        'Malheureusement, vous n êtes pas éligible pour rejoindre la liste d attente.',
+
+      waitlist_check_error_title: 'Échec de vérification du statut de la liste d attente',
+      waitlist_check_error_body:
+        "Échec de la vérification du statut de la liste d'attente, veuillez réessayer.",
+
+      join_wallet_title: 'Rejoindre un portefeuille existant',
+      join_wallet_body:
+        'Contactez le propriétaire du portefeuille pour obtenir leur ID de portefeuille pour vous inscrire.',
+      join_wallet_canister_id: 'ID du Canister du Portefeuille',
+      join_wallet_name: 'Nom du Portefeuille (optionnel)',
+      join_wallet: 'Rejoindre le portefeuille',
+
       status_starting: 'Initialization, veuillez patienter...',
       status_deploying: 'Deploiement de votre portefeuille au Internet Computer ...',
       status_waiting_for_canister_initialization: 'En attente de la fin du deploiement ...',

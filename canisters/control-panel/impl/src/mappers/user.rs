@@ -50,6 +50,7 @@ impl From<User> for UserDTO {
             id: user.id,
             main_wallet: user.main_wallet,
             wallets: user.wallets.into_iter().map(UserWalletDTO::from).collect(),
+            subscription_status: user.subscription_status.into(),
         }
     }
 }

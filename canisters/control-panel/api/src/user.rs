@@ -6,6 +6,7 @@ pub struct UserDTO {
     pub id: Principal,
     pub main_wallet: Option<Principal>,
     pub wallets: Vec<UserWalletDTO>,
+    pub subscription_status: UserSubscriptionStatusDTO,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

@@ -335,6 +335,7 @@ export default {
     action: 'Ação',
     previous: 'Anterior',
     next: 'Próximo',
+    back: 'Voltar',
     wasm: 'Wasm',
     download: 'Baixar',
     arg: 'Arg',
@@ -448,6 +449,7 @@ export default {
     subset: 'Subconjunto',
     skip: 'Saltar',
     version: 'Versão',
+    continue: 'Continuar',
   },
   forms: {
     create: 'Criar',
@@ -534,6 +536,34 @@ export default {
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
     },
     initialization: {
+      join_title: 'Bem-vindo! Como gostaria de se juntar à Orbit?',
+      option_join_existing_wallet: 'Junte-se a uma carteira existente',
+      option_deploy_new_wallet: 'Crie a sua própria carteira',
+
+      join_wallet_title: 'Junte-se a uma carteira existente',
+      join_wallet_body:
+        'Contacte o proprietário da carteira para obter o ID da carteira para se inscrever.',
+      join_wallet_canister_id: 'ID do canister da carteira',
+      join_wallet_name: 'Nome da carteira (opcional)',
+      join_wallet: 'Junte-se a carteira',
+
+      check_permissions_title: 'Verificando o estado da lista de espera ...',
+      join_waitlist_title: 'Junte-se à lista de espera',
+      join_waitlist_body:
+        'Junte-se à lista de espera da Orbit! Insira o seu email para obter acesso antecipado e atualizações exclusivas. A sua jornada começa agora.',
+      join_waitlist_email_field: 'Insira o seu endereço de email',
+      join_waitlist: 'Inscreva-se agora',
+
+      waitlist_pending_title: 'Você está na lista de espera!',
+      waitlist_pending_body:
+        'Por favor, aguarde a aprovação. Você receberá um email assim que o seu pedido for aprovado.',
+      waitlist_denied_title: 'Você foi negado o acesso.',
+      waitlist_denied_body: 'Infelizmente, você não é elegível para se juntar à lista de espera.',
+
+      waitlist_check_error_title: 'Falha ao verificar o estado da lista de espera',
+      waitlist_check_error_body:
+        'Falha ao verificar o estado da lista de espera, por favor, tente novamente.',
+
       status_starting: 'Inicializando, por favor, aguarde ...',
       status_deploying: 'Instalando a sua carteira no Internet Computer ...',
       status_waiting_for_canister_initialization: 'Aguardando a instalação ser concluída ...',

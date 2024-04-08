@@ -5,6 +5,7 @@ import { Ref } from 'vue';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
 import { User } from '~/generated/control-panel/control_panel.did';
+import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
@@ -256,6 +257,27 @@ export const useSessionStore = defineStore('session', {
       if (connectionStatus === WalletConnectionStatus.Connected) {
         this.data.selectedWallet.hasAccess = true;
       }
+    },
+
+    async addWallet(canisterId: string, name: string): Promise<void> {
+      const controlPanelService = services().controlPanel;
+
+      const user = await controlPanelService.editUser({
+        main_wallet: this.mainWallet ? [this.mainWallet] : [],
+        wallets: [
+          [
+            ...this.data.wallets.map(wallet => sessionUserWalletToUserWallet(wallet)),
+            sessionUserWalletToUserWallet({
+              canisterId: canisterId,
+              name: name,
+            }),
+          ],
+        ],
+      });
+
+      this.populateUser(user);
+
+      await this.connectWallet(Principal.fromText(canisterId));
     },
 
     requireReauthentication() {

@@ -67,6 +67,7 @@ export type UpdateWaitingListResult = { 'Ok' : null } |
 export interface User {
   'id' : Principal,
   'wallets' : Array<UserWallet>,
+  'subscription_status' : UserSubscriptionStatus,
   'main_wallet' : [] | [WalletID],
 }
 export type UserId = UUID;

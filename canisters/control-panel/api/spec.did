@@ -25,6 +25,8 @@ type User = record {
   main_wallet : opt WalletID;
   // List of wallets associated with the user.
   wallets : vec UserWallet;
+  // The waiting list subscription status.
+  subscription_status : UserSubscriptionStatus;
 };
 
 // The result of managing an user.

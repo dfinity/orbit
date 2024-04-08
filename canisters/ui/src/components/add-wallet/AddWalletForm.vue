@@ -41,15 +41,21 @@
 </template>
 
 <script setup lang="ts">
-import { Principal } from '@dfinity/principal';
 import { computed, ref } from 'vue';
-import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
-import { i18n } from '~/plugins/i18n.plugin';
-import { services } from '~/plugins/services.plugin';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardItem,
+  VCardText,
+  VCardTitle,
+  VForm,
+  VSpacer,
+  VTextField,
+} from 'vuetify/components';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { VFormValidation } from '~/types/helper.types';
-import { isApiError } from '~/utils/app.utils';
 import { requiredRule, uniqueRule, validCanisterId } from '~/utils/form.utils';
 
 const form = ref<VFormValidation | null>(null);
@@ -64,8 +70,6 @@ const name = ref('');
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 const existingWallets = computed(() => session.data.wallets.map(wallet => wallet.canisterId));
-
-const controlPanelService = services().controlPanel;
 
 const emit = defineEmits<{
   (event: 'submitted'): void;
@@ -83,6 +87,10 @@ defineExpose({
 });
 
 async function addNewWallet() {
+  if (working.value) {
+    return;
+  }
+
   const { valid } = form.value ? await form.value.validate() : { valid: false };
 
   if (valid) {
@@ -90,36 +98,11 @@ async function addNewWallet() {
     working.value = true;
 
     try {
-      const user = await controlPanelService.editUser({
-        main_wallet: session.mainWallet ? [session.mainWallet] : [],
-        wallets: [
-          [
-            ...session.data.wallets.map(wallet => sessionUserWalletToUserWallet(wallet)),
-            sessionUserWalletToUserWallet({
-              canisterId: canisterId.value,
-              name: name.value,
-            }),
-          ],
-        ],
-      });
-
-      session.populateUser(user);
-
-      await session.connectWallet(Principal.fromText(canisterId.value));
+      await session.addWallet(canisterId.value, name.value);
 
       emit('submitted');
     } catch (e: unknown) {
-      let message = i18n.global.t('app.request_failed_message');
-
-      if (isApiError(e) && e.message.length > 0) {
-        message = `${message}: ${e.message[0]}`;
-      } else if (e instanceof Error) {
-        message = `${message}: ${e.message}`;
-      }
-      app.sendNotification({
-        type: 'error',
-        message,
-      });
+      app.sendErrorNotification(e);
     }
     emit('working', false);
     working.value = false;

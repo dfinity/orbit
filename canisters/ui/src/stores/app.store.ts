@@ -9,6 +9,7 @@ import { services } from '~/plugins/services.plugin';
 import { fetchDesignSystemLocale } from '~/plugins/vuetify.plugin';
 import { useSessionStore } from '~/stores/session.store';
 import { GlobalNotification, SupportedTheme } from '~/types/app.types';
+import { isApiError } from '~/utils/app.utils';
 
 export interface AppStoreState {
   initialized: boolean;
@@ -114,6 +115,20 @@ export const useAppStore = defineStore('app', {
         message,
         type,
       };
+    },
+
+    sendErrorNotification(error: unknown): void {
+      let message = i18n.global.t('app.request_failed_message');
+
+      if (isApiError(error) && error.message.length > 0) {
+        message = `${message}: ${error.message[0]}`;
+      } else if (error instanceof Error) {
+        message = `${message}: ${error.message}`;
+      }
+      this.sendNotification({
+        type: 'error',
+        message,
+      });
     },
   },
 });
