@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="waitlistStatus !== WaitlistStatus.Approved"
-    class="mx-auto w-50 mt-16"
+    class="mx-auto w-md-50 mt-16"
     data-test-id="deploy-wallet-screen"
   >
     <VBtn variant="flat" :disabled="working" data-test-id="back-button" @click="emit('back')">
