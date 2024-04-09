@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mount } from '~/test.utils';
+import { mockRouter, mount } from '~/test.utils';
 import DeployWallet from './DeployWallet.vue';
 import { services } from '~/plugins/services.plugin';
 import { flushPromises } from '@vue/test-utils';
@@ -11,17 +11,6 @@ vi.mock('~/utils/helper.utils', async importOriginal => {
   return {
     ...mod,
     wait: vi.fn(),
-  };
-});
-
-const pushFn = vi.fn();
-vi.mock('vue-router', async importOriginal => {
-  const mod = (await importOriginal()) as object;
-  return {
-    ...mod,
-    useRouter: () => ({
-      push: pushFn,
-    }),
   };
 });
 
@@ -98,6 +87,7 @@ describe('DeployWallet', () => {
 
     vi.spyOn(services().controlPanel, 'deployWallet').mockResolvedValueOnce(Principal.anonymous());
     vi.spyOn(services().wallet, 'isHealthy').mockResolvedValueOnce(true);
+    const mockPush = vi.spyOn(mockRouter, 'push');
 
     const wrapper = mount(DeployWallet);
 
@@ -106,6 +96,6 @@ describe('DeployWallet', () => {
     expect(wrapper.find('[data-test-id="deploying-wallet"]').exists()).toBe(true);
 
     // will redirect after deploy is complete
-    expect(pushFn).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalled();
   });
 });

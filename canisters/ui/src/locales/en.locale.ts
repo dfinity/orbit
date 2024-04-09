@@ -314,9 +314,7 @@ export default {
     no_deposit_found_search: 'No deposit found for the search criteria.',
     no_withdrawal_found_search: 'No withdrawal found for the search criteria.',
     no_withdraw_request_found_search: 'No withdraw request found for the search criteria.',
-    add_wallet_list_item: 'Add existing wallet',
-    add_wallet_dialog_title: 'Join existing wallet',
-    add_wallet_dialog_already_added: 'This wallet is already added.',
+    add_wallet_list_item: 'Add wallet',
   },
   terms: {
     deposits: 'Deposits',
@@ -534,8 +532,9 @@ export default {
       btn_edit_title: 'Edit user group',
       create_new_group_title: 'Create new user group',
     },
-    initialization: {
-      join_title: 'Welcome! How would you like to join Orbit?',
+    add_wallet: {
+      initialization_title: 'Welcome! How would you like to join Orbit?',
+      add_wallet_title: 'How would you like to add a wallet?',
       option_join_existing_wallet: 'Join existing wallet on Orbit',
       option_deploy_new_wallet: 'Create your own wallet',
 

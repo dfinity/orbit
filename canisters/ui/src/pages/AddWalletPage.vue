@@ -1,6 +1,5 @@
 <template>
   <PageLayout>
-    <template #sidebar-nav><div /></template>
     <template #main-body>
       <AddWalletScreen :title="props.title" />
     </template>
@@ -16,7 +15,7 @@ import { PageProps } from '~/types/app.types';
 const i18n = useI18n();
 
 const props = withDefaults(defineProps<PageProps>(), {
-  title: i18n.t('pages.add_wallet.initialization_title'),
+  title: i18n.t('pages.add_wallet.add_wallet_title'),
   breadcrumbs: () => [],
 });
 </script>

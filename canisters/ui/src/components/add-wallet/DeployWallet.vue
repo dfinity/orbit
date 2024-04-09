@@ -11,7 +11,7 @@
 
     <div v-if="waitlistStatus === WaitlistStatus.CheckPermissions" class="text-center mt-12">
       <h2 class="text-h4">
-        {{ $t('pages.initialization.check_permissions_title') }}
+        {{ $t('pages.add_wallet.check_permissions_title') }}
       </h2>
       <VProgressCircular class="mt-10" color="primary" indeterminate size="90" width="8" />
     </div>
@@ -24,17 +24,17 @@
       @submit.prevent="joinWaitlist"
     >
       <h2 class="mb-6 text-h4">
-        {{ $t('pages.initialization.join_waitlist_title') }}
+        {{ $t('pages.add_wallet.join_waitlist_title') }}
       </h2>
       <p class="text-body-1 mb-6">
-        {{ $t('pages.initialization.join_waitlist_body') }}
+        {{ $t('pages.add_wallet.join_waitlist_body') }}
       </p>
 
       <VTextField
         v-model="email"
         type="email"
         :rules="[requiredRule]"
-        :label="$t('pages.initialization.join_waitlist_email_field')"
+        :label="$t('pages.add_wallet.join_waitlist_email_field')"
         :variant="'outlined'"
         hide-details="auto"
         :disabled="working"
@@ -48,7 +48,7 @@
           :loading="working"
           :disabled="working || !isFormValid"
         >
-          {{ $t('pages.initialization.join_waitlist') }}
+          {{ $t('pages.add_wallet.join_waitlist') }}
         </VBtn>
       </div>
     </VForm>
@@ -59,10 +59,10 @@
       data-test-id="join-waitlist-pending"
     >
       <h2 class="mb-6 text-h4">
-        {{ $t('pages.initialization.waitlist_pending_title') }}
+        {{ $t('pages.add_wallet.waitlist_pending_title') }}
       </h2>
       <p class="text-body-1 mb-6">
-        {{ $t('pages.initialization.waitlist_pending_body') }}
+        {{ $t('pages.add_wallet.waitlist_pending_body') }}
       </p>
     </div>
     <div
@@ -71,10 +71,10 @@
       data-test-id="join-waitlist-denied"
     >
       <h2 class="mb-6 text-h4">
-        {{ $t('pages.initialization.waitlist_denied_title') }}
+        {{ $t('pages.add_wallet.waitlist_denied_title') }}
       </h2>
       <p class="text-body-1 mb-6">
-        {{ $t('pages.initialization.waitlist_denied_body') }}
+        {{ $t('pages.add_wallet.waitlist_denied_body') }}
       </p>
     </div>
 
@@ -84,10 +84,10 @@
       data-test-id="join-waitlist-check-error"
     >
       <h2 class="mb-6 text-h4">
-        {{ $t('pages.initialization.waitlist_check_error_title') }}
+        {{ $t('pages.add_wallet.waitlist_check_error_title') }}
       </h2>
       <p class="text-body-1 mb-6">
-        {{ $t('pages.initialization.waitlist_check_error_body') }}
+        {{ $t('pages.add_wallet.waitlist_check_error_body') }}
       </p>
     </div>
 
@@ -99,7 +99,7 @@
       <VCol cols="12" class="text-center">
         <VProgressCircular class="my-16" color="primary" indeterminate size="90" width="8" />
         <header class="text-h4">
-          {{ $t(`pages.initialization.status_${deploymentStatus}`) }}
+          {{ $t(`pages.add_wallet.status_${deploymentStatus}`) }}
         </header>
       </VCol>
     </VRow>
@@ -235,6 +235,8 @@ async function joinWaitlist() {
 onMounted(async () => {
   try {
     const user = await controlPanelService.getCurrentUser();
+
+    console.log(user);
 
     if (variantIs(user.subscription_status, 'Approved')) {
       deploymentStatus.value = DeployWalletStatus.Starting;

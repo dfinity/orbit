@@ -5,23 +5,23 @@
       {{ $t('terms.back') }}</VBtn
     >
     <VForm ref="form" class="mt-12" @submit.prevent="addNewWallet">
-      <h2 class="text-h4 mb-6">{{ $t('pages.initialization.join_wallet_title') }}</h2>
+      <h2 class="text-h4 mb-6">{{ $t('pages.add_wallet.join_wallet_title') }}</h2>
       <p class="text-body-1 mb-6">
-        {{ $t('pages.initialization.join_wallet_body') }}
+        {{ $t('pages.add_wallet.join_wallet_body') }}
       </p>
 
       <VTextField
         v-model="canisterId"
         variant="outlined"
         :rules="[requiredRule, validCanisterId]"
-        :label="$t('pages.initialization.join_wallet_canister_id')"
+        :label="$t('pages.add_wallet.join_wallet_canister_id')"
         data-test-id="join-wallet-form-canister-id"
         :disabled="working"
       />
 
       <VTextField
         v-model.trim="name"
-        :label="$t('pages.initialization.join_wallet_name')"
+        :label="$t('pages.add_wallet.join_wallet_name')"
         data-test-id="join-wallet-form-canister-name"
         variant="outlined"
         :disabled="working"
@@ -34,7 +34,7 @@
           :loading="working"
           :disabled="working || !isFormValid"
           @click="addNewWallet"
-          >{{ $t('pages.initialization.join_wallet') }}</VBtn
+          >{{ $t('pages.add_wallet.join_wallet') }}</VBtn
         >
       </div>
     </VForm>

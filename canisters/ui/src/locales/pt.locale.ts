@@ -314,9 +314,7 @@ export default {
     no_deposit_found_search: 'Nenhum depósito encontrado para a pesquisa.',
     no_withdrawal_found_search: 'Nenhuma retirada encontrada para a pesquisa.',
     no_withdraw_request_found_search: 'Nenhum pedido de retirada encontrado para a pesquisa.',
-    add_wallet_list_item: 'Adicionar carteira existente',
-    add_wallet_dialog_title: 'Adicionar carteira',
-    add_wallet_dialog_already_added: 'Esta carteira já foi adicionada.',
+    add_wallet_list_item: 'Adicionar carteira',
   },
   terms: {
     deposits: 'Depósitos',
@@ -535,8 +533,10 @@ export default {
       btn_edit_title: 'Editar usuário',
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
     },
-    initialization: {
-      join_title: 'Bem-vindo! Como gostaria de se juntar à Orbit?',
+    add_wallet: {
+      initialization_title: 'Bem-vindo! Como você gostaria de se juntar à Orbit?',
+      add_wallet_title: 'Como você gostaria de adicionar uma carteira?',
+
       option_join_existing_wallet: 'Junte-se a uma carteira existente',
       option_deploy_new_wallet: 'Crie a sua própria carteira',
 

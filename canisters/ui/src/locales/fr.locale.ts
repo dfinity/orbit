@@ -318,8 +318,6 @@ export default {
     no_withdrawal_found_search: 'Pas de retrait trouvé pour ce critère.',
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
     add_wallet_list_item: 'Ajouter un portefeuille',
-    add_wallet_dialog_title: 'Rejoinde un portefeuille',
-    add_wallet_dialog_already_added: 'Ce portefeuille est déjà present.',
   },
   terms: {
     deposits: 'Deports',
@@ -540,9 +538,10 @@ export default {
       btn_edit_title: "Modifier le groupe d'usagers",
       create_new_group_title: "Ajouter un nouveau groupe d'usagers",
     },
-    initialization: {
-      join_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
-      option_join_existing_wallet: 'Rejoindre un portefeuille existant',
+    add_wallet: {
+      initialization_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
+      add_wallet_title: 'Comment aimeriez-vous ajouter un portefeuille?',
+
       option_deploy_new_wallet: 'Déployer un nouveau portefeuille',
 
       check_permissions_title: 'Vérification du statut de la liste d attente...',
