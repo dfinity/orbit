@@ -309,6 +309,7 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToWallet,
+                    privileges: [Privilege.ListProposals],
                   },
                 },
               },
@@ -331,6 +332,7 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToWallet,
+                    privileges: [Privilege.ListProposalPolicies],
                   },
                 },
               },
