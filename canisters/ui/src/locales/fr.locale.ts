@@ -564,8 +564,8 @@ export default {
 
       join_wallet_title: 'Rejoindre un portefeuille existant',
       join_wallet_body:
-        'Contactez le propriétaire du portefeuille pour obtenir leur ID de portefeuille pour vous inscrire.',
-      join_wallet_canister_id: 'ID du Canister du Portefeuille',
+        'Contactez le propriétaire pour obtenir l ID du portefeuille. Envoyez-leur l ID principal suivant pour qu un usager puisse être créé pour vous dans le portefeuille.',
+      join_wallet_canister_id: 'ID du Portefeuille',
       join_wallet_name: 'Nom du Portefeuille (optionnel)',
       join_wallet: 'Rejoindre le portefeuille',
 

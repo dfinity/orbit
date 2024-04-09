@@ -542,8 +542,8 @@ export default {
 
       join_wallet_title: 'Junte-se a uma carteira existente',
       join_wallet_body:
-        'Contacte o proprietário da carteira para obter o ID da carteira para se inscrever.',
-      join_wallet_canister_id: 'ID do canister da carteira',
+        'Contacte o proprietário para obter o ID da carteira. Envie-lhes o seguinte ID principal para que um usuário possa ser criado para si na carteira.',
+      join_wallet_canister_id: 'ID da carteira',
       join_wallet_name: 'Nome da carteira (opcional)',
       join_wallet: 'Junte-se a carteira',
 

@@ -11,6 +11,17 @@
       </p>
 
       <VTextField
+        :model-value="session.principal"
+        variant="plain"
+        :label="$t('terms.principal')"
+        readonly
+        :append-inner-icon="mdiContentCopy"
+        @click:append-inner="
+          copyToClipboard({ textToCopy: session.principal, sendNotification: true })
+        "
+      />
+
+      <VTextField
         v-model="canisterId"
         variant="outlined"
         :rules="[requiredRule, validCanisterId]"
@@ -42,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { mdiChevronLeft } from '@mdi/js';
+import { mdiChevronLeft, mdiContentCopy } from '@mdi/js';
 import { VBtn, VForm, VTextField } from 'vuetify/components';
 import { VFormValidation } from '~/types/helper.types';
 import { useSessionStore } from '~/stores/session.store';
@@ -52,6 +63,7 @@ import { requiredRule, validCanisterId } from '~/utils/form.utils';
 import { useRouter } from 'vue-router';
 import { defaultHomeRoute } from '~/configs/routes.config';
 import { useAppStore } from '~/stores/app.store';
+import { copyToClipboard } from '~/utils/app.utils';
 
 const session = useSessionStore();
 const router = useRouter();

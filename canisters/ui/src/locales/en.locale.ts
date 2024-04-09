@@ -539,8 +539,9 @@ export default {
       option_deploy_new_wallet: 'Create your own wallet',
 
       join_wallet_title: 'Join existing wallet',
-      join_wallet_body: 'Contact the owner of the wallet to get their Wallet ID to sign up.',
-      join_wallet_canister_id: 'Wallet Canister ID',
+      join_wallet_body:
+        'Contact the owner to get the ID of the wallet. Send them the following principal ID so that a user can be created for you in the wallet.',
+      join_wallet_canister_id: 'Wallet ID',
       join_wallet_name: 'Wallet Name (optional)',
       join_wallet: 'Join wallet',
 
