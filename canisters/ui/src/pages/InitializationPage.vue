@@ -17,7 +17,6 @@ import { PageProps } from '~/types/app.types';
 const i18n = useI18n();
 
 const props = withDefaults(defineProps<PageProps>(), {
-  title: i18n.t('pages.add_wallet.initialization_title'),
   breadcrumbs: () => [],
 });
 
