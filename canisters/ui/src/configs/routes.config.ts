@@ -12,6 +12,7 @@ export enum Routes {
   Users = 'Users',
   AddressBook = 'AddressBook',
   Initialization = 'Initialization',
+  AddWallet = 'AddWallet',
   AccessPolicies = 'AccessPolicies',
   // Proposal Pages
   Proposals = 'Proposals',

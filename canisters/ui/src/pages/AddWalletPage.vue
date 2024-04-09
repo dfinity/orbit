@@ -1,6 +1,5 @@
 <template>
   <PageLayout>
-    <template #sidebar-nav><div /></template>
     <template #main-body>
       <AddWalletScreen :title="pageTitle" />
     </template>
@@ -20,5 +19,5 @@ const props = withDefaults(defineProps<PageProps>(), {
   breadcrumbs: () => [],
 });
 
-const pageTitle = computed(() => props.title || i18n.t('pages.add_wallet.initialization_title'));
+const pageTitle = computed(() => props.title || i18n.t('pages.add_wallet.add_wallet_title'));
 </script>

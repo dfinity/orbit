@@ -9,7 +9,7 @@ import { navigation } from '~/plugins/navigation.plugin';
 import { serviceManager } from '~/plugins/services.plugin';
 import { vuetify } from '~/plugins/vuetify.plugin';
 
-const mockRouter = createRouter({
+export const mockRouter = createRouter({
   history: createMemoryHistory(),
   routes: [
     {

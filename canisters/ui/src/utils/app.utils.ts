@@ -66,6 +66,14 @@ export const redirectToWalletSettings = (): void => {
   router.push({ name: Routes.SystemSettings });
 };
 
+export const forceNavigate = (): void => {
+  if (router.currentRoute.value.name) {
+    router.replace({ name: router.currentRoute.value.name, force: true });
+  } else {
+    router.push({ name: defaultHomeRoute, force: true });
+  }
+};
+
 // To be used in catch blocks to determine if the error is an ApiError
 export function isApiError(e: unknown): e is ApiError {
   return typeof e === 'object' && e !== null && 'code' in e && 'message' in e && 'details' in e;

@@ -39,6 +39,7 @@ export const idlFactory = ({ IDL }) => {
   const User = IDL.Record({
     'id' : IDL.Principal,
     'wallets' : IDL.Vec(UserWallet),
+    'subscription_status' : UserSubscriptionStatus,
     'main_wallet' : IDL.Opt(WalletID),
   });
   const RemoveUserResult = IDL.Variant({

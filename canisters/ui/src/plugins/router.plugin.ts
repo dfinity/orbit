@@ -121,6 +121,18 @@ const router = createRouter({
           },
         },
         {
+          path: 'add-wallet',
+          name: Routes.AddWallet,
+          component: () => import('~/pages/AddWalletPage.vue'),
+          meta: {
+            auth: {
+              check: {
+                session: RequiredSessionState.Authenticated,
+              },
+            },
+          },
+        },
+        {
           path: 'transfer-requests',
           name: Routes.TransferProposals,
           component: () => import('~/pages/ProposalsPage.vue'),
@@ -297,6 +309,7 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToWallet,
+                    privileges: [Privilege.ListProposals],
                   },
                 },
               },
@@ -319,6 +332,7 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToWallet,
+                    privileges: [Privilege.ListProposalPolicies],
                   },
                 },
               },

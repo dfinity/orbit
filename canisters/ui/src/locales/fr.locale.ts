@@ -318,8 +318,6 @@ export default {
     no_withdrawal_found_search: 'Pas de retrait trouvé pour ce critère.',
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
     add_wallet_list_item: 'Ajouter un portefeuille',
-    add_wallet_dialog_title: 'Rejoinde un portefeuille',
-    add_wallet_dialog_already_added: 'Ce portefeuille est déjà present.',
   },
   terms: {
     deposits: 'Deports',
@@ -338,6 +336,7 @@ export default {
     target: 'Cible',
     previous: 'Précédent',
     next: 'Suivant',
+    back: 'Retour',
     permissions: 'Permissions',
     approval_policies: "Politiques d'approbation",
     download: 'Télécharger',
@@ -451,6 +450,7 @@ export default {
     subset: 'sous-ensemble',
     skip: 'Sauter',
     version: 'Version',
+    continue: 'Continuer',
   },
   forms: {
     create: 'Créer',
@@ -538,7 +538,37 @@ export default {
       btn_edit_title: "Modifier le groupe d'usagers",
       create_new_group_title: "Ajouter un nouveau groupe d'usagers",
     },
-    initialization: {
+    add_wallet: {
+      initialization_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
+      add_wallet_title: 'Comment aimeriez-vous ajouter un portefeuille?',
+
+      option_deploy_new_wallet: 'Déployer un nouveau portefeuille',
+
+      check_permissions_title: 'Vérification du statut de la liste d attente...',
+      join_waitlist_title: 'Rejoindre la liste d attente',
+      join_waitlist_body:
+        "Rejoignez la liste d'attente d'Orbit! Entrez votre email pour obtenir un accès anticipé et des mises à jour exclusives. Votre voyage commence maintenant.",
+      join_waitlist_email_field: 'Entrez votre adresse e-mail',
+      join_waitlist: "S'inscrire maintenant",
+
+      waitlist_pending_title: 'Vous êtes sur la liste d attente!',
+      waitlist_pending_body:
+        'Veuillez attendre l approbation. Vous recevrez un email une fois votre demande approuvée.',
+      waitlist_denied_title: 'Vous avez été refusé l accès.',
+      waitlist_denied_body:
+        'Malheureusement, vous n êtes pas éligible pour rejoindre la liste d attente.',
+
+      waitlist_check_error_title: 'Échec de vérification du statut de la liste d attente',
+      waitlist_check_error_body:
+        "Échec de la vérification du statut de la liste d'attente, veuillez réessayer.",
+
+      join_wallet_title: 'Rejoindre un portefeuille existant',
+      join_wallet_body:
+        'Contactez le propriétaire pour obtenir l ID du portefeuille. Envoyez-leur l ID principal suivant pour qu un usager puisse être créé pour vous dans le portefeuille.',
+      join_wallet_canister_id: 'ID du Portefeuille',
+      join_wallet_name: 'Nom du Portefeuille (optionnel)',
+      join_wallet: 'Rejoindre le portefeuille',
+
       status_starting: 'Initialization, veuillez patienter...',
       status_deploying: 'Deploiement de votre portefeuille au Internet Computer ...',
       status_waiting_for_canister_initialization: 'En attente de la fin du deploiement ...',
@@ -568,8 +598,16 @@ export default {
       subtitle: "Vous n'êtes pas autorisés à voir cette page.",
     },
     disconnected: {
-      title: 'Déconnecté',
-      subtitle: "Vous n'êtes pas connectés au portefeuille sélectionné.",
+      title_not_found_user_identity: 'Vous n êtes pas ajouté au portefeuille',
+      subtitle_not_found_user_identity:
+        'Contactez le propriétaire du portefeuille pour ajouter un usager pour vous avec votre principal.',
+
+      title_other_wallet_error: 'Impossible de se connecter au portefeuille',
+      subtitle_other_wallet_error: 'Le portefeuille a retourné l erreur suivante:',
+
+      title_canister_error: 'Impossible de se connecter au portefeuille',
+      subtitle_canister_error:
+        'Il y a eu une erreur en accédant au portefeuille. Vérifiez votre connection internet et que l ID du portefeuille correspond à un portefeuille valide.',
     },
     error: {
       title: 'Erreur',

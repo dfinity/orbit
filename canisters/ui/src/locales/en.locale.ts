@@ -314,9 +314,7 @@ export default {
     no_deposit_found_search: 'No deposit found for the search criteria.',
     no_withdrawal_found_search: 'No withdrawal found for the search criteria.',
     no_withdraw_request_found_search: 'No withdraw request found for the search criteria.',
-    add_wallet_list_item: 'Add existing wallet',
-    add_wallet_dialog_title: 'Join existing wallet',
-    add_wallet_dialog_already_added: 'This wallet is already added.',
+    add_wallet_list_item: 'Add wallet',
   },
   terms: {
     deposits: 'Deposits',
@@ -335,6 +333,7 @@ export default {
     access: 'Access',
     previous: 'Previous',
     next: 'Next',
+    back: 'Back',
     permissions: 'Permissions',
     approval_policies: 'Approval Policies',
     target: 'Target',
@@ -449,6 +448,7 @@ export default {
     subset: 'Subset',
     skip: 'Skip',
     version: 'Version',
+    continue: 'Continue',
   },
   forms: {
     create: 'Create',
@@ -532,7 +532,36 @@ export default {
       btn_edit_title: 'Edit user group',
       create_new_group_title: 'Create new user group',
     },
-    initialization: {
+    add_wallet: {
+      initialization_title: 'Welcome! How would you like to join Orbit?',
+      add_wallet_title: 'How would you like to add a wallet?',
+      option_join_existing_wallet: 'Join existing wallet on Orbit',
+      option_deploy_new_wallet: 'Create your own wallet',
+
+      join_wallet_title: 'Join existing wallet',
+      join_wallet_body:
+        'Contact the owner to get the ID of the wallet. Send them the following principal ID so that a user can be created for you in the wallet.',
+      join_wallet_canister_id: 'Wallet ID',
+      join_wallet_name: 'Wallet Name (optional)',
+      join_wallet: 'Join wallet',
+
+      check_permissions_title: 'Checking waiting list status...',
+      join_waitlist_title: 'Join waiting list',
+      join_waitlist_body:
+        "Join Orbit's waiting list! Enter your email to get early access and exclusive updates. Your journey starts now.",
+      join_waitlist_email_field: 'Enter your email address',
+      join_waitlist: 'Sign up now',
+
+      waitlist_pending_title: 'You are on the waiting list!',
+      waitlist_pending_body:
+        'Please wait for the approval. You will receive an email once your request is approved.',
+
+      waitlist_check_error_title: 'Failed to check waiting list status',
+      waitlist_check_error_body: 'Failed to check waiting list status, please try again.',
+
+      waitlist_denied_title: "You've been denied access.",
+      waitlist_denied_body: 'Unfortunately, you are not eligible to join the waiting list.',
+
       status_starting: 'Initializing, please wait ...',
       status_deploying: 'Deploying your wallet to the Internet Computer ...',
       status_waiting_for_canister_initialization: 'Waiting for deployment to complete ...',
@@ -562,8 +591,16 @@ export default {
       subtitle: 'You are not authorized to view this page.',
     },
     disconnected: {
-      title: 'Disconnected',
-      subtitle: 'You are not connected to the selected wallet.',
+      title_not_found_user_identity: 'You are not added to the wallet',
+      subtitle_not_found_user_identity:
+        'Contact the wallet owner to add a user for you with your principal.',
+
+      title_other_wallet_error: 'Cannot connect to the wallet',
+      subtitle_other_wallet_error: 'The wallet returned the following error:',
+
+      title_canister_error: 'Cannot connect to the wallet',
+      subtitle_canister_error:
+        'There was an error accessing the wallet. Check your internet connection and that the wallet ID corresponds to a valid wallet.',
     },
     error: {
       title: 'Error',

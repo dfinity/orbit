@@ -314,9 +314,7 @@ export default {
     no_deposit_found_search: 'Nenhum depósito encontrado para a pesquisa.',
     no_withdrawal_found_search: 'Nenhuma retirada encontrada para a pesquisa.',
     no_withdraw_request_found_search: 'Nenhum pedido de retirada encontrado para a pesquisa.',
-    add_wallet_list_item: 'Adicionar carteira existente',
-    add_wallet_dialog_title: 'Adicionar carteira',
-    add_wallet_dialog_already_added: 'Esta carteira já foi adicionada.',
+    add_wallet_list_item: 'Adicionar carteira',
   },
   terms: {
     deposits: 'Depósitos',
@@ -335,6 +333,7 @@ export default {
     action: 'Ação',
     previous: 'Anterior',
     next: 'Próximo',
+    back: 'Voltar',
     wasm: 'Wasm',
     download: 'Baixar',
     arg: 'Arg',
@@ -448,6 +447,7 @@ export default {
     subset: 'Subconjunto',
     skip: 'Saltar',
     version: 'Versão',
+    continue: 'Continuar',
   },
   forms: {
     create: 'Criar',
@@ -533,7 +533,37 @@ export default {
       btn_edit_title: 'Editar usuário',
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
     },
-    initialization: {
+    add_wallet: {
+      initialization_title: 'Bem-vindo! Como você gostaria de se juntar à Orbit?',
+      add_wallet_title: 'Como você gostaria de adicionar uma carteira?',
+
+      option_join_existing_wallet: 'Junte-se a uma carteira existente',
+      option_deploy_new_wallet: 'Crie a sua própria carteira',
+
+      join_wallet_title: 'Junte-se a uma carteira existente',
+      join_wallet_body:
+        'Contacte o proprietário para obter o ID da carteira. Envie-lhes o seguinte ID principal para que um usuário possa ser criado para si na carteira.',
+      join_wallet_canister_id: 'ID da carteira',
+      join_wallet_name: 'Nome da carteira (opcional)',
+      join_wallet: 'Junte-se a carteira',
+
+      check_permissions_title: 'Verificando o estado da lista de espera ...',
+      join_waitlist_title: 'Junte-se à lista de espera',
+      join_waitlist_body:
+        'Junte-se à lista de espera da Orbit! Insira o seu email para obter acesso antecipado e atualizações exclusivas. A sua jornada começa agora.',
+      join_waitlist_email_field: 'Insira o seu endereço de email',
+      join_waitlist: 'Inscreva-se agora',
+
+      waitlist_pending_title: 'Você está na lista de espera!',
+      waitlist_pending_body:
+        'Por favor, aguarde a aprovação. Você receberá um email assim que o seu pedido for aprovado.',
+      waitlist_denied_title: 'Você foi negado o acesso.',
+      waitlist_denied_body: 'Infelizmente, você não é elegível para se juntar à lista de espera.',
+
+      waitlist_check_error_title: 'Falha ao verificar o estado da lista de espera',
+      waitlist_check_error_body:
+        'Falha ao verificar o estado da lista de espera, por favor, tente novamente.',
+
       status_starting: 'Inicializando, por favor, aguarde ...',
       status_deploying: 'Instalando a sua carteira no Internet Computer ...',
       status_waiting_for_canister_initialization: 'Aguardando a instalação ser concluída ...',
@@ -564,8 +594,16 @@ export default {
       subtitle: 'Você não tem permissão para aceder a esta página.',
     },
     disconnected: {
-      title: 'Desconectado',
-      subtitle: 'Você está desconectado, por favor, tente novamente.',
+      title_not_found_user_identity: 'Você não está adicionado à carteira',
+      subtitle_not_found_user_identity:
+        'Contacte o proprietário da carteira para adicionar um usuário para si com o seu principal.',
+
+      title_other_wallet_error: 'Não é possível conectar à carteira',
+      subtitle_other_wallet_error: 'A carteira retornou o seguinte erro:',
+
+      title_canister_error: 'Não é possível conectar à carteira',
+      subtitle_canister_error:
+        'Houve um erro ao aceder à carteira. Verifique a sua conexão à internet e se o ID da carteira corresponde a uma carteira válida.',
     },
     error: {
       title: 'Erro',

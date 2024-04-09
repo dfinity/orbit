@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { mount } from '~/test.utils';
+import { mockRouter, mount } from '~/test.utils';
 import AddWalletListItem from './AddWalletListItem.vue';
-import AddWalletDialogVue from './AddWalletDialog.vue';
+import { flushPromises } from '@vue/test-utils';
 
 describe('AddWalletForm', () => {
   it('renders correctly', () => {
@@ -9,16 +9,15 @@ describe('AddWalletForm', () => {
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('opens the Add wallet dialog when clicked', async () => {
+  it('goes to /add-wallet when clicked', async () => {
     const listItem = mount(AddWalletListItem);
 
     const button = listItem.find('[data-test-id="add-wallet-item"]');
     expect(button.exists()).toBe(true);
 
     await button.trigger('click');
-    await listItem.vm.$nextTick();
+    await flushPromises();
 
-    const dialog = listItem.findComponent(AddWalletDialogVue);
-    expect(dialog.exists()).toBe(true);
+    expect(mockRouter.currentRoute.value.params.pathMatch).toContain('add-wallet');
   });
 });
