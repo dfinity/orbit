@@ -51,9 +51,14 @@ import JoinWallet from '~/components/add-wallet/JoinWallet.vue';
 import { VBtn, VContainer, VRadio, VRadioGroup } from 'vuetify/components';
 import { unreachable } from '~/utils/helper.utils';
 
-const props = defineProps<{
-  title: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    title?: string;
+  }>(),
+  {
+    title: '',
+  },
+);
 
 enum UserOptions {
   JoinExisting = 'join-existing',

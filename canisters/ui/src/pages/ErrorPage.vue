@@ -2,47 +2,102 @@
   <PageLayout :hide-sidebar="hideSidebar">
     <template #main-header>
       <VCard class="ma-4" color="background" variant="flat">
-        <div class="d-flex flex-no-wrap justify-space-between">
-          <VAvatar class="ma-3" size="180" rounded="0">
-            <VIcon size="100%" color="primary" :icon="icon" />
-          </VAvatar>
-          <div class="flex-grow-1 my-8">
-            <VCardTitle class="text-h4">{{ pageTitle }}</VCardTitle>
-            <VCardSubtitle>{{ pageSubtitle }}</VCardSubtitle>
-            <VCardActions v-if="showBackToHome">
-              <VBtn
-                color="primary-variant mt-8 mx-2"
-                variant="tonal"
-                size="small"
-                :prepend-icon="mdiHome"
-                :to="{
-                  name: defaultHomeRoute,
-                }"
-              >
-                {{ $t('app.btn_home_back') }}
-              </VBtn>
-            </VCardActions>
+        <ErrorScreen
+          v-if="props.status == RouteStatusCode.Unauthorized"
+          :icon="mdiLockOutline"
+          :title="$t('pages.unauthorized.title')"
+          :subtitle="$t('pages.unauthorized.subtitle')"
+          show-back-to-home
+        />
+
+        <ErrorScreen
+          v-else-if="props.status == RouteStatusCode.NotFound"
+          :icon="mdiMagnifyRemoveOutline"
+          :title="$t('pages.not_found.title')"
+          :subtitle="$t('pages.not_found.subtitle')"
+          show-back-to-home
+        />
+
+        <ErrorScreen
+          v-else-if="
+            props.status == RouteStatusCode.Disconnected &&
+            wallet.connectionError === WalletConnectionError.NOT_FOUND_USER_IDENTITY
+          "
+          :icon="mdiMagnifyRemoveOutline"
+          :title="$t('pages.disconnected.title_not_found_user_identity')"
+          :subtitle="$t('pages.disconnected.subtitle_not_found_user_identity')"
+          :show-back-to-home="false"
+        >
+          <div class="mt-10 w-md-75">
+            <VTextField
+              :model-value="session.principal"
+              variant="outlined"
+              :label="$t('terms.principal')"
+              readonly
+              :append-inner-icon="mdiContentCopy"
+              @click:append-inner="
+                copyToClipboard({ textToCopy: session.principal, sendNotification: true })
+              "
+            />
           </div>
-        </div>
+        </ErrorScreen>
+
+        <ErrorScreen
+          v-else-if="
+            props.status == RouteStatusCode.Disconnected &&
+            wallet.connectionError === WalletConnectionError.OTHER_WALLET_ERROR
+          "
+          :icon="mdiMagnifyRemoveOutline"
+          :title="
+            wallet.connectionErrorMessage || $t('pages.disconnected.title_other_wallet_error')
+          "
+          :subtitle="
+            wallet.connectionErrorMessage || $t('pages.disconnected.subtitle_other_wallet_error')
+          "
+          :show-back-to-home="false"
+        ></ErrorScreen>
+
+        <ErrorScreen
+          v-else-if="
+            props.status == RouteStatusCode.Disconnected &&
+            wallet.connectionError === WalletConnectionError.CANISTER_ERROR
+          "
+          :icon="mdiMagnifyRemoveOutline"
+          :title="$t('pages.disconnected.title_canister_error')"
+          :subtitle="$t('pages.disconnected.subtitle_canister_error')"
+          :show-back-to-home="false"
+        >
+          <VTextarea
+            v-model="wallet.connectionErrorMessage"
+            :variant="'outlined'"
+            readonly
+            auto-grow
+          />
+        </ErrorScreen>
+
+        <ErrorScreen
+          v-else
+          :icon="mdiAlertCircle"
+          :title="$t('pages.error.title')"
+          :subtitle="$t('pages.error.subtitle')"
+          show-back-to-home
+        ></ErrorScreen>
       </VCard>
     </template>
   </PageLayout>
 </template>
 
 <script lang="ts" setup>
-import {
-  mdiAccountOff,
-  mdiAlertCircle,
-  mdiHome,
-  mdiLockOutline,
-  mdiMagnifyRemoveOutline,
-} from '@mdi/js';
+import { mdiAlertCircle, mdiContentCopy, mdiLockOutline, mdiMagnifyRemoveOutline } from '@mdi/js';
 import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { VTextarea } from 'vuetify/components';
 import PageLayout from '~/components/PageLayout.vue';
-import { RouteStatusCode, defaultHomeRoute } from '~/configs/routes.config';
+import ErrorScreen from '~/components/error/ErrorScreen.vue';
+import { RouteStatusCode } from '~/configs/routes.config';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
+import { WalletConnectionError, useWalletStore } from '~/stores/wallet.store';
+import { copyToClipboard } from '~/utils/app.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -53,57 +108,8 @@ const props = withDefaults(
   },
 );
 const session = useSessionStore();
+const wallet = useWalletStore();
 const app = useAppStore();
-const i18n = useI18n();
-const pageTitle = computed(() => {
-  switch (props.status) {
-    case RouteStatusCode.Unauthorized:
-      return i18n.t('pages.unauthorized.title');
-    case RouteStatusCode.Disconnected:
-      return i18n.t('pages.disconnected.title');
-    case RouteStatusCode.NotFound:
-      return i18n.t('pages.not_found.title');
-    default:
-      return i18n.t('pages.error.title');
-  }
-});
-
-const pageSubtitle = computed(() => {
-  switch (props.status) {
-    case RouteStatusCode.Unauthorized:
-      return i18n.t('pages.unauthorized.subtitle');
-    case RouteStatusCode.Disconnected:
-      return i18n.t('pages.disconnected.subtitle');
-    case RouteStatusCode.NotFound:
-      return i18n.t('pages.not_found.subtitle');
-    default:
-      return i18n.t('pages.error.subtitle');
-  }
-});
-
-const icon = computed(() => {
-  switch (props.status) {
-    case RouteStatusCode.Unauthorized:
-      return mdiLockOutline;
-    case RouteStatusCode.Disconnected:
-      return mdiAccountOff;
-    case RouteStatusCode.NotFound:
-      return mdiMagnifyRemoveOutline;
-    default:
-      return mdiAlertCircle;
-  }
-});
-
-const showBackToHome = computed(() => {
-  switch (props.status) {
-    case RouteStatusCode.Unauthorized:
-    case RouteStatusCode.Error:
-    case RouteStatusCode.NotFound:
-      return true;
-    default:
-      return false;
-  }
-});
 
 const hideSidebar = computed(() => {
   if (app.isMobile) {

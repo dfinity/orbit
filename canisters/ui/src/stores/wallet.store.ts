@@ -16,7 +16,7 @@ import { WalletService } from '~/services/wallet.service';
 import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
-import { computedWalletName, redirectToWalletSettings } from '~/utils/app.utils';
+import { computedWalletName, forceNavigate, isApiError } from '~/utils/app.utils';
 import { arrayBatchMaker } from '~/utils/helper.utils';
 import { accountsWorker, startWalletWorkers, stopWalletWorkers } from '~/workers';
 
@@ -28,8 +28,18 @@ export enum WalletConnectionStatus {
   Failed = 'failed',
 }
 
+export enum WalletConnectionError {
+  NOT_FOUND_USER_IDENTITY = 'not_found_user_identity',
+  OTHER_WALLET_ERROR = 'other_wallet_error',
+  CANISTER_ERROR = 'canister_error',
+}
+
 export interface WalletStoreState {
   connectionStatus: WalletConnectionStatus;
+
+  connectionError?: WalletConnectionError;
+  connectionErrorMessage?: string;
+
   canisterId: string;
   loading: boolean;
   user: User;
@@ -83,6 +93,8 @@ export const createUserInitialAccount = async (
 const initialStoreState = (): WalletStoreState => {
   return {
     connectionStatus: WalletConnectionStatus.Disconnected,
+    connectionError: undefined,
+    connectionErrorMessage: undefined,
     canisterId: Principal.anonymous().toText(),
     loading: false,
     user: {
@@ -140,6 +152,8 @@ export const useWalletStore = defineStore('wallet', {
       const initialState = initialStoreState();
 
       this.connectionStatus = initialState.connectionStatus;
+      this.connectionError = initialState.connectionError;
+      this.connectionErrorMessage = initialState.connectionErrorMessage;
       this.canisterId = initialState.canisterId;
       this.configuration = initialState.configuration;
       this.notifications = initialState.notifications;
@@ -148,7 +162,10 @@ export const useWalletStore = defineStore('wallet', {
 
       stopWalletWorkers();
     },
-    async connectTo(walletId: Principal): Promise<WalletConnectionStatus> {
+    async connectTo(
+      walletId: Principal,
+      forceNavigationOnSuccess = true,
+    ): Promise<WalletConnectionStatus> {
       const app = useAppStore();
 
       try {
@@ -180,16 +197,39 @@ export const useWalletStore = defineStore('wallet', {
         startWalletWorkers(walletId);
 
         this.connectionStatus = WalletConnectionStatus.Connected;
+
+        if (forceNavigationOnSuccess) {
+          // force a navigation to re-run the route guards
+          forceNavigate();
+        }
       } catch (err) {
         logger.error(`Failed to connect to wallet`, { err });
         this.connectionStatus = WalletConnectionStatus.Failed;
+
+        if (isApiError(err)) {
+          switch (err.code) {
+            case 'NOT_FOUND_USER_IDENTITY':
+              this.connectionError = WalletConnectionError.NOT_FOUND_USER_IDENTITY;
+              break;
+            default:
+              this.connectionError = WalletConnectionError.OTHER_WALLET_ERROR;
+              break;
+          }
+        } else {
+          this.connectionError = WalletConnectionError.CANISTER_ERROR;
+
+          if (err instanceof Error) {
+            this.connectionErrorMessage = err.message;
+          }
+        }
 
         app.sendNotification({
           type: 'error',
           message: i18n.global.t('wallets.user_load_error'),
         });
 
-        redirectToWalletSettings();
+        // force a navigation to re-run the route guards
+        forceNavigate();
       } finally {
         this.loading = false;
       }

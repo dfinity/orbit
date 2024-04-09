@@ -598,8 +598,16 @@ export default {
       subtitle: "Vous n'êtes pas autorisés à voir cette page.",
     },
     disconnected: {
-      title: 'Déconnecté',
-      subtitle: "Vous n'êtes pas connectés au portefeuille sélectionné.",
+      title_not_found_user_identity: 'Vous n êtes pas ajouté au portefeuille',
+      subtitle_not_found_user_identity:
+        'Contactez le propriétaire du portefeuille pour ajouter un usager pour vous avec votre principal.',
+
+      title_other_wallet_error: 'Impossible de se connecter au portefeuille',
+      subtitle_other_wallet_error: 'Le portefeuille a retourné l erreur suivante:',
+
+      title_canister_error: 'Impossible de se connecter au portefeuille',
+      subtitle_canister_error:
+        'Il y a eu une erreur en accédant au portefeuille. Vérifiez votre connection internet et que l ID du portefeuille correspond à un portefeuille valide.',
     },
     error: {
       title: 'Erreur',

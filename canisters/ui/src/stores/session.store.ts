@@ -247,12 +247,12 @@ export const useSessionStore = defineStore('session', {
 
       wallet.reset();
     },
-    async connectWallet(walletId: Principal): Promise<void> {
+    async connectWallet(walletId: Principal, forceNavigationOnSuccess = true): Promise<void> {
       const wallet = useWalletStore();
 
       this.data.selectedWallet.canisterId = walletId.toText();
       this.data.selectedWallet.hasAccess = false;
-      const connectionStatus = await wallet.connectTo(walletId);
+      const connectionStatus = await wallet.connectTo(walletId, forceNavigationOnSuccess);
 
       if (connectionStatus === WalletConnectionStatus.Connected) {
         this.data.selectedWallet.hasAccess = true;

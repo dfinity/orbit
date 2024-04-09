@@ -591,8 +591,16 @@ export default {
       subtitle: 'You are not authorized to view this page.',
     },
     disconnected: {
-      title: 'Disconnected',
-      subtitle: 'You are not connected to the selected wallet.',
+      title_not_found_user_identity: 'You are not added to the wallet',
+      subtitle_not_found_user_identity:
+        'Contact the wallet owner to add a user for you with your principal.',
+
+      title_other_wallet_error: 'Cannot connect to the wallet',
+      subtitle_other_wallet_error: 'The wallet returned the following error:',
+
+      title_canister_error: 'Cannot connect to the wallet',
+      subtitle_canister_error:
+        'There was an error accessing the wallet. Check your internet connection and that the wallet ID corresponds to a valid wallet.',
     },
     error: {
       title: 'Error',

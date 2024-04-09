@@ -594,8 +594,16 @@ export default {
       subtitle: 'Você não tem permissão para aceder a esta página.',
     },
     disconnected: {
-      title: 'Desconectado',
-      subtitle: 'Você está desconectado, por favor, tente novamente.',
+      title_not_found_user_identity: 'Você não está adicionado à carteira',
+      subtitle_not_found_user_identity:
+        'Contacte o proprietário da carteira para adicionar um usuário para si com o seu principal.',
+
+      title_other_wallet_error: 'Não é possível conectar à carteira',
+      subtitle_other_wallet_error: 'A carteira retornou o seguinte erro:',
+
+      title_canister_error: 'Não é possível conectar à carteira',
+      subtitle_canister_error:
+        'Houve um erro ao aceder à carteira. Verifique a sua conexão à internet e se o ID da carteira corresponde a uma carteira válida.',
     },
     error: {
       title: 'Erro',

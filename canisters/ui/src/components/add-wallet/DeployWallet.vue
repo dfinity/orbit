@@ -201,7 +201,7 @@ const deployInitialWallet = async (): Promise<void> => {
 
     session.populateUser(controlPanelUser);
 
-    await session.connectWallet(walletId);
+    await session.connectWallet(walletId, false);
 
     if (wallet.user) {
       deploymentStatus.value = DeployWalletStatus.CreatingInitialAccount;
@@ -235,8 +235,6 @@ async function joinWaitlist() {
 onMounted(async () => {
   try {
     const user = await controlPanelService.getCurrentUser();
-
-    console.log(user);
 
     if (variantIs(user.subscription_status, 'Approved')) {
       deploymentStatus.value = DeployWalletStatus.Starting;
