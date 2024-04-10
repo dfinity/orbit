@@ -93,9 +93,7 @@ impl Execute for TransferProposalExecute<'_, '_> {
             ProposalExecuteError::Failed {
                 reason: format!(
                     "Account {} does not exist.",
-                    Uuid::from_bytes(self.operation.input.from_account_id)
-                        .hyphenated()
-                        .to_string()
+                    Uuid::from_bytes(self.operation.input.from_account_id).hyphenated()
                 ),
             },
         )?;
