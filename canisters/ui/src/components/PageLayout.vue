@@ -52,38 +52,52 @@ import { VBtn, VLayout, VSnackbar } from 'vuetify/components';
 const app = useAppStore();
 const session = useSessionStore();
 
-const slotNames = [
-  'sidebar',
-  'body',
-  'toolbar',
-  'toolbar-context',
-  'toolbar-actions',
-  'topnav',
-  'main',
-  'main-header',
-  'main-body',
-];
+const slotNames = ['sidebar', 'toolbar', 'contextbar', 'main', 'main-header', 'main-body'];
 
 const props = withDefaults(
   defineProps<{
     backgroundColor?: string;
-    hideSidebar?: string | boolean;
-    hideBody?: string | boolean;
-    hideMain?: string | boolean;
-    hideMainHeader?: string | boolean;
-    hideToolbarContext?: string | boolean;
+    surfaceColor?: string;
+    toolbar?: boolean;
+    sidebar?: boolean;
+    contextbar?: boolean;
+    main?: boolean;
+    mainHeader?: boolean;
+    mainBody?: boolean;
   }>(),
   {
-    backgroundColor: undefined,
-    hideSidebar: false,
-    hideBody: false,
-    hideMain: false,
-    hideMainHeader: false,
-    hideToolbarContext: false,
+    backgroundColor: 'bg-background',
+    surfaceColor: 'bg-surface',
+    toolbar: true,
+    sidebar: true,
+    contextbar: true,
+    main: true,
+    mainHeader: true,
+    mainBody: true,
   },
 );
 
-provide('pageLayoutProps', props);
+const backgroundColor = computed(() => {
+  if (props.backgroundColor !== undefined) {
+    return `${props.backgroundColor}`;
+  }
+
+  return 'bg-background';
+});
+
+const surfaceColor = computed(() => {
+  if (props.surfaceColor !== undefined) {
+    return `${props.surfaceColor}`;
+  }
+
+  return 'bg-surface';
+});
+
+provide('pageLayoutProps', {
+  ...props,
+  backgroundColor: backgroundColor.value,
+  surfaceColor: surfaceColor.value,
+});
 
 const { mobile } = useDisplay();
 
@@ -93,23 +107,9 @@ watch(
   { immediate: true },
 );
 
-const layoutDeviceClass = computed(() => {
-  return app.isMobile ? 'page-layout--mobile' : 'page-layout--desktop';
-});
+const layoutDeviceClass = computed(() =>
+  app.isMobile ? 'page-layout--mobile' : 'page-layout--desktop',
+);
 
-const backgroundColor = computed(() => {
-  if (props.backgroundColor === 'transparent') {
-    return '';
-  }
-
-  if (props.backgroundColor !== undefined) {
-    return `bg-${props.backgroundColor}`;
-  }
-
-  return 'bg-background';
-});
-
-const themeClass = computed(() => {
-  return app.isDarkTheme ? 'theme--dark' : 'theme--light';
-});
+const themeClass = computed(() => (app.isDarkTheme ? 'theme--dark' : 'theme--light'));
 </script>

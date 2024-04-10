@@ -1,5 +1,5 @@
 <template>
-  <PageLayout :hide-sidebar="hideSidebar">
+  <PageLayout :sidebar="false">
     <template #main-header>
       <VCard class="ma-4" color="background" variant="flat">
         <ErrorScreen

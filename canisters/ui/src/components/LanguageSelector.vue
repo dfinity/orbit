@@ -1,11 +1,14 @@
 <template>
   <VSelect
     v-model="activeLocale"
+    bg-color="transparent"
+    :style="{
+      ['max-width']: props.maxWidth,
+    }"
     :items="app.supportedLocales"
     variant="solo-filled"
     density="compact"
     rounded
-    :bg-color="props.bgColor"
     hide-details
     flat
   />
@@ -18,10 +21,10 @@ import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
-    bgColor?: string;
+    maxWidth?: string;
   }>(),
   {
-    bgColor: 'surface',
+    maxWidth: '90px',
   },
 );
 

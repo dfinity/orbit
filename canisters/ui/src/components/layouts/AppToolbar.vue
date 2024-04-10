@@ -1,19 +1,26 @@
 <template>
-  <VToolbar density="compact" :class="toolbarClasses">
+  <VToolbar density="compact" :class="`py-2 ${bgColor}`">
     <div class="d-flex">
       <slot name="context">
         <BrandLogo v-if="showLogo" height="26px" class="ml-4" />
       </slot>
     </div>
     <VSpacer />
-    <div class="d-flex ga-1 mr-4">
+    <div
+      class="d-flex"
+      :class="{
+        'ga-0': app.isMobile,
+        'ga-2': !app.isMobile,
+        'mr-2': !app.isMobile || !session.isAuthenticated,
+      }"
+    >
       <slot name="actions">
         <VBtn
           v-if="props.themeSelector"
           :icon="app.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny"
           @click.prevent="app.toogleTheme"
         />
-        <LanguageSelector :bg-color="props.bgColor" />
+        <LanguageSelector v-if="props.languageSelector" />
         <NotificationsPanelToggle v-if="session.isAuthenticated" :variant="props.variant" />
         <UserAvatarSelector v-if="session.isAuthenticated" :variant="props.variant" />
         <VBtn
@@ -40,6 +47,7 @@ import { useSessionStore } from '~/stores/session.store';
 const props = withDefaults(
   defineProps<{
     logo?: boolean;
+    languageSelector?: boolean;
     sidebar?: boolean;
     bgColor?: string;
     themeSelector?: boolean;
@@ -48,9 +56,10 @@ const props = withDefaults(
   }>(),
   {
     logo: undefined,
+    languageSelector: true,
     sidebar: true,
     themeSelector: true,
-    bgColor: 'surface',
+    bgColor: 'bg-surface',
     variant: 'filled',
     expandableSidebar: false,
   },
@@ -66,14 +75,6 @@ const showLogo = computed(() => {
 
   return app.isMobile;
 });
-const toolbarClasses = computed(() => {
-  if (props.bgColor) {
-    return {
-      [`bg-${props.bgColor}`]: true,
-      'py-2': true,
-    };
-  }
 
-  return {};
-});
+const bgColor = computed(() => (props.bgColor !== undefined ? props.bgColor : ''));
 </script>

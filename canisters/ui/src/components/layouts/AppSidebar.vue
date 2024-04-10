@@ -8,7 +8,7 @@
     <div class="d-flex flex-column h-100">
       <div class="sidebar__header d-flex flex-grow-0">
         <slot name="header">
-          <SidenavHeader v-if="showHeader" />
+          <SidenavHeader v-if="showHeader" :language-selector="props.languageSelector" />
         </slot>
       </div>
       <div class="sidebar_nav d-flex flex-grow-1">
@@ -44,6 +44,7 @@ const props = withDefaults(
     header?: boolean;
     nav?: boolean;
     footer?: boolean;
+    languageSelector?: boolean;
   }>(),
   {
     color: 'sidebar',
@@ -51,6 +52,7 @@ const props = withDefaults(
     header: true,
     nav: true,
     footer: true,
+    languageSelector: false,
   },
 );
 

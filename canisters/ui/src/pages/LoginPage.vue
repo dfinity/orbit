@@ -2,7 +2,7 @@
   <PageLayout>
     <template #custom>
       <VMain class="d-flex flex-column bg-landing logo-markers-bg">
-        <AppToolbar logo :sidebar="false" :theme-selector="false" bg-color="transparent" />
+        <AppToolbar logo :sidebar="false" :theme-selector="false" bg-color="bg-transparent" />
         <VContainer
           fluid
           class="flex-grow-1"
