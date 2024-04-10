@@ -1,6 +1,6 @@
 <template>
   <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
-    <VNavigationDrawer v-model="app.showSidebar" class="sidebar" width="260" color="primary">
+    <VNavigationDrawer v-model="app.showSidebar" class="sidebar" width="260" color="secondary">
       <div class="sidebar__header">
         <slot name="sidebar-header">
           <SidenavHeader v-if="session.isAuthenticated" />
@@ -23,32 +23,7 @@
   <slot v-if="!isSetAndNotFalse(props.hideBody)" name="body">
     <VMain class="body" full-height>
       <slot name="toolbar">
-        <VToolbar density="compact" class="toolbar">
-          <div
-            v-if="!isSetAndNotFalse(props.hideToolbarContext)"
-            class="toolbar__context d-flex align-center"
-          >
-            <slot name="toolbar-context">
-              <BrandLogo v-if="!session.isAuthenticated" height="26px" class="ml-4" />
-              <VBtn
-                v-if="session.isAuthenticated && !isSetAndNotFalse(props.hideSidebar)"
-                :icon="app.showSidebar ? mdiMenuOpen : mdiMenuClose"
-                @click.prevent="app.toogleSidebar"
-              />
-            </slot>
-          </div>
-          <VSpacer />
-          <div class="toolbar__actions mr-4">
-            <slot name="toolbar-actions">
-              <VBtn :icon="themeSwitcherIcon" @click.prevent="app.toogleTheme" />
-              <LanguageSelector />
-              <template v-if="session.isAuthenticated">
-                <NotificationsPanelToggle />
-                <UserAvatarSelector />
-              </template>
-            </slot>
-          </div>
-        </VToolbar>
+        <AppToolbar />
         <div class="alpha-warning">
           <VIcon :icon="mdiAlertOutline" size="medium" />
           {{ $t('app.alpha_warning') }}
@@ -110,23 +85,14 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  mdiAlertOutline,
-  mdiMenuClose,
-  mdiMenuOpen,
-  mdiWeatherNight,
-  mdiWeatherSunny,
-} from '@mdi/js';
+import { mdiAlertOutline } from '@mdi/js';
 import { computed, inject } from 'vue';
 import { isSetAndNotFalse } from '~/utils/helper.utils';
-import BrandLogo from '~/components/BrandLogo.vue';
-import NotificationsPanelToggle from '~/components/notifications/NotificationsPanelToggle.vue';
 import SidenavHeader from '~/components/SidenavHeader.vue';
 import SidenavMenu from '~/components/SidenavMenu.vue';
-import UserAvatarSelector from '~/components/UserAvatarSelector.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
-import LanguageSelector from './LanguageSelector.vue';
+import AppToolbar from '~/components/layouts/AppToolbar.vue';
 
 const app = useAppStore();
 const session = useSessionStore();
@@ -146,10 +112,6 @@ const ghMarkImg = computed(() => {
 });
 
 const poweredByBadge = `/images/powered-by-badge.svg`;
-
-const themeSwitcherIcon = computed(() => {
-  return app.isDarkTheme ? mdiWeatherNight : mdiWeatherSunny;
-});
 </script>
 
 <style lang="scss">

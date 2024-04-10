@@ -5,6 +5,7 @@
     variant="solo-filled"
     density="compact"
     rounded
+    :bg-color="props.bgColor"
     hide-details
     flat
   />
@@ -12,7 +13,17 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { VSelect } from 'vuetify/components';
 import { useAppStore } from '~/stores/app.store';
+
+const props = withDefaults(
+  defineProps<{
+    bgColor?: string;
+  }>(),
+  {
+    bgColor: 'surface',
+  },
+);
 
 const app = useAppStore();
 const router = useRouter();

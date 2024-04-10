@@ -6,37 +6,40 @@ import { Locale } from '~/configs/i18n.config';
 import { SupportedTheme } from '~/types/app.types';
 import { i18n } from './i18n.plugin';
 
+// Styles for material design icons and vuetify
+import '@mdi/font/css/materialdesignicons.css';
+
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#f6f6f6',
-    'background-border': '#9f9f9f',
-    surface: '#fefefe',
-    primary: '#00183b',
-    'primary-variant': '#264674',
-    secondary: '#09f381',
-    'secondary-variant': '#053f36',
-    error: '#B00020',
-    info: '#2196F3',
-    success: '#4CAF50',
-    warning: '#FB8C00',
+    primary: '#00ffcc',
+    secondary: '#030024',
+    landing: '#030024',
+    'landing-surface': '#ffffff',
+    background: '#f0f0f0',
+    surface: '#ffffff',
+    neutral: '#b0b0b5',
+    info: '#5da3cf',
+    success: '#258f5c',
+    warning: '#e39632',
+    error: '#bd3e33',
   },
 };
 
 const dark: ThemeDefinition = {
   dark: true,
   colors: {
-    background: '#2B2D42',
-    'background-border': '#424761',
-    surface: '#313449',
-    primary: '#325a9b',
-    'primary-variant': '#3071c8',
-    secondary: '#36d399',
-    'secondary-variant': '#2E665d',
-    error: '#cf6679',
-    info: '#64B5f6',
-    success: '#81c784',
-    warning: '#ffA726',
+    primary: '#00ffcc',
+    secondary: '#012d6b',
+    landing: '#030024',
+    'landing-surface': '#ffffff',
+    background: '#070707',
+    surface: '#1c1c1c',
+    neutral: '#b0b0b5',
+    info: '#5da3cf',
+    success: '#258f5c',
+    warning: '#e39632',
+    error: '#bd3e33',
   },
 };
 

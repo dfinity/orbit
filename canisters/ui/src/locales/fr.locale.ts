@@ -244,9 +244,14 @@ export default {
       },
     },
   },
-  login: {
-    signin_slogan: 'Connectez vous de manière sécurisée pour gérer vos actifs crypto',
-    auth_failed: "L'authentication a échoué, veuillez essayer de nouveau.",
+  landing: {
+    title: 'Gestion Multichain',
+    subtitle: 'Une Plateforme, Une Supervision Complète',
+    description:
+      'Orbit simplifie la gestion des actifs on-chain pour les entreprises, les DAOs et les équipes, en consolidant le contrôle et la visibilité sur une seule plateforme intuitive.',
+    connect_title: 'Connectez-vous en toute sécurité pour gérer vos actifs numériques',
+    connect_btn: 'Se connecter avec Internet Identity',
+    connect_error: 'Échec de la connexion, veuillez réessayer.',
   },
   slogans: {
     elevate_to_orbit: {

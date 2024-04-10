@@ -1,7 +1,13 @@
-@use './styles/Variables' as variables;
+@use './variables' as *;
+@use './fonts' as *;
+@use './typography' as *;
 
 @use 'vuetify' with (
-  $color-pack: true
+  $color-pack: true,
+  $reset: true,
+  $body-font-family: $body-font-family,
+  $font-size-root: $font-size-root,
+  $typography: $typography,
 );
 
 // :root variables are available in the global scope and should be prefixed
@@ -55,24 +61,25 @@
   --ds-background-border: var(--v-theme-background-border);
 
   // content sizing
-  --ds-bdu: #{variables.$bdu};
-  --ds-toolbar-height: #{variables.$toolbar-height};
-  --ds-device-xs: #{variables.$device-xs};
-  --ds-device-sm: #{variables.$device-sm};
-  --ds-device-md: #{variables.$device-md};
-  --ds-device-lg: #{variables.$device-lg};
-  --ds-device-xl: #{variables.$device-xl};
-  --ds-device-xxl: #{variables.$device-xxl};
+  --ds-bdu: $bdu;
+  --ds-toolbar-height: $toolbar-height;
+  --ds-device-xs: $device-xs;
+  --ds-device-sm: $device-sm;
+  --ds-device-md: $device-md;
+  --ds-device-lg: $device-lg;
+  --ds-device-xl: $device-xl;
+  --ds-device-xxl: $device-xxl;
   --ds-device-breakpoint: var(--ds-device-md);
 
   // fonts
-  --ds-base-font-size: #{variables.$base-font-size};
-  --ds-font-size-xxs: calc(var(--ds-base-font-size) - 4px);
-  --ds-font-size-xs: calc(var(--ds-base-font-size) - 2px);
+  --ds-base-font-size: $font-size-root;
+  --ds-font-size-xxs: calc(var(--ds-base-font-size) - 0.4rem);
+  --ds-font-size-xs: calc(var(--ds-base-font-size) - 0.2rem);
   --ds-font-size-md: var(--ds-base-font-size);
-  --ds-font-size-lg: calc(var(--ds-base-font-size) + 2px);
-  --ds-font-size-xl: calc(var(--ds-base-font-size) + 4px);
-  --ds-font-size-xxl: calc(var(--ds-base-font-size) + 6px);
+  --ds-font-size-default: var(--ds-base-font-size);
+  --ds-font-size-lg: calc(var(--ds-base-font-size) + 0.2rem);
+  --ds-font-size-xl: calc(var(--ds-base-font-size) + 0.4rem);
+  --ds-font-size-xxl: calc(var(--ds-base-font-size) + 0.6rem);
 
   // borders
   --ds-border-style: solid;
@@ -92,9 +99,7 @@ body,
   padding: 0;
   border: 0;
   vertical-align: baseline;
-  background: rgb(var(--ds-surface));
-  color: rgb(var(--ds-on-surface));
-  font-size: var(--ds-font-size-md);
+  font-size: var(--ds-font-size-default);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -112,7 +117,7 @@ a {
 }
 
 // Extends spacing utility classes
-@media (min-width: variables.$device-md) {
+@media (min-width: $device-md) {
   .w-md-auto {
     width: auto !important;
   }
@@ -157,4 +162,15 @@ a {
 
 .box-shadow-none {
   box-shadow: none !important;
+}
+
+.logo-markers-bg {
+  background-image: url('/images/logo-markers-bg.png');
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 60vmin;
+}
+
+.min-height-100 {
+  min-height: 100%;
 }

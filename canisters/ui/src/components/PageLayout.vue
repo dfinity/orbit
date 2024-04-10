@@ -1,15 +1,20 @@
 <template>
-  <VLayout class="page-layout" :class="`${layoutDeviceClass} ${themeClass}`" full-height>
-    <DesktopLayout v-if="!app.isMobile">
-      <template v-for="slotName in slotNames" :key="slotName" #[slotName]>
-        <slot :name="slotName"></slot>
-      </template>
-    </DesktopLayout>
-    <MobileLayout v-else>
-      <template v-for="slotName in slotNames" :key="slotName" #[slotName]>
-        <slot :name="slotName"></slot>
-      </template>
-    </MobileLayout>
+  <VLayout
+    class="page-layout min-height-100"
+    :class="`${layoutDeviceClass} ${themeClass} ${backgroundColor}`"
+  >
+    <slot name="custom">
+      <DesktopLayout v-if="!app.isMobile">
+        <template v-for="slotName in slotNames" :key="slotName" #[slotName]>
+          <slot :name="slotName"></slot>
+        </template>
+      </DesktopLayout>
+      <MobileLayout v-else>
+        <template v-for="slotName in slotNames" :key="slotName" #[slotName]>
+          <slot :name="slotName"></slot>
+        </template>
+      </MobileLayout>
+    </slot>
     <VSnackbar
       v-model="app.notification.show"
       :absolute="true"
@@ -17,7 +22,7 @@
       :color="app.notification.type"
       style="opacity: 0.9"
       variant="elevated"
-      :location="notificationPosition"
+      location="bottom center"
       timeout="4000"
       transition="slide-x-reverse-transition"
     >
@@ -42,6 +47,7 @@ import MobileLayout from './MobileLayout.vue';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
 import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue';
 import { useSessionStore } from '~/stores/session.store';
+import { VLayout, VSnackbar } from 'vuetify/components';
 
 const app = useAppStore();
 const session = useSessionStore();
@@ -96,11 +102,11 @@ const layoutDeviceClass = computed(() => {
   return app.isMobile ? 'page-layout--mobile' : 'page-layout--desktop';
 });
 
-const themeClass = computed(() => {
-  return app.isDarkTheme ? 'theme--dark' : 'theme--light';
+const backgroundColor = computed(() => {
+  return props.backgroundColor !== undefined ? `bg-${props.backgroundColor}` : '';
 });
 
-const notificationPosition = computed(() => {
-  return app.isMobile ? 'bottom center' : 'top right';
+const themeClass = computed(() => {
+  return app.isDarkTheme ? 'theme--dark' : 'theme--light';
 });
 </script>

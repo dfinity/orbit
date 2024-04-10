@@ -242,9 +242,14 @@ export default {
       },
     },
   },
-  login: {
-    signin_slogan: 'Securely connect to manage your crypto assets',
-    auth_failed: 'Authentication failed, please try again.',
+  landing: {
+    title: 'Seamless Multichain',
+    subtitle: 'One Platform, Complete Oversight',
+    description:
+      'Orbit streamlines on-chain asset management for enterprises, DAOs, and teams, consolidating control and visibility into a single, intuitive platform.',
+    connect_title: 'Securely connect to manage your digital assets',
+    connect_btn: 'Connect with Internet Identity',
+    connect_error: 'Failed to connect, please try again.',
   },
   slogans: {
     elevate_to_orbit: {
