@@ -41,13 +41,13 @@
 <script lang="ts" setup>
 import { computed, provide, watch } from 'vue';
 import { useDisplay } from 'vuetify';
-import { useAppStore } from '~/stores/app.store';
-import DesktopLayout from './DesktopLayout.vue';
-import MobileLayout from './MobileLayout.vue';
-import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
-import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue';
-import { useSessionStore } from '~/stores/session.store';
 import { VBtn, VLayout, VSnackbar } from 'vuetify/components';
+import DesktopLayout from '~/components/layouts/DesktopLayout.vue';
+import MobileLayout from '~/components/layouts/MobileLayout.vue';
+import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue';
+import { useAppStore } from '~/stores/app.store';
+import { useSessionStore } from '~/stores/session.store';
+import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
 
 const app = useAppStore();
 const session = useSessionStore();
