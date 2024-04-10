@@ -14,8 +14,6 @@ const light: ThemeDefinition = {
   colors: {
     primary: '#00ffcc',
     secondary: '#030024',
-    landing: '#030024',
-    'landing-surface': '#ffffff',
     background: '#f0f0f0',
     surface: '#ffffff',
     neutral: '#b0b0b5',
@@ -23,6 +21,10 @@ const light: ThemeDefinition = {
     success: '#258f5c',
     warning: '#e39632',
     error: '#bd3e33',
+    // custom styles
+    sidebar: '#030024',
+    landing: '#030024',
+    'landing-surface': '#ffffff',
   },
 };
 
@@ -31,15 +33,17 @@ const dark: ThemeDefinition = {
   colors: {
     primary: '#00ffcc',
     secondary: '#012d6b',
-    landing: '#030024',
-    'landing-surface': '#ffffff',
-    background: '#070707',
-    surface: '#1c1c1c',
+    background: '#010011',
+    surface: '#191822',
     neutral: '#b0b0b5',
     info: '#5da3cf',
     success: '#258f5c',
     warning: '#e39632',
     error: '#bd3e33',
+    // custom styles
+    sidebar: '#191822',
+    landing: '#030024',
+    'landing-surface': '#ffffff',
   },
 };
 

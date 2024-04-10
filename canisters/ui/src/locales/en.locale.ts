@@ -9,7 +9,6 @@ export default {
     confirm: 'Confirm',
     copied_to_clipboard: 'Value copied to clipboard.',
     initial_account_name: 'Main',
-    alpha_warning: 'This is an alpha version. Use with caution.',
     wallet_info_card_title: '{name} Info',
     wallet_info_card_edit_btn: 'Edit wallet',
     wallet_info_card_remove_btn: 'Remove wallet',
@@ -72,6 +71,10 @@ export default {
     account_dialog_approval_policy_transfer_hint:
       'The policy that needs to be approved to transfer funds.',
     criteria_builder_no_criteria: 'No criteria specified.',
+  },
+  alpha_warning: {
+    version: 'This is an alpha version.',
+    caution: 'Use with caution.',
   },
   blockchains: {
     icp: {
@@ -250,17 +253,10 @@ export default {
     connect_title: 'Securely connect to manage your digital assets',
     connect_btn: 'Connect with Internet Identity',
     connect_error: 'Failed to connect, please try again.',
-  },
-  slogans: {
-    elevate_to_orbit: {
-      main: 'Elevate to {term1}, {term2}',
-      term1: 'Orbit',
-      term2: 'where security meets freedom',
-    },
-    institutions_multi_custody: {
-      main: 'Where {term1} and {term2} align',
-      term1: 'Institutions',
-      term2: 'Multi-Custody',
+    sidebar_slogan: {
+      main: 'Transforming {term1} {term2}',
+      term1: 'Digital Assets Management with a',
+      term2: 'Multi-Custody Trustless Wallet',
     },
   },
   home: {

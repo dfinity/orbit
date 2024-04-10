@@ -7,7 +7,7 @@
   $reset: true,
   $body-font-family: $body-font-family,
   $font-size-root: $font-size-root,
-  $typography: $typography,
+  $typography: $typography
 );
 
 // :root variables are available in the global scope and should be prefixed
@@ -108,14 +108,6 @@ a {
   color: inherit;
 }
 
-.alpha-warning {
-  color: rgb(var(--ds-on-surface));
-  font-size: var(--ds-font-size-xs);
-  font-weight: bold;
-  text-align: center;
-  padding: 0.5rem;
-}
-
 // Extends spacing utility classes
 @media (min-width: $device-md) {
   .w-md-auto {
@@ -169,6 +161,12 @@ a {
   background-repeat: no-repeat;
   background-position: bottom left;
   background-size: 60vmin;
+}
+
+.logo-markers-bg--contain {
+  @extend .logo-markers-bg;
+
+  background-size: contain;
 }
 
 .min-height-100 {

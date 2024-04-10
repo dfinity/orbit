@@ -3,11 +3,6 @@
     <div class="d-flex">
       <slot name="context">
         <BrandLogo v-if="showLogo" height="26px" class="ml-4" />
-        <VBtn
-          v-if="session.isAuthenticated && !props.sidebar"
-          :icon="app.showSidebar ? mdiMenuOpen : mdiMenuClose"
-          @click.prevent="app.toogleSidebar"
-        />
       </slot>
     </div>
     <VSpacer />
@@ -19,15 +14,20 @@
           @click.prevent="app.toogleTheme"
         />
         <LanguageSelector :bg-color="props.bgColor" />
-        <NotificationsPanelToggle v-if="session.isAuthenticated" />
-        <UserAvatarSelector v-if="session.isAuthenticated" />
+        <NotificationsPanelToggle v-if="session.isAuthenticated" :variant="props.variant" />
+        <UserAvatarSelector v-if="session.isAuthenticated" :variant="props.variant" />
+        <VBtn
+          v-if="props.expandableSidebar"
+          :icon="mdiMenuOpen"
+          @click.prevent="app.toogleSidebar"
+        />
       </slot>
     </div>
   </VToolbar>
 </template>
 
 <script lang="ts" setup>
-import { mdiMenuClose, mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
+import { mdiMenuOpen, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js';
 import { computed } from 'vue';
 import { VBtn, VSpacer, VToolbar } from 'vuetify/components';
 import BrandLogo from '~/components/BrandLogo.vue';
@@ -43,12 +43,16 @@ const props = withDefaults(
     sidebar?: boolean;
     bgColor?: string;
     themeSelector?: boolean;
+    variant?: 'outlined' | 'filled';
+    expandableSidebar?: boolean;
   }>(),
   {
     logo: undefined,
     sidebar: true,
     themeSelector: true,
     bgColor: 'surface',
+    variant: 'filled',
+    expandableSidebar: false,
   },
 );
 

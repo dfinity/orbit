@@ -28,9 +28,9 @@
     >
       {{ app.notification.message }}
       <template #actions>
-        <v-btn variant="text" @click="app.notification.show = false">
+        <VBtn variant="text" @click="app.notification.show = false">
           {{ $t('terms.close') }}
-        </v-btn>
+        </VBtn>
       </template>
     </VSnackbar>
     <SessionExpiredOverlay />
@@ -47,16 +47,13 @@ import MobileLayout from './MobileLayout.vue';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
 import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue';
 import { useSessionStore } from '~/stores/session.store';
-import { VLayout, VSnackbar } from 'vuetify/components';
+import { VBtn, VLayout, VSnackbar } from 'vuetify/components';
 
 const app = useAppStore();
 const session = useSessionStore();
 
 const slotNames = [
   'sidebar',
-  'sidebar-header',
-  'sidebar-nav',
-  'sidebar-footer',
   'body',
   'toolbar',
   'toolbar-context',
@@ -74,7 +71,6 @@ const props = withDefaults(
     hideBody?: string | boolean;
     hideMain?: string | boolean;
     hideMainHeader?: string | boolean;
-    hideFooter?: string | boolean;
     hideToolbarContext?: string | boolean;
   }>(),
   {
@@ -83,7 +79,6 @@ const props = withDefaults(
     hideBody: false,
     hideMain: false,
     hideMainHeader: false,
-    hideFooter: false,
     hideToolbarContext: false,
   },
 );
@@ -103,7 +98,15 @@ const layoutDeviceClass = computed(() => {
 });
 
 const backgroundColor = computed(() => {
-  return props.backgroundColor !== undefined ? `bg-${props.backgroundColor}` : '';
+  if (props.backgroundColor === 'transparent') {
+    return '';
+  }
+
+  if (props.backgroundColor !== undefined) {
+    return `bg-${props.backgroundColor}`;
+  }
+
+  return 'bg-background';
 });
 
 const themeClass = computed(() => {

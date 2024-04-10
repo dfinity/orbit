@@ -1,33 +1,11 @@
 <template>
-  <slot v-if="!isSetAndNotFalse(props.hideSidebar)" name="sidebar">
-    <VNavigationDrawer v-model="app.showSidebar" class="sidebar" width="260" color="secondary">
-      <div class="sidebar__header">
-        <slot name="sidebar-header">
-          <SidenavHeader v-if="session.isAuthenticated" />
-        </slot>
-      </div>
-      <div class="sidebar__nav">
-        <slot name="sidebar-nav">
-          <SidenavMenu v-if="session.isAuthenticated" />
-        </slot>
-      </div>
-      <div class="px-4 py-4">
-        <slot name="sidebar-footer">
-          <a href="https://internetcomputer.org" target="_blank">
-            <img :src="poweredByBadge" height="20" />
-          </a>
-        </slot>
-      </div>
-    </VNavigationDrawer>
+  <slot name="sidebar">
+    <AppSidebar v-if="props.sidebar" />
   </slot>
   <slot v-if="!isSetAndNotFalse(props.hideBody)" name="body">
     <VMain class="body" full-height>
       <slot name="toolbar">
         <AppToolbar />
-        <div class="alpha-warning">
-          <VIcon :icon="mdiAlertOutline" size="medium" />
-          {{ $t('app.alpha_warning') }}
-        </div>
       </slot>
       <nav
         class="topnav"
@@ -56,93 +34,28 @@
           </div>
         </slot>
       </div>
-      <VFooter
-        v-if="!isSetAndNotFalse(props.hideFooter)"
-        class="footer"
-        :color="props.backgroundColor ? props.backgroundColor : `surface`"
-      >
-        <slot name="footer">
-          <VContainer fluid>
-            <VRow>
-              <VCol class="footer__left text-left">
-                <slot name="footer-left">
-                  <slot name="footer-right">{{ $t('footer.copyright') }}</slot>
-                </slot>
-              </VCol>
-              <VCol class="footer__right text-right">
-                <a href="https://github.com/dfinity/orbit-wallet" target="_blank">
-                  <img :src="ghMarkImg" class="footer__gh-mark" />{{
-                    $t('footer.github.description')
-                  }}
-                </a>
-              </VCol>
-            </VRow>
-          </VContainer>
-        </slot>
-      </VFooter>
     </VMain>
   </slot>
 </template>
 
 <script lang="ts" setup>
-import { mdiAlertOutline } from '@mdi/js';
-import { computed, inject } from 'vue';
-import { isSetAndNotFalse } from '~/utils/helper.utils';
-import SidenavHeader from '~/components/SidenavHeader.vue';
-import SidenavMenu from '~/components/SidenavMenu.vue';
-import { useAppStore } from '~/stores/app.store';
-import { useSessionStore } from '~/stores/session.store';
+import { inject } from 'vue';
+import AppSidebar from '~/components/layouts/AppSidebar.vue';
 import AppToolbar from '~/components/layouts/AppToolbar.vue';
-
-const app = useAppStore();
-const session = useSessionStore();
+import { isSetAndNotFalse } from '~/utils/helper.utils';
 
 const props = inject('pageLayoutProps', {
   backgroundColor: undefined,
-  hideSidebar: false,
+  sidebar: true,
   hideBody: false,
   hideMain: false,
   hideMainHeader: false,
-  hideFooter: false,
   hideToolbarContext: false,
 });
-
-const ghMarkImg = computed(() => {
-  return app.isDarkTheme ? '/images/github-mark-dark.png' : '/images/github-mark-light.png';
-});
-
-const poweredByBadge = `/images/powered-by-badge.svg`;
 </script>
-
-<style lang="scss">
-.sidebar {
-  .v-navigation-drawer__content {
-    display: flex;
-    flex-direction: column;
-  }
-}
-</style>
 
 <style scoped lang="scss">
 .page-layout--desktop {
-  .sidebar {
-    height: 100%;
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    &__header {
-      width: 100%;
-      flex-shrink: 0;
-      min-height: var(--ds-toolbar-height);
-    }
-
-    &__nav {
-      width: 100%;
-      flex-grow: 1;
-    }
-  }
-
   .toolbar {
     display: flex;
     flex-direction: row;
@@ -189,41 +102,6 @@ const poweredByBadge = `/images/powered-by-badge.svg`;
     &__body {
       width: 100%;
       flex-grow: 1;
-    }
-  }
-
-  .footer {
-    height: var(--ds-toolbar-height);
-    min-height: var(--ds-toolbar-height);
-    max-height: var(--ds-toolbar-height);
-    line-height: var(--ds-toolbar-height);
-    font-size: var(--ds-font-size-xxs);
-    background-color: transparent;
-    box-sizing: content-box;
-
-    .v-container {
-      padding: 0;
-      border-top: var(--ds-border-width) var(--ds-border-style) rgb(var(--ds-background-border));
-
-      > .v-row {
-        margin: 0;
-      }
-    }
-
-    .v-col.footer__left,
-    .v-col.footer__right {
-      padding: 0;
-      height: var(--ds-toolbar-height);
-      min-height: var(--ds-toolbar-height);
-      max-height: var(--ds-toolbar-height);
-      line-height: var(--ds-toolbar-height);
-    }
-
-    &__gh-mark {
-      height: var(--ds-font-size-xxs);
-      width: var(--ds-font-size-xxs);
-      vertical-align: middle;
-      margin-right: calc(var(--ds-bdu) / 2);
     }
   }
 }

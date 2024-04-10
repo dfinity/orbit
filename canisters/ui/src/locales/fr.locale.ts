@@ -9,7 +9,6 @@ export default {
     confirm: 'Confirmez',
     copied_to_clipboard: 'Valeur placée dans le presse-papiers',
     initial_account_name: 'Principal',
-    alpha_warning: 'Ceci est une version alpha, utilisez a vos risques',
     wallet_info_card_title: 'Info {name}',
     wallet_info_card_edit_btn: 'Éditer le portefeuille',
     wallet_info_card_remove_btn: 'Retirer le portefeuille',
@@ -74,6 +73,10 @@ export default {
     account_dialog_approval_policy_transfer_hint:
       'La politique qui doit être approuvée pour transférer des fonds.',
     criteria_builder_no_criteria: 'Pas de critères',
+  },
+  alpha_warning: {
+    version: 'Ceci est une version alpha.',
+    caution: 'Utilisez avec prudence.',
   },
   blockchains: {
     icp: {
@@ -252,17 +255,10 @@ export default {
     connect_title: 'Connectez-vous en toute sécurité pour gérer vos actifs numériques',
     connect_btn: 'Se connecter avec Internet Identity',
     connect_error: 'Échec de la connexion, veuillez réessayer.',
-  },
-  slogans: {
-    elevate_to_orbit: {
-      main: 'Elevez vous en {term1}, {term2}',
-      term1: 'Orbit',
-      term2: 'où la sécurity rejoint la liberté ',
-    },
-    institutions_multi_custody: {
-      main: "Où les {term1} et la {term2} s'alignent",
-      term1: 'Institutions',
-      term2: 'Garde-Partagée',
+    sidebar_slogan: {
+      main: 'Transformation {term1} {term2}',
+      term1: "de la Gestion d'Actifs Numériques avec un",
+      term2: 'Portefeuille Multi-Garde',
     },
   },
   home: {
