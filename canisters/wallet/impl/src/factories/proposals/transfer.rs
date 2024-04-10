@@ -1,6 +1,6 @@
 use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::trap},
+    core::generate_uuid_v4,
     errors::{ProposalError, ProposalExecuteError},
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
@@ -16,15 +16,8 @@ use ic_canister_core::repository::Repository;
 use ic_canister_core::types::UUID;
 use uuid::Uuid;
 
-fn get_account(from_account_id: &UUID) -> Account {
-    ACCOUNT_REPOSITORY
-        .get(&Account::key(*from_account_id))
-        .unwrap_or_else(|| {
-            trap(&format!(
-                "Account not found: {}",
-                Uuid::from_bytes(*from_account_id).hyphenated()
-            ))
-        })
+fn get_account(from_account_id: &UUID) -> Option<Account> {
+    ACCOUNT_REPOSITORY.get(&Account::key(*from_account_id))
 }
 
 pub struct TransferProposalCreate {}
@@ -96,7 +89,16 @@ impl<'p, 'o> TransferProposalExecute<'p, 'o> {
 impl Execute for TransferProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         let transfer_id = generate_uuid_v4().await;
-        let account = get_account(&self.operation.input.from_account_id);
+        let account = get_account(&self.operation.input.from_account_id).ok_or(
+            ProposalExecuteError::Failed {
+                reason: format!(
+                    "Account {} does not exist.",
+                    Uuid::from_bytes(self.operation.input.from_account_id)
+                        .hyphenated()
+                        .to_string()
+                ),
+            },
+        )?;
 
         let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
             .map_err(|e| ProposalExecuteError::Failed {
