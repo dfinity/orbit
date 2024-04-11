@@ -205,7 +205,7 @@ const deployInitialWallet = async (): Promise<void> => {
 
     if (wallet.user) {
       deploymentStatus.value = DeployWalletStatus.CreatingInitialAccount;
-      await createUserInitialAccount(wallet.user.identity);
+      await createUserInitialAccount(wallet.user.id);
     }
 
     deploymentStatus.value = DeployWalletStatus.Completed;
