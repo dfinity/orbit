@@ -157,6 +157,13 @@ impl InternetComputer {
             Some(memo) => HelperMapper::to_u64(memo)?,
             None => BigEndian::read_u64(&wallet_transfer.id[0..8]),
         };
+        let to_address =
+            AccountIdentifier::from_hex(&wallet_transfer.to_address).map_err(|error| {
+                BlockchainApiError::InvalidToAddress {
+                    address: wallet_transfer.to_address.clone(),
+                    error,
+                }
+            })?;
 
         let block_height = transfer(
             Self::ledger_canister_id(),
@@ -170,7 +177,7 @@ impl InternetComputer {
                     self.subaccount_from_wallet_account_id(&wallet_account.id),
                 )),
                 memo: Memo(memo),
-                to: AccountIdentifier::from_hex(&wallet_transfer.to_address).unwrap(),
+                to: to_address,
             },
         )
         .await
