@@ -205,7 +205,8 @@ export const useSessionStore = defineStore('session', {
             ? controlPanelUser.main_wallet?.[0]
             : controlPanelUser.wallets?.[0]?.canister_id;
         }
-        const sameUser = this.isAuthenticated && this.principal === controlPanelUser.identity.toText();
+        const sameUser =
+          this.isAuthenticated && this.principal === controlPanelUser.identity.toText();
 
         this.isAuthenticated = true;
         this.populateUser(controlPanelUser);
