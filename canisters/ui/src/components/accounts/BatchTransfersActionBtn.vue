@@ -21,14 +21,14 @@
 
     <VDialog v-model="open" :max-width="props.dialogMaxWidth" :persistent="loading">
       <VCard :loading="loading" :persistent="loading">
-        <VToolbar color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>
             <p class="mt-3">{{ dialogTitle }}</p>
             <p class="text-body-2">
               {{ $t('pages.account.csv_transfer_subtitle') }}
             </p>
           </VToolbarTitle>
-          <VBtn :disabled="loading" :icon="mdiClose" dark @click="open = false" />
+          <VBtn :disabled="loading" :icon="mdiClose" @click="open = false" />
         </VToolbar>
         <VCardText class="px-4 pb-4">
           <VFileInput
@@ -97,7 +97,7 @@
             </VTable>
           </template>
         </VCardText>
-        <VCardActions>
+        <VCardActions class="pa-3 d-flex flex-column flex-md-row ga-4">
           <div v-if="hasInvalidTransfers" class="d-flex flex-column ga-1">
             <span class="text-body-2 pl-2">
               * {{ $t('pages.account.csv_ignored_transfers_hint') }}
@@ -117,7 +117,10 @@
           <VBtn
             :loading="loading"
             :disabled="!canSubmit"
-            variant="text"
+            density="comfortable"
+            variant="elevated"
+            color="primary"
+            :block="app.isMobile"
             @click="startBatchTransfer"
           >
             {{ $t('terms.transfer') }}
@@ -149,6 +152,20 @@ import {
   registerBeforeUnloadConfirmation,
   unregisterBeforeUnloadConfirmation,
 } from '~/utils/app.utils';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VFileInput,
+  VIcon,
+  VProgressCircular,
+  VSpacer,
+  VTable,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

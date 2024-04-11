@@ -31,13 +31,13 @@
     :max-width="props.dialogMaxWidth"
   >
     <VCard :loading="loading">
-      <VToolbar dark :color="props.dialogToolbarColor">
+      <VToolbar :color="props.dialogToolbarColor">
         <VToolbarTitle
           :data-test-id="props.dataTestId ? `${props.dataTestId}-dialog-title` : undefined"
         >
           {{ props.title }}
         </VToolbarTitle>
-        <VBtn :disabled="loading" :icon="mdiClose" dark @click="close" />
+        <VBtn :disabled="loading" :icon="mdiClose" @click="close" />
       </VToolbar>
       <VCardText>
         <slot name="default" :model="{ value: intervalValue }" :loading="loading" :submit="submit">
@@ -125,7 +125,7 @@ const props = withDefaults(
     rounded: false,
     disabled: false,
     dialogMaxWidth: 800,
-    dialogToolbarColor: 'surface',
+    dialogToolbarColor: 'background',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modelValue: null as any,
     submit: undefined,

@@ -33,14 +33,13 @@
           <template #title-toolbar>
             <AccountSetupAction
               :account-id="account.id"
-              class="px-1"
+              class="px-1 mb-2"
               size="small"
-              variant="text"
-              color="default"
+              variant="tonal"
               :readonly="!privileges.can_edit"
               :append-icon="mdiTuneVariant"
             >
-              {{ account.name }}
+              {{ $t('terms.settings') }}
             </AccountSetupAction>
           </template>
           <template #subtitle>

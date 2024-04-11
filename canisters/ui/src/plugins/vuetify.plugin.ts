@@ -32,7 +32,7 @@ const dark: ThemeDefinition = {
   dark: true,
   colors: {
     primary: '#00ffcc',
-    secondary: '#012d6b',
+    secondary: '#0c6a6b',
     background: '#010011',
     surface: '#191822',
     neutral: '#b0b0b5',

@@ -13,9 +13,9 @@
       @loaded="proposalPolicy = $event.policy"
     >
       <VCard :loading="loading">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ $t('pages.proposal_policies.dialog_title') }}</VToolbarTitle>
-          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>
           <ProposalPolicyForm

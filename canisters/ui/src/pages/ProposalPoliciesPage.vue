@@ -107,14 +107,14 @@ import SpecifierSelector from '~/components/proposal-policies/specifier/Specifie
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
-useOnFailedOperation,
-useOnSuccessfulOperation,
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
 import {
-ProposalPolicy,
-ProposalPolicyCallerPrivileges,
-UUID,
+  ProposalPolicy,
+  ProposalPolicyCallerPrivileges,
+  UUID,
 } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';

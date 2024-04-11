@@ -13,25 +13,28 @@
       v-model="name"
       name="name"
       :label="$t('terms.name')"
+      density="comfortable"
       :rules="[maxLengthRule(100, $t('terms.name'))]"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
     <VAutocomplete
       v-model="status"
       name="status"
       :label="$t('terms.status')"
+      density="comfortable"
       :items="statusItems"
       :rules="[requiredRule]"
       chips
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
     <UserGroupAutocomplete
       v-model="userGroups"
       name="groups"
+      density="comfortable"
       :label="$t('terms.user_groups')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
       :rules="[requiredRule]"
       chips
@@ -41,8 +44,9 @@
       ref="identitiesInput"
       v-model="identities"
       name="identities"
+      density="comfortable"
       :label="$t('terms.identities')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
       :rules="[requiredRule]"
       :items="identities"

@@ -21,9 +21,9 @@
 
     <VDialog v-model="open" :max-width="props.dialogMaxWidth" :persistent="loading">
       <VCard :loading="loading" :persistent="loading">
-        <VToolbar>
+        <VToolbar color="background">
           <VToolbarTitle>{{ dialogTitle }}</VToolbarTitle>
-          <VBtn :disabled="loading" :icon="mdiClose" dark @click="open = false" />
+          <VBtn :disabled="loading" :icon="mdiClose" @click="open = false" />
         </VToolbar>
         <VCardText class="px-4 pb-4">
           <VCard
@@ -34,7 +34,7 @@
             variant="flat"
             class="mb-2"
           >
-            <VToolbar dark color="background" density="compact">
+            <VToolbar color="background" density="compact">
               <VToolbarTitle class="text-body-1">
                 {{ $t(`proposals.download.${download.group.toLowerCase()}`) }}
               </VToolbarTitle>

@@ -52,6 +52,7 @@
               size="small"
               class="my-2 w-100"
               color="background"
+              variant="flat"
               :disabled="props.disabled.value"
               :prepend-icon="mdiPlus"
               @click="model.push({ key: '', value: '' })"
@@ -68,6 +69,7 @@
 <script setup lang="ts">
 import { mdiPlus, mdiTrashCanOutline } from '@mdi/js';
 import { computed, toRefs, watch } from 'vue';
+import { VBtn, VTable, VTextField } from 'vuetify/components';
 import { MetadataItem } from '~/types/wallet.types';
 import { requiredRule } from '~/utils/form.utils';
 

@@ -1,12 +1,12 @@
 <template v-if="proposalReviewComponent">
   <VCard :loading="props.loading">
-    <VToolbar color="transparent">
+    <VToolbar color="background">
       <VToolbarTitle class="flex-fill">
-        <span class="text-body-2 font-weight-light">
+        <span class="text-body-2 font-weight-light text-wrap">
           {{ $t(`proposals.types.${proposalType}.request_title`) }}
         </span>
         <br />
-        <span v-if="props.proposal.title">
+        <span v-if="props.proposal.title" class="text-wrap">
           {{ props.proposal.title }}
           <VTooltip
             v-model="titleTooltip"
@@ -103,31 +103,34 @@
       </VContainer>
     </VCardText>
 
-    <VCardActions class="pa-4 d-flex flex-column-reverse flex-md-row ga-2">
+    <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
       <ProposalMetadata
         :proposal="props.proposal"
         :details="props.details"
-        class="flex-grow-0 mt-md-0"
+        class="flex-grow-1 flex-md-grow-0 align-self-start align-self-md-end"
         :class="{ 'mt-8': props.details.can_vote }"
       />
-      <div class="d-flex flex-column flex-md-row ga-2 justify-end flex-grow-1 w-100 w-md-auto">
-        <template v-if="props.details.can_vote">
+      <div class="d-flex flex-column flex-md-row ga-1 justify-end flex-grow-1 w-100 w-md-auto">
+        <template v-if="!props.details.can_vote">
           <VBtn
-            variant="outlined"
-            :disabled="props.loading"
-            data-test-id="proposal-details-approve"
-            @click="$emit('approve', reasonOrUndefined)"
-          >
-            {{ $t('terms.approve') }}
-          </VBtn>
-          <VBtn
-            variant="outlined"
-            :disabled="props.loading"
-            class="ma-0"
             data-test-id="proposal-details-reject"
+            variant="elevated"
+            color="error"
+            class="ma-0"
+            :disabled="props.loading"
             @click="$emit('reject', reasonOrUndefined)"
           >
             {{ $t('terms.reject') }}
+          </VBtn>
+          <VBtn
+            data-test-id="proposal-details-approve"
+            variant="elevated"
+            color="success"
+            class="ma-0"
+            :disabled="props.loading"
+            @click="$emit('approve', reasonOrUndefined)"
+          >
+            {{ $t('terms.approve') }}
           </VBtn>
           <slot name="bottom-actions"></slot>
         </template>
@@ -144,11 +147,23 @@
 import { mdiInformationOutline } from '@mdi/js';
 import type { Component } from 'vue';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import {
+  VBtn,
+  VCardActions,
+  VCardText,
+  VCol,
+  VContainer,
+  VDivider,
+  VRow,
+  VTextarea,
+  VToolbar,
+  VToolbarTitle,
+  VTooltip,
+} from 'vuetify/components';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
-import ProposalMetadata from './ProposalMetadata.vue';
-import ProposalStatusChip from './ProposalStatusChip.vue';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
 import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.vue';
@@ -165,8 +180,9 @@ import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntry
 import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
+import ProposalMetadata from './ProposalMetadata.vue';
+import ProposalStatusChip from './ProposalStatusChip.vue';
 import VoteChip from './VoteChip.vue';
-import { useI18n } from 'vue-i18n';
 
 const i18n = useI18n();
 

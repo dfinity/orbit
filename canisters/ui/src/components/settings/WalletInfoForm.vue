@@ -6,7 +6,8 @@
       v-model="modelValue.name"
       name="name"
       :label="$t('terms.wallet_name')"
-      variant="underlined"
+      variant="filled"
+      density="comfortable"
       :rules="rules.name"
     />
     <VSwitch
@@ -22,6 +23,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
+import { VForm, VSwitch, VTextField } from 'vuetify/components';
 import { i18n } from '~/plugins/i18n.plugin';
 import { FormValidationRules, VFormValidation } from '~/types/helper.types';
 import { maxLengthRule } from '~/utils/form.utils';

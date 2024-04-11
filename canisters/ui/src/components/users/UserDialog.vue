@@ -13,9 +13,9 @@
       @loaded="user = $event.user"
     >
       <VCard :loading="loading">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ $t('terms.user') }}</VToolbarTitle>
-          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>
           <UserForm

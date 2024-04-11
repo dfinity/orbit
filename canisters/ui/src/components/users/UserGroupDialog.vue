@@ -13,9 +13,9 @@
       @loaded="userGroup = $event.userGroup"
     >
       <VCard :loading="loading">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ $t('terms.user_group') }}</VToolbarTitle>
-          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>
           <UserGroupForm
@@ -52,6 +52,7 @@ import {
   VCard,
   VCardActions,
   VCardText,
+  VDialog,
   VSpacer,
   VToolbar,
   VToolbarTitle,
