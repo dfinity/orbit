@@ -11,9 +11,10 @@
           <SidenavHeader v-if="showHeader" :language-selector="props.languageSelector" />
         </slot>
       </div>
-      <div class="sidebar_nav d-flex flex-grow-1">
+      <div class="sidebar_nav d-flex flex-column flex-grow-1">
         <slot name="nav">
           <SidenavMenu v-if="showNav" />
+          <SidebarHighlights v-if="props.nav && !$navigation.value.main.length" class="mb-4" />
         </slot>
       </div>
       <div class="sidebar_footer d-flex flex-column flex-grow-0 pa-4">
@@ -34,8 +35,8 @@ import { VNavigationDrawer } from 'vuetify/components';
 import AlphaWarning from '~/components/layouts/AlphaWarning.vue';
 import SidenavHeader from '~/components/SidenavHeader.vue';
 import SidenavMenu from '~/components/SidenavMenu.vue';
+import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { useAppStore } from '~/stores/app.store';
-import { useSessionStore } from '~/stores/session.store';
 
 const props = withDefaults(
   defineProps<{
@@ -48,7 +49,7 @@ const props = withDefaults(
   }>(),
   {
     color: 'sidebar',
-    width: 260,
+    width: 300,
     header: true,
     nav: true,
     footer: true,
@@ -57,9 +58,8 @@ const props = withDefaults(
 );
 
 const app = useAppStore();
-const session = useSessionStore();
 
 const showHeader = computed(() => props.header);
-const showNav = computed(() => props.nav && session.isAuthenticated);
+const showNav = computed(() => props.nav);
 const showFooter = computed(() => props.footer);
 </script>

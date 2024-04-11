@@ -1,7 +1,7 @@
 <template>
   <PageLayout>
     <template #sidebar>
-      <AppSidebar width="320" class="logo-markers-bg--contain" :language-selector="app.isMobile">
+      <AppSidebar class="logo-markers-bg--contain" :language-selector="app.isMobile">
         <template #nav>
           <SidebarHighlights />
         </template>

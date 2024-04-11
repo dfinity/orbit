@@ -543,7 +543,6 @@ export default {
 
       option_join_existing_wallet: 'Junte-se a uma carteira existente',
       option_deploy_new_wallet: 'Crie a sua própria carteira',
-
       join_wallet_title: 'Junte-se a uma carteira existente',
       join_wallet_body:
         'Contacte o proprietário para obter o ID da carteira. Envie-lhes o seguinte ID principal para que um usuário possa ser criado para si na carteira.',

@@ -539,9 +539,8 @@ export default {
     add_wallet: {
       initialization_title: 'Welcome! How would you like to join Orbit?',
       add_wallet_title: 'How would you like to add a wallet?',
-      option_join_existing_wallet: 'Join existing wallet on Orbit',
+      option_join_existing_wallet: 'Join existing wallet',
       option_deploy_new_wallet: 'Create your own wallet',
-
       join_wallet_title: 'Join existing wallet',
       join_wallet_body:
         'Contact the owner to get the ID of the wallet. Send them the following principal ID so that a user can be created for you in the wallet.',

@@ -1,5 +1,5 @@
 <template>
-  <VContainer>
+  <VContainer class="py-2">
     <VRow>
       <VCol cols="12" class="d-flex flex-column">
         <section class="menu__main">

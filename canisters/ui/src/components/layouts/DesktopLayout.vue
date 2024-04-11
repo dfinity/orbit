@@ -2,14 +2,14 @@
   <slot name="sidebar">
     <AppSidebar v-if="props.sidebar" />
   </slot>
-  <VMain class="body" full-height>
+  <VMain class="body d-flex flex-column" full-height>
     <slot name="toolbar">
       <AppToolbar v-if="props.toolbar" :bg-color="props.surfaceColor" />
     </slot>
     <div v-if="props.contextbar" :class="`contextbar d-flex ${props.surfaceColor}`">
       <slot name="contextbar"></slot>
     </div>
-    <div v-if="props.main" class="main">
+    <div v-if="props.main" class="main d-flex flex-column flex-grow-1 logo-markers-bg--variant">
       <slot name="main">
         <header v-if="props.mainHeader" :class="`main__header ${props.surfaceColor}`">
           <slot name="main-header"></slot>

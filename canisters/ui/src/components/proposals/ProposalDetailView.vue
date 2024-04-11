@@ -111,7 +111,7 @@
         :class="{ 'mt-8': props.details.can_vote }"
       />
       <div class="d-flex flex-column flex-md-row ga-1 justify-end flex-grow-1 w-100 w-md-auto">
-        <template v-if="!props.details.can_vote">
+        <template v-if="props.details.can_vote">
           <VBtn
             data-test-id="proposal-details-reject"
             variant="elevated"

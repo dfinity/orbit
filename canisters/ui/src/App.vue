@@ -1,6 +1,6 @@
 <template>
   <ErrorPage v-if="statusCode !== RouteStatusCode.Success" :status="statusCode" />
-  <RouterView v-else />
+  <RouterView v-else :key="$route.fullPath" />
 </template>
 
 <script lang="ts" setup>

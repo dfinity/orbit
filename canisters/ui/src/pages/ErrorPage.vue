@@ -1,12 +1,5 @@
 <template>
   <PageLayout>
-    <template #sidebar>
-      <AppSidebar width="320" class="logo-markers-bg--contain" :language-selector="app.isMobile">
-        <template #nav>
-          <SidebarHighlights />
-        </template>
-      </AppSidebar>
-    </template>
     <template #main-body>
       <VCard class="ma-4">
         <ErrorScreen
@@ -89,7 +82,7 @@
           :title="$t('pages.error.title')"
           :subtitle="$t('pages.error.subtitle')"
           show-back-to-home
-        ></ErrorScreen>
+        />
       </VCard>
     </template>
   </PageLayout>
@@ -106,10 +99,7 @@ import {
 import { VCard, VTextarea, VTextField } from 'vuetify/components';
 import PageLayout from '~/components/PageLayout.vue';
 import ErrorScreen from '~/components/error/ErrorScreen.vue';
-import AppSidebar from '~/components/layouts/AppSidebar.vue';
-import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { RouteStatusCode } from '~/configs/routes.config';
-import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore, WalletConnectionError } from '~/stores/wallet.store';
 import { copyToClipboard } from '~/utils/app.utils';
@@ -124,6 +114,5 @@ const props = withDefaults(
 );
 
 const session = useSessionStore();
-const app = useAppStore();
 const wallet = useWalletStore();
 </script>

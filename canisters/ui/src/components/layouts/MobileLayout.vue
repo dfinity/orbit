@@ -2,7 +2,7 @@
   <slot name="sidebar">
     <AppSidebar v-if="props.sidebar" :language-selector="true" />
   </slot>
-  <VMain class="body" full-height>
+  <VMain class="body d-flex flex-column logo-markers-bg--variant" full-height>
     <slot name="toolbar">
       <AppToolbar
         v-if="props.toolbar"
@@ -16,7 +16,7 @@
         <WalletSelector v-if="showWalletSelector" />
       </slot>
     </div>
-    <div v-if="props.main" class="main">
+    <div v-if="props.main" class="main d-flex flex-column flex-grow-1">
       <slot name="main">
         <header v-if="props.mainHeader" :class="`main__header ${props.surfaceColor}`">
           <slot name="main-header"></slot>

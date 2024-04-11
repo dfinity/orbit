@@ -209,7 +209,7 @@ const deployInitialWallet = async (): Promise<void> => {
     // this wait is here to make sure the user has a chance to see the completed status
     await wait(2000);
 
-    router.push({ name: defaultHomeRoute });
+    router.push({ name: defaultHomeRoute, query: { walletId: walletId.toText() } });
   } catch (err) {
     logger.error('Failed initialization', { err });
     deploymentStatus.value = DeployWalletStatus.Failed;

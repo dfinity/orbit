@@ -165,7 +165,7 @@ watch(
       return;
     }
 
-    if (model.value && variantIs(model.value, specifier.value)) {
+    if (model.value && specifier.value && variantIs(model.value, specifier.value)) {
       return;
     }
 

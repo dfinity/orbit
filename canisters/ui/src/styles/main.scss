@@ -61,18 +61,18 @@
   --ds-background-border: var(--v-theme-background-border);
 
   // content sizing
-  --ds-bdu: $bdu;
-  --ds-toolbar-height: $toolbar-height;
-  --ds-device-xs: $device-xs;
-  --ds-device-sm: $device-sm;
-  --ds-device-md: $device-md;
-  --ds-device-lg: $device-lg;
-  --ds-device-xl: $device-xl;
-  --ds-device-xxl: $device-xxl;
+  --ds-bdu: #{$bdu};
+  --ds-toolbar-height: #{$toolbar-height};
+  --ds-device-xs: #{$device-xs};
+  --ds-device-sm: #{$device-sm};
+  --ds-device-md: #{$device-md};
+  --ds-device-lg: #{$device-lg};
+  --ds-device-xl: #{$device-xl};
+  --ds-device-xxl: #{$device-xxl};
   --ds-device-breakpoint: var(--ds-device-md);
 
   // fonts
-  --ds-base-font-size: $font-size-root;
+  --ds-base-font-size: #{$font-size-root};
   --ds-font-size-xxs: calc(var(--ds-base-font-size) - 0.4rem);
   --ds-font-size-xs: calc(var(--ds-base-font-size) - 0.2rem);
   --ds-font-size-md: var(--ds-base-font-size);
@@ -109,7 +109,7 @@ a {
 }
 
 // Extends spacing utility classes
-@media (min-width: $device-md) {
+@media (min-width: #{$device-md}) {
   .w-md-auto {
     width: auto !important;
   }
@@ -160,13 +160,19 @@ a {
   background-image: url('/images/logo-markers-bg.png');
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 60vmin;
+  background-size: 50vmin;
 }
 
-.logo-markers-bg--contain {
+.logo-markers-bg--variant {
   @extend .logo-markers-bg;
 
-  background-size: contain;
+  background-blend-mode: soft-light;
+  background-color: rgb(var(--ds-background), 0.4);
+  background-size: 15%;
+
+  @media (max-width: #{$device-md}) {
+    background-size: 40vw;
+  }
 }
 
 .min-height-100 {

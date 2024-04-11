@@ -7,6 +7,7 @@ import {
   defaultHomeRoute,
   defaultLoginRoute,
 } from '~/configs/routes.config';
+import logger from '~/core/logger.core';
 import ErrorPage from '~/pages/ErrorPage.vue';
 import LoginPage from '~/pages/LoginPage.vue';
 import { useAppStore } from '~/stores/app.store';
@@ -17,7 +18,6 @@ import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
 import { services } from './services.plugin';
-import logger from '~/core/logger.core';
 
 export const redirectToKey = 'redirectTo';
 
@@ -36,7 +36,7 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.ConnectedToWallet,
+                session: RequiredSessionState.Any,
               },
             },
           },
@@ -115,7 +115,7 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.Authenticated,
+                session: RequiredSessionState.AuthenticatedNoWallet,
               },
             },
           },
@@ -394,7 +394,14 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
     return next({ name: defaultHomeRoute });
   }
 
-  if (to.name !== Routes.Initialization && session.isAuthenticated && !session.hasWallets) {
+  if (
+    to.name &&
+    ![Routes.Initialization.toString(), Routes.MySettings.toString()].includes(
+      to.name.toString(),
+    ) &&
+    session.isAuthenticated &&
+    !session.hasWallets
+  ) {
     return next({ name: Routes.Initialization });
   }
 

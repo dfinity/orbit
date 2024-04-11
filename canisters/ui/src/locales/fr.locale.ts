@@ -545,9 +545,8 @@ export default {
     add_wallet: {
       initialization_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
       add_wallet_title: 'Comment aimeriez-vous ajouter un portefeuille?',
-
+      option_join_existing_wallet: 'Rejoindre un portefeuille existant',
       option_deploy_new_wallet: 'Déployer un nouveau portefeuille',
-
       check_permissions_title: 'Vérification du statut de la liste d attente...',
       join_waitlist_title: 'Rejoindre la liste d attente',
       join_waitlist_body:

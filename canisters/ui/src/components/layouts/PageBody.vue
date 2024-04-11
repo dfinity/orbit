@@ -8,6 +8,8 @@
   </VContainer>
 </template>
 <script lang="ts" setup>
+import { VCol, VContainer, VRow } from 'vuetify/components';
+
 withDefaults(
   defineProps<{
     dataTestId?: string;

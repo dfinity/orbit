@@ -115,12 +115,15 @@ import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { copyToClipboard } from '~/utils/app.utils';
 import WalletInfoForm, { WalletInfoModel } from './WalletInfoForm.vue';
+import { useRouter } from 'vue-router';
+import { defaultHomeRoute } from '~/configs/routes.config';
 
 const wallet = useWalletStore();
 const session = useSessionStore();
 const app = useAppStore();
+const router = useRouter();
 const isMainWallet = computed(() => wallet.canisterId === session.mainWallet?.toText());
-const isWalletRemovable = computed(() => !isMainWallet.value && session.data.wallets.length > 1);
+const isWalletRemovable = computed(() => !isMainWallet.value);
 const controlPanelService = services().controlPanel;
 
 async function removeWallet(): Promise<void> {
@@ -149,6 +152,8 @@ async function removeWallet(): Promise<void> {
   } else {
     session.disconnectWallet();
   }
+
+  router.push({ name: defaultHomeRoute });
 }
 
 const onFailedOperation = (): void => {
