@@ -41,7 +41,7 @@ impl std::fmt::Display for UserSubscriptionStatus {
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct User {
-    /// The UUID that identifies the user.
+    /// The identity of the user.
     pub identity: Principal,
     /// The subscription status of the user.
     pub subscription_status: UserSubscriptionStatus,
