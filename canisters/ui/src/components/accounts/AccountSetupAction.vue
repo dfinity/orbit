@@ -51,7 +51,7 @@ const props = withDefaults(
     text: undefined,
     size: 'default',
     variant: 'flat',
-    color: 'primary-variant',
+    color: 'primary',
     readonly: false,
     appendIcon: undefined,
   },

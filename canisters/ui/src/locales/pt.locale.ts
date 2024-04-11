@@ -77,6 +77,14 @@ export default {
     version: 'Esta é uma versão alfa.',
     caution: 'Utilize com cuidado.',
   },
+  sidebar: {
+    highlights: {
+      main: 'Carteira Trustless {line1} {line2} {line3}',
+      line3: 'Multichain',
+      line1: 'Ativos Digitais',
+      line2: 'Multi-Custódia',
+    },
+  },
   change_canister: {
     targets: {
       upgradewallet: 'Carteira',
@@ -254,11 +262,6 @@ export default {
     connect_title: 'Conecte-se de forma segura para gerenciar seus ativos digitais',
     connect_btn: 'Conectar com Internet Identity',
     connect_error: 'Falha ao conectar, por favor tente novamente.',
-    sidebar_slogan: {
-      main: 'Transformando {term1} {term2}',
-      term1: 'Gestão de Ativos Digitais com uma',
-      term2: 'Carteira Multi-Custódia',
-    },
   },
   home: {
     welcome_back: 'Boas-vindas de novo',

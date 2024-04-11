@@ -2,7 +2,7 @@
   <VMenu
     v-if="!app.isMobile"
     v-model="notificationsPopup"
-    location="end"
+    location="bottom end"
     :close-on-content-click="false"
   >
     <template #activator="{ props: selectorProps }">
@@ -40,6 +40,7 @@ import { computed, ref } from 'vue';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import NotificationsPanel from './NotificationsPanel.vue';
+import { VMenu } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

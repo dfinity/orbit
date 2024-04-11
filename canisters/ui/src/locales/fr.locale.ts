@@ -78,6 +78,14 @@ export default {
     version: 'Ceci est une version alpha.',
     caution: 'Utilisez avec prudence.',
   },
+  sidebar: {
+    highlights: {
+      main: 'Portefeuille Trustless {line1} {line2} {line3}',
+      line3: 'Multichain',
+      line1: 'Actifs Numériques',
+      line2: 'Multi-Garde',
+    },
+  },
   blockchains: {
     icp: {
       name: 'Internet Computer',
@@ -255,11 +263,6 @@ export default {
     connect_title: 'Connectez-vous en toute sécurité pour gérer vos actifs numériques',
     connect_btn: 'Se connecter avec Internet Identity',
     connect_error: 'Échec de la connexion, veuillez réessayer.',
-    sidebar_slogan: {
-      main: 'Transformation {term1} {term2}',
-      term1: "de la Gestion d'Actifs Numériques avec un",
-      term2: 'Portefeuille Multi-Garde',
-    },
   },
   home: {
     welcome_back: 'Bienvenue',

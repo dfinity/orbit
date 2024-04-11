@@ -8,6 +8,7 @@
 </template>
 <script lang="ts" setup generic="T">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAlert } from 'vuetify/components';
 import { logger } from '~/core/logger.core';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useSessionStore } from '~/stores/session.store';

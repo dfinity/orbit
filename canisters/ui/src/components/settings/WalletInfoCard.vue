@@ -1,10 +1,10 @@
 <template>
-  <VCard color="background" variant="flat">
+  <VCard>
     <VCardTitle>
       {{ $t(`app.wallet_info_card_title`, { name: wallet.name }) }}
     </VCardTitle>
     <VCardText class="pb-0">
-      <VList lines="two" class="bg-background">
+      <VList lines="two" class="bg-transparent">
         <VListItem v-if="wallet.canisterId" class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.wallet_id`) }}</VListItemTitle>
           <VListItemSubtitle>
@@ -47,10 +47,10 @@
         v-model="walletConfigInput"
         :text="$t(`app.wallet_info_card_edit_btn`)"
         :title="$t(`app.wallet_info_card_edit_btn`)"
-        color="primary-variant"
+        color="primary"
         :submit="save"
         size="small"
-        variant="flat"
+        variant="elevated"
         data-test-id="update-wallet-details-btn"
         @failed="onFailedOperation"
         @submitted="onSuccessfulOperation"
@@ -93,6 +93,18 @@
 import { Principal } from '@dfinity/principal';
 import { mdiContentCopy } from '@mdi/js';
 import { computed, ref } from 'vue';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VCardTitle,
+  VList,
+  VListItem,
+  VListItemSubtitle,
+  VListItemTitle,
+  VSpacer,
+} from 'vuetify/components';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import { UserWallet } from '~/generated/control-panel/control_panel.did';
 import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';

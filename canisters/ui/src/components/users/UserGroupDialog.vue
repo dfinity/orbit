@@ -33,6 +33,8 @@
             v-if="!props.readonly.value"
             :disabled="!canSave"
             :loading="saving"
+            color="primary"
+            variant="elevated"
             @click="triggerSubmit = true"
           >
             {{ props.userGroupId.value ? $t('terms.save') : $t('terms.create') }}
@@ -45,6 +47,15 @@
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VSpacer,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import UserGroupForm from '~/components/users/UserGroupForm.vue';
 import {

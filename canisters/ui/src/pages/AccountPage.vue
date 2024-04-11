@@ -58,12 +58,8 @@
             />
           </template>
           <template v-if="privileges.can_transfer" #actions>
-            <BatchTransfersActionBtn
-              :account="account"
-              color="primary-variant"
-              variant="outlined"
-            />
-            <TransferBtn :account="account" color="primary-variant" variant="flat">
+            <BatchTransfersActionBtn :account="account" variant="outlined" />
+            <TransferBtn :account="account" color="primary">
               + {{ $t('pages.accounts.btn_new_transfer') }}
             </TransferBtn>
           </template>
@@ -81,11 +77,11 @@
             :types="[{ Transfer: [account.id] }]"
             hide-not-found
           />
-          <VContainer fluid>
+          <VContainer fluid class="px-3">
             <VRow>
               <VCol
                 cols="12"
-                class="d-flex flex-column-reverse flex-md-row ga-4 px-0 align-md-start"
+                class="d-flex flex-column-reverse flex-md-row ga-4 px-0 align-md-start pt-0"
               >
                 <div class="d-flex flex-column flex-grow-1 ga-4">
                   <DataLoader
@@ -95,7 +91,7 @@
                     :refresh-interval-ms="10000"
                   >
                     <VProgressCircular v-if="loadingTransfers" indeterminate color="primary" />
-                    <VTable v-else-if="data" hover>
+                    <VTable v-else-if="data" hover class="elevation-2 rounded">
                       <thead>
                         <tr>
                           <th class="w-50 font-weight-bold">{{ $t('terms.time') }}</th>
@@ -155,8 +151,6 @@
                   </DataLoader>
                 </div>
                 <VCard
-                  color="background"
-                  variant="flat"
                   min-height="200px"
                   min-width="272px"
                   :max-width="!app.isMobile ? `272px` : undefined"
@@ -205,6 +199,21 @@ import {
 } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import {
+  VBtn,
+  VCard,
+  VCardText,
+  VChip,
+  VCol,
+  VContainer,
+  VDivider,
+  VIcon,
+  VProgressCircular,
+  VRow,
+  VTable,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';

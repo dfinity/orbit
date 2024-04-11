@@ -1,8 +1,6 @@
 <template>
   <VCard
     density="compact"
-    color="background"
-    variant="flat"
     :rounded="0"
     class="mb-2"
     :class="{ 'br-on-background': props.mode === 'grid' }"
@@ -57,6 +55,7 @@ import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntry
 import RemoveProposalPolicyOperation from './operations/RemoveProposalPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
+import { VCard, VCardActions, VCardText, VCardTitle, VSpacer } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

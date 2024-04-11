@@ -245,6 +245,14 @@ export default {
       },
     },
   },
+  sidebar: {
+    highlights: {
+      main: 'Trustless Wallet {line1} {line2} {line3}',
+      line3: 'Multichain',
+      line1: 'Digital Assets',
+      line2: 'Multi-Custody',
+    },
+  },
   landing: {
     title: 'Seamless Multichain',
     subtitle: 'One Platform, Complete Oversight',
@@ -253,11 +261,6 @@ export default {
     connect_title: 'Securely connect to manage your digital assets',
     connect_btn: 'Connect with Internet Identity',
     connect_error: 'Failed to connect, please try again.',
-    sidebar_slogan: {
-      main: 'Transforming {term1} {term2}',
-      term1: 'Digital Assets Management with a',
-      term2: 'Multi-Custody Trustless Wallet',
-    },
   },
   home: {
     welcome_back: 'Welcome back',

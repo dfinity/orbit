@@ -54,7 +54,13 @@
         >
           <VSpacer />
           <VBtn variant="outlined" @click="close">{{ props.cancelText }}</VBtn>
-          <VBtn :loading="loading" data-test-id="action-btn-default-submit-btn" @click="submit">
+          <VBtn
+            :loading="loading"
+            color="primary"
+            variant="elevated"
+            data-test-id="action-btn-default-submit-btn"
+            @click="submit"
+          >
             {{ props.confirmText }}
           </VBtn>
         </slot>
@@ -69,6 +75,17 @@ import { Ref, computed, ref, watch } from 'vue';
 import { logger } from '~/core/logger.core';
 import { wait } from '~/utils/helper.utils';
 import { i18n } from '~/plugins/i18n.plugin';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VIcon,
+  VSpacer,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

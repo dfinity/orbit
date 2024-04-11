@@ -9,8 +9,7 @@
 
           <AuthCheck :privileges="[Privilege.ListAccessPolicies]">
             <VBtn
-              color="primary-variant"
-              variant="flat"
+              color="primary"
               data-test-id="manage-permissions-btn"
               :to="{ name: Routes.AccessPolicies }"
             >
@@ -47,6 +46,7 @@
           "
         >
           <VDataTable
+            class="elevation-2 rounded"
             :loading="loading"
             :headers="headers"
             :items="userGroups"
@@ -96,6 +96,7 @@
 import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn, VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';

@@ -6,9 +6,9 @@
     class="wallet-selector"
     eager
     :variant="app.isMobile ? 'filled' : 'solo'"
-    density="compact"
+    density="default"
     hide-details
-    bg-color="background"
+    bg-color="surface"
     item-value="canisterId"
     :items="allWallets"
   >
@@ -42,6 +42,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { computedWalletName } from '~/utils/app.utils';
 import AddWalletListItem from './add-wallet/AddWalletListItem.vue';
+import { VListItem, VSelect } from 'vuetify/components';
 
 const session = useSessionStore();
 const app = useAppStore();

@@ -28,7 +28,14 @@
         </VCardText>
         <VCardActions class="pa-3">
           <VSpacer />
-          <VBtn v-if="!props.readonly.value" :disabled="!canSave" :loading="saving" @click="save">
+          <VBtn
+            v-if="!props.readonly.value"
+            color="primary"
+            variant="elevated"
+            :disabled="!canSave"
+            :loading="saving"
+            @click="save"
+          >
             {{ $t('terms.save') }}
           </VBtn>
         </VCardActions>
@@ -39,6 +46,16 @@
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VSpacer,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import ProposalPolicyForm from '~/components/proposal-policies/ProposalPolicyForm.vue';
 import {

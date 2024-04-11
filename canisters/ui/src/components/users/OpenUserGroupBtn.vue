@@ -31,6 +31,7 @@
 import { ref, toRefs } from 'vue';
 import { UUID } from '~/generated/wallet/wallet.did';
 import UserGroupDialog from './UserGroupDialog.vue';
+import { VBtn, VIcon } from 'vuetify/components';
 
 const input = withDefaults(
   defineProps<{

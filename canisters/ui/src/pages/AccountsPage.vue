@@ -36,6 +36,7 @@
           "
         >
           <VDataTable
+            class="elevation-2 rounded"
             :loading="loading"
             :headers="headers"
             :items="accounts"
@@ -108,6 +109,7 @@
 import { mdiContentCopy, mdiOpenInApp } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn, VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';

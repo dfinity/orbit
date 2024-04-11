@@ -54,7 +54,7 @@
           v-model="addNewPrincipalModel"
           :title="$t('app.add_new_principal')"
           :icon="mdiPlus"
-          color="primary"
+          variant="tonal"
           :submit="
             newPrincipal => {
               if (newPrincipal.model) {
@@ -83,7 +83,7 @@
               @submit="addNewPrincipal"
             >
               <template #prepend>
-                <VAlert type="warning" variant="outlined" density="compact" class="mb-4">
+                <VAlert type="warning" variant="tonal" density="compact" class="mb-4">
                   {{ $t('app.user_associate_principal_warning') }}
                 </VAlert>
               </template>
@@ -121,6 +121,7 @@ import { VFormValidation } from '~/types/helper.types';
 import { UserStatusType } from '~/types/wallet.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 import AddPrincipalForm from './AddPrincipalForm.vue';
+import { VAlert, VAutocomplete, VBtn, VForm, VSpacer, VTextField } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

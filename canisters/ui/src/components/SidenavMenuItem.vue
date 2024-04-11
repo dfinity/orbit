@@ -10,7 +10,7 @@
     <VListItemTitle>
       <VIcon
         :icon="props.item.icon ? props.item.icon : mdiCircleSmall"
-        color="secondary"
+        color="primary"
         class="mr-2"
       />
       {{ $t(props.item.localeKey) }}
@@ -30,7 +30,7 @@
           <VListItemTitle>
             <VIcon
               :icon="props.item.icon ? props.item.icon : mdiCircleSmall"
-              color="secondary"
+              color="primary"
               class="mr-2"
             />
             {{ $t(props.item.localeKey) }}
@@ -46,6 +46,7 @@
 <script lang="ts" setup>
 import { mdiCircleSmall } from '@mdi/js';
 import { computed } from 'vue';
+import { VDivider, VIcon, VListGroup, VListItem, VListItemTitle } from 'vuetify/components';
 import {
   NavigationAction,
   NavigationActionType,

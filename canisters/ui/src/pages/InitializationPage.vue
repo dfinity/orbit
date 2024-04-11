@@ -3,24 +3,7 @@
     <template #sidebar>
       <AppSidebar width="320" class="logo-markers-bg--contain" :language-selector="app.isMobile">
         <template #nav>
-          <div class="d-flex flex-grow-1 d-flex-column justify-start align-start">
-            <p class="px-4 text-h4 mt-16 text-primary font-weight-bold">
-              <i18n-t keypath="landing.sidebar_slogan.main" scope="global">
-                <template #term1>
-                  <br />
-                  <span class="font-weight-regular text-white">
-                    {{ $t('landing.sidebar_slogan.term1') }}
-                  </span>
-                </template>
-                <template #term2>
-                  <br />
-                  <span class="font-weight-regular text-white">
-                    {{ $t('landing.sidebar_slogan.term2') }}
-                  </span>
-                </template>
-              </i18n-t>
-            </p>
-          </div>
+          <SidebarHighlights />
         </template>
       </AppSidebar>
     </template>
@@ -36,6 +19,7 @@ import { useI18n } from 'vue-i18n';
 import PageLayout from '~/components/PageLayout.vue';
 import AddWalletScreen from '~/components/add-wallet/AddWalletScreen.vue';
 import AppSidebar from '~/components/layouts/AppSidebar.vue';
+import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { useAppStore } from '~/stores/app.store';
 import { PageProps } from '~/types/app.types';
 

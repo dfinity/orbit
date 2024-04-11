@@ -1,7 +1,14 @@
 <template>
-  <PageLayout :sidebar="false">
-    <template #main-header>
-      <VCard class="ma-4" color="background" variant="flat">
+  <PageLayout>
+    <template #sidebar>
+      <AppSidebar width="320" class="logo-markers-bg--contain" :language-selector="app.isMobile">
+        <template #nav>
+          <SidebarHighlights />
+        </template>
+      </AppSidebar>
+    </template>
+    <template #main-body>
+      <VCard class="ma-4">
         <ErrorScreen
           v-if="props.status == RouteStatusCode.Unauthorized"
           :icon="mdiLockOutline"
@@ -23,17 +30,18 @@
             props.status == RouteStatusCode.Disconnected &&
             wallet.connectionError === WalletConnectionError.NOT_FOUND_USER_IDENTITY
           "
-          :icon="mdiMagnifyRemoveOutline"
+          :icon="mdiAccountOffOutline"
           :title="$t('pages.disconnected.title_not_found_user_identity')"
           :subtitle="$t('pages.disconnected.subtitle_not_found_user_identity')"
           :show-back-to-home="false"
         >
-          <div class="mt-10 w-md-75">
+          <div class="mt-4 w-md-75">
             <VTextField
               :model-value="session.principal"
-              variant="outlined"
+              variant="solo-filled"
               :label="$t('terms.principal')"
               readonly
+              hide-details
               :append-inner-icon="mdiContentCopy"
               @click:append-inner="
                 copyToClipboard({ textToCopy: session.principal, sendNotification: true })
@@ -55,7 +63,7 @@
             wallet.connectionErrorMessage || $t('pages.disconnected.subtitle_other_wallet_error')
           "
           :show-back-to-home="false"
-        ></ErrorScreen>
+        />
 
         <ErrorScreen
           v-else-if="
@@ -77,7 +85,7 @@
 
         <ErrorScreen
           v-else
-          :icon="mdiAlertCircle"
+          :icon="mdiAlertCircleOutline"
           :title="$t('pages.error.title')"
           :subtitle="$t('pages.error.subtitle')"
           show-back-to-home
@@ -88,15 +96,22 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiAlertCircle, mdiContentCopy, mdiLockOutline, mdiMagnifyRemoveOutline } from '@mdi/js';
-import { computed } from 'vue';
-import { VTextarea } from 'vuetify/components';
+import {
+  mdiAccountOffOutline,
+  mdiAlertCircleOutline,
+  mdiContentCopy,
+  mdiLockOutline,
+  mdiMagnifyRemoveOutline,
+} from '@mdi/js';
+import { VCard, VTextarea, VTextField } from 'vuetify/components';
 import PageLayout from '~/components/PageLayout.vue';
 import ErrorScreen from '~/components/error/ErrorScreen.vue';
+import AppSidebar from '~/components/layouts/AppSidebar.vue';
+import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { RouteStatusCode } from '~/configs/routes.config';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
-import { WalletConnectionError, useWalletStore } from '~/stores/wallet.store';
+import { useWalletStore, WalletConnectionError } from '~/stores/wallet.store';
 import { copyToClipboard } from '~/utils/app.utils';
 
 const props = withDefaults(
@@ -107,15 +122,8 @@ const props = withDefaults(
     status: RouteStatusCode.NotFound,
   },
 );
+
 const session = useSessionStore();
-const wallet = useWalletStore();
 const app = useAppStore();
-
-const hideSidebar = computed(() => {
-  if (app.isMobile) {
-    return false;
-  }
-
-  return !session.isAuthenticated;
-});
+const wallet = useWalletStore();
 </script>

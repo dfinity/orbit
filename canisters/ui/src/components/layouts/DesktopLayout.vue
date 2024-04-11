@@ -1,6 +1,6 @@
 <template>
   <slot name="sidebar">
-    <AppSidebar v-if="props.sidebar" :language-selector="true" />
+    <AppSidebar v-if="props.sidebar" />
   </slot>
   <VMain class="body" full-height>
     <slot name="toolbar">

@@ -34,7 +34,7 @@
                     v-slot="{ isSelected, toggle }"
                   >
                     <VBtn
-                      :color="isSelected ? 'primary-variant' : undefined"
+                      :color="isSelected ? 'secondary' : undefined"
                       variant="flat"
                       density="comfortable"
                       class="mr-2"
@@ -66,8 +66,6 @@
                   />
                 </div>
                 <VCard
-                  color="background"
-                  variant="flat"
                   min-height="300px"
                   min-width="272px"
                   :max-width="!app.isMobile ? `272px` : undefined"
@@ -87,7 +85,7 @@
                       :label="$t('terms.expires')"
                       :prepend-icon="mdiCalendar"
                     />
-                    <BtnSelect
+                    <CheckboxSelect
                       v-model="filters.statuses"
                       :label="$t('terms.statuses')"
                       :items="statuses"
@@ -118,13 +116,27 @@
 
 <script lang="ts" setup>
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
-import { Ref } from 'vue';
-import { computed, ref, watch } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import {
+  VBtn,
+  VCard,
+  VCardText,
+  VCol,
+  VContainer,
+  VDivider,
+  VIcon,
+  VPagination,
+  VRow,
+  VSlideGroup,
+  VSlideGroupItem,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import BtnSelect from '~/components/inputs/BtnSelect.vue';
+import CheckboxSelect from '~/components/inputs/CheckboxSelect.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';

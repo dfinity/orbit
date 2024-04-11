@@ -4,10 +4,7 @@
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddProposalPolicy]">
-            <OpenProposalPolicyBtn
-              :text="$t('pages.proposal_policies.create_label')"
-              variant="outlined"
-            />
+            <OpenProposalPolicyBtn :text="$t('pages.proposal_policies.create_label')" />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -44,6 +41,7 @@
           "
         >
           <VDataTable
+            class="elevation-2 rounded"
             :headers="headers"
             :loading="loading"
             :items="policies"
@@ -97,6 +95,7 @@
 import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
@@ -108,14 +107,14 @@ import SpecifierSelector from '~/components/proposal-policies/specifier/Specifie
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
-  useOnFailedOperation,
-  useOnSuccessfulOperation,
+useOnFailedOperation,
+useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
 import {
-  ProposalPolicy,
-  ProposalPolicyCallerPrivileges,
-  UUID,
+ProposalPolicy,
+ProposalPolicyCallerPrivileges,
+UUID,
 } from '~/generated/wallet/wallet.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';

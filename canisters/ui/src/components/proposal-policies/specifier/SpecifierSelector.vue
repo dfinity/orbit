@@ -6,7 +6,6 @@
     :label="$t('terms.specifier')"
     item-value="value"
     item-title="text"
-    variant="underlined"
     density="comfortable"
     :disabled="props.disabled.value"
   />
@@ -37,6 +36,7 @@ import TransferSpecifier from './TransferSpecifier.vue';
 import UserGroupSpecifier from './UserGroupSpecifier.vue';
 import UserSpecifier from './UserSpecifier.vue';
 import UnsupportedSpecifier from './UnsupportedSpecifier.vue';
+import { VAutocomplete } from 'vuetify/components';
 
 const input = withDefaults(
   defineProps<{
