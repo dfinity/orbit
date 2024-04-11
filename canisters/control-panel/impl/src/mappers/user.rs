@@ -30,7 +30,7 @@ impl UserMapper {
         };
 
         User {
-            id: user_id,
+            identity: user_id,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: wallets
                 .into_iter()
@@ -49,7 +49,7 @@ impl UserMapper {
 impl From<User> for UserDTO {
     fn from(user: User) -> Self {
         UserDTO {
-            id: user.id,
+            identity: user.identity,
             main_wallet: user.main_wallet,
             wallets: user.wallets.into_iter().map(UserWalletDTO::from).collect(),
             subscription_status: user.subscription_status.into(),
@@ -126,7 +126,7 @@ mod tests {
 
         let user = UserMapper::from_register_input(input, user_id);
 
-        assert_eq!(user.id, user_id);
+        assert_eq!(user.identity, user_id);
         assert_eq!(user.main_wallet, None);
         assert!(user.wallets.is_empty());
     }
@@ -141,7 +141,7 @@ mod tests {
 
         let user = UserMapper::from_register_input(input, user_id);
 
-        assert_eq!(user.id, user_id);
+        assert_eq!(user.identity, user_id);
         assert_eq!(user.main_wallet, Some(main_wallet));
         assert_eq!(user.wallets.len(), 1);
         assert_eq!(user.wallets[0].canister_id, main_wallet);

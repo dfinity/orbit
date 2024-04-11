@@ -20,7 +20,7 @@ type ApiError = record {
 // The user user information.
 type User = record {
   // The identity associated with the user.
-  id : principal;
+  identity : principal;
   // Main wallet used to show in the UI for this user.
   main_wallet : opt WalletID;
   // List of wallets associated with the user.

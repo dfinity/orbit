@@ -80,7 +80,8 @@ impl UserService {
         let user = UserMapper::from_register_input(input.clone(), user_id);
 
         user.validate()?;
-        self.user_repository.insert(UserKey(user.id), user.clone());
+        self.user_repository
+            .insert(UserKey(user.identity), user.clone());
 
         Ok(user)
     }
@@ -226,10 +227,10 @@ impl UserService {
     ///
     /// Admins and controllers have access to all users.
     fn assert_user_access(&self, user: &User, ctx: &CallContext) -> ServiceResult<()> {
-        let is_user_owner = user.id == ctx.caller();
+        let is_user_owner = user.identity == ctx.caller();
         if !is_user_owner && !ctx.is_admin() && !ctx.is_controller() {
             Err(UserError::Forbidden {
-                user: user.id.to_text(),
+                user: user.identity.to_text(),
             })?
         }
 
@@ -244,7 +245,7 @@ impl UserService {
 
         if let Some(user) = maybe_user {
             Err(UserError::IdentityAlreadyHasUser {
-                user: user.id.to_text(),
+                user: user.identity.to_text(),
             })?
         }
 
@@ -282,7 +283,7 @@ mod tests {
         let ctx = CallContext::new(user_id);
         let service = UserService::default();
         let user = User {
-            id: user_id,
+            identity: user_id,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -304,7 +305,7 @@ mod tests {
         let ctx = CallContext::new(user_id);
         let service = UserService::default();
         let user = User {
-            id: user_id,
+            identity: user_id,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -382,7 +383,7 @@ mod tests {
         let ctx = CallContext::new(user_id);
         let service = UserService::default();
         let user = User {
-            id: user_id,
+            identity: user_id,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -432,7 +433,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
-            id: user_id,
+            identity: user_id,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
