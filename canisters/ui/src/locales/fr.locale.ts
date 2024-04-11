@@ -651,6 +651,8 @@ export default {
       transfer: 'Transfert',
       capabilities: 'Capacités',
       systeminfo: 'Information Système',
+      systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
+      systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
     },
     allow: {
       public: "N'importe qui",

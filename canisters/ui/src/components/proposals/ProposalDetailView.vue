@@ -90,12 +90,12 @@
           <VCol cols="12">
             <VTextarea
               v-model.trim="reason"
+              data-test-id="proposal-details-comment"
               :label="$t('proposals.comment_optional')"
               :variant="props.details.can_vote ? 'underlined' : 'plain'"
               hide-details
               rows="1"
               auto-grow
-              data-test-id="proposal-details-comment"
               :readonly="props.loading || !props.details.can_vote"
             />
           </VCol>

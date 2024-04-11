@@ -5,7 +5,6 @@
     :variant="props.variant"
     :icon="props.icon && !props.text"
     :color="props.color"
-    density="comfortable"
     @click="open = true"
   >
     <VIcon v-if="props.icon" class="mr-1" :icon="props.icon" />
@@ -41,7 +40,7 @@ const props = withDefaults(
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
-    variant?: 'flat' | 'text' | 'outlined' | 'tonal';
+    variant?: 'flat' | 'text' | 'outlined' | 'tonal' | 'elevated';
     color?: string;
     readonly?: boolean;
     appendIcon?: string;
@@ -51,8 +50,8 @@ const props = withDefaults(
     icon: undefined,
     text: undefined,
     size: 'default',
-    variant: 'flat',
-    color: undefined,
+    variant: 'elevated',
+    color: 'primary',
     readonly: false,
     appendIcon: undefined,
   },

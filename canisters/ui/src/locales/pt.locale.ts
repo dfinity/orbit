@@ -647,6 +647,8 @@ export default {
       transfer: 'Transferência',
       capabilities: 'Capacidades',
       systeminfo: 'Informações do sistema',
+      systeminfocapabilities: 'Capacidades (Ativos Suportados)',
+      systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
     },
     allow: {
       public: 'Acesso público',

@@ -644,6 +644,8 @@ export default {
       transfer: 'Transfer',
       capabilities: 'Capabilities',
       systeminfo: 'System info',
+      systeminfocapabilities: 'Capabilities (Supported Assets)',
+      systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
     },
     allow: {
       public: 'Anyone',

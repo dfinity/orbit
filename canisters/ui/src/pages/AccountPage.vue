@@ -35,6 +35,7 @@
               :account-id="account.id"
               class="px-1 mb-2"
               size="small"
+              color="default"
               variant="tonal"
               :readonly="!privileges.can_edit"
               :append-icon="mdiTuneVariant"
