@@ -89,7 +89,9 @@ impl UserController {
     )]
     async fn get_user(&self) -> ApiResult<GetUserResponse> {
         let ctx: CallContext = CallContext::get();
-        let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
+        let user = self
+            .user_service
+            .get_user_by_identity(&ctx.caller(), &ctx)?;
 
         Ok(GetUserResponse {
             user: UserDTO::from(user),
@@ -175,7 +177,9 @@ impl UserController {
     #[with_middleware(tail = use_status_metric("delete_user", &result))]
     async fn delete_user(&self) -> ApiResult<DeleteUserResponse> {
         let ctx: CallContext = CallContext::get();
-        let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
+        let user = self
+            .user_service
+            .get_user_by_identity(&ctx.caller(), &ctx)?;
 
         let deleted_user = UserService::default()
             .remove_user(&user.identity, &ctx)
