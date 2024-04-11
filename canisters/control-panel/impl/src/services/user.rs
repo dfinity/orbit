@@ -319,7 +319,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -343,7 +343,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -439,7 +439,7 @@ mod tests {
             .update_waiting_list(input.clone(), &ctrl_ctx)
             .unwrap();
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
         assert!(matches!(
             result.unwrap().subscription_status,
             UserSubscriptionStatus::Approved
@@ -477,6 +477,6 @@ mod tests {
         let result = service.remove_user(&user_identity, &ctx).await;
 
         assert!(result.is_ok());
-        assert!(service.user_repository.get(&UserKey(user.id)).is_none());
+        assert!(service.user_repository.get(&UserKey(user_id)).is_none());
     }
 }
