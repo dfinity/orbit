@@ -11,6 +11,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAlert } from 'vuetify/components';
 import { logger } from '~/core/logger.core';
 import { i18n } from '~/plugins/i18n.plugin';
+import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 
 const loading = ref<boolean>(false);
@@ -56,6 +57,8 @@ watch(
     }
   },
 );
+
+const app = useAppStore();
 const session = useSessionStore();
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
@@ -96,7 +99,9 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
       // disables the refresh functionality if set by the parent component
       props.disableRefresh ||
       // prevents calls to fetchData while the user is locked out
-      session.reauthenticationNeeded
+      session.reauthenticationNeeded ||
+      // prevents calls to fetchData, this can happen when the user is switching between wallets
+      app.disableBackgroundPolling
     ) {
       return;
     }
@@ -113,7 +118,7 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
       emit('loaded', data.value);
     }
   } catch (err) {
-    logger.error(`Failed to load data: ${err}`);
+    logger.error(`Failed to load data`, err);
 
     if (cleanupOnFail) {
       if (refreshTimer) {

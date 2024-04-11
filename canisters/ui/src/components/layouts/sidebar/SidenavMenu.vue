@@ -16,5 +16,5 @@
 
 <script lang="ts" setup>
 import { VCol, VContainer, VList, VRow } from 'vuetify/components';
-import SidenavMenuItem from '~/components/SidenavMenuItem.vue';
+import SidenavMenuItem from './SidenavMenuItem.vue';
 </script>

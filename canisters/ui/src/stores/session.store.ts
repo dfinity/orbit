@@ -144,7 +144,7 @@ export const useSessionStore = defineStore('session', {
       this.data.wallets = [];
       this.data.selectedWallet.canisterId = null;
       this.data.selectedWallet.hasAccess = false;
-    
+
       wallet.onDisconnected();
     },
     async signIn(resetOnError = false): Promise<void> {

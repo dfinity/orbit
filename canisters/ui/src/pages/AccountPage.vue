@@ -150,35 +150,25 @@
                     </VTable>
                   </DataLoader>
                 </div>
-                <VCard
-                  min-height="200px"
-                  min-width="272px"
-                  :max-width="!app.isMobile ? `272px` : undefined"
-                >
-                  <VToolbar color="transparent" class="pr-4">
-                    <VToolbarTitle>{{ $t('terms.filters') }}</VToolbarTitle>
-                    <VIcon :icon="mdiFilter" />
-                  </VToolbar>
-                  <VCardText class="pt-2">
-                    <DateRange
-                      v-model="filters.created"
-                      :label="$t('terms.created')"
-                      :prepend-icon="mdiCalendar"
-                    />
-                    <VDivider thickness="2" class="my-2" />
-                    <VBtn
-                      density="comfortable"
-                      block
-                      color="primary-variant"
-                      flat
-                      size="small"
-                      variant="tonal"
-                      @click="filters = filterUtils.getDefaultFilters()"
-                    >
-                      {{ $t('terms.reset') }}
-                    </VBtn>
-                  </VCardText>
-                </VCard>
+                <FiltersCard :title="$t('terms.filters')" :icon="mdiFilter">
+                  <DateRange
+                    v-model="filters.created"
+                    :label="$t('terms.created')"
+                    :prepend-icon="mdiCalendar"
+                  />
+                  <VSpacer />
+                  <VDivider thickness="2" class="my-2" />
+                  <VBtn
+                    density="default"
+                    color="primary-variant"
+                    flat
+                    size="small"
+                    variant="tonal"
+                    @click="filters = filterUtils.getDefaultFilters()"
+                  >
+                    {{ $t('terms.reset') }}
+                  </VBtn>
+                </FiltersCard>
               </VCol>
             </VRow>
           </VContainer>
@@ -201,8 +191,6 @@ import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   VBtn,
-  VCard,
-  VCardText,
   VChip,
   VCol,
   VContainer,
@@ -210,9 +198,8 @@ import {
   VIcon,
   VProgressCircular,
   VRow,
+  VSpacer,
   VTable,
-  VToolbar,
-  VToolbarTitle,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
@@ -224,11 +211,11 @@ import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import FiltersCard from '~/components/ui/FiltersCard.vue';
 import { useFilterUtils, useSavedFilters } from '~/composables/account.composable';
 import { Routes } from '~/configs/routes.config';
 import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did';
 import { ChainApiFactory } from '~/services/chains';
-import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps } from '~/types/app.types';
 import type { AccountIncomingTransfer } from '~/types/chain.types';
@@ -263,7 +250,6 @@ const privileges = ref<AccountCallerPrivileges>({
   can_transfer: false,
 });
 const loading = ref(false);
-const app = useAppStore();
 const wallet = useWalletStore();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {

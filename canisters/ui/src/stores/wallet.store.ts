@@ -1,5 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
+import { WALLET_ID_QUERY_PARAM } from '~/core/constants.core';
 import { InvalidWalletError, UnregisteredUserError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
 import {
@@ -173,6 +174,7 @@ export const useWalletStore = defineStore('wallet', {
           return this.connectionStatus;
         }
 
+        app.disableBackgroundPolling = true;
         stopWalletWorkers();
 
         this.loading = true;
@@ -241,11 +243,12 @@ export const useWalletStore = defineStore('wallet', {
         if (onConnectedReload && this.canisterId.length && this.canisterId !== walletId.toText()) {
           router.push({
             path: window.location.pathname,
-            query: { walletId: walletId.toText() },
+            query: { [WALLET_ID_QUERY_PARAM]: walletId.toText() },
           });
         }
         this.canisterId = walletId.toText();
         this.loading = false;
+        app.disableBackgroundPolling = false;
       }
 
       return this.connectionStatus;

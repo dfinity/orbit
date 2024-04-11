@@ -33,10 +33,10 @@
 import { computed } from 'vue';
 import { VNavigationDrawer } from 'vuetify/components';
 import AlphaWarning from '~/components/layouts/AlphaWarning.vue';
-import SidenavHeader from '~/components/SidenavHeader.vue';
-import SidenavMenu from '~/components/SidenavMenu.vue';
 import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { useAppStore } from '~/stores/app.store';
+import SidenavHeader from './sidebar/SidenavHeader.vue';
+import SidenavMenu from './sidebar/SidenavMenu.vue';
 
 const props = withDefaults(
   defineProps<{
