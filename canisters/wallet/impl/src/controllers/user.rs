@@ -166,7 +166,7 @@ mod tests {
             .expect("Failed to call `me` successfully");
 
         assert!(
-            response.me.groups.len() == 0,
+            response.me.groups.is_empty(),
             "Non existent group should be ignored"
         );
     }
