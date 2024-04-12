@@ -1,4 +1,3 @@
-use crate::core::ic_cdk::api::{print, trap};
 use crate::models::{ProposalOperation, ProposalOperationType};
 use crate::{
     models::{NotificationType, Proposal},
@@ -8,22 +7,19 @@ use ic_canister_core::repository::Repository;
 use uuid::Uuid;
 use wallet_api::{NotificationTypeDTO, ProposalCreatedNotificationDTO};
 
-impl From<NotificationType> for NotificationTypeDTO {
-    fn from(model: NotificationType) -> Self {
-        match model {
+use super::notification::NotificationMapperError;
+
+impl TryFrom<NotificationType> for NotificationTypeDTO {
+    type Error = NotificationMapperError;
+    fn try_from(model: NotificationType) -> Result<NotificationTypeDTO, NotificationMapperError> {
+        Ok(match model {
             NotificationType::SystemMessage => NotificationTypeDTO::SystemMessage,
             NotificationType::ProposalCreated(ctx) => {
                 let proposal = PROPOSAL_REPOSITORY
                     .get(&Proposal::key(ctx.proposal_id))
-                    .unwrap_or_else(|| {
-                        let err = format!(
-                            "Mapped proposal not found: {}",
-                            Uuid::from_bytes(ctx.proposal_id).hyphenated()
-                        );
-
-                        print(&err);
-                        trap(&err)
-                    });
+                    .ok_or(NotificationMapperError::ProposalNotFound {
+                        proposal_id: ctx.proposal_id,
+                    })?;
 
                 let account_id = match &proposal.operation {
                     ProposalOperation::Transfer(operation) => Some(operation.input.from_account_id),
@@ -70,6 +66,6 @@ impl From<NotificationType> for NotificationTypeDTO {
                     user_id: user_id.map(|id| Uuid::from_bytes(id).to_string()),
                 })
             }
-        }
+        })
     }
 }

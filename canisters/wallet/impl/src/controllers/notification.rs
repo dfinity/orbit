@@ -1,7 +1,11 @@
-use crate::{core::middlewares::call_context, services::NotificationService};
-use ic_canister_core::api::{ApiError, ApiResult};
+use crate::{
+    core::middlewares::call_context, mappers::notification::NotificationMapperError,
+    services::NotificationService,
+};
+use ic_canister_core::{api::ApiResult, cdk::api::print};
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
+use uuid::Uuid;
 use wallet_api::{
     ListNotificationsInput, ListNotificationsResponse, MarkNotificationsReadInput, NotificationDTO,
 };
@@ -44,10 +48,21 @@ impl NotificationController {
             .notification_service
             .list_notifications(input, &call_context())?
             .into_iter()
-            .try_fold(Vec::new(), |mut acc, notification| {
-                acc.push(NotificationDTO::from(notification));
-                Ok::<Vec<_>, ApiError>(acc)
-            })?;
+            .fold(Vec::new(), |mut acc, notification| {
+                match NotificationDTO::try_from(notification) {
+                    Ok(notification_dto) => acc.push(notification_dto),
+                    Err(error) => match error {
+                        NotificationMapperError::ProposalNotFound { proposal_id } => {
+                            print(format!(
+                                "Proposal {} not found when mapping to NotificationDTO",
+                                Uuid::from_bytes(proposal_id).hyphenated()
+                            ));
+                        }
+                    },
+                }
+
+                acc
+            });
 
         Ok(ListNotificationsResponse { notifications })
     }
