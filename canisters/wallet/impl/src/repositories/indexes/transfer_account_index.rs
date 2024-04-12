@@ -54,7 +54,7 @@ impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexR
                 ),
             };
             if from_dt > to_dt {
-                trap(RepositoryError::CriteriaOutOfRange.to_string().as_str());
+                return HashSet::new();
             }
 
             let start_key = TransferAccountIndex {
