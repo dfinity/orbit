@@ -179,7 +179,7 @@ function deploy_control_panel() {
   if [ $canister_id_exit_code -ne 0 ]; then
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
-    dfx canister create control_panel --network $network --with-cycles 2000000000000 --subnet-type $subnet_type
+    dfx canister create control_panel --network $network --with-cycles 5000000000000 --subnet-type $subnet_type
     dfx build control_panel --network $network
     dfx canister install control_panel --network $network --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
   else
@@ -197,7 +197,7 @@ function deploy_ui() {
   echo "Deploying the UI canister to the '$network' network."
 
   if [ "$network" == "local" ]; then
-    NODE_ENV=development dfx deploy --network $network ui --with-cycles 1000000000000 --subnet-type $subnet_type
+    NODE_ENV=development dfx deploy --network $network ui --with-cycles 2000000000000 --subnet-type $subnet_type
     return
   fi
 
