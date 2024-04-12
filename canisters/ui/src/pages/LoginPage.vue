@@ -1,114 +1,77 @@
 <template>
-  <PageLayout :background-color="pageBackgroundColor" hide-toolbar-context>
-    <template v-if="!app.isMobile" #sidebar-header>
-      <div class="d-flex pt-8 align-center justify-center">
-        <BrandLogo />
-      </div>
-    </template>
-    <template v-if="!app.isMobile" #sidebar-nav>
-      <div class="signin__action">
-        <section class="signin__action__slogan">
-          {{ $t('login.signin_slogan') }}
-        </section>
-        <VBtn
-          color="secondary"
-          rounded
-          width="300"
-          :loading="isAuthenticating"
-          @click.prevent="performLogin"
+  <PageLayout>
+    <template #custom>
+      <VMain class="d-flex flex-column bg-landing logo-markers-bg">
+        <AppToolbar logo :sidebar="false" :theme-selector="false" bg-color="bg-transparent" />
+        <VContainer
+          fluid
+          class="flex-grow-1"
+          :class="{
+            'mt-16': !app.isMobile,
+          }"
         >
-          {{ $t('terms.signin') }}
-        </VBtn>
-      </div>
-    </template>
-    <template v-else #topnav>
-      <div class="d-flex align-center justify-center py-4">
-        <BrandLogo />
-      </div>
-      <div class="signin__action">
-        <section class="signin__action__slogan">
-          {{ $t('login.signin_slogan') }}
-        </section>
-        <VBtn
-          color="secondary"
-          rounded
-          width="300"
-          :loading="isAuthenticating"
-          @click.prevent="performLogin"
-        >
-          {{ $t('terms.signin') }}
-        </VBtn>
-      </div>
-    </template>
-
-    <template #main-body>
-      <div class="main__body__content">
-        <VSheet :elevation="!app.isMobile ? 1 : 0" class="main__body__content__card mb-4">
-          <VContainer fluid>
-            <VRow>
-              <VCol cols="2" class="main__body__content__card__icon">
-                <VIcon :icon="mdiShieldLockOutline"></VIcon>
-              </VCol>
-              <VCol cols="10">
-                <i18n-t keypath="slogans.elevate_to_orbit.main" scope="global">
-                  <template #term1>
-                    <strong>{{ $t('slogans.elevate_to_orbit.term1') }}</strong>
-                  </template>
-                  <template #term2>
-                    <br />
-                    {{ $t('slogans.elevate_to_orbit.term2') }}
-                  </template>
-                </i18n-t>
-              </VCol>
-            </VRow>
-          </VContainer>
-        </VSheet>
-        <VSheet :elevation="!app.isMobile ? 1 : 0" class="main__body__content__card">
-          <VContainer fluid>
-            <VRow>
-              <VCol cols="2" class="main__body__content__card__icon">
-                <VIcon :icon="mdiAccountGroupOutline"></VIcon>
-              </VCol>
-              <VCol cols="10">
-                <i18n-t keypath="slogans.institutions_multi_custody.main" scope="global">
-                  <template #term1>
-                    <strong>{{ $t('slogans.institutions_multi_custody.term1') }}</strong>
-                  </template>
-                  <template #term2>
-                    <br />
-                    <strong>{{ $t('slogans.institutions_multi_custody.term2') }}</strong>
-                  </template>
-                </i18n-t>
-              </VCol>
-            </VRow>
-          </VContainer>
-        </VSheet>
-        <div v-if="app.isMobile" class="main__body__content__symbol">
-          <VImg :src="appLogoImg"></VImg>
-        </div>
-      </div>
+          <VRow>
+            <VCol cols="12" md="6">
+              <VCard variant="text" max-width="500" class="mx-auto">
+                <VCardText>
+                  <h1 class="text-h1 font-weight-bold">{{ $t('landing.title') }}</h1>
+                  <p class="text-h4 mt-4 font-weight-light">{{ $t('landing.subtitle') }}</p>
+                  <p v-if="!app.isMobile" class="text-h6 mt-4">{{ $t('landing.description') }}</p>
+                </VCardText>
+              </VCard>
+            </VCol>
+            <VCol cols="12" md="6">
+              <VCard rounded="xl" max-width="500" class="mx-auto" color="landing-surface">
+                <VCardText class="d-flex align-center ga-4 justify-center flex-column py-12 px-8">
+                  <p class="text-h4 font-weight-bold text-center">
+                    {{ $t('landing.connect_title') }}
+                  </p>
+                  <VBtn
+                    color="primary"
+                    rounded
+                    width="300"
+                    size="large"
+                    class="mt-4 text-caption"
+                    :loading="isAuthenticating"
+                    @click.prevent="performLogin"
+                  >
+                    <span class="text-body-1">{{ $t('landing.connect_btn') }}</span>
+                  </VBtn>
+                </VCardText>
+              </VCard>
+            </VCol>
+            <VCol v-if="app.isMobile" cols="12">
+              <p class="text-h6 mt-4">{{ $t('landing.description') }}</p>
+            </VCol>
+          </VRow>
+        </VContainer>
+        <AppFooter />
+      </VMain>
     </template>
   </PageLayout>
 </template>
 
 <script lang="ts" setup>
-import { mdiAccountGroupOutline, mdiShieldLockOutline } from '@mdi/js';
-import { computed, ref } from 'vue';
-import BrandLogo from '~/components/BrandLogo.vue';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { VBtn, VCard, VCardText, VCol, VContainer, VMain, VRow } from 'vuetify/components';
+import AppFooter from '~/components/layouts/AppFooter.vue';
+import AppToolbar from '~/components/layouts/AppToolbar.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import { logger } from '~/core/logger.core';
-import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { afterLoginRedirect } from '~/utils/app.utils';
 
 const app = useAppStore();
 const session = useSessionStore();
+const i18n = useI18n();
 
 const isAuthenticating = ref(false);
 
 const performLogin = async (): Promise<void> => {
   isAuthenticating.value = true;
+
   await session
     .signIn()
     .then(() => afterLoginRedirect())
@@ -116,7 +79,7 @@ const performLogin = async (): Promise<void> => {
       logger.error(`Authentication failed`, e);
 
       app.sendNotification({
-        message: i18n.global.t('login.auth_failed'),
+        message: i18n.t('landing.connect_error'),
         type: 'error',
       });
     })
@@ -124,143 +87,4 @@ const performLogin = async (): Promise<void> => {
       isAuthenticating.value = false;
     });
 };
-
-const appLogoImg = computed(() => {
-  return app.isDarkTheme ? '/images/app-logo-dark.png' : '/images/app-logo-light.png';
-});
-
-const pageBackgroundColor = computed(() => {
-  return app.isDarkTheme ? undefined : 'surface';
-});
 </script>
-
-<style scoped lang="scss">
-@use '~/styles/Variables' as variables;
-
-.signin {
-  &__header {
-    &__title {
-      text-align: center;
-      margin-top: calc(var(--ds-bdu) * 6);
-      margin-bottom: calc(var(--ds-bdu) * 6);
-
-      @media only screen and (max-width: variables.$device-breakpoint) {
-        margin: calc(var(--ds-bdu) * 2) 0;
-      }
-    }
-  }
-
-  &__action {
-    height: 100%;
-    padding: calc(var(--ds-bdu) * 4) calc(var(--ds-bdu) * 4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-
-    @media only screen and (max-width: variables.$device-breakpoint) {
-      background-color: rgb(var(--ds-primary));
-      color: rgb(var(--ds-on-primary));
-    }
-
-    &__slogan {
-      margin-bottom: calc(var(--ds-bdu) * 2);
-    }
-  }
-}
-
-.theme--dark {
-  .main {
-    &__body {
-      &__content {
-        @media (prefers-color-scheme: dark) {
-          &:after {
-            background-image: url('/images/app-logo-dark.png');
-          }
-        }
-      }
-    }
-  }
-}
-
-.main {
-  &__body {
-    &__content {
-      display: flex;
-      flex-direction: column;
-      height: var(--ds-device-sm);
-      align-self: center;
-      margin: 0;
-      min-height: var(--ds-device-sm);
-      min-width: var(--ds-device-sm);
-      max-width: var(--ds-device-lg);
-      padding: calc(var(--ds-bdu) * 10);
-      position: relative;
-
-      @media only screen and (max-width: variables.$device-breakpoint) {
-        width: 100%;
-        min-width: 100%;
-        max-width: 100%;
-        min-height: 0;
-        height: auto;
-        margin-top: calc(var(--ds-bdu) * 1);
-        padding: calc(var(--ds-bdu) * 2) calc(var(--ds-bdu) * 2);
-        min-height: 0;
-
-        &__symbol {
-          width: 100%;
-          display: block;
-          align-items: center;
-          margin-top: calc(var(--ds-bdu) * 4);
-          margin-bottom: calc(var(--ds-bdu) * 2);
-
-          .v-img {
-            width: 40%;
-            min-width: calc(var(--ds-device-sm) / 4);
-            margin: 0 auto;
-          }
-        }
-      }
-
-      @media only screen and (min-width: variables.$device-breakpoint) {
-        &:after {
-          content: ' ';
-          display: block;
-          position: absolute;
-          top: 140px;
-          left: 160px;
-          width: 100%;
-          height: 100%;
-          min-height: 200px;
-          max-height: 500px;
-          background-image: url('/images/app-logo-light.png');
-          background-repeat: no-repeat;
-          background-position: 40% bottom;
-          background-size: contain;
-          z-index: 0;
-        }
-      }
-
-      &__card {
-        z-index: 1;
-        font-size: var(--ds-font-size-lg);
-        width: calc(var(--ds-bdu) * 48);
-        background-color: rgb(var(--ds-background));
-        color: rgb(var(--ds-on-background));
-
-        @media only screen and (max-width: variables.$device-breakpoint) {
-          width: 100%;
-          background-color: rgb(var(--ds-background));
-          color: rgb(var(--ds-on-background));
-        }
-
-        &__icon {
-          font-size: var(--ds-font-size-xxl);
-          line-height: calc(var(--ds-bdu) * 6);
-          text-align: center;
-        }
-      }
-    }
-  }
-}
-</style>

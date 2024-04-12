@@ -4,7 +4,7 @@
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddUser]">
-            <OpenUserBtn :text="$t('pages.users.btn_new_user')" variant="outlined" />
+            <OpenUserBtn :text="$t('pages.users.btn_new_user')" />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -36,6 +36,7 @@
           "
         >
           <VDataTable
+            class="elevation-2 rounded"
             :loading="loading"
             :headers="headers"
             :items="users"
@@ -94,6 +95,7 @@
 import { mdiEye, mdiPencil } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VChip, VDataTable } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';

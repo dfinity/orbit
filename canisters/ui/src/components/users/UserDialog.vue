@@ -13,9 +13,9 @@
       @loaded="user = $event.user"
     >
       <VCard :loading="loading">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ $t('terms.user') }}</VToolbarTitle>
-          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>
           <UserForm
@@ -27,12 +27,15 @@
             @valid="valid = $event"
           />
         </VCardText>
+        <VDivider />
         <VCardActions class="pa-3">
           <VSpacer />
           <VBtn
             v-if="!props.readonly.value"
             :disabled="!canSave"
             :loading="saving"
+            color="primary"
+            variant="elevated"
             @click="triggerSubmit = true"
           >
             {{ props.userId.value ? $t('terms.save') : $t('terms.create') }}
@@ -45,6 +48,17 @@
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
 import { Ref, computed, ref, toRefs } from 'vue';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VDivider,
+  VSpacer,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import UserForm from '~/components/users/UserForm.vue';
 import {

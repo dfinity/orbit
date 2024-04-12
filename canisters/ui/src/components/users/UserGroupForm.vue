@@ -12,8 +12,9 @@
     <VTextField
       v-model="modelValue.name"
       name="name"
-      :label="$t('terms.user_group')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :label="$t('terms.name')"
+      density="comfortable"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :rules="rules.name"
       :disabled="isViewMode"
     />
@@ -23,6 +24,7 @@
 <script lang="ts" setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VForm, VTextField } from 'vuetify/components';
 import { UserGroup } from '~/generated/wallet/wallet.did';
 import { FormValidationRules, VFormValidation } from '~/types/helper.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';

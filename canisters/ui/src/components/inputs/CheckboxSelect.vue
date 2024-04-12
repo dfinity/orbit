@@ -4,25 +4,24 @@
       <VIcon v-if="props.prependIcon" :icon="props.prependIcon" size="small" />
       {{ props.label }}
     </label>
-    <div class="d-flex flex-row ga-1 mt-2 flex-wrap">
-      <VBtn
+    <div class="d-flex flex-column mt-2 flex-wrap">
+      <VCheckbox
         v-for="(item, idx) in props.items"
         :key="idx"
-        :variant="modelValue.includes(item.key) ? 'flat' : 'tonal'"
-        size="small"
-        density="comfortable"
-        :color="props.color"
-        class="flex-grow-1"
-        @click="toggle(item.key)"
-      >
-        {{ item.text }}
-      </VBtn>
+        :model-value="modelValue.includes(item.key)"
+        :label="item.text"
+        hide-details
+        class="checkbox-compact-small"
+        density="compact"
+        @update:model-value="toggle(item.key)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts" generic="T">
 import { computed } from 'vue';
+import { VCheckbox, VIcon } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -58,3 +57,16 @@ const toggle = (key: T) => {
   }
 };
 </script>
+<style lang="scss">
+.checkbox-compact-small {
+  --v-input-control-height: 32px !important;
+
+  .v-selection-control {
+    --v-selection-control-size: 22px !important;
+  }
+
+  .v-label {
+    margin-left: 4px;
+  }
+}
+</style>

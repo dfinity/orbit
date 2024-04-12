@@ -34,7 +34,7 @@
                     v-slot="{ isSelected, toggle }"
                   >
                     <VBtn
-                      :color="isSelected ? 'primary-variant' : undefined"
+                      :color="isSelected ? 'secondary' : undefined"
                       variant="flat"
                       density="comfortable"
                       class="mr-2"
@@ -47,7 +47,10 @@
               </VCol>
             </VRow>
             <VRow>
-              <VCol cols="12 d-flex flex-column-reverse flex-md-row align-start flex-no-wrap ga-4">
+              <VCol
+                cols="12"
+                class="d-flex flex-column-reverse flex-md-row align-md-start flex-no-wrap ga-4"
+              >
                 <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
                   <ProposalList
                     :loading="loading"
@@ -65,48 +68,37 @@
                     @update:model-value="triggerSearch"
                   />
                 </div>
-                <VCard
-                  color="background"
-                  variant="flat"
-                  min-height="300px"
-                  min-width="272px"
-                  :max-width="!app.isMobile ? `272px` : undefined"
-                >
-                  <VToolbar color="transparent" class="pr-4">
-                    <VToolbarTitle>{{ $t('terms.filters') }}</VToolbarTitle>
-                    <VIcon :icon="mdiFilter" />
-                  </VToolbar>
-                  <VCardText class="pt-2">
-                    <DateRange
-                      v-model="filters.created"
-                      :label="$t('terms.created')"
-                      :prepend-icon="mdiCalendar"
-                    />
-                    <DateRange
-                      v-model="filters.expires"
-                      :label="$t('terms.expires')"
-                      :prepend-icon="mdiCalendar"
-                    />
-                    <BtnSelect
-                      v-model="filters.statuses"
-                      :label="$t('terms.statuses')"
-                      :items="statuses"
-                      :prepend-icon="mdiCog"
-                    />
-                    <VDivider thickness="2" class="my-2" />
-                    <VBtn
-                      density="comfortable"
-                      block
-                      color="primary-variant"
-                      flat
-                      size="small"
-                      variant="tonal"
-                      @click="filters = filterUtils.getDefaultFilters()"
-                    >
-                      {{ $t('terms.reset') }}
-                    </VBtn>
-                  </VCardText>
-                </VCard>
+                <FiltersCard :title="$t('terms.filters')" :icon="mdiFilter">
+                  <DateRange
+                    v-model="filters.created"
+                    :label="$t('terms.created')"
+                    :prepend-icon="mdiCalendar"
+                  />
+                  <DateRange
+                    v-model="filters.expires"
+                    :label="$t('terms.expires')"
+                    :prepend-icon="mdiCalendar"
+                  />
+                  <CheckboxSelect
+                    v-model="filters.statuses"
+                    :label="$t('terms.statuses')"
+                    :items="statuses"
+                    :prepend-icon="mdiCog"
+                  />
+                  <VSpacer />
+                  <VDivider thickness="2" class="my-2" />
+                  <VBtn
+                    density="default"
+                    block
+                    color="primary-variant"
+                    flat
+                    size="small"
+                    variant="tonal"
+                    @click="filters = filterUtils.getDefaultFilters()"
+                  >
+                    {{ $t('terms.reset') }}
+                  </VBtn>
+                </FiltersCard>
               </VCol>
             </VRow>
           </VContainer>
@@ -118,18 +110,29 @@
 
 <script lang="ts" setup>
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
-import { Ref } from 'vue';
-import { computed, ref, watch } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import {
+  VBtn,
+  VCol,
+  VContainer,
+  VDivider,
+  VPagination,
+  VRow,
+  VSlideGroup,
+  VSlideGroupItem,
+  VSpacer,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import BtnSelect from '~/components/inputs/BtnSelect.vue';
+import CheckboxSelect from '~/components/inputs/CheckboxSelect.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import ProposalList from '~/components/proposals/ProposalList.vue';
 import ExportCsvActionBtn from '~/components/proposals/export/ExportCsvActionBtn.vue';
+import FiltersCard from '~/components/ui/FiltersCard.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
   useAvailableDomains,
@@ -143,7 +146,6 @@ import {
   ProposalCallerPrivileges,
   ProposalStatusCode,
 } from '~/generated/wallet/wallet.did';
-import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps } from '~/types/app.types';
 import { ProposalDomains } from '~/types/wallet.types';
@@ -162,7 +164,6 @@ const props = withDefaults(defineProps<ProposalsPageProps>(), {
 
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.proposals.title'));
-const app = useAppStore();
 const wallet = useWalletStore();
 const availableDomains = useAvailableDomains();
 const statuses = useProposalStatusItems();

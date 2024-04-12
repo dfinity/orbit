@@ -5,15 +5,16 @@
     </template>
     <template #main-body>
       <PageBody>
-        <VCard variant="flat">
+        <VCard>
           <VCardText>
             <VTextField
               v-model="session.principal"
               :label="$t('app.user_id')"
               variant="plain"
               readonly
+              hide-details
             >
-              <template #append>
+              <template #append-inner>
                 <VBtn
                   size="x-small"
                   variant="text"
@@ -38,6 +39,7 @@
 import { mdiContentCopy } from '@mdi/js';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn, VCard, VCardText, VTextField } from 'vuetify/components';
 import PageLayout from '~/components/PageLayout.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';

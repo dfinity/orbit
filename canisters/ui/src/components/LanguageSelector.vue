@@ -1,6 +1,10 @@
 <template>
   <VSelect
     v-model="activeLocale"
+    bg-color="transparent"
+    :style="{
+      ['max-width']: props.maxWidth,
+    }"
     :items="app.supportedLocales"
     variant="solo-filled"
     density="compact"
@@ -12,7 +16,17 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { VSelect } from 'vuetify/components';
 import { useAppStore } from '~/stores/app.store';
+
+const props = withDefaults(
+  defineProps<{
+    maxWidth?: string;
+  }>(),
+  {
+    maxWidth: '90px',
+  },
+);
 
 const app = useAppStore();
 const router = useRouter();

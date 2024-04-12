@@ -10,6 +10,10 @@ export const hasRequiredSession = (
   switch (requiredSessionState) {
     case RequiredSessionState.Guest:
       return !session.isAuthenticated;
+    case RequiredSessionState.AuthenticatedNoWallet:
+      return session.isAuthenticated && !session.data.wallets.length;
+    case RequiredSessionState.AuthenticatedHasWallets:
+      return session.isAuthenticated && session.data.wallets.length > 0;
     case RequiredSessionState.Authenticated:
       return session.isAuthenticated;
     case RequiredSessionState.ConnectedToWallet:

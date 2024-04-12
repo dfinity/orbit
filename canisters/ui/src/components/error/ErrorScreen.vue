@@ -1,17 +1,17 @@
 <template>
-  <div class="d-flex flex-no-wrap justify-space-between">
-    <VAvatar class="ma-3" size="180" rounded="0">
+  <div class="d-flex flex-row flex-no-wrap justify-space-between">
+    <VAvatar class="ma-3 align-self-center" size="80px" rounded="0">
       <slot name="icon">
-        <VIcon size="100%" color="primary" :icon="props.icon" />
+        <VIcon size="100%" :icon="props.icon" />
       </slot>
     </VAvatar>
-    <div class="flex-grow-1 my-8">
-      <VCardTitle class="text-h4">
+    <div class="flex-grow-1 my-4">
+      <VCardTitle class="text-h4 text-wrap">
         <slot name="title">
           {{ title }}
         </slot>
       </VCardTitle>
-      <VCardSubtitle>
+      <VCardSubtitle class="text-wrap">
         <slot name="subtitle">
           {{ subtitle }}
         </slot>
@@ -24,7 +24,7 @@
         <slot name="actions">
           <VBtn
             v-if="props.showBackToHome"
-            color="primary-variant mt-8 mx-2"
+            color="primary-variant mx-2"
             variant="tonal"
             size="small"
             :prepend-icon="mdiHome"

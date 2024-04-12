@@ -1,8 +1,8 @@
 <template>
-  <VContainer fluid data-test-id="access-policy-list">
+  <VContainer fluid data-test-id="access-policy-list" class="px-3 pt-2">
     <VRow>
       <VCol cols="12" class="px-0 pt-0">
-        <VTable density="compact" hover>
+        <VTable density="compact" hover class="elevation-2 rounded">
           <thead>
             <tr v-if="!app.isMobile">
               <th class="w-50">{{ $t(`access_policies.resource_title`) }}</th>
@@ -50,6 +50,7 @@ import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
 import AccessPolicyListItem from './AccessPolicyListItem.vue';
 import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
+import { VCol, VContainer, VProgressCircular, VRow, VTable } from 'vuetify/components';
 
 const app = useAppStore();
 const props = withDefaults(

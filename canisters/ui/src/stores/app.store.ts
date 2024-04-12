@@ -20,12 +20,14 @@ export interface AppStoreState {
   notification: GlobalNotification;
   isMobile: boolean;
   routeStatusCode: RouteStatusCode;
+  disableBackgroundPolling: boolean;
 }
 
 export const useAppStore = defineStore('app', {
   state: (): AppStoreState => {
     return {
       initialized: false,
+      disableBackgroundPolling: false,
       loading: false,
       appName: appInitConfig.name,
       theme: services().theme.resolveTheme(),

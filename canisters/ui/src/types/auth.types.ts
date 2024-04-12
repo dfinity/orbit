@@ -18,6 +18,8 @@ export enum Privilege {
 
 export enum RequiredSessionState {
   Authenticated = 'authenticated',
+  AuthenticatedNoWallet = 'authenticated-no-wallet',
+  AuthenticatedHasWallets = 'authenticated-has-wallets',
   ConnectedToWallet = 'connected-to-wallet',
   Guest = 'guest',
   Any = 'any',

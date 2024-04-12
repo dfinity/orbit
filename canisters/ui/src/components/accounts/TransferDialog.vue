@@ -16,9 +16,9 @@
       "
     >
       <VCard :loading="loading" data-test-id="transfer-dialog-form">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ $t('terms.transfer') }}</VToolbarTitle>
-          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>
           <TransferForm
@@ -36,8 +36,7 @@
               <VTextField
                 v-model="summary"
                 :label="$t('terms.summary')"
-                variant="underlined"
-                density="compact"
+                density="comfortable"
                 class="mb-2"
                 name="to"
                 :disabled="props.readonly.value"
@@ -48,12 +47,15 @@
             </VCol>
           </VRow>
         </VCardText>
+        <VDivider />
         <VCardActions class="pa-3">
           <VSpacer />
           <VBtn
             v-if="!props.readonly.value"
             :disabled="!canSave"
             :loading="saving"
+            color="primary"
+            variant="elevated"
             data-test-id="transfer-dialog-save-button"
             @click="triggerSubmit = true"
           >
@@ -67,16 +69,30 @@
 <script lang="ts" setup>
 import { mdiClose, mdiComment } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VCol,
+  VDialog,
+  VDivider,
+  VRow,
+  VSpacer,
+  VTextField,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
-import TransferForm from './TransferForm.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { Account, Proposal, Transfer, UUID } from '~/generated/wallet/wallet.did';
-import { assertAndReturn } from '~/utils/helper.utils';
 import { services } from '~/plugins/services.plugin';
+import { assertAndReturn } from '~/utils/helper.utils';
+import TransferForm from './TransferForm.vue';
 
 const input = withDefaults(
   defineProps<{

@@ -2,6 +2,7 @@
   <VBtn
     v-bind="$attrs"
     data-test-id="review-proposal-btn"
+    density="comfortable"
     :size="props.size"
     :variant="props.variant"
     :icon="props.icon && !btnText"
@@ -16,6 +17,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn } from 'vuetify/components';
 import { useProposalOverlay } from '~/composables/proposal.composable';
 import { UUID } from '~/generated/wallet/wallet.did';
 
@@ -28,7 +30,7 @@ const props = withDefaults(
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
-    variant?: 'flat' | 'text' | 'outlined';
+    variant?: 'flat' | 'text' | 'outlined' | 'elevated';
     color?: string;
     readonly?: boolean;
   }>(),
@@ -37,9 +39,9 @@ const props = withDefaults(
     canVote: false,
     icon: undefined,
     text: undefined,
-    size: 'small',
-    variant: 'flat',
-    color: 'default',
+    size: 'default',
+    variant: 'elevated',
+    color: 'secondary',
     readonly: false,
   },
 );
