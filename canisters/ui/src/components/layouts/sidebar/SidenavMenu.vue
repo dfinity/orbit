@@ -1,7 +1,7 @@
 <template>
-  <VContainer>
+  <VContainer class="py-2">
     <VRow>
-      <VCol cols="12" class="menu">
+      <VCol cols="12" class="d-flex flex-column">
         <section class="menu__main">
           <template v-for="(menuItem, _idx) in $navigation.value.main" :key="_idx">
             <VList nav density="compact" class="ps-0 pe-0">
@@ -15,13 +15,6 @@
 </template>
 
 <script lang="ts" setup>
-import SidenavMenuItem from '~/components/SidenavMenuItem.vue';
+import { VCol, VContainer, VList, VRow } from 'vuetify/components';
+import SidenavMenuItem from './SidenavMenuItem.vue';
 </script>
-
-<style scoped lang="scss">
-.menu {
-  display: flex;
-  flex-direction: column;
-  font-size: var(--ds-font-size-xxs);
-}
-</style>

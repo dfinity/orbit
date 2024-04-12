@@ -39,6 +39,7 @@ Options:
   --init-internet-identity fresh installs the internet identity canister
   --init-ui fresh installs the ui canister
   --candid-generate generates the code for the candid specifications that the wallet uses
+  --approve-waiting-list approves the given principal to the waiting list
 EOF
 }
 
@@ -53,9 +54,10 @@ EOF
 
 function exec_function() {
   local function_name=$1
+  shift
   echo "------------------------------------------------------"
   echo -e "\e[1m$ START:\e[0m $function_name"
-  $function_name
+  $function_name "$@"
   echo -e "\e[1m$ COMPLETED:\e[0m $function_name"
 }
 
@@ -201,6 +203,12 @@ function setup_devenv() {
   pnpm install
 }
 
+function approve_waiting_list() {
+  local principal=$1
+
+  dfx canister call control_panel update_waiting_list "record { users = vec { principal \"$principal\" }; new_status = variant {Approved} }"
+}
+
 #############################################
 # SCRIPT OPTIONS                            #
 #############################################
@@ -218,6 +226,16 @@ while [[ $# -gt 0 ]]; do
     usage
     help
     exit 0
+    ;;
+  --approve-waiting-list)
+    shift
+    if [[ $# -eq 0 ]]; then
+      echo "ERROR: No principal ID provided"
+      exit 1
+    fi
+    exec_function approve_waiting_list "$1"
+    shift # Remove the principal ID from the arguments
+    echo
     ;;
   --init)
     shift

@@ -1,5 +1,5 @@
 <template>
-  <VContainer class="pt-8 pb-0 pl-8 pr-8" fluid :data-test-id="$props.dataTestId">
+  <VContainer class="pt-8 pb-0 pl-4 pr-4" fluid :data-test-id="$props.dataTestId" v-bind="$attrs">
     <VRow>
       <VCol v-if="breadcrumbs.length" cols="12" class="pa-0">
         <VBreadcrumbs :items="breadcrumbs" density="comfortable">
@@ -32,17 +32,16 @@
       >
         <slot name="actions"></slot>
       </VCol>
-      <VCol cols="12">
-        <VDivider class="border-opacity-50 pb-2" :thickness="2" />
-      </VCol>
     </VRow>
   </VContainer>
+  <VDivider class="border-opacity-25 mt-4" :thickness="1" />
 </template>
 
 <script lang="ts" setup>
 import { useSlots, computed } from 'vue';
 import { mdiChevronRight } from '@mdi/js';
 import { BreadCrumbItem } from '~/types/navigation.types';
+import { VBreadcrumbs, VCol, VContainer, VDivider, VIcon, VRow } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

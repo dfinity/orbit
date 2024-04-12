@@ -13,9 +13,9 @@
       @loaded="addressBookEntry = $event.entry"
     >
       <VCard :loading="loading">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ $t('app.address_book_entry') }}</VToolbarTitle>
-          <VBtn :disabled="loading || saving" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>
           <AddressBookForm
@@ -30,12 +30,15 @@
             @valid="valid = $event"
           />
         </VCardText>
+        <VDivider />
         <VCardActions class="pa-3">
           <VSpacer />
           <VBtn
             v-if="!props.readonly.value"
             :disabled="!canSave"
             :loading="saving"
+            color="primary"
+            variant="elevated"
             @click="triggerSubmit = true"
           >
             {{ props.addressBookEntryId.value ? $t('terms.save') : $t('terms.create') }}
@@ -48,6 +51,17 @@
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
 import { computed, ref, toRefs } from 'vue';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VDivider,
+  VSpacer,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import AddressBookForm from '~/components/address-book/AddressBookForm.vue';
 import {

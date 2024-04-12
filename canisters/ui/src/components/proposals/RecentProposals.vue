@@ -7,33 +7,27 @@
     :disable-refresh="disablePolling"
   >
     <template #default="{ data, loading }">
-      <VCard
-        color="background"
-        flat
-        :loading="data && data.proposals.length > 0 ? false : loading"
-        rounded
-        v-bind="$attrs"
-      >
+      <VCard :loading="data && data.proposals.length > 0 ? false : loading" rounded v-bind="$attrs">
         <VCardText class="py-0">
-          <VList bg-color="transparent">
-            <VListItem class="px-1">
-              <VListItemTitle class="text-body-2 font-weight-bold">
-                {{ title && title.length ? title : $t('terms.requests') }}
-                <VBadge
-                  v-if="data && Number(data.total) - data.proposals.length > 0"
-                  :content="`+ ${Number(data.total) - data.proposals.length}`"
-                  inline
+          <div class="d-flex pt-4 ga-4 flex-wrap">
+            <div class="text-body-1 font-weight-bold flex-grow-1">
+              {{ title && title.length ? title : $t('terms.requests') }}
+            </div>
+            <div class="d-flex flex-grow-1 justify-end flex-column flex-md-row ga-2">
+              <slot name="top-actions">
+                <VBtn
+                  v-if="props.seeAllLink"
                   color="secondary"
-                />
-              </VListItemTitle>
-              <template #append>
-                <slot name="top-actions">
-                  <VBtn v-if="props.seeAllLink" variant="tonal" size="small" :to="props.seeAllLink">
-                    {{ $t('terms.see_all') }}
-                  </VBtn>
-                </slot>
-              </template>
-            </VListItem>
+                  size="small"
+                  variant="flat"
+                  :to="props.seeAllLink"
+                >
+                  {{ $t('terms.see_all') }}
+                </VBtn>
+              </slot>
+            </div>
+          </div>
+          <VList bg-color="transparent">
             <VDivider
               v-if="data && data.proposals.length > 0"
               class="mb-2 border-opacity-50"
@@ -64,13 +58,14 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { RouteLocationRaw } from 'vue-router';
+import { VBtn, VCard, VCardText, VDivider, VList } from 'vuetify/components';
+import DataLoader from '~/components/DataLoader.vue';
 import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/plugins/i18n.plugin';
+import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { ListProposalsArgs } from '~/types/wallet.types';
-import DataLoader from '~/components/DataLoader.vue';
 import ProposalList from './ProposalList.vue';
-import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{

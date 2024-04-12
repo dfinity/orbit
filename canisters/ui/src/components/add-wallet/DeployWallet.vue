@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-if="waitlistStatus !== WaitlistStatus.Approved"
-    class="mx-auto w-md-50 mt-16"
-    data-test-id="deploy-wallet-screen"
-  >
+  <div v-if="waitlistStatus !== WaitlistStatus.Approved" data-test-id="deploy-wallet-screen">
     <VBtn variant="flat" :disabled="working" data-test-id="back-button" @click="emit('back')">
       <VIcon :icon="mdiChevronLeft" size="x-large"></VIcon>
       {{ $t('terms.back') }}</VBtn
@@ -213,7 +209,7 @@ const deployInitialWallet = async (): Promise<void> => {
     // this wait is here to make sure the user has a chance to see the completed status
     await wait(2000);
 
-    router.push({ name: defaultHomeRoute });
+    router.push({ name: defaultHomeRoute, query: { walletId: walletId.toText() } });
   } catch (err) {
     logger.error('Failed initialization', { err });
     deploymentStatus.value = DeployWalletStatus.Failed;

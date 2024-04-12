@@ -256,13 +256,13 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
     resourceType: ResourceTypeEnum.System,
     resources: [
       {
-        action: ResourceActionEnum.ReadSensitiveConfig,
+        action: ResourceActionEnum.SystemInfoCapabilities,
         resource: { System: { Capabilities: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
-        action: ResourceActionEnum.ReadPublicConfig,
+        action: ResourceActionEnum.SystemInfoConfig,
         resource: { System: { SystemInfo: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
