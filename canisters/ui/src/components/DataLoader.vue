@@ -9,6 +9,7 @@
 <script lang="ts" setup generic="T">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAlert } from 'vuetify/components';
+import { DisabledBackgroundPollingError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
@@ -60,6 +61,7 @@ watch(
 
 const app = useAppStore();
 const session = useSessionStore();
+const initialized = ref(false);
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -67,8 +69,29 @@ if (props.refreshIntervalMs) {
   refreshTimer = setInterval(async () => fetchData(), props.refreshIntervalMs);
 }
 
+const canFetchData = (): boolean => {
+  // the data is first loaded if the component has just been initialized
+  if (!initialized.value) {
+    // prevents calls to fetchData while the user is locked out
+    return !session.reauthenticationNeeded;
+  }
+
+  return (
+    // disables the refresh functionality if set by the parent component
+    !props.disableRefresh &&
+    // prevents calls to fetchData while the user is locked out
+    !session.reauthenticationNeeded &&
+    // prevents calls to fetchData, this can happen when the user is switching between wallets
+    !app.disableBackgroundPolling
+  );
+};
+
 const fetchWithRetries = async (retries: number): Promise<T> => {
   try {
+    if (!canFetchData()) {
+      throw new DisabledBackgroundPollingError();
+    }
+
     return await props.load();
   } catch (err) {
     if (retries > 0) {
@@ -93,16 +116,12 @@ const working = computed({
 
 const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): Promise<void> => {
   try {
-    if (
-      // prevents multiple calls to fetchData at the same time
-      working.value ||
-      // disables the refresh functionality if set by the parent component
-      props.disableRefresh ||
-      // prevents calls to fetchData while the user is locked out
-      session.reauthenticationNeeded ||
-      // prevents calls to fetchData, this can happen when the user is switching between wallets
-      app.disableBackgroundPolling
-    ) {
+    // prevents multiple calls to fetchData at the same time
+    if (working.value) {
+      return;
+    }
+
+    if (!canFetchData()) {
       return;
     }
 
@@ -113,11 +132,22 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
 
     working.value = false;
 
-    if (!props.disableRefresh) {
+    if (
+      // the data is first loaded if the component has just been initialized
+      !initialized.value ||
+      // the data is reloaded if the component has been initialized and the refresh interval is set
+      !props.disableRefresh
+    ) {
       data.value = newData;
       emit('loaded', data.value);
     }
   } catch (err) {
+    if (err instanceof DisabledBackgroundPollingError) {
+      console.log('DisabledBackgroundPollingError', err);
+      // do nothing, this is expected
+      return;
+    }
+
     logger.error(`Failed to load data`, err);
 
     if (cleanupOnFail) {
@@ -135,7 +165,7 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
   }
 };
 
-onMounted(async () => fetchData({ cleanupOnFail: true }));
+onMounted(async () => fetchData({ cleanupOnFail: true }).then(() => (initialized.value = true)));
 
 onUnmounted(() => {
   if (refreshTimer) {

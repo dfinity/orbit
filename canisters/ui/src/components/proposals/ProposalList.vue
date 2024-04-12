@@ -1,6 +1,10 @@
 <template>
   <VProgressLinear v-if="props.loading" indeterminate color="primary" data-test-id="loading" />
-  <div v-else :class="{ 'd-flex flex-row ga-1': props.mode === 'grid' }">
+  <div
+    v-else
+    class="d-flex flex-wrap ga-2"
+    :class="{ 'flex-row': props.mode === 'grid', 'flex-column': props.mode === 'list' }"
+  >
     <ProposalListItem
       v-for="proposal in props.proposals"
       :key="proposal.id"

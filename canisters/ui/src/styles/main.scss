@@ -108,6 +108,10 @@ a {
   color: inherit;
 }
 
+.w-min-25 {
+  min-width: 25% !important;
+}
+
 // Extends spacing utility classes
 @media (min-width: #{$device-md}) {
   .w-md-auto {

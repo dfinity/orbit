@@ -1,7 +1,7 @@
 <template v-if="proposalReviewComponent">
   <VCard :loading="props.loading">
-    <VToolbar color="background">
-      <VToolbarTitle class="flex-fill">
+    <VToolbar color="background" height="auto">
+      <VToolbarTitle class="flex">
         <span class="text-body-2 font-weight-light text-wrap">
           {{ $t(`proposals.types.${proposalType}.request_title`) }}
         </span>
