@@ -16,7 +16,7 @@
                 <VCardText>
                   <h1 class="text-h1 font-weight-bold">{{ $t('landing.title') }}</h1>
                   <p class="text-h4 mt-4 font-weight-light">{{ $t('landing.subtitle') }}</p>
-                  <p class="text-h6 mt-4">{{ $t('landing.description') }}</p>
+                  <p v-if="!app.isMobile" class="text-h6 mt-4">{{ $t('landing.description') }}</p>
                 </VCardText>
               </VCard>
             </VCol>
@@ -39,6 +39,9 @@
                   </VBtn>
                 </VCardText>
               </VCard>
+            </VCol>
+            <VCol v-if="app.isMobile" cols="12">
+              <p class="text-h6 mt-4">{{ $t('landing.description') }}</p>
             </VCol>
           </VRow>
         </VContainer>
