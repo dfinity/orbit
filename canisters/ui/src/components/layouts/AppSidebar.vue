@@ -19,7 +19,7 @@
       </div>
       <div class="sidebar_footer d-flex flex-column flex-grow-0 pa-4">
         <slot name="footer">
-          <AlphaWarning class="mb-4" />
+          <AlphaWarning class="mb-12" />
           <a v-if="showFooter" href="https://internetcomputer.org" target="_blank">
             <img src="/images/powered-by-badge.svg" height="20" />
           </a>

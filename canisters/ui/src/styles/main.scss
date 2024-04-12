@@ -167,18 +167,6 @@ a {
   background-size: 50vmin;
 }
 
-.logo-markers-bg--variant {
-  @extend .logo-markers-bg;
-
-  background-blend-mode: soft-light;
-  background-color: rgb(var(--ds-background), 0.4);
-  background-size: 15%;
-
-  @media (max-width: #{$device-md}) {
-    background-size: 40vw;
-  }
-}
-
 .min-height-100 {
   min-height: 100%;
 }

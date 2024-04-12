@@ -47,6 +47,7 @@
             </VCol>
           </VRow>
         </VCardText>
+        <VDivider />
         <VCardActions class="pa-3">
           <VSpacer />
           <VBtn
@@ -75,6 +76,7 @@ import {
   VCardText,
   VCol,
   VDialog,
+  VDivider,
   VRow,
   VSpacer,
   VTextField,

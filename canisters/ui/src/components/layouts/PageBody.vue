@@ -1,5 +1,5 @@
 <template>
-  <VContainer class="px-8 py-4" fluid>
+  <VContainer class="px-4 py-4" fluid>
     <VRow>
       <VCol cols="12" :data-test-id="$props.dataTestId">
         <slot></slot>

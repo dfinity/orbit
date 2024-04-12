@@ -44,6 +44,7 @@
           <p>{{ props.content }}</p>
         </slot>
       </VCardText>
+      <VDivider />
       <VCardActions class="pa-3">
         <slot
           name="actions"
@@ -81,6 +82,7 @@ import {
   VCardActions,
   VCardText,
   VDialog,
+  VDivider,
   VIcon,
   VSpacer,
   VToolbar,

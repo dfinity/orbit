@@ -102,7 +102,7 @@
         </VRow>
       </VContainer>
     </VCardText>
-
+    <VDivider />
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
       <ProposalMetadata
         :proposal="props.proposal"

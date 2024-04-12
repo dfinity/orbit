@@ -97,6 +97,7 @@
             </VTable>
           </template>
         </VCardText>
+        <VDivider />
         <VCardActions class="pa-3 d-flex flex-column flex-md-row ga-4">
           <div v-if="hasInvalidTransfers" class="d-flex flex-column ga-1">
             <span class="text-body-2 pl-2">
@@ -158,6 +159,7 @@ import {
   VCardActions,
   VCardText,
   VDialog,
+  VDivider,
   VFileInput,
   VIcon,
   VProgressCircular,

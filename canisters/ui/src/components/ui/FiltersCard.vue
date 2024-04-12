@@ -70,7 +70,7 @@ const props = withDefaults(
   }>(),
   {
     icon: undefined,
-    minHeight: '272px',
+    minHeight: '172px',
     minWidth: '272px',
     maxWidth: '272px',
   },

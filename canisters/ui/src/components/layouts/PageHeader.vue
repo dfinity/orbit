@@ -1,5 +1,5 @@
 <template>
-  <VContainer class="pt-8 pb-0 pl-8 pr-8" fluid :data-test-id="$props.dataTestId" v-bind="$attrs">
+  <VContainer class="pt-8 pb-0 pl-4 pr-4" fluid :data-test-id="$props.dataTestId" v-bind="$attrs">
     <VRow>
       <VCol v-if="breadcrumbs.length" cols="12" class="pa-0">
         <VBreadcrumbs :items="breadcrumbs" density="comfortable">

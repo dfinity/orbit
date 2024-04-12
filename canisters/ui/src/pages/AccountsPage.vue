@@ -134,13 +134,25 @@ const app = useAppStore();
 const pageTitle = computed(() => props.title || i18n.t('pages.accounts.title'));
 const pagination = usePagination();
 const forceReload = ref(false);
-const headers = ref<TableHeader[]>([
-  { title: i18n.t('terms.name'), key: 'name', sortable: false },
-  { title: i18n.t('terms.token'), key: 'symbol', sortable: false },
-  { title: i18n.t('terms.address'), key: 'address', sortable: false },
-  { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
-  { title: '', key: 'actions', sortable: false, headerProps: { class: 'w-0' } },
-]);
+const headers = computed<TableHeader[]>(() => {
+  if (app.isMobile) {
+    return [
+      { title: i18n.t('terms.name'), key: 'name', sortable: false },
+      { title: i18n.t('terms.token'), key: 'symbol', sortable: false },
+      { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
+      { title: '', key: 'actions', sortable: false, headerProps: { class: 'w-0' } },
+    ];
+  }
+
+  return [
+    { title: i18n.t('terms.name'), key: 'name', sortable: false },
+    { title: i18n.t('terms.token'), key: 'symbol', sortable: false },
+    { title: i18n.t('terms.address'), key: 'address', sortable: false },
+    { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
+    { title: '', key: 'actions', sortable: false, headerProps: { class: 'w-0' } },
+  ];
+});
+
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const accounts = ref<Account[]>([]);
 const privileges = ref<AccountCallerPrivileges[]>([]);

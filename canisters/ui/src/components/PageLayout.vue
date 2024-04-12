@@ -21,7 +21,7 @@
             <WalletSelector v-if="showWalletSelector" />
           </slot>
         </div>
-        <div v-if="props.main" class="main d-flex flex-column flex-grow-1 logo-markers-bg--variant">
+        <div v-if="props.main" class="main d-flex flex-column flex-grow-1">
           <slot name="main">
             <header v-if="props.mainHeader" :class="`main__header ${props.surfaceColor}`">
               <slot name="main-header"></slot>

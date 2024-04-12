@@ -27,6 +27,7 @@
             @valid="valid = $event"
           />
         </VCardText>
+        <VDivider />
         <VCardActions class="pa-3">
           <VSpacer />
           <VBtn
@@ -53,6 +54,7 @@ import {
   VCardActions,
   VCardText,
   VDialog,
+  VDivider,
   VSpacer,
   VToolbar,
   VToolbarTitle,
