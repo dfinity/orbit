@@ -8,6 +8,7 @@ use crate::{
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
 use ic_canister_core::{repository::Repository, utils::timestamp_to_rfc3339};
+use ic_cdk::print;
 use uuid::Uuid;
 use wallet_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO};
 
@@ -35,19 +36,29 @@ impl AccountMapper {
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata.into_vec_dto(),
-            transfer_approval_policy: account.transfer_approval_policy_id.map(|policy_id| {
+            transfer_approval_policy: account.transfer_approval_policy_id.and_then(|policy_id| {
                 PROPOSAL_POLICY_REPOSITORY
                     .get(&policy_id)
-                    .expect("Transfer policy not found")
-                    .criteria
-                    .into()
+                    .map(|policy| policy.criteria.into())
+                    .or_else(|| {
+                        print(format!(
+                            "transfer_approval_policy not found for proposal {}",
+                            Uuid::from_bytes(policy_id).hyphenated()
+                        ));
+                        None
+                    })
             }),
-            update_approval_policy: account.update_approval_policy_id.map(|policy_id| {
+            update_approval_policy: account.update_approval_policy_id.and_then(|policy_id| {
                 PROPOSAL_POLICY_REPOSITORY
                     .get(&policy_id)
-                    .expect("Update policy not found")
-                    .criteria
-                    .into()
+                    .map(|policy| policy.criteria.into())
+                    .or_else(|| {
+                        print(format!(
+                            "update_approval_policy not found for proposal {}",
+                            Uuid::from_bytes(policy_id).hyphenated()
+                        ));
+                        None
+                    })
             }),
             last_modification_timestamp: timestamp_to_rfc3339(&account.last_modification_timestamp),
         }
