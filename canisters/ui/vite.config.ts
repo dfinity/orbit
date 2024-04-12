@@ -110,14 +110,16 @@ const generateICAssetsJson = (
   });
 };
 
-const BUILD_MODES = ['development', 'playground', 'testing', 'staging', 'production'];
+// All the build modes target a production bundle, even localhost since it is used for deploying to the local network,
+// to develop locally with hot module reloading use the `vite` command use the development mode.
+const BUILD_MODES = ['localhost', 'playground', 'testing', 'staging', 'production'];
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode: defaultMode }) => {
   const mode =
     process.env.BUILD_MODE && process.env.BUILD_MODE.length ? process.env.BUILD_MODE : defaultMode;
 
-  if (!BUILD_MODES.includes(mode)) {
+  if (!BUILD_MODES.includes(mode) && mode !== 'development') {
     throw new Error(`Invalid BUILD_MODE: ${mode}, expected one of ${BUILD_MODES.join(', ')}`);
   }
 
@@ -226,9 +228,11 @@ export default defineConfig(({ mode: defaultMode }) => {
       'import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(
         canisters.internet_identity,
       ),
-      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction
-        ? process.env.APP_PROVIDER_URL_INTERNET_IDENTITY
-        : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
+      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY':
+        // we use the local network for localhost mode
+        isProduction && mode !== 'localhost'
+          ? process.env.APP_PROVIDER_URL_INTERNET_IDENTITY
+          : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
       'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
       'process.env.CANISTER_ID_ICP_INDEX': JSON.stringify(canisters.icp_index),
     },

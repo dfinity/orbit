@@ -45,10 +45,9 @@ Usage:
 
 
 Options:
-  --local Performs a local deployment of Orbit to your local dfx environment
+  --play | --playground Deploys Orbit to the playground network (WARNING: This will reset the control-panel, to avoid this use 'no-reset' as an argument)
   --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
-  --play | --playground Deploys Orbit to the playground network (WARNING: This will reset the control-panel, to avoid this use 'no-reset' as an argument)
   --prod | --production Performs a production deployment of Orbit to the IC
 EOF
 }
@@ -195,11 +194,6 @@ function deploy_ui() {
 
   echo "Deploying the UI canister to the '$network' network."
 
-  if [ "$network" == "local" ]; then
-    BUILD_MODE=development dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    return
-  fi
-
   BUILD_MODE=$network dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
 }
 
@@ -257,15 +251,6 @@ while [[ $# -gt 0 ]]; do
     shift
     identity_warning_confirmation
     set_network testing
-    exec_function setup_enviroment
-    exec_function deploy_control_panel
-    exec_function deploy_ui
-    echo
-    ;;
-  --local)
-    shift
-    identity_warning_confirmation
-    set_network local
     exec_function setup_enviroment
     exec_function deploy_control_panel
     exec_function deploy_ui
