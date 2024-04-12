@@ -1,9 +1,5 @@
 use crate::{
-    core::{
-        ic_cdk::api::{time, trap},
-        with_memory_manager, Memory, TRANSFER_ACCOUNT_INDEX_MEMORY_ID,
-    },
-    errors::RepositoryError,
+    core::{ic_cdk::api::time, with_memory_manager, Memory, TRANSFER_ACCOUNT_INDEX_MEMORY_ID},
     models::{
         indexes::transfer_account_index::{TransferAccountIndex, TransferAccountIndexCriteria},
         TransferId,
