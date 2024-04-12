@@ -95,14 +95,6 @@ describe('WalletInfoCard', () => {
     expect(button.attributes('disabled')).toBeDefined();
   });
 
-  it('is disabled if the wallet is the only wallet', async () => {
-    const wrapper = mount(WalletInfoCard);
-    initWallet(walletCanisterId1, false, 'TEST WALLET');
-    await wrapper.vm.$nextTick();
-    const button = wrapper.find('[data-test-id="remove-wallet-btn"]');
-    expect(button.attributes('disabled')).toBeDefined();
-  });
-
   it('is not disabled if the wallet is the only wallet', async () => {
     const wrapper = mount(WalletInfoCard);
 

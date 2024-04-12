@@ -24,7 +24,7 @@ const input = withDefaults(
   defineProps<{
     modelValue?: string;
     label?: string;
-    variant?: 'underlined' | 'outlined';
+    variant?: 'underlined' | 'outlined' | 'filled';
     density?: 'comfortable' | 'compact';
     multiple?: boolean;
     readonly?: boolean;
@@ -34,7 +34,7 @@ const input = withDefaults(
   {
     modelValue: undefined,
     label: undefined,
-    variant: 'underlined',
+    variant: 'filled',
     density: 'comfortable',
     multiple: false,
     readonly: false,

@@ -13,25 +13,28 @@
       v-model="name"
       name="name"
       :label="$t('terms.name')"
+      density="comfortable"
       :rules="[maxLengthRule(100, $t('terms.name'))]"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
     <VAutocomplete
       v-model="status"
       name="status"
       :label="$t('terms.status')"
+      density="comfortable"
       :items="statusItems"
       :rules="[requiredRule]"
       chips
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
     <UserGroupAutocomplete
       v-model="userGroups"
       name="groups"
+      density="comfortable"
       :label="$t('terms.user_groups')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
       :rules="[requiredRule]"
       chips
@@ -41,8 +44,9 @@
       ref="identitiesInput"
       v-model="identities"
       name="identities"
+      density="comfortable"
       :label="$t('terms.identities')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
+      :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
       :rules="[requiredRule]"
       :items="identities"
@@ -54,7 +58,7 @@
           v-model="addNewPrincipalModel"
           :title="$t('app.add_new_principal')"
           :icon="mdiPlus"
-          color="primary"
+          variant="tonal"
           :submit="
             newPrincipal => {
               if (newPrincipal.model) {
@@ -83,7 +87,7 @@
               @submit="addNewPrincipal"
             >
               <template #prepend>
-                <VAlert type="warning" variant="outlined" density="compact" class="mb-4">
+                <VAlert type="warning" variant="tonal" density="compact" class="mb-4">
                   {{ $t('app.user_associate_principal_warning') }}
                 </VAlert>
               </template>
@@ -121,6 +125,7 @@ import { VFormValidation } from '~/types/helper.types';
 import { UserStatusType } from '~/types/wallet.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 import AddPrincipalForm from './AddPrincipalForm.vue';
+import { VAlert, VAutocomplete, VBtn, VForm, VSpacer, VTextField } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

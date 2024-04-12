@@ -30,6 +30,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, toRefs } from 'vue';
+import { VBtn } from 'vuetify/components';
 import TransferDialog from '~/components/accounts/TransferDialog.vue';
 import { Account, UUID } from '~/generated/wallet/wallet.did';
 
@@ -40,7 +41,7 @@ const input = withDefaults(
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
-    variant?: 'flat' | 'text' | 'outlined';
+    variant?: 'flat' | 'text' | 'outlined' | 'elevated';
     color?: string;
     readonly?: boolean;
     appendIcon?: string;
@@ -50,8 +51,8 @@ const input = withDefaults(
     icon: undefined,
     text: undefined,
     size: 'default',
-    variant: 'flat',
-    color: 'primary-variant',
+    variant: 'elevated',
+    color: 'primary',
     readonly: false,
     appendIcon: undefined,
   },

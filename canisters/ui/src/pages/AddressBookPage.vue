@@ -4,7 +4,7 @@
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddAddressBookEntry]">
-            <AddressBookEntryBtn :text="$t('terms.new_address')" variant="outlined" />
+            <AddressBookEntryBtn :text="$t('terms.new_address')" />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -41,6 +41,7 @@
           "
         >
           <VDataTable
+            class="elevation-2 rounded"
             :loading="loading"
             :headers="headers"
             :items="addressBookEntries"
@@ -115,6 +116,7 @@
 import { mdiContentCopy, mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn, VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';

@@ -31,19 +31,20 @@
     :max-width="props.dialogMaxWidth"
   >
     <VCard :loading="loading">
-      <VToolbar dark :color="props.dialogToolbarColor">
+      <VToolbar :color="props.dialogToolbarColor">
         <VToolbarTitle
           :data-test-id="props.dataTestId ? `${props.dataTestId}-dialog-title` : undefined"
         >
           {{ props.title }}
         </VToolbarTitle>
-        <VBtn :disabled="loading" :icon="mdiClose" dark @click="close" />
+        <VBtn :disabled="loading" :icon="mdiClose" @click="close" />
       </VToolbar>
       <VCardText>
         <slot name="default" :model="{ value: intervalValue }" :loading="loading" :submit="submit">
           <p>{{ props.content }}</p>
         </slot>
       </VCardText>
+      <VDivider />
       <VCardActions class="pa-3">
         <slot
           name="actions"
@@ -54,7 +55,13 @@
         >
           <VSpacer />
           <VBtn variant="outlined" @click="close">{{ props.cancelText }}</VBtn>
-          <VBtn :loading="loading" data-test-id="action-btn-default-submit-btn" @click="submit">
+          <VBtn
+            :loading="loading"
+            color="primary"
+            variant="elevated"
+            data-test-id="action-btn-default-submit-btn"
+            @click="submit"
+          >
             {{ props.confirmText }}
           </VBtn>
         </slot>
@@ -69,6 +76,18 @@ import { Ref, computed, ref, watch } from 'vue';
 import { logger } from '~/core/logger.core';
 import { wait } from '~/utils/helper.utils';
 import { i18n } from '~/plugins/i18n.plugin';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VDivider,
+  VIcon,
+  VSpacer,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -108,7 +127,7 @@ const props = withDefaults(
     rounded: false,
     disabled: false,
     dialogMaxWidth: 800,
-    dialogToolbarColor: 'surface',
+    dialogToolbarColor: 'background',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modelValue: null as any,
     submit: undefined,

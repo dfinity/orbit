@@ -33,14 +33,14 @@
           <template #title-toolbar>
             <AccountSetupAction
               :account-id="account.id"
-              class="px-1"
+              class="px-1 mb-2"
               size="small"
-              variant="text"
               color="default"
+              variant="tonal"
               :readonly="!privileges.can_edit"
               :append-icon="mdiTuneVariant"
             >
-              {{ account.name }}
+              {{ $t('terms.settings') }}
             </AccountSetupAction>
           </template>
           <template #subtitle>
@@ -58,12 +58,8 @@
             />
           </template>
           <template v-if="privileges.can_transfer" #actions>
-            <BatchTransfersActionBtn
-              :account="account"
-              color="primary-variant"
-              variant="outlined"
-            />
-            <TransferBtn :account="account" color="primary-variant" variant="flat">
+            <BatchTransfersActionBtn :account="account" variant="outlined" />
+            <TransferBtn :account="account" color="primary">
               + {{ $t('pages.accounts.btn_new_transfer') }}
             </TransferBtn>
           </template>
@@ -81,11 +77,11 @@
             :types="[{ Transfer: [account.id] }]"
             hide-not-found
           />
-          <VContainer fluid>
+          <VContainer fluid class="px-3">
             <VRow>
               <VCol
                 cols="12"
-                class="d-flex flex-column-reverse flex-md-row ga-4 px-0 align-md-start"
+                class="d-flex flex-column-reverse flex-md-row ga-4 px-0 align-md-start pt-0"
               >
                 <div class="d-flex flex-column flex-grow-1 ga-4">
                   <DataLoader
@@ -95,7 +91,7 @@
                     :refresh-interval-ms="10000"
                   >
                     <VProgressCircular v-if="loadingTransfers" indeterminate color="primary" />
-                    <VTable v-else-if="data" hover>
+                    <VTable v-else-if="data" hover class="elevation-2 rounded">
                       <thead>
                         <tr>
                           <th class="w-50 font-weight-bold">{{ $t('terms.time') }}</th>
@@ -154,37 +150,25 @@
                     </VTable>
                   </DataLoader>
                 </div>
-                <VCard
-                  color="background"
-                  variant="flat"
-                  min-height="200px"
-                  min-width="272px"
-                  :max-width="!app.isMobile ? `272px` : undefined"
-                >
-                  <VToolbar color="transparent" class="pr-4">
-                    <VToolbarTitle>{{ $t('terms.filters') }}</VToolbarTitle>
-                    <VIcon :icon="mdiFilter" />
-                  </VToolbar>
-                  <VCardText class="pt-2">
-                    <DateRange
-                      v-model="filters.created"
-                      :label="$t('terms.created')"
-                      :prepend-icon="mdiCalendar"
-                    />
-                    <VDivider thickness="2" class="my-2" />
-                    <VBtn
-                      density="comfortable"
-                      block
-                      color="primary-variant"
-                      flat
-                      size="small"
-                      variant="tonal"
-                      @click="filters = filterUtils.getDefaultFilters()"
-                    >
-                      {{ $t('terms.reset') }}
-                    </VBtn>
-                  </VCardText>
-                </VCard>
+                <FiltersCard :title="$t('terms.filters')" :icon="mdiFilter">
+                  <DateRange
+                    v-model="filters.created"
+                    :label="$t('terms.created')"
+                    :prepend-icon="mdiCalendar"
+                  />
+                  <VSpacer />
+                  <VDivider thickness="2" class="my-2" />
+                  <VBtn
+                    density="default"
+                    color="primary-variant"
+                    flat
+                    size="small"
+                    variant="tonal"
+                    @click="filters = filterUtils.getDefaultFilters()"
+                  >
+                    {{ $t('terms.reset') }}
+                  </VBtn>
+                </FiltersCard>
               </VCol>
             </VRow>
           </VContainer>
@@ -205,6 +189,18 @@ import {
 } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import {
+  VBtn,
+  VChip,
+  VCol,
+  VContainer,
+  VDivider,
+  VIcon,
+  VProgressCircular,
+  VRow,
+  VSpacer,
+  VTable,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
@@ -215,11 +211,11 @@ import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import FiltersCard from '~/components/ui/FiltersCard.vue';
 import { useFilterUtils, useSavedFilters } from '~/composables/account.composable';
 import { Routes } from '~/configs/routes.config';
 import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did';
 import { ChainApiFactory } from '~/services/chains';
-import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps } from '~/types/app.types';
 import type { AccountIncomingTransfer } from '~/types/chain.types';
@@ -254,7 +250,6 @@ const privileges = ref<AccountCallerPrivileges>({
   can_transfer: false,
 });
 const loading = ref(false);
-const app = useAppStore();
 const wallet = useWalletStore();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {

@@ -10,7 +10,7 @@
           <VTextField
             readonly
             density="compact"
-            variant="solo"
+            variant="filled"
             flat
             v-bind="menuProps"
             :label="$t('terms.from')"
@@ -38,7 +38,7 @@
           <VTextField
             readonly
             density="compact"
-            variant="solo"
+            variant="filled"
             flat
             v-bind="menuProps"
             :label="$t('terms.until')"
@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { VDialog, VIcon, VMenu, VTextField } from 'vuetify/components';
 import { useAppStore } from '~/stores/app.store';
 import { endOfDay, startOfDay } from '~/utils/date.utils';
 import DateSelector from './DateSelector.vue';

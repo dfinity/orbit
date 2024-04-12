@@ -63,6 +63,7 @@
 <script setup lang="ts">
 import { mdiAccountCircle, mdiClockPlusOutline, mdiClockTimeFourOutline } from '@mdi/js';
 import { computed } from 'vue';
+import { VChip, VTooltip } from 'vuetify/components';
 import { Proposal } from '~/generated/wallet/wallet.did';
 import type { ProposalDetails } from '~/types/wallet.types';
 import { variantIs } from '~/utils/helper.utils';

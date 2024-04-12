@@ -5,7 +5,7 @@
     <VTextField
       v-model="modelValue"
       :label="$t('terms.principal')"
-      variant="underlined"
+      variant="filled"
       :rules="[requiredRule, validPrincipalRule]"
     />
   </VForm>
@@ -13,6 +13,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
+import { VForm, VTextField } from 'vuetify/components';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule, validPrincipalRule } from '~/utils/form.utils';
 

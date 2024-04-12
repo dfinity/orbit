@@ -5,7 +5,6 @@
     name="account_id"
     :label="$t('terms.account')"
     :loading="autocomplete.loading.value"
-    variant="underlined"
     :items="groupList"
     chips
     clearable
@@ -46,6 +45,7 @@ import type {
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
 import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
+import { VAutocomplete } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

@@ -1,5 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
+import { WALLET_ID_QUERY_PARAM } from '~/core/constants.core';
+import { InvalidWalletError, UnregisteredUserError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
 import {
   Capabilities,
@@ -11,12 +13,13 @@ import {
   WalletAsset,
 } from '~/generated/wallet/wallet.did';
 import { i18n } from '~/plugins/i18n.plugin';
+import { router } from '~/plugins/router.plugin';
 import { services } from '~/plugins/services.plugin';
 import { WalletService } from '~/services/wallet.service';
 import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
-import { computedWalletName, forceNavigate, isApiError } from '~/utils/app.utils';
+import { computedWalletName, isApiError } from '~/utils/app.utils';
 import { arrayBatchMaker } from '~/utils/helper.utils';
 import { accountsWorker, startWalletWorkers, stopWalletWorkers } from '~/workers';
 
@@ -148,12 +151,9 @@ export const useWalletStore = defineStore('wallet', {
     },
   },
   actions: {
-    reset(): void {
+    onDisconnected(): void {
       const initialState = initialStoreState();
 
-      this.connectionStatus = initialState.connectionStatus;
-      this.connectionError = initialState.connectionError;
-      this.connectionErrorMessage = initialState.connectionErrorMessage;
       this.canisterId = initialState.canisterId;
       this.configuration = initialState.configuration;
       this.notifications = initialState.notifications;
@@ -164,7 +164,7 @@ export const useWalletStore = defineStore('wallet', {
     },
     async connectTo(
       walletId: Principal,
-      forceNavigationOnSuccess = true,
+      onConnectedReload = true,
     ): Promise<WalletConnectionStatus> {
       const app = useAppStore();
 
@@ -174,37 +174,40 @@ export const useWalletStore = defineStore('wallet', {
           return this.connectionStatus;
         }
 
-        // reset the store to the initial state before connecting to a new wallet, this makes sure that
-        // the store is in a consistent state and that the user is not seeing any stale data
-        this.reset();
+        app.disableBackgroundPolling = true;
+        stopWalletWorkers();
 
         this.loading = true;
         this.connectionStatus = WalletConnectionStatus.Connecting;
-        this.canisterId = walletId.toText();
-        const myUser = await this.service.myUser();
+
+        if (walletId.toText() === Principal.anonymous().toText()) {
+          throw new InvalidWalletError();
+        }
+
+        const walletService = await services().wallet.withWalletId(walletId);
+        const myUser = await walletService.myUser();
         if (!myUser) {
-          logger.warn(`User not registered in the selected wallet`);
-          this.connectionStatus = WalletConnectionStatus.UnregisteredUser;
-          return this.connectionStatus;
+          throw new UnregisteredUserError();
         }
 
         this.user = myUser.me;
         this.privileges = myUser.privileges;
 
-        // these calls do not need to be awaited, it will be loaded in the background making the initial load faster
-        this.loadCapabilities();
+        // loads the capabilities of the wallet
+        this.configuration.details = await walletService.capabilities();
 
         startWalletWorkers(walletId);
 
         this.connectionStatus = WalletConnectionStatus.Connected;
-
-        if (forceNavigationOnSuccess) {
-          // force a navigation to re-run the route guards
-          forceNavigate();
-        }
       } catch (err) {
         logger.error(`Failed to connect to wallet`, { err });
-        this.connectionStatus = WalletConnectionStatus.Failed;
+
+        let connectionStatus = WalletConnectionStatus.Failed;
+        if (err instanceof InvalidWalletError) {
+          connectionStatus = WalletConnectionStatus.Disconnected;
+        } else if (err instanceof UnregisteredUserError) {
+          connectionStatus = WalletConnectionStatus.UnregisteredUser;
+        }
 
         if (isApiError(err)) {
           switch (err.code) {
@@ -213,6 +216,11 @@ export const useWalletStore = defineStore('wallet', {
               break;
             default:
               this.connectionError = WalletConnectionError.OTHER_WALLET_ERROR;
+
+              app.sendNotification({
+                type: 'error',
+                message: i18n.global.t('wallets.user_load_error'),
+              });
               break;
           }
         } else {
@@ -220,18 +228,27 @@ export const useWalletStore = defineStore('wallet', {
 
           if (err instanceof Error) {
             this.connectionErrorMessage = err.message;
+
+            app.sendNotification({
+              type: 'error',
+              message: i18n.global.t('app.session_load_error'),
+            });
           }
         }
 
-        app.sendNotification({
-          type: 'error',
-          message: i18n.global.t('wallets.user_load_error'),
-        });
-
-        // force a navigation to re-run the route guards
-        forceNavigate();
+        this.onDisconnected();
+        this.connectionStatus = connectionStatus;
       } finally {
+        // if the wallet id has changed, force a navigation to re-run the route guards
+        if (onConnectedReload && this.canisterId.length && this.canisterId !== walletId.toText()) {
+          router.push({
+            path: window.location.pathname,
+            query: { [WALLET_ID_QUERY_PARAM]: walletId.toText() },
+          });
+        }
+        this.canisterId = walletId.toText();
         this.loading = false;
+        app.disableBackgroundPolling = false;
       }
 
       return this.connectionStatus;
@@ -317,14 +334,6 @@ export const useWalletStore = defineStore('wallet', {
       }
 
       return null;
-    },
-    async loadCapabilities(): Promise<void> {
-      try {
-        this.configuration.loading = true;
-        this.configuration.details = await this.service.capabilities();
-      } finally {
-        this.configuration.loading = false;
-      }
     },
     trackAccountsBalance(accountIds: UUID[]): void {
       accountsWorker?.postMessage({

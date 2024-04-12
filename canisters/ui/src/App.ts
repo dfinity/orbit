@@ -7,7 +7,7 @@ import { pinia } from '~/plugins/pinia.plugin';
 import { router } from '~/plugins/router.plugin';
 import { serviceManager } from '~/plugins/services.plugin';
 import { vuetify } from '~/plugins/vuetify.plugin';
-import './App.scss';
+import './styles/main.scss';
 import App from './App.vue';
 
 const initializeApp = async (): Promise<void> => {

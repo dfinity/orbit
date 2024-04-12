@@ -57,8 +57,7 @@
             v-if="showSubmit"
             :disabled="!canSubmit"
             :loading="props.saving"
-            variant="flat"
-            color="primary-variant"
+            color="primary"
             @click="submit"
           >
             {{ isCreationMode ? $t('terms.create') : $t('terms.save') }}

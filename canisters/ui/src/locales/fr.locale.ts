@@ -9,7 +9,6 @@ export default {
     confirm: 'Confirmez',
     copied_to_clipboard: 'Valeur placée dans le presse-papiers',
     initial_account_name: 'Principal',
-    alpha_warning: 'Ceci est une version alpha, utilisez a vos risques',
     wallet_info_card_title: 'Info {name}',
     wallet_info_card_edit_btn: 'Éditer le portefeuille',
     wallet_info_card_remove_btn: 'Retirer le portefeuille',
@@ -74,6 +73,18 @@ export default {
     account_dialog_approval_policy_transfer_hint:
       'La politique qui doit être approuvée pour transférer des fonds.',
     criteria_builder_no_criteria: 'Pas de critères',
+  },
+  alpha_warning: {
+    version: 'Ceci est une version alpha.',
+    caution: 'Utilisez avec prudence.',
+  },
+  sidebar: {
+    highlights: {
+      main: 'Portefeuille Trustless {line1} {line2} {line3}',
+      line3: 'Multichain',
+      line1: 'Actifs Numériques',
+      line2: 'Multi-Garde',
+    },
   },
   blockchains: {
     icp: {
@@ -244,21 +255,14 @@ export default {
       },
     },
   },
-  login: {
-    signin_slogan: 'Connectez vous de manière sécurisée pour gérer vos actifs crypto',
-    auth_failed: "L'authentication a échoué, veuillez essayer de nouveau.",
-  },
-  slogans: {
-    elevate_to_orbit: {
-      main: 'Elevez vous en {term1}, {term2}',
-      term1: 'Orbit',
-      term2: 'où la sécurity rejoint la liberté ',
-    },
-    institutions_multi_custody: {
-      main: "Où les {term1} et la {term2} s'alignent",
-      term1: 'Institutions',
-      term2: 'Garde-Partagée',
-    },
+  landing: {
+    title: 'Gestion Multichain',
+    subtitle: 'Une Plateforme, Une Supervision Complète',
+    description:
+      'Orbit simplifie la gestion des actifs on-chain pour les entreprises, les DAOs et les équipes, en consolidant le contrôle et la visibilité sur une seule plateforme intuitive.',
+    connect_title: 'Connectez-vous en toute sécurité pour gérer vos actifs numériques',
+    connect_btn: 'Se connecter avec Internet Identity',
+    connect_error: 'Échec de la connexion, veuillez réessayer.',
   },
   home: {
     welcome_back: 'Bienvenue',
@@ -541,9 +545,8 @@ export default {
     add_wallet: {
       initialization_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
       add_wallet_title: 'Comment aimeriez-vous ajouter un portefeuille?',
-
+      option_join_existing_wallet: 'Rejoindre un portefeuille existant',
       option_deploy_new_wallet: 'Déployer un nouveau portefeuille',
-
       check_permissions_title: 'Vérification du statut de la liste d attente...',
       join_waitlist_title: 'Rejoindre la liste d attente',
       join_waitlist_body:
@@ -647,6 +650,8 @@ export default {
       transfer: 'Transfert',
       capabilities: 'Capacités',
       systeminfo: 'Information Système',
+      systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
+      systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
     },
     allow: {
       public: "N'importe qui",

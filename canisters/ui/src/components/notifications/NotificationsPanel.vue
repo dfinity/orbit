@@ -1,10 +1,10 @@
 <template>
   <VCard :width="app.isMobile ? '100%' : '400px'">
-    <VToolbar dark color="surface">
+    <VToolbar color="surface">
       <VToolbarTitle class="text-body-1 font-weight-bold">
         {{ $t('app.notifications_panel_title') }}
       </VToolbarTitle>
-      <VBtn :icon="mdiClose" size="small" variant="flat" @click="emit('close')" />
+      <VBtn :icon="mdiClose" size="small" @click="emit('close')" />
     </VToolbar>
     <VDivider />
     <VList density="compact" max-height="500px" class="py-0">
@@ -44,6 +44,15 @@
 
 <script lang="ts" setup>
 import { mdiCheckAll, mdiClose } from '@mdi/js';
+import {
+  VBtn,
+  VCard,
+  VDivider,
+  VList,
+  VListItem,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import { Notification } from '~/generated/wallet/wallet.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';

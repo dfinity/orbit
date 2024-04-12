@@ -10,7 +10,6 @@
           <VRow>
             <VCol cols="12">
               <RecentProposals
-                class="mb-4"
                 :see-all-link="{
                   name: Routes.Proposals,
                   query: { group_by: ProposalDomains.System },
@@ -47,7 +46,6 @@
                 class="px-2 mt-2"
                 :items="individualResources"
                 density="comfortable"
-                variant="underlined"
                 :label="$t('access_policies.select_resource')"
                 hide-details
               />
@@ -75,6 +73,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VAutocomplete, VCol, VContainer, VRow } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import AccessPolicyList from '~/components/access-policies/AccessPolicyList.vue';

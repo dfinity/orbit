@@ -20,8 +20,8 @@ export enum ResourceActionEnum {
   Update = 'Update',
   Delete = 'Delete',
   Transfer = 'Transfer',
-  ReadSensitiveConfig = 'ReadSensitiveConfig',
-  ReadPublicConfig = 'ReadPublicConfig',
+  SystemInfoConfig = 'SystemInfoConfig',
+  SystemInfoCapabilities = 'SystemInfoCapabilities',
 }
 
 export enum AuthScopeEnum {

@@ -1,10 +1,17 @@
-import { mdiBookOpenVariant, mdiCogs, mdiFormatListText, mdiWalletBifold } from '@mdi/js';
-import { App, Ref, computed, ref, watch } from 'vue';
+import {
+  mdiBookOpenVariant,
+  mdiCogs,
+  mdiFormatListText,
+  mdiPlusBox,
+  mdiWalletBifold,
+} from '@mdi/js';
+import { App, computed, Ref, ref, watch } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { Routes } from '~/configs/routes.config';
 import { logger } from '~/core/logger.core';
 import { useSessionStore } from '~/stores/session.store';
 import { useWalletStore } from '~/stores/wallet.store';
+import { RequiredSessionState } from '~/types/auth.types';
 import {
   NavigastionAuthType,
   NavigationActionType,
@@ -15,6 +22,63 @@ import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 const sections = (): NavigationSections => ({
   main: [
     {
+      name: 'initialization',
+      localeKey: 'wallets.add_wallet_list_item',
+      action: {
+        type: NavigationActionType.To,
+        handle: route =>
+          route.params.locale ? `/${route.params.locale}/initialization` : '/initialization',
+      },
+      auth: {
+        type: NavigastionAuthType.Custom,
+        criteria: {
+          session: RequiredSessionState.AuthenticatedNoWallet,
+        },
+      },
+      icon: mdiPlusBox,
+    },
+    {
+      name: 'accounts',
+      localeKey: 'navigation.accounts',
+      action: {
+        type: NavigationActionType.To,
+        handle: route => (route.params.locale ? `/${route.params.locale}/accounts` : '/accounts'),
+      },
+      auth: {
+        type: NavigastionAuthType.Route,
+        route: Routes.Accounts,
+      },
+      icon: mdiWalletBifold,
+    },
+    {
+      name: 'transfer_proposals',
+      localeKey: 'navigation.transfer_proposals',
+      action: {
+        type: NavigationActionType.To,
+        handle: route =>
+          route.params.locale ? `/${route.params.locale}/transfer-requests` : '/transfer-requests',
+      },
+      auth: {
+        type: NavigastionAuthType.Route,
+        route: Routes.TransferProposals,
+      },
+      icon: mdiFormatListText,
+    },
+    {
+      name: 'address_book',
+      localeKey: 'navigation.address_book',
+      action: {
+        type: NavigationActionType.To,
+        handle: route =>
+          route.params.locale ? `/${route.params.locale}/address-book` : '/address-book',
+      },
+      auth: {
+        type: NavigastionAuthType.Route,
+        route: Routes.AddressBook,
+      },
+      icon: mdiBookOpenVariant,
+    },
+    {
       name: 'settings',
       localeKey: 'navigation.settings',
       action: {
@@ -22,8 +86,10 @@ const sections = (): NavigationSections => ({
       },
       icon: mdiCogs,
       auth: {
-        type: NavigastionAuthType.Route,
-        route: Routes.MySettings,
+        type: NavigastionAuthType.Custom,
+        criteria: {
+          session: RequiredSessionState.AuthenticatedHasWallets,
+        },
       },
       items: [
         {
@@ -99,47 +165,6 @@ const sections = (): NavigationSections => ({
         },
       ],
     },
-    {
-      name: 'accounts',
-      localeKey: 'navigation.accounts',
-      action: {
-        type: NavigationActionType.To,
-        handle: route => (route.params.locale ? `/${route.params.locale}/accounts` : '/accounts'),
-      },
-      auth: {
-        type: NavigastionAuthType.Route,
-        route: Routes.Accounts,
-      },
-      icon: mdiWalletBifold,
-    },
-    {
-      name: 'transfer_proposals',
-      localeKey: 'navigation.transfer_proposals',
-      action: {
-        type: NavigationActionType.To,
-        handle: route =>
-          route.params.locale ? `/${route.params.locale}/transfer-requests` : '/transfer-requests',
-      },
-      auth: {
-        type: NavigastionAuthType.Route,
-        route: Routes.TransferProposals,
-      },
-      icon: mdiFormatListText,
-    },
-    {
-      name: 'address_book',
-      localeKey: 'navigation.address_book',
-      action: {
-        type: NavigationActionType.To,
-        handle: route =>
-          route.params.locale ? `/${route.params.locale}/address-book` : '/address-book',
-      },
-      auth: {
-        type: NavigastionAuthType.Route,
-        route: Routes.AddressBook,
-      },
-      icon: mdiBookOpenVariant,
-    },
   ],
 });
 
@@ -183,7 +208,7 @@ class Navigation {
           main: this.retainAuthorizedNavigation(full.main),
         };
       },
-      { deep: true },
+      { deep: true, immediate: true },
     );
 
     app.config.globalProperties.$navigation = navigation;
