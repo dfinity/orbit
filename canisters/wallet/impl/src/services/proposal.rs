@@ -350,10 +350,16 @@ impl ProposalService {
             return;
         }
 
-        let mut possible_voters = proposal
-            .find_all_possible_voters()
-            .await
-            .expect("Failed to find all possible voters");
+        let mut possible_voters = match proposal.find_all_possible_voters().await {
+            Ok(voters) => voters,
+            Err(_) => {
+                print(format!(
+                    "Failed to find all possible voters for proposal {}",
+                    Uuid::from_bytes(proposal.id).hyphenated()
+                ));
+                return;
+            }
+        };
 
         possible_voters.remove(&proposal.proposed_by);
 
@@ -367,8 +373,7 @@ impl ProposalService {
                     proposal.title.to_owned(),
                     proposal.summary.to_owned(),
                 )
-                .await
-                .expect("Failed to send notification");
+                .await;
         }
     }
 
