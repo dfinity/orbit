@@ -78,21 +78,28 @@
   },
   "networks": {
     "prod": {
-      "providers": ["https://icp0.io"],
+      "providers": ["https://icp-api.io"],
       "type": "persistent",
       "replica": {
         "subnet_type": "application"
       }
     },
     "staging": {
-      "providers": ["https://icp0.io"],
+      "providers": ["https://icp-api.io"],
+      "type": "persistent",
+      "replica": {
+        "subnet_type": "application"
+      }
+    },
+    "playground": {
+      "providers": ["https://icp-api.io"],
       "type": "persistent",
       "replica": {
         "subnet_type": "application"
       }
     },
     "testing": {
-      "providers": ["https://icp0.io"],
+      "providers": ["https://icp-api.io"],
       "type": "persistent",
       "replica": {
         "subnet_type": "application"
