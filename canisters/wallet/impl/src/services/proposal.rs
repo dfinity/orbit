@@ -18,6 +18,7 @@ use crate::{
 use ic_canister_core::utils::rfc3339_to_timestamp;
 use ic_canister_core::{api::ServiceResult, model::ModelValidator};
 use ic_canister_core::{repository::Repository, types::UUID};
+use ic_cdk::print;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -211,7 +212,17 @@ impl ProposalService {
             items: paginated_ids
                 .items
                 .into_iter()
-                .map(|id| self.get_proposal(&id).expect("Failed to get proposal"))
+                .flat_map(|id| match self.get_proposal(&id) {
+                    Ok(proposal) => Some(proposal),
+                    Err(error) => {
+                        print(format!(
+                            "Failed to get proposal {}: {:?}",
+                            Uuid::from_bytes(id.to_owned()).hyphenated(),
+                            error
+                        ));
+                        None
+                    }
+                })
                 .collect::<Vec<Proposal>>(),
         })
     }
