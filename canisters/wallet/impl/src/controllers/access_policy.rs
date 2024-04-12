@@ -55,7 +55,7 @@ impl AccessPolicyController {
         let ctx = call_context();
         let policy = self
             .access_policy_service
-            .get_access_policy(&Resource::from(input.resource))?;
+            .get_access_policy(&Resource::from(input.resource));
 
         Ok(GetAccessPolicyResponse {
             policy: policy.clone().into(),
