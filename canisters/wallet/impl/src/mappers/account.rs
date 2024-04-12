@@ -93,15 +93,10 @@ impl AccountMapper {
 
                 input.blockchain.native_symbol().to_string()
             }
-            _ => {
-                let symbol = input.metadata.get(ACCOUNT_METADATA_SYMBOL_KEY);
-
-                if symbol.is_none() {
-                    return Err(MapperError::NonNativeAccountSymbolRequired);
-                }
-
-                symbol.unwrap()
-            }
+            _ => input
+                .metadata
+                .get(ACCOUNT_METADATA_SYMBOL_KEY)
+                .ok_or(MapperError::NonNativeAccountSymbolRequired)?,
         };
 
         let new_account = Account {
