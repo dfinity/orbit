@@ -196,11 +196,11 @@ function deploy_ui() {
   echo "Deploying the UI canister to the '$network' network."
 
   if [ "$network" == "local" ]; then
-    NODE_ENV=development dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+    BUILD_MODE=development dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
     return
   fi
 
-  NODE_ENV=production dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  BUILD_MODE=$network dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
 }
 
 #############################################

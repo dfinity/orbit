@@ -110,14 +110,22 @@ const generateICAssetsJson = (
   });
 };
 
+const BUILD_MODES = ['development', 'playground', 'testing', 'staging', 'production'];
+
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
-  const isDevelopment =
-    process.env.NODE_ENV && process.env.NODE_ENV.length
-      ? process.env.NODE_ENV === 'development'
-      : mode === 'development';
+export default defineConfig(({ mode: defaultMode }) => {
+  const mode =
+    process.env.BUILD_MODE && process.env.BUILD_MODE.length ? process.env.BUILD_MODE : defaultMode;
+
+  if (!BUILD_MODES.includes(mode)) {
+    throw new Error(`Invalid BUILD_MODE: ${mode}, expected one of ${BUILD_MODES.join(', ')}`);
+  }
+
+  const isDevelopment = mode === 'development';
   const isProduction = !isDevelopment;
-  mode = isProduction ? 'production' : 'development';
+
+  process.env.NODE_ENV = isProduction ? 'production' : 'development';
+
   const localesPath = resolve(__dirname, 'src/locales');
   const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.locale.ts'));
   const canisters = resolveCanisterIds();
