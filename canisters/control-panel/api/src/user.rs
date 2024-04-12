@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UserDTO {
-    pub id: Principal,
+    pub identity: Principal,
     pub main_wallet: Option<Principal>,
     pub wallets: Vec<UserWalletDTO>,
     pub subscription_status: UserSubscriptionStatusDTO,

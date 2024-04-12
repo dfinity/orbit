@@ -177,7 +177,9 @@ impl UserController {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.get_user(&ctx.caller(), &ctx)?;
 
-        let deleted_user = UserService::default().remove_user(&user.id, &ctx).await?;
+        let deleted_user = UserService::default()
+            .remove_user(&user.identity, &ctx)
+            .await?;
 
         Ok(DeleteUserResponse {
             user: UserDTO::from(deleted_user),

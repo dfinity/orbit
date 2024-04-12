@@ -43,7 +43,7 @@ fn register_user_successful() {
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.id, user_id);
+    assert_eq!(user_dto.identity, user_id);
 
     // get main wallet
     let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
@@ -77,7 +77,7 @@ fn deploy_user_wallet() {
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.id, user_id);
+    assert_eq!(user_dto.identity, user_id);
 
     // user can't deploy wallet before being approved
     let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
@@ -210,7 +210,7 @@ fn deploy_too_many_wallets() {
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.id, user_id);
+    assert_eq!(user_dto.identity, user_id);
 
     // approve user
     let update_waiting_list_args = UpdateWaitingListInput {
