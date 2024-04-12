@@ -100,7 +100,7 @@ function get_subnet_type() {
   if [ "$network" == "prod" ]; then
     echo "fiduciary"
   else
-    echo "application"
+    echo ""
   fi
 }
 
@@ -134,7 +134,6 @@ function setup_cycles_wallet() {
 
 function reset_playground_network() {
   local network="$(get_network)"
-  local subnet_type=$(get_subnet_type)
 
   if [ "$network" != "playground" ]; then
     echo "ERROR: This operation is only supported on the playground network"
@@ -179,7 +178,7 @@ function deploy_control_panel() {
   if [ $canister_id_exit_code -ne 0 ]; then
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
-    dfx canister create control_panel --network $network --with-cycles 5000000000000 --subnet-type $subnet_type
+    dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
     dfx build control_panel --network $network
     dfx canister install control_panel --network $network --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
   else
@@ -197,11 +196,11 @@ function deploy_ui() {
   echo "Deploying the UI canister to the '$network' network."
 
   if [ "$network" == "local" ]; then
-    NODE_ENV=development dfx deploy --network $network ui --with-cycles 2000000000000 --subnet-type $subnet_type
+    NODE_ENV=development dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
     return
   fi
 
-  NODE_ENV=production dfx deploy --network $network ui --with-cycles 1000000000000 --subnet-type $subnet_type
+  NODE_ENV=production dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
 }
 
 #############################################
@@ -245,7 +244,7 @@ while [[ $# -gt 0 ]]; do
     identity_warning_confirmation
     set_network playground
     exec_function setup_enviroment
-    if [ "$1" == "no-reset" ]; then
+    if [ "${1-}" == "no-reset" ]; then
       shift
     else
       exec_function reset_playground_network
