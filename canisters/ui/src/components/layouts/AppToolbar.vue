@@ -1,19 +1,12 @@
 <template>
-  <VToolbar density="compact" :class="`py-2 ${bgColor}`">
+  <VToolbar density="compact" :class="`py-2 px-4 ${bgColor}`">
     <div class="d-flex">
       <slot name="context">
-        <BrandLogo v-if="showLogo" height="26px" class="ml-4" />
+        <BrandLogo v-if="showLogo" height="26px" />
       </slot>
     </div>
     <VSpacer />
-    <div
-      class="d-flex"
-      :class="{
-        'ga-0': app.isMobile,
-        'ga-2': !app.isMobile,
-        'mr-2': !app.isMobile || !session.isAuthenticated,
-      }"
-    >
+    <div class="d-flex ga-0 ga-md-2 align-center">
       <slot name="actions">
         <VBtn
           v-if="props.themeSelector"
@@ -25,6 +18,7 @@
         <UserAvatarSelector v-if="session.isAuthenticated" :variant="props.variant" />
         <VBtn
           v-if="props.expandableSidebar"
+          density="compact"
           :icon="mdiMenuOpen"
           @click.prevent="app.toogleSidebar"
         />

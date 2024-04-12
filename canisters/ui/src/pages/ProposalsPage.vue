@@ -48,7 +48,8 @@
             </VRow>
             <VRow>
               <VCol
-                cols="12 d-flex flex-column-reverse flex-md-row align-md-start flex-no-wrap ga-4"
+                cols="12"
+                class="d-flex flex-column-reverse flex-md-row align-md-start flex-no-wrap ga-4"
               >
                 <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
                   <ProposalList

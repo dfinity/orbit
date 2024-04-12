@@ -1,23 +1,18 @@
 <template>
-  <VNavigationDrawer
-    v-model="app.showSidebar"
-    class="sidebar"
-    :width="props.width"
-    :color="props.color"
-  >
+  <VNavigationDrawer v-model="app.showSidebar" :width="props.width" :color="props.color">
     <div class="d-flex flex-column h-100">
-      <div class="sidebar__header d-flex flex-grow-0">
+      <div class="d-flex flex-grow-0">
         <slot name="header">
           <SidenavHeader v-if="showHeader" :language-selector="props.languageSelector" />
         </slot>
       </div>
-      <div class="sidebar_nav d-flex flex-column flex-grow-1">
+      <div class="d-flex flex-column flex-grow-1">
         <slot name="nav">
           <SidenavMenu v-if="showNav" />
           <SidebarHighlights v-if="props.nav && !$navigation.value.main.length" class="mb-4" />
         </slot>
       </div>
-      <div class="sidebar_footer d-flex flex-column flex-grow-0 pa-4">
+      <div class="d-flex flex-column flex-grow-0 pa-4">
         <slot name="footer">
           <AlphaWarning class="mb-12" />
           <a v-if="showFooter" href="https://internetcomputer.org" target="_blank">
