@@ -21,9 +21,9 @@
 
     <VDialog v-model="open" :max-width="props.dialogMaxWidth" :persistent="loading">
       <VCard :loading="loading" :persistent="loading">
-        <VToolbar dark color="surface">
+        <VToolbar color="background">
           <VToolbarTitle>{{ dialogTitle }}</VToolbarTitle>
-          <VBtn :disabled="loading" :icon="mdiClose" dark @click="open = false" />
+          <VBtn :disabled="loading" :icon="mdiClose" @click="open = false" />
         </VToolbar>
         <VCardText class="px-4 pb-4">
           <VCard
@@ -34,7 +34,7 @@
             variant="flat"
             class="mb-2"
           >
-            <VToolbar dark color="background" density="compact">
+            <VToolbar color="background" density="compact">
               <VToolbarTitle class="text-body-1">
                 {{ $t(`proposals.download.${download.group.toLowerCase()}`) }}
               </VToolbarTitle>
@@ -61,6 +61,15 @@
 import { mdiClose, mdiDownload } from '@mdi/js';
 import { computed, ref, toRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  VBtn,
+  VCard,
+  VCardText,
+  VDialog,
+  VIcon,
+  VToolbar,
+  VToolbarTitle,
+} from 'vuetify/components';
 import { AvailableDomain, Filters, useDownloadItems } from '~/composables/proposal.composable';
 import logger from '~/core/logger.core';
 import { ProposalStatusCode, UUID } from '~/generated/wallet/wallet.did';
@@ -81,7 +90,7 @@ const props = withDefaults(
     color?: string;
     density?: 'comfortable' | 'compact' | 'default';
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
-    variant?: 'flat' | 'text' | 'outlined';
+    variant?: 'flat' | 'text' | 'outlined' | 'elevated';
     prependIcon?: string;
     appendIcon?: string;
     dialogMaxWidth?: number;
@@ -89,9 +98,9 @@ const props = withDefaults(
   {
     batchFetchLimit: 50,
     density: 'default',
-    color: 'primary-variant',
+    color: 'primary',
     size: 'default',
-    variant: 'outlined',
+    variant: 'elevated',
     icon: undefined,
     prependIcon: undefined,
     appendIcon: undefined,

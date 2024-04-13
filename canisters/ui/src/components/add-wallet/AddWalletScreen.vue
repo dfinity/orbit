@@ -2,43 +2,52 @@
   <VContainer fluid>
     <div class="screens" data-test-id="split-screen">
       <TransitionGroup :name="transitionDestinationNames[initializationStep]">
-        <div
+        <VCard
           v-if="initializationStep == InitializationStep.ChooseOption"
-          class="mx-auto w-md-50 mt-16"
+          class="mt-16 pa-4 mx-auto w-md-75"
         >
-          <h1 class="text-h4 mb-6">{{ props.title }}</h1>
+          <VCardText>
+            <h1 class="text-h4 mb-6">{{ props.title }}</h1>
 
-          <VRadioGroup v-model="userChoice">
-            <VRadio
-              :label="$t('pages.add_wallet.option_join_existing_wallet')"
-              :value="UserOptions.JoinExisting"
-              data-test-id="join-existing-wallet-radio"
-            ></VRadio>
-            <VRadio
-              :label="$t('pages.add_wallet.option_deploy_new_wallet')"
-              :value="UserOptions.CreateNew"
-              data-test-id="deploy-new-wallet-radio"
-            ></VRadio>
-          </VRadioGroup>
+            <VRadioGroup v-model="userChoice">
+              <VRadio
+                :label="$t('pages.add_wallet.option_join_existing_wallet')"
+                :value="UserOptions.JoinExisting"
+                data-test-id="join-existing-wallet-radio"
+              />
+              <VRadio
+                :label="$t('pages.add_wallet.option_deploy_new_wallet')"
+                :value="UserOptions.CreateNew"
+                data-test-id="deploy-new-wallet-radio"
+              />
+            </VRadioGroup>
 
-          <VBtn
-            color="primary"
-            class="mt-2"
-            data-test-id="continue-button"
-            @click="onInitializationOptionChosen"
-          >
-            {{ $t('terms.continue') }}
-          </VBtn>
-        </div>
-
-        <JoinWallet
+            <VBtn
+              color="primary"
+              class="mt-2"
+              data-test-id="continue-button"
+              @click="onInitializationOptionChosen"
+            >
+              {{ $t('terms.continue') }}
+            </VBtn>
+          </VCardText>
+        </VCard>
+        <VCard
           v-if="initializationStep == InitializationStep.JoinWallet"
-          @back="initializationStep = InitializationStep.ChooseOption"
-        ></JoinWallet>
-        <DeployWallet
+          class="mt-16 pa-4 mx-auto w-md-75"
+        >
+          <VCardText>
+            <JoinWallet @back="initializationStep = InitializationStep.ChooseOption" />
+          </VCardText>
+        </VCard>
+        <VCard
           v-if="initializationStep == InitializationStep.DeployWallet"
-          @back="initializationStep = InitializationStep.ChooseOption"
-        />
+          class="mt-16 pa-4 mx-auto w-md-75"
+        >
+          <VCardText>
+            <DeployWallet @back="initializationStep = InitializationStep.ChooseOption" />
+          </VCardText>
+        </VCard>
       </TransitionGroup>
     </div>
   </VContainer>
@@ -48,7 +57,7 @@
 import { ref } from 'vue';
 import DeployWallet from '~/components/add-wallet/DeployWallet.vue';
 import JoinWallet from '~/components/add-wallet/JoinWallet.vue';
-import { VBtn, VContainer, VRadio, VRadioGroup } from 'vuetify/components';
+import { VBtn, VCard, VCardText, VContainer, VRadio, VRadioGroup } from 'vuetify/components';
 import { unreachable } from '~/utils/helper.utils';
 
 const props = withDefaults(

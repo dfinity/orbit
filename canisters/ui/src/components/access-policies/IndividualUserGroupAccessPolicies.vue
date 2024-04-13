@@ -5,7 +5,6 @@
     name="user_group_id"
     :label="$t('terms.user_group')"
     :loading="autocomplete.loading.value"
-    variant="underlined"
     :items="groupList"
     chips
     clearable
@@ -46,6 +45,7 @@ import {
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
 import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
+import { VAutocomplete } from 'vuetify/components';
 
 const autocomplete = useUserGroupsAutocomplete();
 const selectedUserGroupId = ref<UUID | null>(null);

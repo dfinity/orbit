@@ -9,17 +9,47 @@ function title() {
   echo "Orbit deployment"
 }
 
+function identity_warning_confirmation() {
+  if [ "${SKIP_CONFIRMATION:-}" = "true" ] || [ "${SKIP_CONFIRMATION:-}" = "1" ]; then
+    return
+  fi
+
+  echo -e "\e[1;33m"
+  echo -e "WARNING: You are about to deploy to the IC network, this will use your default identity."
+  echo -e "\e[0m"
+
+  identity=$(dfx identity whoami)
+
+  if [ -z "$identity" ]; then
+    echo "No identity found, please login to your dfx environment."
+    exit 1
+  fi
+
+  echo "Current identity: $identity"
+  echo
+
+  read -p "Do you want to continue? [y/N]: " confirmation
+
+  if [[ ! "$confirmation" =~ ^[yY] ]]; then
+    echo
+    echo "Deployment cancelled."
+    exit 1
+  fi
+}
+
 function usage() {
   cat <<EOF
 
 Usage:
   $0
 
+
 Options:
   --local Performs a local deployment of Orbit to your local dfx environment
   --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
-  --prod Performs a production deployment of Orbit to the IC
+  --play | --playground Deploys Orbit to the playground network (WARNING: This will reset the control-panel, to avoid this use 'no-reset' as an argument)
+  --prod | --production Performs a production deployment of Orbit to the IC
 EOF
 }
 
@@ -34,9 +64,10 @@ EOF
 
 function exec_function() {
   local function_name=$1
+  shift
   echo "------------------------------------------------------"
   echo -e "\e[1m$ START:\e[0m $function_name"
-  $function_name
+  $function_name "$@"
   echo -e "\e[1m$ COMPLETED:\e[0m $function_name"
 }
 
@@ -69,7 +100,7 @@ function get_subnet_type() {
   if [ "$network" == "prod" ]; then
     echo "fiduciary"
   else
-    echo "application"
+    echo ""
   fi
 }
 
@@ -101,6 +132,32 @@ function setup_cycles_wallet() {
   fi
 }
 
+function reset_playground_network() {
+  local network="$(get_network)"
+
+  if [ "$network" != "playground" ]; then
+    echo "ERROR: This operation is only supported on the playground network"
+    exit 1
+  fi
+
+  echo "Resetting the playground network..."
+  echo "This will remove the code and data for the control_panel canister."
+
+  set +e # Disable 'exit on error'
+  canister_id_output=$(dfx canister id control_panel --network $network 2>&1)
+  canister_id_exit_code=$?
+  set -e # Re-enable 'exit on error'
+
+  if [ $canister_id_exit_code -eq 0 ]; then
+    echo "Canister 'control_panel' exists with ID: $canister_id_output"
+    echo "Uninstalling code from the control_panel..."
+
+    dfx canister --network $network uninstall-code control_panel
+  else
+    echo "Canister 'control_panel' does not exist."
+  fi
+}
+
 function deploy_control_panel() {
   local network="$(get_network)"
   local subnet_type=$(get_subnet_type)
@@ -121,7 +178,7 @@ function deploy_control_panel() {
   if [ $canister_id_exit_code -ne 0 ]; then
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
-    dfx canister create control_panel --network $network --with-cycles 500000000000 --subnet-type $subnet_type
+    dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
     dfx build control_panel --network $network
     dfx canister install control_panel --network $network --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
   else
@@ -139,11 +196,11 @@ function deploy_ui() {
   echo "Deploying the UI canister to the '$network' network."
 
   if [ "$network" == "local" ]; then
-    NODE_ENV=development dfx deploy --network $network ui --with-cycles 500000000000 --subnet-type $subnet_type
+    NODE_ENV=development dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
     return
   fi
 
-  NODE_ENV=production dfx deploy --network $network ui --with-cycles 500000000000 --subnet-type $subnet_type
+  NODE_ENV=production dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
 }
 
 #############################################
@@ -166,6 +223,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   --prod | --production)
     shift
+    identity_warning_confirmation
     set_network prod
     exec_function setup_enviroment
     exec_function deploy_control_panel
@@ -174,14 +232,30 @@ while [[ $# -gt 0 ]]; do
     ;;
   --staging)
     shift
+    identity_warning_confirmation
     set_network staging
     exec_function setup_enviroment
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
+  --play | --playground)
+    shift
+    identity_warning_confirmation
+    set_network playground
+    exec_function setup_enviroment
+    if [ "${1-}" == "no-reset" ]; then
+      shift
+    else
+      exec_function reset_playground_network
+    fi
+    exec_function deploy_control_panel
+    exec_function deploy_ui
+    echo
+    ;;
   --testing)
     shift
+    identity_warning_confirmation
     set_network testing
     exec_function setup_enviroment
     exec_function deploy_control_panel
@@ -190,6 +264,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   --local)
     shift
+    identity_warning_confirmation
     set_network local
     exec_function setup_enviroment
     exec_function deploy_control_panel

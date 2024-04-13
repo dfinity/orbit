@@ -6,7 +6,8 @@
       :items="upgradeTargetItems"
       :label="$t('app.canister_upgrade_target')"
       :prepend-icon="mdiTarget"
-      variant="underlined"
+      variant="filled"
+      density="comfortable"
     />
 
     <VFileInput
@@ -15,7 +16,8 @@
       :label="$t('app.canister_wasm_module')"
       :rules="[requiredRule]"
       :prepend-icon="mdiCube"
-      variant="underlined"
+      variant="filled"
+      density="comfortable"
     >
       <template v-if="moduleChecksum" #counter>
         {{ $t('terms.checksum') }}: {{ moduleChecksum }}
@@ -28,7 +30,8 @@
       :label="$t(`app.canister_upgrade_args_input`)"
       :prepend-icon="mdiMessageText"
       :hint="$t(`app.canister_upgrade_args_input_hint`)"
-      variant="underlined"
+      variant="filled"
+      density="comfortable"
     />
   </VForm>
 </template>
@@ -37,6 +40,7 @@
 import { mdiCube, mdiMessageText, mdiTarget } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VFileInput, VForm, VSelect, VTextarea } from 'vuetify/components';
 import { ChangeCanisterTarget } from '~/generated/wallet/wallet.did';
 import { VFormValidation } from '~/types/helper.types';
 import { ChangeCanisterTargetType } from '~/types/wallet.types';

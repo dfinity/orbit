@@ -9,6 +9,9 @@
           <VRow>
             <AuthCheck :privileges="[Privilege.ListProposals]">
               <template #default>
+                <VCol cols="12" md="4">
+                  <WalletInfoCard />
+                </VCol>
                 <VCol cols="12" md="8">
                   <RecentProposals
                     :title="$t(`app.wallet_upgrades_card_title`)"
@@ -16,10 +19,11 @@
                   >
                     <template #top-actions>
                       <AuthCheck :privileges="[Privilege.ChangeCanister]">
-                        <ChangeCanisterActionBtn class="mr-2" />
+                        <ChangeCanisterActionBtn />
                       </AuthCheck>
                       <VBtn
-                        variant="tonal"
+                        variant="elevated"
+                        color="secondary"
                         size="small"
                         :to="{
                           name: Routes.Proposals,
@@ -30,9 +34,6 @@
                       </VBtn>
                     </template>
                   </RecentProposals>
-                </VCol>
-                <VCol cols="12" md="4">
-                  <WalletInfoCard />
                 </VCol>
               </template>
               <template #unauthorized>
@@ -51,6 +52,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn, VCol } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import ChangeCanisterActionBtn from '~/components/change-canister/ChangeCanisterActionBtn.vue';

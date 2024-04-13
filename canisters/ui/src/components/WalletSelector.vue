@@ -6,15 +6,15 @@
     class="wallet-selector"
     eager
     :variant="app.isMobile ? 'filled' : 'solo'"
-    density="compact"
+    density="default"
     hide-details
-    bg-color="background"
+    :bg-color="props.bgColor"
     item-value="canisterId"
     :items="allWallets"
   >
-    <template #item="{ props, item }">
+    <template #item="{ props: itemProps, item }">
       <VListItem
-        v-bind="props"
+        v-bind="itemProps"
         :title="computedWalletName({ canisterId: Principal.fromText(item.raw.canisterId) })"
         :subtitle="item.raw.canisterId"
       />
@@ -42,6 +42,16 @@ import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { computedWalletName } from '~/utils/app.utils';
 import AddWalletListItem from './add-wallet/AddWalletListItem.vue';
+import { VListItem, VSelect } from 'vuetify/components';
+
+const props = withDefaults(
+  defineProps<{
+    bgColor?: string;
+  }>(),
+  {
+    bgColor: 'surface',
+  },
+);
 
 const session = useSessionStore();
 const app = useAppStore();

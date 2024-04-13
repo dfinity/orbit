@@ -25,6 +25,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, toRefs } from 'vue';
+import { VBtn, VIcon } from 'vuetify/components';
 import ProposalPolicyDialog from '~/components/proposal-policies/ProposalPolicyDialog.vue';
 import { UUID } from '~/generated/wallet/wallet.did';
 
@@ -34,7 +35,7 @@ const input = withDefaults(
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
-    variant?: 'flat' | 'text' | 'outlined';
+    variant?: 'flat' | 'text' | 'outlined' | 'elevated';
     color?: string;
     readonly?: boolean;
   }>(),
@@ -43,8 +44,8 @@ const input = withDefaults(
     icon: undefined,
     text: undefined,
     size: 'default',
-    variant: 'flat',
-    color: 'primary-variant',
+    variant: 'elevated',
+    color: 'primary',
     readonly: false,
   },
 );

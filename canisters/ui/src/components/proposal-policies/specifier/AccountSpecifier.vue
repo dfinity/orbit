@@ -4,7 +4,8 @@
       <VBtn
         :active="isAny"
         :disabled="props.disabled.value"
-        variant="outlined"
+        variant="flat"
+        :color="isAny ? 'primary' : undefined"
         size="small"
         @click="setSelectionMode('Any')"
       >
@@ -13,7 +14,8 @@
       <VBtn
         :active="isId"
         :disabled="props.disabled.value"
-        variant="outlined"
+        :color="isId ? 'primary' : undefined"
+        variant="flat"
         size="small"
         @click="setSelectionMode('Id')"
       >
@@ -33,6 +35,7 @@
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
+import { VBtn } from 'vuetify/components';
 import AccountAutocomplete from '~/components/inputs/AccountAutocomplete.vue';
 import { CommonSpecifier } from '~/generated/wallet/wallet.did';
 import { variantIs } from '~/utils/helper.utils';

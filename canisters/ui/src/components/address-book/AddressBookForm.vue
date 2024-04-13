@@ -15,7 +15,7 @@
       :label="$t('terms.blockchain')"
       :prepend-icon="mdiTransitConnectionVariant"
       :rules="[requiredRule]"
-      variant="underlined"
+      variant="filled"
       density="comfortable"
       :disabled="isViewMode || !!model.id"
     />
@@ -23,7 +23,7 @@
       v-model="model.address_owner"
       name="name"
       :label="$t('terms.name')"
-      variant="underlined"
+      variant="filled"
       :rules="[requiredRule]"
       class="mb-2"
       density="comfortable"
@@ -36,7 +36,7 @@
       :label="$t('terms.address')"
       :prepend-icon="mdiKeyChain"
       :rules="[requiredRule]"
-      variant="underlined"
+      variant="filled"
       density="comfortable"
       :disabled="isViewMode"
     />
@@ -47,6 +47,7 @@
 <script lang="ts" setup>
 import { mdiAccount, mdiKeyChain, mdiTransitConnectionVariant } from '@mdi/js';
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import { VForm, VTextField } from 'vuetify/components';
 import BlockchainAutocomplete from '~/components/inputs/BlockchainAutocomplete.vue';
 import MetadataField from '~/components/inputs/MetadataField.vue';
 import { AddressBookEntry, WalletAsset } from '~/generated/wallet/wallet.did';

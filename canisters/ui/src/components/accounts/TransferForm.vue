@@ -6,15 +6,15 @@
       name="id"
       :label="$t('terms.id')"
       variant="plain"
-      density="compact"
+      density="comfortable"
       :readonly="isViewMode"
       data-test-id="transfer-form-transfer-id"
     />
     <VTextField
       v-model="model.to"
       :label="$t('terms.destination_address')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
-      density="compact"
+      :variant="isViewMode ? 'plain' : 'filled'"
+      density="comfortable"
       class="mb-2"
       name="to"
       :readonly="isViewMode"
@@ -27,8 +27,8 @@
       ref="amountInput"
       v-model="amount"
       :label="$t('terms.amount')"
-      :variant="isViewMode ? 'plain' : 'underlined'"
-      density="compact"
+      :variant="isViewMode ? 'plain' : 'filled'"
+      density="comfortable"
       name="amount"
       class="mb-2"
       type="number"
@@ -45,6 +45,7 @@ import { mdiNumeric, mdiSend } from '@mdi/js';
 import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { computed, ref, toRefs, watch } from 'vue';
+import { VForm, VTextField } from 'vuetify/components';
 import { Account, Transfer } from '~/generated/wallet/wallet.did';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule, validTokenAmount } from '~/utils/form.utils';

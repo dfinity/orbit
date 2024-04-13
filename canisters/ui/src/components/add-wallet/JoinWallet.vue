@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto w-md-50 mt-16" data-test-id="join-wallet-screen">
+  <div data-test-id="join-wallet-screen">
     <VBtn variant="flat" :disabled="working" data-test-id="back-button" @click="emit('back')">
       <VIcon :icon="mdiChevronLeft" size="x-large"></VIcon>
       {{ $t('terms.back') }}</VBtn

@@ -9,7 +9,6 @@ export default {
     confirm: 'Confirm',
     copied_to_clipboard: 'Value copied to clipboard.',
     initial_account_name: 'Main',
-    alpha_warning: 'This is an alpha version. Use with caution.',
     wallet_info_card_title: '{name} Info',
     wallet_info_card_edit_btn: 'Edit wallet',
     wallet_info_card_remove_btn: 'Remove wallet',
@@ -72,6 +71,10 @@ export default {
     account_dialog_approval_policy_transfer_hint:
       'The policy that needs to be approved to transfer funds.',
     criteria_builder_no_criteria: 'No criteria specified.',
+  },
+  alpha_warning: {
+    version: 'This is an alpha version.',
+    caution: 'Use with caution.',
   },
   blockchains: {
     icp: {
@@ -242,21 +245,22 @@ export default {
       },
     },
   },
-  login: {
-    signin_slogan: 'Securely connect to manage your crypto assets',
-    auth_failed: 'Authentication failed, please try again.',
+  sidebar: {
+    highlights: {
+      main: 'Trustless Wallet {line1} {line2} {line3}',
+      line3: 'Multichain',
+      line1: 'Digital Assets',
+      line2: 'Multi-Custody',
+    },
   },
-  slogans: {
-    elevate_to_orbit: {
-      main: 'Elevate to {term1}, {term2}',
-      term1: 'Orbit',
-      term2: 'where security meets freedom',
-    },
-    institutions_multi_custody: {
-      main: 'Where {term1} and {term2} align',
-      term1: 'Institutions',
-      term2: 'Multi-Custody',
-    },
+  landing: {
+    title: 'Seamless Multichain',
+    subtitle: 'One Platform, Complete Oversight',
+    description:
+      'Orbit streamlines on-chain asset management for enterprises, DAOs, and teams, consolidating control and visibility into a single, intuitive platform.',
+    connect_title: 'Securely connect to manage your digital assets',
+    connect_btn: 'Connect with Internet Identity',
+    connect_error: 'Failed to connect, please try again.',
   },
   home: {
     welcome_back: 'Welcome back',
@@ -535,9 +539,8 @@ export default {
     add_wallet: {
       initialization_title: 'Welcome! How would you like to join Orbit?',
       add_wallet_title: 'How would you like to add a wallet?',
-      option_join_existing_wallet: 'Join existing wallet on Orbit',
+      option_join_existing_wallet: 'Join existing wallet',
       option_deploy_new_wallet: 'Create your own wallet',
-
       join_wallet_title: 'Join existing wallet',
       join_wallet_body:
         'Contact the owner to get the ID of the wallet. Send them the following principal ID so that a user can be created for you in the wallet.',
@@ -640,6 +643,8 @@ export default {
       transfer: 'Transfer',
       capabilities: 'Capabilities',
       systeminfo: 'System info',
+      systeminfocapabilities: 'Capabilities (Supported Assets)',
+      systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
     },
     allow: {
       public: 'Anyone',

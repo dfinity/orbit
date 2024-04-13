@@ -84,7 +84,7 @@ fn successful_monitors_wallets_and_tops_up() {
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.id, user_id);
+    assert_eq!(user_dto.identity, user_id);
 
     // approve user
     let update_waiting_list_args = UpdateWaitingListInput {

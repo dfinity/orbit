@@ -41,8 +41,8 @@ impl std::fmt::Display for UserSubscriptionStatus {
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct User {
-    /// The UUID that identifies the user.
-    pub id: Principal,
+    /// The identity of the user.
+    pub identity: Principal,
     /// The subscription status of the user.
     pub subscription_status: UserSubscriptionStatus,
     /// All the wallets that the user has access to (including the main wallet).
@@ -69,7 +69,7 @@ impl User {
     pub const MAX_DEPLOYED_WALLETS: u8 = 10;
 
     pub fn to_key(&self) -> UserKey {
-        UserKey(self.id)
+        UserKey(self.identity)
     }
 
     pub fn can_deploy_wallet(&self) -> CanDeployWallet {
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn valid_model_serialization() {
         let model = User {
-            id: Principal::from_slice(&[u8::MAX; 29]),
+            identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -185,7 +185,7 @@ mod tests {
         let serialized_model = model.to_bytes();
         let deserialized_model = User::from_bytes(serialized_model);
 
-        assert_eq!(model.id, deserialized_model.id);
+        assert_eq!(model.identity, deserialized_model.identity);
         assert_eq!(
             model.subscription_status,
             deserialized_model.subscription_status
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn check_wallets_validation() {
         let user = User {
-            id: Principal::from_slice(&[u8::MAX; 29]),
+            identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn valid_main_wallet() {
         let user = User {
-            id: Principal::from_slice(&[u8::MAX; 29]),
+            identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
                 canister_id: Principal::anonymous(),
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn invalid_main_wallet() {
         let user = User {
-            id: Principal::from_slice(&[u8::MAX; 29]),
+            identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
                 canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),

@@ -144,7 +144,8 @@ export const useSessionStore = defineStore('session', {
       this.data.wallets = [];
       this.data.selectedWallet.canisterId = null;
       this.data.selectedWallet.hasAccess = false;
-      wallet.reset();
+
+      wallet.onDisconnected();
     },
     async signIn(resetOnError = false): Promise<void> {
       const authService = services().auth;
@@ -205,7 +206,8 @@ export const useSessionStore = defineStore('session', {
             ? controlPanelUser.main_wallet?.[0]
             : controlPanelUser.wallets?.[0]?.canister_id;
         }
-        const sameUser = this.isAuthenticated && this.principal === controlPanelUser.id.toText();
+        const sameUser =
+          this.isAuthenticated && this.principal === controlPanelUser.identity.toText();
 
         this.isAuthenticated = true;
         this.populateUser(controlPanelUser);
@@ -226,8 +228,8 @@ export const useSessionStore = defineStore('session', {
     },
     populateUser(user: User): void {
       const selectedWalletId = this.data.selectedWallet.canisterId;
-      const sameUser = this.isAuthenticated && this.principal === user.id.toText();
-      this.principal = user.id.toText();
+      const sameUser = this.isAuthenticated && this.principal === user.identity.toText();
+      this.principal = user.identity.toText();
       this.data.wallets = user.wallets.map(wallet => ({
         main: wallet.canister_id.toText() === user.main_wallet?.[0]?.toText(),
         name: wallet.name?.[0] ?? null,
@@ -245,14 +247,14 @@ export const useSessionStore = defineStore('session', {
       this.data.selectedWallet.hasAccess = false;
       this.data.selectedWallet.canisterId = null;
 
-      wallet.reset();
+      wallet.onDisconnected();
     },
-    async connectWallet(walletId: Principal, forceNavigationOnSuccess = true): Promise<void> {
+    async connectWallet(walletId: Principal, onConnectedReload = true): Promise<void> {
       const wallet = useWalletStore();
 
       this.data.selectedWallet.canisterId = walletId.toText();
       this.data.selectedWallet.hasAccess = false;
-      const connectionStatus = await wallet.connectTo(walletId, forceNavigationOnSuccess);
+      const connectionStatus = await wallet.connectTo(walletId, onConnectedReload);
 
       if (connectionStatus === WalletConnectionStatus.Connected) {
         this.data.selectedWallet.hasAccess = true;

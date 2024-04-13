@@ -38,9 +38,9 @@
             :hide-details="true"
             color="primary"
             :disabled="voting"
-          ></VSwitch>
+          />
 
-          <VBtn :disabled="voting" :icon="mdiClose" dark @click="openModel = false" />
+          <VBtn :disabled="voting" :icon="mdiClose" @click="openModel = false" />
         </template>
         <template v-if="loadNext" #bottom-actions>
           <VBtn variant="plain" :disabled="voting" class="ma-0" @click="skip">
@@ -68,6 +68,7 @@
 import { mdiCheckCircle, mdiClose } from '@mdi/js';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VBtn, VCard, VCardActions, VCardText, VDialog, VIcon, VSwitch } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import logger from '~/core/logger.core';
 import {
@@ -76,13 +77,12 @@ import {
   Proposal,
   UUID,
 } from '~/generated/wallet/wallet.did';
+import { mapProposalOperationToListProposalsOperationType } from '~/mappers/proposals.mapper';
+import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
-import ProposalDetailView from './ProposalDetailView.vue';
 import { variantIs } from '~/utils/helper.utils';
-import { mapProposalOperationToListProposalsOperationType } from '~/mappers/proposals.mapper';
-import { VBtn, VCardActions, VIcon, VSwitch } from 'vuetify/components';
-import { services } from '~/plugins/services.plugin';
+import ProposalDetailView from './ProposalDetailView.vue';
 
 type DataType = {
   proposal: GetProposalResultData['proposal'];

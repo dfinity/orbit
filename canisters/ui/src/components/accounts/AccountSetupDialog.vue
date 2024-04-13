@@ -23,7 +23,7 @@
                 : $t('app.account_dialog_create_new_title')
             }}
           </VToolbarTitle>
-          <VBtn :disabled="!canClose" :icon="mdiClose" dark @click="open = false" />
+          <VBtn :disabled="!canClose" :icon="mdiClose" @click="open = false" />
         </VToolbar>
         <VDivider />
 

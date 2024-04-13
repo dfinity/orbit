@@ -17,7 +17,7 @@ pub struct UserMapper {}
 
 impl UserMapper {
     /// Maps the registration input to an user entity.
-    pub fn from_register_input(input: RegisterUserInput, user_id: Principal) -> User {
+    pub fn from_register_input(input: RegisterUserInput, user_identity: Principal) -> User {
         let wallets = match input.wallet_id {
             Some(wallet_id) => vec![wallet_id],
             None => vec![],
@@ -30,7 +30,7 @@ impl UserMapper {
         };
 
         User {
-            id: user_id,
+            identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: wallets
                 .into_iter()
@@ -49,7 +49,7 @@ impl UserMapper {
 impl From<User> for UserDTO {
     fn from(user: User) -> Self {
         UserDTO {
-            id: user.id,
+            identity: user.identity,
             main_wallet: user.main_wallet,
             wallets: user.wallets.into_iter().map(UserWalletDTO::from).collect(),
             subscription_status: user.subscription_status.into(),
@@ -121,27 +121,27 @@ mod tests {
 
     #[test]
     fn mapped_user_registration_with_no_wallet() {
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let input = RegisterUserInput { wallet_id: None };
 
-        let user = UserMapper::from_register_input(input, user_id);
+        let user = UserMapper::from_register_input(input, user_identity);
 
-        assert_eq!(user.id, user_id);
+        assert_eq!(user.identity, user_identity);
         assert_eq!(user.main_wallet, None);
         assert!(user.wallets.is_empty());
     }
 
     #[test]
     fn mapped_user_registration_with_wallet() {
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let main_wallet = Principal::from_slice(&[2; 29]);
         let input = RegisterUserInput {
             wallet_id: Some(main_wallet),
         };
 
-        let user = UserMapper::from_register_input(input, user_id);
+        let user = UserMapper::from_register_input(input, user_identity);
 
-        assert_eq!(user.id, user_id);
+        assert_eq!(user.identity, user_identity);
         assert_eq!(user.main_wallet, Some(main_wallet));
         assert_eq!(user.wallets.len(), 1);
         assert_eq!(user.wallets[0].canister_id, main_wallet);

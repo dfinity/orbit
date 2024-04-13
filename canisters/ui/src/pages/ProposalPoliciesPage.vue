@@ -4,10 +4,7 @@
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
           <AuthCheck :privileges="[Privilege.AddProposalPolicy]">
-            <OpenProposalPolicyBtn
-              :text="$t('pages.proposal_policies.create_label')"
-              variant="outlined"
-            />
+            <OpenProposalPolicyBtn :text="$t('pages.proposal_policies.create_label')" />
           </AuthCheck>
         </template>
       </PageHeader>
@@ -44,6 +41,7 @@
           "
         >
           <VDataTable
+            class="elevation-2 rounded"
             :headers="headers"
             :loading="loading"
             :items="policies"
@@ -97,6 +95,7 @@
 import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';

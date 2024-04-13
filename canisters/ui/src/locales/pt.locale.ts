@@ -9,7 +9,6 @@ export default {
     confirm: 'Confirmar',
     copied_to_clipboard: 'Texto copiado para a área de transferência.',
     initial_account_name: 'Principal',
-    alpha_warning: 'Esta é uma versão alfa. Utilize com cuidado.',
     wallet_info_card_title: '{name} Informaçōes',
     wallet_info_card_edit_btn: 'Editar carteira',
     wallet_info_card_remove_btn: 'Remover carteira',
@@ -73,6 +72,18 @@ export default {
     account_dialog_approval_policy_transfer_hint:
       'A política que precisa ser aprovada para transferir fundos.',
     criteria_builder_no_criteria: 'Nenhum critério definido.',
+  },
+  alpha_warning: {
+    version: 'Esta é uma versão alfa.',
+    caution: 'Utilize com cuidado.',
+  },
+  sidebar: {
+    highlights: {
+      main: 'Carteira Trustless {line1} {line2} {line3}',
+      line3: 'Multichain',
+      line1: 'Ativos Digitais',
+      line2: 'Multi-Custódia',
+    },
   },
   change_canister: {
     targets: {
@@ -243,21 +254,14 @@ export default {
       },
     },
   },
-  login: {
-    signin_slogan: 'Conecte-se para gerir a sua carteira de ativos crypto',
-    auth_failed: 'Login falhou, tente novamente',
-  },
-  slogans: {
-    elevate_to_orbit: {
-      main: 'Se eleve à {term1}, {term2}',
-      term1: 'Órbita',
-      term2: 'onde a segurança e a conveniência se alinham',
-    },
-    institutions_multi_custody: {
-      main: 'Onde as {term1} e as carteiras {term2} se alinham',
-      term1: 'Instituições',
-      term2: 'Multi-custódia',
-    },
+  landing: {
+    title: 'Gestão Multichain',
+    subtitle: 'Uma Plataforma, Supervisão Completa',
+    description:
+      'Orbit simplifica a gestão de ativos on-chain para empresas, DAOs e equipes, consolidando controle e visibilidade em uma única plataforma intuitiva.',
+    connect_title: 'Conecte-se de forma segura para gerenciar seus ativos digitais',
+    connect_btn: 'Conectar com Internet Identity',
+    connect_error: 'Falha ao conectar, por favor tente novamente.',
   },
   home: {
     welcome_back: 'Boas-vindas de novo',
@@ -539,7 +543,6 @@ export default {
 
       option_join_existing_wallet: 'Junte-se a uma carteira existente',
       option_deploy_new_wallet: 'Crie a sua própria carteira',
-
       join_wallet_title: 'Junte-se a uma carteira existente',
       join_wallet_body:
         'Contacte o proprietário para obter o ID da carteira. Envie-lhes o seguinte ID principal para que um usuário possa ser criado para si na carteira.',
@@ -643,6 +646,8 @@ export default {
       transfer: 'Transferência',
       capabilities: 'Capacidades',
       systeminfo: 'Informações do sistema',
+      systeminfocapabilities: 'Capacidades (Ativos Suportados)',
+      systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
     },
     allow: {
       public: 'Acesso público',
