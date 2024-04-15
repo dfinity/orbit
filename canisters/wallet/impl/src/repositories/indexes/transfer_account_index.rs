@@ -6,6 +6,7 @@ use crate::{
     },
 };
 use ic_canister_core::repository::IndexRepository;
+use ic_cdk::print;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
@@ -50,6 +51,7 @@ impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexR
                 ),
             };
             if from_dt > to_dt {
+                print(format!("Invalid TransferAccountIndexRepository::FindByCriteria: from_dt {} is greater than to_dt {}", from_dt, to_dt));
                 return HashSet::new();
             }
 
