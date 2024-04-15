@@ -45,7 +45,8 @@ Usage:
 
 
 Options:
-  --playground [reset] Deploys Orbit to the playground network. If 'reset' is specified, the control-panel will be reset.
+  --playground Deploys Orbit to the playground network (If 'reset' is specified, the control-panel will be reset)
+  --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
   --production Performs a production deployment of Orbit to the IC
 EOF
@@ -227,6 +228,15 @@ while [[ $# -gt 0 ]]; do
     shift
     identity_warning_confirmation
     set_network staging
+    exec_function setup_enviroment
+    exec_function deploy_control_panel
+    exec_function deploy_ui
+    echo
+    ;;
+  --testing)
+    shift
+    identity_warning_confirmation
+    set_network testing
     exec_function setup_enviroment
     exec_function deploy_control_panel
     exec_function deploy_ui
