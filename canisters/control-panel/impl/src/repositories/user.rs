@@ -2,10 +2,12 @@ use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
     mappers::SubscribedUser,
     models::{
-        indexes::user_identity_index::UserIdentityIndexCriteria, User, UserKey,
-        UserSubscriptionStatus,
+        indexes::user_identity_index::UserIdentityIndexCriteria,
+        indexes::user_status_index::{UserIndexSubscriptionStatus, UserStatusIndexCriteria},
+        User, UserKey, UserSubscriptionStatus,
     },
     repositories::indexes::user_identity_index::UserIdentityIndexRepository,
+    repositories::indexes::user_status_index::UserStatusIndexRepository,
 };
 use candid::Principal;
 use ic_canister_core::repository::RefreshIndexMode;
@@ -30,6 +32,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct UserRepository {
     identity_index: UserIdentityIndexRepository,
+    status_index: UserStatusIndexRepository,
 }
 
 impl Repository<UserKey, User> for UserRepository {
@@ -52,6 +55,13 @@ impl Repository<UserKey, User> for UserRepository {
                         .map_or(Vec::new(), |prev| vec![prev.to_index_for_identity()]),
                     current: vec![value.to_index_for_identity()],
                 });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_status()]),
+                    current: vec![value.to_index_for_status()],
+                });
 
             prev
         })
@@ -65,6 +75,12 @@ impl Repository<UserKey, User> for UserRepository {
                     current: prev
                         .clone()
                         .map_or(Vec::new(), |prev| vec![prev.to_index_for_identity()]),
+                });
+            self.status_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_status()]),
                 });
 
             prev
@@ -88,12 +104,16 @@ impl UserRepository {
     }
 
     pub fn get_subscribed_users(&self) -> Vec<SubscribedUser> {
-        self.list()
-            .into_iter()
-            .filter_map(|u| {
-                if let UserSubscriptionStatus::Pending(email) = u.subscription_status {
+        self.status_index
+            .find_by_criteria(UserStatusIndexCriteria {
+                status: UserIndexSubscriptionStatus::Pending,
+            })
+            .iter()
+            .filter_map(|id| {
+                let user = self.get(&UserKey(*id)).unwrap();
+                if let UserSubscriptionStatus::Pending(email) = user.subscription_status {
                     Some(SubscribedUser {
-                        user_principal: u.identity,
+                        user_principal: user.identity,
                         email,
                     })
                 } else {
