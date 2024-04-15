@@ -80,7 +80,8 @@ impl UserService {
         let user = UserMapper::from_register_input(input.clone(), user_id);
 
         user.validate()?;
-        self.user_repository.insert(UserKey(user.id), user.clone());
+        self.user_repository
+            .insert(UserKey(user.identity), user.clone());
 
         Ok(user)
     }
@@ -226,10 +227,10 @@ impl UserService {
     ///
     /// Admins and controllers have access to all users.
     fn assert_user_access(&self, user: &User, ctx: &CallContext) -> ServiceResult<()> {
-        let is_user_owner = user.id == ctx.caller();
+        let is_user_owner = user.identity == ctx.caller();
         if !is_user_owner && !ctx.is_admin() && !ctx.is_controller() {
             Err(UserError::Forbidden {
-                user: user.id.to_text(),
+                user: user.identity.to_text(),
             })?
         }
 
@@ -244,7 +245,7 @@ impl UserService {
 
         if let Some(user) = maybe_user {
             Err(UserError::IdentityAlreadyHasUser {
-                user: user.id.to_text(),
+                user: user.identity.to_text(),
             })?
         }
 
@@ -263,26 +264,26 @@ mod tests {
     fn get_user_returns_not_found_err() {
         let ctx = CallContext::default();
         let service = UserService::default();
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user(&user_identity, &ctx);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err(),
             ApiError::from(UserError::NotFound {
-                user: user_id.to_text()
+                user: user_identity.to_text()
             })
         );
     }
 
     #[test]
     fn success_fetch_existing_user() {
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_id);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
+        let ctx = CallContext::new(user_identity);
         let service = UserService::default();
         let user = User {
-            id: user_id,
+            identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -292,7 +293,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user(&user_identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -300,11 +301,11 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user_with_identity() {
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_id);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
+        let ctx = CallContext::new(user_identity);
         let service = UserService::default();
         let user = User {
-            id: user_id,
+            identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -314,7 +315,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user(&user_identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -378,11 +379,11 @@ mod tests {
 
     #[test]
     fn update_waiting_list() {
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_id);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
+        let ctx = CallContext::new(user_identity);
         let service = UserService::default();
         let user = User {
-            id: user_id,
+            identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -393,7 +394,7 @@ mod tests {
         service.user_repository.insert(user.to_key(), user.clone());
 
         let input = UpdateWaitingListInput {
-            users: vec![user_id],
+            users: vec![user_identity],
             new_status: UserSubscriptionStatusDTO::Approved,
         };
 
@@ -408,7 +409,7 @@ mod tests {
             .update_waiting_list(input.clone(), &ctrl_ctx)
             .unwrap();
 
-        let result = service.get_user(&user_id, &ctx);
+        let result = service.get_user(&user_identity, &ctx);
         assert!(matches!(
             result.unwrap().subscription_status,
             UserSubscriptionStatus::Approved
@@ -426,13 +427,13 @@ mod tests {
     #[tokio::test]
     async fn can_remove_user() {
         crate::core::test_utils::init_canister_config();
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_id);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
+        let ctx = CallContext::new(user_identity);
         let service = UserService::default();
 
-        let user_id = Principal::from_slice(&[u8::MAX; 29]);
+        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
-            id: user_id,
+            identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -442,9 +443,12 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.remove_user(&user_id, &ctx).await;
+        let result = service.remove_user(&user_identity, &ctx).await;
 
         assert!(result.is_ok());
-        assert!(service.user_repository.get(&UserKey(user_id)).is_none());
+        assert!(service
+            .user_repository
+            .get(&UserKey(user_identity))
+            .is_none());
     }
 }

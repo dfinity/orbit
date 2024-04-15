@@ -53,7 +53,7 @@ impl UserRepository {
             .filter_map(|u| {
                 if let UserSubscriptionStatus::Pending(email) = u.subscription_status {
                     Some(SubscribedUser {
-                        user_principal: u.id,
+                        user_principal: u.identity,
                         email,
                     })
                 } else {
@@ -74,7 +74,7 @@ mod tests {
     fn check_user_insert_and_get() {
         let repository = UserRepository::default();
         let user = User {
-            id: Principal::from_slice(&[u8::MAX; 29]),
+            identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -82,10 +82,10 @@ mod tests {
             last_update_timestamp: 0,
         };
 
-        assert!(repository.get(&UserKey(user.id)).is_none());
+        assert!(repository.get(&UserKey(user.identity)).is_none());
 
-        repository.insert(UserKey(user.id), user.clone());
-        assert_eq!(repository.get(&UserKey(user.id)), Some(user));
+        repository.insert(UserKey(user.identity), user.clone());
+        assert_eq!(repository.get(&UserKey(user.identity)), Some(user));
     }
 
     #[test]
@@ -93,29 +93,32 @@ mod tests {
         let repository = UserRepository::default();
 
         let unsubscribed_user = User {
-            id: Principal::from_slice(&[0; 29]),
+            identity: Principal::from_slice(&[0; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
-        repository.insert(UserKey(unsubscribed_user.id), unsubscribed_user.clone());
+        repository.insert(
+            UserKey(unsubscribed_user.identity),
+            unsubscribed_user.clone(),
+        );
 
         let email = "john@example.com".to_string();
         let subscribed_user = User {
-            id: Principal::from_slice(&[1; 29]),
+            identity: Principal::from_slice(&[1; 29]),
             subscription_status: UserSubscriptionStatus::Pending(email.clone()),
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
-        repository.insert(UserKey(subscribed_user.id), subscribed_user.clone());
+        repository.insert(UserKey(subscribed_user.identity), subscribed_user.clone());
 
         let another_email = "martin@example.com".to_string();
         let another_subscribed_user = User {
-            id: Principal::from_slice(&[2; 29]),
+            identity: Principal::from_slice(&[2; 29]),
             subscription_status: UserSubscriptionStatus::Pending(another_email.clone()),
             wallets: vec![],
             deployed_wallets: vec![],
@@ -123,7 +126,7 @@ mod tests {
             last_update_timestamp: 0,
         };
         repository.insert(
-            UserKey(another_subscribed_user.id),
+            UserKey(another_subscribed_user.identity),
             another_subscribed_user.clone(),
         );
 
@@ -133,12 +136,12 @@ mod tests {
         let subscribed_users = repository.get_subscribed_users();
         assert_eq!(subscribed_users.len(), 2);
         let subscribed = SubscribedUser {
-            user_principal: subscribed_user.id,
+            user_principal: subscribed_user.identity,
             email,
         };
         assert!(subscribed_users.contains(&subscribed));
         let another_subscribed = SubscribedUser {
-            user_principal: another_subscribed_user.id,
+            user_principal: another_subscribed_user.identity,
             email: another_email,
         };
         assert!(subscribed_users.contains(&another_subscribed));
@@ -148,7 +151,7 @@ mod tests {
     fn check_user_removal() {
         let repository = UserRepository::default();
         let user = User {
-            id: Principal::from_slice(&[u8::MAX; 29]),
+            identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
@@ -156,9 +159,9 @@ mod tests {
             last_update_timestamp: 0,
         };
 
-        repository.insert(UserKey(user.id), user.clone());
-        assert_eq!(repository.get(&UserKey(user.id)), Some(user.clone()));
-        repository.remove(&UserKey(user.id));
-        assert!(repository.get(&UserKey(user.id)).is_none());
+        repository.insert(UserKey(user.identity), user.clone());
+        assert_eq!(repository.get(&UserKey(user.identity)), Some(user.clone()));
+        repository.remove(&UserKey(user.identity));
+        assert!(repository.get(&UserKey(user.identity)).is_none());
     }
 }

@@ -74,9 +74,9 @@ export interface UpdateWaitingListInput {
 export type UpdateWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface User {
-  'id' : Principal,
   'wallets' : Array<UserWallet>,
   'subscription_status' : UserSubscriptionStatus,
+  'identity' : Principal,
   'main_wallet' : [] | [WalletID],
 }
 export type UserId = UUID;

@@ -206,7 +206,8 @@ export const useSessionStore = defineStore('session', {
             ? controlPanelUser.main_wallet?.[0]
             : controlPanelUser.wallets?.[0]?.canister_id;
         }
-        const sameUser = this.isAuthenticated && this.principal === controlPanelUser.id.toText();
+        const sameUser =
+          this.isAuthenticated && this.principal === controlPanelUser.identity.toText();
 
         this.isAuthenticated = true;
         this.populateUser(controlPanelUser);
@@ -227,8 +228,8 @@ export const useSessionStore = defineStore('session', {
     },
     populateUser(user: User): void {
       const selectedWalletId = this.data.selectedWallet.canisterId;
-      const sameUser = this.isAuthenticated && this.principal === user.id.toText();
-      this.principal = user.id.toText();
+      const sameUser = this.isAuthenticated && this.principal === user.identity.toText();
+      this.principal = user.identity.toText();
       this.data.wallets = user.wallets.map(wallet => ({
         main: wallet.canister_id.toText() === user.main_wallet?.[0]?.toText(),
         name: wallet.name?.[0] ?? null,
