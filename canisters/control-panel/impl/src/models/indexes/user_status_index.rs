@@ -29,7 +29,7 @@ impl From<&UserSubscriptionStatus> for UserIndexSubscriptionStatus {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserStatusIndex {
-    /// The identity associated with the user.
+    /// The subscription status of the user.
     pub status: UserIndexSubscriptionStatus,
     /// The user id, which is a UUID.
     pub user_id: UserId,
@@ -83,7 +83,7 @@ mod tests {
         };
         let index = user.to_index_for_status();
 
-        assert_eq!(index.status, (&user.subscription_status).into());
+        assert_eq!(index.status, UserIndexSubscriptionStatus::Pending);
         assert_eq!(index.user_id, user.id);
     }
 }
