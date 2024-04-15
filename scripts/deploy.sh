@@ -186,7 +186,14 @@ function deploy_control_panel() {
     echo "Canister 'control_panel' already exists with ID: $canister_id_output"
 
     dfx build control_panel --network $network
-    dfx canister install control_panel --network $network --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+    module_hash=$(dfx canister info control_panel --network $network | grep "Module hash" | awk '{print $3}')
+
+    if [ "$module_hash" == "None" ]; then
+      echo "Installing the wasm module to the control_panel canister..."
+      dfx canister install control_panel --network $network --mode install --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+    else
+      dfx canister install control_panel --network $network --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+    fi
   fi
 }
 
