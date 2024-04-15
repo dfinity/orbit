@@ -4,6 +4,10 @@ export default {
     action_save_failed: "Échec de sauvegarde de l'action, veuillez essayer de nouveau.",
     action_save_success: "Sauvegarde de l'action réussie.",
     session_load_error: 'Échec du chargement votre session, veuillez essayer de nouveau.',
+    test_environment_warning_banner: {
+      main: 'ATTENTION: Environnement de test.',
+      info: 'Fonctionnalités et données instables.',
+    },
     user_id: 'Identifiant',
     wallets: 'Portefeuilles',
     confirm: 'Confirmez',

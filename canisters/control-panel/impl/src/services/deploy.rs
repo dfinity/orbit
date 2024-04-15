@@ -29,7 +29,7 @@ impl DeployService {
 
     /// Deploys a wallet canister for the user.
     pub async fn deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<Principal> {
-        let user = self.user_service.get_user(&ctx.caller(), ctx)?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let can_deploy_wallet_response = user.can_deploy_wallet();
         match can_deploy_wallet_response {

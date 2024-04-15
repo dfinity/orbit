@@ -72,7 +72,7 @@ impl WalletController {
         let ctx = CallContext::get();
         let user = self
             .user_service
-            .get_user(&CallContext::get().caller(), &ctx)?;
+            .get_user_by_identity(&CallContext::get().caller(), &ctx)?;
 
         Ok(ListWalletsResponse {
             wallets: user.wallets.into_iter().map(UserWalletDTO::from).collect(),
