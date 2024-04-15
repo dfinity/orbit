@@ -153,6 +153,24 @@ const generateICAssetsJson = (
       },
       allow_raw_access: false,
     },
+    fonts: {
+      match: '**/fonts/**/*',
+      headers: {
+        'Cache-Control': 'max-age=31536000',
+      },
+    },
+    assets: {
+      match: '**/assets/**/*',
+      headers: {
+        'Cache-Control': 'max-age=604800',
+      },
+    },
+    images: {
+      match: '**/images/**/*',
+      headers: {
+        'Cache-Control': 'max-age=604800',
+      },
+    },
   };
 
   const icAssetsJson = Object.values(assetsConfig);
