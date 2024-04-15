@@ -28,7 +28,7 @@ impl Authorization {
 
         // Checks if the caller has access to the requested resource.
         resources.iter().any(|resource| {
-            let access_policy = ACCESS_POLICY_SERVICE.get_access_policy(resource).unwrap();
+            let access_policy = ACCESS_POLICY_SERVICE.get_access_policy(resource);
 
             // Checks if the resource is public, if so, then the access is granted.
             if access_policy.allowed_public() {

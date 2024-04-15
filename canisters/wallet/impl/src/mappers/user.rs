@@ -41,12 +41,8 @@ impl From<User> for UserDTO {
             groups: user
                 .groups
                 .iter()
-                .map(|group| {
-                    USER_GROUP_REPOSITORY
-                        .get(group)
-                        .expect("Invalid group")
-                        .into()
-                })
+                .filter_map(|group| USER_GROUP_REPOSITORY.get(group))
+                .map(Into::into)
                 .collect(),
             last_modification_timestamp: timestamp_to_rfc3339(&user.last_modification_timestamp),
         }

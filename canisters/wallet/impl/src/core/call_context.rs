@@ -1,10 +1,13 @@
-use crate::core::ic_cdk::{
-    api::{id as self_canister_id, is_controller},
-    caller,
-};
+use crate::core::ic_cdk::api::{id as self_canister_id, is_controller};
 use crate::models::User;
 use crate::repositories::USER_REPOSITORY;
 use candid::Principal;
+
+#[cfg(not(test))]
+use ic_cdk::api::caller;
+
+#[cfg(test)]
+use std::sync::Mutex;
 
 #[derive(Clone, Debug)]
 pub struct CallContext {
@@ -21,6 +24,14 @@ impl Default for CallContext {
     }
 }
 
+#[cfg(test)]
+static MOCK_CALLER: Mutex<Principal> = Mutex::new(Principal::anonymous());
+
+#[cfg(test)]
+pub fn set_mock_caller(caller: Principal) {
+    *MOCK_CALLER.lock().unwrap() = caller;
+}
+
 impl CallContext {
     pub fn new(caller: Principal) -> Self {
         Self {
@@ -31,11 +42,21 @@ impl CallContext {
 
     /// This method can only be used before any await has been called in the current call context,
     /// otherwise it will panic.
+    #[cfg(not(test))]
     pub fn get() -> Self {
         let caller = caller();
 
         Self {
             caller,
+            user: USER_REPOSITORY.find_by_identity(&caller),
+        }
+    }
+
+    #[cfg(test)]
+    pub fn get() -> Self {
+        let caller = MOCK_CALLER.lock().unwrap();
+        Self {
+            caller: *caller,
             user: USER_REPOSITORY.find_by_identity(&caller),
         }
     }

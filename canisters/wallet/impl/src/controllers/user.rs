@@ -100,3 +100,74 @@ impl UserController {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    use crate::{
+        core::{set_mock_caller, test_utils},
+        models::{AddUserOperationInput, UserStatus},
+        services::UserService,
+    };
+
+    struct TestContext {
+        user_service: UserService,
+    }
+
+    fn setup() -> TestContext {
+        test_utils::init_canister_system();
+
+        TestContext {
+            user_service: UserService::default(),
+        }
+    }
+
+    #[tokio::test]
+    async fn me_returns_successfully() {
+        let ctx = setup();
+        let identity = Principal::from_slice(&[1; 29]);
+        ctx.user_service
+            .add_user(AddUserOperationInput {
+                groups: vec![],
+                identities: vec![identity],
+                name: None,
+                status: UserStatus::Active,
+            })
+            .await
+            .expect("Failed to add user");
+
+        set_mock_caller(identity);
+        CONTROLLER
+            .me()
+            .await
+            .expect("Failed to call `me` successfully");
+    }
+
+    #[tokio::test]
+    async fn me_returns_successfully_with_non_existent_group() {
+        let ctx = setup();
+        let identity = Principal::from_slice(&[1; 29]);
+        ctx.user_service
+            .add_user(AddUserOperationInput {
+                groups: vec![[0; 16]],
+                identities: vec![identity],
+                name: None,
+                status: UserStatus::Active,
+            })
+            .await
+            .expect("Failed to add user");
+
+        set_mock_caller(identity);
+        let response = CONTROLLER
+            .me()
+            .await
+            .expect("Failed to call `me` successfully");
+
+        assert!(
+            response.me.groups.is_empty(),
+            "Non existent group should be ignored"
+        );
+    }
+}

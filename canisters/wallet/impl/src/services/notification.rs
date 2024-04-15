@@ -114,25 +114,28 @@ impl NotificationService {
         notification_type: NotificationType,
         title: String,
         message: Option<String>,
-    ) -> ServiceResult<()> {
+    ) {
         let notification_id = generate_uuid_v4().await;
         let notification = Notification {
             id: *notification_id.as_bytes(),
             status: NotificationStatus::Sent,
             target_user_id: user_id,
-            title,
-            message,
+            title: title
+                .chars()
+                .take(Notification::MAX_TITLE_LEN as usize)
+                .collect(),
+            message: message.map(|m| {
+                m.chars()
+                    .take(Notification::MAX_MESSAGE_LEN as usize)
+                    .collect()
+            }),
             notification_type,
             created_timestamp: time(),
             last_modification_timestamp: time(),
         };
 
-        notification.validate()?;
-
         self.notification_repository
             .insert(notification.to_key(), notification);
-
-        Ok(())
     }
 
     fn assert_notification_access(

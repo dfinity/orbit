@@ -74,13 +74,10 @@ impl UserGroupRepository {
                 name: name.to_string(),
             });
 
-        if user_group_ids.is_empty() {
-            return None;
-        }
-
-        let user_group_id = user_group_ids.iter().next().unwrap();
-
-        self.get(user_group_id)
+        user_group_ids
+            .iter()
+            .next()
+            .and_then(|user_group_id| self.get(user_group_id))
     }
 
     pub fn find_where(&self, where_clause: UseGroupWhereClause) -> Vec<UserGroup> {
