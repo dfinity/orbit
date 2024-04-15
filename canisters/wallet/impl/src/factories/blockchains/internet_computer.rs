@@ -65,10 +65,6 @@ pub struct SubmitTransferResponse {
     pub transaction_hash: Option<String>,
 }
 
-enum TransactionHashError {
-    SerializationError,
-}
-
 impl InternetComputer {
     pub const BLOCKCHAIN: Blockchain = Blockchain::InternetComputer;
     pub const STANDARD: BlockchainStandard = BlockchainStandard::Native;
@@ -86,12 +82,9 @@ impl InternetComputer {
         Principal::from_text(Self::ICP_LEDGER_CANISTER_ID).unwrap()
     }
 
-    fn hash_transaction(transaction: &Transaction) -> Result<String, TransactionHashError> {
+    fn hash_transaction(transaction: &Transaction) -> Result<String, serde_cbor::Error> {
         let mut hasher = Sha256::new();
-        hasher.update(
-            &serde_cbor::ser::to_vec_packed(transaction)
-                .map_err(|_| TransactionHashError::SerializationError)?,
-        );
+        hasher.update(&serde_cbor::ser::to_vec_packed(transaction)?);
         Ok(hex::encode(hasher.finalize()))
     }
 
@@ -223,7 +216,7 @@ impl InternetComputer {
             Ok(QueryBlocksResponse { blocks, .. }) => match blocks.first() {
                 Some(block) => match Self::hash_transaction(&block.transaction) {
                     Ok(transaction_hash) => Some(transaction_hash),
-                    Err(TransactionHashError::SerializationError) => {
+                    Err(_) => {
                         print("Error: could not serialize ICP ledger transaction");
                         None
                     }
