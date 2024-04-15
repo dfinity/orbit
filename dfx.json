@@ -77,7 +77,7 @@
     }
   },
   "networks": {
-    "prod": {
+    "production": {
       "providers": ["https://icp0.io"],
       "type": "persistent",
       "replica": {
@@ -105,7 +105,7 @@
         "subnet_type": "application"
       }
     },
-    "localhost": {
+    "local": {
       "bind": "127.0.0.1:4943",
       "type": "ephemeral",
       "replica": {

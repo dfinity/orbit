@@ -2,10 +2,31 @@ import vue from '@vitejs/plugin-vue';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import vuetify from 'vite-plugin-vuetify';
 
+// This function is used to determine the build mode based on the environment variables.
+//
+// The `BUILD_MODE` environment variable is used to determine the build mode.
+const getMode = (): string => {
+  if (process.env.BUILD_MODE && process.env.BUILD_MODE.length) {
+    if (process.env.BUILD_MODE === 'local') {
+      return 'localhost';
+    }
+
+    return process.env.BUILD_MODE;
+  }
+
+  if (process.env.NODE_ENV && process.env.NODE_ENV.length) {
+    return process.env.NODE_ENV;
+  }
+
+  return 'production';
+};
+
 const network = process.env.DFX_NETWORK ?? 'local';
+const mode = getMode();
+
 const defaultCanisterIds = {
   internet_identity: 'rdmx6-jaaaa-aaaaa-aaadq-cai',
   icp_index: 'qhbym-qaaaa-aaaaa-aaafq-cai',
@@ -110,32 +131,11 @@ const generateICAssetsJson = (
   });
 };
 
-// All the build modes target a production bundle, even localhost since it is used for deploying to the local network,
-// to develop locally with hot module reloading use the `vite` command use the development mode.
-const DEV_BUILD_MODES = ['development'];
-const LOCAL_BUILD_MODES = ['localhost', 'test'];
-const PROD_BUILD_MODES = ['playground', 'testing', 'staging', 'production'];
-
 // https://vitejs.dev/config/
-export default defineConfig(({ mode: defaultMode }) => {
-  const mode =
-    process.env.BUILD_MODE && process.env.BUILD_MODE.length ? process.env.BUILD_MODE : defaultMode;
-
-  if (
-    !PROD_BUILD_MODES.includes(mode) &&
-    !DEV_BUILD_MODES.includes(mode) &&
-    !LOCAL_BUILD_MODES.includes(mode)
-  ) {
-    throw new Error(
-      `Invalid BUILD_MODE: ${mode}, expected one of ${[...DEV_BUILD_MODES, ...PROD_BUILD_MODES, ...LOCAL_BUILD_MODES].join(', ')}`,
-    );
-  }
-
-  const isDevelopment = mode === 'development';
-  const isProduction = !isDevelopment;
-
-  process.env.NODE_ENV = isProduction ? 'production' : 'development';
-
+export default defineConfig(_ => {
+  const env = loadEnv(mode, process.cwd(), '');
+  process.env.NODE_ENV = env.APP_ENV ?? 'production';
+  const isProduction = process.env.NODE_ENV === 'production';
   const localesPath = resolve(__dirname, 'src/locales');
   const supportedLocales = readdirSync(localesPath).map(file => basename(file, '.locale.ts'));
   const canisters = resolveCanisterIds();
@@ -144,7 +144,7 @@ export default defineConfig(({ mode: defaultMode }) => {
   generateICAssetsJson(isProduction);
 
   return {
-    mode,
+    mode: mode,
     base: '/',
     root: '.',
     publicDir: './public',
@@ -236,7 +236,7 @@ export default defineConfig(({ mode: defaultMode }) => {
       'import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(
         canisters.internet_identity,
       ),
-      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': PROD_BUILD_MODES.includes(mode)
+      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction && mode !== 'localhost'
         ? process.env.APP_PROVIDER_URL_INTERNET_IDENTITY
         : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
       'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
