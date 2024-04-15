@@ -7,6 +7,7 @@ export interface AppInitConfig {
   logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
   baseUrl: string;
   isProduction: boolean;
+  buildMode: string;
   apiGatewayUrl: URL;
   locale: {
     default: string;

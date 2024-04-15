@@ -1,12 +1,14 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly APP_ALCHEMY_API_KEY: string;
-  readonly APP_ALCHEMY_JSON_RPC_URL: string;
   readonly APP_ENV: 'development' | 'production';
+  readonly APP_URL: string;
   readonly APP_BASE_URL: string;
   readonly APP_TITLE: string;
-  readonly APP_VERSION: string;
+  readonly APP_BUILD_MODE: string;
+  readonly APP_BUILD_VERSION: string;
+  readonly APP_BUILD_HASH: string;
+  readonly APP_BUILD_DATE: string;
   readonly APP_SUPPORTED_LOCALES: string;
   readonly APP_LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
   readonly APP_CANISTER_ID_UI: string;

@@ -4,6 +4,10 @@ export default {
     action_save_failed: 'Erro ao gravar a ação, por favor, tente novamente.',
     action_save_success: 'Ação gravada com sucesso.',
     session_load_error: 'Erro ao inicializar a sessão, por favor, tente novamente.',
+    test_environment_warning_banner: {
+      main: 'ATENÇÃO: Ambiente de teste.',
+      info: 'Funcionalidades e dados instáveis.',
+    },
     user_id: 'ID do usuário',
     wallets: 'Carteiras',
     confirm: 'Confirmar',
