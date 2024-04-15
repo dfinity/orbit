@@ -4,6 +4,10 @@ export default {
     action_save_failed: 'Failed to save action, please try again.',
     action_save_success: 'Action successfully saved.',
     session_load_error: 'Failed to load your session, please try again.',
+    test_environment_warning_banner: {
+      main: 'WARNING: Test environment.',
+      info: 'Unstable features and data.',
+    },
     user_id: 'User ID',
     wallets: 'Wallets',
     confirm: 'Confirm',

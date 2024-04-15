@@ -177,7 +177,7 @@ function uninstall_ui() {
 }
 
 function install_ui() {
-  DFX_NETWORK=local NODE_ENV=development dfx deploy --specified-id $CANISTER_ID_UI ui
+  BUILD_MODE=development dfx deploy --specified-id $CANISTER_ID_UI ui
 }
 
 function setup_ui() {
