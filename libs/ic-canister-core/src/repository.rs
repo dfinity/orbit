@@ -183,7 +183,7 @@ impl<'a> SelectionFilter<'a> for AndSelectionFilter<'a> {
         for filter in &self.filters {
             found_ids = Some(filter.apply(found_ids.as_ref()));
 
-            if found_ids.is_some() && found_ids.as_ref().unwrap().is_empty() {
+            if found_ids.as_ref().map_or(false, |ids| ids.is_empty()) {
                 break;
             }
         }
