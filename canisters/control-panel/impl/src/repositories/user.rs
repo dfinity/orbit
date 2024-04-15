@@ -1,9 +1,15 @@
 use crate::{
     core::{with_memory_manager, Memory, USER_MEMORY_ID},
     mappers::SubscribedUser,
-    models::{User, UserKey, UserSubscriptionStatus},
+    models::{
+        indexes::user_identity_index::UserIdentityIndexCriteria, User, UserKey,
+        UserSubscriptionStatus,
+    },
+    repositories::indexes::user_identity_index::UserIdentityIndexRepository,
 };
-use ic_canister_core::repository::Repository;
+use candid::Principal;
+use ic_canister_core::repository::RefreshIndexMode;
+use ic_canister_core::repository::{IndexRepository, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
@@ -17,12 +23,14 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref USER_REPOSITORY: Arc<UserRepository> = Arc::new(UserRepository {});
+    pub static ref USER_REPOSITORY: Arc<UserRepository> = Arc::new(UserRepository::default());
 }
 
 /// A repository that enables managing users in stable memory.
 #[derive(Default, Debug)]
-pub struct UserRepository {}
+pub struct UserRepository {
+    identity_index: UserIdentityIndexRepository,
+}
 
 impl Repository<UserKey, User> for UserRepository {
     fn list(&self) -> Vec<User> {
@@ -34,11 +42,33 @@ impl Repository<UserKey, User> for UserRepository {
     }
 
     fn insert(&self, key: UserKey, value: User) -> Option<User> {
-        DB.with(|m| m.borrow_mut().insert(key, value.clone()))
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+
+            self.identity_index
+                .refresh_index_on_modification(RefreshIndexMode::List {
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_identity()]),
+                    current: vec![value.to_index_for_identity()],
+                });
+
+            prev
+        })
     }
 
     fn remove(&self, key: &UserKey) -> Option<User> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
+            self.identity_index
+                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
+                    current: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_identity()]),
+                });
+
+            prev
+        })
     }
 
     fn len(&self) -> usize {
@@ -47,6 +77,16 @@ impl Repository<UserKey, User> for UserRepository {
 }
 
 impl UserRepository {
+    /// Returns the user associated with the given identity if it exists.
+    pub fn find_by_identity(&self, identity: &Principal) -> Option<User> {
+        self.identity_index
+            .find_by_criteria(UserIdentityIndexCriteria {
+                identity_id: identity.to_owned(),
+            })
+            .iter()
+            .find_map(|id| self.get(&UserKey(*id)))
+    }
+
     pub fn get_subscribed_users(&self) -> Vec<SubscribedUser> {
         self.list()
             .into_iter()
@@ -74,6 +114,7 @@ mod tests {
     fn check_user_insert_and_get() {
         let repository = UserRepository::default();
         let user = User {
+            id: [u8::MAX; 16],
             identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -82,10 +123,10 @@ mod tests {
             last_update_timestamp: 0,
         };
 
-        assert!(repository.get(&UserKey(user.identity)).is_none());
+        assert!(repository.get(&UserKey(user.id)).is_none());
 
-        repository.insert(UserKey(user.identity), user.clone());
-        assert_eq!(repository.get(&UserKey(user.identity)), Some(user));
+        repository.insert(UserKey(user.id), user.clone());
+        assert_eq!(repository.get(&UserKey(user.id)), Some(user));
     }
 
     #[test]
@@ -93,6 +134,7 @@ mod tests {
         let repository = UserRepository::default();
 
         let unsubscribed_user = User {
+            id: [0; 16],
             identity: Principal::from_slice(&[0; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -100,13 +142,11 @@ mod tests {
             main_wallet: None,
             last_update_timestamp: 0,
         };
-        repository.insert(
-            UserKey(unsubscribed_user.identity),
-            unsubscribed_user.clone(),
-        );
+        repository.insert(UserKey(unsubscribed_user.id), unsubscribed_user.clone());
 
         let email = "john@example.com".to_string();
         let subscribed_user = User {
+            id: [1; 16],
             identity: Principal::from_slice(&[1; 29]),
             subscription_status: UserSubscriptionStatus::Pending(email.clone()),
             wallets: vec![],
@@ -114,10 +154,11 @@ mod tests {
             main_wallet: None,
             last_update_timestamp: 0,
         };
-        repository.insert(UserKey(subscribed_user.identity), subscribed_user.clone());
+        repository.insert(UserKey(subscribed_user.id), subscribed_user.clone());
 
         let another_email = "martin@example.com".to_string();
         let another_subscribed_user = User {
+            id: [2; 16],
             identity: Principal::from_slice(&[2; 29]),
             subscription_status: UserSubscriptionStatus::Pending(another_email.clone()),
             wallets: vec![],
@@ -126,7 +167,7 @@ mod tests {
             last_update_timestamp: 0,
         };
         repository.insert(
-            UserKey(another_subscribed_user.identity),
+            UserKey(another_subscribed_user.id),
             another_subscribed_user.clone(),
         );
 
@@ -151,6 +192,7 @@ mod tests {
     fn check_user_removal() {
         let repository = UserRepository::default();
         let user = User {
+            id: [u8::MAX; 16],
             identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -159,9 +201,9 @@ mod tests {
             last_update_timestamp: 0,
         };
 
-        repository.insert(UserKey(user.identity), user.clone());
-        assert_eq!(repository.get(&UserKey(user.identity)), Some(user.clone()));
-        repository.remove(&UserKey(user.identity));
-        assert!(repository.get(&UserKey(user.identity)).is_none());
+        repository.insert(UserKey(user.id), user.clone());
+        assert_eq!(repository.get(&UserKey(user.id)), Some(user.clone()));
+        repository.remove(&UserKey(user.id));
+        assert!(repository.get(&UserKey(user.id)).is_none());
     }
 }
