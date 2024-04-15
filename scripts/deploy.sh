@@ -14,8 +14,10 @@ function identity_warning_confirmation() {
     return
   fi
 
+  local network=$(get_network)
+
   echo -e "\e[1;33m"
-  echo -e "WARNING: You are about to deploy to the IC network, this will use your default identity."
+  echo "WARNING: You are about to deploy to the IC with the \"$network\" network, this will use your active identity."
   echo -e "\e[0m"
 
   identity=$(dfx identity whoami)
@@ -217,36 +219,36 @@ while [[ $# -gt 0 ]]; do
     ;;
   --production)
     shift
-    identity_warning_confirmation
     set_network prod
     exec_function setup_enviroment
+    identity_warning_confirmation
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
   --staging)
     shift
-    identity_warning_confirmation
     set_network staging
     exec_function setup_enviroment
+    identity_warning_confirmation
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
   --testing)
     shift
-    identity_warning_confirmation
     set_network testing
     exec_function setup_enviroment
+    identity_warning_confirmation
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
   --playground)
     shift
-    identity_warning_confirmation
     set_network playground
     exec_function setup_enviroment
+    identity_warning_confirmation
     if [ "${1-}" == "reset" ]; then
       shift
       exec_function reset_playground_network
