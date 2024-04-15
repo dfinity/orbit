@@ -1,5 +1,4 @@
 use crate::models::{User, UserId, UserSubscriptionStatus};
-use candid::Principal;
 use ic_canister_macros::storable;
 
 /// The subscription status of an user to be stored in the user index.
@@ -54,6 +53,7 @@ impl User {
 mod tests {
     use super::*;
     use crate::models::UserSubscriptionStatus;
+    use candid::Principal;
     use ic_stable_structures::Storable;
 
     #[test]

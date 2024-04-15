@@ -1,9 +1,7 @@
 use crate::{
     core::{with_memory_manager, Memory, USER_STATUS_INDEX_MEMORY_ID},
     models::{
-        indexes::user_status_index::{
-            UserIndexSubscriptionStatus, UserStatusIndex, UserStatusIndexCriteria,
-        },
+        indexes::user_status_index::{UserStatusIndex, UserStatusIndexCriteria},
         UserId,
     },
 };
@@ -60,6 +58,7 @@ impl IndexRepository<UserStatusIndex, UserId> for UserStatusIndexRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::indexes::user_status_index::UserIndexSubscriptionStatus;
 
     #[test]
     fn test_user_status_index_repository() {
