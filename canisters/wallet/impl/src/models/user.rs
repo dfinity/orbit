@@ -1,11 +1,13 @@
 use super::UserStatus;
-use crate::errors::UserError;
+use crate::{errors::UserError, repositories::USER_GROUP_REPOSITORY};
 use candid::{CandidType, Deserialize, Principal};
+use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::storable;
+use uuid::Uuid;
 
 /// The user id, which is a UUID.
 pub type UserId = UUID;
@@ -89,11 +91,19 @@ fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserErr
     Ok(())
 }
 
-fn validate_groups(access_roles: &[UUID]) -> ModelValidatorResult<UserError> {
-    if access_roles.len() > User::MAX_USER_GROUPS as usize {
+fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
+    if group_ids.len() > User::MAX_USER_GROUPS as usize {
         return Err(UserError::TooManyUserGroups {
             max: User::MAX_USER_GROUPS,
         });
+    }
+
+    for group_id in group_ids.iter() {
+        if USER_GROUP_REPOSITORY.get(group_id).is_none() {
+            return Err(UserError::UserGroupDoesNotExist {
+                group_id: Uuid::from_bytes(*group_id).hyphenated().to_string(),
+            });
+        }
     }
 
     Ok(())
@@ -123,6 +133,8 @@ impl ModelValidator<UserError> for User {
 
 #[cfg(test)]
 mod tests {
+    use crate::models::UserGroup;
+
     use super::user_test_utils::mock_user;
     use super::*;
 
@@ -193,7 +205,23 @@ mod tests {
     #[test]
     fn fail_user_groups_too_many() {
         let mut user = mock_user();
-        user.groups = vec![[0; 16]; User::MAX_USER_GROUPS as usize + 1];
+
+        let groups = (0..=User::MAX_USER_GROUPS)
+            .map(|i| {
+                let id = [i + 1; 16];
+                USER_GROUP_REPOSITORY.insert(
+                    id,
+                    UserGroup {
+                        id,
+                        last_modification_timestamp: 0,
+                        name: format!("group_{}", i),
+                    },
+                );
+                id
+            })
+            .collect::<Vec<_>>();
+
+        user.groups = groups;
 
         let result = validate_groups(&user.groups);
 
@@ -202,6 +230,22 @@ mod tests {
             result.unwrap_err(),
             UserError::TooManyUserGroups {
                 max: User::MAX_USER_GROUPS
+            }
+        );
+    }
+
+    #[test]
+    fn fail_non_existent_user_group() {
+        let mut user = mock_user();
+        user.groups = vec![[1; 16]];
+
+        let result = validate_groups(&user.groups);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            UserError::UserGroupDoesNotExist {
+                group_id: Uuid::from_bytes(user.groups[0]).hyphenated().to_string()
             }
         );
     }
