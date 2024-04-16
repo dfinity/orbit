@@ -10,7 +10,7 @@ use crate::{
     repositories::TransferRepository,
 };
 use ic_canister_core::repository::Repository;
-use ic_canister_core::{api::ServiceResult, utils::rfc3339_to_timestamp};
+use ic_canister_core::{api::ServiceResult, model::ModelValidator, utils::rfc3339_to_timestamp};
 use uuid::Uuid;
 use wallet_api::ListAccountTransfersInput;
 
@@ -22,6 +22,15 @@ pub struct TransferService {
 }
 
 impl TransferService {
+    pub fn add_transfer(&self, transfer: Transfer) -> ServiceResult<Transfer> {
+        transfer.validate()?;
+
+        self.transfer_repository
+            .insert(transfer.to_key(), transfer.to_owned());
+
+        Ok(transfer)
+    }
+
     pub fn get_transfer(&self, id: &TransferId, ctx: &CallContext) -> ServiceResult<Transfer> {
         let transfer_key = Transfer::key(*id);
         let transfer = self.transfer_repository.get(&transfer_key).ok_or({
@@ -95,10 +104,12 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            account_test_utils::mock_account, transfer_test_utils::mock_transfer,
-            user_test_utils::mock_user, Account, User,
+            account_test_utils::mock_account, proposal_test_utils::mock_proposal,
+            transfer_test_utils::mock_transfer, user_test_utils::mock_user, Account, User,
         },
-        repositories::{ACCOUNT_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY},
+        repositories::{
+            ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY,
+        },
     };
     use candid::Principal;
 
@@ -123,6 +134,11 @@ mod tests {
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 
+        let mut proposal = mock_proposal();
+        proposal.id = [2; 16];
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
         TestContext {
             repository: TransferRepository::default(),
             service: TransferService::default(),
@@ -130,6 +146,71 @@ mod tests {
             account,
             call_context,
         }
+    }
+
+    #[test]
+    fn add_transfer_successfully() {
+        let ctx = setup();
+
+        let mut transfer = mock_transfer();
+        transfer.initiator_user = ctx.caller_user.id;
+        transfer.from_account = ctx.account.id;
+
+        let result = ctx.service.add_transfer(transfer);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_add_transfer_missing_initiator_user() {
+        let ctx = setup();
+
+        let mut transfer = mock_transfer();
+        transfer.initiator_user = [0; 16];
+        transfer.from_account = ctx.account.id;
+
+        let result = ctx.service.add_transfer(transfer);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().details.unwrap().get("info"),
+            Some(&"The initiator_user does not exist".to_owned())
+        );
+    }
+
+    #[test]
+    fn fail_add_transfer_missing_from_account() {
+        let ctx = setup();
+
+        let mut transfer = mock_transfer();
+        transfer.initiator_user = ctx.caller_user.id;
+        transfer.from_account = [0; 16];
+
+        let result = ctx.service.add_transfer(transfer);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().details.unwrap().get("info"),
+            Some(&"The from_account does not exist".to_owned())
+        );
+    }
+
+    #[test]
+    fn fail_add_transfer_missing_proposal_id() {
+        let ctx = setup();
+
+        let mut transfer = mock_transfer();
+        transfer.initiator_user = ctx.caller_user.id;
+        transfer.from_account = ctx.account.id;
+        transfer.proposal_id = [0; 16];
+
+        let result = ctx.service.add_transfer(transfer);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().details.unwrap().get("info"),
+            Some(&"The proposal_id does not exist".to_owned())
+        );
     }
 
     #[test]

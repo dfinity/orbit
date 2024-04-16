@@ -1,7 +1,9 @@
-use super::{AccountId, UserId};
-use crate::core::ic_cdk::api::time;
+use super::{AccountId, AccountKey, ProposalKey, UserId, UserKey};
 use crate::errors::TransferError;
 use crate::models::Metadata;
+use crate::repositories::{ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY};
+use crate::{core::ic_cdk::api::time, repositories::USER_REPOSITORY};
+use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
@@ -161,11 +163,44 @@ fn validate_network(blockchain_network: &str) -> ModelValidatorResult<TransferEr
     Ok(())
 }
 
+fn validate_initiator_user(initiator_user: &UserId) -> ModelValidatorResult<TransferError> {
+    USER_REPOSITORY
+        .get(&UserKey {
+            id: *initiator_user,
+        })
+        .ok_or(TransferError::ValidationError {
+            info: "The initiator_user does not exist".to_owned(),
+        })?;
+    Ok(())
+}
+
+fn validate_from_account(from_account: &AccountId) -> ModelValidatorResult<TransferError> {
+    ACCOUNT_REPOSITORY
+        .get(&AccountKey { id: *from_account })
+        .ok_or(TransferError::ValidationError {
+            info: "The from_account does not exist".to_owned(),
+        })?;
+    Ok(())
+}
+
+fn validate_proposal_id(proposal_id: &UUID) -> ModelValidatorResult<TransferError> {
+    PROPOSAL_REPOSITORY
+        .get(&ProposalKey { id: *proposal_id })
+        .ok_or(TransferError::ValidationError {
+            info: "The proposal_id does not exist".to_owned(),
+        })?;
+    Ok(())
+}
+
 impl ModelValidator<TransferError> for Transfer {
     fn validate(&self) -> ModelValidatorResult<TransferError> {
         self.metadata.validate()?;
         validate_to_address(&self.to_address)?;
         validate_network(&self.blockchain_network)?;
+
+        validate_initiator_user(&self.initiator_user)?;
+        validate_from_account(&self.from_account)?;
+        validate_proposal_id(&self.proposal_id)?;
 
         Ok(())
     }
@@ -173,6 +208,11 @@ impl ModelValidator<TransferError> for Transfer {
 
 #[cfg(test)]
 mod tests {
+    use crate::models::{
+        account_test_utils::mock_account, proposal_test_utils::mock_proposal,
+        user_test_utils::mock_user,
+    };
+
     use super::*;
     use transfer_test_utils::mock_transfer;
 
@@ -274,6 +314,45 @@ mod tests {
                 )
             }
         );
+    }
+
+    #[test]
+    fn fail_initiator_user_missing() {
+        assert!(validate_initiator_user(&[0; 16]).is_err());
+    }
+
+    #[test]
+    fn test_initiator_user_exists() {
+        let user = mock_user();
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+        let result = validate_initiator_user(&user.id);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_from_account_missing() {
+        assert!(validate_from_account(&[0; 16]).is_err());
+    }
+
+    #[test]
+    fn test_from_account_exists() {
+        let account = mock_account();
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+        let result = validate_from_account(&account.id);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_proposal_id_missing() {
+        assert!(validate_proposal_id(&[0; 16]).is_err());
+    }
+
+    #[test]
+    fn test_proposal_id_exists() {
+        let proposal = mock_proposal();
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+        let result = validate_proposal_id(&proposal.id);
+        assert!(result.is_ok());
     }
 }
 
