@@ -470,6 +470,30 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn add_account_with_missing_policy_should_fail() {
+        let ctx = setup();
+
+        let operation = AddAccountOperation {
+            account_id: None,
+            input: AddAccountOperationInput {
+                name: "test".to_string(),
+                blockchain: Blockchain::InternetComputer,
+                standard: BlockchainStandard::Native,
+                metadata: Metadata::default(),
+                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                update_approval_policy: Some(Criteria::AutoAdopted),
+                transfer_approval_policy: Some(Criteria::AutoAdopted),
+            },
+        };
+
+        let result = ctx.service.create_account(operation.input).await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
     async fn edit_account() {
         let ctx = setup();
         let account = mock_account();
