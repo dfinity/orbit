@@ -133,15 +133,15 @@ function setup_cycles_wallet() {
   fi
 }
 
-function reset_playground_network() {
+function reset_control_panel() {
   local network="$(get_network)"
 
-  if [ "$network" != "playground" ]; then
-    echo "ERROR: This operation is only supported on the playground network"
+  if [ "$network" != "playground" ] && [ "$network" != "local" ]; then
+    echo "ERROR: This operation is only supported on the playground or local network"
     exit 1
   fi
 
-  echo "Resetting the playground network..."
+  echo "Resetting the \"$network\" network..."
   echo "This will remove the code and data for the control_panel canister."
 
   set +e # Disable 'exit on error'
@@ -261,7 +261,7 @@ while [[ $# -gt 0 ]]; do
     identity_warning_confirmation
     if [ "${1-}" == "reset" ]; then
       shift
-      exec_function reset_playground_network
+      exec_function reset_control_panel
     fi
     exec_function deploy_control_panel
     exec_function deploy_ui
