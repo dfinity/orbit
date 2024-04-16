@@ -48,7 +48,7 @@ async fn post_upgrade(install: Option<CanisterInstall>) {
 
     match install {
         Some(CanisterInstall::Upgrade(input)) => CANISTER_SERVICE
-            .upgrade_canister(input.to_owned())
+            .upgrade_canister(input)
             .await
             .expect("failed to upgrade canister"),
         Some(_) => trap("wrong install mode for canister"),

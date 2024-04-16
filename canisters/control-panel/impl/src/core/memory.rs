@@ -59,6 +59,27 @@ pub fn write_canister_config(config: CanisterConfig) {
 }
 
 #[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_canister_config() {
+        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        write_canister_config(config.clone());
+        assert_eq!(canister_config(), config);
+    }
+
+    #[test]
+    fn test_update_canister_config() {
+        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        write_canister_config(config.clone());
+        let new_config = CanisterConfig::new(vec![1], vec![2]);
+        write_canister_config(new_config.clone());
+        assert_eq!(canister_config(), new_config);
+    }
+}
+
+#[cfg(test)]
 pub mod test_utils {
     use super::write_canister_config;
     use crate::core::CanisterConfig;

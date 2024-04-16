@@ -1,7 +1,13 @@
 <template>
   <PageLayout>
-    <template #sidebar>
-      <AppSidebar class="logo-markers-bg--contain" :language-selector="app.isMobile">
+    <template #sidebar="{ showWarningBanner }">
+      <AppSidebar
+        class="logo-markers-bg--contain"
+        :class="{
+          ['warning-banner--offset']: showWarningBanner,
+        }"
+        :language-selector="app.isMobile"
+      >
         <template #nav>
           <SidebarHighlights />
         </template>
