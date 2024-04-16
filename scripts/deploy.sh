@@ -133,15 +133,15 @@ function setup_cycles_wallet() {
   fi
 }
 
-function reset_playground_network() {
+function reset_control_panel() {
   local network="$(get_network)"
 
-  if [ "$network" != "playground" ]; then
-    echo "ERROR: This operation is only supported on the playground network"
+  if [ "$network" != "playground" ] && [ "$network" != "local" ]; then
+    echo "ERROR: This operation is only supported on the playground or local network"
     exit 1
   fi
 
-  echo "Resetting the playground network..."
+  echo "Resetting the \"$network\" network..."
   echo "This will remove the code and data for the control_panel canister."
 
   set +e # Disable 'exit on error'
@@ -180,13 +180,19 @@ function deploy_control_panel() {
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
     dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    dfx build control_panel --network $network
-    dfx canister install control_panel --network $network --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
   else
     echo "Canister 'control_panel' already exists with ID: $canister_id_output"
 
-    dfx build control_panel --network $network
-    dfx canister install control_panel --network $network --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+    module_hash=$(dfx canister info control_panel --network $network | grep "Module hash" | awk '{print $3}')
+
+    if [ "$module_hash" == "None" ]; then
+      echo "Installing the wasm module to the control_panel canister..."
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+    else
+      echo "Upgrading the wasm module to the control_panel canister..."
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+    fi
   fi
 }
 
@@ -251,7 +257,7 @@ while [[ $# -gt 0 ]]; do
     identity_warning_confirmation
     if [ "${1-}" == "reset" ]; then
       shift
-      exec_function reset_playground_network
+      exec_function reset_control_panel
     fi
     exec_function deploy_control_panel
     exec_function deploy_ui

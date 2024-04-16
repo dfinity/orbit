@@ -45,9 +45,12 @@ function initBuildEnv() {
   env.APP_ENV = env.APP_ENV ?? process.env.NODE_ENV;
   process.env.NODE_ENV = env.APP_ENV;
 
-  // Since localhost is deployed in a local replica, we need to set the APP_URL to the local replica URL.
-  env.APP_URL =
-    mode === 'localhost' ? 'http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943' : env.APP_URL;
+  if (mode === 'localhost') {
+    // Since localhost is deployed in a local replica, we need to set the APP_URL to the local replica URL.
+    env.APP_URL = 'http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943';
+    env.APP_ENV = 'development';
+    process.env.NODE_ENV = 'development';
+  }
 
   return env;
 }
@@ -153,6 +156,24 @@ const generateICAssetsJson = (
       },
       allow_raw_access: false,
     },
+    fonts: {
+      match: '**/fonts/**/*',
+      headers: {
+        'Cache-Control': 'max-age=31536000',
+      },
+    },
+    assets: {
+      match: '**/assets/**/*',
+      headers: {
+        'Cache-Control': 'max-age=604800',
+      },
+    },
+    images: {
+      match: '**/images/**/*',
+      headers: {
+        'Cache-Control': 'max-age=604800',
+      },
+    },
   };
 
   const icAssetsJson = Object.values(assetsConfig);
@@ -171,6 +192,10 @@ export default defineConfig(_ => {
   // Generate .ic-assets.json file, which is used to configure the asset canister headers.
   generateICAssetsJson(isProduction);
 
+  // Determine if the build is optimized based on the build mode, localhost is opmitized to match the production build
+  // when deploying to a local replica.
+  const productionBuild = isProduction || mode === 'localhost';
+
   return {
     mode: mode,
     base: '/',
@@ -183,8 +208,8 @@ export default defineConfig(_ => {
     plugins: [vue(), vuetify({ autoImport: true })],
     build: {
       target: 'es2020',
-      sourcemap: !isProduction,
-      minify: isProduction,
+      sourcemap: !productionBuild,
+      minify: productionBuild,
       chunkSizeWarningLimit: 500,
       outDir: './dist',
       emptyOutDir: true,
@@ -240,7 +265,7 @@ export default defineConfig(_ => {
       format: 'es',
     },
     css: {
-      devSourcemap: !isProduction,
+      devSourcemap: !productionBuild,
     },
     test: {
       globals: true,
@@ -258,7 +283,9 @@ export default defineConfig(_ => {
       // Make sure to use import.meta.env as the prefix since
       // vite uses that during runtime to access the variables.
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
-      'import.meta.env.APP_ENV': JSON.stringify(env.NODE_ENV),
+      'import.meta.env.PROD': isProduction,
+      'import.meta.env.DEV': !isProduction,
+      'import.meta.env.APP_ENV': JSON.stringify(env.APP_ENV),
       'import.meta.env.APP_URL': JSON.stringify(env.APP_URL),
       'import.meta.env.APP_BUILD_MODE': JSON.stringify(mode),
       'import.meta.env.APP_BUILD_VERSION': JSON.stringify(process.env.npm_package_version),
@@ -269,10 +296,9 @@ export default defineConfig(_ => {
       'import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(
         canisters.internet_identity,
       ),
-      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY':
-        isProduction && mode !== 'localhost'
-          ? JSON.stringify(env.APP_PROVIDER_URL_INTERNET_IDENTITY)
-          : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
+      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction
+        ? JSON.stringify(env.APP_PROVIDER_URL_INTERNET_IDENTITY)
+        : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
       'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
       'process.env.CANISTER_ID_ICP_INDEX': JSON.stringify(canisters.icp_index),
     },

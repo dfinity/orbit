@@ -18,7 +18,7 @@
       </div>
     </div>
     <slot name="custom">
-      <slot name="sidebar">
+      <slot :show-warning-banner="showWarningBanner" name="sidebar">
         <AppSidebar
           v-if="props.sidebar"
           :class="{
