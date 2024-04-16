@@ -192,7 +192,7 @@ export default defineConfig(_ => {
   // Generate .ic-assets.json file, which is used to configure the asset canister headers.
   generateICAssetsJson(isProduction);
 
-  // Determine if the build is optimized based on the build mode, localhost is opmitized to match the production build 
+  // Determine if the build is optimized based on the build mode, localhost is opmitized to match the production build
   // when deploying to a local replica.
   const productionBuild = isProduction || mode === 'localhost';
 
