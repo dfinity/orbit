@@ -317,7 +317,7 @@ impl ProposalService {
             .insert(proposal.to_key(), proposal.to_owned());
 
         if proposal.can_vote(&proposer.id).await {
-            proposal.add_vote(proposer.id, ProposalVoteStatus::Accepted, None);
+            proposal.add_vote(proposer.id, ProposalVoteStatus::Accepted, None)?;
         }
 
         // When a proposal is created, it is immediately evaluated to determine its status.
@@ -379,7 +379,7 @@ impl ProposalService {
             false => ProposalVoteStatus::Rejected,
         };
 
-        proposal.add_vote(voter.id, vote_decision, input.reason);
+        proposal.add_vote(voter.id, vote_decision, input.reason)?;
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
         proposal.reevaluate().await?;

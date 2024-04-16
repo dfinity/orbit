@@ -141,7 +141,7 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                 });
             self.status_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().clone().map(|prev| prev.to_index_by_status()),
+                    previous: prev.clone().map(|prev| prev.to_index_by_status()),
                     current: Some(value.to_index_by_status()),
                 });
             self.sort_index

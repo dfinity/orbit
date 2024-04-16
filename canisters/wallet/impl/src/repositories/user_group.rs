@@ -41,7 +41,7 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().clone().map(|prev| prev.to_index_by_name()),
+                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
                     current: Some(value.to_index_by_name()),
                 });
 

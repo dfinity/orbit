@@ -1,6 +1,6 @@
 use super::{
     DisplayUser, EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote,
-    ProposalVoteStatus, UserId,
+    ProposalVoteStatus, UserId, UserKey,
 };
 use crate::core::evaluation::{
     Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER, PROPOSAL_POSSIBLE_VOTERS_CRITERIA_EVALUATOR,
@@ -11,7 +11,9 @@ use crate::core::proposal::{
     ProposalEvaluator, ProposalPossibleVotersFinder, ProposalVoteRightsEvaluator,
 };
 use crate::errors::{EvaluateError, ProposalError};
+use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
+use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
@@ -105,10 +107,20 @@ fn validate_summary(summary: &Option<String>) -> ModelValidatorResult<ProposalEr
     Ok(())
 }
 
+fn validate_proposed_by(proposed_by: &UserId) -> ModelValidatorResult<ProposalError> {
+    USER_REPOSITORY
+        .get(&UserKey { id: *proposed_by })
+        .ok_or(ProposalError::ValidationError {
+            info: "The proposed_by does not exist".to_owned(),
+        })?;
+    Ok(())
+}
+
 impl ModelValidator<ProposalError> for Proposal {
     fn validate(&self) -> ModelValidatorResult<ProposalError> {
         validate_title(&self.title)?;
         validate_summary(&self.summary)?;
+        validate_proposed_by(&self.proposed_by)?;
 
         Ok(())
     }
@@ -168,19 +180,30 @@ impl Proposal {
         }
     }
 
-    pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
+    pub fn add_vote(
+        &mut self,
+        user_id: UUID,
+        vote: ProposalVoteStatus,
+        reason: Option<String>,
+    ) -> ModelValidatorResult<ProposalError> {
         if self.votes.iter().any(|vote| vote.user_id == user_id) {
             // users can only vote once per proposal
-            return;
+            return Err(ProposalError::VoteNotAllowed);
         }
 
-        self.votes.push(ProposalVote {
+        let vote = ProposalVote {
             user_id,
             status: vote,
             status_reason: reason,
             decided_dt: time(),
             last_modification_timestamp: time(),
-        });
+        };
+
+        vote.validate()?;
+
+        self.votes.push(vote);
+
+        Ok(())
     }
 
     pub async fn reevaluate(&mut self) -> Result<(), EvaluateError> {
