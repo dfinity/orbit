@@ -34,6 +34,9 @@ do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
 
+candid_spec_file=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[] | select(.name == "'$PACKAGE'") | .manifest_path | gsub("/impl/Cargo.toml$"; "") + "/api/spec.did"')
+package_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[] | select(.name == "'$PACKAGE'") | .version')
+
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE $FEATURES
 
 echo Optimising wasm
@@ -50,6 +53,14 @@ fi
 curl -sL "${URL}" -o ic-wasm || exit 1
 chmod +x ic-wasm
 ./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
+
+# if candid file exists, generate metadata
+if [ -f "$candid_spec_file" ]
+then
+  echo Adding wasm metadata
+  ./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm metadata candid:service -f $candid_spec_file -v public
+  ./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm metadata app:version -d "$package_version" -v public
+fi
 
 echo Compressing wasm
 mkdir -p wasms
