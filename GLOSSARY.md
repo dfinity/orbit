@@ -1,6 +1,6 @@
 # Orbit glossary
 
-This glossary is intended to provide a reference for users and developers to navigate within the Orbit ecosystem. It includes technical terms, Orbit-specific terms, and wallet terms. The glossary is organized alphabetically and includes explanations for each term.
+This glossary is intended to provide a reference for users and developers to navigate within the Orbit ecosystem. It includes technical terms, Orbit-specific terms, and wallet terms.
 
 # Table of Contents
 
@@ -59,7 +59,7 @@ All operations in the Station canister are performed through requests. A request
 
 The status of a request can be one of the following:
 
-- **Created:** A request is in the created state when it has been submitted to the station canister for evaluation. Created requests can be canceled by the user who submitted them.
+- **AwaitingApproval:** A request is in the awaiting approval state when it has been submitted to the station canister for evaluation. These requests can be canceled by the user who submitted them.
 
 - **Approved:** A request is in the approved state when it has passed all rules in the Approval Policy. Approved requests can be executed by the station canister.
 
@@ -79,13 +79,13 @@ The status of a request can be one of the following:
 
 An Approval Policy is a set of rules that define the behavior of requests in the station canister. Approval policies are used to enforce security measures, such as requiring multiple signatures to execute a request, they are defined by authorized users and can be customized to fit the needs of different use cases.
 
-### Approval Policy Rule
+### Approval Rule
 
-An Approval Policy Rule is a condition that must be met for a request to be approved by the station canister. Approval policy rules can be based on the request type, the request amount, the request sender, or any other parameter of the request. Approval policy rules are defined by authorized users and can be customized to fit the needs of different use cases.
+An Approval Rule is a condition that must be met for a request to be approved by the station canister. Approval policy rules can be based on the request type, the request amount, the request sender, or any other parameter of the request. Approval policy rules are defined by authorized users and can be customized to fit the needs of different use cases.
 
-### Approval Policy Rule Types
+### Approval Rule Types
 
-Approval policy rules can be of the following types:
+Approval rules can be of the following types:
 
 - **Auto-Approve:** An auto-approve rule automatically approves requests, regardless of the request parameters. Auto-approve rules can be used to expedite the execution of requests that do not require manual approval.
 
@@ -93,17 +93,17 @@ Approval policy rules can be of the following types:
 
 - **Percentage:** A percentage rule requires a minimum percentage of users to approve a request. Percentage rules can be used to enforce multi-signature requirements based on the percentage of users in the station.
 
-- **Allow listed:**: An allow-list rule are only relevant to transfers and checks if the destination address is in the allow-list. Allow-list rules can be used to restrict transfers to specific addresses that are in the address book.
+- **Allow listed:** An allow-list rule are only relevant to transfers and checks if the destination address is in the allow-list. Allow-list rules can be used to restrict transfers to specific addresses that are in the address book.
 
-- **Allow listed by label:**: An allow-list by label rule are only relevant to transfers and checks if the destination address is in the allow-list with the provided label. Allow-list by label rules can be used to restrict transfers to specific addresses by defined labels.
+- **Allow listed by label:** An allow-list by label rule are only relevant to transfers and checks if the destination address is in the allow-list with the provided label. Allow-list by label rules can be used to restrict transfers to specific addresses by defined labels.
 
 There are also the following composite rules that can be used to combine multiple rules:
 
-- **All of:**: A rule that requires all of the sub-rules to be approved. This rule can be used to enforce complex approval requirements that involve multiple conditions.
+- **All of:** A rule that requires all of the sub-rules to be approved. This rule can be used to enforce complex approval requirements that involve multiple conditions.
 
-- **Any of:**: A rule that requires any of the sub-rules to be approved. This rule can be used to enforce flexible approval requirements that allow for multiple conditions.
+- **Any of:** A rule that requires any of the sub-rules to be approved. This rule can be used to enforce flexible approval requirements that allow for multiple conditions.
 
-- **Not:**: A rule that requires the sub-rule to be rejected. This rule can be used to enforce negative approval requirements that prevent specific conditions from being met. An example of this rule is to prevent a specific user from approving a request.
+- **Not:** A rule that requires the sub-rule to be rejected. This rule can be used to enforce negative approval requirements that prevent specific conditions from being met. An example of this rule is to prevent a specific user from approving a request.
 
 ### Permission
 
