@@ -36,19 +36,19 @@ function getCommitHash() {
 }
 
 function initBuildEnv() {
-  const env = loadEnv(mode, process.cwd(), '');
-  // For the test environment, we need to set the APP_ENV to test to ensure the correct configuration is loaded.
+  const env = loadEnv(mode, process.cwd(), 'APP_');
+  // For the test environment, we need to set the APP_MODE to test to ensure the correct configuration is loaded.
   if (mode === 'test') {
-    env.APP_ENV = 'test';
+    env.APP_MODE = 'test';
   }
 
-  env.APP_ENV = env.APP_ENV ?? process.env.NODE_ENV;
-  process.env.NODE_ENV = env.APP_ENV;
+  env.APP_MODE = env.APP_MODE ?? process.env.NODE_ENV;
+  process.env.NODE_ENV = env.APP_MODE;
 
   if (mode === 'localhost') {
     // Since localhost is deployed in a local replica, we need to set the APP_URL to the local replica URL.
     env.APP_URL = 'http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943';
-    env.APP_ENV = 'development';
+    env.APP_MODE = 'development';
     process.env.NODE_ENV = 'development';
   }
 
@@ -285,7 +285,7 @@ export default defineConfig(_ => {
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
       'import.meta.env.PROD': isProduction,
       'import.meta.env.DEV': !isProduction,
-      'import.meta.env.APP_ENV': JSON.stringify(env.APP_ENV),
+      'import.meta.env.APP_MODE': JSON.stringify(env.APP_MODE),
       'import.meta.env.APP_URL': JSON.stringify(env.APP_URL),
       'import.meta.env.APP_BUILD_MODE': JSON.stringify(mode),
       'import.meta.env.APP_BUILD_VERSION': JSON.stringify(process.env.npm_package_version),
