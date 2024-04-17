@@ -282,3 +282,32 @@ mod tests {
         assert!(validate_email(email).is_err());
     }
 }
+
+#[cfg(test)]
+pub mod user_model_utils {
+    use super::{User, UserSubscriptionStatus};
+    use candid::Principal;
+    use uuid::Uuid;
+
+    pub fn mock_user() -> User {
+        // generate a random slice of 29 bytes to create a Principal
+        let mut principal_id = [0u8; 29];
+        Uuid::new_v4()
+            .as_bytes()
+            .iter()
+            .enumerate()
+            .for_each(|(i, byte)| {
+                principal_id[i] = *byte;
+            });
+
+        User {
+            id: *Uuid::new_v4().as_bytes(),
+            identity: Principal::from_slice(&principal_id),
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
+            wallets: vec![],
+            deployed_wallets: vec![],
+            main_wallet: None,
+            last_update_timestamp: 0,
+        }
+    }
+}
