@@ -167,6 +167,10 @@ function deploy_control_panel() {
 
   exec_function "build_wasms"
 
+  echo "Building the control_panel wasm..."
+
+  ./scripts/generate-wasm.sh control_panel
+
   # Read the WASM files and convert them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
   wallet_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/wallet.wasm.gz | sed 's/../\\&/g')

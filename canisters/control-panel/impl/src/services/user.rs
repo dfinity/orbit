@@ -191,10 +191,11 @@ impl UserService {
 
     pub async fn add_deployed_wallet(
         &self,
+        user_id: &UserId,
         wallet_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let mut user = self.get_user_by_identity(&ctx.caller(), ctx)?;
+        let mut user = self.get_user(user_id, ctx)?;
 
         user.wallets.push(UserWallet {
             canister_id: wallet_canister_id,
@@ -222,10 +223,11 @@ impl UserService {
 
     pub async fn set_main_wallet(
         &self,
+        user_id: &UserId,
         wallet_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let mut user = self.get_user_by_identity(&ctx.caller(), ctx)?;
+        let mut user = self.get_user(user_id, ctx)?;
 
         user.main_wallet = Some(wallet_canister_id);
 

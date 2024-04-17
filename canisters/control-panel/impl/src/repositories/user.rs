@@ -127,7 +127,7 @@ impl UserRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserSubscriptionStatus;
+    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus};
     use candid::Principal;
 
     #[test]
@@ -225,5 +225,49 @@ mod tests {
         assert_eq!(repository.get(&UserKey(user.id)), Some(user.clone()));
         repository.remove(&UserKey(user.id));
         assert!(repository.get(&UserKey(user.id)).is_none());
+    }
+
+    #[test]
+    fn check_user_find_by_identity() {
+        let user = mock_user();
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+        assert_eq!(
+            USER_REPOSITORY.find_by_identity(&user.identity),
+            Some(user.clone())
+        );
+    }
+
+    #[test]
+    fn check_user_find_by_identity_not_found() {
+        let user = mock_user();
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+        assert_eq!(
+            USER_REPOSITORY.find_by_identity(&Principal::from_slice(&[0; 29])),
+            None
+        );
+    }
+
+    #[test]
+    fn check_find_by_identity_gets_correct_user_from_many() {
+        for _ in 0..10 {
+            let mock_user = mock_user();
+            USER_REPOSITORY.insert(mock_user.to_key(), mock_user);
+        }
+
+        let user = mock_user();
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        for _ in 0..10 {
+            let mock_user = mock_user();
+            USER_REPOSITORY.insert(mock_user.to_key(), mock_user);
+        }
+
+        assert_eq!(USER_REPOSITORY.len(), 21);
+        assert_eq!(
+            USER_REPOSITORY.find_by_identity(&user.identity),
+            Some(user.clone())
+        );
     }
 }

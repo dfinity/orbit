@@ -87,12 +87,12 @@ impl DeployService {
         })?;
 
         self.user_service
-            .add_deployed_wallet(wallet_canister.canister_id, ctx)
+            .add_deployed_wallet(&user.id, wallet_canister.canister_id, ctx)
             .await?;
 
         if user.main_wallet.is_none() {
             self.user_service
-                .set_main_wallet(wallet_canister.canister_id, ctx)
+                .set_main_wallet(&user.id, wallet_canister.canister_id, ctx)
                 .await?;
         }
 
