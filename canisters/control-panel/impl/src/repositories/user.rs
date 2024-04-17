@@ -250,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn check_user_find_by_identity_multiple_users() {
+    fn check_find_by_identity_gets_correct_user_from_many() {
         for _ in 0..10 {
             let mock_user = mock_user();
             USER_REPOSITORY.insert(mock_user.to_key(), mock_user);
