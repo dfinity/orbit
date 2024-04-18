@@ -412,7 +412,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        core::{test_utils, validation::disable_mock_validation, CallContext},
+        core::{test_utils, validation::disable_mock_resource_validation, CallContext},
         models::{
             access_policy::Allow, account_test_utils::mock_account, criteria::Criteria,
             specifier::UserSpecifier, user_test_utils::mock_user, AddAccountOperation,
@@ -482,7 +482,7 @@ mod tests {
     async fn add_account_with_existing_name_should_fail() {
         let ctx = setup();
 
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let mut account = mock_account();
         account.name = "foo".to_string();
@@ -513,7 +513,7 @@ mod tests {
     async fn add_account_with_missing_policy_should_fail() {
         let ctx = setup();
 
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let base_input = AddAccountOperationInput {
             name: "foo".to_string(),
@@ -655,7 +655,7 @@ mod tests {
     async fn edit_account_with_missing_policy_should_fail() {
         let ctx = setup();
 
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let account = mock_account();
 

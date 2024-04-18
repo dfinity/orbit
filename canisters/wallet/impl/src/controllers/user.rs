@@ -107,7 +107,7 @@ mod tests {
     use candid::Principal;
 
     use crate::{
-        core::{set_mock_caller, test_utils, validation::disable_mock_validation},
+        core::{set_mock_caller, test_utils, validation::disable_mock_resource_validation},
         models::{AddUserOperationInput, UserStatus},
         services::UserService,
     };
@@ -127,7 +127,7 @@ mod tests {
     #[tokio::test]
     async fn me_returns_successfully() {
         let ctx = setup();
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let identity = Principal::from_slice(&[1; 29]);
         ctx.user_service

@@ -7,9 +7,8 @@ use crate::models::user::User;
 use crate::repositories::{ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY};
 
 use crate::core::validation::{
-    ensure_account_resource_ids_exist, ensure_address_book_entry_resource_ids_exist,
-    ensure_proposal_policy_resource_ids_exist, ensure_user_exists, ensure_user_group_exists,
-    ensure_user_resource_ids_exist, RecordNotFoundError,
+    EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureProposalPolicy,
+    EnsureResourceIdExists, EnsureUser, EnsureUserGroup, RecordNotFoundError,
 };
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
@@ -46,13 +45,13 @@ impl ModelValidator<UserSpecifierError> for UserSpecifier {
             UserSpecifier::Any | UserSpecifier::Owner | UserSpecifier::Proposer => Ok(()),
             UserSpecifier::Group(group_ids) => {
                 for group_id in group_ids {
-                    ensure_user_group_exists(group_id)?;
+                    EnsureUserGroup::id_exists(group_id)?;
                 }
                 Ok(())
             }
             UserSpecifier::Id(user_ids) => {
                 for user_id in user_ids {
-                    ensure_user_exists(user_id)?;
+                    EnsureUser::id_exists(user_id)?;
                 }
                 Ok(())
             }
@@ -100,29 +99,27 @@ impl ModelValidator<RecordNotFoundError> for ProposalSpecifier {
 
             ProposalSpecifier::Transfer(resource_ids)
             | ProposalSpecifier::EditAccount(resource_ids) => {
-                ensure_account_resource_ids_exist(resource_ids)
+                EnsureAccount::resource_ids_exist(resource_ids)
             }
             ProposalSpecifier::EditUser(resource_ids) => {
-                ensure_user_resource_ids_exist(resource_ids)
+                EnsureUser::resource_ids_exist(resource_ids)
             }
             ProposalSpecifier::RemoveAddressBookEntry(resource_ids)
             | ProposalSpecifier::EditAddressBookEntry(resource_ids) => {
-                ensure_address_book_entry_resource_ids_exist(resource_ids)
+                EnsureAddressBookEntry::resource_ids_exist(resource_ids)
             }
             ProposalSpecifier::EditAccessPolicy(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => Ok(()),
                 ResourceSpecifier::Resource(resource) => resource.validate(),
             },
 
-            ProposalSpecifier::EditProposalPolicy(resource_ids) => {
-                ensure_proposal_policy_resource_ids_exist(resource_ids)
-            }
-            ProposalSpecifier::RemoveProposalPolicy(resource_ids) => {
-                ensure_proposal_policy_resource_ids_exist(resource_ids)
+            ProposalSpecifier::EditProposalPolicy(resource_ids)
+            | ProposalSpecifier::RemoveProposalPolicy(resource_ids) => {
+                EnsureProposalPolicy::resource_ids_exist(resource_ids)
             }
             ProposalSpecifier::EditUserGroup(resource_ids)
             | ProposalSpecifier::RemoveUserGroup(resource_ids) => {
-                ensure_user_resource_ids_exist(resource_ids)
+                EnsureUserGroup::resource_ids_exist(resource_ids)
             }
         }
     }
@@ -386,7 +383,7 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
 mod tests {
 
     use crate::{
-        core::validation::disable_mock_validation,
+        core::validation::disable_mock_resource_validation,
         models::{
             access_policy::Allow,
             criteria::Criteria,
@@ -545,7 +542,7 @@ mod tests {
 
     #[test]
     fn test_valid_user_specifier() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         UserSpecifier::Any.validate().expect("Any should be valid");
         UserSpecifier::Owner
@@ -558,7 +555,7 @@ mod tests {
 
     #[test]
     fn fail_invalid_user_specifier() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         UserSpecifier::Id(vec![[0; 16]])
             .validate()
@@ -570,7 +567,7 @@ mod tests {
 
     #[test]
     fn test_valid_proposal_specifier() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         ProposalSpecifier::AddAccount
             .validate()
@@ -594,7 +591,7 @@ mod tests {
 
     #[test]
     fn fail_invalid_proposal_specifier() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         ProposalSpecifier::Transfer(ResourceIds::Ids(vec![[0; 16]]))
             .validate()

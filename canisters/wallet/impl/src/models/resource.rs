@@ -5,9 +5,8 @@ use ic_canister_macros::storable;
 use uuid::Uuid;
 
 use crate::core::validation::{
-    ensure_account_resource_id_exists, ensure_address_book_entry_resource_id_exists,
-    ensure_proposal_policy_resource_id_exists, ensure_proposal_resource_id_exists,
-    ensure_user_group_resource_id_exists, ensure_user_resource_id_exists, RecordNotFoundError,
+    EnsureAccount, EnsureAddressBookEntry, EnsureProposal, EnsureProposalPolicy,
+    EnsureResourceIdExists, EnsureUser, EnsureUserGroup, RecordNotFoundError,
 };
 
 #[storable]
@@ -36,7 +35,7 @@ impl ModelValidator<RecordNotFoundError> for Resource {
                 AccountResourceAction::Transfer(resource_id)
                 | AccountResourceAction::Read(resource_id)
                 | AccountResourceAction::Update(resource_id) => {
-                    ensure_account_resource_id_exists(resource_id)
+                    EnsureAccount::resource_id_exists(resource_id)
                 }
             },
             Resource::AddressBook(action) => match action {
@@ -44,7 +43,7 @@ impl ModelValidator<RecordNotFoundError> for Resource {
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    ensure_address_book_entry_resource_id_exists(resource_id)
+                    EnsureAddressBookEntry::resource_id_exists(resource_id)
                 }
             },
             Resource::ChangeCanister(action) => match action {
@@ -53,7 +52,7 @@ impl ModelValidator<RecordNotFoundError> for Resource {
             Resource::Proposal(action) => match action {
                 ProposalResourceAction::List => Ok(()),
                 ProposalResourceAction::Read(resource_id) => {
-                    ensure_proposal_resource_id_exists(resource_id)
+                    EnsureProposal::resource_id_exists(resource_id)
                 }
             },
             Resource::ProposalPolicy(action) => match action {
@@ -61,7 +60,7 @@ impl ModelValidator<RecordNotFoundError> for Resource {
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    ensure_proposal_policy_resource_id_exists(resource_id)
+                    EnsureProposalPolicy::resource_id_exists(resource_id)
                 }
             },
             Resource::System(action) => match action {
@@ -70,7 +69,7 @@ impl ModelValidator<RecordNotFoundError> for Resource {
             Resource::User(action) => match action {
                 UserResourceAction::List | UserResourceAction::Create => Ok(()),
                 UserResourceAction::Read(resource_id) | UserResourceAction::Update(resource_id) => {
-                    ensure_user_resource_id_exists(resource_id)
+                    EnsureUser::resource_id_exists(resource_id)
                 }
             },
             Resource::UserGroup(action) => match action {
@@ -78,7 +77,7 @@ impl ModelValidator<RecordNotFoundError> for Resource {
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    ensure_user_group_resource_id_exists(resource_id)
+                    EnsureUserGroup::resource_id_exists(resource_id)
                 }
             },
         }
@@ -490,7 +489,7 @@ impl Display for ResourceId {
 mod test {
     use ic_canister_core::model::ModelValidator;
 
-    use crate::core::validation::disable_mock_validation;
+    use crate::core::validation::disable_mock_resource_validation;
 
     use super::{
         AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
@@ -500,7 +499,7 @@ mod test {
 
     #[test]
     fn test_resource_validation() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let valid_resources = vec![
             Resource::Account(AccountResourceAction::List),
@@ -545,7 +544,7 @@ mod test {
 
     #[test]
     fn fail_non_existent_resource_id() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let invalid_resources = vec![
             Resource::Account(AccountResourceAction::Read(ResourceId::Id([0; 16]))),

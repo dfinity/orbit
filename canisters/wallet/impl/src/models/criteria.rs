@@ -343,13 +343,13 @@ impl EvaluateCriteria for CriteriaEvaluator {
 
 #[cfg(test)]
 mod test {
-    use crate::core::validation::disable_mock_validation;
+    use crate::core::validation::disable_mock_resource_validation;
 
     use super::*;
 
     #[test]
     fn fail_critera_with_non_existent_user_specifier() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         Criteria::ApprovalThreshold(UserSpecifier::Id(vec![[0; 16]]), Percentage(100))
             .validate()

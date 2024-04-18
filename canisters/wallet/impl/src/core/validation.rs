@@ -22,17 +22,17 @@ use ic_canister_core::repository::Repository;
 thread_local! {
   /// Switch for tests to enable validation if needed.
   #[cfg(test)]
-  static MOCK_VALIDATION_ON: RefCell<bool> = RefCell::new(true);
+  static MOCK_RESOURCE_VALIDATION_ON: RefCell<bool> = RefCell::new(true);
 }
 
 #[cfg(test)]
-pub fn disable_mock_validation() {
-    MOCK_VALIDATION_ON.with(|v| *v.borrow_mut() = false);
+pub fn disable_mock_resource_validation() {
+    MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow_mut() = false);
 }
 
 #[cfg(test)]
-pub fn enable_mock_validation() {
-    MOCK_VALIDATION_ON.with(|v| *v.borrow_mut() = true);
+pub fn enable_mock_resource_validation() {
+    MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow_mut() = true);
 }
 
 #[derive(Debug)]
@@ -43,204 +43,134 @@ pub struct RecordNotFoundError {
 
 fn ensure_entry_exists<K, V>(repository: Arc<dyn Repository<K, V>>, key: K) -> Option<()> {
     #[cfg(test)]
-    if MOCK_VALIDATION_ON.with(|v| *v.borrow()) {
+    if MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow()) {
         return Some(());
     }
 
     repository.get(&key).map(|_| ())
 }
 
-pub fn ensure_user_exists(user_id: &UUID) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(USER_REPOSITORY.to_owned(), UserKey { id: *user_id }).ok_or(
-        RecordNotFoundError {
-            model_name: "User".to_string(),
-            id: Uuid::from_bytes(*user_id).hyphenated().to_string(),
-        },
-    )
+pub trait EnsureIdExists<Key> {
+    fn id_exists(id: &Key) -> Result<(), RecordNotFoundError>;
 }
 
-pub fn ensure_user_resource_id_exists(resource_id: &ResourceId) -> Result<(), RecordNotFoundError> {
-    match resource_id {
-        ResourceId::Any => Ok(()),
-        ResourceId::Id(id) => ensure_user_exists(id),
+pub trait EnsureResourceIdExists: EnsureIdExists<UUID> {
+    fn resource_id_exists(resource_id: &ResourceId) -> Result<(), RecordNotFoundError> {
+        match resource_id {
+            ResourceId::Any => Ok(()),
+            ResourceId::Id(id) => Self::id_exists(id),
+        }
     }
-}
-
-pub fn ensure_user_resource_ids_exist(resource: &ResourceIds) -> Result<(), RecordNotFoundError> {
-    match resource {
-        ResourceIds::Any => Ok(()),
-        ResourceIds::Ids(ids) => {
-            for id in ids {
-                ensure_user_exists(id)?;
+    fn resource_ids_exist(resource_ids: &ResourceIds) -> Result<(), RecordNotFoundError> {
+        match resource_ids {
+            ResourceIds::Any => Ok(()),
+            ResourceIds::Ids(ids) => {
+                for id in ids {
+                    Self::id_exists(id)?;
+                }
+                Ok(())
             }
-            Ok(())
         }
     }
 }
 
-pub fn ensure_user_group_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(USER_GROUP_REPOSITORY.to_owned(), *id).ok_or(RecordNotFoundError {
-        model_name: "UserGroup".to_string(),
-        id: Uuid::from_bytes(*id).hyphenated().to_string(),
-    })
-}
+pub struct EnsureUser {}
 
-pub fn ensure_user_group_resource_id_exists(
-    resource_id: &ResourceId,
-) -> Result<(), RecordNotFoundError> {
-    match resource_id {
-        ResourceId::Any => Ok(()),
-        ResourceId::Id(id) => ensure_user_group_exists(id),
+impl EnsureIdExists<UUID> for EnsureUser {
+    fn id_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(USER_REPOSITORY.to_owned(), UserKey { id: *id }).ok_or(
+            RecordNotFoundError {
+                model_name: "User".to_string(),
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            },
+        )
     }
 }
 
-pub fn ensure_user_group_resource_ids_exist(
-    resource: &ResourceIds,
-) -> Result<(), RecordNotFoundError> {
-    match resource {
-        ResourceIds::Any => Ok(()),
-        ResourceIds::Ids(ids) => {
-            for id in ids {
-                ensure_user_group_exists(id)?;
-            }
-            Ok(())
-        }
-    }
-}
+impl EnsureResourceIdExists for EnsureUser {}
 
-pub fn ensure_account_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(ACCOUNT_REPOSITORY.to_owned(), AccountKey { id: *id }).ok_or(
-        RecordNotFoundError {
-            model_name: "Account".to_string(),
+pub struct EnsureUserGroup {}
+
+impl EnsureIdExists<UUID> for EnsureUserGroup {
+    fn id_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(USER_GROUP_REPOSITORY.to_owned(), *id).ok_or(RecordNotFoundError {
+            model_name: "UserGroup".to_string(),
             id: Uuid::from_bytes(*id).hyphenated().to_string(),
-        },
-    )
-}
-
-pub fn ensure_account_resource_id_exists(
-    resource_id: &ResourceId,
-) -> Result<(), RecordNotFoundError> {
-    match resource_id {
-        ResourceId::Any => Ok(()),
-        ResourceId::Id(id) => ensure_account_exists(id),
+        })
     }
 }
 
-pub fn ensure_account_resource_ids_exist(
-    resource: &ResourceIds,
-) -> Result<(), RecordNotFoundError> {
-    match resource {
-        ResourceIds::Any => Ok(()),
-        ResourceIds::Ids(ids) => {
-            for id in ids {
-                ensure_account_exists(id)?;
-            }
-            Ok(())
-        }
+impl EnsureResourceIdExists for EnsureUserGroup {}
+
+pub struct EnsureAccount {}
+
+impl EnsureIdExists<UUID> for EnsureAccount {
+    fn id_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(ACCOUNT_REPOSITORY.to_owned(), AccountKey { id: *id }).ok_or(
+            RecordNotFoundError {
+                model_name: "Account".to_string(),
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            },
+        )
     }
 }
 
-pub fn ensure_address_book_entry_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(
-        ADDRESS_BOOK_REPOSITORY.to_owned(),
-        AddressBookEntryKey { id: *id },
-    )
-    .ok_or(RecordNotFoundError {
-        model_name: "AddressBookEntry".to_string(),
-        id: Uuid::from_bytes(*id).hyphenated().to_string(),
-    })
-}
+impl EnsureResourceIdExists for EnsureAccount {}
 
-pub fn ensure_address_book_entry_resource_id_exists(
-    resource_id: &ResourceId,
-) -> Result<(), RecordNotFoundError> {
-    match resource_id {
-        ResourceId::Any => Ok(()),
-        ResourceId::Id(id) => ensure_address_book_entry_exists(id),
-    }
-}
+pub struct EnsureAddressBookEntry {}
 
-pub fn ensure_address_book_entry_resource_ids_exist(
-    resource: &ResourceIds,
-) -> Result<(), RecordNotFoundError> {
-    match resource {
-        ResourceIds::Any => Ok(()),
-        ResourceIds::Ids(ids) => {
-            for id in ids {
-                ensure_address_book_entry_exists(id)?;
-            }
-            Ok(())
-        }
-    }
-}
-
-pub fn ensure_proposal_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(PROPOSAL_REPOSITORY.to_owned(), ProposalKey { id: *id }).ok_or(
-        RecordNotFoundError {
-            model_name: "Proposal".to_string(),
+impl EnsureIdExists<UUID> for EnsureAddressBookEntry {
+    fn id_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(
+            ADDRESS_BOOK_REPOSITORY.to_owned(),
+            AddressBookEntryKey { id: *id },
+        )
+        .ok_or(RecordNotFoundError {
+            model_name: "AddressBookEntry".to_string(),
             id: Uuid::from_bytes(*id).hyphenated().to_string(),
-        },
-    )
-}
-
-pub fn ensure_proposal_resource_id_exists(
-    resource_id: &ResourceId,
-) -> Result<(), RecordNotFoundError> {
-    match resource_id {
-        ResourceId::Any => Ok(()),
-        ResourceId::Id(id) => ensure_proposal_exists(id),
+        })
     }
 }
 
-pub fn ensure_proposal_resource_ids_exist(
-    resource: &ResourceIds,
-) -> Result<(), RecordNotFoundError> {
-    match resource {
-        ResourceIds::Any => Ok(()),
-        ResourceIds::Ids(ids) => {
-            for id in ids {
-                ensure_proposal_exists(id)?;
-            }
-            Ok(())
-        }
+impl EnsureResourceIdExists for EnsureAddressBookEntry {}
+
+pub struct EnsureProposal {}
+
+impl EnsureIdExists<UUID> for EnsureProposal {
+    fn id_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(PROPOSAL_REPOSITORY.to_owned(), ProposalKey { id: *id }).ok_or(
+            RecordNotFoundError {
+                model_name: "Proposal".to_string(),
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            },
+        )
     }
 }
 
-pub fn ensure_proposal_policy_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(PROPOSAL_POLICY_REPOSITORY.to_owned(), *id).ok_or(RecordNotFoundError {
-        model_name: "ProposalPolicy".to_string(),
-        id: Uuid::from_bytes(*id).hyphenated().to_string(),
-    })
-}
+impl EnsureResourceIdExists for EnsureProposal {}
 
-pub fn ensure_proposal_policy_resource_id_exists(
-    resource_id: &ResourceId,
-) -> Result<(), RecordNotFoundError> {
-    match resource_id {
-        ResourceId::Any => Ok(()),
-        ResourceId::Id(id) => ensure_proposal_policy_exists(id),
+pub struct EnsureProposalPolicy {}
+
+impl EnsureIdExists<UUID> for EnsureProposalPolicy {
+    fn id_exists(id: &UUID) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(PROPOSAL_POLICY_REPOSITORY.to_owned(), *id).ok_or(RecordNotFoundError {
+            model_name: "ProposalPolicy".to_string(),
+            id: Uuid::from_bytes(*id).hyphenated().to_string(),
+        })
     }
 }
 
-pub fn ensure_proposal_policy_resource_ids_exist(
-    resource: &ResourceIds,
-) -> Result<(), RecordNotFoundError> {
-    match resource {
-        ResourceIds::Any => Ok(()),
-        ResourceIds::Ids(ids) => {
-            for id in ids {
-                ensure_proposal_policy_exists(id)?;
-            }
-            Ok(())
-        }
-    }
-}
+impl EnsureResourceIdExists for EnsureProposalPolicy {}
 
-pub fn ensure_access_policy_exists(key: &Resource) -> Result<(), RecordNotFoundError> {
-    ensure_entry_exists(ACCESS_POLICY_REPOSITORY.to_owned(), key.to_owned()).ok_or(
-        RecordNotFoundError {
-            model_name: "AccessPolicy".to_string(),
-            id: key.to_string(),
-        },
-    )
+pub struct EnsureAccessPolicy {}
+
+impl EnsureIdExists<Resource> for EnsureAccessPolicy {
+    fn id_exists(key: &Resource) -> Result<(), RecordNotFoundError> {
+        ensure_entry_exists(ACCESS_POLICY_REPOSITORY.to_owned(), key.to_owned()).ok_or(
+            RecordNotFoundError {
+                model_name: "AccessPolicy".to_string(),
+                id: key.to_string(),
+            },
+        )
+    }
 }

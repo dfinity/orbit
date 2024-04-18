@@ -1,4 +1,4 @@
-use crate::core::validation::{ensure_user_exists, ensure_user_group_exists, RecordNotFoundError};
+use crate::core::validation::{EnsureIdExists, EnsureUser, EnsureUserGroup, RecordNotFoundError};
 
 use super::{resource::Resource, User, UserGroupId, UserId};
 use ic_canister_core::model::{ModelKey, ModelValidator, ModelValidatorResult};
@@ -22,10 +22,10 @@ pub struct Allow {
 impl ModelValidator<RecordNotFoundError> for Allow {
     fn validate(&self) -> ModelValidatorResult<RecordNotFoundError> {
         for user_id in &self.users {
-            ensure_user_exists(user_id)?;
+            EnsureUser::id_exists(user_id)?;
         }
         for group_id in &self.user_groups {
-            ensure_user_group_exists(group_id)?;
+            EnsureUserGroup::id_exists(group_id)?;
         }
         Ok(())
     }
@@ -151,12 +151,9 @@ impl AccessPolicy {
 
 #[cfg(any(test, feature = "canbench"))]
 pub mod access_policy_test_utils {
-    use crate::{
-        core::validation::disable_mock_validation,
-        models::resource::{
-            AccessPolicyResourceAction, AccountResourceAction, ProposalResourceAction,
-            ResourceAction, ResourceId, UserResourceAction,
-        },
+    use crate::models::resource::{
+        AccessPolicyResourceAction, AccountResourceAction, ProposalResourceAction, ResourceAction,
+        ResourceId, UserResourceAction,
     };
 
     use super::*;
@@ -280,10 +277,19 @@ pub mod access_policy_test_utils {
 
         policy
     }
+}
+
+#[cfg(test)]
+mod test {
+    use ic_canister_core::model::ModelValidator;
+
+    use crate::core::validation::disable_mock_resource_validation;
+
+    use super::{Allow, AuthScope};
 
     #[test]
     fn test_validate_default_allow() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let allow = Allow::default();
         allow.validate().expect("Default allow should be valid");
@@ -291,7 +297,7 @@ pub mod access_policy_test_utils {
 
     #[test]
     fn fail_allow_with_non_existent_user() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let allow = Allow {
             auth_scope: AuthScope::Restricted,
@@ -306,7 +312,7 @@ pub mod access_policy_test_utils {
 
     #[test]
     fn fail_allow_with_non_existent_user_group() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let allow = Allow {
             auth_scope: AuthScope::Restricted,

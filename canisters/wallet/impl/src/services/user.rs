@@ -242,7 +242,7 @@ impl UserService {
 mod tests {
     use super::*;
     use crate::{
-        core::{test_utils, validation::disable_mock_validation},
+        core::{test_utils, validation::disable_mock_resource_validation},
         models::{
             access_policy::AuthScope,
             user_group_test_utils::mock_user_group,
@@ -361,7 +361,7 @@ mod tests {
     async fn add_user_non_existent_group_should_fail() {
         let ctx: TestContext = setup();
 
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let input = AddUserOperationInput {
             identities: vec![Principal::from_slice(&[2; 29])],

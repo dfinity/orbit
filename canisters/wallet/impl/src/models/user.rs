@@ -1,14 +1,14 @@
 use super::UserStatus;
-use crate::core::validation::ensure_user_group_exists;
-use crate::{errors::UserError, repositories::USER_GROUP_REPOSITORY};
+use crate::{
+    core::validation::{EnsureIdExists, EnsureUserGroup},
+    errors::UserError,
+};
 use candid::{CandidType, Deserialize, Principal};
-use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
 use ic_canister_macros::storable;
-use uuid::Uuid;
 
 /// The user id, which is a UUID.
 pub type UserId = UUID;
@@ -100,12 +100,7 @@ fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
     }
 
     for group_id in group_ids.iter() {
-        ensure_user_group_exists(group_id)?;
-        // if USER_GROUP_REPOSITORY.get(group_id).is_none() {
-        //     return Err(UserError::UserGroupDoesNotExist {
-        //         group_id: Uuid::from_bytes(*group_id).hyphenated().to_string(),
-        //     });
-        // }
+        EnsureUserGroup::id_exists(group_id)?;
     }
 
     Ok(())
@@ -135,8 +130,12 @@ impl ModelValidator<UserError> for User {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::validation::disable_mock_validation;
+    use uuid::Uuid;
+
+    use crate::core::validation::disable_mock_resource_validation;
     use crate::models::UserGroup;
+    use crate::repositories::USER_GROUP_REPOSITORY;
+    use ic_canister_core::repository::Repository;
 
     use super::user_test_utils::mock_user;
     use super::*;
@@ -239,7 +238,7 @@ mod tests {
 
     #[test]
     fn fail_non_existent_user_group() {
-        disable_mock_validation();
+        disable_mock_resource_validation();
 
         let mut user = mock_user();
         user.groups = vec![[1; 16]];
