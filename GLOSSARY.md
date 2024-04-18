@@ -57,7 +57,7 @@ All operations in the Station canister are performed through actions. Actions ar
 
 ### Action Operation
 
-An action operation is a type of operation that can be performed by the station canister. Action operations are defined by the station canister and can include operations such as transferring tokens, adding accounts, or updating permissions.
+An action operation specifies what the station canister should do when executing the action. They include operations such as transferring tokens, adding accounts, or updating permissions.
 
 #### Action Status
 
