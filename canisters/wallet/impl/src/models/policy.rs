@@ -1,7 +1,10 @@
 use super::{criteria::Criteria, specifier::ProposalSpecifier};
-use crate::errors::MatchError;
+use crate::errors::{MatchError, PolicyError};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::UUID;
+use ic_canister_core::{
+    model::{ModelValidator, ModelValidatorResult},
+    types::UUID,
+};
 use ic_canister_macros::storable;
 
 #[storable]
@@ -40,6 +43,14 @@ impl From<MatchError> for EvaluateError {
         match value {
             MatchError::UnexpectedError(err) => EvaluateError::UnexpectedError(err),
         }
+    }
+}
+
+impl ModelValidator<PolicyError> for ProposalPolicy {
+    fn validate(&self) -> ModelValidatorResult<PolicyError> {
+        // todo: can't validate self.specifier because it might reference a resource that doesn't exist yet (eg. when creating a new account)
+        self.criteria.validate()?;
+        Ok(())
     }
 }
 

@@ -4,19 +4,19 @@ use thiserror::Error;
 
 use crate::core::validation::RecordNotFoundError;
 
-/// Container for user specifier errors.
+/// Container for policy errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
-pub enum UserSpecifierError {
-    /// The user specifier has failed validation.
-    #[error(r#"The user specifier has failed validation."#)]
+pub enum PolicyError {
+    /// The policy has failed validation.
+    #[error(r#"The policy has failed validation."#)]
     ValidationError { info: String },
 }
 
-impl DetailableError for UserSpecifierError {
+impl DetailableError for PolicyError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
-            UserSpecifierError::ValidationError { info } => {
+            PolicyError::ValidationError { info } => {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
@@ -24,16 +24,10 @@ impl DetailableError for UserSpecifierError {
     }
 }
 
-impl From<RecordNotFoundError> for UserSpecifierError {
+impl From<RecordNotFoundError> for PolicyError {
     fn from(error: RecordNotFoundError) -> Self {
-        UserSpecifierError::ValidationError {
+        PolicyError::ValidationError {
             info: format!("{} record not found", error.model_name),
         }
     }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum MatchError {
-    #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
 }

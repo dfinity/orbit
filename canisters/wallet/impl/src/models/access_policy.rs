@@ -1,7 +1,8 @@
-use super::{resource::Resource, User, UserGroupId, UserId};
-use ic_canister_core::model::ModelKey;
-use ic_canister_macros::storable;
+use crate::core::validation::{ensure_user_exists, ensure_user_group_exists, RecordNotFoundError};
 
+use super::{resource::Resource, User, UserGroupId, UserId};
+use ic_canister_core::model::{ModelKey, ModelValidator, ModelValidatorResult};
+use ic_canister_macros::storable;
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AuthScope {
@@ -16,6 +17,18 @@ pub struct Allow {
     pub auth_scope: AuthScope,
     pub users: Vec<UserId>,
     pub user_groups: Vec<UserGroupId>,
+}
+
+impl ModelValidator<RecordNotFoundError> for Allow {
+    fn validate(&self) -> ModelValidatorResult<RecordNotFoundError> {
+        for user_id in &self.users {
+            ensure_user_exists(user_id)?;
+        }
+        for group_id in &self.user_groups {
+            ensure_user_group_exists(group_id)?;
+        }
+        Ok(())
+    }
 }
 
 impl Default for AuthScope {
@@ -138,9 +151,12 @@ impl AccessPolicy {
 
 #[cfg(any(test, feature = "canbench"))]
 pub mod access_policy_test_utils {
-    use crate::models::resource::{
-        AccessPolicyResourceAction, AccountResourceAction, ProposalResourceAction, ResourceAction,
-        ResourceId, UserResourceAction,
+    use crate::{
+        core::validation::disable_mock_validation,
+        models::resource::{
+            AccessPolicyResourceAction, AccountResourceAction, ProposalResourceAction,
+            ResourceAction, ResourceId, UserResourceAction,
+        },
     };
 
     use super::*;
@@ -263,5 +279,43 @@ pub mod access_policy_test_utils {
         });
 
         policy
+    }
+
+    #[test]
+    fn test_validate_default_allow() {
+        disable_mock_validation();
+
+        let allow = Allow::default();
+        allow.validate().expect("Default allow should be valid");
+    }
+
+    #[test]
+    fn fail_allow_with_non_existent_user() {
+        disable_mock_validation();
+
+        let allow = Allow {
+            auth_scope: AuthScope::Restricted,
+            users: vec![[1; 16]],
+            user_groups: vec![],
+        };
+
+        allow
+            .validate()
+            .expect_err("Allow with non-existent user should fail");
+    }
+
+    #[test]
+    fn fail_allow_with_non_existent_user_group() {
+        disable_mock_validation();
+
+        let allow = Allow {
+            auth_scope: AuthScope::Restricted,
+            users: vec![],
+            user_groups: vec![[1; 16]],
+        };
+
+        allow
+            .validate()
+            .expect_err("Allow with non-existent user group should fail");
     }
 }

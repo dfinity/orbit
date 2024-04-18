@@ -7,11 +7,12 @@ use super::{
 };
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
-    errors::MatchError,
+    errors::{MatchError, PolicyError},
     repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, USER_REPOSITORY},
     services::ACCOUNT_SERVICE,
 };
 use anyhow::{anyhow, Error};
+use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
 use ic_canister_macros::storable;
 use std::sync::Arc;
 use std::{cmp, hash::Hash};
@@ -48,6 +49,35 @@ pub enum Criteria {
     Or(Vec<Criteria>),
     And(Vec<Criteria>),
     Not(Box<Criteria>),
+}
+
+impl ModelValidator<PolicyError> for Criteria {
+    fn validate(&self) -> ModelValidatorResult<PolicyError> {
+        match self {
+            Criteria::AutoAdopted
+            | Criteria::HasAddressBookMetadata(_)
+            | Criteria::HasAddressInAddressBook => Ok(()),
+
+            Criteria::ApprovalThreshold(user_specifier, _)
+            | Criteria::MinimumVotes(user_specifier, _) => {
+                user_specifier.validate().map_err(|e| match e {
+                    crate::errors::UserSpecifierError::ValidationError { info } => {
+                        PolicyError::ValidationError {
+                            info: format!("Invalid user specifier: {}", info),
+                        }
+                    }
+                })
+            }
+
+            Criteria::Or(criterias) | Criteria::And(criterias) => {
+                for criteria in criterias {
+                    criteria.validate()?;
+                }
+                Ok(())
+            }
+            Criteria::Not(criteria) => criteria.validate(),
+        }
+    }
 }
 
 #[storable]
@@ -308,5 +338,39 @@ impl EvaluateCriteria for CriteriaEvaluator {
                 },
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::core::validation::disable_mock_validation;
+
+    use super::*;
+
+    #[test]
+    fn fail_critera_with_non_existent_user_specifier() {
+        disable_mock_validation();
+
+        Criteria::ApprovalThreshold(UserSpecifier::Id(vec![[0; 16]]), Percentage(100))
+            .validate()
+            .expect_err("Criteria with non-existent user specifier should fail");
+
+        Criteria::ApprovalThreshold(UserSpecifier::Group(vec![[0; 16]]), Percentage(100))
+            .validate()
+            .expect_err("Criteria with non-existent user group specifier should fail");
+
+        Criteria::MinimumVotes(UserSpecifier::Id(vec![[0; 16]]), 1)
+            .validate()
+            .expect_err("Criteria with non-existent user specifier should fail");
+
+        Criteria::MinimumVotes(UserSpecifier::Group(vec![[0; 16]]), 1)
+            .validate()
+            .expect_err("Criteria with non-existent user group specifier should fail");
+
+        Criteria::And(vec![Criteria::Or(vec![Criteria::Not(Box::new(
+            Criteria::ApprovalThreshold(UserSpecifier::Id(vec![[0; 16]]), Percentage(100)),
+        ))])])
+        .validate()
+        .expect_err("Criteria with non-existent user specifier should fail");
     }
 }

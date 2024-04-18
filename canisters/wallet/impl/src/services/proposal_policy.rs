@@ -15,8 +15,8 @@ use crate::{
     },
     repositories::policy::{ProposalPolicyRepository, PROPOSAL_POLICY_REPOSITORY},
 };
-use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, types::UUID};
+use ic_canister_core::{model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -64,6 +64,8 @@ impl ProposalPolicyService {
             specifier: input.specifier,
             criteria: input.criteria,
         };
+
+        policy.validate()?;
 
         self.proposal_policy_repository
             .insert(policy.id, policy.clone());
@@ -131,6 +133,8 @@ impl ProposalPolicyService {
         if let Some(criteria) = input.criteria {
             policy.criteria = criteria;
         }
+
+        policy.validate()?;
 
         self.proposal_policy_repository
             .insert(policy.id, policy.to_owned());

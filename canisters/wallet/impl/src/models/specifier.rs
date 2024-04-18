@@ -2,13 +2,21 @@ use super::resource::{Resource, ResourceId, ResourceIds, UserResourceAction};
 use super::{
     MetadataItem, Proposal, ProposalId, ProposalKey, ProposalOperation, ProposalOperationType,
 };
+use crate::errors::UserSpecifierError;
 use crate::models::user::User;
 use crate::repositories::{ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY};
 
+use crate::core::validation::{
+    ensure_account_resource_ids_exist, ensure_address_book_entry_resource_ids_exist,
+    ensure_proposal_policy_resource_ids_exist, ensure_user_exists, ensure_user_group_exists,
+    ensure_user_resource_ids_exist, RecordNotFoundError,
+};
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use anyhow::anyhow;
-use ic_canister_core::{repository::Repository, types::UUID};
+use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
+use ic_canister_core::repository::Repository;
+use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
 use std::sync::Arc;
 
@@ -30,6 +38,26 @@ pub enum UserSpecifier {
     Id(Vec<UUID>),
     Owner,
     Proposer,
+}
+
+impl ModelValidator<UserSpecifierError> for UserSpecifier {
+    fn validate(&self) -> Result<(), UserSpecifierError> {
+        match self {
+            UserSpecifier::Any | UserSpecifier::Owner | UserSpecifier::Proposer => Ok(()),
+            UserSpecifier::Group(group_ids) => {
+                for group_id in group_ids {
+                    ensure_user_group_exists(group_id)?;
+                }
+                Ok(())
+            }
+            UserSpecifier::Id(user_ids) => {
+                for user_id in user_ids {
+                    ensure_user_exists(user_id)?;
+                }
+                Ok(())
+            }
+        }
+    }
 }
 
 #[storable]
@@ -58,6 +86,46 @@ pub enum ProposalSpecifier {
     AddUserGroup,
     EditUserGroup(ResourceIds),
     RemoveUserGroup(ResourceIds),
+}
+
+impl ModelValidator<RecordNotFoundError> for ProposalSpecifier {
+    fn validate(&self) -> ModelValidatorResult<RecordNotFoundError> {
+        match self {
+            ProposalSpecifier::AddAccount
+            | ProposalSpecifier::AddUser
+            | ProposalSpecifier::AddAddressBookEntry
+            | ProposalSpecifier::ChangeCanister
+            | ProposalSpecifier::AddProposalPolicy
+            | ProposalSpecifier::AddUserGroup => Ok(()),
+
+            ProposalSpecifier::Transfer(resource_ids)
+            | ProposalSpecifier::EditAccount(resource_ids) => {
+                ensure_account_resource_ids_exist(resource_ids)
+            }
+            ProposalSpecifier::EditUser(resource_ids) => {
+                ensure_user_resource_ids_exist(resource_ids)
+            }
+            ProposalSpecifier::RemoveAddressBookEntry(resource_ids)
+            | ProposalSpecifier::EditAddressBookEntry(resource_ids) => {
+                ensure_address_book_entry_resource_ids_exist(resource_ids)
+            }
+            ProposalSpecifier::EditAccessPolicy(resource_specifier) => match resource_specifier {
+                ResourceSpecifier::Any => Ok(()),
+                ResourceSpecifier::Resource(resource) => resource.validate(),
+            },
+
+            ProposalSpecifier::EditProposalPolicy(resource_ids) => {
+                ensure_proposal_policy_resource_ids_exist(resource_ids)
+            }
+            ProposalSpecifier::RemoveProposalPolicy(resource_ids) => {
+                ensure_proposal_policy_resource_ids_exist(resource_ids)
+            }
+            ProposalSpecifier::EditUserGroup(resource_ids)
+            | ProposalSpecifier::RemoveUserGroup(resource_ids) => {
+                ensure_user_resource_ids_exist(resource_ids)
+            }
+        }
+    }
 }
 
 impl From<&ProposalSpecifier> for ProposalOperationType {
@@ -318,6 +386,7 @@ impl Match<ProposalHasMetadata> for AddressBookMetadataMatcher {
 mod tests {
 
     use crate::{
+        core::validation::disable_mock_validation,
         models::{
             access_policy::Allow,
             criteria::Criteria,
@@ -336,7 +405,7 @@ mod tests {
     };
     use anyhow::{anyhow, Error};
     use candid::Nat;
-    use ic_canister_core::repository::Repository;
+    use ic_canister_core::{model::ModelValidator, repository::Repository};
     use std::sync::Arc;
 
     #[tokio::test]
@@ -472,5 +541,87 @@ mod tests {
                 })
                 .expect("Could not test user matcher"));
         }
+    }
+
+    #[test]
+    fn test_valid_user_specifier() {
+        disable_mock_validation();
+
+        UserSpecifier::Any.validate().expect("Any should be valid");
+        UserSpecifier::Owner
+            .validate()
+            .expect("Owner should be valid");
+        UserSpecifier::Proposer
+            .validate()
+            .expect("Proposer should be valid");
+    }
+
+    #[test]
+    fn fail_invalid_user_specifier() {
+        disable_mock_validation();
+
+        UserSpecifier::Id(vec![[0; 16]])
+            .validate()
+            .expect_err("Non existent user ID should be invalid");
+        UserSpecifier::Group(vec![[0; 16]])
+            .validate()
+            .expect_err("Non existent group ID should be invalid");
+    }
+
+    #[test]
+    fn test_valid_proposal_specifier() {
+        disable_mock_validation();
+
+        ProposalSpecifier::AddAccount
+            .validate()
+            .expect("AddAccount should be valid");
+        ProposalSpecifier::AddUser
+            .validate()
+            .expect("AddUser should be valid");
+        ProposalSpecifier::AddAddressBookEntry
+            .validate()
+            .expect("AddAddressBookEntry should be valid");
+        ProposalSpecifier::ChangeCanister
+            .validate()
+            .expect("ChangeCanister should be valid");
+        ProposalSpecifier::AddProposalPolicy
+            .validate()
+            .expect("AddProposalPolicy should be valid");
+        ProposalSpecifier::AddUserGroup
+            .validate()
+            .expect("AddUserGroup should be valid");
+    }
+
+    #[test]
+    fn fail_invalid_proposal_specifier() {
+        disable_mock_validation();
+
+        ProposalSpecifier::Transfer(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent account ID should be invalid");
+        ProposalSpecifier::EditAccount(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent account ID should be invalid");
+        ProposalSpecifier::EditUser(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent user ID should be invalid");
+        ProposalSpecifier::EditAddressBookEntry(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent address book entry ID should be invalid");
+        ProposalSpecifier::RemoveAddressBookEntry(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent address book entry ID should be invalid");
+        ProposalSpecifier::EditProposalPolicy(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent proposal policy ID should be invalid");
+        ProposalSpecifier::RemoveProposalPolicy(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent proposal policy ID should be invalid");
+        ProposalSpecifier::EditUserGroup(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent user group ID should be invalid");
+        ProposalSpecifier::RemoveUserGroup(ResourceIds::Ids(vec![[0; 16]]))
+            .validate()
+            .expect_err("Non existent user group ID should be invalid");
     }
 }
