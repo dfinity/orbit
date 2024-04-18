@@ -24,12 +24,11 @@ impl HelperMapper {
     }
 
     pub fn nat_to_u64(amount: Nat) -> Result<u64, MapperError> {
-        let amount_str = amount.to_string();
-
-        amount
-            .0
+        (&amount.0)
             .try_into()
-            .map_err(|_| MapperError::NatConversionError { nat: amount_str })
+            .map_err(|_| MapperError::NatConversionError {
+                nat: amount.to_string(),
+            })
     }
 }
 
@@ -77,6 +76,15 @@ mod tests {
     #[test]
     fn test_to_u64_should_fail() {
         let input = "not_a_number";
+
+        let result = HelperMapper::to_u64(input);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_to_u64_fails_on_too_large_number() {
+        let input = "18446744073709551616";
 
         let result = HelperMapper::to_u64(input);
 
