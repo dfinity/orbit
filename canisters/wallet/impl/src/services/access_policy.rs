@@ -1,5 +1,8 @@
 use crate::{
-    core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+    core::{
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        validation::{EnsureIdExists, EnsureUser},
+    },
     models::{
         access_policy::{AccessPolicy, Allow},
         resource::Resource,
@@ -69,6 +72,7 @@ impl AccessPolicyService {
             access_policy.allow.auth_scope = scope;
         }
         if let Some(users) = input.users {
+            EnsureUser::id_list_exists(&users)?;
             access_policy.allow.users = users;
         }
         if let Some(user_groups) = input.user_groups {

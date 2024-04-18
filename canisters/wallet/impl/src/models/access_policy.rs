@@ -1,4 +1,7 @@
-use crate::core::validation::{EnsureIdExists, EnsureUser, EnsureUserGroup, RecordNotFoundError};
+use crate::{
+    core::validation::{EnsureIdExists, EnsureUser, EnsureUserGroup},
+    errors::RecordValidationError,
+};
 
 use super::{resource::Resource, User, UserGroupId, UserId};
 use ic_canister_core::model::{ModelKey, ModelValidator, ModelValidatorResult};
@@ -19,8 +22,8 @@ pub struct Allow {
     pub user_groups: Vec<UserGroupId>,
 }
 
-impl ModelValidator<RecordNotFoundError> for Allow {
-    fn validate(&self) -> ModelValidatorResult<RecordNotFoundError> {
+impl ModelValidator<RecordValidationError> for Allow {
+    fn validate(&self) -> ModelValidatorResult<RecordValidationError> {
         for user_id in &self.users {
             EnsureUser::id_exists(user_id)?;
         }

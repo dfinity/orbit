@@ -2,13 +2,13 @@ use super::resource::{Resource, ResourceId, ResourceIds, UserResourceAction};
 use super::{
     MetadataItem, Proposal, ProposalId, ProposalKey, ProposalOperation, ProposalOperationType,
 };
-use crate::errors::UserSpecifierError;
+use crate::errors::RecordValidationError;
 use crate::models::user::User;
 use crate::repositories::{ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY};
 
 use crate::core::validation::{
     EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureProposalPolicy,
-    EnsureResourceIdExists, EnsureUser, EnsureUserGroup, RecordNotFoundError,
+    EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
@@ -39,8 +39,8 @@ pub enum UserSpecifier {
     Proposer,
 }
 
-impl ModelValidator<UserSpecifierError> for UserSpecifier {
-    fn validate(&self) -> Result<(), UserSpecifierError> {
+impl ModelValidator<RecordValidationError> for UserSpecifier {
+    fn validate(&self) -> Result<(), RecordValidationError> {
         match self {
             UserSpecifier::Any | UserSpecifier::Owner | UserSpecifier::Proposer => Ok(()),
             UserSpecifier::Group(group_ids) => {
@@ -87,8 +87,8 @@ pub enum ProposalSpecifier {
     RemoveUserGroup(ResourceIds),
 }
 
-impl ModelValidator<RecordNotFoundError> for ProposalSpecifier {
-    fn validate(&self) -> ModelValidatorResult<RecordNotFoundError> {
+impl ModelValidator<RecordValidationError> for ProposalSpecifier {
+    fn validate(&self) -> ModelValidatorResult<RecordValidationError> {
         match self {
             ProposalSpecifier::AddAccount
             | ProposalSpecifier::AddUser

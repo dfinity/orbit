@@ -2,8 +2,6 @@ use ic_canister_core::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
-use crate::core::validation::RecordNotFoundError;
-
 /// Container for policy errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum PolicyError {
@@ -20,14 +18,6 @@ impl DetailableError for PolicyError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
-        }
-    }
-}
-
-impl From<RecordNotFoundError> for PolicyError {
-    fn from(error: RecordNotFoundError) -> Self {
-        PolicyError::ValidationError {
-            info: format!("{} record not found", error.model_name),
         }
     }
 }

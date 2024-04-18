@@ -4,9 +4,12 @@ use ic_canister_core::{model::ModelValidator, types::UUID};
 use ic_canister_macros::storable;
 use uuid::Uuid;
 
-use crate::core::validation::{
-    EnsureAccount, EnsureAddressBookEntry, EnsureProposal, EnsureProposalPolicy,
-    EnsureResourceIdExists, EnsureUser, EnsureUserGroup, RecordNotFoundError,
+use crate::{
+    core::validation::{
+        EnsureAccount, EnsureAddressBookEntry, EnsureProposal, EnsureProposalPolicy,
+        EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
+    },
+    errors::RecordValidationError,
 };
 
 #[storable]
@@ -23,8 +26,8 @@ pub enum Resource {
     UserGroup(ResourceAction),
 }
 
-impl ModelValidator<RecordNotFoundError> for Resource {
-    fn validate(&self) -> Result<(), RecordNotFoundError> {
+impl ModelValidator<RecordValidationError> for Resource {
+    fn validate(&self) -> Result<(), RecordValidationError> {
         match self {
             Resource::AccessPolicy(action) => match action {
                 AccessPolicyResourceAction::Read | AccessPolicyResourceAction::Update => Ok(()),

@@ -1,7 +1,7 @@
 use super::UserStatus;
 use crate::{
     core::validation::{EnsureIdExists, EnsureUserGroup},
-    errors::UserError,
+    errors::{RecordValidationError, UserError},
 };
 use candid::{CandidType, Deserialize, Principal};
 use ic_canister_core::{
@@ -99,9 +99,11 @@ fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
         });
     }
 
-    for group_id in group_ids.iter() {
-        EnsureUserGroup::id_exists(group_id)?;
-    }
+    EnsureUserGroup::id_list_exists(group_ids).map_err(|err| match err {
+        RecordValidationError::NotFound { id, .. } => {
+            UserError::UserGroupDoesNotExist { group_id: id }
+        }
+    })?;
 
     Ok(())
 }

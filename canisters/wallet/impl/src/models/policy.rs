@@ -1,5 +1,5 @@
 use super::{criteria::Criteria, specifier::ProposalSpecifier};
-use crate::errors::{MatchError, PolicyError};
+use crate::errors::{MatchError, PolicyError, RecordValidationError};
 use candid::{CandidType, Deserialize};
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -48,8 +48,19 @@ impl From<MatchError> for EvaluateError {
 
 impl ModelValidator<PolicyError> for ProposalPolicy {
     fn validate(&self) -> ModelValidatorResult<PolicyError> {
-        // todo: can't validate self.specifier because it might reference a resource that doesn't exist yet (eg. when creating a new account)
-        self.criteria.validate()?;
+        self.specifier.validate().map_err(|err| match err {
+            RecordValidationError::NotFound { id, model_name } => PolicyError::ValidationError {
+                info: format!("Invalid user specifier: {} {} not found", model_name, id),
+            },
+        })?;
+        self.criteria.validate().map_err(|err| match err {
+            RecordValidationError::NotFound { id, model_name } => PolicyError::ValidationError {
+                info: format!(
+                    "Invalid proposal specifier: {} {} not found",
+                    model_name, id
+                ),
+            },
+        })?;
         Ok(())
     }
 }

@@ -6,7 +6,7 @@ use crate::{
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
-    errors::{AccountError, PolicyError},
+    errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
@@ -150,22 +150,21 @@ impl AccountService {
             criteria.validate()?;
         };
 
-        input
-            .read_access_policy
-            .validate()
-            .map_err(PolicyError::from)?;
-        input
-            .update_access_policy
-            .validate()
-            .map_err(PolicyError::from)?;
-        input
-            .transfer_access_policy
-            .validate()
-            .map_err(PolicyError::from)?;
+        input.read_access_policy.validate()?;
+        input.update_access_policy.validate()?;
+        input.transfer_access_policy.validate()?;
 
         // The decimals of the asset are fetched from the blockchain and stored in the account,
         // depending on the blockchain standard used by the account the decimals used by each asset can vary.
         new_account.decimals = blockchain_api.decimals(&new_account).await?;
+
+        // Validate here before database operations.
+        new_account.validate()?;
+
+        // Insert the account into the repository already to avoid subsequent policy validators erroring
+        // out with invalid proposal specifier.
+        self.account_repository
+            .insert(key.clone(), new_account.clone());
 
         // adds the associated transfer policy based on the transfer criteria
         if let Some(criteria) = &input.transfer_approval_policy {
@@ -196,9 +195,6 @@ impl AccountService {
 
             new_account.update_approval_policy_id = Some(update_approval_policy.id);
         }
-
-        // Validations happen after all the fields are set in the account to avoid partial data in the repository.
-        new_account.validate()?;
 
         // Inserting the account into the repository and its associations is the last step of the account creation
         // process to avoid potential consistency issues due to the fact that some of the calls to create the account
@@ -267,13 +263,13 @@ impl AccountService {
             criteria.validate()?;
         };
         if let Some(access_policy) = &input.read_access_policy {
-            access_policy.validate().map_err(PolicyError::from)?;
+            access_policy.validate()?;
         };
         if let Some(access_policy) = &input.update_access_policy {
-            access_policy.validate().map_err(PolicyError::from)?;
+            access_policy.validate()?;
         };
         if let Some(access_policy) = &input.transfer_access_policy {
-            access_policy.validate().map_err(PolicyError::from)?;
+            access_policy.validate()?;
         };
 
         if let Some(transfer_approval_policy_input) = input.transfer_approval_policy {

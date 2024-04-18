@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
-    errors::{MatchError, PolicyError},
+    errors::{MatchError, RecordValidationError},
     repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, USER_REPOSITORY},
     services::ACCOUNT_SERVICE,
 };
@@ -51,23 +51,15 @@ pub enum Criteria {
     Not(Box<Criteria>),
 }
 
-impl ModelValidator<PolicyError> for Criteria {
-    fn validate(&self) -> ModelValidatorResult<PolicyError> {
+impl ModelValidator<RecordValidationError> for Criteria {
+    fn validate(&self) -> ModelValidatorResult<RecordValidationError> {
         match self {
             Criteria::AutoAdopted
             | Criteria::HasAddressBookMetadata(_)
             | Criteria::HasAddressInAddressBook => Ok(()),
 
             Criteria::ApprovalThreshold(user_specifier, _)
-            | Criteria::MinimumVotes(user_specifier, _) => {
-                user_specifier.validate().map_err(|e| match e {
-                    crate::errors::UserSpecifierError::ValidationError { info } => {
-                        PolicyError::ValidationError {
-                            info: format!("Invalid user specifier: {}", info),
-                        }
-                    }
-                })
-            }
+            | Criteria::MinimumVotes(user_specifier, _) => user_specifier.validate(),
 
             Criteria::Or(criterias) | Criteria::And(criterias) => {
                 for criteria in criterias {
