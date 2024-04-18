@@ -82,10 +82,10 @@ impl InternetComputer {
         Principal::from_text(Self::ICP_LEDGER_CANISTER_ID).unwrap()
     }
 
-    fn hash_transaction(transaction: &Transaction) -> String {
+    fn hash_transaction(transaction: &Transaction) -> Result<String, serde_cbor::Error> {
         let mut hasher = Sha256::new();
-        hasher.update(&serde_cbor::ser::to_vec_packed(transaction).unwrap());
-        hex::encode(hasher.finalize())
+        hasher.update(&serde_cbor::ser::to_vec_packed(transaction)?);
+        Ok(hex::encode(hasher.finalize()))
     }
 
     /// Generates the corresponded subaccount id for the given wallet_account id.
@@ -213,20 +213,22 @@ impl InternetComputer {
         )
         .await
         {
-            Ok(QueryBlocksResponse { blocks, .. }) => {
-                let maybe_transaction_hash = blocks
-                    .first()
-                    .map(|block| Self::hash_transaction(&block.transaction));
-
-                if maybe_transaction_hash.is_none() {
+            Ok(QueryBlocksResponse { blocks, .. }) => match blocks.first() {
+                Some(block) => match Self::hash_transaction(&block.transaction) {
+                    Ok(transaction_hash) => Some(transaction_hash),
+                    Err(_) => {
+                        print("Error: could not serialize ICP ledger transaction");
+                        None
+                    }
+                },
+                None => {
                     print(format!(
                         "Error: no ICP ledger block found at height {}",
                         block_height
                     ));
+                    None
                 }
-
-                maybe_transaction_hash
-            }
+            },
 
             Err(e) => {
                 print(format!(

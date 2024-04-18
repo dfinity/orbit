@@ -4,10 +4,13 @@ use candid::Principal;
 use email_address::EmailAddress;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
-    types::Timestamp,
+    types::{Timestamp, UUID},
 };
 use ic_canister_macros::storable;
 use std::str::FromStr;
+
+/// The user id, which is a UUID.
+pub type UserId = UUID;
 
 /// The subscription status of an user.
 #[storable(serializer = "candid")]
@@ -41,6 +44,8 @@ impl std::fmt::Display for UserSubscriptionStatus {
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct User {
+    /// The UUID that identifies the user.
+    pub id: UserId,
     /// The identity of the user.
     pub identity: Principal,
     /// The subscription status of the user.
@@ -60,7 +65,7 @@ pub struct User {
 
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct UserKey(pub Principal);
+pub struct UserKey(pub UUID);
 
 impl User {
     pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
@@ -69,7 +74,7 @@ impl User {
     pub const MAX_DEPLOYED_WALLETS: u8 = 10;
 
     pub fn to_key(&self) -> UserKey {
-        UserKey(self.identity)
+        UserKey(self.id)
     }
 
     pub fn can_deploy_wallet(&self) -> CanDeployWallet {
@@ -174,6 +179,7 @@ mod tests {
     #[test]
     fn valid_model_serialization() {
         let model = User {
+            id: [u8::MAX; 16],
             identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -202,6 +208,7 @@ mod tests {
     #[test]
     fn check_wallets_validation() {
         let user = User {
+            id: [u8::MAX; 16],
             identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -234,6 +241,7 @@ mod tests {
     #[test]
     fn valid_main_wallet() {
         let user = User {
+            id: [u8::MAX; 16],
             identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
@@ -251,6 +259,7 @@ mod tests {
     #[test]
     fn invalid_main_wallet() {
         let user = User {
+            id: [u8::MAX; 16],
             identity: Principal::from_slice(&[u8::MAX; 29]),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![UserWallet {
@@ -271,5 +280,34 @@ mod tests {
     #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMKufYuimeCebnHWgQXeSzkeqcFLqSVxpdNeSGADkpvvjZHCYXLmM")]
     fn invalid_email(#[case] email: &str) {
         assert!(validate_email(email).is_err());
+    }
+}
+
+#[cfg(test)]
+pub mod user_model_utils {
+    use super::{User, UserSubscriptionStatus};
+    use candid::Principal;
+    use uuid::Uuid;
+
+    pub fn mock_user() -> User {
+        // generate a random slice of 29 bytes to create a Principal
+        let mut principal_id = [0u8; 29];
+        Uuid::new_v4()
+            .as_bytes()
+            .iter()
+            .enumerate()
+            .for_each(|(i, byte)| {
+                principal_id[i] = *byte;
+            });
+
+        User {
+            id: *Uuid::new_v4().as_bytes(),
+            identity: Principal::from_slice(&principal_id),
+            subscription_status: UserSubscriptionStatus::Unsubscribed,
+            wallets: vec![],
+            deployed_wallets: vec![],
+            main_wallet: None,
+            last_update_timestamp: 0,
+        }
     }
 }

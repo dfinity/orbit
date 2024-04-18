@@ -63,7 +63,7 @@ jobs:
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
         with:
-          dfx-version: '0.17.0'
+          dfx-version: '0.19.0'
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel
@@ -96,6 +96,9 @@ jobs:
       - name: 'Check code'
         run: |
           pnpm lint
+      - name: 'Build code'
+        run: |
+          pnpm build
       - name: 'Check typing'
         run: |
           pnpm type-check

@@ -392,7 +392,7 @@ impl AccountService {
 
                     new_balance
                 }
-                (_, _) => account.balance.unwrap(),
+                (Some(balance), _) => balance.to_owned(),
             };
 
             balances.push(AccountMapper::to_balance_dto(

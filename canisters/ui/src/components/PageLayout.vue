@@ -1,11 +1,31 @@
 <template>
   <VLayout
     class="page-layout min-height-100"
-    :class="`${layoutDeviceClass} ${themeClass} ${props.backgroundColor}`"
+    :class="{
+      [layoutBaseClasses]: true,
+      ['warning-banner--offset']: showWarningBanner,
+    }"
   >
+    <div
+      v-if="showWarningBanner"
+      class="warning-banner d-flex ga-1 flex-column justify-center flex-md-row text-body-2 font-weight-bold"
+    >
+      <div>
+        {{ $t('app.test_environment_warning_banner.main') }}
+      </div>
+      <div>
+        {{ $t('app.test_environment_warning_banner.info') }}
+      </div>
+    </div>
     <slot name="custom">
-      <slot name="sidebar">
-        <AppSidebar v-if="props.sidebar" :language-selector="mobile" />
+      <slot :show-warning-banner="showWarningBanner" name="sidebar">
+        <AppSidebar
+          v-if="props.sidebar"
+          :class="{
+            ['warning-banner--offset']: showWarningBanner,
+          }"
+          :language-selector="mobile"
+        />
       </slot>
       <VMain class="body d-flex flex-column" full-height>
         <slot name="toolbar">
@@ -67,6 +87,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
 import WalletSelector from '~/components/WalletSelector.vue';
+import { appInitConfig } from '~/configs/init.config';
 
 const app = useAppStore();
 const session = useSessionStore();
@@ -107,7 +128,39 @@ const layoutDeviceClass = computed(() =>
 );
 
 const themeClass = computed(() => (app.isDarkTheme ? 'theme--dark' : 'theme--light'));
+
+const layoutBaseClasses = computed(
+  () => `${layoutDeviceClass.value} ${themeClass.value} ${props.backgroundColor}`,
+);
+
 const showWalletSelector = computed(
   () => session.isAuthenticated && session.hasWallets && mobile.value,
 );
+
+const showWarningBanner = ['playground', 'testing'].includes(appInitConfig.buildMode);
 </script>
+
+<style lang="scss">
+@use '~/styles/variables.scss' as *;
+
+.warning-banner--offset {
+  padding-top: 48px;
+
+  @media (min-width: #{$device-md}) {
+    padding-top: 24px;
+  }
+}
+
+.warning-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  text-align: center;
+  text-wrap: nowrap;
+  background-color: rgb(var(--ds-primary));
+  color: rgb(var(--ds-on-primary));
+  padding: 4px 0;
+}
+</style>

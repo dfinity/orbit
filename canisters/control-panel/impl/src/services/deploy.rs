@@ -29,7 +29,7 @@ impl DeployService {
 
     /// Deploys a wallet canister for the user.
     pub async fn deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<Principal> {
-        let user = self.user_service.get_user(&ctx.caller(), ctx)?;
+        let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let can_deploy_wallet_response = user.can_deploy_wallet();
         match can_deploy_wallet_response {
@@ -87,12 +87,12 @@ impl DeployService {
         })?;
 
         self.user_service
-            .add_deployed_wallet(wallet_canister.canister_id, ctx)
+            .add_deployed_wallet(&user.id, wallet_canister.canister_id, ctx)
             .await?;
 
         if user.main_wallet.is_none() {
             self.user_service
-                .set_main_wallet(wallet_canister.canister_id, ctx)
+                .set_main_wallet(&user.id, wallet_canister.canister_id, ctx)
                 .await?;
         }
 

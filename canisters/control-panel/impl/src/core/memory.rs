@@ -11,6 +11,7 @@ pub type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 
 pub const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
+pub const USER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 thread_local! {
   /// Static configuration of the canister.
@@ -56,6 +57,27 @@ pub fn write_canister_config(config: CanisterConfig) {
             .set(CanisterState::Initialized(config))
             .expect("failed to write canister config");
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_canister_config() {
+        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        write_canister_config(config.clone());
+        assert_eq!(canister_config(), config);
+    }
+
+    #[test]
+    fn test_update_canister_config() {
+        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        write_canister_config(config.clone());
+        let new_config = CanisterConfig::new(vec![1], vec![2]);
+        write_canister_config(new_config.clone());
+        assert_eq!(canister_config(), new_config);
+    }
 }
 
 #[cfg(test)]

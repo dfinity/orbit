@@ -14,8 +14,10 @@ function identity_warning_confirmation() {
     return
   fi
 
+  local network=$(get_network)
+
   echo -e "\e[1;33m"
-  echo -e "WARNING: You are about to deploy to the IC network, this will use your default identity."
+  echo "WARNING: You are about to deploy to the IC with the \"$network\" network, this will use your active identity."
   echo -e "\e[0m"
 
   identity=$(dfx identity whoami)
@@ -45,11 +47,10 @@ Usage:
 
 
 Options:
-  --local Performs a local deployment of Orbit to your local dfx environment
+  --playground Deploys Orbit to the playground network (If 'reset' is specified, the control-panel will be reset)
   --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
-  --play | --playground Deploys Orbit to the playground network (WARNING: This will reset the control-panel, to avoid this use 'no-reset' as an argument)
-  --prod | --production Performs a production deployment of Orbit to the IC
+  --production Performs a production deployment of Orbit to the IC
 EOF
 }
 
@@ -132,15 +133,15 @@ function setup_cycles_wallet() {
   fi
 }
 
-function reset_playground_network() {
+function reset_control_panel() {
   local network="$(get_network)"
 
-  if [ "$network" != "playground" ]; then
-    echo "ERROR: This operation is only supported on the playground network"
+  if [ "$network" != "playground" ] && [ "$network" != "local" ]; then
+    echo "ERROR: This operation is only supported on the playground or local network"
     exit 1
   fi
 
-  echo "Resetting the playground network..."
+  echo "Resetting the \"$network\" network..."
   echo "This will remove the code and data for the control_panel canister."
 
   set +e # Disable 'exit on error'
@@ -166,6 +167,10 @@ function deploy_control_panel() {
 
   exec_function "build_wasms"
 
+  echo "Building the control_panel wasm..."
+
+  ./scripts/generate-wasm.sh control_panel
+
   # Read the WASM files and convert them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
   wallet_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/wallet.wasm.gz | sed 's/../\\&/g')
@@ -179,13 +184,19 @@ function deploy_control_panel() {
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
     dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    dfx build control_panel --network $network
-    dfx canister install control_panel --network $network --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
   else
     echo "Canister 'control_panel' already exists with ID: $canister_id_output"
 
-    dfx build control_panel --network $network
-    dfx canister install control_panel --network $network --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+    module_hash=$(dfx canister info control_panel --network $network | grep "Module hash" | awk '{print $3}')
+
+    if [ "$module_hash" == "None" ]; then
+      echo "Installing the wasm module to the control_panel canister..."
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+    else
+      echo "Upgrading the wasm module to the control_panel canister..."
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+    fi
   fi
 }
 
@@ -195,12 +206,7 @@ function deploy_ui() {
 
   echo "Deploying the UI canister to the '$network' network."
 
-  if [ "$network" == "local" ]; then
-    NODE_ENV=development dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    return
-  fi
-
-  NODE_ENV=production dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  BUILD_MODE=$network dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
 }
 
 #############################################
@@ -221,52 +227,42 @@ while [[ $# -gt 0 ]]; do
     help
     exit 0
     ;;
-  --prod | --production)
+  --production)
     shift
-    identity_warning_confirmation
     set_network prod
     exec_function setup_enviroment
+    identity_warning_confirmation
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
   --staging)
     shift
-    identity_warning_confirmation
     set_network staging
     exec_function setup_enviroment
-    exec_function deploy_control_panel
-    exec_function deploy_ui
-    echo
-    ;;
-  --play | --playground)
-    shift
     identity_warning_confirmation
-    set_network playground
-    exec_function setup_enviroment
-    if [ "${1-}" == "no-reset" ]; then
-      shift
-    else
-      exec_function reset_playground_network
-    fi
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
   --testing)
     shift
-    identity_warning_confirmation
     set_network testing
     exec_function setup_enviroment
+    identity_warning_confirmation
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo
     ;;
-  --local)
+  --playground)
     shift
-    identity_warning_confirmation
-    set_network local
+    set_network playground
     exec_function setup_enviroment
+    identity_warning_confirmation
+    if [ "${1-}" == "reset" ]; then
+      shift
+      exec_function reset_control_panel
+    fi
     exec_function deploy_control_panel
     exec_function deploy_ui
     echo

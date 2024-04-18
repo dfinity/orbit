@@ -53,20 +53,17 @@ impl AccessPolicyService {
         }
     }
 
-    pub fn get_access_policy(&self, resource: &Resource) -> ServiceResult<AccessPolicy> {
-        let access_policy = self
-            .access_policy_repository
+    pub fn get_access_policy(&self, resource: &Resource) -> AccessPolicy {
+        self.access_policy_repository
             .get(resource)
-            .unwrap_or_else(|| AccessPolicy::new(Allow::default(), resource.clone()));
-
-        Ok(access_policy)
+            .unwrap_or_else(|| AccessPolicy::new(Allow::default(), resource.clone()))
     }
 
     pub async fn edit_access_policy(
         &self,
         input: EditAccessPolicyOperationInput,
     ) -> ServiceResult<AccessPolicy> {
-        let mut access_policy = self.get_access_policy(&input.resource)?;
+        let mut access_policy = self.get_access_policy(&input.resource);
 
         if let Some(scope) = input.auth_scope {
             access_policy.allow.auth_scope = scope;
@@ -92,7 +89,7 @@ impl AccessPolicyService {
             Some(resources) => resources
                 .into_iter()
                 .map(|r| self.get_access_policy(&r.into()))
-                .collect::<Result<Vec<_>, _>>()?,
+                .collect::<_>(),
             None => self.access_policy_repository.list(),
         };
 
@@ -187,9 +184,8 @@ mod tests {
         let service = ACCESS_POLICY_SERVICE.clone();
         let result = service.get_access_policy(&Resource::Proposal(ProposalResourceAction::List));
 
-        assert!(result.is_ok());
         assert_eq!(
-            result.unwrap(),
+            result,
             AccessPolicy::new(
                 Allow::default(),
                 Resource::Proposal(ProposalResourceAction::List)
@@ -274,10 +270,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(service
-            .get_access_policy(&resource)
-            .unwrap()
-            .allowed_public());
+        assert!(service.get_access_policy(&resource).allowed_public());
 
         service
             .edit_access_policy(EditAccessPolicyOperationInput {
@@ -289,9 +282,6 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(service
-            .get_access_policy(&resource)
-            .unwrap()
-            .allowed_authenticated());
+        assert!(service.get_access_policy(&resource).allowed_authenticated());
     }
 }

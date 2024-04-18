@@ -1,15 +1,12 @@
 use crate::{
-    core::{
-        ic_cdk::api::{time, trap},
-        with_memory_manager, Memory, TRANSFER_ACCOUNT_INDEX_MEMORY_ID,
-    },
-    errors::RepositoryError,
+    core::{ic_cdk::api::time, with_memory_manager, Memory, TRANSFER_ACCOUNT_INDEX_MEMORY_ID},
     models::{
         indexes::transfer_account_index::{TransferAccountIndex, TransferAccountIndexCriteria},
         TransferId,
     },
 };
 use ic_canister_core::repository::IndexRepository;
+use ic_cdk::print;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use std::{cell::RefCell, collections::HashSet};
 
@@ -54,7 +51,8 @@ impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexR
                 ),
             };
             if from_dt > to_dt {
-                trap(RepositoryError::CriteriaOutOfRange.to_string().as_str());
+                print(format!("Invalid TransferAccountIndexRepository::FindByCriteria: from_dt {} is greater than to_dt {}", from_dt, to_dt));
+                return HashSet::new();
             }
 
             let start_key = TransferAccountIndex {

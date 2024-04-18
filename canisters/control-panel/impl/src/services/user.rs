@@ -1,8 +1,8 @@
 use crate::{
-    core::CallContext,
+    core::{generate_uuid_v4, CallContext},
     errors::UserError,
     mappers::{SubscribedUser, UserMapper},
-    models::{CanDeployWallet, User, UserKey, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployWallet, User, UserId, UserKey, UserSubscriptionStatus, UserWallet},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
 };
@@ -15,6 +15,7 @@ use ic_canister_core::{
 };
 use lazy_static::lazy_static;
 use std::sync::Arc;
+use uuid::Uuid;
 
 lazy_static! {
     pub static ref USER_SERVICE: Arc<UserService> =
@@ -32,12 +33,12 @@ impl UserService {
     }
 
     /// Returns the user associated with the given user id.
-    pub fn get_user(&self, user_id: &Principal, ctx: &CallContext) -> ServiceResult<User> {
+    pub fn get_user(&self, user_id: &UserId, ctx: &CallContext) -> ServiceResult<User> {
         let user = self
             .user_repository
             .get(&UserKey(*user_id))
             .ok_or(UserError::NotFound {
-                user: user_id.to_text(),
+                user: Uuid::from_bytes(*user_id).hyphenated().to_string(),
             })?;
 
         self.assert_user_access(&user, ctx)?;
@@ -45,8 +46,26 @@ impl UserService {
         Ok(user)
     }
 
+    /// Returns the user associated with the given user identity.
+    pub fn get_user_by_identity(
+        &self,
+        user_identity: &Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let user =
+            self.user_repository
+                .find_by_identity(user_identity)
+                .ok_or(UserError::NotFound {
+                    user: user_identity.to_text(),
+                })?;
+
+        self.assert_user_access(&user, ctx)?;
+
+        Ok(user)
+    }
+
     pub fn get_main_wallet(&self, ctx: &CallContext) -> ServiceResult<Option<UserWallet>> {
-        let user = self.get_user(&ctx.caller(), ctx)?;
+        let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
         match user.main_wallet {
             Some(main_wallet) => {
@@ -76,18 +95,23 @@ impl UserService {
             })?
         }
 
-        let user_id = ctx.caller();
-        let user = UserMapper::from_register_input(input.clone(), user_id);
+        let user_id = generate_uuid_v4().await;
+        let user_identity = ctx.caller();
+        let user =
+            UserMapper::from_register_input(*user_id.as_bytes(), input.clone(), user_identity);
 
         user.validate()?;
-        self.user_repository
-            .insert(UserKey(user.identity), user.clone());
+        self.user_repository.insert(UserKey(user.id), user.clone());
 
         Ok(user)
     }
 
-    pub async fn remove_user(&self, user_id: &Principal, ctx: &CallContext) -> ServiceResult<User> {
-        let user = self.get_user(user_id, ctx)?;
+    pub async fn remove_user(
+        &self,
+        user_identity: &Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let user = self.get_user_by_identity(user_identity, ctx)?;
 
         self.assert_user_access(&user, ctx)?;
 
@@ -101,7 +125,7 @@ impl UserService {
         input: ManageUserInput,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let mut user = self.get_user(&ctx.caller(), ctx)?;
+        let mut user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
         user.update_with(input)?;
         user.validate()?;
@@ -116,7 +140,7 @@ impl UserService {
         email: String,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let mut user = self.get_user(&ctx.caller(), ctx)?;
+        let mut user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
         match user.subscription_status {
             UserSubscriptionStatus::Pending(_)
@@ -153,7 +177,7 @@ impl UserService {
         self.assert_controller(ctx)?;
 
         for user_principal in input.users {
-            let mut user = self.get_user(&user_principal, ctx)?;
+            let mut user = self.get_user_by_identity(&user_principal, ctx)?;
 
             user.subscription_status = input.new_status.clone().try_into()?;
 
@@ -167,10 +191,11 @@ impl UserService {
 
     pub async fn add_deployed_wallet(
         &self,
+        user_id: &UserId,
         wallet_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let mut user = self.get_user(&ctx.caller(), ctx)?;
+        let mut user = self.get_user(user_id, ctx)?;
 
         user.wallets.push(UserWallet {
             canister_id: wallet_canister_id,
@@ -191,17 +216,18 @@ impl UserService {
 
     /// Checks if a user can deploy a wallet.
     pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<CanDeployWallet> {
-        let user = self.get_user(&ctx.caller(), ctx)?;
+        let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
         Ok(user.can_deploy_wallet())
     }
 
     pub async fn set_main_wallet(
         &self,
+        user_id: &UserId,
         wallet_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
-        let mut user = self.get_user(&ctx.caller(), ctx)?;
+        let mut user = self.get_user(user_id, ctx)?;
 
         user.main_wallet = Some(wallet_canister_id);
 
@@ -241,7 +267,7 @@ impl UserService {
     ///
     /// If the identity has an associated user, an error is returned.
     pub fn assert_identity_is_unregistered(&self, identity: &Principal) -> ServiceResult<()> {
-        let maybe_user = self.user_repository.get(&UserKey(*identity));
+        let maybe_user = self.user_repository.find_by_identity(identity);
 
         if let Some(user) = maybe_user {
             Err(UserError::IdentityAlreadyHasUser {
@@ -266,7 +292,7 @@ mod tests {
         let service = UserService::default();
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
 
-        let result = service.get_user(&user_identity, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
 
         assert!(result.is_err());
         assert_eq!(
@@ -279,10 +305,12 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user() {
+        let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let ctx = CallContext::new(user_identity);
         let service = UserService::default();
         let user = User {
+            id: user_id,
             identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -293,7 +321,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_identity, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -301,10 +329,12 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user_with_identity() {
+        let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let ctx = CallContext::new(user_identity);
         let service = UserService::default();
         let user = User {
+            id: user_id,
             identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -315,7 +345,7 @@ mod tests {
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user(&user_identity, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -379,10 +409,12 @@ mod tests {
 
     #[test]
     fn update_waiting_list() {
+        let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let ctx = CallContext::new(user_identity);
         let service = UserService::default();
         let user = User {
+            id: user_id,
             identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -409,7 +441,7 @@ mod tests {
             .update_waiting_list(input.clone(), &ctrl_ctx)
             .unwrap();
 
-        let result = service.get_user(&user_identity, &ctx);
+        let result = service.get_user_by_identity(&user_identity, &ctx);
         assert!(matches!(
             result.unwrap().subscription_status,
             UserSubscriptionStatus::Approved
@@ -427,12 +459,13 @@ mod tests {
     #[tokio::test]
     async fn can_remove_user() {
         crate::core::test_utils::init_canister_config();
+        let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let ctx = CallContext::new(user_identity);
         let service = UserService::default();
 
-        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let user = User {
+            id: user_id,
             identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
@@ -446,9 +479,6 @@ mod tests {
         let result = service.remove_user(&user_identity, &ctx).await;
 
         assert!(result.is_ok());
-        assert!(service
-            .user_repository
-            .get(&UserKey(user_identity))
-            .is_none());
+        assert!(service.user_repository.get(&UserKey(user_id)).is_none());
     }
 }
