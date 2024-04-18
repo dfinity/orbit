@@ -87,18 +87,31 @@ impl SystemService {
     #[allow(unused_variables, unused_mut)]
     fn install_canister_post_process(&self, mut system_info: SystemInfo, install: SystemInstall) {
         #[cfg(target_arch = "wasm32")]
+        async fn initialize_rng_timer() {
+            use crate::core::ic_cdk::spawn;
+            use ic_canister_core::utils::initialize_rng;
+            if let Err(e) = initialize_rng().await {
+                ic_cdk::print(format!("initializing rng failed: {}", e));
+                ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
+                    spawn(initialize_rng_timer())
+                });
+            }
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
+            use crate::core::ic_cdk::spawn;
+            spawn(initialize_rng_timer())
+        });
+
+        #[cfg(target_arch = "wasm32")]
         ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
             use crate::core::ic_cdk::api::id as self_canister_id;
             use crate::core::ic_cdk::spawn;
             use crate::core::NNS_ROOT_CANISTER_ID;
             use crate::jobs::register_jobs;
-            use ic_canister_core::utils::maybe_initialize_rng;
 
             spawn(async move {
-                // initializes the random number generator if it has not been initialized yet
-                // uses `raw_rand`` to generate a seed for the random number generator
-                maybe_initialize_rng().await;
-
                 match install {
                     SystemInstall::Init(init) => {
                         let canister_id = self_canister_id();
