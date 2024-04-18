@@ -15,7 +15,7 @@ use crate::{
     },
     repositories::policy::{ProposalPolicyRepository, PROPOSAL_POLICY_REPOSITORY},
 };
-use ic_canister_core::{api::ServiceResult, types::UUID};
+use ic_canister_core::{api::ServiceResult, cdk::api::print, types::UUID};
 use ic_canister_core::{model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
 use std::sync::Arc;
@@ -43,7 +43,7 @@ impl ProposalPolicyService {
         }
     }
 
-    pub fn get_proposal_policy(&self, id: &UUID) -> ServiceResult<ProposalPolicy> {
+    pub fn get_proposal_policy(&self, id: &UUID) -> ServiceResult<ProposalPolicy, ProposalError> {
         let policy =
             self.proposal_policy_repository
                 .get(id)
@@ -85,7 +85,14 @@ impl ProposalPolicyService {
         match criteria {
             ApprovalCriteriaInput::Remove => {
                 if let Some(existing_policy_id) = editable_policy_id {
-                    self.remove_proposal_policy(existing_policy_id).await?;
+                    if let Err(ProposalError::PolicyNotFound { id }) =
+                        self.remove_proposal_policy(existing_policy_id).await
+                    {
+                        print(format!(
+                            "Cannot handle policy change: policy {} not found",
+                            id
+                        ));
+                    }
 
                     // Directly modify the policy_id in place
                     *editable_policy_id = None;
@@ -142,7 +149,7 @@ impl ProposalPolicyService {
         Ok(policy)
     }
 
-    pub async fn remove_proposal_policy(&self, id: &UUID) -> ServiceResult<()> {
+    pub async fn remove_proposal_policy(&self, id: &UUID) -> ServiceResult<(), ProposalError> {
         let policy = self.get_proposal_policy(id)?;
 
         self.proposal_policy_repository.remove(&policy.id);
