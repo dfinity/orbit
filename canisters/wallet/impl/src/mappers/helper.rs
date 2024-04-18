@@ -99,4 +99,13 @@ mod tests {
 
         assert_eq!(result.unwrap(), u64::MAX);
     }
+
+    #[test]
+    fn test_nat_to_u64_fail_on_too_large_number() {
+        let amount = Nat::from(18446744073709551616u128);
+
+        let result = HelperMapper::nat_to_u64(amount);
+
+        assert!(result.is_err());
+    }
 }
