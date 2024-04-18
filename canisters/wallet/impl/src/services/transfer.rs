@@ -102,7 +102,7 @@ impl TransferService {
 mod tests {
     use super::*;
     use crate::{
-        core::test_utils,
+        core::{test_utils, validation::disable_mock_resource_validation},
         models::{
             account_test_utils::mock_account, proposal_test_utils::mock_proposal,
             transfer_test_utils::mock_transfer, user_test_utils::mock_user, Account, User,
@@ -152,6 +152,8 @@ mod tests {
     fn add_transfer_successfully() {
         let ctx = setup();
 
+        disable_mock_resource_validation();
+
         let mut transfer = mock_transfer();
         transfer.initiator_user = ctx.caller_user.id;
         transfer.from_account = ctx.account.id;
@@ -165,6 +167,8 @@ mod tests {
     fn fail_add_transfer_missing_initiator_user() {
         let ctx = setup();
 
+        disable_mock_resource_validation();
+
         let mut transfer = mock_transfer();
         transfer.initiator_user = [0; 16];
         transfer.from_account = ctx.account.id;
@@ -174,13 +178,18 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().details.unwrap().get("info"),
-            Some(&"The initiator_user does not exist".to_owned())
+            Some(
+                &"The initiator_user 00000000-0000-0000-0000-000000000000 does not exist"
+                    .to_owned()
+            )
         );
     }
 
     #[test]
     fn fail_add_transfer_missing_from_account() {
         let ctx = setup();
+
+        disable_mock_resource_validation();
 
         let mut transfer = mock_transfer();
         transfer.initiator_user = ctx.caller_user.id;
@@ -191,13 +200,17 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().details.unwrap().get("info"),
-            Some(&"The from_account does not exist".to_owned())
+            Some(
+                &"The from_account 00000000-0000-0000-0000-000000000000 does not exist".to_owned()
+            )
         );
     }
 
     #[test]
     fn fail_add_transfer_missing_proposal_id() {
         let ctx = setup();
+
+        disable_mock_resource_validation();
 
         let mut transfer = mock_transfer();
         transfer.initiator_user = ctx.caller_user.id;
@@ -209,7 +222,7 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().details.unwrap().get("info"),
-            Some(&"The proposal_id does not exist".to_owned())
+            Some(&"The proposal_id 00000000-0000-0000-0000-000000000000 does not exist".to_owned())
         );
     }
 

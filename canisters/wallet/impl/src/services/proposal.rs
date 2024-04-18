@@ -288,26 +288,6 @@ impl ProposalService {
         Ok(None)
     }
 
-    pub async fn edit_proposal(&self, input: ProposalEditInput) -> ServiceResult<Proposal> {
-        let mut proposal = self.get_proposal(&input.proposal_id)?;
-
-        if let Some(status) = input.status {
-            proposal.status = status;
-        }
-
-        // Different proposal types may have different validation rules.
-        proposal.validate()?;
-
-        // When a proposal is edited, it is immediately evaluated to determine its status.
-        // This is done because the proposal may be immediately rejected or adopted based on the policies.
-        proposal.reevaluate().await?;
-
-        self.proposal_repository
-            .insert(proposal.to_key(), proposal.to_owned());
-
-        Ok(proposal)
-    }
-
     /// Creates a new proposal adding the caller user as the proposer.
     ///
     /// By default the proposal has an expiration date of 7 days from the creation date.
