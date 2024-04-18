@@ -137,7 +137,7 @@ impl SystemService {
                 );
 
                 // register the jobs after the canister is fully initialized
-                register_jobs().await;
+                register_jobs();
             });
         });
     }
