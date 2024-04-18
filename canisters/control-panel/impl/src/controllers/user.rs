@@ -82,11 +82,6 @@ impl UserController {
         Self { user_service }
     }
 
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
     async fn get_user(&self) -> ApiResult<GetUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self
@@ -143,11 +138,6 @@ impl UserController {
         Ok(())
     }
 
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
     #[with_middleware(tail = use_status_metric("get_waiting_list", &result))]
     async fn get_waiting_list(&self) -> ApiResult<GetWaitingListResponse> {
         let ctx: CallContext = CallContext::get();

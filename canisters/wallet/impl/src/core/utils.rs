@@ -109,7 +109,7 @@ pub(crate) fn retain_accessible_resources<T, F>(
 }
 
 pub(crate) fn format_unique_string(text: &str) -> String {
-    any_ascii::any_ascii(text).to_lowercase().replace(' ', "")
+    deunicode::deunicode(text).to_lowercase().replace(' ', "")
 }
 
 #[cfg(test)]
