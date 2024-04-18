@@ -1,6 +1,8 @@
 use ic_canister_core::api::DetailableError;
 use thiserror::Error;
 
+use crate::core::validation::RecordNotFoundError;
+
 /// Container for user errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum UserError {
@@ -131,5 +133,11 @@ impl DetailableError for UserError {
             }
             _ => None,
         }
+    }
+}
+
+impl From<RecordNotFoundError> for UserError {
+    fn from(err: RecordNotFoundError) -> Self {
+        UserError::UserGroupDoesNotExist { group_id: err.id }
     }
 }
