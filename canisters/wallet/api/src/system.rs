@@ -21,9 +21,7 @@ pub struct SystemInit {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct SystemUpgrade {
-    pub upgrader_wasm_module: Option<Vec<u8>>,
-}
+pub struct SystemUpgrade {}
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum SystemInstall {

@@ -92,7 +92,6 @@ impl SystemService {
             use crate::core::ic_cdk::spawn;
             use crate::core::NNS_ROOT_CANISTER_ID;
             use crate::jobs::register_jobs;
-            use crate::services::CHANGE_CANISTER_SERVICE;
             use ic_canister_core::utils::maybe_initialize_rng;
 
             spawn(async move {
@@ -127,14 +126,7 @@ impl SystemService {
                         install_canister_handlers::set_admins(init.admins.unwrap_or_default())
                             .await;
                     }
-                    SystemInstall::Upgrade(upgrade) => {
-                        if let Some(new_upgrader_wasm) = &upgrade.upgrader_wasm_module {
-                            CHANGE_CANISTER_SERVICE
-                                .upgrade_upgrader(new_upgrader_wasm, None)
-                                .await
-                                .expect("Failed to upgrade upgrader canister");
-                        }
-                    }
+                    SystemInstall::Upgrade(upgrade) => {}
                 };
 
                 system_info.update_last_upgrade_timestamp();
@@ -145,7 +137,7 @@ impl SystemService {
                 );
 
                 // register the jobs after the canister is fully initialized
-                register_jobs().await;
+                register_jobs();
             });
         });
     }
@@ -179,9 +171,7 @@ impl SystemService {
         let mut system_info = read_system_info();
         let input = match input {
             Some(input) => input,
-            None => SystemUpgrade {
-                upgrader_wasm_module: None,
-            },
+            None => SystemUpgrade {},
         };
 
         // verifies that the upgrade proposal exists and marks it as completed

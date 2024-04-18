@@ -1720,10 +1720,7 @@ type SystemInit = record {
 };
 
 // The upgrade configuration for the canister.
-type SystemUpgrade = record {
-  // The updated upgrader wasm module to use for the canister.
-  upgrader_wasm_module : opt blob;
-};
+type SystemUpgrade = record {};
 
 // The input type for the canister install method (e.g. init or upgrade).
 type SystemInstall = variant {
