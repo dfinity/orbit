@@ -676,9 +676,7 @@ export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };
 export type SystemResourceAction = { 'SystemInfo' : null } |
   { 'Capabilities' : null };
-export interface SystemUpgrade {
-  'upgrader_wasm_module' : [] | [Uint8Array | number[]],
-}
+export type SystemUpgrade = {};
 export type TimestampRFC3339 = string;
 export interface Transfer {
   'id' : UUID,

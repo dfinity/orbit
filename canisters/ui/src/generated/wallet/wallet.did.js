@@ -1,8 +1,6 @@
 export const idlFactory = ({ IDL }) => {
   const ProposalPolicyCriteria = IDL.Rec();
-  const SystemUpgrade = IDL.Record({
-    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
+  const SystemUpgrade = IDL.Record({});
   const SystemInit = IDL.Record({
     'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
@@ -978,9 +976,7 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
-  const SystemUpgrade = IDL.Record({
-    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
+  const SystemUpgrade = IDL.Record({});
   const SystemInit = IDL.Record({
     'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),

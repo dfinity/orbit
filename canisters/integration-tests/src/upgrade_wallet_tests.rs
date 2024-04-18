@@ -29,9 +29,7 @@ fn successful_wallet_upgrade() {
     assert_eq!(health_status, HealthStatus::Healthy);
 
     // submit wallet upgrade proposal
-    let wallet_init_arg = SystemInstall::Upgrade(SystemUpgrade {
-        upgrader_wasm_module: None,
-    });
+    let wallet_init_arg = SystemInstall::Upgrade(SystemUpgrade {});
     let wallet_init_arg_bytes = Encode!(&wallet_init_arg).unwrap();
     let wallet_upgrade_operation =
         ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
