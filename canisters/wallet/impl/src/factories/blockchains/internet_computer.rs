@@ -151,8 +151,8 @@ impl InternetComputer {
         wallet_transfer: Transfer,
     ) -> Result<SubmitTransferResponse, ApiError> {
         let current_time = cdk::api::time();
-        let amount: u64 = HelperMapper::biguint_to_u64(&wallet_transfer.amount.0)?;
-        let transaction_fee: u64 = HelperMapper::biguint_to_u64(&wallet_transfer.fee.0)?;
+        let amount: u64 = HelperMapper::nat_to_u64(wallet_transfer.amount.clone())?;
+        let transaction_fee: u64 = HelperMapper::nat_to_u64(wallet_transfer.fee.clone())?;
         let memo = match wallet_transfer.metadata_map().get(METADATA_MEMO_KEY) {
             Some(memo) => HelperMapper::to_u64(memo)?,
             None => BigEndian::read_u64(&wallet_transfer.id[0..8]),

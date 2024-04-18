@@ -29,11 +29,11 @@ pub enum MapperError {
         /// The malformed UUID.
         malformed_uuid: String,
     },
-    /// The provided biguint cannot be converted to u64.
-    #[error(r#"The provided biguint cannot be converted to u64."#)]
-    BigUintConversionError {
-        /// The biguint that failed to be converted.
-        biguint: String,
+    /// The provided nat cannot be converted to u64.
+    #[error(r#"The provided nat cannot be converted to u64."#)]
+    NatConversionError {
+        /// The nat that failed to be converted.
+        nat: String,
     },
     /// The provided string cannot be converted to u64.
     #[error(r#"The provided string cannot be converted to u64."#)]
@@ -84,8 +84,8 @@ impl DetailableError for MapperError {
                 details.insert("malformed_uuid".to_string(), malformed_uuid.to_string());
                 Some(details)
             }
-            MapperError::BigUintConversionError { biguint } => {
-                details.insert("biguint".to_string(), biguint.to_string());
+            MapperError::NatConversionError { nat } => {
+                details.insert("nat".to_string(), nat.to_string());
                 Some(details)
             }
             MapperError::StringToNumberConversionError { input } => {
