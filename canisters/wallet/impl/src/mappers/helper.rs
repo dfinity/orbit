@@ -29,9 +29,7 @@ impl HelperMapper {
         amount
             .0
             .try_into()
-            .map_err(|_| MapperError::NatConversionError {
-                nat: amount_str,
-            })
+            .map_err(|_| MapperError::NatConversionError { nat: amount_str })
     }
 }
 
