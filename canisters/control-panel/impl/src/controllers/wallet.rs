@@ -63,11 +63,6 @@ impl WalletController {
     }
 
     /// Returns list of wallets associated with the user.
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
     async fn list_wallets(&self) -> ApiResult<ListWalletsResponse> {
         let ctx = CallContext::get();
         let user = self
@@ -79,11 +74,6 @@ impl WalletController {
         })
     }
     /// Returns main wallet associated with the user if any.
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
     async fn get_main_wallet(&self) -> ApiResult<GetMainWalletResponse> {
         let ctx = CallContext::get();
         let main_wallet = self.user_service.get_main_wallet(&ctx)?;
