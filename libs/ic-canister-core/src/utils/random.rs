@@ -10,7 +10,8 @@ thread_local! {
     let mut seed = [42; 32];
     seed[..8].copy_from_slice(&time().to_le_bytes());
     RefCell::new(ChaCha20Rng::from_seed(seed))
-  }
+  };
+  static RAW_RAND_SUCCESSFUL: RefCell<bool> = RefCell::new(false);
 }
 
 #[cfg(all(
@@ -55,6 +56,8 @@ pub async fn initialize_rng() -> Result<(), String> {
 
     initialize_rng_from_seed(seed);
 
+    RAW_RAND_SUCCESSFUL.with(|b| *b.borrow_mut() = true);
+
     ic_cdk::print("rng succesfully initialized");
     Ok(())
 }
@@ -79,6 +82,10 @@ pub fn random_bytes_gen<const N: usize>() -> [u8; N] {
 pub async fn generate_uuid_v4() -> Uuid {
     let bytes = random_bytes::<16>().await;
     Builder::from_random_bytes(bytes).into_uuid()
+}
+
+pub fn raw_rand_successful() -> bool {
+    RAW_RAND_SUCCESSFUL.with(|b| *b.borrow())
 }
 
 #[cfg(test)]

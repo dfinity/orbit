@@ -662,6 +662,7 @@ export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export interface SystemInfo {
   'last_upgrade_timestamp' : TimestampRFC3339,
+  'raw_rand_successful' : boolean,
   'version' : string,
   'cycles' : bigint,
   'upgrader_id' : Principal,
