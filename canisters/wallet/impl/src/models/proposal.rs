@@ -116,7 +116,7 @@ fn validate_proposed_by(proposed_by: &UserId) -> ModelValidatorResult<ProposalEr
     USER_REPOSITORY
         .get(&UserKey { id: *proposed_by })
         .ok_or(ProposalError::ValidationError {
-            info: "The proposed_by does not exist".to_owned(),
+            info: "The proposed_by user does not exist".to_owned(),
         })?;
     Ok(())
 }
