@@ -1,4 +1,5 @@
 use crate::cdk::api::management_canister;
+use ic_cdk::api::time;
 use rand_chacha::rand_core::RngCore;
 use rand_chacha::rand_core::SeedableRng;
 use rand_chacha::ChaCha20Rng;
@@ -6,7 +7,11 @@ use std::cell::RefCell;
 use uuid::{Builder, Uuid};
 
 thread_local! {
-  static RNG: RefCell<ChaCha20Rng> = RefCell::new(ChaCha20Rng::from_seed([42; 32]));
+  static RNG: RefCell<ChaCha20Rng> = {
+    let mut seed = [42; 32];
+    seed[..8].copy_from_slice(&time().to_le_bytes());
+    RefCell::new(ChaCha20Rng::from_seed(seed))
+  }
 }
 
 #[cfg(all(
