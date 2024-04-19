@@ -1,5 +1,4 @@
-use crate::cdk::api::management_canister;
-use ic_cdk::api::time;
+use crate::cdk::api::{management_canister, time};
 use rand_chacha::rand_core::RngCore;
 use rand_chacha::rand_core::SeedableRng;
 use rand_chacha::ChaCha20Rng;
