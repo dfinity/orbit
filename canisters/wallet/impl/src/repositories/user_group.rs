@@ -7,7 +7,7 @@ use ic_canister_core::repository::{IndexRepository, RefreshIndexMode};
 use ic_canister_core::{repository::Repository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<UUID, UserGroup, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -18,7 +18,8 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref USER_GROUP_REPOSITORY: UserGroupRepository = UserGroupRepository::default();
+    pub static ref USER_GROUP_REPOSITORY: Arc<UserGroupRepository> =
+        Arc::new(UserGroupRepository::default());
 }
 
 /// A repository that enables managing users in stable memory.
@@ -41,7 +42,7 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().clone().map(|prev| prev.to_index_by_name()),
+                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
                     current: Some(value.to_index_by_name()),
                 });
 

@@ -58,3 +58,9 @@ pub use install::*;
 
 mod change_canister;
 pub use change_canister::*;
+
+mod policy;
+pub use policy::*;
+
+mod validation;
+pub use validation::*;

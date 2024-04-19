@@ -1,5 +1,8 @@
 use crate::{
-    core::utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+    core::{
+        utils::{paginated_items, PaginatedData, PaginatedItemsArgs},
+        validation::{EnsureIdExists, EnsureUser, EnsureUserGroup},
+    },
     models::{
         access_policy::{AccessPolicy, Allow},
         resource::Resource,
@@ -9,8 +12,8 @@ use crate::{
     services::{UserGroupService, UserService, USER_GROUP_SERVICE, USER_SERVICE},
 };
 use candid::CandidType;
-use ic_canister_core::repository::Repository;
 use ic_canister_core::{api::ServiceResult, model::ModelKey};
+use ic_canister_core::{model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
 use std::{collections::HashSet, sync::Arc};
 use wallet_api::ListAccessPoliciesInput;
@@ -63,15 +66,19 @@ impl AccessPolicyService {
         &self,
         input: EditAccessPolicyOperationInput,
     ) -> ServiceResult<AccessPolicy> {
+        input.resource.validate()?;
+
         let mut access_policy = self.get_access_policy(&input.resource);
 
         if let Some(scope) = input.auth_scope {
             access_policy.allow.auth_scope = scope;
         }
         if let Some(users) = input.users {
+            EnsureUser::id_list_exists(&users)?;
             access_policy.allow.users = users;
         }
         if let Some(user_groups) = input.user_groups {
+            EnsureUserGroup::id_list_exists(&user_groups)?;
             access_policy.allow.user_groups = user_groups;
         }
 
@@ -137,9 +144,10 @@ impl AccessPolicyService {
 mod tests {
     use super::*;
     use crate::{
+        core::validation::disable_mock_resource_validation,
         models::{
             access_policy::{access_policy_test_utils::mock_access_policy, AuthScope},
-            resource::ProposalResourceAction,
+            resource::{AccountResourceAction, ProposalResourceAction, ResourceId},
             user_group_test_utils::mock_user_group,
             user_test_utils::mock_user,
         },
@@ -283,5 +291,44 @@ mod tests {
             .unwrap();
 
         assert!(service.get_access_policy(&resource).allowed_authenticated());
+    }
+
+    #[tokio::test]
+    async fn fail_edit_access_policy_invalid_ids() {
+        let service = AccessPolicyService::default();
+
+        disable_mock_resource_validation();
+
+        service
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
+                    [1; 16],
+                ))),
+                auth_scope: None,
+                users: None,
+                user_groups: None,
+            })
+            .await
+            .expect_err("Should fail with invalid account ID");
+
+        service
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+                auth_scope: None,
+                users: Some(vec![[1; 16]]),
+                user_groups: None,
+            })
+            .await
+            .expect_err("Should fail with invalid User ID");
+
+        service
+            .edit_access_policy(EditAccessPolicyOperationInput {
+                resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
+                auth_scope: None,
+                users: None,
+                user_groups: Some(vec![[1; 16]]),
+            })
+            .await
+            .expect_err("Should fail with invalid Group ID");
     }
 }
