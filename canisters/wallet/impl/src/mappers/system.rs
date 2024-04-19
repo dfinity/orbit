@@ -1,5 +1,5 @@
 use crate::models::system::SystemInfo;
-use ic_canister_core::utils::timestamp_to_rfc3339;
+use ic_canister_core::utils::{raw_rand_successful, timestamp_to_rfc3339};
 
 impl SystemInfo {
     pub fn to_dto(&self, cycles: &u64, version: &str) -> wallet_api::SystemInfoDTO {
@@ -8,6 +8,7 @@ impl SystemInfo {
             upgrader_id: *self.get_upgrader_canister_id(),
             cycles: *cycles,
             version: version.to_string(),
+            raw_rand_successful: raw_rand_successful(),
         }
     }
 }
