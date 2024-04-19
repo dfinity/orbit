@@ -54,6 +54,7 @@ fn successful_wallet_upgrade() {
     assert_eq!(health_status, HealthStatus::Healthy);
 
     let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    assert!(system_info.raw_rand_successful);
     let last_uprade_timestamp = system_info.last_upgrade_timestamp;
 
     // submit one more wallet upgrade proposal with no changes

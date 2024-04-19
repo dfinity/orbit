@@ -848,6 +848,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SystemInfo = IDL.Record({
     'last_upgrade_timestamp' : TimestampRFC3339,
+    'raw_rand_successful' : IDL.Bool,
     'version' : IDL.Text,
     'cycles' : IDL.Nat64,
     'upgrader_id' : IDL.Principal,

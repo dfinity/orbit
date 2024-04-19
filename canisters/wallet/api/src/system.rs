@@ -7,6 +7,7 @@ pub struct SystemInfoDTO {
     pub upgrader_id: Principal,
     pub cycles: u64,
     pub last_upgrade_timestamp: TimestampRfc3339,
+    pub raw_rand_successful: bool,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
