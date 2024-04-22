@@ -142,15 +142,16 @@ impl SystemService {
                     SystemInstall::Upgrade(upgrade) => {}
                 };
 
-                system_info.update_last_upgrade_timestamp();
-                write_system_info(system_info.to_owned());
-
                 install_canister_handlers::monitor_upgrader_cycles(
                     *system_info.get_upgrader_canister_id(),
                 );
 
                 // register the jobs after the canister is fully initialized
                 register_jobs();
+
+                // write system info at the very end since this makes the canister "healthy"
+                system_info.update_last_upgrade_timestamp();
+                write_system_info(system_info.to_owned());
             });
         });
     }
@@ -213,8 +214,6 @@ impl SystemService {
 
             // clears the change canister proposal from the config to avoid it being used again
             system_info.clear_change_canister_proposal();
-
-            write_system_info(system_info.clone());
         }
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
