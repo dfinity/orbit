@@ -43,7 +43,7 @@ impl Upgrade for Upgrader {
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
         mgmt::install_code(InstallCodeArgument {
-            mode: CanisterInstallMode::Upgrade,
+            mode: CanisterInstallMode::Upgrade(None),
             canister_id: id.0,
             wasm_module: ps.module,
             arg: ps.arg,

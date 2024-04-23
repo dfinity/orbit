@@ -33,7 +33,7 @@ getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 ic-canister-core = { path = "./libs/ic-canister-core" }
 ic-canister-macros = { path = "./libs/ic-canister-macros" }
-ic-cdk = "0.13.1"
+ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"
 ic-ledger-types = "0.10.0"

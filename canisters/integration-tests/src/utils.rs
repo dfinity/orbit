@@ -2,9 +2,7 @@ use crate::setup::WALLET_ADMIN_USER;
 use candid::Principal;
 use ic_canister_core::api::ApiResult;
 use ic_canister_core::cdk::api::management_canister::main::CanisterId;
-use ic_cdk::api::management_canister::main::{
-    CanisterIdRecord, CanisterSettings, CanisterStatusResponse, UpdateSettingsArgument,
-};
+use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use pocket_ic::{update_candid_as, PocketIc};
 use std::time::Duration;
 use wallet_api::{
@@ -241,39 +239,17 @@ pub fn canister_status(
     sender: Option<Principal>,
     canister_id: Principal,
 ) -> CanisterStatusResponse {
-    let args = CanisterIdRecord { canister_id };
-
-    let res: (CanisterStatusResponse,) = update_candid_as(
-        env,
-        Principal::management_canister(),
-        sender.unwrap_or(Principal::anonymous()),
-        "canister_status",
-        (args,),
-    )
-    .unwrap();
-    res.0
+    env.canister_status(canister_id, sender).unwrap()
 }
 
-pub fn update_canister_settings(
+pub fn set_controllers(
     env: &PocketIc,
     sender: Option<Principal>,
     canister_id: Principal,
-    settings: CanisterSettings,
+    new_controllers: Vec<Principal>,
 ) {
-    let args = UpdateSettingsArgument {
-        settings,
-        canister_id,
-    };
-
-    // the type () is required here due to rust not being able to infer the type of the return automatically
-    let _: () = update_candid_as(
-        env,
-        Principal::management_canister(),
-        sender.unwrap_or(Principal::anonymous()),
-        "update_settings",
-        (args,),
-    )
-    .unwrap();
+    env.set_controllers(canister_id, sender, new_controllers)
+        .unwrap();
 }
 
 pub fn get_core_canister_health_status(
@@ -320,10 +296,6 @@ pub fn advance_time_to_burn_cycles(
 
     // restart the canister
     env.start_canister(canister_id, Some(sender)).unwrap();
-    // wait for the canister to start
-    for _ in 0..2 {
-        env.tick();
-    }
 
     // adds cycles to be as close as possible to the target
     let canister_cycles = env.cycle_balance(canister_id);

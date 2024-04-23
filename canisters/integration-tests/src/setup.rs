@@ -1,13 +1,12 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id, update_canister_settings};
+use crate::utils::{controller_test_id, minter_test_id, set_controllers};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use control_panel_api::{
     CanisterInit as ControlPanelInitArg, CanisterInstall as ControlPanelInstallArg,
 };
-use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use std::collections::{HashMap, HashSet};
@@ -118,15 +117,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     let control_panel = create_canister(env, controller);
     let wallet = create_canister(env, controller);
 
-    update_canister_settings(
-        env,
-        Some(controller),
-        wallet,
-        CanisterSettings {
-            controllers: Some(vec![controller, wallet]),
-            ..Default::default()
-        },
-    );
+    set_controllers(env, Some(controller), wallet, vec![controller, wallet]);
 
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let wallet_wasm = get_canister_wasm("wallet").to_vec();
