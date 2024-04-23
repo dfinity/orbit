@@ -21,6 +21,9 @@ pub use notification::*;
 mod proposal;
 pub use proposal::*;
 
+mod evaluation_result;
+pub use evaluation_result::*;
+
 pub mod policy;
 
 pub mod access_policy;

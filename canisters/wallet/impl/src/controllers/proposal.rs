@@ -73,7 +73,7 @@ impl ProposalController {
             .await?;
         let additional_info = self
             .proposal_service
-            .get_proposal_additional_info(&proposal)?;
+            .get_proposal_additional_info(&proposal, true)?;
 
         Ok(CreateProposalResponse {
             proposal: proposal.to_dto(),
@@ -94,7 +94,7 @@ impl ProposalController {
             .await?;
         let additional_info = self
             .proposal_service
-            .get_proposal_additional_info(&proposal)?;
+            .get_proposal_additional_info(&proposal, true)?;
 
         Ok(GetProposalResponse {
             proposal: proposal.to_dto(),
@@ -106,6 +106,7 @@ impl ProposalController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::Proposal(ProposalResourceAction::List)]))]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let ctx = call_context();
+        let return_evaluation_results = input.return_evaluation_results;
         let result = self.proposal_service.list_proposals(input, &ctx).await?;
 
         let mut privileges = Vec::new();
@@ -119,7 +120,7 @@ impl ProposalController {
 
             let additional_info = self
                 .proposal_service
-                .get_proposal_additional_info(proposal)?;
+                .get_proposal_additional_info(proposal, return_evaluation_results)?;
 
             privileges.push(ProposalCallerPrivilegesDTO::from(privilege));
             additionals.push(ProposalAdditionalInfoDTO::from(additional_info));
@@ -153,7 +154,7 @@ impl ProposalController {
 
             let additional_info = self
                 .proposal_service
-                .get_proposal_additional_info(&proposal)?;
+                .get_proposal_additional_info(&proposal, true)?;
 
             Ok(Some(GetProposalResponse {
                 proposal: proposal.to_dto(),
@@ -178,7 +179,7 @@ impl ProposalController {
             .await?;
         let additional_info = self
             .proposal_service
-            .get_proposal_additional_info(&proposal)?;
+            .get_proposal_additional_info(&proposal, true)?;
 
         Ok(VoteOnProposalResponse {
             proposal: proposal.to_dto(),

@@ -94,6 +94,7 @@ impl From<ProposalAdditionalInfo> for wallet_api::ProposalAdditionalInfoDTO {
             id: Uuid::from_bytes(info.id).hyphenated().to_string(),
             proposer_name: info.proposer_name,
             voters: info.voters.into_iter().map(|voter| voter.into()).collect(),
+            evaluation_result: info.evaluation_result.map(|result| result.into()),
         }
     }
 }

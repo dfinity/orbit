@@ -6,10 +6,14 @@ use crate::models::{
         ResourceAction, ResourceId, ResourceIds, UserResourceAction,
     },
     specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
-    ProposalPolicy, ProposalPolicyCallerPrivileges,
+    CriteriaResult, EvaluatedCriteria, EvaluationStatus, ProposalEvaluationResult, ProposalPolicy,
+    ProposalPolicyCallerPrivileges,
 };
 use uuid::Uuid;
-use wallet_api::{ApprovalThresholdDTO, CriteriaDTO, MinimumVotesDTO, UserSpecifierDTO};
+use wallet_api::{
+    ApprovalThresholdDTO, CriteriaDTO, CriteriaResultDTO, EvaluatedCriteriaDTO,
+    EvaluationStatusDTO, MinimumVotesDTO, ProposalEvaluationResultDTO, UserSpecifierDTO,
+};
 
 impl From<Criteria> for CriteriaDTO {
     fn from(criteria: Criteria) -> Self {
@@ -63,6 +67,84 @@ impl From<CriteriaDTO> for Criteria {
                 Criteria::And(criterias.into_iter().map(Into::into).collect())
             }
             CriteriaDTO::Not(criteria) => Criteria::Not(Box::new(Into::into(*criteria))),
+        }
+    }
+}
+
+impl From<ProposalEvaluationResult> for ProposalEvaluationResultDTO {
+    fn from(value: ProposalEvaluationResult) -> Self {
+        ProposalEvaluationResultDTO {
+            proposal_id: Uuid::from_bytes(value.proposal_id).hyphenated().to_string(),
+            status: value.status.into(),
+            policy_results: value.policy_results.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<EvaluationStatus> for EvaluationStatusDTO {
+    fn from(value: EvaluationStatus) -> Self {
+        match value {
+            EvaluationStatus::Adopted => EvaluationStatusDTO::Adopted,
+            EvaluationStatus::Rejected => EvaluationStatusDTO::Rejected,
+            EvaluationStatus::Pending => EvaluationStatusDTO::Pending,
+        }
+    }
+}
+
+impl From<CriteriaResult> for CriteriaResultDTO {
+    fn from(value: CriteriaResult) -> Self {
+        CriteriaResultDTO {
+            status: value.status.into(),
+            evaluated_criteria: value.evaluated_criteria.into(),
+        }
+    }
+}
+
+impl From<EvaluatedCriteria> for EvaluatedCriteriaDTO {
+    fn from(value: EvaluatedCriteria) -> Self {
+        match value {
+            EvaluatedCriteria::AutoAdopted => EvaluatedCriteriaDTO::AutoAdopted,
+            EvaluatedCriteria::ApprovalThreshold {
+                min_required_votes,
+                total_possible_votes,
+                votes,
+            } => EvaluatedCriteriaDTO::ApprovalThreshold {
+                min_required_votes,
+                total_possible_votes,
+                votes: votes
+                    .into_iter()
+                    .map(|id| Uuid::from_bytes(id).hyphenated().to_string())
+                    .collect(),
+            },
+            EvaluatedCriteria::MinimumVotes {
+                min_required_votes,
+                total_possible_votes,
+                votes,
+            } => EvaluatedCriteriaDTO::MinimumVotes {
+                min_required_votes,
+                total_possible_votes,
+                votes: votes
+                    .into_iter()
+                    .map(|id| Uuid::from_bytes(id).hyphenated().to_string())
+                    .collect(),
+            },
+            EvaluatedCriteria::HasAddressBookMetadata { metadata } => {
+                EvaluatedCriteriaDTO::HasAddressBookMetadata {
+                    metadata: metadata.into(),
+                }
+            }
+            EvaluatedCriteria::HasAddressInAddressBook => {
+                EvaluatedCriteriaDTO::HasAddressInAddressBook
+            }
+            EvaluatedCriteria::Or(criterias) => {
+                EvaluatedCriteriaDTO::Or(criterias.into_iter().map(Into::into).collect())
+            }
+            EvaluatedCriteria::And(criterias) => {
+                EvaluatedCriteriaDTO::And(criterias.into_iter().map(Into::into).collect())
+            }
+            EvaluatedCriteria::Not(criteria) => {
+                EvaluatedCriteriaDTO::Not(Box::new(Into::into(*criteria)))
+            }
         }
     }
 }

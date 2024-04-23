@@ -49,6 +49,7 @@ impl Evaluate<ProposalEvaluationResult> for ProposalEvaluator {
             // Since proposals handle security critical operations, we want to reject them by default if
             // they don't match any policy. Users need to explicitly add the necessary policies to evaluate them.
             return Ok(ProposalEvaluationResult {
+                proposal_id: self.proposal.id,
                 status: EvaluationStatus::Rejected,
                 policy_results: vec![],
             });
@@ -69,16 +70,17 @@ impl Evaluate<ProposalEvaluationResult> for ProposalEvaluator {
         }
 
         Ok(ProposalEvaluationResult {
+            proposal_id: self.proposal.id,
             status: {
                 if evaluation_statuses
                     .iter()
-                    .any(|status| status.result == EvaluationStatus::Adopted)
+                    .any(|result| result.status == EvaluationStatus::Adopted)
                 {
                     // If any policy adopted the proposal, then the proposal is adopted.
                     EvaluationStatus::Adopted
                 } else if evaluation_statuses
                     .iter()
-                    .all(|status| status.result == EvaluationStatus::Rejected)
+                    .all(|result| result.status == EvaluationStatus::Rejected)
                 {
                     // Only if all policies are rejected then the proposal is rejected,
                     // this applies an implicit `OR` between policies.

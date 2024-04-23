@@ -2,8 +2,8 @@ use super::{
     specifier::{
         Match, ProposalHasMetadata, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
     },
-    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalOperation, ProposalVoteStatus,
-    UserId, UserStatus,
+    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalId, ProposalOperation,
+    ProposalVoteStatus, UserId, UserStatus,
 };
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
@@ -50,7 +50,8 @@ pub enum Criteria {
     Not(Box<Criteria>),
 }
 
-#[derive(Debug)]
+#[storable]
+#[derive(Debug, Clone)]
 pub enum EvaluatedCriteria {
     AutoAdopted,
     ApprovalThreshold {
@@ -59,7 +60,7 @@ pub enum EvaluatedCriteria {
         votes: Vec<UserId>,
     },
     MinimumVotes {
-        min_required_votes: u16,
+        min_required_votes: usize,
         votes: Vec<UserId>,
         total_possible_votes: usize,
     },
@@ -72,14 +73,17 @@ pub enum EvaluatedCriteria {
     Not(Box<CriteriaResult>),
 }
 
-#[derive(Debug)]
+#[storable]
+#[derive(Debug, Clone)]
 pub struct CriteriaResult {
-    pub result: EvaluationStatus,
+    pub status: EvaluationStatus,
     pub evaluated_criteria: EvaluatedCriteria,
 }
 
-#[derive(Debug)]
+#[storable]
+#[derive(Debug, Clone)]
 pub struct ProposalEvaluationResult {
+    pub proposal_id: ProposalId,
     pub status: EvaluationStatus,
     pub policy_results: Vec<CriteriaResult>,
 }
@@ -257,7 +261,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
     ) -> Result<CriteriaResult, EvaluateError> {
         match critera.as_ref() {
             Criteria::AutoAdopted => Ok(CriteriaResult {
-                result: EvaluationStatus::Adopted,
+                status: EvaluationStatus::Adopted,
                 evaluated_criteria: EvaluatedCriteria::AutoAdopted,
             }),
             Criteria::ApprovalThreshold(user_specifier, percentage) => {
@@ -266,7 +270,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                     calculate_minimum_threshold(percentage, &vote_summary.total_possible_votes);
 
                 Ok(CriteriaResult {
-                    result: vote_summary.evaluate(min_votes),
+                    status: vote_summary.evaluate(min_votes),
                     evaluated_criteria: EvaluatedCriteria::ApprovalThreshold {
                         min_required_votes: min_votes,
                         total_possible_votes: vote_summary.total_possible_votes,
@@ -278,9 +282,9 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                 let vote_summary = self.calculate_votes(&proposal, user_specifier)?;
 
                 Ok(CriteriaResult {
-                    result: vote_summary.evaluate(*min_votes as usize),
+                    status: vote_summary.evaluate(*min_votes as usize),
                     evaluated_criteria: EvaluatedCriteria::MinimumVotes {
-                        min_required_votes: *min_votes,
+                        min_required_votes: *min_votes as usize,
                         total_possible_votes: vote_summary.total_possible_votes,
                         votes: vote_summary.voters,
                     },
@@ -292,7 +296,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                     .is_match((proposal.as_ref().to_owned(), metadata.clone()))?;
 
                 Ok(CriteriaResult {
-                    result: if is_match {
+                    status: if is_match {
                         EvaluationStatus::Adopted
                     } else {
                         EvaluationStatus::Rejected
@@ -313,7 +317,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                             ));
 
                             return Ok(CriteriaResult {
-                                result: EvaluationStatus::Rejected,
+                                status: EvaluationStatus::Rejected,
                                 evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
                             });
                         }
@@ -326,7 +330,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
 
                             if is_in_address_book {
                                 return Ok(CriteriaResult {
-                                    result: EvaluationStatus::Adopted,
+                                    status: EvaluationStatus::Adopted,
                                     evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
                                 });
                             }
@@ -335,7 +339,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                 }
 
                 Ok(CriteriaResult {
-                    result: EvaluationStatus::Rejected,
+                    status: EvaluationStatus::Rejected,
                     evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
                 })
             }
@@ -344,26 +348,26 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
 
                 if evaluation_statuses
                     .iter()
-                    .any(|s| s.result == EvaluationStatus::Rejected)
+                    .any(|result| result.status == EvaluationStatus::Rejected)
                 {
                     return Ok(CriteriaResult {
-                        result: EvaluationStatus::Rejected,
+                        status: EvaluationStatus::Rejected,
                         evaluated_criteria: EvaluatedCriteria::And(evaluation_statuses),
                     });
                 }
 
                 if evaluation_statuses
                     .iter()
-                    .all(|s| s.result == EvaluationStatus::Adopted)
+                    .all(|result| result.status == EvaluationStatus::Adopted)
                 {
                     return Ok(CriteriaResult {
-                        result: EvaluationStatus::Adopted,
+                        status: EvaluationStatus::Adopted,
                         evaluated_criteria: EvaluatedCriteria::And(evaluation_statuses),
                     });
                 }
 
                 Ok(CriteriaResult {
-                    result: EvaluationStatus::Pending,
+                    status: EvaluationStatus::Pending,
                     evaluated_criteria: EvaluatedCriteria::And(evaluation_statuses),
                 })
             }
@@ -372,26 +376,26 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
 
                 if evaluation_statuses
                     .iter()
-                    .any(|s| s.result == EvaluationStatus::Adopted)
+                    .any(|result| result.status == EvaluationStatus::Adopted)
                 {
                     return Ok(CriteriaResult {
-                        result: EvaluationStatus::Adopted,
+                        status: EvaluationStatus::Adopted,
                         evaluated_criteria: EvaluatedCriteria::Or(evaluation_statuses),
                     });
                 }
 
                 if evaluation_statuses
                     .iter()
-                    .all(|s| s.result == EvaluationStatus::Rejected)
+                    .all(|result| result.status == EvaluationStatus::Rejected)
                 {
                     return Ok(CriteriaResult {
-                        result: EvaluationStatus::Rejected,
+                        status: EvaluationStatus::Rejected,
                         evaluated_criteria: EvaluatedCriteria::Or(evaluation_statuses),
                     });
                 }
 
                 Ok(CriteriaResult {
-                    result: EvaluationStatus::Pending,
+                    status: EvaluationStatus::Pending,
                     evaluated_criteria: EvaluatedCriteria::Or(evaluation_statuses),
                 })
             }
@@ -399,7 +403,7 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                 let evaluation_result =
                     self.evaluate((proposal.to_owned(), Arc::new(criteria.as_ref().to_owned())))?;
                 Ok(CriteriaResult {
-                    result: match evaluation_result.result {
+                    status: match evaluation_result.status {
                         EvaluationStatus::Pending => EvaluationStatus::Pending,
                         EvaluationStatus::Adopted => EvaluationStatus::Rejected,
                         EvaluationStatus::Rejected => EvaluationStatus::Adopted,
@@ -407,6 +411,45 @@ impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateEr
                     evaluated_criteria: EvaluatedCriteria::Not(Box::new(evaluation_result)),
                 })
             }
+        }
+    }
+}
+
+#[cfg(test)]
+pub mod criteria_test_utils {
+    use super::*;
+
+    pub fn mock_proposal_evaluation_result() -> ProposalEvaluationResult {
+        ProposalEvaluationResult {
+            proposal_id: [0; 16],
+            status: EvaluationStatus::Adopted,
+            policy_results: vec![
+                CriteriaResult {
+                    status: EvaluationStatus::Adopted,
+                    evaluated_criteria: EvaluatedCriteria::Or(vec![
+                        CriteriaResult {
+                            status: EvaluationStatus::Adopted,
+                            evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
+                        },
+                        CriteriaResult {
+                            status: EvaluationStatus::Rejected,
+                            evaluated_criteria: EvaluatedCriteria::ApprovalThreshold {
+                                min_required_votes: 2,
+                                total_possible_votes: 3,
+                                votes: vec![[0; 16], [1; 16]],
+                            },
+                        },
+                    ]),
+                },
+                CriteriaResult {
+                    status: EvaluationStatus::Rejected,
+                    evaluated_criteria: EvaluatedCriteria::MinimumVotes {
+                        min_required_votes: 2,
+                        votes: vec![[0; 16], [1; 16]],
+                        total_possible_votes: 3,
+                    },
+                },
+            ],
         }
     }
 }

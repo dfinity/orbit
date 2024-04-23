@@ -71,11 +71,12 @@ pub struct ProposalCallerPrivileges {
     pub can_vote: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ProposalAdditionalInfo {
     pub id: UUID,
     pub proposer_name: Option<String>,
     pub voters: Vec<DisplayUser>,
+    pub evaluation_result: Option<ProposalEvaluationResult>,
 }
 
 fn validate_title(title: &str) -> ModelValidatorResult<ProposalError> {

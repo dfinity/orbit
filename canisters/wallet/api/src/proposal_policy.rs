@@ -72,6 +72,48 @@ pub enum CriteriaDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum EvaluationStatusDTO {
+    Adopted,
+    Rejected,
+    Pending,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum EvaluatedCriteriaDTO {
+    AutoAdopted,
+    ApprovalThreshold {
+        min_required_votes: usize,
+        total_possible_votes: usize,
+        votes: Vec<UuidDTO>,
+    },
+    MinimumVotes {
+        min_required_votes: usize,
+        votes: Vec<UuidDTO>,
+        total_possible_votes: usize,
+    },
+    HasAddressBookMetadata {
+        metadata: MetadataDTO,
+    },
+    HasAddressInAddressBook,
+    Or(Vec<CriteriaResultDTO>),
+    And(Vec<CriteriaResultDTO>),
+    Not(Box<CriteriaResultDTO>),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct CriteriaResultDTO {
+    pub status: EvaluationStatusDTO,
+    pub evaluated_criteria: EvaluatedCriteriaDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ProposalEvaluationResultDTO {
+    pub proposal_id: UuidDTO,
+    pub status: EvaluationStatusDTO,
+    pub policy_results: Vec<CriteriaResultDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum CommonSpecifierDTO {
     Any,
     Id(Vec<UuidDTO>),
