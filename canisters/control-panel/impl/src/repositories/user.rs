@@ -1,13 +1,17 @@
 use crate::{
-    core::{with_memory_manager, Memory, USER_MEMORY_ID},
+    core::{metrics::USER_METRICS, with_memory_manager, Memory, USER_MEMORY_ID},
     mappers::SubscribedUser,
     models::{
-        indexes::user_identity_index::UserIdentityIndexCriteria,
-        indexes::user_status_index::{UserIndexSubscriptionStatus, UserStatusIndexCriteria},
+        indexes::{
+            user_identity_index::UserIdentityIndexCriteria,
+            user_status_index::{UserIndexSubscriptionStatus, UserStatusIndexCriteria},
+        },
         User, UserKey, UserSubscriptionStatus,
     },
-    repositories::indexes::user_identity_index::UserIdentityIndexRepository,
-    repositories::indexes::user_status_index::UserStatusIndexRepository,
+    repositories::indexes::{
+        user_identity_index::UserIdentityIndexRepository,
+        user_status_index::UserStatusIndexRepository,
+    },
 };
 use candid::Principal;
 use ic_canister_core::repository::RefreshIndexMode;
@@ -48,6 +52,11 @@ impl Repository<UserKey, User> for UserRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
+            // Update metrics when a user is upserted.
+            USER_METRICS
+                .iter()
+                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+
             self.identity_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
                     previous: prev
@@ -70,6 +79,12 @@ impl Repository<UserKey, User> for UserRepository {
     fn remove(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when a user is removed.
+            if let Some(prev) = &prev {
+                USER_METRICS.iter().for_each(|metric| metric.sub(prev));
+            }
+
             self.identity_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
                     current: prev
