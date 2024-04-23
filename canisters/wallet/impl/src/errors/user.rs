@@ -75,6 +75,10 @@ pub enum UserError {
     /// Invalid user list limit.
     #[error(r#"Invalid user list limit, it cannot be more than {max}."#)]
     InvalidUserListLimit { max: u16 },
+
+    // error for when non existent user group is getting added
+    #[error(r#"The user group {group_id} does not exist."#)]
+    UserGroupDoesNotExist { group_id: String },
 }
 
 impl DetailableError for UserError {

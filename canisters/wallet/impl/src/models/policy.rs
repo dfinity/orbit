@@ -1,7 +1,10 @@
 use super::{criteria::Criteria, specifier::ProposalSpecifier};
-use crate::errors::MatchError;
+use crate::errors::{MatchError, PolicyError, RecordValidationError};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::types::UUID;
+use ic_canister_core::{
+    model::{ModelValidator, ModelValidatorResult},
+    types::UUID,
+};
 use ic_canister_macros::storable;
 
 #[storable]
@@ -40,6 +43,25 @@ impl From<MatchError> for EvaluateError {
         match value {
             MatchError::UnexpectedError(err) => EvaluateError::UnexpectedError(err),
         }
+    }
+}
+
+impl ModelValidator<PolicyError> for ProposalPolicy {
+    fn validate(&self) -> ModelValidatorResult<PolicyError> {
+        self.specifier.validate().map_err(|err| match err {
+            RecordValidationError::NotFound { id, model_name } => PolicyError::ValidationError {
+                info: format!("Invalid user specifier: {} {} not found", model_name, id),
+            },
+        })?;
+        self.criteria.validate().map_err(|err| match err {
+            RecordValidationError::NotFound { id, model_name } => PolicyError::ValidationError {
+                info: format!(
+                    "Invalid proposal specifier: {} {} not found",
+                    model_name, id
+                ),
+            },
+        })?;
+        Ok(())
     }
 }
 

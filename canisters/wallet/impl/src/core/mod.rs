@@ -13,6 +13,7 @@ mod call_context;
 pub use call_context::*;
 
 pub mod middlewares;
+pub mod validation;
 
 #[cfg(not(test))]
 pub use ic_canister_core::cdk as ic_cdk;

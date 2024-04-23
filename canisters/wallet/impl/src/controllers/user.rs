@@ -107,7 +107,7 @@ mod tests {
     use candid::Principal;
 
     use crate::{
-        core::{set_mock_caller, test_utils},
+        core::{set_mock_caller, test_utils, validation::disable_mock_resource_validation},
         models::{AddUserOperationInput, UserStatus},
         services::UserService,
     };
@@ -127,6 +127,8 @@ mod tests {
     #[tokio::test]
     async fn me_returns_successfully() {
         let ctx = setup();
+        disable_mock_resource_validation();
+
         let identity = Principal::from_slice(&[1; 29]);
         ctx.user_service
             .add_user(AddUserOperationInput {
@@ -149,6 +151,7 @@ mod tests {
     async fn me_returns_successfully_with_non_existent_group() {
         let ctx = setup();
         let identity = Principal::from_slice(&[1; 29]);
+
         ctx.user_service
             .add_user(AddUserOperationInput {
                 groups: vec![[0; 16]],
