@@ -1,8 +1,10 @@
+use crate::services::{UserService, USER_SERVICE};
 use crate::{core::ic_cdk::api::canister_balance, SERVICE_NAME};
 use ic_canister_core::api::{HeaderField, HttpRequest, HttpResponse};
 use ic_canister_core::metrics::with_metrics_registry;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
+use std::sync::Arc;
 
 // Canister entrypoints for the controller.
 #[query(name = "http_request")]
@@ -12,15 +14,17 @@ async fn http_request(request: HttpRequest) -> HttpResponse {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: HttpController = HttpController::new();
+    static ref CONTROLLER: HttpController = HttpController::new(Arc::clone(&USER_SERVICE));
 }
 
 #[derive(Debug)]
-pub struct HttpController {}
+pub struct HttpController {
+    user_service: Arc<UserService>,
+}
 
 impl HttpController {
-    fn new() -> Self {
-        Self {}
+    fn new(user_service: Arc<UserService>) -> Self {
+        Self { user_service }
     }
 
     async fn router(&self, request: HttpRequest) -> HttpResponse {
@@ -28,11 +32,49 @@ impl HttpController {
             return self.metrics(request).await;
         }
 
+        if request.url == "/metrics/sd" || request.url == "/metrics/sd/" {
+            return self.metrics_service_discovery(request).await;
+        }
+
         return HttpResponse {
             status_code: 404,
             headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
             body: "404 Not Found".as_bytes().to_owned(),
         };
+    }
+
+    /// Returns all deployed wallet hosts for Prometheus service discovery.
+    ///
+    /// As defined by https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_sd_config
+    async fn metrics_service_discovery(&self, request: HttpRequest) -> HttpResponse {
+        if request.method.to_lowercase() != "get" {
+            return HttpResponse {
+                status_code: 405,
+                headers: vec![HeaderField("Allow".into(), "GET".into())],
+                body: "405 Method Not Allowed".as_bytes().to_owned(),
+            };
+        }
+
+        let wallet_hosts = self
+            .user_service
+            .get_all_deployed_wallets()
+            .iter()
+            .map(|wallet| format!("https://{}.raw.icp0.io", wallet.to_text()))
+            .collect::<Vec<String>>();
+
+        let body = format!(
+            r#"{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}"#,
+            wallet_hosts.join("\", \"")
+        );
+
+        HttpResponse {
+            status_code: 200,
+            headers: vec![HeaderField(
+                "Content-Type".into(),
+                "application/json".into(),
+            )],
+            body: body.as_bytes().to_owned(),
+        }
     }
 
     async fn metrics(&self, request: HttpRequest) -> HttpResponse {
@@ -57,5 +99,51 @@ impl HttpController {
         with_metrics_registry(SERVICE_NAME, |registry| {
             registry.export_metrics_as_http_response()
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{models::user_model_utils::mock_user, repositories::USER_REPOSITORY};
+    use candid::Principal;
+    use ic_canister_core::repository::Repository;
+
+    #[tokio::test]
+    async fn test_service_discovery() {
+        let mut user = mock_user();
+        user.deployed_wallets = vec![Principal::from_slice(&[0; 29])];
+        let wallet_host = format!("https://{}.raw.icp0.io", user.deployed_wallets[0].to_text());
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        let controller = HttpController::new(Arc::new(UserService::default()));
+
+        let request = HttpRequest {
+            method: "GET".into(),
+            url: "/metrics/sd".into(),
+            headers: vec![],
+            body: vec![],
+        };
+
+        let response = controller.metrics_service_discovery(request).await;
+
+        assert_eq!(response.status_code, 200);
+        assert_eq!(
+            response.headers,
+            vec![HeaderField(
+                "Content-Type".into(),
+                "application/json".into()
+            )]
+        );
+        assert_eq!(
+            response.body,
+            format!(
+                r#"{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}"#,
+                wallet_host
+            )
+            .as_bytes()
+            .to_owned()
+        );
     }
 }
