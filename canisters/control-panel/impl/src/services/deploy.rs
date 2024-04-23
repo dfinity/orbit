@@ -7,6 +7,7 @@ use crate::{
 };
 use candid::{Encode, Principal};
 use ic_canister_core::api::ServiceResult;
+use ic_canister_core::cdk::call;
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use lazy_static::lazy_static;
@@ -82,6 +83,14 @@ impl DeployService {
             })?,
         })
         .await
+        .map_err(|(_, err)| DeployError::Failed {
+            reason: err.to_string(),
+        })?;
+
+        // performs post-install wallet canister initialization which makes
+        // inter-canister calls and thus must happen separately from
+        // code installation
+        call::<_, ((),)>(wallet_canister.canister_id, "post_install_canister_init", ((),)).await
         .map_err(|(_, err)| DeployError::Failed {
             reason: err.to_string(),
         })?;

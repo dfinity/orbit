@@ -10,6 +10,9 @@ pub enum InstallError {
     InitFailed { reason: String },
     #[error(r#"The wallet needs at least one admin"#)]
     NoAdminsSpecified,
+    #[error(r#"Invalid caller of post-install canister initialization"#)]
+    InvalidPostInstallCaller,
+
 }
 
 impl DetailableError for InstallError {

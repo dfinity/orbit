@@ -77,16 +77,8 @@ impl SystemService {
         }
     }
 
-    // init calls can't perform inter-canister calls so we need to delay tasks such as user registration
-    // with a one-off timer to allow the canister to be initialized first and then perform them,
-    // this is needed because properties like ids are generated based on UUIDs which requires `raw_rand` to be used.
-    //
-    // WARNING: we do not perform locking, the canister might already receive calls before the timer is executed,
-    // currently this is not a problem because the admins would simply get an access denied error but if more
-    // complex/required business logic is added to the timer a locking mechanism should be added.
-    #[allow(unused_variables, unused_mut)]
+    #[cfg(target_arch = "wasm32")]
     fn install_canister_post_process(&self, mut system_info: SystemInfo, install: SystemInstall) {
-        #[cfg(target_arch = "wasm32")]
         async fn initialize_rng_timer() {
             use crate::core::ic_cdk::spawn;
             use ic_canister_core::utils::initialize_rng;
@@ -98,61 +90,84 @@ impl SystemService {
             }
         }
 
-        #[cfg(target_arch = "wasm32")]
         ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
             use crate::core::ic_cdk::spawn;
             spawn(initialize_rng_timer())
         });
 
-        #[cfg(target_arch = "wasm32")]
-        ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
-            use crate::core::ic_cdk::api::id as self_canister_id;
-            use crate::core::ic_cdk::spawn;
-            use crate::core::NNS_ROOT_CANISTER_ID;
-            use crate::jobs::register_jobs;
+        match install {
+            SystemInstall::Init(init) => {}
+            SystemInstall::Upgrade(upgrade) => {
+                self.install_canister_final_setup(system_info);
+            }
+        };
+    }
 
-            spawn(async move {
-                match install {
-                    SystemInstall::Init(init) => {
-                        let canister_id = self_canister_id();
+    #[cfg(not(target_arch = "wasm32"))]
+    fn install_canister_post_process(&self, mut _system_info: SystemInfo, _install: SystemInstall) {}
 
-                        // registers the default canister configurations such as policies and user groups.
-                        print("Adding initial canister configurations");
-                        install_canister_handlers::init_post_process().await;
+    #[cfg(target_arch = "wasm32")]
+    fn install_canister_final_setup(&self, system_info: SystemInfo) {
+        use crate::jobs::register_jobs;
 
-                        print("Deploying upgrader canister");
-                        let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
-                            init.upgrader_wasm_module,
-                            vec![canister_id, NNS_ROOT_CANISTER_ID],
-                        )
-                        .await;
-                        system_info.set_upgrader_canister_id(upgrader_canister_id);
+        install_canister_handlers::monitor_upgrader_cycles(*system_info.get_upgrader_canister_id());
 
-                        // sets the upgrader as a controller of the wallet canister
-                        print("Updating canister settings to set the upgrader as the controller");
-                        install_canister_handlers::set_controllers(vec![
-                            upgrader_canister_id,
-                            NNS_ROOT_CANISTER_ID,
-                        ])
-                        .await;
+        // register the jobs after the canister is fully initialized
+        register_jobs();
 
-                        install_canister_handlers::set_admins(init.admins.unwrap_or_default())
-                            .await;
-                    }
-                    SystemInstall::Upgrade(upgrade) => {}
-                };
+        // the canister should be uninitialized so far
 
-                system_info.update_last_upgrade_timestamp();
-                write_system_info(system_info.to_owned());
+        system_info.update_last_upgrade_timestamp();
+        write_system_info(system_info.to_owned());
+    }
 
-                install_canister_handlers::monitor_upgrader_cycles(
-                    *system_info.get_upgrader_canister_id(),
-                );
+    #[cfg(target_arch = "wasm32")]
+    pub async fn post_install_canister_init(
+        &self,
+        system_info: SystemInfo,
+        ctx: &CallContext,
+    ) -> ServiceResult<()> {
+        use crate::core::ic_cdk::api::id as self_canister_id;
+        use crate::core::NNS_ROOT_CANISTER_ID;
 
-                // register the jobs after the canister is fully initialized
-                register_jobs();
-            });
-        });
+        if ctx.caller() != system_info.get_initial_deployment_caller() {
+            Err(InstallError::InvalidPostInstallCaller);
+        }
+
+        let canister_id = self_canister_id();
+
+        // registers the default canister configurations such as policies and user groups.
+        print("Adding initial canister configurations");
+        install_canister_handlers::init_post_process().await;
+
+        print("Deploying upgrader canister");
+        let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
+            init.upgrader_wasm_module,
+            vec![canister_id, NNS_ROOT_CANISTER_ID],
+        )
+        .await;
+        system_info.set_upgrader_canister_id(upgrader_canister_id);
+
+        // sets the upgrader as a controller of the wallet canister
+        print("Updating canister settings to set the upgrader as the controller");
+        install_canister_handlers::set_controllers(vec![
+            upgrader_canister_id,
+            NNS_ROOT_CANISTER_ID,
+        ])
+        .await;
+
+        install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await;
+
+        self.install_canister_final_setup(system_info);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub async fn post_install_canister_init(
+        &self,
+        _system_info: SystemInfo,
+        _ctx: &CallContext,
+    ) -> ServiceResult<()> {
+      Ok(())
     }
 
     /// Initializes the canister with the given owners and settings.

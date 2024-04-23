@@ -24,6 +24,12 @@ async fn initialize(input: Option<SystemInstall>) {
     }
 }
 
+#[cfg(any(not(feature = "canbench"), test))]
+#[ic_cdk_macros::update]
+async fn post_install_canister_init() {
+    CONTROLLER.post_install_canister_init().await
+}
+
 /// The init is overriden for benchmarking purposes.
 ///
 /// This is only used for benchmarking and is not included in the final canister.
@@ -77,6 +83,18 @@ impl SystemController {
             .await
             .unwrap_or_else(|err| {
                 trap(&format!("Error: initializing canister failed {err}"));
+            });
+    }
+
+    #[cfg(any(not(feature = "canbench"), test))]
+    async fn post_install_canister_init(&self) {
+        let system_info = self.system_service.get_system_info();
+        let ctx = &call_context();
+        self.system_service
+            .post_install_canister_init(system_info, ctx)
+            .await
+            .unwrap_or_else(|err| {
+                trap(&format!("Error: post-install canister initialization failed {err}"));
             });
     }
 

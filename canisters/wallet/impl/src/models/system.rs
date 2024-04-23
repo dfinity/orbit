@@ -1,5 +1,6 @@
 use crate::core::{
     ic_cdk::api::{time, trap},
+    ic_cdk::caller,
     WASM_PAGE_SIZE,
 };
 use candid::Principal;
@@ -29,6 +30,8 @@ pub struct SystemInfo {
     upgrader_canister_id: Option<Principal>,
     /// The upgrader canister wasm module.
     upgrader_wasm_module: Option<Vec<u8>>,
+    /// The principal that initially deployed this canister.
+    initial_deployment_caller: Principal,
 }
 
 impl Default for SystemInfo {
@@ -38,6 +41,7 @@ impl Default for SystemInfo {
             change_canister_proposal: None,
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
+            initial_deployment_caller: caller(),
         }
     }
 }
@@ -69,6 +73,10 @@ impl SystemInfo {
         self.upgrader_wasm_module
             .as_deref()
             .expect("upgrader_wasm_module is not set")
+    }
+
+    pub fn get_initial_deployment_caller(&self) -> Principal {
+        self.initial_deployment_caller
     }
 
     pub fn set_change_canister_proposal(&mut self, proposal: UUID) {
