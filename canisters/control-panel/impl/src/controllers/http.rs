@@ -1,6 +1,6 @@
-use crate::{core::ic_cdk::api::canister_balance, repositories::USER_REPOSITORY, SERVICE_NAME};
+use crate::{core::ic_cdk::api::canister_balance, SERVICE_NAME};
 use ic_canister_core::api::{HeaderField, HttpRequest, HttpResponse};
-use ic_canister_core::{metrics::with_metrics_registry, repository::Repository};
+use ic_canister_core::metrics::with_metrics_registry;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 
@@ -46,9 +46,6 @@ impl HttpController {
 
         // Add dynamic metrics, dropped after the request since query calls don't save state changes.
         with_metrics_registry(SERVICE_NAME, |registry| {
-            registry
-                .gauge_mut("users_total", "registered users")
-                .set(USER_REPOSITORY.len() as f64);
             registry
                 .gauge_mut(
                     "canister_cycles_balance",
