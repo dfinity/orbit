@@ -1,3 +1,4 @@
+use super::criteria::ProposalEvaluationResult;
 use super::{
     DisplayUser, EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote,
     ProposalVoteStatus, UserId,
@@ -183,24 +184,26 @@ impl Proposal {
         });
     }
 
-    pub async fn reevaluate(&mut self) -> Result<(), EvaluateError> {
-        if let ProposalStatus::Created = self.status {
+    pub async fn reevaluate(&mut self) -> Result<Option<ProposalEvaluationResult>, EvaluateError> {
+        if self.status == ProposalStatus::Created {
             let evaluator = ProposalEvaluator {
                 proposal: self.to_owned(),
                 proposal_matcher: PROPOSAL_MATCHER.to_owned(),
                 criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
             };
 
-            let evaluation_status = evaluator.evaluate()?;
+            let evaluation_result = evaluator.evaluate()?;
 
-            if evaluation_status == EvaluationStatus::Adopted {
+            if evaluation_result.status == EvaluationStatus::Adopted {
                 self.status = ProposalStatus::Adopted;
-            } else if evaluation_status == EvaluationStatus::Rejected {
+            } else if evaluation_result.status == EvaluationStatus::Rejected {
                 self.status = ProposalStatus::Rejected;
             }
-        }
 
-        Ok(())
+            Ok(Some(evaluation_result))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn find_all_possible_voters(&self) -> Result<HashSet<UUID>, EvaluateError> {

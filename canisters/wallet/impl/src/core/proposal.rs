@@ -2,7 +2,7 @@ use super::evaluation::Evaluate;
 use crate::{
     errors::EvaluateError,
     models::{
-        criteria::{Criteria, EvaluateCriteria},
+        criteria::{Criteria, CriteriaResult, EvaluateCriteria, ProposalEvaluationResult},
         specifier::{
             Match, ProposalSpecifier, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
         },
@@ -17,14 +17,14 @@ use std::{collections::HashSet, sync::Arc};
 
 pub struct ProposalEvaluator {
     pub proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
-    pub criteria_evaluator: Arc<dyn EvaluateCriteria>,
+    pub criteria_evaluator: Arc<dyn EvaluateCriteria<CriteriaResult>>,
     pub proposal: Proposal,
 }
 
 impl ProposalEvaluator {
     pub fn new(
         proposal_matcher: Arc<dyn Match<(Proposal, ProposalSpecifier)>>,
-        criteria_evaluator: Arc<dyn EvaluateCriteria>,
+        criteria_evaluator: Arc<dyn EvaluateCriteria<CriteriaResult>>,
         proposal: Proposal,
     ) -> Self {
         Self {
@@ -35,8 +35,8 @@ impl ProposalEvaluator {
     }
 }
 
-impl Evaluate<EvaluationStatus> for ProposalEvaluator {
-    fn evaluate(&self) -> Result<EvaluationStatus, EvaluateError> {
+impl Evaluate<ProposalEvaluationResult> for ProposalEvaluator {
+    fn evaluate(&self) -> Result<ProposalEvaluationResult, EvaluateError> {
         let matching_policies = self
             .proposal
             .operation
@@ -48,12 +48,16 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
         if matching_policies.is_empty() {
             // Since proposals handle security critical operations, we want to reject them by default if
             // they don't match any policy. Users need to explicitly add the necessary policies to evaluate them.
-            return Ok(EvaluationStatus::Rejected);
+            return Ok(ProposalEvaluationResult {
+                status: EvaluationStatus::Rejected,
+                policy_results: vec![],
+            });
         }
 
         let proposal = Arc::new(self.proposal.to_owned());
         let mut evaluation_statuses = Vec::new();
 
+        // Evaluate all matching policies to get the full evaluation result.
         for policy in matching_policies {
             // Evaluate the criteria
             let evaluation_status = self
@@ -61,25 +65,32 @@ impl Evaluate<EvaluationStatus> for ProposalEvaluator {
                 .evaluate((proposal.to_owned(), Arc::new(policy.criteria)))
                 .context("failed to evaluate criteria")?;
 
-            evaluation_statuses.push(evaluation_status.to_owned());
-
-            if let EvaluationStatus::Adopted = evaluation_status {
-                return Ok(evaluation_status);
-            }
+            evaluation_statuses.push(evaluation_status);
         }
 
-        // Only if all policies are rejected then the proposal is rejected,
-        // this applies an implicit `OR` between policies.
-        if evaluation_statuses
-            .iter()
-            .all(|status| *status == EvaluationStatus::Rejected)
-        {
-            return Ok(EvaluationStatus::Rejected);
-        }
-
-        // Since there are matching policies, but none of them adopted or rejected the proposal, we keep it in the
-        // pending status until one of the policies evaluates it as adopted or rejected.
-        Ok(EvaluationStatus::Pending)
+        Ok(ProposalEvaluationResult {
+            status: {
+                if evaluation_statuses
+                    .iter()
+                    .any(|status| status.result == EvaluationStatus::Adopted)
+                {
+                    // If any policy adopted the proposal, then the proposal is adopted.
+                    EvaluationStatus::Adopted
+                } else if evaluation_statuses
+                    .iter()
+                    .all(|status| status.result == EvaluationStatus::Rejected)
+                {
+                    // Only if all policies are rejected then the proposal is rejected,
+                    // this applies an implicit `OR` between policies.
+                    EvaluationStatus::Rejected
+                } else {
+                    // Since there are matching policies, but none of them adopted or rejected the proposal, we keep it in the
+                    // pending status until one of the policies evaluates it as adopted or rejected.
+                    EvaluationStatus::Pending
+                }
+            },
+            policy_results: evaluation_statuses,
+        })
     }
 }
 
@@ -432,9 +443,9 @@ mod tests {
             criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
-        let evaluation_status = evaluator.evaluate().unwrap();
+        let result = evaluator.evaluate().unwrap();
 
-        assert_eq!(evaluation_status, EvaluationStatus::Rejected);
+        assert_eq!(result.status, EvaluationStatus::Rejected);
     }
 
     #[tokio::test]
@@ -465,9 +476,9 @@ mod tests {
             criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
-        let evaluation_status = evaluator.evaluate().unwrap();
+        let result = evaluator.evaluate().unwrap();
 
-        assert_eq!(evaluation_status, EvaluationStatus::Adopted);
+        assert_eq!(result.status, EvaluationStatus::Adopted);
     }
 
     #[tokio::test]
@@ -499,9 +510,9 @@ mod tests {
             criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
-        let evaluation_status = evaluator.evaluate().unwrap();
+        let result = evaluator.evaluate().unwrap();
 
-        assert_eq!(evaluation_status, EvaluationStatus::Pending);
+        assert_eq!(result.status, EvaluationStatus::Pending);
     }
 
     #[tokio::test]
@@ -536,9 +547,9 @@ mod tests {
             criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
-        let evaluation_status = evaluator.evaluate().unwrap();
+        let result = evaluator.evaluate().unwrap();
 
-        assert_eq!(evaluation_status, EvaluationStatus::Rejected);
+        assert_eq!(result.status, EvaluationStatus::Rejected);
     }
 
     #[tokio::test]
@@ -570,9 +581,9 @@ mod tests {
             criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
-        let evaluation_status = evaluator.evaluate().unwrap();
+        let result = evaluator.evaluate().unwrap();
 
-        assert_eq!(evaluation_status, EvaluationStatus::Adopted);
+        assert_eq!(result.status, EvaluationStatus::Adopted);
     }
 
     #[tokio::test]
@@ -603,8 +614,8 @@ mod tests {
             criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
         };
 
-        let evaluation_status = evaluator.evaluate().unwrap();
+        let result = evaluator.evaluate().unwrap();
 
-        assert_eq!(evaluation_status, EvaluationStatus::Adopted);
+        assert_eq!(result.status, EvaluationStatus::Adopted);
     }
 }
