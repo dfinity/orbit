@@ -1709,6 +1709,13 @@ type MeResult = variant {
   Err : Error;
 };
 
+type SystemInitCallback = record {
+  // Canister to call.
+  canister_id : principal;
+  // Method name to call on that canister.
+  method_name : text;
+};
+
 // The init configuration for the canister.
 //
 // Only used when installing the canister for the first time.
@@ -1719,6 +1726,8 @@ type SystemInit = record {
   admins : opt vec principal;
   // The wasm module of the wallet upgrader canister.
   upgrader_wasm_module : blob;
+  // An optional callback invoked after finishing the canister initialization.
+  callback : opt SystemInitCallback;
 };
 
 // The upgrade configuration for the canister.

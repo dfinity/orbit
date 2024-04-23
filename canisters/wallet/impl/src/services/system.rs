@@ -109,7 +109,6 @@ impl SystemService {
             use crate::core::ic_cdk::api::id as self_canister_id;
             use crate::core::ic_cdk::spawn;
             use crate::core::NNS_ROOT_CANISTER_ID;
-            use crate::jobs::register_jobs;
 
             spawn(async move {
                 match install {
@@ -138,21 +137,32 @@ impl SystemService {
 
                         install_canister_handlers::set_admins(init.admins.unwrap_or_default())
                             .await;
+
+                        install_canister_final_setup(system_info);
+
+                        if let Some(callback) = init.callback {
+                            call(callback.canister_id, callback.method, Encode!(&()).unwrap())
+                                .await;
+                        }
                     }
-                    SystemInstall::Upgrade(upgrade) => {}
+                    SystemInstall::Upgrade(upgrade) => {
+                        install_canister_final_setup(system_info);
+                    }
                 };
-
-                system_info.update_last_upgrade_timestamp();
-                write_system_info(system_info.to_owned());
-
-                install_canister_handlers::monitor_upgrader_cycles(
-                    *system_info.get_upgrader_canister_id(),
-                );
-
-                // register the jobs after the canister is fully initialized
-                register_jobs();
             });
         });
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn install_canister_final_setup(system_info: SystemInfo) {
+        use crate::jobs::register_jobs;
+        system_info.update_last_upgrade_timestamp();
+        write_system_info(system_info.to_owned());
+
+        install_canister_handlers::monitor_upgrader_cycles(*system_info.get_upgrader_canister_id());
+
+        // register the jobs after the canister is fully initialized
+        register_jobs();
     }
 
     /// Initializes the canister with the given owners and settings.
@@ -408,6 +418,7 @@ mod tests {
                 SystemInit {
                     admins: Some(vec![Principal::from_slice(&[1; 29])]),
                     upgrader_wasm_module: vec![],
+                    callback: None,
                 },
                 &ctx,
             )

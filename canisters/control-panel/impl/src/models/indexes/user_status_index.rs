@@ -78,6 +78,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Pending("john@example.com".to_string()),
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 10,
         };

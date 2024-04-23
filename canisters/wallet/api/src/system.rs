@@ -16,9 +16,16 @@ pub struct SystemInfoResponse {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct SystemInitCallback {
+    pub canister_id: Principal,
+    pub method_name: String,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct SystemInit {
     pub admins: Option<Vec<Principal>>,
     pub upgrader_wasm_module: Vec<u8>,
+    pub callback: Option<SystemInitCallback>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]

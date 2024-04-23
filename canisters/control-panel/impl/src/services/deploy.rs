@@ -76,6 +76,7 @@ impl DeployService {
             arg: Encode!(&wallet_api::SystemInstall::Init(wallet_api::SystemInit {
                 admins: Some(vec![user.identity]),
                 upgrader_wasm_module: config.upgrader_wasm_module,
+                callback: None,
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),

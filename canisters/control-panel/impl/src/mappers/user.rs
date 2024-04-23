@@ -46,6 +46,7 @@ impl UserMapper {
                 })
                 .collect(),
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet,
             last_update_timestamp: time(),
         }

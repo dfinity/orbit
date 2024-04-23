@@ -139,6 +139,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -159,6 +160,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -171,6 +173,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Pending(email.clone()),
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -183,6 +186,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Pending(another_email.clone()),
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };
@@ -217,6 +221,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         };

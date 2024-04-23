@@ -146,6 +146,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     let wallet_init_args = SystemInstallArg::Init(SystemInitArg {
         admins: Some(vec![WALLET_ADMIN_USER]),
         upgrader_wasm_module: upgrader_wasm,
+        callback: None,
     });
     env.install_canister(
         wallet,

@@ -54,6 +54,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 10,
         };

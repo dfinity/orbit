@@ -57,6 +57,9 @@ pub struct User {
     /// The wallets that have ever been deployed for the user by the control panel.
     /// Used to bound the total number of wallets a user could deploy via the control panel.
     pub deployed_wallets: Vec<Principal>,
+    /// The wallets that have ever been deployed for the user by the control panel
+    /// *and* successfully initialized.
+    pub initialized_wallets: Vec<Principal>,
     /// The main wallet to use for the user, this is the wallet that will be used by default.
     pub main_wallet: Option<Principal>,
     /// Last time the identity was updated.
@@ -184,6 +187,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 10,
         };
@@ -213,6 +217,7 @@ mod tests {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 10,
         };
@@ -249,6 +254,7 @@ mod tests {
                 name: None,
             }],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: Some(Principal::anonymous()),
             last_update_timestamp: 0,
         };
@@ -267,6 +273,7 @@ mod tests {
                 name: None,
             }],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: Some(Principal::anonymous()),
             last_update_timestamp: 0,
         };
@@ -306,6 +313,7 @@ pub mod user_model_utils {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             wallets: vec![],
             deployed_wallets: vec![],
+            initialized_wallets: vec![],
             main_wallet: None,
             last_update_timestamp: 0,
         }
