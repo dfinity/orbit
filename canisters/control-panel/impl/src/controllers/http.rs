@@ -63,7 +63,7 @@ impl HttpController {
             .collect::<Vec<String>>();
 
         let body = format!(
-            r#"{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}"#,
+            r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}]"#,
             wallet_hosts.join("\", \"")
         );
 
@@ -139,7 +139,7 @@ mod tests {
         assert_eq!(
             response.body,
             format!(
-                r#"{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}"#,
+                r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}]"#,
                 wallet_host
             )
             .as_bytes()
