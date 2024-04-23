@@ -1,6 +1,7 @@
 use crate::{
     core::{
         ic_cdk::api::{print, time, trap},
+        metrics::recompute_metrics,
         read_system_info, read_system_state, write_system_info, CallContext,
     },
     errors::InstallError,
@@ -181,6 +182,10 @@ impl SystemService {
     ///
     /// Must only be called within a canister post_upgrade call.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
+        // recompute all metrics to make sure they are up to date, only gauges are recomputed
+        // since they are the only ones that can change over time.
+        recompute_metrics();
+
         let mut system_info = read_system_info();
         let input = match input {
             Some(input) => input,

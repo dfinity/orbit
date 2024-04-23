@@ -1,6 +1,6 @@
 use super::indexes::user_group_name_index::UserGroupNameIndexRepository;
 use crate::{
-    core::{with_memory_manager, Memory, USER_GROUP_MEMORY_ID},
+    core::{metrics::USER_GROUP_METRICS, with_memory_manager, Memory, USER_GROUP_MEMORY_ID},
     models::{indexes::user_group_name_index::UserGroupNameIndexCriteria, UserGroup},
 };
 use ic_canister_core::repository::{IndexRepository, RefreshIndexMode};
@@ -40,6 +40,12 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
     fn insert(&self, key: UUID, value: UserGroup) -> Option<UserGroup> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
+
+            // Update metrics when a user group is upserted.
+            USER_GROUP_METRICS
+                .iter()
+                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index_by_name()),
@@ -53,6 +59,14 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
     fn remove(&self, key: &UUID) -> Option<UserGroup> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when a user group is removed.
+            if let Some(prev) = &prev {
+                USER_GROUP_METRICS
+                    .iter()
+                    .for_each(|metric| metric.sub(prev));
+            }
+
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index_by_name()),

@@ -14,3 +14,7 @@ pub use time::*;
 /// String utils.
 mod string;
 pub use string::*;
+
+/// Number utils.
+mod number;
+pub use number::*;
