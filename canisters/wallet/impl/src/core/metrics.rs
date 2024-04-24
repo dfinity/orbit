@@ -1,6 +1,4 @@
 use crate::{
-    core::ic_cdk::api::print,
-    mappers::HelperMapper,
     models::{Account, AddressBookEntry, Proposal, ProposalPolicy, Transfer, User, UserGroup},
     repositories::{
         policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY,
@@ -10,7 +8,7 @@ use crate::{
 };
 use ic_canister_core::{
     metrics::{labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric},
-    utils::format_amount,
+    utils::amount_to_f64,
 };
 use ic_canister_core::{
     metrics::{ApplicationCounterMetric, ApplicationCounterVecMetric},
@@ -259,19 +257,9 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
             );
 
             let current_total = labeled_totals.get(&label_key).unwrap_or(&0.0);
-            let balance = account
-                .balance
-                .clone()
-                .map(|b| {
-                    HelperMapper::nat_to_u64(b.balance.clone()).unwrap_or_else(|_| {
-                        print(format!("Failed to convert balance to u64: {:?}", b.balance));
+            let balance = account.balance.clone().map(|b| b.to_u64()).unwrap_or(0u64);
 
-                        0u64
-                    })
-                })
-                .unwrap_or(0u64);
-
-            let formatted_balance = format_amount(balance as i128, account.decimals);
+            let formatted_balance = amount_to_f64(balance as i128, account.decimals);
 
             labeled_totals.insert(label_key, current_total + formatted_balance);
         }
@@ -291,34 +279,16 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         let account_labels =
             labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
 
-        let balance = current
-            .balance
-            .clone()
-            .map(|b| {
-                HelperMapper::nat_to_u64(b.balance.clone()).unwrap_or_else(|_| {
-                    print(format!("Failed to convert balance to u64: {:?}", b.balance));
-
-                    0u64
-                })
-            })
-            .unwrap_or(0u64);
+        let balance = current.balance.clone().map(|b| b.to_u64()).unwrap_or(0u64);
 
         let previous_balance = previous
-            .and_then(|p| {
-                p.balance.clone().map(|b| {
-                    HelperMapper::nat_to_u64(b.balance.clone()).unwrap_or_else(|_| {
-                        print(format!("Failed to convert balance to u64: {:?}", b.balance));
-
-                        0u64
-                    })
-                })
-            })
+            .and_then(|p| p.balance.clone().map(|b| b.to_u64()))
             .unwrap_or(0u64);
 
         let diff_balance = balance as i128 - previous_balance as i128;
         let current_total = self.get(SERVICE_NAME, &account_labels);
 
-        let formatted_balance = format_amount(diff_balance, current.decimals);
+        let formatted_balance = amount_to_f64(diff_balance, current.decimals);
         let new_total = current_total + formatted_balance;
 
         self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
@@ -330,19 +300,9 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         let account_labels =
             labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
 
-        let balance = current
-            .balance
-            .clone()
-            .map(|b| {
-                HelperMapper::nat_to_u64(b.balance.clone()).unwrap_or_else(|_| {
-                    print(format!("Failed to convert balance to u64: {:?}", b.balance));
+        let balance = current.balance.clone().map(|b| b.to_u64()).unwrap_or(0u64);
 
-                    0u64
-                })
-            })
-            .unwrap_or(0u64);
-
-        let formatted_balance = format_amount(balance as i128, current.decimals);
+        let formatted_balance = amount_to_f64(balance as i128, current.decimals);
         let current_total = self.get(SERVICE_NAME, &account_labels);
 
         let new_total = current_total - formatted_balance;
@@ -373,7 +333,7 @@ impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
 
         match previous {
             Some(previous) => {
-                if previous.status != current.status { 
+                if previous.status != current.status {
                     self.inc(SERVICE_NAME, &labels);
                 }
             }
