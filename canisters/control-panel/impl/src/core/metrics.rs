@@ -210,22 +210,22 @@ impl MetricActiveUsers {
 
         self.set(
             SERVICE_NAME,
-            &labels! { "time" => "1h" },
+            &labels! { "time" => "hourly" },
             hourly_active as f64,
         );
         self.set(
             SERVICE_NAME,
-            &labels! { "time" => "1d" },
+            &labels! { "time" => "daily" },
             daily_active as f64,
         );
         self.set(
             SERVICE_NAME,
-            &labels! { "time" => "1w" },
+            &labels! { "time" => "weekly" },
             weekly_active as f64,
         );
         self.set(
             SERVICE_NAME,
-            &labels! { "time" => "1m" },
+            &labels! { "time" => "monthly" },
             montly_active as f64,
         );
     }
@@ -406,10 +406,10 @@ mod tests {
 
     #[test]
     fn test_active_users_metric_starts_with_none() {
-        let hourly = labels! { "time" => "1h" };
-        let daily = labels! { "time" => "1d" };
-        let weekly = labels! { "time" => "1w" };
-        let monthly = labels! { "time" => "1m" };
+        let hourly = labels! { "time" => "hourly" };
+        let daily = labels! { "time" => "daily" };
+        let weekly = labels! { "time" => "weekly" };
+        let monthly = labels! { "time" => "monthly" };
 
         let mut metric = MetricActiveUsers::default();
         metric.refresh(0);
@@ -422,10 +422,10 @@ mod tests {
 
     #[test]
     fn test_advance_intervals_reset_active_users() {
-        let hourly = labels! { "time" => "1h" };
-        let daily = labels! { "time" => "1d" };
-        let weekly = labels! { "time" => "1w" };
-        let monthly = labels! { "time" => "1m" };
+        let hourly = labels! { "time" => "hourly" };
+        let daily = labels! { "time" => "daily" };
+        let weekly = labels! { "time" => "weekly" };
+        let monthly = labels! { "time" => "monthly" };
 
         let mut user = mock_user();
         user.last_active = 0;
@@ -471,10 +471,10 @@ mod tests {
 
     #[test]
     fn test_active_users_metric_increments() {
-        let hourly = labels! { "time" => "1h" };
-        let daily = labels! { "time" => "1d" };
-        let weekly = labels! { "time" => "1w" };
-        let monthly = labels! { "time" => "1m" };
+        let hourly = labels! { "time" => "hourly" };
+        let daily = labels! { "time" => "daily" };
+        let weekly = labels! { "time" => "weekly" };
+        let monthly = labels! { "time" => "monthly" };
 
         let mut user = mock_user();
         user.last_active = 0;
