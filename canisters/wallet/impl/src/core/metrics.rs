@@ -373,9 +373,7 @@ impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
 
         match previous {
             Some(previous) => {
-                let previous_status = previous.status.to_type().to_string();
-
-                if previous_status != status {
+                if previous.status != current.status { 
                     self.inc(SERVICE_NAME, &labels);
                 }
             }
