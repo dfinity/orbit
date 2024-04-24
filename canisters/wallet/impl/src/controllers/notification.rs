@@ -1,5 +1,6 @@
 use crate::{
-    core::middlewares::{call_context, use_status_metric}, mappers::notification::NotificationMapperError,
+    core::middlewares::{call_context, use_status_metric},
+    mappers::notification::NotificationMapperError,
     services::NotificationService,
 };
 use ic_canister_core::{api::ApiResult, cdk::api::print};
