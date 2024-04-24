@@ -31,12 +31,14 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : CanDeployWalletResponse,
     'Err' : ApiError,
   });
+  const TimestampRFC3339 = IDL.Text;
   const WalletID = IDL.Principal;
   const UserWallet = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'canister_id' : WalletID,
   });
   const User = IDL.Record({
+    'last_active' : TimestampRFC3339,
     'wallets' : IDL.Vec(UserWallet),
     'subscription_status' : UserSubscriptionStatus,
     'identity' : IDL.Principal,
@@ -100,6 +102,10 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
+  const SetUserActiveResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : ApiError,
+  });
   const SubscribeToWaitingListResult = IDL.Variant({
     'Ok' : IDL.Null,
     'Err' : ApiError,
@@ -123,6 +129,7 @@ export const idlFactory = ({ IDL }) => {
     'list_wallets' : IDL.Func([], [ListWalletsResult], ['query']),
     'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
+    'set_user_active' : IDL.Func([], [SetUserActiveResult], []),
     'subscribe_to_waiting_list' : IDL.Func(
         [IDL.Text],
         [SubscribeToWaitingListResult],

@@ -10,6 +10,7 @@ import {
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
 import { Maybe } from '~/types/helper.types';
+import { variantIs } from '~/utils/helper.utils';
 
 export class ControlPanelService {
   private actor: ActorSubclass<_SERVICE>;
@@ -27,7 +28,7 @@ export class ControlPanelService {
       throw result.Err;
     }
 
-    return result.Ok.user ?? null;
+    return result.Ok.user;
   }
 
   async subscribeToWaitlist(email: string): Promise<void> {
@@ -52,6 +53,14 @@ export class ControlPanelService {
     }
 
     return result.Ok.user;
+  }
+
+  async setUserActive(): Promise<void> {
+    const result = await this.actor.set_user_active();
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
   }
 
   async editUser(input: ManageUserInput): Promise<User> {
