@@ -354,7 +354,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
 pub struct MetricTotalProposalsByType;
 
 impl ApplicationCounterVecMetric<Proposal> for MetricTotalProposalsByType {
-    const LABELS: &'static [&'static str] = &["type"];
+    const LABELS: &'static [&'static str] = &["type", "status"];
 }
 
 impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
@@ -367,9 +367,21 @@ impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
     }
 
     fn sum(&self, current: &Proposal, previous: Option<&Proposal>) {
-        if previous.is_none() {
-            let operation = current.operation.to_string();
-            self.inc(SERVICE_NAME, &labels! { "type" => operation.as_str() });
+        let operation = current.operation.to_string();
+        let status = current.status.to_type().to_string();
+        let labels = labels! { "type" => operation.as_str(), "status" => status.as_str() };
+
+        match previous {
+            Some(previous) => {
+                let previous_status = previous.status.to_type().to_string();
+
+                if previous_status != status {
+                    self.inc(SERVICE_NAME, &labels);
+                }
+            }
+            None => {
+                self.inc(SERVICE_NAME, &labels);
+            }
         }
     }
 }
@@ -530,21 +542,29 @@ mod tests {
         proposal.status = ProposalStatus::Created;
 
         let operation = proposal.operation.to_string();
-        let label = labels! { "type" => operation.as_str() };
+        let status = proposal.status.to_type().to_string();
+        let label = labels! { "type" => operation.as_str(), "status" => status.as_str() };
 
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
 
         assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 1.0);
+
+        let mut proposal = mock_proposal();
+        proposal.status = ProposalStatus::Created;
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 2.0);
 
         proposal.status = ProposalStatus::Processing { started_at: 0 };
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
 
-        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 1.0);
+        let status = proposal.status.to_type().to_string();
+        let new_label = labels! { "type" => operation.as_str(), "status" => status.as_str() };
 
-        let proposal = mock_proposal();
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
-
-        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 2.0);
+        assert_eq!(
+            MetricTotalProposalsByType.get(SERVICE_NAME, &new_label),
+            1.0
+        );
     }
 
     #[test]
