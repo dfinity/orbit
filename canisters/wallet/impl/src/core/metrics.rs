@@ -298,7 +298,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         let formatted_balance = format_amount(diff_balance, current.decimals);
         let new_total = current_total + formatted_balance;
 
-        self.set(SERVICE_NAME, &account_labels, new_total);
+        self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
     }
 
     fn sub(&self, current: &Account) {
@@ -323,7 +323,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         let current_total = self.get(SERVICE_NAME, &account_labels);
 
         let new_total = current_total - formatted_balance;
-        self.set(SERVICE_NAME, &account_labels, new_total);
+        self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
     }
 }
 
@@ -350,8 +350,6 @@ impl ApplicationMetric<Proposal> for MetricTotalProposals {
 
 #[cfg(test)]
 mod tests {
-    use candid::Nat;
-
     use super::*;
     use crate::{
         models::{
@@ -361,6 +359,7 @@ mod tests {
         },
         repositories::{PROPOSAL_REPOSITORY, TRANSFER_REPOSITORY},
     };
+    use candid::Nat;
 
     #[test]
     fn test_total_users_metric() {
