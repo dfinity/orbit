@@ -1,4 +1,4 @@
-use prometheus::{CounterVec, Encoder, Gauge, GaugeVec, Opts, Registry, TextEncoder};
+use prometheus::{Counter, CounterVec, Encoder, Gauge, GaugeVec, Opts, Registry, TextEncoder};
 use std::cell::RefCell;
 use std::collections::{hash_map::Entry, HashMap};
 
@@ -34,6 +34,7 @@ pub struct MetricsRegistry {
     registry: Registry,
     metric_gauges: HashMap<String, Gauge>,
     metric_gauge_vecs: HashMap<String, GaugeVec>,
+    metric_counters: HashMap<String, Counter>,
     metric_counter_vecs: HashMap<String, CounterVec>,
 }
 
@@ -43,6 +44,7 @@ impl MetricsRegistry {
             service_name,
             metric_gauges: HashMap::new(),
             metric_gauge_vecs: HashMap::new(),
+            metric_counters: HashMap::new(),
             metric_counter_vecs: HashMap::new(),
             registry: Registry::new(),
         }
@@ -54,15 +56,17 @@ impl MetricsRegistry {
     }
 
     /// Returns a counter vec metric with the given name and set of label names.
-    pub fn counter_vec_mut(&mut self, name: &str, label_names: &[&str]) -> &mut CounterVec {
+    pub fn counter_vec_mut(
+        &mut self,
+        name: &str,
+        label_names: &[&str],
+        helper_message: &str,
+    ) -> &mut CounterVec {
         match self.metric_counter_vecs.entry(name.to_string()) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let counter = CounterVec::new(
-                    Opts::new(
-                        format!("{}_{}", self.service_name, name),
-                        format!("number of times {} was called", name),
-                    ),
+                    Opts::new(format!("{}_{}", self.service_name, name), helper_message),
                     label_names,
                 )
                 .unwrap();
@@ -80,6 +84,34 @@ impl MetricsRegistry {
             self.registry
                 .unregister(Box::new(counter))
                 .expect("Failed to unregister counter vec");
+        }
+    }
+
+    /// Returns a counter metric with the given name and helper message that explains what
+    /// the counter is measuring or tracking.
+    pub fn counter_mut(&mut self, name: &str, helper_message: &str) -> &mut Counter {
+        match self.metric_counters.entry(name.to_string()) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                let counter = Counter::with_opts(Opts::new(
+                    format!("{}_{}", self.service_name, name),
+                    helper_message,
+                ))
+                .unwrap();
+
+                self.registry.register(Box::new(counter.clone())).unwrap();
+
+                entry.insert(counter)
+            }
+        }
+    }
+
+    /// Removes a counter metric with the given name.
+    pub fn remove_counter(&mut self, name: &str) {
+        if let Some(counter) = self.metric_counters.remove(name) {
+            self.registry
+                .unregister(Box::new(counter))
+                .expect("Failed to unregister counter");
         }
     }
 
@@ -199,13 +231,18 @@ where
     fn help(&self) -> &'static str;
 
     /// Recalculates the metric value based on the current state of the application.
-    fn recalculate(&self, models: &[Model]);
+    fn recalculate(&self, _models: &[Model]) {
+        // By default, do nothing, some metrics may not need to be recalculated such as counters since they are
+        // updated incrementally.
+    }
 
     /// Sums the difference between the current and previous state of the model to the metric.
     fn sum(&self, current: &Model, previous: Option<&Model>);
 
     /// Subtracts the model value from the metric.
-    fn sub(&self, current: &Model);
+    fn sub(&self, _current: &Model) {
+        // By default, do nothing, some metrics may not enable subtraction such as counters.
+    }
 }
 
 pub trait ApplicationGaugeVecMetric<Model>: ApplicationMetric<Model>
@@ -257,6 +294,54 @@ where
     }
 }
 
+pub trait ApplicationCounterVecMetric<Model>: ApplicationMetric<Model>
+where
+    Model: Clone + std::fmt::Debug,
+{
+    /// The labels that are used to partition the counter metric into multiple dimensions.
+    const LABELS: &'static [&'static str];
+
+    /// Returns the labels that are used to partition the counter metric into multiple dimensions.
+    fn labels(&self) -> &'static [&'static str] {
+        Self::LABELS
+    }
+
+    fn get(&self, service_name: &str, labels: &HashMap<&str, &str>) -> f64 {
+        with_metrics_registry(service_name, |registry| {
+            registry
+                .counter_vec_mut(self.name(), self.labels(), self.help())
+                .with(labels)
+                .get()
+        })
+    }
+
+    fn inc(&self, service_name: &str, labels: &HashMap<&str, &str>) {
+        with_metrics_registry(service_name, |registry| {
+            registry
+                .counter_vec_mut(self.name(), self.labels(), self.help())
+                .with(labels)
+                .inc();
+        });
+    }
+}
+
+pub trait ApplicationCounterMetric<Model>: ApplicationMetric<Model>
+where
+    Model: Clone + std::fmt::Debug,
+{
+    fn get(&self, service_name: &str) -> f64 {
+        with_metrics_registry(service_name, |registry| {
+            registry.counter_mut(self.name(), self.help()).get()
+        })
+    }
+
+    fn inc(&self, service_name: &str) {
+        with_metrics_registry(service_name, |registry| {
+            registry.counter_mut(self.name(), self.help()).inc();
+        });
+    }
+}
+
 pub trait ApplicationGaugeMetric<Model>: ApplicationMetric<Model>
 where
     Model: Clone + std::fmt::Debug,
@@ -295,9 +380,12 @@ mod tests {
     fn test_metrics_registry() {
         let mut registry = MetricsRegistry::new("default".to_string());
 
-        let counter = registry.counter_vec_mut("test_counter", &["status"]);
-        counter.with(&labels! { "status" => "ok" }).inc();
-        counter.with(&labels! { "status" => "fail" }).inc();
+        let counter_vec = registry.counter_vec_mut("test_counter", &["status"], "testing metric");
+        counter_vec.with(&labels! { "status" => "ok" }).inc();
+        counter_vec.with(&labels! { "status" => "fail" }).inc();
+
+        let counter = registry.counter_mut("test_counter_single", "test counter");
+        counter.inc();
 
         let gauge = registry.gauge_mut("test_gauge", "test gauge");
         gauge.set(42.0);
@@ -311,6 +399,7 @@ mod tests {
         let buffer = registry.export_metrics().unwrap();
         let output = String::from_utf8(buffer).unwrap();
 
+        assert!(output.contains("default_test_counter_single 1"));
         assert!(output.contains("default_test_counter{status=\"ok\"} 1"));
         assert!(output.contains("default_test_counter{status=\"fail\"} 1"));
         assert!(output.contains("default_test_gauge 42"));
@@ -363,7 +452,7 @@ mod tests {
     fn test_remove_counter_vec() {
         let mut registry = MetricsRegistry::new("default".to_string());
 
-        let counter = registry.counter_vec_mut("test_counter", &["status"]);
+        let counter = registry.counter_vec_mut("test_counter", &["status"], "testing metric");
         counter.with(&labels! { "status" => "ok" }).inc();
 
         let buffer = registry.export_metrics().unwrap();
@@ -377,6 +466,26 @@ mod tests {
         let output = String::from_utf8(buffer).unwrap();
 
         assert!(!output.contains("default_test_counter{status=\"ok\"} 1"));
+    }
+
+    #[test]
+    fn test_remove_counter() {
+        let mut registry = MetricsRegistry::new("default".to_string());
+
+        let counter = registry.counter_mut("test_counter", "test counter");
+        counter.inc();
+
+        let buffer = registry.export_metrics().unwrap();
+        let output = String::from_utf8(buffer).unwrap();
+
+        assert!(output.contains("default_test_counter 1"));
+
+        registry.remove_counter("test_counter");
+
+        let buffer = registry.export_metrics().unwrap();
+        let output = String::from_utf8(buffer).unwrap();
+
+        assert!(!output.contains("default_test_counter 1"));
     }
 
     #[test]

@@ -3,7 +3,7 @@ use super::indexes::{
     transfer_status_index::TransferStatusIndexRepository,
 };
 use crate::{
-    core::{with_memory_manager, Memory, TRANSFER_MEMORY_ID},
+    core::{metrics::TRANSFER_METRICS, with_memory_manager, Memory, TRANSFER_MEMORY_ID},
     models::{
         indexes::{
             transfer_account_index::TransferAccountIndexCriteria,
@@ -53,6 +53,12 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     fn insert(&self, key: TransferKey, value: Transfer) -> Option<Transfer> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
+
+            // Update metrics when a transfer is upserted.
+            TRANSFER_METRICS
+                .iter()
+                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index_by_account()),
@@ -71,6 +77,12 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when a transfer is removed.
+            if let Some(prev) = &prev {
+                TRANSFER_METRICS.iter().for_each(|metric| metric.sub(prev));
+            }
+
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index_by_account()),

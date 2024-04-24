@@ -4,7 +4,7 @@ use super::indexes::{
     user_status_group_index::UserStatusGroupIndexRepository,
 };
 use crate::{
-    core::{with_memory_manager, Memory, USER_MEMORY_ID},
+    core::{metrics::USER_METRICS, with_memory_manager, Memory, USER_MEMORY_ID},
     models::{
         indexes::{
             name_to_user_id_index::NameToUserIdIndexCriteria,
@@ -54,6 +54,11 @@ impl Repository<UserKey, User> for UserRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
+            // Update metrics when a user is upserted.
+            USER_METRICS
+                .iter()
+                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+
             self.identity_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
                     previous: prev
@@ -81,6 +86,12 @@ impl Repository<UserKey, User> for UserRepository {
     fn remove(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when a user is removed.
+            if let Some(prev) = &prev {
+                USER_METRICS.iter().for_each(|metric| metric.sub(prev));
+            }
+
             self.identity_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
                     current: prev
