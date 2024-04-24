@@ -122,4 +122,7 @@ jobs:
           name: integration-tests
           path: canisters/integration-tests/wasms
       - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh
+        run: |
+          ./scripts/run-integration-tests.sh 2> logs.txt
+          grep "rng succesfully initialized" logs.txt
+          ! grep "canister reports healthy already before its initialization has finished" logs.txt
