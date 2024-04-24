@@ -1,7 +1,7 @@
-use crate::core::ic_cdk::api::time;
 use crate::{
+    core::ic_cdk::next_time,
     errors::UserError,
-    models::{CanDeployWallet, User, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployWallet, User, UserLastActiveIntervals, UserSubscriptionStatus, UserWallet},
 };
 use candid::Principal;
 use control_panel_api::{
@@ -10,6 +10,7 @@ use control_panel_api::{
 };
 use ic_canister_core::api::ApiError;
 use ic_canister_core::types::UUID;
+use ic_canister_core::utils::timestamp_to_rfc3339;
 
 pub type SubscribedUser = SubscribedUserDTO;
 
@@ -34,6 +35,8 @@ impl UserMapper {
             false => Some(wallets[0]),
         };
 
+        let registration_time = next_time();
+
         User {
             id: new_user_id,
             identity: user_identity,
@@ -47,7 +50,14 @@ impl UserMapper {
                 .collect(),
             deployed_wallets: vec![],
             main_wallet,
-            last_update_timestamp: time(),
+            last_active: registration_time,
+            last_active_intervals: UserLastActiveIntervals {
+                daily: registration_time,
+                hourly: registration_time,
+                monthly: registration_time,
+                weekly: registration_time,
+            },
+            last_update_timestamp: registration_time,
         }
     }
 }
@@ -59,6 +69,7 @@ impl From<User> for UserDTO {
             main_wallet: user.main_wallet,
             wallets: user.wallets.into_iter().map(UserWalletDTO::from).collect(),
             subscription_status: user.subscription_status.into(),
+            last_active: timestamp_to_rfc3339(&user.last_active),
         }
     }
 }

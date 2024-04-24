@@ -1,5 +1,8 @@
 use super::UserWallet;
-use crate::errors::UserError;
+use crate::{
+    core::{ONE_DAY_NS, ONE_HOUR_NS, ONE_MONTH_NS, ONE_WEEK_NS},
+    errors::UserError,
+};
 use candid::Principal;
 use email_address::EmailAddress;
 use ic_canister_core::{
@@ -59,8 +62,21 @@ pub struct User {
     pub deployed_wallets: Vec<Principal>,
     /// The main wallet to use for the user, this is the wallet that will be used by default.
     pub main_wallet: Option<Principal>,
+    /// The timestamp of last time the user was active.
+    pub last_active: Timestamp,
+    /// Set the last time intervals the user was active.
+    pub last_active_intervals: UserLastActiveIntervals,
     /// Last time the identity was updated.
     pub last_update_timestamp: Timestamp,
+}
+
+#[storable(serializer = "candid")]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Default)]
+pub struct UserLastActiveIntervals {
+    pub hourly: u64,
+    pub daily: u64,
+    pub weekly: u64,
+    pub monthly: u64,
 }
 
 #[storable(serializer = "candid")]
@@ -91,6 +107,26 @@ impl User {
             return CanDeployWallet::QuotaExceeded;
         }
         CanDeployWallet::Allowed(max_deployed_wallets - self.deployed_wallets.len())
+    }
+
+    pub fn set_last_active(&mut self, timestamp: Timestamp) {
+        self.last_active = timestamp;
+
+        if timestamp.saturating_sub(self.last_active_intervals.hourly) >= ONE_HOUR_NS {
+            self.last_active_intervals.hourly = timestamp;
+        }
+
+        if timestamp.saturating_sub(self.last_active_intervals.daily) >= ONE_DAY_NS {
+            self.last_active_intervals.daily = timestamp;
+        }
+
+        if timestamp.saturating_sub(self.last_active_intervals.weekly) >= ONE_WEEK_NS {
+            self.last_active_intervals.weekly = timestamp;
+        }
+
+        if timestamp.saturating_sub(self.last_active_intervals.monthly) >= ONE_MONTH_NS {
+            self.last_active_intervals.monthly = timestamp;
+        }
     }
 }
 
@@ -175,18 +211,11 @@ mod tests {
     use super::*;
     use ic_stable_structures::Storable;
     use rstest::rstest;
+    use tests::user_model_utils::mock_user;
 
     #[test]
     fn valid_model_serialization() {
-        let model = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 10,
-        };
+        let model = mock_user();
 
         let serialized_model = model.to_bytes();
         let deserialized_model = User::from_bytes(serialized_model);
@@ -207,15 +236,10 @@ mod tests {
 
     #[test]
     fn check_wallets_validation() {
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 10,
-        };
+        let mut user = mock_user();
+        user.wallets = Vec::new();
+        user.main_wallet = None;
+        user.deployed_wallets = Vec::new();
 
         let user_with_no_wallets = user.clone();
         let mut user_with_one_wallet = user.clone();
@@ -240,36 +264,26 @@ mod tests {
 
     #[test]
     fn valid_main_wallet() {
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![UserWallet {
-                canister_id: Principal::anonymous(),
-                name: None,
-            }],
-            deployed_wallets: vec![],
-            main_wallet: Some(Principal::anonymous()),
-            last_update_timestamp: 0,
-        };
+        let mut user = mock_user();
+        user.deployed_wallets = vec![];
+        user.main_wallet = Some(Principal::from_slice(&[10; 29]));
+        user.wallets = vec![UserWallet {
+            canister_id: Principal::from_slice(&[10; 29]),
+            name: None,
+        }];
 
         assert!(validate_main_wallet(&user.main_wallet, &user.wallets).is_ok());
     }
 
     #[test]
     fn invalid_main_wallet() {
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![UserWallet {
-                canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
-                name: None,
-            }],
-            deployed_wallets: vec![],
-            main_wallet: Some(Principal::anonymous()),
-            last_update_timestamp: 0,
-        };
+        let mut user = mock_user();
+        user.deployed_wallets = vec![];
+        user.main_wallet = Some(Principal::from_slice(&[10; 29]));
+        user.wallets = vec![UserWallet {
+            canister_id: Principal::from_slice(&[12; 29]),
+            name: None,
+        }];
 
         assert!(validate_main_wallet(&user.main_wallet, &user.wallets).is_err());
     }
@@ -280,6 +294,36 @@ mod tests {
     #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMKufYuimeCebnHWgQXeSzkeqcFLqSVxpdNeSGADkpvvjZHCYXLmM")]
     fn invalid_email(#[case] email: &str) {
         assert!(validate_email(email).is_err());
+    }
+
+    #[test]
+    fn validate_last_active_instervals_updates() {
+        let mut user = mock_user();
+        let timestamp = 0;
+
+        user.set_last_active(timestamp);
+        assert_eq!(user.last_active_intervals.hourly, timestamp);
+        assert_eq!(user.last_active_intervals.daily, timestamp);
+        assert_eq!(user.last_active_intervals.weekly, timestamp);
+        assert_eq!(user.last_active_intervals.monthly, timestamp);
+
+        user.set_last_active(timestamp + ONE_HOUR_NS);
+        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_HOUR_NS);
+
+        user.set_last_active(timestamp + ONE_DAY_NS);
+        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_DAY_NS);
+        assert_eq!(user.last_active_intervals.daily, timestamp + ONE_DAY_NS);
+
+        user.set_last_active(timestamp + ONE_WEEK_NS);
+        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_WEEK_NS);
+        assert_eq!(user.last_active_intervals.daily, timestamp + ONE_WEEK_NS);
+        assert_eq!(user.last_active_intervals.weekly, timestamp + ONE_WEEK_NS);
+
+        user.set_last_active(timestamp + ONE_MONTH_NS);
+        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_MONTH_NS);
+        assert_eq!(user.last_active_intervals.daily, timestamp + ONE_MONTH_NS);
+        assert_eq!(user.last_active_intervals.weekly, timestamp + ONE_MONTH_NS);
+        assert_eq!(user.last_active_intervals.monthly, timestamp + ONE_MONTH_NS);
     }
 }
 
@@ -307,6 +351,8 @@ pub mod user_model_utils {
             wallets: vec![],
             deployed_wallets: vec![],
             main_wallet: None,
+            last_active: 0,
+            last_active_intervals: Default::default(),
             last_update_timestamp: 0,
         }
     }

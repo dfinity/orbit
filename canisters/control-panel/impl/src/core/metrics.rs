@@ -1,6 +1,7 @@
 use crate::{models::User, repositories::USER_REPOSITORY, SERVICE_NAME};
 use ic_canister_core::metrics::{
-    labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric,
+    labels, ApplicationCounterVecMetric, ApplicationGaugeMetric, ApplicationGaugeVecMetric,
+    ApplicationMetric,
 };
 use ic_canister_core::repository::Repository;
 use std::{
@@ -15,6 +16,7 @@ pub const USER_METRICS: &[&dyn ApplicationMetric<User>] = &[
     &MetricRegisteredUsers,
     &MetricDeployedWallets,
     &MetricUserWallets,
+    &MetricActiveUsers,
 ];
 
 /// Recompute all metrics for the canister, updating the values in the metrics registry.
@@ -168,6 +170,55 @@ impl ApplicationMetric<User> for MetricUserWallets {
     }
 }
 
+/// Metric that tracks the total number of active users on the platform.
+pub struct MetricActiveUsers;
+
+impl ApplicationCounterVecMetric<User> for MetricActiveUsers {
+    const LABELS: &'static [&'static str] = &["time"];
+}
+
+impl ApplicationMetric<User> for MetricActiveUsers {
+    fn name(&self) -> &'static str {
+        "active_users"
+    }
+
+    fn help(&self) -> &'static str {
+        "Total number of active users in the system, labeled by the time interval."
+    }
+
+    fn sum(&self, current: &User, previous: Option<&User>) {
+        match previous {
+            Some(previous) => {
+                if previous.last_active == current.last_active {
+                    return;
+                }
+
+                if current.last_active_intervals.hourly > previous.last_active_intervals.hourly {
+                    self.inc(SERVICE_NAME, &labels! { "time" => "1h" });
+                }
+
+                if current.last_active_intervals.daily > previous.last_active_intervals.daily {
+                    self.inc(SERVICE_NAME, &labels! { "time" => "1d" });
+                }
+
+                if current.last_active_intervals.weekly > previous.last_active_intervals.weekly {
+                    self.inc(SERVICE_NAME, &labels! { "time" => "1w" });
+                }
+
+                if current.last_active_intervals.monthly > previous.last_active_intervals.monthly {
+                    self.inc(SERVICE_NAME, &labels! { "time" => "1m" });
+                }
+            }
+            None => {
+                self.inc(SERVICE_NAME, &labels! { "time" => "1h" });
+                self.inc(SERVICE_NAME, &labels! { "time" => "1d" });
+                self.inc(SERVICE_NAME, &labels! { "time" => "1w" });
+                self.inc(SERVICE_NAME, &labels! { "time" => "1m" });
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -314,5 +365,84 @@ mod tests {
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => new_status.as_str() }),
             1.0
         );
+    }
+
+    #[test]
+    fn test_active_users_metric_starts_with_none() {
+        let hourly = labels! { "time" => "1h" };
+        let daily = labels! { "time" => "1d" };
+        let weekly = labels! { "time" => "1w" };
+        let monthly = labels! { "time" => "1m" };
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 0.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 0.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 0.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 0.0);
+    }
+
+    #[test]
+    fn test_active_users_metric_increments_only_if_interval_passes() {
+        let hourly = labels! { "time" => "1h" };
+        let daily = labels! { "time" => "1d" };
+        let weekly = labels! { "time" => "1w" };
+        let monthly = labels! { "time" => "1m" };
+
+        let mut user = mock_user();
+        user.set_last_active(0);
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+
+        // Update the user with the same last active time should not increment the metrics
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+
+        // Advance the time by 1 hour should only increment the hourly metric
+        user.set_last_active(60 * 60 * 1_000_000_000);
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 2.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+
+        // Advance the time by 1 day should only increment the hourly and daily metrics
+        user.set_last_active(24 * 60 * 60 * 1_000_000_000);
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 3.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 2.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+
+        // Advance the time by 1 week should only increment the hourly, daily and weekly metrics
+        user.set_last_active(7 * 24 * 60 * 60 * 1_000_000_000);
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 4.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 3.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 2.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+
+        // Advance the time by 1 month should only increment the hourly, daily, weekly and monthly metrics
+        user.set_last_active(30 * 24 * 60 * 60 * 1_000_000_000);
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 5.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 4.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 3.0);
+        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 2.0);
     }
 }
