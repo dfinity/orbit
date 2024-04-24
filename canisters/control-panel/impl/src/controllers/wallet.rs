@@ -89,7 +89,7 @@ impl WalletController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("deploy_wallet", &result))]
+    #[with_middleware(tail = use_status_metric("call_deploy_wallet", &result))]
     async fn deploy_wallet(&self) -> ApiResult<DeployWalletResponse> {
         let ctx = CallContext::get();
         let _lock = STATE
@@ -109,7 +109,6 @@ impl WalletController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("can_deploy_wallet", &result))]
     async fn can_deploy_wallet(&self) -> ApiResult<CanDeployWalletResponse> {
         let ctx = CallContext::get();
         self.user_service
