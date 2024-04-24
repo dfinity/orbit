@@ -1,5 +1,7 @@
 use crate::{
-    core::{with_memory_manager, Memory, PROPOSAL_POLICIES_MEMORY_ID},
+    core::{
+        metrics::PROPOSAL_POLICY_METRICS, with_memory_manager, Memory, PROPOSAL_POLICIES_MEMORY_ID,
+    },
     models::{
         indexes::policy_resource_index::PolicyResourceIndexCriteria, resource::Resource,
         ProposalPolicy,
@@ -46,6 +48,11 @@ impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
+            // Update metrics when a policy is upserted.
+            PROPOSAL_POLICY_METRICS
+                .iter()
+                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+
             self.resource_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
                     previous: prev
@@ -62,6 +69,13 @@ impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
     fn remove(&self, key: &UUID) -> Option<ProposalPolicy> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when a policy is removed.
+            if let Some(prev) = &prev {
+                PROPOSAL_POLICY_METRICS
+                    .iter()
+                    .for_each(|metric| metric.sub(prev));
+            }
 
             self.resource_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {

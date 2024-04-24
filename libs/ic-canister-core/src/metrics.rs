@@ -292,6 +292,37 @@ where
     }
 }
 
+pub trait ApplicationCounterVecMetric<Model>: ApplicationMetric<Model>
+where
+    Model: Clone + std::fmt::Debug,
+{
+    /// The labels that are used to partition the counter metric into multiple dimensions.
+    const LABELS: &'static [&'static str];
+
+    /// Returns the labels that are used to partition the counter metric into multiple dimensions.
+    fn labels(&self) -> &'static [&'static str] {
+        Self::LABELS
+    }
+
+    fn get(&self, service_name: &str, labels: &HashMap<&str, &str>) -> f64 {
+        with_metrics_registry(service_name, |registry| {
+            registry
+                .counter_vec_mut(self.name(), self.labels())
+                .with(labels)
+                .get()
+        })
+    }
+
+    fn inc(&self, service_name: &str, labels: &HashMap<&str, &str>) {
+        with_metrics_registry(service_name, |registry| {
+            registry
+                .counter_vec_mut(self.name(), self.labels())
+                .with(labels)
+                .inc();
+        });
+    }
+}
+
 pub trait ApplicationCounterMetric<Model>: ApplicationMetric<Model>
 where
     Model: Clone + std::fmt::Debug,

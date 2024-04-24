@@ -202,10 +202,11 @@ pub mod address_book_entry_test_utils {
     use super::*;
     use crate::repositories::ADDRESS_BOOK_REPOSITORY;
     use ic_canister_core::repository::Repository;
+    use uuid::Uuid;
 
     pub fn mock_address_book_entry() -> AddressBookEntry {
         AddressBookEntry {
-            id: [0; 16],
+            id: *Uuid::new_v4().as_bytes(),
             address_owner: "foo".to_string(),
             address: "0x1234".to_string(),
             blockchain: Blockchain::InternetComputer,

@@ -1,14 +1,20 @@
 use crate::{
     core::ic_cdk::api::print,
     mappers::HelperMapper,
-    models::{Account, Proposal, Transfer, User, UserGroup},
-    repositories::{ACCOUNT_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY},
+    models::{Account, AddressBookEntry, Proposal, ProposalPolicy, Transfer, User, UserGroup},
+    repositories::{
+        policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY,
+        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+    },
     SERVICE_NAME,
 };
-use ic_canister_core::{metrics::ApplicationCounterMetric, repository::Repository};
 use ic_canister_core::{
-    metrics::{labels, ApplicationGaugeVecMetric, ApplicationMetric},
+    metrics::{labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric},
     utils::format_amount,
+};
+use ic_canister_core::{
+    metrics::{ApplicationCounterMetric, ApplicationCounterVecMetric},
+    repository::Repository,
 };
 use std::collections::BTreeMap;
 
@@ -36,7 +42,19 @@ pub const TRANSFER_METRICS: [&dyn ApplicationMetric<Transfer>; 1] = [&MetricTota
 /// A collection of proposal related metrics.
 ///
 /// This list should be updated with new proposal metrics as they are added.
-pub const PROPOSAL_METRICS: [&dyn ApplicationMetric<Proposal>; 1] = [&MetricTotalProposals];
+pub const PROPOSAL_METRICS: [&dyn ApplicationMetric<Proposal>; 1] = [&MetricTotalProposalsByType];
+
+/// A collection of address book entry related metrics.
+///
+/// This list should be updated with new address book entry metrics as they are added.
+pub const ADDRESS_BOOK_METRICS: [&dyn ApplicationMetric<AddressBookEntry>; 1] =
+    [&MetricTotalAddressBookEntries];
+
+/// A collection of proposal policy related metrics.
+///
+/// This list should be updated with new proposal policy metrics as they are added.
+pub const PROPOSAL_POLICY_METRICS: [&dyn ApplicationMetric<ProposalPolicy>; 1] =
+    [&MetricTotalPolicies];
 
 /// Recompute all metrics for the canister, updating the values in the metrics registry.
 ///
@@ -45,6 +63,11 @@ pub fn recompute_metrics() {
     let users = USER_REPOSITORY.list();
     let user_groups = USER_GROUP_REPOSITORY.list();
     let accounts = ACCOUNT_REPOSITORY.list();
+
+    // To avoid deserialize all the data, we can use the repository length to get the total number of entries of
+    // simple gauge metrics.
+    MetricTotalAddressBookEntries.set(SERVICE_NAME, ADDRESS_BOOK_REPOSITORY.len() as f64);
+    MetricTotalPolicies.set(SERVICE_NAME, PROPOSAL_POLICY_REPOSITORY.len() as f64);
 
     USER_METRICS
         .iter()
@@ -328,23 +351,76 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
 }
 
 /// Metric for the total number of proposals.
-pub struct MetricTotalProposals;
+pub struct MetricTotalProposalsByType;
 
-impl ApplicationCounterMetric<Proposal> for MetricTotalProposals {}
+impl ApplicationCounterVecMetric<Proposal> for MetricTotalProposalsByType {
+    const LABELS: &'static [&'static str] = &["type"];
+}
 
-impl ApplicationMetric<Proposal> for MetricTotalProposals {
+impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
     fn name(&self) -> &'static str {
-        "total_proposals"
+        "total_proposals_by_type"
     }
 
     fn help(&self) -> &'static str {
-        "The total number of proposals."
+        "The total number of proposals, labeled by their type."
     }
 
-    fn sum(&self, _: &Proposal, previous: Option<&Proposal>) {
+    fn sum(&self, current: &Proposal, previous: Option<&Proposal>) {
+        if previous.is_none() {
+            let operation = current.operation.to_string();
+            self.inc(SERVICE_NAME, &labels! { "type" => operation.as_str() });
+        }
+    }
+}
+
+/// Metric for the total number of address book entries.
+pub struct MetricTotalAddressBookEntries;
+
+impl ApplicationGaugeMetric<AddressBookEntry> for MetricTotalAddressBookEntries {}
+
+impl ApplicationMetric<AddressBookEntry> for MetricTotalAddressBookEntries {
+    fn name(&self) -> &'static str {
+        "total_address_book_entries"
+    }
+
+    fn help(&self) -> &'static str {
+        "The total number of address book entries."
+    }
+
+    fn sum(&self, _: &AddressBookEntry, previous: Option<&AddressBookEntry>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME);
         }
+    }
+
+    fn sub(&self, _: &AddressBookEntry) {
+        self.dec(SERVICE_NAME);
+    }
+}
+
+/// Metric for the total number of policies that are available.
+pub struct MetricTotalPolicies;
+
+impl ApplicationGaugeMetric<ProposalPolicy> for MetricTotalPolicies {}
+
+impl ApplicationMetric<ProposalPolicy> for MetricTotalPolicies {
+    fn name(&self) -> &'static str {
+        "total_policies"
+    }
+
+    fn help(&self) -> &'static str {
+        "The total number of policies that are available."
+    }
+
+    fn sum(&self, _: &ProposalPolicy, previous: Option<&ProposalPolicy>) {
+        if previous.is_none() {
+            self.inc(SERVICE_NAME);
+        }
+    }
+
+    fn sub(&self, _: &ProposalPolicy) {
+        self.dec(SERVICE_NAME);
     }
 }
 
@@ -353,7 +429,9 @@ mod tests {
     use super::*;
     use crate::{
         models::{
-            account_test_utils::mock_account, proposal_test_utils::mock_proposal,
+            account_test_utils::mock_account,
+            address_book_entry_test_utils::mock_address_book_entry,
+            proposal_policy_test_utils::mock_proposal_policy, proposal_test_utils::mock_proposal,
             transfer_test_utils::mock_transfer, user_group_test_utils, user_test_utils::mock_user,
             AccountBalance, Blockchain, ProposalStatus, TransferStatus, UserStatus,
         },
@@ -447,23 +525,26 @@ mod tests {
     }
 
     #[test]
-    fn test_total_proposals_metric() {
+    fn test_total_proposals_by_type_metric() {
         let mut proposal = mock_proposal();
         proposal.status = ProposalStatus::Created;
 
+        let operation = proposal.operation.to_string();
+        let label = labels! { "type" => operation.as_str() };
+
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
 
-        assert_eq!(MetricTotalProposals.get(SERVICE_NAME), 1.0);
+        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 1.0);
 
         proposal.status = ProposalStatus::Processing { started_at: 0 };
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
 
-        assert_eq!(MetricTotalProposals.get(SERVICE_NAME), 1.0);
+        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 1.0);
 
         let proposal = mock_proposal();
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
 
-        assert_eq!(MetricTotalProposals.get(SERVICE_NAME), 2.0);
+        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 2.0);
     }
 
     #[test]
@@ -522,5 +603,35 @@ mod tests {
             ),
             11.00000000
         );
+    }
+
+    #[test]
+    fn test_total_address_book_entries_metric() {
+        let address_book_entry = mock_address_book_entry();
+
+        ADDRESS_BOOK_REPOSITORY.insert(address_book_entry.to_key(), address_book_entry.clone());
+
+        assert_eq!(MetricTotalAddressBookEntries.get(SERVICE_NAME), 1.0);
+
+        let address_book_entry = mock_address_book_entry();
+
+        ADDRESS_BOOK_REPOSITORY.insert(address_book_entry.to_key(), address_book_entry.clone());
+
+        assert_eq!(MetricTotalAddressBookEntries.get(SERVICE_NAME), 2.0);
+    }
+
+    #[test]
+    fn test_total_policies_metric() {
+        let policy = mock_proposal_policy();
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        assert_eq!(MetricTotalPolicies.get(SERVICE_NAME), 1.0);
+
+        let policy = mock_proposal_policy();
+
+        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+
+        assert_eq!(MetricTotalPolicies.get(SERVICE_NAME), 2.0);
     }
 }
