@@ -54,7 +54,11 @@ where
     T: std::fmt::Debug,
 {
     with_metrics_registry(SERVICE_NAME, |registry| {
-        let counter = registry.counter_vec_mut(metric_key, &["status"]);
+        let counter = registry.counter_vec_mut(
+            metric_key,
+            &["status"],
+            &format!("number of times {} was called", metric_key),
+        );
         let status = match result {
             Ok(_) => "ok",
             Err(_) => "fail",

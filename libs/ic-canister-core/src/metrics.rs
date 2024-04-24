@@ -56,15 +56,17 @@ impl MetricsRegistry {
     }
 
     /// Returns a counter vec metric with the given name and set of label names.
-    pub fn counter_vec_mut(&mut self, name: &str, label_names: &[&str]) -> &mut CounterVec {
+    pub fn counter_vec_mut(
+        &mut self,
+        name: &str,
+        label_names: &[&str],
+        helper_message: &str,
+    ) -> &mut CounterVec {
         match self.metric_counter_vecs.entry(name.to_string()) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => {
                 let counter = CounterVec::new(
-                    Opts::new(
-                        format!("{}_{}", self.service_name, name),
-                        format!("number of times {} was called", name),
-                    ),
+                    Opts::new(format!("{}_{}", self.service_name, name), helper_message),
                     label_names,
                 )
                 .unwrap();
@@ -307,7 +309,7 @@ where
     fn get(&self, service_name: &str, labels: &HashMap<&str, &str>) -> f64 {
         with_metrics_registry(service_name, |registry| {
             registry
-                .counter_vec_mut(self.name(), self.labels())
+                .counter_vec_mut(self.name(), self.labels(), self.help())
                 .with(labels)
                 .get()
         })
@@ -316,7 +318,7 @@ where
     fn inc(&self, service_name: &str, labels: &HashMap<&str, &str>) {
         with_metrics_registry(service_name, |registry| {
             registry
-                .counter_vec_mut(self.name(), self.labels())
+                .counter_vec_mut(self.name(), self.labels(), self.help())
                 .with(labels)
                 .inc();
         });
@@ -378,7 +380,7 @@ mod tests {
     fn test_metrics_registry() {
         let mut registry = MetricsRegistry::new("default".to_string());
 
-        let counter_vec = registry.counter_vec_mut("test_counter", &["status"]);
+        let counter_vec = registry.counter_vec_mut("test_counter", &["status"], "testing metric");
         counter_vec.with(&labels! { "status" => "ok" }).inc();
         counter_vec.with(&labels! { "status" => "fail" }).inc();
 
@@ -450,7 +452,7 @@ mod tests {
     fn test_remove_counter_vec() {
         let mut registry = MetricsRegistry::new("default".to_string());
 
-        let counter = registry.counter_vec_mut("test_counter", &["status"]);
+        let counter = registry.counter_vec_mut("test_counter", &["status"], "testing metric");
         counter.with(&labels! { "status" => "ok" }).inc();
 
         let buffer = registry.export_metrics().unwrap();
