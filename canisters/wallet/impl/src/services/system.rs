@@ -125,6 +125,11 @@ impl SystemService {
             use crate::core::ic_cdk::api::id as self_canister_id;
             use crate::core::NNS_ROOT_CANISTER_ID;
 
+            // registers the default canister configurations such as policies and user groups.
+            print("Adding initial canister configurations");
+            install_canister_handlers::init_post_process().await?;
+            install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await?;
+
             print("Deploying upgrader canister");
             let canister_id = self_canister_id();
             let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
@@ -141,11 +146,6 @@ impl SystemService {
                 NNS_ROOT_CANISTER_ID,
             ])
             .await?;
-
-            // registers the default canister configurations such as policies and user groups.
-            print("Adding initial canister configurations");
-            install_canister_handlers::init_post_process().await?;
-            install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await?;
 
             if SYSTEM_SERVICE.is_healthy() {
                 print("canister reports healthy already before its initialization has finished!");
