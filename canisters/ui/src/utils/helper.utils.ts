@@ -1,5 +1,6 @@
 import { TransferStatus } from '~/generated/wallet/wallet.did';
 import { AccountTransferStatus } from '~/types/wallet.types';
+import type { IDL as CandidIDL } from '@dfinity/candid';
 
 export const timer = (
   cb: () => void,
@@ -182,4 +183,29 @@ export const stringify = (obj: unknown): string => {
     obj,
     (_, value) => (typeof value === 'bigint' ? value.toString() : value), // return everything else unchanged
   );
+};
+
+// This function is used to transform the IDL to only have update calls, all query and composite query calls are
+// converted to update calls. This is useful to be able to dynamically leverage verification of calls for security
+// critical contexts.
+export const transformIdlWithOnlyVerifiedCalls = (
+  build: CandidIDL.InterfaceFactory,
+): ((idl: Parameters<CandidIDL.InterfaceFactory>[0]) => CandidIDL.ServiceClass) => {
+  const queryAnnotationTypes = ['query', 'composite_query'];
+
+  return (idl): CandidIDL.ServiceClass => {
+    const service = build(idl);
+
+    for (const key in service._fields) {
+      const annotations: string[] = service._fields[key]?.[1].annotations ?? [];
+
+      if (queryAnnotationTypes.some(type => annotations.includes(type))) {
+        service._fields[key][1].annotations = annotations.filter(
+          annotation => !queryAnnotationTypes.includes(annotation),
+        );
+      }
+    }
+
+    return service;
+  };
 };

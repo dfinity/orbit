@@ -10,8 +10,13 @@ import {
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
 import { Maybe } from '~/types/helper.types';
+import { transformIdlWithOnlyVerifiedCalls } from '~/utils/helper.utils';
 
 export class ControlPanelService {
+  // This actor is modified to only perform calls that can be verified, such as update calls that go through consensus.
+  private verified_actor: ActorSubclass<_SERVICE>;
+
+  // This is the default actor that is used to perform all calls, including query calls.
   private actor: ActorSubclass<_SERVICE>;
 
   constructor(agent: HttpAgent) {
@@ -19,10 +24,19 @@ export class ControlPanelService {
       agent,
       canisterId: appInitConfig.canisters.controlPanel,
     });
+
+    this.verified_actor = Actor.createActor<_SERVICE>(
+      transformIdlWithOnlyVerifiedCalls(idlFactory),
+      {
+        agent,
+        canisterId: appInitConfig.canisters.controlPanel,
+      },
+    );
   }
 
-  async getCurrentUser(): Promise<User> {
-    const result = await this.actor.get_user();
+  async getCurrentUser(verifiedCall = false): Promise<User> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_user();
     if ('Err' in result) {
       throw result.Err;
     }
@@ -38,8 +52,8 @@ export class ControlPanelService {
     }
   }
 
-  async hasRegistration(): Promise<boolean> {
-    return await this.getCurrentUser()
+  async hasRegistration(verifiedCall = false): Promise<boolean> {
+    return await this.getCurrentUser(verifiedCall)
       .then(_ => true)
       .catch(() => false);
   }
@@ -64,8 +78,9 @@ export class ControlPanelService {
     return result.Ok.user;
   }
 
-  async getMainWallet(): Promise<Maybe<UserWallet>> {
-    const result = await this.actor.get_main_wallet();
+  async getMainWallet(verifiedCall = false): Promise<Maybe<UserWallet>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_main_wallet();
 
     if ('Err' in result) {
       throw result.Err;
@@ -74,8 +89,9 @@ export class ControlPanelService {
     return result.Ok.wallet?.[0] ?? null;
   }
 
-  async listWallets(): Promise<UserWallet[]> {
-    const result = await this.actor.list_wallets();
+  async listWallets(verifiedCall = false): Promise<UserWallet[]> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_wallets();
 
     if ('Err' in result) {
       throw result.Err;
