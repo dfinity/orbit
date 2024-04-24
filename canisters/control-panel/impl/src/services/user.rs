@@ -14,7 +14,7 @@ use ic_canister_core::{
     model::ModelValidator,
 };
 use lazy_static::lazy_static;
-use std::sync::Arc;
+use std::{collections::BTreeSet, sync::Arc};
 use uuid::Uuid;
 
 lazy_static! {
@@ -187,6 +187,16 @@ impl UserService {
         }
 
         Ok(())
+    }
+
+    /// Returns all deployed wallets in the system.
+    pub fn get_all_deployed_wallets(&self) -> BTreeSet<Principal> {
+        let users = self.user_repository.list();
+
+        users
+            .into_iter()
+            .flat_map(|user| user.deployed_wallets)
+            .collect()
     }
 
     pub async fn add_deployed_wallet(

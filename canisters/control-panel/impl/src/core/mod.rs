@@ -12,6 +12,8 @@ pub use call_context::*;
 mod config;
 pub use config::*;
 
+pub mod metrics;
+
 pub mod middlewares;
 
 #[cfg(not(test))]

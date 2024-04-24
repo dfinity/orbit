@@ -1,6 +1,6 @@
 use super::indexes::name_to_account_id_index::NameToAccountIdIndexRepository;
 use crate::{
-    core::{with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
+    core::{metrics::ACCOUNT_METRICS, with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
     models::{
         indexes::name_to_account_id_index::NameToAccountIdIndexCriteria, Account, AccountId,
         AccountKey,
@@ -45,6 +45,11 @@ impl Repository<AccountKey, Account> for AccountRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
+            // Update metrics when an account is upserted.
+            ACCOUNT_METRICS
+                .iter()
+                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index_by_name()),
@@ -58,6 +63,11 @@ impl Repository<AccountKey, Account> for AccountRepository {
     fn remove(&self, key: &AccountKey) -> Option<Account> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when an account is removed.
+            if let Some(prev) = &prev {
+                ACCOUNT_METRICS.iter().for_each(|metric| metric.sub(prev));
+            }
 
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
