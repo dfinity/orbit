@@ -232,7 +232,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         for account in accounts {
             let label_key = (
                 account.blockchain.to_string().clone(),
-                account.symbol.clone(),
+                account.symbol.clone().to_lowercase(),
             );
 
             let current_total = labeled_totals.get(&label_key).unwrap_or(&0.0);
@@ -264,8 +264,9 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
 
     fn sum(&self, current: &Account, previous: Option<&Account>) {
         let blockchain = current.blockchain.to_string();
+        let symbol = current.symbol.clone().to_lowercase();
         let account_labels =
-            labels! { "blockchain" => blockchain.as_str(), "symbol" => current.symbol.as_str() };
+            labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
 
         let balance = current
             .balance
@@ -302,8 +303,9 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
 
     fn sub(&self, current: &Account) {
         let blockchain = current.blockchain.to_string();
+        let symbol = current.symbol.clone().to_lowercase();
         let account_labels =
-            labels! { "blockchain" => blockchain.as_str(), "symbol" => current.symbol.as_str() };
+            labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
 
         let balance = current
             .balance
@@ -343,5 +345,183 @@ impl ApplicationMetric<Proposal> for MetricTotalProposals {
         if previous.is_none() {
             self.inc(SERVICE_NAME);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use candid::Nat;
+
+    use super::*;
+    use crate::{
+        models::{
+            account_test_utils::mock_account, proposal_test_utils::mock_proposal,
+            transfer_test_utils::mock_transfer, user_group_test_utils, user_test_utils::mock_user,
+            AccountBalance, Blockchain, ProposalStatus, TransferStatus, UserStatus,
+        },
+        repositories::{PROPOSAL_REPOSITORY, TRANSFER_REPOSITORY},
+    };
+
+    #[test]
+    fn test_total_users_metric() {
+        let mut user = mock_user();
+        user.status = UserStatus::Active;
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(
+            MetricTotalUsers.get(SERVICE_NAME, &labels! { "status" => "active" }),
+            1.0
+        );
+
+        user.status = UserStatus::Inactive;
+
+        USER_REPOSITORY.insert(user.to_key(), user.clone());
+
+        assert_eq!(
+            MetricTotalUsers.get(SERVICE_NAME, &labels! { "status" => "active" }),
+            0.0
+        );
+        assert_eq!(
+            MetricTotalUsers.get(SERVICE_NAME, &labels! { "status" => "inactive" }),
+            1.0
+        );
+    }
+
+    #[test]
+    fn test_total_user_groups_metric() {
+        user_group_test_utils::add_group("finance");
+        user_group_test_utils::add_group("hr");
+
+        assert_eq!(
+            MetricTotalUserGroups.get(SERVICE_NAME, &labels! { "status" => "active" }),
+            2.0
+        );
+    }
+
+    #[test]
+    fn test_total_accounts_metric() {
+        let mut account = mock_account();
+        account.blockchain = Blockchain::InternetComputer;
+        account.symbol = "ICP".to_string();
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account);
+
+        assert_eq!(
+            MetricTotalAccounts.get(SERVICE_NAME, &labels! { "status" => "active" }),
+            1.0
+        );
+
+        let mut account = mock_account();
+        account.name = "Test2".to_string();
+        account.blockchain = Blockchain::InternetComputer;
+        account.symbol = "ICP".to_string();
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account);
+
+        assert_eq!(
+            MetricTotalAccounts.get(SERVICE_NAME, &labels! { "status" => "active" }),
+            2.0
+        );
+    }
+
+    #[test]
+    fn test_total_transfers_metric() {
+        let mut transfer = mock_transfer();
+        transfer.status = TransferStatus::Created;
+
+        TRANSFER_REPOSITORY.insert(transfer.to_key(), transfer.clone());
+
+        assert_eq!(MetricTotalTranfers.get(SERVICE_NAME), 1.0);
+
+        transfer.status = TransferStatus::Processing { started_at: 0 };
+
+        TRANSFER_REPOSITORY.insert(transfer.to_key(), transfer.clone());
+
+        assert_eq!(MetricTotalTranfers.get(SERVICE_NAME), 1.0);
+
+        let transfer = mock_transfer();
+
+        TRANSFER_REPOSITORY.insert(transfer.to_key(), transfer.clone());
+
+        assert_eq!(MetricTotalTranfers.get(SERVICE_NAME), 2.0);
+    }
+
+    #[test]
+    fn test_total_proposals_metric() {
+        let mut proposal = mock_proposal();
+        proposal.status = ProposalStatus::Created;
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        assert_eq!(MetricTotalProposals.get(SERVICE_NAME), 1.0);
+
+        proposal.status = ProposalStatus::Processing { started_at: 0 };
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        assert_eq!(MetricTotalProposals.get(SERVICE_NAME), 1.0);
+
+        let proposal = mock_proposal();
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        assert_eq!(MetricTotalProposals.get(SERVICE_NAME), 2.0);
+    }
+
+    #[test]
+    fn test_assets_balance_metric() {
+        let blockchain_name = Blockchain::InternetComputer.to_string();
+
+        let mut account = mock_account();
+        account.blockchain = Blockchain::InternetComputer;
+        account.symbol = "icp".to_string();
+        account.balance = Some(AccountBalance {
+            balance: Nat::from(1_000_000_000u64),
+            last_modification_timestamp: 0,
+        });
+        account.decimals = 8;
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+
+        assert_eq!(
+            MetricAssetsTotalBalance.get(
+                SERVICE_NAME,
+                &labels! { "blockchain" => blockchain_name.as_str(), "symbol" => "icp" }
+            ),
+            10.00000000
+        );
+
+        let mut account = mock_account();
+        account.blockchain = Blockchain::InternetComputer;
+        account.symbol = "icp".to_string();
+        account.balance = Some(AccountBalance {
+            balance: Nat::from(10_000_000_000u64),
+            last_modification_timestamp: 0,
+        });
+        account.decimals = 8;
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+
+        assert_eq!(
+            MetricAssetsTotalBalance.get(
+                SERVICE_NAME,
+                &labels! { "blockchain" => blockchain_name.as_str(), "symbol" => "icp" }
+            ),
+            110.00000000
+        );
+
+        account.balance = Some(AccountBalance {
+            balance: Nat::from(100_000_000u64),
+            last_modification_timestamp: 0,
+        });
+
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+
+        assert_eq!(
+            MetricAssetsTotalBalance.get(
+                SERVICE_NAME,
+                &labels! { "blockchain" => blockchain_name.as_str(), "symbol" => "icp" }
+            ),
+            11.00000000
+        );
     }
 }

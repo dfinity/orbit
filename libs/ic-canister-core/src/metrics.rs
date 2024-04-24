@@ -296,6 +296,12 @@ pub trait ApplicationCounterMetric<Model>: ApplicationMetric<Model>
 where
     Model: Clone + std::fmt::Debug,
 {
+    fn get(&self, service_name: &str) -> f64 {
+        with_metrics_registry(service_name, |registry| {
+            registry.counter_mut(self.name(), self.help()).get()
+        })
+    }
+
     fn inc(&self, service_name: &str) {
         with_metrics_registry(service_name, |registry| {
             registry.counter_mut(self.name(), self.help()).inc();
