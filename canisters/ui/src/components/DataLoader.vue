@@ -7,6 +7,7 @@
   <slot v-else name="default" :loading="loading" :reloading="reloading" :data="data"></slot>
 </template>
 <script lang="ts" setup generic="T">
+import { Ref } from 'vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAlert } from 'vuetify/components';
 import { DisabledBackgroundPollingError } from '~/core/errors.core';
@@ -17,7 +18,7 @@ import { useSessionStore } from '~/stores/session.store';
 
 const loading = ref<boolean>(false);
 const failed = ref<boolean>(false);
-const data = ref<T | undefined>();
+const data: Ref<T | null> = ref(null);
 const reloading = ref<boolean>(false);
 const errorDetails = ref<string>();
 
@@ -52,9 +53,9 @@ watch(
     if (forceReload) {
       emit('update:forceReload', false);
 
-      data.value = undefined;
+      data.value = null;
 
-      fetchData({ cleanupOnFail: false });
+      fetchData({ cleanupOnFail: false }, true);
     }
   },
 );
@@ -62,6 +63,7 @@ watch(
 const app = useAppStore();
 const session = useSessionStore();
 const initialized = ref(false);
+const fetchJobId = ref<number | null>(null);
 
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -105,7 +107,7 @@ const fetchWithRetries = async (retries: number): Promise<T> => {
 const working = computed({
   get: () => loading.value || reloading.value,
   set: (value: boolean) => {
-    if (data.value === undefined) {
+    if (data.value == null) {
       loading.value = value;
       emit('loading', value);
     } else {
@@ -114,10 +116,13 @@ const working = computed({
   },
 });
 
-const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): Promise<void> => {
+const fetchData = async (
+  { cleanupOnFail }: { cleanupOnFail?: boolean } = {},
+  force = false,
+): Promise<void> => {
   try {
     // prevents multiple calls to fetchData at the same time
-    if (working.value) {
+    if (working.value && !force) {
       return;
     }
 
@@ -125,11 +130,19 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
       return;
     }
 
+    const jobId = fetchJobId.value === null ? 1 : fetchJobId.value + 1;
+
     failed.value = false;
     working.value = true;
+    fetchJobId.value = jobId;
 
     const newData = await fetchWithRetries(props.retries);
 
+    if (fetchJobId.value !== jobId) {
+      return;
+    }
+
+    fetchJobId.value = null;
     working.value = false;
 
     if (
@@ -143,7 +156,6 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
     }
   } catch (err) {
     if (err instanceof DisabledBackgroundPollingError) {
-      console.log('DisabledBackgroundPollingError', err);
       // do nothing, this is expected
       return;
     }
@@ -160,7 +172,7 @@ const fetchData = async ({ cleanupOnFail }: { cleanupOnFail?: boolean } = {}): P
 
     errorDetails.value = `${err}`;
     emit('failed', err);
-  } finally {
+
     working.value = false;
   }
 };

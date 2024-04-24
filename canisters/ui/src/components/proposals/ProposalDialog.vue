@@ -14,8 +14,17 @@
       @loading="loading = $event"
       @loaded="onProposalLoaded"
     >
+      <VCard v-if="loading">
+        <VToolbar color="background">
+          <VToolbarTitle>{{ $t('terms.request') }}</VToolbarTitle>
+          <VBtn :icon="mdiClose" @click="openModel = false" />
+        </VToolbar>
+        <VCardText v-if="loading" class="py-8">
+          <LoadingMessage />
+        </VCardText>
+      </VCard>
       <ProposalDetailView
-        v-if="data"
+        v-else-if="data"
         :proposal="data.proposal"
         :details="{
           can_vote: data.privileges.can_vote,
@@ -83,6 +92,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { variantIs } from '~/utils/helper.utils';
 import ProposalDetailView from './ProposalDetailView.vue';
+import LoadingMessage from '~/components/LoadingMessage.vue';
 
 type DataType = {
   proposal: GetProposalResultData['proposal'];
@@ -164,7 +174,10 @@ const loadProposal = async (): Promise<DataType> => {
       additionalInfo: preloadedData.value.additionalInfo,
     };
   } else {
-    const result = await services().wallet.getProposal({ proposal_id: currentProposalId.value! });
+    const result = await services().wallet.getProposal(
+      { proposal_id: currentProposalId.value! },
+      true,
+    );
     return {
       proposal: result.proposal,
       privileges: result.privileges,

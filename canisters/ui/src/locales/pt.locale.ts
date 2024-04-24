@@ -379,6 +379,7 @@ export default {
     expires: 'Expira',
     rejected: 'Rejeitado',
     to: 'Para',
+    request: 'Pedido',
     requested: 'Requerido',
     summary: 'Resumo',
     review: 'Validar',

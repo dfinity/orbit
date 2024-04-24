@@ -302,12 +302,16 @@ const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
   return transfers;
 };
 
+let useVerifiedCall = false;
+
 const loadAccount = async (): Promise<{
   account: Account;
   privileges: AccountCallerPrivileges;
 }> => {
   const accountId = `${router.currentRoute.value.params.id}`;
-  const result = await wallet.service.getAccount({ account_id: accountId });
+  const result = await wallet.service.getAccount({ account_id: accountId }, useVerifiedCall);
+  useVerifiedCall = true;
+
   const account = result.account;
 
   if (!account.balance.length) {
