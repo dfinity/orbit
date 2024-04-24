@@ -185,7 +185,7 @@ impl ApplicationMetric<Transfer> for MetricTotalTranfers {
     }
 
     fn help(&self) -> &'static str {
-        "The total number of transfers that have been creted."
+        "The total number of transfers that have been created."
     }
 
     fn sum(&self, _: &Transfer, previous: Option<&Transfer>) {
