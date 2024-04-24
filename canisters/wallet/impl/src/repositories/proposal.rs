@@ -93,9 +93,11 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when a proposal is upserted.
-            PROPOSAL_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            PROPOSAL_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.voter_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
@@ -182,7 +184,11 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
 
             // Update metrics when a proposal is removed.
             if let Some(prev) = &prev {
-                PROPOSAL_METRICS.iter().for_each(|metric| metric.sub(prev));
+                PROPOSAL_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.voter_index

@@ -1,7 +1,7 @@
 use crate::{
     core::ic_cdk::next_time,
     errors::UserError,
-    models::{CanDeployWallet, User, UserLastActiveIntervals, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployWallet, User, UserSubscriptionStatus, UserWallet},
 };
 use candid::Principal;
 use control_panel_api::{
@@ -51,12 +51,6 @@ impl UserMapper {
             deployed_wallets: vec![],
             main_wallet,
             last_active: registration_time,
-            last_active_intervals: UserLastActiveIntervals {
-                daily: registration_time,
-                hourly: registration_time,
-                monthly: registration_time,
-                weekly: registration_time,
-            },
             last_update_timestamp: registration_time,
         }
     }

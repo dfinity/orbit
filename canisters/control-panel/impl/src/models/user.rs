@@ -1,8 +1,5 @@
 use super::UserWallet;
-use crate::{
-    core::{ONE_DAY_NS, ONE_HOUR_NS, ONE_MONTH_NS, ONE_WEEK_NS},
-    errors::UserError,
-};
+use crate::errors::UserError;
 use candid::Principal;
 use email_address::EmailAddress;
 use ic_canister_core::{
@@ -64,19 +61,8 @@ pub struct User {
     pub main_wallet: Option<Principal>,
     /// The timestamp of last time the user was active.
     pub last_active: Timestamp,
-    /// Set the last time intervals the user was active.
-    pub last_active_intervals: UserLastActiveIntervals,
     /// Last time the identity was updated.
     pub last_update_timestamp: Timestamp,
-}
-
-#[storable(serializer = "candid")]
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Default)]
-pub struct UserLastActiveIntervals {
-    pub hourly: u64,
-    pub daily: u64,
-    pub weekly: u64,
-    pub monthly: u64,
 }
 
 #[storable(serializer = "candid")]
@@ -107,26 +93,6 @@ impl User {
             return CanDeployWallet::QuotaExceeded;
         }
         CanDeployWallet::Allowed(max_deployed_wallets - self.deployed_wallets.len())
-    }
-
-    pub fn set_last_active(&mut self, timestamp: Timestamp) {
-        self.last_active = timestamp;
-
-        if timestamp.saturating_sub(self.last_active_intervals.hourly) >= ONE_HOUR_NS {
-            self.last_active_intervals.hourly = timestamp;
-        }
-
-        if timestamp.saturating_sub(self.last_active_intervals.daily) >= ONE_DAY_NS {
-            self.last_active_intervals.daily = timestamp;
-        }
-
-        if timestamp.saturating_sub(self.last_active_intervals.weekly) >= ONE_WEEK_NS {
-            self.last_active_intervals.weekly = timestamp;
-        }
-
-        if timestamp.saturating_sub(self.last_active_intervals.monthly) >= ONE_MONTH_NS {
-            self.last_active_intervals.monthly = timestamp;
-        }
     }
 }
 
@@ -295,36 +261,6 @@ mod tests {
     fn invalid_email(#[case] email: &str) {
         assert!(validate_email(email).is_err());
     }
-
-    #[test]
-    fn validate_last_active_instervals_updates() {
-        let mut user = mock_user();
-        let timestamp = 0;
-
-        user.set_last_active(timestamp);
-        assert_eq!(user.last_active_intervals.hourly, timestamp);
-        assert_eq!(user.last_active_intervals.daily, timestamp);
-        assert_eq!(user.last_active_intervals.weekly, timestamp);
-        assert_eq!(user.last_active_intervals.monthly, timestamp);
-
-        user.set_last_active(timestamp + ONE_HOUR_NS);
-        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_HOUR_NS);
-
-        user.set_last_active(timestamp + ONE_DAY_NS);
-        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_DAY_NS);
-        assert_eq!(user.last_active_intervals.daily, timestamp + ONE_DAY_NS);
-
-        user.set_last_active(timestamp + ONE_WEEK_NS);
-        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_WEEK_NS);
-        assert_eq!(user.last_active_intervals.daily, timestamp + ONE_WEEK_NS);
-        assert_eq!(user.last_active_intervals.weekly, timestamp + ONE_WEEK_NS);
-
-        user.set_last_active(timestamp + ONE_MONTH_NS);
-        assert_eq!(user.last_active_intervals.hourly, timestamp + ONE_MONTH_NS);
-        assert_eq!(user.last_active_intervals.daily, timestamp + ONE_MONTH_NS);
-        assert_eq!(user.last_active_intervals.weekly, timestamp + ONE_MONTH_NS);
-        assert_eq!(user.last_active_intervals.monthly, timestamp + ONE_MONTH_NS);
-    }
 }
 
 #[cfg(test)]
@@ -352,7 +288,6 @@ pub mod user_model_utils {
             deployed_wallets: vec![],
             main_wallet: None,
             last_active: 0,
-            last_active_intervals: Default::default(),
             last_update_timestamp: 0,
         }
     }

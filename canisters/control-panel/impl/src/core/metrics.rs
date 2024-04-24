@@ -1,23 +1,30 @@
+use super::{ONE_DAY_NS, ONE_HOUR_NS, ONE_MONTH_NS, ONE_WEEK_NS};
+use crate::models::UserId;
 use crate::{models::User, repositories::USER_REPOSITORY, SERVICE_NAME};
 use ic_canister_core::metrics::{
-    labels, ApplicationCounterVecMetric, ApplicationGaugeMetric, ApplicationGaugeVecMetric,
-    ApplicationMetric,
+    labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric,
 };
 use ic_canister_core::repository::Repository;
+use ic_canister_core::types::Timestamp;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::{
     collections::BTreeMap,
     ops::{Add, Sub},
 };
 
-/// A collection of user related metrics.
-///
-/// This list should be updated with new metrics as they are added to the system.
-pub const USER_METRICS: &[&dyn ApplicationMetric<User>] = &[
-    &MetricRegisteredUsers,
-    &MetricDeployedWallets,
-    &MetricUserWallets,
-    &MetricActiveUsers,
-];
+thread_local! {
+    pub static METRIC_ACTIVE_USERS: Rc<RefCell<MetricActiveUsers>> =
+        Rc::new(RefCell::new(MetricActiveUsers::default()));
+
+    /// A collection of user related metrics.
+    pub static USER_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<User>>>> = vec![
+        Rc::new(RefCell::new(MetricRegisteredUsers)),
+        Rc::new(RefCell::new(MetricDeployedWallets)),
+        Rc::new(RefCell::new(MetricUserWallets)),
+        METRIC_ACTIVE_USERS.with(|metric_active_users| metric_active_users.clone())
+    ];
+}
 
 /// Recompute all metrics for the canister, updating the values in the metrics registry.
 ///
@@ -25,9 +32,11 @@ pub const USER_METRICS: &[&dyn ApplicationMetric<User>] = &[
 pub fn recompute_all_metrics() {
     let users = USER_REPOSITORY.list();
 
-    USER_METRICS
-        .iter()
-        .for_each(|metric| metric.recalculate(&users));
+    USER_METRICS.with(|metrics| {
+        metrics
+            .iter()
+            .for_each(|metric| metric.borrow_mut().recalculate(&users));
+    });
 }
 
 /// Metric for the number of users that have been registered, labeled by subscription status.
@@ -46,7 +55,7 @@ impl ApplicationMetric<User> for MetricRegisteredUsers {
         "Total number of users registered on the platform, labeled by subscription status."
     }
 
-    fn recalculate(&self, models: &[User]) {
+    fn recalculate(&mut self, models: &[User]) {
         let mut labeled_totals = BTreeMap::new();
 
         for user in models {
@@ -61,7 +70,7 @@ impl ApplicationMetric<User> for MetricRegisteredUsers {
         }
     }
 
-    fn sum(&self, current: &User, previous: Option<&User>) {
+    fn sum(&mut self, current: &User, previous: Option<&User>) {
         let previous_label = previous.map(|user| user.subscription_status.to_string());
         let label = current.subscription_status.to_string();
 
@@ -82,7 +91,7 @@ impl ApplicationMetric<User> for MetricRegisteredUsers {
         }
     }
 
-    fn sub(&self, model: &User) {
+    fn sub(&mut self, model: &User) {
         let label_value = model.subscription_status.to_string();
 
         self.dec(SERVICE_NAME, &labels! { "status" => label_value.as_str() });
@@ -103,7 +112,7 @@ impl ApplicationMetric<User> for MetricDeployedWallets {
         "Total number of deployed wallets that have been created by the control panel."
     }
 
-    fn recalculate(&self, models: &[User]) {
+    fn recalculate(&mut self, models: &[User]) {
         let mut deployed_wallets = 0.0;
         for user in models {
             deployed_wallets += user.deployed_wallets.len() as f64;
@@ -112,7 +121,7 @@ impl ApplicationMetric<User> for MetricDeployedWallets {
         self.set(SERVICE_NAME, deployed_wallets);
     }
 
-    fn sum(&self, current: &User, previous: Option<&User>) {
+    fn sum(&mut self, current: &User, previous: Option<&User>) {
         let diff_deployed_wallets = current.deployed_wallets.len() as f64
             - previous.map_or(0.0, |user| user.deployed_wallets.len() as f64);
 
@@ -121,7 +130,7 @@ impl ApplicationMetric<User> for MetricDeployedWallets {
         self.set(SERVICE_NAME, current_total.add(diff_deployed_wallets));
     }
 
-    fn sub(&self, model: &User) {
+    fn sub(&mut self, model: &User) {
         let current_total = self.get(SERVICE_NAME);
 
         self.set(
@@ -145,7 +154,7 @@ impl ApplicationMetric<User> for MetricUserWallets {
         "Total number of wallets users have associated with their user account."
     }
 
-    fn recalculate(&self, models: &[User]) {
+    fn recalculate(&mut self, models: &[User]) {
         let mut user_wallets = 0.0;
         for user in models {
             user_wallets += user.wallets.len() as f64;
@@ -154,7 +163,7 @@ impl ApplicationMetric<User> for MetricUserWallets {
         self.set(SERVICE_NAME, user_wallets);
     }
 
-    fn sum(&self, current: &User, previous: Option<&User>) {
+    fn sum(&mut self, current: &User, previous: Option<&User>) {
         let diff_user_wallets =
             current.wallets.len() as f64 - previous.map_or(0.0, |user| user.wallets.len() as f64);
 
@@ -163,7 +172,7 @@ impl ApplicationMetric<User> for MetricUserWallets {
         self.set(SERVICE_NAME, current_total.add(diff_user_wallets));
     }
 
-    fn sub(&self, model: &User) {
+    fn sub(&mut self, model: &User) {
         let current_total = self.get(SERVICE_NAME);
 
         self.set(SERVICE_NAME, current_total.sub(model.wallets.len() as f64));
@@ -171,9 +180,58 @@ impl ApplicationMetric<User> for MetricUserWallets {
 }
 
 /// Metric that tracks the total number of active users on the platform.
-pub struct MetricActiveUsers;
+#[derive(Default)]
+pub struct MetricActiveUsers {
+    users_activity_log: BTreeMap<UserId, Timestamp>,
+}
 
-impl ApplicationCounterVecMetric<User> for MetricActiveUsers {
+impl MetricActiveUsers {
+    pub fn refresh(&mut self, now_ns: u64) {
+        let mut hourly_active: u64 = 0;
+        let mut daily_active: u64 = 0;
+        let mut weekly_active: u64 = 0;
+        let mut montly_active: u64 = 0;
+
+        for (_, last_active) in self.users_activity_log.iter() {
+            let elapsed_ns = now_ns.saturating_sub(*last_active);
+            if elapsed_ns < ONE_HOUR_NS {
+                hourly_active = hourly_active.saturating_add(1);
+            }
+            if elapsed_ns < ONE_DAY_NS {
+                daily_active = daily_active.saturating_add(1);
+            }
+            if elapsed_ns < ONE_WEEK_NS {
+                weekly_active = weekly_active.saturating_add(1);
+            }
+            if elapsed_ns < ONE_MONTH_NS {
+                montly_active = montly_active.saturating_add(1);
+            }
+        }
+
+        self.set(
+            SERVICE_NAME,
+            &labels! { "time" => "1h" },
+            hourly_active as f64,
+        );
+        self.set(
+            SERVICE_NAME,
+            &labels! { "time" => "1d" },
+            daily_active as f64,
+        );
+        self.set(
+            SERVICE_NAME,
+            &labels! { "time" => "1w" },
+            weekly_active as f64,
+        );
+        self.set(
+            SERVICE_NAME,
+            &labels! { "time" => "1m" },
+            montly_active as f64,
+        );
+    }
+}
+
+impl ApplicationGaugeVecMetric<User> for MetricActiveUsers {
     const LABELS: &'static [&'static str] = &["time"];
 }
 
@@ -186,36 +244,15 @@ impl ApplicationMetric<User> for MetricActiveUsers {
         "Total number of active users in the system, labeled by the time interval."
     }
 
-    fn sum(&self, current: &User, previous: Option<&User>) {
-        match previous {
-            Some(previous) => {
-                if previous.last_active == current.last_active {
-                    return;
-                }
-
-                if current.last_active_intervals.hourly > previous.last_active_intervals.hourly {
-                    self.inc(SERVICE_NAME, &labels! { "time" => "1h" });
-                }
-
-                if current.last_active_intervals.daily > previous.last_active_intervals.daily {
-                    self.inc(SERVICE_NAME, &labels! { "time" => "1d" });
-                }
-
-                if current.last_active_intervals.weekly > previous.last_active_intervals.weekly {
-                    self.inc(SERVICE_NAME, &labels! { "time" => "1w" });
-                }
-
-                if current.last_active_intervals.monthly > previous.last_active_intervals.monthly {
-                    self.inc(SERVICE_NAME, &labels! { "time" => "1m" });
-                }
-            }
-            None => {
-                self.inc(SERVICE_NAME, &labels! { "time" => "1h" });
-                self.inc(SERVICE_NAME, &labels! { "time" => "1d" });
-                self.inc(SERVICE_NAME, &labels! { "time" => "1w" });
-                self.inc(SERVICE_NAME, &labels! { "time" => "1m" });
-            }
+    fn recalculate(&mut self, models: &[User]) {
+        for user in models {
+            self.users_activity_log.insert(user.id, user.last_active);
         }
+    }
+
+    fn sum(&mut self, current: &User, _: Option<&User>) {
+        self.users_activity_log
+            .insert(current.id, current.last_active);
     }
 }
 
@@ -374,75 +411,121 @@ mod tests {
         let weekly = labels! { "time" => "1w" };
         let monthly = labels! { "time" => "1m" };
 
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 0.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 0.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 0.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 0.0);
+        let mut metric = MetricActiveUsers::default();
+        metric.refresh(0);
+
+        assert_eq!(metric.get(SERVICE_NAME, &hourly), 0.0);
+        assert_eq!(metric.get(SERVICE_NAME, &daily), 0.0);
+        assert_eq!(metric.get(SERVICE_NAME, &weekly), 0.0);
+        assert_eq!(metric.get(SERVICE_NAME, &monthly), 0.0);
     }
 
     #[test]
-    fn test_active_users_metric_increments_only_if_interval_passes() {
+    fn test_advance_intervals_reset_active_users() {
         let hourly = labels! { "time" => "1h" };
         let daily = labels! { "time" => "1d" };
         let weekly = labels! { "time" => "1w" };
         let monthly = labels! { "time" => "1m" };
 
         let mut user = mock_user();
-        user.set_last_active(0);
+        user.last_active = 0;
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+        METRIC_ACTIVE_USERS.with(|metric| {
+            metric.borrow_mut().refresh(ONE_HOUR_NS);
+        });
 
-        // Update the user with the same last active time should not increment the metrics
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &hourly)),
+            0.0
+        );
+
+        METRIC_ACTIVE_USERS.with(|metric| {
+            metric.borrow_mut().refresh(ONE_DAY_NS);
+        });
+
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &daily)),
+            0.0
+        );
+
+        METRIC_ACTIVE_USERS.with(|metric| {
+            metric.borrow_mut().refresh(ONE_WEEK_NS);
+        });
+
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &weekly)),
+            0.0
+        );
+
+        METRIC_ACTIVE_USERS.with(|metric| {
+            metric.borrow_mut().refresh(ONE_MONTH_NS);
+        });
+
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &monthly)),
+            0.0
+        );
+    }
+
+    #[test]
+    fn test_active_users_metric_increments() {
+        let hourly = labels! { "time" => "1h" };
+        let daily = labels! { "time" => "1d" };
+        let weekly = labels! { "time" => "1w" };
+        let monthly = labels! { "time" => "1m" };
+
+        let mut user = mock_user();
+        user.last_active = 0;
+
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+        METRIC_ACTIVE_USERS.with(|metric| {
+            metric.borrow_mut().refresh(0);
+        });
 
-        // Advance the time by 1 hour should only increment the hourly metric
-        user.set_last_active(60 * 60 * 1_000_000_000);
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &hourly)),
+            1.0
+        );
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &daily)),
+            1.0
+        );
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &weekly)),
+            1.0
+        );
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &monthly)),
+            1.0
+        );
 
-        USER_REPOSITORY.insert(user.to_key(), user.clone());
-
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 2.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
-
-        // Advance the time by 1 day should only increment the hourly and daily metrics
-        user.set_last_active(24 * 60 * 60 * 1_000_000_000);
-
-        USER_REPOSITORY.insert(user.to_key(), user.clone());
-
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 3.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 2.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 1.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
-
-        // Advance the time by 1 week should only increment the hourly, daily and weekly metrics
-        user.set_last_active(7 * 24 * 60 * 60 * 1_000_000_000);
+        let mut user = mock_user();
+        user.last_active = 0;
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 4.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 3.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 2.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 1.0);
+        METRIC_ACTIVE_USERS.with(|metric| {
+            metric.borrow_mut().refresh(0);
+        });
 
-        // Advance the time by 1 month should only increment the hourly, daily, weekly and monthly metrics
-        user.set_last_active(30 * 24 * 60 * 60 * 1_000_000_000);
-
-        USER_REPOSITORY.insert(user.to_key(), user.clone());
-
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &hourly), 5.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &daily), 4.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &weekly), 3.0);
-        assert_eq!(MetricActiveUsers.get(SERVICE_NAME, &monthly), 2.0);
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &hourly)),
+            2.0
+        );
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &daily)),
+            2.0
+        );
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &weekly)),
+            2.0
+        );
+        assert_eq!(
+            METRIC_ACTIVE_USERS.with(|metric| metric.borrow().get(SERVICE_NAME, &monthly)),
+            2.0
+        );
     }
 }

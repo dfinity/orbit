@@ -14,45 +14,59 @@ use ic_canister_core::{
     metrics::{ApplicationCounterMetric, ApplicationCounterVecMetric},
     repository::Repository,
 };
-use std::collections::BTreeMap;
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
-/// A collection of user related metrics.
-///
-/// This list should be updated with new user metrics as they are added.
-pub const USER_METRICS: [&dyn ApplicationMetric<User>; 1] = [&MetricTotalUsers];
+thread_local! {
+    /// A collection of user related metrics.
+    ///
+    /// This list should be updated with new user metrics as they are added.
+    pub static USER_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<User>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalUsers)),
+    ];
 
-/// A collection of user group related metrics.
-///
-/// This list should be updated with new user group metrics as they are added.
-pub const USER_GROUP_METRICS: [&dyn ApplicationMetric<UserGroup>; 1] = [&MetricTotalUserGroups];
+    /// A collection of user group related metrics.
+    ///
+    /// This list should be updated with new user group metrics as they are added.
+    pub static USER_GROUP_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<UserGroup>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalUserGroups)),
+    ];
 
-/// A collection of account related metrics.
-///
-/// This list should be updated with new account metrics as they are added.
-pub const ACCOUNT_METRICS: [&dyn ApplicationMetric<Account>; 2] =
-    [&MetricTotalAccounts, &MetricAssetsTotalBalance];
+    /// A collection of account related metrics.
+    ///
+    /// This list should be updated with new account metrics as they are added.
+    pub static ACCOUNT_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Account>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalAccounts)),
+        Rc::new(RefCell::new(MetricAssetsTotalBalance)),
+    ];
 
-/// A collection of transfer related metrics.
-///
-/// This list should be updated with new transfer metrics as they are added.
-pub const TRANSFER_METRICS: [&dyn ApplicationMetric<Transfer>; 1] = [&MetricTotalTranfers];
+    /// A collection of transfer related metrics.
+    ///
+    /// This list should be updated with new transfer metrics as they are added.
+    pub static TRANSFER_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Transfer>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalTranfers)),
+    ];
 
-/// A collection of proposal related metrics.
-///
-/// This list should be updated with new proposal metrics as they are added.
-pub const PROPOSAL_METRICS: [&dyn ApplicationMetric<Proposal>; 1] = [&MetricTotalProposalsByType];
+    /// A collection of proposal related metrics.
+    ///
+    /// This list should be updated with new proposal metrics as they are added.
+    pub static PROPOSAL_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Proposal>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalProposalsByType)),
+    ];
 
-/// A collection of address book entry related metrics.
-///
-/// This list should be updated with new address book entry metrics as they are added.
-pub const ADDRESS_BOOK_METRICS: [&dyn ApplicationMetric<AddressBookEntry>; 1] =
-    [&MetricTotalAddressBookEntries];
+    /// A collection of address book entry related metrics.
+    ///
+    /// This list should be updated with new address book entry metrics as they are added.
+    pub static ADDRESS_BOOK_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<AddressBookEntry>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalAddressBookEntries)),
+    ];
 
-/// A collection of proposal policy related metrics.
-///
-/// This list should be updated with new proposal policy metrics as they are added.
-pub const PROPOSAL_POLICY_METRICS: [&dyn ApplicationMetric<ProposalPolicy>; 1] =
-    [&MetricTotalPolicies];
+    /// A collection of proposal policy related metrics.
+    ///
+    /// This list should be updated with new proposal policy metrics as they are added.
+    pub static PROPOSAL_POLICY_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<ProposalPolicy>>>>
+        = vec![Rc::new(RefCell::new(MetricTotalPolicies))];
+
+}
 
 /// Recompute all metrics for the canister, updating the values in the metrics registry.
 ///
@@ -67,17 +81,23 @@ pub fn recompute_metrics() {
     MetricTotalAddressBookEntries.set(SERVICE_NAME, ADDRESS_BOOK_REPOSITORY.len() as f64);
     MetricTotalPolicies.set(SERVICE_NAME, PROPOSAL_POLICY_REPOSITORY.len() as f64);
 
-    USER_METRICS
-        .iter()
-        .for_each(|metric| metric.recalculate(&users));
+    USER_METRICS.with(|metrics| {
+        metrics
+            .iter()
+            .for_each(|metric| metric.borrow_mut().recalculate(&users))
+    });
 
-    USER_GROUP_METRICS
-        .iter()
-        .for_each(|metric| metric.recalculate(&user_groups));
+    USER_GROUP_METRICS.with(|metrics| {
+        metrics
+            .iter()
+            .for_each(|metric| metric.borrow_mut().recalculate(&user_groups))
+    });
 
-    ACCOUNT_METRICS
-        .iter()
-        .for_each(|metric| metric.recalculate(&accounts));
+    ACCOUNT_METRICS.with(|metrics| {
+        metrics
+            .iter()
+            .for_each(|metric| metric.borrow_mut().recalculate(&accounts))
+    });
 }
 
 /// Metric for the number of users that have been registered, labeled by their status.
@@ -96,7 +116,7 @@ impl ApplicationMetric<User> for MetricTotalUsers {
         "The total number of users that are registered, labeled by their status."
     }
 
-    fn recalculate(&self, models: &[User]) {
+    fn recalculate(&mut self, models: &[User]) {
         let mut labeled_totals = BTreeMap::new();
 
         for user in models {
@@ -111,7 +131,7 @@ impl ApplicationMetric<User> for MetricTotalUsers {
         }
     }
 
-    fn sum(&self, current: &User, previous: Option<&User>) {
+    fn sum(&mut self, current: &User, previous: Option<&User>) {
         let label = current.status.to_string();
 
         if let Some(previous) = previous {
@@ -128,7 +148,7 @@ impl ApplicationMetric<User> for MetricTotalUsers {
         }
     }
 
-    fn sub(&self, current: &User) {
+    fn sub(&mut self, current: &User) {
         let label = current.status.to_string();
         self.dec(SERVICE_NAME, &labels! { "status" => label.as_str() });
     }
@@ -153,7 +173,7 @@ impl ApplicationMetric<UserGroup> for MetricTotalUserGroups {
         "The total number of user groups that are available, labeled by their status."
     }
 
-    fn recalculate(&self, models: &[UserGroup]) {
+    fn recalculate(&mut self, models: &[UserGroup]) {
         self.set(
             SERVICE_NAME,
             &labels! { "status" => "active" },
@@ -161,13 +181,13 @@ impl ApplicationMetric<UserGroup> for MetricTotalUserGroups {
         );
     }
 
-    fn sum(&self, _: &UserGroup, previous: Option<&UserGroup>) {
+    fn sum(&mut self, _: &UserGroup, previous: Option<&UserGroup>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME, &labels! { "status" => "active" });
         }
     }
 
-    fn sub(&self, _: &UserGroup) {
+    fn sub(&mut self, _: &UserGroup) {
         self.dec(SERVICE_NAME, &labels! { "status" => "active" });
     }
 }
@@ -186,7 +206,7 @@ impl ApplicationMetric<Transfer> for MetricTotalTranfers {
         "The total number of transfers that have been created."
     }
 
-    fn sum(&self, _: &Transfer, previous: Option<&Transfer>) {
+    fn sum(&mut self, _: &Transfer, previous: Option<&Transfer>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME);
         }
@@ -212,7 +232,7 @@ impl ApplicationMetric<Account> for MetricTotalAccounts {
         "The total number of accounts that have been created, labeled by their status."
     }
 
-    fn recalculate(&self, models: &[Account]) {
+    fn recalculate(&mut self, models: &[Account]) {
         self.set(
             SERVICE_NAME,
             &labels! { "status" => "active" },
@@ -220,13 +240,13 @@ impl ApplicationMetric<Account> for MetricTotalAccounts {
         );
     }
 
-    fn sum(&self, _: &Account, previous: Option<&Account>) {
+    fn sum(&mut self, _: &Account, previous: Option<&Account>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME, &labels! { "status" => "active" });
         }
     }
 
-    fn sub(&self, _: &Account) {
+    fn sub(&mut self, _: &Account) {
         self.dec(SERVICE_NAME, &labels! { "status" => "active" });
     }
 }
@@ -247,7 +267,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         "The total balance of all accounts, labeled by the blockchain and token symbol."
     }
 
-    fn recalculate(&self, accounts: &[Account]) {
+    fn recalculate(&mut self, accounts: &[Account]) {
         let mut labeled_totals = BTreeMap::new();
 
         for account in accounts {
@@ -273,7 +293,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         }
     }
 
-    fn sum(&self, current: &Account, previous: Option<&Account>) {
+    fn sum(&mut self, current: &Account, previous: Option<&Account>) {
         let blockchain = current.blockchain.to_string();
         let symbol = current.symbol.clone().to_lowercase();
         let account_labels =
@@ -294,7 +314,7 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
     }
 
-    fn sub(&self, current: &Account) {
+    fn sub(&mut self, current: &Account) {
         let blockchain = current.blockchain.to_string();
         let symbol = current.symbol.clone().to_lowercase();
         let account_labels =
@@ -326,7 +346,7 @@ impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
         "The total number of proposals, labeled by their type."
     }
 
-    fn sum(&self, current: &Proposal, previous: Option<&Proposal>) {
+    fn sum(&mut self, current: &Proposal, previous: Option<&Proposal>) {
         let operation = current.operation.to_string();
         let status = current.status.to_type().to_string();
         let labels = labels! { "type" => operation.as_str(), "status" => status.as_str() };
@@ -358,13 +378,13 @@ impl ApplicationMetric<AddressBookEntry> for MetricTotalAddressBookEntries {
         "The total number of address book entries."
     }
 
-    fn sum(&self, _: &AddressBookEntry, previous: Option<&AddressBookEntry>) {
+    fn sum(&mut self, _: &AddressBookEntry, previous: Option<&AddressBookEntry>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME);
         }
     }
 
-    fn sub(&self, _: &AddressBookEntry) {
+    fn sub(&mut self, _: &AddressBookEntry) {
         self.dec(SERVICE_NAME);
     }
 }
@@ -383,13 +403,13 @@ impl ApplicationMetric<ProposalPolicy> for MetricTotalPolicies {
         "The total number of policies that are available."
     }
 
-    fn sum(&self, _: &ProposalPolicy, previous: Option<&ProposalPolicy>) {
+    fn sum(&mut self, _: &ProposalPolicy, previous: Option<&ProposalPolicy>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME);
         }
     }
 
-    fn sub(&self, _: &ProposalPolicy) {
+    fn sub(&mut self, _: &ProposalPolicy) {
         self.dec(SERVICE_NAME);
     }
 }

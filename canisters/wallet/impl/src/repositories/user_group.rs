@@ -42,9 +42,11 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when a user group is upserted.
-            USER_GROUP_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            USER_GROUP_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
@@ -62,9 +64,11 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
 
             // Update metrics when a user group is removed.
             if let Some(prev) = &prev {
-                USER_GROUP_METRICS
-                    .iter()
-                    .for_each(|metric| metric.sub(prev));
+                USER_GROUP_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.name_index
