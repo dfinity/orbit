@@ -108,7 +108,9 @@ type EvaluatedCriteria = variant {
     votes : vec UUID;
     total_possible_votes : nat64;
   };
-  HasAddressBookMetadata : AddressBookMetadata;
+  HasAddressBookMetadata : record {
+    metadata : AddressBookMetadata;
+  };
   HasAddressInAddressBook;
   Or : vec CriteriaResult;
   And : vec CriteriaResult;

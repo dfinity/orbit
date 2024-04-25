@@ -238,7 +238,7 @@ export type EvaluatedCriteria = { 'Or' : Array<CriteriaResult> } |
   { 'And' : Array<CriteriaResult> } |
   { 'Not' : CriteriaResult } |
   { 'HasAddressInAddressBook' : null } |
-  { 'HasAddressBookMetadata' : AddressBookMetadata } |
+  { 'HasAddressBookMetadata' : { 'metadata' : AddressBookMetadata } } |
   {
     'MinimumVotes' : {
       'total_possible_votes' : bigint,

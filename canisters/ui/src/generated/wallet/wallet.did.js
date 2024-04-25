@@ -435,7 +435,7 @@ export const idlFactory = ({ IDL }) => {
     'And' : IDL.Vec(CriteriaResult),
     'Not' : CriteriaResult,
     'HasAddressInAddressBook' : IDL.Null,
-    'HasAddressBookMetadata' : AddressBookMetadata,
+    'HasAddressBookMetadata' : IDL.Record({ 'metadata' : AddressBookMetadata }),
     'MinimumVotes' : IDL.Record({
       'total_possible_votes' : IDL.Nat64,
       'votes' : IDL.Vec(UUID),
