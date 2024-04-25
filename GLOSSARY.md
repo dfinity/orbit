@@ -49,7 +49,7 @@ flowchart LR
 
 #### Station
 
-A station is the core canister component of Orbit. It is a trustless multi-custody canister that allows users to manage their crypto assets and operations. Stations are created by the user and can be shared with other users to create a multi-signature system for managing assets.
+A station is the core canister component of Orbit. It is a trustless multi-custody canister that allows users to manage their crypto assets and operations. Stations are created by the user and can be shared with other users to create a multi-approval system for managing assets. The station canister is the owner of the assets and is responsible for executing the operations requested by the users based on the station policies.
 
 #### Upgrader
 
