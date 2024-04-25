@@ -161,7 +161,7 @@ impl SystemService {
                 install_canister_post_process_work(init.clone(), system_info.clone()).await
             {
                 ic_cdk::print(format!("canister initialization failed: {}", e));
-                ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
+                ic_cdk_timers::set_timer(std::time::Duration::from_secs(3600), move || {
                     use crate::core::ic_cdk::spawn;
                     spawn(install_canister_post_process_timer(init, system_info))
                 });
