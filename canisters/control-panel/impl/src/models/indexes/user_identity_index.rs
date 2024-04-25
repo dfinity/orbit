@@ -29,7 +29,7 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserSubscriptionStatus;
+    use crate::models::user_model_utils::mock_user;
     use ic_stable_structures::Storable;
 
     #[test]
@@ -48,15 +48,8 @@ mod tests {
 
     #[test]
     fn valid_user_identities_to_indexes() {
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 10,
-        };
+        let mut user = mock_user();
+        user.identity = Principal::from_slice(&[u8::MAX; 29]);
         let index = user.to_index_for_identity();
 
         assert_eq!(index.identity_id, user.identity);

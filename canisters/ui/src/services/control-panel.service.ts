@@ -10,7 +10,7 @@ import {
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
 import { Maybe } from '~/types/helper.types';
-import { transformIdlWithOnlyVerifiedCalls } from '~/utils/helper.utils';
+import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
 
 export class ControlPanelService {
   // This actor is modified to only perform calls that can be verified, such as update calls that go through consensus.
@@ -37,17 +37,17 @@ export class ControlPanelService {
   async getCurrentUser(verifiedCall = false): Promise<User> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
     const result = await actor.get_user();
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.user ?? null;
+    return result.Ok.user;
   }
 
   async subscribeToWaitlist(email: string): Promise<void> {
     const result = await this.actor.subscribe_to_waiting_list(email);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
   }
@@ -61,17 +61,25 @@ export class ControlPanelService {
   async register(input: RegisterUserInput): Promise<User> {
     const result = await this.actor.register_user(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
     return result.Ok.user;
   }
 
+  async setUserActive(): Promise<void> {
+    const result = await this.actor.set_user_active();
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+  }
+
   async editUser(input: ManageUserInput): Promise<User> {
     const result = await this.actor.manage_user(input);
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -82,7 +90,7 @@ export class ControlPanelService {
     const actor = verifiedCall ? this.verified_actor : this.actor;
     const result = await actor.get_main_wallet();
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -93,7 +101,7 @@ export class ControlPanelService {
     const actor = verifiedCall ? this.verified_actor : this.actor;
     const result = await actor.list_wallets();
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
@@ -103,7 +111,7 @@ export class ControlPanelService {
   async deployWallet(): Promise<Principal> {
     const result = await this.actor.deploy_wallet();
 
-    if ('Err' in result) {
+    if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 

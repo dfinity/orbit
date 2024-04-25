@@ -45,6 +45,36 @@ export interface SessionStoreState {
   };
 }
 
+let trackingUserActive: ReturnType<typeof setInterval> | null = null;
+const considerTheUserActiveAfterMs = 10_000;
+const keepUserActiveEveryMs = 60_000;
+
+// A function that registers that a user is active every after a certain interval of time
+const registerUserLastActiveTracking = (): void => {
+  if (trackingUserActive) {
+    return;
+  }
+
+  trackingUserActive = setInterval(() => {
+    recordUserIsActive();
+  }, keepUserActiveEveryMs);
+
+  setTimeout(() => {
+    recordUserIsActive();
+  }, considerTheUserActiveAfterMs);
+};
+
+const recordUserIsActive = (): void => {
+  const session = useSessionStore();
+  const controlPanel = services().controlPanel;
+
+  if (session.isAuthenticated && !session.reauthenticationNeeded) {
+    controlPanel.setUserActive().catch(err => {
+      logger.error(`Failed to set user active`, { err });
+    });
+  }
+};
+
 export const useSessionStore = defineStore('session', {
   state: (): SessionStoreState => {
     return {
@@ -131,6 +161,8 @@ export const useSessionStore = defineStore('session', {
         logger.error(`Application failed to initialize the state`, { error });
 
         this.initialized = InitializationStatus.FailedInitialization;
+      } finally {
+        registerUserLastActiveTracking();
       }
     },
     reset(): void {

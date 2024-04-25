@@ -60,12 +60,15 @@ export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
+export type SetUserActiveResult = { 'Ok' : null } |
+  { 'Err' : ApiError };
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface SubscribedUser {
   'user_principal' : Principal,
   'email' : string,
 }
+export type TimestampRFC3339 = string;
 export type UUID = string;
 export interface UpdateWaitingListInput {
   'users' : Array<Principal>,
@@ -74,6 +77,7 @@ export interface UpdateWaitingListInput {
 export type UpdateWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface User {
+  'last_active' : TimestampRFC3339,
   'wallets' : Array<UserWallet>,
   'subscription_status' : UserSubscriptionStatus,
   'identity' : Principal,
@@ -98,6 +102,7 @@ export interface _SERVICE {
   'list_wallets' : ActorMethod<[], ListWalletsResult>,
   'manage_user' : ActorMethod<[ManageUserInput], ManageUserResult>,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
+  'set_user_active' : ActorMethod<[], SetUserActiveResult>,
   'subscribe_to_waiting_list' : ActorMethod<
     [string],
     SubscribeToWaitingListResult
