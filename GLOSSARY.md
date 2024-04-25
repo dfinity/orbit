@@ -111,9 +111,9 @@ These rules can be of the following types:
 
 - **Percentage:** A percentage rule requires a minimum percentage of users to approve a request. Percentage rules can be used to enforce multi-signature requirements based on the percentage of users in the station.
 
-- **Allow listed:** An allow-list rule are only relevant to transfers and checks if the destination address is in the allow-list. Allow-list rules can be used to restrict transfers to specific addresses that are in the address book.
+- **Allow listed:** Allow-listed rules can be used to restrict transfers to specific addresses that are in the address book.
 
-- **Allow listed by label:** An allow-list by label rule are only relevant to transfers and checks if the destination address is in the allow-list with the provided label. Allow-list by label rules can be used to restrict transfers to specific addresses by defined labels.
+- **Allow listed by label:** Allow-listed by label rules can be used to restrict transfers to specific addresses that are in the address book and have a specific label.
 
 There are also the following composite rules that can be used to combine multiple rules:
 
