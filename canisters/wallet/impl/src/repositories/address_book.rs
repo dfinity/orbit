@@ -58,9 +58,11 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when an entry is upserted.
-            ADDRESS_BOOK_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            ADDRESS_BOOK_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
@@ -78,9 +80,11 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
 
             // Update metrics when an entry is removed.
             if let Some(prev) = &prev {
-                ADDRESS_BOOK_METRICS
-                    .iter()
-                    .for_each(|metric| metric.sub(prev));
+                ADDRESS_BOOK_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.index

@@ -46,9 +46,11 @@ impl Repository<AccountKey, Account> for AccountRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when an account is upserted.
-            ACCOUNT_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            ACCOUNT_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
@@ -66,7 +68,11 @@ impl Repository<AccountKey, Account> for AccountRepository {
 
             // Update metrics when an account is removed.
             if let Some(prev) = &prev {
-                ACCOUNT_METRICS.iter().for_each(|metric| metric.sub(prev));
+                ACCOUNT_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.name_index

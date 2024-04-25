@@ -1,5 +1,9 @@
+use crate::core::metrics::METRIC_ACTIVE_USERS;
 use crate::services::{UserService, USER_SERVICE};
-use crate::{core::ic_cdk::api::canister_balance, SERVICE_NAME};
+use crate::{
+    core::ic_cdk::api::{canister_balance, time},
+    SERVICE_NAME,
+};
 use ic_canister_core::api::{HeaderField, HttpRequest, HttpResponse};
 use ic_canister_core::metrics::with_metrics_registry;
 use ic_cdk_macros::query;
@@ -85,6 +89,9 @@ impl HttpController {
                 body: "405 Method Not Allowed".as_bytes().to_owned(),
             };
         }
+
+        // Trigger active users metric update.
+        METRIC_ACTIVE_USERS.with(|metric| metric.borrow_mut().refresh(time()));
 
         // Add dynamic metrics, dropped after the request since query calls don't save state changes.
         with_metrics_registry(SERVICE_NAME, |registry| {

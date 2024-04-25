@@ -52,8 +52,7 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserSubscriptionStatus;
-    use candid::Principal;
+    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus};
     use ic_stable_structures::Storable;
 
     #[test]
@@ -72,15 +71,9 @@ mod tests {
 
     #[test]
     fn valid_user_status_to_index() {
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Pending("john@example.com".to_string()),
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 10,
-        };
+        let mut user = mock_user();
+        user.subscription_status = UserSubscriptionStatus::Pending("john@example.com".to_string());
+
         let index = user.to_index_for_status();
 
         assert_eq!(index.status, UserIndexSubscriptionStatus::Pending);

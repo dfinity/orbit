@@ -12,12 +12,15 @@
       @loading="loading = $event"
       @loaded="userGroup = $event.userGroup"
     >
-      <VCard :loading="loading">
+      <VCard>
         <VToolbar color="background">
           <VToolbarTitle>{{ $t('terms.user_group') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
-        <VCardText>
+        <VCardText v-if="loading" class="py-8">
+          <LoadingMessage />
+        </VCardText>
+        <VCardText v-else>
           <UserGroupForm
             v-if="data"
             v-model="userGroup"
@@ -60,6 +63,7 @@ import {
   VToolbarTitle,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
+import LoadingMessage from '~/components/LoadingMessage.vue';
 import UserGroupForm from '~/components/users/UserGroupForm.vue';
 import {
   useOnFailedOperation,
@@ -110,9 +114,12 @@ const loadUserGroup = async (): Promise<{
     return { userGroup: createModel };
   }
 
-  const result = await wallet.service.getUserGroup({
-    user_group_id: props.userGroupId.value,
-  });
+  const result = await wallet.service.getUserGroup(
+    {
+      user_group_id: props.userGroupId.value,
+    },
+    true,
+  );
   return { userGroup: result.user_group };
 };
 

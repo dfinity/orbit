@@ -12,12 +12,15 @@
       @loading="loading = $event"
       @loaded="proposalPolicy = $event.policy"
     >
-      <VCard :loading="loading">
+      <VCard>
         <VToolbar color="background">
           <VToolbarTitle>{{ $t('pages.proposal_policies.dialog_title') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
-        <VCardText>
+        <VCardText v-if="loading" class="py-8">
+          <LoadingMessage />
+        </VCardText>
+        <VCardText v-else>
           <ProposalPolicyForm
             v-if="data"
             v-model="proposalPolicy"
@@ -59,6 +62,7 @@ import {
   VToolbarTitle,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
+import LoadingMessage from '~/components/LoadingMessage.vue';
 import ProposalPolicyForm from '~/components/proposal-policies/ProposalPolicyForm.vue';
 import {
   useOnFailedOperation,
@@ -111,7 +115,7 @@ const loadPolicy = async (): Promise<{
     return { policy: createModel };
   }
 
-  const result = await wallet.service.getProposalPolicy(props.policyId.value);
+  const result = await wallet.service.getProposalPolicy(props.policyId.value, true);
   return result;
 };
 

@@ -55,9 +55,11 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when a transfer is upserted.
-            TRANSFER_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            TRANSFER_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
@@ -80,7 +82,11 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
 
             // Update metrics when a transfer is removed.
             if let Some(prev) = &prev {
-                TRANSFER_METRICS.iter().for_each(|metric| metric.sub(prev));
+                TRANSFER_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.account_index

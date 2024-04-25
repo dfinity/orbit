@@ -1,4 +1,5 @@
 use super::UserWalletDTO;
+use crate::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -7,6 +8,7 @@ pub struct UserDTO {
     pub main_wallet: Option<Principal>,
     pub wallets: Vec<UserWalletDTO>,
     pub subscription_status: UserSubscriptionStatusDTO,
+    pub last_active: TimestampRfc3339,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

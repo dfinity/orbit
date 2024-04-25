@@ -200,6 +200,7 @@ const resetPagination = (): void => {
 };
 
 const triggerSearch = throttle(() => {
+  useVerifiedCall = false;
   forceReload.value = true;
 }, 500);
 
@@ -213,37 +214,48 @@ watch(
   { deep: true },
 );
 
+let useVerifiedCall = false;
+
 const fetchList = useFetchList(
   async (offset, limit) => {
-    return wallet.service.listProposals({
-      types: shownProposalDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
-      created_dt: {
-        fromDt: convertDate(filters.value.created.from, {
-          time: 'start-of-day',
-          tz: 'local',
-        }),
-        toDt: convertDate(filters.value.created.to, {
-          time: 'end-of-day',
-          tz: 'local',
-        }),
+    const results = wallet.service.listProposals(
+      {
+        types: shownProposalDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
+        created_dt: {
+          fromDt: convertDate(filters.value.created.from, {
+            time: 'start-of-day',
+            tz: 'local',
+          }),
+          toDt: convertDate(filters.value.created.to, {
+            time: 'end-of-day',
+            tz: 'local',
+          }),
+        },
+        expiration_dt: {
+          fromDt: convertDate(filters.value.expires.from, {
+            time: 'start-of-day',
+            tz: 'local',
+          }),
+          toDt: convertDate(filters.value.expires.to, {
+            time: 'end-of-day',
+            tz: 'local',
+          }),
+        },
+        statuses: filters.value.statuses.map(status => ({
+          [status]: null,
+        })) as ProposalStatusCode[],
+        limit,
+        offset,
+        sortBy: {
+          createdAt: 'desc',
+        },
       },
-      expiration_dt: {
-        fromDt: convertDate(filters.value.expires.from, {
-          time: 'start-of-day',
-          tz: 'local',
-        }),
-        toDt: convertDate(filters.value.expires.to, {
-          time: 'end-of-day',
-          tz: 'local',
-        }),
-      },
-      statuses: filters.value.statuses.map(status => ({ [status]: null })) as ProposalStatusCode[],
-      limit,
-      offset,
-      sortBy: {
-        createdAt: 'desc',
-      },
-    });
+      useVerifiedCall,
+    );
+
+    useVerifiedCall = true;
+
+    return results;
   },
   {
     pagination,

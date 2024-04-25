@@ -136,12 +136,21 @@ const headers = ref<TableHeader[]>([
 const hasEditPrivilege = (id: UUID): boolean =>
   privileges.value.find(p => p.id === id)?.can_edit ?? false;
 
+let useVerifiedCall = false;
+
 const fetchList = useFetchList(
   (offset, limit) => {
-    return wallet.service.listUsers({
-      offset,
-      limit,
-    });
+    const results = wallet.service.listUsers(
+      {
+        offset,
+        limit,
+      },
+      useVerifiedCall,
+    );
+
+    useVerifiedCall = true;
+
+    return results;
   },
   {
     pagination,

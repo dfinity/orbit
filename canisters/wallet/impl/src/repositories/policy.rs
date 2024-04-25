@@ -49,9 +49,11 @@ impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when a policy is upserted.
-            PROPOSAL_POLICY_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            PROPOSAL_POLICY_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.resource_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
@@ -72,9 +74,11 @@ impl Repository<UUID, ProposalPolicy> for ProposalPolicyRepository {
 
             // Update metrics when a policy is removed.
             if let Some(prev) = &prev {
-                PROPOSAL_POLICY_METRICS
-                    .iter()
-                    .for_each(|metric| metric.sub(prev));
+                PROPOSAL_POLICY_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.resource_index
