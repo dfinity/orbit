@@ -8,4 +8,4 @@ cd $SCRIPT_DIR/..
 
 ./scripts/generate-wasm.sh control_panel
 ./scripts/generate-wasm.sh upgrader
-./scripts/generate-wasm.sh wallet
+./scripts/generate-wasm.sh station

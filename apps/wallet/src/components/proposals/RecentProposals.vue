@@ -60,7 +60,7 @@ import { ref } from 'vue';
 import { RouteLocationRaw } from 'vue-router';
 import { VBtn, VCard, VCardText, VDivider, VList } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
-import { ListProposalsOperationType } from '~/generated/wallet/wallet.did';
+import { ListProposalsOperationType } from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';

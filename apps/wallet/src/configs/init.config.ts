@@ -17,8 +17,8 @@ const appInitConfig: AppInitConfig = {
     internetIdentity: import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY,
   },
   canisters: {
+    app_wallet: import.meta.env.APP_CANISTER_ID_APP_WALLET,
     controlPanel: import.meta.env.APP_CANISTER_ID_CONTROL_PANEL,
-    ui: import.meta.env.APP_CANISTER_ID_UI,
     internetIdentity: import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY,
     icpIndex: import.meta.env.APP_CANISTER_ID_ICP_INDEX,
   },

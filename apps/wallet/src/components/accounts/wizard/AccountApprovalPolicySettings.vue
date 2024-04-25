@@ -45,7 +45,7 @@ import { computed } from 'vue';
 import { VCard, VCardText, VCardTitle, VCol, VDivider, VRow } from 'vuetify/components';
 import TextLabel from '~/components/ui/TextLabel.vue';
 import CriteriaBuilder from '~/components/proposal-policies/criteria/CriteriaBuilder.vue';
-import { ProposalPolicyCriteria } from '~/generated/wallet/wallet.did';
+import { ProposalPolicyCriteria } from '~/generated/station/station.did';
 
 export interface AccountApprovalPolicyModel {
   configurationCriteria?: ProposalPolicyCriteria;

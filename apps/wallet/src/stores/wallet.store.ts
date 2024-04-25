@@ -11,7 +11,7 @@ import {
   User,
   UserPrivilege,
   WalletAsset,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { router } from '~/plugins/router.plugin';
 import { services } from '~/plugins/services.plugin';

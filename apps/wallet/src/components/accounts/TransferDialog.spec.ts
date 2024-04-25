@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import TransferDialog from './TransferDialog.vue';
-import { Account, GetProposalResult, Proposal, Transfer } from '~/generated/wallet/wallet.did';
+import { Account, GetProposalResult, Proposal, Transfer } from '~/generated/station/station.did';
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';

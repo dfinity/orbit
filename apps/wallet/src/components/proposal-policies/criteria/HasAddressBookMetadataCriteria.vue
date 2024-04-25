@@ -35,7 +35,7 @@
 import { mdiTrashCanOutline } from '@mdi/js';
 import { computed } from 'vue';
 import { toRefs } from 'vue';
-import { AddressBookMetadata } from '~/generated/wallet/wallet.did';
+import { AddressBookMetadata } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
 
 const input = withDefaults(

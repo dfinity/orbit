@@ -6,14 +6,14 @@ use ic_cdk::api::management_canister::main::{
     CanisterIdRecord, CanisterSettings, CanisterStatusResponse, UpdateSettingsArgument,
 };
 use pocket_ic::{update_candid_as, PocketIc};
-use std::time::Duration;
-use wallet_api::{
+use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
     GetProposalInput, GetProposalResponse, HealthStatus, MeResponse, ProposalDTO,
     ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
     SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO, VoteOnProposalInput,
     VoteOnProposalResponse,
 };
+use std::time::Duration;
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 

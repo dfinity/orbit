@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ProposalVoteStatus } from '~/generated/wallet/wallet.did';
+import { ProposalVoteStatus } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(

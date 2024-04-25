@@ -17,4 +17,4 @@ sha2 = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 control_panel_api = { workspace = true }
 upgrader_api = { workspace = true }
-wallet_api = { workspace = true }
+station_api = { workspace = true }

@@ -70,7 +70,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
+import { UUID, UserGroup } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 

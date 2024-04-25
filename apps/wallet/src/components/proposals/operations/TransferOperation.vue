@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import TransferForm from '~/components/accounts/TransferForm.vue';
-import { Proposal, Transfer, TransferOperation } from '~/generated/wallet/wallet.did';
+import { Proposal, Transfer, TransferOperation } from '~/generated/station/station.did';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 import { mdiArrowRight, mdiContentCopy, mdiOpenInApp, mdiWallet } from '@mdi/js';
 import { Routes } from '~/configs/routes.config';

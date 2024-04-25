@@ -8,7 +8,7 @@ use control_panel_api::{
 };
 use ic_canister_core::api::ApiResult;
 use pocket_ic::update_candid_as;
-use wallet_api::HealthStatus;
+use station_api::HealthStatus;
 
 #[test]
 fn register_user_successful() {

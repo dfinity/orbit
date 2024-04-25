@@ -89,7 +89,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { Account, Proposal, Transfer, UUID } from '~/generated/wallet/wallet.did';
+import { Account, Proposal, Transfer, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { assertAndReturn } from '~/utils/helper.utils';
 import TransferForm from './TransferForm.vue';

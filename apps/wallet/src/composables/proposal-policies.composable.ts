@@ -1,7 +1,7 @@
 import { ComputedRef, Ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { proposalSpecifiersIncludedCriterias } from '~/configs/proposal-policies.config';
-import { ProposalSpecifier } from '~/generated/wallet/wallet.did';
+import { ProposalSpecifier } from '~/generated/station/station.did';
 import { mapProposalSpecifierToEnum } from '~/mappers/specifiers.mapper';
 import { SelectItem } from '~/types/helper.types';
 import { ProposalCriteriaUserSpecifierEnum } from '~/types/wallet.types';

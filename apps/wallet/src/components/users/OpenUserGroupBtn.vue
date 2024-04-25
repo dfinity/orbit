@@ -29,7 +29,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, toRefs } from 'vue';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 import UserGroupDialog from './UserGroupDialog.vue';
 import { VBtn, VIcon } from 'vuetify/components';
 

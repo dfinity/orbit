@@ -73,7 +73,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { AddressBookEntry, UUID } from '~/generated/wallet/wallet.did';
+import { AddressBookEntry, UUID } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { BlockchainStandard } from '~/types/chain.types';
 import { assertAndReturn } from '~/utils/helper.utils';

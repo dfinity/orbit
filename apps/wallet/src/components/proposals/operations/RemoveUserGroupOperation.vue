@@ -15,7 +15,7 @@
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import UserGroupForm from '~/components/users/UserGroupForm.vue';
 import logger from '~/core/logger.core';
-import { Proposal, RemoveUserGroupOperation, UserGroup } from '~/generated/wallet/wallet.did';
+import { Proposal, RemoveUserGroupOperation, UserGroup } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 

@@ -36,7 +36,7 @@
 import { computed, ref, toRefs } from 'vue';
 import CriteriaBuilder from '~/components/proposal-policies/criteria/CriteriaBuilder.vue';
 import SpecifierSelector from '~/components/proposal-policies/specifier/SpecifierSelector.vue';
-import { ProposalPolicy } from '~/generated/wallet/wallet.did';
+import { ProposalPolicy } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 
 export type ProposalPolicyFormProps = {

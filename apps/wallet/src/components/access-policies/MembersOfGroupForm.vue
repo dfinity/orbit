@@ -19,7 +19,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
-import { UUID, UserGroup } from '~/generated/wallet/wallet.did';
+import { UUID, UserGroup } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 
 export type MembersOfGroupFormProps = {

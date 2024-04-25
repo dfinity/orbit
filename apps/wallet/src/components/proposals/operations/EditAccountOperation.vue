@@ -22,7 +22,7 @@ import {
   useLoadAccountSetupWizardModel,
 } from '~/composables/account.composable';
 import logger from '~/core/logger.core';
-import { EditAccountOperation, Proposal } from '~/generated/wallet/wallet.did';
+import { EditAccountOperation, Proposal } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 

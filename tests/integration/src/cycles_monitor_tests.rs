@@ -11,8 +11,8 @@ use control_panel_api::{
 use ic_canister_core::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
+use station_api::HealthStatus;
 use std::time::Duration;
-use wallet_api::HealthStatus;
 
 #[test]
 fn successful_monitors_upgrader_and_tops_up() {

@@ -20,7 +20,7 @@ import { computed, onBeforeMount, ref } from 'vue';
 import { VProgressCircular } from 'vuetify/components';
 import AccessPolicyForm from '~/components/access-policies/AccessPolicyForm.vue';
 import logger from '~/core/logger.core';
-import { AccessPolicy, EditAccessPolicyOperation, Proposal } from '~/generated/wallet/wallet.did';
+import { AccessPolicy, EditAccessPolicyOperation, Proposal } from '~/generated/station/station.did';
 import { fromResourceToResourceEnum } from '~/mappers/access-policies.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';

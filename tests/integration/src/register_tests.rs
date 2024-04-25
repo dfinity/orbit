@@ -2,12 +2,12 @@ use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::user_test_id;
 use crate::TestEnv;
 use pocket_ic::update_candid_as;
-use std::time::Duration;
-use wallet_api::{
+use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateProposalInput, CreateProposalResponse,
     GetProposalInput, GetProposalResponse, ProposalExecutionScheduleDTO, ProposalOperationDTO,
     ProposalOperationInput, ProposalStatusDTO,
 };
+use std::time::Duration;
 
 #[test]
 fn register_user_successful() {
@@ -22,7 +22,7 @@ fn register_user_successful() {
         name: Some("test".to_string()),
         identities: vec![user_id],
         groups: vec![],
-        status: wallet_api::UserStatusDTO::Active,
+        status: station_api::UserStatusDTO::Active,
     };
     let add_user_proposal = CreateProposalInput {
         operation: ProposalOperationInput::AddUser(add_user),

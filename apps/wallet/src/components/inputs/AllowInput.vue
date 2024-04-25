@@ -50,7 +50,7 @@ import { computed, watch } from 'vue';
 import { VCol, VRadio, VRadioGroup, VRow } from 'vuetify/components';
 import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
-import { Allow } from '~/generated/wallet/wallet.did';
+import { Allow } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { variantIs } from '~/utils/helper.utils';
 

@@ -1,4 +1,4 @@
-import { Account } from '~/generated/wallet/wallet.did';
+import { Account } from '~/generated/station/station.did';
 import { BlockchainStandard, BlockchainType, ChainApi } from '~/types/chain.types';
 import { ICNativeApi } from './ic-native-api.service';
 

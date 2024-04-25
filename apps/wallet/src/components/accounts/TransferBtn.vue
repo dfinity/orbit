@@ -32,7 +32,7 @@
 import { ref, toRefs } from 'vue';
 import { VBtn } from 'vuetify/components';
 import TransferDialog from '~/components/accounts/TransferDialog.vue';
-import { Account, UUID } from '~/generated/wallet/wallet.did';
+import { Account, UUID } from '~/generated/station/station.did';
 
 const input = withDefaults(
   defineProps<{

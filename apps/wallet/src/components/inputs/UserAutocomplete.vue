@@ -19,7 +19,7 @@
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUsersAutocomplete } from '~/composables/autocomplete.composable';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 import { FormValidationRuleFn, SelectItem } from '~/types/helper.types';
 
 const input = withDefaults(

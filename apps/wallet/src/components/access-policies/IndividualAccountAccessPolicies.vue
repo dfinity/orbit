@@ -41,7 +41,7 @@ import type {
   Resource,
   UUID,
   UserGroup,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import AccessPolicyList from './AccessPolicyList.vue';
 import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';

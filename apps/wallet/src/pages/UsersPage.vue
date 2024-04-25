@@ -107,7 +107,7 @@ import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import OpenUserBtn from '~/components/users/OpenUserBtn.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import { Routes } from '~/configs/routes.config';
-import { UUID, User, UserCallerPrivileges } from '~/generated/wallet/wallet.did';
+import { UUID, User, UserCallerPrivileges } from '~/generated/station/station.did';
 import { fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';

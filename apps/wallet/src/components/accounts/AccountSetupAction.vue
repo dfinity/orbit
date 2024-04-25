@@ -32,7 +32,7 @@
 import { ref } from 'vue';
 import { VBtn } from 'vuetify/components';
 import AccountSetupDialog from '~/components/accounts/AccountSetupDialog.vue';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 
 const props = withDefaults(
   defineProps<{

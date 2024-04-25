@@ -22,7 +22,7 @@ import AccountSetupWizard, {
   AccountSetupWizardModel,
 } from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import { useDefaultAccountSetupWizardModel } from '~/composables/account.composable';
-import { AddAccountOperation, Proposal } from '~/generated/wallet/wallet.did';
+import { AddAccountOperation, Proposal } from '~/generated/station/station.did';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(

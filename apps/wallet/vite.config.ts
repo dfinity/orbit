@@ -64,7 +64,7 @@ const defaultCanisterIds = {
   internet_identity: 'rdmx6-jaaaa-aaaaa-aaadq-cai',
   icp_index: 'qhbym-qaaaa-aaaaa-aaafq-cai',
   control_panel: '65evf-oqaaa-aaaal-add6q-cai',
-  ui: '6uh6z-yyaaa-aaaal-add7a-cai',
+  app_wallet: '6uh6z-yyaaa-aaaal-add7a-cai',
 };
 
 const resolveCanisterIds = (
@@ -291,7 +291,7 @@ export default defineConfig(_ => {
       'import.meta.env.APP_BUILD_VERSION': JSON.stringify(process.env.npm_package_version),
       'import.meta.env.APP_BUILD_HASH': JSON.stringify(commitHash),
       'import.meta.env.APP_BUILD_DATE': JSON.stringify(new Date().toISOString()),
-      'import.meta.env.APP_CANISTER_ID_UI': JSON.stringify(canisters.ui),
+      'import.meta.env.APP_CANISTER_ID_APP_WALLET': JSON.stringify(canisters.app_wallet),
       'import.meta.env.APP_CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
       'import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(
         canisters.internet_identity,

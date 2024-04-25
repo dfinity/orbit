@@ -19,7 +19,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { useUsersAutocomplete } from '~/composables/autocomplete.composable';
-import { BasicUser, UUID } from '~/generated/wallet/wallet.did';
+import { BasicUser, UUID } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 
 export type SpecificUsersFormProps = {

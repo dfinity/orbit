@@ -41,7 +41,7 @@ import { mdiCube, mdiMessageText, mdiTarget } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VFileInput, VForm, VSelect, VTextarea } from 'vuetify/components';
-import { ChangeCanisterTarget } from '~/generated/wallet/wallet.did';
+import { ChangeCanisterTarget } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 import { ChangeCanisterTargetType } from '~/types/wallet.types';
 import { arrayBufferToHashHex } from '~/utils/crypto.utils';

@@ -31,7 +31,7 @@ import {
   Proposal,
   ProposalAdditionalInfo,
   ProposalCallerPrivileges,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { ProposalDetails } from '~/types/wallet.types';
 import ProposalListItem from './ProposalListItem.vue';
 

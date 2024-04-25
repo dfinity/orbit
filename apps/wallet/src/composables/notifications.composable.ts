@@ -1,4 +1,4 @@
-import { Proposal } from '~/generated/wallet/wallet.did';
+import { Proposal } from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 

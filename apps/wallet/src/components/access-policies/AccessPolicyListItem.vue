@@ -87,7 +87,7 @@
 
 <script lang="ts" setup>
 import { ref, toRefs, watch } from 'vue';
-import { Proposal, Resource } from '~/generated/wallet/wallet.did';
+import { Proposal, Resource } from '~/generated/station/station.did';
 import {
   AggregatedResouceAccessPolicies,
   ResourceAccessPolicySpecifier,

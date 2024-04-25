@@ -45,7 +45,7 @@ import {
   Resource,
   UUID,
   UserGroup,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
 import AccessPolicyListItem from './AccessPolicyListItem.vue';

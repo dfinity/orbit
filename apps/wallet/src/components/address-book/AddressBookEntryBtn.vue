@@ -30,7 +30,7 @@
 <script lang="ts" setup>
 import { ref, toRefs } from 'vue';
 import { VBtn, VIcon } from 'vuetify/components';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 import AddressBookDialog from './AddressBookDialog.vue';
 
 const input = withDefaults(

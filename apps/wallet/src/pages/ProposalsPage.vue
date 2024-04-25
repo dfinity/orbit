@@ -145,7 +145,7 @@ import {
   ProposalAdditionalInfo,
   ProposalCallerPrivileges,
   ProposalStatusCode,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps } from '~/types/app.types';
 import { ProposalDomains } from '~/types/wallet.types';

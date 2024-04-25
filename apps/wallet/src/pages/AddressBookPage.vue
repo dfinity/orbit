@@ -136,7 +136,7 @@ import {
   AddressBookEntry,
   AddressBookEntryCallerPrivileges,
   UUID,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';

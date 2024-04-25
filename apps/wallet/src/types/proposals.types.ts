@@ -1,4 +1,4 @@
-import { Proposal, ProposalAdditionalInfo } from '~/generated/wallet/wallet.did';
+import { Proposal, ProposalAdditionalInfo } from '~/generated/station/station.did';
 
 export enum ListProposalsOperationTypeGroup {
   User = 'user',

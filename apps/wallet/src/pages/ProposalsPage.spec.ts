@@ -1,7 +1,7 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { icAgent } from '~/core/ic-agent.core';
-import { ListProposalsResult } from '~/generated/wallet/wallet.did';
+import { ListProposalsResult } from '~/generated/station/station.did';
 import { serviceManager } from '~/plugins/services.plugin';
 import { WalletService } from '~/services/wallet.service';
 import { mount } from '~/test.utils';

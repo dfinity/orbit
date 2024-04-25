@@ -7,7 +7,7 @@ import {
   ResourceId,
   SystemResourceAction,
   UserResourceAction,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 
 /**

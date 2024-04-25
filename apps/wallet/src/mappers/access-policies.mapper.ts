@@ -1,4 +1,4 @@
-import { AuthScope, Resource } from '~/generated/wallet/wallet.did';
+import { AuthScope, Resource } from '~/generated/station/station.did';
 import { AuthScopeEnum, ResourceTypeEnum } from '~/types/access-policies.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 

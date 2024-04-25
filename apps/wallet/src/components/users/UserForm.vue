@@ -118,7 +118,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
-import { User } from '~/generated/wallet/wallet.did';
+import { User } from '~/generated/station/station.did';
 import { fromUserStatusEnumToVariant, fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
 import { useAppStore } from '~/stores/app.store';
 import { VFormValidation } from '~/types/helper.types';

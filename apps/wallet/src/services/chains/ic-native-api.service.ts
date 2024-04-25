@@ -3,7 +3,7 @@ import { appInitConfig } from '~/configs/init.config';
 import { icAgent } from '~/core/ic-agent.core';
 import { idlFactory } from '~/generated/icp_index';
 import { _SERVICE } from '~/generated/icp_index/icp_index.did';
-import { Account } from '~/generated/wallet/wallet.did';
+import { Account } from '~/generated/station/station.did';
 import { AccountIncomingTransfer, ChainApi, FetchTransfersInput } from '~/types/chain.types';
 import { nanoToJsDate } from '~/utils/date.utils';
 import { isValidSha256 } from '~/utils/helper.utils';

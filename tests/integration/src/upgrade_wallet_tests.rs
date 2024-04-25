@@ -6,7 +6,7 @@ use crate::utils::{
 use crate::TestEnv;
 use candid::Encode;
 use sha2::{Digest, Sha256};
-use wallet_api::{
+use station_api::{
     ChangeCanisterOperationInput, ChangeCanisterTargetDTO, HealthStatus, ProposalOperationInput,
     SystemInstall, SystemUpgrade,
 };

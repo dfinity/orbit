@@ -1,4 +1,4 @@
-import { BasicUser, Resource, UserGroup } from '~/generated/wallet/wallet.did';
+import { BasicUser, Resource, UserGroup } from '~/generated/station/station.did';
 
 export enum ResourceTypeEnum {
   User = 'User',

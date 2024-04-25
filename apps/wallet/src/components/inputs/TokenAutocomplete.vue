@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import { WalletAsset } from '~/generated/wallet/wallet.did';
+import { WalletAsset } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { FormValidationRuleFn } from '~/types/helper.types';
 

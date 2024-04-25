@@ -50,18 +50,18 @@
       "optimize": "cycles",
       "gzip": true
     },
-    "wallet": {
+    "station": {
       "type": "rust",
-      "package": "wallet",
-      "candid": "core/wallet/api/spec.did",
+      "package": "station",
+      "candid": "core/station/api/spec.did",
       "declarations": {
-        "output": "apps/wallet/src/generated/wallet",
+        "output": "apps/wallet/src/generated/station",
         "node_compatibility": true
       },
       "optimize": "cycles",
       "gzip": true
     },
-    "ui": {
+    "app_wallet": {
       "type": "assets",
       "source": ["apps/wallet/dist/"],
       "frontend": {

@@ -19,7 +19,7 @@ import {
   AddProposalPolicyOperation,
   Proposal,
   ProposalPolicy,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 
 const props = withDefaults(
   defineProps<{

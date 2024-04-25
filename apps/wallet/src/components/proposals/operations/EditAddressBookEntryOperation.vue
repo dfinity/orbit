@@ -31,7 +31,7 @@ import {
   AddressBookEntry,
   EditAddressBookEntryOperation,
   Proposal,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { variantIs } from '~/utils/helper.utils';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';

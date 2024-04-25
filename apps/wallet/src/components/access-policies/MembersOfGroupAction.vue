@@ -45,7 +45,7 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { Proposal } from '~/generated/wallet/wallet.did';
+import { Proposal } from '~/generated/station/station.did';
 import { ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
 import MembersOfGroupForm, { MembersOfGroupFormProps } from './MembersOfGroupForm.vue';
 

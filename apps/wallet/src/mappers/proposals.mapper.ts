@@ -3,7 +3,7 @@ import {
   Proposal,
   ProposalOperation,
   ProposalStatus,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { CsvRow, CsvTable } from '~/types/app.types';
 import { ListProposalsOperationTypeGroup, ProposalWithDetails } from '~/types/proposals.types';

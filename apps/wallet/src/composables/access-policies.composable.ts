@@ -1,4 +1,4 @@
-import { Resource } from '~/generated/wallet/wallet.did';
+import { Resource } from '~/generated/station/station.did';
 import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
 
 export const useResourcesFromAggregatedView = (

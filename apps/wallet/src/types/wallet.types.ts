@@ -3,7 +3,7 @@ import {
   ListProposalsOperationType,
   ProposalStatusCode,
   UUID,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 
 export enum PolicyType {
   VariableApprovalThreshold = 'VariableApprovalThreshold',

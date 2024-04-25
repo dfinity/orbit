@@ -323,10 +323,10 @@ dependencies = [
  "serde",
  "serde_cbor",
  "serde_json",
+ "station_api",
  "thiserror",
  "tokio",
  "uuid",
- "wallet_api",
 ]
 
 [[package]]
@@ -970,8 +970,8 @@ dependencies = [
  "pocket-ic",
  "serde",
  "sha2",
+ "station_api",
  "upgrader_api",
- "wallet_api",
 ]
 
 [[package]]
@@ -1932,6 +1932,50 @@ dependencies = [
 ]
 
 [[package]]
+name = "station"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "byteorder",
+ "canbench-rs",
+ "candid",
+ "candid_parser",
+ "canfund",
+ "deunicode",
+ "futures",
+ "hex",
+ "ic-canister-core",
+ "ic-canister-macros",
+ "ic-cdk 0.13.1",
+ "ic-cdk-macros 0.9.0",
+ "ic-cdk-timers",
+ "ic-ledger-types",
+ "ic-stable-structures",
+ "lazy_static",
+ "num-bigint",
+ "rstest",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "sha2",
+ "station_api",
+ "thiserror",
+ "tokio",
+ "upgrader_api",
+ "uuid",
+]
+
+[[package]]
+name = "station_api"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "string_cache"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2383,50 +2427,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "wallet"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "byteorder",
- "canbench-rs",
- "candid",
- "candid_parser",
- "canfund",
- "deunicode",
- "futures",
- "hex",
- "ic-canister-core",
- "ic-canister-macros",
- "ic-cdk 0.13.1",
- "ic-cdk-macros 0.9.0",
- "ic-cdk-timers",
- "ic-ledger-types",
- "ic-stable-structures",
- "lazy_static",
- "num-bigint",
- "rstest",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "sha2",
- "thiserror",
- "tokio",
- "upgrader_api",
- "uuid",
- "wallet_api",
-]
-
-[[package]]
-name = "wallet_api"
-version = "0.1.0"
-dependencies = [
- "candid",
- "serde",
- "serde_bytes",
-]
 
 [[package]]
 name = "want"

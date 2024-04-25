@@ -48,7 +48,7 @@ import { computed } from 'vue';
 import { VCard, VCardText, VCardTitle, VCol, VDivider, VRow } from 'vuetify/components';
 import TextLabel from '~/components/ui/TextLabel.vue';
 import AllowInput from '~/components/inputs/AllowInput.vue';
-import { Allow } from '~/generated/wallet/wallet.did';
+import { Allow } from '~/generated/station/station.did';
 
 export interface AccountAccessPolicyModel {
   read: Allow;

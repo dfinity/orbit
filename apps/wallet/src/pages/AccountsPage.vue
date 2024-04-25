@@ -118,7 +118,7 @@ import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import { Routes } from '~/configs/routes.config';
-import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did';
+import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';

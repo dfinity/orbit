@@ -115,7 +115,7 @@ import {
   ProposalPolicy,
   ProposalPolicyCallerPrivileges,
   UUID,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';

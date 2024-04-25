@@ -1,6 +1,6 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { idlFactory } from '~/generated/wallet';
+import { idlFactory } from '~/generated/station';
 import {
   AccountBalance,
   AddAccountOperationInput,
@@ -58,7 +58,7 @@ import {
   UserStatus,
   VoteOnProposalInput,
   _SERVICE,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { ExtractOk } from '~/types/helper.types';
 import {
   GetNextVotableProposalArgs,

@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import UserGroupForm from '~/components/users/UserGroupForm.vue';
-import { AddUserGroupOperation, Proposal, UserGroup } from '~/generated/wallet/wallet.did';
+import { AddUserGroupOperation, Proposal, UserGroup } from '~/generated/station/station.did';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(

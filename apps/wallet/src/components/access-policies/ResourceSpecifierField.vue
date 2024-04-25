@@ -164,7 +164,7 @@ import {
   ResourceAction,
   ResourceId,
   SystemResourceAction,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export type ResourceSpecifierFieldProps = {

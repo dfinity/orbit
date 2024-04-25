@@ -7,14 +7,14 @@ use crate::TestEnv;
 use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
 use pocket_ic::{query_candid_as, update_candid_as};
-use std::time::Duration;
-use wallet_api::{
+use station_api::{
     AddAccountOperationInput, AllowDTO, ApiErrorDTO, ApprovalThresholdDTO, CreateProposalInput,
     CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, GetTransfersInput,
     GetTransfersResponse, ListAccountTransfersInput, ListAccountTransfersResponse, MeResponse,
     ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
     TransferOperationInput, UserSpecifierDTO,
 };
+use std::time::Duration;
 
 #[test]
 fn make_transfer_successful() {
@@ -38,17 +38,17 @@ fn make_transfer_successful() {
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
         read_access_policy: AllowDTO {
-            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
         update_access_policy: AllowDTO {
-            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
         transfer_access_policy: AllowDTO {
-            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
@@ -251,7 +251,7 @@ fn make_transfer_successful() {
 
     // transactions should be completed and have transaction hash
     let all_have_transaction_hash = res.0.unwrap().transfers.iter().all(|t| match &t.status {
-        wallet_api::TransferStatusDTO::Completed { hash, .. } => hash.is_some(),
+        station_api::TransferStatusDTO::Completed { hash, .. } => hash.is_some(),
         _ => {
             panic!("transfer should be completed");
         }

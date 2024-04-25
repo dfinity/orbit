@@ -46,7 +46,7 @@ import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { computed, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
-import { Account, Transfer } from '~/generated/wallet/wallet.did';
+import { Account, Transfer } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule, validTokenAmount } from '~/utils/form.utils';
 import { amountToBigInt, formatBalance } from '~/utils/helper.utils';

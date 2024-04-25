@@ -25,7 +25,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VForm, VTextField } from 'vuetify/components';
-import { UserGroup } from '~/generated/wallet/wallet.did';
+import { UserGroup } from '~/generated/station/station.did';
 import { FormValidationRules, VFormValidation } from '~/types/helper.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Proposal } from '~/generated/wallet/wallet.did';
+import { Proposal } from '~/generated/station/station.did';
 import { mount } from '~/test.utils';
 import ProposalMetadata from './ProposalMetadata.vue';
 

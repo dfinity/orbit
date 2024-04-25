@@ -61,7 +61,7 @@
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/wallet/wallet.did';
+import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 import AddCriteriaSelect from './AddCriteriaSelect.vue';
 import AndCriteria from './AndCriteria.vue';

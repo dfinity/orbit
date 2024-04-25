@@ -214,7 +214,7 @@ import RecentProposals from '~/components/proposals/RecentProposals.vue';
 import FiltersCard from '~/components/ui/FiltersCard.vue';
 import { useFilterUtils, useSavedFilters } from '~/composables/account.composable';
 import { Routes } from '~/configs/routes.config';
-import { Account, AccountCallerPrivileges } from '~/generated/wallet/wallet.did';
+import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
 import { ChainApiFactory } from '~/services/chains';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps } from '~/types/app.types';

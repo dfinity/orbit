@@ -1,4 +1,4 @@
-import { TransferStatus } from '~/generated/wallet/wallet.did';
+import { TransferStatus } from '~/generated/station/station.did';
 import { AccountTransferStatus } from '~/types/wallet.types';
 import type { IDL as CandidIDL } from '@dfinity/candid';
 

@@ -50,7 +50,7 @@ import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
 import BlockchainAutocomplete from '~/components/inputs/BlockchainAutocomplete.vue';
 import MetadataField from '~/components/inputs/MetadataField.vue';
-import { AddressBookEntry, WalletAsset } from '~/generated/wallet/wallet.did';
+import { AddressBookEntry, WalletAsset } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule } from '~/utils/form.utils';

@@ -111,7 +111,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
-import { UUID, UserGroup, UserGroupCallerPrivileges } from '~/generated/wallet/wallet.did';
+import { UUID, UserGroup, UserGroupCallerPrivileges } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';

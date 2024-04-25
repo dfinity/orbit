@@ -1,7 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
-import { Notification } from '~/generated/wallet/wallet.did';
+import { Notification } from '~/generated/station/station.did';
 import { WalletService } from '~/services/wallet.service';
 import { timer, unreachable } from '~/utils/helper.utils';
 

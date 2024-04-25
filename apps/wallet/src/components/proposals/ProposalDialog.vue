@@ -85,7 +85,7 @@ import {
   ListProposalsOperationType,
   Proposal,
   UUID,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { mapProposalOperationToListProposalsOperationType } from '~/mappers/proposals.mapper';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';

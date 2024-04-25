@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ChangeCanisterOperation, Proposal } from '~/generated/wallet/wallet.did';
+import { ChangeCanisterOperation, Proposal } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 

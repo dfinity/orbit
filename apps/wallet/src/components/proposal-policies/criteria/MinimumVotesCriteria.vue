@@ -63,7 +63,7 @@ import { useI18n } from 'vue-i18n';
 import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { useUserSpecifierSelectorItems } from '~/composables/proposal-policies.composable';
-import { MinimumVotes } from '~/generated/wallet/wallet.did';
+import { MinimumVotes } from '~/generated/station/station.did';
 import {
   mapProposalCriteriaUserSpecifierEnumToVariant,
   mapProposalCriteriaUserSpecifierToEnum,

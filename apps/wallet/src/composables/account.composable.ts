@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { AccountSetupWizardModel } from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import logger from '~/core/logger.core';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import { BlockchainStandard, BlockchainType, TokenSymbol } from '~/types/chain.types';

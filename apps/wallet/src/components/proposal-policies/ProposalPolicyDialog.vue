@@ -69,7 +69,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { ProposalPolicy, UUID } from '~/generated/wallet/wallet.did';
+import { ProposalPolicy, UUID } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 

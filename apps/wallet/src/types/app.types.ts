@@ -17,7 +17,7 @@ export interface AppInitConfig {
     internetIdentity: string;
   };
   canisters: {
-    ui: string;
+    app_wallet: string;
     controlPanel: string;
     internetIdentity: string;
     icpIndex: string;

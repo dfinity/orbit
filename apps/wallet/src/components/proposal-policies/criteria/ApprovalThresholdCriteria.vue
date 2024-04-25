@@ -62,7 +62,7 @@ import { computed, ref, toRefs, watch } from 'vue';
 import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { useUserSpecifierSelectorItems } from '~/composables/proposal-policies.composable';
-import { ApprovalThreshold } from '~/generated/wallet/wallet.did';
+import { ApprovalThreshold } from '~/generated/station/station.did';
 import {
   mapProposalCriteriaUserSpecifierEnumToVariant,
   mapProposalCriteriaUserSpecifierToEnum,

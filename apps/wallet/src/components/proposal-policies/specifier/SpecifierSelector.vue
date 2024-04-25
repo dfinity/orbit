@@ -27,7 +27,7 @@
 import type { Component } from 'vue';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useAvailableOProposalSpecifiers } from '~/composables/proposal.composable';
-import { ProposalSpecifier } from '~/generated/wallet/wallet.did';
+import { ProposalSpecifier } from '~/generated/station/station.did';
 import { ProposalSpecifierEnum } from '~/types/wallet.types';
 import { KeysOfUnion, unreachable, variantIs } from '~/utils/helper.utils';
 import AccountSpecifier from './AccountSpecifier.vue';

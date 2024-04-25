@@ -6,8 +6,8 @@ edition = "2021"
 authors = ["DFINITY Stiftung"]
 license = "Apache-2.0"
 include = ["src", "Cargo.toml"]
-homepage = "https://github.com/dfinity/orbit-wallet#readme"
-repository = "https://github.com/dfinity/orbit-wallet"
+homepage = "https://github.com/dfinity/orbit#readme"
+repository = "https://github.com/dfinity/orbit"
 
 [lib]
 crate-type = ["cdylib"]
@@ -29,7 +29,7 @@ serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
 control_panel_api = { workspace = true }
-wallet_api = { workspace = true }
+station_api = { workspace = true }
 email_address = "0.2.4"
 
 [dev-dependencies]

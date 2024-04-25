@@ -11,7 +11,7 @@ interface ImportMetaEnv {
   readonly APP_BUILD_DATE: string;
   readonly APP_SUPPORTED_LOCALES: string;
   readonly APP_LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
-  readonly APP_CANISTER_ID_UI: string;
+  readonly APP_CANISTER_ID_APP_WALLET: string;
   readonly APP_CANISTER_ID_CONTROL_PANEL: string;
   readonly APP_CANISTER_ID_INTERNET_IDENTITY: string;
   readonly APP_PROVIDER_URL_INTERNET_IDENTITY: string;

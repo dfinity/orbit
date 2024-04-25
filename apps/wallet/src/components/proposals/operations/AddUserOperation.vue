@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import UserForm from '~/components/users/UserForm.vue';
-import { AddUserOperation, Proposal, User } from '~/generated/wallet/wallet.did';
+import { AddUserOperation, Proposal, User } from '~/generated/station/station.did';
 import { fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 

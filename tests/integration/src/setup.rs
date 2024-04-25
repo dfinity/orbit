@@ -10,13 +10,13 @@ use control_panel_api::{
 use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
+use station_api::{SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use wallet_api::{SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
 

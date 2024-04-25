@@ -1,4 +1,4 @@
-import { UserStatus } from '~/generated/wallet/wallet.did';
+import { UserStatus } from '~/generated/station/station.did';
 import { UserStatusType } from '~/types/wallet.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 

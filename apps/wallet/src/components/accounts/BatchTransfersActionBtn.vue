@@ -136,7 +136,7 @@ import { mdiAlertCircle, mdiCashFast, mdiClose, mdiDownload, mdiTable } from '@m
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import logger from '~/core/logger.core';
-import { Account, Transfer, TransferOperationInput } from '~/generated/wallet/wallet.did';
+import { Account, Transfer, TransferOperationInput } from '~/generated/station/station.did';
 import { ChainApiFactory } from '~/services/chains';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';

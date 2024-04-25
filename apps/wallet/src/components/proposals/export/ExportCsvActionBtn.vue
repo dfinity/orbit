@@ -72,7 +72,7 @@ import {
 } from 'vuetify/components';
 import { AvailableDomain, Filters, useDownloadItems } from '~/composables/proposal.composable';
 import logger from '~/core/logger.core';
-import { ProposalStatusCode, UUID } from '~/generated/wallet/wallet.did';
+import { ProposalStatusCode, UUID } from '~/generated/station/station.did';
 import { mapProposalsToCsvTable } from '~/mappers/proposals.mapper';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';

@@ -32,7 +32,7 @@ import { computed, ref, toRefs } from 'vue';
 import MembersOfGroupForm from '~/components/access-policies/MembersOfGroupForm.vue';
 import ResourceSpecifierField from '~/components/access-policies/ResourceSpecifierField.vue';
 import SpecificUsersForm from '~/components/access-policies/SpecificUsersForm.vue';
-import { AccessPolicy } from '~/generated/wallet/wallet.did';
+import { AccessPolicy } from '~/generated/station/station.did';
 import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
 import { VFormValidation } from '~/types/helper.types';
 import EveryoneForm from './EveryoneForm.vue';

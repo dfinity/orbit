@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { mdiTrashCanOutline } from '@mdi/js';
 import { computed, toRefs } from 'vue';
-import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/wallet/wallet.did';
+import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/station/station.did';
 import CriteriaBuilder from './CriteriaBuilder.vue';
 import AddCriteriaSelect from '~/components/proposal-policies/criteria/AddCriteriaSelect.vue';
 

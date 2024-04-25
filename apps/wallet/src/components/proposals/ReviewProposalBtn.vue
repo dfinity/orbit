@@ -19,7 +19,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VBtn } from 'vuetify/components';
 import { useProposalOverlay } from '~/composables/proposal.composable';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 
 const proposalOverlay = useProposalOverlay();
 

@@ -6,7 +6,7 @@ import {
   GetProposalResultData,
   ProposalOperation,
   ProposalVote,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
 import { ExtractOk } from '~/types/helper.types';

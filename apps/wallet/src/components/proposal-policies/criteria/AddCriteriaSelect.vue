@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref, toRefs } from 'vue';
 import { useProposalSpecifierCriterias } from '~/composables/proposal-policies.composable';
-import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/wallet/wallet.did';
+import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/station/station.did';
 import { ProposalCriteriaEnum } from '~/types/wallet.types';
 import { unreachable } from '~/utils/helper.utils';
 

@@ -53,7 +53,7 @@ import {
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
-import { Notification } from '~/generated/wallet/wallet.did';
+import { Notification } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useWalletStore } from '~/stores/wallet.store';
 import NotificationListItem from './NotificationListItem.vue';

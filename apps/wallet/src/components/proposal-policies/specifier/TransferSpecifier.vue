@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
 import AccountAutocomplete from '~/components/inputs/AccountAutocomplete.vue';
-import { TransferSpecifier } from '~/generated/wallet/wallet.did';
+import { TransferSpecifier } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(

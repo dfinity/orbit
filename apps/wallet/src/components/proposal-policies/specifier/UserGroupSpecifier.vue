@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
 import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
-import { CommonSpecifier } from '~/generated/wallet/wallet.did';
+import { CommonSpecifier } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(

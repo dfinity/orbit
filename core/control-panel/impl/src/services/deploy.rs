@@ -73,7 +73,7 @@ impl DeployService {
             mode: mgmt::CanisterInstallMode::Install,
             canister_id: wallet_canister.canister_id,
             wasm_module: config.wallet_wasm_module,
-            arg: Encode!(&wallet_api::SystemInstall::Init(wallet_api::SystemInit {
+            arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 admins: Some(vec![user.identity]),
                 upgrader_wasm_module: config.upgrader_wasm_module,
             }))

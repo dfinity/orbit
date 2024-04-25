@@ -46,7 +46,7 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { Proposal } from '~/generated/wallet/wallet.did';
+import { Proposal } from '~/generated/station/station.did';
 import { useWalletStore } from '~/stores/wallet.store';
 import { hexStringToArrayBuffer } from '~/utils/crypto.utils';
 import { readFileAsArrayBuffer } from '~/utils/file.utils';

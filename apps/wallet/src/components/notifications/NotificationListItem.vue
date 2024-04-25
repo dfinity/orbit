@@ -38,7 +38,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import TextOverflow from '~/components/TextOverflow.vue';
 import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
-import { Notification, UUID } from '~/generated/wallet/wallet.did';
+import { Notification, UUID } from '~/generated/station/station.did';
 import { formatLocaleDatetimeString } from '~/utils/date.utils';
 import { variantIs } from '~/utils/helper.utils';
 

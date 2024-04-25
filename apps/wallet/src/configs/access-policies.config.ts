@@ -1,4 +1,4 @@
-import { Resource, UUID } from '~/generated/wallet/wallet.did';
+import { Resource, UUID } from '~/generated/station/station.did';
 import {
   AggregatedResouceAccessPolicies,
   AuthScopeEnum,

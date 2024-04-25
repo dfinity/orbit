@@ -27,7 +27,7 @@
 import { ref, toRefs } from 'vue';
 import { VBtn, VIcon } from 'vuetify/components';
 import ProposalPolicyDialog from '~/components/proposal-policies/ProposalPolicyDialog.vue';
-import { UUID } from '~/generated/wallet/wallet.did';
+import { UUID } from '~/generated/station/station.did';
 
 const input = withDefaults(
   defineProps<{

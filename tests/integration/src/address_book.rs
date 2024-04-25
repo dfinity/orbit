@@ -4,7 +4,7 @@ use crate::utils::{execute_proposal, get_user, user_test_id};
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
 use pocket_ic::update_candid_as;
-use wallet_api::{
+use station_api::{
     AddAccountOperationInput, AddAddressBookEntryOperationInput, AddressChainInput, AllowDTO,
     ApiErrorDTO, ChangeMetadataDTO, CriteriaDTO, EditAddressBookEntryOperationInput,
     GetAddressBookEntryInputDTO, GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
@@ -263,17 +263,17 @@ fn check_address_book_for_transfer() {
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
         read_access_policy: AllowDTO {
-            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },
         update_access_policy: AllowDTO {
-            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },
         transfer_access_policy: AllowDTO {
-            auth_scope: wallet_api::AuthScopeDTO::Restricted,
+            auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },

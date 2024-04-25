@@ -22,7 +22,7 @@ import {
   AddressBookEntry,
   AddAddressBookEntryOperation,
   Proposal,
-} from '~/generated/wallet/wallet.did';
+} from '~/generated/station/station.did';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 import AddressBookForm from '~/components/address-book/AddressBookForm.vue';
 

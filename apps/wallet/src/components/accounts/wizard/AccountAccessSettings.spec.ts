@@ -2,7 +2,7 @@ import { describe } from 'node:test';
 import AccountAccessSettings from './AccountAccessSettings.vue';
 import { mount } from '~/test.utils';
 import { expect, it, vi } from 'vitest';
-import { Allow } from '~/generated/wallet/wallet.did';
+import { Allow } from '~/generated/station/station.did';
 import { WalletService } from '~/services/wallet.service';
 
 const allowAuthenticated = (): Allow => ({

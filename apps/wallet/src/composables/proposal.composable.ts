@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { logger } from '~/core/logger.core';
-import { ListProposalsOperationType, UUID } from '~/generated/wallet/wallet.did';
+import { ListProposalsOperationType, UUID } from '~/generated/station/station.did';
 import { mapListProposalsOperationTypeToGroups } from '~/mappers/proposals.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';

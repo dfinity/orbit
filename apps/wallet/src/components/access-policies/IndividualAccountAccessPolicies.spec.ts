@@ -1,6 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { Account } from '~/generated/wallet/wallet.did';
+import { Account } from '~/generated/station/station.did';
 import { WalletService } from '~/services/wallet.service';
 import { mount } from '~/test.utils';
 import IndividualAccountAccessPolicies from './IndividualAccountAccessPolicies.vue';

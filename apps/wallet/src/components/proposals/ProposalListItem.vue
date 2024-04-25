@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed } from 'vue';
-import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
+import { Proposal, ProposalOperation } from '~/generated/station/station.did';
 import { ProposalDetails } from '~/types/wallet.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ProposalStatusChip from './ProposalStatusChip.vue';
