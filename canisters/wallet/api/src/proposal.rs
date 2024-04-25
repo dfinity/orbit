@@ -8,8 +8,8 @@ use crate::{
     ChangeCanisterOperationInput, CriteriaDTO, DisplayUserDTO, EditAccessPolicyOperationDTO,
     EditAccessPolicyOperationInput, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
     EditAddressBookEntryOperationInput, EditUserGroupOperationDTO, EditUserGroupOperationInput,
-    EditUserOperationDTO, EditUserOperationInput, PaginationInput, ProposalSpecifierDTO,
-    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    EditUserOperationDTO, EditUserOperationInput, PaginationInput, ProposalEvaluationResultDTO,
+    ProposalSpecifierDTO, RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
@@ -143,6 +143,7 @@ pub struct ProposalAdditionalInfoDTO {
     pub id: UuidDTO,
     pub proposer_name: Option<String>,
     pub voters: Vec<DisplayUserDTO>,
+    pub evaluation_result: Option<ProposalEvaluationResultDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -219,6 +220,7 @@ pub struct ListProposalsInput {
     pub paginate: Option<PaginationInput>,
     pub sort_by: Option<ListProposalsSortBy>,
     pub only_votable: bool,
+    pub with_evaluation_results: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

@@ -2,8 +2,8 @@ use super::{
     specifier::{
         Match, ProposalHasMetadata, UserInvolvedInCriteriaForProposalResource, UserSpecifier,
     },
-    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalOperation, ProposalVoteStatus,
-    UserId, UserStatus,
+    EvaluateError, EvaluationStatus, MetadataItem, Proposal, ProposalId, ProposalOperation,
+    ProposalVoteStatus, UserId, UserStatus,
 };
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
@@ -73,6 +73,44 @@ impl ModelValidator<RecordValidationError> for Criteria {
 }
 
 #[storable]
+#[derive(Debug, Clone, PartialEq)]
+pub enum EvaluatedCriteria {
+    AutoAdopted,
+    ApprovalThreshold {
+        min_required_votes: usize,
+        total_possible_votes: usize,
+        votes: Vec<UserId>,
+    },
+    MinimumVotes {
+        min_required_votes: usize,
+        votes: Vec<UserId>,
+        total_possible_votes: usize,
+    },
+    HasAddressBookMetadata {
+        metadata: MetadataItem,
+    },
+    HasAddressInAddressBook,
+    Or(Vec<CriteriaResult>),
+    And(Vec<CriteriaResult>),
+    Not(Box<CriteriaResult>),
+}
+
+#[storable]
+#[derive(Debug, Clone, PartialEq)]
+pub struct CriteriaResult {
+    pub status: EvaluationStatus,
+    pub evaluated_criteria: EvaluatedCriteria,
+}
+
+#[storable]
+#[derive(Debug, Clone)]
+pub struct ProposalEvaluationResult {
+    pub proposal_id: ProposalId,
+    pub status: EvaluationStatus,
+    pub policy_results: Vec<CriteriaResult>,
+}
+
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ApprovalCriteriaInput {
     Remove,
@@ -108,6 +146,7 @@ struct ProposalVoteSummary {
     total_possible_votes: usize,
     adopted_votes: usize,
     rejected_votes: usize,
+    voters: Vec<UserId>,
 }
 
 impl ProposalVoteSummary {
@@ -117,8 +156,8 @@ impl ProposalVoteSummary {
     /// If the proposal does not yet have enough votes to meet the minimum votes required but has
     /// enough uncasted votes that could be casted to meet the minimum votes required, then the evaluation
     /// is kept in the `Pending` state.
-    fn evaluate(&self, min_votes: &usize) -> EvaluationStatus {
-        let min_votes = *cmp::min(min_votes, &self.total_possible_votes);
+    fn evaluate(&self, min_votes: usize) -> EvaluationStatus {
+        let min_votes = cmp::min(min_votes, self.total_possible_votes);
         let uncasted_votes = self
             .total_possible_votes
             .saturating_sub(self.adopted_votes)
@@ -141,7 +180,7 @@ impl CriteriaEvaluator {
         &self,
         proposal: &Arc<Proposal>,
         criterias: &[Criteria],
-    ) -> Result<Vec<EvaluationStatus>, EvaluateError> {
+    ) -> Result<Vec<CriteriaResult>, EvaluateError> {
         criterias
             .iter()
             .map(|criteria| self.evaluate((proposal.to_owned(), Arc::new(criteria.to_owned()))))
@@ -181,13 +220,18 @@ impl CriteriaEvaluator {
         proposal: &Arc<Proposal>,
         user_specifier: &UserSpecifier,
     ) -> Result<ProposalVoteSummary, MatchError> {
-        let casted_votes = self.find_matching_users::<ProposalVoteStatus>(
+        let casted_votes = self.find_matching_users::<(UserId, ProposalVoteStatus)>(
             proposal,
             proposal
                 .votes
                 .iter()
-                .map(|vote| (vote.user_id.to_owned(), vote.status.to_owned()))
-                .collect::<Vec<(UserId, ProposalVoteStatus)>>()
+                .map(|vote| {
+                    (
+                        vote.user_id.to_owned(),
+                        (vote.user_id.to_owned(), vote.status.to_owned()),
+                    )
+                })
+                .collect::<Vec<(UserId, (UserId, ProposalVoteStatus))>>()
                 .as_slice(),
             user_specifier,
         )?;
@@ -216,45 +260,73 @@ impl CriteriaEvaluator {
             total_possible_votes,
             adopted_votes: casted_votes
                 .iter()
-                .filter(|&v| matches!(v, ProposalVoteStatus::Accepted))
+                .filter(|&v| v.1 == ProposalVoteStatus::Accepted)
                 .count(),
             rejected_votes: casted_votes
                 .iter()
-                .filter(|&v| matches!(v, ProposalVoteStatus::Rejected))
+                .filter(|&v| v.1 == ProposalVoteStatus::Rejected)
                 .count(),
+            voters: casted_votes
+                .into_iter()
+                .map(|(user_id, _)| user_id)
+                .collect(),
         })
     }
 }
 
-impl EvaluateCriteria for CriteriaEvaluator {
+impl EvaluateCriteria<CriteriaResult, (Arc<Proposal>, Arc<Criteria>), EvaluateError>
+    for CriteriaEvaluator
+{
     fn evaluate(
         &self,
-        (proposal, c): (Arc<Proposal>, Arc<Criteria>),
-    ) -> Result<EvaluationStatus, EvaluateError> {
-        match c.as_ref() {
-            Criteria::AutoAdopted => Ok(EvaluationStatus::Adopted),
+        (proposal, critera): (Arc<Proposal>, Arc<Criteria>),
+    ) -> Result<CriteriaResult, EvaluateError> {
+        match critera.as_ref() {
+            Criteria::AutoAdopted => Ok(CriteriaResult {
+                status: EvaluationStatus::Adopted,
+                evaluated_criteria: EvaluatedCriteria::AutoAdopted,
+            }),
             Criteria::ApprovalThreshold(user_specifier, percentage) => {
-                let votes = self.calculate_votes(&proposal, user_specifier)?;
+                let vote_summary = self.calculate_votes(&proposal, user_specifier)?;
                 let min_votes =
-                    calculate_minimum_threshold(percentage, &votes.total_possible_votes);
+                    calculate_minimum_threshold(percentage, &vote_summary.total_possible_votes);
 
-                Ok(votes.evaluate(&min_votes))
+                Ok(CriteriaResult {
+                    status: vote_summary.evaluate(min_votes),
+                    evaluated_criteria: EvaluatedCriteria::ApprovalThreshold {
+                        min_required_votes: min_votes,
+                        total_possible_votes: vote_summary.total_possible_votes,
+                        votes: vote_summary.voters,
+                    },
+                })
             }
             Criteria::MinimumVotes(user_specifier, min_votes) => {
-                let votes = self.calculate_votes(&proposal, user_specifier)?;
-                let min_votes = *min_votes as usize;
+                let vote_summary = self.calculate_votes(&proposal, user_specifier)?;
 
-                Ok(votes.evaluate(&min_votes))
+                Ok(CriteriaResult {
+                    status: vote_summary.evaluate(*min_votes as usize),
+                    evaluated_criteria: EvaluatedCriteria::MinimumVotes {
+                        min_required_votes: *min_votes as usize,
+                        total_possible_votes: vote_summary.total_possible_votes,
+                        votes: vote_summary.voters,
+                    },
+                })
             }
             Criteria::HasAddressBookMetadata(metadata) => {
                 let is_match = self
                     .address_book_metadata_matcher
                     .is_match((proposal.as_ref().to_owned(), metadata.clone()))?;
-                if is_match {
-                    Ok(EvaluationStatus::Adopted)
-                } else {
-                    Ok(EvaluationStatus::Rejected)
-                }
+
+                Ok(CriteriaResult {
+                    status: if is_match {
+                        EvaluationStatus::Adopted
+                    } else {
+                        EvaluationStatus::Rejected
+                    },
+                    evaluated_criteria: EvaluatedCriteria::HasAddressBookMetadata {
+                        metadata: metadata.clone(),
+                    },
+                })
             }
             Criteria::HasAddressInAddressBook => {
                 if let ProposalOperation::Transfer(transfer) = &proposal.operation {
@@ -266,7 +338,10 @@ impl EvaluateCriteria for CriteriaEvaluator {
                                 e
                             ));
 
-                            return Ok(EvaluationStatus::Rejected);
+                            return Ok(CriteriaResult {
+                                status: EvaluationStatus::Rejected,
+                                evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
+                            });
                         }
                         Ok(account) => {
                             let is_in_address_book = ADDRESS_BOOK_REPOSITORY.exists(
@@ -276,59 +351,127 @@ impl EvaluateCriteria for CriteriaEvaluator {
                             );
 
                             if is_in_address_book {
-                                return Ok(EvaluationStatus::Adopted);
+                                return Ok(CriteriaResult {
+                                    status: EvaluationStatus::Adopted,
+                                    evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
+                                });
                             }
                         }
                     }
                 }
 
-                Ok(EvaluationStatus::Rejected)
+                Ok(CriteriaResult {
+                    status: EvaluationStatus::Rejected,
+                    evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
+                })
             }
             Criteria::And(criterias) => {
                 let evaluation_statuses = self.evaluate_criterias(&proposal, criterias)?;
 
                 if evaluation_statuses
                     .iter()
-                    .any(|s| matches!(s, EvaluationStatus::Rejected))
+                    .any(|result| result.status == EvaluationStatus::Rejected)
                 {
-                    return Ok(EvaluationStatus::Rejected);
+                    return Ok(CriteriaResult {
+                        status: EvaluationStatus::Rejected,
+                        evaluated_criteria: EvaluatedCriteria::And(evaluation_statuses),
+                    });
                 }
 
                 if evaluation_statuses
                     .iter()
-                    .all(|s| matches!(s, EvaluationStatus::Adopted))
+                    .all(|result| result.status == EvaluationStatus::Adopted)
                 {
-                    return Ok(EvaluationStatus::Adopted);
+                    return Ok(CriteriaResult {
+                        status: EvaluationStatus::Adopted,
+                        evaluated_criteria: EvaluatedCriteria::And(evaluation_statuses),
+                    });
                 }
 
-                Ok(EvaluationStatus::Pending)
+                Ok(CriteriaResult {
+                    status: EvaluationStatus::Pending,
+                    evaluated_criteria: EvaluatedCriteria::And(evaluation_statuses),
+                })
             }
             Criteria::Or(criterias) => {
                 let evaluation_statuses = self.evaluate_criterias(&proposal, criterias)?;
 
                 if evaluation_statuses
                     .iter()
-                    .any(|s| matches!(s, EvaluationStatus::Adopted))
+                    .any(|result| result.status == EvaluationStatus::Adopted)
                 {
-                    return Ok(EvaluationStatus::Adopted);
+                    return Ok(CriteriaResult {
+                        status: EvaluationStatus::Adopted,
+                        evaluated_criteria: EvaluatedCriteria::Or(evaluation_statuses),
+                    });
                 }
 
                 if evaluation_statuses
                     .iter()
-                    .all(|s| matches!(s, EvaluationStatus::Rejected))
+                    .all(|result| result.status == EvaluationStatus::Rejected)
                 {
-                    return Ok(EvaluationStatus::Rejected);
+                    return Ok(CriteriaResult {
+                        status: EvaluationStatus::Rejected,
+                        evaluated_criteria: EvaluatedCriteria::Or(evaluation_statuses),
+                    });
                 }
 
-                Ok(EvaluationStatus::Pending)
+                Ok(CriteriaResult {
+                    status: EvaluationStatus::Pending,
+                    evaluated_criteria: EvaluatedCriteria::Or(evaluation_statuses),
+                })
             }
-            Criteria::Not(criteria) => Ok(
-                match self.evaluate((proposal, Arc::new(criteria.as_ref().to_owned())))? {
-                    EvaluationStatus::Pending => EvaluationStatus::Pending,
-                    EvaluationStatus::Adopted => EvaluationStatus::Rejected,
-                    EvaluationStatus::Rejected => EvaluationStatus::Adopted,
+            Criteria::Not(criteria) => {
+                let evaluation_result =
+                    self.evaluate((proposal.to_owned(), Arc::new(criteria.as_ref().to_owned())))?;
+                Ok(CriteriaResult {
+                    status: match evaluation_result.status {
+                        EvaluationStatus::Pending => EvaluationStatus::Pending,
+                        EvaluationStatus::Adopted => EvaluationStatus::Rejected,
+                        EvaluationStatus::Rejected => EvaluationStatus::Adopted,
+                    },
+                    evaluated_criteria: EvaluatedCriteria::Not(Box::new(evaluation_result)),
+                })
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+pub mod criteria_test_utils {
+    use super::*;
+
+    pub fn mock_proposal_evaluation_result() -> ProposalEvaluationResult {
+        ProposalEvaluationResult {
+            proposal_id: [0; 16],
+            status: EvaluationStatus::Adopted,
+            policy_results: vec![
+                CriteriaResult {
+                    status: EvaluationStatus::Adopted,
+                    evaluated_criteria: EvaluatedCriteria::Or(vec![
+                        CriteriaResult {
+                            status: EvaluationStatus::Adopted,
+                            evaluated_criteria: EvaluatedCriteria::HasAddressInAddressBook,
+                        },
+                        CriteriaResult {
+                            status: EvaluationStatus::Rejected,
+                            evaluated_criteria: EvaluatedCriteria::ApprovalThreshold {
+                                min_required_votes: 2,
+                                total_possible_votes: 3,
+                                votes: vec![[0; 16], [1; 16]],
+                            },
+                        },
+                    ]),
                 },
-            ),
+                CriteriaResult {
+                    status: EvaluationStatus::Rejected,
+                    evaluated_criteria: EvaluatedCriteria::MinimumVotes {
+                        min_required_votes: 2,
+                        votes: vec![[0; 16], [1; 16]],
+                        total_possible_votes: 3,
+                    },
+                },
+            ],
         }
     }
 }

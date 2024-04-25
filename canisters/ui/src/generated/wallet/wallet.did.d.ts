@@ -174,6 +174,10 @@ export type CreateProposalResult = {
     }
   } |
   { 'Err' : Error };
+export interface CriteriaResult {
+  'status' : EvaluationStatus,
+  'evaluated_criteria' : EvaluatedCriteria,
+}
 export interface DisplayUser { 'id' : UUID, 'name' : [] | [string] }
 export interface EditAccessPolicyOperation {
   'input' : EditAccessPolicyOperationInput,
@@ -230,6 +234,29 @@ export interface Error {
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
+export type EvaluatedCriteria = { 'Or' : Array<CriteriaResult> } |
+  { 'And' : Array<CriteriaResult> } |
+  { 'Not' : CriteriaResult } |
+  { 'HasAddressInAddressBook' : null } |
+  { 'HasAddressBookMetadata' : { 'metadata' : AddressBookMetadata } } |
+  {
+    'MinimumVotes' : {
+      'total_possible_votes' : bigint,
+      'votes' : Array<UUID>,
+      'min_required_votes' : bigint,
+    }
+  } |
+  {
+    'ApprovalThreshold' : {
+      'total_possible_votes' : bigint,
+      'votes' : Array<UUID>,
+      'min_required_votes' : bigint,
+    }
+  } |
+  { 'AutoAdopted' : null };
+export type EvaluationStatus = { 'Rejected' : null } |
+  { 'Adopted' : null } |
+  { 'Pending' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
@@ -386,6 +413,7 @@ export type ListProposalPoliciesResult = {
 export interface ListProposalsInput {
   'sort_by' : [] | [ListProposalsSortBy],
   'voter_ids' : [] | [Array<UUID>],
+  'with_evaluation_results' : boolean,
   'expiration_from_dt' : [] | [TimestampRFC3339],
   'created_to_dt' : [] | [TimestampRFC3339],
   'statuses' : [] | [Array<ProposalStatusCode>],
@@ -506,9 +534,15 @@ export interface Proposal {
 export interface ProposalAdditionalInfo {
   'id' : UUID,
   'voters' : Array<DisplayUser>,
+  'evaluation_result' : [] | [ProposalEvaluationResult],
   'proposer_name' : [] | [string],
 }
 export interface ProposalCallerPrivileges { 'id' : UUID, 'can_vote' : boolean }
+export interface ProposalEvaluationResult {
+  'status' : EvaluationStatus,
+  'proposal_id' : UUID,
+  'policy_results' : Array<CriteriaResult>,
+}
 export type ProposalExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type ProposalOperation = {

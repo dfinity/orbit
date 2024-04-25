@@ -1,4 +1,4 @@
-use super::criteria::ApprovalCriteriaInput;
+use super::criteria::{ApprovalCriteriaInput, ProposalEvaluationResult};
 use super::{
     DisplayUser, EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote,
     ProposalVoteStatus, UserId, UserKey,
@@ -77,11 +77,12 @@ pub struct ProposalCallerPrivileges {
     pub can_vote: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ProposalAdditionalInfo {
     pub id: UUID,
     pub proposer_name: Option<String>,
     pub voters: Vec<DisplayUser>,
+    pub evaluation_result: Option<ProposalEvaluationResult>,
 }
 
 fn validate_title(title: &str) -> ModelValidatorResult<ProposalError> {
@@ -326,24 +327,26 @@ impl Proposal {
         Ok(())
     }
 
-    pub async fn reevaluate(&mut self) -> Result<(), EvaluateError> {
-        if let ProposalStatus::Created = self.status {
+    pub async fn reevaluate(&mut self) -> Result<Option<ProposalEvaluationResult>, EvaluateError> {
+        if self.status == ProposalStatus::Created {
             let evaluator = ProposalEvaluator {
                 proposal: self.to_owned(),
                 proposal_matcher: PROPOSAL_MATCHER.to_owned(),
                 criteria_evaluator: CRITERIA_EVALUATOR.to_owned(),
             };
 
-            let evaluation_status = evaluator.evaluate()?;
+            let evaluation_result = evaluator.evaluate()?;
 
-            if evaluation_status == EvaluationStatus::Adopted {
+            if evaluation_result.status == EvaluationStatus::Adopted {
                 self.status = ProposalStatus::Adopted;
-            } else if evaluation_status == EvaluationStatus::Rejected {
+            } else if evaluation_result.status == EvaluationStatus::Rejected {
                 self.status = ProposalStatus::Rejected;
             }
-        }
 
-        Ok(())
+            Ok(Some(evaluation_result))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn find_all_possible_voters(&self) -> Result<HashSet<UUID>, EvaluateError> {

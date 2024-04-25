@@ -12,7 +12,10 @@ use crate::{
         DisplayUser, NotificationType, Proposal, ProposalAdditionalInfo, ProposalCallerPrivileges,
         ProposalCreatedNotification, ProposalStatus, ProposalStatusCode, ProposalVoteStatus,
     },
-    repositories::{ProposalRepository, ProposalWhereClause, PROPOSAL_REPOSITORY},
+    repositories::{
+        EvaluationResultRepository, ProposalRepository, ProposalWhereClause,
+        EVALUATION_RESULT_REPOSITORY, PROPOSAL_REPOSITORY,
+    },
     services::{NotificationService, UserService, NOTIFICATION_SERVICE, USER_SERVICE},
 };
 use ic_canister_core::utils::rfc3339_to_timestamp;
@@ -31,6 +34,7 @@ lazy_static! {
         Arc::clone(&USER_SERVICE),
         Arc::clone(&PROPOSAL_REPOSITORY),
         Arc::clone(&NOTIFICATION_SERVICE),
+        Arc::clone(&EVALUATION_RESULT_REPOSITORY),
     ));
 }
 
@@ -38,6 +42,7 @@ lazy_static! {
 pub struct ProposalService {
     user_service: Arc<UserService>,
     proposal_repository: Arc<ProposalRepository>,
+    evaluation_result_repository: Arc<EvaluationResultRepository>,
     notification_service: Arc<NotificationService>,
 }
 
@@ -55,11 +60,13 @@ impl ProposalService {
         user_service: Arc<UserService>,
         proposal_repository: Arc<ProposalRepository>,
         notification_service: Arc<NotificationService>,
+        evaluation_result_repository: Arc<EvaluationResultRepository>,
     ) -> Self {
         Self {
             user_service,
             proposal_repository,
             notification_service,
+            evaluation_result_repository,
         }
     }
 
@@ -92,6 +99,7 @@ impl ProposalService {
     pub fn get_proposal_additional_info(
         &self,
         proposal: &Proposal,
+        with_evaluation_results: bool,
     ) -> ServiceResult<ProposalAdditionalInfo> {
         let proposer = self
             .user_service
@@ -115,10 +123,19 @@ impl ProposalService {
             })
             .collect();
 
+        let evaluation_result = with_evaluation_results
+            .then(|| {
+                self.evaluation_result_repository
+                    .get(&proposal.id)
+                    .map(|evaluation| evaluation.to_owned())
+            })
+            .flatten();
+
         Ok(ProposalAdditionalInfo {
             id: proposal.id,
             proposer_name: proposer,
             voters,
+            evaluation_result,
         })
     }
 
@@ -313,10 +330,15 @@ impl ProposalService {
 
         // When a proposal is created, it is immediately evaluated to determine its status.
         // This is done because the proposal may be immediately rejected or adopted based on the policies.
-        proposal.reevaluate().await?;
+        let maybe_evaluation = proposal.reevaluate().await?;
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
+
+        if let Some(evaluation) = maybe_evaluation {
+            self.evaluation_result_repository
+                .insert(proposal.id, evaluation);
+        }
 
         self.created_proposal_hook(&proposal).await;
 
@@ -378,10 +400,15 @@ impl ProposalService {
         proposal.add_vote(voter.id, vote_decision, input.reason)?;
 
         // Must happen after the vote is added to the proposal to ensure the vote is counted.
-        proposal.reevaluate().await?;
+        let maybe_evaluation = proposal.reevaluate().await?;
 
         self.proposal_repository
             .insert(proposal.to_key(), proposal.to_owned());
+
+        if let Some(evaluation) = maybe_evaluation {
+            self.evaluation_result_repository
+                .insert(proposal.id, evaluation);
+        }
 
         Ok(proposal)
     }
@@ -690,6 +717,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: false,
+                    with_evaluation_results: false,
                 },
                 &ctx.call_context,
             )
@@ -803,6 +831,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
+                    with_evaluation_results: false,
                 },
                 &ctx.call_context,
             )
@@ -827,6 +856,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
+                    with_evaluation_results: false,
                 },
                 &CallContext::new(transfer_requester_user.identities[0]),
             )
@@ -850,6 +880,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
+                    with_evaluation_results: false,
                 },
                 &CallContext::new(no_access_user.identities[0]),
             )
@@ -888,6 +919,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
+                    with_evaluation_results: false,
                 },
                 &ctx.call_context,
             )
@@ -983,6 +1015,7 @@ mod benchs {
                                 wallet_api::SortDirection::Asc,
                             )),
                             only_votable: false,
+                            with_evaluation_results: false,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
@@ -1029,6 +1062,7 @@ mod benchs {
                                 wallet_api::SortDirection::Asc,
                             )),
                             only_votable: false,
+                            with_evaluation_results: false,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )

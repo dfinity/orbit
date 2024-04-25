@@ -71,6 +71,7 @@ mod configuration;
 pub use configuration::*;
 
 pub mod criteria;
+pub use criteria::*;
 
 pub mod access_policy;
 

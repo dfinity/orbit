@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const CriteriaResult = IDL.Rec();
   const ProposalPolicyCriteria = IDL.Rec();
   const SystemUpgrade = IDL.Record({});
   const SystemInit = IDL.Record({
@@ -424,9 +425,44 @@ export const idlFactory = ({ IDL }) => {
     'proposed_by' : UUID,
   });
   const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Opt(IDL.Text) });
+  const EvaluationStatus = IDL.Variant({
+    'Rejected' : IDL.Null,
+    'Adopted' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
+  const EvaluatedCriteria = IDL.Variant({
+    'Or' : IDL.Vec(CriteriaResult),
+    'And' : IDL.Vec(CriteriaResult),
+    'Not' : CriteriaResult,
+    'HasAddressInAddressBook' : IDL.Null,
+    'HasAddressBookMetadata' : IDL.Record({ 'metadata' : AddressBookMetadata }),
+    'MinimumVotes' : IDL.Record({
+      'total_possible_votes' : IDL.Nat64,
+      'votes' : IDL.Vec(UUID),
+      'min_required_votes' : IDL.Nat64,
+    }),
+    'ApprovalThreshold' : IDL.Record({
+      'total_possible_votes' : IDL.Nat64,
+      'votes' : IDL.Vec(UUID),
+      'min_required_votes' : IDL.Nat64,
+    }),
+    'AutoAdopted' : IDL.Null,
+  });
+  CriteriaResult.fill(
+    IDL.Record({
+      'status' : EvaluationStatus,
+      'evaluated_criteria' : EvaluatedCriteria,
+    })
+  );
+  const ProposalEvaluationResult = IDL.Record({
+    'status' : EvaluationStatus,
+    'proposal_id' : UUID,
+    'policy_results' : IDL.Vec(CriteriaResult),
+  });
   const ProposalAdditionalInfo = IDL.Record({
     'id' : UUID,
     'voters' : IDL.Vec(DisplayUser),
+    'evaluation_result' : IDL.Opt(ProposalEvaluationResult),
     'proposer_name' : IDL.Opt(IDL.Text),
   });
   const CreateProposalResult = IDL.Variant({
@@ -770,6 +806,7 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalsInput = IDL.Record({
     'sort_by' : IDL.Opt(ListProposalsSortBy),
     'voter_ids' : IDL.Opt(IDL.Vec(UUID)),
+    'with_evaluation_results' : IDL.Bool,
     'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
     'created_to_dt' : IDL.Opt(TimestampRFC3339),
     'statuses' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
