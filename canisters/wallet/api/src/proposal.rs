@@ -220,7 +220,7 @@ pub struct ListProposalsInput {
     pub paginate: Option<PaginationInput>,
     pub sort_by: Option<ListProposalsSortBy>,
     pub only_votable: bool,
-    pub return_evaluation_results: bool,
+    pub with_evaluation_results: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

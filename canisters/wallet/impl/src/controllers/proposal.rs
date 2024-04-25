@@ -107,7 +107,7 @@ impl ProposalController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::Proposal(ProposalResourceAction::List)]))]
     async fn list_proposals(&self, input: ListProposalsInput) -> ApiResult<ListProposalsResponse> {
         let ctx = call_context();
-        let return_evaluation_results = input.return_evaluation_results;
+        let with_evaluation_results = input.with_evaluation_results;
         let result = self.proposal_service.list_proposals(input, &ctx).await?;
 
         let mut privileges = Vec::new();
@@ -121,7 +121,7 @@ impl ProposalController {
 
             let additional_info = self
                 .proposal_service
-                .get_proposal_additional_info(proposal, return_evaluation_results)?;
+                .get_proposal_additional_info(proposal, with_evaluation_results)?;
 
             privileges.push(ProposalCallerPrivilegesDTO::from(privilege));
             additionals.push(ProposalAdditionalInfoDTO::from(additional_info));

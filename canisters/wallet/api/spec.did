@@ -89,14 +89,14 @@ type ProposalPolicyCriteria = variant {
 };
 
 // Defines the high level result of evaluating a proposal policy criteria.
-type EvaluationStatusDTO = variant {
+type EvaluationStatus = variant {
   Adopted;
   Rejected;
   Pending;
 };
 
 // Defines the evaluation data of a proposal policy criteria.
-type EvaluatedCriteriaDTO = variant {
+type EvaluatedCriteria = variant {
   AutoAdopted;
   ApprovalThreshold : record {
     min_required_votes : nat64;
@@ -110,27 +110,27 @@ type EvaluatedCriteriaDTO = variant {
   };
   HasAddressBookMetadata : AddressBookMetadata;
   HasAddressInAddressBook;
-  Or : vec CriteriaResultDTO;
-  And : vec CriteriaResultDTO;
-  Not : CriteriaResultDTO;
+  Or : vec CriteriaResult;
+  And : vec CriteriaResult;
+  Not : CriteriaResult;
 };
 
 // A record type representing the full evaluation result of a proposal policy criteria.
-type CriteriaResultDTO = record {
+type CriteriaResult = record {
   // The final evaluation status of the criteria.
-  status : EvaluationStatusDTO;
+  status : EvaluationStatus;
   // The result of the evaluation of the criteria and all its sub-criteria.
-  evaluated_criteria : EvaluatedCriteriaDTO;
+  evaluated_criteria : EvaluatedCriteria;
 };
 
 // A record type representing the full evaluation result of all matching policies for a proposal.
-type ProposalEvaluationResultDTO = record {
+type ProposalEvaluationResult = record {
   // The proposal id that was evaluated.
   proposal_id : UUID;
   // The final evaluation status of the proposal.
-  status : EvaluationStatusDTO;
+  status : EvaluationStatus;
   // The evaluation results of all matching policies.
-  policy_results : vec CriteriaResultDTO;
+  policy_results : vec CriteriaResult;
 };
 
 // Defines a user in the context of a proposal.
@@ -715,7 +715,7 @@ type ProposalAdditionalInfo = record {
   // Display information for the voters.
   voters : vec DisplayUser;
   // The evaluation result of all matching policies for the proposal.
-  evaluation_result : opt ProposalEvaluationResultDTO;
+  evaluation_result : opt ProposalEvaluationResult;
 };
 
 // A record type that can be used to represent a proposed operation in the wallet.
@@ -846,7 +846,7 @@ type ListProposalsInput = record {
   // Return only proposals the the user can vote on.
   only_votable : bool;
   // Return the full evaluation results for the proposals.
-  return_evaluation_results : bool;
+  with_evaluation_results : bool;
 };
 
 // The result type for getting the list of proposals.

@@ -99,7 +99,7 @@ impl ProposalService {
     pub fn get_proposal_additional_info(
         &self,
         proposal: &Proposal,
-        with_evaluation_result: bool,
+        with_evaluation_results: bool,
     ) -> ServiceResult<ProposalAdditionalInfo> {
         let proposer = self
             .user_service
@@ -123,7 +123,7 @@ impl ProposalService {
             })
             .collect();
 
-        let evaluation_result = with_evaluation_result
+        let evaluation_result = with_evaluation_results
             .then(|| {
                 self.evaluation_result_repository
                     .get(&proposal.id)
@@ -717,7 +717,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: false,
-                    return_evaluation_results: false,
+                    with_evaluation_results: false,
                 },
                 &ctx.call_context,
             )
@@ -831,7 +831,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
-                    return_evaluation_results: false,
+                    with_evaluation_results: false,
                 },
                 &ctx.call_context,
             )
@@ -856,7 +856,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
-                    return_evaluation_results: false,
+                    with_evaluation_results: false,
                 },
                 &CallContext::new(transfer_requester_user.identities[0]),
             )
@@ -880,7 +880,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
-                    return_evaluation_results: false,
+                    with_evaluation_results: false,
                 },
                 &CallContext::new(no_access_user.identities[0]),
             )
@@ -919,7 +919,7 @@ mod tests {
                     paginate: None,
                     sort_by: None,
                     only_votable: true,
-                    return_evaluation_results: false,
+                    with_evaluation_results: false,
                 },
                 &ctx.call_context,
             )
@@ -1015,6 +1015,7 @@ mod benchs {
                                 wallet_api::SortDirection::Asc,
                             )),
                             only_votable: false,
+                            with_evaluation_results: false,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
@@ -1061,6 +1062,7 @@ mod benchs {
                                 wallet_api::SortDirection::Asc,
                             )),
                             only_votable: false,
+                            with_evaluation_results: false,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
