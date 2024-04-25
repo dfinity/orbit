@@ -33,67 +33,71 @@ Example textual representation of Principals: `un4fu-tqaaa-aaaab-qadjq-cai`
 
 ## Orbit Components
 
-### Control panel
+### Core
 
-The control panel is a canister that facilitates common operations for accessing and managing Orbit Stations. It is responsible for storing the list of station canisters the user is associated and facilitating the creation of new station canisters.
-
-### Station
+#### Station
 
 A station is the core canister component of Orbit. It is a trustless multi-custody canister that allows users to manage their crypto assets and operations. Stations are created by the user and can be shared with other users to create a multi-signature system for managing assets.
 
-### Upgrader
+#### Upgrader
 
 The upgrader is a canister that is responsible for upgrading the Orbit station canister. Each station canister has an associated upgrader canister that allows the station users to upgrade the station canister to a new version.
 
-### Wallet UI
+#### Control panel
 
-The Wallet UI is the user interface (UI) of the Orbit Wallet. It is a web application that allows users to interact with their stattions, view their balances, send and receive tokens, and manage their accounts.
+The control panel is a canister that facilitates common operations for accessing and managing Orbit Stations. It is responsible for storing the list of station canisters the user is associated and facilitating the creation of new station canisters.
+
+### Applications
+
+#### Wallet
+
+Wallet is the user interface (UI) for wallet management in the Orbit ecosystem. It is a web application that allows users to interact with their stations, view their balances, send and receive tokens, and manage their accounts.
 
 ## Orbit Terms
 
-### Action
+### Request
 
-All operations in the Station canister are performed through actions. Actions are signed by the user's Identity and are sent to the Station canister to execute them, such as sending tokens or adding a new account. Actions are only executed if they pass the relevant checks and validations, this includes the required signatures and permissions applied by the approval policies of the station.
+All operations in the Station canister are performed through requests. Requests are signed by the user's Identity and are sent to the Station canister to execute them, such as sending tokens or adding a new account. Requests are only executed if they pass the relevant checks and validations, this includes the required signatures and permissions applied by the approval policies of the station.
 
-### Action Operation
+### Request Operation
 
-An action operation specifies what the station canister should do when executing the action. They include operations such as transferring tokens, adding accounts, or updating permissions.
+A request operation specifies what the station canister should do when executing the request. They include operations such as transferring tokens, adding accounts, or updating permissions.
 
-#### Action Status
+#### Request Status
 
-Actions can have the following statuses:
+Requests can have the following statuses:
 
-- **AwaitingApproval:** An action is in the awaiting approval state when it has been submitted to the station canister for evaluation. These actions can be canceled by the user who submitted them.
+- **Created:** A request is in the created state when it has been submitted to the station canister for evaluation. These requests can be canceled by the user who submitted them.
 
-- **Approved:** An action is in the approved state when it has passed all rules in the Action Policy. Approved actions can be scheduled for execution by the station canister.
+- **Cancelled:** A request is in the cancelled state when it has been canceled by the user who submitted it. Cancelled requests cannot be executed by the station canister.
 
-- **Rejected:** An action is in the rejected state when it has failed to pass the rules in the Action Policy. Rejected actions cannot be executed by the station canister.
+- **Approved:** A request is in the approved state when it has passed all rules in the Request Policy. Approved requests can be scheduled for execution by the station canister.
 
-- **Scheduled:** An action is in the scheduled state when it has been approved and is waiting to be executed. Scheduled actions are executed by the station canister in the scheduled order.
+- **Rejected:** A request is in the rejected state when it has failed to pass the rules in the Request Policy. Rejected requests cannot be executed by the station canister.
 
-- **Cancelled:** An action is in the cancelled state when it has been canceled by the user who submitted it. Cancelled actions cannot be executed by the station canister.
+- **Scheduled:** A request is in the scheduled state when it has been approved and is waiting to be executed. Scheduled requests are executed by the station canister in the scheduled order.
 
-- **Processing:** An action is in the processing state when it is being executed by the station canister. These actions are being processed and will transition to the completed or failed state once the execution is complete.
+- **Processing:** A request is in the processing state when it is being executed by the station canister. These requests are being processed and will transition to the completed or failed state once the execution is complete.
 
-- **Completed:** An action is in the completed state when it has been successfully executed by the station canister. Completed actions have successfully performed the operation specified.
+- **Completed:** A request is in the completed state when it has been successfully executed by the station canister. Completed requests have successfully performed the operation specified.
 
-- **Failed:** An action is in the failed state when it has failed to be executed by the station canister. Failed actions have not performed the operation specified.
+- **Failed:** A request is in the failed state when it has failed to be executed by the station canister. Failed requests have not performed the operation specified.
 
-#### Action Policy
+#### Request Policy
 
-An Action Policy is a set of rules that define the behavior of actions in the station canister. Policies are used to enforce security measures, such as requiring multiple signatures to execute on an action, they are defined by authorized users and can be customized to fit the needs of different use cases.
+A Request Policy is a set of rules that define the behavior of requests in the station canister. Policies are used to enforce security measures, such as requiring multiple signatures to execute a request, they are defined by authorized users and can be customized to fit the needs of different use cases.
 
-#### Action Policy Rule
+#### Request Policy Rule
 
-An Action Policy Rule is a condition that must be met for an action to be approved by the station canister. Policy rules can be based on the action operation, the action sender, or other parameter of the action. Policy rules are defined by authorized users and can be customized to fit the needs of different use cases.
+A Request Policy Rule is a condition that must be met for a request to be approved by the station canister. Rules can be based on the request operation, the request proposer, or other parameter of the request. Policy rules are defined by authorized users and can be customized to fit the needs of different use cases.
 
 These rules can be of the following types:
 
-- **Auto-Approve:** An auto-approve rule automatically approves actions, regardless of the action parameters. Auto-approve rules can be used to expedite the execution of actions that do not require manual approval.
+- **Auto-Approve:** An auto-approve rule automatically approves requests, regardless of the parameters. Auto-approve rules can be used to expedite the execution of requests that do not require manual approval, this is commonly used on single user stations.
 
-- **Quorum:** A threshold rule requires a minimum number of signatures to approve an action. Threshold rules can be used to enforce multi-signature requirements for executing actions.
+- **Quorum:** A quotum rule requires a minimum number of signatures to approve a request. Quorum rules can be used to enforce multi-signature requirements for executing requests.
 
-- **Percentage:** A percentage rule requires a minimum percentage of users to approve an action. Percentage rules can be used to enforce multi-signature requirements based on the percentage of users in the station.
+- **Percentage:** A percentage rule requires a minimum percentage of users to approve a request. Percentage rules can be used to enforce multi-signature requirements based on the percentage of users in the station.
 
 - **Allow listed:** An allow-list rule are only relevant to transfers and checks if the destination address is in the allow-list. Allow-list rules can be used to restrict transfers to specific addresses that are in the address book.
 
@@ -105,15 +109,15 @@ There are also the following composite rules that can be used to combine multipl
 
 - **Any of:** A rule that requires any of the sub-rules to be approved. This rule can be used to enforce flexible approval requirements that allow for multiple conditions.
 
-- **Not:** A rule that requires the sub-rule to be rejected. This rule can be used to enforce negative approval requirements that prevent specific conditions from being met. An example of this rule is to prevent a specific user from approving an action.
+- **Not:** A rule that requires the sub-rule to be rejected. This rule can be used to enforce negative approval requirements that prevent specific conditions from being met. An example of this rule is to prevent a specific user from approving a request.
 
 ### Permission
 
-Permissions are rules that define the actions that a user can perform in a station canister. Permissions are defined by the authorized station users and can be customized to fit the needs of different use cases. Permissions can be granted to individual users, groups of users or any (un)authenticated user and can be revoked at any time.
+Permissions are rules that define the functionality that a user can access in a station canister. Permissions are defined by the authorized station users and can be customized to fit the needs of different use cases. Permissions can be granted to individual users, groups of users or any (un)authenticated user and can be revoked at any time.
 
 ### Account
 
-An account is a record in the station canister that represents a user's ownership of a specific asset. Accounts can hold different types of assets, such as tokens, NFTs, or other fungible or non-fungible assets. Accounts can be created, updated, and archived by the station users through actions.
+An account is a record in the station canister that represents a user's ownership of a specific asset. Accounts can hold different types of assets, such as tokens, NFTs, or other fungible or non-fungible assets. Accounts can be created, updated, and archived by the station users through requests.
 
 #### Account Name
 
