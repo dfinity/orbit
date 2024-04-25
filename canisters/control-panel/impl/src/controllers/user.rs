@@ -27,7 +27,7 @@ async fn get_user() -> ApiResult<GetUserResponse> {
 
 #[update(name = "set_user_active")]
 async fn set_user_active() -> ApiResult<()> {
-    Ok(())
+    CONTROLLER.set_user_active().await
 }
 
 #[update(name = "register_user")]
