@@ -1,7 +1,8 @@
-use super::criteria::ProposalEvaluationResult;
+
+use super::criteria::{ApprovalCriteriaInput, ProposalEvaluationResult};
 use super::{
     DisplayUser, EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote,
-    ProposalVoteStatus, UserId,
+    ProposalVoteStatus, UserId, UserKey,
 };
 use crate::core::evaluation::{
     Evaluate, CRITERIA_EVALUATOR, PROPOSAL_MATCHER, PROPOSAL_POSSIBLE_VOTERS_CRITERIA_EVALUATOR,
@@ -11,8 +12,14 @@ use crate::core::ic_cdk::api::{print, time};
 use crate::core::proposal::{
     ProposalEvaluator, ProposalPossibleVotersFinder, ProposalVoteRightsEvaluator,
 };
-use crate::errors::{EvaluateError, ProposalError};
+use crate::core::validation::{
+    EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureProposalPolicy, EnsureUser,
+    EnsureUserGroup,
+};
+use crate::errors::{EvaluateError, ProposalError, RecordValidationError};
+use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
+use ic_canister_core::repository::Repository;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
@@ -107,10 +114,135 @@ fn validate_summary(summary: &Option<String>) -> ModelValidatorResult<ProposalEr
     Ok(())
 }
 
+fn validate_proposed_by(proposed_by: &UserId) -> ModelValidatorResult<ProposalError> {
+    USER_REPOSITORY
+        .get(&UserKey { id: *proposed_by })
+        .ok_or(ProposalError::ValidationError {
+            info: "The proposed_by user does not exist".to_owned(),
+        })?;
+    Ok(())
+}
+
+fn validate_proposal_operation_foreign_keys(
+    operation: &ProposalOperation,
+) -> ModelValidatorResult<RecordValidationError> {
+    match operation {
+        ProposalOperation::Transfer(op) => EnsureAccount::id_exists(&op.input.from_account_id),
+        ProposalOperation::AddAccount(op) => {
+            op.input.read_access_policy.validate()?;
+            op.input.update_access_policy.validate()?;
+            op.input.transfer_access_policy.validate()?;
+
+            if let Some(criteria) = &op.input.transfer_approval_policy {
+                criteria.validate()?;
+            }
+
+            if let Some(criteria) = &op.input.update_approval_policy {
+                criteria.validate()?;
+            }
+
+            Ok(())
+        }
+        ProposalOperation::EditAccount(op) => {
+            EnsureAccount::id_exists(&op.input.account_id)?;
+
+            if let Some(allow) = &op.input.read_access_policy {
+                allow.validate()?;
+            }
+
+            if let Some(allow) = &op.input.update_access_policy {
+                allow.validate()?;
+            }
+
+            if let Some(allow) = &op.input.transfer_access_policy {
+                allow.validate()?;
+            }
+
+            if let Some(ApprovalCriteriaInput::Set(criteria)) = &op.input.update_approval_policy {
+                criteria.validate()?;
+            }
+
+            if let Some(ApprovalCriteriaInput::Set(criteria)) = &op.input.transfer_approval_policy {
+                criteria.validate()?;
+            }
+
+            Ok(())
+        }
+        ProposalOperation::AddAddressBookEntry(_) => Ok(()),
+        ProposalOperation::EditAddressBookEntry(op) => {
+            EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)
+        }
+        ProposalOperation::RemoveAddressBookEntry(op) => {
+            EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)
+        }
+        ProposalOperation::AddUser(op) => EnsureUserGroup::id_list_exists(&op.input.groups),
+        ProposalOperation::EditUser(op) => {
+            EnsureUser::id_exists(&op.input.user_id)?;
+
+            if let Some(group_ids) = &op.input.groups {
+                EnsureUserGroup::id_list_exists(group_ids)?;
+            }
+
+            Ok(())
+        }
+        ProposalOperation::EditAccessPolicy(op) => {
+            op.input.resource.validate()?;
+
+            if let Some(user_ids) = &op.input.users {
+                EnsureUser::id_list_exists(user_ids)?;
+            }
+
+            if let Some(group_ids) = &op.input.user_groups {
+                EnsureUserGroup::id_list_exists(group_ids)?;
+            }
+
+            Ok(())
+        }
+        ProposalOperation::AddUserGroup(_) => Ok(()),
+        ProposalOperation::EditUserGroup(op) => EnsureUserGroup::id_exists(&op.input.user_group_id),
+        ProposalOperation::RemoveUserGroup(ok) => {
+            EnsureUserGroup::id_exists(&ok.input.user_group_id)
+        }
+        ProposalOperation::ChangeCanister(_) => Ok(()),
+        ProposalOperation::AddProposalPolicy(op) => {
+            op.input.specifier.validate()?;
+            op.input.criteria.validate()?;
+
+            Ok(())
+        }
+        ProposalOperation::EditProposalPolicy(op) => {
+            EnsureProposalPolicy::id_exists(&op.input.policy_id)?;
+
+            if let Some(specifier) = &op.input.specifier {
+                specifier.validate()?;
+            }
+
+            if let Some(criteria) = &op.input.criteria {
+                criteria.validate()?;
+            }
+
+            Ok(())
+        }
+        ProposalOperation::RemoveProposalPolicy(op) => {
+            EnsureProposalPolicy::id_exists(&op.input.policy_id)
+        }
+    }
+}
+
 impl ModelValidator<ProposalError> for Proposal {
     fn validate(&self) -> ModelValidatorResult<ProposalError> {
         validate_title(&self.title)?;
         validate_summary(&self.summary)?;
+        validate_proposed_by(&self.proposed_by)?;
+
+        validate_proposal_operation_foreign_keys(&self.operation).map_err(|err| match err {
+            RecordValidationError::NotFound { model_name, id } => ProposalError::ValidationError {
+                info: format!(
+                    "Invalid proposal operation: {} {} does not exist",
+                    model_name, id
+                ),
+            },
+        })?;
 
         Ok(())
     }
@@ -170,19 +302,30 @@ impl Proposal {
         }
     }
 
-    pub fn add_vote(&mut self, user_id: UUID, vote: ProposalVoteStatus, reason: Option<String>) {
+    pub fn add_vote(
+        &mut self,
+        user_id: UUID,
+        vote: ProposalVoteStatus,
+        reason: Option<String>,
+    ) -> ModelValidatorResult<ProposalError> {
         if self.votes.iter().any(|vote| vote.user_id == user_id) {
             // users can only vote once per proposal
-            return;
+            return Err(ProposalError::VoteNotAllowed);
         }
 
-        self.votes.push(ProposalVote {
+        let vote = ProposalVote {
             user_id,
             status: vote,
             status_reason: reason,
             decided_dt: time(),
             last_modification_timestamp: time(),
-        });
+        };
+
+        vote.validate()?;
+
+        self.votes.push(vote);
+
+        Ok(())
     }
 
     pub async fn reevaluate(&mut self) -> Result<Option<ProposalEvaluationResult>, EvaluateError> {
@@ -221,6 +364,14 @@ impl Proposal {
 
 #[cfg(test)]
 mod tests {
+    use crate::core::validation::disable_mock_resource_validation;
+    use crate::models::access_policy::Allow;
+    use crate::models::{
+        AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Metadata,
+        TransferOperation, TransferOperationInput,
+    };
+    use crate::services::AccountService;
+
     use super::proposal_test_utils::mock_proposal;
     use super::*;
 
@@ -262,6 +413,207 @@ mod tests {
         let result = validate_summary(&proposal.summary);
 
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_proposal_operation_is_valid() {
+        disable_mock_resource_validation();
+
+        let account_service = AccountService::default();
+        let account = account_service
+            .create_account(AddAccountOperationInput {
+                name: "a".to_owned(),
+                blockchain: crate::models::Blockchain::InternetComputer,
+                standard: crate::models::BlockchainStandard::Native,
+                metadata: Metadata::default(),
+                read_access_policy: Allow::default(),
+                update_access_policy: Allow::default(),
+                transfer_access_policy: Allow::default(),
+                update_approval_policy: None,
+                transfer_approval_policy: None,
+            })
+            .await
+            .expect("Failed to create account");
+
+        let operation = ProposalOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            input: TransferOperationInput {
+                network: "mainnet".to_string(),
+                amount: 1u64.into(),
+                fee: None,
+                metadata: Metadata::default(),
+                to: "0x1234".to_string(),
+                from_account_id: account.id,
+            },
+        });
+
+        let result = validate_proposal_operation_foreign_keys(&operation);
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn fail_proposal_operation_with_invalid_id() {
+        disable_mock_resource_validation();
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            input: TransferOperationInput {
+                network: "mainnet".to_string(),
+                amount: 1u64.into(),
+                fee: None,
+                metadata: Metadata::default(),
+                to: "0x1234".to_string(),
+                from_account_id: [0; 16],
+            },
+        }))
+        .expect_err("Invalid account id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::AddUser(AddUserOperation {
+            user_id: None,
+            input: AddUserOperationInput {
+                name: None,
+                identities: vec![],
+                groups: vec![[1; 16]],
+                status: crate::models::UserStatus::Active,
+            },
+        }))
+        .expect_err("Invalid user group id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditUserGroup(
+            crate::models::EditUserGroupOperation {
+                input: crate::models::EditUserGroupOperationInput {
+                    user_group_id: [0; 16],
+                    name: "a".to_owned(),
+                },
+            },
+        ))
+        .expect_err("Invalid user group id should fail");
+        validate_proposal_operation_foreign_keys(&ProposalOperation::RemoveUserGroup(
+            crate::models::RemoveUserGroupOperation {
+                input: crate::models::RemoveUserGroupOperationInput {
+                    user_group_id: [0; 16],
+                },
+            },
+        ))
+        .expect_err("Invalid user group id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::AddProposalPolicy(
+            crate::models::AddProposalPolicyOperation {
+                policy_id: None,
+                input: crate::models::AddProposalPolicyOperationInput {
+                    specifier: crate::models::specifier::ProposalSpecifier::EditUser(
+                        crate::models::resource::ResourceIds::Ids(vec![[1; 16]]),
+                    ),
+                    criteria: crate::models::criteria::Criteria::AutoAdopted,
+                },
+            },
+        ))
+        .expect_err("Invalid proposal specifier should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditProposalPolicy(
+            crate::models::EditProposalPolicyOperation {
+                input: crate::models::EditProposalPolicyOperationInput {
+                    policy_id: [0; 16],
+                    specifier: None,
+                    criteria: None,
+                },
+            },
+        ))
+        .expect_err("Invalid proposal policy id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::RemoveProposalPolicy(
+            crate::models::RemoveProposalPolicyOperation {
+                input: crate::models::RemoveProposalPolicyOperationInput { policy_id: [0; 16] },
+            },
+        ))
+        .expect_err("Invalid proposal policy id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::AddAccount(
+            crate::models::AddAccountOperation {
+                account_id: None,
+                input: crate::models::AddAccountOperationInput {
+                    name: "a".to_owned(),
+                    blockchain: crate::models::Blockchain::InternetComputer,
+                    standard: crate::models::BlockchainStandard::Native,
+                    metadata: Metadata::default(),
+                    read_access_policy: Allow {
+                        auth_scope: crate::models::access_policy::AuthScope::Restricted,
+                        users: vec![[1; 16]],
+                        user_groups: vec![],
+                    },
+                    update_access_policy: Allow::default(),
+                    transfer_access_policy: Allow::default(),
+                    update_approval_policy: None,
+                    transfer_approval_policy: None,
+                },
+            },
+        ))
+        .expect_err("Invalid user id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditAccount(
+            crate::models::EditAccountOperation {
+                input: crate::models::EditAccountOperationInput {
+                    account_id: [0; 16],
+                    read_access_policy: None,
+                    update_access_policy: None,
+                    transfer_access_policy: None,
+                    update_approval_policy: None,
+                    transfer_approval_policy: None,
+                    name: None,
+                },
+            },
+        ))
+        .expect_err("Invalid account id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditAddressBookEntry(
+            crate::models::EditAddressBookEntryOperation {
+                input: crate::models::EditAddressBookEntryOperationInput {
+                    address_book_entry_id: [0; 16],
+                    address_owner: None,
+                    change_metadata: None,
+                },
+            },
+        ))
+        .expect_err("Invalid address book entry id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::RemoveAddressBookEntry(
+            crate::models::RemoveAddressBookEntryOperation {
+                input: crate::models::RemoveAddressBookEntryOperationInput {
+                    address_book_entry_id: [0; 16],
+                },
+            },
+        ))
+        .expect_err("Invalid address book entry id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditUser(
+            crate::models::EditUserOperation {
+                input: crate::models::EditUserOperationInput {
+                    user_id: [0; 16],
+                    groups: None,
+                    name: None,
+                    identities: None,
+                    status: None,
+                },
+            },
+        ))
+        .expect_err("Invalid user id should fail");
+
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditAccessPolicy(
+            crate::models::EditAccessPolicyOperation {
+                input: crate::models::EditAccessPolicyOperationInput {
+                    resource: crate::models::resource::Resource::Account(
+                        crate::models::resource::AccountResourceAction::Read(
+                            crate::models::resource::ResourceId::Id([0; 16]),
+                        ),
+                    ),
+                    users: None,
+                    user_groups: None,
+                    auth_scope: None,
+                },
+            },
+        ))
+        .expect_err("Invalid resource id should fail");
     }
 }
 

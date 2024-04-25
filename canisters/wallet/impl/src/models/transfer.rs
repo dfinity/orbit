@@ -1,6 +1,7 @@
 use super::{AccountId, UserId};
 use crate::core::ic_cdk::api::time;
-use crate::errors::TransferError;
+use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureProposal, EnsureUser};
+use crate::errors::{RecordValidationError, TransferError};
 use crate::models::Metadata;
 use ic_canister_core::{
     model::{ModelValidator, ModelValidatorResult},
@@ -167,12 +168,31 @@ impl ModelValidator<TransferError> for Transfer {
         validate_to_address(&self.to_address)?;
         validate_network(&self.blockchain_network)?;
 
+        EnsureUser::id_exists(&self.initiator_user).map_err(|err| match err {
+            RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
+                info: format!("The initiator_user {} does not exist", id),
+            },
+        })?;
+
+        EnsureAccount::id_exists(&self.from_account).map_err(|err| match err {
+            RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
+                info: format!("The from_account {} does not exist", id),
+            },
+        })?;
+
+        EnsureProposal::id_exists(&self.proposal_id).map_err(|err| match err {
+            RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
+                info: format!("The proposal_id {} does not exist", id),
+            },
+        })?;
+
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use transfer_test_utils::mock_transfer;
 

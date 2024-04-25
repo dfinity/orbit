@@ -242,13 +242,14 @@ impl UserService {
 mod tests {
     use super::*;
     use crate::{
-        core::test_utils,
+        core::{test_utils, validation::disable_mock_resource_validation},
         models::{
             access_policy::AuthScope,
+            user_group_test_utils::mock_user_group,
             user_test_utils::{self, mock_user},
             EditAccessPolicyOperationInput, UserStatus,
         },
-        repositories::USER_REPOSITORY,
+        repositories::{UserGroupRepository, USER_REPOSITORY},
         services::access_policy::ACCESS_POLICY_SERVICE,
     };
     use wallet_api::PaginationInput;
@@ -261,6 +262,10 @@ mod tests {
 
     fn setup() -> TestContext {
         test_utils::init_canister_system();
+
+        let user_group_repository = UserGroupRepository::default();
+
+        user_group_repository.insert(*ADMIN_GROUP_ID, mock_user_group());
 
         TestContext {
             repository: UserRepository::default(),
@@ -350,6 +355,27 @@ mod tests {
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
         assert_eq!(user.identities, vec![Principal::from_slice(&[2; 29])]);
         assert_eq!(user.groups, vec![*ADMIN_GROUP_ID]);
+    }
+
+    #[tokio::test]
+    async fn add_user_non_existent_group_should_fail() {
+        let ctx: TestContext = setup();
+
+        disable_mock_resource_validation();
+
+        let input = AddUserOperationInput {
+            identities: vec![Principal::from_slice(&[2; 29])],
+            groups: vec![[0; 16]],
+            status: UserStatus::Active,
+            name: None,
+        };
+
+        let result = ctx.service.add_user(input).await;
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "USER_GROUP_DOES_NOT_EXIST: The user group 00000000-0000-0000-0000-000000000000 does not exist."
+        );
     }
 
     #[tokio::test]

@@ -8,7 +8,8 @@ use crate::{
         Account, Metadata, Proposal, ProposalExecutionPlan, ProposalOperation, Transfer,
         TransferOperation, TransferOperationInput,
     },
-    repositories::{TransferRepository, ACCOUNT_REPOSITORY},
+    repositories::ACCOUNT_REPOSITORY,
+    services::TransferService,
 };
 use async_trait::async_trait;
 use ic_canister_core::model::ModelValidator;
@@ -72,7 +73,7 @@ impl Create<wallet_api::TransferOperationInput> for TransferProposalCreate {
 pub struct TransferProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
     operation: &'o TransferOperation,
-    transfer_repository: TransferRepository,
+    transfer_service: TransferService,
 }
 
 impl<'p, 'o> TransferProposalExecute<'p, 'o> {
@@ -80,7 +81,7 @@ impl<'p, 'o> TransferProposalExecute<'p, 'o> {
         Self {
             proposal,
             operation,
-            transfer_repository: TransferRepository::default(),
+            transfer_service: TransferService::default(),
         }
     }
 }
@@ -88,7 +89,6 @@ impl<'p, 'o> TransferProposalExecute<'p, 'o> {
 #[async_trait]
 impl Execute for TransferProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
-        let transfer_id = generate_uuid_v4().await;
         let account = get_account(&self.operation.input.from_account_id).ok_or(
             ProposalExecuteError::Failed {
                 reason: format!(
@@ -116,26 +116,22 @@ impl Execute for TransferProposalExecute<'_, '_> {
                 candid::Nat(transaction_fee.fee)
             }
         };
-        let transfer = Transfer::new(
-            self.proposal.id,
-            *transfer_id.as_bytes(),
-            self.proposal.proposed_by,
-            self.operation.input.from_account_id,
-            self.operation.input.to.clone(),
-            self.operation.input.metadata.clone(),
-            self.operation.input.amount.clone(),
-            fee,
-            self.operation.input.network.clone(),
-        );
 
-        transfer
-            .validate()
+        self.transfer_service
+            .add_transfer(Transfer::new(
+                self.proposal.id,
+                *generate_uuid_v4().await.as_bytes(),
+                self.proposal.proposed_by,
+                self.operation.input.from_account_id,
+                self.operation.input.to.clone(),
+                self.operation.input.metadata.clone(),
+                self.operation.input.amount.clone(),
+                fee,
+                self.operation.input.network.clone(),
+            ))
             .map_err(|e| ProposalExecuteError::Failed {
                 reason: format!("Failed to validate transfer: {}", e),
             })?;
-
-        self.transfer_repository
-            .insert(transfer.to_key(), transfer.to_owned());
 
         Ok(ProposalExecuteStage::Processing(
             self.proposal.operation.clone(),

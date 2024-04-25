@@ -1,8 +1,10 @@
 use crate::{
-    core::middlewares::call_context, mappers::notification::NotificationMapperError,
+    core::middlewares::{call_context, use_status_metric},
+    mappers::notification::NotificationMapperError,
     services::NotificationService,
 };
 use ic_canister_core::{api::ApiResult, cdk::api::print};
+use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use uuid::Uuid;
@@ -68,6 +70,7 @@ impl NotificationController {
     }
 
     /// No authorization required since the user will be calling this only for their own notifications.
+    #[with_middleware(tail = use_status_metric("call_mark_notifications_read", &result))]
     async fn mark_notifications_read(&self, input: MarkNotificationsReadInput) -> ApiResult<()> {
         self.notification_service
             .mark_read(input, &call_context())

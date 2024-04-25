@@ -10,6 +10,7 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::{account::AccountMapper, HelperMapper},
     models::{
+        criteria::ApprovalCriteriaInput,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         specifier::ProposalSpecifier,
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
@@ -142,9 +143,28 @@ impl AccountService {
             new_account.address = account_address;
         }
 
+        if let Some(criteria) = &input.transfer_approval_policy {
+            criteria.validate()?;
+        };
+        if let Some(criteria) = &input.update_approval_policy {
+            criteria.validate()?;
+        };
+
+        input.read_access_policy.validate()?;
+        input.update_access_policy.validate()?;
+        input.transfer_access_policy.validate()?;
+
         // The decimals of the asset are fetched from the blockchain and stored in the account,
         // depending on the blockchain standard used by the account the decimals used by each asset can vary.
         new_account.decimals = blockchain_api.decimals(&new_account).await?;
+
+        // Validate here before database operations.
+        new_account.validate()?;
+
+        // Insert the account into the repository already to avoid subsequent policy validators erroring
+        // out with invalid proposal specifier.
+        self.account_repository
+            .insert(key.clone(), new_account.clone());
 
         // adds the associated transfer policy based on the transfer criteria
         if let Some(criteria) = &input.transfer_approval_policy {
@@ -175,9 +195,6 @@ impl AccountService {
 
             new_account.update_approval_policy_id = Some(update_approval_policy.id);
         }
-
-        // Validations happen after all the fields are set in the account to avoid partial data in the repository.
-        new_account.validate()?;
 
         // Inserting the account into the repository and its associations is the last step of the account creation
         // process to avoid potential consistency issues due to the fact that some of the calls to create the account
@@ -238,6 +255,22 @@ impl AccountService {
                 Err(AccountError::AccountNameAlreadyExists)?
             }
         }
+
+        if let Some(ApprovalCriteriaInput::Set(criteria)) = &input.transfer_approval_policy {
+            criteria.validate()?;
+        };
+        if let Some(ApprovalCriteriaInput::Set(criteria)) = &input.update_approval_policy {
+            criteria.validate()?;
+        };
+        if let Some(access_policy) = &input.read_access_policy {
+            access_policy.validate()?;
+        };
+        if let Some(access_policy) = &input.update_access_policy {
+            access_policy.validate()?;
+        };
+        if let Some(access_policy) = &input.transfer_access_policy {
+            access_policy.validate()?;
+        };
 
         if let Some(transfer_approval_policy_input) = input.transfer_approval_policy {
             self.proposal_policy_service
@@ -375,11 +408,11 @@ mod tests {
 
     use super::*;
     use crate::{
-        core::{test_utils, CallContext},
+        core::{test_utils, validation::disable_mock_resource_validation, CallContext},
         models::{
             access_policy::Allow, account_test_utils::mock_account, criteria::Criteria,
-            user_test_utils::mock_user, AddAccountOperation, AddAccountOperationInput, Blockchain,
-            BlockchainStandard, Metadata, User,
+            specifier::UserSpecifier, user_test_utils::mock_user, AddAccountOperation,
+            AddAccountOperationInput, Blockchain, BlockchainStandard, Metadata, User,
         },
         repositories::UserRepository,
     };
@@ -444,6 +477,9 @@ mod tests {
     #[tokio::test]
     async fn add_account_with_existing_name_should_fail() {
         let ctx = setup();
+
+        disable_mock_resource_validation();
+
         let mut account = mock_account();
         account.name = "foo".to_string();
 
@@ -467,6 +503,73 @@ mod tests {
         let result = ctx.service.create_account(operation.input).await;
 
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn add_account_with_missing_policy_should_fail() {
+        let ctx = setup();
+
+        disable_mock_resource_validation();
+
+        let base_input = AddAccountOperationInput {
+            name: "foo".to_string(),
+            blockchain: Blockchain::InternetComputer,
+            standard: BlockchainStandard::Native,
+            metadata: Metadata::default(),
+            read_access_policy: Allow::users(vec![ctx.caller_user.id]),
+            update_access_policy: Allow::users(vec![ctx.caller_user.id]),
+            transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+            update_approval_policy: Some(Criteria::AutoAdopted),
+            transfer_approval_policy: Some(Criteria::AutoAdopted),
+        };
+
+        assert!(ctx.service.create_account(base_input.clone()).await.is_ok());
+
+        ctx.service
+            .create_account(AddAccountOperationInput {
+                read_access_policy: Allow::users(vec![[5; 16]]),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("read_access_policy should be invalid");
+
+        ctx.service
+            .create_account(AddAccountOperationInput {
+                update_access_policy: Allow::users(vec![[5; 16]]),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("update_access_policy should be invalid");
+
+        ctx.service
+            .create_account(AddAccountOperationInput {
+                transfer_access_policy: Allow::users(vec![[5; 16]]),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("transfer_access_policy should be invalid");
+
+        ctx.service
+            .create_account(AddAccountOperationInput {
+                update_approval_policy: Some(Criteria::MinimumVotes(
+                    UserSpecifier::Id(vec![[5; 16]]),
+                    1,
+                )),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("update_approval_policy should be invalid");
+
+        ctx.service
+            .create_account(AddAccountOperationInput {
+                transfer_approval_policy: Some(Criteria::MinimumVotes(
+                    UserSpecifier::Id(vec![[5; 16]]),
+                    1,
+                )),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("transfer_approval_policy should be invalid");
     }
 
     #[tokio::test]
@@ -542,5 +645,74 @@ mod tests {
         let result = ctx.service.create_account(operation.input).await;
 
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn edit_account_with_missing_policy_should_fail() {
+        let ctx = setup();
+
+        disable_mock_resource_validation();
+
+        let account = mock_account();
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let base_input = EditAccountOperationInput {
+            account_id: account.id,
+            name: Some("test_edit".to_string()),
+            read_access_policy: None,
+            transfer_access_policy: None,
+            update_access_policy: None,
+            transfer_approval_policy: None,
+            update_approval_policy: None,
+        };
+
+        assert!(ctx.service.edit_account(base_input.clone()).await.is_ok());
+
+        ctx.service
+            .edit_account(EditAccountOperationInput {
+                read_access_policy: Some(Allow::users(vec![[5; 16]])),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("read_access_policy should be invalid");
+
+        ctx.service
+            .edit_account(EditAccountOperationInput {
+                update_access_policy: Some(Allow::users(vec![[5; 16]])),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("update_access_policy should be invalid");
+
+        ctx.service
+            .edit_account(EditAccountOperationInput {
+                transfer_access_policy: Some(Allow::users(vec![[5; 16]])),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("transfer_access_policy should be invalid");
+
+        ctx.service
+            .edit_account(EditAccountOperationInput {
+                update_approval_policy: Some(ApprovalCriteriaInput::Set(Criteria::MinimumVotes(
+                    UserSpecifier::Id(vec![[5; 16]]),
+                    1,
+                ))),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("update_approval_policy should be invalid");
+
+        ctx.service
+            .edit_account(EditAccountOperationInput {
+                transfer_approval_policy: Some(ApprovalCriteriaInput::Set(Criteria::MinimumVotes(
+                    UserSpecifier::Id(vec![[5; 16]]),
+                    1,
+                ))),
+                ..base_input.clone()
+            })
+            .await
+            .expect_err("transfer_approval_policy should be invalid");
     }
 }

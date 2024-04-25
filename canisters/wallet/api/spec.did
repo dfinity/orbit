@@ -1397,6 +1397,8 @@ type SystemInfo = record {
   cycles : nat64;
   // The time at which the canister was last upgraded.
   last_upgrade_timestamp : TimestampRFC3339;
+  // Did the canister successfully fetched randomness from the management canister.
+  raw_rand_successful : bool;
 };
 
 // Result type for getting the canister system information.

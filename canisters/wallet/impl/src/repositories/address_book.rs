@@ -1,7 +1,7 @@
 use super::indexes::address_book_index::AddressBookIndexRepository;
 use super::indexes::address_book_standard_index::AddressBookStandardIndexRepository;
 use crate::{
-    core::{with_memory_manager, Memory, ADDRESS_BOOK_MEMORY_ID},
+    core::{metrics::ADDRESS_BOOK_METRICS, with_memory_manager, Memory, ADDRESS_BOOK_MEMORY_ID},
     models::{
         indexes::{
             address_book_index::AddressBookIndexCriteria,
@@ -56,6 +56,14 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
     ) -> Option<AddressBookEntry> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
+
+            // Update metrics when an entry is upserted.
+            ADDRESS_BOOK_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
+
             self.index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index()),
@@ -69,6 +77,16 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
     fn remove(&self, key: &AddressBookEntryKey) -> Option<AddressBookEntry> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when an entry is removed.
+            if let Some(prev) = &prev {
+                ADDRESS_BOOK_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
+            }
+
             self.index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index()),

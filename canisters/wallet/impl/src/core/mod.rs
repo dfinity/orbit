@@ -13,6 +13,7 @@ mod call_context;
 pub use call_context::*;
 
 pub mod middlewares;
+pub mod validation;
 
 #[cfg(not(test))]
 pub use ic_canister_core::cdk as ic_cdk;
@@ -29,6 +30,7 @@ pub async fn generate_uuid_v4() -> uuid::Uuid {
 pub mod authorization;
 pub mod evaluation;
 pub mod init;
+pub mod metrics;
 pub mod proposal;
 pub mod utils;
 

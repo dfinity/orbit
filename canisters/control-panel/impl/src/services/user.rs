@@ -1,5 +1,5 @@
 use crate::{
-    core::{generate_uuid_v4, CallContext},
+    core::{generate_uuid_v4, ic_cdk::next_time, CallContext},
     errors::UserError,
     mappers::{SubscribedUser, UserMapper},
     models::{CanDeployWallet, User, UserId, UserKey, UserSubscriptionStatus, UserWallet},
@@ -14,7 +14,7 @@ use ic_canister_core::{
     model::ModelValidator,
 };
 use lazy_static::lazy_static;
-use std::sync::Arc;
+use std::{collections::BTreeSet, sync::Arc};
 use uuid::Uuid;
 
 lazy_static! {
@@ -79,6 +79,21 @@ impl UserService {
             }
             None => Ok(None),
         }
+    }
+
+    /// Sets the new last active timestamp for the user.
+    pub async fn set_last_active(
+        &self,
+        user_identity: &Principal,
+        ctx: &CallContext,
+    ) -> ServiceResult<User> {
+        let mut user = self.get_user_by_identity(user_identity, ctx)?;
+
+        user.last_active = next_time();
+
+        self.user_repository.insert(user.to_key(), user.clone());
+
+        Ok(user)
     }
 
     /// Registers a new user for the caller identity.
@@ -189,6 +204,16 @@ impl UserService {
         Ok(())
     }
 
+    /// Returns all deployed wallets in the system.
+    pub fn get_all_deployed_wallets(&self) -> BTreeSet<Principal> {
+        let users = self.user_repository.list();
+
+        users
+            .into_iter()
+            .flat_map(|user| user.deployed_wallets)
+            .collect()
+    }
+
     pub async fn add_deployed_wallet(
         &self,
         user_id: &UserId,
@@ -282,7 +307,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::UserSubscriptionStatus;
+    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus};
     use control_panel_api::UserSubscriptionStatusDTO;
     use ic_canister_core::cdk::mocks::TEST_CONTROLLER_ID;
 
@@ -305,23 +330,13 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user() {
-        let user_id = [u8::MAX; 16];
-        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_identity);
+        let user = mock_user();
+        let ctx = CallContext::new(user.identity);
         let service = UserService::default();
-        let user = User {
-            id: user_id,
-            identity: user_identity,
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.get_user_by_identity(&user_identity, &ctx);
+        let result = service.get_user_by_identity(&user.identity, &ctx);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), user);
@@ -329,19 +344,11 @@ mod tests {
 
     #[test]
     fn success_fetch_existing_user_with_identity() {
-        let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let ctx = CallContext::new(user_identity);
         let service = UserService::default();
-        let user = User {
-            id: user_id,
-            identity: user_identity,
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let mut user = mock_user();
+        user.identity = user_identity;
 
         service.user_repository.insert(user.to_key(), user.clone());
 
@@ -409,24 +416,15 @@ mod tests {
 
     #[test]
     fn update_waiting_list() {
-        let user_id = [u8::MAX; 16];
-        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_identity);
+        let mut user = mock_user();
+        let ctx = CallContext::new(user.identity);
         let service = UserService::default();
-        let user = User {
-            id: user_id,
-            identity: user_identity,
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        user.subscription_status = UserSubscriptionStatus::Unsubscribed;
 
         service.user_repository.insert(user.to_key(), user.clone());
 
         let input = UpdateWaitingListInput {
-            users: vec![user_identity],
+            users: vec![user.identity],
             new_status: UserSubscriptionStatusDTO::Approved,
         };
 
@@ -441,7 +439,7 @@ mod tests {
             .update_waiting_list(input.clone(), &ctrl_ctx)
             .unwrap();
 
-        let result = service.get_user_by_identity(&user_identity, &ctx);
+        let result = service.get_user_by_identity(&user.identity, &ctx);
         assert!(matches!(
             result.unwrap().subscription_status,
             UserSubscriptionStatus::Approved
@@ -459,26 +457,16 @@ mod tests {
     #[tokio::test]
     async fn can_remove_user() {
         crate::core::test_utils::init_canister_config();
-        let user_id = [u8::MAX; 16];
-        let user_identity = Principal::from_slice(&[u8::MAX; 29]);
-        let ctx = CallContext::new(user_identity);
-        let service = UserService::default();
 
-        let user = User {
-            id: user_id,
-            identity: user_identity,
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let user: User = mock_user();
+        let ctx = CallContext::new(user.identity);
+        let service = UserService::default();
 
         service.user_repository.insert(user.to_key(), user.clone());
 
-        let result = service.remove_user(&user_identity, &ctx).await;
+        let result = service.remove_user(&user.identity, &ctx).await;
 
         assert!(result.is_ok());
-        assert!(service.user_repository.get(&UserKey(user_id)).is_none());
+        assert!(service.user_repository.get(&user.to_key()).is_none());
     }
 }

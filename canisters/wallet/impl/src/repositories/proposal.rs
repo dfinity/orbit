@@ -13,7 +13,7 @@ use super::indexes::{
     proposal_voter_index::ProposalVoterIndexRepository,
 };
 use crate::{
-    core::{with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
+    core::{metrics::PROPOSAL_METRICS, with_memory_manager, Memory, PROPOSAL_MEMORY_ID},
     errors::RepositoryError,
     models::{
         indexes::{
@@ -91,6 +91,14 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
     fn insert(&self, key: ProposalKey, value: Proposal) -> Option<Proposal> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
+
+            // Update metrics when a proposal is upserted.
+            PROPOSAL_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
+
             self.voter_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
                     previous: prev
@@ -141,7 +149,7 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
                 });
             self.status_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().clone().map(|prev| prev.to_index_by_status()),
+                    previous: prev.clone().map(|prev| prev.to_index_by_status()),
                     current: Some(value.to_index_by_status()),
                 });
             self.sort_index
@@ -173,6 +181,16 @@ impl Repository<ProposalKey, Proposal> for ProposalRepository {
     fn remove(&self, key: &ProposalKey) -> Option<Proposal> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
+
+            // Update metrics when a proposal is removed.
+            if let Some(prev) = &prev {
+                PROPOSAL_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
+            }
+
             self.voter_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
                     current: prev

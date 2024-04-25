@@ -91,7 +91,7 @@ pub type ServiceResult<CompletedOperation = (), FailedOperation = ApiError> =
     Result<CompletedOperation, FailedOperation>;
 
 // Http Interface
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct HeaderField(pub String, pub String);
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

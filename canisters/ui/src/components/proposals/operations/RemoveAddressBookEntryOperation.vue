@@ -46,9 +46,12 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await wallet.service.getAddressBookEntry({
-      address_book_entry_id: props.operation.input.address_book_entry_id,
-    });
+    const currentEntry = await wallet.service.getAddressBookEntry(
+      {
+        address_book_entry_id: props.operation.input.address_book_entry_id,
+      },
+      true,
+    );
 
     formValue.value = currentEntry.address_book_entry;
   } catch (e) {

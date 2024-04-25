@@ -1,6 +1,7 @@
 //! Canister lifecycle hooks.
 use super::AVAILABLE_TOKENS_USER_REGISTRATION;
 use crate::core::ic_cdk::spawn;
+use crate::core::metrics::recompute_all_metrics;
 use crate::{core::ic_cdk::api::trap, services::CANISTER_SERVICE};
 use control_panel_api::CanisterInstall;
 use ic_cdk_macros::{init, post_upgrade};
@@ -59,6 +60,7 @@ async fn initialize(install: Option<CanisterInstall>) {
 
 #[post_upgrade]
 async fn post_upgrade(install: Option<CanisterInstall>) {
+    recompute_all_metrics();
     init_timers_fn();
 
     match install {

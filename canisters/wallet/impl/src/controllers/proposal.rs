@@ -1,5 +1,5 @@
 use crate::{
-    core::middlewares::{authorize, call_context},
+    core::middlewares::{authorize, call_context, use_status_metric},
     mappers::HelperMapper,
     models::resource::{ProposalResourceAction, Resource},
     services::{ProposalService, PROPOSAL_SERVICE},
@@ -61,6 +61,7 @@ impl ProposalController {
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
+    #[with_middleware(tail = use_status_metric("call_create_proposal", &result))]
     async fn create_proposal(
         &self,
         input: CreateProposalInput,
@@ -167,6 +168,7 @@ impl ProposalController {
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
+    #[with_middleware(tail = use_status_metric("call_vote_on_proposal", &result))]
     async fn vote_on_proposal(
         &self,
         input: VoteOnProposalInput,

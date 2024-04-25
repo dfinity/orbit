@@ -25,6 +25,11 @@ async fn get_user() -> ApiResult<GetUserResponse> {
     CONTROLLER.get_user().await
 }
 
+#[update(name = "set_user_active")]
+async fn set_user_active() -> ApiResult<()> {
+    CONTROLLER.set_user_active().await
+}
+
 #[update(name = "register_user")]
 async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
     AVAILABLE_TOKENS_USER_REGISTRATION.with(|ts| {
@@ -98,7 +103,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("register_user", &result))]
+    #[with_middleware(tail = use_status_metric("call_register_user", &result))]
     async fn register_user(&self, input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.register_user(input, &ctx).await?;
@@ -113,7 +118,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("manage_user", &result))]
+    #[with_middleware(tail = use_status_metric("call_manage_user", &result))]
     async fn manage_user(&self, input: ManageUserInput) -> ApiResult<ManageUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self.user_service.manage_user(input, &ctx).await?;
@@ -128,7 +133,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("subscribe_to_waiting_list", &result))]
+    #[with_middleware(tail = use_status_metric("call_subscribe_to_waiting_list", &result))]
     async fn subscribe_to_waiting_list(&self, email: String) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
         self.user_service
@@ -138,7 +143,7 @@ impl UserController {
         Ok(())
     }
 
-    #[with_middleware(tail = use_status_metric("get_waiting_list", &result))]
+    #[with_middleware(tail = use_status_metric("call_get_waiting_list", &result))]
     async fn get_waiting_list(&self) -> ApiResult<GetWaitingListResponse> {
         let ctx: CallContext = CallContext::get();
         self.user_service
@@ -151,7 +156,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("update_waiting_list", &result))]
+    #[with_middleware(tail = use_status_metric("call_update_waiting_list", &result))]
     async fn update_waiting_list(&self, input: UpdateWaitingListInput) -> ApiResult<()> {
         let ctx: CallContext = CallContext::get();
         self.user_service.update_waiting_list(input, &ctx)?;
@@ -164,7 +169,7 @@ impl UserController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("delete_user", &result))]
+    #[with_middleware(tail = use_status_metric("call_delete_user", &result))]
     async fn delete_user(&self) -> ApiResult<DeleteUserResponse> {
         let ctx: CallContext = CallContext::get();
         let user = self
@@ -178,5 +183,20 @@ impl UserController {
         Ok(DeleteUserResponse {
             user: UserDTO::from(deleted_user),
         })
+    }
+
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
+    #[with_middleware(tail = use_status_metric("call_set_user_active", &result))]
+    async fn set_user_active(&self) -> ApiResult<()> {
+        let ctx = CallContext::get();
+        self.user_service
+            .set_last_active(&ctx.caller(), &ctx)
+            .await?;
+
+        Ok(())
     }
 }

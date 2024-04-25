@@ -10,6 +10,7 @@ use crate::models::Metadata;
 use candid::Principal;
 use ic_canister_core::types::UUID;
 use ic_canister_macros::storable;
+use std::fmt::Display;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -30,6 +31,29 @@ pub enum ProposalOperation {
     AddProposalPolicy(AddProposalPolicyOperation),
     EditProposalPolicy(EditProposalPolicyOperation),
     RemoveProposalPolicy(RemoveProposalPolicyOperation),
+}
+
+impl Display for ProposalOperation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProposalOperation::Transfer(_) => write!(f, "transfer"),
+            ProposalOperation::AddAccount(_) => write!(f, "add_account"),
+            ProposalOperation::EditAccount(_) => write!(f, "edit_account"),
+            ProposalOperation::AddAddressBookEntry(_) => write!(f, "add_address_book_entry"),
+            ProposalOperation::EditAddressBookEntry(_) => write!(f, "edit_address_book_entry"),
+            ProposalOperation::RemoveAddressBookEntry(_) => write!(f, "remove_address_book_entry"),
+            ProposalOperation::AddUser(_) => write!(f, "add_user"),
+            ProposalOperation::EditUser(_) => write!(f, "edit_user"),
+            ProposalOperation::EditAccessPolicy(_) => write!(f, "edit_access_policy"),
+            ProposalOperation::AddUserGroup(_) => write!(f, "add_user_group"),
+            ProposalOperation::EditUserGroup(_) => write!(f, "adit_user_group"),
+            ProposalOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
+            ProposalOperation::ChangeCanister(_) => write!(f, "change_canister"),
+            ProposalOperation::AddProposalPolicy(_) => write!(f, "add_proposal_policy"),
+            ProposalOperation::EditProposalPolicy(_) => write!(f, "edit_proposal_policy"),
+            ProposalOperation::RemoveProposalPolicy(_) => write!(f, "remove_proposal_policy"),
+        }
+    }
 }
 
 #[storable]

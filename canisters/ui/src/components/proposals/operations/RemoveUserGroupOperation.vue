@@ -42,9 +42,12 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await wallet.service.getUserGroup({
-      user_group_id: props.operation.input.user_group_id,
-    });
+    const currentEntry = await wallet.service.getUserGroup(
+      {
+        user_group_id: props.operation.input.user_group_id,
+      },
+      true,
+    );
 
     formValue.value = currentEntry.user_group;
   } catch (e) {
