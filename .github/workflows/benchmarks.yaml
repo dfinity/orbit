@@ -36,4 +36,4 @@ jobs:
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Run Wallet Benchmarks'
-        run: ./scripts/benchmark-canister.sh ./canisters/wallet/impl
+        run: ./scripts/benchmark-canister.sh ./core/wallet/impl

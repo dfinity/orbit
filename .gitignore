@@ -63,7 +63,7 @@ out
 dist
 coverage
 .dfx
-canisters/integration-tests/pocket-ic
+pocket-ic
 ic-wasm
 wasms/*.wasm.gz
 /src

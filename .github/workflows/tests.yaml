@@ -70,7 +70,7 @@ jobs:
       - name: 'Prepare artifacts'
         run: |
           mkdir -p artifacts
-          mv canisters/integration-tests/wasms/* artifacts
+          mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v3
         with:
@@ -96,7 +96,7 @@ jobs:
       - name: 'Prepare artifacts'
         run: |
           mkdir -p artifacts
-          mv canisters/integration-tests/wasms/* artifacts
+          mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v3
         with:
@@ -120,7 +120,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: integration-tests
-          path: canisters/integration-tests/wasms
+          path: tests/integration/wasms
       - name: Run integration tests
         run: |
           ./scripts/run-integration-tests.sh 2> logs.txt

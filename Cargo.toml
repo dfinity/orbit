@@ -1,13 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "canisters/integration-tests",
-    "canisters/control-panel/api",
-    "canisters/control-panel/impl",
-    "canisters/upgrader/api",
-    "canisters/upgrader/impl",
-    "canisters/wallet/api",
-    "canisters/wallet/impl",
+    "tests/integration",
+    "core/control-panel/api",
+    "core/control-panel/impl",
+    "core/upgrader/api",
+    "core/upgrader/impl",
+    "core/wallet/api",
+    "core/wallet/impl",
     "libs/canfund",
     "libs/ic-canister-core",
     "libs/ic-canister-macros",
@@ -19,6 +19,9 @@ opt-level = 'z'
 codegen-units = 1
 
 [workspace.dependencies]
+control_panel_api = { path = "./core/control-panel/api" }
+upgrader_api = { path = "./core/upgrader/api" }
+wallet_api = { path = "./core/wallet/api" }
 anyhow = "1.0.75"
 deunicode = "1.4.4"
 async-trait = "0.1"

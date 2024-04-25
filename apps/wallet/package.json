@@ -1,12 +1,12 @@
 {
-  "name": "@dfinity/orbit-wallet-ui",
+  "name": "@dfinity/orbit-wallet",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dfinity/orbit-wallet.git",
-    "directory": "canisters/wallet-ui"
+    "url": "https://github.com/dfinity/orbit.git",
+    "directory": "apps/wallet"
   },
   "engines": {
     "node": "^20",

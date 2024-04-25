@@ -28,8 +28,8 @@ serde_json = { workspace = true }
 serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
-control_panel_api = { path = "../api" }
-wallet_api = { path = "../../wallet/api" }
+control_panel_api = { workspace = true }
+wallet_api = { workspace = true }
 email_address = "0.2.4"
 
 [dev-dependencies]
