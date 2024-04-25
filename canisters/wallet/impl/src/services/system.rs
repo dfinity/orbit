@@ -1,6 +1,7 @@
 use crate::{
     core::{
         ic_cdk::api::{print, time, trap},
+        metrics::recompute_metrics,
         read_system_info, read_system_state, write_system_info, CallContext,
     },
     errors::InstallError,
@@ -77,82 +78,107 @@ impl SystemService {
         }
     }
 
-    // init calls can't perform inter-canister calls so we need to delay tasks such as user registration
-    // with a one-off timer to allow the canister to be initialized first and then perform them,
-    // this is needed because properties like ids are generated based on UUIDs which requires `raw_rand` to be used.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn install_canister_post_process(&self, _system_info: SystemInfo, _install: SystemInstall) {}
+
+    // inter-canister calls can't be performed during canister code installation so we need to delay tasks
+    // such as deploying the upgrader canister into a one-off timer
     //
     // WARNING: we do not perform locking, the canister might already receive calls before the timer is executed,
     // currently this is not a problem because the admins would simply get an access denied error but if more
     // complex/required business logic is added to the timer a locking mechanism should be added.
-    #[allow(unused_variables, unused_mut)]
-    fn install_canister_post_process(&self, mut system_info: SystemInfo, install: SystemInstall) {
-        #[cfg(target_arch = "wasm32")]
+    #[cfg(target_arch = "wasm32")]
+    fn install_canister_post_process(&self, system_info: SystemInfo, install: SystemInstall) {
         async fn initialize_rng_timer() {
-            use crate::core::ic_cdk::spawn;
             use ic_canister_core::utils::initialize_rng;
             if let Err(e) = initialize_rng().await {
                 ic_cdk::print(format!("initializing rng failed: {}", e));
                 ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
+                    use crate::core::ic_cdk::spawn;
                     spawn(initialize_rng_timer())
                 });
             }
         }
 
-        #[cfg(target_arch = "wasm32")]
         ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
             use crate::core::ic_cdk::spawn;
             spawn(initialize_rng_timer())
         });
 
-        #[cfg(target_arch = "wasm32")]
-        ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
-            use crate::core::ic_cdk::api::id as self_canister_id;
-            use crate::core::ic_cdk::spawn;
-            use crate::core::NNS_ROOT_CANISTER_ID;
+        fn install_canister_post_process_finish(mut system_info: SystemInfo) {
             use crate::jobs::register_jobs;
 
-            spawn(async move {
-                match install {
-                    SystemInstall::Init(init) => {
-                        let canister_id = self_canister_id();
+            install_canister_handlers::monitor_upgrader_cycles(
+                *system_info.get_upgrader_canister_id(),
+            );
 
-                        // registers the default canister configurations such as policies and user groups.
-                        print("Adding initial canister configurations");
-                        install_canister_handlers::init_post_process().await;
+            // register the jobs after the canister is fully initialized
+            register_jobs();
 
-                        print("Deploying upgrader canister");
-                        let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
-                            init.upgrader_wasm_module,
-                            vec![canister_id, NNS_ROOT_CANISTER_ID],
-                        )
-                        .await;
-                        system_info.set_upgrader_canister_id(upgrader_canister_id);
+            system_info.update_last_upgrade_timestamp();
+            write_system_info(system_info.to_owned());
+        }
 
-                        // sets the upgrader as a controller of the wallet canister
-                        print("Updating canister settings to set the upgrader as the controller");
-                        install_canister_handlers::set_controllers(vec![
-                            upgrader_canister_id,
-                            NNS_ROOT_CANISTER_ID,
-                        ])
-                        .await;
+        async fn install_canister_post_process_work(
+            init: SystemInit,
+            mut system_info: SystemInfo,
+        ) -> Result<(), String> {
+            use crate::core::ic_cdk::api::id as self_canister_id;
+            use crate::core::NNS_ROOT_CANISTER_ID;
 
-                        install_canister_handlers::set_admins(init.admins.unwrap_or_default())
-                            .await;
-                    }
-                    SystemInstall::Upgrade(upgrade) => {}
-                };
+            // registers the default canister configurations such as policies and user groups.
+            print("Adding initial canister configurations");
+            install_canister_handlers::init_post_process().await?;
+            install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await?;
 
-                system_info.update_last_upgrade_timestamp();
-                write_system_info(system_info.to_owned());
+            print("Deploying upgrader canister");
+            let canister_id = self_canister_id();
+            let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
+                init.upgrader_wasm_module,
+                vec![canister_id, NNS_ROOT_CANISTER_ID],
+            )
+            .await?;
+            system_info.set_upgrader_canister_id(upgrader_canister_id);
 
-                install_canister_handlers::monitor_upgrader_cycles(
-                    *system_info.get_upgrader_canister_id(),
-                );
+            // sets the upgrader as a controller of the wallet canister
+            print("Updating canister settings to set the upgrader as the controller");
+            install_canister_handlers::set_controllers(vec![
+                upgrader_canister_id,
+                NNS_ROOT_CANISTER_ID,
+            ])
+            .await?;
 
-                // register the jobs after the canister is fully initialized
-                register_jobs();
-            });
-        });
+            if SYSTEM_SERVICE.is_healthy() {
+                print("canister reports healthy already before its initialization has finished!");
+            }
+            install_canister_post_process_finish(system_info);
+
+            Ok(())
+        }
+
+        async fn install_canister_post_process_timer(init: SystemInit, system_info: SystemInfo) {
+            if let Err(e) =
+                install_canister_post_process_work(init.clone(), system_info.clone()).await
+            {
+                ic_cdk::print(format!("canister initialization failed: {}", e));
+                ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
+                    use crate::core::ic_cdk::spawn;
+                    spawn(install_canister_post_process_timer(init, system_info))
+                });
+            }
+        }
+
+        match install {
+            SystemInstall::Init(init) => {
+                ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
+                    use crate::core::ic_cdk::spawn;
+                    spawn(install_canister_post_process_timer(init, system_info))
+                });
+            }
+            SystemInstall::Upgrade(_) => {
+                install_canister_post_process_finish(system_info);
+            }
+        };
     }
 
     /// Initializes the canister with the given owners and settings.
@@ -181,6 +207,10 @@ impl SystemService {
     ///
     /// Must only be called within a canister post_upgrade call.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
+        // recompute all metrics to make sure they are up to date, only gauges are recomputed
+        // since they are the only ones that can change over time.
+        recompute_metrics();
+
         let mut system_info = read_system_info();
         let input = match input {
             Some(input) => input,
@@ -202,8 +232,7 @@ impl SystemService {
                 }
                 None => {
                     // Do not fail the upgrade if the proposal is not found, even though this should never happen
-                    // it's not a critical error and failling the upgrade would leave the canister without being able to
-                    // be upgraded again.
+                    // it's not a critical error
                     print(format!(
                         "Error: verifying upgrade failed, proposal not found {}",
                         Uuid::from_bytes(*proposal_id).hyphenated()
@@ -218,7 +247,7 @@ impl SystemService {
         }
 
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
-        // this upgrades the upgrader canister if a new upgrader module is provided .
+        // this upgrades the upgrader canister if a new upgrader module is provided.
         self.install_canister_post_process(system_info, SystemInstall::Upgrade(input));
 
         Ok(())
@@ -255,9 +284,7 @@ mod install_canister_handlers {
     }
 
     /// Registers the default configurations for the canister.
-    ///
-    /// Is used for canister init, however, it's executed through a one-off timer to allow for inter canister calls.
-    pub async fn init_post_process() {
+    pub async fn init_post_process() -> Result<(), String> {
         // adds the admin group which is used as the default group for admins during the canister instantiation
         USER_GROUP_REPOSITORY.insert(
             ADMIN_GROUP_ID.to_owned(),
@@ -276,7 +303,7 @@ mod install_canister_handlers {
                     criteria: policy.1.to_owned(),
                 })
                 .await
-                .expect("Failed to add default proposal policy");
+                .map_err(|e| format!("Failed to add default proposal policy: {:?}", e))?;
         }
 
         // adds the default access control policies which sets safe defaults for the canister
@@ -290,15 +317,17 @@ mod install_canister_handlers {
                     resource: policy.1.to_owned(),
                 })
                 .await
-                .expect("Failed to add default access control policy");
+                .map_err(|e| format!("Failed to add default access control policy: {:?}", e))?;
         }
+
+        Ok(())
     }
 
     /// Deploys the wallet upgrader canister and sets the wallet as the controller of the upgrader.
     pub async fn deploy_upgrader(
         upgrader_wasm_module: Vec<u8>,
         controllers: Vec<Principal>,
-    ) -> Principal {
+    ) -> Result<Principal, String> {
         let (upgrader_canister,) = mgmt::create_canister(
             mgmt::CreateCanisterArgument {
                 settings: Some(mgmt::CanisterSettings {
@@ -309,7 +338,7 @@ mod install_canister_handlers {
             INITIAL_UPGRADER_CYCLES,
         )
         .await
-        .expect("Failed to create upgrader canister");
+        .map_err(|e| format!("Failed to create upgrader canister: {:?}", e))?;
 
         mgmt::install_code(mgmt::InstallCodeArgument {
             mode: mgmt::CanisterInstallMode::Install,
@@ -321,13 +350,13 @@ mod install_canister_handlers {
             .expect("Failed to encode upgrader init arg"),
         })
         .await
-        .expect("Failed to install upgrader canister");
+        .map_err(|e| format!("Failed to install upgrader canister: {:?}", e))?;
 
-        upgrader_canister.canister_id
+        Ok(upgrader_canister.canister_id)
     }
 
     /// Sets the only controller of the canister.
-    pub async fn set_controllers(controllers: Vec<Principal>) {
+    pub async fn set_controllers(controllers: Vec<Principal>) -> Result<(), String> {
         mgmt::update_settings(mgmt::UpdateSettingsArgument {
             canister_id: self_canister_id(),
             settings: mgmt::CanisterSettings {
@@ -336,11 +365,11 @@ mod install_canister_handlers {
             },
         })
         .await
-        .expect("Failed to set wallet controller");
+        .map_err(|e| format!("Failed to set wallet controller: {:?}", e))
     }
 
     /// Registers the newly added admins of the canister.
-    pub async fn set_admins(admins: Vec<Principal>) {
+    pub async fn set_admins(admins: Vec<Principal>) -> Result<(), String> {
         print(&format!("Registering {:?} admin users", admins.len()));
         for admin in admins {
             let user = USER_SERVICE
@@ -351,7 +380,7 @@ mod install_canister_handlers {
                     status: UserStatus::Active,
                 })
                 .await
-                .expect("Failed to register admin user");
+                .map_err(|e| format!("Failed to register admin user: {:?}", e))?;
 
             print(&format!(
                 "Added admin user with principal {:?} and user id {:?}",
@@ -359,6 +388,7 @@ mod install_canister_handlers {
                 Uuid::from_bytes(user.id).hyphenated().to_string()
             ));
         }
+        Ok(())
     }
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.

@@ -1,3 +1,4 @@
+use crate::core::middlewares::use_status_metric;
 use crate::mappers::authorization::FetchAccountBalancesInputRef;
 use crate::mappers::HelperMapper;
 use crate::models::resource::{AccountResourceAction, Resource};
@@ -93,6 +94,7 @@ impl AccountController {
     }
 
     #[with_middleware(guard = authorize(&call_context(), &FetchAccountBalancesInputRef(&input).to_resources()))]
+    #[with_middleware(tail = use_status_metric("call_fetch_account_balances", &result))]
     async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,

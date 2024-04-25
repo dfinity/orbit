@@ -1,8 +1,12 @@
+use ic_canister_core::api::ApiResult;
+use ic_canister_core::metrics::{labels, with_metrics_registry};
+
 use super::authorization::Authorization;
 use super::CallContext;
 use crate::core::ic_cdk::api::trap;
 use crate::models::resource::Resource;
 use crate::services::SYSTEM_SERVICE;
+use crate::SERVICE_NAME;
 
 /// Creates the call context of the current request
 pub fn call_context() -> CallContext {
@@ -43,4 +47,23 @@ pub fn authorize(ctx: &CallContext, resources: &[Resource]) {
             unauthorized_resources.join(", ")
         ));
     }
+}
+
+pub fn use_status_metric<T>(metric_key: &str, result: &ApiResult<T>)
+where
+    T: std::fmt::Debug,
+{
+    with_metrics_registry(SERVICE_NAME, |registry| {
+        let counter = registry.counter_vec_mut(
+            metric_key,
+            &["status"],
+            &format!("number of times {} was called", metric_key),
+        );
+        let status = match result {
+            Ok(_) => "ok",
+            Err(_) => "fail",
+        };
+
+        counter.with(&labels! { "status" => status }).inc();
+    });
 }
