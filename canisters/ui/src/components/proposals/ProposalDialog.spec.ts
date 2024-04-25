@@ -104,9 +104,12 @@ describe('ProposalDialog', () => {
       },
     });
 
-    expect(services().wallet.getProposal).toHaveBeenCalledWith({
-      proposal_id: '123',
-    });
+    expect(services().wallet.getProposal).toHaveBeenCalledWith(
+      {
+        proposal_id: '123',
+      },
+      true,
+    );
     vi.restoreAllMocks();
   });
 

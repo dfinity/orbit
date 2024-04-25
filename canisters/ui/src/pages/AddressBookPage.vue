@@ -173,12 +173,21 @@ const hasDeletePrivilege = (id: UUID): boolean => {
   return !!privilege?.can_delete;
 };
 
+let useVerifiedCall = false;
+
 const fetchList = useFetchList(
   (offset, limit) => {
-    return wallet.service.listAddressBook({
-      offset,
-      limit,
-    });
+    const results = wallet.service.listAddressBook(
+      {
+        offset,
+        limit,
+      },
+      useVerifiedCall,
+    );
+
+    useVerifiedCall = true;
+
+    return results;
   },
   {
     pagination,

@@ -26,3 +26,15 @@ pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
 
 /// The initial cycle balance to set for new wallet canisters.
 pub const INITIAL_WALLET_CYCLES: u128 = 1_000_000_000_000;
+
+/// The nanoseconds equivalent of one hour.
+pub const ONE_HOUR_NS: u64 = 60 * 60 * 1_000_000_000;
+
+/// The nanoseconds equivalent of one day.
+pub const ONE_DAY_NS: u64 = 24 * ONE_HOUR_NS;
+
+/// The nanoseconds equivalent of one week.
+pub const ONE_WEEK_NS: u64 = 7 * ONE_DAY_NS;
+
+/// The nanoseconds equivalent of 30 days.
+pub const ONE_MONTH_NS: u64 = 30 * ONE_DAY_NS;

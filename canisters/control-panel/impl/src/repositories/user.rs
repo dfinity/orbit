@@ -53,9 +53,11 @@ impl Repository<UserKey, User> for UserRepository {
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when a user is upserted.
-            USER_METRICS
-                .iter()
-                .for_each(|metric| metric.sum(&value, prev.as_ref()));
+            USER_METRICS.with(|metrics| {
+                metrics
+                    .iter()
+                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
+            });
 
             self.identity_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
@@ -82,7 +84,11 @@ impl Repository<UserKey, User> for UserRepository {
 
             // Update metrics when a user is removed.
             if let Some(prev) = &prev {
-                USER_METRICS.iter().for_each(|metric| metric.sub(prev));
+                USER_METRICS.with(|metrics| {
+                    metrics
+                        .iter()
+                        .for_each(|metric| metric.borrow_mut().sub(prev))
+                });
             }
 
             self.identity_index
@@ -148,15 +154,7 @@ mod tests {
     #[test]
     fn check_user_insert_and_get() {
         let repository = UserRepository::default();
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let user = mock_user();
 
         assert!(repository.get(&UserKey(user.id)).is_none());
 
@@ -168,39 +166,19 @@ mod tests {
     fn get_subscribed_users() {
         let repository = UserRepository::default();
 
-        let unsubscribed_user = User {
-            id: [0; 16],
-            identity: Principal::from_slice(&[0; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let mut unsubscribed_user = mock_user();
+        unsubscribed_user.subscription_status = UserSubscriptionStatus::Unsubscribed;
         repository.insert(UserKey(unsubscribed_user.id), unsubscribed_user.clone());
 
         let email = "john@example.com".to_string();
-        let subscribed_user = User {
-            id: [1; 16],
-            identity: Principal::from_slice(&[1; 29]),
-            subscription_status: UserSubscriptionStatus::Pending(email.clone()),
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let mut subscribed_user = mock_user();
+        subscribed_user.subscription_status = UserSubscriptionStatus::Pending(email.clone());
         repository.insert(UserKey(subscribed_user.id), subscribed_user.clone());
 
         let another_email = "martin@example.com".to_string();
-        let another_subscribed_user = User {
-            id: [2; 16],
-            identity: Principal::from_slice(&[2; 29]),
-            subscription_status: UserSubscriptionStatus::Pending(another_email.clone()),
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let mut another_subscribed_user = mock_user();
+        another_subscribed_user.subscription_status =
+            UserSubscriptionStatus::Pending(another_email.clone());
         repository.insert(
             UserKey(another_subscribed_user.id),
             another_subscribed_user.clone(),
@@ -226,15 +204,7 @@ mod tests {
     #[test]
     fn check_user_removal() {
         let repository = UserRepository::default();
-        let user = User {
-            id: [u8::MAX; 16],
-            identity: Principal::from_slice(&[u8::MAX; 29]),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
-            last_update_timestamp: 0,
-        };
+        let user = mock_user();
 
         repository.insert(UserKey(user.id), user.clone());
         assert_eq!(repository.get(&UserKey(user.id)), Some(user.clone()));

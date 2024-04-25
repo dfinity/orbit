@@ -96,13 +96,20 @@ const wallet = useWalletStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);
 
+let useVerifiedCall = false;
+
 const fetchRecentProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
-  const result = await wallet.service.listProposals({
-    types: props.types,
-    statuses: [{ Created: null }],
-    limit: props.limit,
-    sortBy: props.sortBy,
-  });
+  const result = await wallet.service.listProposals(
+    {
+      types: props.types,
+      statuses: [{ Created: null }],
+      limit: props.limit,
+      sortBy: props.sortBy,
+    },
+    useVerifiedCall,
+  );
+
+  useVerifiedCall = true;
 
   return result;
 };

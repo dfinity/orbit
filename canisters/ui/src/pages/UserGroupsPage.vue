@@ -140,12 +140,21 @@ const hasEditPrivilege = (id: UUID): boolean =>
 const hasDeletePrivilege = (id: UUID): boolean =>
   privileges.value.find(p => p.id === id)?.can_delete ?? false;
 
+let useVerifiedCall = false;
+
 const fetchList = useFetchList(
   (offset, limit) => {
-    return wallet.service.listUserGroups({
-      offset,
-      limit,
-    });
+    const results = wallet.service.listUserGroups(
+      {
+        offset,
+        limit,
+      },
+      useVerifiedCall,
+    );
+
+    useVerifiedCall = true;
+
+    return results;
   },
   {
     pagination,

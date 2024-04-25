@@ -25,6 +25,11 @@ async fn get_user() -> ApiResult<GetUserResponse> {
     CONTROLLER.get_user().await
 }
 
+#[update(name = "set_user_active")]
+async fn set_user_active() -> ApiResult<()> {
+    CONTROLLER.set_user_active().await
+}
+
 #[update(name = "register_user")]
 async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserResponse> {
     AVAILABLE_TOKENS_USER_REGISTRATION.with(|ts| {
@@ -178,5 +183,20 @@ impl UserController {
         Ok(DeleteUserResponse {
             user: UserDTO::from(deleted_user),
         })
+    }
+
+    #[with_middleware(
+        guard = logger::<()>(__target_fn, context, None),
+        tail = logger(__target_fn, context, Some(&result)),
+        context = &call_context()
+    )]
+    #[with_middleware(tail = use_status_metric("call_set_user_active", &result))]
+    async fn set_user_active(&self) -> ApiResult<()> {
+        let ctx = CallContext::get();
+        self.user_service
+            .set_last_active(&ctx.caller(), &ctx)
+            .await?;
+
+        Ok(())
     }
 }
