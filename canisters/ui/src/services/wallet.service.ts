@@ -414,6 +414,7 @@ export class WalletService {
       paginate: [paginate],
       sort_by: sortingCriteria,
       only_votable: !!onlyVotable,
+      with_evaluation_results: false,
     });
 
     if (variantIs(result, 'Err')) {
