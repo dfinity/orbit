@@ -6,6 +6,8 @@ type UserIdentityID = principal;
 type UUID = text;
 // The id of an user.
 type UserId = UUID;
+// The timestamp type used in the canister.
+type TimestampRFC3339 = text;
 
 // Generic error type added to responses that can fail.
 type ApiError = record {
@@ -27,6 +29,16 @@ type User = record {
   wallets : vec UserWallet;
   // The waiting list subscription status.
   subscription_status : UserSubscriptionStatus;
+  // The last time the user was active in the system.
+  last_active : TimestampRFC3339;
+};
+
+// The result of setting the user active.
+type SetUserActiveResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
 };
 
 // The result of managing an user.
@@ -230,6 +242,8 @@ type HttpResponse = record {
 
 // The control panel service definition.
 service : (opt CanisterInstall) -> {
+  // Set the last active time for the user associated with the caller.
+  set_user_active : () -> (SetUserActiveResult);
   // Get the user information for the caller.
   get_user : () -> (GetUserResult) query;
   // Manage the user associated with the caller.
@@ -253,7 +267,6 @@ service : (opt CanisterInstall) -> {
   deploy_wallet : () -> (DeployWalletResult);
   // Checks if the caller can deploy a new wallet canister.
   can_deploy_wallet : () -> (CanDeployWalletResult) query;
-
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
 };

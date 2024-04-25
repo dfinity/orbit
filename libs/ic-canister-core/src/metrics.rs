@@ -220,7 +220,7 @@ impl MetricsRegistry {
 }
 
 /// A trait for application metrics that can be recalculated and updated based on the current state of the application.
-pub trait ApplicationMetric<Model>
+pub trait ApplicationMetric<Model>: Send + Sync
 where
     Model: Clone + std::fmt::Debug,
 {
@@ -231,16 +231,16 @@ where
     fn help(&self) -> &'static str;
 
     /// Recalculates the metric value based on the current state of the application.
-    fn recalculate(&self, _models: &[Model]) {
+    fn recalculate(&mut self, _models: &[Model]) {
         // By default, do nothing, some metrics may not need to be recalculated such as counters since they are
         // updated incrementally.
     }
 
     /// Sums the difference between the current and previous state of the model to the metric.
-    fn sum(&self, current: &Model, previous: Option<&Model>);
+    fn sum(&mut self, current: &Model, previous: Option<&Model>);
 
     /// Subtracts the model value from the metric.
-    fn sub(&self, _current: &Model) {
+    fn sub(&mut self, _current: &Model) {
         // By default, do nothing, some metrics may not enable subtraction such as counters.
     }
 }
@@ -266,7 +266,7 @@ where
         })
     }
 
-    fn set(&self, service_name: &str, labels: &HashMap<&str, &str>, value: f64) {
+    fn set(&mut self, service_name: &str, labels: &HashMap<&str, &str>, value: f64) {
         with_metrics_registry(service_name, |registry| {
             registry
                 .gauge_vec_mut(self.name(), self.help(), self.labels())
@@ -275,7 +275,7 @@ where
         });
     }
 
-    fn inc(&self, service_name: &str, labels: &HashMap<&str, &str>) {
+    fn inc(&mut self, service_name: &str, labels: &HashMap<&str, &str>) {
         with_metrics_registry(service_name, |registry| {
             registry
                 .gauge_vec_mut(self.name(), self.help(), self.labels())
@@ -284,7 +284,7 @@ where
         });
     }
 
-    fn dec(&self, service_name: &str, labels: &HashMap<&str, &str>) {
+    fn dec(&mut self, service_name: &str, labels: &HashMap<&str, &str>) {
         with_metrics_registry(service_name, |registry| {
             registry
                 .gauge_vec_mut(self.name(), self.help(), self.labels())
@@ -335,7 +335,7 @@ where
         })
     }
 
-    fn inc(&self, service_name: &str) {
+    fn inc(&mut self, service_name: &str) {
         with_metrics_registry(service_name, |registry| {
             registry.counter_mut(self.name(), self.help()).inc();
         });
@@ -352,19 +352,19 @@ where
         })
     }
 
-    fn set(&self, service_name: &str, value: f64) {
+    fn set(&mut self, service_name: &str, value: f64) {
         with_metrics_registry(service_name, |registry| {
             registry.gauge_mut(self.name(), self.help()).set(value);
         });
     }
 
-    fn inc(&self, service_name: &str) {
+    fn inc(&mut self, service_name: &str) {
         with_metrics_registry(service_name, |registry| {
             registry.gauge_mut(self.name(), self.help()).inc();
         });
     }
 
-    fn dec(&self, service_name: &str) {
+    fn dec(&mut self, service_name: &str) {
         with_metrics_registry(service_name, |registry| {
             registry.gauge_mut(self.name(), self.help()).dec();
         });
