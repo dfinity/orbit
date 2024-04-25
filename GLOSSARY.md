@@ -33,6 +33,18 @@ Example textual representation of Principals: `un4fu-tqaaa-aaaab-qadjq-cai`
 
 ## Orbit Components
 
+### Component overview
+
+```mermaid
+flowchart LR
+    wallet[("Wallet (UI)")] -- connects to --> Control_Panel;
+    wallet -- connects to --> Station;
+
+    Control_Panel[(Control Panel)] -- deploys --> Station;
+    Station[(Station)] -- deploys & controls --> Upgrader;
+    Upgrader[(Upgrader)] -- controls --> Station;
+```
+
 ### Core
 
 #### Station
