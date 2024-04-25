@@ -37,7 +37,7 @@ Example textual representation of Principals: `un4fu-tqaaa-aaaab-qadjq-cai`
 
 ```mermaid
 flowchart LR
-    wallet[("Wallet (UI)")] -- connects to --> Control_Panel;
+    wallet[("Wallet (App)")] -- connects to --> Control_Panel;
     wallet -- connects to --> Station;
 
     Control_Panel[(Control Panel)] -- deploys --> Station;
@@ -63,7 +63,7 @@ The control panel is a canister that facilitates common operations for accessing
 
 #### Wallet
 
-Wallet is the user interface (UI) for wallet management in the Orbit ecosystem. It is a web application that allows users to interact with their stations, view their balances, send and receive tokens, and manage their accounts.
+This application is tailored for token management in the Orbit ecosystem. It is a web application that allows users to interact with their stations, view their balances, send and receive tokens, and manage their accounts.
 
 ## Orbit Terms
 
