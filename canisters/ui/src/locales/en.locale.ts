@@ -349,6 +349,7 @@ export default {
     upgrader: 'Upgrader',
     view: 'View',
     new_address: 'New Address',
+    request: 'Request',
     requested: 'Requested',
     proposals: 'Proposals',
     specifier: 'Specifier',

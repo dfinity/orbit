@@ -116,21 +116,30 @@ export const useLoadAccountSetupWizardModel = async (
 
   // load the individual account details and access policies in parallel
   const [account, read, configuration, transfer] = await Promise.all([
-    wallet.service.getAccount({ account_id: accountId }).then(({ account }) => account),
+    wallet.service.getAccount({ account_id: accountId }, true).then(({ account }) => account),
     wallet.service
-      .getAccessPolicy({
-        resource: { Account: { Read: { Id: accountId } } },
-      })
+      .getAccessPolicy(
+        {
+          resource: { Account: { Read: { Id: accountId } } },
+        },
+        true,
+      )
       .then(({ policy }) => policy.allow),
     wallet.service
-      .getAccessPolicy({
-        resource: { Account: { Update: { Id: accountId } } },
-      })
+      .getAccessPolicy(
+        {
+          resource: { Account: { Update: { Id: accountId } } },
+        },
+        true,
+      )
       .then(({ policy }) => policy.allow),
     await wallet.service
-      .getAccessPolicy({
-        resource: { Account: { Transfer: { Id: accountId } } },
-      })
+      .getAccessPolicy(
+        {
+          resource: { Account: { Transfer: { Id: accountId } } },
+        },
+        true,
+      )
       .then(({ policy }) => policy.allow),
   ]);
 

@@ -12,12 +12,15 @@
       @loading="loading = $event"
       @loaded="addressBookEntry = $event.entry"
     >
-      <VCard :loading="loading">
+      <VCard>
         <VToolbar color="background">
           <VToolbarTitle>{{ $t('app.address_book_entry') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
-        <VCardText>
+        <VCardText v-if="loading" class="py-8">
+          <LoadingMessage />
+        </VCardText>
+        <VCardText v-else>
           <AddressBookForm
             v-if="data"
             v-model="addressBookEntry"
@@ -63,6 +66,7 @@ import {
   VToolbarTitle,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
+import LoadingMessage from '~/components/LoadingMessage.vue';
 import AddressBookForm from '~/components/address-book/AddressBookForm.vue';
 import {
   useOnFailedOperation,
@@ -116,9 +120,12 @@ const loadAddressBookEntry = async (): Promise<{
     return { entry: createModel };
   }
 
-  const result = await wallet.service.getAddressBookEntry({
-    address_book_entry_id: props.addressBookEntryId.value,
-  });
+  const result = await wallet.service.getAddressBookEntry(
+    {
+      address_book_entry_id: props.addressBookEntryId.value,
+    },
+    true,
+  );
   return { entry: result.address_book_entry };
 };
 

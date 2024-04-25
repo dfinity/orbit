@@ -8,8 +8,8 @@ import {
   AddProposalPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
-  ChangeCanisterOperationInput,
   Capabilities,
+  ChangeCanisterOperationInput,
   CreateProposalInput,
   EditAccessPolicyOperationInput,
   EditAccountOperationInput,
@@ -66,9 +66,13 @@ import {
   ListAddressBookEntriesArgs,
   ListProposalsArgs,
 } from '~/types/wallet.types';
-import { variantIs } from '~/utils/helper.utils';
+import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
 
 export class WalletService {
+  // This actor is modified to only perform calls that can be verified, such as update calls that go through consensus.
+  private verified_actor: ActorSubclass<_SERVICE>;
+
+  // This is the default actor that can perform all calls, including query calls.
   private actor: ActorSubclass<_SERVICE>;
 
   public static ERR_USER_IDENTITY_NOT_FOUND = 'NOT_FOUND_USER_IDENTITY';
@@ -82,6 +86,14 @@ export class WalletService {
       agent: this.agent,
       canisterId: walletId,
     });
+
+    this.verified_actor = Actor.createActor<_SERVICE>(
+      transformIdlWithOnlyVerifiedCalls(idlFactory),
+      {
+        agent: this.agent,
+        canisterId: walletId,
+      },
+    );
   }
 
   withWalletId(walletId: Principal): WalletService {
@@ -90,11 +102,21 @@ export class WalletService {
       canisterId: walletId,
     });
 
+    this.verified_actor = Actor.createActor<_SERVICE>(
+      transformIdlWithOnlyVerifiedCalls(idlFactory),
+      {
+        agent: this.agent,
+        canisterId: walletId,
+      },
+    );
+
     return this;
   }
 
-  async getUser(input: GetUserInput): Promise<ExtractOk<GetUserResult>> {
-    const result = await this.actor.get_user(input);
+  async getUser(input: GetUserInput, verifiedCall = false): Promise<ExtractOk<GetUserResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_user(input);
+
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
@@ -102,8 +124,13 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getAccessPolicy(input: GetAccessPolicyInput): Promise<ExtractOk<GetAccessPolicyResult>> {
-    const result = await this.actor.get_access_policy(input);
+  async getAccessPolicy(
+    input: GetAccessPolicyInput,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetAccessPolicyResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_access_policy(input);
+
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
@@ -111,8 +138,13 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getAccountAccessPolicies(accountId: UUID): Promise<ExtractOk<ListAccessPoliciesResult>> {
-    const result = await this.actor.list_access_policies({
+  async getAccountAccessPolicies(
+    accountId: UUID,
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListAccessPoliciesResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+
+    const result = await actor.list_access_policies({
       resources: [
         [
           { Account: { Read: { Id: accountId } } },
@@ -135,8 +167,12 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getUserGroup(input: GetUserGroupInput): Promise<ExtractOk<GetUserGroupResult>> {
-    const result = await this.actor.get_user_group(input);
+  async getUserGroup(
+    input: GetUserGroupInput,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetUserGroupResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_user_group(input);
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
@@ -144,8 +180,9 @@ export class WalletService {
     return result.Ok;
   }
 
-  async myUser(): Promise<{ me: User; privileges: UserPrivilege[] } | null> {
-    const result = await this.actor.me();
+  async myUser(verifiedCall = false): Promise<{ me: User; privileges: UserPrivilege[] } | null> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.me();
     if (variantIs(result, 'Err')) {
       if (result.Err.code === WalletService.ERR_USER_NOT_FOUND) {
         return null;
@@ -160,16 +197,20 @@ export class WalletService {
     };
   }
 
-  async listUserGroups({
-    limit,
-    offset,
-    searchTerm,
-  }: {
-    limit?: number;
-    offset?: number;
-    searchTerm?: string;
-  } = {}): Promise<ExtractOk<ListUserGroupsResult>> {
-    const result = await this.actor.list_user_groups({
+  async listUserGroups(
+    {
+      limit,
+      offset,
+      searchTerm,
+    }: {
+      limit?: number;
+      offset?: number;
+      searchTerm?: string;
+    } = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListUserGroupsResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_user_groups({
       search_term: searchTerm ? [searchTerm] : [],
       paginate:
         limit || offset
@@ -264,18 +305,22 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async listUsers({
-    limit,
-    offset,
-    searchTerm,
-    statuses,
-  }: {
-    limit?: number;
-    offset?: number;
-    searchTerm?: string;
-    statuses?: UserStatus[];
-  } = {}): Promise<ExtractOk<ListUsersResult>> {
-    const result = await this.actor.list_users({
+  async listUsers(
+    {
+      limit,
+      offset,
+      searchTerm,
+      statuses,
+    }: {
+      limit?: number;
+      offset?: number;
+      searchTerm?: string;
+      statuses?: UserStatus[];
+    } = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListUsersResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_users({
       paginate:
         limit || offset
           ? [
@@ -296,8 +341,9 @@ export class WalletService {
     return result.Ok;
   }
 
-  async capabilities(): Promise<Capabilities> {
-    const result = await this.actor.capabilities();
+  async capabilities(verifiedCall = false): Promise<Capabilities> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.capabilities();
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -306,8 +352,12 @@ export class WalletService {
     return result.Ok.capabilities;
   }
 
-  async listNotifications(input: ListNotificationsInput): Promise<Notification[]> {
-    const result = await this.actor.list_notifications(input);
+  async listNotifications(
+    input: ListNotificationsInput,
+    verifiedCall = false,
+  ): Promise<Notification[]> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_notifications(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -316,18 +366,22 @@ export class WalletService {
     return result.Ok.notifications;
   }
 
-  async listProposals({
-    created_dt,
-    expiration_dt,
-    limit,
-    offset,
-    proposerIds,
-    statuses,
-    types,
-    voterIds,
-    sortBy,
-    onlyVotable,
-  }: ListProposalsArgs = {}): Promise<ExtractOk<ListProposalsResult>> {
+  async listProposals(
+    {
+      created_dt,
+      expiration_dt,
+      limit,
+      offset,
+      proposerIds,
+      statuses,
+      types,
+      voterIds,
+      sortBy,
+      onlyVotable,
+    }: ListProposalsArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListProposalsResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
     const paginate: PaginationInput = {
       limit: limit ? [limit] : [],
       offset: offset ? [BigInt(offset)] : [],
@@ -348,7 +402,7 @@ export class WalletService {
       ];
     }
 
-    const result = await this.actor.list_proposals({
+    const result = await actor.list_proposals({
       statuses: statuses ? [statuses] : [],
       created_from_dt: created_dt?.fromDt ? [created_dt.fromDt.toISOString()] : [],
       created_to_dt: created_dt?.toDt ? [created_dt.toDt.toISOString()] : [],
@@ -369,11 +423,12 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getNextVotableProposal({
-    types,
-    excludedProposalIds,
-  }: GetNextVotableProposalArgs = {}): Promise<ExtractOk<GetNextVotableProposalResponse>> {
-    const result = await this.actor.get_next_votable_proposal({
+  async getNextVotableProposal(
+    { types, excludedProposalIds }: GetNextVotableProposalArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetNextVotableProposalResponse>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_next_votable_proposal({
       operation_types: types ? [types] : [],
       excluded_proposal_ids: excludedProposalIds ?? [],
     });
@@ -385,13 +440,20 @@ export class WalletService {
     return result.Ok;
   }
 
-  async listUnreadNotifications(from_dt?: Date, last_id?: UUID): Promise<Notification[]> {
-    const notifications = await this.listNotifications({
-      notification_type: [],
-      status: [{ Sent: null }],
-      from_dt: from_dt ? [from_dt.toISOString()] : [],
-      to_dt: [],
-    });
+  async listUnreadNotifications(
+    from_dt?: Date,
+    last_id?: UUID,
+    verifiedCall = false,
+  ): Promise<Notification[]> {
+    const notifications = await this.listNotifications(
+      {
+        notification_type: [],
+        status: [{ Sent: null }],
+        from_dt: from_dt ? [from_dt.toISOString()] : [],
+        to_dt: [],
+      },
+      verifiedCall,
+    );
 
     return notifications.filter(notification => notification.id !== last_id);
   }
@@ -410,8 +472,12 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async getProposal(input: GetProposalInput): Promise<ExtractOk<GetProposalResult>> {
-    const result = await this.actor.get_proposal(input);
+  async getProposal(
+    input: GetProposalInput,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetProposalResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_proposal(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -420,10 +486,12 @@ export class WalletService {
     return result.Ok;
   }
 
-  async listAccounts({ limit, offset, searchTerm }: ListAccountsArgs = {}): Promise<
-    ExtractOk<ListAccountsResult>
-  > {
-    const result = await this.actor.list_accounts({
+  async listAccounts(
+    { limit, offset, searchTerm }: ListAccountsArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListAccountsResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_accounts({
       paginate: [
         {
           limit: limit !== undefined ? [limit] : [],
@@ -440,15 +508,12 @@ export class WalletService {
     return result.Ok;
   }
 
-  async listAddressBook({
-    limit,
-    offset,
-    blockchain,
-    standard,
-    ids,
-    addresses,
-  }: ListAddressBookEntriesArgs = {}): Promise<ExtractOk<ListAddressBookEntriesResult>> {
-    const result = await this.actor.list_address_book_entries({
+  async listAddressBook(
+    { limit, offset, blockchain, standard, ids, addresses }: ListAddressBookEntriesArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListAddressBookEntriesResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_address_book_entries({
       paginate: [
         {
           limit: limit !== undefined ? [limit] : [],
@@ -475,8 +540,12 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getAccount(input: GetAccountInput): Promise<ExtractOk<GetAccountResult>> {
-    const result = await this.actor.get_account(input);
+  async getAccount(
+    input: GetAccountInput,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetAccountResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_account(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -487,8 +556,10 @@ export class WalletService {
 
   async getAddressBookEntry(
     input: GetAddressBookEntryInput,
+    verifiedCall = false,
   ): Promise<ExtractOk<GetAddressBookEntryResult>> {
-    const result = await this.actor.get_address_book_entry(input);
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_address_book_entry(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -527,8 +598,9 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async isHealthy(): Promise<boolean> {
-    const result = await this.actor.health_status();
+  async isHealthy(verifiedCall = false): Promise<boolean> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.health_status();
 
     return variantIs(result, 'Healthy');
   }
@@ -543,8 +615,12 @@ export class WalletService {
     return result.Ok.balances;
   }
 
-  async listAccountTransfers(input: ListAccountTransfersInput): Promise<TransferListItem[]> {
-    const result = await this.actor.list_account_transfers(input);
+  async listAccountTransfers(
+    input: ListAccountTransfersInput,
+    verifiedCall = false,
+  ): Promise<TransferListItem[]> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_account_transfers(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -553,8 +629,9 @@ export class WalletService {
     return result.Ok.transfers;
   }
 
-  async getTransfers(input: GetTransfersInput): Promise<Transfer[]> {
-    const result = await this.actor.get_transfers(input);
+  async getTransfers(input: GetTransfersInput, verifiedCall = false): Promise<Transfer[]> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_transfers(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -563,8 +640,9 @@ export class WalletService {
     return result.Ok.transfers;
   }
 
-  async getTransfer(id: UUID): Promise<Transfer> {
-    const result = await this.actor.get_transfers({ transfer_ids: [id] });
+  async getTransfer(id: UUID, verifiedCall = false): Promise<Transfer> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_transfers({ transfer_ids: [id] });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -589,8 +667,10 @@ export class WalletService {
 
   async listAccessPolicies(
     input: ListAccessPoliciesInput,
+    verifiedCall = false,
   ): Promise<ExtractOk<ListAccessPoliciesResult>> {
-    const result = await this.actor.list_access_policies(input);
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_access_policies(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -704,10 +784,12 @@ export class WalletService {
     return result.Ok.proposal;
   }
 
-  async listProposalPolicies({ limit, offset }: { limit?: number; offset?: number } = {}): Promise<
-    ExtractOk<ListProposalPoliciesResult>
-  > {
-    const result = await this.actor.list_proposal_policies({
+  async listProposalPolicies(
+    { limit, offset }: { limit?: number; offset?: number } = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListProposalPoliciesResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_proposal_policies({
       limit: limit ? [limit] : [],
       offset: offset ? [BigInt(offset)] : [],
     });
@@ -719,8 +801,12 @@ export class WalletService {
     return result.Ok;
   }
 
-  async getProposalPolicy(id: UUID): Promise<ExtractOk<GetProposalPolicyResult>> {
-    const result = await this.actor.get_proposal_policy({ id });
+  async getProposalPolicy(
+    id: UUID,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetProposalPolicyResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_proposal_policy({ id });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

@@ -1,5 +1,5 @@
-<template v-if="proposalReviewComponent">
-  <VCard :loading="props.loading">
+<template>
+  <VCard>
     <VToolbar color="background" height="auto">
       <VToolbarTitle class="flex">
         <span class="text-body-2 font-weight-light text-wrap">

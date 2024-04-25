@@ -12,12 +12,15 @@
       @loading="loading = $event"
       @loaded="user = $event.user"
     >
-      <VCard :loading="loading">
+      <VCard>
         <VToolbar color="background">
           <VToolbarTitle>{{ $t('terms.user') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
-        <VCardText>
+        <VCardText v-if="loading" class="py-8">
+          <LoadingMessage />
+        </VCardText>
+        <VCardText v-else>
           <UserForm
             v-if="data"
             v-model="user"
@@ -60,6 +63,7 @@ import {
   VToolbarTitle,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
+import LoadingMessage from '~/components/LoadingMessage.vue';
 import UserForm from '~/components/users/UserForm.vue';
 import {
   useOnFailedOperation,
@@ -110,9 +114,12 @@ const loadUser = async (): Promise<{
     return { user: createModel };
   }
 
-  const result = await wallet.service.getUser({
-    user_id: props.userId.value,
-  });
+  const result = await wallet.service.getUser(
+    {
+      user_id: props.userId.value,
+    },
+    true,
+  );
   return { user: result.user };
 };
 

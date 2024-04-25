@@ -351,6 +351,7 @@ export default {
     upgrader: 'Metteur à jour',
     view: 'Voir',
     new_address: 'Nouvelle Adresse',
+    request: 'Demande',
     requested: 'Demandé',
     proposals: 'Demande',
     specifier: 'Spécificateur',

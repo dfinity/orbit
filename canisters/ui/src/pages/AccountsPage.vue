@@ -153,15 +153,21 @@ const headers = computed<TableHeader[]>(() => {
   ];
 });
 
+let useVerifiedCall = false;
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const accounts = ref<Account[]>([]);
 const privileges = ref<AccountCallerPrivileges[]>([]);
 const fetchList = useFetchList(
   async (offset, limit) => {
-    const results = await wallet.service.listAccounts({
-      offset,
-      limit,
-    });
+    const results = await wallet.service.listAccounts(
+      {
+        offset,
+        limit,
+      },
+      useVerifiedCall,
+    );
+
+    useVerifiedCall = true;
 
     wallet.trackAccountsBalance(results.accounts.map(account => account.id));
     return results;
