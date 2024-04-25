@@ -421,17 +421,32 @@ impl EvaluateCriteria<bool, (Arc<ProposalId>, Arc<UserId>, Arc<Criteria>), Evalu
 mod tests {
     use super::*;
     use crate::{
-        core::evaluation::{CRITERIA_EVALUATOR, PROPOSAL_MATCHER},
+        core::{
+            evaluation::{CRITERIA_EVALUATOR, PROPOSAL_MATCHER},
+            middlewares::call_context,
+            set_mock_caller,
+        },
         models::{
             criteria::Percentage,
             proposal_policy_test_utils::mock_proposal_policy,
             proposal_test_utils::mock_proposal,
             proposal_vote_test_utils::{mock_accepted_with_user, mock_rejected_with_user},
-            user_test_utils, AddUserGroupOperation, AddUserGroupOperationInput,
+            resource::ResourceIds,
+            user_test_utils::{self, mock_user},
+            Account, AccountKey, AddUserGroupOperation, AddUserGroupOperationInput, Blockchain,
+            BlockchainStandard, EvaluatedCriteria, Metadata, MetadataItem, ProposalPolicy,
+            ProposalStatus, ADMIN_GROUP_ID,
         },
-        repositories::{policy::PROPOSAL_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
+        repositories::{
+            policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, EVALUATION_RESULT_REPOSITORY,
+            PROPOSAL_REPOSITORY,
+        },
+        services::ProposalService,
     };
+    use candid::Principal;
     use ic_canister_core::repository::Repository;
+    use uuid::Uuid;
+    use wallet_api::VoteOnProposalInput;
 
     #[tokio::test]
     async fn is_rejected_when_no_policy_is_available() {
@@ -619,5 +634,159 @@ mod tests {
         let result = evaluator.evaluate().unwrap();
 
         assert_eq!(result.status, EvaluationStatus::Adopted);
+    }
+
+    #[tokio::test]
+    async fn returns_correct_evaluation_result() {
+        let mut proposal = mock_proposal();
+        proposal.status = ProposalStatus::Created;
+
+        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+
+        let mut user_1 = mock_user();
+        user_1.identities = vec![Principal::from_slice(&[1; 29])];
+        user_1.groups.push(*ADMIN_GROUP_ID);
+        USER_REPOSITORY.insert(user_1.to_key(), user_1.clone());
+
+        let mut user_2 = mock_user();
+        user_2.identities = vec![Principal::from_slice(&[2; 29])];
+        user_2.groups.push(*ADMIN_GROUP_ID);
+        USER_REPOSITORY.insert(user_2.to_key(), user_2.clone());
+
+        let mut user_3 = mock_user();
+        user_3.identities = vec![Principal::from_slice(&[3; 29])];
+        user_3.groups.push(*ADMIN_GROUP_ID);
+        USER_REPOSITORY.insert(user_3.to_key(), user_3.clone());
+
+        ACCOUNT_REPOSITORY.insert(
+            AccountKey { id: [1; 16] },
+            Account {
+                id: [1; 16],
+                blockchain: Blockchain::InternetComputer,
+                address: "a".to_owned(),
+                standard: BlockchainStandard::Native,
+                symbol: "S".to_owned(),
+                decimals: 1,
+                name: "test".to_owned(),
+                balance: None,
+                metadata: Metadata::default(),
+                transfer_approval_policy_id: None,
+                update_approval_policy_id: None,
+                last_modification_timestamp: 0,
+            },
+        );
+
+        let result = proposal
+            .reevaluate()
+            .await
+            .expect("failed to reevaluate proposal")
+            .expect("proposal state is not Created");
+
+        // no policies affecting the proposal means it should be rejected
+        assert!(result.policy_results.is_empty());
+        assert_eq!(result.status, EvaluationStatus::Rejected);
+
+        // add policy
+        PROPOSAL_POLICY_REPOSITORY.insert(
+            [1; 16],
+            ProposalPolicy {
+                id: [1; 16],
+                criteria: Criteria::Or(vec![
+                    Criteria::MinimumVotes(
+                        UserSpecifier::Id(vec![user_1.id, user_2.id, user_3.id]),
+                        1,
+                    ),
+                    Criteria::HasAddressBookMetadata(MetadataItem {
+                        key: "test".to_string(),
+                        value: "test".to_string(),
+                    }),
+                ]),
+                specifier: ProposalSpecifier::Transfer(ResourceIds::Any),
+            },
+        );
+
+        proposal.status = ProposalStatus::Created;
+
+        let result = proposal
+            .reevaluate()
+            .await
+            .expect("failed to reevaluate proposal")
+            .expect("proposal state is not Created");
+
+        // 2 policies affecting the proposal
+        assert_eq!(result.policy_results.len(), 1);
+        // no votes yet, so it should be pending
+        assert_eq!(result.status, EvaluationStatus::Pending);
+
+        assert_eq!(
+            result.policy_results[0],
+            CriteriaResult {
+                status: EvaluationStatus::Pending,
+                evaluated_criteria: EvaluatedCriteria::Or(vec![
+                    CriteriaResult {
+                        status: EvaluationStatus::Pending,
+                        evaluated_criteria: EvaluatedCriteria::MinimumVotes {
+                            min_required_votes: 1,
+                            votes: vec![],
+                            total_possible_votes: 3,
+                        }
+                    },
+                    CriteriaResult {
+                        status: EvaluationStatus::Rejected,
+                        evaluated_criteria: EvaluatedCriteria::HasAddressBookMetadata {
+                            metadata: MetadataItem {
+                                key: "test".to_string(),
+                                value: "test".to_string()
+                            }
+                        }
+                    }
+                ])
+            }
+        );
+
+        set_mock_caller(user_1.identities.first().unwrap().to_owned());
+
+        ProposalService::default()
+            .vote_on_proposal(
+                VoteOnProposalInput {
+                    proposal_id: Uuid::from_bytes(proposal.id).hyphenated().to_string(),
+                    approve: true,
+                    reason: None,
+                },
+                &call_context(),
+            )
+            .await
+            .expect("failed to vote on proposal");
+
+        // After voting the result should be stored in the repository
+        let evaluation = EVALUATION_RESULT_REPOSITORY.get(&proposal.id).unwrap();
+
+        assert_eq!(evaluation.status, EvaluationStatus::Adopted);
+
+        assert_eq!(
+            evaluation.policy_results[0],
+            CriteriaResult {
+                status: EvaluationStatus::Adopted,
+                evaluated_criteria: EvaluatedCriteria::Or(vec![
+                    CriteriaResult {
+                        status: EvaluationStatus::Adopted,
+                        evaluated_criteria: EvaluatedCriteria::MinimumVotes {
+                            min_required_votes: 1,
+                            votes: vec![user_1.id,],
+                            total_possible_votes: 3,
+                        }
+                    },
+                    CriteriaResult {
+                        status: EvaluationStatus::Rejected,
+                        evaluated_criteria: EvaluatedCriteria::HasAddressBookMetadata {
+                            metadata: MetadataItem {
+                                key: "test".to_string(),
+                                value: "test".to_string()
+                            }
+                        }
+                    }
+                ])
+            }
+        );
     }
 }

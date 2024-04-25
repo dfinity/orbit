@@ -73,7 +73,7 @@ impl ModelValidator<RecordValidationError> for Criteria {
 }
 
 #[storable]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum EvaluatedCriteria {
     AutoAdopted,
     ApprovalThreshold {
@@ -96,7 +96,7 @@ pub enum EvaluatedCriteria {
 }
 
 #[storable]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CriteriaResult {
     pub status: EvaluationStatus,
     pub evaluated_criteria: EvaluatedCriteria,
