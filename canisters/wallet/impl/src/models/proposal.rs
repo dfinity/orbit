@@ -1,4 +1,3 @@
-
 use super::criteria::{ApprovalCriteriaInput, ProposalEvaluationResult};
 use super::{
     DisplayUser, EvaluationStatus, ProposalOperation, ProposalStatus, ProposalVote,
