@@ -23,18 +23,18 @@
         </span>
       </VToolbarTitle>
 
-      <VMenu :close-on-content-click="false">
+      <VMenu :close-on-content-click="false" :eager="true">
         <template #activator="{ props: menuProps }">
           <VBtn :icon="mdiDotsVertical" v-bind="menuProps"></VBtn>
         </template>
 
-        <VList>
+        <VList data-test-it="proposal-dialog-menu">
           <VListItem>
             <template #prepend>
               <VListItemAction>
                 <VSwitch
                   v-model="showAcceptanceRules"
-                  data-test-id="load-next-proposal-switch"
+                  data-test-id="show-acceptance-rules-switch"
                   class="flex-0-1"
                   :hide-details="true"
                   density="compact"
@@ -159,7 +159,7 @@
         </VRow>
       </VContainer>
     </VCardText>
-    <VDivider />
+    <VDivider class="mt-6" />
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
       <ProposalMetadata
         :proposal="props.proposal"

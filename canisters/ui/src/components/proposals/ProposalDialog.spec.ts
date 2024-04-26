@@ -1,6 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { VCard } from 'vuetify/components';
+import { VCard, VList, VMenu } from 'vuetify/components';
 import {
   GetProposalResult,
   GetProposalResultData,
@@ -49,6 +49,7 @@ const votableProposalResponse = {
   additional_info: {
     id: 'proposerid',
     proposer_name: [],
+    evaluation_result: [],
   },
   //...
 } as ExtractOk<GetProposalResult>;
@@ -64,6 +65,7 @@ const nextVotableProposalResponse = {
   additional_info: {
     id: 'next-id',
     proposer_name: [],
+    evaluation_result: [],
   },
   //...
 } as GetProposalResultData;
@@ -79,6 +81,7 @@ const completedProposalResponse = {
   additional_info: {
     id: 'first-id',
     proposer_name: [],
+    evaluation_result: [],
   },
   //...
 } as ExtractOk<GetProposalResult>;
@@ -125,14 +128,14 @@ describe('ProposalDialog', () => {
 
     await flushPromises();
 
-    const contents = wrapper.findComponent(VCard);
+    const proposalMenu = wrapper.findComponent(VMenu);
+    const menuContents = proposalMenu.findComponent(VList);
 
-    expect(contents.find('[data-test-id="load-next-proposal-switch"]').exists()).toBeTruthy();
+    expect(menuContents.find('[data-test-id="load-next-proposal-switch"]').exists()).toBeTruthy();
     vi.restoreAllMocks();
   });
 
   it('does not display a switch to load next when the proposal cannot be voted on', async () => {
-    // services().wallet.getProposal = vi.fn(() => Promise.resolve(completedProposalResponse));
     vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(completedProposalResponse);
 
     const wrapper = mount(ProposalDialog, {
@@ -144,9 +147,10 @@ describe('ProposalDialog', () => {
 
     await flushPromises();
 
-    const contents = wrapper.findComponent(VCard);
+    const proposalMenu = wrapper.findComponent(VMenu);
+    const menuContents = proposalMenu.findComponent(VList);
 
-    expect(contents.find('[data-test-id="load-next-proposal-switch"]').exists()).toBeFalsy();
+    expect(menuContents.find('[data-test-id="load-next-proposal-switch"]').exists()).toBeFalsy();
 
     vi.restoreAllMocks();
   });
@@ -200,7 +204,10 @@ describe('ProposalDialog', () => {
         .element.value,
     ).toBe('toaddress1');
 
-    await contents.find('[data-test-id="load-next-proposal-switch"] input').trigger('click');
+    const proposalMenu = wrapper.findComponent(VMenu);
+    const menuContents = proposalMenu.findComponent(VList);
+
+    await menuContents.find('[data-test-id="load-next-proposal-switch"] input').trigger('click');
     await contents.find('[data-test-id="proposal-details-approve"]').trigger('click');
 
     expect(wrapper.emitted('voted')).toBeFalsy();
@@ -237,7 +244,10 @@ describe('ProposalDialog', () => {
     await flushPromises();
     let contents = wrapper.findComponent(VCard);
 
-    await contents.find('[data-test-id="load-next-proposal-switch"] input').trigger('click');
+    const proposalMenu = wrapper.findComponent(VMenu);
+    const menuContents = proposalMenu.findComponent(VList);
+
+    await menuContents.find('[data-test-id="load-next-proposal-switch"] input').trigger('click');
     await contents.find('[data-test-id="proposal-details-approve"]').trigger('click');
 
     await flushPromises();
