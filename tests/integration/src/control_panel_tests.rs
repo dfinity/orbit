@@ -229,7 +229,7 @@ fn deploy_too_many_stations() {
 
     // deploy the maximum amount of user stations
     let mut stations = vec![];
-    for _ in 0..10 {
+    for _ in 0..3 {
         let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
             &env,
             canister_ids.control_panel,
@@ -245,7 +245,7 @@ fn deploy_too_many_stations() {
     let res: (ApiResult<ManageUserResponse>,) =
         update_candid_as(&env, canister_ids.control_panel, user_id, "get_user", ()).unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.stations.len(), 10);
+    assert_eq!(user_dto.stations.len(), 3);
     assert_eq!(user_dto.main_station, Some(stations[0]));
 
     // reset all but one deployed station
@@ -276,5 +276,5 @@ fn deploy_too_many_stations() {
         (),
     )
     .unwrap();
-    assert_eq!(res.0.unwrap_err().code, "DEPLOY_WALLET_QUOTA_EXCEEDED");
+    assert_eq!(res.0.unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
 }
