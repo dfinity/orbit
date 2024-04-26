@@ -164,7 +164,7 @@ pub mod access_policy_test_utils {
     use std::cell::RefCell;
 
     thread_local! {
-        static RANDOM_MOCKED_POLICY: RefCell<u8> = RefCell::new(0);
+        static RANDOM_MOCKED_POLICY: RefCell<u8> = const { RefCell::new(0) };
         static AVAILABLE_POLICIES: RefCell<Vec<AccessPolicy>> = RefCell::new(vec![
             AccessPolicy::new(
                 Allow::public(),

@@ -11,7 +11,7 @@ thread_local! {
     seed[..8].copy_from_slice(&time().to_le_bytes());
     RefCell::new(ChaCha20Rng::from_seed(seed))
   };
-  static RAW_RAND_SUCCESSFUL: RefCell<bool> = RefCell::new(false);
+  static RAW_RAND_SUCCESSFUL: RefCell<bool> = const { RefCell::new(false) };
 }
 
 #[cfg(all(

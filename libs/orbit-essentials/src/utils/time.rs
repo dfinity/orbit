@@ -21,7 +21,7 @@ pub fn rfc3339_to_timestamp(rfc3339: &str) -> Timestamp {
 }
 
 thread_local! {
-    static CURRENT_TIME: RefCell<u64> = RefCell::new(0);
+    static CURRENT_TIME: RefCell<u64> = const { RefCell::new(0) };
 }
 
 /// This function increments the time by 1ns for each call in the same round.

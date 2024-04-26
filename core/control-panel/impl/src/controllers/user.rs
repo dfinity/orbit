@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 
 thread_local! {
-    pub static AVAILABLE_TOKENS_USER_REGISTRATION: RefCell<u32> = RefCell::new(USER_REGISTRATION_RATE);
+    pub static AVAILABLE_TOKENS_USER_REGISTRATION: RefCell<u32> = const { RefCell::new(USER_REGISTRATION_RATE) };
 }
 
 // Canister entrypoints for the controller.

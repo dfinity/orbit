@@ -23,7 +23,7 @@ use orbit_essentials::repository::Repository;
 thread_local! {
   /// Switch for tests to enable validation if needed.
   #[cfg(test)]
-  static MOCK_RESOURCE_VALIDATION_ON: RefCell<bool> = RefCell::new(true);
+  static MOCK_RESOURCE_VALIDATION_ON: RefCell<bool> = const { RefCell::new(true) };
 }
 
 #[cfg(test)]
