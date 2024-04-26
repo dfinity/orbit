@@ -54,7 +54,7 @@ const i18n = useI18n();
 
 const everyone = computed(() => {
   if (specifier.value.allow.authScope === AuthScopeEnum.Public) {
-    return { icon: mdiEarth, label: i18n.t('permissions.allow.anyone') };
+    return { icon: mdiEarth, label: i18n.t('permissions.allow.public') };
   }
 
   if (specifier.value.allow.authScope === AuthScopeEnum.Authenticated) {
