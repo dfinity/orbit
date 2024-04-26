@@ -120,7 +120,10 @@ mod tests {
     async fn test_service_discovery() {
         let mut user = mock_user();
         user.deployed_stations = vec![Principal::from_slice(&[0; 29])];
-        let station_host = format!("https://{}.raw.icp0.io", user.deployed_stations[0].to_text());
+        let station_host = format!(
+            "https://{}.raw.icp0.io",
+            user.deployed_stations[0].to_text()
+        );
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 

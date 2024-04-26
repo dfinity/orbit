@@ -70,7 +70,11 @@ impl StationController {
             .get_user_by_identity(&CallContext::get().caller(), &ctx)?;
 
         Ok(ListStationsResponse {
-            stations: user.stations.into_iter().map(UserStationDTO::from).collect(),
+            stations: user
+                .stations
+                .into_iter()
+                .map(UserStationDTO::from)
+                .collect(),
         })
     }
     /// Returns main station associated with the user if any.

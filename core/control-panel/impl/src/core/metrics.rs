@@ -259,7 +259,7 @@ impl ApplicationMetric<User> for MetricActiveUsers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus, UserStation};
+    use crate::models::{user_model_utils::mock_user, UserStation, UserSubscriptionStatus};
     use candid::Principal;
 
     #[test]

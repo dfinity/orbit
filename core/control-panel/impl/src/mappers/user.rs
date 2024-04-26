@@ -1,12 +1,12 @@
 use crate::{
     core::ic_cdk::next_time,
     errors::UserError,
-    models::{CanDeployStation, User, UserSubscriptionStatus, UserStation},
+    models::{CanDeployStation, User, UserStation, UserSubscriptionStatus},
 };
 use candid::Principal;
 use control_panel_api::{
     CanDeployStationResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO,
-    UserSubscriptionStatusDTO, UserStationDTO,
+    UserStationDTO, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiError;
 use orbit_essentials::types::UUID;
@@ -61,7 +61,11 @@ impl From<User> for UserDTO {
         UserDTO {
             identity: user.identity,
             main_station: user.main_station,
-            stations: user.stations.into_iter().map(UserStationDTO::from).collect(),
+            stations: user
+                .stations
+                .into_iter()
+                .map(UserStationDTO::from)
+                .collect(),
             subscription_status: user.subscription_status.into(),
             last_active: timestamp_to_rfc3339(&user.last_active),
         }

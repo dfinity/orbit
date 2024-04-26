@@ -131,7 +131,9 @@ impl InternetComputer {
         )
         .await
         .map_err(|_| BlockchainApiError::FetchBalanceFailed {
-            account_id: Uuid::from_bytes(station_account.id).hyphenated().to_string(),
+            account_id: Uuid::from_bytes(station_account.id)
+                .hyphenated()
+                .to_string(),
         })?;
 
         Ok(balance.e8s())

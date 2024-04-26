@@ -1,6 +1,6 @@
 //! # Control panel canister
 //!
-//! The control panel canister is responsible for providing helper functions for Orbit deployments 
+//! The control panel canister is responsible for providing helper functions for Orbit deployments
 //! and managing user subscriptions.
 
 pub const SERVICE_NAME: &str = "control_panel";
