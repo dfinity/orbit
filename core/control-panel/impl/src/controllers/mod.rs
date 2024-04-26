@@ -8,9 +8,9 @@ pub use user::*;
 mod canister;
 pub use canister::*;
 
-/// Wallet entrypoints.
-mod wallet;
-pub use wallet::*;
+/// Station entrypoints.
+mod station;
+pub use station::*;
 
 /// HTTP entrypoints.
 mod http;
@@ -19,7 +19,7 @@ pub use http::*;
 #[cfg(test)]
 mod tests {
     use control_panel_api::*;
-    use ic_canister_core::api::*;
+    use orbit_essentials::api::*;
 
     #[test]
     fn check_candid_interface() {

@@ -1,11 +1,11 @@
-use crate::models::{Blockchain, BlockchainStandard, Metadata, WalletAsset};
+use crate::models::{Asset, Blockchain, BlockchainStandard, Metadata};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {
-  /// The list of assets that are supported by the wallet canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
-  pub static WALLET_ASSETS: RefCell<HashSet<WalletAsset>> =
+  /// The list of assets that are supported by the canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
+  pub static ASSETS: RefCell<HashSet<Asset>> =
       RefCell::new(vec![
-        WalletAsset {
+        Asset {
           blockchain: Blockchain::InternetComputer,
           standard: BlockchainStandard::Native,
           symbol: "ICP".to_string(),

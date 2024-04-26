@@ -16,7 +16,7 @@ import { Ref, computed, onBeforeMount, ref } from 'vue';
 import UserGroupForm from '~/components/users/UserGroupForm.vue';
 import logger from '~/core/logger.core';
 import { Proposal, RemoveUserGroupOperation, UserGroup } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
@@ -33,7 +33,7 @@ const props = withDefaults(
 const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<UserGroup>> = ref({});
 const loading = ref(false);
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const fetchDetails = async () => {
   try {
@@ -42,7 +42,7 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await wallet.service.getUserGroup(
+    const currentEntry = await station.service.getUserGroup(
       {
         user_group_id: props.operation.input.user_group_id,
       },

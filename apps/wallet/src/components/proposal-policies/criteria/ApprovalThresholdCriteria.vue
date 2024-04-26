@@ -67,7 +67,7 @@ import {
   mapProposalCriteriaUserSpecifierEnumToVariant,
   mapProposalCriteriaUserSpecifierToEnum,
 } from '~/mappers/specifiers.mapper';
-import { ProposalCriteriaUserSpecifierEnum } from '~/types/wallet.types';
+import { ProposalCriteriaUserSpecifierEnum } from '~/types/station.types';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(

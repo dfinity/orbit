@@ -8,7 +8,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use futures::future;
-use ic_canister_core::repository::Repository;
+use orbit_essentials::repository::Repository;
 
 #[derive(Debug, Default)]
 pub struct Job {

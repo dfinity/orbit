@@ -1,12 +1,12 @@
-use ic_canister_core::api::DetailableError;
+use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
 /// Container for deployment errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum DeployError {
-    /// The deployment of the wallet canister failed.
-    #[error(r#"The deployment of the wallet canister failed due to `{reason}`"#)]
+    /// The deployment of the station canister failed.
+    #[error(r#"The deployment of the station canister failed due to `{reason}`"#)]
     Failed { reason: String },
 }
 

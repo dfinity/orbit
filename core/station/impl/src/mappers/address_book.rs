@@ -6,8 +6,8 @@ use crate::models::{
     AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
     AddressChain, ListAddressBookEntriesInput,
 };
-use ic_canister_core::types::UUID;
-use ic_canister_core::utils::timestamp_to_rfc3339;
+use orbit_essentials::types::UUID;
+use orbit_essentials::utils::timestamp_to_rfc3339;
 use station_api::{
     AddressBookEntryCallerPrivilegesDTO, AddressBookEntryDTO, ListAddressBookEntriesInputDTO,
 };

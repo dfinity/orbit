@@ -25,7 +25,7 @@ import {
   ProposalPolicy,
   RemoveProposalPolicyOperation,
 } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 import ProposalPolicyForm from '~/components/proposal-policies/ProposalPolicyForm.vue';
 import { useI18n } from 'vue-i18n';
@@ -44,7 +44,7 @@ const props = withDefaults(
 const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<ProposalPolicy>> = ref({});
 const loading = ref(false);
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const fetchDetails = async () => {
   try {
@@ -53,7 +53,7 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await wallet.service.getProposalPolicy(props.operation.input.policy_id);
+    const currentEntry = await station.service.getProposalPolicy(props.operation.input.policy_id);
 
     formValue.value = currentEntry.policy;
   } catch (e) {

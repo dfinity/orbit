@@ -4,12 +4,12 @@ use crate::{
 };
 use candid::CandidType;
 use candid::Principal;
-use ic_canister_core::api::ServiceResult;
 use ic_cdk::api::management_canister::{
     main::{self as mgmt, CanisterInstallMode, InstallCodeArgument},
     provisional::CanisterIdRecord,
 };
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
 use std::sync::Arc;
 
 lazy_static! {
@@ -33,8 +33,8 @@ impl ChangeCanisterService {
         Self { system_service }
     }
 
-    /// Execute an upgrade of the wallet by requesting the upgrader to perform it on our behalf.
-    pub async fn upgrade_wallet(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
+    /// Execute an upgrade of the station by requesting the upgrader to perform it on our behalf.
+    pub async fn upgrade_station(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
 
         ic_cdk::call(

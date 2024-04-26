@@ -5,7 +5,7 @@ use crate::{
     services::access_policy::AccessPolicyService,
 };
 use async_trait::async_trait;
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 use std::sync::Arc;
 
 pub struct EditAccessPolicyProposalCreate {}
@@ -82,7 +82,7 @@ mod tests {
         repositories::{access_policy::ACCESS_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
         services::access_policy::ACCESS_POLICY_SERVICE,
     };
-    use ic_canister_core::{model::ModelKey, repository::Repository};
+    use orbit_essentials::{model::ModelKey, repository::Repository};
 
     #[test]
     fn test_create_proposal() {

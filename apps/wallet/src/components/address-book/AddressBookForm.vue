@@ -50,8 +50,8 @@ import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
 import BlockchainAutocomplete from '~/components/inputs/BlockchainAutocomplete.vue';
 import MetadataField from '~/components/inputs/MetadataField.vue';
-import { AddressBookEntry, WalletAsset } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { AddressBookEntry, Asset } from '~/generated/station/station.did';
+import { useStationStore } from '~/stores/station.store';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule } from '~/utils/form.utils';
 
@@ -89,9 +89,9 @@ const emit = defineEmits<{
 const model = computed(() => props.modelValue.value);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
-const onSelectedBlockchain = (asset?: WalletAsset): void => {
+const onSelectedBlockchain = (asset?: Asset): void => {
   if (asset) {
     model.value.blockchain = asset.blockchain;
     model.value.standard = asset.standard;
@@ -102,8 +102,8 @@ const onSelectedBlockchain = (asset?: WalletAsset): void => {
 };
 
 onMounted(() => {
-  if (wallet.configuration.details.supported_assets.length === 1 && !model.value.blockchain) {
-    onSelectedBlockchain(wallet.configuration.details.supported_assets[0]);
+  if (station.configuration.details.supported_assets.length === 1 && !model.value.blockchain) {
+    onSelectedBlockchain(station.configuration.details.supported_assets[0]);
   }
 
   if (!model.value.metadata) {

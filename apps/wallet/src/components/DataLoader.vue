@@ -83,7 +83,7 @@ const canFetchData = (): boolean => {
     !props.disableRefresh &&
     // prevents calls to fetchData while the user is locked out
     !session.reauthenticationNeeded &&
-    // prevents calls to fetchData, this can happen when the user is switching between wallets
+    // prevents calls to fetchData, this can happen when the user is switching between stations
     !app.disableBackgroundPolling
   );
 };

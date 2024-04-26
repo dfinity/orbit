@@ -6,7 +6,7 @@ import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import logger from '~/core/logger.core';
 import { UUID } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { BlockchainStandard, BlockchainType, TokenSymbol } from '~/types/chain.types';
 import { parseDate } from '~/utils/date.utils';
 
@@ -112,12 +112,12 @@ export const useDefaultAccountSetupWizardModel = ({
 export const useLoadAccountSetupWizardModel = async (
   accountId: UUID,
 ): Promise<AccountSetupWizardModel> => {
-  const wallet = useWalletStore();
+  const station = useStationStore();
 
   // load the individual account details and access policies in parallel
   const [account, read, configuration, transfer] = await Promise.all([
-    wallet.service.getAccount({ account_id: accountId }, true).then(({ account }) => account),
-    wallet.service
+    station.service.getAccount({ account_id: accountId }, true).then(({ account }) => account),
+    station.service
       .getAccessPolicy(
         {
           resource: { Account: { Read: { Id: accountId } } },
@@ -125,7 +125,7 @@ export const useLoadAccountSetupWizardModel = async (
         true,
       )
       .then(({ policy }) => policy.allow),
-    wallet.service
+    station.service
       .getAccessPolicy(
         {
           resource: { Account: { Update: { Id: accountId } } },
@@ -133,7 +133,7 @@ export const useLoadAccountSetupWizardModel = async (
         true,
       )
       .then(({ policy }) => policy.allow),
-    await wallet.service
+    await station.service
       .getAccessPolicy(
         {
           resource: { Account: { Transfer: { Id: accountId } } },

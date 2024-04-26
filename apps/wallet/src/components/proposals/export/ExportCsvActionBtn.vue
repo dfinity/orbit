@@ -75,7 +75,7 @@ import logger from '~/core/logger.core';
 import { ProposalStatusCode, UUID } from '~/generated/station/station.did';
 import { mapProposalsToCsvTable } from '~/mappers/proposals.mapper';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { ProposalWithDetails } from '~/types/proposals.types';
 import { convertDate } from '~/utils/date.utils';
 import { downloadCsv } from '~/utils/file.utils';
@@ -118,7 +118,7 @@ const open = ref(false);
 const loading = ref(false);
 const downloads = useDownloadItems(filters, domains);
 const app = useAppStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 
 watch(
   () => downloads.value,
@@ -140,7 +140,7 @@ const startDownload = async (idx: number): Promise<void> => {
     let offset: number | undefined = undefined;
 
     do {
-      const result = await wallet.service.listProposals({
+      const result = await station.service.listProposals({
         types: downloadItem.filterBy.types,
         created_dt: {
           fromDt: convertDate(downloadItem.filterBy.created.from, {

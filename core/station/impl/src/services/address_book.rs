@@ -15,8 +15,8 @@ use crate::{
     },
     repositories::{AddressBookRepository, AddressBookWhereClause, ADDRESS_BOOK_REPOSITORY},
 };
-use ic_canister_core::{api::ServiceResult, model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
+use orbit_essentials::{api::ServiceResult, model::ModelValidator, repository::Repository};
 use station_api::PaginationInput;
 use std::sync::Arc;
 use uuid::Uuid;

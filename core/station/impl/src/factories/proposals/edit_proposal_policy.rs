@@ -8,7 +8,7 @@ use crate::{
     services::{ProposalPolicyService, PROPOSAL_POLICY_SERVICE},
 };
 use async_trait::async_trait;
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -95,7 +95,7 @@ mod tests {
         models::proposal_policy_test_utils::mock_proposal_policy,
         repositories::{policy::PROPOSAL_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
     };
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
     use std::str::FromStr;
 
     #[test]

@@ -3,7 +3,7 @@
 mod user;
 pub use user::*;
 
-mod user_wallet;
+mod user_station;
 
 mod helper;
 pub use helper::*;

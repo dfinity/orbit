@@ -3,11 +3,11 @@ use crate::core::ic_cdk::api::time;
 use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureProposal, EnsureUser};
 use crate::errors::{RecordValidationError, TransferError};
 use crate::models::Metadata;
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter},

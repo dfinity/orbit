@@ -6,8 +6,8 @@ import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
 
-vi.mock('~/services/wallet.service', () => ({
-  WalletService: vi.fn().mockImplementation(() => {
+vi.mock('~/services/station.service', () => ({
+  StationService: vi.fn().mockImplementation(() => {
     return {
       transfer: vi.fn(() => {
         return Promise.resolve({} as Proposal);
@@ -103,7 +103,7 @@ describe('TransferDialog', () => {
     await wrapper.vm.$nextTick();
     await flushPromises();
 
-    expect(services().wallet.transfer).toHaveBeenCalledWith(
+    expect(services().station.transfer).toHaveBeenCalledWith(
       expect.objectContaining({
         amount: 10n,
         to: 'destination address',
@@ -113,14 +113,14 @@ describe('TransferDialog', () => {
   });
 
   it('loads the corresponding objects to display the transfer and summary if transferId is specified', async () => {
-    services().wallet.getProposal = vi.fn(() =>
+    services().station.getProposal = vi.fn(() =>
       Promise.resolve({
         proposal: {
           summary: ['test summary'], // it's an opt
         } as unknown as Proposal,
       } as ExtractOk<GetProposalResult>),
     );
-    services().wallet.getTransfer = vi.fn(() =>
+    services().station.getTransfer = vi.fn(() =>
       Promise.resolve({
         id: 'transfer-id',
         to: 'destination address',
@@ -143,8 +143,8 @@ describe('TransferDialog', () => {
     await flushPromises();
     await wrapper.vm.$nextTick();
 
-    expect(services().wallet.getTransfer).toHaveBeenCalledWith('transfer-id');
-    expect(services().wallet.getProposal).toHaveBeenCalledWith({
+    expect(services().station.getTransfer).toHaveBeenCalledWith('transfer-id');
+    expect(services().station.getProposal).toHaveBeenCalledWith({
       proposal_id: 'proposal-id',
     });
 

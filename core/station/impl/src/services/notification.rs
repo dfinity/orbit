@@ -9,10 +9,10 @@ use crate::{
     },
     services::{UserService, USER_SERVICE},
 };
-use ic_canister_core::repository::Repository;
-use ic_canister_core::utils::rfc3339_to_timestamp;
-use ic_canister_core::{api::ServiceResult, model::ModelValidator};
 use lazy_static::lazy_static;
+use orbit_essentials::repository::Repository;
+use orbit_essentials::utils::rfc3339_to_timestamp;
+use orbit_essentials::{api::ServiceResult, model::ModelValidator};
 use station_api::{ListNotificationsInput, MarkNotificationsReadInput};
 use std::sync::Arc;
 use uuid::Uuid;

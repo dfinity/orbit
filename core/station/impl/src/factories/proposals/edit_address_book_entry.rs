@@ -9,7 +9,7 @@ use crate::{
     services::ADDRESS_BOOK_SERVICE,
 };
 use async_trait::async_trait;
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 
 pub struct EditAddressBookEntryProposalCreate {}
 

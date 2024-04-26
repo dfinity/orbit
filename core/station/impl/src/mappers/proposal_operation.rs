@@ -20,7 +20,7 @@ use crate::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
     },
 };
-use ic_canister_core::repository::Repository;
+use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
     ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, EditAccountOperationDTO,
@@ -305,7 +305,7 @@ impl From<station_api::EditUserOperationInput> for EditUserOperationInput {
 impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
     fn from(value: ChangeCanisterTarget) -> Self {
         match value {
-            ChangeCanisterTarget::UpgradeWallet => ChangeCanisterTargetDTO::UpgradeWallet,
+            ChangeCanisterTarget::UpgradeStation => ChangeCanisterTargetDTO::UpgradeStation,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
             ChangeCanisterTarget::UpgradeCanister(canister_id) => {
                 ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
@@ -317,7 +317,7 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
 impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
     fn from(value: ChangeCanisterTargetDTO) -> Self {
         match value {
-            ChangeCanisterTargetDTO::UpgradeWallet => ChangeCanisterTarget::UpgradeWallet,
+            ChangeCanisterTargetDTO::UpgradeStation => ChangeCanisterTarget::UpgradeStation,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
             ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
                 ChangeCanisterTarget::UpgradeCanister(canister_id)

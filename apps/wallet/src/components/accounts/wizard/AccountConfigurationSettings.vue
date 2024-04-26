@@ -47,7 +47,7 @@ import { mdiBank, mdiIdentifier, mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
 import { VCol, VRow, VTextField } from 'vuetify/components';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
-import { TimestampRFC3339, UUID, WalletAsset } from '~/generated/station/station.did';
+import { TimestampRFC3339, UUID, Asset } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
 
 export interface AccountConfigurationModel {
@@ -88,7 +88,7 @@ const model = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const onSelectedAsset = (asset?: WalletAsset): void => {
+const onSelectedAsset = (asset?: Asset): void => {
   if (asset) {
     model.value.symbol = asset.symbol;
     model.value.blockchain = asset.blockchain;

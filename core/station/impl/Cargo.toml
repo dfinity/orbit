@@ -26,8 +26,7 @@ candid = { workspace = true }
 canfund = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
-ic-canister-core = { workspace = true }
-ic-canister-macros = { workspace = true }
+orbit-essentials = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
@@ -41,8 +40,8 @@ serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
-station_api = { workspace = true }
-upgrader_api = { workspace = true }
+station-api = { workspace = true }
+upgrader-api = { workspace = true }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

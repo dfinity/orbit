@@ -1,5 +1,5 @@
 use crate::models::Notification;
-use ic_canister_core::{types::UUID, utils::timestamp_to_rfc3339};
+use orbit_essentials::{types::UUID, utils::timestamp_to_rfc3339};
 use station_api::NotificationDTO;
 use uuid::Uuid;
 

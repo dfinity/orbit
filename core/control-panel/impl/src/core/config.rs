@@ -1,18 +1,18 @@
 use super::CANISTER_CONFIG_STATE_SIZE;
 use crate::core::ic_cdk::api::{time, trap};
-use ic_canister_core::types::Timestamp;
-use ic_canister_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
+use orbit_essentials::storable;
+use orbit_essentials::types::Timestamp;
 use std::borrow::Cow;
 
 #[storable(serializer = "candid")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
-    /// The upgrader canister wasm module that will be used to upgrade the wallet canister.
+    /// The upgrader canister wasm module that will be used to upgrade the station canister.
     pub upgrader_wasm_module: Vec<u8>,
 
-    /// The wallet canister wasm module that will be used to deploy new wallets.
-    pub wallet_wasm_module: Vec<u8>,
+    /// The station canister wasm module that will be used to deploy new stations.
+    pub station_wasm_module: Vec<u8>,
 
     /// Last time the canister was upgraded or initialized.
     pub last_upgrade_timestamp: Timestamp,
@@ -22,17 +22,17 @@ impl Default for CanisterConfig {
     fn default() -> Self {
         Self {
             upgrader_wasm_module: vec![],
-            wallet_wasm_module: vec![],
+            station_wasm_module: vec![],
             last_upgrade_timestamp: time(),
         }
     }
 }
 
 impl CanisterConfig {
-    pub fn new(upgrader_wasm_module: Vec<u8>, wallet_wasm_module: Vec<u8>) -> Self {
+    pub fn new(upgrader_wasm_module: Vec<u8>, station_wasm_module: Vec<u8>) -> Self {
         Self {
             upgrader_wasm_module,
-            wallet_wasm_module,
+            station_wasm_module,
             last_upgrade_timestamp: time(),
         }
     }

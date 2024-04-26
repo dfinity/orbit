@@ -1,15 +1,15 @@
 use crate::{
     core::{
         middlewares::{authorize, call_context},
-        WALLET_ASSETS,
+        ASSETS,
     },
     models::resource::{Resource, SystemResourceAction},
     SYSTEM_VERSION,
 };
-use ic_canister_core::api::ApiResult;
-use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::with_middleware;
 use station_api::{CapabilitiesDTO, CapabilitiesResponse};
 
 #[query(name = "capabilities")]
@@ -32,7 +32,7 @@ impl CapabilitiesController {
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::System(SystemResourceAction::Capabilities)]))]
     async fn capabilities(&self) -> ApiResult<CapabilitiesResponse> {
-        let assets = WALLET_ASSETS.with(|wallet_assets| wallet_assets.borrow().clone());
+        let assets = ASSETS.with(|asset| asset.borrow().clone());
 
         Ok(CapabilitiesResponse {
             capabilities: CapabilitiesDTO {

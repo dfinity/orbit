@@ -4,11 +4,11 @@ use crate::{
     errors::{RecordValidationError, UserError},
 };
 use candid::{CandidType, Deserialize, Principal};
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 
 /// The user id, which is a UUID.
 pub type UserId = UUID;
@@ -137,7 +137,7 @@ mod tests {
     use crate::core::validation::disable_mock_resource_validation;
     use crate::models::UserGroup;
     use crate::repositories::USER_GROUP_REPOSITORY;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
 
     use super::user_test_utils::mock_user;
     use super::*;
@@ -287,7 +287,7 @@ mod tests {
 pub mod user_test_utils {
     use super::*;
     use crate::repositories::USER_REPOSITORY;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
     use uuid::Uuid;
 
     pub fn mock_user() -> User {

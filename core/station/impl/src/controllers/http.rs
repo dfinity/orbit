@@ -1,8 +1,8 @@
 use crate::{core::ic_cdk::api::canister_balance, SERVICE_NAME};
-use ic_canister_core::api::{HeaderField, HttpRequest, HttpResponse};
-use ic_canister_core::metrics::with_metrics_registry;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
+use orbit_essentials::api::{HeaderField, HttpRequest, HttpResponse};
+use orbit_essentials::metrics::with_metrics_registry;
 
 // Canister entrypoints for the controller.
 #[query(name = "http_request")]

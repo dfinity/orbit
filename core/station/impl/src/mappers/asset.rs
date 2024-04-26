@@ -1,8 +1,8 @@
-use crate::models::WalletAsset;
+use crate::models::Asset;
 
-impl From<WalletAsset> for station_api::WalletAssetDTO {
-    fn from(asset: WalletAsset) -> Self {
-        station_api::WalletAssetDTO {
+impl From<Asset> for station_api::AssetDTO {
+    fn from(asset: Asset) -> Self {
+        station_api::AssetDTO {
             blockchain: asset.blockchain.to_string(),
             symbol: asset.symbol.to_string(),
             standard: asset.standard.to_string(),

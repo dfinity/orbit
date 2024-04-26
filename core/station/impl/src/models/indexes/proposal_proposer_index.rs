@@ -1,6 +1,6 @@
 use crate::models::Proposal;
-use ic_canister_core::types::UUID;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::UUID;
 
 /// Index of proposals by the proposer user id.
 #[storable]

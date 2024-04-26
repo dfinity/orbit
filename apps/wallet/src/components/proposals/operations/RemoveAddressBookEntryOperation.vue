@@ -20,7 +20,7 @@ import {
   Proposal,
   RemoveAddressBookEntryOperation,
 } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
@@ -37,7 +37,7 @@ const props = withDefaults(
 const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<AddressBookEntry>> = ref({});
 const loading = ref(false);
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const fetchDetails = async () => {
   try {
@@ -46,7 +46,7 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const currentEntry = await wallet.service.getAddressBookEntry(
+    const currentEntry = await station.service.getAddressBookEntry(
       {
         address_book_entry_id: props.operation.input.address_book_entry_id,
       },

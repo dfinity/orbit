@@ -95,7 +95,7 @@ describe('ProposalDialog', () => {
   });
 
   it('loads the proposal passed in as prop', async () => {
-    vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
+    vi.spyOn(services().station, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
 
     mount(ProposalDialog, {
       props: {
@@ -104,7 +104,7 @@ describe('ProposalDialog', () => {
       },
     });
 
-    expect(services().wallet.getProposal).toHaveBeenCalledWith(
+    expect(services().station.getProposal).toHaveBeenCalledWith(
       {
         proposal_id: '123',
       },
@@ -114,7 +114,7 @@ describe('ProposalDialog', () => {
   });
 
   it('displays a switch to load next when the proposal can be voted on', async () => {
-    vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
+    vi.spyOn(services().station, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
 
     const wrapper = mount(ProposalDialog, {
       props: {
@@ -132,8 +132,8 @@ describe('ProposalDialog', () => {
   });
 
   it('does not display a switch to load next when the proposal cannot be voted on', async () => {
-    // services().wallet.getProposal = vi.fn(() => Promise.resolve(completedProposalResponse));
-    vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(completedProposalResponse);
+    // services().station.getProposal = vi.fn(() => Promise.resolve(completedProposalResponse));
+    vi.spyOn(services().station, 'getProposal').mockResolvedValueOnce(completedProposalResponse);
 
     const wrapper = mount(ProposalDialog, {
       props: {
@@ -152,8 +152,8 @@ describe('ProposalDialog', () => {
   });
 
   it('does not load the next proposal after voting when the switch is not turned on', async () => {
-    vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
-    vi.spyOn(services().wallet, 'voteOnProposal').mockResolvedValueOnce(
+    vi.spyOn(services().station, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
+    vi.spyOn(services().station, 'voteOnProposal').mockResolvedValueOnce(
       completedProposalResponse.proposal,
     );
 
@@ -177,11 +177,11 @@ describe('ProposalDialog', () => {
   });
 
   it('loads the next proposal after voting when the switch is turned on', async () => {
-    vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
-    vi.spyOn(services().wallet, 'voteOnProposal').mockResolvedValueOnce(
+    vi.spyOn(services().station, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
+    vi.spyOn(services().station, 'voteOnProposal').mockResolvedValueOnce(
       completedProposalResponse.proposal,
     );
-    vi.spyOn(services().wallet, 'getNextVotableProposal').mockResolvedValueOnce([
+    vi.spyOn(services().station, 'getNextVotableProposal').mockResolvedValueOnce([
       nextVotableProposalResponse,
     ]);
 
@@ -208,7 +208,7 @@ describe('ProposalDialog', () => {
 
     await flushPromises();
 
-    expect(services().wallet.getNextVotableProposal).toHaveBeenCalled();
+    expect(services().station.getNextVotableProposal).toHaveBeenCalled();
 
     contents = wrapper.findComponent(VCard);
 
@@ -221,11 +221,11 @@ describe('ProposalDialog', () => {
   });
 
   it('shows a message when there are no votable proposals left', async () => {
-    vi.spyOn(services().wallet, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
-    vi.spyOn(services().wallet, 'voteOnProposal').mockResolvedValueOnce(
+    vi.spyOn(services().station, 'getProposal').mockResolvedValueOnce(votableProposalResponse);
+    vi.spyOn(services().station, 'voteOnProposal').mockResolvedValueOnce(
       completedProposalResponse.proposal,
     );
-    vi.spyOn(services().wallet, 'getNextVotableProposal').mockResolvedValueOnce([]);
+    vi.spyOn(services().station, 'getNextVotableProposal').mockResolvedValueOnce([]);
 
     const wrapper = mount(ProposalDialog, {
       props: {

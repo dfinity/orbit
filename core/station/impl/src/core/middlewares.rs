@@ -1,5 +1,5 @@
-use ic_canister_core::api::ApiResult;
-use ic_canister_core::metrics::{labels, with_metrics_registry};
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::metrics::{labels, with_metrics_registry};
 
 use super::authorization::Authorization;
 use super::CallContext;

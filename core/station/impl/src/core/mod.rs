@@ -1,4 +1,4 @@
-//! Core utility features for the wallet canister.
+//! Core utility features for the canister.
 
 mod assets;
 pub use assets::*;
@@ -16,12 +16,12 @@ pub mod middlewares;
 pub mod validation;
 
 #[cfg(not(test))]
-pub use ic_canister_core::cdk as ic_cdk;
+pub use orbit_essentials::cdk as ic_cdk;
 #[cfg(test)]
-pub use ic_canister_core::cdk::mocks as ic_cdk;
+pub use orbit_essentials::cdk::mocks as ic_cdk;
 
 #[cfg(not(test))]
-pub use ic_canister_core::utils::generate_uuid_v4;
+pub use orbit_essentials::utils::generate_uuid_v4;
 #[cfg(test)]
 pub async fn generate_uuid_v4() -> uuid::Uuid {
     uuid::Uuid::new_v4()

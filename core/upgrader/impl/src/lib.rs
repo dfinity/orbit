@@ -6,13 +6,13 @@ use crate::{
     },
 };
 use candid::Principal;
-use ic_canister_macros::storable;
 use ic_cdk::{init, update};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl, StableBTreeMap,
 };
 use lazy_static::lazy_static;
+use orbit_essentials::storable;
 use std::{cell::RefCell, sync::Arc, thread::LocalKey};
 use upgrade::UpgradeError;
 use upgrader_api::{InitArg, TriggerUpgradeError, TriggerUpgradeResponse, UpgradeParams};

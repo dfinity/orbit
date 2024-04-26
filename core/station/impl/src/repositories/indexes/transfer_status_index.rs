@@ -2,8 +2,8 @@ use crate::{
     core::{with_memory_manager, Memory, TRANSFER_STATUS_INDEX_MEMORY_ID},
     models::indexes::transfer_status_index::{TransferStatusIndex, TransferStatusIndexCriteria},
 };
-use ic_canister_core::{repository::IndexRepository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use orbit_essentials::{repository::IndexRepository, types::UUID};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {

@@ -38,7 +38,7 @@
         </slot>
         <div v-if="props.contextbar" :class="`contextbar d-flex ${props.surfaceColor}`">
           <slot name="contextbar">
-            <WalletSelector v-if="showWalletSelector" />
+            <StationSelector v-if="showStationSelector" />
           </slot>
         </div>
         <div v-if="props.main" class="main d-flex flex-column flex-grow-1">
@@ -72,7 +72,7 @@
       </template>
     </VSnackbar>
     <SessionExpiredOverlay />
-    <OpenProposalOverlay v-if="session.isAuthenticated && session.data.selectedWallet.hasAccess" />
+    <OpenProposalOverlay v-if="session.isAuthenticated && session.data.selected.hasAccess" />
   </VLayout>
 </template>
 
@@ -86,7 +86,7 @@ import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue'
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
-import WalletSelector from '~/components/WalletSelector.vue';
+import StationSelector from '~/components/StationSelector.vue';
 import { appInitConfig } from '~/configs/init.config';
 
 const app = useAppStore();
@@ -133,8 +133,8 @@ const layoutBaseClasses = computed(
   () => `${layoutDeviceClass.value} ${themeClass.value} ${props.backgroundColor}`,
 );
 
-const showWalletSelector = computed(
-  () => session.isAuthenticated && session.hasWallets && mobile.value,
+const showStationSelector = computed(
+  () => session.isAuthenticated && session.hasStations && mobile.value,
 );
 
 const showWarningBanner = ['playground', 'testing'].includes(appInitConfig.buildMode);

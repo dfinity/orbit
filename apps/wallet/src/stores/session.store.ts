@@ -5,23 +5,23 @@ import { Ref } from 'vue';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
 import { User } from '~/generated/control-panel/control_panel.did';
-import { sessionUserWalletToUserWallet } from '~/mappers/wallets.mapper';
+import { stationToUserStation } from '~/mappers/stations.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
-import { WalletConnectionStatus, useWalletStore } from '~/stores/wallet.store';
+import { ConnectionStatus, useStationStore } from '~/stores/station.store';
 import { afterLoginRedirect, redirectToLogin } from '~/utils/app.utils';
 import { unreachable } from '~/utils/helper.utils';
 import { objectDeserialize, objectSerialize, useStorage } from '~/utils/storage.utils';
-import { disableWalletWorkers, enableWalletWorkers } from '~/workers';
+import { disableWorkers, enableWorkers } from '~/workers';
 
-export interface UserWallet {
+export interface Station {
   main: boolean;
   name: string | null;
   canisterId: string;
 }
 
-export interface SelectedUserWallet {
+export interface SelectedStation {
   canisterId: Ref<string | null>;
   hasAccess: boolean;
 }
@@ -40,8 +40,8 @@ export interface SessionStoreState {
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
   data: {
-    wallets: UserWallet[];
-    selectedWallet: SelectedUserWallet;
+    stations: Station[];
+    selected: SelectedStation;
   };
 }
 
@@ -85,12 +85,12 @@ export const useSessionStore = defineStore('session', {
       isAuthenticated: false,
       reauthenticationNeeded: false,
       data: {
-        wallets: [],
-        selectedWallet: {
+        stations: [],
+        selected: {
           canisterId: useStorage({
             deserialize: objectDeserialize,
             serialize: objectSerialize,
-            key: 'selected-wallet',
+            key: 'selected-station',
             storage: sessionStorage,
             deepWatch: true,
             initial: () => null,
@@ -101,13 +101,13 @@ export const useSessionStore = defineStore('session', {
     };
   },
   getters: {
-    hasWallets(): boolean {
-      return !!this.data.wallets.length;
+    hasStations(): boolean {
+      return !!this.data.stations.length;
     },
-    mainWallet(): Principal | null {
-      const mainWallet = this.data.wallets.find(wallet => wallet.main);
+    mainStation(): Principal | null {
+      const mainStation = this.data.stations.find(station => station.main);
 
-      return mainWallet ? Principal.fromText(mainWallet.canisterId) : null;
+      return mainStation ? Principal.fromText(mainStation.canisterId) : null;
     },
   },
   actions: {
@@ -166,18 +166,18 @@ export const useSessionStore = defineStore('session', {
       }
     },
     reset(): void {
-      const wallet = useWalletStore();
+      const station = useStationStore();
 
       this.loading = false;
       this.isAuthenticated = false;
       this.principal = Principal.anonymous().toText();
       this.lastLoginPrincipal = Principal.anonymous().toText();
       this.reauthenticationNeeded = false;
-      this.data.wallets = [];
-      this.data.selectedWallet.canisterId = null;
-      this.data.selectedWallet.hasAccess = false;
+      this.data.stations = [];
+      this.data.selected.canisterId = null;
+      this.data.selected.hasAccess = false;
 
-      wallet.onDisconnected();
+      station.onDisconnected();
     },
     async signIn(resetOnError = false): Promise<void> {
       const authService = services().auth;
@@ -190,7 +190,7 @@ export const useSessionStore = defineStore('session', {
         sessionExpirationService.notifySignedIn();
         await this.initializeAuthenticated(identity);
       } catch (error) {
-        disableWalletWorkers();
+        disableWorkers();
         if (resetOnError) {
           this.reset();
         }
@@ -198,7 +198,7 @@ export const useSessionStore = defineStore('session', {
       }
     },
     async signOut(notifyOtherTabs = true): Promise<void> {
-      disableWalletWorkers();
+      disableWorkers();
 
       const sessionExpirationService = services().sessionExpiration;
 
@@ -229,14 +229,14 @@ export const useSessionStore = defineStore('session', {
         const controlPanelService = services().controlPanel;
         const controlPanelUser = await controlPanelService.getCurrentUser();
 
-        let initialWalletId = null;
+        let initialStationId = null;
 
-        if (this.data.selectedWallet.canisterId) {
-          initialWalletId = Principal.fromText(this.data.selectedWallet.canisterId);
+        if (this.data.selected.canisterId) {
+          initialStationId = Principal.fromText(this.data.selected.canisterId);
         } else {
-          initialWalletId = controlPanelUser.main_wallet?.[0]
-            ? controlPanelUser.main_wallet?.[0]
-            : controlPanelUser.wallets?.[0]?.canister_id;
+          initialStationId = controlPanelUser.main_station?.[0]
+            ? controlPanelUser.main_station?.[0]
+            : controlPanelUser.stations?.[0]?.canister_id;
         }
         const sameUser =
           this.isAuthenticated && this.principal === controlPanelUser.identity.toText();
@@ -244,8 +244,8 @@ export const useSessionStore = defineStore('session', {
         this.isAuthenticated = true;
         this.populateUser(controlPanelUser);
 
-        if (!sameUser && initialWalletId) {
-          return this.connectWallet(initialWalletId);
+        if (!sameUser && initialStationId) {
+          return this.connectStation(initialStationId);
         }
       } catch (err) {
         logger.error(`Failed to load user session`, { err });
@@ -259,49 +259,51 @@ export const useSessionStore = defineStore('session', {
       }
     },
     populateUser(user: User): void {
-      const selectedWalletId = this.data.selectedWallet.canisterId;
+      const selectedStationId = this.data.selected.canisterId;
       const sameUser = this.isAuthenticated && this.principal === user.identity.toText();
       this.principal = user.identity.toText();
-      this.data.wallets = user.wallets.map(wallet => ({
-        main: wallet.canister_id.toText() === user.main_wallet?.[0]?.toText(),
-        name: wallet.name?.[0] ?? null,
-        canisterId: wallet.canister_id.toText(),
+      this.data.stations = user.stations.map(station => ({
+        main: station.canister_id.toText() === user.main_station?.[0]?.toText(),
+        name: station.name?.[0] ?? null,
+        canisterId: station.canister_id.toText(),
       }));
 
-      const hasWallet = this.data.wallets.some(wallet => wallet.canisterId === selectedWalletId);
-      if (!sameUser || !hasWallet) {
-        this.disconnectWallet();
+      const hasStation = this.data.stations.some(
+        station => station.canisterId === selectedStationId,
+      );
+      if (!sameUser || !hasStation) {
+        this.disconnectStation();
       }
     },
-    disconnectWallet(): void {
-      const wallet = useWalletStore();
+    disconnectStation(): void {
+      const station = useStationStore();
 
-      this.data.selectedWallet.hasAccess = false;
-      this.data.selectedWallet.canisterId = null;
+      this.data.selected.hasAccess = false;
+      this.data.selected.canisterId = null;
 
-      wallet.onDisconnected();
+      station.onDisconnected();
     },
-    async connectWallet(walletId: Principal, onConnectedReload = true): Promise<void> {
-      const wallet = useWalletStore();
+    async connectStation(stationId: Principal, onConnectedReload = true): Promise<void> {
+      const station = useStationStore();
 
-      this.data.selectedWallet.canisterId = walletId.toText();
-      this.data.selectedWallet.hasAccess = false;
-      const connectionStatus = await wallet.connectTo(walletId, onConnectedReload);
+      this.data.selected.canisterId = stationId.toText();
+      this.data.selected.hasAccess = false;
+      const connectionStatus = await station.connectTo(stationId, onConnectedReload);
 
-      if (connectionStatus === WalletConnectionStatus.Connected) {
-        this.data.selectedWallet.hasAccess = true;
+      if (connectionStatus === ConnectionStatus.Connected) {
+        this.data.selected.hasAccess = true;
       }
     },
 
-    async addWallet(canisterId: string, name: string): Promise<void> {
+    async addStation(canisterId: string, name: string): Promise<void> {
       const controlPanelService = services().controlPanel;
 
       const user = await controlPanelService.editUser({
-        main_wallet: this.mainWallet ? [this.mainWallet] : [],
-        wallets: [
+        main_station: this.mainStation ? [this.mainStation] : [],
+        stations: [
           [
-            ...this.data.wallets.map(wallet => sessionUserWalletToUserWallet(wallet)),
-            sessionUserWalletToUserWallet({
+            ...this.data.stations.map(station => stationToUserStation(station)),
+            stationToUserStation({
               canisterId: canisterId,
               name: name,
             }),
@@ -311,7 +313,7 @@ export const useSessionStore = defineStore('session', {
 
       this.populateUser(user);
 
-      await this.connectWallet(Principal.fromText(canisterId));
+      await this.connectStation(Principal.fromText(canisterId));
     },
 
     requireReauthentication() {
@@ -321,7 +323,7 @@ export const useSessionStore = defineStore('session', {
       sessionExpirationService.clearInactivityTimer();
       sessionExpirationService.clearSessionTimer();
 
-      disableWalletWorkers();
+      disableWorkers();
     },
 
     async setReauthenticated() {
@@ -348,7 +350,7 @@ export const useSessionStore = defineStore('session', {
       }
 
       this.reauthenticationNeeded = false;
-      enableWalletWorkers();
+      enableWorkers();
 
       const sessionExpirationService = services().sessionExpiration;
 
@@ -363,8 +365,8 @@ export const useSessionStore = defineStore('session', {
 
       if (!isRegistered) {
         await controlPanelService.register({
-          // a new user is created with an empty list of wallets, they can add them later
-          wallet_id: [],
+          // a new user is created with an empty list of stations, they can add them later
+          station_id: [],
         });
       }
 

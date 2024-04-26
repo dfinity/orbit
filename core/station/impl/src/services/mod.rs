@@ -1,4 +1,4 @@
-//! Canister services used to handle the necessary business logic for the Wallet canister.
+//! Services used to handle the necessary business logic for the canister.
 
 mod account;
 pub use account::*;

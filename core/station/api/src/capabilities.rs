@@ -2,7 +2,7 @@ use crate::MetadataDTO;
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct WalletAssetDTO {
+pub struct AssetDTO {
     /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
     pub blockchain: String,
     /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
@@ -18,13 +18,13 @@ pub struct WalletAssetDTO {
     pub metadata: Vec<MetadataDTO>,
 }
 
-/// The capabilities of the wallet canister.
+/// The capabilities of the canister.
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct CapabilitiesDTO {
     /// The current version of the canister.
     pub version: String,
-    /// The list of assets that are supported by the wallet canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
-    pub supported_assets: Vec<WalletAssetDTO>,
+    /// The list of assets that are supported by the canister (e.g. `ICP`, `BTC`, `ETH`, etc.)
+    pub supported_assets: Vec<AssetDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]

@@ -1,5 +1,5 @@
 use super::AccountId;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

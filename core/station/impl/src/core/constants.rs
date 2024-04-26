@@ -23,7 +23,7 @@ pub const ACCOUNT_BALANCE_FRESHNESS_IN_MS: u64 = 15000;
 /// The initial cycles balance to use when creating the upgrader canister.
 pub const INITIAL_UPGRADER_CYCLES: u128 = 250_000_000_000;
 
-/// The NNS Root canister id added to wallet and upgrader canisters as a recovery method.
+/// The NNS Root canister id added to station and upgrader canisters as a recovery method.
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
 #[cfg(test)]

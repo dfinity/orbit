@@ -74,7 +74,7 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { AddressBookEntry, UUID } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { BlockchainStandard } from '~/types/chain.types';
 import { assertAndReturn } from '~/utils/helper.utils';
 
@@ -107,7 +107,7 @@ const openModel = computed({
   set: value => emit('update:open', value),
 });
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const loadAddressBookEntry = async (): Promise<{
   entry: Partial<AddressBookEntry>;
@@ -120,7 +120,7 @@ const loadAddressBookEntry = async (): Promise<{
     return { entry: createModel };
   }
 
-  const result = await wallet.service.getAddressBookEntry(
+  const result = await station.service.getAddressBookEntry(
     {
       address_book_entry_id: props.addressBookEntryId.value,
     },
@@ -143,7 +143,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (addressBookEntry.value.id) {
-      const proposal = await wallet.service.editAddressBookEntry({
+      const proposal = await station.service.editAddressBookEntry({
         address_book_entry_id: addressBookEntry.value.id,
         address_owner: [assertAndReturn(addressBookEntry.value.address_owner)],
         change_metadata: [
@@ -159,7 +159,7 @@ const save = async (): Promise<void> => {
       return;
     }
 
-    const proposal = await wallet.service.addAddressBookEntry({
+    const proposal = await station.service.addAddressBookEntry({
       blockchain: assertAndReturn(addressBookEntry.value.blockchain, 'blockchain'),
       standard: assertAndReturn(addressBookEntry.value.standard, 'standard'),
       address_owner: assertAndReturn(addressBookEntry.value.address_owner, 'address_owner'),

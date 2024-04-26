@@ -18,11 +18,11 @@ use crate::{
     },
     services::{NotificationService, UserService, NOTIFICATION_SERVICE, USER_SERVICE},
 };
-use ic_canister_core::utils::rfc3339_to_timestamp;
-use ic_canister_core::{api::ServiceResult, model::ModelValidator};
-use ic_canister_core::{repository::Repository, types::UUID};
 use ic_cdk::print;
 use lazy_static::lazy_static;
+use orbit_essentials::utils::rfc3339_to_timestamp;
+use orbit_essentials::{api::ServiceResult, model::ModelValidator};
+use orbit_essentials::{repository::Repository, types::UUID};
 use station_api::{
     CreateProposalInput, GetNextVotableProposalInput, ListProposalsInput, VoteOnProposalInput,
 };
@@ -947,7 +947,7 @@ mod benchs {
     };
     use canbench_rs::{bench, BenchResult};
     use candid::Principal;
-    use ic_canister_core::{model::ModelKey, utils::timestamp_to_rfc3339};
+    use orbit_essentials::{model::ModelKey, utils::timestamp_to_rfc3339};
     use station_api::ProposalStatusCodeDTO;
 
     fn create_test_proposals(proposals_to_insert: u64) -> u64 {

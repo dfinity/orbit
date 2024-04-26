@@ -1,12 +1,12 @@
-use super::UserWallet;
+use super::UserStation;
 use crate::errors::UserError;
 use candid::Principal;
 use email_address::EmailAddress;
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 use std::str::FromStr;
 
 /// The user id, which is a UUID.
@@ -23,7 +23,7 @@ pub enum UserSubscriptionStatus {
 }
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum CanDeployWallet {
+pub enum CanDeployStation {
     NotAllowed(UserSubscriptionStatus),
     Allowed(usize),
     QuotaExceeded,
@@ -50,15 +50,15 @@ pub struct User {
     pub identity: Principal,
     /// The subscription status of the user.
     pub subscription_status: UserSubscriptionStatus,
-    /// All the wallets that the user has access to (including the main wallet).
+    /// All the stations that the user has access to (including the main station).
     ///
-    /// The user can optionally give a name to each wallet to make it easier to identify them.
-    pub wallets: Vec<UserWallet>,
-    /// The wallets that have ever been deployed for the user by the control panel.
-    /// Used to bound the total number of wallets a user could deploy via the control panel.
-    pub deployed_wallets: Vec<Principal>,
-    /// The main wallet to use for the user, this is the wallet that will be used by default.
-    pub main_wallet: Option<Principal>,
+    /// The user can optionally give a name to each station to make it easier to identify them.
+    pub stations: Vec<UserStation>,
+    /// The stations that have ever been deployed for the user by the control panel.
+    /// Used to bound the total number of stations a user could deploy via the control panel.
+    pub deployed_stations: Vec<Principal>,
+    /// The main station to use for the user, this is the station that will be used by default.
+    pub main_station: Option<Principal>,
     /// The timestamp of last time the user was active.
     pub last_active: Timestamp,
     /// Last time the identity was updated.
@@ -72,27 +72,27 @@ pub struct UserKey(pub UUID);
 impl User {
     pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
     pub const EMAIL_LEN_RANGE: (u8, u8) = (1, 100);
-    pub const MAX_WALLETS: u8 = 10;
-    pub const MAX_DEPLOYED_WALLETS: u8 = 10;
+    pub const MAX_STATIONS: u8 = 15;
+    pub const MAX_DEPLOYED_STATIONS: u8 = 3;
 
     pub fn to_key(&self) -> UserKey {
         UserKey(self.id)
     }
 
-    pub fn can_deploy_wallet(&self) -> CanDeployWallet {
+    pub fn can_deploy_station(&self) -> CanDeployStation {
         match self.subscription_status {
             UserSubscriptionStatus::Approved => (),
             UserSubscriptionStatus::Unsubscribed
             | UserSubscriptionStatus::Pending(_)
             | UserSubscriptionStatus::Denylisted => {
-                return CanDeployWallet::NotAllowed(self.subscription_status.clone());
+                return CanDeployStation::NotAllowed(self.subscription_status.clone());
             }
         };
-        let max_deployed_wallets: usize = Self::MAX_DEPLOYED_WALLETS.into();
-        if self.deployed_wallets.len() >= max_deployed_wallets {
-            return CanDeployWallet::QuotaExceeded;
+        let max_deployed_stations: usize = Self::MAX_DEPLOYED_STATIONS.into();
+        if self.deployed_stations.len() >= max_deployed_stations {
+            return CanDeployStation::QuotaExceeded;
         }
-        CanDeployWallet::Allowed(max_deployed_wallets - self.deployed_wallets.len())
+        CanDeployStation::Allowed(max_deployed_stations - self.deployed_stations.len())
     }
 }
 
@@ -117,21 +117,21 @@ fn validate_email(email: &str) -> ModelValidatorResult<UserError> {
     Ok(())
 }
 
-fn validate_wallets(wallets: &[UserWallet]) -> ModelValidatorResult<UserError> {
-    if wallets.len() > User::MAX_WALLETS as usize {
+fn validate_stations(stations: &[UserStation]) -> ModelValidatorResult<UserError> {
+    if stations.len() > User::MAX_STATIONS as usize {
         return Err(UserError::ValidationError {
             info: format!(
-                "Too many wallets, expected at most {} but got {}",
-                User::MAX_WALLETS,
-                wallets.len()
+                "Too many stations, expected at most {} but got {}",
+                User::MAX_STATIONS,
+                stations.len()
             ),
         });
     }
 
-    for wallet in wallets.iter() {
-        if let Err(e) = wallet.validate() {
+    for station in stations.iter() {
+        if let Err(e) = station.validate() {
             return Err(UserError::ValidationError {
-                info: format!("Wallet validation failed: {:?}", e,),
+                info: format!("Station validation failed: {:?}", e,),
             });
         }
     }
@@ -139,19 +139,19 @@ fn validate_wallets(wallets: &[UserWallet]) -> ModelValidatorResult<UserError> {
     Ok(())
 }
 
-fn validate_main_wallet(
-    main_wallet: &Option<Principal>,
-    wallets: &Vec<UserWallet>,
+fn validate_main_station(
+    main_station: &Option<Principal>,
+    stations: &Vec<UserStation>,
 ) -> ModelValidatorResult<UserError> {
-    if let Some(main_wallet) = main_wallet {
-        if !wallets
+    if let Some(main_station) = main_station {
+        if !stations
             .iter()
-            .any(|wallet| &wallet.canister_id == main_wallet)
+            .any(|station| &station.canister_id == main_station)
         {
             return Err(UserError::ValidationError {
                 info: format!(
-                    "Main wallet {} is not in the list of wallets {:?}",
-                    main_wallet, wallets
+                    "Main station {} is not in the list of stations {:?}",
+                    main_station, stations
                 ),
             });
         }
@@ -165,8 +165,8 @@ impl ModelValidator<UserError> for User {
         if let UserSubscriptionStatus::Pending(email) = &self.subscription_status {
             validate_email(email)?;
         }
-        validate_wallets(&self.wallets)?;
-        validate_main_wallet(&self.main_wallet, &self.wallets)?;
+        validate_stations(&self.stations)?;
+        validate_main_station(&self.main_station, &self.stations)?;
 
         Ok(())
     }
@@ -191,9 +191,12 @@ mod tests {
             model.subscription_status,
             deserialized_model.subscription_status
         );
-        assert_eq!(model.wallets, deserialized_model.wallets);
-        assert_eq!(model.deployed_wallets, deserialized_model.deployed_wallets);
-        assert_eq!(model.main_wallet, deserialized_model.main_wallet);
+        assert_eq!(model.stations, deserialized_model.stations);
+        assert_eq!(
+            model.deployed_stations,
+            deserialized_model.deployed_stations
+        );
+        assert_eq!(model.main_station, deserialized_model.main_station);
         assert_eq!(
             model.last_update_timestamp,
             deserialized_model.last_update_timestamp
@@ -201,57 +204,57 @@ mod tests {
     }
 
     #[test]
-    fn check_wallets_validation() {
+    fn check_stations_validation() {
         let mut user = mock_user();
-        user.wallets = Vec::new();
-        user.main_wallet = None;
-        user.deployed_wallets = Vec::new();
+        user.stations = Vec::new();
+        user.main_station = None;
+        user.deployed_stations = Vec::new();
 
-        let user_with_no_wallets = user.clone();
-        let mut user_with_one_wallet = user.clone();
-        let mut user_with_too_many_wallets = user.clone();
+        let user_with_no_stations = user.clone();
+        let mut user_with_one_station = user.clone();
+        let mut user_with_too_many_stations = user.clone();
 
-        user_with_one_wallet.wallets.push(UserWallet {
+        user_with_one_station.stations.push(UserStation {
             canister_id: Principal::anonymous(),
             name: None,
         });
 
-        for _ in 0..=User::MAX_WALLETS {
-            user_with_too_many_wallets.wallets.push(UserWallet {
+        for _ in 0..=User::MAX_STATIONS {
+            user_with_too_many_stations.stations.push(UserStation {
                 canister_id: Principal::anonymous(),
                 name: None,
             });
         }
 
-        assert!(validate_wallets(&user_with_no_wallets.wallets).is_ok());
-        assert!(validate_wallets(&user_with_one_wallet.wallets).is_ok());
-        assert!(validate_wallets(&user_with_too_many_wallets.wallets).is_err());
+        assert!(validate_stations(&user_with_no_stations.stations).is_ok());
+        assert!(validate_stations(&user_with_one_station.stations).is_ok());
+        assert!(validate_stations(&user_with_too_many_stations.stations).is_err());
     }
 
     #[test]
-    fn valid_main_wallet() {
+    fn valid_main_station() {
         let mut user = mock_user();
-        user.deployed_wallets = vec![];
-        user.main_wallet = Some(Principal::from_slice(&[10; 29]));
-        user.wallets = vec![UserWallet {
+        user.deployed_stations = vec![];
+        user.main_station = Some(Principal::from_slice(&[10; 29]));
+        user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[10; 29]),
             name: None,
         }];
 
-        assert!(validate_main_wallet(&user.main_wallet, &user.wallets).is_ok());
+        assert!(validate_main_station(&user.main_station, &user.stations).is_ok());
     }
 
     #[test]
-    fn invalid_main_wallet() {
+    fn invalid_main_station() {
         let mut user = mock_user();
-        user.deployed_wallets = vec![];
-        user.main_wallet = Some(Principal::from_slice(&[10; 29]));
-        user.wallets = vec![UserWallet {
+        user.deployed_stations = vec![];
+        user.main_station = Some(Principal::from_slice(&[10; 29]));
+        user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[12; 29]),
             name: None,
         }];
 
-        assert!(validate_main_wallet(&user.main_wallet, &user.wallets).is_err());
+        assert!(validate_main_station(&user.main_station, &user.stations).is_err());
     }
 
     #[rstest]
@@ -284,9 +287,9 @@ pub mod user_model_utils {
             id: *Uuid::new_v4().as_bytes(),
             identity: Principal::from_slice(&principal_id),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: vec![],
-            deployed_wallets: vec![],
-            main_wallet: None,
+            stations: vec![],
+            deployed_stations: vec![],
+            main_station: None,
             last_active: 0,
             last_update_timestamp: 0,
         }

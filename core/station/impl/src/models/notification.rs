@@ -1,10 +1,10 @@
 use super::{NotificationStatus, NotificationType, UserId};
 use crate::errors::NotificationError;
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 
 /// The notification id, which is a UUID.
 pub type NotificationId = UUID;

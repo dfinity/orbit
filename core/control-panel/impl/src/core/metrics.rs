@@ -1,11 +1,11 @@
 use super::{ONE_DAY_NS, ONE_HOUR_NS, ONE_MONTH_NS, ONE_WEEK_NS};
 use crate::models::UserId;
 use crate::{models::User, repositories::USER_REPOSITORY, SERVICE_NAME};
-use ic_canister_core::metrics::{
+use orbit_essentials::metrics::{
     labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric,
 };
-use ic_canister_core::repository::Repository;
-use ic_canister_core::types::Timestamp;
+use orbit_essentials::repository::Repository;
+use orbit_essentials::types::Timestamp;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::{
@@ -20,8 +20,8 @@ thread_local! {
     /// A collection of user related metrics.
     pub static USER_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<User>>>> = vec![
         Rc::new(RefCell::new(MetricRegisteredUsers)),
-        Rc::new(RefCell::new(MetricDeployedWallets)),
-        Rc::new(RefCell::new(MetricUserWallets)),
+        Rc::new(RefCell::new(MetricDeployedStations)),
+        Rc::new(RefCell::new(MetricUserStations)),
         METRIC_ACTIVE_USERS.with(|metric_active_users| metric_active_users.clone())
     ];
 }
@@ -98,36 +98,36 @@ impl ApplicationMetric<User> for MetricRegisteredUsers {
     }
 }
 
-/// Metric for the number of deployed wallets that have been created by the control panel.
-pub struct MetricDeployedWallets;
+/// Metric for the number of deployed stations that have been created by the control panel.
+pub struct MetricDeployedStations;
 
-impl ApplicationGaugeMetric<User> for MetricDeployedWallets {}
+impl ApplicationGaugeMetric<User> for MetricDeployedStations {}
 
-impl ApplicationMetric<User> for MetricDeployedWallets {
+impl ApplicationMetric<User> for MetricDeployedStations {
     fn name(&self) -> &'static str {
-        "deployed_wallets"
+        "deployed_stations"
     }
 
     fn help(&self) -> &'static str {
-        "Total number of deployed wallets that have been created by the control panel."
+        "Total number of deployed stations that have been created by the control panel."
     }
 
     fn recalculate(&mut self, models: &[User]) {
-        let mut deployed_wallets = 0.0;
+        let mut deployed_stations = 0.0;
         for user in models {
-            deployed_wallets += user.deployed_wallets.len() as f64;
+            deployed_stations += user.deployed_stations.len() as f64;
         }
 
-        self.set(SERVICE_NAME, deployed_wallets);
+        self.set(SERVICE_NAME, deployed_stations);
     }
 
     fn sum(&mut self, current: &User, previous: Option<&User>) {
-        let diff_deployed_wallets = current.deployed_wallets.len() as f64
-            - previous.map_or(0.0, |user| user.deployed_wallets.len() as f64);
+        let diff_deployed_stations = current.deployed_stations.len() as f64
+            - previous.map_or(0.0, |user| user.deployed_stations.len() as f64);
 
         let current_total = self.get(SERVICE_NAME);
 
-        self.set(SERVICE_NAME, current_total.add(diff_deployed_wallets));
+        self.set(SERVICE_NAME, current_total.add(diff_deployed_stations));
     }
 
     fn sub(&mut self, model: &User) {
@@ -135,47 +135,47 @@ impl ApplicationMetric<User> for MetricDeployedWallets {
 
         self.set(
             SERVICE_NAME,
-            current_total.sub(model.deployed_wallets.len() as f64),
+            current_total.sub(model.deployed_stations.len() as f64),
         );
     }
 }
 
-/// Metric for the number of wallets users have associated with their user account.
-pub struct MetricUserWallets;
+/// Metric for the number of stations users have associated with their user account.
+pub struct MetricUserStations;
 
-impl ApplicationGaugeMetric<User> for MetricUserWallets {}
+impl ApplicationGaugeMetric<User> for MetricUserStations {}
 
-impl ApplicationMetric<User> for MetricUserWallets {
+impl ApplicationMetric<User> for MetricUserStations {
     fn name(&self) -> &'static str {
-        "user_wallets"
+        "user_stations"
     }
 
     fn help(&self) -> &'static str {
-        "Total number of wallets users have associated with their user account."
+        "Total number of stations users have associated with their user account."
     }
 
     fn recalculate(&mut self, models: &[User]) {
-        let mut user_wallets = 0.0;
+        let mut user_stations = 0.0;
         for user in models {
-            user_wallets += user.wallets.len() as f64;
+            user_stations += user.stations.len() as f64;
         }
 
-        self.set(SERVICE_NAME, user_wallets);
+        self.set(SERVICE_NAME, user_stations);
     }
 
     fn sum(&mut self, current: &User, previous: Option<&User>) {
-        let diff_user_wallets =
-            current.wallets.len() as f64 - previous.map_or(0.0, |user| user.wallets.len() as f64);
+        let diff_user_stations =
+            current.stations.len() as f64 - previous.map_or(0.0, |user| user.stations.len() as f64);
 
         let current_total = self.get(SERVICE_NAME);
 
-        self.set(SERVICE_NAME, current_total.add(diff_user_wallets));
+        self.set(SERVICE_NAME, current_total.add(diff_user_stations));
     }
 
     fn sub(&mut self, model: &User) {
         let current_total = self.get(SERVICE_NAME);
 
-        self.set(SERVICE_NAME, current_total.sub(model.wallets.len() as f64));
+        self.set(SERVICE_NAME, current_total.sub(model.stations.len() as f64));
     }
 }
 
@@ -259,17 +259,17 @@ impl ApplicationMetric<User> for MetricActiveUsers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus, UserWallet};
+    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus, UserStation};
     use candid::Principal;
 
     #[test]
     fn test_user_metrics() {
         let mut user = mock_user();
-        user.wallets = vec![UserWallet {
+        user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: None,
         }];
-        user.deployed_wallets = vec![
+        user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
             Principal::from_slice(&[2; 29]),
         ];
@@ -278,8 +278,8 @@ mod tests {
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        assert_eq!(MetricUserWallets.get(SERVICE_NAME), 1.0);
-        assert_eq!(MetricDeployedWallets.get(SERVICE_NAME), 2.0);
+        assert_eq!(MetricUserStations.get(SERVICE_NAME), 1.0);
+        assert_eq!(MetricDeployedStations.get(SERVICE_NAME), 2.0);
         assert_eq!(
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => status.as_str() }),
             1.0
@@ -288,8 +288,8 @@ mod tests {
         // update on user removal
         USER_REPOSITORY.remove(&user.to_key());
 
-        assert_eq!(MetricUserWallets.get(SERVICE_NAME), 0.0);
-        assert_eq!(MetricDeployedWallets.get(SERVICE_NAME), 0.0);
+        assert_eq!(MetricUserStations.get(SERVICE_NAME), 0.0);
+        assert_eq!(MetricDeployedStations.get(SERVICE_NAME), 0.0);
         assert_eq!(
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => status.as_str() }),
             0.0
@@ -299,11 +299,11 @@ mod tests {
     #[test]
     fn test_aggregated_user_metrics() {
         let mut user = mock_user();
-        user.wallets = vec![UserWallet {
+        user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: None,
         }];
-        user.deployed_wallets = vec![
+        user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
             Principal::from_slice(&[2; 29]),
         ];
@@ -313,18 +313,18 @@ mod tests {
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
         let mut user2 = mock_user();
-        user2.wallets = vec![UserWallet {
+        user2.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: None,
         }];
-        user2.deployed_wallets = vec![Principal::from_slice(&[1; 29])];
+        user2.deployed_stations = vec![Principal::from_slice(&[1; 29])];
         user2.subscription_status = UserSubscriptionStatus::Pending("email".to_string());
         let status2 = user2.subscription_status.to_string();
 
         USER_REPOSITORY.insert(user2.to_key(), user2.clone());
 
-        assert_eq!(MetricUserWallets.get(SERVICE_NAME), 2.0);
-        assert_eq!(MetricDeployedWallets.get(SERVICE_NAME), 3.0);
+        assert_eq!(MetricUserStations.get(SERVICE_NAME), 2.0);
+        assert_eq!(MetricDeployedStations.get(SERVICE_NAME), 3.0);
         assert_eq!(
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => status.as_str() }),
             1.0
@@ -337,8 +337,8 @@ mod tests {
         // update on user removal
         USER_REPOSITORY.remove(&user.to_key());
 
-        assert_eq!(MetricUserWallets.get(SERVICE_NAME), 1.0);
-        assert_eq!(MetricDeployedWallets.get(SERVICE_NAME), 1.0);
+        assert_eq!(MetricUserStations.get(SERVICE_NAME), 1.0);
+        assert_eq!(MetricDeployedStations.get(SERVICE_NAME), 1.0);
         assert_eq!(
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => status.as_str() }),
             0.0
@@ -352,11 +352,11 @@ mod tests {
     #[test]
     fn test_user_metrics_diff() {
         let mut user = mock_user();
-        user.wallets = vec![UserWallet {
+        user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: None,
         }];
-        user.deployed_wallets = vec![
+        user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
             Principal::from_slice(&[2; 29]),
         ];
@@ -365,24 +365,24 @@ mod tests {
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        assert_eq!(MetricUserWallets.get(SERVICE_NAME), 1.0);
-        assert_eq!(MetricDeployedWallets.get(SERVICE_NAME), 2.0);
+        assert_eq!(MetricUserStations.get(SERVICE_NAME), 1.0);
+        assert_eq!(MetricDeployedStations.get(SERVICE_NAME), 2.0);
         assert_eq!(
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => status.as_str() }),
             1.0
         );
 
-        user.wallets = vec![
-            UserWallet {
+        user.stations = vec![
+            UserStation {
                 canister_id: Principal::from_slice(&[1; 29]),
                 name: None,
             },
-            UserWallet {
+            UserStation {
                 canister_id: Principal::from_slice(&[2; 29]),
                 name: None,
             },
         ];
-        user.deployed_wallets = vec![
+        user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
             Principal::from_slice(&[2; 29]),
             Principal::from_slice(&[3; 29]),
@@ -392,8 +392,8 @@ mod tests {
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        assert_eq!(MetricUserWallets.get(SERVICE_NAME), 2.0);
-        assert_eq!(MetricDeployedWallets.get(SERVICE_NAME), 3.0);
+        assert_eq!(MetricUserStations.get(SERVICE_NAME), 2.0);
+        assert_eq!(MetricDeployedStations.get(SERVICE_NAME), 3.0);
         assert_eq!(
             MetricRegisteredUsers.get(SERVICE_NAME, &labels! { "status" => status.as_str() }),
             0.0

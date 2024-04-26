@@ -1,4 +1,4 @@
-import { ProposalCriteriaEnum, ProposalSpecifierEnum } from '~/types/wallet.types';
+import { ProposalCriteriaEnum, ProposalSpecifierEnum } from '~/types/station.types';
 
 export const defaultCriterias = [
   ProposalCriteriaEnum.AutoAdopted,

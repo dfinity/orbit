@@ -5,8 +5,8 @@
         <BrandLogo variation="dark" class="flex-grow-1" />
         <LanguageSelector v-if="props.languageSelector" />
       </VCol>
-      <VCol v-if="showWalletSelector" cols="12" class="d-flex ga-2 align-center">
-        <WalletSelector bg-color="background" class="flex-grow-1" />
+      <VCol v-if="showStationSelector" cols="12" class="d-flex ga-2 align-center">
+        <StationSelector bg-color="background" class="flex-grow-1" />
         <RouterLink :to="{ name: Routes.SystemSettings }">
           <VIcon :icon="mdiCog" size="small" />
         </RouterLink>
@@ -21,7 +21,7 @@ import { computed } from 'vue';
 import { VCol, VContainer, VIcon, VRow } from 'vuetify/components';
 import BrandLogo from '~/components/BrandLogo.vue';
 import LanguageSelector from '~/components/LanguageSelector.vue';
-import WalletSelector from '~/components/WalletSelector.vue';
+import StationSelector from '~/components/StationSelector.vue';
 import { Routes } from '~/configs/routes.config';
 import { useSessionStore } from '~/stores/session.store';
 
@@ -35,5 +35,5 @@ const props = withDefaults(
 );
 
 const session = useSessionStore();
-const showWalletSelector = computed(() => session.isAuthenticated && session.hasWallets);
+const showStationSelector = computed(() => session.isAuthenticated && session.hasStations);
 </script>

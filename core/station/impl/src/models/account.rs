@@ -3,12 +3,12 @@ use crate::errors::AccountError;
 use crate::models::Metadata;
 use crate::repositories::policy::PROPOSAL_POLICY_REPOSITORY;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
-use ic_canister_core::{
+use orbit_essentials::repository::Repository;
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 use std::{collections::HashMap, hash::Hash};
 
 /// The account metadata key for the asset symbol;
@@ -272,7 +272,7 @@ mod tests {
 pub mod account_test_utils {
     use super::*;
     use crate::repositories::ACCOUNT_REPOSITORY;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
     use uuid::Uuid;
 
     pub fn mock_account() -> Account {

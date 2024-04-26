@@ -216,11 +216,11 @@ import { useFilterUtils, useSavedFilters } from '~/composables/account.composabl
 import { Routes } from '~/configs/routes.config';
 import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
 import { ChainApiFactory } from '~/services/chains';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
 import type { AccountIncomingTransfer } from '~/types/chain.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { convertDate } from '~/utils/date.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
@@ -250,7 +250,7 @@ const privileges = ref<AccountCallerPrivileges>({
   can_transfer: false,
 });
 const loading = ref(false);
-const wallet = useWalletStore();
+const station = useStationStore();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
   const breadcrumbs = [...props.breadcrumbs];
@@ -309,13 +309,13 @@ const loadAccount = async (): Promise<{
   privileges: AccountCallerPrivileges;
 }> => {
   const accountId = `${router.currentRoute.value.params.id}`;
-  const result = await wallet.service.getAccount({ account_id: accountId }, useVerifiedCall);
+  const result = await station.service.getAccount({ account_id: accountId }, useVerifiedCall);
   useVerifiedCall = true;
 
   const account = result.account;
 
   if (!account.balance.length) {
-    const balances = await wallet.service.fetchAccountBalances({
+    const balances = await station.service.fetchAccountBalances({
       account_ids: [accountId],
     });
 
@@ -330,7 +330,7 @@ const loadAccount = async (): Promise<{
     }
   }
 
-  wallet.trackAccountsBalance([account.id]);
+  station.trackAccountsBalance([account.id]);
   return { account, privileges: result.privileges };
 };
 </script>

@@ -7,8 +7,8 @@ use crate::{
     },
     repositories::policy::PROPOSAL_POLICY_REPOSITORY,
 };
-use ic_canister_core::{repository::Repository, utils::timestamp_to_rfc3339};
 use ic_cdk::print;
+use orbit_essentials::{repository::Repository, utils::timestamp_to_rfc3339};
 use station_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO};
 use uuid::Uuid;
 

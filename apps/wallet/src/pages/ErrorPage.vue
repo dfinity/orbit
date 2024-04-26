@@ -21,7 +21,7 @@
         <ErrorScreen
           v-else-if="
             props.status == RouteStatusCode.Disconnected &&
-            wallet.connectionError === WalletConnectionError.NOT_FOUND_USER_IDENTITY
+            station.connectionError === ConnectionError.NOT_FOUND_USER_IDENTITY
           "
           :icon="mdiAccountOffOutline"
           :title="$t('pages.disconnected.title_not_found_user_identity')"
@@ -46,14 +46,14 @@
         <ErrorScreen
           v-else-if="
             props.status == RouteStatusCode.Disconnected &&
-            wallet.connectionError === WalletConnectionError.OTHER_WALLET_ERROR
+            station.connectionError === ConnectionError.OTHER_ERROR
           "
           :icon="mdiMagnifyRemoveOutline"
           :title="
-            wallet.connectionErrorMessage || $t('pages.disconnected.title_other_wallet_error')
+            station.connectionErrorMessage || $t('pages.disconnected.title_other_station_error')
           "
           :subtitle="
-            wallet.connectionErrorMessage || $t('pages.disconnected.subtitle_other_wallet_error')
+            station.connectionErrorMessage || $t('pages.disconnected.subtitle_other_station_error')
           "
           :show-back-to-home="false"
         />
@@ -61,7 +61,7 @@
         <ErrorScreen
           v-else-if="
             props.status == RouteStatusCode.Disconnected &&
-            wallet.connectionError === WalletConnectionError.CANISTER_ERROR
+            station.connectionError === ConnectionError.CANISTER_ERROR
           "
           :icon="mdiMagnifyRemoveOutline"
           :title="$t('pages.disconnected.title_canister_error')"
@@ -69,7 +69,7 @@
           :show-back-to-home="false"
         >
           <VTextarea
-            v-model="wallet.connectionErrorMessage"
+            v-model="station.connectionErrorMessage"
             :variant="'outlined'"
             readonly
             auto-grow
@@ -101,7 +101,7 @@ import PageLayout from '~/components/PageLayout.vue';
 import ErrorScreen from '~/components/error/ErrorScreen.vue';
 import { RouteStatusCode } from '~/configs/routes.config';
 import { useSessionStore } from '~/stores/session.store';
-import { useWalletStore, WalletConnectionError } from '~/stores/wallet.store';
+import { useStationStore, ConnectionError } from '~/stores/station.store';
 import { copyToClipboard } from '~/utils/app.utils';
 
 const props = withDefaults(
@@ -114,5 +114,5 @@ const props = withDefaults(
 );
 
 const session = useSessionStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 </script>

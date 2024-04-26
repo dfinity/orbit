@@ -1,0 +1,19 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "orbit-essentials-macros-tests"
+version = "0.1.0"
+edition = "2021"
+authors = ["DFINITY Stiftung"]
+license = "Apache-2.0"
+include = ["src", "Cargo.toml"]
+
+[lib]
+crate-type = ["rlib"]
+bench = false
+
+[dependencies]
+candid = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_cbor = { workspace = true }
+serde_bytes = { workspace = true }
+orbit-essentials = { workspace = true }

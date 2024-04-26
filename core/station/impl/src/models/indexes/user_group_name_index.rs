@@ -1,6 +1,6 @@
 use crate::models::UserGroup;
-use ic_canister_core::types::UUID;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::UUID;
 
 /// Represents the user group name index within the system.
 ///

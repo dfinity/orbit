@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [control_panel, upgrader, station]
+        package: [control-panel, upgrader, station]
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4

@@ -2,7 +2,7 @@ import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
 import { Notification } from '~/generated/station/station.did';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 import { timer, unreachable } from '~/utils/helper.utils';
 
 const DEFAULT_POOL_INTERVAL_MS = 5000;
@@ -13,8 +13,8 @@ export interface NotificationsWorker extends Worker {
 }
 
 export interface NotificationsWorkerStartInput {
-  // The wallet id to use for the worker.
-  walletId: Principal;
+  // The canister id to use for the worker to fetch notifications.
+  stationId: Principal;
   // The frequency at which the worker should poll for notification updates in milliseconds.
   //
   // Default: 5000 (5 seconds)
@@ -57,7 +57,7 @@ class NotificationsWorkerImpl {
   private enabled: boolean = false;
   private loading: boolean = false;
 
-  constructor(private walletService: WalletService = new WalletService(icAgent.get())) {}
+  constructor(private stationService: StationService = new StationService(icAgent.get())) {}
 
   static register(): void {
     if (typeof navigator === 'undefined') {
@@ -95,7 +95,7 @@ class NotificationsWorkerImpl {
     this.lastNotificationDate = null;
     this.lastNotificationId = null;
 
-    this.walletService.withWalletId(data.walletId);
+    this.stationService.withStationId(data.stationId);
     const poolIntervalMs =
       data.poolIntervalMs && data.poolIntervalMs > 0
         ? data.poolIntervalMs
@@ -125,7 +125,7 @@ class NotificationsWorkerImpl {
       this.loading = true;
       await icAgent.loadIdentity();
 
-      const notifications = await this.walletService.listUnreadNotifications(
+      const notifications = await this.stationService.listUnreadNotifications(
         this.lastNotificationDate ?? undefined,
         this.lastNotificationId ?? undefined,
       );

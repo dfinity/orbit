@@ -70,7 +70,7 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { ProposalPolicy, UUID } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -102,7 +102,7 @@ const openModel = computed({
   set: value => emit('update:open', value),
 });
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const loadPolicy = async (): Promise<{
   policy: Partial<ProposalPolicy>;
@@ -115,7 +115,7 @@ const loadPolicy = async (): Promise<{
     return { policy: createModel };
   }
 
-  const result = await wallet.service.getProposalPolicy(props.policyId.value, true);
+  const result = await station.service.getProposalPolicy(props.policyId.value, true);
   return result;
 };
 
@@ -136,7 +136,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (proposalPolicy.value.id) {
-      const proposal = await wallet.service.editProposalPolicy({
+      const proposal = await station.service.editProposalPolicy({
         policy_id: proposalPolicy.value.id,
         specifier: [assertAndReturn(proposalPolicy.value.specifier)],
         criteria: [assertAndReturn(proposalPolicy.value.criteria)],
@@ -148,7 +148,7 @@ const save = async (): Promise<void> => {
       return;
     }
 
-    const proposal = await wallet.service.addProposalPolicy({
+    const proposal = await station.service.addProposalPolicy({
       specifier: assertAndReturn(proposalPolicy.value.specifier),
       criteria: assertAndReturn(proposalPolicy.value.criteria),
     });

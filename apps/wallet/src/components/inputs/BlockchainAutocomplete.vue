@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { FormValidationRuleFn } from '~/types/helper.types';
 
 const input = withDefaults(
@@ -45,9 +45,11 @@ const input = withDefaults(
 
 const props = toRefs(input);
 const i18n = useI18n();
-const wallet = useWalletStore();
+const station = useStationStore();
 const blockchains = computed(() =>
-  Array.from(new Set(wallet.configuration.details.supported_assets.map(token => token.blockchain))),
+  Array.from(
+    new Set(station.configuration.details.supported_assets.map(token => token.blockchain)),
+  ),
 );
 
 const model = computed({

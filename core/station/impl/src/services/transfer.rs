@@ -9,8 +9,8 @@ use crate::{
     },
     repositories::TransferRepository,
 };
-use ic_canister_core::repository::Repository;
-use ic_canister_core::{api::ServiceResult, model::ModelValidator, utils::rfc3339_to_timestamp};
+use orbit_essentials::repository::Repository;
+use orbit_essentials::{api::ServiceResult, model::ModelValidator, utils::rfc3339_to_timestamp};
 use station_api::ListAccountTransfersInput;
 use uuid::Uuid;
 

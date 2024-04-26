@@ -12,9 +12,9 @@ use crate::{
     services::TransferService,
 };
 use async_trait::async_trait;
-use ic_canister_core::model::ModelValidator;
-use ic_canister_core::repository::Repository;
-use ic_canister_core::types::UUID;
+use orbit_essentials::model::ModelValidator;
+use orbit_essentials::repository::Repository;
+use orbit_essentials::types::UUID;
 use uuid::Uuid;
 
 fn get_account(from_account_id: &UUID) -> Option<Account> {

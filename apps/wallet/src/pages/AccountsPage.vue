@@ -120,16 +120,16 @@ import { useFetchList, usePagination } from '~/composables/lists.composable';
 import { Routes } from '~/configs/routes.config';
 import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
-const wallet = useWalletStore();
+const station = useStationStore();
 const app = useAppStore();
 const pageTitle = computed(() => props.title || i18n.t('pages.accounts.title'));
 const pagination = usePagination();
@@ -159,7 +159,7 @@ const accounts = ref<Account[]>([]);
 const privileges = ref<AccountCallerPrivileges[]>([]);
 const fetchList = useFetchList(
   async (offset, limit) => {
-    const results = await wallet.service.listAccounts(
+    const results = await station.service.listAccounts(
       {
         offset,
         limit,
@@ -169,7 +169,7 @@ const fetchList = useFetchList(
 
     useVerifiedCall = true;
 
-    wallet.trackAccountsBalance(results.accounts.map(account => account.id));
+    station.trackAccountsBalance(results.accounts.map(account => account.id));
     return results;
   },
   {

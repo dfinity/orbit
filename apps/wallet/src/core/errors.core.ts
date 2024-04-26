@@ -6,7 +6,7 @@ export class UnregisteredUserError extends Error {
   }
 }
 
-export class InvalidWalletError extends Error {
+export class InvalidStationError extends Error {
   constructor(message?: string) {
     super(message);
 

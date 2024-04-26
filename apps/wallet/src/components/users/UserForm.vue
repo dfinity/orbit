@@ -122,7 +122,7 @@ import { User } from '~/generated/station/station.did';
 import { fromUserStatusEnumToVariant, fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
 import { useAppStore } from '~/stores/app.store';
 import { VFormValidation } from '~/types/helper.types';
-import { UserStatusType } from '~/types/wallet.types';
+import { UserStatusType } from '~/types/station.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 import AddPrincipalForm from './AddPrincipalForm.vue';
 import { VAlert, VAutocomplete, VBtn, VForm, VSpacer, VTextField } from 'vuetify/components';

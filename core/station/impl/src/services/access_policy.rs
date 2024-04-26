@@ -12,9 +12,9 @@ use crate::{
     services::{UserGroupService, UserService, USER_GROUP_SERVICE, USER_SERVICE},
 };
 use candid::CandidType;
-use ic_canister_core::{api::ServiceResult, model::ModelKey};
-use ic_canister_core::{model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
+use orbit_essentials::{api::ServiceResult, model::ModelKey};
+use orbit_essentials::{model::ModelValidator, repository::Repository};
 use station_api::ListAccessPoliciesInput;
 use std::{collections::HashSet, sync::Arc};
 

@@ -43,7 +43,7 @@ import { useI18n } from 'vue-i18n';
 import { VFileInput, VForm, VSelect, VTextarea } from 'vuetify/components';
 import { ChangeCanisterTarget } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { ChangeCanisterTargetType } from '~/types/wallet.types';
+import { ChangeCanisterTargetType } from '~/types/station.types';
 import { arrayBufferToHashHex } from '~/utils/crypto.utils';
 import { readFileAsArrayBuffer } from '~/utils/file.utils';
 import { requiredRule } from '~/utils/form.utils';
@@ -59,11 +59,11 @@ export type ChangeCanisterFormProps = {
 
 const i18n = useI18n();
 
-const upgradeTarget = ref<ChangeCanisterTargetType>(ChangeCanisterTargetType.UpgradeWallet);
+const upgradeTarget = ref<ChangeCanisterTargetType>(ChangeCanisterTargetType.UpgradeStation);
 const upgradeTargetItems = computed(() => [
   {
-    value: ChangeCanisterTargetType.UpgradeWallet,
-    title: i18n.t('change_canister.targets.upgradewallet'),
+    value: ChangeCanisterTargetType.UpgradeStation,
+    title: i18n.t('change_canister.targets.upgradestation'),
   },
   {
     value: ChangeCanisterTargetType.UpgradeUpgrader,
@@ -105,9 +105,9 @@ watch(
   () => upgradeTarget.value,
   () => {
     switch (upgradeTarget.value) {
-      case ChangeCanisterTargetType.UpgradeWallet:
+      case ChangeCanisterTargetType.UpgradeStation:
         modelValue.value.target = {
-          UpgradeWallet: null,
+          UpgradeStation: null,
         };
         break;
       case ChangeCanisterTargetType.UpgradeUpgrader:

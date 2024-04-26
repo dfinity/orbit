@@ -14,10 +14,10 @@ use crate::{
     },
 };
 use candid::Principal;
-use ic_canister_core::repository::RefreshIndexMode;
-use ic_canister_core::repository::{IndexRepository, Repository};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
+use orbit_essentials::repository::RefreshIndexMode;
+use orbit_essentials::repository::{IndexRepository, Repository};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {

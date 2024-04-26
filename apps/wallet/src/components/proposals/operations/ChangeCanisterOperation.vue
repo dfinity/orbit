@@ -42,8 +42,8 @@ const props = withDefaults(
 const i18n = useI18n();
 
 const target = computed(() => {
-  if (variantIs(props.operation.target, 'UpgradeWallet')) {
-    return i18n.t('terms.wallet');
+  if (variantIs(props.operation.target, 'UpgradeStation')) {
+    return i18n.t('terms.station');
   }
 
   if (variantIs(props.operation.target, 'UpgradeUpgrader')) {

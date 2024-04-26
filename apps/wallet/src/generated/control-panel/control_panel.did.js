@@ -1,11 +1,11 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterUpgrade = IDL.Record({
+    'station_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'wallet_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
   const CanisterInit = IDL.Record({
+    'station_wasm_module' : IDL.Vec(IDL.Nat8),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-    'wallet_wasm_module' : IDL.Vec(IDL.Nat8),
   });
   const CanisterInstall = IDL.Variant({
     'Upgrade' : CanisterUpgrade,
@@ -17,7 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'Denylisted' : IDL.Null,
     'Pending' : IDL.Null,
   });
-  const CanDeployWalletResponse = IDL.Variant({
+  const CanDeployStationResponse = IDL.Variant({
     'NotAllowed' : UserSubscriptionStatus,
     'Allowed' : IDL.Nat64,
     'QuotaExceeded' : IDL.Null,
@@ -27,33 +27,33 @@ export const idlFactory = ({ IDL }) => {
     'message' : IDL.Opt(IDL.Text),
     'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
   });
-  const CanDeployWalletResult = IDL.Variant({
-    'Ok' : CanDeployWalletResponse,
+  const CanDeployStationResult = IDL.Variant({
+    'Ok' : CanDeployStationResponse,
     'Err' : ApiError,
   });
-  const TimestampRFC3339 = IDL.Text;
-  const WalletID = IDL.Principal;
-  const UserWallet = IDL.Record({
+  const StationID = IDL.Principal;
+  const UserStation = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
-    'canister_id' : WalletID,
+    'canister_id' : StationID,
   });
+  const TimestampRFC3339 = IDL.Text;
   const User = IDL.Record({
+    'stations' : IDL.Vec(UserStation),
     'last_active' : TimestampRFC3339,
-    'wallets' : IDL.Vec(UserWallet),
     'subscription_status' : UserSubscriptionStatus,
     'identity' : IDL.Principal,
-    'main_wallet' : IDL.Opt(WalletID),
+    'main_station' : IDL.Opt(StationID),
   });
   const RemoveUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const DeployWalletResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'canister_id' : WalletID }),
+  const DeployStationResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'canister_id' : StationID }),
     'Err' : ApiError,
   });
-  const GetMainWalletResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'wallet' : IDL.Opt(UserWallet) }),
+  const GetMainStationResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'station' : IDL.Opt(UserStation) }),
     'Err' : ApiError,
   });
   const GetUserResult = IDL.Variant({
@@ -83,20 +83,20 @@ export const idlFactory = ({ IDL }) => {
     'headers' : IDL.Vec(HeaderField),
     'status_code' : IDL.Nat16,
   });
-  const ListWalletsResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'wallets' : IDL.Vec(UserWallet) }),
+  const ListStationsResult = IDL.Variant({
+    'Ok' : IDL.Record({ 'stations' : IDL.Vec(UserStation) }),
     'Err' : ApiError,
   });
   const ManageUserInput = IDL.Record({
-    'wallets' : IDL.Opt(IDL.Vec(UserWallet)),
-    'main_wallet' : IDL.Opt(WalletID),
+    'stations' : IDL.Opt(IDL.Vec(UserStation)),
+    'main_station' : IDL.Opt(StationID),
   });
   const ManageUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
   const RegisterUserInput = IDL.Record({
-    'wallet_id' : IDL.Opt(IDL.Principal),
+    'station_id' : IDL.Opt(IDL.Principal),
   });
   const RegisterUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
@@ -119,14 +119,14 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   return IDL.Service({
-    'can_deploy_wallet' : IDL.Func([], [CanDeployWalletResult], ['query']),
+    'can_deploy_station' : IDL.Func([], [CanDeployStationResult], ['query']),
     'delete_user' : IDL.Func([], [RemoveUserResult], []),
-    'deploy_wallet' : IDL.Func([], [DeployWalletResult], []),
-    'get_main_wallet' : IDL.Func([], [GetMainWalletResult], ['query']),
+    'deploy_station' : IDL.Func([], [DeployStationResult], []),
+    'get_main_station' : IDL.Func([], [GetMainStationResult], ['query']),
     'get_user' : IDL.Func([], [GetUserResult], ['query']),
     'get_waiting_list' : IDL.Func([], [GetWaitingListResult], []),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
-    'list_wallets' : IDL.Func([], [ListWalletsResult], ['query']),
+    'list_stations' : IDL.Func([], [ListStationsResult], ['query']),
     'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'set_user_active' : IDL.Func([], [SetUserActiveResult], []),
@@ -144,12 +144,12 @@ export const idlFactory = ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
   const CanisterUpgrade = IDL.Record({
+    'station_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'wallet_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
   const CanisterInit = IDL.Record({
+    'station_wasm_module' : IDL.Vec(IDL.Nat8),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-    'wallet_wasm_module' : IDL.Vec(IDL.Nat8),
   });
   const CanisterInstall = IDL.Variant({
     'Upgrade' : CanisterUpgrade,

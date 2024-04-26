@@ -11,8 +11,8 @@ use crate::{
     },
     repositories::TRANSFER_REPOSITORY,
 };
-use ic_canister_core::repository::Repository;
-use ic_canister_core::types::UUID;
+use orbit_essentials::repository::Repository;
+use orbit_essentials::types::UUID;
 use station_api::{ProposalOperationInput, UserPrivilege};
 
 pub const USER_PRIVILEGES: [UserPrivilege; 15] = [

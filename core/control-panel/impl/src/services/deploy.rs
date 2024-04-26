@@ -1,15 +1,15 @@
 use super::UserService;
 use crate::{
-    core::{canister_config, CallContext, INITIAL_WALLET_CYCLES},
+    core::{canister_config, CallContext, INITIAL_STATION_CYCLES},
     errors::{DeployError, UserError},
-    models::CanDeployWallet,
+    models::CanDeployStation,
     services::USER_SERVICE,
 };
 use candid::{Encode, Principal};
-use ic_canister_core::api::ServiceResult;
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
 use std::sync::Arc;
 
 lazy_static! {
@@ -27,38 +27,38 @@ impl DeployService {
         Self { user_service }
     }
 
-    /// Deploys a wallet canister for the user.
-    pub async fn deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<Principal> {
+    /// Deploys a station canister for the user.
+    pub async fn deploy_station(&self, ctx: &CallContext) -> ServiceResult<Principal> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
-        let can_deploy_wallet_response = user.can_deploy_wallet();
-        match can_deploy_wallet_response {
-            CanDeployWallet::Allowed(_) => {}
-            CanDeployWallet::QuotaExceeded => {
-                return Err(UserError::DeployWalletQuotaExceeded)?;
+        let can_deploy_station_response = user.can_deploy_station();
+        match can_deploy_station_response {
+            CanDeployStation::Allowed(_) => {}
+            CanDeployStation::QuotaExceeded => {
+                return Err(UserError::DeployStationQuotaExceeded)?;
             }
-            CanDeployWallet::NotAllowed(subscription_status) => {
+            CanDeployStation::NotAllowed(subscription_status) => {
                 return Err(UserError::BadUserSubscriptionStatus {
                     subscription_status: subscription_status.into(),
                 })?;
             }
         }
 
-        // Creates the wallet canister with some initial cycles
-        let (wallet_canister,) = mgmt::create_canister(
+        // Creates the station canister with some initial cycles
+        let (station_canister,) = mgmt::create_canister(
             mgmt::CreateCanisterArgument { settings: None },
-            INITIAL_WALLET_CYCLES,
+            INITIAL_STATION_CYCLES,
         )
         .await
         .map_err(|(_, err)| DeployError::Failed {
             reason: err.to_string(),
         })?;
 
-        // Adds the wallet canister as a controller of itself so that it can change its own settings
+        // Adds the station canister as a controller of itself so that it can change its own settings
         mgmt::update_settings(mgmt::UpdateSettingsArgument {
-            canister_id: wallet_canister.canister_id,
+            canister_id: station_canister.canister_id,
             settings: mgmt::CanisterSettings {
-                controllers: Some(vec![self_canister_id(), wallet_canister.canister_id]),
+                controllers: Some(vec![self_canister_id(), station_canister.canister_id]),
                 ..Default::default()
             },
         })
@@ -67,12 +67,12 @@ impl DeployService {
             reason: err.to_string(),
         })?;
 
-        // installs the wallet canister with the associated upgrader wasm module
+        // installs the station canister with the associated upgrader wasm module
         let config = canister_config();
         mgmt::install_code(mgmt::InstallCodeArgument {
             mode: mgmt::CanisterInstallMode::Install,
-            canister_id: wallet_canister.canister_id,
-            wasm_module: config.wallet_wasm_module,
+            canister_id: station_canister.canister_id,
+            wasm_module: config.station_wasm_module,
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 admins: Some(vec![user.identity]),
                 upgrader_wasm_module: config.upgrader_wasm_module,
@@ -87,15 +87,15 @@ impl DeployService {
         })?;
 
         self.user_service
-            .add_deployed_wallet(&user.id, wallet_canister.canister_id, ctx)
+            .add_deployed_station(&user.id, station_canister.canister_id, ctx)
             .await?;
 
-        if user.main_wallet.is_none() {
+        if user.main_station.is_none() {
             self.user_service
-                .set_main_wallet(&user.id, wallet_canister.canister_id, ctx)
+                .set_main_station(&user.id, station_canister.canister_id, ctx)
                 .await?;
         }
 
-        Ok(wallet_canister.canister_id)
+        Ok(station_canister.canister_id)
     }
 }

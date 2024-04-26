@@ -15,7 +15,7 @@
 import { ref, toRefs } from 'vue';
 import { useProposalSpecifierCriterias } from '~/composables/proposal-policies.composable';
 import { ProposalPolicyCriteria, ProposalSpecifier } from '~/generated/station/station.did';
-import { ProposalCriteriaEnum } from '~/types/wallet.types';
+import { ProposalCriteriaEnum } from '~/types/station.types';
 import { unreachable } from '~/utils/helper.utils';
 
 const input = withDefaults(

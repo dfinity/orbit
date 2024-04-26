@@ -69,7 +69,7 @@ import {
   mapProposalCriteriaUserSpecifierToEnum,
 } from '~/mappers/specifiers.mapper';
 import { FormValidationRules } from '~/types/helper.types';
-import { ProposalCriteriaUserSpecifierEnum } from '~/types/wallet.types';
+import { ProposalCriteriaUserSpecifierEnum } from '~/types/station.types';
 import { intNumberRangeRule, requiredRule } from '~/utils/form.utils';
 import { variantIs } from '~/utils/helper.utils';
 

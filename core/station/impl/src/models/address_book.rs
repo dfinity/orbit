@@ -2,11 +2,11 @@ use super::{Blockchain, BlockchainStandard};
 use crate::errors::AddressBookError;
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 use std::{collections::HashMap, hash::Hash};
 
 /// The address book entry id, which is a UUID.
@@ -201,7 +201,7 @@ mod tests {
 pub mod address_book_entry_test_utils {
     use super::*;
     use crate::repositories::ADDRESS_BOOK_REPOSITORY;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
     use uuid::Uuid;
 
     pub fn mock_address_book_entry() -> AddressBookEntry {

@@ -1,6 +1,6 @@
 //! Canister controller entrypoints.
 //!
-//! These entrypoints are used to handle the necessary business logic for the wallet canister and expose
+//! These entrypoints are used to handle the necessary business logic for the canister and expose
 //! the functionality to the clients.
 
 mod system;
@@ -41,7 +41,7 @@ pub use http::*;
 
 #[cfg(test)]
 mod tests {
-    use ic_canister_core::api::*;
+    use orbit_essentials::api::*;
     use station_api::*;
 
     #[test]

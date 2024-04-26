@@ -7,10 +7,10 @@ use crate::{
     services::{SystemService, SYSTEM_SERVICE},
     SYSTEM_VERSION,
 };
-use ic_canister_core::api::ApiResult;
-use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{post_upgrade, query};
 use lazy_static::lazy_static;
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::with_middleware;
 use station_api::{HealthStatus, SystemInfoResponse, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 
@@ -32,7 +32,7 @@ async fn initialize(input: Option<SystemInstall>) {
 pub async fn mock_init() {
     // Initialize the random number generator with a fixed seed to ensure deterministic
     // results across runs of the benchmarks.
-    ic_canister_core::utils::initialize_rng_from_seed([0u8; 32]);
+    orbit_essentials::utils::initialize_rng_from_seed([0u8; 32]);
 }
 
 #[post_upgrade]

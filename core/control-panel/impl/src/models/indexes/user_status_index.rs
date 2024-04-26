@@ -1,5 +1,5 @@
 use crate::models::{User, UserId, UserSubscriptionStatus};
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
 
 /// The subscription status of an user to be stored in the user index.
 /// Unlike `UserSubscriptionStatus`, the `Pending` variant does not

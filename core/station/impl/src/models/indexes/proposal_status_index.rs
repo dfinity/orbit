@@ -1,6 +1,6 @@
 use crate::models::{Proposal, ProposalStatusCode};
-use ic_canister_core::types::UUID;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::UUID;
 use std::hash::Hash;
 
 /// Represents a proposal index by its status.

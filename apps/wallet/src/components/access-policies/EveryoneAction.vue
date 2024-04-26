@@ -13,7 +13,7 @@
     :icon="everyone.icon"
     :submit="
       ({ everyone: authScope }) => {
-        return wallet.service.editAccessPolicy({
+        return station.service.editAccessPolicy({
           auth_scope: [toAuthScope(authScope)],
           user_groups: [],
           users: [],
@@ -39,12 +39,12 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { AuthScopeEnum, ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
 import EveryoneForm from './EveryoneForm.vue';
 import { toAuthScope } from '~/mappers/access-policies.mapper';
 
-const wallet = useWalletStore();
+const station = useStationStore();
 const props = defineProps<{
   specifier: ResourceAccessPolicySpecifier;
 }>();

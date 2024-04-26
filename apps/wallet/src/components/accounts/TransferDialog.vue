@@ -132,7 +132,7 @@ const summary = computed({
   },
 });
 
-const walletService = services().wallet;
+const stationService = services().station;
 
 const loadTransfer = async (): Promise<{
   transfer: Partial<Transfer>;
@@ -146,9 +146,9 @@ const loadTransfer = async (): Promise<{
     return { transfer: createModel, proposal: {} };
   }
 
-  const transfer = await walletService.getTransfer(props.transferId.value);
+  const transfer = await stationService.getTransfer(props.transferId.value);
 
-  const { proposal } = await walletService.getProposal({
+  const { proposal } = await stationService.getProposal({
     proposal_id: transfer.proposal_id,
   });
 
@@ -169,7 +169,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
 
-    const newProposal = await walletService.transfer(
+    const newProposal = await stationService.transfer(
       {
         from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
         amount: assertAndReturn(transfer.value.amount, 'amount'),

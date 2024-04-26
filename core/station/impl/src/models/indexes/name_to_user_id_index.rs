@@ -2,7 +2,7 @@ use crate::{
     core::utils::format_unique_string,
     models::{User, UserId},
 };
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

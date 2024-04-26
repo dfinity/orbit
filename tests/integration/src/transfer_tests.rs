@@ -4,8 +4,8 @@ use crate::interfaces::{
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::user_test_id;
 use crate::TestEnv;
-use ic_canister_core::api::ApiResult;
 use ic_ledger_types::AccountIdentifier;
+use orbit_essentials::api::ApiResult;
 use pocket_ic::{query_candid_as, update_candid_as};
 use station_api::{
     AddAccountOperationInput, AllowDTO, ApiErrorDTO, ApprovalThresholdDTO, CreateProposalInput,

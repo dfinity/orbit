@@ -139,7 +139,7 @@ import logger from '~/core/logger.core';
 import { Account, Transfer, TransferOperationInput } from '~/generated/station/station.did';
 import { ChainApiFactory } from '~/services/chains';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { CsvTable } from '~/types/app.types';
 import { downloadCsv, readFileAsCsvTable } from '~/utils/file.utils';
 import { requiredRule } from '~/utils/form.utils';
@@ -199,7 +199,7 @@ const props = withDefaults(
 
 const i18n = useI18n();
 const app = useAppStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 const btnText = computed(() =>
   props.text || props.icon ? '' : i18n.t('pages.accounts.btn_upload_csv'),
 );
@@ -371,7 +371,7 @@ const startBatchTransfer = async (): Promise<void> => {
       const inProgressRequests = currentChunk.map(entry => {
         const row = rows.value[entry.rowId];
         row.requesting = true;
-        return wallet.service
+        return station.service
           .transfer(entry.transfer)
           .then(() => {
             row.requested = true;

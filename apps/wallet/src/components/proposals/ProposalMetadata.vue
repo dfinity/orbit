@@ -65,7 +65,7 @@ import { mdiAccountCircle, mdiClockPlusOutline, mdiClockTimeFourOutline } from '
 import { computed } from 'vue';
 import { VChip, VTooltip } from 'vuetify/components';
 import { Proposal } from '~/generated/station/station.did';
-import type { ProposalDetails } from '~/types/wallet.types';
+import type { ProposalDetails } from '~/types/station.types';
 import { variantIs } from '~/utils/helper.utils';
 
 const props = defineProps<{

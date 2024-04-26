@@ -1,11 +1,11 @@
 use super::{criteria::Criteria, specifier::ProposalSpecifier};
 use crate::errors::{MatchError, PolicyError, RecordValidationError};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::UUID,
 };
-use ic_canister_macros::storable;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

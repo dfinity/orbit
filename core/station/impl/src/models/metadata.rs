@@ -1,6 +1,6 @@
 use crate::errors::MetadataError;
-use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
-use ic_canister_macros::storable;
+use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
+use orbit_essentials::storable;
 use station_api::MetadataDTO;
 use std::collections::{BTreeMap, HashMap};
 

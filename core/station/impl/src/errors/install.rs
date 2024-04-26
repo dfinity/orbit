@@ -1,14 +1,14 @@
-use ic_canister_core::api::DetailableError;
+use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
-/// Container for wallet install errors.
+/// Container for canister install errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum InstallError {
     /// The initialization of the canister failed.
     #[error(r#"The initialization of the canister failed due to {reason}"#)]
     InitFailed { reason: String },
-    #[error(r#"The wallet needs at least one admin"#)]
+    #[error(r#"The canister needs at least one admin"#)]
     NoAdminsSpecified,
 }
 

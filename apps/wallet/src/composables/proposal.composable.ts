@@ -11,7 +11,7 @@ import { useAppStore } from '~/stores/app.store';
 import { Privilege } from '~/types/auth.types';
 import { SelectItem } from '~/types/helper.types';
 import { ListProposalsOperationTypeGroup } from '~/types/proposals.types';
-import { ProposalDomains, ProposalSpecifierEnum, ProposalStatusEnum } from '~/types/wallet.types';
+import { ProposalDomains, ProposalSpecifierEnum, ProposalStatusEnum } from '~/types/station.types';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { parseDate } from '~/utils/date.utils';
 

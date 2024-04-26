@@ -13,10 +13,10 @@ use crate::core::validation::{
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use anyhow::anyhow;
-use ic_canister_core::model::{ModelValidator, ModelValidatorResult};
-use ic_canister_core::repository::Repository;
-use ic_canister_core::types::UUID;
-use ic_canister_macros::storable;
+use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
+use orbit_essentials::repository::Repository;
+use orbit_essentials::storable;
+use orbit_essentials::types::UUID;
 use std::sync::Arc;
 
 #[storable]
@@ -402,7 +402,7 @@ mod tests {
     };
     use anyhow::{anyhow, Error};
     use candid::Nat;
-    use ic_canister_core::{model::ModelValidator, repository::Repository};
+    use orbit_essentials::{model::ModelValidator, repository::Repository};
     use std::sync::Arc;
 
     #[tokio::test]

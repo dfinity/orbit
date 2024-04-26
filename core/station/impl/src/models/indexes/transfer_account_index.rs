@@ -1,6 +1,6 @@
 use crate::models::{AccountId, Transfer, TransferId};
-use ic_canister_core::types::Timestamp;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::Timestamp;
 use std::hash::Hash;
 
 /// Represents a transfer list index in the system.

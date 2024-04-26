@@ -93,14 +93,14 @@ import {
   ResourceAccessPolicySpecifier,
 } from '~/types/access-policies.types';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import EveryoneAction from './EveryoneAction.vue';
 import MembersOfGroupAction from './MembersOfGroupAction.vue';
 import { MembersOfGroupFormProps } from './MembersOfGroupForm.vue';
 import SpecificUsersAction from './SpecificUsersAction.vue';
 import { SpecificUsersFormProps } from './SpecificUsersForm.vue';
 
-const wallet = useWalletStore();
+const station = useStationStore();
 const app = useAppStore();
 
 const props = defineProps<{
@@ -151,7 +151,7 @@ const onMembersOfGroupFormSubmit = (
   resource: Resource,
   form: MembersOfGroupFormProps,
 ): Promise<Proposal> => {
-  return wallet.service.editAccessPolicy({
+  return station.service.editAccessPolicy({
     auth_scope: [],
     user_groups: [form.modelValue.groupIds],
     users: [],
@@ -186,7 +186,7 @@ const onSpecificUsersFormSubmit = (
   resource: Resource,
   form: SpecificUsersFormProps,
 ): Promise<Proposal> => {
-  return wallet.service.editAccessPolicy({
+  return station.service.editAccessPolicy({
     auth_scope: [],
     user_groups: [],
     users: [form.modelValue.userIds],

@@ -4,8 +4,9 @@ use crate::{
 };
 
 use super::{resource::Resource, User, UserGroupId, UserId};
-use ic_canister_core::model::{ModelKey, ModelValidator, ModelValidatorResult};
-use ic_canister_macros::storable;
+use orbit_essentials::model::{ModelKey, ModelValidator, ModelValidatorResult};
+use orbit_essentials::storable;
+
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AuthScope {
@@ -284,7 +285,7 @@ pub mod access_policy_test_utils {
 
 #[cfg(test)]
 mod test {
-    use ic_canister_core::model::ModelValidator;
+    use orbit_essentials::model::ModelValidator;
 
     use crate::core::validation::disable_mock_resource_validation;
 

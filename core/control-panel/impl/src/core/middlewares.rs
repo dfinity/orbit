@@ -1,6 +1,6 @@
 use super::CallContext;
 use crate::{core::ic_cdk, SERVICE_NAME};
-use ic_canister_core::{
+use orbit_essentials::{
     api::ApiResult,
     metrics::{labels, with_metrics_registry},
 };

@@ -6,12 +6,12 @@ use crate::{
         NotificationKey, NotificationStatus, UserId,
     },
 };
-use ic_canister_core::{
+use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use lazy_static::lazy_static;
+use orbit_essentials::{
     repository::{IndexRepository, Repository},
     types::Timestamp,
 };
-use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use lazy_static::lazy_static;
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {

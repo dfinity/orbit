@@ -7,7 +7,7 @@ use crate::{
     },
     repositories::USER_GROUP_REPOSITORY,
 };
-use ic_canister_core::{
+use orbit_essentials::{
     repository::Repository,
     types::UUID,
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},

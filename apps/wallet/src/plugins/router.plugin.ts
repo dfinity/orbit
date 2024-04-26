@@ -13,7 +13,7 @@ import LoginPage from '~/pages/LoginPage.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
@@ -59,7 +59,7 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.ConnectedToWallet,
+                session: RequiredSessionState.ConnectedToStation,
               },
             },
           },
@@ -79,7 +79,7 @@ const router = createRouter({
               meta: {
                 auth: {
                   check: {
-                    session: RequiredSessionState.ConnectedToWallet,
+                    session: RequiredSessionState.ConnectedToStation,
                     privileges: [Privilege.ListAccounts],
                   },
                 },
@@ -100,7 +100,7 @@ const router = createRouter({
               meta: {
                 auth: {
                   check: {
-                    session: RequiredSessionState.ConnectedToWallet,
+                    session: RequiredSessionState.ConnectedToStation,
                     privileges: [Privilege.ListAccounts],
                   },
                 },
@@ -115,15 +115,15 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.AuthenticatedNoWallet,
+                session: RequiredSessionState.AuthenticatedNoStation,
               },
             },
           },
         },
         {
-          path: 'add-wallet',
-          name: Routes.AddWallet,
-          component: () => import('~/pages/AddWalletPage.vue'),
+          path: 'add-station',
+          name: Routes.AddStation,
+          component: () => import('~/pages/AddStationPage.vue'),
           meta: {
             auth: {
               check: {
@@ -149,7 +149,7 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.ConnectedToWallet,
+                session: RequiredSessionState.ConnectedToStation,
                 privileges: [Privilege.ListAccounts],
               },
             },
@@ -181,7 +181,7 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.ConnectedToWallet,
+                session: RequiredSessionState.ConnectedToStation,
               },
             },
           },
@@ -213,7 +213,7 @@ const router = createRouter({
               meta: {
                 auth: {
                   check: {
-                    session: RequiredSessionState.ConnectedToWallet,
+                    session: RequiredSessionState.ConnectedToStation,
                     privileges: [Privilege.ListUserGroups, Privilege.ListAccessPolicies],
                   },
                 },
@@ -235,7 +235,7 @@ const router = createRouter({
                   meta: {
                     auth: {
                       check: {
-                        session: RequiredSessionState.ConnectedToWallet,
+                        session: RequiredSessionState.ConnectedToStation,
                         privileges: [Privilege.ListUserGroups],
                       },
                     },
@@ -261,7 +261,7 @@ const router = createRouter({
                   meta: {
                     auth: {
                       check: {
-                        session: RequiredSessionState.ConnectedToWallet,
+                        session: RequiredSessionState.ConnectedToStation,
                         privileges: [Privilege.ListAccessPolicies],
                       },
                     },
@@ -285,7 +285,7 @@ const router = createRouter({
               meta: {
                 auth: {
                   check: {
-                    session: RequiredSessionState.ConnectedToWallet,
+                    session: RequiredSessionState.ConnectedToStation,
                     privileges: [Privilege.ListUsers],
                   },
                 },
@@ -308,7 +308,7 @@ const router = createRouter({
               meta: {
                 auth: {
                   check: {
-                    session: RequiredSessionState.ConnectedToWallet,
+                    session: RequiredSessionState.ConnectedToStation,
                     privileges: [Privilege.ListProposals],
                   },
                 },
@@ -331,7 +331,7 @@ const router = createRouter({
               meta: {
                 auth: {
                   check: {
-                    session: RequiredSessionState.ConnectedToWallet,
+                    session: RequiredSessionState.ConnectedToStation,
                     privileges: [Privilege.ListProposalPolicies],
                   },
                 },
@@ -359,7 +359,7 @@ const router = createRouter({
           meta: {
             auth: {
               check: {
-                session: RequiredSessionState.ConnectedToWallet,
+                session: RequiredSessionState.ConnectedToStation,
                 privileges: [Privilege.ListAddressBookEntries],
               },
             },
@@ -386,11 +386,11 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
   const session = useSessionStore();
   const app = useAppStore();
 
-  if (to.name === Routes.Disconnected && session.data.selectedWallet.hasAccess) {
+  if (to.name === Routes.Disconnected && session.data.selected.hasAccess) {
     return next({ name: defaultHomeRoute });
   }
 
-  if (to.name === Routes.Initialization && (!session.isAuthenticated || session.hasWallets)) {
+  if (to.name === Routes.Initialization && (!session.isAuthenticated || session.hasStations)) {
     return next({ name: defaultHomeRoute });
   }
 
@@ -400,7 +400,7 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
       to.name.toString(),
     ) &&
     session.isAuthenticated &&
-    !session.hasWallets
+    !session.hasStations
   ) {
     return next({ name: Routes.Initialization });
   }
@@ -410,7 +410,7 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
     switch (to.meta.auth.check.session) {
       case RequiredSessionState.Authenticated:
         return next({ name: defaultLoginRoute });
-      case RequiredSessionState.ConnectedToWallet: {
+      case RequiredSessionState.ConnectedToStation: {
         if (!session.isAuthenticated) {
           return next({ name: defaultLoginRoute });
         }

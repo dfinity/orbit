@@ -8,8 +8,8 @@ use super::{
 };
 use crate::models::Metadata;
 use candid::Principal;
-use ic_canister_core::types::UUID;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::UUID;
 use std::fmt::Display;
 
 #[storable]
@@ -231,7 +231,7 @@ pub struct RemoveUserGroupOperationInput {
 #[storable]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterTarget {
-    UpgradeWallet,
+    UpgradeStation,
     UpgradeUpgrader,
     UpgradeCanister(Principal),
 }

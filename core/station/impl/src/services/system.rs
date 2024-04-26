@@ -12,9 +12,9 @@ use crate::{
     repositories::{ProposalRepository, PROPOSAL_REPOSITORY},
 };
 use candid::Principal;
-use ic_canister_core::api::ServiceResult;
-use ic_canister_core::repository::Repository;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
+use orbit_essentials::repository::Repository;
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -90,7 +90,7 @@ impl SystemService {
     #[cfg(target_arch = "wasm32")]
     fn install_canister_post_process(&self, system_info: SystemInfo, install: SystemInstall) {
         async fn initialize_rng_timer() {
-            use ic_canister_core::utils::initialize_rng;
+            use orbit_essentials::utils::initialize_rng;
             if let Err(e) = initialize_rng().await {
                 ic_cdk::print(format!("initializing rng failed: {}", e));
                 ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
@@ -140,7 +140,7 @@ impl SystemService {
             .await?;
             system_info.set_upgrader_canister_id(upgrader_canister_id);
 
-            // sets the upgrader as a controller of the wallet canister
+            // sets the upgrader as a controller of the station canister
             print("Updating canister settings to set the upgrader as the controller");
             install_canister_handlers::set_controllers(vec![
                 upgrader_canister_id,
@@ -196,7 +196,7 @@ impl SystemService {
         }
 
         // Handles the post init process in a one-off timer to allow for inter canister calls,
-        // this adds the default canister configurations, deploys the wallet upgrader and makes sure
+        // this adds the default canister configurations, deploys the station upgrader and makes sure
         // there are no unintended controllers of the canister.
         self.install_canister_post_process(system_info, SystemInstall::Init(input));
 
@@ -273,8 +273,8 @@ mod install_canister_handlers {
     use canfund::fetch::cycles::FetchCyclesBalanceFromCanisterStatus;
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::FundManager;
-    use ic_canister_core::repository::Repository;
     use ic_cdk::api::management_canister::main::{self as mgmt};
+    use orbit_essentials::repository::Repository;
     use std::cell::RefCell;
     use std::sync::Arc;
     use uuid::Uuid;
@@ -323,7 +323,7 @@ mod install_canister_handlers {
         Ok(())
     }
 
-    /// Deploys the wallet upgrader canister and sets the wallet as the controller of the upgrader.
+    /// Deploys the station upgrader canister and sets the station as the controller of the upgrader.
     pub async fn deploy_upgrader(
         upgrader_wasm_module: Vec<u8>,
         controllers: Vec<Principal>,
@@ -365,7 +365,7 @@ mod install_canister_handlers {
             },
         })
         .await
-        .map_err(|e| format!("Failed to set wallet controller: {:?}", e))
+        .map_err(|e| format!("Failed to set station controller: {:?}", e))
     }
 
     /// Registers the newly added admins of the canister.

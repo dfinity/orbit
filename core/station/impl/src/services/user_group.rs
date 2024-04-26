@@ -10,11 +10,11 @@ use crate::models::{
     AddUserGroupOperationInput, EditUserGroupOperationInput, UserGroup, UserGroupCallerPrivileges,
 };
 use crate::repositories::{UseGroupWhereClause, UserGroupRepository};
-use ic_canister_core::api::ServiceResult;
-use ic_canister_core::model::ModelValidator;
-use ic_canister_core::repository::Repository;
-use ic_canister_core::types::UUID;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
+use orbit_essentials::model::ModelValidator;
+use orbit_essentials::repository::Repository;
+use orbit_essentials::types::UUID;
 use station_api::ListUserGroupsInput;
 use std::sync::Arc;
 use uuid::Uuid;

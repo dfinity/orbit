@@ -24,8 +24,8 @@ pub const CANISTER_CONFIG_STATE_SIZE: u32 = WASM_PAGE_SIZE * CANISTER_CONFIG_TOT
 /// The maximum number of Wasm pages that we allow to use for the stable storage.
 pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
 
-/// The initial cycle balance to set for new wallet canisters.
-pub const INITIAL_WALLET_CYCLES: u128 = 1_000_000_000_000;
+/// The initial cycle balance to set for new station canisters.
+pub const INITIAL_STATION_CYCLES: u128 = 1_250_000_000_000;
 
 /// The nanoseconds equivalent of one hour.
 pub const ONE_HOUR_NS: u64 = 60 * 60 * 1_000_000_000;

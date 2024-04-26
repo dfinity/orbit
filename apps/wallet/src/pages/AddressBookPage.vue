@@ -82,7 +82,7 @@
                   v-if="hasDeletePrivilege(addressBookEntry.id)"
                   v-model="addressBookEntry.id"
                   :icon="mdiTrashCanOutline"
-                  :submit="id => wallet.service.removeAddressBookEntry(id)"
+                  :submit="id => station.service.removeAddressBookEntry(id)"
                   @failed="useOnFailedOperation"
                   @submitted="useOnSuccessfulOperation"
                 />
@@ -138,16 +138,16 @@ import {
   UUID,
 } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const app = useAppStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.address_book.title'));
 const addressBookEntries = ref<AddressBookEntry[]>([]);
@@ -177,7 +177,7 @@ let useVerifiedCall = false;
 
 const fetchList = useFetchList(
   (offset, limit) => {
-    const results = wallet.service.listAddressBook(
+    const results = station.service.listAddressBook(
       {
         offset,
         limit,

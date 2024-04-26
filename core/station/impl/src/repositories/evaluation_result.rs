@@ -2,9 +2,9 @@ use crate::{
     core::{with_memory_manager, Memory, EVALUATION_RESULT_MEMORY_ID},
     models::{ProposalEvaluationResult, ProposalId},
 };
-use ic_canister_core::{repository::Repository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
+use orbit_essentials::{repository::Repository, types::UUID};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {

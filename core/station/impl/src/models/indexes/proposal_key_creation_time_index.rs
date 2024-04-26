@@ -1,6 +1,6 @@
 use crate::models::Proposal;
-use ic_canister_core::types::{Timestamp, UUID};
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::{Timestamp, UUID};
 use std::hash::Hash;
 
 /// Represents a proposal index by creation time prefixed by the proposal id.

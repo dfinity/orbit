@@ -9,19 +9,19 @@ export default {
       info: 'Funcionalidades e dados instáveis.',
     },
     user_id: 'ID do usuário',
-    wallets: 'Carteiras',
+    stations: 'Carteiras',
     confirm: 'Confirmar',
     copied_to_clipboard: 'Texto copiado para a área de transferência.',
     initial_account_name: 'Principal',
-    wallet_info_card_title: '{name} Informaçōes',
-    wallet_info_card_edit_btn: 'Editar carteira',
-    wallet_info_card_remove_btn: 'Remover carteira',
-    wallet_info_card_remove_btn_confirm: 'Tem a certeza que pretende remover esta carteira?',
-    manage_associated_wallet: 'Gerenciar carteira associada',
-    manage_associated_wallet_hint:
+    station_info_card_title: '{name} Informaçōes',
+    station_info_card_edit_btn: 'Editar carteira',
+    station_info_card_remove_btn: 'Remover carteira',
+    station_info_card_remove_btn_confirm: 'Tem a certeza que pretende remover esta carteira?',
+    manage_associated_station: 'Gerenciar carteira associada',
+    manage_associated_station_hint:
       'Qualquer modificação apenas serão aplicadas a sua conta de usuário.',
     user_activities_card_title: 'Atividades do usuário',
-    wallet_upgrades_card_title: 'Atualizaçōes de sistema',
+    station_upgrades_card_title: 'Atualizaçōes de sistema',
     data_load_error: 'Erro ao carregar os dados, por favor, tente novamente.',
     dialog_confirmation_title: 'Confirmação',
     dialog_confirmation_question: 'Tem a certeza que pretende continuar?',
@@ -91,7 +91,7 @@ export default {
   },
   change_canister: {
     targets: {
-      upgradewallet: 'Carteira',
+      upgradestation: 'Carteira',
       upgradeupgrader: 'Atualizador',
     },
   },
@@ -285,7 +285,7 @@ export default {
     edit_success: 'As informaçōes da sua conta foram alteradas com sucesso.',
     load_failed: 'Falha ao procurar as informaçōes da sua conta, por favor, tente novament.',
   },
-  wallets: {
+  stations: {
     add_account_proposal_saved: 'Pedido de criação de conta enviado',
     edit_account_proposal_saved: 'Pedido de atualização de conta enviado',
     pending_account_creation_subtitle: 'Criação de conta pendente ...',
@@ -297,11 +297,11 @@ export default {
     user_copied_to_clipboard: 'Id de utilizador copiado.',
     account_address_copied_to_clipboard: 'Endereço da conta copiado.',
     load_error: 'Erro ao carregar as informaçōes das carteiras, por favor, tente novamente.',
-    wallet_nr_title: '#{nr} Carteira',
+    station_nr_title: '#{nr} Carteira',
     load_error_withdraw_requests: 'Erro ao carregar os pedidos de retirada.',
-    no_wallets: 'Nenhuma carteira disponível.',
+    no_stations: 'Nenhuma carteira disponível.',
     user_load_error: 'Erro ao carregar a sua conta de utilizador.',
-    no_wallet_user: 'Nenhum utilizador de carteira disponível.',
+    no_station_user: 'Nenhum utilizador de carteira disponível.',
     please_register_to_continue: 'Por favor registe-se para continuar.',
     private_account: 'Conta privada',
     joint_account: 'Conta conjunta',
@@ -322,14 +322,14 @@ export default {
     no_deposit_found_search: 'Nenhum depósito encontrado para a pesquisa.',
     no_withdrawal_found_search: 'Nenhuma retirada encontrada para a pesquisa.',
     no_withdraw_request_found_search: 'Nenhum pedido de retirada encontrado para a pesquisa.',
-    add_wallet_list_item: 'Adicionar carteira',
+    add_station_list_item: 'Adicionar carteira',
   },
   terms: {
     deposits: 'Depósitos',
-    wallet: 'Carteira',
+    station: 'Carteira',
     all_done: 'Tudo pronto',
     destination_address: 'Endereço de destino',
-    wallet_id: 'ID da carteira',
+    station_id: 'ID da carteira',
     search: 'Procurar',
     details: 'Detalhes',
     proposals: 'Propostas',
@@ -440,7 +440,7 @@ export default {
     owners: 'Proprietários',
     user_name: 'Nome de utilizador',
     users: 'Usuários',
-    wallet_name: 'Nome da carteira',
+    station_name: 'Nome da carteira',
     identity_name: 'Nome da identidade',
     canister_id: 'Canister ID',
     principal: 'Principal',
@@ -461,7 +461,7 @@ export default {
   forms: {
     create: 'Criar',
     edit: 'Editar',
-    wallets: 'Carteiras ({min}/{max})',
+    stations: 'Carteiras ({min}/{max})',
     identities: 'Identidades ({min}/{max})',
     save_changes: 'Gravar alteraçōes',
     rules: {
@@ -484,7 +484,7 @@ export default {
     settings: 'Configuraçōes',
     user_groups_permissions: 'Grupos de usuários & Permissões',
     administration: 'Administração',
-    add_another_wallet: 'Adicionar outra carteira',
+    add_another_station: 'Adicionar outra carteira',
     account_info_settings: 'Informaçōes da conta & Configuraçōes',
     login: 'Entrar',
     logout: 'Sair',
@@ -542,18 +542,18 @@ export default {
       btn_edit_title: 'Editar usuário',
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
     },
-    add_wallet: {
+    add_station: {
       initialization_title: 'Bem-vindo! Como você gostaria de se juntar à Orbit?',
-      add_wallet_title: 'Como você gostaria de adicionar uma carteira?',
+      add_station_title: 'Como você gostaria de adicionar uma carteira?',
 
-      option_join_existing_wallet: 'Junte-se a uma carteira existente',
-      option_deploy_new_wallet: 'Crie a sua própria carteira',
-      join_wallet_title: 'Junte-se a uma carteira existente',
-      join_wallet_body:
+      option_join_existing_station: 'Junte-se a uma carteira existente',
+      option_deploy_new_station: 'Crie a sua própria carteira',
+      join_station_title: 'Junte-se a uma carteira existente',
+      join_station_body:
         'Contacte o proprietário para obter o ID da carteira. Envie-lhes o seguinte ID principal para que um usuário possa ser criado para si na carteira.',
-      join_wallet_canister_id: 'ID da carteira',
-      join_wallet_name: 'Nome da carteira (opcional)',
-      join_wallet: 'Junte-se a carteira',
+      join_station_canister_id: 'ID da carteira',
+      join_station_name: 'Nome da carteira (opcional)',
+      join_station: 'Junte-se a carteira',
 
       check_permissions_title: 'Verificando o estado da lista de espera ...',
       join_waitlist_title: 'Junte-se à lista de espera',
@@ -606,8 +606,8 @@ export default {
       subtitle_not_found_user_identity:
         'Contacte o proprietário da carteira para adicionar um usuário para si com o seu principal.',
 
-      title_other_wallet_error: 'Não é possível conectar à carteira',
-      subtitle_other_wallet_error: 'A carteira retornou o seguinte erro:',
+      title_other_station_error: 'Não é possível conectar à carteira',
+      subtitle_other_station_error: 'A carteira retornou o seguinte erro:',
 
       title_canister_error: 'Não é possível conectar à carteira',
       subtitle_canister_error:

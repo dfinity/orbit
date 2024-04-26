@@ -18,12 +18,12 @@ use crate::core::validation::{
 use crate::errors::{EvaluateError, ProposalError, RecordValidationError};
 use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
-use ic_canister_core::repository::Repository;
-use ic_canister_core::{
+use orbit_essentials::repository::Repository;
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 use std::collections::HashSet;
 
 /// The proposal id, which is a UUID.

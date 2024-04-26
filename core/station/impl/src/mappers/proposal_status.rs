@@ -1,5 +1,5 @@
 use crate::models::{ProposalStatus, ProposalStatusCode};
-use ic_canister_core::utils::{rfc3339_to_timestamp, timestamp_to_rfc3339};
+use orbit_essentials::utils::{rfc3339_to_timestamp, timestamp_to_rfc3339};
 use station_api::{ProposalStatusCodeDTO, ProposalStatusDTO};
 
 impl From<ProposalStatus> for ProposalStatusDTO {

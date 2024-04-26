@@ -1,5 +1,5 @@
 //! Transport layer that defines the data transfer objects (DTOs) that are used to communicate
-//! with the clients of the wallet canister.
+//! with the clients of the canister.
 
 mod capabilities;
 pub use capabilities::*;

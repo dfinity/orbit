@@ -14,7 +14,7 @@
       </AppSidebar>
     </template>
     <template #main-body>
-      <AddWalletScreen :title="pageTitle" />
+      <AddStationScreen :title="pageTitle" />
     </template>
   </PageLayout>
 </template>
@@ -23,7 +23,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PageLayout from '~/components/PageLayout.vue';
-import AddWalletScreen from '~/components/add-wallet/AddWalletScreen.vue';
+import AddStationScreen from '~/components/add-station/AddStationScreen.vue';
 import AppSidebar from '~/components/layouts/AppSidebar.vue';
 import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { useAppStore } from '~/stores/app.store';
@@ -36,5 +36,5 @@ const props = withDefaults(defineProps<PageProps>(), {
 const i18n = useI18n();
 const app = useAppStore();
 
-const pageTitle = computed(() => props.title || i18n.t('pages.add_wallet.initialization_title'));
+const pageTitle = computed(() => props.title || i18n.t('pages.add_station.initialization_title'));
 </script>

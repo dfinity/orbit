@@ -6,7 +6,7 @@ import {
   ManageUserInput,
   RegisterUserInput,
   User,
-  UserWallet,
+  UserStation,
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
 import { Maybe } from '~/types/helper.types';
@@ -86,30 +86,30 @@ export class ControlPanelService {
     return result.Ok.user;
   }
 
-  async getMainWallet(verifiedCall = false): Promise<Maybe<UserWallet>> {
+  async getMainStation(verifiedCall = false): Promise<Maybe<UserStation>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.get_main_wallet();
+    const result = await actor.get_main_station();
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.wallet?.[0] ?? null;
+    return result.Ok.station?.[0] ?? null;
   }
 
-  async listWallets(verifiedCall = false): Promise<UserWallet[]> {
+  async listStations(verifiedCall = false): Promise<UserStation[]> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.list_wallets();
+    const result = await actor.list_stations();
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.wallets;
+    return result.Ok.stations;
   }
 
-  async deployWallet(): Promise<Principal> {
-    const result = await this.actor.deploy_wallet();
+  async deployStation(): Promise<Principal> {
+    const result = await this.actor.deploy_station();
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

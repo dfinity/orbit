@@ -1,16 +1,16 @@
 use crate::{
     core::ic_cdk::next_time,
     errors::UserError,
-    models::{CanDeployWallet, User, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployStation, User, UserSubscriptionStatus, UserStation},
 };
 use candid::Principal;
 use control_panel_api::{
-    CanDeployWalletResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO,
-    UserSubscriptionStatusDTO, UserWalletDTO,
+    CanDeployStationResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO,
+    UserSubscriptionStatusDTO, UserStationDTO,
 };
-use ic_canister_core::api::ApiError;
-use ic_canister_core::types::UUID;
-use ic_canister_core::utils::timestamp_to_rfc3339;
+use orbit_essentials::api::ApiError;
+use orbit_essentials::types::UUID;
+use orbit_essentials::utils::timestamp_to_rfc3339;
 
 pub type SubscribedUser = SubscribedUserDTO;
 
@@ -24,15 +24,15 @@ impl UserMapper {
         input: RegisterUserInput,
         user_identity: Principal,
     ) -> User {
-        let wallets = match input.wallet_id {
-            Some(wallet_id) => vec![wallet_id],
+        let stations = match input.station_id {
+            Some(station_id) => vec![station_id],
             None => vec![],
         };
-        // The order of the wallets is important, the first wallet is the main wallet for the user at this stage
-        // so that it can be used to the `main_wallet` field of the user entity.
-        let main_wallet = match wallets.is_empty() {
+        // The order of the stations is important, the first station is the main station for the user at this stage
+        // so that it can be used to the `main_station` field of the user entity.
+        let main_station = match stations.is_empty() {
             true => None,
-            false => Some(wallets[0]),
+            false => Some(stations[0]),
         };
 
         let registration_time = next_time();
@@ -41,15 +41,15 @@ impl UserMapper {
             id: new_user_id,
             identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
-            wallets: wallets
+            stations: stations
                 .into_iter()
-                .map(|canister_id| UserWallet {
+                .map(|canister_id| UserStation {
                     canister_id,
                     name: None,
                 })
                 .collect(),
-            deployed_wallets: vec![],
-            main_wallet,
+            deployed_stations: vec![],
+            main_station,
             last_active: registration_time,
             last_update_timestamp: registration_time,
         }
@@ -60,8 +60,8 @@ impl From<User> for UserDTO {
     fn from(user: User) -> Self {
         UserDTO {
             identity: user.identity,
-            main_wallet: user.main_wallet,
-            wallets: user.wallets.into_iter().map(UserWalletDTO::from).collect(),
+            main_station: user.main_station,
+            stations: user.stations.into_iter().map(UserStationDTO::from).collect(),
             subscription_status: user.subscription_status.into(),
             last_active: timestamp_to_rfc3339(&user.last_active),
         }
@@ -70,14 +70,14 @@ impl From<User> for UserDTO {
 
 impl User {
     pub fn update_with(&mut self, input: ManageUserInput) -> Result<(), UserError> {
-        if let Some(wallet) = input.main_wallet {
-            self.main_wallet = Some(wallet);
+        if let Some(station) = input.main_station {
+            self.main_station = Some(station);
         }
 
-        if let Some(wallets) = input.wallets {
-            self.wallets = wallets
+        if let Some(stations) = input.stations {
+            self.stations = stations
                 .iter()
-                .map(|b| UserWallet::from(b.clone()))
+                .map(|b| UserStation::from(b.clone()))
                 .collect();
         }
 
@@ -112,16 +112,16 @@ impl TryFrom<UserSubscriptionStatusDTO> for UserSubscriptionStatus {
     }
 }
 
-impl From<CanDeployWallet> for CanDeployWalletResponse {
-    fn from(can_deploy_wallet: CanDeployWallet) -> Self {
-        match can_deploy_wallet {
-            CanDeployWallet::NotAllowed(user_subscription_status) => {
-                CanDeployWalletResponse::NotAllowed(user_subscription_status.into())
+impl From<CanDeployStation> for CanDeployStationResponse {
+    fn from(can_deploy_station: CanDeployStation) -> Self {
+        match can_deploy_station {
+            CanDeployStation::NotAllowed(user_subscription_status) => {
+                CanDeployStationResponse::NotAllowed(user_subscription_status.into())
             }
-            CanDeployWallet::Allowed(remaining_wallets) => {
-                CanDeployWalletResponse::Allowed(remaining_wallets)
+            CanDeployStation::Allowed(remaining_stations) => {
+                CanDeployStationResponse::Allowed(remaining_stations)
             }
-            CanDeployWallet::QuotaExceeded => CanDeployWalletResponse::QuotaExceeded,
+            CanDeployStation::QuotaExceeded => CanDeployStationResponse::QuotaExceeded,
         }
     }
 }
@@ -131,35 +131,35 @@ mod tests {
     use super::*;
 
     #[test]
-    fn mapped_user_registration_with_no_wallet() {
+    fn mapped_user_registration_with_no_station() {
         let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
-        let input = RegisterUserInput { wallet_id: None };
+        let input = RegisterUserInput { station_id: None };
 
         let user = UserMapper::from_register_input(user_id, input, user_identity);
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.identity, user_identity);
-        assert_eq!(user.main_wallet, None);
-        assert!(user.wallets.is_empty());
+        assert_eq!(user.main_station, None);
+        assert!(user.stations.is_empty());
     }
 
     #[test]
-    fn mapped_user_registration_with_wallet() {
+    fn mapped_user_registration_with_station() {
         let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
-        let main_wallet = Principal::from_slice(&[2; 29]);
+        let main_station = Principal::from_slice(&[2; 29]);
         let input = RegisterUserInput {
-            wallet_id: Some(main_wallet),
+            station_id: Some(main_station),
         };
 
         let user = UserMapper::from_register_input(user_id, input, user_identity);
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.identity, user_identity);
-        assert_eq!(user.main_wallet, Some(main_wallet));
-        assert_eq!(user.wallets.len(), 1);
-        assert_eq!(user.wallets[0].canister_id, main_wallet);
-        assert_eq!(user.wallets[0].name, None);
+        assert_eq!(user.main_station, Some(main_station));
+        assert_eq!(user.stations.len(), 1);
+        assert_eq!(user.stations[0].canister_id, main_station);
+        assert_eq!(user.stations[0].name, None);
     }
 }

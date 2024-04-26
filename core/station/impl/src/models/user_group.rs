@@ -1,10 +1,10 @@
 use crate::{errors::UserGroupError, repositories::USER_GROUP_REPOSITORY};
 use candid::{CandidType, Deserialize};
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
-use ic_canister_macros::storable;
 use uuid::Uuid;
 
 pub const ADMIN_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452352).as_bytes();
@@ -80,7 +80,7 @@ impl ModelValidator<UserGroupError> for UserGroup {
 mod tests {
     use super::user_group_test_utils::mock_user_group;
     use super::*;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
 
     #[test]
     fn fail_user_group_name_too_short() {
@@ -163,7 +163,7 @@ mod tests {
 #[cfg(test)]
 pub mod user_group_test_utils {
     use super::*;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
 
     pub fn mock_user_group() -> UserGroup {
         UserGroup {

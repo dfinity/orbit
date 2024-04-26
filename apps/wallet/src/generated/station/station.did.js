@@ -12,7 +12,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
-  const WalletAsset = IDL.Record({
+  const Asset = IDL.Record({
     'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
@@ -21,7 +21,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Capabilities = IDL.Record({
     'version' : IDL.Text,
-    'supported_assets' : IDL.Vec(WalletAsset),
+    'supported_assets' : IDL.Vec(Asset),
   });
   const Error = IDL.Record({
     'code' : IDL.Text,
@@ -184,7 +184,7 @@ export const idlFactory = ({ IDL }) => {
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
     'UpgradeCanister' : IDL.Principal,
-    'UpgradeWallet' : IDL.Null,
+    'UpgradeStation' : IDL.Null,
   });
   const ChangeCanisterOperationInput = IDL.Record({
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),

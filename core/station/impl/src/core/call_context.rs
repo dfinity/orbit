@@ -79,8 +79,8 @@ impl CallContext {
 pub mod tests {
     use super::*;
     use crate::models::{user_test_utils::mock_user, ADMIN_GROUP_ID};
-    use ic_canister_core::cdk::mocks::TEST_CANISTER_ID;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::cdk::mocks::TEST_CANISTER_ID;
+    use orbit_essentials::repository::Repository;
 
     #[test]
     fn check_caller_is_not_controller() {

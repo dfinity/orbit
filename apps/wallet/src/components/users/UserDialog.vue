@@ -71,7 +71,7 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { UUID, User } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -103,7 +103,7 @@ const openModel = computed({
   set: value => emit('update:open', value),
 });
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const loadUser = async (): Promise<{
   user: Partial<User>;
@@ -114,7 +114,7 @@ const loadUser = async (): Promise<{
     return { user: createModel };
   }
 
-  const result = await wallet.service.getUser(
+  const result = await station.service.getUser(
     {
       user_id: props.userId.value,
     },
@@ -137,7 +137,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (user.value.id) {
-      const proposal = await wallet.service.editUser({
+      const proposal = await station.service.editUser({
         id: user.value.id,
         groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
         identities: [assertAndReturn(user.value.identities, 'identities')],
@@ -151,7 +151,7 @@ const save = async (): Promise<void> => {
       return;
     }
 
-    const proposal = await wallet.service.addUser({
+    const proposal = await station.service.addUser({
       groups: assertAndReturn(user.value.groups, 'groups').map(g => g.id),
       identities: assertAndReturn(user.value.identities, 'identities'),
       name: user.value.name !== undefined ? user.value.name : [],

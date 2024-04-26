@@ -1,6 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import { logger } from '~/core/logger.core';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { unreachable } from '~/utils/helper.utils';
 import type { AccountsWorker } from '~/workers/accounts.worker';
 import type { NotificationsWorker } from '~/workers/notifications.worker';
@@ -47,20 +47,20 @@ const registerNotificationsWorkerEventListener = (): void => {
     return;
   }
 
-  const wallet = useWalletStore();
+  const station = useStationStore();
 
   notificationsWorker.onmessage = ({ data: msg }) => {
     switch (msg.type) {
       case 'notifications': {
         const { notifications } = msg.data;
         notifications.forEach(notification => {
-          const existingNotification = wallet.notifications.items.find(
+          const existingNotification = station.notifications.items.find(
             n => n.data.id === notification.id,
           );
           if (existingNotification) {
             existingNotification.data = notification;
           } else {
-            wallet.notifications.items.push({ loading: false, data: notification });
+            station.notifications.items.push({ loading: false, data: notification });
           }
         });
         break;
@@ -78,21 +78,21 @@ const registerNotificationsWorkerEventListener = (): void => {
   };
 };
 
-export function startWalletWorkers(walletId: Principal) {
+export function startWorkers(stationId: Principal) {
   accountsWorker?.postMessage({
     type: 'start',
     data: {
-      walletId,
+      stationId,
     },
   });
   notificationsWorker?.postMessage({
     type: 'start',
     data: {
-      walletId,
+      stationId,
     },
   });
 }
-export function stopWalletWorkers() {
+export function stopWorkers() {
   accountsWorker?.postMessage({
     type: 'stop',
   });
@@ -101,7 +101,7 @@ export function stopWalletWorkers() {
   });
 }
 
-export function enableWalletWorkers() {
+export function enableWorkers() {
   accountsWorker?.postMessage({
     type: 'enable',
   });
@@ -110,7 +110,7 @@ export function enableWalletWorkers() {
   });
 }
 
-export function disableWalletWorkers() {
+export function disableWorkers() {
   accountsWorker?.postMessage({
     type: 'disable',
   });

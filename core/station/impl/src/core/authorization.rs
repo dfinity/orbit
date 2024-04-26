@@ -122,7 +122,7 @@ mod tests {
         repositories::{access_policy::ACCESS_POLICY_REPOSITORY, USER_REPOSITORY},
     };
     use candid::Principal;
-    use ic_canister_core::{model::ModelKey, repository::Repository};
+    use orbit_essentials::{model::ModelKey, repository::Repository};
 
     struct TestContext {
         finance_user_group: UserGroup,

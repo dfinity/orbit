@@ -7,7 +7,7 @@ use crate::{
     services::ProposalPolicyService,
 };
 use async_trait::async_trait;
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 
 pub struct AddProposalPolicyProposalCreate {}
 
@@ -85,7 +85,7 @@ impl Execute for AddProposalPolicyProposalExecute<'_, '_> {
 mod tests {
     use super::*;
     use crate::{repositories::PROPOSAL_REPOSITORY, services::PROPOSAL_POLICY_SERVICE};
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
 
     #[test]
     fn test_create_proposal() {

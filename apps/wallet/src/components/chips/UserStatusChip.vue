@@ -8,7 +8,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { UserStatusType } from '~/types/wallet.types';
+import { UserStatusType } from '~/types/station.types';
 
 const props = withDefaults(
   defineProps<{

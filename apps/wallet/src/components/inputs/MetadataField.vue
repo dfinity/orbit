@@ -70,7 +70,7 @@
 import { mdiPlus, mdiTrashCanOutline } from '@mdi/js';
 import { computed, toRefs, watch } from 'vue';
 import { VBtn, VTable, VTextField } from 'vuetify/components';
-import { MetadataItem } from '~/types/wallet.types';
+import { MetadataItem } from '~/types/station.types';
 import { requiredRule } from '~/utils/form.utils';
 
 const input = withDefaults(

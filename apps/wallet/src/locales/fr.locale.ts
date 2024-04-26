@@ -9,19 +9,19 @@ export default {
       info: 'Fonctionnalités et données instables.',
     },
     user_id: 'Identifiant',
-    wallets: 'Portefeuilles',
+    stations: 'Portefeuilles',
     confirm: 'Confirmez',
     copied_to_clipboard: 'Valeur placée dans le presse-papiers',
     initial_account_name: 'Principal',
-    wallet_info_card_title: 'Info {name}',
-    wallet_info_card_edit_btn: 'Éditer le portefeuille',
-    wallet_info_card_remove_btn: 'Retirer le portefeuille',
-    wallet_info_card_remove_btn_confirm: 'Êtes-vous sûrs de vouloir retirer ce portefeuille?',
-    manage_associated_wallet: 'Gerer le portefeuille associé',
-    manage_associated_wallet_hint:
+    station_info_card_title: 'Info {name}',
+    station_info_card_edit_btn: 'Éditer le portefeuille',
+    station_info_card_remove_btn: 'Retirer le portefeuille',
+    station_info_card_remove_btn_confirm: 'Êtes-vous sûrs de vouloir retirer ce portefeuille?',
+    manage_associated_station: 'Gerer le portefeuille associé',
+    manage_associated_station_hint:
       "Ces paramètres s'appliquent à votre utilisateur uniquement et non pas au portefeuille.",
     user_activities_card_title: "Activitiés de l'utilisateur",
-    wallet_upgrades_card_title: 'Mise à jour du portefeuille',
+    station_upgrades_card_title: 'Mise à jour du portefeuille',
     data_load_error: 'Échec de load data, veuillez essayer de nouveau.',
     dialog_confirmation_title: 'Confirmation',
     dialog_confirmation_question: 'Êtes vous certains de vouloir continuer cette action?',
@@ -112,7 +112,7 @@ export default {
   },
   change_canister: {
     targets: {
-      upgradewallet: 'Wallet',
+      upgradestation: 'Portefeuille',
       upgradeupgrader: 'Upgrader',
     },
   },
@@ -286,7 +286,7 @@ export default {
     edit_success: "Votre information d'usager a été mise à jour.",
     load_failed: "Votre information d'usager n'a pas été chargée, veuillez essayer de nouveau.",
   },
-  wallets: {
+  stations: {
     add_account_proposal_saved: 'Demande de création de compte envoyée',
     edit_account_proposal_saved: 'Demande de création de compte envoyée',
     pending_account_creation_subtitle: 'En attente de la création du compte...',
@@ -299,10 +299,10 @@ export default {
     account_address_copied_to_clipboard: 'Adresse du compte copiée.',
     load_error: 'Le chargement des portefeuils a échoué, veuillez essayer de nouveau.',
     load_error_withdraw_requests: 'Le chargement des demandes de retrait a échoué',
-    wallet_nr_title: '#{nr} Portefeuille',
-    no_wallets: 'Pas de portefeuille disponible.',
+    station_nr_title: '#{nr} Portefeuille',
+    no_stations: 'Pas de portefeuille disponible.',
     user_load_error: 'Le chargement de votre usager de portefeuil a échoué.',
-    no_wallet_user: "Pas d'usager de portefeuille",
+    no_station_user: "Pas d'usager de portefeuille",
     please_register_to_continue: 'Enregistrez un portefeuille pour continuer',
     private_account: 'Compte Privé',
     joint_account: 'Compte joint',
@@ -325,14 +325,14 @@ export default {
     no_deposit_found_search: 'Pas de depot trouvé pour ce critère.',
     no_withdrawal_found_search: 'Pas de retrait trouvé pour ce critère.',
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
-    add_wallet_list_item: 'Ajouter un portefeuille',
+    add_station_list_item: 'Ajouter un portefeuille',
   },
   terms: {
     deposits: 'Deports',
-    wallet: 'Portefeuille',
+    station: 'Portefeuille',
     all_done: 'Tout terminé',
     approve: 'Aprouver',
-    wallet_id: 'ID du Portefeuille',
+    station_id: 'ID du Portefeuille',
     details: 'Détails',
     create: 'Créer',
     review: 'Revoir',
@@ -440,7 +440,7 @@ export default {
     cancelled: 'Annulé',
     user_name: "Nom d'utilisateur",
     scheduled: 'Planifié',
-    wallet_name: 'Nom du Portefeuille',
+    station_name: 'Nom du Portefeuille',
     users: 'Usagers',
     everyone: 'Tout le monde',
     identity_name: "Nom de l'identité",
@@ -464,7 +464,7 @@ export default {
   forms: {
     create: 'Créer',
     edit: 'Éditer',
-    wallets: 'Portefeuilles ({min}/{max})',
+    stations: 'Portefeuilles ({min}/{max})',
     identities: 'Identités ({min}/{max})',
     save_changes: 'Sauvegarder',
     rules: {
@@ -487,7 +487,7 @@ export default {
     settings: 'Settings',
     user_groups_permissions: "Groupes d'Usagers et Accés",
     administration: 'Administration',
-    add_another_wallet: 'Add another wallet',
+    add_another_station: 'Ajouter un autre portefeuille',
     account_info_settings: 'Details du Compte et Paramètres',
     login: 'Se Connecter',
     logout: 'Deconnexion',
@@ -547,11 +547,11 @@ export default {
       btn_edit_title: "Modifier le groupe d'usagers",
       create_new_group_title: "Ajouter un nouveau groupe d'usagers",
     },
-    add_wallet: {
+    add_station: {
       initialization_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
-      add_wallet_title: 'Comment aimeriez-vous ajouter un portefeuille?',
-      option_join_existing_wallet: 'Rejoindre un portefeuille existant',
-      option_deploy_new_wallet: 'Déployer un nouveau portefeuille',
+      add_station_title: 'Comment aimeriez-vous ajouter un portefeuille?',
+      option_join_existing_station: 'Rejoindre un portefeuille existant',
+      option_deploy_new_station: 'Déployer un nouveau portefeuille',
       check_permissions_title: 'Vérification du statut de la liste d attente...',
       join_waitlist_title: 'Rejoindre la liste d attente',
       join_waitlist_body:
@@ -570,18 +570,18 @@ export default {
       waitlist_check_error_body:
         "Échec de la vérification du statut de la liste d'attente, veuillez réessayer.",
 
-      join_wallet_title: 'Rejoindre un portefeuille existant',
-      join_wallet_body:
+      join_station_title: 'Rejoindre un portefeuille existant',
+      join_station_body:
         'Contactez le propriétaire pour obtenir l ID du portefeuille. Envoyez-leur l ID principal suivant pour qu un usager puisse être créé pour vous dans le portefeuille.',
-      join_wallet_canister_id: 'ID du Portefeuille',
-      join_wallet_name: 'Nom du Portefeuille (optionnel)',
-      join_wallet: 'Rejoindre le portefeuille',
+      join_station_canister_id: 'ID du Portefeuille',
+      join_station_name: 'Nom du Portefeuille (optionnel)',
+      join_station: 'Rejoindre le portefeuille',
 
       status_starting: 'Initialization, veuillez patienter...',
       status_deploying: 'Deploiement de votre portefeuille au Internet Computer ...',
       status_waiting_for_canister_initialization: 'En attente de la fin du deploiement ...',
       status_creating_initial_account: 'Creation de votre compte initial ...',
-      status_completed: "Your wallet has been successfully initialized, you'll soon be redirected.",
+      status_completed: "Portefeuille créé avec succès! Vous pouvez maintenant l'utiliser.",
       status_failed: "Échec de l'initialization, veuillez essayer de nouveau.",
     },
     proposals: {
@@ -610,8 +610,8 @@ export default {
       subtitle_not_found_user_identity:
         'Contactez le propriétaire du portefeuille pour ajouter un usager pour vous avec votre principal.',
 
-      title_other_wallet_error: 'Impossible de se connecter au portefeuille',
-      subtitle_other_wallet_error: 'Le portefeuille a retourné l erreur suivante:',
+      title_other_station_error: 'Impossible de se connecter au portefeuille',
+      subtitle_other_station_error: 'Le portefeuille a retourné l erreur suivante:',
 
       title_canister_error: 'Impossible de se connecter au portefeuille',
       subtitle_canister_error:

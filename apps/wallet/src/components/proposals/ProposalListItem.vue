@@ -36,7 +36,7 @@
 import type { Component } from 'vue';
 import { computed } from 'vue';
 import { Proposal, ProposalOperation } from '~/generated/station/station.did';
-import { ProposalDetails } from '~/types/wallet.types';
+import { ProposalDetails } from '~/types/station.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import ProposalStatusChip from './ProposalStatusChip.vue';
 import ReviewProposalBtn from './ReviewProposalBtn.vue';

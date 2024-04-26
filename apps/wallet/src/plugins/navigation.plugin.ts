@@ -10,7 +10,7 @@ import { RouteRecordRaw } from 'vue-router';
 import { Routes } from '~/configs/routes.config';
 import { logger } from '~/core/logger.core';
 import { useSessionStore } from '~/stores/session.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { RequiredSessionState } from '~/types/auth.types';
 import {
   NavigastionAuthType,
@@ -23,7 +23,7 @@ const sections = (): NavigationSections => ({
   main: [
     {
       name: 'initialization',
-      localeKey: 'wallets.add_wallet_list_item',
+      localeKey: 'stations.add_station_list_item',
       action: {
         type: NavigationActionType.To,
         handle: route =>
@@ -32,7 +32,7 @@ const sections = (): NavigationSections => ({
       auth: {
         type: NavigastionAuthType.Custom,
         criteria: {
-          session: RequiredSessionState.AuthenticatedNoWallet,
+          session: RequiredSessionState.AuthenticatedNoStation,
         },
       },
       icon: mdiPlusBox,
@@ -88,7 +88,7 @@ const sections = (): NavigationSections => ({
       auth: {
         type: NavigastionAuthType.Custom,
         criteria: {
-          session: RequiredSessionState.AuthenticatedHasWallets,
+          session: RequiredSessionState.AuthenticatedHasStations,
         },
       },
       items: [
@@ -193,11 +193,11 @@ class Navigation {
 
     const navigation = ref<NavigationSections>(sections());
     const session = useSessionStore();
-    const store = useWalletStore();
+    const store = useStationStore();
     const userState = computed(() => ({
       user: store.$state.user,
       privileges: store.$state.privileges,
-      selectedWallet: session.data.selectedWallet,
+      selectedStation: session.data.selected,
     }));
 
     watch(

@@ -1,8 +1,8 @@
 use control_panel_api::UserSubscriptionStatusDTO;
-use ic_canister_core::api::DetailableError;
+use orbit_essentials::api::DetailableError;
 use thiserror::Error;
 
-/// Container for wallet errors.
+/// Container for station errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum UserError {
     /// The identity already has an associated user.
@@ -35,20 +35,20 @@ pub enum UserError {
     /// Removing the caller identity would lock the user.
     #[error(r#"Removing the caller identity would lock the user."#)]
     SelfLocked,
-    /// The main wallet associated with the user was not found.
-    #[error(r#"The main wallet associated with the user was not found."#)]
-    MainWalletNotFound,
-    /// The deploy wallet quota was exceeded.
-    #[error(r#"Deploy wallet quota exceeded."#)]
-    DeployWalletQuotaExceeded,
+    /// The main station associated with the user was not found.
+    #[error(r#"The main station associated with the user was not found."#)]
+    MainStationNotFound,
+    /// The deploy station quota was exceeded.
+    #[error(r#"Deploy station quota exceeded."#)]
+    DeployStationQuotaExceeded,
     /// The user has an inappropriate subscription status for the operation.
     #[error(r#"The user has an inappropriate subscription status for the operation."#)]
     BadUserSubscriptionStatus {
         subscription_status: UserSubscriptionStatusDTO,
     },
-    /// Concurrent wallet canister deployment.
-    #[error(r#"Concurrent wallet canister deployment is not allowed."#)]
-    ConcurrentWalletDeployment,
+    /// Concurrent station canister deployment.
+    #[error(r#"Concurrent station canister deployment is not allowed."#)]
+    ConcurrentStationDeployment,
 }
 
 impl DetailableError for UserError {

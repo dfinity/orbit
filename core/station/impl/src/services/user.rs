@@ -15,10 +15,10 @@ use crate::{
     repositories::{UserRepository, UserWhereClause},
 };
 use candid::Principal;
-use ic_canister_core::api::ServiceResult;
-use ic_canister_core::model::ModelValidator;
-use ic_canister_core::repository::Repository;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
+use orbit_essentials::model::ModelValidator;
+use orbit_essentials::repository::Repository;
 use station_api::{ListUsersInput, UserPrivilege};
 use std::sync::Arc;
 use uuid::Uuid;

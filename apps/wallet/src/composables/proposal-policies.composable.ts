@@ -4,7 +4,7 @@ import { proposalSpecifiersIncludedCriterias } from '~/configs/proposal-policies
 import { ProposalSpecifier } from '~/generated/station/station.did';
 import { mapProposalSpecifierToEnum } from '~/mappers/specifiers.mapper';
 import { SelectItem } from '~/types/helper.types';
-import { ProposalCriteriaUserSpecifierEnum } from '~/types/wallet.types';
+import { ProposalCriteriaUserSpecifierEnum } from '~/types/station.types';
 
 export const useProposalSpecifierCriterias = (
   specifier: Ref<ProposalSpecifier>,

@@ -1,5 +1,5 @@
 use crate::models::system::SystemInfo;
-use ic_canister_core::utils::{raw_rand_successful, timestamp_to_rfc3339};
+use orbit_essentials::utils::{raw_rand_successful, timestamp_to_rfc3339};
 
 impl SystemInfo {
     pub fn to_dto(&self, cycles: &u64, version: &str) -> station_api::SystemInfoDTO {

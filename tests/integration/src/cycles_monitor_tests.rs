@@ -8,7 +8,7 @@ use control_panel_api::{
     DeployWalletResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
     UserSubscriptionStatusDTO,
 };
-use ic_canister_core::api::ApiResult;
+use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::HealthStatus;

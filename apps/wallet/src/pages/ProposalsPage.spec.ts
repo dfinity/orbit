@@ -3,26 +3,26 @@ import { describe, expect, it, vi } from 'vitest';
 import { icAgent } from '~/core/ic-agent.core';
 import { ListProposalsResult } from '~/generated/station/station.did';
 import { serviceManager } from '~/plugins/services.plugin';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
 import { ExtractOk } from '~/types/helper.types';
 import ProposalsPage from './ProposalsPage.vue';
 
-vi.mock('~/services/wallet.service', () => {
-  const mock: Partial<WalletService> = {
-    withWalletId: vi.fn().mockReturnThis(),
+vi.mock('~/services/station.service', () => {
+  const mock: Partial<StationService> = {
+    withStationId: vi.fn().mockReturnThis(),
     listProposals: vi.fn().mockReturnThis(),
   };
 
   return {
-    WalletService: vi.fn(() => mock),
+    StationService: vi.fn(() => mock),
   };
 });
 
-const mockedWalletService = new WalletService(icAgent.get());
-serviceManager.services.wallet = mockedWalletService;
+const mockedStationService = new StationService(icAgent.get());
+serviceManager.services.station = mockedStationService;
 
-vi.spyOn(mockedWalletService, 'listProposals').mockReturnValue(
+vi.spyOn(mockedStationService, 'listProposals').mockReturnValue(
   Promise.resolve({
     proposals: [],
     additional_info: [],
@@ -55,7 +55,7 @@ describe('ProposalsPage', () => {
   });
 
   it('renders with proposal list', async () => {
-    vi.spyOn(mockedWalletService, 'listProposals').mockReturnValue(
+    vi.spyOn(mockedStationService, 'listProposals').mockReturnValue(
       Promise.resolve({
         proposals: [
           {

@@ -9,8 +9,8 @@ use crate::{
 };
 use async_trait::async_trait;
 use candid::Encode;
-use ic_canister_core::types::UUID;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
 use station_api::{ChangeCanisterOperationInput, CreateProposalInput};
 use std::sync::Arc;
@@ -77,17 +77,17 @@ impl<'p, 'o> ChangeCanisterProposalExecute<'p, 'o> {
 impl Execute for ChangeCanisterProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         match self.operation.input.target {
-            ChangeCanisterTarget::UpgradeWallet => {
+            ChangeCanisterTarget::UpgradeStation => {
                 self.system_service
                     .set_self_upgrade_proposal(self.proposal.id);
 
                 let default_arg = Encode!(&()).unwrap();
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
                 let out = CHANGE_CANISTER_SERVICE
-                    .upgrade_wallet(&self.operation.input.module, arg)
+                    .upgrade_station(&self.operation.input.module, arg)
                     .await
                     .map_err(|err| ProposalExecuteError::Failed {
-                        reason: format!("failed to upgrade wallet: {}", err),
+                        reason: format!("failed to upgrade station: {}", err),
                     });
 
                 if out.is_err() {

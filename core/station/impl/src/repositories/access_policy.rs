@@ -2,9 +2,9 @@ use crate::{
     core::{with_memory_manager, Memory, ACCESS_POLICY_MEMORY_ID},
     models::access_policy::{AccessPolicy, AccessPolicyKey},
 };
-use ic_canister_core::repository::Repository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
+use orbit_essentials::repository::Repository;
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -51,7 +51,7 @@ mod tests {
     use super::*;
     use crate::models::access_policy::access_policy_test_utils::mock_access_policy;
     use crate::models::resource::{Resource, ResourceAction, ResourceId};
-    use ic_canister_core::model::ModelKey;
+    use orbit_essentials::model::ModelKey;
 
     #[test]
     fn test_crud() {

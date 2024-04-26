@@ -1,7 +1,6 @@
+use orbit_essentials::storable;
+use orbit_essentials::{model::ModelValidator, types::UUID};
 use std::fmt::{Display, Formatter};
-
-use ic_canister_core::{model::ModelValidator, types::UUID};
-use ic_canister_macros::storable;
 use uuid::Uuid;
 
 use crate::{
@@ -490,7 +489,7 @@ impl Display for ResourceId {
 
 #[cfg(test)]
 mod test {
-    use ic_canister_core::model::ModelValidator;
+    use orbit_essentials::model::ModelValidator;
 
     use crate::core::validation::disable_mock_resource_validation;
 

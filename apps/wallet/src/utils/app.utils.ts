@@ -24,7 +24,7 @@ export const copyToClipboard = (
   }
 };
 
-export const computedWalletName = (
+export const computedStationName = (
   {
     canisterId,
     notFoundName = '-',
@@ -34,16 +34,17 @@ export const computedWalletName = (
   },
   sessionStore = useSessionStore(),
 ): string => {
-  const walletIdx =
-    sessionStore.data.wallets.findIndex(wallet => wallet.canisterId === canisterId.toText()) ?? -1;
+  const stationIdx =
+    sessionStore.data.stations.findIndex(station => station.canisterId === canisterId.toText()) ??
+    -1;
 
-  if (walletIdx === -1) {
+  if (stationIdx === -1) {
     return notFoundName;
   }
 
   return (
-    sessionStore.data.wallets?.[walletIdx].name ??
-    i18n.global.t('wallets.wallet_nr_title', { nr: walletIdx + 1 })
+    sessionStore.data.stations?.[stationIdx].name ??
+    i18n.global.t('stations.station_nr_title', { nr: stationIdx + 1 })
   );
 };
 
@@ -62,7 +63,7 @@ export const afterLoginRedirect = (): void => {
   router.push({ name: defaultHomeRoute });
 };
 
-export const redirectToWalletSettings = (): void => {
+export const redirectToStationSettings = (): void => {
   router.push({ name: Routes.SystemSettings });
 };
 

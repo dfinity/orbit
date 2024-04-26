@@ -1,6 +1,6 @@
 use crate::models::{Proposal, ProposalId};
-use ic_canister_core::types::Timestamp;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::Timestamp;
 
 /// Index of proposals to use for sorting.
 #[storable]

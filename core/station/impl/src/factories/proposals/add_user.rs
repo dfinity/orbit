@@ -5,7 +5,7 @@ use crate::{
     services::USER_SERVICE,
 };
 use async_trait::async_trait;
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 
 pub struct AddUserProposalCreate {}
 

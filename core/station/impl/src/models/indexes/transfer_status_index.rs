@@ -1,6 +1,6 @@
 use crate::models::Transfer;
-use ic_canister_core::types::{Timestamp, UUID};
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
+use orbit_essentials::types::{Timestamp, UUID};
 use std::hash::Hash;
 
 /// Represents a transfer index by its status.

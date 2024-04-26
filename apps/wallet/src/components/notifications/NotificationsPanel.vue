@@ -8,32 +8,32 @@
     </VToolbar>
     <VDivider />
     <VList density="compact" max-height="500px" class="py-0">
-      <VListItem v-if="!wallet.hasNotifications" class="text-center">
+      <VListItem v-if="!station.hasNotifications" class="text-center">
         {{ $t('app.notifications_panel_no_results') }}
       </VListItem>
       <VListItem
-        v-for="({ loading, data }, idx) in wallet.sortedNotifications"
+        v-for="({ loading, data }, idx) in station.sortedNotifications"
         :key="idx"
         class="py-0 px-0"
       >
         <NotificationListItem
           :loading="loading"
-          :notification="wallet.sortedNotifications[idx].data"
+          :notification="station.sortedNotifications[idx].data"
           @read="read => onRead(data, read)"
         />
-        <VDivider v-if="wallet.notifications.items.length - 1 !== idx" />
+        <VDivider v-if="station.notifications.items.length - 1 !== idx" />
       </VListItem>
     </VList>
-    <template v-if="wallet.hasNotifications">
+    <template v-if="station.hasNotifications">
       <VDivider />
       <div class="d-flex justify-end flex-column mx-4 my-4">
         <VBtn
           size="x-small"
           :prepend-icon="mdiCheckAll"
           variant="tonal"
-          :loading="wallet.notifications.loading"
+          :loading="station.notifications.loading"
           small
-          @click="wallet.markAllNotificationsRead"
+          @click="station.markAllNotificationsRead"
         >
           {{ $t('app.notifications_panel_read_all') }}
         </VBtn>
@@ -55,16 +55,16 @@ import {
 } from 'vuetify/components';
 import { Notification } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import NotificationListItem from './NotificationListItem.vue';
 
 const app = useAppStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const emit = defineEmits<{
   (event: 'close'): void;
 }>();
 
 const onRead = (notification: Notification, read: boolean) =>
-  wallet.markNotificationRead(notification.id, read);
+  station.markNotificationRead(notification.id, read);
 </script>

@@ -109,16 +109,16 @@ import { useFetchList, usePagination } from '~/composables/lists.composable';
 import { Routes } from '~/configs/routes.config';
 import { UUID, User, UserCallerPrivileges } from '~/generated/station/station.did';
 import { fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.users.title'));
-const wallet = useWalletStore();
+const station = useStationStore();
 const users = ref<User[]>([]);
 const privileges = ref<UserCallerPrivileges[]>([]);
 const forceReload = ref(false);
@@ -140,7 +140,7 @@ let useVerifiedCall = false;
 
 const fetchList = useFetchList(
   (offset, limit) => {
-    const results = wallet.service.listUsers(
+    const results = station.service.listUsers(
       {
         offset,
         limit,

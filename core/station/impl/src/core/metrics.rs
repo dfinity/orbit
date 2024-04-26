@@ -6,11 +6,11 @@ use crate::{
     },
     SERVICE_NAME,
 };
-use ic_canister_core::{
+use orbit_essentials::{
     metrics::{labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric},
     utils::amount_to_f64,
 };
-use ic_canister_core::{
+use orbit_essentials::{
     metrics::{ApplicationCounterMetric, ApplicationCounterVecMetric},
     repository::Repository,
 };

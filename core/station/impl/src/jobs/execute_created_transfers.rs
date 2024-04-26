@@ -13,7 +13,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use futures::future;
-use ic_canister_core::repository::Repository;
+use orbit_essentials::repository::Repository;
 use std::collections::HashMap;
 use uuid::Uuid;
 

@@ -1,6 +1,6 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = "control_panel"
+name = "control-panel"
 version = "0.1.0"
 edition = "2021"
 authors = ["DFINITY Stiftung"]
@@ -16,8 +16,7 @@ bench = false
 [dependencies]
 candid = { workspace = true }
 canfund = { workspace = true }
-ic-canister-core = { workspace = true }
-ic-canister-macros = { workspace = true }
+orbit-essentials = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
@@ -28,8 +27,8 @@ serde_json = { workspace = true }
 serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
-control_panel_api = { workspace = true }
-station_api = { workspace = true }
+control-panel-api = { workspace = true }
+station-api = { workspace = true }
 email_address = "0.2.4"
 
 [dev-dependencies]

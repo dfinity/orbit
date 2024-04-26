@@ -22,7 +22,7 @@ import AccessPolicyForm from '~/components/access-policies/AccessPolicyForm.vue'
 import logger from '~/core/logger.core';
 import { AccessPolicy, EditAccessPolicyOperation, Proposal } from '~/generated/station/station.did';
 import { fromResourceToResourceEnum } from '~/mappers/access-policies.mapper';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
@@ -37,7 +37,7 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
-const wallet = useWalletStore();
+const station = useStationStore();
 const accessPolicy = ref<Partial<AccessPolicy>>({});
 const loading = ref(false);
 
@@ -48,7 +48,7 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const { policy } = await wallet.service.getAccessPolicy({
+    const { policy } = await station.service.getAccessPolicy({
       resource: props.operation.input.resource,
     });
 

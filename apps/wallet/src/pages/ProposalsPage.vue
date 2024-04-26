@@ -146,9 +146,9 @@ import {
   ProposalCallerPrivileges,
   ProposalStatusCode,
 } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { convertDate } from '~/utils/date.utils';
 import { throttle } from '~/utils/helper.utils';
 
@@ -164,7 +164,7 @@ const props = withDefaults(defineProps<ProposalsPageProps>(), {
 
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.proposals.title'));
-const wallet = useWalletStore();
+const station = useStationStore();
 const availableDomains = useAvailableDomains();
 const statuses = useProposalStatusItems();
 const filterUtils = useFilterUtils();
@@ -218,7 +218,7 @@ let useVerifiedCall = false;
 
 const fetchList = useFetchList(
   async (offset, limit) => {
-    const results = wallet.service.listProposals(
+    const results = station.service.listProposals(
       {
         types: shownProposalDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
         created_dt: {

@@ -15,9 +15,9 @@ use crate::{
     },
     repositories::policy::{ProposalPolicyRepository, PROPOSAL_POLICY_REPOSITORY},
 };
-use ic_canister_core::{api::ServiceResult, cdk::api::print, types::UUID};
-use ic_canister_core::{model::ModelValidator, repository::Repository};
 use lazy_static::lazy_static;
+use orbit_essentials::{api::ServiceResult, cdk::api::print, types::UUID};
+use orbit_essentials::{model::ModelValidator, repository::Repository};
 use station_api::ListProposalPoliciesInput;
 use std::sync::Arc;
 use uuid::Uuid;

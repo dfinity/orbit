@@ -5,9 +5,9 @@ use canfund::fetch::cycles::FetchCyclesBalanceFromPrometheusMetrics;
 use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
 use canfund::FundManager;
 use control_panel_api::{CanisterInit, CanisterUpgrade};
-use ic_canister_core::api::ServiceResult;
-use ic_canister_core::repository::Repository;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
+use orbit_essentials::repository::Repository;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -33,7 +33,7 @@ impl CanisterService {
     }
 
     pub async fn init_canister(&self, input: CanisterInit) -> ServiceResult<()> {
-        let mut config = CanisterConfig::new(input.upgrader_wasm_module, input.wallet_wasm_module);
+        let mut config = CanisterConfig::new(input.upgrader_wasm_module, input.station_wasm_module);
 
         config.last_upgrade_timestamp = time();
 
@@ -51,8 +51,8 @@ impl CanisterService {
             config.upgrader_wasm_module = upgrader_wasm_module;
         }
 
-        if let Some(wallet_wasm_module) = input.wallet_wasm_module {
-            config.wallet_wasm_module = wallet_wasm_module;
+        if let Some(station_wasm_module) = input.station_wasm_module {
+            config.station_wasm_module = station_wasm_module;
         }
 
         config.last_upgrade_timestamp = time();
@@ -68,13 +68,13 @@ impl CanisterService {
     // and top up if necessary.
     fn start_canister_cycles_monitoring(&self) {
         let users = self.user_repository.list();
-        let deployed_wallets = users
+        let deployed_stations = users
             .iter()
             .flat_map(|user| {
-                user.deployed_wallets.iter().filter(|canister_id| {
-                    user.wallets
+                user.deployed_stations.iter().filter(|canister_id| {
+                    user.stations
                         .iter()
-                        .any(|wallet| wallet.canister_id == **canister_id)
+                        .any(|station| station.canister_id == **canister_id)
                 })
             })
             .collect::<HashSet<_>>();
@@ -101,7 +101,7 @@ impl CanisterService {
                 ),
             ));
 
-            for canister_id in deployed_wallets {
+            for canister_id in deployed_stations {
                 fund_manager.register(*canister_id);
             }
 

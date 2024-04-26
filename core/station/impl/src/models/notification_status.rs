@@ -1,4 +1,4 @@
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,

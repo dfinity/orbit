@@ -3,9 +3,9 @@ use crate::core::{
     WASM_PAGE_SIZE,
 };
 use candid::Principal;
-use ic_canister_core::types::{Timestamp, UUID};
-use ic_canister_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
+use orbit_essentials::storable;
+use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, Eq, PartialEq)]

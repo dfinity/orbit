@@ -7,7 +7,7 @@ import {
 import { i18n } from '~/plugins/i18n.plugin';
 import { CsvRow, CsvTable } from '~/types/app.types';
 import { ListProposalsOperationTypeGroup, ProposalWithDetails } from '~/types/proposals.types';
-import { ProposalOperationEnum, ProposalStatusEnum } from '~/types/wallet.types';
+import { ProposalOperationEnum, ProposalStatusEnum } from '~/types/station.types';
 import { formatBalance, stringify, unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapProposalsOperationTypeToGroup = (
@@ -477,9 +477,9 @@ const mapProposalToChangeCanisterCsvRow = (proposal: Proposal): CsvRow => {
       ? proposal.operation.ChangeCanister.arg_checksum[0]
       : '';
 
-    if (variantIs(proposal.operation.ChangeCanister.target, 'UpgradeWallet')) {
+    if (variantIs(proposal.operation.ChangeCanister.target, 'UpgradeStation')) {
       return {
-        change_target: 'wallet',
+        change_target: 'station',
         wasm_checksum: proposal.operation.ChangeCanister.module_checksum,
         details: stringify({ args }),
       };

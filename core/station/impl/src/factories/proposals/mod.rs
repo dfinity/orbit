@@ -5,7 +5,7 @@ use crate::{
     services::{access_policy::ACCESS_POLICY_SERVICE, PROPOSAL_POLICY_SERVICE, SYSTEM_SERVICE},
 };
 use async_trait::async_trait;
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 use station_api::{CreateProposalInput, ProposalOperationInput};
 use std::sync::Arc;
 

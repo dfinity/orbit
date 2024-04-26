@@ -47,12 +47,12 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { Proposal } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { hexStringToArrayBuffer } from '~/utils/crypto.utils';
 import { readFileAsArrayBuffer } from '~/utils/file.utils';
 import { assertAndReturn } from '~/utils/helper.utils';
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const upgradeModel = ref<ChangeCanisterFormProps>({
   modelValue: {
@@ -67,7 +67,7 @@ const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Prom
   const wasmModule = assertAndReturn(model.wasmModule?.[0], 'model.wasmModule is required');
   const fileBuffer = await readFileAsArrayBuffer(wasmModule);
 
-  return wallet.service.changeCanister({
+  return station.service.changeCanister({
     arg:
       model.arg && model.arg.length > 0 ? [new Uint8Array(hexStringToArrayBuffer(model.arg))] : [],
     module: new Uint8Array(fileBuffer),

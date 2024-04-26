@@ -2,7 +2,7 @@ import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
 import { AccountBalance, UUID } from '~/generated/station/station.did';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 import { arrayBatchMaker, timer, unreachable } from '~/utils/helper.utils';
 
 const DEFAULT_INTERVAL_MS = 10000;
@@ -17,8 +17,8 @@ export interface AccountsWorker extends Worker {
 }
 
 export interface AccountsWorkerStartInput {
-  // The wallet id to use for the worker.
-  walletId: Principal;
+  // The canister id to use for the worker to fetch account balances.
+  stationId: Principal;
   // The frequency at which the worker should run in milliseconds.
   //
   // Default: 10000 (10 seconds)
@@ -54,7 +54,7 @@ class AccountsWorkerImpl {
   private timer: NodeJS.Timeout | null = null;
   private enabled: boolean = false;
 
-  constructor(private walletService: WalletService = new WalletService(icAgent.get())) {}
+  constructor(private stationService: StationService = new StationService(icAgent.get())) {}
 
   static register(): void {
     if (typeof navigator === 'undefined') {
@@ -95,7 +95,7 @@ class AccountsWorkerImpl {
     }
     this.enabled = true;
 
-    this.walletService.withWalletId(data.walletId);
+    this.stationService.withStationId(data.stationId);
     const poolIntervalMs =
       data.poolIntervalMs && data.poolIntervalMs > 0 ? data.poolIntervalMs : DEFAULT_INTERVAL_MS;
 
@@ -127,7 +127,7 @@ class AccountsWorkerImpl {
 
       const batchToTrack = arrayBatchMaker(Array.from(accountsToTrack), MAX_BATCH_SIZE);
       const requests = batchToTrack.map(accountIds =>
-        this.walletService.fetchAccountBalances({ account_ids: accountIds }).catch(err => {
+        this.stationService.fetchAccountBalances({ account_ids: accountIds }).catch(err => {
           logger.error('Failed to update the balance for the given account ids', { err });
 
           return [] as AccountBalance[];

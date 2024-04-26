@@ -32,7 +32,7 @@ import {
   ProposalAdditionalInfo,
   ProposalCallerPrivileges,
 } from '~/generated/station/station.did';
-import { ProposalDetails } from '~/types/wallet.types';
+import { ProposalDetails } from '~/types/station.types';
 import ProposalListItem from './ProposalListItem.vue';
 
 const props = withDefaults(

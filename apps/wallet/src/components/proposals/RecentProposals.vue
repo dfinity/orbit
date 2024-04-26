@@ -63,8 +63,8 @@ import DataLoader from '~/components/DataLoader.vue';
 import { ListProposalsOperationType } from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
-import { ListProposalsArgs } from '~/types/wallet.types';
+import { useStationStore } from '~/stores/station.store';
+import { ListProposalsArgs } from '~/types/station.types';
 import ProposalList from './ProposalList.vue';
 
 const props = withDefaults(
@@ -92,14 +92,14 @@ const props = withDefaults(
 );
 
 const app = useAppStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);
 
 let useVerifiedCall = false;
 
-const fetchRecentProposals = async (): ReturnType<typeof wallet.service.listProposals> => {
-  const result = await wallet.service.listProposals(
+const fetchRecentProposals = async (): ReturnType<typeof station.service.listProposals> => {
+  const result = await station.service.listProposals(
     {
       types: props.types,
       statuses: [{ Created: null }],

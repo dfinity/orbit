@@ -16,8 +16,8 @@
 
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import { WalletAsset } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { Asset } from '~/generated/station/station.did';
+import { useStationStore } from '~/stores/station.store';
 import { FormValidationRuleFn } from '~/types/helper.types';
 
 const input = withDefaults(
@@ -45,14 +45,14 @@ const input = withDefaults(
 
 const props = toRefs(input);
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const model = computed({
   get: () => props.modelValue.value,
   set: value => {
     emit(
       'selectedAsset',
-      wallet.configuration.details.supported_assets.find(token => token.symbol === value),
+      station.configuration.details.supported_assets.find(token => token.symbol === value),
     );
     emit('update:modelValue', value);
   },
@@ -60,11 +60,11 @@ const model = computed({
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload?: string): void;
-  (event: 'selectedAsset', payload?: WalletAsset): void;
+  (event: 'selectedAsset', payload?: Asset): void;
 }>();
 
 const items = computed(() =>
-  wallet.configuration.details.supported_assets.map(token => ({
+  station.configuration.details.supported_assets.map(token => ({
     value: token.symbol,
     text: `${token.name} (${token.symbol})`,
   })),

@@ -93,10 +93,10 @@ import {
   Resource,
   UserGroup,
 } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { ResourceTypeEnum } from '~/types/access-policies.types';
 import type { PageProps } from '~/types/app.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -105,7 +105,7 @@ const props = withDefaults(defineProps<PageProps>(), {
 
 const i18n = useI18n();
 const title = computed(() => props.title || i18n.t('pages.access_policies.title'));
-const wallet = useWalletStore();
+const station = useStationStore();
 const disableRefresh = ref(false);
 const resourceAccessPolicies = globalAccessPolicies();
 const individualResourceSelected = ref<ResourceTypeEnum | null>(null);
@@ -142,7 +142,7 @@ const fetchAccessPolicies = async (
     // This is to avoid infinite loops in case the offset is not updated properly
     maxOffsetFound = nextOffset;
 
-    const result = await wallet.service.listAccessPolicies({
+    const result = await station.service.listAccessPolicies({
       resources: [resources],
       paginate: [
         {

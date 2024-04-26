@@ -57,7 +57,7 @@
                   v-if="hasDeletePrivilege(policy.id)"
                   v-model="policy.id"
                   :icon="mdiTrashCanOutline"
-                  :submit="id => wallet.service.removeProposalPolicy(id)"
+                  :submit="id => station.service.removeProposalPolicy(id)"
                   data-test-id="remove-proposal-policy-btn"
                   @failed="useOnFailedOperation"
                   @submitted="useOnSuccessfulOperation"
@@ -116,15 +116,15 @@ import {
   ProposalPolicyCallerPrivileges,
   UUID,
 } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
-const wallet = useWalletStore();
+const station = useStationStore();
 const pageTitle = computed(() => props.title ?? i18n.t('pages.proposal_policies.title'));
 const forceReload = ref(false);
 const disableRefresh = ref(false);
@@ -156,7 +156,7 @@ let useVerifiedCall = false;
 
 const fetchList = useFetchList(
   (offset, limit) => {
-    const results = wallet.service.listProposalPolicies(
+    const results = station.service.listProposalPolicies(
       {
         offset,
         limit,

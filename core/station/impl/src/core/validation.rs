@@ -3,7 +3,7 @@ use std::sync::Arc;
 #[cfg(test)]
 use std::cell::RefCell;
 
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 use uuid::Uuid;
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
         USER_REPOSITORY,
     },
 };
-use ic_canister_core::repository::Repository;
+use orbit_essentials::repository::Repository;
 
 thread_local! {
   /// Switch for tests to enable validation if needed.

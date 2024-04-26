@@ -1,6 +1,6 @@
 use crate::models::{User, UserId};
 use candid::Principal;
-use ic_canister_macros::storable;
+use orbit_essentials::storable;
 
 /// Represents an user identity index within the system.
 #[storable]

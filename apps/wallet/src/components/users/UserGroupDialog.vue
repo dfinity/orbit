@@ -71,7 +71,7 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { UUID, UserGroup } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -103,7 +103,7 @@ const openModel = computed({
   set: value => emit('update:open', value),
 });
 
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const loadUserGroup = async (): Promise<{
   userGroup: Partial<UserGroup>;
@@ -114,7 +114,7 @@ const loadUserGroup = async (): Promise<{
     return { userGroup: createModel };
   }
 
-  const result = await wallet.service.getUserGroup(
+  const result = await station.service.getUserGroup(
     {
       user_group_id: props.userGroupId.value,
     },
@@ -137,7 +137,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (userGroup.value.id) {
-      const proposal = await wallet.service.editUserGroup({
+      const proposal = await station.service.editUserGroup({
         user_group_id: userGroup.value.id,
         name: assertAndReturn(userGroup.value.name, 'name'),
       });
@@ -148,7 +148,7 @@ const save = async (): Promise<void> => {
       return;
     }
 
-    const proposal = await wallet.service.addUserGroup({
+    const proposal = await station.service.addUserGroup({
       name: assertAndReturn(userGroup.value.name, 'name'),
     });
 

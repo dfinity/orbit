@@ -7,7 +7,7 @@ edition = "2021"
 candid = { workspace = true }
 candid_parser = { workspace = true }
 hex = { workspace = true }
-ic-canister-core = { workspace = true }
+orbit-essentials = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 lazy_static = { workspace = true }
@@ -15,6 +15,6 @@ num-bigint = { workspace = true }
 pocket-ic = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-control_panel_api = { workspace = true }
-upgrader_api = { workspace = true }
-station_api = { workspace = true }
+control-panel-api = { workspace = true }
+upgrader-api = { workspace = true }
+station-api = { workspace = true }

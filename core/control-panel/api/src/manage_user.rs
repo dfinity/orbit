@@ -1,13 +1,13 @@
-use super::{UserDTO, UserWalletDTO};
+use super::{UserDTO, UserStationDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 /// The input to manage an user.
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ManageUserInput {
-    /// The main wallet to use for the user.
-    pub main_wallet: Option<Principal>,
-    /// Set wallets to use for the user.
-    pub wallets: Option<Vec<UserWalletDTO>>,
+    /// The main station to use for the user.
+    pub main_station: Option<Principal>,
+    /// Set stations to use for the user.
+    pub stations: Option<Vec<UserStationDTO>>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -21,13 +21,13 @@ pub struct DeleteUserResponse {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct RegisterUserWalletSharedInput {
+pub struct RegisterUserStationSharedInput {
     pub is_main: bool,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegisterUserInput {
-    pub wallet_id: Option<Principal>,
+    pub station_id: Option<Principal>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

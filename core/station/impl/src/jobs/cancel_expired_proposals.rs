@@ -4,7 +4,7 @@ use crate::{
     repositories::ProposalRepository,
 };
 use async_trait::async_trait;
-use ic_canister_core::repository::Repository;
+use orbit_essentials::repository::Repository;
 
 use super::ScheduledJob;
 

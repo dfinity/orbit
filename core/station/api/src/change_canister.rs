@@ -4,7 +4,7 @@ use crate::Sha256HashDTO;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ChangeCanisterTargetDTO {
-    UpgradeWallet,
+    UpgradeStation,
     UpgradeUpgrader,
     UpgradeCanister(Principal),
 }

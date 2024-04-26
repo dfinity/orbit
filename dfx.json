@@ -41,7 +41,7 @@
     },
     "control_panel": {
       "type": "rust",
-      "package": "control_panel",
+      "package": "control-panel",
       "candid": "core/control-panel/api/spec.did",
       "declarations": {
         "output": "apps/wallet/src/generated/control-panel",

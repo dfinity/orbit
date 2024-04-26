@@ -122,6 +122,13 @@ export interface ApprovalThreshold {
   'threshold' : number,
   'voters' : UserSpecifier,
 }
+export interface Asset {
+  'metadata' : Array<AssetMetadata>,
+  'name' : string,
+  'blockchain' : string,
+  'standard' : string,
+  'symbol' : AssetSymbol,
+}
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
 export type AuthScope = { 'Authenticated' : null } |
@@ -134,7 +141,7 @@ export interface BasicUser {
 }
 export interface Capabilities {
   'version' : string,
-  'supported_assets' : Array<WalletAsset>,
+  'supported_assets' : Array<Asset>,
 }
 export type CapabilitiesResult = { 'Ok' : { 'capabilities' : Capabilities } } |
   { 'Err' : Error };
@@ -156,7 +163,7 @@ export interface ChangeCanisterOperationInput {
 export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeCanister' : Principal } |
-  { 'UpgradeWallet' : null };
+  { 'UpgradeStation' : null };
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
@@ -817,13 +824,6 @@ export type VoteOnProposalResult = {
     }
   } |
   { 'Err' : Error };
-export interface WalletAsset {
-  'metadata' : Array<AssetMetadata>,
-  'name' : string,
-  'blockchain' : string,
-  'standard' : string,
-  'symbol' : AssetSymbol,
-}
 export interface _SERVICE {
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,

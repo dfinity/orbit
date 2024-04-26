@@ -7,7 +7,7 @@
   >
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
-        <VBadge dot :color="wallet.hasNotifications ? 'warning' : 'transparent'">
+        <VBadge dot :color="station.hasNotifications ? 'warning' : 'transparent'">
           <VIcon :icon="toggleIcon" size="small" />
         </VBadge>
       </VBtn>
@@ -25,7 +25,7 @@
   >
     <template #activator="{ props: selectorProps }">
       <VBtn v-bind="selectorProps" variant="text" icon>
-        <VBadge dot :color="wallet.hasNotifications ? 'warning' : 'transparent'">
+        <VBadge dot :color="station.hasNotifications ? 'warning' : 'transparent'">
           <VIcon :icon="toggleIcon" size="small" />
         </VBadge>
       </VBtn>
@@ -38,7 +38,7 @@
 import { mdiBellRing, mdiBellRingOutline } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import NotificationsPanel from './NotificationsPanel.vue';
 import { VMenu } from 'vuetify/components';
 
@@ -56,6 +56,6 @@ const toggleIcon = computed(() =>
 );
 
 const notificationsPopup = ref(false);
-const wallet = useWalletStore();
+const station = useStationStore();
 const app = useAppStore();
 </script>

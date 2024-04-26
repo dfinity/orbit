@@ -3,7 +3,7 @@ use crate::{
     models::{NotificationType, Proposal},
     repositories::PROPOSAL_REPOSITORY,
 };
-use ic_canister_core::repository::Repository;
+use orbit_essentials::repository::Repository;
 use station_api::{NotificationTypeDTO, ProposalCreatedNotificationDTO};
 use uuid::Uuid;
 

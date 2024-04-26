@@ -1,5 +1,5 @@
 use crate::models::Transfer;
-use ic_canister_core::utils::timestamp_to_rfc3339;
+use orbit_essentials::utils::timestamp_to_rfc3339;
 use station_api::{NetworkDTO, TransferDTO, TransferListItemDTO};
 use uuid::Uuid;
 

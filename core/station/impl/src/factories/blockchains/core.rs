@@ -4,8 +4,8 @@ use crate::{
     models::{Account, Blockchain, BlockchainStandard, Metadata, Transfer},
 };
 use async_trait::async_trait;
-use ic_canister_core::api::ApiError;
 use num_bigint::BigUint;
+use orbit_essentials::api::ApiError;
 use std::collections::HashMap;
 
 pub const TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY: &str = "block_height";

@@ -1,7 +1,7 @@
 import { Ref, ref } from 'vue';
 import { logger } from '~/core/logger.core';
 import { UserGroup } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { throttle } from '~/utils/helper.utils';
 
 export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) => {
@@ -39,10 +39,10 @@ export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) 
 };
 
 export const useUserGroupsAutocomplete = () => {
-  const wallet = useWalletStore();
+  const station = useStationStore();
 
   const autocomplete = useAutocomplete<UserGroup>(async term => {
-    const groups = await wallet.service.listUserGroups({
+    const groups = await station.service.listUserGroups({
       searchTerm: term.trim().length > 0 ? term.trim() : undefined,
       limit: 100,
       offset: 0,
@@ -55,10 +55,10 @@ export const useUserGroupsAutocomplete = () => {
 };
 
 export const useUsersAutocomplete = () => {
-  const wallet = useWalletStore();
+  const station = useStationStore();
 
   const autocomplete = useAutocomplete(async term => {
-    const users = await wallet.service.listUsers({
+    const users = await station.service.listUsers({
       searchTerm: term.trim().length > 0 ? term.trim() : undefined,
       limit: 100,
       offset: 0,
@@ -71,10 +71,10 @@ export const useUsersAutocomplete = () => {
 };
 
 export const useAccountsAutocomplete = () => {
-  const wallet = useWalletStore();
+  const station = useStationStore();
 
   const autocomplete = useAutocomplete(async term => {
-    const accounts = await wallet.service.listAccounts({
+    const accounts = await station.service.listAccounts({
       searchTerm: term.trim().length > 0 ? term.trim() : undefined,
       limit: 100,
       offset: 0,
@@ -87,10 +87,10 @@ export const useAccountsAutocomplete = () => {
 };
 
 export const useAddressBookAutocomplete = () => {
-  const wallet = useWalletStore();
+  const station = useStationStore();
 
   const autocomplete = useAutocomplete(async term => {
-    const results = await wallet.service.listAddressBook({
+    const results = await station.service.listAddressBook({
       addresses: term.trim().length > 0 ? [term.trim()] : undefined,
       limit: 100,
       offset: 0,

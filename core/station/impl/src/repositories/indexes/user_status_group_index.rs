@@ -5,8 +5,8 @@ use crate::{
         UserId,
     },
 };
-use ic_canister_core::repository::IndexRepository;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use orbit_essentials::repository::IndexRepository;
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {

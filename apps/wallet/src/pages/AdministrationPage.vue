@@ -10,11 +10,11 @@
             <AuthCheck :privileges="[Privilege.ListProposals]">
               <template #default>
                 <VCol cols="12" md="4">
-                  <WalletInfoCard />
+                  <StationInfoCard />
                 </VCol>
                 <VCol cols="12" md="8">
                   <RecentProposals
-                    :title="$t(`app.wallet_upgrades_card_title`)"
+                    :title="$t(`app.station_upgrades_card_title`)"
                     :types="[{ ChangeCanister: null }]"
                   >
                     <template #top-actions>
@@ -38,7 +38,7 @@
               </template>
               <template #unauthorized>
                 <VCol cols="12" md="4">
-                  <WalletInfoCard />
+                  <StationInfoCard />
                 </VCol>
               </template>
             </AuthCheck>
@@ -59,11 +59,11 @@ import ChangeCanisterActionBtn from '~/components/change-canister/ChangeCanister
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
-import WalletInfoCard from '~/components/settings/WalletInfoCard.vue';
+import StationInfoCard from '~/components/settings/StationInfoCard.vue';
 import { Routes } from '~/configs/routes.config';
 import { PageProps } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();

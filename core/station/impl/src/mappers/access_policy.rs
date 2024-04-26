@@ -3,7 +3,7 @@ use crate::models::{
     access_policy::{AccessPolicy, Allow, AuthScope},
     resource::ResourceIds,
 };
-use ic_canister_core::types::UUID;
+use orbit_essentials::types::UUID;
 use uuid::Uuid;
 
 impl From<station_api::AuthScopeDTO> for AuthScope {

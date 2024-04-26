@@ -6,7 +6,7 @@ use control_panel_api::{
     RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserSubscriptionStatusDTO,
     UserWalletDTO,
 };
-use ic_canister_core::api::ApiResult;
+use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use station_api::HealthStatus;
 

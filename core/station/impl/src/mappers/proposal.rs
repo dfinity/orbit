@@ -5,7 +5,7 @@ use crate::{
         ProposalOperation, ProposalStatus, UserId,
     },
 };
-use ic_canister_core::{
+use orbit_essentials::{
     types::{Timestamp, UUID},
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };

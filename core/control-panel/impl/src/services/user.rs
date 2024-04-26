@@ -2,18 +2,18 @@ use crate::{
     core::{generate_uuid_v4, ic_cdk::next_time, CallContext},
     errors::UserError,
     mappers::{SubscribedUser, UserMapper},
-    models::{CanDeployWallet, User, UserId, UserKey, UserSubscriptionStatus, UserWallet},
+    models::{CanDeployStation, User, UserId, UserKey, UserStation, UserSubscriptionStatus},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
 };
 use candid::Principal;
 use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
-use ic_canister_core::repository::Repository;
-use ic_canister_core::{
+use lazy_static::lazy_static;
+use orbit_essentials::repository::Repository;
+use orbit_essentials::{
     api::{ApiError, ServiceResult},
     model::ModelValidator,
 };
-use lazy_static::lazy_static;
 use std::{collections::BTreeSet, sync::Arc};
 use uuid::Uuid;
 
@@ -64,18 +64,18 @@ impl UserService {
         Ok(user)
     }
 
-    pub fn get_main_wallet(&self, ctx: &CallContext) -> ServiceResult<Option<UserWallet>> {
+    pub fn get_main_station(&self, ctx: &CallContext) -> ServiceResult<Option<UserStation>> {
         let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
-        match user.main_wallet {
-            Some(main_wallet) => {
-                let main_wallet = user
-                    .wallets
+        match user.main_station {
+            Some(main_station) => {
+                let main_station = user
+                    .stations
                     .into_iter()
-                    .find(|wallet| wallet.canister_id == main_wallet)
-                    .ok_or(UserError::MainWalletNotFound)?;
+                    .find(|station| station.canister_id == main_station)
+                    .ok_or(UserError::MainStationNotFound)?;
 
-                Ok(Some(main_wallet))
+                Ok(Some(main_station))
             }
             None => Ok(None),
         }
@@ -204,57 +204,57 @@ impl UserService {
         Ok(())
     }
 
-    /// Returns all deployed wallets in the system.
-    pub fn get_all_deployed_wallets(&self) -> BTreeSet<Principal> {
+    /// Returns all deployed stations in the system.
+    pub fn get_all_deployed_stations(&self) -> BTreeSet<Principal> {
         let users = self.user_repository.list();
 
         users
             .into_iter()
-            .flat_map(|user| user.deployed_wallets)
+            .flat_map(|user| user.deployed_stations)
             .collect()
     }
 
-    pub async fn add_deployed_wallet(
+    pub async fn add_deployed_station(
         &self,
         user_id: &UserId,
-        wallet_canister_id: Principal,
+        station_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
 
-        user.wallets.push(UserWallet {
-            canister_id: wallet_canister_id,
+        user.stations.push(UserStation {
+            canister_id: station_canister_id,
             name: None,
         });
-        user.deployed_wallets.push(wallet_canister_id);
+        user.deployed_stations.push(station_canister_id);
 
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.clone());
 
         FUND_MANAGER.with(|fund_manager| {
-            fund_manager.borrow_mut().register(wallet_canister_id);
+            fund_manager.borrow_mut().register(station_canister_id);
         });
 
         Ok(user)
     }
 
-    /// Checks if a user can deploy a wallet.
-    pub async fn can_deploy_wallet(&self, ctx: &CallContext) -> ServiceResult<CanDeployWallet> {
+    /// Checks if a user can deploy a station.
+    pub async fn can_deploy_station(&self, ctx: &CallContext) -> ServiceResult<CanDeployStation> {
         let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
-        Ok(user.can_deploy_wallet())
+        Ok(user.can_deploy_station())
     }
 
-    pub async fn set_main_wallet(
+    pub async fn set_main_station(
         &self,
         user_id: &UserId,
-        wallet_canister_id: Principal,
+        station_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
 
-        user.main_wallet = Some(wallet_canister_id);
+        user.main_station = Some(station_canister_id);
 
         user.validate()?;
 
@@ -309,7 +309,7 @@ mod tests {
     use super::*;
     use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus};
     use control_panel_api::UserSubscriptionStatusDTO;
-    use ic_canister_core::cdk::mocks::TEST_CONTROLLER_ID;
+    use orbit_essentials::cdk::mocks::TEST_CONTROLLER_ID;
 
     #[test]
     fn get_user_returns_not_found_err() {
@@ -365,7 +365,7 @@ mod tests {
         let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
         let input = RegisterUserInput {
-            wallet_id: Some(Principal::from_slice(&[2; 29])),
+            station_id: Some(Principal::from_slice(&[2; 29])),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -380,7 +380,7 @@ mod tests {
         let ctx = CallContext::new(Principal::anonymous());
         let service = UserService::default();
         let input = RegisterUserInput {
-            wallet_id: Some(Principal::from_slice(&[2; 29])),
+            station_id: Some(Principal::from_slice(&[2; 29])),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -402,8 +402,8 @@ mod tests {
 
         let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
-        let input = RegisterUserInput { wallet_id: None };
-        let duplicated_user_input = RegisterUserInput { wallet_id: None };
+        let input = RegisterUserInput { station_id: None };
+        let duplicated_user_input = RegisterUserInput { station_id: None };
 
         let result = service.register_user(input.clone(), &ctx).await;
         let duplicated_user_result = service

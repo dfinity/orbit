@@ -2,7 +2,7 @@
 type AssetSymbol = text;
 // The network id, represented by the blockchain symbol and network name (e.g. "icp:mainnet").
 type NetworkId = text;
-// Most ids under the wallet canister are in the UUID format (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+// Most ids under the station canister are in the UUID format (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
 type UUID = text;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
@@ -434,12 +434,12 @@ type AddUserOperationInput = record {
   identities : vec principal;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet
+  // Users can be tagged with groups that can be used to control access to the station
   // (e.g. the UUID of the finance group).
   groups : vec UUID;
   // The status of the user (e.g. `Active`).
   //
-  // The user must be active to be able to practically use the wallet.
+  // The user must be active to be able to practically use the station.
   status : UserStatus;
 };
 
@@ -459,7 +459,7 @@ type EditUserOperationInput = record {
   identities : opt vec principal;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet
+  // Users can be tagged with groups that can be used to control access to the station
   // (e.g. "UUID of the finance group").
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
@@ -506,7 +506,7 @@ type RemoveUserGroupOperation = record {
 };
 
 type ChangeCanisterTarget = variant {
-  UpgradeWallet;
+  UpgradeStation;
   UpgradeUpgrader;
   UpgradeCanister : principal;
 };
@@ -720,7 +720,7 @@ type ProposalAdditionalInfo = record {
   evaluation_result : opt ProposalEvaluationResult;
 };
 
-// A record type that can be used to represent a proposed operation in the wallet.
+// A record type that can be used to represent a proposed operation in the station.
 type Proposal = record {
   // The proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
@@ -1011,7 +1011,7 @@ type UserGroupCallerPrivileges = record {
   can_delete : bool;
 };
 
-// A record type that can be used to represent a user group in the wallet.
+// A record type that can be used to represent a user group in the station.
 type UserGroup = record {
   // The UUID of the group (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
@@ -1034,7 +1034,7 @@ type UserCallerPrivileges = record {
   can_edit : bool;
 };
 
-// A record type that can be used to represent a user in the wallet.
+// A record type that can be used to represent a user in the station.
 type User = record {
   // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
@@ -1044,7 +1044,7 @@ type User = record {
   status : UserStatus;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the wallet
+  // Users can be tagged with groups that can be used to control access to the station
   groups : vec UserGroup;
   // The principals associated with the user.
   identities : vec principal;
@@ -1353,8 +1353,8 @@ type AssetMetadata = record {
   value : text;
 };
 
-// A record type that can be used to represent an asset in the wallet.
-type WalletAsset = record {
+// A record type that can be used to represent an asset in the station.
+type Asset = record {
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
@@ -1375,7 +1375,7 @@ type Capabilities = record {
   // Version of the canister.
   version : text;
   // The list of supported assets.
-  supported_assets : vec WalletAsset;
+  supported_assets : vec Asset;
 };
 
 // Result type for getting the current config.
@@ -1433,7 +1433,7 @@ type GetUserResult = variant {
   Err : Error;
 };
 
-// Input type for listing users of the wallet.
+// Input type for listing users of the station.
 type ListUsersInput = record {
   // The search term to use for filtering the users.
   search_term : opt text;
@@ -1443,7 +1443,7 @@ type ListUsersInput = record {
   paginate : opt PaginationInput;
 };
 
-// Result type for listing users of the wallet.
+// Result type for listing users of the station.
 type ListUsersResult = variant {
   // The result data for a successful execution.
   Ok : record {
@@ -1597,7 +1597,7 @@ type ListAccessPoliciesInput = record {
   paginate : opt PaginationInput;
 };
 
-// A basic user record that can be used to represent a user in the wallet.
+// A basic user record that can be used to represent a user in the station.
 type BasicUser = record {
   // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
@@ -1764,11 +1764,11 @@ type MeResult = variant {
 //
 // Only used when installing the canister for the first time.
 type SystemInit = record {
-  // The list of admin principals to be associated with the wallet.
+  // The list of admin principals to be associated with the station.
   //
   // When not specified, the caller will be added as the admin.
   admins : opt vec principal;
-  // The wasm module of the wallet upgrader canister.
+  // The wasm module of the station upgrader canister.
   upgrader_wasm_module : blob;
 };
 
@@ -1803,9 +1803,9 @@ type HttpResponse = record {
   body : blob;
 };
 
-// The Wallet service definition.
+// The Station service definition.
 service : (opt SystemInstall) -> {
-  // Check if the wallet is healthy and ready to be used.
+  // Check if the station is healthy and ready to be used.
   health_status : () -> (HealthStatus) query;
   // Get the system information of the canister (e.g. version, cycles, etc.).
   //
@@ -1858,7 +1858,7 @@ service : (opt SystemInstall) -> {
   vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
   // Get the user associated with the user id provided.
   get_user : (input : GetUserInput) -> (GetUserResult) query;
-  // List all users of the wallet.
+  // List all users of the station.
   list_users : (input : ListUsersInput) -> (ListUsersResult) query;
   // List all access policies.
   list_access_policies : (input : ListAccessPoliciesInput) -> (ListAccessPoliciesResult) query;
@@ -1872,7 +1872,7 @@ service : (opt SystemInstall) -> {
   //
   // If the caller does not have access to the user group, an error will be returned.
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
-  // List all user groups of the wallet.
+  // List all user groups of the station.
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;

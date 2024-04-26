@@ -162,7 +162,7 @@ import {
   VTooltip,
 } from 'vuetify/components';
 import { Proposal, ProposalOperation } from '~/generated/station/station.did';
-import { ProposalDetails } from '~/types/wallet.types';
+import { ProposalDetails } from '~/types/station.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';

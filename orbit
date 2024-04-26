@@ -244,7 +244,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_icp_index
     exec_function setup_internet_identity
     exec_function setup_control_panel
-    exec_function setup_ui
+    exec_function setup_app_wallet
     echo
     ;;
   --init-icp-ledger)

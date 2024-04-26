@@ -89,7 +89,7 @@ import {
 import { mapProposalOperationToListProposalsOperationType } from '~/mappers/proposals.mapper';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { variantIs } from '~/utils/helper.utils';
 import ProposalDetailView from './ProposalDetailView.vue';
 import LoadingMessage from '~/components/LoadingMessage.vue';
@@ -153,17 +153,17 @@ const openModel = computed({
 });
 const i18n = useI18n();
 const app = useAppStore();
-const wallet = useWalletStore();
+const station = useStationStore();
 
 const loadProposal = async (): Promise<DataType> => {
-  wallet.notifications.items.forEach(notification => {
+  station.notifications.items.forEach(notification => {
     if (
       !notification.loading &&
       variantIs(notification.data.notification_type, 'ProposalCreated') &&
       !variantIs(notification.data.status, 'Read') &&
       notification.data.notification_type.ProposalCreated.proposal_id === currentProposalId.value
     ) {
-      wallet.markNotificationRead(notification.data.id, true);
+      station.markNotificationRead(notification.data.id, true);
     }
   });
 
@@ -174,7 +174,7 @@ const loadProposal = async (): Promise<DataType> => {
       additionalInfo: preloadedData.value.additionalInfo,
     };
   } else {
-    const result = await services().wallet.getProposal(
+    const result = await services().station.getProposal(
       { proposal_id: currentProposalId.value! },
       true,
     );
@@ -207,7 +207,7 @@ const onProposalLoaded = (data: Awaited<ReturnType<typeof loadProposal>>): void 
 };
 
 const loadNextProposal = async (): Promise<DataType | null> => {
-  const nextProposal = await services().wallet.getNextVotableProposal({
+  const nextProposal = await services().station.getNextVotableProposal({
     types: [proposalType.value!],
     excludedProposalIds: skippedProposalIds.value,
   });
@@ -230,7 +230,7 @@ const onVote = async (approve: boolean, reason?: string): Promise<void> => {
 
   voting.value = true;
 
-  return wallet.service
+  return station.service
     .voteOnProposal({
       proposal_id: currentProposalId.value,
       approve,

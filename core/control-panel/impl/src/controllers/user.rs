@@ -7,10 +7,10 @@ use control_panel_api::{
     DeleteUserResponse, GetUserResponse, GetWaitingListResponse, ManageUserInput,
     ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserDTO,
 };
-use ic_canister_core::api::{ApiError, ApiResult};
-use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
+use orbit_essentials::api::{ApiError, ApiResult};
+use orbit_essentials::with_middleware;
 use std::cell::RefCell;
 use std::sync::Arc;
 

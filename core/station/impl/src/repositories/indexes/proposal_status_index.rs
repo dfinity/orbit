@@ -2,8 +2,8 @@ use crate::{
     core::{with_memory_manager, Memory, PROPOSAL_STATUS_INDEX_MEMORY_ID},
     models::indexes::proposal_status_index::{ProposalStatusIndex, ProposalStatusIndexCriteria},
 };
-use ic_canister_core::{repository::IndexRepository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
+use orbit_essentials::{repository::IndexRepository, types::UUID};
 use std::{cell::RefCell, collections::HashSet};
 
 thread_local! {

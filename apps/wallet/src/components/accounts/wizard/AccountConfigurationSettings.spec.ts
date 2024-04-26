@@ -1,16 +1,16 @@
 import { describe } from 'node:test';
 import { expect, it, vi } from 'vitest';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
 import AccountConfigurationSettings from './AccountConfigurationSettings.vue';
 
-vi.mock('~/services/wallet.service', () => {
-  const mock: Partial<WalletService> = {
-    withWalletId: vi.fn().mockReturnThis(),
+vi.mock('~/services/station.service', () => {
+  const mock: Partial<StationService> = {
+    withStationId: vi.fn().mockReturnThis(),
   };
 
   return {
-    WalletService: vi.fn(() => mock),
+    StationService: vi.fn(() => mock),
   };
 });
 

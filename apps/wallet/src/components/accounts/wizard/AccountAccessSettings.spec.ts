@@ -3,7 +3,7 @@ import AccountAccessSettings from './AccountAccessSettings.vue';
 import { mount } from '~/test.utils';
 import { expect, it, vi } from 'vitest';
 import { Allow } from '~/generated/station/station.did';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 
 const allowAuthenticated = (): Allow => ({
   auth_scope: { Authenticated: null },
@@ -11,9 +11,9 @@ const allowAuthenticated = (): Allow => ({
   users: [],
 });
 
-vi.mock('~/services/wallet.service', () => {
-  const mock: Partial<WalletService> = {
-    withWalletId: vi.fn().mockReturnThis(),
+vi.mock('~/services/station.service', () => {
+  const mock: Partial<StationService> = {
+    withStationId: vi.fn().mockReturnThis(),
     listUserGroups: vi.fn().mockImplementation(() =>
       Promise.resolve({
         user_groups: [],
@@ -32,7 +32,7 @@ vi.mock('~/services/wallet.service', () => {
   };
 
   return {
-    WalletService: vi.fn(() => mock),
+    StationService: vi.fn(() => mock),
   };
 });
 

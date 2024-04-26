@@ -75,7 +75,7 @@ import {
   Proposal,
   UUID,
 } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const props = withDefaults(
@@ -101,7 +101,7 @@ const loading = ref(false);
 const submitting = ref(false);
 const wizard = ref<AccountSetupWizardModel>(useDefaultAccountSetupWizardModel());
 const canClose = computed(() => !loading.value && !submitting.value);
-const wallet = useWalletStore();
+const station = useStationStore();
 const open = computed({
   get: () => props.open,
   set: value => emit('update:open', value),
@@ -110,7 +110,7 @@ const open = computed({
 const load = async (): Promise<AccountSetupWizardModel> => {
   if (props.accountId === undefined) {
     return useDefaultAccountSetupWizardModel({
-      prefilledUserIds: [wallet.user.id],
+      prefilledUserIds: [station.user.id],
     });
   }
 
@@ -155,7 +155,7 @@ const saveChangesToExistingAccount = async (accountId: UUID): Promise<Proposal> 
     assertAndReturn(wizard.value.access_policy.configuration, 'update_access'),
   ];
 
-  return wallet.service.editAccount(changes as EditAccountOperationInput);
+  return station.service.editAccount(changes as EditAccountOperationInput);
 };
 
 const createNewAccount = async (): Promise<Proposal> => {
@@ -180,6 +180,6 @@ const createNewAccount = async (): Promise<Proposal> => {
   );
   changes.metadata = [];
 
-  return wallet.service.addAccount(changes as AddAccountOperationInput);
+  return station.service.addAccount(changes as AddAccountOperationInput);
 };
 </script>

@@ -1,5 +1,5 @@
 import { TransferStatus } from '~/generated/station/station.did';
-import { AccountTransferStatus } from '~/types/wallet.types';
+import { AccountTransferStatus } from '~/types/station.types';
 import type { IDL as CandidIDL } from '@dfinity/candid';
 
 export const timer = (

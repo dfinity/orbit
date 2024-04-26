@@ -5,10 +5,10 @@ use crate::{
     core::middlewares::{authorize, call_context},
     services::AddressBookService,
 };
-use ic_canister_core::api::ApiResult;
-use ic_canister_macros::with_middleware;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::with_middleware;
 use station_api::{
     AddressBookEntryCallerPrivilegesDTO, GetAddressBookEntryInputDTO,
     GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,

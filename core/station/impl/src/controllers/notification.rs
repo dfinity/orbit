@@ -3,10 +3,10 @@ use crate::{
     mappers::notification::NotificationMapperError,
     services::NotificationService,
 };
-use ic_canister_core::{api::ApiResult, cdk::api::print};
-use ic_canister_macros::with_middleware;
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
+use orbit_essentials::with_middleware;
+use orbit_essentials::{api::ApiResult, cdk::api::print};
 use station_api::{
     ListNotificationsInput, ListNotificationsResponse, MarkNotificationsReadInput, NotificationDTO,
 };

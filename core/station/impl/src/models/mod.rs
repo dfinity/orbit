@@ -1,6 +1,6 @@
 //! Storable models.
 //!
-//! This module contains the storable models for the Wallet canister.
+//! This module contains the storable models for the canister.
 
 mod account;
 pub use account::*;
@@ -62,8 +62,8 @@ pub use proposal::*;
 mod proposal_vote;
 pub use proposal_vote::*;
 
-mod wallet_asset;
-pub use wallet_asset::*;
+mod asset;
+pub use asset::*;
 
 pub mod system;
 

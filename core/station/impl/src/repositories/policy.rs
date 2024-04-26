@@ -7,10 +7,10 @@ use crate::{
         ProposalPolicy,
     },
 };
-use ic_canister_core::repository::{IndexRepository, RefreshIndexMode, Repository};
-use ic_canister_core::types::UUID;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
+use orbit_essentials::repository::{IndexRepository, RefreshIndexMode, Repository};
+use orbit_essentials::types::UUID;
 use std::{cell::RefCell, sync::Arc};
 
 use super::indexes::policy_resource_index::PolicyResourceIndexRepository;

@@ -62,7 +62,7 @@
                   v-if="hasDeletePrivilege(userGroup.id)"
                   v-model="userGroup.id"
                   :icon="mdiTrashCanOutline"
-                  :submit="id => wallet.service.removeUserGroup({ user_group_id: id })"
+                  :submit="id => station.service.removeUserGroup({ user_group_id: id })"
                   @failed="useOnFailedOperation"
                   @submitted="useOnSuccessfulOperation"
                 />
@@ -112,16 +112,16 @@ import {
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
 import { UUID, UserGroup, UserGroupCallerPrivileges } from '~/generated/station/station.did';
-import { useWalletStore } from '~/stores/wallet.store';
+import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/wallet.types';
+import { ProposalDomains } from '~/types/station.types';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.user_groups.title'));
-const wallet = useWalletStore();
+const station = useStationStore();
 const userGroups = ref<UserGroup[]>([]);
 const privileges = ref<UserGroupCallerPrivileges[]>([]);
 const forceReload = ref(false);
@@ -144,7 +144,7 @@ let useVerifiedCall = false;
 
 const fetchList = useFetchList(
   (offset, limit) => {
-    const results = wallet.service.listUserGroups(
+    const results = station.service.listUserGroups(
       {
         offset,
         limit,

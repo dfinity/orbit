@@ -3,10 +3,10 @@ use crate::{
     core::{metrics::USER_GROUP_METRICS, with_memory_manager, Memory, USER_GROUP_MEMORY_ID},
     models::{indexes::user_group_name_index::UserGroupNameIndexCriteria, UserGroup},
 };
-use ic_canister_core::repository::{IndexRepository, RefreshIndexMode};
-use ic_canister_core::{repository::Repository, types::UUID};
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
+use orbit_essentials::repository::{IndexRepository, RefreshIndexMode};
+use orbit_essentials::{repository::Repository, types::UUID};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {

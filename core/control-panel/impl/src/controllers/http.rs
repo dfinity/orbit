@@ -4,10 +4,10 @@ use crate::{
     core::ic_cdk::api::{canister_balance, time},
     SERVICE_NAME,
 };
-use ic_canister_core::api::{HeaderField, HttpRequest, HttpResponse};
-use ic_canister_core::metrics::with_metrics_registry;
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
+use orbit_essentials::api::{HeaderField, HttpRequest, HttpResponse};
+use orbit_essentials::metrics::with_metrics_registry;
 use std::sync::Arc;
 
 // Canister entrypoints for the controller.
@@ -47,7 +47,7 @@ impl HttpController {
         };
     }
 
-    /// Returns all deployed wallet hosts for Prometheus service discovery.
+    /// Returns all deployed station hosts for Prometheus service discovery.
     ///
     /// As defined by https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_sd_config
     async fn metrics_service_discovery(&self, request: HttpRequest) -> HttpResponse {
@@ -59,16 +59,16 @@ impl HttpController {
             };
         }
 
-        let wallet_hosts = self
+        let station_hosts = self
             .user_service
-            .get_all_deployed_wallets()
+            .get_all_deployed_stations()
             .iter()
-            .map(|wallet| format!("https://{}.raw.icp0.io", wallet.to_text()))
+            .map(|station| format!("https://{}.raw.icp0.io", station.to_text()))
             .collect::<Vec<String>>();
 
         let body = format!(
             r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}]"#,
-            wallet_hosts.join("\", \"")
+            station_hosts.join("\", \"")
         );
 
         HttpResponse {
@@ -114,13 +114,13 @@ mod tests {
     use super::*;
     use crate::{models::user_model_utils::mock_user, repositories::USER_REPOSITORY};
     use candid::Principal;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
 
     #[tokio::test]
     async fn test_service_discovery() {
         let mut user = mock_user();
-        user.deployed_wallets = vec![Principal::from_slice(&[0; 29])];
-        let wallet_host = format!("https://{}.raw.icp0.io", user.deployed_wallets[0].to_text());
+        user.deployed_stations = vec![Principal::from_slice(&[0; 29])];
+        let station_host = format!("https://{}.raw.icp0.io", user.deployed_stations[0].to_text());
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
@@ -147,7 +147,7 @@ mod tests {
             response.body,
             format!(
                 r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics"}}}}]"#,
-                wallet_host
+                station_host
             )
             .as_bytes()
             .to_owned()

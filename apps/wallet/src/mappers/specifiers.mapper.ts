@@ -1,5 +1,5 @@
 import { ProposalSpecifier, UserSpecifier } from '~/generated/station/station.did';
-import { ProposalCriteriaUserSpecifierEnum, ProposalSpecifierEnum } from '~/types/wallet.types';
+import { ProposalCriteriaUserSpecifierEnum, ProposalSpecifierEnum } from '~/types/station.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapProposalSpecifierToEnum = (specifier: ProposalSpecifier): ProposalSpecifierEnum => {

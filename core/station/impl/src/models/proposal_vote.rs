@@ -1,10 +1,10 @@
 use super::{ProposalVoteStatus, UserId};
 use crate::errors::ProposalError;
-use ic_canister_core::{
+use orbit_essentials::storable;
+use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::Timestamp,
 };
-use ic_canister_macros::storable;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -78,7 +78,7 @@ mod tests {
 pub mod proposal_vote_test_utils {
     use super::ProposalVote;
     use crate::models::ProposalVoteStatus;
-    use ic_canister_core::types::UUID;
+    use orbit_essentials::types::UUID;
 
     pub fn mock_decision() -> ProposalVote {
         ProposalVote {

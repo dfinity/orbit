@@ -46,6 +46,8 @@ fi
 curl -sL "${URL}" -o ic-wasm || exit 1
 chmod +x ic-wasm
 
+PACKAGE=$(echo $PACKAGE | tr - _)
+
 # if candid file exists, generate metadata
 if [ -f "$candid_spec_file" ]; then
   echo Adding wasm metadata: \"candid:service\"

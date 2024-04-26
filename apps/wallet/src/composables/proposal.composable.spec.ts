@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { useRouter } from 'vue-router';
-import { useWalletStore } from '~/stores/wallet.store';
-import { ProposalDomains, ProposalStatusEnum } from '~/types/wallet.types';
+import { useStationStore } from '~/stores/station.store';
+import { ProposalDomains, ProposalStatusEnum } from '~/types/station.types';
 import { setupComponent } from '../test.utils';
 import {
   StorableFilters,
@@ -13,8 +13,8 @@ import {
 describe('Proposal Composables', () => {
   it('should not load domains the user is missing privileges', () => {
     const vm = setupComponent(() => {
-      const wallet = useWalletStore();
-      wallet.privileges = [];
+      const station = useStationStore();
+      station.privileges = [];
 
       return { availableDomains: useAvailableDomains() };
     });
@@ -24,8 +24,8 @@ describe('Proposal Composables', () => {
 
   it('should load domains if the user has required privileges', () => {
     const vm = setupComponent(() => {
-      const wallet = useWalletStore();
-      wallet.privileges = [{ ListUsers: null }];
+      const station = useStationStore();
+      station.privileges = [{ ListUsers: null }];
 
       return { availableDomains: useAvailableDomains() };
     });

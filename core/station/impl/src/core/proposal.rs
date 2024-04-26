@@ -12,7 +12,7 @@ use crate::{
     repositories::{policy::PROPOSAL_POLICY_REPOSITORY, PROPOSAL_REPOSITORY, USER_REPOSITORY},
 };
 use anyhow::Context;
-use ic_canister_core::{repository::Repository, types::UUID};
+use orbit_essentials::{repository::Repository, types::UUID};
 use std::{collections::HashSet, sync::Arc};
 
 pub struct ProposalEvaluator {
@@ -444,7 +444,7 @@ mod tests {
         services::ProposalService,
     };
     use candid::Principal;
-    use ic_canister_core::repository::Repository;
+    use orbit_essentials::repository::Repository;
     use station_api::VoteOnProposalInput;
     use uuid::Uuid;
 

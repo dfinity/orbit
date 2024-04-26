@@ -6,14 +6,14 @@ import { ControlPanelService } from '~/services/control-panel.service';
 import { LocalesService } from '~/services/locales.service';
 import { SessionExpirationService } from '~/services/session-expiration.service';
 import { ThemeService } from '~/services/theme.service';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 
 export interface Services {
   locales: LocalesService;
   auth: AuthService;
   theme: ThemeService;
   controlPanel: ControlPanelService;
-  wallet: WalletService;
+  station: StationService;
   sessionExpiration: SessionExpirationService;
 }
 
@@ -24,7 +24,7 @@ const getDefauultServices = (): Services => ({
   controlPanel: new ControlPanelService(
     new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() }),
   ),
-  wallet: new WalletService(new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() })),
+  station: new StationService(new HttpAgent({ host: appInitConfig.apiGatewayUrl.toString() })),
   sessionExpiration: new SessionExpirationService(),
 });
 
@@ -33,7 +33,7 @@ class ServiceManager {
 
   withAgent(icAgent: HttpAgent): ServiceManager {
     this.services.controlPanel = new ControlPanelService(icAgent);
-    this.services.wallet = new WalletService(icAgent);
+    this.services.station = new StationService(icAgent);
 
     return this;
   }

@@ -1,4 +1,4 @@
-use ic_canister_core::api::DetailableError;
+use orbit_essentials::api::DetailableError;
 use thiserror::Error;
 
 /// Container for user errors.

@@ -1,5 +1,5 @@
-// The canister id of a wallet.
-type WalletID = principal;
+// The canister id of a station.
+type StationID = principal;
 // The principal that is associated with an user.
 type UserIdentityID = principal;
 // A UUID used to identify items.
@@ -23,10 +23,10 @@ type ApiError = record {
 type User = record {
   // The identity associated with the user.
   identity : principal;
-  // Main wallet used to show in the UI for this user.
-  main_wallet : opt WalletID;
-  // List of wallets associated with the user.
-  wallets : vec UserWallet;
+  // Main station used to show in the UI for this user.
+  main_station : opt StationID;
+  // List of stations associated with the user.
+  stations : vec UserStation;
   // The waiting list subscription status.
   subscription_status : UserSubscriptionStatus;
   // The last time the user was active in the system.
@@ -43,12 +43,12 @@ type SetUserActiveResult = variant {
 
 // The result of managing an user.
 type ManageUserInput = record {
-  // The main wallet to use for this user.
+  // The main station to use for this user.
   //
-  // If specified and the wallet is not already associated with the user it will be added.
-  main_wallet : opt WalletID;
-  // Manage the wallets associated with the user.
-  wallets : opt vec UserWallet;
+  // If specified and the station is not already associated with the user it will be added.
+  main_station : opt StationID;
+  // Manage the stations associated with the user.
+  stations : opt vec UserStation;
 };
 
 // The result of managing an user.
@@ -105,31 +105,31 @@ type UpdateWaitingListResult = variant {
   Err : ApiError;
 };
 
-// The wallet information.
-type UserWallet = record {
-  // The id associated with the wallet.
-  canister_id : WalletID;
-  // The name of the wallet.
+// The station information.
+type UserStation = record {
+  // The id associated with the station.
+  canister_id : StationID;
+  // The name of the station.
   name : opt text;
 };
 
-// The result of listing wallets.
-type ListWalletsResult = variant {
-  // The list of wallets.
+// The result of listing stations.
+type ListStationsResult = variant {
+  // The list of stations.
   Ok : record {
-    // The list of wallets.
-    wallets : vec UserWallet;
+    // The list of stations.
+    stations : vec UserStation;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
-// The result of getting the main wallet.
-type GetMainWalletResult = variant {
-  // The main wallet for the given user.
+// The result of getting the main station.
+type GetMainStationResult = variant {
+  // The main station for the given user.
   Ok : record {
-    // The main wallet for the given user.
-    wallet : opt UserWallet;
+    // The main station for the given user.
+    station : opt UserStation;
   };
   // The error that occurred during the operation.
   Err : ApiError;
@@ -148,8 +148,8 @@ type GetUserResult = variant {
 
 // The input for registering an user.
 type RegisterUserInput = record {
-  // A wallet canister to use for this user.
-  wallet_id : opt principal;
+  // A station canister to use for this user.
+  station_id : opt principal;
 };
 
 // The result of registering an user.
@@ -174,49 +174,49 @@ type RemoveUserResult = variant {
   Err : ApiError;
 };
 
-// The result of deploying a wallet canister for the caller.
-type DeployWalletResult = variant {
+// The result of deploying a station canister for the caller.
+type DeployStationResult = variant {
   // Successfull operation result.
   Ok : record {
-    // The wallet canister id.
-    canister_id : WalletID;
+    // The station canister id.
+    canister_id : StationID;
   };
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
-/// The successful result of checking if the caller can deploy a wallet canister.
-/// Returns the remaining number of wallet canisters the caller can still deploy
-/// or a reason why the caller cannot deploy a wallet canister
+/// The successful result of checking if the caller can deploy a station canister.
+/// Returns the remaining number of station canisters the caller can still deploy
+/// or a reason why the caller cannot deploy a station canister
 /// (bad subscription status or exceeded quota).
-type CanDeployWalletResponse = variant {
+type CanDeployStationResponse = variant {
   NotAllowed : UserSubscriptionStatus;
   Allowed : nat64;
   QuotaExceeded;
 };
 
-// The result of checking if the caller can deploy a wallet canister.
-type CanDeployWalletResult = variant {
+// The result of checking if the caller can deploy a station canister.
+type CanDeployStationResult = variant {
   // Successfull operation result.
-  Ok : CanDeployWalletResponse;
+  Ok : CanDeployStationResponse;
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
 // The init configuration for the control panel.
 type CanisterInit = record {
-  // The upgrader wasm module to use for the wallet canister.
+  // The upgrader wasm module to use for the station canister.
   upgrader_wasm_module : blob;
-  // The wallet wasm module to use.
-  wallet_wasm_module : blob;
+  // The station wasm module to use.
+  station_wasm_module : blob;
 };
 
 // The upgrade configuration for the control panel.
 type CanisterUpgrade = record {
-  // The updated wasm canister module to use for the wallet canister.
+  // The updated wasm canister module to use for the upgrader canister.
   upgrader_wasm_module : opt blob;
-  // The updated wasm canister module to use.
-  wallet_wasm_module : opt blob;
+  // The updated wasm canister module to use for the station canister.
+  station_wasm_module : opt blob;
 };
 
 // The install configuration for the control panel.
@@ -259,14 +259,14 @@ service : (opt CanisterInstall) -> {
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.
   delete_user : () -> (RemoveUserResult);
-  // List all the wallets associated with the caller.
-  list_wallets : () -> (ListWalletsResult) query;
-  // Get main wallet for the caller user.
-  get_main_wallet : () -> (GetMainWalletResult) query;
-  // Deploys a new wallet canister for the caller.
-  deploy_wallet : () -> (DeployWalletResult);
-  // Checks if the caller can deploy a new wallet canister.
-  can_deploy_wallet : () -> (CanDeployWalletResult) query;
+  // List all the stations associated with the caller.
+  list_stations : () -> (ListStationsResult) query;
+  // Get main station for the caller user.
+  get_main_station : () -> (GetMainStationResult) query;
+  // Deploys a new station canister for the caller.
+  deploy_station : () -> (DeployStationResult);
+  // Checks if the caller can deploy a new station canister.
+  can_deploy_station : () -> (CanDeployStationResult) query;
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
 };

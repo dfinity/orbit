@@ -1,12 +1,12 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { WalletService } from '~/services/wallet.service';
+import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
 import MembersOfGroupForm from './MembersOfGroupForm.vue';
 
-vi.mock('~/services/wallet.service', () => {
-  const mock: Partial<WalletService> = {
-    withWalletId: vi.fn().mockReturnThis(),
+vi.mock('~/services/station.service', () => {
+  const mock: Partial<StationService> = {
+    withStationId: vi.fn().mockReturnThis(),
     listUserGroups: vi.fn().mockImplementation(() =>
       Promise.resolve({
         user_groups: [],
@@ -18,7 +18,7 @@ vi.mock('~/services/wallet.service', () => {
   };
 
   return {
-    WalletService: vi.fn(() => mock),
+    StationService: vi.fn(() => mock),
   };
 });
 

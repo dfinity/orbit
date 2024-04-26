@@ -22,10 +22,10 @@ use crate::{
         ProposalPolicyService, PROPOSAL_POLICY_SERVICE,
     },
 };
-use ic_canister_core::{
+use lazy_static::lazy_static;
+use orbit_essentials::{
     api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
 };
-use lazy_static::lazy_static;
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
 use std::sync::Arc;
 use uuid::Uuid;
