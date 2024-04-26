@@ -3,13 +3,6 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export type AccessControlUserSpecifier = CommonSpecifier;
-export interface AccessPolicy { 'resource' : Resource, 'allow' : Allow }
-export interface AccessPolicyCallerPrivileges {
-  'resource' : Resource,
-  'can_edit' : boolean,
-}
-export type AccessPolicyResourceAction = { 'Read' : null } |
-  { 'Update' : null };
 export interface Account {
   'id' : UUID,
   'decimals' : number,
@@ -52,14 +45,14 @@ export interface AddAccountOperation {
   'input' : AddAccountOperationInput,
 }
 export interface AddAccountOperationInput {
-  'transfer_access_policy' : Allow,
+  'read_permission' : Allow,
   'update_approval_policy' : [] | [ProposalPolicyCriteria],
-  'read_access_policy' : Allow,
   'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
-  'update_access_policy' : Allow,
+  'update_permission' : Allow,
   'blockchain' : string,
+  'transfer_permission' : Allow,
   'standard' : string,
 }
 export interface AddAddressBookEntryOperation {
@@ -186,24 +179,15 @@ export interface CriteriaResult {
   'evaluated_criteria' : EvaluatedCriteria,
 }
 export interface DisplayUser { 'id' : UUID, 'name' : [] | [string] }
-export interface EditAccessPolicyOperation {
-  'input' : EditAccessPolicyOperationInput,
-}
-export interface EditAccessPolicyOperationInput {
-  'resource' : Resource,
-  'user_groups' : [] | [Array<UUID>],
-  'auth_scope' : [] | [AuthScope],
-  'users' : [] | [Array<UUID>],
-}
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
   'account_id' : UUID,
-  'transfer_access_policy' : [] | [Allow],
+  'read_permission' : [] | [Allow],
   'update_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
-  'read_access_policy' : [] | [Allow],
   'transfer_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
   'name' : [] | [string],
-  'update_access_policy' : [] | [Allow],
+  'update_permission' : [] | [Allow],
+  'transfer_permission' : [] | [Allow],
 }
 export interface EditAddressBookEntryOperation {
   'input' : EditAddressBookEntryOperationInput,
@@ -212,6 +196,15 @@ export interface EditAddressBookEntryOperationInput {
   'change_metadata' : [] | [ChangeAddressBookMetadata],
   'address_book_entry_id' : UUID,
   'address_owner' : [] | [string],
+}
+export interface EditPermissionOperation {
+  'input' : EditPermissionOperationInput,
+}
+export interface EditPermissionOperationInput {
+  'resource' : Resource,
+  'user_groups' : [] | [Array<UUID>],
+  'auth_scope' : [] | [AuthScope],
+  'users' : [] | [Array<UUID>],
 }
 export interface EditProposalPolicyOperation {
   'input' : EditProposalPolicyOperationInput,
@@ -269,14 +262,6 @@ export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
   } |
   { 'Err' : Error };
-export interface GetAccessPolicyInput { 'resource' : Resource }
-export type GetAccessPolicyResult = {
-    'Ok' : {
-      'privileges' : AccessPolicyCallerPrivileges,
-      'policy' : AccessPolicy,
-    }
-  } |
-  { 'Err' : Error };
 export interface GetAccountInput { 'account_id' : UUID }
 export type GetAccountResult = {
     'Ok' : { 'privileges' : AccountCallerPrivileges, 'account' : Account }
@@ -296,6 +281,14 @@ export interface GetNextVotableProposalInput {
 }
 export type GetNextVotableProposalResponse = {
     'Ok' : [] | [GetProposalResultData]
+  } |
+  { 'Err' : Error };
+export interface GetPermissionInput { 'resource' : Resource }
+export type GetPermissionResult = {
+    'Ok' : {
+      'permission' : Permission,
+      'privileges' : PermissionCallerPrivileges,
+    }
   } |
   { 'Err' : Error };
 export interface GetProposalInput { 'proposal_id' : UUID }
@@ -344,21 +337,6 @@ export interface HttpResponse {
   'headers' : Array<HeaderField>,
   'status_code' : number,
 }
-export interface ListAccessPoliciesInput {
-  'resources' : [] | [Array<Resource>],
-  'paginate' : [] | [PaginationInput],
-}
-export type ListAccessPoliciesResult = {
-    'Ok' : {
-      'total' : bigint,
-      'privileges' : Array<AccessPolicyCallerPrivileges>,
-      'user_groups' : Array<UserGroup>,
-      'users' : Array<BasicUser>,
-      'next_offset' : [] | [bigint],
-      'policies' : Array<AccessPolicy>,
-    }
-  } |
-  { 'Err' : Error };
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
   'status' : [] | [TransferStatusType],
@@ -407,6 +385,21 @@ export type ListNotificationsResult = {
     'Ok' : { 'notifications' : Array<Notification> }
   } |
   { 'Err' : Error };
+export interface ListPermissionsInput {
+  'resources' : [] | [Array<Resource>],
+  'paginate' : [] | [PaginationInput],
+}
+export type ListPermissionsResult = {
+    'Ok' : {
+      'permissions' : Array<Permission>,
+      'total' : bigint,
+      'privileges' : Array<PermissionCallerPrivileges>,
+      'user_groups' : Array<UserGroup>,
+      'users' : Array<BasicUser>,
+      'next_offset' : [] | [bigint],
+    }
+  } |
+  { 'Err' : Error };
 export type ListProposalPoliciesInput = PaginationInput;
 export type ListProposalPoliciesResult = {
     'Ok' : {
@@ -431,8 +424,8 @@ export interface ListProposalsInput {
   'operation_types' : [] | [Array<ListProposalsOperationType>],
   'created_from_dt' : [] | [TimestampRFC3339],
 }
-export type ListProposalsOperationType = { 'EditAccessPolicy' : null } |
-  { 'AddUserGroup' : null } |
+export type ListProposalsOperationType = { 'AddUserGroup' : null } |
+  { 'EditPermission' : null } |
   { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
@@ -526,6 +519,13 @@ export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
 }
+export interface Permission { 'resource' : Resource, 'allow' : Allow }
+export interface PermissionCallerPrivileges {
+  'resource' : Resource,
+  'can_edit' : boolean,
+}
+export type PermissionResourceAction = { 'Read' : null } |
+  { 'Update' : null };
 export interface Proposal {
   'id' : UUID,
   'status' : ProposalStatus,
@@ -552,10 +552,8 @@ export interface ProposalEvaluationResult {
 }
 export type ProposalExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
-export type ProposalOperation = {
-    'EditAccessPolicy' : EditAccessPolicyOperation
-  } |
-  { 'AddUserGroup' : AddUserGroupOperation } |
+export type ProposalOperation = { 'AddUserGroup' : AddUserGroupOperation } |
+  { 'EditPermission' : EditPermissionOperation } |
   { 'RemoveProposalPolicy' : RemoveProposalPolicyOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
@@ -571,9 +569,9 @@ export type ProposalOperation = {
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type ProposalOperationInput = {
-    'EditAccessPolicy' : EditAccessPolicyOperationInput
+    'AddUserGroup' : AddUserGroupOperationInput
   } |
-  { 'AddUserGroup' : AddUserGroupOperationInput } |
+  { 'EditPermission' : EditPermissionOperationInput } |
   { 'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
@@ -588,8 +586,8 @@ export type ProposalOperationInput = {
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
-export type ProposalOperationType = { 'EditAccessPolicy' : null } |
-  { 'AddUserGroup' : null } |
+export type ProposalOperationType = { 'AddUserGroup' : null } |
+  { 'EditPermission' : null } |
   { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
@@ -624,8 +622,8 @@ export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
   { 'AutoAdopted' : null };
 export type ProposalResourceAction = { 'List' : null } |
   { 'Read' : ResourceId };
-export type ProposalSpecifier = { 'EditAccessPolicy' : ResourceSpecifier } |
-  { 'AddUserGroup' : null } |
+export type ProposalSpecifier = { 'AddUserGroup' : null } |
+  { 'EditPermission' : ResourceSpecifier } |
   { 'RemoveProposalPolicy' : ResourceIds } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : ResourceIds } |
@@ -685,8 +683,8 @@ export type Resource = { 'System' : SystemResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'Proposal' : ProposalResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
-  { 'AccessPolicy' : AccessPolicyResourceAction } |
-  { 'UserGroup' : ResourceAction };
+  { 'UserGroup' : ResourceAction } |
+  { 'Permission' : PermissionResourceAction };
 export type ResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
   { 'Delete' : ResourceId } |
@@ -787,6 +785,7 @@ export interface UserGroupCallerPrivileges {
 }
 export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListProposals' : null } |
+  { 'ListPermissions' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
@@ -795,7 +794,6 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListProposalPolicies' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
-  { 'ListAccessPolicies' : null } |
   { 'ListAddressBookEntries' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null } |
@@ -831,10 +829,6 @@ export interface _SERVICE {
     [FetchAccountBalancesInput],
     FetchAccountBalancesResult
   >,
-  'get_access_policy' : ActorMethod<
-    [GetAccessPolicyInput],
-    GetAccessPolicyResult
-  >,
   'get_account' : ActorMethod<[GetAccountInput], GetAccountResult>,
   'get_address_book_entry' : ActorMethod<
     [GetAddressBookEntryInput],
@@ -844,6 +838,7 @@ export interface _SERVICE {
     [GetNextVotableProposalInput],
     GetNextVotableProposalResponse
   >,
+  'get_permission' : ActorMethod<[GetPermissionInput], GetPermissionResult>,
   'get_proposal' : ActorMethod<[GetProposalInput], GetProposalResult>,
   'get_proposal_policy' : ActorMethod<
     [GetProposalPolicyInput],
@@ -854,10 +849,6 @@ export interface _SERVICE {
   'get_user_group' : ActorMethod<[GetUserGroupInput], GetUserGroupResult>,
   'health_status' : ActorMethod<[], HealthStatus>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
-  'list_access_policies' : ActorMethod<
-    [ListAccessPoliciesInput],
-    ListAccessPoliciesResult
-  >,
   'list_account_transfers' : ActorMethod<
     [ListAccountTransfersInput],
     ListAccountTransfersResult
@@ -870,6 +861,10 @@ export interface _SERVICE {
   'list_notifications' : ActorMethod<
     [ListNotificationsInput],
     ListNotificationsResult
+  >,
+  'list_permissions' : ActorMethod<
+    [ListPermissionsInput],
+    ListPermissionsResult
   >,
   'list_proposal_policies' : ActorMethod<
     [ListProposalPoliciesInput],
