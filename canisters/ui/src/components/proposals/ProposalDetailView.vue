@@ -22,6 +22,34 @@
           </VTooltip>
         </span>
       </VToolbarTitle>
+
+      <VMenu :close-on-content-click="false">
+        <template #activator="{ props: menuProps }">
+          <VBtn :icon="mdiDotsVertical" v-bind="menuProps"></VBtn>
+        </template>
+
+        <VList>
+          <VListItem>
+            <template #prepend>
+              <VListItemAction>
+                <VSwitch
+                  v-model="showAcceptanceRules"
+                  data-test-id="load-next-proposal-switch"
+                  class="flex-0-1"
+                  :hide-details="true"
+                  density="compact"
+                  color="primary"
+                  :disabled="!canShowAcceptanceRules"
+                />
+              </VListItemAction>
+            </template>
+            <VListItemTitle>{{ $t('proposals.evaluation.show_acceptance_rules') }}</VListItemTitle>
+          </VListItem>
+
+          <slot name="top-menu"></slot>
+        </VList>
+      </VMenu>
+
       <slot name="top-actions"></slot>
     </VToolbar>
     <VCardText class="px-4 pt-2">
@@ -140,21 +168,6 @@
         :class="{ 'mt-8': props.details.can_vote }"
       />
       <div class="d-flex flex-column flex-md-row ga-1 justify-end flex-grow-1 w-100 w-md-auto">
-        <VBtn
-          v-if="canShowAcceptanceRules"
-          data-test-id="proposal-details-show-criteria-results"
-          variant="text"
-          class="ma-0"
-          :disabled="props.loading"
-          @click="showAcceptanceRules = !showAcceptanceRules"
-        >
-          <template v-if="!showAcceptanceRules">
-            {{ $t('proposals.evaluation.show_acceptance_rules') }}
-          </template>
-          <template v-else>
-            {{ $t('proposals.evaluation.hide_acceptance_rules') }}
-          </template>
-        </VBtn>
         <template v-if="props.details.can_vote">
           <VBtn
             data-test-id="proposal-details-reject"
@@ -188,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { mdiInformationOutline } from '@mdi/js';
+import { mdiInformationOutline, mdiDotsVertical } from '@mdi/js';
 import type { Component } from 'vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -199,7 +212,13 @@ import {
   VCol,
   VContainer,
   VDivider,
+  VList,
+  VListItem,
+  VListItemAction,
+  VListItemTitle,
+  VMenu,
   VRow,
+  VSwitch,
   VTextarea,
   VToolbar,
   VToolbarTitle,

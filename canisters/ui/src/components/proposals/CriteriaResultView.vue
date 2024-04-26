@@ -2,8 +2,8 @@
   <VTreeview
     class="text-caption"
     :items="[items]"
-    :openAll="true"
-    :itemProps="itemProps"
+    :open-all="true"
+    :item-props="itemProps"
     :density="'compact'"
   >
     <template #append="{ item }">
@@ -62,7 +62,7 @@ type TreeViewItem = {
   children?: TreeViewItem[];
 };
 
-function getVotingSummary(voterIds: String[], status: EvaluationStatus): string {
+function getVotingSummary(voterIds: string[], status: EvaluationStatus): string {
   const votes = voterIds.map(userId => props.proposalVotes.find(vote => vote.user_id === userId));
 
   const approvals = votes.filter(vote => vote && variantIs(vote.status, 'Accepted')).length;

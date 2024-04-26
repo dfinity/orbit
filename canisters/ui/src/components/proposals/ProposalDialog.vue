@@ -38,18 +38,25 @@
         @approve="reason => onVote(true, reason)"
         @reject="reason => onVote(false, reason)"
       >
+        <template #top-menu>
+          <VListItem v-if="data.privileges.can_vote">
+            <template #prepend>
+              <VListItemAction>
+                <VSwitch
+                  v-model="loadNext"
+                  data-test-id="load-next-proposal-switch"
+                  class="flex-0-1"
+                  :hide-details="true"
+                  color="primary"
+                  :disabled="voting"
+                  density="compact"
+                />
+              </VListItemAction>
+            </template>
+            <VListItemTitle>{{ $t('proposals.load_next') }}</VListItemTitle>
+          </VListItem>
+        </template>
         <template #top-actions>
-          <VSwitch
-            v-if="data.privileges.can_vote"
-            v-model="loadNext"
-            data-test-id="load-next-proposal-switch"
-            :label="$t('proposals.load_next')"
-            class="flex-0-1"
-            :hide-details="true"
-            color="primary"
-            :disabled="voting"
-          />
-
           <VBtn :disabled="voting" :icon="mdiClose" @click="openModel = false" />
         </template>
         <template v-if="loadNext" #bottom-actions>
@@ -78,7 +85,18 @@
 import { mdiCheckCircle, mdiClose } from '@mdi/js';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VBtn, VCard, VCardActions, VCardText, VDialog, VIcon, VSwitch } from 'vuetify/components';
+import {
+  VBtn,
+  VCard,
+  VCardActions,
+  VCardText,
+  VDialog,
+  VIcon,
+  VListItem,
+  VListItemAction,
+  VListItemTitle,
+  VSwitch,
+} from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import logger from '~/core/logger.core';
 import {
