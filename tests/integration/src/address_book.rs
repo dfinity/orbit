@@ -33,7 +33,7 @@ fn address_book_entry_lifecycle() {
     let add_address_book_entry_proposal = execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         add_address_book_entry,
     )
     .unwrap();
@@ -70,7 +70,7 @@ fn address_book_entry_lifecycle() {
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         add_address_book_entry,
     )
     .unwrap_err();
@@ -90,7 +90,7 @@ fn address_book_entry_lifecycle() {
     let add_address_book_entry_proposal = execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         add_address_book_entry,
     )
     .unwrap();
@@ -127,7 +127,7 @@ fn address_book_entry_lifecycle() {
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "list_address_book_entries",
         (list_address_book_entries_args,),
@@ -154,7 +154,7 @@ fn address_book_entry_lifecycle() {
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         edit_address_book_entry,
     )
     .unwrap();
@@ -165,7 +165,7 @@ fn address_book_entry_lifecycle() {
     };
     let res: (Result<GetAddressBookEntryResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "get_address_book_entry",
         (get_address_book_entry_args,),
@@ -184,7 +184,7 @@ fn address_book_entry_lifecycle() {
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         remove_address_book_entry,
     )
     .unwrap();
@@ -201,7 +201,7 @@ fn address_book_entry_lifecycle() {
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "list_address_book_entries",
         (list_address_book_entries_args,),
@@ -243,7 +243,7 @@ fn check_address_book_for_transfer() {
     let add_address_book_entry_proposal = execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         add_address_book_entry,
     )
     .unwrap();
@@ -255,7 +255,7 @@ fn check_address_book_for_transfer() {
     };
 
     // get admin user
-    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
 
     // create account for admin user
     let add_account = ProposalOperationInput::AddAccount(AddAccountOperationInput {
@@ -285,13 +285,13 @@ fn check_address_book_for_transfer() {
         metadata: vec![],
     });
     let add_account_proposal =
-        execute_proposal(&env, WALLET_ADMIN_USER, canister_ids.wallet, add_account).unwrap();
+        execute_proposal(&env, WALLET_ADMIN_USER, canister_ids.station, add_account).unwrap();
     let admin_account = match add_account_proposal.operation {
         ProposalOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
         _ => panic!("unexpected proposal operation"),
     };
 
-    // send ICP to admin user's wallet account
+    // send ICP to admin user's station account
     let admin_account_address = AccountIdentifier::from_hex(&admin_account.address).unwrap();
     send_icp_to_account(&env, controller, admin_account_address, ICP + ICP_FEE, 0).unwrap();
 
@@ -308,7 +308,7 @@ fn check_address_book_for_transfer() {
     let transfer_error = execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         transfer.clone(),
     )
     .unwrap_err();
@@ -334,14 +334,14 @@ fn check_address_book_for_transfer() {
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         edit_address_book_entry,
     )
     .unwrap();
 
     // try transfer from admin account to John Doe again
     // and check that transfer proposal succeeds
-    execute_proposal(&env, WALLET_ADMIN_USER, canister_ids.wallet, transfer).unwrap();
+    execute_proposal(&env, WALLET_ADMIN_USER, canister_ids.station, transfer).unwrap();
 
     // check John Doe's balance
     let new_balance = get_icp_balance(&env, john_doe_id);

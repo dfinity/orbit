@@ -41,7 +41,7 @@ pub fn user_test_id(n: u64) -> Principal {
 pub fn get_proposal(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal: ProposalDTO,
 ) -> ProposalDTO {
     let get_proposal_args = GetProposalInput {
@@ -49,7 +49,7 @@ pub fn get_proposal(
     };
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
         env,
-        wallet_canister_id,
+        station_canister_id,
         user_id,
         "get_proposal",
         (get_proposal_args,),
@@ -87,7 +87,7 @@ fn is_proposal_evaluated(proposal: ProposalDTO) -> bool {
 pub fn submit_proposal(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal_operation_input: ProposalOperationInput,
 ) -> ProposalDTO {
     let create_proposal_input = CreateProposalInput {
@@ -98,7 +98,7 @@ pub fn submit_proposal(
     };
     let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
         env,
-        wallet_canister_id,
+        station_canister_id,
         user_id,
         "create_proposal",
         (create_proposal_input,),
@@ -110,16 +110,16 @@ pub fn submit_proposal(
 pub fn wait_for_proposal(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal: ProposalDTO,
 ) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
-    wait_for_proposal_with_extra_ticks(env, user_id, wallet_canister_id, proposal, 0)
+    wait_for_proposal_with_extra_ticks(env, user_id, station_canister_id, proposal, 0)
 }
 
 pub fn wait_for_proposal_with_extra_ticks(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal: ProposalDTO,
     extra_ticks: u64,
 ) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
@@ -134,7 +134,7 @@ pub fn wait_for_proposal_with_extra_ticks(
     }
     // wait for the proposal to be completed
     for _ in 0..100 {
-        let new_proposal = get_proposal(env, user_id, wallet_canister_id, proposal.clone());
+        let new_proposal = get_proposal(env, user_id, station_canister_id, proposal.clone());
         if is_proposal_completed(new_proposal.clone()) {
             return Ok(new_proposal);
         }
@@ -148,13 +148,13 @@ pub fn wait_for_proposal_with_extra_ticks(
 pub fn execute_proposal(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal_operation_input: ProposalOperationInput,
 ) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
     execute_proposal_with_extra_ticks(
         env,
         user_id,
-        wallet_canister_id,
+        station_canister_id,
         proposal_operation_input,
         0,
     )
@@ -163,18 +163,18 @@ pub fn execute_proposal(
 pub fn execute_proposal_with_extra_ticks(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal_operation_input: ProposalOperationInput,
     extra_ticks: u64,
 ) -> Result<ProposalDTO, Option<ProposalStatusDTO>> {
-    let proposal = submit_proposal(env, user_id, wallet_canister_id, proposal_operation_input);
-    wait_for_proposal_with_extra_ticks(env, user_id, wallet_canister_id, proposal, extra_ticks)
+    let proposal = submit_proposal(env, user_id, station_canister_id, proposal_operation_input);
+    wait_for_proposal_with_extra_ticks(env, user_id, station_canister_id, proposal, extra_ticks)
 }
 
 pub fn vote_on_proposal(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
     proposal: ProposalDTO,
     approve: bool,
 ) {
@@ -185,7 +185,7 @@ pub fn vote_on_proposal(
     };
     let res: (Result<VoteOnProposalResponse, ApiErrorDTO>,) = update_candid_as(
         env,
-        wallet_canister_id,
+        station_canister_id,
         user_id,
         "vote_on_proposal",
         (vote_on_proposal_input,),
@@ -197,10 +197,10 @@ pub fn vote_on_proposal(
 pub fn get_system_info(
     env: &PocketIc,
     user_id: Principal,
-    wallet_canister_id: CanisterId,
+    station_canister_id: CanisterId,
 ) -> SystemInfoDTO {
     let res: (ApiResult<SystemInfoResponse>,) =
-        update_candid_as(env, wallet_canister_id, user_id, "system_info", ()).unwrap();
+        update_candid_as(env, station_canister_id, user_id, "system_info", ()).unwrap();
     res.0.unwrap().system
 }
 
@@ -208,7 +208,7 @@ pub fn add_user(
     env: &PocketIc,
     user_id: Principal,
     group_ids: Vec<String>,
-    wallet_canister_id: Principal,
+    station_canister_id: Principal,
 ) -> UserDTO {
     let add_user = ProposalOperationInput::AddUser(AddUserOperationInput {
         name: None,
@@ -216,11 +216,11 @@ pub fn add_user(
         groups: group_ids,
         status: UserStatusDTO::Active,
     });
-    let add_user_proposal = submit_proposal(env, WALLET_ADMIN_USER, wallet_canister_id, add_user);
+    let add_user_proposal = submit_proposal(env, WALLET_ADMIN_USER, station_canister_id, add_user);
     let new_proposal = wait_for_proposal(
         env,
         WALLET_ADMIN_USER,
-        wallet_canister_id,
+        station_canister_id,
         add_user_proposal,
     )
     .unwrap();
@@ -230,9 +230,9 @@ pub fn add_user(
     }
 }
 
-pub fn get_user(env: &PocketIc, user_id: Principal, wallet_canister_id: Principal) -> UserDTO {
+pub fn get_user(env: &PocketIc, user_id: Principal, station_canister_id: Principal) -> UserDTO {
     let res: (ApiResult<MeResponse>,) =
-        update_candid_as(env, wallet_canister_id, user_id, "me", ()).unwrap();
+        update_candid_as(env, station_canister_id, user_id, "me", ()).unwrap();
     res.0.unwrap().me
 }
 

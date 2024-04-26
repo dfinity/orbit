@@ -29,7 +29,7 @@ fn make_transfer_successful() {
 
     // register user
     let res: (ApiResult<MeResponse>,) =
-        update_candid_as(&env, canister_ids.wallet, WALLET_ADMIN_USER, "me", ()).unwrap();
+        update_candid_as(&env, canister_ids.station, WALLET_ADMIN_USER, "me", ()).unwrap();
     let user_dto = res.0.unwrap().me;
 
     // create account
@@ -70,7 +70,7 @@ fn make_transfer_successful() {
     };
     let res: (ApiResult<CreateProposalResponse>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "create_proposal",
         (add_account_proposal,),
@@ -99,7 +99,7 @@ fn make_transfer_successful() {
     };
     let res: (ApiResult<CreateProposalResponse>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "get_proposal",
         (get_proposal_args,),
@@ -128,11 +128,11 @@ fn make_transfer_successful() {
     let user_balance = get_icp_balance(&env, WALLET_ADMIN_USER);
     assert_eq!(user_balance, ICP + 2 * ICP_FEE);
 
-    // send ICP to orbit wallet account
+    // send ICP to orbit station account
     let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
     send_icp_to_account(&env, WALLET_ADMIN_USER, account_address, ICP + ICP_FEE, 0).unwrap();
 
-    // check user balance after transfer to orbit wallet account
+    // check user balance after transfer to orbit station account
     let new_user_balance = get_icp_balance(&env, WALLET_ADMIN_USER);
     assert_eq!(new_user_balance, 0);
 
@@ -157,7 +157,7 @@ fn make_transfer_successful() {
     };
     let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "create_proposal",
         (transfer_proposal,),
@@ -180,7 +180,7 @@ fn make_transfer_successful() {
     };
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "get_proposal",
         (get_proposal_args,),
@@ -210,7 +210,7 @@ fn make_transfer_successful() {
     // fetch the transfer and check if its proposal id matches the proposal id that created it
     let res: (Result<GetTransfersResponse, ApiErrorDTO>,) = query_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "get_transfers",
         (GetTransfersInput {
@@ -237,7 +237,7 @@ fn make_transfer_successful() {
     // load account transfers
     let res: (Result<ListAccountTransfersResponse, ApiErrorDTO>,) = query_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "list_account_transfers",
         (ListAccountTransfersInput {

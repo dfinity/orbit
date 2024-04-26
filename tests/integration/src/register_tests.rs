@@ -33,7 +33,7 @@ fn register_user_successful() {
 
     let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "create_proposal",
         (add_user_proposal,),
@@ -54,7 +54,7 @@ fn register_user_successful() {
     };
     let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
-        canister_ids.wallet,
+        canister_ids.station,
         WALLET_ADMIN_USER,
         "get_proposal",
         (get_proposal_args,),

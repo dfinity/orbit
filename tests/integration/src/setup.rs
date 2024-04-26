@@ -116,24 +116,24 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     );
 
     let control_panel = create_canister(env, controller);
-    let wallet = create_canister(env, controller);
+    let station = create_canister(env, controller);
 
     update_canister_settings(
         env,
         Some(controller),
-        wallet,
+        station,
         CanisterSettings {
-            controllers: Some(vec![controller, wallet]),
+            controllers: Some(vec![controller, station]),
             ..Default::default()
         },
     );
 
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
-    let wallet_wasm = get_canister_wasm("wallet").to_vec();
+    let station_wasm = get_canister_wasm("station").to_vec();
 
     let control_panel_wasm = get_canister_wasm("control_panel").to_vec();
     let control_panel_init_args = ControlPanelInstallArg::Init(ControlPanelInitArg {
-        wallet_wasm_module: wallet_wasm.to_owned(),
+        station_wasm_module: station_wasm.to_owned(),
         upgrader_wasm_module: upgrader_wasm.to_owned(),
     });
     env.install_canister(
@@ -143,28 +143,28 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         Some(controller),
     );
 
-    let wallet_init_args = SystemInstallArg::Init(SystemInitArg {
+    let station_init_args = SystemInstallArg::Init(SystemInitArg {
         admins: Some(vec![WALLET_ADMIN_USER]),
         upgrader_wasm_module: upgrader_wasm,
     });
     env.install_canister(
-        wallet,
-        wallet_wasm,
-        Encode!(&wallet_init_args).unwrap(),
+        station,
+        station_wasm,
+        Encode!(&station_init_args).unwrap(),
         Some(controller),
     );
-    // required because the wallet canister performs post init tasks through a one off timer
+    // required because the station canister performs post init tasks through a one off timer
     env.tick();
     // required because it requires inter canister calls to initialize the UUIDs generator with a call
     // to `raw_rand` which is not allowed in init calls,
     env.tick();
     env.tick();
-    // required because the wallet canister creates the upgrader canister
+    // required because the station canister creates the upgrader canister
     env.tick();
-    // required because the wallet canister installs the upgrader canister
+    // required because the station canister installs the upgrader canister
     env.tick();
     env.tick();
-    // required because the wallet canister updates its own controllers
+    // required because the station canister updates its own controllers
     env.tick();
     env.tick();
 
@@ -172,7 +172,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         icp_ledger: nns_ledger_canister_id,
         icp_index: nns_index_canister_id,
         control_panel,
-        wallet,
+        station,
     }
 }
 

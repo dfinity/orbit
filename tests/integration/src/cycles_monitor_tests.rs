@@ -5,7 +5,7 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use control_panel_api::{
-    DeployWalletResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
+    DeployStationResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
     UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
@@ -20,17 +20,17 @@ fn successful_monitors_upgrader_and_tops_up() {
         env, canister_ids, ..
     } = setup_new_env();
 
-    // get wallet wasm
-    let wallet_wasm = get_canister_wasm("wallet").to_vec();
+    // get station wasm
+    let station_wasm = get_canister_wasm("station").to_vec();
     let mut hasher = Sha256::new();
-    hasher.update(&wallet_wasm);
+    hasher.update(&station_wasm);
 
     // check if canister is healthy
     let health_status =
-        get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.wallet);
+        get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.station);
     assert_eq!(health_status, HealthStatus::Healthy);
 
-    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.wallet).upgrader_id;
+    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).upgrader_id;
 
     let top_up_should_happen_when_cycles_below = 125_000_000_000;
     advance_time_to_burn_cycles(
@@ -66,7 +66,7 @@ fn successful_monitors_upgrader_and_tops_up() {
 }
 
 #[test]
-fn successful_monitors_wallets_and_tops_up() {
+fn successful_monitors_stations_and_tops_up() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -74,7 +74,7 @@ fn successful_monitors_wallets_and_tops_up() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput { wallet_id: None };
+    let register_args = RegisterUserInput { station_id: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -101,27 +101,27 @@ fn successful_monitors_wallets_and_tops_up() {
     .unwrap();
     res.0.unwrap();
 
-    // deploy user wallet
-    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+    // deploy user station
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "deploy_wallet",
+        "deploy_station",
         (),
     )
     .unwrap();
-    let newly_created_user_wallet = res.0.unwrap().canister_id;
+    let newly_created_user_station = res.0.unwrap().canister_id;
 
-    // rounds required for wallet initialization
-    let rounds_required_for_wallet_initialization = 7;
-    for _ in 0..rounds_required_for_wallet_initialization {
+    // rounds required for station initialization
+    let rounds_required_for_station_initialization = 7;
+    for _ in 0..rounds_required_for_station_initialization {
         env.tick();
     }
 
-    // the newly created wallet should be healthy at this point
+    // the newly created station should be healthy at this point
     let res: (HealthStatus,) = update_candid_as(
         &env,
-        newly_created_user_wallet,
+        newly_created_user_station,
         user_id,
         "health_status",
         (),
@@ -133,11 +133,11 @@ fn successful_monitors_wallets_and_tops_up() {
     advance_time_to_burn_cycles(
         &env,
         NNS_ROOT_CANISTER_ID,
-        newly_created_user_wallet,
+        newly_created_user_station,
         130_000_000_000,
     );
 
-    let cycles_balance = env.cycle_balance(newly_created_user_wallet);
+    let cycles_balance = env.cycle_balance(newly_created_user_station);
     if cycles_balance <= 125_000_000_000 {
         panic!(
             "Cycles balance is too low to run the test, cycles_balance: {}",
@@ -148,7 +148,7 @@ fn successful_monitors_wallets_and_tops_up() {
     advance_time_to_burn_cycles(
         &env,
         NNS_ROOT_CANISTER_ID,
-        newly_created_user_wallet,
+        newly_created_user_station,
         120_000_000_000,
     );
 
@@ -158,5 +158,5 @@ fn successful_monitors_wallets_and_tops_up() {
         env.tick();
     }
 
-    assert!(env.cycle_balance(newly_created_user_wallet) > 350_000_000_000)
+    assert!(env.cycle_balance(newly_created_user_station) > 350_000_000_000)
 }

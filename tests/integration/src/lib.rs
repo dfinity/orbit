@@ -11,7 +11,7 @@ mod interfaces;
 mod register_tests;
 mod setup;
 mod transfer_tests;
-mod upgrade_wallet_tests;
+mod upgrade_station_tests;
 mod utils;
 
 pub struct TestEnv {
@@ -26,5 +26,5 @@ pub struct CanisterIds {
     pub icp_ledger: Principal,
     pub icp_index: Principal,
     pub control_panel: Principal,
-    pub wallet: Principal,
+    pub station: Principal,
 }

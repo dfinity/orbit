@@ -30,7 +30,7 @@ fn successful_four_eyes_upgrade() {
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         add_proposal_policy,
     )
     .unwrap();
@@ -48,19 +48,19 @@ fn successful_four_eyes_upgrade() {
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
-        canister_ids.wallet,
+        canister_ids.station,
         add_access_policy,
     )
     .unwrap();
 
-    // create new user identities and add them to the wallet
+    // create new user identities and add them to the station
     let user_a = user_test_id(0);
-    add_user(&env, user_a, vec![], canister_ids.wallet);
+    add_user(&env, user_a, vec![], canister_ids.station);
     let user_b = user_test_id(1);
-    add_user(&env, user_b, vec![], canister_ids.wallet);
+    add_user(&env, user_b, vec![], canister_ids.station);
 
     // create and install the canister to be upgraded by a proposal
-    let canister_id = create_canister(&mut env, canister_ids.wallet);
+    let canister_id = create_canister(&mut env, canister_ids.station);
     let module_bytes = vec![0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
     let module_hash =
         hex::decode("93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476").unwrap();
@@ -68,11 +68,11 @@ fn successful_four_eyes_upgrade() {
         canister_id,
         module_bytes.clone(),
         vec![],
-        Some(canister_ids.wallet),
+        Some(canister_ids.station),
     );
 
     // check canister status and ensure that the WASM matches the old canister module
-    let status = canister_status(&env, Some(canister_ids.wallet), canister_id);
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(module_hash.clone()));
 
     // new canister WASM
@@ -87,14 +87,18 @@ fn successful_four_eyes_upgrade() {
             module: new_module_bytes,
             arg: None,
         });
-    let change_canister_operation_proposal =
-        submit_proposal(&env, user_a, canister_ids.wallet, change_canister_operation);
+    let change_canister_operation_proposal = submit_proposal(
+        &env,
+        user_a,
+        canister_ids.station,
+        change_canister_operation,
+    );
 
     // the proposal should not be completed before the second user votes on it
     assert!(wait_for_proposal(
         &env,
         user_a,
-        canister_ids.wallet,
+        canister_ids.station,
         change_canister_operation_proposal.clone(),
     )
     .is_err());
@@ -103,19 +107,19 @@ fn successful_four_eyes_upgrade() {
     vote_on_proposal(
         &env,
         user_b,
-        canister_ids.wallet,
+        canister_ids.station,
         change_canister_operation_proposal.clone(),
         true,
     );
     wait_for_proposal(
         &env,
         user_a,
-        canister_ids.wallet,
+        canister_ids.station,
         change_canister_operation_proposal.clone(),
     )
     .unwrap();
 
     // check canister status and ensure that the WASM matches the new canister module
-    let status = canister_status(&env, Some(canister_ids.wallet), canister_id);
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(new_module_hash));
 }

@@ -2,9 +2,9 @@ use crate::setup::setup_new_env;
 use crate::utils::{controller_test_id, user_test_id};
 use crate::TestEnv;
 use control_panel_api::{
-    DeployWalletResponse, GetMainWalletResponse, ManageUserInput, ManageUserResponse,
-    RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserSubscriptionStatusDTO,
-    UserWalletDTO,
+    DeployStationResponse, GetMainStationResponse, ManageUserInput, ManageUserResponse,
+    RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserStationDTO,
+    UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
@@ -18,12 +18,12 @@ fn register_user_successful() {
 
     let user_id = user_test_id(0);
 
-    // user has no wallet so far
-    let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
+    // user has no station so far
+    let res: (ApiResult<GetMainStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "get_main_wallet",
+        "get_main_station",
         (),
     )
     .unwrap();
@@ -32,7 +32,7 @@ fn register_user_successful() {
 
     // register user
     let register_args = RegisterUserInput {
-        wallet_id: Some(canister_ids.wallet),
+        station_id: Some(canister_ids.station),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
@@ -45,21 +45,21 @@ fn register_user_successful() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
 
-    // get main wallet
-    let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
+    // get main station
+    let res: (ApiResult<GetMainStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "get_main_wallet",
+        "get_main_station",
         (),
     )
     .unwrap();
-    let main_wallet_dto = res.0.unwrap().wallet.unwrap();
-    assert_eq!(main_wallet_dto.canister_id, canister_ids.wallet);
+    let main_station_dto = res.0.unwrap().station.unwrap();
+    assert_eq!(main_station_dto.canister_id, canister_ids.station);
 }
 
 #[test]
-fn deploy_user_wallet() {
+fn deploy_user_station() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -67,7 +67,7 @@ fn deploy_user_wallet() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput { wallet_id: None };
+    let register_args = RegisterUserInput { station_id: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -79,12 +79,12 @@ fn deploy_user_wallet() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
 
-    // user can't deploy wallet before being approved
-    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+    // user can't deploy station before being approved
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "deploy_wallet",
+        "deploy_station",
         (),
     )
     .unwrap();
@@ -101,12 +101,12 @@ fn deploy_user_wallet() {
     .unwrap();
     res.0.unwrap();
 
-    // user can't deploy wallet before being approved
-    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+    // user can't deploy station before being approved
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "deploy_wallet",
+        "deploy_station",
         (),
     )
     .unwrap();
@@ -138,33 +138,33 @@ fn deploy_user_wallet() {
     .unwrap();
     res.0.unwrap();
 
-    // deploy user wallet
-    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+    // deploy user station
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "deploy_wallet",
+        "deploy_station",
         (),
     )
     .unwrap();
-    let newly_created_user_wallet = res.0.unwrap().canister_id;
+    let newly_created_user_station = res.0.unwrap().canister_id;
 
-    // get main wallet
-    let res: (ApiResult<GetMainWalletResponse>,) = update_candid_as(
+    // get main station
+    let res: (ApiResult<GetMainStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "get_main_wallet",
+        "get_main_station",
         (),
     )
     .unwrap();
-    let main_wallet_dto = res.0.unwrap().wallet.unwrap();
-    assert_eq!(main_wallet_dto.canister_id, newly_created_user_wallet);
+    let main_station_dto = res.0.unwrap().station.unwrap();
+    assert_eq!(main_station_dto.canister_id, newly_created_user_station);
 
-    // the newly created wallet should be uninitialized at first
+    // the newly created station should be uninitialized at first
     let res: (HealthStatus,) = update_candid_as(
         &env,
-        newly_created_user_wallet,
+        newly_created_user_station,
         user_id,
         "health_status",
         (),
@@ -173,15 +173,15 @@ fn deploy_user_wallet() {
     let health_status = res.0;
     assert_eq!(health_status, HealthStatus::Uninitialized);
 
-    let rounds_required_for_wallet_initialization = 5;
-    for _ in 0..rounds_required_for_wallet_initialization {
+    let rounds_required_for_station_initialization = 5;
+    for _ in 0..rounds_required_for_station_initialization {
         env.tick();
     }
 
-    // the newly created wallet should be healthy at this point
+    // the newly created station should be healthy at this point
     let res: (HealthStatus,) = update_candid_as(
         &env,
-        newly_created_user_wallet,
+        newly_created_user_station,
         user_id,
         "health_status",
         (),
@@ -192,7 +192,7 @@ fn deploy_user_wallet() {
 }
 
 #[test]
-fn deploy_too_many_wallets() {
+fn deploy_too_many_stations() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -200,7 +200,7 @@ fn deploy_too_many_wallets() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput { wallet_id: None };
+    let register_args = RegisterUserInput { station_id: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -227,32 +227,32 @@ fn deploy_too_many_wallets() {
     .unwrap();
     res.0.unwrap();
 
-    // deploy the maximum amount of user wallets
-    let mut wallets = vec![];
+    // deploy the maximum amount of user stations
+    let mut stations = vec![];
     for _ in 0..10 {
-        let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+        let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
             &env,
             canister_ids.control_panel,
             user_id,
-            "deploy_wallet",
+            "deploy_station",
             (),
         )
         .unwrap();
-        wallets.push(res.0.unwrap().canister_id);
+        stations.push(res.0.unwrap().canister_id);
     }
 
-    // check that the user has 10 wallets and the first deployed wallet is the main wallet
+    // check that the user has 10 stations and the first deployed station is the main station
     let res: (ApiResult<ManageUserResponse>,) =
         update_candid_as(&env, canister_ids.control_panel, user_id, "get_user", ()).unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.wallets.len(), 10);
-    assert_eq!(user_dto.main_wallet, Some(wallets[0]));
+    assert_eq!(user_dto.stations.len(), 10);
+    assert_eq!(user_dto.main_station, Some(stations[0]));
 
-    // reset all but one deployed wallet
+    // reset all but one deployed station
     let manage_user_args = ManageUserInput {
-        main_wallet: Some(wallets[0]),
-        wallets: Some(vec![UserWalletDTO {
-            canister_id: wallets[0],
+        main_station: Some(stations[0]),
+        stations: Some(vec![UserStationDTO {
+            canister_id: stations[0],
             name: None,
         }]),
     };
@@ -265,14 +265,14 @@ fn deploy_too_many_wallets() {
     )
     .unwrap();
     let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.wallets.len(), 1);
+    assert_eq!(user_dto.stations.len(), 1);
 
-    // deploying an additional wallet should fail nonetheless
-    let res: (ApiResult<DeployWalletResponse>,) = update_candid_as(
+    // deploying an additional station should fail nonetheless
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "deploy_wallet",
+        "deploy_station",
         (),
     )
     .unwrap();
