@@ -46,7 +46,7 @@ import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
 import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
-import EditAccessPolicyOperation from './operations/EditAccessPolicyOperation.vue';
+import EditPermissionOperation from './operations/EditPermissionOperation.vue';
 import EditAccountOperation from './operations/EditAccountOperation.vue';
 import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
 import EditProposalPolicyOperation from './operations/EditProposalPolicyOperation.vue';
@@ -89,7 +89,7 @@ const componentsMap: {
   EditProposalPolicy: EditProposalPolicyOperation,
   RemoveProposalPolicy: RemoveProposalPolicyOperation,
   ChangeCanister: ChangeCanisterOperation,
-  EditAccessPolicy: EditAccessPolicyOperation,
+  EditPermission: EditPermissionOperation,
 };
 
 defineEmits<{

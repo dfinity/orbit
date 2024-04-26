@@ -60,7 +60,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
   domains.push({
     id: ProposalDomains.System,
     types: [
-      { EditAccessPolicy: null },
+      { EditPermission: null },
       { AddProposalPolicy: null },
       { EditProposalPolicy: null },
       { RemoveProposalPolicy: null },

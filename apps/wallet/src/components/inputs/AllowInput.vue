@@ -4,19 +4,19 @@
       <VRadioGroup v-model="model.auth_scope" :inline="!app.isMobile" hide-details>
         <VRadio
           :disabled="isViewMode"
-          :label="$t('access_policies.allow.public')"
+          :label="$t('permissions.allow.public')"
           :value="{ Public: null }"
         />
         <VRadio
           :class="{ 'ml-2': !app.isMobile }"
           :disabled="isViewMode"
-          :label="$t('access_policies.allow.authenticated')"
+          :label="$t('permissions.allow.authenticated')"
           :value="{ Authenticated: null }"
         />
         <VRadio
           :class="{ 'ml-2': !app.isMobile }"
           :disabled="isViewMode"
-          :label="$t('access_policies.allow.restricted')"
+          :label="$t('permissions.allow.restricted')"
           :value="{ Restricted: null }"
         />
       </VRadioGroup>

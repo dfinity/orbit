@@ -14,23 +14,21 @@
                   name: Routes.Proposals,
                   query: { group_by: ProposalDomains.System },
                 }"
-                :types="[{ EditAccessPolicy: null }]"
+                :types="[{ EditPermission: null }]"
                 hide-not-found
               />
             </VCol>
             <VCol cols="12">
               <DataLoader
                 v-slot="{ data, loading }"
-                :load="
-                  () => fetchAccessPolicies(useResourcesFromAggregatedView(resourceAccessPolicies))
-                "
+                :load="() => fetchPermissions(useResourcesFromAggregatedView(resourcePermissions))"
                 :refresh-interval-ms="5000"
                 :disable-refresh="disableRefresh"
               >
-                <AccessPolicyList
+                <PermissionList
                   :loading="loading"
-                  :resources="resourceAccessPolicies"
-                  :access-policies="data ? data.policies : []"
+                  :resources="resourcePermissions"
+                  :permissions="data ? data.permissions : []"
                   :privileges="data ? data.privileges : []"
                   :preload-user-groups="data ? data.userGroups : []"
                   :preload-users="data ? data.users : []"
@@ -39,28 +37,28 @@
               </DataLoader>
             </VCol>
             <VCol cols="12">
-              <div class="text-h6 px-2">{{ $t('access_policies.individual_resources_title') }}</div>
+              <div class="text-h6 px-2">{{ $t('permissions.individual_resources_title') }}</div>
 
               <VAutocomplete
                 v-model="individualResourceSelected"
                 class="px-2 mt-2"
                 :items="individualResources"
                 density="comfortable"
-                :label="$t('access_policies.select_resource')"
+                :label="$t('permissions.select_resource')"
                 hide-details
               />
 
-              <IndividualAccountAccessPolicies
+              <IndividualAccountPermissions
                 v-if="individualResourceSelected === ResourceTypeEnum.Account"
-                :fetch-policies="fetchAccessPolicies"
+                :fetch-permissions="fetchPermissions"
               />
-              <IndividualUserAccessPolicies
+              <IndividualUserPermissions
                 v-else-if="individualResourceSelected === ResourceTypeEnum.User"
-                :fetch-policies="fetchAccessPolicies"
+                :fetch-permissions="fetchPermissions"
               />
-              <IndividualUserGroupAccessPolicies
+              <IndividualUserGroupPermissions
                 v-else-if="individualResourceSelected === ResourceTypeEnum.UserGroup"
-                :fetch-policies="fetchAccessPolicies"
+                :fetch-permissions="fetchPermissions"
               />
             </VCol>
           </VRow>
@@ -75,27 +73,27 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VAutocomplete, VCol, VContainer, VRow } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
-import PageLayout from '~/components/PageLayout.vue';
-import AccessPolicyList from '~/components/access-policies/AccessPolicyList.vue';
-import IndividualAccountAccessPolicies from '~/components/access-policies/IndividualAccountAccessPolicies.vue';
-import IndividualUserAccessPolicies from '~/components/access-policies/IndividualUserAccessPolicies.vue';
-import IndividualUserGroupAccessPolicies from '~/components/access-policies/IndividualUserGroupAccessPolicies.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
+import PageLayout from '~/components/PageLayout.vue';
+import IndividualAccountPermissions from '~/components/permissions/IndividualAccountPermissions.vue';
+import IndividualUserGroupPermissions from '~/components/permissions/IndividualUserGroupPermissions.vue';
+import IndividualUserPermissions from '~/components/permissions/IndividualUserPermissions.vue';
+import PermissionList from '~/components/permissions/PermissionList.vue';
 import RecentProposals from '~/components/proposals/RecentProposals.vue';
-import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
-import { globalAccessPolicies } from '~/configs/access-policies.config';
+import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
+import { globalPermissions } from '~/configs/permissions.config';
 import { Routes } from '~/configs/routes.config';
 import {
-  AccessPolicy,
-  AccessPolicyCallerPrivileges,
   BasicUser,
+  Permission,
+  PermissionCallerPrivileges,
   Resource,
   UserGroup,
 } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
-import { ResourceTypeEnum } from '~/types/access-policies.types';
 import type { PageProps } from '~/types/app.types';
+import { ResourceTypeEnum } from '~/types/permissions.types';
 import { ProposalDomains } from '~/types/station.types';
 
 const props = withDefaults(defineProps<PageProps>(), {
@@ -104,10 +102,10 @@ const props = withDefaults(defineProps<PageProps>(), {
 });
 
 const i18n = useI18n();
-const title = computed(() => props.title || i18n.t('pages.access_policies.title'));
+const title = computed(() => props.title || i18n.t('pages.permissions.title'));
 const station = useStationStore();
 const disableRefresh = ref(false);
-const resourceAccessPolicies = globalAccessPolicies();
+const resourcePermissions = globalPermissions();
 const individualResourceSelected = ref<ResourceTypeEnum | null>(null);
 const individualResourceKeys = ref<ResourceTypeEnum[]>([
   ResourceTypeEnum.Account,
@@ -118,22 +116,22 @@ const individualResourceKeys = ref<ResourceTypeEnum[]>([
 const individualResources = computed(() => {
   return individualResourceKeys.value.map(key => ({
     value: key,
-    title: i18n.t(`access_policies.resources.${key.toLowerCase()}`),
+    title: i18n.t(`permissions.resources.${key.toLowerCase()}`),
   }));
 });
 
-const fetchAccessPolicies = async (
+const fetchPermissions = async (
   resources: Resource[],
 ): Promise<{
-  policies: AccessPolicy[];
-  privileges: AccessPolicyCallerPrivileges[];
+  permissions: Permission[];
+  privileges: PermissionCallerPrivileges[];
   userGroups: UserGroup[];
   users: BasicUser[];
 }> => {
   const userGroups: UserGroup[] = [];
   const users: BasicUser[] = [];
-  let policies: AccessPolicy[] = [];
-  let privileges: AccessPolicyCallerPrivileges[] = [];
+  let permissions: Permission[] = [];
+  let privileges: PermissionCallerPrivileges[] = [];
   let limit = 250;
   let nextOffset = BigInt(0);
   let maxOffsetFound = nextOffset;
@@ -142,7 +140,7 @@ const fetchAccessPolicies = async (
     // This is to avoid infinite loops in case the offset is not updated properly
     maxOffsetFound = nextOffset;
 
-    const result = await station.service.listAccessPolicies({
+    const result = await station.service.listPermissions({
       resources: [resources],
       paginate: [
         {
@@ -156,13 +154,13 @@ const fetchAccessPolicies = async (
     users.push(...result.users);
     privileges.push(...result.privileges);
 
-    policies = policies.concat(result.policies);
+    permissions = permissions.concat(result.permissions);
     nextOffset =
       result.next_offset?.[0] !== undefined && result.next_offset[0] > 0
         ? result.next_offset[0]
         : BigInt(-1);
   } while (nextOffset > 0 && nextOffset > maxOffsetFound);
 
-  return { policies, userGroups, users, privileges };
+  return { permissions, userGroups, users, privileges };
 };
 </script>

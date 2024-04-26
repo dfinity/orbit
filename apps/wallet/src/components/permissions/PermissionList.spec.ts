@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
-import AccessPolicyList from './AccessPolicyList.vue';
+import PermissionList from './PermissionList.vue';
 
-describe('AccessPolicyList', () => {
+describe('PermissionList', () => {
   it('renders properly', () => {
-    const wrapper = mount(AccessPolicyList, {
+    const wrapper = mount(PermissionList, {
       props: {
-        accessPolicies: [],
+        permissions: [],
         privileges: [],
         resources: [],
       },
@@ -17,10 +17,10 @@ describe('AccessPolicyList', () => {
 
   it('hides extra headers when screen is set to mobile', () => {
     const wrapper = mount(
-      AccessPolicyList,
+      PermissionList,
       {
         props: {
-          accessPolicies: [],
+          permissions: [],
           privileges: [],
           resources: [],
         },
@@ -40,10 +40,10 @@ describe('AccessPolicyList', () => {
 
   it('shows extra headers when screen is not set to mobile', () => {
     const wrapper = mount(
-      AccessPolicyList,
+      PermissionList,
       {
         props: {
-          accessPolicies: [],
+          permissions: [],
           privileges: [],
           resources: [],
         },

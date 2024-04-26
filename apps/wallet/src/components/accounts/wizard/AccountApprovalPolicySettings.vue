@@ -55,7 +55,7 @@ export interface AccountApprovalPolicyModel {
 const props = withDefaults(
   defineProps<{
     modelValue: AccountApprovalPolicyModel;
-    mode: 'view' | 'edit';
+    mode?: 'view' | 'edit';
   }>(),
   {
     valid: true,

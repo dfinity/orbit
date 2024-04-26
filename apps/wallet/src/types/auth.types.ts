@@ -8,7 +8,7 @@ export enum Privilege {
   AddProposalPolicy = 'AddProposalPolicy',
   ListProposalPolicies = 'ListProposalPolicies',
   ListAccounts = 'ListAccounts',
-  ListAccessPolicies = 'ListAccessPolicies',
+  ListPermissions = 'ListPermissions',
   AddAccount = 'AddAccount',
   ListAddressBookEntries = 'ListAddressBookEntries',
   AddAddressBookEntry = 'AddAddressBookEntry',

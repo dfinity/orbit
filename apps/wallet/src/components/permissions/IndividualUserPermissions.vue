@@ -17,10 +17,10 @@
     :refresh-interval-ms="5000"
     :disable-refresh="disableRefresh"
   >
-    <AccessPolicyList
+    <PermissionList
       :loading="loading"
       :resources="resources"
-      :access-policies="data ? data.policies : []"
+      :permissions="data ? data.policies : []"
       :privileges="data ? data.privileges : []"
       :preload-user-groups="data ? data.userGroups : []"
       :preload-users="data ? data.users : []"
@@ -33,23 +33,23 @@
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
 import { useUsersAutocomplete } from '~/composables/autocomplete.composable';
-import { getUserAccessPolicies } from '~/configs/access-policies.config';
+import { getUserPermissions } from '~/configs/permissions.config';
 import {
-  AccessPolicy,
-  AccessPolicyCallerPrivileges,
+  Permission,
+  PermissionCallerPrivileges,
   BasicUser,
   Resource,
   UUID,
   UserGroup,
 } from '~/generated/station/station.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
-import AccessPolicyList from './AccessPolicyList.vue';
-import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
+import { AggregatedResoucePermissions } from '~/types/permissions.types';
+import PermissionList from './PermissionList.vue';
+import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
 import { VAutocomplete } from 'vuetify/components';
 
 const autocomplete = useUsersAutocomplete();
 const selectedUserId = ref<UUID | null>(null);
-const resources = ref<AggregatedResouceAccessPolicies[]>([]);
+const resources = ref<AggregatedResoucePermissions[]>([]);
 const disableRefresh = ref(false);
 
 onMounted(() => {
@@ -59,10 +59,10 @@ onMounted(() => {
 const props = withDefaults(
   defineProps<{
     fetchPolicies?: (resources: Resource[]) => Promise<{
-      policies: AccessPolicy[];
+      policies: Permission[];
       userGroups: UserGroup[];
       users: BasicUser[];
-      privileges: AccessPolicyCallerPrivileges[];
+      privileges: PermissionCallerPrivileges[];
     }>;
   }>(),
   {
@@ -86,7 +86,7 @@ watch(
   () => selectedUserId.value,
   () => {
     if (selectedUserId.value) {
-      resources.value = getUserAccessPolicies(selectedUserId.value);
+      resources.value = getUserPermissions(selectedUserId.value);
     } else {
       resources.value = [];
     }

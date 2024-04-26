@@ -18,7 +18,7 @@ export const proposalSpecifiersIncludedCriterias = (): Record<
     ProposalCriteriaEnum.HasAddressInAddressBook,
     ...defaultCriterias,
   ],
-  [ProposalSpecifierEnum.EditAccessPolicy]: [...defaultCriterias],
+  [ProposalSpecifierEnum.EditPermission]: [...defaultCriterias],
   [ProposalSpecifierEnum.AddProposalPolicy]: [...defaultCriterias],
   [ProposalSpecifierEnum.EditProposalPolicy]: [...defaultCriterias],
   [ProposalSpecifierEnum.RemoveProposalPolicy]: [...defaultCriterias],

@@ -1,5 +1,5 @@
 import {
-  AccessPolicyResourceAction,
+  PermissionResourceAction,
   AccountResourceAction,
   ChangeCanisterResourceAction,
   ProposalResourceAction,
@@ -144,9 +144,9 @@ export const isAccountResourceActionContained = (
   return false;
 };
 
-export const isAccessPolicyResourceActionContained = (
-  a: AccessPolicyResourceAction,
-  b: AccessPolicyResourceAction,
+export const isPermissionResourceActionContained = (
+  a: PermissionResourceAction,
+  b: PermissionResourceAction,
 ) => {
   if (variantIs(a, 'Read') && variantIs(b, 'Read')) {
     return true;

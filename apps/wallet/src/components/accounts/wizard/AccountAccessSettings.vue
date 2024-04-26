@@ -50,7 +50,7 @@ import TextLabel from '~/components/ui/TextLabel.vue';
 import AllowInput from '~/components/inputs/AllowInput.vue';
 import { Allow } from '~/generated/station/station.did';
 
-export interface AccountAccessPolicyModel {
+export interface AccountPermissionModel {
   read: Allow;
   transfer: Allow;
   configuration: Allow;
@@ -58,8 +58,8 @@ export interface AccountAccessPolicyModel {
 
 const props = withDefaults(
   defineProps<{
-    modelValue: AccountAccessPolicyModel;
-    mode: 'view' | 'edit';
+    modelValue: AccountPermissionModel;
+    mode?: 'view' | 'edit';
   }>(),
   {
     mode: 'edit',
@@ -67,7 +67,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: AccountAccessPolicyModel): void;
+  (event: 'update:modelValue', payload: AccountPermissionModel): void;
 }>();
 
 const model = computed({

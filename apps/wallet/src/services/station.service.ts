@@ -11,15 +11,15 @@ import {
   Capabilities,
   ChangeCanisterOperationInput,
   CreateProposalInput,
-  EditAccessPolicyOperationInput,
+  EditPermissionOperationInput,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
   EditProposalPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
-  GetAccessPolicyInput,
-  GetAccessPolicyResult,
+  GetPermissionInput,
+  GetPermissionResult,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
@@ -33,8 +33,8 @@ import {
   GetUserGroupResult,
   GetUserInput,
   GetUserResult,
-  ListAccessPoliciesInput,
-  ListAccessPoliciesResult,
+  ListPermissionsInput,
+  ListPermissionsResult,
   ListAccountTransfersInput,
   ListAccountsResult,
   ListAddressBookEntriesResult,
@@ -124,12 +124,12 @@ export class StationService {
     return result.Ok;
   }
 
-  async getAccessPolicy(
-    input: GetAccessPolicyInput,
+  async getPermission(
+    input: GetPermissionInput,
     verifiedCall = false,
-  ): Promise<ExtractOk<GetAccessPolicyResult>> {
+  ): Promise<ExtractOk<GetPermissionResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.get_access_policy(input);
+    const result = await actor.get_permission(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -138,13 +138,13 @@ export class StationService {
     return result.Ok;
   }
 
-  async getAccountAccessPolicies(
+  async getAccountPermissions(
     accountId: UUID,
     verifiedCall = false,
-  ): Promise<ExtractOk<ListAccessPoliciesResult>> {
+  ): Promise<ExtractOk<ListPermissionsResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
 
-    const result = await actor.list_access_policies({
+    const result = await actor.list_permissions({
       resources: [
         [
           { Account: { Read: { Id: accountId } } },
@@ -666,12 +666,12 @@ export class StationService {
     return result.Ok.proposal;
   }
 
-  async listAccessPolicies(
-    input: ListAccessPoliciesInput,
+  async listPermissions(
+    input: ListPermissionsInput,
     verifiedCall = false,
-  ): Promise<ExtractOk<ListAccessPoliciesResult>> {
+  ): Promise<ExtractOk<ListPermissionsResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.list_access_policies(input);
+    const result = await actor.list_permissions(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -680,12 +680,12 @@ export class StationService {
     return result.Ok;
   }
 
-  async editAccessPolicy(input: EditAccessPolicyOperationInput): Promise<Proposal> {
+  async editPermission(input: EditPermissionOperationInput): Promise<Proposal> {
     const result = await this.actor.create_proposal({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: { EditAccessPolicy: input },
+      operation: { EditPermission: input },
     });
 
     if (variantIs(result, 'Err')) {

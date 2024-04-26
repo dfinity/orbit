@@ -5,7 +5,7 @@ export enum ResourceTypeEnum {
   UserGroup = 'UserGroup',
   Account = 'Account',
   Transfer = 'Transfer',
-  AccessPolicy = 'AccessPolicy',
+  Permission = 'Permission',
   ProposalPolicy = 'ProposalPolicy',
   ChangeCanister = 'ChangeCanister',
   System = 'System',
@@ -36,15 +36,15 @@ export interface ResourceAccessAllowLevels {
   specificUsers: BasicUser[];
 }
 
-export interface ResourceAccessPolicySpecifier {
+export interface ResourcePermissionSpecifier {
   action: ResourceActionEnum;
   resource: Resource;
   allow: ResourceAccessAllowLevels;
   canEdit: boolean;
 }
 
-export interface AggregatedResouceAccessPolicies {
+export interface AggregatedResoucePermissions {
   resourceType: ResourceTypeEnum;
-  resources: ResourceAccessPolicySpecifier[];
+  resources: ResourcePermissionSpecifier[];
   match(a: Resource, b: Resource): boolean;
 }

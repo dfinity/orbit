@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultAllowLevels } from '~/configs/access-policies.config';
-import { AuthScopeEnum, ResourceActionEnum } from '~/types/access-policies.types';
+import { defaultAllowLevels } from '~/configs/permissions.config';
+import { AuthScopeEnum, ResourceActionEnum } from '~/types/permissions.types';
 import { mount } from '~/test.utils';
 import EveryoneAction from './EveryoneAction.vue';
 
@@ -11,7 +11,7 @@ describe('MembersOfGroupAction', () => {
         specifier: {
           action: ResourceActionEnum.Read,
           resource: {
-            AccessPolicy: { Update: null },
+            Permission: { Update: null },
           },
           allow: defaultAllowLevels(),
           canEdit: true,
@@ -22,7 +22,7 @@ describe('MembersOfGroupAction', () => {
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('shows the action btn if access policy is not read only', () => {
+  it('shows the action btn if permission is not read only', () => {
     const wrapper = mount(
       EveryoneAction,
       {
@@ -30,7 +30,7 @@ describe('MembersOfGroupAction', () => {
           specifier: {
             action: ResourceActionEnum.Create,
             resource: {
-              AccessPolicy: { Update: null },
+              Permission: { Update: null },
             },
             canEdit: true,
             allow: {
@@ -51,13 +51,13 @@ describe('MembersOfGroupAction', () => {
     expect(actionBtn.exists()).toBe(true);
   });
 
-  it('hides the action btn if access policy is read only', () => {
+  it('hides the action btn if permission is read only', () => {
     const wrapper = mount(EveryoneAction, {
       props: {
         specifier: {
           action: ResourceActionEnum.Read,
           resource: {
-            AccessPolicy: { Update: null },
+            Permission: { Update: null },
           },
           canEdit: false,
           allow: {

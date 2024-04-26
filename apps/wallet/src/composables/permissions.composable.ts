@@ -1,8 +1,8 @@
 import { Resource } from '~/generated/station/station.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
+import { AggregatedResoucePermissions } from '~/types/permissions.types';
 
 export const useResourcesFromAggregatedView = (
-  aggregatedView: AggregatedResouceAccessPolicies[],
+  aggregatedView: AggregatedResoucePermissions[],
 ): Resource[] => {
   const resources: Resource[] = [];
 

@@ -1,20 +1,20 @@
 import { Resource, UUID } from '~/generated/station/station.did';
 import {
-  AggregatedResouceAccessPolicies,
+  AggregatedResoucePermissions,
   AuthScopeEnum,
   ResourceAccessAllowLevels,
   ResourceActionEnum,
   ResourceTypeEnum,
-} from '~/types/access-policies.types';
+} from '~/types/permissions.types';
 import {
-  isAccessPolicyResourceActionContained,
+  isPermissionResourceActionContained,
   isAccountResourceActionContained,
   isChangeCanisterResourceActionContained,
   isProposalResourceActionContained,
   isResourceActionContained,
   isSystemResourceActionContained,
   isUserResourceActionContained,
-} from '~/utils/access-policies.utils';
+} from '~/utils/permissions.utils';
 import { variantIs } from '~/utils/helper.utils';
 
 export const defaultAllowLevels = (): ResourceAccessAllowLevels => ({
@@ -23,7 +23,7 @@ export const defaultAllowLevels = (): ResourceAccessAllowLevels => ({
   specificUsers: [],
 });
 
-export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
+export const globalPermissions = (): AggregatedResoucePermissions[] => [
   {
     resourceType: ResourceTypeEnum.User,
     resources: [
@@ -187,24 +187,24 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
     },
   },
   {
-    resourceType: ResourceTypeEnum.AccessPolicy,
+    resourceType: ResourceTypeEnum.Permission,
     resources: [
       {
         action: ResourceActionEnum.Read,
-        resource: { AccessPolicy: { Read: null } },
+        resource: { Permission: { Read: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        resource: { AccessPolicy: { Update: null } },
+        resource: { Permission: { Update: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
     ],
     match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'AccessPolicy') && variantIs(resource, 'AccessPolicy')) {
-        return isAccessPolicyResourceActionContained(specifier.AccessPolicy, resource.AccessPolicy);
+      if (variantIs(specifier, 'Permission') && variantIs(resource, 'Permission')) {
+        return isPermissionResourceActionContained(specifier.Permission, resource.Permission);
       }
 
       return false;
@@ -323,7 +323,7 @@ export const globalAccessPolicies = (): AggregatedResouceAccessPolicies[] => [
   },
 ];
 
-export const getAccountAccessPolicies = (accountId: UUID): AggregatedResouceAccessPolicies[] => {
+export const getAccountPermissions = (accountId: UUID): AggregatedResoucePermissions[] => {
   return [
     {
       resourceType: ResourceTypeEnum.Account,
@@ -358,7 +358,7 @@ export const getAccountAccessPolicies = (accountId: UUID): AggregatedResouceAcce
   ];
 };
 
-export const getUserAccessPolicies = (userId: UUID): AggregatedResouceAccessPolicies[] => {
+export const getUserPermissions = (userId: UUID): AggregatedResoucePermissions[] => {
   return [
     {
       resourceType: ResourceTypeEnum.User,
@@ -387,7 +387,7 @@ export const getUserAccessPolicies = (userId: UUID): AggregatedResouceAccessPoli
   ];
 };
 
-export const getUserGroupAccessPolicies = (groupId: UUID): AggregatedResouceAccessPolicies[] => {
+export const getUserGroupPermissions = (groupId: UUID): AggregatedResoucePermissions[] => {
   return [
     {
       resourceType: ResourceTypeEnum.UserGroup,

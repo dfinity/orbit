@@ -1,25 +1,21 @@
 <template>
-  <ShortValues
-    v-if="!canEdit"
-    :values="specifier.allow.membersOfGroup.map(g => g.name)"
-    empty="-"
-  />
+  <ShortValues v-if="!canEdit" :values="specifier.allow.specificUsers.map(u => u.name)" empty="-" />
   <template v-else>
     <ActionBtn
-      v-model="modelValue"
-      :title="$t('pages.access_policies.update_dialog_title')"
+      v-model="model"
+      :title="$t('pages.permissions.update_dialog_title')"
       size="small"
       density="comfortable"
       :icon="mdiPencil"
       :submit="submitCb"
-      data-test-id="members-of-group-action-btn"
+      data-test-id="specific-users-action-btn"
       @opened="emit('editing', true)"
       @closed="emit('editing', false)"
       @failed="useOnFailedOperation"
       @submitted="useOnSuccessfulOperation"
     >
       <template #default="{ model: elem, submit }">
-        <MembersOfGroupForm
+        <SpecificUsersForm
           v-model="elem.value.modelValue"
           @valid="isValid => (elem.value.valid = isValid)"
           @submit="submit"
@@ -32,7 +28,7 @@
         </VBtn>
       </template>
     </ActionBtn>
-    <ShortValues :values="specifier.allow.membersOfGroup.map(g => g.name)" />
+    <ShortValues :values="specifier.allow.specificUsers.map(u => u.name)" />
   </template>
 </template>
 
@@ -46,25 +42,25 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { Proposal } from '~/generated/station/station.did';
-import { ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
-import MembersOfGroupForm, { MembersOfGroupFormProps } from './MembersOfGroupForm.vue';
+import { ResourcePermissionSpecifier } from '~/types/permissions.types';
+import SpecificUsersForm, { SpecificUsersFormProps } from './SpecificUsersForm.vue';
 
 const props = defineProps<{
-  specifier: ResourceAccessPolicySpecifier;
-  modelValue: MembersOfGroupFormProps;
-  submitCb: (form: MembersOfGroupFormProps) => Promise<Proposal>;
+  specifier: ResourcePermissionSpecifier;
+  modelValue: SpecificUsersFormProps;
+  submitCb: (form: SpecificUsersFormProps) => Promise<Proposal>;
 }>();
 
-const { specifier, submitCb } = toRefs(props);
+const { specifier, submitCb, modelValue: reactivePropModel } = toRefs(props);
 
-const modelValue = computed<MembersOfGroupFormProps>({
-  get: () => props.modelValue,
+const model = computed<SpecificUsersFormProps>({
+  get: () => reactivePropModel.value,
   set: value => emit('update:modelValue', value),
 });
 
 const emit = defineEmits<{
   (event: 'editing', payload: boolean): void;
-  (event: 'update:modelValue', payload: MembersOfGroupFormProps): void;
+  (event: 'update:modelValue', payload: SpecificUsersFormProps): void;
 }>();
 
 const canEdit = computed(() => specifier.value.canEdit);

@@ -20,8 +20,8 @@
                 <template #icon>{{ AccountSetupStep.Configuration }}</template>
               </VStepperItem>
               <VDivider />
-              <VStepperItem :value="AccountSetupStep.AccessPolicy" :title="$t('terms.access')">
-                <template #icon>{{ AccountSetupStep.AccessPolicy }}</template>
+              <VStepperItem :value="AccountSetupStep.Permission" :title="$t('terms.access')">
+                <template #icon>{{ AccountSetupStep.Permission }}</template>
               </VStepperItem>
               <VDivider />
               <VStepperItem
@@ -35,8 +35,8 @@
               <VStepperWindowItem :value="AccountSetupStep.Configuration">
                 <AccountConfigurationSettings v-model="model.configuration" :mode="props.mode" />
               </VStepperWindowItem>
-              <VStepperWindowItem :value="AccountSetupStep.AccessPolicy">
-                <AccountAccessSettings v-model="model.access_policy" :mode="props.mode" />
+              <VStepperWindowItem :value="AccountSetupStep.Permission">
+                <AccountAccessSettings v-model="model.permission" :mode="props.mode" />
               </VStepperWindowItem>
               <VStepperWindowItem :value="AccountSetupStep.ApprovalPolicy">
                 <AccountApprovalPolicySettings v-model="model.approval_policy" :mode="props.mode" />
@@ -85,7 +85,7 @@ import {
   VStepperWindowItem,
 } from 'vuetify/components';
 import AccountAccessSettings, {
-  AccountAccessPolicyModel,
+  AccountPermissionModel,
 } from '~/components/accounts/wizard/AccountAccessSettings.vue';
 import AccountApprovalPolicySettings, {
   AccountApprovalPolicyModel,
@@ -98,7 +98,7 @@ import { VFormValidation } from '~/types/helper.types';
 
 export interface AccountSetupWizardModel {
   configuration: Partial<AccountConfigurationModel>;
-  access_policy: AccountAccessPolicyModel;
+  permission: AccountPermissionModel;
   approval_policy: AccountApprovalPolicyModel;
 }
 
@@ -124,7 +124,7 @@ const emit = defineEmits<{
 
 enum AccountSetupStep {
   Configuration = 1,
-  AccessPolicy = 2,
+  Permission = 2,
   ApprovalPolicy = 3,
 }
 

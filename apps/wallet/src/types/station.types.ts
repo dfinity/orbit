@@ -89,7 +89,7 @@ export enum ChangeCanisterTargetType {
 }
 
 export enum ProposalSpecifierEnum {
-  EditAccessPolicy = 'EditAccessPolicy',
+  EditPermission = 'EditPermission',
   AddUserGroup = 'AddUserGroup',
   RemoveProposalPolicy = 'RemoveProposalPolicy',
   AddUser = 'AddUser',
@@ -157,7 +157,7 @@ export enum ProposalOperationEnum {
   AddProposalPolicy = 'AddProposalPolicy',
   EditProposalPolicy = 'EditProposalPolicy',
   RemoveProposalPolicy = 'RemoveProposalPolicy',
-  EditAccessPolicy = 'EditAccessPolicy',
+  EditPermission = 'EditPermission',
   ChangeCanister = 'ChangeCanister',
   Transfer = 'Transfer',
 }

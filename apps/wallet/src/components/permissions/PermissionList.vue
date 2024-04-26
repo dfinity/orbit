@@ -5,13 +5,13 @@
         <VTable density="compact" hover class="elevation-2 rounded">
           <thead>
             <tr v-if="!app.isMobile">
-              <th class="w-50">{{ $t(`access_policies.resource_title`) }}</th>
-              <th>{{ $t(`access_policies.group_members_title`) }}</th>
-              <th>{{ $t(`access_policies.specific_users_title`) }}</th>
-              <th>{{ $t(`access_policies.everyone_title`) }}</th>
+              <th class="w-50">{{ $t(`permissions.resource_title`) }}</th>
+              <th>{{ $t(`permissions.group_members_title`) }}</th>
+              <th>{{ $t(`permissions.specific_users_title`) }}</th>
+              <th>{{ $t(`permissions.everyone_title`) }}</th>
             </tr>
             <tr v-else data-test-id="mobile-table-headers">
-              <th>{{ $t(`access_policies.resource_title`) }}</th>
+              <th>{{ $t(`permissions.resource_title`) }}</th>
             </tr>
           </thead>
           <tbody>
@@ -20,11 +20,11 @@
                 <VProgressCircular indeterminate color="primary" />
               </td>
             </tr>
-            <AccessPolicyListItem
-              v-for="(resourceAccessPolicy, idx) in aggregatedAccessPolicies"
+            <PermissionListItem
+              v-for="(resourcePermission, idx) in aggregatedPermissions"
               v-else
               :key="idx"
-              :resource="resourceAccessPolicy"
+              :resource="resourcePermission"
               @editing="emit('editing', $event)"
             />
           </tbody>
@@ -36,28 +36,28 @@
 
 <script lang="ts" setup>
 import { computed, toRefs } from 'vue';
-import { defaultAllowLevels } from '~/configs/access-policies.config';
+import { defaultAllowLevels } from '~/configs/permissions.config';
 import { logger } from '~/core/logger.core';
 import {
-  AccessPolicy,
-  AccessPolicyCallerPrivileges,
+  Permission,
+  PermissionCallerPrivileges,
   BasicUser,
   Resource,
   UUID,
   UserGroup,
 } from '~/generated/station/station.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
+import { AggregatedResoucePermissions } from '~/types/permissions.types';
 import { useAppStore } from '~/stores/app.store';
-import AccessPolicyListItem from './AccessPolicyListItem.vue';
-import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
+import PermissionListItem from './PermissionListItem.vue';
+import { toAuthScopeEnum } from '~/mappers/permissions.mapper';
 import { VCol, VContainer, VProgressCircular, VRow, VTable } from 'vuetify/components';
 
 const app = useAppStore();
 const props = withDefaults(
   defineProps<{
-    resources: AggregatedResouceAccessPolicies[];
-    accessPolicies: AccessPolicy[];
-    privileges: AccessPolicyCallerPrivileges[];
+    resources: AggregatedResoucePermissions[];
+    permissions: Permission[];
+    privileges: PermissionCallerPrivileges[];
     preloadUserGroups?: UserGroup[];
     preloadUsers?: BasicUser[];
     loading?: boolean;
@@ -69,7 +69,7 @@ const props = withDefaults(
   },
 );
 
-const { preloadUserGroups, preloadUsers, accessPolicies, resources, privileges, loading } =
+const { preloadUserGroups, preloadUsers, permissions, resources, privileges, loading } =
   toRefs(props);
 
 const userGroups = computed<Record<UUID, UserGroup>>(() => {
@@ -94,8 +94,8 @@ const hasEditPrivilege = (resource: Resource): boolean => {
   return privilege?.can_edit ?? false;
 };
 
-const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() => {
-  const resourceAccessPolicies = resources.value.map(resource => ({
+const aggregatedPermissions = computed<AggregatedResoucePermissions[]>(() => {
+  const resourcePermissions = resources.value.map(resource => ({
     match: resource.match,
     resourceType: resource.resourceType,
     resources: resource.resources.map(resource => ({
@@ -104,14 +104,14 @@ const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() 
     })),
   }));
 
-  const hasAccessPolicies = accessPolicies.value.length > 0;
-  if (!hasAccessPolicies) {
-    return resourceAccessPolicies;
+  const hasPermissions = permissions.value.length > 0;
+  if (!hasPermissions) {
+    return resourcePermissions;
   }
 
-  for (const aggregatedResource of resourceAccessPolicies) {
+  for (const aggregatedResource of resourcePermissions) {
     for (const resource of aggregatedResource.resources) {
-      let policy = accessPolicies.value.find(policy =>
+      let policy = permissions.value.find(policy =>
         aggregatedResource.match(resource.resource, policy.resource),
       );
       if (!policy) {
@@ -144,7 +144,7 @@ const aggregatedAccessPolicies = computed<AggregatedResouceAccessPolicies[]>(() 
     }
   }
 
-  return resourceAccessPolicies;
+  return resourcePermissions;
 });
 
 const emit = defineEmits<{

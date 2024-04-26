@@ -172,7 +172,7 @@ export default {
       user_group: 'User Groups',
       user: 'Users',
       account: 'Accounts',
-      access_policy: 'Access Policies',
+      permission: 'Access Policies',
       proposal_policy: 'Proposal Policies',
       address_book_entry: 'Address Book',
       change_canister: 'Upgrades',
@@ -215,9 +215,9 @@ export default {
         title: 'Change canister',
         request_title: 'Change canister request',
       },
-      editaccesspolicy: {
-        title: 'Edit access policy',
-        request_title: 'Edit access policy request',
+      editpermission: {
+        title: 'Edit permission',
+        request_title: 'Edit permission request',
       },
       editusergroup: {
         title: 'Edit user group',
@@ -491,7 +491,7 @@ export default {
     logout: 'Logout',
     proposals: 'Requests',
     transfer_proposals: 'Transfer Requests',
-    access_policies: 'Permissions',
+    permissions: 'Permissions',
     proposal_policies: 'Approval Policies',
   },
   pages: {
@@ -581,7 +581,7 @@ export default {
       title: 'Requests',
       transfer_title: 'Transfer Requests',
     },
-    access_policies: {
+    permissions: {
       title: 'Permissions',
       update_dialog_title: 'Update Permissions',
     },
@@ -620,7 +620,7 @@ export default {
     expired_dialog_content: 'You must reauthenticate to continue.',
     expired_dialog_btn: 'Reauthenticate',
   },
-  access_policies: {
+  permissions: {
     resource_title: 'Resource',
     group_members_title: 'Members of groups',
     specific_users_title: 'Specific users',
@@ -631,7 +631,7 @@ export default {
       account: 'Account',
       user: 'User',
       usergroup: 'User Group',
-      accesspolicy: 'Access Policy',
+      permission: 'Access Policy',
       proposalpolicy: 'Proposal Policy',
       system: 'System',
       changecanister: 'Change Canister',
@@ -679,7 +679,7 @@ export default {
       hasaddressinaddressbook: 'Has address in address book',
     },
     specifier: {
-      editaccesspolicy: 'Edit permission',
+      editpermission: 'Edit permission',
       addusergroup: 'Add user group',
       removeproposalpolicy: 'Remove request policy',
       adduser: 'Add user',

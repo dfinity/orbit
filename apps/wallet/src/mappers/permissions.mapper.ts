@@ -1,5 +1,5 @@
 import { AuthScope, Resource } from '~/generated/station/station.did';
-import { AuthScopeEnum, ResourceTypeEnum } from '~/types/access-policies.types';
+import { AuthScopeEnum, ResourceTypeEnum } from '~/types/permissions.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum => {
@@ -15,8 +15,8 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.Account;
   }
 
-  if (variantIs(resource, 'AccessPolicy')) {
-    return ResourceTypeEnum.AccessPolicy;
+  if (variantIs(resource, 'Permission')) {
+    return ResourceTypeEnum.Permission;
   }
 
   if (variantIs(resource, 'ProposalPolicy')) {

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Account } from '~/generated/station/station.did';
 import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
-import IndividualAccountAccessPolicies from './IndividualAccountAccessPolicies.vue';
+import IndividualAccountPermissions from './IndividualAccountPermissions.vue';
 
 vi.mock('~/services/station.service', () => {
   const mock: Partial<StationService> = {
@@ -27,15 +27,15 @@ vi.mock('~/services/station.service', () => {
   };
 });
 
-describe('IndividualAccountAccessPolicies', () => {
+describe('IndividualAccountPermissions', () => {
   it('renders properly', () => {
-    const wrapper = mount(IndividualAccountAccessPolicies);
+    const wrapper = mount(IndividualAccountPermissions);
 
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('shows access policy list when specific resource is selected', async () => {
-    const wrapper = mount(IndividualAccountAccessPolicies);
+  it('shows permission list when specific resource is selected', async () => {
+    const wrapper = mount(IndividualAccountPermissions);
 
     const selectInput = wrapper.find('[name="account_id"]');
     expect(selectInput.exists()).toBe(true);
@@ -48,8 +48,8 @@ describe('IndividualAccountAccessPolicies', () => {
     expect(wrapper.find('[data-test-id="access-policy-list"]').exists()).toBe(true);
   });
 
-  it('hides access policy list when specific resource is not selected', async () => {
-    const wrapper = mount(IndividualAccountAccessPolicies);
+  it('hides permission list when specific resource is not selected', async () => {
+    const wrapper = mount(IndividualAccountPermissions);
 
     const selectInput = wrapper.find('[name="account_id"]');
     expect(selectInput.exists()).toBe(true);

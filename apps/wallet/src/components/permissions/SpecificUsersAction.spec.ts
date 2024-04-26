@@ -1,27 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
-import { defaultAllowLevels } from '~/configs/access-policies.config';
-import { ResourceActionEnum } from '~/types/access-policies.types';
+import { defaultAllowLevels } from '~/configs/permissions.config';
 import { mount } from '~/test.utils';
-import MembersOfGroupAction from './MembersOfGroupAction.vue';
+import { ResourceActionEnum } from '~/types/permissions.types';
+import SpecificUsersAction from './SpecificUsersAction.vue';
 
-describe('MembersOfGroupAction', () => {
+describe('SpecificUsersAction', () => {
   it('renders properly', () => {
-    const wrapper = mount(MembersOfGroupAction, {
+    const wrapper = mount(SpecificUsersAction, {
       props: {
         modelValue: {
           modelValue: {
-            groupIds: [],
-            prefilledGroups: [],
+            userIds: [],
+            prefilledUsers: [],
           },
           valid: false,
         },
         specifier: {
           action: ResourceActionEnum.Read,
+          canEdit: true,
           resource: {
-            AccessPolicy: { Update: null },
+            Permission: { Update: null },
           },
           allow: defaultAllowLevels(),
-          canEdit: false,
         },
         submitCb: vi.fn(),
       },
@@ -30,61 +30,61 @@ describe('MembersOfGroupAction', () => {
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('shows the action btn if access policy is not read only', () => {
-    const wrapper = mount(MembersOfGroupAction, {
+  it('shows the action btn if permission is not read only', () => {
+    const wrapper = mount(SpecificUsersAction, {
       props: {
         modelValue: {
           modelValue: {
-            groupIds: [],
-            prefilledGroups: [],
+            userIds: [],
+            prefilledUsers: [],
           },
           valid: false,
         },
         specifier: {
           action: ResourceActionEnum.Create,
           resource: {
-            AccessPolicy: { Update: null },
+            Permission: { Update: null },
           },
           canEdit: true,
           allow: {
             ...defaultAllowLevels(),
-            membersOfGroup: [],
+            specificUsers: [],
           },
         },
         submitCb: vi.fn(),
       },
     });
 
-    const actionBtn = wrapper.find('[data-test-id="members-of-group-action-btn"]');
+    const actionBtn = wrapper.find('[data-test-id="specific-users-action-btn"]');
     expect(actionBtn.exists()).toBe(true);
   });
 
-  it('hides the action btn if access policy is read only', () => {
-    const wrapper = mount(MembersOfGroupAction, {
+  it('hides the action btn if permission is read only', () => {
+    const wrapper = mount(SpecificUsersAction, {
       props: {
         modelValue: {
           modelValue: {
-            groupIds: [],
-            prefilledGroups: [],
+            userIds: [],
+            prefilledUsers: [],
           },
           valid: false,
         },
         specifier: {
           action: ResourceActionEnum.Read,
           resource: {
-            AccessPolicy: { Update: null },
+            Permission: { Update: null },
           },
           canEdit: false,
           allow: {
             ...defaultAllowLevels(),
-            membersOfGroup: [],
+            specificUsers: [],
           },
         },
         submitCb: vi.fn(),
       },
     });
 
-    const actionBtn = wrapper.find('[data-test-id="members-of-group-action-btn"]');
+    const actionBtn = wrapper.find('[data-test-id="specific-users-action-btn"]');
     expect(actionBtn.exists()).toBe(false);
   });
 });

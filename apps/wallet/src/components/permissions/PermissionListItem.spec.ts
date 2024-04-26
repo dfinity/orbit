@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ResourceTypeEnum } from '~/types/access-policies.types';
+import { ResourceTypeEnum } from '~/types/permissions.types';
 import { mount } from '~/test.utils';
-import AccessPolicyListItem from './AccessPolicyListItem.vue';
+import PermissionListItem from './PermissionListItem.vue';
 
-describe('AccessPolicyListItem', () => {
+describe('PermissionListItem', () => {
   it('renders properly', () => {
-    const wrapper = mount(AccessPolicyListItem, {
+    const wrapper = mount(PermissionListItem, {
       props: {
         resource: {
           match: vi.fn().mockReturnValue(false),
           resources: [],
-          resourceType: ResourceTypeEnum.AccessPolicy,
+          resourceType: ResourceTypeEnum.Permission,
         },
       },
     });
@@ -20,13 +20,13 @@ describe('AccessPolicyListItem', () => {
 
   it('shows the mobile version if the screen is set to mobile', () => {
     const wrapper = mount(
-      AccessPolicyListItem,
+      PermissionListItem,
       {
         props: {
           resource: {
             match: vi.fn().mockReturnValue(false),
             resources: [],
-            resourceType: ResourceTypeEnum.AccessPolicy,
+            resourceType: ResourceTypeEnum.Permission,
           },
         },
       },
@@ -45,13 +45,13 @@ describe('AccessPolicyListItem', () => {
 
   it('shows the desktop version if the screen is not set to mobile', () => {
     const wrapper = mount(
-      AccessPolicyListItem,
+      PermissionListItem,
       {
         props: {
           resource: {
             match: vi.fn().mockReturnValue(false),
             resources: [],
-            resourceType: ResourceTypeEnum.AccessPolicy,
+            resourceType: ResourceTypeEnum.Permission,
           },
         },
       },

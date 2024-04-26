@@ -3,17 +3,17 @@
     <VRadioGroup v-model="model" class="everyone_radio_group">
       <VRadio
         :disabled="isViewMode"
-        :label="$t('access_policies.allow.restricted')"
+        :label="$t('permissions.allow.restricted')"
         :value="AuthScopeEnum.Restrictred"
       />
       <VRadio
         :disabled="isViewMode"
-        :label="$t('access_policies.allow.authenticated')"
+        :label="$t('permissions.allow.authenticated')"
         :value="AuthScopeEnum.Authenticated"
       />
       <VRadio
         :disabled="isViewMode"
-        :label="$t('access_policies.allow.public')"
+        :label="$t('permissions.allow.public')"
         :value="AuthScopeEnum.Public"
       />
     </VRadioGroup>
@@ -22,7 +22,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, toRefs, watch } from 'vue';
-import { AuthScopeEnum } from '~/types/access-policies.types';
+import { AuthScopeEnum } from '~/types/permissions.types';
 import { VFormValidation } from '~/types/helper.types';
 
 export type EveryoneFormProps = {

@@ -46,9 +46,9 @@ onBeforeMount(() => {
   model.configuration.standard = props.operation.input.standard;
   model.approval_policy.configurationCriteria = props.operation.input.update_approval_policy?.[0];
   model.approval_policy.transferCriteria = props.operation.input.transfer_approval_policy?.[0];
-  model.access_policy.configuration = props.operation.input.update_access_policy;
-  model.access_policy.transfer = props.operation.input.transfer_access_policy;
-  model.access_policy.read = props.operation.input.read_access_policy;
+  model.permission.configuration = props.operation.input.update_permission;
+  model.permission.transfer = props.operation.input.transfer_permission;
+  model.permission.read = props.operation.input.read_permission;
 
   accountSetup.value = model;
 });

@@ -182,7 +182,7 @@ export default {
       user_group: "Groupes d'Usagers",
       user: 'Usagers',
       account: 'Comptes',
-      access_policy: "Police d'Accès",
+      permission: "Police d'Accès",
       proposal_policy: 'Police de Propositions',
       address_book_entry: "Carnet d'Adresses",
       change_canister: 'Mise à Jour',
@@ -225,9 +225,9 @@ export default {
         title: 'Modifier un canister',
         request_title: 'Demande de modifier un canister',
       },
-      editaccesspolicy: {
-        title: "Modifier une police d'accès",
-        request_title: "Demande de modifier une police d'accès",
+      editpermission: {
+        title: "Modifier les permissions",
+        request_title: "Demande de modifier une permission",
       },
       editusergroup: {
         title: "Modifier un groupe d'usagers",
@@ -493,7 +493,7 @@ export default {
     logout: 'Deconnexion',
     proposals: 'Demandes',
     transfer_proposals: 'Demandes de Transfert',
-    access_policies: "Polices d'Accés",
+    permissions: "Polices d'Accés",
     proposal_policies: "Polices d'Aprobation",
   },
   pages: {
@@ -588,7 +588,7 @@ export default {
       title: 'Demandes',
       transfer_title: 'Demandes de Transfert',
     },
-    access_policies: {
+    permissions: {
       title: 'Permissions',
       update_dialog_title: 'Modifier les Permissions',
     },
@@ -627,7 +627,7 @@ export default {
     expired_dialog_content: 'Vous devez vous ré-authentifier pour continuer',
     expired_dialog_btn: 'Ré-authentifiez vous',
   },
-  access_policies: {
+  permissions: {
     resource_title: 'Resource',
     group_members_title: 'Membres de groupes',
     specific_users_title: 'Usagers specifiques',
@@ -638,7 +638,7 @@ export default {
       account: 'Compte',
       user: 'Usager',
       usergroup: "Groupe d'Usagers",
-      accesspolicy: "Police d'Accés",
+      permission: "Police d'Accés",
       proposalpolicy: 'Police de Demande',
       system: 'Système',
       changecanister: 'Modification de Canister',
@@ -686,7 +686,7 @@ export default {
       hasaddressinaddressbook: "Adresse dans le carnet d'adresses",
     },
     specifier: {
-      editaccesspolicy: 'Modifier les permissions',
+      editpermission: 'Modifier les permissions',
       addusergroup: "Ajouter un groupe d'usagers",
       removeproposalpolicy: 'Éffacer une police de demande',
       adduser: 'Ajouter un usager',

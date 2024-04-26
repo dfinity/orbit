@@ -1,7 +1,7 @@
 <template>
-  <template v-if="variantIs(model, 'AccessPolicy')">
+  <template v-if="variantIs(model, 'Permission')">
     <VTextField
-      :model-value="$t('access_policies.resources.accesspolicy')"
+      :model-value="$t('permissions.resources.permission')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -9,7 +9,7 @@
     />
 
     <VTextField
-      :model-value="toAccessPolicyResourceActionTest(model.AccessPolicy)"
+      :model-value="toPermissionResourceActionTest(model.Permission)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -18,7 +18,7 @@
   </template>
   <template v-else-if="variantIs(model, 'Account')">
     <VTextField
-      :model-value="$t('access_policies.resources.account')"
+      :model-value="$t('permissions.resources.account')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -35,7 +35,7 @@
   </template>
   <template v-else-if="variantIs(model, 'AddressBook')">
     <VTextField
-      :model-value="$t('access_policies.resources.addressbook')"
+      :model-value="$t('permissions.resources.addressbook')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -52,7 +52,7 @@
   </template>
   <template v-else-if="variantIs(model, 'ProposalPolicy')">
     <VTextField
-      :model-value="$t('access_policies.resources.proposalpolicy')"
+      :model-value="$t('permissions.resources.proposalpolicy')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -69,7 +69,7 @@
   </template>
   <template v-else-if="variantIs(model, 'User')">
     <VTextField
-      :model-value="$t('access_policies.resources.user')"
+      :model-value="$t('permissions.resources.user')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -86,7 +86,7 @@
   </template>
   <template v-else-if="variantIs(model, 'UserGroup')">
     <VTextField
-      :model-value="$t('access_policies.resources.usergroup')"
+      :model-value="$t('permissions.resources.usergroup')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -103,7 +103,7 @@
   </template>
   <template v-else-if="variantIs(model, 'Proposal')">
     <VTextField
-      :model-value="$t('access_policies.resources.proposal')"
+      :model-value="$t('permissions.resources.proposal')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -120,7 +120,7 @@
   </template>
   <template v-else-if="variantIs(model, 'System')">
     <VTextField
-      :model-value="$t('access_policies.resources.system')"
+      :model-value="$t('permissions.resources.system')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -137,7 +137,7 @@
   </template>
   <template v-else-if="variantIs(model, 'ChangeCanister')">
     <VTextField
-      :model-value="$t('access_policies.resources.changecanister')"
+      :model-value="$t('permissions.resources.changecanister')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -158,7 +158,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
-  AccessPolicyResourceAction,
+  PermissionResourceAction,
   AccountResourceAction,
   Resource,
   ResourceAction,
@@ -201,23 +201,23 @@ const toResourceIdText = (specifier: ResourceId): string => {
 
 const toResourceActionText = (action: ResourceAction): string => {
   if (variantIs(action, 'List')) {
-    return i18n.t('access_policies.actions.list');
+    return i18n.t('permissions.actions.list');
   }
 
   if (variantIs(action, 'Create')) {
-    return i18n.t('access_policies.actions.create');
+    return i18n.t('permissions.actions.create');
   }
 
   if (variantIs(action, 'Read')) {
-    return i18n.t('access_policies.actions.read') + ` (${toResourceIdText(action.Read)})`;
+    return i18n.t('permissions.actions.read') + ` (${toResourceIdText(action.Read)})`;
   }
 
   if (variantIs(action, 'Update')) {
-    return i18n.t('access_policies.actions.update') + ` (${toResourceIdText(action.Update)})`;
+    return i18n.t('permissions.actions.update') + ` (${toResourceIdText(action.Update)})`;
   }
 
   if (variantIs(action, 'Delete')) {
-    return i18n.t('access_policies.actions.delete') + ` (${toResourceIdText(action.Delete)})`;
+    return i18n.t('permissions.actions.delete') + ` (${toResourceIdText(action.Delete)})`;
   }
 
   return unreachable(action);
@@ -225,23 +225,23 @@ const toResourceActionText = (action: ResourceAction): string => {
 
 const toAccountResourceActionText = (action: AccountResourceAction): string => {
   if (variantIs(action, 'Create')) {
-    return i18n.t('access_policies.actions.create');
+    return i18n.t('permissions.actions.create');
   }
 
   if (variantIs(action, 'List')) {
-    return i18n.t('access_policies.actions.list');
+    return i18n.t('permissions.actions.list');
   }
 
   if (variantIs(action, 'Read')) {
-    return i18n.t('access_policies.actions.read') + ` (${toResourceIdText(action.Read)})`;
+    return i18n.t('permissions.actions.read') + ` (${toResourceIdText(action.Read)})`;
   }
 
   if (variantIs(action, 'Update')) {
-    return i18n.t('access_policies.actions.update') + ` (${toResourceIdText(action.Update)})`;
+    return i18n.t('permissions.actions.update') + ` (${toResourceIdText(action.Update)})`;
   }
 
   if (variantIs(action, 'Transfer')) {
-    return i18n.t('access_policies.actions.update') + ` (${toResourceIdText(action.Transfer)})`;
+    return i18n.t('permissions.actions.update') + ` (${toResourceIdText(action.Transfer)})`;
   }
 
   return unreachable(action);
@@ -249,23 +249,23 @@ const toAccountResourceActionText = (action: AccountResourceAction): string => {
 
 const toSystemResourceActionText = (specifier: SystemResourceAction): string => {
   if (variantIs(specifier, 'Capabilities')) {
-    return i18n.t('access_policies.actions.capabilities');
+    return i18n.t('permissions.actions.capabilities');
   }
 
   if (variantIs(specifier, 'SystemInfo')) {
-    return i18n.t('access_policies.actions.systeminfo');
+    return i18n.t('permissions.actions.systeminfo');
   }
 
   return unreachable(specifier);
 };
 
-const toAccessPolicyResourceActionTest = (specifier: AccessPolicyResourceAction): string => {
+const toPermissionResourceActionTest = (specifier: PermissionResourceAction): string => {
   if (variantIs(specifier, 'Update')) {
-    return i18n.t('access_policies.actions.update');
+    return i18n.t('permissions.actions.update');
   }
 
   if (variantIs(specifier, 'Read')) {
-    return i18n.t('access_policies.actions.read');
+    return i18n.t('permissions.actions.read');
   }
 
   return unreachable(specifier);

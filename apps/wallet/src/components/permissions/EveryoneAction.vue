@@ -13,7 +13,7 @@
     :icon="everyone.icon"
     :submit="
       ({ everyone: authScope }) => {
-        return station.service.editAccessPolicy({
+        return station.service.editPermission({
           auth_scope: [toAuthScope(authScope)],
           user_groups: [],
           users: [],
@@ -40,13 +40,13 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { useStationStore } from '~/stores/station.store';
-import { AuthScopeEnum, ResourceAccessPolicySpecifier } from '~/types/access-policies.types';
+import { AuthScopeEnum, ResourcePermissionSpecifier } from '~/types/permissions.types';
 import EveryoneForm from './EveryoneForm.vue';
-import { toAuthScope } from '~/mappers/access-policies.mapper';
+import { toAuthScope } from '~/mappers/permissions.mapper';
 
 const station = useStationStore();
 const props = defineProps<{
-  specifier: ResourceAccessPolicySpecifier;
+  specifier: ResourcePermissionSpecifier;
 }>();
 
 const { specifier } = toRefs(props);
@@ -54,11 +54,11 @@ const i18n = useI18n();
 
 const everyone = computed(() => {
   if (specifier.value.allow.authScope === AuthScopeEnum.Public) {
-    return { icon: mdiEarth, label: i18n.t('access_policies.allow.anyone') };
+    return { icon: mdiEarth, label: i18n.t('permissions.allow.anyone') };
   }
 
   if (specifier.value.allow.authScope === AuthScopeEnum.Authenticated) {
-    return { icon: mdiAccountKey, label: i18n.t('access_policies.allow.authenticated') };
+    return { icon: mdiAccountKey, label: i18n.t('permissions.allow.authenticated') };
   }
 
   return { icon: mdiPencil };

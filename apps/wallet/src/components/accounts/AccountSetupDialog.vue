@@ -147,12 +147,12 @@ const saveChangesToExistingAccount = async (accountId: UUID): Promise<Proposal> 
   changes.transfer_approval_policy = !wizard.value.approval_policy.transferCriteria
     ? [{ Remove: null }]
     : [{ Set: assertAndReturn(wizard.value.approval_policy.transferCriteria) }];
-  changes.read_access_policy = [assertAndReturn(wizard.value.access_policy.read, 'read_access')];
-  changes.transfer_access_policy = [
-    assertAndReturn(wizard.value.access_policy.transfer, 'transfer_access'),
+  changes.read_permission = [assertAndReturn(wizard.value.permission.read, 'read_access')];
+  changes.transfer_permission = [
+    assertAndReturn(wizard.value.permission.transfer, 'transfer_access'),
   ];
-  changes.update_access_policy = [
-    assertAndReturn(wizard.value.access_policy.configuration, 'update_access'),
+  changes.update_permission = [
+    assertAndReturn(wizard.value.permission.configuration, 'update_access'),
   ];
 
   return station.service.editAccount(changes as EditAccountOperationInput);
@@ -169,13 +169,13 @@ const createNewAccount = async (): Promise<Proposal> => {
   changes.transfer_approval_policy = wizard.value.approval_policy.transferCriteria
     ? [wizard.value.approval_policy.transferCriteria]
     : [];
-  changes.read_access_policy = assertAndReturn(wizard.value.access_policy.read, 'read_access');
-  changes.transfer_access_policy = assertAndReturn(
-    wizard.value.access_policy.transfer,
+  changes.read_permission = assertAndReturn(wizard.value.permission.read, 'read_access');
+  changes.transfer_permission = assertAndReturn(
+    wizard.value.permission.transfer,
     'transfer_access',
   );
-  changes.update_access_policy = assertAndReturn(
-    wizard.value.access_policy.configuration,
+  changes.update_permission = assertAndReturn(
+    wizard.value.permission.configuration,
     'update_access',
   );
   changes.metadata = [];

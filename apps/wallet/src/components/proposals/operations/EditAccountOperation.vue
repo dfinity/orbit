@@ -72,16 +72,16 @@ const fetchDetails = async () => {
         : props.operation.input.transfer_approval_policy[0].Set;
     }
 
-    if (props.operation.input.read_access_policy?.[0]) {
-      model.value.access_policy.read = props.operation.input.read_access_policy?.[0];
+    if (props.operation.input.read_permission?.[0]) {
+      model.value.permission.read = props.operation.input.read_permission?.[0];
     }
 
-    if (props.operation.input.transfer_access_policy?.[0]) {
-      model.value.access_policy.transfer = props.operation.input.transfer_access_policy?.[0];
+    if (props.operation.input.transfer_permission?.[0]) {
+      model.value.permission.transfer = props.operation.input.transfer_permission?.[0];
     }
 
-    if (props.operation.input.update_access_policy?.[0]) {
-      model.value.access_policy.configuration = props.operation.input.update_access_policy?.[0];
+    if (props.operation.input.update_permission?.[0]) {
+      model.value.permission.configuration = props.operation.input.update_permission?.[0];
     }
   } catch (e) {
     logger.error('Failed to fetch account details', e);

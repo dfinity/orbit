@@ -1,17 +1,17 @@
 <template>
   <tr v-if="app.isMobile" data-test-id="mobile-list-view">
     <div class="text-body-2 font-weight-bold pl-4 pt-2">
-      {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
+      {{ $t(`permissions.resources.${resource.resourceType.toLowerCase()}`) }}
     </div>
     <VCard v-for="(specifier, idx) in resource.resources" :key="idx" variant="text" class="mb-1">
       <VCardTitle class="text-body-1 py-0">
-        {{ $t(`access_policies.actions.${specifier.action.toLowerCase()}`) }}
+        {{ $t(`permissions.actions.${specifier.action.toLowerCase()}`) }}
       </VCardTitle>
       <VCardText>
         <VList>
           <VListItem class="px-0 pt-0">
             <VListItemTitle class="text-body-2">
-              {{ $t(`access_policies.group_members_title`) }}
+              {{ $t(`permissions.group_members_title`) }}
             </VListItemTitle>
             <VListItemSubtitle>
               <MembersOfGroupAction
@@ -25,7 +25,7 @@
           </VListItem>
           <VListItem class="px-0">
             <VListItemTitle class="text-body-2">
-              {{ $t(`access_policies.specific_users_title`) }}
+              {{ $t(`permissions.specific_users_title`) }}
             </VListItemTitle>
             <VListItemSubtitle>
               <SpecificUsersAction
@@ -39,7 +39,7 @@
           </VListItem>
           <VListItem class="px-0">
             <VListItemTitle class="text-body-2">
-              {{ $t(`access_policies.everyone_title`) }}
+              {{ $t(`permissions.everyone_title`) }}
             </VListItemTitle>
             <VListItemSubtitle>
               <EveryoneAction :specifier="specifier" @editing="emit('editing', $event)" />
@@ -53,12 +53,12 @@
   <template v-else>
     <tr v-bind="$attrs">
       <td colspan="4" class="bb-none font-weight-bold pt-4 pb-1">
-        {{ $t(`access_policies.resources.${resource.resourceType.toLowerCase()}`) }}
+        {{ $t(`permissions.resources.${resource.resourceType.toLowerCase()}`) }}
       </td>
     </tr>
     <tr v-for="(specifier, idx) in resource.resources" :key="idx">
       <td class="bb-none">
-        {{ $t(`access_policies.actions.${specifier.action.toLowerCase()}`) }}
+        {{ $t(`permissions.actions.${specifier.action.toLowerCase()}`) }}
       </td>
       <td class="bb-none cursor-pointer">
         <MembersOfGroupAction
@@ -89,9 +89,9 @@
 import { ref, toRefs, watch } from 'vue';
 import { Proposal, Resource } from '~/generated/station/station.did';
 import {
-  AggregatedResouceAccessPolicies,
-  ResourceAccessPolicySpecifier,
-} from '~/types/access-policies.types';
+  AggregatedResoucePermissions,
+  ResourcePermissionSpecifier,
+} from '~/types/permissions.types';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import EveryoneAction from './EveryoneAction.vue';
@@ -104,7 +104,7 @@ const station = useStationStore();
 const app = useAppStore();
 
 const props = defineProps<{
-  resource: AggregatedResouceAccessPolicies;
+  resource: AggregatedResoucePermissions;
 }>();
 
 const { resource } = toRefs(props);
@@ -131,7 +131,7 @@ const updateMembersOfGroupModel = (idx: number, model: MembersOfGroupFormProps) 
 
 const getMembersOfGroupForm = (
   idx: number,
-  specifier: ResourceAccessPolicySpecifier,
+  specifier: ResourcePermissionSpecifier,
 ): MembersOfGroupFormProps => {
   if (membersOfGroupModels.value[idx]) {
     return membersOfGroupModels.value[idx];
@@ -151,7 +151,7 @@ const onMembersOfGroupFormSubmit = (
   resource: Resource,
   form: MembersOfGroupFormProps,
 ): Promise<Proposal> => {
-  return station.service.editAccessPolicy({
+  return station.service.editPermission({
     auth_scope: [],
     user_groups: [form.modelValue.groupIds],
     users: [],
@@ -166,7 +166,7 @@ const updateSpecificUsersModel = (idx: number, model: SpecificUsersFormProps) =>
 
 const getSpecificUsersForm = (
   idx: number,
-  specifier: ResourceAccessPolicySpecifier,
+  specifier: ResourcePermissionSpecifier,
 ): SpecificUsersFormProps => {
   if (specificUsersModels.value[idx]) {
     return specificUsersModels.value[idx];
@@ -186,7 +186,7 @@ const onSpecificUsersFormSubmit = (
   resource: Resource,
   form: SpecificUsersFormProps,
 ): Promise<Proposal> => {
-  return station.service.editAccessPolicy({
+  return station.service.editPermission({
     auth_scope: [],
     user_groups: [],
     users: [form.modelValue.userIds],

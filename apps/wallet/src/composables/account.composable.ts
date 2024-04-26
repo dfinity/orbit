@@ -88,7 +88,7 @@ export const useDefaultAccountSetupWizardModel = ({
       standard: BlockchainStandard.Native,
       symbol: TokenSymbol.ICP,
     },
-    access_policy: {
+    permission: {
       read: {
         auth_scope: { Restricted: null },
         user_groups: [],
@@ -114,33 +114,33 @@ export const useLoadAccountSetupWizardModel = async (
 ): Promise<AccountSetupWizardModel> => {
   const station = useStationStore();
 
-  // load the individual account details and access policies in parallel
+  // load the individual account details and permissions in parallel
   const [account, read, configuration, transfer] = await Promise.all([
     station.service.getAccount({ account_id: accountId }, true).then(({ account }) => account),
     station.service
-      .getAccessPolicy(
+      .getPermission(
         {
           resource: { Account: { Read: { Id: accountId } } },
         },
         true,
       )
-      .then(({ policy }) => policy.allow),
+      .then(({ permission }) => permission.allow),
     station.service
-      .getAccessPolicy(
+      .getPermission(
         {
           resource: { Account: { Update: { Id: accountId } } },
         },
         true,
       )
-      .then(({ policy }) => policy.allow),
+      .then(({ permission }) => permission.allow),
     await station.service
-      .getAccessPolicy(
+      .getPermission(
         {
           resource: { Account: { Transfer: { Id: accountId } } },
         },
         true,
       )
-      .then(({ policy }) => policy.allow),
+      .then(({ permission }) => permission.allow),
   ]);
 
   return {
@@ -152,7 +152,7 @@ export const useLoadAccountSetupWizardModel = async (
       standard: account.standard,
       symbol: account.symbol,
     },
-    access_policy: {
+    permission: {
       read,
       configuration,
       transfer,

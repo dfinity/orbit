@@ -7,11 +7,11 @@
             <OpenUserGroupBtn :text="$t('pages.user_groups.btn_new_group')" variant="outlined" />
           </AuthCheck>
 
-          <AuthCheck :privileges="[Privilege.ListAccessPolicies]">
+          <AuthCheck :privileges="[Privilege.ListPermissions]">
             <VBtn
               color="primary"
               data-test-id="manage-permissions-btn"
-              :to="{ name: Routes.AccessPolicies }"
+              :to="{ name: Routes.Permissions }"
             >
               {{ $t('pages.user_groups.btn_manage_permissions') }}
             </VBtn>

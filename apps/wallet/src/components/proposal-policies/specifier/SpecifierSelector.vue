@@ -75,7 +75,7 @@ const componentsMap: {
   AddAddressBookEntry: null,
   ChangeCanister: null,
   // below variants require more specific specifier model
-  EditAccessPolicy: UnsupportedSpecifier,
+  EditPermission: UnsupportedSpecifier,
   EditProposalPolicy: UnsupportedSpecifier,
   RemoveProposalPolicy: UnsupportedSpecifier,
   Transfer: TransferSpecifier,
@@ -193,7 +193,7 @@ watch(
       case ProposalSpecifierEnum.EditAddressBookEntry:
         model.value = { [specifier.value]: { Any: null } };
         break;
-      case ProposalSpecifierEnum.EditAccessPolicy:
+      case ProposalSpecifierEnum.EditPermission:
         model.value = { [specifier.value]: { Any: null } };
         break;
       case ProposalSpecifierEnum.EditProposalPolicy:

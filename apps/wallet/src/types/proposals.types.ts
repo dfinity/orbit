@@ -7,7 +7,7 @@ export enum ListProposalsOperationTypeGroup {
   Transfer = 'transfer',
   AddressBook = 'address_book_entry',
   ProposalPolicy = 'proposal_policy',
-  AccessPolicy = 'access_policy',
+  Permission = 'permission',
   ChangeCanister = 'change_canister',
 }
 

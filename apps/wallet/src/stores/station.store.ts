@@ -69,13 +69,13 @@ export const createUserInitialAccount = async (
         blockchain: BlockchainType.InternetComputer,
         standard: BlockchainStandard.Native,
         metadata: [],
-        read_access_policy: { auth_scope: { Restricted: null }, user_groups: [], users: [userId] },
-        transfer_access_policy: {
+        read_permission: { auth_scope: { Restricted: null }, user_groups: [], users: [userId] },
+        transfer_permission: {
           auth_scope: { Restricted: null },
           user_groups: [],
           users: [userId],
         },
-        update_access_policy: {
+        update_permission: {
           auth_scope: { Restricted: null },
           user_groups: [],
           users: [userId],

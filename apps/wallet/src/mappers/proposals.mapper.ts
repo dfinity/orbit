@@ -41,8 +41,8 @@ export const mapProposalsOperationTypeToGroup = (
     return ListProposalsOperationTypeGroup.ProposalPolicy;
   }
 
-  if (variantIs(operationType, 'EditAccessPolicy')) {
-    return ListProposalsOperationTypeGroup.AccessPolicy;
+  if (variantIs(operationType, 'EditPermission')) {
+    return ListProposalsOperationTypeGroup.Permission;
   }
 
   if (variantIs(operationType, 'ChangeCanister')) {
@@ -183,8 +183,8 @@ export const mapProposalOperationToTypeEnum = (
   if (variantIs(operation, 'RemoveProposalPolicy')) {
     return ProposalOperationEnum.RemoveProposalPolicy;
   }
-  if (variantIs(operation, 'EditAccessPolicy')) {
-    return ProposalOperationEnum.EditAccessPolicy;
+  if (variantIs(operation, 'EditPermission')) {
+    return ProposalOperationEnum.EditPermission;
   }
   if (variantIs(operation, 'ChangeCanister')) {
     return ProposalOperationEnum.ChangeCanister;
@@ -243,8 +243,8 @@ export const mapProposalOperationToListProposalsOperationType = (
     return { EditProposalPolicy: null };
   } else if (variantIs(proposalOperation, 'RemoveProposalPolicy')) {
     return { RemoveProposalPolicy: null };
-  } else if (variantIs(proposalOperation, 'EditAccessPolicy')) {
-    return { EditAccessPolicy: null };
+  } else if (variantIs(proposalOperation, 'EditPermission')) {
+    return { EditPermission: null };
   } else if (variantIs(proposalOperation, 'ChangeCanister')) {
     return { ChangeCanister: null };
   } else if (variantIs(proposalOperation, 'AddUserGroup')) {
@@ -461,10 +461,10 @@ const mapProposalToProposalPolicyCsvRow = (proposal: Proposal): CsvRow => {
   return {};
 };
 
-const mapProposalToAccessPolicyCsvRow = (proposal: Proposal): CsvRow => {
-  if (variantIs(proposal.operation, 'EditAccessPolicy')) {
+const mapProposalToPermissionCsvRow = (proposal: Proposal): CsvRow => {
+  if (variantIs(proposal.operation, 'EditPermission')) {
     return {
-      details: stringify(proposal.operation.EditAccessPolicy.input),
+      details: stringify(proposal.operation.EditPermission.input),
     };
   }
 
@@ -520,8 +520,8 @@ export const mapProposalToCsvRow = (
       return mapProposalToAddressBookCsvRow(proposal);
     case ListProposalsOperationTypeGroup.ProposalPolicy:
       return mapProposalToProposalPolicyCsvRow(proposal);
-    case ListProposalsOperationTypeGroup.AccessPolicy:
-      return mapProposalToAccessPolicyCsvRow(proposal);
+    case ListProposalsOperationTypeGroup.Permission:
+      return mapProposalToPermissionCsvRow(proposal);
     case ListProposalsOperationTypeGroup.ChangeCanister:
       return mapProposalToChangeCanisterCsvRow(proposal);
     case ListProposalsOperationTypeGroup.Transfer:

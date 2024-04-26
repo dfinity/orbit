@@ -5,30 +5,30 @@
       <template #content>
         {{
           $t(
-            `access_policies.resources.${fromResourceToResourceEnum(operation.input.resource).toLowerCase()}`,
+            `permissions.resources.${fromResourceToResourceEnum(operation.input.resource).toLowerCase()}`,
           )
         }}
       </template>
     </ProposalOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
-  <AccessPolicyForm v-else :model-value="accessPolicy" mode="view" />
+  <PermissionForm v-else :model-value="permission" mode="view" />
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue';
 import { VProgressCircular } from 'vuetify/components';
-import AccessPolicyForm from '~/components/access-policies/AccessPolicyForm.vue';
+import PermissionForm from '~/components/permissions/PermissionForm.vue';
 import logger from '~/core/logger.core';
-import { AccessPolicy, EditAccessPolicyOperation, Proposal } from '~/generated/station/station.did';
-import { fromResourceToResourceEnum } from '~/mappers/access-policies.mapper';
+import { Permission, EditPermissionOperation, Proposal } from '~/generated/station/station.did';
+import { fromResourceToResourceEnum } from '~/mappers/permissions.mapper';
 import { useStationStore } from '~/stores/station.store';
 import ProposalOperationListRow from '../ProposalOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{
     proposal: Proposal;
-    operation: EditAccessPolicyOperation;
+    operation: EditPermissionOperation;
     mode?: 'list' | 'detail';
   }>(),
   {
@@ -38,7 +38,7 @@ const props = withDefaults(
 
 const isListMode = computed(() => props.mode === 'list');
 const station = useStationStore();
-const accessPolicy = ref<Partial<AccessPolicy>>({});
+const permission = ref<Partial<Permission>>({});
 const loading = ref(false);
 
 const fetchDetails = async () => {
@@ -48,17 +48,17 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    const { policy } = await station.service.getAccessPolicy({
+    const { permission: result } = await station.service.getPermission({
       resource: props.operation.input.resource,
     });
 
-    policy.allow.auth_scope = props.operation.input.auth_scope?.[0] ?? policy.allow.auth_scope;
-    policy.allow.users = props.operation.input.users?.[0] ?? policy.allow.users;
-    policy.allow.user_groups = props.operation.input.user_groups?.[0] ?? policy.allow.user_groups;
+    result.allow.auth_scope = props.operation.input.auth_scope?.[0] ?? result.allow.auth_scope;
+    result.allow.users = props.operation.input.users?.[0] ?? result.allow.users;
+    result.allow.user_groups = props.operation.input.user_groups?.[0] ?? result.allow.user_groups;
 
-    accessPolicy.value = policy;
+    permission.value = result;
   } catch (e) {
-    logger.error('Failed to fetch access policy details', e);
+    logger.error('Failed to fetch permission details', e);
   } finally {
     loading.value = false;
   }

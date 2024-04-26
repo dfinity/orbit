@@ -214,7 +214,7 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToStation,
-                    privileges: [Privilege.ListUserGroups, Privilege.ListAccessPolicies],
+                    privileges: [Privilege.ListUserGroups, Privilege.ListPermissions],
                   },
                 },
               },
@@ -243,8 +243,8 @@ const router = createRouter({
                 },
                 {
                   path: 'permissions',
-                  name: Routes.AccessPolicies,
-                  component: () => import('~/pages/AccessPoliciesPage.vue'),
+                  name: Routes.Permissions,
+                  component: () => import('~/pages/PermissionsPage.vue'),
                   props: () => {
                     return {
                       breadcrumbs: [
@@ -254,7 +254,7 @@ const router = createRouter({
                           title: i18n.global.t('terms.user_groups'),
                           to: { name: Routes.UserGroups },
                         },
-                        { title: i18n.global.t('navigation.access_policies') },
+                        { title: i18n.global.t('navigation.permissions') },
                       ],
                     };
                   },
@@ -262,7 +262,7 @@ const router = createRouter({
                     auth: {
                       check: {
                         session: RequiredSessionState.ConnectedToStation,
-                        privileges: [Privilege.ListAccessPolicies],
+                        privileges: [Privilege.ListPermissions],
                       },
                     },
                   },

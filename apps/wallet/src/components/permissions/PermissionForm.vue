@@ -29,32 +29,32 @@
 
 <script lang="ts" setup>
 import { computed, ref, toRefs } from 'vue';
-import MembersOfGroupForm from '~/components/access-policies/MembersOfGroupForm.vue';
-import ResourceSpecifierField from '~/components/access-policies/ResourceSpecifierField.vue';
-import SpecificUsersForm from '~/components/access-policies/SpecificUsersForm.vue';
-import { AccessPolicy } from '~/generated/station/station.did';
-import { toAuthScopeEnum } from '~/mappers/access-policies.mapper';
+import MembersOfGroupForm from '~/components/permissions/MembersOfGroupForm.vue';
+import ResourceSpecifierField from '~/components/permissions/ResourceSpecifierField.vue';
+import SpecificUsersForm from '~/components/permissions/SpecificUsersForm.vue';
+import { Permission } from '~/generated/station/station.did';
+import { toAuthScopeEnum } from '~/mappers/permissions.mapper';
 import { VFormValidation } from '~/types/helper.types';
 import EveryoneForm from './EveryoneForm.vue';
 
-export type AccessPolicyFormProps = {
-  modelValue: Partial<AccessPolicy>;
+export type PermissionFormProps = {
+  modelValue: Partial<Permission>;
   valid?: boolean;
   mode?: 'view' | 'edit';
 };
 
 const form = ref<VFormValidation | null>(null);
 
-const input = withDefaults(defineProps<AccessPolicyFormProps>(), {
+const input = withDefaults(defineProps<PermissionFormProps>(), {
   valid: true,
   mode: 'edit',
 });
 const props = toRefs(input);
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: AccessPolicyFormProps['modelValue']): void;
+  (event: 'update:modelValue', payload: PermissionFormProps['modelValue']): void;
   (event: 'valid', payload: boolean): void;
-  (event: 'submit', payload: AccessPolicyFormProps['modelValue']): void;
+  (event: 'submit', payload: PermissionFormProps['modelValue']): void;
 }>();
 
 const model = computed({

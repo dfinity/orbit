@@ -1,9 +1,9 @@
 <template>
   <VAutocomplete
-    v-model="selectedUserGroupId"
+    v-model="selectedAccountId"
     class="mt-2 px-2"
-    name="user_group_id"
-    :label="$t('terms.user_group')"
+    name="account_id"
+    :label="$t('terms.account')"
     :loading="autocomplete.loading.value"
     :items="groupList"
     chips
@@ -11,16 +11,16 @@
     @update:search="autocomplete.searchItems"
   />
   <DataLoader
-    v-if="selectedUserGroupId"
+    v-if="selectedAccountId"
     v-slot="{ data, loading }"
     :load="() => fetchPolicies(useResourcesFromAggregatedView(resources))"
     :refresh-interval-ms="5000"
     :disable-refresh="disableRefresh"
   >
-    <AccessPolicyList
+    <PermissionList
       :loading="loading"
       :resources="resources"
-      :access-policies="data ? data.policies : []"
+      :permissions="data ? data.policies : []"
       :privileges="data ? data.privileges : []"
       :preload-user-groups="data ? data.userGroups : []"
       :preload-users="data ? data.users : []"
@@ -32,37 +32,28 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import DataLoader from '~/components/DataLoader.vue';
-import { useUserGroupsAutocomplete } from '~/composables/autocomplete.composable';
-import { getUserGroupAccessPolicies } from '~/configs/access-policies.config';
-import {
-  AccessPolicy,
-  AccessPolicyCallerPrivileges,
+import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
+import { getAccountPermissions } from '~/configs/permissions.config';
+import type {
+  Permission,
+  PermissionCallerPrivileges,
   BasicUser,
   Resource,
   UUID,
   UserGroup,
 } from '~/generated/station/station.did';
-import { AggregatedResouceAccessPolicies } from '~/types/access-policies.types';
-import AccessPolicyList from './AccessPolicyList.vue';
-import { useResourcesFromAggregatedView } from '~/composables/access-policies.composable';
+import { AggregatedResoucePermissions } from '~/types/permissions.types';
+import PermissionList from './PermissionList.vue';
+import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
 import { VAutocomplete } from 'vuetify/components';
-
-const autocomplete = useUserGroupsAutocomplete();
-const selectedUserGroupId = ref<UUID | null>(null);
-const resources = ref<AggregatedResouceAccessPolicies[]>([]);
-const disableRefresh = ref(false);
-
-onMounted(() => {
-  autocomplete.searchItems();
-});
 
 const props = withDefaults(
   defineProps<{
     fetchPolicies?: (resources: Resource[]) => Promise<{
-      policies: AccessPolicy[];
+      policies: Permission[];
       userGroups: UserGroup[];
       users: BasicUser[];
-      privileges: AccessPolicyCallerPrivileges[];
+      privileges: PermissionCallerPrivileges[];
     }>;
   }>(),
   {
@@ -72,6 +63,15 @@ const props = withDefaults(
 );
 
 const { fetchPolicies } = toRefs(props);
+
+const autocomplete = useAccountsAutocomplete();
+const selectedAccountId = ref<UUID | null>(null);
+const resources = ref<AggregatedResoucePermissions[]>([]);
+const disableRefresh = ref(false);
+
+onMounted(() => {
+  autocomplete.searchItems();
+});
 
 const groupList = computed(() => {
   const groups = autocomplete.results.value.map(group => ({
@@ -83,10 +83,10 @@ const groupList = computed(() => {
 });
 
 watch(
-  () => selectedUserGroupId.value,
+  () => selectedAccountId.value,
   () => {
-    if (selectedUserGroupId.value) {
-      resources.value = getUserGroupAccessPolicies(selectedUserGroupId.value);
+    if (selectedAccountId.value) {
+      resources.value = getAccountPermissions(selectedAccountId.value);
     } else {
       resources.value = [];
     }

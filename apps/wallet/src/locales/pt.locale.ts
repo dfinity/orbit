@@ -153,7 +153,7 @@ export default {
       user_group: 'Grupos de usuários',
       user: 'Usuários',
       account: 'Contas',
-      access_policy: 'Regras de acesso',
+      permission: 'Regras de acesso',
       proposal_policy: 'Regras de aprovação',
       address_book_entry: 'Livro de endereços',
       change_canister: 'Atualizações de sistema',
@@ -224,9 +224,9 @@ export default {
         title: 'Alterar canister',
         request_title: 'Pedido de alteração de canister',
       },
-      editaccesspolicy: {
-        title: 'Editar regra de acesso',
-        request_title: 'Pedido de alteração de regra de acesso',
+      editpermission: {
+        title: 'Editar permissão',
+        request_title: 'Pedido de alteração de permissão',
       },
       editusergroup: {
         title: 'Editar grupo de usuários',
@@ -490,7 +490,7 @@ export default {
     logout: 'Sair',
     proposals: 'Pedidos',
     transfer_proposals: 'Pedidos de transferência',
-    access_policies: 'Permissões',
+    permissions: 'Permissões',
     proposal_policies: 'Regras de aprovação',
   },
   pages: {
@@ -584,7 +584,7 @@ export default {
       title: 'Pedidos',
       transfer_title: 'Pedidos de transferência',
     },
-    access_policies: {
+    permissions: {
       title: 'Permissões',
       update_dialog_title: 'Atualizar permissões',
     },
@@ -623,7 +623,7 @@ export default {
     expired_dialog_content: 'Você deve se reautenticar para continuar.',
     expired_dialog_btn: 'Reautenticar',
   },
-  access_policies: {
+  permissions: {
     resource_title: 'Recurso',
     group_members_title: 'Membros do grupo',
     specific_users_title: 'Usuários específicos',
@@ -634,7 +634,7 @@ export default {
       account: 'Conta',
       user: 'Usuário',
       usergroup: 'Grupo de usuários',
-      accesspolicy: 'Regra de acesso',
+      permission: 'Regra de acesso',
       proposalpolicy: 'Regra para pedidos',
       system: 'Sistema',
       changecanister: 'Alterar canister',
@@ -682,7 +682,7 @@ export default {
       hasaddressinaddressbook: 'Endereço no livro de endereços',
     },
     specifier: {
-      editaccesspolicy: 'Editar permissão',
+      editpermission: 'Editar permissão',
       addusergroup: 'Adicionar grupo de usuários',
       removeproposalpolicy: 'Remover regra',
       adduser: 'Adicionar usuário',

@@ -2,21 +2,17 @@ import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
-import IndividualUserAccessPolicies from './IndividualUserAccessPolicies.vue';
+import IndividualUserGroupPermissions from './IndividualUserGroupPermissions.vue';
 
 vi.mock('~/services/station.service', () => {
   const mock: Partial<StationService> = {
     withStationId: vi.fn().mockReturnThis(),
-    listUsers: vi.fn().mockImplementation(() =>
+    listUserGroups: vi.fn().mockImplementation(() =>
       Promise.resolve({
-        users: [
+        user_groups: [
           {
             id: '1',
-            name: ['Test1'],
-            groups: [],
-            identities: [],
-            last_modification_timestamp: '',
-            status: { Active: null },
+            name: 'Test1',
           },
         ],
         privileges: [],
@@ -31,17 +27,17 @@ vi.mock('~/services/station.service', () => {
   };
 });
 
-describe('IndividualUserAccessPolicies', () => {
+describe('IndividualUserGroupPermissions', () => {
   it('renders properly', () => {
-    const wrapper = mount(IndividualUserAccessPolicies);
+    const wrapper = mount(IndividualUserGroupPermissions);
 
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('shows access policy list when specific resource is selected', async () => {
-    const wrapper = mount(IndividualUserAccessPolicies);
+  it('shows permission list when specific resource is selected', async () => {
+    const wrapper = mount(IndividualUserGroupPermissions);
 
-    const selectInput = wrapper.find('[name="user_id"]');
+    const selectInput = wrapper.find('[name="user_group_id"]');
     expect(selectInput.exists()).toBe(true);
 
     const autocomplete = wrapper.findComponent({ name: 'VAutocomplete' });
@@ -52,10 +48,10 @@ describe('IndividualUserAccessPolicies', () => {
     expect(wrapper.find('[data-test-id="access-policy-list"]').exists()).toBe(true);
   });
 
-  it('hides access policy list when specific resource is not selected', async () => {
-    const wrapper = mount(IndividualUserAccessPolicies);
+  it('hides permission list when specific resource is not selected', async () => {
+    const wrapper = mount(IndividualUserGroupPermissions);
 
-    const selectInput = wrapper.find('[name="user_id"]');
+    const selectInput = wrapper.find('[name="user_group_id"]');
     expect(selectInput.exists()).toBe(true);
 
     const autocomplete = wrapper.findComponent({ name: 'VAutocomplete' });
