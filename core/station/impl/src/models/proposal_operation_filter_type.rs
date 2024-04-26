@@ -13,7 +13,7 @@ pub enum ProposalOperationFilterType {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
-    EditAccessPolicy,
+    EditPermission,
     AddProposalPolicy,
     EditProposalPolicy,
     RemoveProposalPolicy,

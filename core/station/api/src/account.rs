@@ -28,9 +28,9 @@ pub struct AccountDTO {
 pub struct EditAccountOperationInput {
     pub account_id: UuidDTO,
     pub name: Option<String>,
-    pub read_access_policy: Option<AllowDTO>,
-    pub update_access_policy: Option<AllowDTO>,
-    pub transfer_access_policy: Option<AllowDTO>,
+    pub read_permission: Option<AllowDTO>,
+    pub update_permission: Option<AllowDTO>,
+    pub transfer_permission: Option<AllowDTO>,
     pub update_approval_policy: Option<ApprovalCriteriaInput>,
     pub transfer_approval_policy: Option<ApprovalCriteriaInput>,
 }
@@ -46,9 +46,9 @@ pub struct AddAccountOperationInput {
     pub blockchain: String,
     pub standard: String,
     pub metadata: Vec<MetadataDTO>,
-    pub read_access_policy: AllowDTO,
-    pub update_access_policy: AllowDTO,
-    pub transfer_access_policy: AllowDTO,
+    pub read_permission: AllowDTO,
+    pub update_permission: AllowDTO,
+    pub transfer_permission: AllowDTO,
     pub update_approval_policy: Option<CriteriaDTO>,
     pub transfer_approval_policy: Option<CriteriaDTO>,
 }

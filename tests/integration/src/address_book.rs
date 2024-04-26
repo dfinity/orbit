@@ -262,17 +262,17 @@ fn check_address_book_for_transfer() {
         name: "admin".to_string(),
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
-        read_access_policy: AllowDTO {
+        read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },
-        update_access_policy: AllowDTO {
+        update_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },
-        transfer_access_policy: AllowDTO {
+        transfer_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![admin_user.id.clone()],

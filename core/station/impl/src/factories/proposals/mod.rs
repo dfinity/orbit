@@ -2,7 +2,7 @@ use crate::{
     core::generate_uuid_v4,
     errors::{ProposalError, ProposalExecuteError},
     models::{Proposal, ProposalOperation},
-    services::{access_policy::ACCESS_POLICY_SERVICE, PROPOSAL_POLICY_SERVICE, SYSTEM_SERVICE},
+    services::{permission::PERMISSION_SERVICE, PROPOSAL_POLICY_SERVICE, SYSTEM_SERVICE},
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
@@ -15,9 +15,9 @@ mod add_proposal_policy;
 mod add_user;
 mod add_user_group;
 mod change_canister;
-mod edit_access_policy;
 mod edit_account;
 mod edit_address_book_entry;
+mod edit_permission;
 mod edit_proposal_policy;
 mod edit_user;
 mod edit_user_group;
@@ -35,11 +35,11 @@ use self::{
     add_user::{AddUserProposalCreate, AddUserProposalExecute},
     add_user_group::{AddUserGroupProposalCreate, AddUserGroupProposalExecute},
     change_canister::{ChangeCanisterProposalCreate, ChangeCanisterProposalExecute},
-    edit_access_policy::{EditAccessPolicyProposalCreate, EditAccessPolicyProposalExecute},
     edit_account::{EditAccountProposalCreate, EditAccountProposalExecute},
     edit_address_book_entry::{
         EditAddressBookEntryProposalCreate, EditAddressBookEntryProposalExecute,
     },
+    edit_permission::{EditPermissionProposalCreate, EditPermissionProposalExecute},
     edit_proposal_policy::{EditProposalPolicyProposalCreate, EditProposalPolicyProposalExecute},
     edit_user::{EditUserProposalCreate, EditUserProposalExecute},
     edit_user_group::{EditUserGroupProposalCreate, EditUserGroupProposalExecute},
@@ -182,10 +182,10 @@ impl ProposalFactory {
                     ChangeCanisterProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
-            ProposalOperationInput::EditAccessPolicy(operation) => {
+            ProposalOperationInput::EditPermission(operation) => {
                 create_proposal::<
-                    station_api::EditAccessPolicyOperationInput,
-                    EditAccessPolicyProposalCreate,
+                    station_api::EditPermissionOperationInput,
+                    EditPermissionProposalCreate,
                 >(id, proposed_by_user, input.clone(), operation.clone())
             }
             ProposalOperationInput::AddProposalPolicy(operation) => {
@@ -251,11 +251,11 @@ impl ProposalFactory {
                     Arc::clone(&SYSTEM_SERVICE),
                 ))
             }
-            ProposalOperation::EditAccessPolicy(operation) => {
-                Box::new(EditAccessPolicyProposalExecute::new(
+            ProposalOperation::EditPermission(operation) => {
+                Box::new(EditPermissionProposalExecute::new(
                     proposal,
                     operation,
-                    Arc::clone(&ACCESS_POLICY_SERVICE),
+                    Arc::clone(&PERMISSION_SERVICE),
                 ))
             }
             ProposalOperation::AddProposalPolicy(operation) => {

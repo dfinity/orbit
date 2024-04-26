@@ -1,6 +1,6 @@
 use crate::{
-    core::{with_memory_manager, Memory, ACCESS_POLICY_MEMORY_ID},
-    models::access_policy::{AccessPolicy, AccessPolicyKey},
+    core::{with_memory_manager, Memory, PERMISSION_MEMORY_ID},
+    models::permission::{Permission, PermissionKey},
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -8,36 +8,36 @@ use orbit_essentials::repository::Repository;
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<AccessPolicyKey, AccessPolicy, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
-      StableBTreeMap::init(memory_manager.get(ACCESS_POLICY_MEMORY_ID))
+      StableBTreeMap::init(memory_manager.get(PERMISSION_MEMORY_ID))
     )
   })
 }
 
 lazy_static! {
-    pub static ref ACCESS_POLICY_REPOSITORY: Arc<AccessPolicyRepository> =
-        Arc::new(AccessPolicyRepository::default());
+    pub static ref PERMISSION_REPOSITORY: Arc<PermissionRepository> =
+        Arc::new(PermissionRepository::default());
 }
 
-/// A repository that enables managing access policies in stable memory.
+/// A repository that enables managing permissions in stable memory.
 #[derive(Default, Debug)]
-pub struct AccessPolicyRepository {}
+pub struct PermissionRepository {}
 
-impl Repository<AccessPolicyKey, AccessPolicy> for AccessPolicyRepository {
-    fn list(&self) -> Vec<AccessPolicy> {
+impl Repository<PermissionKey, Permission> for PermissionRepository {
+    fn list(&self) -> Vec<Permission> {
         DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
-    fn get(&self, key: &AccessPolicyKey) -> Option<AccessPolicy> {
+    fn get(&self, key: &PermissionKey) -> Option<Permission> {
         DB.with(|m| m.borrow().get(key))
     }
 
-    fn insert(&self, key: AccessPolicyKey, value: AccessPolicy) -> Option<AccessPolicy> {
+    fn insert(&self, key: PermissionKey, value: Permission) -> Option<Permission> {
         DB.with(|m| m.borrow_mut().insert(key, value.clone()))
     }
 
-    fn remove(&self, key: &AccessPolicyKey) -> Option<AccessPolicy> {
+    fn remove(&self, key: &PermissionKey) -> Option<Permission> {
         DB.with(|m| m.borrow_mut().remove(key))
     }
 
@@ -49,14 +49,14 @@ impl Repository<AccessPolicyKey, AccessPolicy> for AccessPolicyRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::access_policy::access_policy_test_utils::mock_access_policy;
+    use crate::models::permission::permission_test_utils::mock_permission;
     use crate::models::resource::{Resource, ResourceAction, ResourceId};
     use orbit_essentials::model::ModelKey;
 
     #[test]
     fn test_crud() {
-        let repository = &ACCESS_POLICY_REPOSITORY;
-        let policy = mock_access_policy();
+        let repository = &PERMISSION_REPOSITORY;
+        let policy = mock_permission();
 
         assert!(repository.get(&policy.key()).is_none());
 
@@ -70,21 +70,21 @@ mod tests {
     #[test]
     fn test_find_by_resource_and_access() {
         for _ in 0..3 {
-            let policy = mock_access_policy();
-            ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.clone());
+            let policy = mock_permission();
+            PERMISSION_REPOSITORY.insert(policy.key(), policy.clone());
         }
 
-        let mut policy = mock_access_policy();
+        let mut policy = mock_permission();
         policy.resource = Resource::AddressBook(ResourceAction::Read(ResourceId::Any));
 
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.clone());
+        PERMISSION_REPOSITORY.insert(policy.key(), policy.clone());
 
-        let access_policy = ACCESS_POLICY_REPOSITORY
+        let permission = PERMISSION_REPOSITORY
             .get(&Resource::AddressBook(ResourceAction::Read(
                 ResourceId::Any,
             )))
             .unwrap();
 
-        assert_eq!(access_policy, policy);
+        assert_eq!(permission, policy);
     }
 }

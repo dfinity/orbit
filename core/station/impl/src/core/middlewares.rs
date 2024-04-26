@@ -1,12 +1,11 @@
-use orbit_essentials::api::ApiResult;
-use orbit_essentials::metrics::{labels, with_metrics_registry};
-
 use super::authorization::Authorization;
 use super::CallContext;
 use crate::core::ic_cdk::api::trap;
 use crate::models::resource::Resource;
 use crate::services::SYSTEM_SERVICE;
 use crate::SERVICE_NAME;
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::metrics::{labels, with_metrics_registry};
 
 /// Creates the call context of the current request
 pub fn call_context() -> CallContext {

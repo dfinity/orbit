@@ -48,7 +48,7 @@ mod proposal_vote_status;
 
 mod proposal_vote;
 
-pub mod access_policy;
+pub mod permission;
 
 pub mod metadata;
 

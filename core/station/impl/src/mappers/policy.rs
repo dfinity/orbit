@@ -2,7 +2,7 @@ use super::HelperMapper;
 use crate::models::{
     criteria::{Criteria, Percentage},
     resource::{
-        AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction, Resource,
+        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction, Resource,
         ResourceAction, ResourceId, ResourceIds, UserResourceAction,
     },
     specifier::{CommonSpecifier, ProposalSpecifier, ResourceSpecifier, UserSpecifier},
@@ -289,8 +289,8 @@ impl From<ProposalSpecifier> for station_api::ProposalSpecifierDTO {
                 station_api::ProposalSpecifierDTO::Transfer(account.into())
             }
             ProposalSpecifier::ChangeCanister => station_api::ProposalSpecifierDTO::ChangeCanister,
-            ProposalSpecifier::EditAccessPolicy(policy) => {
-                station_api::ProposalSpecifierDTO::EditAccessPolicy(policy.into())
+            ProposalSpecifier::EditPermission(policy) => {
+                station_api::ProposalSpecifierDTO::EditPermission(policy.into())
             }
             ProposalSpecifier::AddProposalPolicy => {
                 station_api::ProposalSpecifierDTO::AddProposalPolicy
@@ -336,8 +336,8 @@ impl From<station_api::ProposalSpecifierDTO> for ProposalSpecifier {
                 ProposalSpecifier::Transfer(transfer_specifier.into())
             }
             station_api::ProposalSpecifierDTO::ChangeCanister => ProposalSpecifier::ChangeCanister,
-            station_api::ProposalSpecifierDTO::EditAccessPolicy(policy) => {
-                ProposalSpecifier::EditAccessPolicy(policy.into())
+            station_api::ProposalSpecifierDTO::EditPermission(policy) => {
+                ProposalSpecifier::EditPermission(policy.into())
             }
             station_api::ProposalSpecifierDTO::AddProposalPolicy => {
                 ProposalSpecifier::AddProposalPolicy
@@ -433,9 +433,9 @@ impl ProposalSpecifier {
             ProposalSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
                 ChangeCanisterResourceAction::Create,
             )],
-            ProposalSpecifier::EditAccessPolicy(resource_specifier) => match resource_specifier {
+            ProposalSpecifier::EditPermission(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => {
-                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
+                    vec![Resource::Permission(PermissionResourceAction::Update)]
                 }
                 ResourceSpecifier::Resource(resource) => vec![resource.clone()],
             },

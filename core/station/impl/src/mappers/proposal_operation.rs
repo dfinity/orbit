@@ -2,15 +2,15 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         resource::{
-            AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+            AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
             Resource, ResourceAction, ResourceId, UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddProposalPolicyOperation,
         AddProposalPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
         ChangeCanisterOperation, ChangeCanisterOperationInput, ChangeCanisterTarget,
-        EditAccessPolicyOperation, EditAccessPolicyOperationInput, EditAccountOperation,
-        EditAccountOperationInput, EditAddressBookEntryOperation, EditProposalPolicyOperation,
+        EditAccountOperation, EditAccountOperationInput, EditAddressBookEntryOperation,
+        EditPermissionOperation, EditPermissionOperationInput, EditProposalPolicyOperation,
         EditProposalPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
         EditUserOperationInput, ProposalOperation, RemoveAddressBookEntryOperation,
         RemoveProposalPolicyOperation, RemoveProposalPolicyOperationInput,
@@ -66,9 +66,9 @@ impl AddAccountOperation {
                 blockchain: self.input.blockchain.to_string(),
                 standard: self.input.standard.to_string(),
                 metadata: self.input.metadata.into_vec_dto(),
-                read_access_policy: self.input.read_access_policy.into(),
-                transfer_access_policy: self.input.transfer_access_policy.into(),
-                update_access_policy: self.input.update_access_policy.into(),
+                read_permission: self.input.read_permission.into(),
+                transfer_permission: self.input.transfer_permission.into(),
+                update_permission: self.input.update_permission.into(),
                 transfer_approval_policy: self.input.transfer_approval_policy.map(Into::into),
                 update_approval_policy: self.input.update_approval_policy.map(Into::into),
             },
@@ -98,9 +98,9 @@ impl From<station_api::AddAccountOperationInput> for AddAccountOperationInput {
             standard: BlockchainMapper::to_blockchain_standard(input.standard)
                 .expect("Invalid blockchain standard"),
             metadata: input.metadata.into(),
-            read_access_policy: input.read_access_policy.into(),
-            update_access_policy: input.update_access_policy.into(),
-            transfer_access_policy: input.transfer_access_policy.into(),
+            read_permission: input.read_permission.into(),
+            update_permission: input.update_permission.into(),
+            transfer_permission: input.transfer_permission.into(),
             transfer_approval_policy: input.transfer_approval_policy.map(Into::into),
             update_approval_policy: input.update_approval_policy.map(Into::into),
         }
@@ -115,17 +115,14 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                     .hyphenated()
                     .to_string(),
                 name: operation.input.name,
-                read_access_policy: operation
+                read_permission: operation.input.read_permission.map(|policy| policy.into()),
+                transfer_permission: operation
                     .input
-                    .read_access_policy
+                    .transfer_permission
                     .map(|policy| policy.into()),
-                transfer_access_policy: operation
+                update_permission: operation
                     .input
-                    .transfer_access_policy
-                    .map(|policy| policy.into()),
-                update_access_policy: operation
-                    .input
-                    .update_access_policy
+                    .update_permission
                     .map(|policy| policy.into()),
                 transfer_approval_policy: operation
                     .input
@@ -147,9 +144,9 @@ impl From<station_api::EditAccountOperationInput> for EditAccountOperationInput 
                 .expect("Invalid account id")
                 .as_bytes(),
             name: input.name,
-            read_access_policy: input.read_access_policy.map(|policy| policy.into()),
-            transfer_access_policy: input.transfer_access_policy.map(|policy| policy.into()),
-            update_access_policy: input.update_access_policy.map(|policy| policy.into()),
+            read_permission: input.read_permission.map(|policy| policy.into()),
+            transfer_permission: input.transfer_permission.map(|policy| policy.into()),
+            update_permission: input.update_permission.map(|policy| policy.into()),
             transfer_approval_policy: input.transfer_approval_policy.map(|policy| policy.into()),
             update_approval_policy: input.update_approval_policy.map(|policy| policy.into()),
         }
@@ -356,9 +353,9 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     }
 }
 
-impl From<EditAccessPolicyOperationInput> for station_api::EditAccessPolicyOperationInput {
-    fn from(input: EditAccessPolicyOperationInput) -> station_api::EditAccessPolicyOperationInput {
-        station_api::EditAccessPolicyOperationInput {
+impl From<EditPermissionOperationInput> for station_api::EditPermissionOperationInput {
+    fn from(input: EditPermissionOperationInput) -> station_api::EditPermissionOperationInput {
+        station_api::EditPermissionOperationInput {
             auth_scope: input.auth_scope.map(|auth_scope| auth_scope.into()),
             user_groups: input.user_groups.map(|ids| {
                 ids.iter()
@@ -375,9 +372,9 @@ impl From<EditAccessPolicyOperationInput> for station_api::EditAccessPolicyOpera
     }
 }
 
-impl From<station_api::EditAccessPolicyOperationInput> for EditAccessPolicyOperationInput {
-    fn from(input: station_api::EditAccessPolicyOperationInput) -> EditAccessPolicyOperationInput {
-        EditAccessPolicyOperationInput {
+impl From<station_api::EditPermissionOperationInput> for EditPermissionOperationInput {
+    fn from(input: station_api::EditPermissionOperationInput) -> EditPermissionOperationInput {
+        EditPermissionOperationInput {
             auth_scope: input.auth_scope.map(|auth_scope| auth_scope.into()),
             user_groups: input.user_groups.map(|ids| {
                 ids.into_iter()
@@ -402,9 +399,9 @@ impl From<station_api::EditAccessPolicyOperationInput> for EditAccessPolicyOpera
     }
 }
 
-impl From<EditAccessPolicyOperation> for station_api::EditAccessPolicyOperationDTO {
-    fn from(operation: EditAccessPolicyOperation) -> station_api::EditAccessPolicyOperationDTO {
-        station_api::EditAccessPolicyOperationDTO {
+impl From<EditPermissionOperation> for station_api::EditPermissionOperationDTO {
+    fn from(operation: EditPermissionOperation) -> station_api::EditPermissionOperationDTO {
+        station_api::EditPermissionOperationDTO {
             input: operation.input.into(),
         }
     }
@@ -569,8 +566,8 @@ impl From<ProposalOperation> for ProposalOperationDTO {
             ProposalOperation::ChangeCanister(operation) => {
                 ProposalOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
-            ProposalOperation::EditAccessPolicy(operation) => {
-                ProposalOperationDTO::EditAccessPolicy(Box::new(operation.into()))
+            ProposalOperation::EditPermission(operation) => {
+                ProposalOperationDTO::EditPermission(Box::new(operation.into()))
             }
             ProposalOperation::AddProposalPolicy(operation) => {
                 ProposalOperationDTO::AddProposalPolicy(Box::new(operation.into()))
@@ -600,8 +597,8 @@ impl ProposalOperation {
             ProposalOperation::AddProposalPolicy(_) => {
                 vec![Resource::ProposalPolicy(ResourceAction::Create)]
             }
-            ProposalOperation::EditAccessPolicy(_) => {
-                vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
+            ProposalOperation::EditPermission(_) => {
+                vec![Resource::Permission(PermissionResourceAction::Update)]
             }
 
             ProposalOperation::Transfer(transfer) => {

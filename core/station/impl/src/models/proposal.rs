@@ -128,9 +128,9 @@ fn validate_proposal_operation_foreign_keys(
     match operation {
         ProposalOperation::Transfer(op) => EnsureAccount::id_exists(&op.input.from_account_id),
         ProposalOperation::AddAccount(op) => {
-            op.input.read_access_policy.validate()?;
-            op.input.update_access_policy.validate()?;
-            op.input.transfer_access_policy.validate()?;
+            op.input.read_permission.validate()?;
+            op.input.update_permission.validate()?;
+            op.input.transfer_permission.validate()?;
 
             if let Some(criteria) = &op.input.transfer_approval_policy {
                 criteria.validate()?;
@@ -145,15 +145,15 @@ fn validate_proposal_operation_foreign_keys(
         ProposalOperation::EditAccount(op) => {
             EnsureAccount::id_exists(&op.input.account_id)?;
 
-            if let Some(allow) = &op.input.read_access_policy {
+            if let Some(allow) = &op.input.read_permission {
                 allow.validate()?;
             }
 
-            if let Some(allow) = &op.input.update_access_policy {
+            if let Some(allow) = &op.input.update_permission {
                 allow.validate()?;
             }
 
-            if let Some(allow) = &op.input.transfer_access_policy {
+            if let Some(allow) = &op.input.transfer_permission {
                 allow.validate()?;
             }
 
@@ -184,7 +184,7 @@ fn validate_proposal_operation_foreign_keys(
 
             Ok(())
         }
-        ProposalOperation::EditAccessPolicy(op) => {
+        ProposalOperation::EditPermission(op) => {
             op.input.resource.validate()?;
 
             if let Some(user_ids) = &op.input.users {
@@ -364,7 +364,7 @@ impl Proposal {
 #[cfg(test)]
 mod tests {
     use crate::core::validation::disable_mock_resource_validation;
-    use crate::models::access_policy::Allow;
+    use crate::models::permission::Allow;
     use crate::models::{
         AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Metadata,
         TransferOperation, TransferOperationInput,
@@ -425,9 +425,9 @@ mod tests {
                 blockchain: crate::models::Blockchain::InternetComputer,
                 standard: crate::models::BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                read_access_policy: Allow::default(),
-                update_access_policy: Allow::default(),
-                transfer_access_policy: Allow::default(),
+                read_permission: Allow::default(),
+                update_permission: Allow::default(),
+                transfer_permission: Allow::default(),
                 update_approval_policy: None,
                 transfer_approval_policy: None,
             })
@@ -536,13 +536,13 @@ mod tests {
                     blockchain: crate::models::Blockchain::InternetComputer,
                     standard: crate::models::BlockchainStandard::Native,
                     metadata: Metadata::default(),
-                    read_access_policy: Allow {
-                        auth_scope: crate::models::access_policy::AuthScope::Restricted,
+                    read_permission: Allow {
+                        auth_scope: crate::models::permission::AuthScope::Restricted,
                         users: vec![[1; 16]],
                         user_groups: vec![],
                     },
-                    update_access_policy: Allow::default(),
-                    transfer_access_policy: Allow::default(),
+                    update_permission: Allow::default(),
+                    transfer_permission: Allow::default(),
                     update_approval_policy: None,
                     transfer_approval_policy: None,
                 },
@@ -554,9 +554,9 @@ mod tests {
             crate::models::EditAccountOperation {
                 input: crate::models::EditAccountOperationInput {
                     account_id: [0; 16],
-                    read_access_policy: None,
-                    update_access_policy: None,
-                    transfer_access_policy: None,
+                    read_permission: None,
+                    update_permission: None,
+                    transfer_permission: None,
                     update_approval_policy: None,
                     transfer_approval_policy: None,
                     name: None,
@@ -598,9 +598,9 @@ mod tests {
         ))
         .expect_err("Invalid user id should fail");
 
-        validate_proposal_operation_foreign_keys(&ProposalOperation::EditAccessPolicy(
-            crate::models::EditAccessPolicyOperation {
-                input: crate::models::EditAccessPolicyOperationInput {
+        validate_proposal_operation_foreign_keys(&ProposalOperation::EditPermission(
+            crate::models::EditPermissionOperation {
+                input: crate::models::EditPermissionOperationInput {
                     resource: crate::models::resource::Resource::Account(
                         crate::models::resource::AccountResourceAction::Read(
                             crate::models::resource::ResourceId::Id([0; 16]),

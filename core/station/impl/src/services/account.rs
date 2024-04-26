@@ -14,11 +14,11 @@ use crate::{
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         specifier::ProposalSpecifier,
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddProposalPolicyOperationInput, EditAccessPolicyOperationInput, EditAccountOperationInput,
+        AddProposalPolicyOperationInput, EditAccountOperationInput, EditPermissionOperationInput,
     },
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
     services::{
-        access_policy::{AccessPolicyService, ACCESS_POLICY_SERVICE},
+        permission::{PermissionService, PERMISSION_SERVICE},
         ProposalPolicyService, PROPOSAL_POLICY_SERVICE,
     },
 };
@@ -33,7 +33,7 @@ use uuid::Uuid;
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
         Arc::clone(&PROPOSAL_POLICY_SERVICE),
-        Arc::clone(&ACCESS_POLICY_SERVICE),
+        Arc::clone(&PERMISSION_SERVICE),
         Arc::clone(&ACCOUNT_REPOSITORY),
     ));
 }
@@ -41,7 +41,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct AccountService {
     proposal_policy_service: Arc<ProposalPolicyService>,
-    access_policy_service: Arc<AccessPolicyService>,
+    permission_service: Arc<PermissionService>,
     account_repository: Arc<AccountRepository>,
 }
 
@@ -51,12 +51,12 @@ impl AccountService {
 
     pub fn new(
         proposal_policy_service: Arc<ProposalPolicyService>,
-        access_policy_service: Arc<AccessPolicyService>,
+        permission_service: Arc<PermissionService>,
         account_repository: Arc<AccountRepository>,
     ) -> Self {
         Self {
             proposal_policy_service,
-            access_policy_service,
+            permission_service,
             account_repository,
         }
     }
@@ -150,9 +150,9 @@ impl AccountService {
             criteria.validate()?;
         };
 
-        input.read_access_policy.validate()?;
-        input.update_access_policy.validate()?;
-        input.transfer_access_policy.validate()?;
+        input.read_permission.validate()?;
+        input.update_permission.validate()?;
+        input.transfer_permission.validate()?;
 
         // The decimals of the asset are fetched from the blockchain and stored in the account,
         // depending on the blockchain standard used by the account the decimals used by each asset can vary.
@@ -202,33 +202,33 @@ impl AccountService {
         self.account_repository.insert(key, new_account.clone());
 
         // Adds the access policies for the account.
-        self.access_policy_service
-            .edit_access_policy(EditAccessPolicyOperationInput {
-                auth_scope: Some(input.read_access_policy.auth_scope),
-                users: Some(input.read_access_policy.users),
-                user_groups: Some(input.read_access_policy.user_groups),
+        self.permission_service
+            .edit_permission(EditPermissionOperationInput {
+                auth_scope: Some(input.read_permission.auth_scope),
+                users: Some(input.read_permission.users),
+                user_groups: Some(input.read_permission.user_groups),
                 resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
             })
             .await?;
 
-        self.access_policy_service
-            .edit_access_policy(EditAccessPolicyOperationInput {
-                auth_scope: Some(input.update_access_policy.auth_scope),
-                users: Some(input.update_access_policy.users),
-                user_groups: Some(input.update_access_policy.user_groups),
+        self.permission_service
+            .edit_permission(EditPermissionOperationInput {
+                auth_scope: Some(input.update_permission.auth_scope),
+                users: Some(input.update_permission.users),
+                user_groups: Some(input.update_permission.user_groups),
                 resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
             })
             .await?;
 
-        self.access_policy_service
-            .edit_access_policy(EditAccessPolicyOperationInput {
-                auth_scope: Some(input.transfer_access_policy.auth_scope),
-                users: Some(input.transfer_access_policy.users),
-                user_groups: Some(input.transfer_access_policy.user_groups),
+        self.permission_service
+            .edit_permission(EditPermissionOperationInput {
+                auth_scope: Some(input.transfer_permission.auth_scope),
+                users: Some(input.transfer_permission.users),
+                user_groups: Some(input.transfer_permission.user_groups),
                 resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
@@ -262,14 +262,14 @@ impl AccountService {
         if let Some(ApprovalCriteriaInput::Set(criteria)) = &input.update_approval_policy {
             criteria.validate()?;
         };
-        if let Some(access_policy) = &input.read_access_policy {
-            access_policy.validate()?;
+        if let Some(permission) = &input.read_permission {
+            permission.validate()?;
         };
-        if let Some(access_policy) = &input.update_access_policy {
-            access_policy.validate()?;
+        if let Some(permission) = &input.update_permission {
+            permission.validate()?;
         };
-        if let Some(access_policy) = &input.transfer_access_policy {
-            access_policy.validate()?;
+        if let Some(permission) = &input.transfer_permission {
+            permission.validate()?;
         };
 
         if let Some(transfer_approval_policy_input) = input.transfer_approval_policy {
@@ -299,12 +299,12 @@ impl AccountService {
             .insert(account.to_key(), account.to_owned());
 
         // Updates the access policies for the account.
-        if let Some(read_access_policy) = input.read_access_policy {
-            self.access_policy_service
-                .edit_access_policy(EditAccessPolicyOperationInput {
-                    auth_scope: Some(read_access_policy.auth_scope),
-                    users: Some(read_access_policy.users),
-                    user_groups: Some(read_access_policy.user_groups),
+        if let Some(read_permission) = input.read_permission {
+            self.permission_service
+                .edit_permission(EditPermissionOperationInput {
+                    auth_scope: Some(read_permission.auth_scope),
+                    users: Some(read_permission.users),
+                    user_groups: Some(read_permission.user_groups),
                     resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
                         account.id,
                     ))),
@@ -312,12 +312,12 @@ impl AccountService {
                 .await?;
         }
 
-        if let Some(update_access_policy) = input.update_access_policy {
-            self.access_policy_service
-                .edit_access_policy(EditAccessPolicyOperationInput {
-                    auth_scope: Some(update_access_policy.auth_scope),
-                    users: Some(update_access_policy.users),
-                    user_groups: Some(update_access_policy.user_groups),
+        if let Some(update_permission) = input.update_permission {
+            self.permission_service
+                .edit_permission(EditPermissionOperationInput {
+                    auth_scope: Some(update_permission.auth_scope),
+                    users: Some(update_permission.users),
+                    user_groups: Some(update_permission.user_groups),
                     resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                         account.id,
                     ))),
@@ -325,12 +325,12 @@ impl AccountService {
                 .await?;
         }
 
-        if let Some(transfer_access_policy) = input.transfer_access_policy {
-            self.access_policy_service
-                .edit_access_policy(EditAccessPolicyOperationInput {
-                    auth_scope: Some(transfer_access_policy.auth_scope),
-                    users: Some(transfer_access_policy.users),
-                    user_groups: Some(transfer_access_policy.user_groups),
+        if let Some(transfer_permission) = input.transfer_permission {
+            self.permission_service
+                .edit_permission(EditPermissionOperationInput {
+                    auth_scope: Some(transfer_permission.auth_scope),
+                    users: Some(transfer_permission.users),
+                    user_groups: Some(transfer_permission.user_groups),
                     resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                         account.id,
                     ))),
@@ -410,7 +410,7 @@ mod tests {
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation, CallContext},
         models::{
-            access_policy::Allow, account_test_utils::mock_account, criteria::Criteria,
+            account_test_utils::mock_account, criteria::Criteria, permission::Allow,
             specifier::UserSpecifier, user_test_utils::mock_user, AddAccountOperation,
             AddAccountOperationInput, Blockchain, BlockchainStandard, Metadata, User,
         },
@@ -461,9 +461,9 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                read_permission: Allow::users(vec![ctx.caller_user.id]),
+                update_permission: Allow::users(vec![ctx.caller_user.id]),
+                transfer_permission: Allow::users(vec![ctx.caller_user.id]),
                 update_approval_policy: Some(Criteria::AutoAdopted),
                 transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
@@ -492,9 +492,9 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                read_permission: Allow::users(vec![ctx.caller_user.id]),
+                update_permission: Allow::users(vec![ctx.caller_user.id]),
+                transfer_permission: Allow::users(vec![ctx.caller_user.id]),
                 update_approval_policy: Some(Criteria::AutoAdopted),
                 transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
@@ -516,9 +516,9 @@ mod tests {
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
             metadata: Metadata::default(),
-            read_access_policy: Allow::users(vec![ctx.caller_user.id]),
-            update_access_policy: Allow::users(vec![ctx.caller_user.id]),
-            transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+            read_permission: Allow::users(vec![ctx.caller_user.id]),
+            update_permission: Allow::users(vec![ctx.caller_user.id]),
+            transfer_permission: Allow::users(vec![ctx.caller_user.id]),
             update_approval_policy: Some(Criteria::AutoAdopted),
             transfer_approval_policy: Some(Criteria::AutoAdopted),
         };
@@ -527,27 +527,27 @@ mod tests {
 
         ctx.service
             .create_account(AddAccountOperationInput {
-                read_access_policy: Allow::users(vec![[5; 16]]),
+                read_permission: Allow::users(vec![[5; 16]]),
                 ..base_input.clone()
             })
             .await
-            .expect_err("read_access_policy should be invalid");
+            .expect_err("read_permission should be invalid");
 
         ctx.service
             .create_account(AddAccountOperationInput {
-                update_access_policy: Allow::users(vec![[5; 16]]),
+                update_permission: Allow::users(vec![[5; 16]]),
                 ..base_input.clone()
             })
             .await
-            .expect_err("update_access_policy should be invalid");
+            .expect_err("update_permission should be invalid");
 
         ctx.service
             .create_account(AddAccountOperationInput {
-                transfer_access_policy: Allow::users(vec![[5; 16]]),
+                transfer_permission: Allow::users(vec![[5; 16]]),
                 ..base_input.clone()
             })
             .await
-            .expect_err("transfer_access_policy should be invalid");
+            .expect_err("transfer_permission should be invalid");
 
         ctx.service
             .create_account(AddAccountOperationInput {
@@ -582,9 +582,9 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
-            read_access_policy: None,
-            transfer_access_policy: None,
-            update_access_policy: None,
+            read_permission: None,
+            transfer_permission: None,
+            update_permission: None,
             transfer_approval_policy: None,
             update_approval_policy: None,
         };
@@ -612,9 +612,9 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("bar".to_string()),
-            read_access_policy: None,
-            transfer_access_policy: None,
-            update_access_policy: None,
+            read_permission: None,
+            transfer_permission: None,
+            update_permission: None,
             transfer_approval_policy: None,
             update_approval_policy: None,
         };
@@ -634,9 +634,9 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::ERC20,
                 metadata: Metadata::default(),
-                read_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                update_access_policy: Allow::users(vec![ctx.caller_user.id]),
-                transfer_access_policy: Allow::users(vec![ctx.caller_user.id]),
+                read_permission: Allow::users(vec![ctx.caller_user.id]),
+                update_permission: Allow::users(vec![ctx.caller_user.id]),
+                transfer_permission: Allow::users(vec![ctx.caller_user.id]),
                 update_approval_policy: Some(Criteria::AutoAdopted),
                 transfer_approval_policy: Some(Criteria::AutoAdopted),
             },
@@ -660,9 +660,9 @@ mod tests {
         let base_input = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
-            read_access_policy: None,
-            transfer_access_policy: None,
-            update_access_policy: None,
+            read_permission: None,
+            transfer_permission: None,
+            update_permission: None,
             transfer_approval_policy: None,
             update_approval_policy: None,
         };
@@ -671,27 +671,27 @@ mod tests {
 
         ctx.service
             .edit_account(EditAccountOperationInput {
-                read_access_policy: Some(Allow::users(vec![[5; 16]])),
+                read_permission: Some(Allow::users(vec![[5; 16]])),
                 ..base_input.clone()
             })
             .await
-            .expect_err("read_access_policy should be invalid");
+            .expect_err("read_permission should be invalid");
 
         ctx.service
             .edit_account(EditAccountOperationInput {
-                update_access_policy: Some(Allow::users(vec![[5; 16]])),
+                update_permission: Some(Allow::users(vec![[5; 16]])),
                 ..base_input.clone()
             })
             .await
-            .expect_err("update_access_policy should be invalid");
+            .expect_err("update_permission should be invalid");
 
         ctx.service
             .edit_account(EditAccountOperationInput {
-                transfer_access_policy: Some(Allow::users(vec![[5; 16]])),
+                transfer_permission: Some(Allow::users(vec![[5; 16]])),
                 ..base_input.clone()
             })
             .await
-            .expect_err("transfer_access_policy should be invalid");
+            .expect_err("transfer_permission should be invalid");
 
         ctx.service
             .edit_account(EditAccountOperationInput {

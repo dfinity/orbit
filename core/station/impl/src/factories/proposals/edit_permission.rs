@@ -1,27 +1,27 @@
 use super::{Create, Execute, ProposalExecuteStage};
 use crate::{
     errors::{ProposalError, ProposalExecuteError},
-    models::{EditAccessPolicyOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
-    services::access_policy::AccessPolicyService,
+    models::{EditPermissionOperation, Proposal, ProposalExecutionPlan, ProposalOperation},
+    services::permission::PermissionService,
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
 use std::sync::Arc;
 
-pub struct EditAccessPolicyProposalCreate {}
+pub struct EditPermissionProposalCreate {}
 
-impl Create<station_api::EditAccessPolicyOperationInput> for EditAccessPolicyProposalCreate {
+impl Create<station_api::EditPermissionOperationInput> for EditPermissionProposalCreate {
     fn create(
         proposal_id: UUID,
         proposed_by_user: UUID,
         input: station_api::CreateProposalInput,
-        operation_input: station_api::EditAccessPolicyOperationInput,
+        operation_input: station_api::EditPermissionOperationInput,
     ) -> Result<Proposal, ProposalError> {
         let proposal = Proposal::new(
             proposal_id,
             proposed_by_user,
             Proposal::default_expiration_dt_ns(),
-            ProposalOperation::EditAccessPolicy(EditAccessPolicyOperation {
+            ProposalOperation::EditPermission(EditPermissionOperation {
                 input: operation_input.into(),
             }),
             input
@@ -30,7 +30,7 @@ impl Create<station_api::EditAccessPolicyOperationInput> for EditAccessPolicyPro
                 .unwrap_or(ProposalExecutionPlan::Immediate),
             input
                 .title
-                .unwrap_or_else(|| "Access policy update".to_string()),
+                .unwrap_or_else(|| "Permission update".to_string()),
             input.summary,
         );
 
@@ -38,17 +38,17 @@ impl Create<station_api::EditAccessPolicyOperationInput> for EditAccessPolicyPro
     }
 }
 
-pub struct EditAccessPolicyProposalExecute<'p, 'o> {
+pub struct EditPermissionProposalExecute<'p, 'o> {
     proposal: &'p Proposal,
-    operation: &'o EditAccessPolicyOperation,
-    policy_service: Arc<AccessPolicyService>,
+    operation: &'o EditPermissionOperation,
+    policy_service: Arc<PermissionService>,
 }
 
-impl<'p, 'o> EditAccessPolicyProposalExecute<'p, 'o> {
+impl<'p, 'o> EditPermissionProposalExecute<'p, 'o> {
     pub fn new(
         proposal: &'p Proposal,
-        operation: &'o EditAccessPolicyOperation,
-        policy_service: Arc<AccessPolicyService>,
+        operation: &'o EditPermissionOperation,
+        policy_service: Arc<PermissionService>,
     ) -> Self {
         Self {
             proposal,
@@ -59,13 +59,13 @@ impl<'p, 'o> EditAccessPolicyProposalExecute<'p, 'o> {
 }
 
 #[async_trait]
-impl Execute for EditAccessPolicyProposalExecute<'_, '_> {
+impl Execute for EditPermissionProposalExecute<'_, '_> {
     async fn execute(&self) -> Result<ProposalExecuteStage, ProposalExecuteError> {
         self.policy_service
-            .edit_access_policy(self.operation.input.to_owned())
+            .edit_permission(self.operation.input.to_owned())
             .await
             .map_err(|e| ProposalExecuteError::Failed {
-                reason: format!("Failed to update access policy: {}", e),
+                reason: format!("Failed to update permission: {}", e),
             })?;
 
         Ok(ProposalExecuteStage::Completed(
@@ -78,9 +78,9 @@ impl Execute for EditAccessPolicyProposalExecute<'_, '_> {
 mod tests {
     use super::*;
     use crate::{
-        models::access_policy::access_policy_test_utils::mock_access_policy,
-        repositories::{access_policy::ACCESS_POLICY_REPOSITORY, PROPOSAL_REPOSITORY},
-        services::access_policy::ACCESS_POLICY_SERVICE,
+        models::permission::permission_test_utils::mock_permission,
+        repositories::{permission::PERMISSION_REPOSITORY, PROPOSAL_REPOSITORY},
+        services::permission::PERMISSION_SERVICE,
     };
     use orbit_essentials::{model::ModelKey, repository::Repository};
 
@@ -88,12 +88,12 @@ mod tests {
     fn test_create_proposal() {
         let proposal_id = [0u8; 16];
         let proposed_by_user = [1u8; 16];
-        let operation_input = edit_access_policy_test_utils::mock_edit_access_policy_api_input();
-        let mut proposal_input = edit_access_policy_test_utils::mock_proposal_api_input();
+        let operation_input = edit_permission_test_utils::mock_edit_permission_api_input();
+        let mut proposal_input = edit_permission_test_utils::mock_proposal_api_input();
         proposal_input.operation =
-            station_api::ProposalOperationInput::EditAccessPolicy(operation_input.clone());
+            station_api::ProposalOperationInput::EditPermission(operation_input.clone());
 
-        let proposal = EditAccessPolicyProposalCreate::create(
+        let proposal = EditPermissionProposalCreate::create(
             proposal_id,
             proposed_by_user,
             proposal_input,
@@ -103,19 +103,19 @@ mod tests {
 
         assert_eq!(proposal.id, proposal_id);
         assert_eq!(proposal.proposed_by, proposed_by_user);
-        assert_eq!(proposal.title, "Access policy update".to_string());
+        assert_eq!(proposal.title, "Permission update".to_string());
     }
 
     #[tokio::test]
     async fn test_execute_proposal_completed() {
         let proposal_id = [0u8; 16];
         let proposed_by_user = [1u8; 16];
-        let operation_input = edit_access_policy_test_utils::mock_edit_access_policy_api_input();
-        let mut proposal_input = edit_access_policy_test_utils::mock_proposal_api_input();
+        let operation_input = edit_permission_test_utils::mock_edit_permission_api_input();
+        let mut proposal_input = edit_permission_test_utils::mock_proposal_api_input();
         proposal_input.operation =
-            station_api::ProposalOperationInput::EditAccessPolicy(operation_input.clone());
+            station_api::ProposalOperationInput::EditPermission(operation_input.clone());
 
-        let proposal = EditAccessPolicyProposalCreate::create(
+        let proposal = EditPermissionProposalCreate::create(
             proposal_id,
             proposed_by_user,
             proposal_input,
@@ -125,14 +125,14 @@ mod tests {
 
         PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.to_owned());
 
-        if let ProposalOperation::EditAccessPolicy(operation) = &proposal.operation {
-            let policy = mock_access_policy();
-            ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        if let ProposalOperation::EditPermission(operation) = &proposal.operation {
+            let policy = mock_permission();
+            PERMISSION_REPOSITORY.insert(policy.key(), policy.to_owned());
 
-            let stage = EditAccessPolicyProposalExecute::new(
+            let stage = EditPermissionProposalExecute::new(
                 &proposal,
                 operation,
-                Arc::clone(&ACCESS_POLICY_SERVICE),
+                Arc::clone(&PERMISSION_SERVICE),
             )
             .execute()
             .await
@@ -144,7 +144,7 @@ mod tests {
             }
         } else {
             panic!(
-                "Expected EditAccessPolicy operation, got {:?}",
+                "Expected EditPermission operation, got {:?}",
                 proposal.operation
             );
         }
@@ -152,13 +152,13 @@ mod tests {
 }
 
 #[cfg(test)]
-pub mod edit_access_policy_test_utils {
+pub mod edit_permission_test_utils {
     use uuid::Uuid;
 
-    pub fn mock_edit_access_policy_api_input() -> station_api::EditAccessPolicyOperationInput {
-        station_api::EditAccessPolicyOperationInput {
-            resource: station_api::ResourceDTO::AccessPolicy(
-                station_api::AccessPolicyResourceActionDTO::Read,
+    pub fn mock_edit_permission_api_input() -> station_api::EditPermissionOperationInput {
+        station_api::EditPermissionOperationInput {
+            resource: station_api::ResourceDTO::Permission(
+                station_api::PermissionResourceActionDTO::Read,
             ),
             auth_scope: None,
             user_groups: None,
@@ -168,8 +168,8 @@ pub mod edit_access_policy_test_utils {
 
     pub fn mock_proposal_api_input() -> station_api::CreateProposalInput {
         station_api::CreateProposalInput {
-            operation: station_api::ProposalOperationInput::EditAccessPolicy(
-                mock_edit_access_policy_api_input(),
+            operation: station_api::ProposalOperationInput::EditPermission(
+                mock_edit_permission_api_input(),
             ),
             title: None,
             summary: None,

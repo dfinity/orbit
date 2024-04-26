@@ -46,7 +46,7 @@ type ProposalSpecifier = variant {
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
-  EditAccessPolicy : ResourceSpecifier;
+  EditPermission : ResourceSpecifier;
   AddProposalPolicy;
   EditProposalPolicy : ResourceIds;
   RemoveProposalPolicy : ResourceIds;
@@ -220,7 +220,7 @@ type ListNotificationsResult = variant {
     // The list of notifications ordered by creation time (newest first).
     notifications : vec Notification;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -324,11 +324,11 @@ type EditAccountOperationInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
   // Who can read the account information.
-  read_access_policy : opt Allow;
+  read_permission : opt Allow;
   // Who can request updates to the account.
-  update_access_policy : opt Allow;
+  update_permission : opt Allow;
   // Who can request transfers from the account.
-  transfer_access_policy : opt Allow;
+  transfer_permission : opt Allow;
   // The approval policy for updates to the account.
   update_approval_policy : opt ApprovalPolicyCriteriaInput;
   // The approval policy for transfers from the account.
@@ -351,11 +351,11 @@ type AddAccountOperationInput = record {
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
   // Who can read the account information.
-  read_access_policy : Allow;
+  read_permission : Allow;
   // Who can request updates to the account.
-  update_access_policy : Allow;
+  update_permission : Allow;
   // Who can request transfers from the account.
-  transfer_access_policy : Allow;
+  transfer_permission : Allow;
   // The approval policy for updates to the account.
   update_approval_policy : opt ProposalPolicyCriteria;
   // The approval policy for transfers from the account.
@@ -529,7 +529,7 @@ type ChangeCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type EditAccessPolicyOperationInput = record {
+type EditPermissionOperationInput = record {
   // The updated resource that this policy will apply to.
   resource : Resource;
   // The updated authorization scope for the resource.
@@ -540,9 +540,9 @@ type EditAccessPolicyOperationInput = record {
   user_groups : opt vec UUID;
 };
 
-type EditAccessPolicyOperation = record {
-  // The input to the proposal to edit an access policy.
-  input : EditAccessPolicyOperationInput;
+type EditPermissionOperation = record {
+  // The input to the proposal to edit an permission.
+  input : EditPermissionOperationInput;
 };
 
 type AddProposalPolicyOperationInput = record {
@@ -608,8 +608,8 @@ type ProposalOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperation;
-  // An operation for editing an access policy.
-  EditAccessPolicy : EditAccessPolicyOperation;
+  // An operation for editing an permission.
+  EditPermission : EditPermissionOperation;
   // An operation for adding a proposal policy.
   AddProposalPolicy : AddProposalPolicyOperation;
   // An operation for editing a proposal policy.
@@ -643,8 +643,8 @@ type ProposalOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperationInput;
-  // An operation for editing an access policy.
-  EditAccessPolicy : EditAccessPolicyOperationInput;
+  // An operation for editing an permission.
+  EditPermission : EditPermissionOperationInput;
   // An operation for adding a proposal policy.
   AddProposalPolicy : AddProposalPolicyOperationInput;
   // An operation for editing a proposal policy.
@@ -678,8 +678,8 @@ type ProposalOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for editing an access policy.
-  EditAccessPolicy;
+  // An operation for editing an permission.
+  EditPermission;
   // An operation for adding a proposal policy.
   AddProposalPolicy;
   // An operation for editing a proposal policy.
@@ -766,7 +766,7 @@ type CreateProposalResult = variant {
     // The additional info about the proposal.
     additional_info : ProposalAdditionalInfo;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -795,8 +795,8 @@ type ListProposalsOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for editing an access policy.
-  EditAccessPolicy;
+  // An operation for editing an permission.
+  EditPermission;
   // An operation for adding a proposal policy.
   AddProposalPolicy;
   // An operation for editing a proposal policy.
@@ -866,7 +866,7 @@ type ListProposalsResult = variant {
     // The additional info about the proposals.
     additional_info : vec ProposalAdditionalInfo;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -889,7 +889,7 @@ type GetProposalResultData = record {
 type GetProposalResult = variant {
   // The result data for a successful execution.
   Ok : GetProposalResultData;
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -905,7 +905,7 @@ type GetNextVotableProposalInput = record {
 type GetNextVotableProposalResponse = variant {
   // The result data for a successful execution.
   Ok : opt GetProposalResultData;
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -997,7 +997,7 @@ type ListAccountTransfersResult = variant {
     // The list of transfers.
     transfers : vec TransferListItem;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1044,7 +1044,7 @@ type User = record {
   status : UserStatus;
   // The list of groups the user belongs to.
   //
-  // Users can be tagged with groups that can be used to control access to the station
+  // Users can be tagged with groups that can be used to control access to resources.
   groups : vec UserGroup;
   // The principals associated with the user.
   identities : vec principal;
@@ -1139,7 +1139,7 @@ type GetTransfersResult = variant {
     // The transfer that was retrieved.
     transfers : vec Transfer;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1220,7 +1220,7 @@ type GetAccountResult = variant {
     // The privileges of the caller for the account.
     privileges : AccountCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1248,7 +1248,7 @@ type FetchAccountBalancesResult = variant {
     // The account balance that was retrieved.
     balances : vec AccountBalance;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1305,7 +1305,7 @@ type GetAddressBookEntryResult = variant {
     // The privileges of the caller for the address book entry.
     privileges : AddressBookEntryCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1340,7 +1340,7 @@ type ListAddressBookEntriesResult = variant {
     // The privileges of the caller for the address book entries.
     privileges : vec AddressBookEntryCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1385,7 +1385,7 @@ type CapabilitiesResult = variant {
     // The config.
     capabilities : Capabilities;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1429,7 +1429,7 @@ type GetUserResult = variant {
     // The caller privileges for the user.
     privileges : UserCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1456,7 +1456,7 @@ type ListUsersResult = variant {
     // The privileges of the caller.
     privileges : vec UserCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1547,8 +1547,8 @@ type UserResourceAction = variant {
   Update : ResourceId;
 };
 
-// The actions that are available for access policies.
-type AccessPolicyResourceAction = variant {
+// The actions that are available for permissions.
+type PermissionResourceAction = variant {
   Read;
   Update;
 };
@@ -1559,9 +1559,9 @@ type TransferSpecifier = record {
   account : CommonSpecifier;
 };
 
-// The access control resource, used to specify the resource that is being accessed.
+// The Resource is used to specify what is being accessed.
 type Resource = variant {
-  AccessPolicy : AccessPolicyResourceAction;
+  Permission : PermissionResourceAction;
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
@@ -1572,25 +1572,24 @@ type Resource = variant {
   UserGroup : ResourceAction;
 };
 
-// A record type that can be used to represent the caller privileges for a given access policy.
-type AccessPolicyCallerPrivileges = record {
+// A record type that can be used to represent the caller privileges for a given permission.
+type PermissionCallerPrivileges = record {
   // The resource that the caller has privileges for.
   resource : Resource;
   // Wether or not the caller can edit the resource.
   can_edit : bool;
 };
 
-// The access control policy, used to specify the access control rules for
-// users when interacting with resources.
-type AccessPolicy = record {
+// The permission, used to specify the rules for users when interacting with resources.
+type Permission = record {
   // The allowed users and user groups for the resource.
   allow : Allow;
-  // The resource that the access policy is for.
+  // The resource that the permission is for.
   resource : Resource;
 };
 
-// Input type for listing access policies with the given pagination parameters.
-type ListAccessPoliciesInput = record {
+// Input type for listing permissions with the given pagination parameters.
+type ListPermissionsInput = record {
   // The resources to retrieve policies for.
   resources : opt vec Resource;
   // The pagination parameters.
@@ -1615,41 +1614,41 @@ type DisplayUser = record {
   name : opt text;
 };
 
-// Result type for listing access policies.
-type ListAccessPoliciesResult = variant {
+// Result type for listing permissions.
+type ListPermissionsResult = variant {
   // The result data for a successful execution.
   Ok : record {
-    // The list of access policies.
-    policies : vec AccessPolicy;
-    // The user groups that are associated with returned access policies.
+    // The list of permissions.
+    permissions : vec Permission;
+    // The user groups that are associated with returned permissions.
     user_groups : vec UserGroup;
-    // The users that are associated with returned access policies.
+    // The users that are associated with returned permissions.
     users : vec BasicUser;
     // The offset to use for the next page.
     next_offset : opt nat64;
-    // The total number of access policies.
+    // The total number of permissions.
     total : nat64;
-    // The caller privileges for the access policies.
-    privileges : vec AccessPolicyCallerPrivileges;
+    // The caller privileges for the permissions.
+    privileges : vec PermissionCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
-type GetAccessPolicyInput = record {
+type GetPermissionInput = record {
   // The resource to retrive policies for.
   resource : Resource;
 };
 
-type GetAccessPolicyResult = variant {
+type GetPermissionResult = variant {
   // The result data for a successful execution.
   Ok : record {
-    // The access policy that was retrieved.
-    policy : AccessPolicy;
-    // The privileges of the caller for the access policy.
-    privileges : AccessPolicyCallerPrivileges;
+    // The permission that was retrieved.
+    permission : Permission;
+    // The privileges of the caller for the permission.
+    privileges : PermissionCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1690,7 +1689,7 @@ type GetUserGroupResult = variant {
     // The caller privileges for the user group.
     privileges : UserGroupCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1707,7 +1706,7 @@ type GetProposalPolicyResult = variant {
     // The privileges of the caller for the proposal policy.
     privileges : ProposalPolicyCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1727,7 +1726,7 @@ type ListProposalPoliciesResult = variant {
     // The caller privileges for the proposal policies.
     privileges : vec ProposalPolicyCallerPrivileges;
   };
-  // The error that occurred (e.g. the user does not have the necessary access rights).
+  // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
@@ -1741,7 +1740,7 @@ type UserPrivilege = variant {
   AddUser;
   ListUserGroups;
   AddUserGroup;
-  ListAccessPolicies;
+  ListPermissions;
   ListProposalPolicies;
   AddProposalPolicy;
   ListAddressBookEntries;
@@ -1860,10 +1859,10 @@ service : (opt SystemInstall) -> {
   get_user : (input : GetUserInput) -> (GetUserResult) query;
   // List all users of the station.
   list_users : (input : ListUsersInput) -> (ListUsersResult) query;
-  // List all access policies.
-  list_access_policies : (input : ListAccessPoliciesInput) -> (ListAccessPoliciesResult) query;
-  // Get access control policy.
-  get_access_policy : (input : GetAccessPolicyInput) -> (GetAccessPolicyResult) query;
+  // List all permissions.
+  list_permissions : (input : ListPermissionsInput) -> (ListPermissionsResult) query;
+  // Get the permission for the resource provided.
+  get_permission : (input : GetPermissionInput) -> (GetPermissionResult) query;
   // List add proposal policies.
   list_proposal_policies : (input : ListProposalPoliciesInput) -> (ListProposalPoliciesResult) query;
   // Get proposal policy by id.

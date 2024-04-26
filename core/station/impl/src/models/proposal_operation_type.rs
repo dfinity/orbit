@@ -16,7 +16,7 @@ pub enum ProposalOperationType {
     EditUserGroup = 7,
     RemoveUserGroup = 8,
     ChangeCanister = 9,
-    EditAccessPolicy = 11,
+    EditPermission = 11,
     AddProposalPolicy = 13,
     EditProposalPolicy = 14,
     RemoveProposalPolicy = 15,
@@ -42,7 +42,7 @@ impl FromStr for ProposalOperationType {
             "edit_user_group" => Ok(ProposalOperationType::EditUserGroup),
             "remove_user_group" => Ok(ProposalOperationType::RemoveUserGroup),
             "change_canister" => Ok(ProposalOperationType::ChangeCanister),
-            "edit_access_policy" => Ok(ProposalOperationType::EditAccessPolicy),
+            "edit_permission" => Ok(ProposalOperationType::EditPermission),
             "add_proposal_policy" => Ok(ProposalOperationType::AddProposalPolicy),
             "edit_proposal_policy" => Ok(ProposalOperationType::EditProposalPolicy),
             "remove_proposal_policy" => Ok(ProposalOperationType::RemoveProposalPolicy),
@@ -66,7 +66,7 @@ impl Display for ProposalOperationType {
             ProposalOperationType::EditUserGroup => write!(f, "edit_user_group"),
             ProposalOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
             ProposalOperationType::ChangeCanister => write!(f, "change_canister"),
-            ProposalOperationType::EditAccessPolicy => write!(f, "edit_access_policy"),
+            ProposalOperationType::EditPermission => write!(f, "edit_permission"),
             ProposalOperationType::AddProposalPolicy => write!(f, "add_proposal_policy"),
             ProposalOperationType::EditProposalPolicy => write!(f, "edit_proposal_policy"),
             ProposalOperationType::RemoveProposalPolicy => write!(f, "remove_proposal_policy"),
@@ -161,8 +161,8 @@ mod tests {
             ProposalOperationType::ChangeCanister
         );
         assert_eq!(
-            ProposalOperationType::from_str("edit_access_policy").unwrap(),
-            ProposalOperationType::EditAccessPolicy
+            ProposalOperationType::from_str("edit_permission").unwrap(),
+            ProposalOperationType::EditPermission
         );
         assert_eq!(
             ProposalOperationType::from_str("add_proposal_policy").unwrap(),

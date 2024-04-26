@@ -78,7 +78,7 @@ pub enum ProposalSpecifier {
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
     ChangeCanister,
-    EditAccessPolicy(ResourceSpecifier),
+    EditPermission(ResourceSpecifier),
     AddProposalPolicy,
     EditProposalPolicy(ResourceIds),
     RemoveProposalPolicy(ResourceIds),
@@ -108,7 +108,7 @@ impl ModelValidator<RecordValidationError> for ProposalSpecifier {
             | ProposalSpecifier::EditAddressBookEntry(resource_ids) => {
                 EnsureAddressBookEntry::resource_ids_exist(resource_ids)
             }
-            ProposalSpecifier::EditAccessPolicy(resource_specifier) => match resource_specifier {
+            ProposalSpecifier::EditPermission(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => Ok(()),
                 ResourceSpecifier::Resource(resource) => resource.validate(),
             },
@@ -140,7 +140,7 @@ impl From<&ProposalSpecifier> for ProposalOperationType {
                 ProposalOperationType::RemoveAddressBookEntry
             }
             ProposalSpecifier::Transfer(_) => ProposalOperationType::Transfer,
-            ProposalSpecifier::EditAccessPolicy(_) => ProposalOperationType::EditAccessPolicy,
+            ProposalSpecifier::EditPermission(_) => ProposalOperationType::EditPermission,
             ProposalSpecifier::ChangeCanister => ProposalOperationType::ChangeCanister,
             ProposalSpecifier::AddProposalPolicy => ProposalOperationType::AddProposalPolicy,
             ProposalSpecifier::EditProposalPolicy(_) => ProposalOperationType::EditProposalPolicy,
@@ -297,8 +297,8 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             (ProposalOperation::ChangeCanister(_), ProposalSpecifier::ChangeCanister) => true,
             (ProposalOperation::AddUserGroup(_), ProposalSpecifier::AddUserGroup) => true,
             (
-                ProposalOperation::EditAccessPolicy(operation),
-                ProposalSpecifier::EditAccessPolicy(specifier),
+                ProposalOperation::EditPermission(operation),
+                ProposalSpecifier::EditPermission(specifier),
             ) => match specifier {
                 ResourceSpecifier::Any => true,
                 ResourceSpecifier::Resource(resource) => resource == operation.input.resource,
@@ -339,7 +339,7 @@ impl Match<(Proposal, ProposalSpecifier)> for ProposalMatcher {
             | (ProposalOperation::ChangeCanister(_), _)
             | (ProposalOperation::AddProposalPolicy(_), _)
             | (ProposalOperation::EditProposalPolicy(_), _)
-            | (ProposalOperation::EditAccessPolicy(_), _)
+            | (ProposalOperation::EditPermission(_), _)
             | (ProposalOperation::EditUserGroup(_), _)
             | (ProposalOperation::RemoveUserGroup(_), _)
             | (ProposalOperation::RemoveProposalPolicy(_), _)
@@ -385,8 +385,8 @@ mod tests {
     use crate::{
         core::validation::disable_mock_resource_validation,
         models::{
-            access_policy::Allow,
             criteria::Criteria,
+            permission::Allow,
             proposal_test_utils::mock_proposal,
             resource::ResourceIds,
             specifier::{
@@ -424,9 +424,9 @@ mod tests {
                         metadata: Metadata::default(),
                         transfer_approval_policy: Some(Criteria::AutoAdopted),
                         update_approval_policy: Some(Criteria::AutoAdopted),
-                        read_access_policy: Allow::authenticated(),
-                        update_access_policy: Allow::authenticated(),
-                        transfer_access_policy: Allow::authenticated(),
+                        read_permission: Allow::authenticated(),
+                        update_permission: Allow::authenticated(),
+                        transfer_permission: Allow::authenticated(),
                     },
                 }),
                 ProposalSpecifier::AddAccount,
@@ -448,9 +448,9 @@ mod tests {
                     input: EditAccountOperationInput {
                         account_id: [0; 16],
                         name: None,
-                        read_access_policy: None,
-                        update_access_policy: None,
-                        transfer_access_policy: None,
+                        read_permission: None,
+                        update_permission: None,
+                        transfer_permission: None,
                         transfer_approval_policy: None,
                         update_approval_policy: None,
                     },

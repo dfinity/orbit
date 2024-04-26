@@ -244,13 +244,13 @@ mod tests {
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation},
         models::{
-            access_policy::AuthScope,
+            permission::AuthScope,
             user_group_test_utils::mock_user_group,
             user_test_utils::{self, mock_user},
-            EditAccessPolicyOperationInput, UserStatus,
+            EditPermissionOperationInput, UserStatus,
         },
         repositories::{UserGroupRepository, USER_REPOSITORY},
-        services::access_policy::ACCESS_POLICY_SERVICE,
+        services::permission::PERMISSION_SERVICE,
     };
     use station_api::PaginationInput;
 
@@ -538,8 +538,8 @@ mod tests {
 
         let ctx = CallContext::new(user.identities[0]);
 
-        ACCESS_POLICY_SERVICE
-            .edit_access_policy(EditAccessPolicyOperationInput {
+        PERMISSION_SERVICE
+            .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Restricted),
                 user_groups: None,
                 users: Some(vec![user.id]),
@@ -547,8 +547,8 @@ mod tests {
             })
             .await
             .unwrap();
-        ACCESS_POLICY_SERVICE
-            .edit_access_policy(EditAccessPolicyOperationInput {
+        PERMISSION_SERVICE
+            .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Authenticated),
                 user_groups: None,
                 users: Some(Vec::new()),

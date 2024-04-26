@@ -1,10 +1,9 @@
-use candid::{CandidType, Deserialize};
-
 use crate::UuidDTO;
+use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceDTO {
-    AccessPolicy(AccessPolicyResourceActionDTO),
+    Permission(PermissionResourceActionDTO),
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
     ChangeCanister(ChangeCanisterResourceActionDTO),
@@ -37,7 +36,7 @@ pub enum ResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum AccessPolicyResourceActionDTO {
+pub enum PermissionResourceActionDTO {
     Read,
     Update,
 }

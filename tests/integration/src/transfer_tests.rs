@@ -37,17 +37,17 @@ fn make_transfer_successful() {
         name: "test".to_string(),
         blockchain: "icp".to_string(),
         standard: "native".to_string(),
-        read_access_policy: AllowDTO {
+        read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
-        update_access_policy: AllowDTO {
+        update_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
-        transfer_access_policy: AllowDTO {
+        transfer_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],

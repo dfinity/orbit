@@ -12,7 +12,7 @@ pub enum ProposalSpecifierDTO {
     RemoveAddressBookEntry(ResourceIdsDTO),
     Transfer(ResourceIdsDTO),
     ChangeCanister,
-    EditAccessPolicy(ResourceSpecifierDTO),
+    EditPermission(ResourceSpecifierDTO),
     AddProposalPolicy,
     EditProposalPolicy(ResourceIdsDTO),
     RemoveProposalPolicy(ResourceIdsDTO),

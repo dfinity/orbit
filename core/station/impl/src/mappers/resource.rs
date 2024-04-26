@@ -1,10 +1,9 @@
-use uuid::Uuid;
-
 use crate::models::resource::{
-    AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+    AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
     ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
     UserResourceAction,
 };
+use uuid::Uuid;
 
 use super::HelperMapper;
 
@@ -13,7 +12,7 @@ impl From<station_api::ResourceDTO> for Resource {
         match dto {
             station_api::ResourceDTO::User(action) => Resource::User(action.into()),
             station_api::ResourceDTO::Account(action) => Resource::Account(action.into()),
-            station_api::ResourceDTO::AccessPolicy(action) => Resource::AccessPolicy(action.into()),
+            station_api::ResourceDTO::Permission(action) => Resource::Permission(action.into()),
             station_api::ResourceDTO::ProposalPolicy(action) => {
                 Resource::ProposalPolicy(action.into())
             }
@@ -33,7 +32,7 @@ impl From<Resource> for station_api::ResourceDTO {
         match resource {
             Resource::User(action) => station_api::ResourceDTO::User(action.into()),
             Resource::Account(action) => station_api::ResourceDTO::Account(action.into()),
-            Resource::AccessPolicy(action) => station_api::ResourceDTO::AccessPolicy(action.into()),
+            Resource::Permission(action) => station_api::ResourceDTO::Permission(action.into()),
             Resource::ProposalPolicy(action) => {
                 station_api::ResourceDTO::ProposalPolicy(action.into())
             }
@@ -96,24 +95,20 @@ impl From<ResourceAction> for station_api::ResourceActionDTO {
     }
 }
 
-impl From<station_api::AccessPolicyResourceActionDTO> for AccessPolicyResourceAction {
-    fn from(dto: station_api::AccessPolicyResourceActionDTO) -> Self {
+impl From<station_api::PermissionResourceActionDTO> for PermissionResourceAction {
+    fn from(dto: station_api::PermissionResourceActionDTO) -> Self {
         match dto {
-            station_api::AccessPolicyResourceActionDTO::Read => AccessPolicyResourceAction::Read,
-            station_api::AccessPolicyResourceActionDTO::Update => {
-                AccessPolicyResourceAction::Update
-            }
+            station_api::PermissionResourceActionDTO::Read => PermissionResourceAction::Read,
+            station_api::PermissionResourceActionDTO::Update => PermissionResourceAction::Update,
         }
     }
 }
 
-impl From<AccessPolicyResourceAction> for station_api::AccessPolicyResourceActionDTO {
-    fn from(action: AccessPolicyResourceAction) -> Self {
+impl From<PermissionResourceAction> for station_api::PermissionResourceActionDTO {
+    fn from(action: PermissionResourceAction) -> Self {
         match action {
-            AccessPolicyResourceAction::Read => station_api::AccessPolicyResourceActionDTO::Read,
-            AccessPolicyResourceAction::Update => {
-                station_api::AccessPolicyResourceActionDTO::Update
-            }
+            PermissionResourceAction::Read => station_api::PermissionResourceActionDTO::Read,
+            PermissionResourceAction::Update => station_api::PermissionResourceActionDTO::Update,
         }
     }
 }

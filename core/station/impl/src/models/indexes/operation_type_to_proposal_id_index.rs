@@ -68,8 +68,8 @@ impl Proposal {
                 operation_type: ProposalOperationFilterType::ChangeCanister,
                 proposal_id: self.id,
             }],
-            ProposalOperation::EditAccessPolicy(_) => vec![OperationTypeToProposalIdIndex {
-                operation_type: ProposalOperationFilterType::EditAccessPolicy,
+            ProposalOperation::EditPermission(_) => vec![OperationTypeToProposalIdIndex {
+                operation_type: ProposalOperationFilterType::EditPermission,
                 proposal_id: self.id,
             }],
             ProposalOperation::AddProposalPolicy(_) => vec![OperationTypeToProposalIdIndex {

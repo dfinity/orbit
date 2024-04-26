@@ -420,9 +420,9 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            access_policy::Allow,
             account_test_utils::mock_account,
             criteria::{Criteria, Percentage},
+            permission::Allow,
             proposal_policy_test_utils::mock_proposal_policy,
             proposal_test_utils::mock_proposal,
             resource::ResourceIds,
@@ -756,9 +756,9 @@ mod tests {
                     Percentage(100),
                 )),
                 update_approval_policy: Some(Criteria::AutoAdopted),
-                read_access_policy: Allow::users(account_owners.clone()),
-                update_access_policy: Allow::users(account_owners.clone()),
-                transfer_access_policy: Allow::users(account_owners.clone()),
+                read_permission: Allow::users(account_owners.clone()),
+                update_permission: Allow::users(account_owners.clone()),
+                transfer_permission: Allow::users(account_owners.clone()),
             })
             .await
             .expect("Failed to create account");
@@ -938,12 +938,12 @@ mod benchs {
     use crate::{
         core::ic_cdk::spawn,
         models::{
-            access_policy::{AccessPolicy, Allow},
+            permission::{Allow, Permission},
             proposal_test_utils::mock_proposal,
             user_test_utils::mock_user,
             UserStatus,
         },
-        repositories::{access_policy::ACCESS_POLICY_REPOSITORY, USER_REPOSITORY},
+        repositories::{permission::PERMISSION_REPOSITORY, USER_REPOSITORY},
     };
     use canbench_rs::{bench, BenchResult};
     use candid::Principal;
@@ -976,13 +976,13 @@ mod benchs {
             users.push(user);
         }
 
-        // adding some access policies since the filter will check for access
-        let access_policy = AccessPolicy::new(
+        // adding some permissions since the filter will check for access
+        let permission = Permission::new(
             Allow::users(users.iter().map(|u| u.id).collect()),
             Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(access_policy.key(), access_policy.to_owned());
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.to_owned());
 
         end_creation_time
     }

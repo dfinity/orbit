@@ -6,7 +6,7 @@ use crate::utils::{
 use crate::TestEnv;
 use station_api::{
     AddProposalPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    CriteriaDTO, EditAccessPolicyOperationInput, MinimumVotesDTO, ProposalOperationInput,
+    CriteriaDTO, EditPermissionOperationInput, MinimumVotesDTO, ProposalOperationInput,
     ProposalSpecifierDTO, UserSpecifierDTO,
 };
 
@@ -36,20 +36,19 @@ fn successful_four_eyes_upgrade() {
     .unwrap();
 
     // allow anyone to create change canister proposals
-    let add_access_policy =
-        ProposalOperationInput::EditAccessPolicy(EditAccessPolicyOperationInput {
-            resource: station_api::ResourceDTO::ChangeCanister(
-                station_api::ChangeCanisterResourceActionDTO::Create,
-            ),
-            auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
-            user_groups: None,
-            users: None,
-        });
+    let add_permission = ProposalOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: station_api::ResourceDTO::ChangeCanister(
+            station_api::ChangeCanisterResourceActionDTO::Create,
+        ),
+        auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
     execute_proposal(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        add_access_policy,
+        add_permission,
     )
     .unwrap();
 

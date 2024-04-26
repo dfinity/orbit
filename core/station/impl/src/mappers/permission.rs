@@ -1,6 +1,6 @@
 use super::HelperMapper;
 use crate::models::{
-    access_policy::{AccessPolicy, Allow, AuthScope},
+    permission::{Allow, AuthScope, Permission},
     resource::ResourceIds,
 };
 use orbit_essentials::types::UUID;
@@ -100,9 +100,9 @@ impl From<ResourceIds> for station_api::ResourceIdsDTO {
     }
 }
 
-impl From<AccessPolicy> for station_api::AccessPolicyDTO {
-    fn from(policy: AccessPolicy) -> Self {
-        station_api::AccessPolicyDTO {
+impl From<Permission> for station_api::PermissionDTO {
+    fn from(policy: Permission) -> Self {
+        station_api::PermissionDTO {
             resource: policy.resource.into(),
             allow: policy.allow.into(),
         }

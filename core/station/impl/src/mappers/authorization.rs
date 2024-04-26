@@ -3,7 +3,7 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         resource::{
-            AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+            AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
             ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
             UserResourceAction,
         },
@@ -22,7 +22,7 @@ pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
     UserPrivilege::AddAccount,
-    UserPrivilege::ListAccessPolicies,
+    UserPrivilege::ListPermissions,
     UserPrivilege::ListProposalPolicies,
     UserPrivilege::AddProposalPolicy,
     UserPrivilege::ListUserGroups,
@@ -42,9 +42,7 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::AddUser => Resource::User(UserResourceAction::Create),
             UserPrivilege::ListAccounts => Resource::Account(AccountResourceAction::List),
             UserPrivilege::AddAccount => Resource::Account(AccountResourceAction::Create),
-            UserPrivilege::ListAccessPolicies => {
-                Resource::AccessPolicy(AccessPolicyResourceAction::Read)
-            }
+            UserPrivilege::ListPermissions => Resource::Permission(PermissionResourceAction::Read),
             UserPrivilege::ListProposalPolicies => Resource::ProposalPolicy(ResourceAction::List),
             UserPrivilege::AddProposalPolicy => Resource::ProposalPolicy(ResourceAction::Create),
             UserPrivilege::ListUserGroups => Resource::UserGroup(ResourceAction::List),
@@ -202,8 +200,8 @@ impl From<&station_api::CreateProposalInput> for Resource {
             ProposalOperationInput::ChangeCanister(_) => {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
-            ProposalOperationInput::EditAccessPolicy(_) => {
-                Resource::AccessPolicy(AccessPolicyResourceAction::Update)
+            ProposalOperationInput::EditPermission(_) => {
+                Resource::Permission(PermissionResourceAction::Update)
             }
             ProposalOperationInput::AddProposalPolicy(_) => {
                 Resource::ProposalPolicy(ResourceAction::Create)

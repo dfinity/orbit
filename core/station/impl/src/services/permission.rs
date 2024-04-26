@@ -4,100 +4,99 @@ use crate::{
         validation::{EnsureIdExists, EnsureUser, EnsureUserGroup},
     },
     models::{
-        access_policy::{AccessPolicy, Allow},
+        permission::{Allow, Permission},
         resource::Resource,
-        EditAccessPolicyOperationInput, User, UserGroup,
+        EditPermissionOperationInput, User, UserGroup,
     },
-    repositories::access_policy::{AccessPolicyRepository, ACCESS_POLICY_REPOSITORY},
+    repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY},
     services::{UserGroupService, UserService, USER_GROUP_SERVICE, USER_SERVICE},
 };
 use candid::CandidType;
 use lazy_static::lazy_static;
 use orbit_essentials::{api::ServiceResult, model::ModelKey};
 use orbit_essentials::{model::ModelValidator, repository::Repository};
-use station_api::ListAccessPoliciesInput;
+use station_api::ListPermissionsInput;
 use std::{collections::HashSet, sync::Arc};
 
 lazy_static! {
-    pub static ref ACCESS_POLICY_SERVICE: Arc<AccessPolicyService> =
-        Arc::new(AccessPolicyService::new(
-            Arc::clone(&ACCESS_POLICY_REPOSITORY),
-            Arc::clone(&USER_SERVICE),
-            Arc::clone(&USER_GROUP_SERVICE)
-        ));
+    pub static ref PERMISSION_SERVICE: Arc<PermissionService> = Arc::new(PermissionService::new(
+        Arc::clone(&PERMISSION_REPOSITORY),
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&USER_GROUP_SERVICE)
+    ));
 }
 
 #[derive(Clone, CandidType)]
-pub struct AccessPolicyDependenciesResponse {
+pub struct PermissionDependenciesResponse {
     pub groups: Vec<UserGroup>,
     pub users: Vec<User>,
 }
 
 #[derive(Default, Debug)]
-pub struct AccessPolicyService {
-    access_policy_repository: Arc<AccessPolicyRepository>,
+pub struct PermissionService {
+    permission_repository: Arc<PermissionRepository>,
     user_service: Arc<UserService>,
     user_group_service: Arc<UserGroupService>,
 }
 
-impl AccessPolicyService {
+impl PermissionService {
     pub const DEFAULT_POLICIES_LIMIT: u16 = 100;
     pub const MAX_LIST_POLICIES_LIMIT: u16 = 1000;
 
     pub fn new(
-        access_policy_repository: Arc<AccessPolicyRepository>,
+        permission_repository: Arc<PermissionRepository>,
         user_service: Arc<UserService>,
         user_group_service: Arc<UserGroupService>,
     ) -> Self {
         Self {
-            access_policy_repository,
+            permission_repository,
             user_service,
             user_group_service,
         }
     }
 
-    pub fn get_access_policy(&self, resource: &Resource) -> AccessPolicy {
-        self.access_policy_repository
+    pub fn get_permission(&self, resource: &Resource) -> Permission {
+        self.permission_repository
             .get(resource)
-            .unwrap_or_else(|| AccessPolicy::new(Allow::default(), resource.clone()))
+            .unwrap_or_else(|| Permission::new(Allow::default(), resource.clone()))
     }
 
-    pub async fn edit_access_policy(
+    pub async fn edit_permission(
         &self,
-        input: EditAccessPolicyOperationInput,
-    ) -> ServiceResult<AccessPolicy> {
+        input: EditPermissionOperationInput,
+    ) -> ServiceResult<Permission> {
         input.resource.validate()?;
 
-        let mut access_policy = self.get_access_policy(&input.resource);
+        let mut permission = self.get_permission(&input.resource);
 
         if let Some(scope) = input.auth_scope {
-            access_policy.allow.auth_scope = scope;
+            permission.allow.auth_scope = scope;
         }
         if let Some(users) = input.users {
             EnsureUser::id_list_exists(&users)?;
-            access_policy.allow.users = users;
+            permission.allow.users = users;
         }
         if let Some(user_groups) = input.user_groups {
             EnsureUserGroup::id_list_exists(&user_groups)?;
-            access_policy.allow.user_groups = user_groups;
+            permission.allow.user_groups = user_groups;
         }
 
-        self.access_policy_repository
-            .insert(access_policy.key(), access_policy.to_owned());
+        self.permission_repository
+            .insert(permission.key(), permission.to_owned());
 
-        Ok(access_policy)
+        Ok(permission)
     }
 
-    pub async fn list_access_policies(
+    pub async fn list_permissions(
         &self,
-        input: ListAccessPoliciesInput,
-    ) -> ServiceResult<PaginatedData<AccessPolicy>> {
+        input: ListPermissionsInput,
+    ) -> ServiceResult<PaginatedData<Permission>> {
         let policies = match input.resources {
             Some(resources) => resources
                 .into_iter()
-                .map(|r| self.get_access_policy(&r.into()))
+                .map(|r| self.get_permission(&r.into()))
                 .collect::<_>(),
-            None => self.access_policy_repository.list(),
+            None => self.permission_repository.list(),
         };
 
         let result = paginated_items(PaginatedItemsArgs {
@@ -111,10 +110,10 @@ impl AccessPolicyService {
         Ok(result)
     }
 
-    pub fn get_access_policies_dependencies(
+    pub fn get_permissions_dependencies(
         &self,
-        policies: &Vec<AccessPolicy>,
-    ) -> ServiceResult<AccessPolicyDependenciesResponse> {
+        policies: &Vec<Permission>,
+    ) -> ServiceResult<PermissionDependenciesResponse> {
         let mut user_ids = HashSet::new();
         let mut group_ids = HashSet::new();
         for policy in policies {
@@ -136,7 +135,7 @@ impl AccessPolicyService {
             }
         });
 
-        Ok(AccessPolicyDependenciesResponse { groups, users })
+        Ok(PermissionDependenciesResponse { groups, users })
     }
 }
 
@@ -146,7 +145,7 @@ mod tests {
     use crate::{
         core::validation::disable_mock_resource_validation,
         models::{
-            access_policy::{access_policy_test_utils::mock_access_policy, AuthScope},
+            permission::{permission_test_utils::mock_permission, AuthScope},
             resource::{AccountResourceAction, ProposalResourceAction, ResourceId},
             user_group_test_utils::mock_user_group,
             user_test_utils::mock_user,
@@ -155,10 +154,10 @@ mod tests {
     };
 
     #[tokio::test]
-    async fn test_access_policy_operations() {
-        let service = ACCESS_POLICY_SERVICE.clone();
+    async fn test_permission_operations() {
+        let service = PERMISSION_SERVICE.clone();
         let result = service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Authenticated),
                 user_groups: None,
                 users: None,
@@ -172,7 +171,7 @@ mod tests {
         assert!(policy.allowed_authenticated());
 
         let result = service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Public),
                 user_groups: None,
                 users: None,
@@ -189,12 +188,12 @@ mod tests {
 
     #[test]
     fn test_get_default_policy() {
-        let service = ACCESS_POLICY_SERVICE.clone();
-        let result = service.get_access_policy(&Resource::Proposal(ProposalResourceAction::List));
+        let service = PERMISSION_SERVICE.clone();
+        let result = service.get_permission(&Resource::Proposal(ProposalResourceAction::List));
 
         assert_eq!(
             result,
-            AccessPolicy::new(
+            Permission::new(
                 Allow::default(),
                 Resource::Proposal(ProposalResourceAction::List)
             )
@@ -202,19 +201,19 @@ mod tests {
     }
 
     #[test]
-    fn get_access_policy_dependencies_finds_users() {
-        let service = ACCESS_POLICY_SERVICE.clone();
-        let policy = AccessPolicy::new(
+    fn get_permission_dependencies_finds_users() {
+        let service = PERMISSION_SERVICE.clone();
+        let policy = Permission::new(
             Allow::users(vec![[1; 16]]),
             Resource::Proposal(ProposalResourceAction::List),
         );
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(policy.key(), policy.to_owned());
         let mut user = mock_user();
         user.id = [1; 16];
         USER_REPOSITORY.insert(user.to_key(), user.to_owned());
 
         let result = service
-            .get_access_policies_dependencies(&vec![policy.to_owned()])
+            .get_permissions_dependencies(&vec![policy.to_owned()])
             .unwrap();
 
         assert_eq!(result.users.len(), 1);
@@ -222,19 +221,19 @@ mod tests {
     }
 
     #[test]
-    fn get_access_policy_dependencies_finds_groups() {
-        let service = ACCESS_POLICY_SERVICE.clone();
-        let policy = AccessPolicy::new(
+    fn get_permission_dependencies_finds_groups() {
+        let service = PERMISSION_SERVICE.clone();
+        let policy = Permission::new(
             Allow::user_groups(vec![[1; 16]]),
             Resource::Proposal(ProposalResourceAction::List),
         );
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(policy.key(), policy.to_owned());
         let mut group = mock_user_group();
         group.id = [1; 16];
         USER_GROUP_REPOSITORY.insert(group.id, group.to_owned());
 
         let result = service
-            .get_access_policies_dependencies(&vec![policy.to_owned()])
+            .get_permissions_dependencies(&vec![policy.to_owned()])
             .unwrap();
 
         assert_eq!(result.users.len(), 0);
@@ -242,13 +241,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn list_access_policies_should_use_offset_and_limit() {
+    async fn list_permissions_should_use_offset_and_limit() {
         for _ in 0..20 {
-            let policy = mock_access_policy();
-            ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+            let policy = mock_permission();
+            PERMISSION_REPOSITORY.insert(policy.key(), policy.to_owned());
         }
 
-        let input = ListAccessPoliciesInput {
+        let input = ListPermissionsInput {
             resources: None,
             paginate: Some(station_api::PaginationInput {
                 offset: Some(5),
@@ -256,20 +255,17 @@ mod tests {
             }),
         };
 
-        let result = ACCESS_POLICY_SERVICE
-            .list_access_policies(input)
-            .await
-            .unwrap();
+        let result = PERMISSION_SERVICE.list_permissions(input).await.unwrap();
         assert_eq!(result.items.len(), 10);
         assert_eq!(result.next_offset, Some(15));
     }
 
     #[tokio::test]
-    async fn test_override_access_policy_auth_scope() {
-        let service = ACCESS_POLICY_SERVICE.clone();
+    async fn test_override_permission_auth_scope() {
+        let service = PERMISSION_SERVICE.clone();
         let resource = Resource::Proposal(ProposalResourceAction::List);
         let _ = service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Public),
                 user_groups: None,
                 users: None,
@@ -278,10 +274,10 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(service.get_access_policy(&resource).allowed_public());
+        assert!(service.get_permission(&resource).allowed_public());
 
         service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Authenticated),
                 user_groups: None,
                 users: None,
@@ -290,17 +286,17 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(service.get_access_policy(&resource).allowed_authenticated());
+        assert!(service.get_permission(&resource).allowed_authenticated());
     }
 
     #[tokio::test]
-    async fn fail_edit_access_policy_invalid_ids() {
-        let service = AccessPolicyService::default();
+    async fn fail_edit_permission_invalid_ids() {
+        let service = PermissionService::default();
 
         disable_mock_resource_validation();
 
         service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                     [1; 16],
                 ))),
@@ -312,7 +308,7 @@ mod tests {
             .expect_err("Should fail with invalid account ID");
 
         service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
                 auth_scope: None,
                 users: Some(vec![[1; 16]]),
@@ -322,7 +318,7 @@ mod tests {
             .expect_err("Should fail with invalid User ID");
 
         service
-            .edit_access_policy(EditAccessPolicyOperationInput {
+            .edit_permission(EditPermissionOperationInput {
                 resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
                 auth_scope: None,
                 users: None,

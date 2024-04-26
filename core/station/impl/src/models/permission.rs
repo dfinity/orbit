@@ -41,12 +41,12 @@ impl Default for AuthScope {
     }
 }
 
-/// Represents an access policy within the system.
+/// Represents a permission within the system.
 ///
-/// An access policy is a rule that defines who can access a resource and what they can do with it.
+/// A permission is a rule that defines who can access a resource and what they can do with it.
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd)]
-pub struct AccessPolicy {
+pub struct Permission {
     /// The resource that the user can access.
     pub resource: Resource,
     /// The users who can access the resource.
@@ -55,7 +55,7 @@ pub struct AccessPolicy {
     pub allow: Allow,
 }
 
-impl AccessPolicy {
+impl Permission {
     pub fn allowed_public(&self) -> bool {
         AuthScope::Public == self.allow.auth_scope
     }
@@ -135,17 +135,17 @@ impl Allow {
     }
 }
 
-/// The unique identifier of an access policy.
-pub type AccessPolicyKey = Resource;
+/// The unique identifier of a permission.
+pub type PermissionKey = Resource;
 
-impl ModelKey<AccessPolicyKey> for AccessPolicy {
+impl ModelKey<PermissionKey> for Permission {
     fn key(&self) -> Resource {
         self.resource.clone()
     }
 }
 
-impl AccessPolicy {
-    /// Creates a new access policy with the given allow and resource.
+impl Permission {
+    /// Creates a new permission with the given allow and resource.
     ///
     /// The id is generated automatically.
     pub fn new(allow: Allow, resource: Resource) -> Self {
@@ -154,9 +154,9 @@ impl AccessPolicy {
 }
 
 #[cfg(any(test, feature = "canbench"))]
-pub mod access_policy_test_utils {
+pub mod permission_test_utils {
     use crate::models::resource::{
-        AccessPolicyResourceAction, AccountResourceAction, ProposalResourceAction, ResourceAction,
+        AccountResourceAction, PermissionResourceAction, ProposalResourceAction, ResourceAction,
         ResourceId, UserResourceAction,
     };
 
@@ -165,96 +165,96 @@ pub mod access_policy_test_utils {
 
     thread_local! {
         static RANDOM_MOCKED_POLICY: RefCell<u8> = const { RefCell::new(0) };
-        static AVAILABLE_POLICIES: RefCell<Vec<AccessPolicy>> = RefCell::new(vec![
-            AccessPolicy::new(
+        static AVAILABLE_POLICIES: RefCell<Vec<Permission>> = RefCell::new(vec![
+            Permission::new(
                 Allow::public(),
                 Resource::Account(AccountResourceAction::Create),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::Account(AccountResourceAction::List),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
-                Resource::AccessPolicy(AccessPolicyResourceAction::Read),
+                Resource::Permission(PermissionResourceAction::Read),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
-                Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+                Resource::Permission(PermissionResourceAction::Update),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Create),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::List),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::User(UserResourceAction::Create),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::User(UserResourceAction::List),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::User(UserResourceAction::Read(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::User(UserResourceAction::Update(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Create),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::List),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Read(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::UserGroup(ResourceAction::Update(ResourceId::Any)),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::Proposal(ProposalResourceAction::List),
             ),
-            AccessPolicy::new(
+            Permission::new(
                 Allow::authenticated(),
                 Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
             ),
@@ -262,8 +262,8 @@ pub mod access_policy_test_utils {
 
     }
 
-    /// Generates a random access policy for testing purposes.
-    pub fn mock_access_policy() -> AccessPolicy {
+    /// Generates a random permission for testing purposes.
+    pub fn mock_permission() -> Permission {
         let policy = RANDOM_MOCKED_POLICY.with(|num| {
             let num = *num.borrow();
             AVAILABLE_POLICIES.with(|policies| {

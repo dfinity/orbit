@@ -1,8 +1,8 @@
 use crate::models::{
-    access_policy::Allow,
     criteria::{Criteria, Percentage},
+    permission::Allow,
     resource::{
-        AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
         ProposalResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
         SystemResourceAction, UserResourceAction,
     },
@@ -12,7 +12,7 @@ use crate::models::{
 use lazy_static::lazy_static;
 
 lazy_static! {
-    pub static ref DEFAULT_ACCESS_CONTROL_POLICIES: Vec<(Allow, Resource)> = vec![
+    pub static ref DEFAULT_PERMISSIONS: Vec<(Allow, Resource)> = vec![
         // all authenticated users can read the capabilities of the canister
         (
             Allow::authenticated(),
@@ -61,14 +61,14 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
         ),
-        // access policies
+        // permissions
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Read),
+            Resource::Permission(PermissionResourceAction::Read),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+            Resource::Permission(PermissionResourceAction::Update),
         ),
         // proposal policies
         (
@@ -176,9 +176,9 @@ lazy_static! {
             )
 
         ),
-        // access policies
+        // permissions
         (
-            ProposalSpecifier::EditAccessPolicy(ResourceSpecifier::Any),
+            ProposalSpecifier::EditPermission(ResourceSpecifier::Any),
             Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
         ),
         // proposal policies

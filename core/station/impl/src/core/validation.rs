@@ -13,9 +13,8 @@ use crate::{
         AccountKey, AddressBookEntryKey, ProposalKey, UserKey,
     },
     repositories::{
-        access_policy::ACCESS_POLICY_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY,
-        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY, USER_GROUP_REPOSITORY,
-        USER_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY,
+        ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
 };
 use orbit_essentials::repository::Repository;
@@ -166,13 +165,13 @@ impl EnsureIdExists<UUID> for EnsureProposalPolicy {
 
 impl EnsureResourceIdExists for EnsureProposalPolicy {}
 
-pub struct EnsureAccessPolicy {}
+pub struct EnsurePermission {}
 
-impl EnsureIdExists<Resource> for EnsureAccessPolicy {
+impl EnsureIdExists<Resource> for EnsurePermission {
     fn id_exists(key: &Resource) -> Result<(), RecordValidationError> {
-        ensure_entry_exists(ACCESS_POLICY_REPOSITORY.to_owned(), key.to_owned()).ok_or(
+        ensure_entry_exists(PERMISSION_REPOSITORY.to_owned(), key.to_owned()).ok_or(
             RecordValidationError::NotFound {
-                model_name: "AccessPolicy".to_string(),
+                model_name: "Permission".to_string(),
                 id: key.to_string(),
             },
         )

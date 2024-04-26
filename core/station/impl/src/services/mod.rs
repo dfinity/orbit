@@ -30,4 +30,4 @@ pub use proposal_policy::*;
 mod change_canister;
 pub use change_canister::*;
 
-pub mod access_policy;
+pub mod permission;

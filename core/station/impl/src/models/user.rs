@@ -197,7 +197,7 @@ mod tests {
     }
 
     #[test]
-    fn test_user_access_roles_validation() {
+    fn test_user_groups_validation() {
         let mut user = mock_user();
         user.groups = vec![];
 

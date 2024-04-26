@@ -2,13 +2,13 @@ use crate::{BasicUserDTO, PaginationInput, ResourceDTO, UserGroupDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccessPolicyCallerPrivilegesDTO {
+pub struct PermissionCallerPrivilegesDTO {
     pub resource: ResourceDTO,
     pub can_edit: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AccessPolicyDTO {
+pub struct PermissionDTO {
     pub allow: AllowDTO,
     pub resource: ResourceDTO,
 }
@@ -28,39 +28,39 @@ pub enum AuthScopeDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAccessPoliciesInput {
+pub struct ListPermissionsInput {
     pub resources: Option<Vec<ResourceDTO>>,
     pub paginate: Option<PaginationInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListAccessPoliciesResponse {
-    pub policies: Vec<AccessPolicyDTO>,
+pub struct ListPermissionsResponse {
+    pub permissions: Vec<PermissionDTO>,
     pub user_groups: Vec<UserGroupDTO>,
     pub users: Vec<BasicUserDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
-    pub privileges: Vec<AccessPolicyCallerPrivilegesDTO>,
+    pub privileges: Vec<PermissionCallerPrivilegesDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetAccessPolicyInput {
+pub struct GetPermissionInput {
     pub resource: ResourceDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetAccessPolicyResponse {
-    pub policy: AccessPolicyDTO,
-    pub privileges: AccessPolicyCallerPrivilegesDTO,
+pub struct GetPermissionResponse {
+    pub permission: PermissionDTO,
+    pub privileges: PermissionCallerPrivilegesDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditAccessPolicyOperationDTO {
-    pub input: EditAccessPolicyOperationInput,
+pub struct EditPermissionOperationDTO {
+    pub input: EditPermissionOperationInput,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditAccessPolicyOperationInput {
+pub struct EditPermissionOperationInput {
     pub resource: ResourceDTO,
     pub auth_scope: Option<AuthScopeDTO>,
     pub users: Option<Vec<UuidDTO>>,

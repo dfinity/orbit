@@ -1,6 +1,6 @@
 use super::{
-    access_policy::{Allow, AuthScope},
     criteria::{ApprovalCriteriaInput, Criteria},
+    permission::{Allow, AuthScope},
     resource::Resource,
     specifier::ProposalSpecifier,
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
@@ -8,8 +8,7 @@ use super::{
 };
 use crate::models::Metadata;
 use candid::Principal;
-use orbit_essentials::storable;
-use orbit_essentials::types::UUID;
+use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
 #[storable]
@@ -23,7 +22,7 @@ pub enum ProposalOperation {
     RemoveAddressBookEntry(RemoveAddressBookEntryOperation),
     AddUser(AddUserOperation),
     EditUser(EditUserOperation),
-    EditAccessPolicy(EditAccessPolicyOperation),
+    EditPermission(EditPermissionOperation),
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
@@ -44,7 +43,7 @@ impl Display for ProposalOperation {
             ProposalOperation::RemoveAddressBookEntry(_) => write!(f, "remove_address_book_entry"),
             ProposalOperation::AddUser(_) => write!(f, "add_user"),
             ProposalOperation::EditUser(_) => write!(f, "edit_user"),
-            ProposalOperation::EditAccessPolicy(_) => write!(f, "edit_access_policy"),
+            ProposalOperation::EditPermission(_) => write!(f, "edit_permission"),
             ProposalOperation::AddUserGroup(_) => write!(f, "add_user_group"),
             ProposalOperation::EditUserGroup(_) => write!(f, "adit_user_group"),
             ProposalOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
@@ -89,9 +88,9 @@ pub struct AddAccountOperationInput {
     pub blockchain: Blockchain,
     pub standard: BlockchainStandard,
     pub metadata: Metadata,
-    pub read_access_policy: Allow,
-    pub update_access_policy: Allow,
-    pub transfer_access_policy: Allow,
+    pub read_permission: Allow,
+    pub update_permission: Allow,
+    pub transfer_permission: Allow,
     pub update_approval_policy: Option<Criteria>,
     pub transfer_approval_policy: Option<Criteria>,
 }
@@ -107,9 +106,9 @@ pub struct EditAccountOperation {
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
     pub name: Option<String>,
-    pub read_access_policy: Option<Allow>,
-    pub update_access_policy: Option<Allow>,
-    pub transfer_access_policy: Option<Allow>,
+    pub read_permission: Option<Allow>,
+    pub update_permission: Option<Allow>,
+    pub transfer_permission: Option<Allow>,
     pub update_approval_policy: Option<ApprovalCriteriaInput>,
     pub transfer_approval_policy: Option<ApprovalCriteriaInput>,
 }
@@ -254,7 +253,7 @@ pub struct ChangeCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditAccessPolicyOperationInput {
+pub struct EditPermissionOperationInput {
     pub resource: Resource,
     pub auth_scope: Option<AuthScope>,
     pub users: Option<Vec<UserId>>,
@@ -263,8 +262,8 @@ pub struct EditAccessPolicyOperationInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EditAccessPolicyOperation {
-    pub input: EditAccessPolicyOperationInput,
+pub struct EditPermissionOperation {
+    pub input: EditPermissionOperationInput,
 }
 
 #[storable]

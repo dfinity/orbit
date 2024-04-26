@@ -30,8 +30,8 @@ pub use user::*;
 mod proposal_policy;
 pub use proposal_policy::*;
 
-mod access_policy;
-pub use access_policy::*;
+mod permission;
+pub use permission::*;
 
 mod user_group;
 pub use user_group::*;

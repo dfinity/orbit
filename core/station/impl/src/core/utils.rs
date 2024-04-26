@@ -81,10 +81,10 @@ pub fn calculate_minimum_threshold(percentage: &Percentage, total_value: &usize)
     }
 }
 
-/// Retains items based on the result of an access control evaluation.
+/// Retains items based on the result of a authorization check evaluation.
 ///
-/// This function will evaluate the access control for each item in the list and retain only the
-/// items for which the access control evaluation is successful.
+/// This function will evaluate the access for each item in the list and retain only the
+/// items for which the authorization check is successful.
 pub(crate) fn retain_accessible_resources<T, F>(
     ctx: &CallContext,
     items: &mut Vec<T>,

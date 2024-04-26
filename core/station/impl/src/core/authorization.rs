@@ -10,7 +10,7 @@ use crate::{
         User,
     },
     repositories::PROPOSAL_REPOSITORY,
-    services::access_policy::ACCESS_POLICY_SERVICE,
+    services::permission::PERMISSION_SERVICE,
 };
 
 pub struct Authorization;
@@ -28,10 +28,10 @@ impl Authorization {
 
         // Checks if the caller has access to the requested resource.
         resources.iter().any(|resource| {
-            let access_policy = ACCESS_POLICY_SERVICE.get_access_policy(resource);
+            let permission = PERMISSION_SERVICE.get_permission(resource);
 
             // Checks if the resource is public, if so, then the access is granted.
-            if access_policy.allowed_public() {
+            if permission.allowed_public() {
                 return true;
             }
 
@@ -42,17 +42,17 @@ impl Authorization {
                 }
 
                 // If the resource is available to authenticated users, then the access is granted.
-                if access_policy.allowed_authenticated() {
+                if permission.allowed_authenticated() {
                     return true;
                 }
 
-                // Validades if the user has access to the resource based on the default rules (non-policy based).
+                // Validades if the user has access to the resource based on the default rules (non-permission based).
                 if has_default_resource_access(user, resource) {
                     return true;
                 }
 
-                // Checks if the user has access to the resource based on the access policy.
-                return access_policy.is_allowed(user);
+                // Checks if the user has access to the resource based on the system permissions.
+                return permission.is_allowed(user);
             }
 
             false
@@ -60,7 +60,7 @@ impl Authorization {
     }
 }
 
-/// Checks if the user had access to the resource based on default rules (non-policy based).
+/// Checks if the user had access to the resource based on default rules (non-permission based).
 ///
 /// e.g. the user has access to their own user record, etc...
 fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
@@ -89,9 +89,9 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
     }
 }
 
-/// This function checks if the user has the required access role to perform the given action.
+/// This function checks if the user has the required privilege to perform the given action.
 ///
-/// It uses the access control policies defined in the canister configuration.
+/// It uses the permissions defined in the canister configuration.
 pub async fn evaluate_caller_access(
     ctx: &CallContext,
     resource: &Resource,
@@ -112,14 +112,14 @@ mod tests {
     use super::*;
     use crate::{
         models::{
-            access_policy::{AccessPolicy, Allow},
             account_test_utils,
+            permission::{Allow, Permission},
             resource::{AccountResourceAction, ResourceAction},
             user_group_test_utils,
             user_test_utils::{self, mock_user},
             UserGroup, UserStatus, ADMIN_GROUP_ID,
         },
-        repositories::{access_policy::ACCESS_POLICY_REPOSITORY, USER_REPOSITORY},
+        repositories::{permission::PERMISSION_REPOSITORY, USER_REPOSITORY},
     };
     use candid::Principal;
     use orbit_essentials::{model::ModelKey, repository::Repository};
@@ -163,12 +163,12 @@ mod tests {
     #[tokio::test]
     async fn inactive_user_has_no_access() {
         let mut test_context = setup();
-        let policy = AccessPolicy::new(
+        let permission = Permission::new(
             Allow::users(vec![test_context.finance_user.id]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.to_owned());
 
         let ctx = CallContext::new(test_context.finance_user.identities[0]);
 
@@ -194,12 +194,12 @@ mod tests {
 
     #[tokio::test]
     async fn fail_user_has_access_to_admin_resource() {
-        let admin_access = AccessPolicy::new(
+        let admin_access = Permission::new(
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
+        PERMISSION_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
         let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
@@ -219,12 +219,12 @@ mod tests {
 
     #[tokio::test]
     async fn admin_user_has_access_to_admin_resource() {
-        let admin_access = AccessPolicy::new(
+        let admin_access = Permission::new(
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
+        PERMISSION_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
         let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
@@ -244,12 +244,12 @@ mod tests {
 
     #[tokio::test]
     async fn user_has_access_to_admin_resource() {
-        let admin_access = AccessPolicy::new(
+        let admin_access = Permission::new(
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
+        PERMISSION_REPOSITORY.insert(admin_access.key(), admin_access.to_owned());
 
         let caller = Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap();
         let mut user = mock_user();
@@ -272,12 +272,12 @@ mod tests {
         let test_context = setup();
 
         // add finance read access to address book
-        let policy = AccessPolicy::new(
+        let permission = Permission::new(
             Allow::user_groups(vec![test_context.finance_user_group.id]),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.to_owned());
 
         assert!(Authorization::is_allowed(
             &CallContext::new(test_context.finance_user.identities[0]),
@@ -300,7 +300,7 @@ mod tests {
     #[tokio::test]
     async fn group_has_access_to_resource_by_id() {
         let test_context = setup();
-        let policy = AccessPolicy::new(
+        let permission = Permission::new(
             Allow::user_groups(vec![test_context.finance_user_group.id]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Id([1; 16]))),
         );
@@ -308,7 +308,7 @@ mod tests {
         account_test_utils::add_account(&[1; 16]);
         account_test_utils::add_account(&[2; 16]);
 
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.to_owned());
 
         assert!(Authorization::is_allowed(
             &CallContext::new(test_context.finance_user.identities[0]),
@@ -327,12 +327,12 @@ mod tests {
     #[tokio::test]
     async fn user_has_access_to_resource_by_id() {
         let user = user_test_utils::add_user(&[1; 16]);
-        let policy = AccessPolicy::new(
+        let permission = Permission::new(
             Allow::users(vec![user.id]),
             Resource::User(UserResourceAction::Read(ResourceId::Id([1; 16]))),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.to_owned());
 
         assert!(Authorization::is_allowed(
             &CallContext::new(user.identities[0]),
@@ -351,12 +351,12 @@ mod tests {
     #[tokio::test]
     async fn user_has_access_to_any() {
         let user = user_test_utils::add_user(&[1; 16]);
-        let policy = AccessPolicy::new(
+        let permission = Permission::new(
             Allow::users(vec![user.id]),
             Resource::User(UserResourceAction::Read(ResourceId::Any)),
         );
 
-        ACCESS_POLICY_REPOSITORY.insert(policy.key(), policy.to_owned());
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.to_owned());
 
         assert!(Authorization::is_allowed(
             &CallContext::new(user.identities[0]),

@@ -257,14 +257,14 @@ impl SystemService {
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print, time};
-    use crate::core::init::{DEFAULT_ACCESS_CONTROL_POLICIES, DEFAULT_PROPOSAL_POLICIES};
+    use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_PROPOSAL_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{
-        AddProposalPolicyOperationInput, AddUserOperationInput, EditAccessPolicyOperationInput,
+        AddProposalPolicyOperationInput, AddUserOperationInput, EditPermissionOperationInput,
         UserStatus,
     };
     use crate::services::PROPOSAL_POLICY_SERVICE;
-    use crate::services::{access_policy::ACCESS_POLICY_SERVICE, USER_SERVICE};
+    use crate::services::{permission::PERMISSION_SERVICE, USER_SERVICE};
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
         repositories::USER_GROUP_REPOSITORY,
@@ -306,18 +306,18 @@ mod install_canister_handlers {
                 .map_err(|e| format!("Failed to add default proposal policy: {:?}", e))?;
         }
 
-        // adds the default access control policies which sets safe defaults for the canister
-        for policy in DEFAULT_ACCESS_CONTROL_POLICIES.iter() {
+        // adds the default permissions which sets safe defaults for the canister
+        for policy in DEFAULT_PERMISSIONS.iter() {
             let allow = policy.0.to_owned();
-            ACCESS_POLICY_SERVICE
-                .edit_access_policy(EditAccessPolicyOperationInput {
+            PERMISSION_SERVICE
+                .edit_permission(EditPermissionOperationInput {
                     auth_scope: Some(allow.auth_scope),
                     user_groups: Some(allow.user_groups),
                     users: Some(allow.users),
                     resource: policy.1.to_owned(),
                 })
                 .await
-                .map_err(|e| format!("Failed to add default access control policy: {:?}", e))?;
+                .map_err(|e| format!("Failed to add default permission: {:?}", e))?;
         }
 
         Ok(())

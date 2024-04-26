@@ -14,7 +14,7 @@ use crate::{
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Resource {
-    AccessPolicy(AccessPolicyResourceAction),
+    Permission(PermissionResourceAction),
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
@@ -28,8 +28,8 @@ pub enum Resource {
 impl ModelValidator<RecordValidationError> for Resource {
     fn validate(&self) -> Result<(), RecordValidationError> {
         match self {
-            Resource::AccessPolicy(action) => match action {
-                AccessPolicyResourceAction::Read | AccessPolicyResourceAction::Update => Ok(()),
+            Resource::Permission(action) => match action {
+                PermissionResourceAction::Read | PermissionResourceAction::Update => Ok(()),
             },
 
             Resource::Account(action) => match action {
@@ -98,7 +98,7 @@ pub enum ResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AccessPolicyResourceAction {
+pub enum PermissionResourceAction {
     Read,
     Update,
 }
@@ -169,7 +169,7 @@ impl Resource {
     /// Enables Resource be used in range queries in indexes.
     /// Takes advantage of lexicographical ordering implemented by Ord.
     pub fn min() -> Self {
-        Resource::AccessPolicy(AccessPolicyResourceAction::Read)
+        Resource::Permission(PermissionResourceAction::Read)
     }
     pub fn max() -> Self {
         Resource::UserGroup(ResourceAction::Delete(ResourceId::Id([u8::MAX; 16])))
@@ -219,15 +219,15 @@ impl Resource {
                     ))]
                 }
             },
-            Resource::AccessPolicy(action) => match action {
-                AccessPolicyResourceAction::Read => {
+            Resource::Permission(action) => match action {
+                PermissionResourceAction::Read => {
                     vec![
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Read),
-                        Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+                        Resource::Permission(PermissionResourceAction::Read),
+                        Resource::Permission(PermissionResourceAction::Update),
                     ]
                 }
-                AccessPolicyResourceAction::Update => {
-                    vec![Resource::AccessPolicy(AccessPolicyResourceAction::Update)]
+                PermissionResourceAction::Update => {
+                    vec![Resource::Permission(PermissionResourceAction::Update)]
                 }
             },
             Resource::AddressBook(action) => match action {
@@ -393,7 +393,7 @@ impl Resource {
 impl Display for Resource {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Resource::AccessPolicy(action) => write!(f, "AccessPolicy({})", action),
+            Resource::Permission(action) => write!(f, "Permission({})", action),
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
@@ -418,11 +418,11 @@ impl Display for ResourceAction {
     }
 }
 
-impl Display for AccessPolicyResourceAction {
+impl Display for PermissionResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            AccessPolicyResourceAction::Read => write!(f, "Read"),
-            AccessPolicyResourceAction::Update => write!(f, "Update"),
+            PermissionResourceAction::Read => write!(f, "Read"),
+            PermissionResourceAction::Update => write!(f, "Update"),
         }
     }
 }
@@ -494,7 +494,7 @@ mod test {
     use crate::core::validation::disable_mock_resource_validation;
 
     use super::{
-        AccessPolicyResourceAction, AccountResourceAction, ChangeCanisterResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
         ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
         UserResourceAction,
     };
@@ -509,8 +509,8 @@ mod test {
             Resource::Account(AccountResourceAction::Transfer(ResourceId::Any)),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
             Resource::Account(AccountResourceAction::Update(ResourceId::Any)),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Read),
-            Resource::AccessPolicy(AccessPolicyResourceAction::Update),
+            Resource::Permission(PermissionResourceAction::Read),
+            Resource::Permission(PermissionResourceAction::Update),
             Resource::AddressBook(ResourceAction::List),
             Resource::AddressBook(ResourceAction::Create),
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),

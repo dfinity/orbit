@@ -26,6 +26,6 @@ pub use evaluation_result::*;
 
 pub mod policy;
 
-pub mod access_policy;
+pub mod permission;
 
 pub mod indexes;
