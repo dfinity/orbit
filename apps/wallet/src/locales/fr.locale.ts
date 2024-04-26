@@ -226,8 +226,8 @@ export default {
         request_title: 'Demande de modifier un canister',
       },
       editpermission: {
-        title: "Modifier les permissions",
-        request_title: "Demande de modifier une permission",
+        title: 'Modifier les permissions',
+        request_title: 'Demande de modifier une permission',
       },
       editusergroup: {
         title: "Modifier un groupe d'usagers",
