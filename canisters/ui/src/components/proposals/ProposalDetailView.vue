@@ -62,14 +62,14 @@
     <table v-if="votes.length > 0" class="voters mx-4 text-body-1" data-test-id="proposal-votes">
       <thead>
         <tr>
-          <th>{{ $t('proposals.votes') }}</th>
+          <th class="pl-0">{{ $t('proposals.votes') }}</th>
           <th></th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="vote in votes" :key="vote.voter?.id">
-          <td>
+          <td class="pl-0">
             {{ vote.voter.name?.[0] || vote.voter.id }}
           </td>
           <td>
@@ -83,6 +83,35 @@
         </tr>
       </tbody>
     </table>
+
+    <template v-if="showAcceptanceRules">
+      <VContainer>
+        <VRow>
+          <VCol class="text-body-1 font-weight-bold pb-0">{{
+            $t('proposals.evaluation.acceptance_rules')
+          }}</VCol>
+        </VRow>
+      </VContainer>
+
+      <CriteriaResultView
+        :evaluated-criteria="props.details.evaluationResult!.policy_results[0].evaluated_criteria"
+        :status="props.details.evaluationResult!.policy_results[0].status"
+        :proposal-votes="props.proposal.votes"
+      ></CriteriaResultView>
+    </template>
+
+    <VContainer v-if="!!proposalFailed" class="">
+      <VRow>
+        <VCol class="text-body-1 font-weight-bold pb-0">
+          {{ $t('proposals.failure_title') }}
+        </VCol>
+      </VRow>
+      <VRow class="">
+        <VCol class="text-body-2 text-medium-emphasis pt-2 pb-0">
+          {{ proposalFailed }}
+        </VCol>
+      </VRow>
+    </VContainer>
 
     <VCardText v-if="props.details.can_vote || reason" class="px-4 pt-2">
       <VContainer class="px-0">
@@ -111,6 +140,21 @@
         :class="{ 'mt-8': props.details.can_vote }"
       />
       <div class="d-flex flex-column flex-md-row ga-1 justify-end flex-grow-1 w-100 w-md-auto">
+        <VBtn
+          v-if="canShowAcceptanceRules"
+          data-test-id="proposal-details-show-criteria-results"
+          variant="text"
+          class="ma-0"
+          :disabled="props.loading"
+          @click="showAcceptanceRules = !showAcceptanceRules"
+        >
+          <template v-if="!showAcceptanceRules">
+            {{ $t('proposals.evaluation.show_acceptance_rules') }}
+          </template>
+          <template v-else>
+            {{ $t('proposals.evaluation.hide_acceptance_rules') }}
+          </template>
+        </VBtn>
         <template v-if="props.details.can_vote">
           <VBtn
             data-test-id="proposal-details-reject"
@@ -163,8 +207,9 @@ import {
 } from 'vuetify/components';
 import { Proposal, ProposalOperation } from '~/generated/wallet/wallet.did';
 import { ProposalDetails } from '~/types/wallet.types';
-import { KeysOfUnion } from '~/utils/helper.utils';
+import { KeysOfUnion, variantIs } from '~/utils/helper.utils';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
+import CriteriaResultView from './CriteriaResultView.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
 import AddProposalPolicyOperation from './operations/AddProposalPolicyOperation.vue';
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
@@ -253,8 +298,19 @@ const proposalType = computed(() => {
   return 'unknown';
 });
 
+const proposalFailed = computed(() => {
+  if (variantIs(props.proposal.status, 'Failed')) {
+    return props.proposal.status.Failed.reason[0] ?? i18n.t('proposals.failure_reason_unknown');
+  }
+
+  return false;
+});
+
 const reason = ref('');
 const reasonOrUndefined = computed(() => (reason.value.length ? reason.value : undefined));
+
+const canShowAcceptanceRules = computed(() => !!props.details.evaluationResult);
+const showAcceptanceRules = ref(false);
 
 const votes = computed(() =>
   props.proposal.votes.map(vote => {

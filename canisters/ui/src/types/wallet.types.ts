@@ -1,6 +1,7 @@
 import {
   DisplayUser,
   ListProposalsOperationType,
+  ProposalEvaluationResult,
   ProposalStatusCode,
   UUID,
 } from '~/generated/wallet/wallet.did';
@@ -147,6 +148,7 @@ export interface ProposalDetails {
   can_vote: boolean;
   proposer_name?: string;
   voters: DisplayUser[];
+  evaluationResult?: ProposalEvaluationResult;
 }
 
 export enum ProposalOperationEnum {

@@ -30,6 +30,7 @@
           can_vote: data.privileges.can_vote,
           proposer_name: data.additionalInfo.proposer_name[0],
           voters: data.additionalInfo.voters,
+          evaluationResult: data.additionalInfo.evaluation_result[0],
         }"
         :loading="voting || loading"
         @closed="openModel = false"
