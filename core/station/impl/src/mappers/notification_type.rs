@@ -1,10 +1,10 @@
-use crate::models::{ProposalOperation, ProposalOperationType};
+use crate::models::{RequestOperation, RequestOperationType};
 use crate::{
-    models::{NotificationType, Proposal},
-    repositories::PROPOSAL_REPOSITORY,
+    models::{NotificationType, Request},
+    repositories::REQUEST_REPOSITORY,
 };
 use orbit_essentials::repository::Repository;
-use station_api::{NotificationTypeDTO, ProposalCreatedNotificationDTO};
+use station_api::{NotificationTypeDTO, RequestCreatedNotificationDTO};
 use uuid::Uuid;
 
 use super::notification::NotificationMapperError;
@@ -14,54 +14,54 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
     fn try_from(model: NotificationType) -> Result<NotificationTypeDTO, NotificationMapperError> {
         Ok(match model {
             NotificationType::SystemMessage => NotificationTypeDTO::SystemMessage,
-            NotificationType::ProposalCreated(ctx) => {
-                let proposal = PROPOSAL_REPOSITORY
-                    .get(&Proposal::key(ctx.proposal_id))
-                    .ok_or(NotificationMapperError::ProposalNotFound {
-                        proposal_id: ctx.proposal_id,
+            NotificationType::RequestCreated(ctx) => {
+                let request = REQUEST_REPOSITORY
+                    .get(&Request::key(ctx.request_id))
+                    .ok_or(NotificationMapperError::RequestNotFound {
+                        request_id: ctx.request_id,
                     })?;
 
-                let account_id = match &proposal.operation {
-                    ProposalOperation::Transfer(operation) => Some(operation.input.from_account_id),
-                    ProposalOperation::EditAccount(operation) => Some(operation.input.account_id),
-                    ProposalOperation::AddAccount(_)
-                    | ProposalOperation::AddAddressBookEntry(_)
-                    | ProposalOperation::EditAddressBookEntry(_)
-                    | ProposalOperation::RemoveAddressBookEntry(_)
-                    | ProposalOperation::EditUser(_)
-                    | ProposalOperation::AddProposalPolicy(_)
-                    | ProposalOperation::AddUser(_)
-                    | ProposalOperation::AddUserGroup(_)
-                    | ProposalOperation::EditPermission(_)
-                    | ProposalOperation::EditProposalPolicy(_)
-                    | ProposalOperation::EditUserGroup(_)
-                    | ProposalOperation::RemoveProposalPolicy(_)
-                    | ProposalOperation::RemoveUserGroup(_)
-                    | ProposalOperation::ChangeCanister(_) => None,
+                let account_id = match &request.operation {
+                    RequestOperation::Transfer(operation) => Some(operation.input.from_account_id),
+                    RequestOperation::EditAccount(operation) => Some(operation.input.account_id),
+                    RequestOperation::AddAccount(_)
+                    | RequestOperation::AddAddressBookEntry(_)
+                    | RequestOperation::EditAddressBookEntry(_)
+                    | RequestOperation::RemoveAddressBookEntry(_)
+                    | RequestOperation::EditUser(_)
+                    | RequestOperation::AddRequestPolicy(_)
+                    | RequestOperation::AddUser(_)
+                    | RequestOperation::AddUserGroup(_)
+                    | RequestOperation::EditPermission(_)
+                    | RequestOperation::EditRequestPolicy(_)
+                    | RequestOperation::EditUserGroup(_)
+                    | RequestOperation::RemoveRequestPolicy(_)
+                    | RequestOperation::RemoveUserGroup(_)
+                    | RequestOperation::ChangeCanister(_) => None,
                 };
 
-                let user_id: Option<[u8; 16]> = match &proposal.operation {
-                    ProposalOperation::EditUser(operation) => Some(operation.input.user_id),
-                    ProposalOperation::AddAccount(_)
-                    | ProposalOperation::AddAddressBookEntry(_)
-                    | ProposalOperation::AddProposalPolicy(_)
-                    | ProposalOperation::AddUser(_)
-                    | ProposalOperation::AddUserGroup(_)
-                    | ProposalOperation::EditPermission(_)
-                    | ProposalOperation::EditAccount(_)
-                    | ProposalOperation::EditAddressBookEntry(_)
-                    | ProposalOperation::RemoveAddressBookEntry(_)
-                    | ProposalOperation::EditProposalPolicy(_)
-                    | ProposalOperation::EditUserGroup(_)
-                    | ProposalOperation::RemoveProposalPolicy(_)
-                    | ProposalOperation::RemoveUserGroup(_)
-                    | ProposalOperation::Transfer(_)
-                    | ProposalOperation::ChangeCanister(_) => None,
+                let user_id: Option<[u8; 16]> = match &request.operation {
+                    RequestOperation::EditUser(operation) => Some(operation.input.user_id),
+                    RequestOperation::AddAccount(_)
+                    | RequestOperation::AddAddressBookEntry(_)
+                    | RequestOperation::AddRequestPolicy(_)
+                    | RequestOperation::AddUser(_)
+                    | RequestOperation::AddUserGroup(_)
+                    | RequestOperation::EditPermission(_)
+                    | RequestOperation::EditAccount(_)
+                    | RequestOperation::EditAddressBookEntry(_)
+                    | RequestOperation::RemoveAddressBookEntry(_)
+                    | RequestOperation::EditRequestPolicy(_)
+                    | RequestOperation::EditUserGroup(_)
+                    | RequestOperation::RemoveRequestPolicy(_)
+                    | RequestOperation::RemoveUserGroup(_)
+                    | RequestOperation::Transfer(_)
+                    | RequestOperation::ChangeCanister(_) => None,
                 };
 
-                NotificationTypeDTO::ProposalCreated(ProposalCreatedNotificationDTO {
-                    proposal_id: Uuid::from_bytes(ctx.proposal_id).to_string(),
-                    operation_type: ProposalOperationType::from(proposal.operation).into(),
+                NotificationTypeDTO::RequestCreated(RequestCreatedNotificationDTO {
+                    request_id: Uuid::from_bytes(ctx.request_id).to_string(),
+                    operation_type: RequestOperationType::from(request.operation).into(),
                     account_id: account_id.map(|id| Uuid::from_bytes(id).to_string()),
                     user_id: user_id.map(|id| Uuid::from_bytes(id).to_string()),
                 })

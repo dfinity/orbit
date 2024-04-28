@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     core::validation::{
-        EnsureAccount, EnsureAddressBookEntry, EnsureProposal, EnsureProposalPolicy,
+        EnsureAccount, EnsureAddressBookEntry, EnsureRequest, EnsureRequestPolicy,
         EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
     },
     errors::RecordValidationError,
@@ -18,8 +18,8 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
-    Proposal(ProposalResourceAction),
-    ProposalPolicy(ResourceAction),
+    Request(RequestResourceAction),
+    RequestPolicy(ResourceAction),
     System(SystemResourceAction),
     User(UserResourceAction),
     UserGroup(ResourceAction),
@@ -51,18 +51,18 @@ impl ModelValidator<RecordValidationError> for Resource {
             Resource::ChangeCanister(action) => match action {
                 ChangeCanisterResourceAction::Create => Ok(()),
             },
-            Resource::Proposal(action) => match action {
-                ProposalResourceAction::List => Ok(()),
-                ProposalResourceAction::Read(resource_id) => {
-                    EnsureProposal::resource_id_exists(resource_id)
+            Resource::Request(action) => match action {
+                RequestResourceAction::List => Ok(()),
+                RequestResourceAction::Read(resource_id) => {
+                    EnsureRequest::resource_id_exists(resource_id)
                 }
             },
-            Resource::ProposalPolicy(action) => match action {
+            Resource::RequestPolicy(action) => match action {
                 ResourceAction::List | ResourceAction::Create => Ok(()),
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    EnsureProposalPolicy::resource_id_exists(resource_id)
+                    EnsureRequestPolicy::resource_id_exists(resource_id)
                 }
             },
             Resource::System(action) => match action {
@@ -137,7 +137,7 @@ pub enum ChangeCanisterResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ProposalResourceAction {
+pub enum RequestResourceAction {
     List,
     Read(ResourceId),
 }
@@ -272,55 +272,55 @@ impl Resource {
                     )]
                 }
             },
-            Resource::Proposal(action) => match action {
-                ProposalResourceAction::List => {
-                    vec![Resource::Proposal(ProposalResourceAction::List)]
+            Resource::Request(action) => match action {
+                RequestResourceAction::List => {
+                    vec![Resource::Request(RequestResourceAction::List)]
                 }
-                ProposalResourceAction::Read(ResourceId::Id(id)) => {
+                RequestResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(*id))),
-                        Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
+                        Resource::Request(RequestResourceAction::Read(ResourceId::Id(*id))),
+                        Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
                     ]
                 }
-                ProposalResourceAction::Read(ResourceId::Any) => {
-                    vec![Resource::Proposal(ProposalResourceAction::Read(
+                RequestResourceAction::Read(ResourceId::Any) => {
+                    vec![Resource::Request(RequestResourceAction::Read(
                         ResourceId::Any,
                     ))]
                 }
             },
-            Resource::ProposalPolicy(action) => match action {
-                ResourceAction::Create => vec![Resource::ProposalPolicy(ResourceAction::Create)],
+            Resource::RequestPolicy(action) => match action {
+                ResourceAction::Create => vec![Resource::RequestPolicy(ResourceAction::Create)],
                 ResourceAction::Delete(ResourceId::Id(id)) => {
                     vec![
-                        Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(*id))),
-                        Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Any)),
+                        Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Id(*id))),
+                        Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Any)),
                     ]
                 }
-                ResourceAction::List => vec![Resource::ProposalPolicy(ResourceAction::List)],
+                ResourceAction::List => vec![Resource::RequestPolicy(ResourceAction::List)],
                 ResourceAction::Read(ResourceId::Id(id)) => {
                     vec![
-                        Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Id(*id))),
-                        Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Any)),
+                        Resource::RequestPolicy(ResourceAction::Read(ResourceId::Id(*id))),
+                        Resource::RequestPolicy(ResourceAction::Read(ResourceId::Any)),
                     ]
                 }
                 ResourceAction::Update(ResourceId::Id(id)) => {
                     vec![
-                        Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(*id))),
-                        Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Any)),
+                        Resource::RequestPolicy(ResourceAction::Update(ResourceId::Id(*id))),
+                        Resource::RequestPolicy(ResourceAction::Update(ResourceId::Any)),
                     ]
                 }
                 ResourceAction::Update(ResourceId::Any) => {
-                    vec![Resource::ProposalPolicy(ResourceAction::Update(
+                    vec![Resource::RequestPolicy(ResourceAction::Update(
                         ResourceId::Any,
                     ))]
                 }
                 ResourceAction::Read(ResourceId::Any) => {
-                    vec![Resource::ProposalPolicy(ResourceAction::Read(
+                    vec![Resource::RequestPolicy(ResourceAction::Read(
                         ResourceId::Any,
                     ))]
                 }
                 ResourceAction::Delete(ResourceId::Any) => {
-                    vec![Resource::ProposalPolicy(ResourceAction::Delete(
+                    vec![Resource::RequestPolicy(ResourceAction::Delete(
                         ResourceId::Any,
                     ))]
                 }
@@ -397,8 +397,8 @@ impl Display for Resource {
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
-            Resource::Proposal(action) => write!(f, "Proposal({})", action),
-            Resource::ProposalPolicy(action) => write!(f, "ProposalPolicy({})", action),
+            Resource::Request(action) => write!(f, "Request({})", action),
+            Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
             Resource::User(action) => write!(f, "User({})", action),
             Resource::UserGroup(action) => write!(f, "UserGroup({})", action),
@@ -447,11 +447,11 @@ impl Display for ChangeCanisterResourceAction {
     }
 }
 
-impl Display for ProposalResourceAction {
+impl Display for RequestResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ProposalResourceAction::List => write!(f, "List"),
-            ProposalResourceAction::Read(id) => write!(f, "Read({})", id),
+            RequestResourceAction::List => write!(f, "List"),
+            RequestResourceAction::Read(id) => write!(f, "Read({})", id),
         }
     }
 }
@@ -495,7 +495,7 @@ mod test {
 
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+        RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
         UserResourceAction,
     };
 
@@ -517,13 +517,13 @@ mod test {
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
-            Resource::Proposal(ProposalResourceAction::List),
-            Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
-            Resource::ProposalPolicy(ResourceAction::List),
-            Resource::ProposalPolicy(ResourceAction::Create),
-            Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Any)),
-            Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Any)),
-            Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Any)),
+            Resource::Request(RequestResourceAction::List),
+            Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
+            Resource::RequestPolicy(ResourceAction::List),
+            Resource::RequestPolicy(ResourceAction::Create),
+            Resource::RequestPolicy(ResourceAction::Read(ResourceId::Any)),
+            Resource::RequestPolicy(ResourceAction::Update(ResourceId::Any)),
+            Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Any)),
             Resource::System(SystemResourceAction::SystemInfo),
             Resource::System(SystemResourceAction::Capabilities),
             Resource::User(UserResourceAction::List),
@@ -555,10 +555,10 @@ mod test {
             Resource::AddressBook(ResourceAction::Read(ResourceId::Id([0; 16]))),
             Resource::AddressBook(ResourceAction::Update(ResourceId::Id([0; 16]))),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Id([0; 16]))),
-            Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id([0; 16]))),
-            Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Id([0; 16]))),
-            Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id([0; 16]))),
-            Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id([0; 16]))),
+            Resource::Request(RequestResourceAction::Read(ResourceId::Id([0; 16]))),
+            Resource::RequestPolicy(ResourceAction::Read(ResourceId::Id([0; 16]))),
+            Resource::RequestPolicy(ResourceAction::Update(ResourceId::Id([0; 16]))),
+            Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Id([0; 16]))),
             Resource::User(UserResourceAction::Read(ResourceId::Id([0; 16]))),
             Resource::User(UserResourceAction::Update(ResourceId::Id([0; 16]))),
             Resource::UserGroup(ResourceAction::Read(ResourceId::Id([0; 16]))),

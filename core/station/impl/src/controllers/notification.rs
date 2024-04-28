@@ -54,10 +54,10 @@ impl NotificationController {
                 match NotificationDTO::try_from(notification) {
                     Ok(notification_dto) => acc.push(notification_dto),
                     Err(error) => match error {
-                        NotificationMapperError::ProposalNotFound { proposal_id } => {
+                        NotificationMapperError::RequestNotFound { request_id } => {
                             print(format!(
-                                "Proposal {} not found when mapping to NotificationDTO",
-                                Uuid::from_bytes(proposal_id).hyphenated()
+                                "Request {} not found when mapping to NotificationDTO",
+                                Uuid::from_bytes(request_id).hyphenated()
                             ));
                         }
                     },

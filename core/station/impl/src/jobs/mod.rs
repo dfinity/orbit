@@ -11,10 +11,10 @@ use std::{
     time::Duration,
 };
 
-mod cancel_expired_proposals;
+mod cancel_expired_requests;
 mod execute_created_transfers;
-mod execute_scheduled_proposals;
-mod schedule_adopted_proposals;
+mod execute_scheduled_requests;
+mod schedule_approved_requests;
 
 #[async_trait]
 pub trait ScheduledJob: Send + Sync {
@@ -48,8 +48,8 @@ pub fn register_job<Job: ScheduledJob>() {
 
 /// Register all the jobs that run in the background to perform tasks within the canister.
 pub fn register_jobs() {
-    register_job::<schedule_adopted_proposals::Job>();
-    register_job::<execute_scheduled_proposals::Job>();
-    register_job::<cancel_expired_proposals::Job>();
+    register_job::<schedule_approved_requests::Job>();
+    register_job::<execute_scheduled_requests::Job>();
+    register_job::<cancel_expired_requests::Job>();
     register_job::<execute_created_transfers::Job>();
 }

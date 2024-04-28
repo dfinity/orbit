@@ -1,7 +1,7 @@
 use super::{AccountBalance, Blockchain, BlockchainStandard};
 use crate::errors::AccountError;
 use crate::models::Metadata;
-use crate::repositories::policy::PROPOSAL_POLICY_REPOSITORY;
+use crate::repositories::request_policy::REQUEST_POLICY_REPOSITORY;
 use candid::{CandidType, Deserialize};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
@@ -53,7 +53,7 @@ pub struct Account {
     ///
     /// This policy is non exaustive, this means that the account can have other policies that are enforced
     /// by the system that are globally defined.
-    pub update_approval_policy_id: Option<UUID>,
+    pub configs_approval_policy_id: Option<UUID>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -102,7 +102,7 @@ fn validate_address(address: &str) -> ModelValidatorResult<AccountError> {
 }
 
 fn validate_policy_id(policy_id: &UUID, field_name: &str) -> ModelValidatorResult<AccountError> {
-    PROPOSAL_POLICY_REPOSITORY
+    REQUEST_POLICY_REPOSITORY
         .get(policy_id)
         .ok_or(AccountError::ValidationError {
             info: format!("The {} does not exist", field_name),
@@ -119,8 +119,8 @@ impl ModelValidator<AccountError> for Account {
         if let Some(transfer_approval_policy_id) = &self.transfer_approval_policy_id {
             validate_policy_id(transfer_approval_policy_id, "transfer_approval_policy_id")?;
         }
-        if let Some(update_approval_policy_id) = &self.update_approval_policy_id {
-            validate_policy_id(update_approval_policy_id, "update_approval_policy_id")?;
+        if let Some(configs_approval_policy_id) = &self.configs_approval_policy_id {
+            validate_policy_id(configs_approval_policy_id, "configs_approval_policy_id")?;
         }
 
         Ok(())
@@ -254,7 +254,7 @@ mod tests {
         );
 
         account.transfer_approval_policy_id = None;
-        account.update_approval_policy_id = Some([0; 16]);
+        account.configs_approval_policy_id = Some([0; 16]);
 
         let result = account.validate();
 
@@ -262,7 +262,7 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             AccountError::ValidationError {
-                info: "The update_approval_policy_id does not exist".to_string()
+                info: "The configs_approval_policy_id does not exist".to_string()
             }
         );
     }
@@ -288,7 +288,7 @@ pub mod account_test_utils {
             metadata: Metadata::mock(),
             symbol: "ICP".to_string(),
             transfer_approval_policy_id: None,
-            update_approval_policy_id: None,
+            configs_approval_policy_id: None,
         }
     }
 

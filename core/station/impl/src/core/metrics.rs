@@ -1,7 +1,7 @@
 use crate::{
-    models::{Account, AddressBookEntry, Proposal, ProposalPolicy, Transfer, User, UserGroup},
+    models::{Account, AddressBookEntry, Request, RequestPolicy, Transfer, User, UserGroup},
     repositories::{
-        policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY,
+        request_policy::REQUEST_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY,
         USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     SERVICE_NAME,
@@ -46,11 +46,11 @@ thread_local! {
         Rc::new(RefCell::new(MetricTotalTranfers)),
     ];
 
-    /// A collection of proposal related metrics.
+    /// A collection of request related metrics.
     ///
-    /// This list should be updated with new proposal metrics as they are added.
-    pub static PROPOSAL_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Proposal>>>> = vec![
-        Rc::new(RefCell::new(MetricTotalProposalsByType)),
+    /// This list should be updated with new request metrics as they are added.
+    pub static REQUEST_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Request>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalRequestsByType)),
     ];
 
     /// A collection of address book entry related metrics.
@@ -60,10 +60,10 @@ thread_local! {
         Rc::new(RefCell::new(MetricTotalAddressBookEntries)),
     ];
 
-    /// A collection of proposal policy related metrics.
+    /// A collection of request policy related metrics.
     ///
-    /// This list should be updated with new proposal policy metrics as they are added.
-    pub static PROPOSAL_POLICY_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<ProposalPolicy>>>>
+    /// This list should be updated with new request policy metrics as they are added.
+    pub static REQUEST_POLICY_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<RequestPolicy>>>>
         = vec![Rc::new(RefCell::new(MetricTotalPolicies))];
 
 }
@@ -79,7 +79,7 @@ pub fn recompute_metrics() {
     // To avoid deserialize all the data, we can use the repository length to get the total number of entries of
     // simple gauge metrics.
     MetricTotalAddressBookEntries.set(SERVICE_NAME, ADDRESS_BOOK_REPOSITORY.len() as f64);
-    MetricTotalPolicies.set(SERVICE_NAME, PROPOSAL_POLICY_REPOSITORY.len() as f64);
+    MetricTotalPolicies.set(SERVICE_NAME, REQUEST_POLICY_REPOSITORY.len() as f64);
 
     USER_METRICS.with(|metrics| {
         metrics
@@ -330,23 +330,23 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
     }
 }
 
-/// Metric for the total number of proposals.
-pub struct MetricTotalProposalsByType;
+/// Metric for the total number of requests.
+pub struct MetricTotalRequestsByType;
 
-impl ApplicationCounterVecMetric<Proposal> for MetricTotalProposalsByType {
+impl ApplicationCounterVecMetric<Request> for MetricTotalRequestsByType {
     const LABELS: &'static [&'static str] = &["type", "status"];
 }
 
-impl ApplicationMetric<Proposal> for MetricTotalProposalsByType {
+impl ApplicationMetric<Request> for MetricTotalRequestsByType {
     fn name(&self) -> &'static str {
-        "total_proposals_by_type"
+        "total_requests_by_type"
     }
 
     fn help(&self) -> &'static str {
-        "The total number of proposals, labeled by their type."
+        "The total number of requests, labeled by their type."
     }
 
-    fn sum(&mut self, current: &Proposal, previous: Option<&Proposal>) {
+    fn sum(&mut self, current: &Request, previous: Option<&Request>) {
         let operation = current.operation.to_string();
         let status = current.status.to_type().to_string();
         let labels = labels! { "type" => operation.as_str(), "status" => status.as_str() };
@@ -392,9 +392,9 @@ impl ApplicationMetric<AddressBookEntry> for MetricTotalAddressBookEntries {
 /// Metric for the total number of policies that are available.
 pub struct MetricTotalPolicies;
 
-impl ApplicationGaugeMetric<ProposalPolicy> for MetricTotalPolicies {}
+impl ApplicationGaugeMetric<RequestPolicy> for MetricTotalPolicies {}
 
-impl ApplicationMetric<ProposalPolicy> for MetricTotalPolicies {
+impl ApplicationMetric<RequestPolicy> for MetricTotalPolicies {
     fn name(&self) -> &'static str {
         "total_policies"
     }
@@ -403,13 +403,13 @@ impl ApplicationMetric<ProposalPolicy> for MetricTotalPolicies {
         "The total number of policies that are available."
     }
 
-    fn sum(&mut self, _: &ProposalPolicy, previous: Option<&ProposalPolicy>) {
+    fn sum(&mut self, _: &RequestPolicy, previous: Option<&RequestPolicy>) {
         if previous.is_none() {
             self.inc(SERVICE_NAME);
         }
     }
 
-    fn sub(&mut self, _: &ProposalPolicy) {
+    fn sub(&mut self, _: &RequestPolicy) {
         self.dec(SERVICE_NAME);
     }
 }
@@ -421,11 +421,11 @@ mod tests {
         models::{
             account_test_utils::mock_account,
             address_book_entry_test_utils::mock_address_book_entry,
-            proposal_policy_test_utils::mock_proposal_policy, proposal_test_utils::mock_proposal,
+            request_policy_test_utils::mock_request_policy, request_test_utils::mock_request,
             transfer_test_utils::mock_transfer, user_group_test_utils, user_test_utils::mock_user,
-            AccountBalance, Blockchain, ProposalStatus, TransferStatus, UserStatus,
+            AccountBalance, Blockchain, RequestStatus, TransferStatus, UserStatus,
         },
-        repositories::{PROPOSAL_REPOSITORY, TRANSFER_REPOSITORY},
+        repositories::{REQUEST_REPOSITORY, TRANSFER_REPOSITORY},
     };
     use candid::Nat;
 
@@ -515,34 +515,31 @@ mod tests {
     }
 
     #[test]
-    fn test_total_proposals_by_type_metric() {
-        let mut proposal = mock_proposal();
-        proposal.status = ProposalStatus::Created;
+    fn test_total_requests_by_type_metric() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
 
-        let operation = proposal.operation.to_string();
-        let status = proposal.status.to_type().to_string();
+        let operation = request.operation.to_string();
+        let status = request.status.to_type().to_string();
         let label = labels! { "type" => operation.as_str(), "status" => status.as_str() };
 
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
-        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 1.0);
+        assert_eq!(MetricTotalRequestsByType.get(SERVICE_NAME, &label), 1.0);
 
-        let mut proposal = mock_proposal();
-        proposal.status = ProposalStatus::Created;
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
-        assert_eq!(MetricTotalProposalsByType.get(SERVICE_NAME, &label), 2.0);
+        assert_eq!(MetricTotalRequestsByType.get(SERVICE_NAME, &label), 2.0);
 
-        proposal.status = ProposalStatus::Processing { started_at: 0 };
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+        request.status = RequestStatus::Processing { started_at: 0 };
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
-        let status = proposal.status.to_type().to_string();
+        let status = request.status.to_type().to_string();
         let new_label = labels! { "type" => operation.as_str(), "status" => status.as_str() };
 
-        assert_eq!(
-            MetricTotalProposalsByType.get(SERVICE_NAME, &new_label),
-            1.0
-        );
+        assert_eq!(MetricTotalRequestsByType.get(SERVICE_NAME, &new_label), 1.0);
     }
 
     #[test]
@@ -620,15 +617,15 @@ mod tests {
 
     #[test]
     fn test_total_policies_metric() {
-        let policy = mock_proposal_policy();
+        let policy = mock_request_policy();
 
-        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+        REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.clone());
 
         assert_eq!(MetricTotalPolicies.get(SERVICE_NAME), 1.0);
 
-        let policy = mock_proposal_policy();
+        let policy = mock_request_policy();
 
-        PROPOSAL_POLICY_REPOSITORY.insert(policy.id, policy.clone());
+        REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.clone());
 
         assert_eq!(MetricTotalPolicies.get(SERVICE_NAME), 2.0);
     }

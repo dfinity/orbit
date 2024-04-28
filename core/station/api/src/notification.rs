@@ -4,7 +4,7 @@ use candid::{CandidType, Deserialize};
 use std::fmt::{Display, Formatter};
 
 pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
-pub const PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "request-created";
+pub const REQUEST_CREATED_NOTIFICATION_TYPE: &str = "request-created";
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationStatusDTO {
@@ -39,7 +39,7 @@ impl Display for NotificationTypeInput {
                 write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE)
             }
             NotificationTypeInput::RequestCreated => {
-                write!(f, "{}", PROPOSAL_CREATED_NOTIFICATION_TYPE)
+                write!(f, "{}", REQUEST_CREATED_NOTIFICATION_TYPE)
             }
         }
     }

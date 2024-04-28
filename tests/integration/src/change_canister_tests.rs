@@ -1,13 +1,13 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_user, canister_status, execute_proposal, submit_proposal, user_test_id, vote_on_proposal,
-    wait_for_proposal,
+    add_user, canister_status, execute_request, submit_request, submit_request_approval,
+    user_test_id, wait_for_request,
 };
 use crate::TestEnv;
 use station_api::{
-    AddProposalPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    CriteriaDTO, EditPermissionOperationInput, MinimumVotesDTO, ProposalOperationInput,
-    ProposalSpecifierDTO, UserSpecifierDTO,
+    AddRequestPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
+    EditPermissionOperationInput, QuorumDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, UserSpecifierDTO,
 };
 
 #[test]
@@ -19,24 +19,24 @@ fn successful_four_eyes_upgrade() {
     } = setup_new_env();
 
     // set four eyes principle for canister changes
-    let add_proposal_policy =
-        ProposalOperationInput::AddProposalPolicy(AddProposalPolicyOperationInput {
-            specifier: ProposalSpecifierDTO::ChangeCanister,
-            criteria: CriteriaDTO::MinimumVotes(MinimumVotesDTO {
-                voters: UserSpecifierDTO::Any,
-                minimum: 2,
+    let add_request_policy =
+        RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
+            specifier: RequestSpecifierDTO::ChangeCanister,
+            rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
+                approvers: UserSpecifierDTO::Any,
+                min_approved: 2,
             }),
         });
-    execute_proposal(
+    execute_request(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        add_proposal_policy,
+        add_request_policy,
     )
     .unwrap();
 
-    // allow anyone to create change canister proposals
-    let add_permission = ProposalOperationInput::EditPermission(EditPermissionOperationInput {
+    // allow anyone to create change canister requests
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
         resource: station_api::ResourceDTO::ChangeCanister(
             station_api::ChangeCanisterResourceActionDTO::Create,
         ),
@@ -44,7 +44,7 @@ fn successful_four_eyes_upgrade() {
         user_groups: None,
         users: None,
     });
-    execute_proposal(
+    execute_request(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
@@ -58,7 +58,7 @@ fn successful_four_eyes_upgrade() {
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
-    // create and install the canister to be upgraded by a proposal
+    // create and install the canister to be upgraded by a request
     let canister_id = create_canister(&mut env, canister_ids.station);
     let module_bytes = vec![0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
     let module_hash =
@@ -79,42 +79,42 @@ fn successful_four_eyes_upgrade() {
     let new_module_hash =
         hex::decode("d7f602df8d1cb581cc5c886a4ff8809793c50627e305ef45f6d770f27e0261cc").unwrap();
 
-    // submit canister upgrade proposal
+    // submit canister upgrade request
     let change_canister_operation =
-        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
             target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
             module: new_module_bytes,
             arg: None,
         });
-    let change_canister_operation_proposal = submit_proposal(
+    let change_canister_operation_request = submit_request(
         &env,
         user_a,
         canister_ids.station,
         change_canister_operation,
     );
 
-    // the proposal should not be completed before the second user votes on it
-    assert!(wait_for_proposal(
+    // the request should not be completed before the second user votes on it
+    assert!(wait_for_request(
         &env,
         user_a,
         canister_ids.station,
-        change_canister_operation_proposal.clone(),
+        change_canister_operation_request.clone(),
     )
     .is_err());
 
-    // the second user votes and then the proposal will eventually become completed
-    vote_on_proposal(
+    // the second user votes and then the request will eventually become completed
+    submit_request_approval(
         &env,
         user_b,
         canister_ids.station,
-        change_canister_operation_proposal.clone(),
+        change_canister_operation_request.clone(),
         true,
     );
-    wait_for_proposal(
+    wait_for_request(
         &env,
         user_a,
         canister_ids.station,
-        change_canister_operation_proposal.clone(),
+        change_canister_operation_request.clone(),
     )
     .unwrap();
 

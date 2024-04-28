@@ -18,7 +18,7 @@ use candid::{CandidType, Deserialize};
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum RequestStatusDTO {
     Created,
-    Adopted,
+    Approved,
     Rejected,
     Cancelled { reason: Option<String> },
     Scheduled { scheduled_at: TimestampRfc3339 },
@@ -30,7 +30,7 @@ pub enum RequestStatusDTO {
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RequestStatusCodeDTO {
     Created = 0,
-    Adopted = 1,
+    Approved = 1,
     Rejected = 2,
     Cancelled = 3,
     Scheduled = 4,
@@ -41,7 +41,7 @@ pub enum RequestStatusCodeDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum RequestApprovalStatusDTO {
-    Accepted,
+    Approved,
     Rejected,
 }
 
@@ -113,7 +113,7 @@ pub enum RequestOperationTypeDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct RequestApprovalDTO {
-    pub user_id: UuidDTO,
+    pub approver_id: UuidDTO,
     pub status: RequestApprovalStatusDTO,
     pub status_reason: Option<String>,
     pub decided_at: TimestampRfc3339,

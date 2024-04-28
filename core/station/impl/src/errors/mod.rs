@@ -35,11 +35,11 @@ pub use repository::*;
 mod transfer;
 pub use transfer::*;
 
-mod proposal;
-pub use proposal::*;
+mod request;
+pub use request::*;
 
-mod proposal_execute;
-pub use proposal_execute::*;
+mod request_execute;
+pub use request_execute::*;
 
 mod evaluate;
 pub use evaluate::*;
@@ -59,8 +59,8 @@ pub use install::*;
 mod change_canister;
 pub use change_canister::*;
 
-mod policy;
-pub use policy::*;
+mod request_policy;
+pub use request_policy::*;
 
 mod validation;
 pub use validation::*;

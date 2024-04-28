@@ -1,12 +1,12 @@
 use crate::models::{
-    criteria::{Criteria, Percentage},
     permission::Allow,
+    request_policy_rule::RequestPolicyRule,
+    request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        ProposalResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
         SystemResourceAction, UserResourceAction,
     },
-    specifier::{ProposalSpecifier, ResourceSpecifier, UserSpecifier},
     ADMIN_GROUP_ID,
 };
 use lazy_static::lazy_static;
@@ -70,35 +70,35 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::Permission(PermissionResourceAction::Update),
         ),
-        // proposal policies
+        // request policies
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ProposalPolicy(ResourceAction::List),
+            Resource::RequestPolicy(ResourceAction::List),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ProposalPolicy(ResourceAction::Create),
+            Resource::RequestPolicy(ResourceAction::Create),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Any)),
+            Resource::RequestPolicy(ResourceAction::Read(ResourceId::Any)),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Any)),
+            Resource::RequestPolicy(ResourceAction::Update(ResourceId::Any)),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Any)),
+            Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Any)),
         ),
-        // proposals
+        // requests
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::Proposal(ProposalResourceAction::List),
+            Resource::Request(RequestResourceAction::List),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
+            Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
         ),
         // address book
         (
@@ -141,90 +141,90 @@ lazy_static! {
         ),
     ];
 
-    pub static ref DEFAULT_PROPOSAL_POLICIES: Vec<(ProposalSpecifier, Criteria)> = vec![
+    pub static ref DEFAULT_REQUEST_POLICIES: Vec<(RequestSpecifier, RequestPolicyRule)> = vec![
         // accounts
         (
-            ProposalSpecifier::AddAccount,
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::AddAccount,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // users
         (
-            ProposalSpecifier::AddUser,
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::AddUser,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         (
-            ProposalSpecifier::EditUser(ResourceIds::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),Percentage(51))
+            RequestSpecifier::EditUser(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),1)
         ),
         // address book
         (
-            ProposalSpecifier::AddAddressBookEntry,
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::AddAddressBookEntry,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         (
-            ProposalSpecifier::EditAddressBookEntry(ResourceIds::Any),
-            Criteria::ApprovalThreshold(
+            RequestSpecifier::EditAddressBookEntry(ResourceIds::Any),
+            RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Percentage(51)
+                1
             )
         ),
         (
-            ProposalSpecifier::RemoveAddressBookEntry(ResourceIds::Any),
-            Criteria::ApprovalThreshold(
+            RequestSpecifier::RemoveAddressBookEntry(ResourceIds::Any),
+            RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Percentage(51)
+                1
             )
 
         ),
         // permissions
         (
-            ProposalSpecifier::EditPermission(ResourceSpecifier::Any),
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::EditPermission(ResourceSpecifier::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
-        // proposal policies
+        // request policies
         (
-            ProposalSpecifier::AddProposalPolicy,
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::AddRequestPolicy,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         (
-            ProposalSpecifier::EditProposalPolicy(ResourceIds::Any),
-            Criteria::ApprovalThreshold(
+            RequestSpecifier::EditRequestPolicy(ResourceIds::Any),
+            RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Percentage(51)
+                1
             )
         ),
         (
-            ProposalSpecifier::RemoveProposalPolicy(ResourceIds::Any),
-            Criteria::ApprovalThreshold(
+            RequestSpecifier::RemoveRequestPolicy(ResourceIds::Any),
+            RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Percentage(51)
+                1
             )
 
         ),
         // user groups
         (
-            ProposalSpecifier::AddUserGroup,
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::AddUserGroup,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         (
-            ProposalSpecifier::EditUserGroup(ResourceIds::Any),
-            Criteria::ApprovalThreshold(
+            RequestSpecifier::EditUserGroup(ResourceIds::Any),
+            RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Percentage(51)
+                1
             )
         ),
         (
-            ProposalSpecifier::RemoveUserGroup(ResourceIds::Any),
-            Criteria::ApprovalThreshold(
+            RequestSpecifier::RemoveUserGroup(ResourceIds::Any),
+            RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                Percentage(51)
+                1
             )
 
         ),
         // change canister
         (
-            ProposalSpecifier::ChangeCanister,
-            Criteria::ApprovalThreshold(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), Percentage(51))
+            RequestSpecifier::ChangeCanister,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
     ];
 }

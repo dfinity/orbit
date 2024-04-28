@@ -1,15 +1,15 @@
 use super::{
-    evaluation::{Evaluate, PROPOSAL_MATCHER, PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR},
-    proposal::ProposalVoteRightsEvaluator,
+    evaluation::{Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_MATCHER},
+    request::RequestApprovalRightsEvaluator,
     CallContext,
 };
 use crate::{
     errors::AuthorizationError,
     models::{
-        resource::{ProposalResourceAction, Resource, ResourceId, UserResourceAction},
+        resource::{RequestResourceAction, Resource, ResourceId, UserResourceAction},
         User,
     },
-    repositories::PROPOSAL_REPOSITORY,
+    repositories::REQUEST_REPOSITORY,
     services::permission::PERMISSION_SERVICE,
 };
 
@@ -65,18 +65,18 @@ impl Authorization {
 /// e.g. the user has access to their own user record, etc...
 fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
     match &resource {
-        &Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(proposal_id))) => {
-            if PROPOSAL_REPOSITORY.exists_voter(proposal_id, &user.id)
-                || PROPOSAL_REPOSITORY.exists_proposer(proposal_id, &user.id)
+        &Resource::Request(RequestResourceAction::Read(ResourceId::Id(request_id))) => {
+            if REQUEST_REPOSITORY.exists_approver(request_id, &user.id)
+                || REQUEST_REPOSITORY.exists_requester(request_id, &user.id)
             {
                 return true;
             }
 
-            let validator = ProposalVoteRightsEvaluator::new(
-                PROPOSAL_MATCHER.to_owned(),
-                PROPOSAL_VOTE_RIGHTS_CRITERIA_EVALUATOR.clone(),
+            let validator = RequestApprovalRightsEvaluator::new(
+                REQUEST_MATCHER.to_owned(),
+                REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
                 user.id,
-                *proposal_id,
+                *request_id,
             );
 
             validator.evaluate().unwrap_or(false)

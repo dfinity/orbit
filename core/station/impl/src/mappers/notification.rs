@@ -4,7 +4,7 @@ use station_api::NotificationDTO;
 use uuid::Uuid;
 
 pub enum NotificationMapperError {
-    ProposalNotFound { proposal_id: UUID },
+    RequestNotFound { request_id: UUID },
 }
 
 impl TryFrom<Notification> for NotificationDTO {

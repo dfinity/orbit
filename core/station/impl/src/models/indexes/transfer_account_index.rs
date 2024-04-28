@@ -50,7 +50,7 @@ mod tests {
             amount: candid::Nat(BigUint::from(0u32)),
             blockchain_network: "icp".to_string(),
             created_timestamp: 1,
-            proposal_id: [0; 16],
+            request_id: [0; 16],
             fee: candid::Nat(BigUint::from(0u32)),
             from_account: [1; 16],
             to_address: "0x1234".to_string(),

@@ -1,6 +1,6 @@
 use super::{AccountId, UserId};
 use crate::core::ic_cdk::api::time;
-use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureProposal, EnsureUser};
+use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureRequest, EnsureUser};
 use crate::errors::{RecordValidationError, TransferError};
 use crate::models::Metadata;
 use orbit_essentials::storable;
@@ -63,8 +63,8 @@ pub struct Transfer {
     pub status: TransferStatus,
     /// The amount of the transfer.
     pub amount: candid::Nat,
-    /// The proposal id that the transfer is associated with.
-    pub proposal_id: UUID,
+    /// The request id that the transfer is associated with.
+    pub request_id: UUID,
     /// The fee of the transfer.
     pub fee: candid::Nat,
     /// The blockchain network that the transfer will be executed on.
@@ -103,7 +103,7 @@ impl Transfer {
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        proposal_id: UUID,
+        request_id: UUID,
         transfer_id: UUID,
         initiator_user: UUID,
         from_account: UUID,
@@ -118,7 +118,7 @@ impl Transfer {
             initiator_user,
             from_account,
             to_address,
-            proposal_id,
+            request_id,
             status: TransferStatus::Created,
             amount,
             fee,
@@ -180,9 +180,9 @@ impl ModelValidator<TransferError> for Transfer {
             },
         })?;
 
-        EnsureProposal::id_exists(&self.proposal_id).map_err(|err| match err {
+        EnsureRequest::id_exists(&self.request_id).map_err(|err| match err {
             RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
-                info: format!("The proposal_id {} does not exist", id),
+                info: format!("The request_id {} does not exist", id),
             },
         })?;
 
@@ -307,7 +307,7 @@ pub mod transfer_test_utils {
             id: *Uuid::new_v4().as_bytes(),
             initiator_user: [0; 16],
             from_account: [0; 16],
-            proposal_id: [2; 16],
+            request_id: [2; 16],
             to_address: "x".repeat(255),
             status: TransferStatus::Created,
             amount: candid::Nat::from(100_u64),

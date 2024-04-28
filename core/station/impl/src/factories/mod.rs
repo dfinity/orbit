@@ -3,4 +3,4 @@
 //! Examples of these are handling the interaction with different blockchains.
 
 pub mod blockchains;
-pub mod proposals;
+pub mod requests;

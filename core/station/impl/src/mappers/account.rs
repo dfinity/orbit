@@ -5,7 +5,7 @@ use crate::{
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
     },
-    repositories::policy::PROPOSAL_POLICY_REPOSITORY,
+    repositories::request_policy::REQUEST_POLICY_REPOSITORY,
 };
 use ic_cdk::print;
 use orbit_essentials::{repository::Repository, utils::timestamp_to_rfc3339};
@@ -37,24 +37,24 @@ impl AccountMapper {
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata.into_vec_dto(),
             transfer_approval_policy: account.transfer_approval_policy_id.and_then(|policy_id| {
-                PROPOSAL_POLICY_REPOSITORY
+                REQUEST_POLICY_REPOSITORY
                     .get(&policy_id)
-                    .map(|policy| policy.criteria.into())
+                    .map(|policy| policy.rule.into())
                     .or_else(|| {
                         print(format!(
-                            "transfer_approval_policy not found for proposal {}",
+                            "transfer_approval_policy not found for request {}",
                             Uuid::from_bytes(policy_id).hyphenated()
                         ));
                         None
                     })
             }),
-            update_approval_policy: account.update_approval_policy_id.and_then(|policy_id| {
-                PROPOSAL_POLICY_REPOSITORY
+            configs_approval_policy: account.configs_approval_policy_id.and_then(|policy_id| {
+                REQUEST_POLICY_REPOSITORY
                     .get(&policy_id)
-                    .map(|policy| policy.criteria.into())
+                    .map(|policy| policy.rule.into())
                     .or_else(|| {
                         print(format!(
-                            "update_approval_policy not found for proposal {}",
+                            "configs_approval_policy not found for request {}",
                             Uuid::from_bytes(policy_id).hyphenated()
                         ));
                         None
@@ -108,7 +108,7 @@ impl AccountMapper {
             decimals: 0,
             symbol,
             transfer_approval_policy_id: None,
-            update_approval_policy_id: None,
+            configs_approval_policy_id: None,
             balance: None,
             metadata: input.metadata,
             last_modification_timestamp: time(),

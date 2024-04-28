@@ -146,7 +146,7 @@ mod tests {
         core::validation::disable_mock_resource_validation,
         models::{
             permission::{permission_test_utils::mock_permission, AuthScope},
-            resource::{AccountResourceAction, ProposalResourceAction, ResourceId},
+            resource::{AccountResourceAction, RequestResourceAction, ResourceId},
             user_group_test_utils::mock_user_group,
             user_test_utils::mock_user,
         },
@@ -161,7 +161,7 @@ mod tests {
                 auth_scope: Some(AuthScope::Authenticated),
                 user_groups: None,
                 users: None,
-                resource: Resource::Proposal(ProposalResourceAction::List),
+                resource: Resource::Request(RequestResourceAction::List),
             })
             .await;
 
@@ -175,7 +175,7 @@ mod tests {
                 auth_scope: Some(AuthScope::Public),
                 user_groups: None,
                 users: None,
-                resource: Resource::Proposal(ProposalResourceAction::List),
+                resource: Resource::Request(RequestResourceAction::List),
             })
             .await;
 
@@ -189,13 +189,13 @@ mod tests {
     #[test]
     fn test_get_default_policy() {
         let service = PERMISSION_SERVICE.clone();
-        let result = service.get_permission(&Resource::Proposal(ProposalResourceAction::List));
+        let result = service.get_permission(&Resource::Request(RequestResourceAction::List));
 
         assert_eq!(
             result,
             Permission::new(
                 Allow::default(),
-                Resource::Proposal(ProposalResourceAction::List)
+                Resource::Request(RequestResourceAction::List)
             )
         );
     }
@@ -205,7 +205,7 @@ mod tests {
         let service = PERMISSION_SERVICE.clone();
         let policy = Permission::new(
             Allow::users(vec![[1; 16]]),
-            Resource::Proposal(ProposalResourceAction::List),
+            Resource::Request(RequestResourceAction::List),
         );
         PERMISSION_REPOSITORY.insert(policy.key(), policy.to_owned());
         let mut user = mock_user();
@@ -225,7 +225,7 @@ mod tests {
         let service = PERMISSION_SERVICE.clone();
         let policy = Permission::new(
             Allow::user_groups(vec![[1; 16]]),
-            Resource::Proposal(ProposalResourceAction::List),
+            Resource::Request(RequestResourceAction::List),
         );
         PERMISSION_REPOSITORY.insert(policy.key(), policy.to_owned());
         let mut group = mock_user_group();
@@ -263,7 +263,7 @@ mod tests {
     #[tokio::test]
     async fn test_override_permission_auth_scope() {
         let service = PERMISSION_SERVICE.clone();
-        let resource = Resource::Proposal(ProposalResourceAction::List);
+        let resource = Resource::Request(RequestResourceAction::List);
         let _ = service
             .edit_permission(EditPermissionOperationInput {
                 auth_scope: Some(AuthScope::Public),

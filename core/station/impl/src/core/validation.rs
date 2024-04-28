@@ -3,21 +3,21 @@ use std::sync::Arc;
 #[cfg(test)]
 use std::cell::RefCell;
 
-use orbit_essentials::types::UUID;
-use uuid::Uuid;
-
 use crate::{
     errors::RecordValidationError,
     models::{
         resource::{Resource, ResourceId, ResourceIds},
-        AccountKey, AddressBookEntryKey, ProposalKey, UserKey,
+        AccountKey, AddressBookEntryKey, RequestKey, UserKey,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, policy::PROPOSAL_POLICY_REPOSITORY, ACCOUNT_REPOSITORY,
-        ADDRESS_BOOK_REPOSITORY, PROPOSAL_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
+        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, REQUEST_REPOSITORY, USER_GROUP_REPOSITORY,
+        USER_REPOSITORY,
     },
 };
 use orbit_essentials::repository::Repository;
+use orbit_essentials::types::UUID;
+use uuid::Uuid;
 
 thread_local! {
   /// Switch for tests to enable validation if needed.
@@ -135,35 +135,35 @@ impl EnsureIdExists<UUID> for EnsureAddressBookEntry {
 
 impl EnsureResourceIdExists for EnsureAddressBookEntry {}
 
-pub struct EnsureProposal {}
+pub struct EnsureRequest {}
 
-impl EnsureIdExists<UUID> for EnsureProposal {
+impl EnsureIdExists<UUID> for EnsureRequest {
     fn id_exists(id: &UUID) -> Result<(), RecordValidationError> {
-        ensure_entry_exists(PROPOSAL_REPOSITORY.to_owned(), ProposalKey { id: *id }).ok_or(
+        ensure_entry_exists(REQUEST_REPOSITORY.to_owned(), RequestKey { id: *id }).ok_or(
             RecordValidationError::NotFound {
-                model_name: "Proposal".to_string(),
+                model_name: "Request".to_string(),
                 id: Uuid::from_bytes(*id).hyphenated().to_string(),
             },
         )
     }
 }
 
-impl EnsureResourceIdExists for EnsureProposal {}
+impl EnsureResourceIdExists for EnsureRequest {}
 
-pub struct EnsureProposalPolicy {}
+pub struct EnsureRequestPolicy {}
 
-impl EnsureIdExists<UUID> for EnsureProposalPolicy {
+impl EnsureIdExists<UUID> for EnsureRequestPolicy {
     fn id_exists(id: &UUID) -> Result<(), RecordValidationError> {
-        ensure_entry_exists(PROPOSAL_POLICY_REPOSITORY.to_owned(), *id).ok_or(
+        ensure_entry_exists(REQUEST_POLICY_REPOSITORY.to_owned(), *id).ok_or(
             RecordValidationError::NotFound {
-                model_name: "ProposalPolicy".to_string(),
+                model_name: "RequestPolicy".to_string(),
                 id: Uuid::from_bytes(*id).hyphenated().to_string(),
             },
         )
     }
 }
 
-impl EnsureResourceIdExists for EnsureProposalPolicy {}
+impl EnsureResourceIdExists for EnsureRequestPolicy {}
 
 pub struct EnsurePermission {}
 

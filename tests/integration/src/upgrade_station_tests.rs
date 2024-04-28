@@ -1,13 +1,13 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    canister_status, execute_proposal_with_extra_ticks, get_core_canister_health_status,
+    canister_status, execute_request_with_extra_ticks, get_core_canister_health_status,
     get_system_info, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::Encode;
 use sha2::{Digest, Sha256};
 use station_api::{
-    ChangeCanisterOperationInput, ChangeCanisterTargetDTO, HealthStatus, ProposalOperationInput,
+    ChangeCanisterOperationInput, ChangeCanisterTargetDTO, HealthStatus, RequestOperationInput,
     SystemInstall, SystemUpgrade,
 };
 
@@ -28,18 +28,18 @@ fn successful_station_upgrade() {
         get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.station);
     assert_eq!(health_status, HealthStatus::Healthy);
 
-    // submit station upgrade proposal
+    // submit station upgrade request
     let station_init_arg = SystemInstall::Upgrade(SystemUpgrade {});
     let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
     let station_upgrade_operation =
-        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
             target: ChangeCanisterTargetDTO::UpgradeStation,
             module: station_wasm.clone(),
             arg: Some(station_init_arg_bytes),
         });
-    // extra ticks are necessary to prevent polling on the proposal status
+    // extra ticks are necessary to prevent polling on the request status
     // before the station canister is upgraded and running
-    execute_proposal_with_extra_ticks(
+    execute_request_with_extra_ticks(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
@@ -57,15 +57,15 @@ fn successful_station_upgrade() {
     assert!(system_info.raw_rand_successful);
     let last_uprade_timestamp = system_info.last_upgrade_timestamp;
 
-    // submit one more station upgrade proposal with no changes
+    // submit one more station upgrade request with no changes
     let station_upgrade_operation =
-        ProposalOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
             target: ChangeCanisterTargetDTO::UpgradeStation,
             module: station_wasm.clone(),
             arg: None,
         });
 
-    execute_proposal_with_extra_ticks(
+    execute_request_with_extra_ticks(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,

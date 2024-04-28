@@ -10,9 +10,9 @@ pub mod address_book;
 
 pub mod blockchain;
 
-pub mod criteria;
+pub mod request_policy_rule;
 
-pub mod policy;
+pub mod request_policy;
 
 pub mod notification;
 
@@ -20,9 +20,18 @@ pub mod notification_status;
 
 pub mod notification_type;
 
-pub mod proposal_operation_type;
+pub mod request_operation_type;
 
-pub mod proposal_operation;
+pub mod request_operation;
+
+mod request;
+
+mod request_status;
+pub use request_status::*;
+
+mod request_approval_status;
+
+mod request_approval;
 
 mod helper;
 pub use helper::*;
@@ -38,15 +47,6 @@ mod transfer;
 pub use transfer::*;
 
 mod transfer_status;
-
-mod proposal;
-
-mod proposal_status;
-pub use proposal_status::*;
-
-mod proposal_vote_status;
-
-mod proposal_vote;
 
 pub mod permission;
 

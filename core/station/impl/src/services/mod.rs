@@ -18,14 +18,14 @@ pub use user::*;
 mod user_group;
 pub use user_group::*;
 
-mod proposal;
-pub use proposal::*;
+mod request;
+pub use request::*;
 
 mod system;
 pub use system::*;
 
-mod proposal_policy;
-pub use proposal_policy::*;
+mod request_policy;
+pub use request_policy::*;
 
 mod change_canister;
 pub use change_canister::*;

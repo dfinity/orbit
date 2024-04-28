@@ -22,7 +22,7 @@ pub struct AccountDTO {
     pub balance: Option<AccountBalanceInfoDTO>,
     pub metadata: Vec<MetadataDTO>,
     pub transfer_approval_policy: Option<RequestPolicyRuleDTO>,
-    pub update_approval_policy: Option<RequestPolicyRuleDTO>,
+    pub configs_approval_policy: Option<RequestPolicyRuleDTO>,
     pub last_modification_timestamp: String,
 }
 
@@ -31,9 +31,9 @@ pub struct EditAccountOperationInput {
     pub account_id: UuidDTO,
     pub name: Option<String>,
     pub read_permission: Option<AllowDTO>,
-    pub update_permission: Option<AllowDTO>,
+    pub configs_permission: Option<AllowDTO>,
     pub transfer_permission: Option<AllowDTO>,
-    pub update_approval_policy: Option<RequestPolicyRuleInput>,
+    pub configs_approval_policy: Option<RequestPolicyRuleInput>,
     pub transfer_approval_policy: Option<RequestPolicyRuleInput>,
 }
 
@@ -49,9 +49,9 @@ pub struct AddAccountOperationInput {
     pub standard: String,
     pub metadata: Vec<MetadataDTO>,
     pub read_permission: AllowDTO,
-    pub update_permission: AllowDTO,
+    pub configs_permission: AllowDTO,
     pub transfer_permission: AllowDTO,
-    pub update_approval_policy: Option<RequestPolicyRuleDTO>,
+    pub configs_approval_policy: Option<RequestPolicyRuleDTO>,
     pub transfer_approval_policy: Option<RequestPolicyRuleDTO>,
 }
 

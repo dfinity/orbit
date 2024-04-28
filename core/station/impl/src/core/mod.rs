@@ -31,7 +31,7 @@ pub mod authorization;
 pub mod evaluation;
 pub mod init;
 pub mod metrics;
-pub mod proposal;
+pub mod request;
 pub mod utils;
 
 #[cfg(test)]

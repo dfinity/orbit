@@ -1,30 +1,31 @@
 //! Repositories for entities and related data, including indexes to facilitate data retrieval.
 
-mod address_book;
+pub mod address_book;
 pub use address_book::*;
 
-mod user;
+pub mod user;
 pub use user::*;
 
-mod user_group;
+pub mod user_group;
 pub use user_group::*;
 
-mod account;
+pub mod account;
 pub use account::*;
 
-mod transfer;
+pub mod transfer;
 pub use transfer::*;
 
-mod notification;
+pub mod notification;
 pub use notification::*;
 
-mod proposal;
-pub use proposal::*;
+pub mod request;
+pub use request::*;
 
-mod evaluation_result;
-pub use evaluation_result::*;
+pub mod request_policy;
+pub use request_policy::*;
 
-pub mod policy;
+pub mod request_evaluation_result;
+pub use request_evaluation_result::*;
 
 pub mod permission;
 

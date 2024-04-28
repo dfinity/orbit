@@ -10,7 +10,7 @@ impl TransferMapper {
     pub fn to_dto(transfer: Transfer) -> TransferDTO {
         TransferDTO {
             id: Uuid::from_bytes(transfer.id).hyphenated().to_string(),
-            proposal_id: Uuid::from_bytes(transfer.proposal_id)
+            request_id: Uuid::from_bytes(transfer.request_id)
                 .hyphenated()
                 .to_string(),
             amount: transfer.amount,
@@ -35,7 +35,7 @@ impl TransferMapper {
             to: transfer.to_address,
             created_at: timestamp_to_rfc3339(&transfer.created_timestamp),
             status: transfer.status.into(),
-            proposal_id: Uuid::from_bytes(transfer.proposal_id)
+            request_id: Uuid::from_bytes(transfer.request_id)
                 .hyphenated()
                 .to_string(),
         }

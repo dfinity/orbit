@@ -1,7 +1,8 @@
 use super::authorization::Authorization;
 use super::CallContext;
+use crate::errors::PaginationError;
 use crate::models::resource::Resource;
-use crate::{errors::PaginationError, models::criteria::Percentage};
+use crate::models::Percentage;
 
 pub const DEFAULT_PAGINATION_LIMIT: u16 = 10;
 

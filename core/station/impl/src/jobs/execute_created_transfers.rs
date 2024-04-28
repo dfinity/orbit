@@ -7,9 +7,9 @@ use crate::{
         TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
     },
     models::{
-        Account, Proposal, ProposalOperation, ProposalStatus, Transfer, TransferId, TransferStatus,
+        Account, Request, RequestOperation, RequestStatus, Transfer, TransferId, TransferStatus,
     },
-    repositories::{AccountRepository, ProposalRepository, TransferRepository},
+    repositories::{AccountRepository, RequestRepository, TransferRepository},
 };
 use async_trait::async_trait;
 use futures::future;
@@ -21,7 +21,7 @@ use uuid::Uuid;
 pub struct Job {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
-    proposal_repository: ProposalRepository,
+    request_repository: RequestRepository,
 }
 
 #[async_trait]
@@ -52,7 +52,7 @@ impl Job {
         // truncate the list to avoid processing too many transfers at once
         transfers.truncate(Self::MAX_BATCH_SIZE);
 
-        // update the status of the proposals to avoid processing them again
+        // update the status of the requests to avoid processing them again
         for transfer in transfers.iter_mut() {
             transfer.status = TransferStatus::Processing { started_at: time() };
             transfer.last_modification_timestamp = time();
@@ -60,26 +60,26 @@ impl Job {
                 .insert(transfer.to_key(), transfer.to_owned());
         }
 
-        // load proposals associated with the transfers
-        let mut proposals: HashMap<TransferId, Proposal> = HashMap::new();
+        // load requests associated with the transfers
+        let mut requests: HashMap<TransferId, Request> = HashMap::new();
         for transfer in transfers.iter() {
             match self
-                .proposal_repository
-                .get(&Proposal::key(transfer.proposal_id))
+                .request_repository
+                .get(&Request::key(transfer.request_id))
             {
-                Some(proposal) => {
-                    proposals.insert(transfer.id, proposal);
+                Some(request) => {
+                    requests.insert(transfer.id, request);
                 }
                 None => {
-                    // if the proposal is not found, mark the transfer as failed
+                    // if the request is not found, mark the transfer as failed
                     print(format!(
-                        "Error: proposal not found for transfer {}",
+                        "Error: request not found for transfer {}",
                         Uuid::from_bytes(transfer.id).hyphenated()
                     ));
 
                     let mut transfer = transfer.clone();
                     transfer.status = TransferStatus::Failed {
-                        reason: "Proposal not found".to_string(),
+                        reason: "Request not found".to_string(),
                     };
                     transfer.last_modification_timestamp = time();
                     self.transfer_repository
@@ -89,14 +89,14 @@ impl Job {
         }
 
         // batch the transfers to be executed
-        let requests = transfers
+        let calls = transfers
             .clone()
             .into_iter()
-            .filter(|transfer| proposals.contains_key(&transfer.id))
+            .filter(|transfer| requests.contains_key(&transfer.id))
             .map(|transfer| self.execute_transfer(transfer));
 
         // wait for all the transfers to be executed
-        let results = future::join_all(requests).await;
+        let results = future::join_all(calls).await;
         let transfers = transfers.clone();
 
         // update the status of the transfers
@@ -122,24 +122,24 @@ impl Job {
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
 
-                    if let Some(proposal) = proposals.get(&transfer.id) {
-                        let mut proposal = proposal.clone();
+                    if let Some(request) = requests.get(&transfer.id) {
+                        let mut request = request.clone();
 
-                        if let ProposalOperation::Transfer(transfer_operation) =
-                            &mut proposal.operation
+                        if let RequestOperation::Transfer(transfer_operation) =
+                            &mut request.operation
                         {
                             transfer_operation.transfer_id = Some(transfer.id);
                         }
 
-                        proposal.status = ProposalStatus::Completed {
+                        request.status = RequestStatus::Completed {
                             completed_at: time(),
                         };
-                        proposal.last_modification_timestamp = time();
-                        self.proposal_repository
-                            .insert(proposal.to_key(), proposal.to_owned());
+                        request.last_modification_timestamp = time();
+                        self.request_repository
+                            .insert(request.to_key(), request.to_owned());
                     } else {
                         print(format!(
-                            "Error: proposal not found for transfer {}",
+                            "Error: request not found for transfer {}",
                             Uuid::from_bytes(transfer.id).hyphenated()
                         ));
                     }
@@ -153,17 +153,17 @@ impl Job {
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
 
-                    if let Some(proposal) = proposals.get(&transfer.id) {
-                        let mut proposal = proposal.clone();
-                        proposal.status = ProposalStatus::Failed {
+                    if let Some(request) = requests.get(&transfer.id) {
+                        let mut request = request.clone();
+                        request.status = RequestStatus::Failed {
                             reason: Some(e.to_string()),
                         };
-                        proposal.last_modification_timestamp = time();
-                        self.proposal_repository
-                            .insert(proposal.to_key(), proposal.to_owned());
+                        request.last_modification_timestamp = time();
+                        self.request_repository
+                            .insert(request.to_key(), request.to_owned());
                     } else {
                         print(format!(
-                            "Error: proposal not found for transfer {}",
+                            "Error: request not found for transfer {}",
                             Uuid::from_bytes(transfer.id).hyphenated()
                         ));
                     }

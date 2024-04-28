@@ -4,7 +4,7 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-            ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
             UserResourceAction,
         },
         Transfer,
@@ -13,7 +13,7 @@ use crate::{
 };
 use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
-use station_api::{ProposalOperationInput, UserPrivilege};
+use station_api::{RequestOperationInput, UserPrivilege};
 
 pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
     UserPrivilege::Capabilities,
@@ -23,14 +23,14 @@ pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
     UserPrivilege::ListAccounts,
     UserPrivilege::AddAccount,
     UserPrivilege::ListPermissions,
-    UserPrivilege::ListProposalPolicies,
-    UserPrivilege::AddProposalPolicy,
+    UserPrivilege::ListRequestPolicies,
+    UserPrivilege::AddRequestPolicy,
     UserPrivilege::ListUserGroups,
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
     UserPrivilege::ChangeCanister,
-    UserPrivilege::ListProposals,
+    UserPrivilege::ListRequests,
 ];
 
 impl From<UserPrivilege> for Resource {
@@ -43,8 +43,8 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListAccounts => Resource::Account(AccountResourceAction::List),
             UserPrivilege::AddAccount => Resource::Account(AccountResourceAction::Create),
             UserPrivilege::ListPermissions => Resource::Permission(PermissionResourceAction::Read),
-            UserPrivilege::ListProposalPolicies => Resource::ProposalPolicy(ResourceAction::List),
-            UserPrivilege::AddProposalPolicy => Resource::ProposalPolicy(ResourceAction::Create),
+            UserPrivilege::ListRequestPolicies => Resource::RequestPolicy(ResourceAction::List),
+            UserPrivilege::AddRequestPolicy => Resource::RequestPolicy(ResourceAction::Create),
             UserPrivilege::ListUserGroups => Resource::UserGroup(ResourceAction::List),
             UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
@@ -52,7 +52,7 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ChangeCanister => {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
-            UserPrivilege::ListProposals => Resource::Proposal(ProposalResourceAction::List),
+            UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
         }
     }
 }
@@ -87,21 +87,21 @@ impl From<&station_api::GetUserInput> for Resource {
     }
 }
 
-impl From<&station_api::GetProposalInput> for Resource {
-    fn from(input: &station_api::GetProposalInput) -> Self {
-        Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(
-            *HelperMapper::to_uuid(input.proposal_id.to_owned())
-                .expect("Invalid proposal id")
+impl From<&station_api::GetRequestInput> for Resource {
+    fn from(input: &station_api::GetRequestInput) -> Self {
+        Resource::Request(RequestResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.request_id.to_owned())
+                .expect("Invalid request id")
                 .as_bytes(),
         )))
     }
 }
 
-impl From<&station_api::GetProposalPolicyInput> for Resource {
-    fn from(input: &station_api::GetProposalPolicyInput) -> Self {
-        Resource::ProposalPolicy(ResourceAction::Read(ResourceId::Id(
+impl From<&station_api::GetRequestPolicyInput> for Resource {
+    fn from(input: &station_api::GetRequestPolicyInput) -> Self {
+        Resource::RequestPolicy(ResourceAction::Read(ResourceId::Id(
             *HelperMapper::to_uuid(input.id.to_owned())
-                .expect("Invalid proposal policy id")
+                .expect("Invalid request policy id")
                 .as_bytes(),
         )))
     }
@@ -117,11 +117,11 @@ impl From<&station_api::GetUserGroupInput> for Resource {
     }
 }
 
-impl From<&station_api::VoteOnProposalInput> for Resource {
-    fn from(input: &station_api::VoteOnProposalInput) -> Self {
-        Resource::Proposal(ProposalResourceAction::Read(ResourceId::Id(
-            *HelperMapper::to_uuid(input.proposal_id.to_owned())
-                .expect("Invalid proposal id")
+impl From<&station_api::SubmitRequestApprovalInput> for Resource {
+    fn from(input: &station_api::SubmitRequestApprovalInput) -> Self {
+        Resource::Request(RequestResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.request_id.to_owned())
+                .expect("Invalid request id")
                 .as_bytes(),
         )))
     }
@@ -137,86 +137,86 @@ impl From<&station_api::GetAddressBookEntryInputDTO> for Resource {
     }
 }
 
-impl From<&station_api::CreateProposalInput> for Resource {
-    fn from(input: &station_api::CreateProposalInput) -> Self {
+impl From<&station_api::CreateRequestInput> for Resource {
+    fn from(input: &station_api::CreateRequestInput) -> Self {
         match &input.operation {
-            ProposalOperationInput::AddAccount(_) => {
+            RequestOperationInput::AddAccount(_) => {
                 Resource::Account(AccountResourceAction::Create)
             }
-            ProposalOperationInput::EditAccount(input) => {
+            RequestOperationInput::EditAccount(input) => {
                 Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                     *HelperMapper::to_uuid(input.account_id.to_owned())
                         .expect("Invalid account id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::AddAddressBookEntry(_) => {
+            RequestOperationInput::AddAddressBookEntry(_) => {
                 Resource::AddressBook(ResourceAction::Create)
             }
-            ProposalOperationInput::EditAddressBookEntry(input) => {
+            RequestOperationInput::EditAddressBookEntry(input) => {
                 Resource::AddressBook(ResourceAction::Update(ResourceId::Id(
                     *HelperMapper::to_uuid(input.address_book_entry_id.to_owned())
                         .expect("Invalid address book entry id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::RemoveAddressBookEntry(input) => {
+            RequestOperationInput::RemoveAddressBookEntry(input) => {
                 Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(
                     *HelperMapper::to_uuid(input.address_book_entry_id.to_owned())
                         .expect("Invalid address book entry id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::Transfer(input) => {
+            RequestOperationInput::Transfer(input) => {
                 Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                     *HelperMapper::to_uuid(input.from_account_id.to_owned())
                         .expect("Invalid account id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::AddUser(_) => Resource::User(UserResourceAction::Create),
-            ProposalOperationInput::EditUser(input) => {
+            RequestOperationInput::AddUser(_) => Resource::User(UserResourceAction::Create),
+            RequestOperationInput::EditUser(input) => {
                 Resource::User(UserResourceAction::Update(ResourceId::Id(
                     *HelperMapper::to_uuid(input.id.to_owned())
                         .expect("Invalid user id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::AddUserGroup(_) => Resource::UserGroup(ResourceAction::Create),
-            ProposalOperationInput::EditUserGroup(input) => {
+            RequestOperationInput::AddUserGroup(_) => Resource::UserGroup(ResourceAction::Create),
+            RequestOperationInput::EditUserGroup(input) => {
                 Resource::UserGroup(ResourceAction::Update(ResourceId::Id(
                     *HelperMapper::to_uuid(input.user_group_id.to_owned())
                         .expect("Invalid user group id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::RemoveUserGroup(input) => {
+            RequestOperationInput::RemoveUserGroup(input) => {
                 Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(
                     *HelperMapper::to_uuid(input.user_group_id.to_owned())
                         .expect("Invalid user group id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::ChangeCanister(_) => {
+            RequestOperationInput::ChangeCanister(_) => {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
-            ProposalOperationInput::EditPermission(_) => {
+            RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
             }
-            ProposalOperationInput::AddProposalPolicy(_) => {
-                Resource::ProposalPolicy(ResourceAction::Create)
+            RequestOperationInput::AddRequestPolicy(_) => {
+                Resource::RequestPolicy(ResourceAction::Create)
             }
-            ProposalOperationInput::EditProposalPolicy(input) => {
-                Resource::ProposalPolicy(ResourceAction::Update(ResourceId::Id(
+            RequestOperationInput::EditRequestPolicy(input) => {
+                Resource::RequestPolicy(ResourceAction::Update(ResourceId::Id(
                     *HelperMapper::to_uuid(input.policy_id.to_owned())
-                        .expect("Invalid proposal policy id")
+                        .expect("Invalid request policy id")
                         .as_bytes(),
                 )))
             }
-            ProposalOperationInput::RemoveProposalPolicy(input) => {
-                Resource::ProposalPolicy(ResourceAction::Delete(ResourceId::Id(
+            RequestOperationInput::RemoveRequestPolicy(input) => {
+                Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Id(
                     *HelperMapper::to_uuid(input.policy_id.to_owned())
-                        .expect("Invalid proposal policy id")
+                        .expect("Invalid request policy id")
                         .as_bytes(),
                 )))
             }

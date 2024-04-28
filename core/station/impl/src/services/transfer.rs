@@ -104,11 +104,11 @@ mod tests {
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation},
         models::{
-            account_test_utils::mock_account, proposal_test_utils::mock_proposal,
+            account_test_utils::mock_account, request_test_utils::mock_request,
             transfer_test_utils::mock_transfer, user_test_utils::mock_user, Account, User,
         },
         repositories::{
-            ACCOUNT_REPOSITORY, PROPOSAL_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY,
+            ACCOUNT_REPOSITORY, REQUEST_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY,
         },
     };
     use candid::Principal;
@@ -134,10 +134,10 @@ mod tests {
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 
-        let mut proposal = mock_proposal();
-        proposal.id = [2; 16];
+        let mut request = mock_request();
+        request.id = [2; 16];
 
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
         TestContext {
             repository: TransferRepository::default(),
@@ -207,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn fail_add_transfer_missing_proposal_id() {
+    fn fail_add_transfer_missing_request_id() {
         let ctx = setup();
 
         disable_mock_resource_validation();
@@ -215,14 +215,14 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.initiator_user = ctx.caller_user.id;
         transfer.from_account = ctx.account.id;
-        transfer.proposal_id = [0; 16];
+        transfer.request_id = [0; 16];
 
         let result = ctx.service.add_transfer(transfer);
 
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().details.unwrap().get("info"),
-            Some(&"The proposal_id 00000000-0000-0000-0000-000000000000 does not exist".to_owned())
+            Some(&"The request_id 00000000-0000-0000-0000-000000000000 does not exist".to_owned())
         );
     }
 

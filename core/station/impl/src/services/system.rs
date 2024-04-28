@@ -7,9 +7,9 @@ use crate::{
     errors::InstallError,
     models::{
         system::{SystemInfo, SystemState},
-        ProposalId, ProposalKey, ProposalStatus,
+        RequestId, RequestKey, RequestStatus,
     },
-    repositories::{ProposalRepository, PROPOSAL_REPOSITORY},
+    repositories::{RequestRepository, REQUEST_REPOSITORY},
 };
 use candid::Principal;
 use lazy_static::lazy_static;
@@ -21,19 +21,17 @@ use uuid::Uuid;
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
-        Arc::new(SystemService::new(Arc::clone(&PROPOSAL_REPOSITORY)));
+        Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
 }
 
 #[derive(Debug)]
 pub struct SystemService {
-    proposal_repository: Arc<ProposalRepository>,
+    request_repository: Arc<RequestRepository>,
 }
 
 impl SystemService {
-    pub fn new(proposal_repository: Arc<ProposalRepository>) -> Self {
-        Self {
-            proposal_repository,
-        }
+    pub fn new(request_repository: Arc<RequestRepository>) -> Self {
+        Self { request_repository }
     }
 
     /// Gets the system information of the current canister.
@@ -41,16 +39,16 @@ impl SystemService {
         read_system_info()
     }
 
-    pub fn clear_self_upgrade_proposal(&self) {
+    pub fn clear_self_upgrade_request(&self) {
         let mut system_info = self.get_system_info();
-        system_info.clear_change_canister_proposal();
+        system_info.clear_change_canister_request();
 
         write_system_info(system_info);
     }
 
-    pub fn set_self_upgrade_proposal(&self, self_upgrade_proposal_id: ProposalId) {
+    pub fn set_self_upgrade_request(&self, self_upgrade_request_id: RequestId) {
         let mut system_info = self.get_system_info();
-        system_info.set_change_canister_proposal(self_upgrade_proposal_id);
+        system_info.set_change_canister_request(self_upgrade_request_id);
 
         write_system_info(system_info);
     }
@@ -217,31 +215,28 @@ impl SystemService {
             None => SystemUpgrade {},
         };
 
-        // verifies that the upgrade proposal exists and marks it as completed
-        if let Some(proposal_id) = system_info.get_change_canister_proposal() {
-            match self
-                .proposal_repository
-                .get(&ProposalKey { id: *proposal_id })
-            {
-                Some(mut proposal) => {
-                    proposal.status = ProposalStatus::Completed {
+        // verifies that the upgrade request exists and marks it as completed
+        if let Some(request_id) = system_info.get_change_canister_request() {
+            match self.request_repository.get(&RequestKey { id: *request_id }) {
+                Some(mut request) => {
+                    request.status = RequestStatus::Completed {
                         completed_at: time(),
                     };
 
-                    self.proposal_repository.insert(proposal.to_key(), proposal);
+                    self.request_repository.insert(request.to_key(), request);
                 }
                 None => {
-                    // Do not fail the upgrade if the proposal is not found, even though this should never happen
+                    // Do not fail the upgrade if the request is not found, even though this should never happen
                     // it's not a critical error
                     print(format!(
-                        "Error: verifying upgrade failed, proposal not found {}",
-                        Uuid::from_bytes(*proposal_id).hyphenated()
+                        "Error: verifying upgrade failed, request not found {}",
+                        Uuid::from_bytes(*request_id).hyphenated()
                     ));
                 }
             };
 
-            // clears the change canister proposal from the config to avoid it being used again
-            system_info.clear_change_canister_proposal();
+            // clears the change canister request from the config to avoid it being used again
+            system_info.clear_change_canister_request();
 
             write_system_info(system_info.clone());
         }
@@ -257,13 +252,13 @@ impl SystemService {
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print, time};
-    use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_PROPOSAL_POLICIES};
+    use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_REQUEST_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{
-        AddProposalPolicyOperationInput, AddUserOperationInput, EditPermissionOperationInput,
+        AddRequestPolicyOperationInput, AddUserOperationInput, EditPermissionOperationInput,
         UserStatus,
     };
-    use crate::services::PROPOSAL_POLICY_SERVICE;
+    use crate::services::REQUEST_POLICY_SERVICE;
     use crate::services::{permission::PERMISSION_SERVICE, USER_SERVICE};
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
@@ -295,15 +290,15 @@ mod install_canister_handlers {
             },
         );
 
-        // adds the default proposal policies which sets safe defaults for the canister
-        for policy in DEFAULT_PROPOSAL_POLICIES.iter() {
-            PROPOSAL_POLICY_SERVICE
-                .add_proposal_policy(AddProposalPolicyOperationInput {
+        // adds the default request policies which sets safe defaults for the canister
+        for policy in DEFAULT_REQUEST_POLICIES.iter() {
+            REQUEST_POLICY_SERVICE
+                .add_request_policy(AddRequestPolicyOperationInput {
                     specifier: policy.0.to_owned(),
                     criteria: policy.1.to_owned(),
                 })
                 .await
-                .map_err(|e| format!("Failed to add default proposal policy: {:?}", e))?;
+                .map_err(|e| format!("Failed to add default request policy: {:?}", e))?;
         }
 
         // adds the default permissions which sets safe defaults for the canister
@@ -423,7 +418,7 @@ mod install_canister_handlers {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::proposal_test_utils::mock_proposal;
+    use crate::models::request_test_utils::mock_request;
 
     use super::*;
     use candid::Principal;
@@ -447,14 +442,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn canister_upgrade_marks_proposal_completed_and_clears_it() {
-        let mut proposal = mock_proposal();
-        proposal.status = ProposalStatus::Processing { started_at: time() };
+    async fn canister_upgrade_marks_request_completed_and_clears_it() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Processing { started_at: time() };
 
-        PROPOSAL_REPOSITORY.insert(proposal.to_key(), proposal.clone());
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
         let mut system_info = SystemInfo::new(Principal::management_canister(), Vec::new());
-        system_info.set_change_canister_proposal(proposal.id);
+        system_info.set_change_canister_request(request.id);
 
         write_system_info(system_info);
 
@@ -462,11 +457,11 @@ mod tests {
 
         assert!(result.is_ok());
 
-        let proposal = PROPOSAL_REPOSITORY.get(&proposal.to_key()).unwrap();
-        assert!(matches!(proposal.status, ProposalStatus::Completed { .. }));
+        let request = REQUEST_REPOSITORY.get(&request.to_key()).unwrap();
+        assert!(matches!(request.status, RequestStatus::Completed { .. }));
 
         let system_info = read_system_info();
 
-        assert!(system_info.get_change_canister_proposal().is_none());
+        assert!(system_info.get_change_canister_request().is_none());
     }
 }

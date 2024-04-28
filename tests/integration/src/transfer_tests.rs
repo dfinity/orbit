@@ -8,11 +8,11 @@ use ic_ledger_types::AccountIdentifier;
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{query_candid_as, update_candid_as};
 use station_api::{
-    AddAccountOperationInput, AllowDTO, ApiErrorDTO, ApprovalThresholdDTO, CreateProposalInput,
-    CreateProposalResponse, CriteriaDTO, GetProposalInput, GetProposalResponse, GetTransfersInput,
-    GetTransfersResponse, ListAccountTransfersInput, ListAccountTransfersResponse, MeResponse,
-    ProposalExecutionScheduleDTO, ProposalOperationDTO, ProposalOperationInput, ProposalStatusDTO,
-    TransferOperationInput, UserSpecifierDTO,
+    AddAccountOperationInput, AllowDTO, ApiErrorDTO, CreateRequestInput, CreateRequestResponse,
+    GetRequestInput, GetRequestResponse, GetTransfersInput, GetTransfersResponse,
+    ListAccountTransfersInput, ListAccountTransfersResponse, MeResponse, QuorumPercentageDTO,
+    RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestStatusDTO, TransferOperationInput, UserSpecifierDTO,
 };
 use std::time::Duration;
 
@@ -42,7 +42,7 @@ fn make_transfer_successful() {
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
-        update_permission: AllowDTO {
+        configs_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
@@ -52,74 +52,78 @@ fn make_transfer_successful() {
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
-        transfer_approval_policy: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
-            voters: UserSpecifierDTO::Owner,
-            threshold: 100,
-        })),
-        update_approval_policy: Some(CriteriaDTO::ApprovalThreshold(ApprovalThresholdDTO {
-            voters: UserSpecifierDTO::Owner,
-            threshold: 100,
-        })),
+        transfer_approval_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
+            QuorumPercentageDTO {
+                approvers: UserSpecifierDTO::Owner,
+                min_approved: 100,
+            },
+        )),
+        configs_approval_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
+            QuorumPercentageDTO {
+                approvers: UserSpecifierDTO::Owner,
+                min_approved: 100,
+            },
+        )),
         metadata: vec![],
     };
-    let add_account_proposal = CreateProposalInput {
-        operation: ProposalOperationInput::AddAccount(create_account_args),
+    let add_account_request = CreateRequestInput {
+        operation: RequestOperationInput::AddAccount(create_account_args),
         title: None,
         summary: None,
-        execution_plan: Some(ProposalExecutionScheduleDTO::Immediate),
+        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
     };
-    let res: (ApiResult<CreateProposalResponse>,) = update_candid_as(
+    let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        "create_proposal",
-        (add_account_proposal,),
+        "create_request",
+        (add_account_request,),
     )
     .unwrap();
 
-    // wait for the proposal to be adopted (timer's period is 5 seconds)
+    // wait for the request to be adopted (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
 
-    let account_creation_proposal_dto = res.0.unwrap().proposal;
-    match account_creation_proposal_dto.status {
-        ProposalStatusDTO::Adopted { .. } => {}
+    let account_creation_request_dto = res.0.unwrap().request;
+    match account_creation_request_dto.status {
+        RequestStatusDTO::Approved { .. } => {}
         _ => {
-            panic!("proposal must be adopted by now");
+            panic!("request must be adopted by now");
         }
     };
 
-    // wait for the proposal to be executed (timer's period is 5 seconds)
+    // wait for the request to be executed (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
 
-    // fetch the created account id from the proposal
-    let get_proposal_args = GetProposalInput {
-        proposal_id: account_creation_proposal_dto.id,
+    // fetch the created account id from the request
+    let get_request_args = GetRequestInput {
+        request_id: account_creation_request_dto.id,
     };
-    let res: (ApiResult<CreateProposalResponse>,) = update_candid_as(
+    let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        "get_proposal",
-        (get_proposal_args,),
+        "get_request",
+        (get_request_args,),
     )
     .unwrap();
-    let finalized_proposal = res.0.unwrap().proposal;
-    match finalized_proposal.status {
-        ProposalStatusDTO::Completed { .. } => {}
+    let finalized_request = res.0.unwrap().request;
+    match finalized_request.status {
+        RequestStatusDTO::Completed { .. } => {}
         _ => {
             panic!(
-                "proposal must be completed by now but instead is {:?}",
-                finalized_proposal.status
+                "request must be completed by now but instead is {:?}",
+                finalized_request.status
             );
         }
     };
 
-    let account_dto = match finalized_proposal.operation {
-        ProposalOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
+    let account_dto = match finalized_request.operation {
+        RequestOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
         _ => {
-            panic!("proposal must be AddAccount");
+            panic!("request must be AddAccount");
         }
     };
 
@@ -140,7 +144,7 @@ fn make_transfer_successful() {
     let old_beneficiary_balance = get_icp_balance(&env, beneficiary_id);
     assert_eq!(old_beneficiary_balance, 0);
 
-    // make transfer proposal to beneficiary
+    // make transfer request to beneficiary
     let transfer = TransferOperationInput {
         from_account_id: account_dto.id.clone(),
         to: default_account(beneficiary_id),
@@ -149,65 +153,65 @@ fn make_transfer_successful() {
         metadata: vec![],
         network: None,
     };
-    let transfer_proposal = CreateProposalInput {
-        operation: ProposalOperationInput::Transfer(transfer),
+    let transfer_request = CreateRequestInput {
+        operation: RequestOperationInput::Transfer(transfer),
         title: None,
         summary: None,
-        execution_plan: Some(ProposalExecutionScheduleDTO::Immediate),
+        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
     };
-    let res: (Result<CreateProposalResponse, ApiErrorDTO>,) = update_candid_as(
+    let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        "create_proposal",
-        (transfer_proposal,),
+        "create_request",
+        (transfer_request,),
     )
     .unwrap();
-    let proposal_dto = res.0.unwrap().proposal;
+    let request_dto = res.0.unwrap().request;
 
-    // wait for the proposal to be adopted (timer's period is 5 seconds)
+    // wait for the request to be adopted (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
-    // wait for the proposal to be processing (timer's period is 5 seconds) and first is set to processing
+    // wait for the request to be processing (timer's period is 5 seconds) and first is set to processing
     env.advance_time(Duration::from_secs(5));
     env.tick();
     env.tick();
     env.tick();
 
-    // check transfer proposal status
-    let get_proposal_args = GetProposalInput {
-        proposal_id: proposal_dto.id.clone(),
+    // check transfer request status
+    let get_request_args = GetRequestInput {
+        request_id: request_dto.id.clone(),
     };
-    let res: (Result<GetProposalResponse, ApiErrorDTO>,) = update_candid_as(
+    let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        "get_proposal",
-        (get_proposal_args,),
+        "get_request",
+        (get_request_args,),
     )
     .unwrap();
-    let new_proposal_dto = res.0.unwrap().proposal;
-    match new_proposal_dto.status {
-        ProposalStatusDTO::Completed { .. } => {}
+    let new_request_dto = res.0.unwrap().request;
+    match new_request_dto.status {
+        RequestStatusDTO::Completed { .. } => {}
         _ => {
             panic!(
-                "proposal must be completed by now but instead is {:?}",
-                new_proposal_dto.status
+                "request must be completed by now but instead is {:?}",
+                new_request_dto.status
             );
         }
     };
 
-    // proposal has the transfer id filled out
-    let transfer_id = match new_proposal_dto.operation {
-        ProposalOperationDTO::Transfer(transfer) => transfer
+    // request has the transfer id filled out
+    let transfer_id = match new_request_dto.operation {
+        RequestOperationDTO::Transfer(transfer) => transfer
             .transfer_id
             .expect("transfer id must be set for completed transfer"),
         _ => {
-            panic!("proposal must be Transfer");
+            panic!("request must be Transfer");
         }
     };
 
-    // fetch the transfer and check if its proposal id matches the proposal id that created it
+    // fetch the transfer and check if its request id matches the request id that created it
     let res: (Result<GetTransfersResponse, ApiErrorDTO>,) = query_candid_as(
         &env,
         canister_ids.station,
@@ -219,16 +223,16 @@ fn make_transfer_successful() {
     )
     .unwrap();
 
-    let proposal_id_in_transfer_dto = res
+    let request_id_in_transfer_dto = res
         .0
         .unwrap()
         .transfers
         .first()
         .expect("One transaction must be returned")
-        .proposal_id
+        .request_id
         .clone();
 
-    assert_eq!(proposal_id_in_transfer_dto, proposal_dto.id);
+    assert_eq!(request_id_in_transfer_dto, request_dto.id);
 
     // check beneficiary balance after completed transfer
     let new_beneficiary_balance = get_icp_balance(&env, beneficiary_id);

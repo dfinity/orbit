@@ -156,7 +156,7 @@ impl Permission {
 #[cfg(any(test, feature = "canbench"))]
 pub mod permission_test_utils {
     use crate::models::resource::{
-        AccountResourceAction, PermissionResourceAction, ProposalResourceAction, ResourceAction,
+        AccountResourceAction, PermissionResourceAction, RequestResourceAction, ResourceAction,
         ResourceId, UserResourceAction,
     };
 
@@ -252,11 +252,11 @@ pub mod permission_test_utils {
             ),
             Permission::new(
                 Allow::authenticated(),
-                Resource::Proposal(ProposalResourceAction::List),
+                Resource::Request(RequestResourceAction::List),
             ),
             Permission::new(
                 Allow::authenticated(),
-                Resource::Proposal(ProposalResourceAction::Read(ResourceId::Any)),
+                Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
             ),
         ]);
 

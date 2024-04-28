@@ -1,6 +1,6 @@
 use crate::models::resource::{
     AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-    ProposalResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+    RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
     UserResourceAction,
 };
 use uuid::Uuid;
@@ -13,15 +13,15 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::User(action) => Resource::User(action.into()),
             station_api::ResourceDTO::Account(action) => Resource::Account(action.into()),
             station_api::ResourceDTO::Permission(action) => Resource::Permission(action.into()),
-            station_api::ResourceDTO::ProposalPolicy(action) => {
-                Resource::ProposalPolicy(action.into())
+            station_api::ResourceDTO::RequestPolicy(action) => {
+                Resource::RequestPolicy(action.into())
             }
             station_api::ResourceDTO::UserGroup(action) => Resource::UserGroup(action.into()),
             station_api::ResourceDTO::AddressBook(action) => Resource::AddressBook(action.into()),
             station_api::ResourceDTO::ChangeCanister(action) => {
                 Resource::ChangeCanister(action.into())
             }
-            station_api::ResourceDTO::Proposal(action) => Resource::Proposal(action.into()),
+            station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
         }
     }
@@ -33,15 +33,15 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::User(action) => station_api::ResourceDTO::User(action.into()),
             Resource::Account(action) => station_api::ResourceDTO::Account(action.into()),
             Resource::Permission(action) => station_api::ResourceDTO::Permission(action.into()),
-            Resource::ProposalPolicy(action) => {
-                station_api::ResourceDTO::ProposalPolicy(action.into())
+            Resource::RequestPolicy(action) => {
+                station_api::ResourceDTO::RequestPolicy(action.into())
             }
             Resource::UserGroup(action) => station_api::ResourceDTO::UserGroup(action.into()),
             Resource::AddressBook(action) => station_api::ResourceDTO::AddressBook(action.into()),
             Resource::ChangeCanister(action) => {
                 station_api::ResourceDTO::ChangeCanister(action.into())
             }
-            Resource::Proposal(action) => station_api::ResourceDTO::Proposal(action.into()),
+            Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
         }
     }
@@ -205,23 +205,23 @@ impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceA
     }
 }
 
-impl From<station_api::ProposalResourceActionDTO> for ProposalResourceAction {
-    fn from(dto: station_api::ProposalResourceActionDTO) -> Self {
+impl From<station_api::RequestResourceActionDTO> for RequestResourceAction {
+    fn from(dto: station_api::RequestResourceActionDTO) -> Self {
         match dto {
-            station_api::ProposalResourceActionDTO::List => ProposalResourceAction::List,
-            station_api::ProposalResourceActionDTO::Read(id) => {
-                ProposalResourceAction::Read(id.into())
+            station_api::RequestResourceActionDTO::List => RequestResourceAction::List,
+            station_api::RequestResourceActionDTO::Read(id) => {
+                RequestResourceAction::Read(id.into())
             }
         }
     }
 }
 
-impl From<ProposalResourceAction> for station_api::ProposalResourceActionDTO {
-    fn from(action: ProposalResourceAction) -> Self {
+impl From<RequestResourceAction> for station_api::RequestResourceActionDTO {
+    fn from(action: RequestResourceAction) -> Self {
         match action {
-            ProposalResourceAction::List => station_api::ProposalResourceActionDTO::List,
-            ProposalResourceAction::Read(id) => {
-                station_api::ProposalResourceActionDTO::Read(id.into())
+            RequestResourceAction::List => station_api::RequestResourceActionDTO::List,
+            RequestResourceAction::Read(id) => {
+                station_api::RequestResourceActionDTO::Read(id.into())
             }
         }
     }

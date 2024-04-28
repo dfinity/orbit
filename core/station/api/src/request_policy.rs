@@ -44,13 +44,13 @@ pub struct TransferSpecifierDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct QuorumPercentageDTO {
     pub approvers: UserSpecifierDTO,
-    pub min_accepted: u16,
+    pub min_approved: u16,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct QuorumDTO {
     pub approvers: UserSpecifierDTO,
-    pub min_accepted: u16,
+    pub min_approved: u16,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -83,12 +83,12 @@ pub enum EvaluatedRequestPolicyRuleDTO {
     AutoApproved,
     QuorumPercentage {
         total_possible_approvers: usize,
-        min_accepted: usize,
+        min_approved: usize,
         approvers: Vec<UuidDTO>,
     },
     Quorum {
         total_possible_approvers: usize,
-        min_accepted: usize,
+        min_approved: usize,
         approvers: Vec<UuidDTO>,
     },
     AllowListedByMetadata {
@@ -110,7 +110,7 @@ pub struct RequestPolicyRuleResultDTO {
 pub struct RequestEvaluationResultDTO {
     pub request_id: UuidDTO,
     pub status: EvaluationStatusDTO,
-    pub policy_results: Vec<RequestPolicyRuleDTO>,
+    pub policy_results: Vec<RequestPolicyRuleResultDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
