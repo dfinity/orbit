@@ -81,7 +81,7 @@ impl Evaluate<RequestEvaluationResult> for RequestEvaluator {
                     .iter()
                     .any(|result| result.status == EvaluationStatus::Approved)
                 {
-                    // If any policy adopted the request, then the request is adopted.
+                    // If any policy of the request is approved, then the request is approved.
                     EvaluationStatus::Approved
                 } else if evaluation_statuses
                     .iter()
@@ -91,8 +91,8 @@ impl Evaluate<RequestEvaluationResult> for RequestEvaluator {
                     // this applies an implicit `OR` between policies.
                     EvaluationStatus::Rejected
                 } else {
-                    // Since there are matching policies, but none of them adopted or rejected the request, we keep it in the
-                    // pending status until one of the policies evaluates it as adopted or rejected.
+                    // Since there are matching policies, but none of them approved or rejected the request, we keep it in the
+                    // pending status until one of the policies evaluates it as approved or rejected.
                     EvaluationStatus::Pending
                 }
             },
@@ -239,7 +239,7 @@ impl
 
                     Ok(possible_approvers)
                 }
-                UserSpecifier::Proposer => {
+                UserSpecifier::Requester => {
                     possible_approvers
                         .users
                         .insert(request.requested_by.to_owned());
@@ -314,13 +314,13 @@ impl
     }
 }
 
-/// Evaluates if the user has the right to vote on the request.
+/// Evaluates if the user has the right to add their approval on the request.
 ///
-/// The user has the right to vote if:
+/// The user has the right to add if:
 ///
-/// - The request is not adopted or rejected
-/// - There are matching policies for the request and the user is a part of the group that is allowed to vote
-/// - The user has not already voted on the request
+/// - The request is not approved or rejected
+/// - There are matching policies for the request and the user is a part of the group that is allowed to approve
+/// - The user has not already approved on the request
 pub struct RequestApprovalRightsEvaluator {
     pub request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
     pub approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
@@ -470,7 +470,7 @@ mod tests {
     };
     use candid::Principal;
     use orbit_essentials::repository::Repository;
-    use station_api::SubmitRequestApprovalInput;
+    use station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
     use uuid::Uuid;
 
     #[tokio::test]
@@ -508,7 +508,8 @@ mod tests {
         REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
         policy.specifier = RequestSpecifier::AddUserGroup;
-        policy.rule = RequestPolicyRule::QuorumPercentage(UserSpecifier::Proposer, Percentage(100));
+        policy.rule =
+            RequestPolicyRule::QuorumPercentage(UserSpecifier::Requester, Percentage(100));
 
         REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.clone());
 
@@ -524,7 +525,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn is_pending_when_votes_are_not_reached() {
+    async fn is_pending_when_approved_is_not_reached() {
         let mut request = mock_request();
         let mut policy = mock_request_policy();
         let user = user_test_utils::add_user(&[1; 16]);
@@ -558,7 +559,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn is_rejected_when_votes_are_not_reached() {
+    async fn is_rejected_when_approved_is_not_reached() {
         let mut request = mock_request();
         let mut policy = mock_request_policy();
         let user = user_test_utils::add_user(&[1; 16]);
@@ -629,7 +630,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn misconfigured_min_votes_when_not_enough_approvers_should_still_adopt() {
+    async fn misconfigured_min_approved_when_not_enough_approvers_should_still_approve() {
         let mut request = mock_request();
         let mut policy = mock_request_policy();
         let user = user_test_utils::add_user(&[1; 16]);
@@ -695,8 +696,8 @@ mod tests {
                 name: "test".to_owned(),
                 balance: None,
                 metadata: Metadata::default(),
-                transfer_approval_policy_id: None,
-                configs_approval_policy_id: None,
+                transfer_request_policy_id: None,
+                configs_request_policy_id: None,
                 last_modification_timestamp: 0,
             },
         );
@@ -740,7 +741,7 @@ mod tests {
 
         // 2 policies affecting the request
         assert_eq!(result.policy_results.len(), 1);
-        // no votes yet, so it should be pending
+        // no approvals yet, so it should be pending
         assert_eq!(result.status, EvaluationStatus::Pending);
 
         assert_eq!(
@@ -775,13 +776,13 @@ mod tests {
             .submit_request_approval(
                 SubmitRequestApprovalInput {
                     request_id: Uuid::from_bytes(request.id).hyphenated().to_string(),
-                    approve: true,
+                    decision: RequestApprovalStatusDTO::Approved,
                     reason: None,
                 },
                 &call_context(),
             )
             .await
-            .expect("failed to vote on request");
+            .expect("failed to approve on request");
 
         // After voting the result should be stored in the repository
         let evaluation = REQUEST_EVALUATION_RESULT_REPOSITORY

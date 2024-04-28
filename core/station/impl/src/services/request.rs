@@ -330,7 +330,7 @@ impl RequestService {
         }
 
         // When a request is created, it is immediately evaluated to determine its status.
-        // This is done because the request may be immediately rejected or adopted based on the policies.
+        // This is done because the request may be immediately rejected or approved based on the policies.
         let maybe_evaluation = request.reevaluate().await?;
 
         self.request_repository
@@ -393,10 +393,7 @@ impl RequestService {
             Err(RequestError::ApprovalNotAllowed)?
         }
 
-        let approval_decision = match input.approve {
-            true => RequestApprovalStatus::Approved,
-            false => RequestApprovalStatus::Rejected,
-        };
+        let approval_decision = input.decision.into();
 
         request.add_approval(approver.id, approval_decision, input.reason)?;
 
@@ -441,7 +438,9 @@ mod tests {
         services::AccountService,
     };
     use candid::Principal;
-    use station_api::{ListRequestsOperationTypeDTO, RequestStatusCodeDTO};
+    use station_api::{
+        ListRequestsOperationTypeDTO, RequestApprovalStatusDTO, RequestStatusCodeDTO,
+    };
 
     struct TestContext {
         repository: RequestRepository,
@@ -552,7 +551,7 @@ mod tests {
                     request_id: Uuid::from_bytes(request.id.to_owned())
                         .hyphenated()
                         .to_string(),
-                    approve: false,
+                    decision: RequestApprovalStatusDTO::Rejected,
                     reason: None,
                 },
                 &ctx.call_context,
@@ -749,11 +748,11 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 standard: BlockchainStandard::Native,
                 metadata: Metadata::default(),
-                transfer_approval_policy: Some(RequestPolicyRule::QuorumPercentage(
+                transfer_request_policy: Some(RequestPolicyRule::QuorumPercentage(
                     UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),
                     Percentage(100),
                 )),
-                configs_approval_policy: Some(RequestPolicyRule::AutoApproved),
+                configs_request_policy: Some(RequestPolicyRule::AutoApproved),
                 read_permission: Allow::users(account_owners.clone()),
                 configs_permission: Allow::users(account_owners.clone()),
                 transfer_permission: Allow::users(account_owners.clone()),
@@ -890,7 +889,7 @@ mod tests {
         ctx.service
             .submit_request_approval(
                 SubmitRequestApprovalInput {
-                    approve: true,
+                    decision: RequestApprovalStatusDTO::Approved,
                     request_id: Uuid::from_bytes(transfer_requests[1].id.to_owned())
                         .hyphenated()
                         .to_string(),

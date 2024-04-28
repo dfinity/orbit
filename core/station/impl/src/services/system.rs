@@ -295,7 +295,7 @@ mod install_canister_handlers {
             REQUEST_POLICY_SERVICE
                 .add_request_policy(AddRequestPolicyOperationInput {
                     specifier: policy.0.to_owned(),
-                    criteria: policy.1.to_owned(),
+                    rule: policy.1.to_owned(),
                 })
                 .await
                 .map_err(|e| format!("Failed to add default request policy: {:?}", e))?;
@@ -418,9 +418,8 @@ mod install_canister_handlers {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::request_test_utils::mock_request;
-
     use super::*;
+    use crate::models::request_test_utils::mock_request;
     use candid::Principal;
 
     #[tokio::test]

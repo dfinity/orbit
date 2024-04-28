@@ -27,7 +27,7 @@ pub enum UserSpecifierDTO {
     Group(Vec<UuidDTO>),
     Id(Vec<UuidDTO>),
     Owner,
-    Proposer,
+    Requester,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

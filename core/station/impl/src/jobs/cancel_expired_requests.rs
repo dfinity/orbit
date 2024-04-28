@@ -23,7 +23,7 @@ impl ScheduledJob for Job {
     }
 }
 
-/// This job is responsible for canceling the requests that have expired while not adopted/rejected.
+/// This job is responsible for canceling the requests that have expired while not approved/rejected.
 impl Job {
     /// Cancel the requests that have expired while still pending.
     async fn cancel_requests(&self) {

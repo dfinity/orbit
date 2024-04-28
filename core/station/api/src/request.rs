@@ -157,7 +157,7 @@ pub struct CreateRequestInput {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct SubmitRequestApprovalInput {
-    pub approve: bool,
+    pub decision: RequestApprovalStatusDTO,
     pub request_id: UuidDTO,
     pub reason: Option<String>,
 }

@@ -132,11 +132,11 @@ fn validate_request_operation_foreign_keys(
             op.input.configs_permission.validate()?;
             op.input.transfer_permission.validate()?;
 
-            if let Some(policy_rule) = &op.input.transfer_approval_policy {
+            if let Some(policy_rule) = &op.input.transfer_request_policy {
                 policy_rule.validate()?;
             }
 
-            if let Some(policy_rule) = &op.input.configs_approval_policy {
+            if let Some(policy_rule) = &op.input.configs_request_policy {
                 policy_rule.validate()?;
             }
 
@@ -157,12 +157,12 @@ fn validate_request_operation_foreign_keys(
                 allow.validate()?;
             }
 
-            if let Some(RequestPolicyRuleInput::Set(criteria)) = &op.input.configs_approval_policy {
+            if let Some(RequestPolicyRuleInput::Set(criteria)) = &op.input.configs_request_policy {
                 criteria.validate()?;
             }
 
             if let Some(RequestPolicyRuleInput::Set(policy_rule)) =
-                &op.input.transfer_approval_policy
+                &op.input.transfer_request_policy
             {
                 policy_rule.validate()?;
             }
@@ -306,7 +306,7 @@ impl Request {
     pub fn add_approval(
         &mut self,
         user_id: UUID,
-        vote: RequestApprovalStatus,
+        decision: RequestApprovalStatus,
         reason: Option<String>,
     ) -> ModelValidatorResult<RequestError> {
         if self
@@ -314,21 +314,21 @@ impl Request {
             .iter()
             .any(|approval| approval.approver_id == user_id)
         {
-            // users can only vote once per request
+            // users can only approval once per request
             return Err(RequestError::ApprovalNotAllowed);
         }
 
-        let vote = RequestApproval {
+        let approval = RequestApproval {
             approver_id: user_id,
-            status: vote,
+            status: decision,
             status_reason: reason,
             decided_dt: time(),
             last_modification_timestamp: time(),
         };
 
-        vote.validate()?;
+        approval.validate()?;
 
-        self.approvals.push(vote);
+        self.approvals.push(approval);
 
         Ok(())
     }
@@ -434,8 +434,8 @@ mod tests {
                 read_permission: Allow::default(),
                 configs_permission: Allow::default(),
                 transfer_permission: Allow::default(),
-                configs_approval_policy: None,
-                transfer_approval_policy: None,
+                configs_request_policy: None,
+                transfer_request_policy: None,
             })
             .await
             .expect("Failed to create account");
@@ -549,8 +549,8 @@ mod tests {
                     },
                     configs_permission: Allow::default(),
                     transfer_permission: Allow::default(),
-                    configs_approval_policy: None,
-                    transfer_approval_policy: None,
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
                 },
             },
         ))
@@ -563,8 +563,8 @@ mod tests {
                     read_permission: None,
                     configs_permission: None,
                     transfer_permission: None,
-                    configs_approval_policy: None,
-                    transfer_approval_policy: None,
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
                     name: None,
                 },
             },

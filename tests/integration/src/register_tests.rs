@@ -41,7 +41,7 @@ fn register_user_successful() {
     .unwrap();
     let request_dto = res.0.unwrap().request;
 
-    // wait for the request to be adopted and scheduled (timer's period is 5 seconds)
+    // wait for the request to be approved and scheduled (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
     // wait for the request to be executed (timer's period is 5 seconds)

@@ -143,10 +143,10 @@ impl AccountService {
             new_account.address = account_address;
         }
 
-        if let Some(criteria) = &input.transfer_approval_policy {
+        if let Some(criteria) = &input.transfer_request_policy {
             criteria.validate()?;
         };
-        if let Some(criteria) = &input.configs_approval_policy {
+        if let Some(criteria) = &input.configs_request_policy {
             criteria.validate()?;
         };
 
@@ -167,8 +167,8 @@ impl AccountService {
             .insert(key.clone(), new_account.clone());
 
         // adds the associated transfer policy based on the transfer criteria
-        if let Some(policy_rule) = &input.transfer_approval_policy {
-            let transfer_approval_policy = self
+        if let Some(policy_rule) = &input.transfer_request_policy {
+            let transfer_request_policy = self
                 .request_policy_service
                 .add_request_policy(AddRequestPolicyOperationInput {
                     specifier: RequestSpecifier::Transfer(ResourceIds::Ids(vec![*uuid.as_bytes()])),
@@ -176,12 +176,12 @@ impl AccountService {
                 })
                 .await?;
 
-            new_account.transfer_approval_policy_id = Some(transfer_approval_policy.id);
+            new_account.transfer_request_policy_id = Some(transfer_request_policy.id);
         }
 
         // adds the associated edit policy based on the edit criteria
-        if let Some(policy_rule) = &input.configs_approval_policy {
-            let configs_approval_policy = self
+        if let Some(policy_rule) = &input.configs_request_policy {
+            let configs_request_policy = self
                 .request_policy_service
                 .add_request_policy(AddRequestPolicyOperationInput {
                     specifier: RequestSpecifier::EditAccount(ResourceIds::Ids(vec![
@@ -191,7 +191,7 @@ impl AccountService {
                 })
                 .await?;
 
-            new_account.configs_approval_policy_id = Some(configs_approval_policy.id);
+            new_account.configs_request_policy_id = Some(configs_request_policy.id);
         }
 
         // Inserting the account into the repository and its associations is the last step of the account creation
@@ -254,10 +254,10 @@ impl AccountService {
             }
         }
 
-        if let Some(RequestPolicyRuleInput::Set(criteria)) = &input.transfer_approval_policy {
+        if let Some(RequestPolicyRuleInput::Set(criteria)) = &input.transfer_request_policy {
             criteria.validate()?;
         };
-        if let Some(RequestPolicyRuleInput::Set(criteria)) = &input.configs_approval_policy {
+        if let Some(RequestPolicyRuleInput::Set(criteria)) = &input.configs_request_policy {
             criteria.validate()?;
         };
         if let Some(permission) = &input.read_permission {
@@ -270,22 +270,22 @@ impl AccountService {
             permission.validate()?;
         };
 
-        if let Some(transfer_approval_policy_input) = input.transfer_approval_policy {
+        if let Some(transfer_request_policy_input) = input.transfer_request_policy {
             self.request_policy_service
                 .handle_policy_change(
                     RequestSpecifier::Transfer(ResourceIds::Ids(vec![account.id])),
-                    transfer_approval_policy_input,
-                    &mut account.transfer_approval_policy_id,
+                    transfer_request_policy_input,
+                    &mut account.transfer_request_policy_id,
                 )
                 .await?;
         }
 
-        if let Some(configs_approval_policy_input) = input.configs_approval_policy {
+        if let Some(configs_request_policy_input) = input.configs_request_policy {
             self.request_policy_service
                 .handle_policy_change(
                     RequestSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
-                    configs_approval_policy_input,
-                    &mut account.configs_approval_policy_id,
+                    configs_request_policy_input,
+                    &mut account.configs_request_policy_id,
                 )
                 .await?;
         }
@@ -463,8 +463,8 @@ mod tests {
                 read_permission: Allow::users(vec![ctx.caller_user.id]),
                 configs_permission: Allow::users(vec![ctx.caller_user.id]),
                 transfer_permission: Allow::users(vec![ctx.caller_user.id]),
-                configs_approval_policy: Some(RequestPolicyRule::AutoApproved),
-                transfer_approval_policy: Some(RequestPolicyRule::AutoApproved),
+                configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+                transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
             },
         };
 
@@ -494,8 +494,8 @@ mod tests {
                 read_permission: Allow::users(vec![ctx.caller_user.id]),
                 configs_permission: Allow::users(vec![ctx.caller_user.id]),
                 transfer_permission: Allow::users(vec![ctx.caller_user.id]),
-                configs_approval_policy: Some(RequestPolicyRule::AutoApproved),
-                transfer_approval_policy: Some(RequestPolicyRule::AutoApproved),
+                configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+                transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
             },
         };
 
@@ -518,8 +518,8 @@ mod tests {
             read_permission: Allow::users(vec![ctx.caller_user.id]),
             configs_permission: Allow::users(vec![ctx.caller_user.id]),
             transfer_permission: Allow::users(vec![ctx.caller_user.id]),
-            configs_approval_policy: Some(RequestPolicyRule::AutoApproved),
-            transfer_approval_policy: Some(RequestPolicyRule::AutoApproved),
+            configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+            transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
         };
 
         assert!(ctx.service.create_account(base_input.clone()).await.is_ok());
@@ -550,25 +550,25 @@ mod tests {
 
         ctx.service
             .create_account(AddAccountOperationInput {
-                configs_approval_policy: Some(RequestPolicyRule::Quorum(
+                configs_request_policy: Some(RequestPolicyRule::Quorum(
                     UserSpecifier::Id(vec![[5; 16]]),
                     1,
                 )),
                 ..base_input.clone()
             })
             .await
-            .expect_err("configs_approval_policy should be invalid");
+            .expect_err("configs_request_policy should be invalid");
 
         ctx.service
             .create_account(AddAccountOperationInput {
-                transfer_approval_policy: Some(RequestPolicyRule::Quorum(
+                transfer_request_policy: Some(RequestPolicyRule::Quorum(
                     UserSpecifier::Id(vec![[5; 16]]),
                     1,
                 )),
                 ..base_input.clone()
             })
             .await
-            .expect_err("transfer_approval_policy should be invalid");
+            .expect_err("transfer_request_policy should be invalid");
     }
 
     #[tokio::test]
@@ -584,8 +584,8 @@ mod tests {
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
-            transfer_approval_policy: None,
-            configs_approval_policy: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
         };
 
         let result = ctx.service.edit_account(operation).await;
@@ -614,8 +614,8 @@ mod tests {
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
-            transfer_approval_policy: None,
-            configs_approval_policy: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
         };
 
         let result = ctx.service.edit_account(operation).await;
@@ -636,8 +636,8 @@ mod tests {
                 read_permission: Allow::users(vec![ctx.caller_user.id]),
                 configs_permission: Allow::users(vec![ctx.caller_user.id]),
                 transfer_permission: Allow::users(vec![ctx.caller_user.id]),
-                configs_approval_policy: Some(RequestPolicyRule::AutoApproved),
-                transfer_approval_policy: Some(RequestPolicyRule::AutoApproved),
+                configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+                transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
             },
         };
 
@@ -662,8 +662,8 @@ mod tests {
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
-            transfer_approval_policy: None,
-            configs_approval_policy: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
         };
 
         assert!(ctx.service.edit_account(base_input.clone()).await.is_ok());
@@ -694,22 +694,22 @@ mod tests {
 
         ctx.service
             .edit_account(EditAccountOperationInput {
-                configs_approval_policy: Some(RequestPolicyRuleInput::Set(
+                configs_request_policy: Some(RequestPolicyRuleInput::Set(
                     RequestPolicyRule::Quorum(UserSpecifier::Id(vec![[5; 16]]), 1),
                 )),
                 ..base_input.clone()
             })
             .await
-            .expect_err("configs_approval_policy should be invalid");
+            .expect_err("configs_request_policy should be invalid");
 
         ctx.service
             .edit_account(EditAccountOperationInput {
-                transfer_approval_policy: Some(RequestPolicyRuleInput::Set(
+                transfer_request_policy: Some(RequestPolicyRuleInput::Set(
                     RequestPolicyRule::Quorum(UserSpecifier::Id(vec![[5; 16]]), 1),
                 )),
                 ..base_input.clone()
             })
             .await
-            .expect_err("transfer_approval_policy should be invalid");
+            .expect_err("transfer_request_policy should be invalid");
     }
 }

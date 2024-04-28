@@ -6,8 +6,8 @@ use crate::utils::{
 use crate::TestEnv;
 use station_api::{
     AddRequestPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    EditPermissionOperationInput, QuorumDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, UserSpecifierDTO,
+    EditPermissionOperationInput, QuorumDTO, RequestApprovalStatusDTO, RequestOperationInput,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, UserSpecifierDTO,
 };
 
 #[test]
@@ -93,7 +93,7 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation,
     );
 
-    // the request should not be completed before the second user votes on it
+    // the request should not be completed before the second user approves on it
     assert!(wait_for_request(
         &env,
         user_a,
@@ -102,13 +102,13 @@ fn successful_four_eyes_upgrade() {
     )
     .is_err());
 
-    // the second user votes and then the request will eventually become completed
+    // the second user approves and then the request will eventually become completed
     submit_request_approval(
         &env,
         user_b,
         canister_ids.station,
         change_canister_operation_request.clone(),
-        true,
+        RequestApprovalStatusDTO::Approved,
     );
     wait_for_request(
         &env,

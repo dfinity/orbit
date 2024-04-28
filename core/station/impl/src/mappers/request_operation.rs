@@ -69,8 +69,8 @@ impl AddAccountOperation {
                 read_permission: self.input.read_permission.into(),
                 transfer_permission: self.input.transfer_permission.into(),
                 configs_permission: self.input.configs_permission.into(),
-                transfer_approval_policy: self.input.transfer_approval_policy.map(Into::into),
-                configs_approval_policy: self.input.configs_approval_policy.map(Into::into),
+                transfer_request_policy: self.input.transfer_request_policy.map(Into::into),
+                configs_request_policy: self.input.configs_request_policy.map(Into::into),
             },
         }
     }
@@ -101,8 +101,8 @@ impl From<station_api::AddAccountOperationInput> for AddAccountOperationInput {
             read_permission: input.read_permission.into(),
             configs_permission: input.configs_permission.into(),
             transfer_permission: input.transfer_permission.into(),
-            transfer_approval_policy: input.transfer_approval_policy.map(Into::into),
-            configs_approval_policy: input.configs_approval_policy.map(Into::into),
+            transfer_request_policy: input.transfer_request_policy.map(Into::into),
+            configs_request_policy: input.configs_request_policy.map(Into::into),
         }
     }
 }
@@ -124,13 +124,13 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                     .input
                     .configs_permission
                     .map(|policy| policy.into()),
-                transfer_approval_policy: operation
+                transfer_request_policy: operation
                     .input
-                    .transfer_approval_policy
+                    .transfer_request_policy
                     .map(|policy| policy.into()),
-                configs_approval_policy: operation
+                configs_request_policy: operation
                     .input
-                    .configs_approval_policy
+                    .configs_request_policy
                     .map(|policy| policy.into()),
             },
         }
@@ -147,8 +147,8 @@ impl From<station_api::EditAccountOperationInput> for EditAccountOperationInput 
             read_permission: input.read_permission.map(|policy| policy.into()),
             transfer_permission: input.transfer_permission.map(|policy| policy.into()),
             configs_permission: input.configs_permission.map(|policy| policy.into()),
-            transfer_approval_policy: input.transfer_approval_policy.map(|policy| policy.into()),
-            configs_approval_policy: input.configs_approval_policy.map(|policy| policy.into()),
+            transfer_request_policy: input.transfer_request_policy.map(|policy| policy.into()),
+            configs_request_policy: input.configs_request_policy.map(|policy| policy.into()),
         }
     }
 }

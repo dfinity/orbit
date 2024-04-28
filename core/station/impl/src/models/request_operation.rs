@@ -91,8 +91,8 @@ pub struct AddAccountOperationInput {
     pub read_permission: Allow,
     pub configs_permission: Allow,
     pub transfer_permission: Allow,
-    pub configs_approval_policy: Option<RequestPolicyRule>,
-    pub transfer_approval_policy: Option<RequestPolicyRule>,
+    pub configs_request_policy: Option<RequestPolicyRule>,
+    pub transfer_request_policy: Option<RequestPolicyRule>,
 }
 
 #[storable]
@@ -109,8 +109,8 @@ pub struct EditAccountOperationInput {
     pub read_permission: Option<Allow>,
     pub configs_permission: Option<Allow>,
     pub transfer_permission: Option<Allow>,
-    pub configs_approval_policy: Option<RequestPolicyRuleInput>,
-    pub transfer_approval_policy: Option<RequestPolicyRuleInput>,
+    pub configs_request_policy: Option<RequestPolicyRuleInput>,
+    pub transfer_request_policy: Option<RequestPolicyRuleInput>,
 }
 
 #[storable]

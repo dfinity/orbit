@@ -48,12 +48,12 @@ pub struct Account {
     ///
     /// This policy is non exaustive, this means that the account can have other policies that are enforced
     /// by the system that are globally defined.
-    pub transfer_approval_policy_id: Option<UUID>,
+    pub transfer_request_policy_id: Option<UUID>,
     /// The account update policy id, which is a UUID.
     ///
     /// This policy is non exaustive, this means that the account can have other policies that are enforced
     /// by the system that are globally defined.
-    pub configs_approval_policy_id: Option<UUID>,
+    pub configs_request_policy_id: Option<UUID>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -116,11 +116,11 @@ impl ModelValidator<AccountError> for Account {
         validate_symbol(&self.symbol)?;
         validate_address(&self.address)?;
 
-        if let Some(transfer_approval_policy_id) = &self.transfer_approval_policy_id {
-            validate_policy_id(transfer_approval_policy_id, "transfer_approval_policy_id")?;
+        if let Some(transfer_request_policy_id) = &self.transfer_request_policy_id {
+            validate_policy_id(transfer_request_policy_id, "transfer_request_policy_id")?;
         }
-        if let Some(configs_approval_policy_id) = &self.configs_approval_policy_id {
-            validate_policy_id(configs_approval_policy_id, "configs_approval_policy_id")?;
+        if let Some(configs_request_policy_id) = &self.configs_request_policy_id {
+            validate_policy_id(configs_request_policy_id, "configs_request_policy_id")?;
         }
 
         Ok(())
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn fail_missing_policy_id() {
         let mut account = mock_account();
-        account.transfer_approval_policy_id = Some([0; 16]);
+        account.transfer_request_policy_id = Some([0; 16]);
 
         let result = account.validate();
 
@@ -249,12 +249,12 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             AccountError::ValidationError {
-                info: "The transfer_approval_policy_id does not exist".to_string()
+                info: "The transfer_request_policy_id does not exist".to_string()
             }
         );
 
-        account.transfer_approval_policy_id = None;
-        account.configs_approval_policy_id = Some([0; 16]);
+        account.transfer_request_policy_id = None;
+        account.configs_request_policy_id = Some([0; 16]);
 
         let result = account.validate();
 
@@ -262,7 +262,7 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             AccountError::ValidationError {
-                info: "The configs_approval_policy_id does not exist".to_string()
+                info: "The configs_request_policy_id does not exist".to_string()
             }
         );
     }
@@ -287,8 +287,8 @@ pub mod account_test_utils {
             last_modification_timestamp: 0,
             metadata: Metadata::mock(),
             symbol: "ICP".to_string(),
-            transfer_approval_policy_id: None,
-            configs_approval_policy_id: None,
+            transfer_request_policy_id: None,
+            configs_request_policy_id: None,
         }
     }
 

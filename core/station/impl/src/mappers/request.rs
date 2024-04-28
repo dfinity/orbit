@@ -51,7 +51,7 @@ impl Request {
             approvals: self
                 .approvals
                 .iter()
-                .map(|vote| vote.to_owned().into())
+                .map(|approval| approval.to_owned().into())
                 .collect(),
         }
     }
@@ -96,7 +96,7 @@ impl From<RequestAdditionalInfo> for station_api::RequestAdditionalInfoDTO {
             approvers: info
                 .approvers
                 .into_iter()
-                .map(|voter| voter.into())
+                .map(|approver| approver.into())
                 .collect(),
             evaluation_result: info.evaluation_result.map(|result| result.into()),
         }

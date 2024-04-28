@@ -34,13 +34,13 @@ pub enum UserSpecifier {
     Group(Vec<UUID>),
     Id(Vec<UUID>),
     Owner,
-    Proposer,
+    Requester,
 }
 
 impl ModelValidator<RecordValidationError> for UserSpecifier {
     fn validate(&self) -> Result<(), RecordValidationError> {
         match self {
-            UserSpecifier::Any | UserSpecifier::Owner | UserSpecifier::Proposer => Ok(()),
+            UserSpecifier::Any | UserSpecifier::Owner | UserSpecifier::Requester => Ok(()),
             UserSpecifier::Group(group_ids) => {
                 for group_id in group_ids {
                     EnsureUserGroup::id_exists(group_id)?;
@@ -224,7 +224,7 @@ impl Match<UserInvolvedInPolicyRuleForRequestResource> for UserMatcher {
 
                 Ok(false)
             }
-            UserSpecifier::Proposer => {
+            UserSpecifier::Requester => {
                 if let Some(request) = REQUEST_REPOSITORY.get(&RequestKey {
                     id: input.request_id,
                 }) {
@@ -415,8 +415,8 @@ mod tests {
                         blockchain: Blockchain::InternetComputer,
                         standard: crate::models::BlockchainStandard::Native,
                         metadata: Metadata::default(),
-                        transfer_approval_policy: Some(RequestPolicyRule::AutoApproved),
-                        configs_approval_policy: Some(RequestPolicyRule::AutoApproved),
+                        transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
+                        configs_request_policy: Some(RequestPolicyRule::AutoApproved),
                         read_permission: Allow::authenticated(),
                         configs_permission: Allow::authenticated(),
                         transfer_permission: Allow::authenticated(),
@@ -444,8 +444,8 @@ mod tests {
                         read_permission: None,
                         configs_permission: None,
                         transfer_permission: None,
-                        transfer_approval_policy: None,
-                        configs_approval_policy: None,
+                        transfer_request_policy: None,
+                        configs_request_policy: None,
                     },
                 }),
                 RequestSpecifier::EditAccount(ResourceIds::Any),
@@ -508,9 +508,9 @@ mod tests {
                 UserSpecifier::Id(vec![[1; 16]]), // specifier
             ),
             (
-                [0; 16],                 // requester
-                [0; 16],                 // approver
-                UserSpecifier::Proposer, // specifier
+                [0; 16],                  // requester
+                [0; 16],                  // approver
+                UserSpecifier::Requester, // specifier
             ),
         ];
 
@@ -541,9 +541,9 @@ mod tests {
         UserSpecifier::Owner
             .validate()
             .expect("Owner should be valid");
-        UserSpecifier::Proposer
+        UserSpecifier::Requester
             .validate()
-            .expect("Proposer should be valid");
+            .expect("Requester should be valid");
     }
 
     #[test]

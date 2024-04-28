@@ -167,7 +167,7 @@ impl From<UserSpecifierDTO> for UserSpecifier {
                     .collect(),
             ),
             UserSpecifierDTO::Owner => UserSpecifier::Owner,
-            UserSpecifierDTO::Proposer => UserSpecifier::Proposer,
+            UserSpecifierDTO::Requester => UserSpecifier::Requester,
         }
     }
 }
@@ -187,7 +187,7 @@ impl From<UserSpecifier> for UserSpecifierDTO {
                     .collect::<Vec<_>>(),
             ),
             UserSpecifier::Owner => UserSpecifierDTO::Owner,
-            UserSpecifier::Proposer => UserSpecifierDTO::Proposer,
+            UserSpecifier::Requester => UserSpecifierDTO::Requester,
         }
     }
 }

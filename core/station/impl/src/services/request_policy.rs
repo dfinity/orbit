@@ -296,28 +296,28 @@ mod tests {
     #[tokio::test]
     async fn test_handle_policy_change() {
         let mut account = mock_account();
-        account.configs_approval_policy_id = None;
+        account.configs_request_policy_id = None;
 
         REQUEST_POLICY_SERVICE
             .handle_policy_change(
                 RequestSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
                 RequestPolicyRuleInput::Set(RequestPolicyRule::AutoApproved),
-                &mut account.configs_approval_policy_id,
+                &mut account.configs_request_policy_id,
             )
             .await
             .unwrap();
 
-        assert!(account.configs_approval_policy_id.is_some());
+        assert!(account.configs_request_policy_id.is_some());
 
         REQUEST_POLICY_SERVICE
             .handle_policy_change(
                 RequestSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
                 RequestPolicyRuleInput::Remove,
-                &mut account.configs_approval_policy_id,
+                &mut account.configs_request_policy_id,
             )
             .await
             .unwrap();
 
-        assert!(account.configs_approval_policy_id.is_none());
+        assert!(account.configs_request_policy_id.is_none());
     }
 }

@@ -22,12 +22,12 @@ impl ScheduledJob for Job {
     }
 }
 
-/// This job is responsible for processing the requests that have been adopted and
+/// This job is responsible for processing the requests that have been approved and
 /// are ready to be scheduled.
 impl Job {
     pub const MAX_BATCH_SIZE: usize = 100;
 
-    /// Processes all the requests that have been adopted but are not yet scheduled to be executed.
+    /// Processes all the requests that have been approved but are not yet scheduled to be executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` requests at once.
     async fn process_approved_requests(&self) {

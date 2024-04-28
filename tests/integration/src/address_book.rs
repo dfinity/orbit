@@ -278,8 +278,8 @@ fn check_address_book_for_transfer() {
             user_groups: vec![],
             users: vec![admin_user.id.clone()],
         },
-        configs_approval_policy: Some(RequestPolicyRuleDTO::AutoApproved),
-        transfer_approval_policy: Some(RequestPolicyRuleDTO::AllowListedByMetadata(MetadataDTO {
+        configs_request_policy: Some(RequestPolicyRuleDTO::AutoApproved),
+        transfer_request_policy: Some(RequestPolicyRuleDTO::AllowListedByMetadata(MetadataDTO {
             key: "kyc".to_string(),
             value: "true".to_string(),
         })),

@@ -52,13 +52,13 @@ fn make_transfer_successful() {
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
         },
-        transfer_approval_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
+        transfer_request_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
             QuorumPercentageDTO {
                 approvers: UserSpecifierDTO::Owner,
                 min_approved: 100,
             },
         )),
-        configs_approval_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
+        configs_request_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
             QuorumPercentageDTO {
                 approvers: UserSpecifierDTO::Owner,
                 min_approved: 100,
@@ -81,7 +81,7 @@ fn make_transfer_successful() {
     )
     .unwrap();
 
-    // wait for the request to be adopted (timer's period is 5 seconds)
+    // wait for the request to be approved (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
 
@@ -89,7 +89,7 @@ fn make_transfer_successful() {
     match account_creation_request_dto.status {
         RequestStatusDTO::Approved { .. } => {}
         _ => {
-            panic!("request must be adopted by now");
+            panic!("request must be approved by now");
         }
     };
 
@@ -169,7 +169,7 @@ fn make_transfer_successful() {
     .unwrap();
     let request_dto = res.0.unwrap().request;
 
-    // wait for the request to be adopted (timer's period is 5 seconds)
+    // wait for the request to be approved (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
     // wait for the request to be processing (timer's period is 5 seconds) and first is set to processing

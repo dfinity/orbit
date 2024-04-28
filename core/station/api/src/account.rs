@@ -21,8 +21,8 @@ pub struct AccountDTO {
     pub decimals: u32,
     pub balance: Option<AccountBalanceInfoDTO>,
     pub metadata: Vec<MetadataDTO>,
-    pub transfer_approval_policy: Option<RequestPolicyRuleDTO>,
-    pub configs_approval_policy: Option<RequestPolicyRuleDTO>,
+    pub transfer_request_policy: Option<RequestPolicyRuleDTO>,
+    pub configs_request_policy: Option<RequestPolicyRuleDTO>,
     pub last_modification_timestamp: String,
 }
 
@@ -33,8 +33,8 @@ pub struct EditAccountOperationInput {
     pub read_permission: Option<AllowDTO>,
     pub configs_permission: Option<AllowDTO>,
     pub transfer_permission: Option<AllowDTO>,
-    pub configs_approval_policy: Option<RequestPolicyRuleInput>,
-    pub transfer_approval_policy: Option<RequestPolicyRuleInput>,
+    pub configs_request_policy: Option<RequestPolicyRuleInput>,
+    pub transfer_request_policy: Option<RequestPolicyRuleInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -51,8 +51,8 @@ pub struct AddAccountOperationInput {
     pub read_permission: AllowDTO,
     pub configs_permission: AllowDTO,
     pub transfer_permission: AllowDTO,
-    pub configs_approval_policy: Option<RequestPolicyRuleDTO>,
-    pub transfer_approval_policy: Option<RequestPolicyRuleDTO>,
+    pub configs_request_policy: Option<RequestPolicyRuleDTO>,
+    pub transfer_request_policy: Option<RequestPolicyRuleDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

@@ -36,25 +36,25 @@ impl AccountMapper {
             standard: account.standard.to_string(),
             blockchain: account.blockchain.to_string(),
             metadata: account.metadata.into_vec_dto(),
-            transfer_approval_policy: account.transfer_approval_policy_id.and_then(|policy_id| {
+            transfer_request_policy: account.transfer_request_policy_id.and_then(|policy_id| {
                 REQUEST_POLICY_REPOSITORY
                     .get(&policy_id)
                     .map(|policy| policy.rule.into())
                     .or_else(|| {
                         print(format!(
-                            "transfer_approval_policy not found for request {}",
+                            "transfer_request_policy not found for request {}",
                             Uuid::from_bytes(policy_id).hyphenated()
                         ));
                         None
                     })
             }),
-            configs_approval_policy: account.configs_approval_policy_id.and_then(|policy_id| {
+            configs_request_policy: account.configs_request_policy_id.and_then(|policy_id| {
                 REQUEST_POLICY_REPOSITORY
                     .get(&policy_id)
                     .map(|policy| policy.rule.into())
                     .or_else(|| {
                         print(format!(
-                            "configs_approval_policy not found for request {}",
+                            "configs_request_policy not found for request {}",
                             Uuid::from_bytes(policy_id).hyphenated()
                         ));
                         None
@@ -107,8 +107,8 @@ impl AccountMapper {
             address: address.unwrap_or("".to_string()),
             decimals: 0,
             symbol,
-            transfer_approval_policy_id: None,
-            configs_approval_policy_id: None,
+            transfer_request_policy_id: None,
+            configs_request_policy_id: None,
             balance: None,
             metadata: input.metadata,
             last_modification_timestamp: time(),

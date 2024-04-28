@@ -60,7 +60,7 @@ type QuorumPercentage = record {
   // The users that are required to approve the request.
   approvers : UserSpecifier;
   // The required user approvals for the rule to be approved.
-  min_accepted : nat16;
+  min_approved : nat16;
 };
 
 // A record type that can be used to represent the minimum quorum of users that are required to approve a rule.
@@ -68,7 +68,7 @@ type Quorum = record {
   // The users that can approve the request.
   approvers : UserSpecifier;
   // The minimum number of user approvals required for the rule to be approved.
-  min_accepted : nat16;
+  min_approved : nat16;
 };
 
 type RequestPolicyRuleInput = variant {
@@ -81,7 +81,7 @@ type RequestPolicyRule = variant {
   AutoApproved;
   QuorumPercentage : QuorumPercentage;
   Quorum : Quorum;
-  AllowListedByMetadata : AllowListedByMetadata;
+  AllowListedByMetadata : AddressBookMetadata;
   AllowListed;
   AnyOf : vec RequestPolicyRule;
   AllOf : vec RequestPolicyRule;
@@ -99,12 +99,12 @@ type EvaluationStatus = variant {
 type EvaluatedRequestPolicyRule = variant {
   AutoApproved;
   QuorumPercentage : record {
-    min_accepted : nat64;
+    min_approved : nat64;
     total_possible_approvers : nat64;
     approvers : vec UUID;
   };
   Quorum : record {
-    min_accepted : nat64;
+    min_approved : nat64;
     total_possible_approvers : nat64;
     approvers : vec UUID;
   };
@@ -271,7 +271,7 @@ type RequestStatusCode = variant {
 };
 
 // The status of a request.
-type RequestApprovalStatus = variant { Accepted; Rejected };
+type RequestApprovalStatus = variant { Approved; Rejected };
 
 // A record type that is used to represent a user approval decision on a request.
 type RequestApproval = record {
@@ -357,9 +357,9 @@ type AddAccountOperationInput = record {
   // Who can request transfers from the account.
   transfer_permission : Allow;
   // The approval policy for updates to the account.
-  configs_approval_policy : opt RequestPolicyRule;
+  configs_request_policy : opt RequestPolicyRule;
   // The approval policy for transfers from the account.
-  transfer_approval_policy : opt RequestPolicyRule;
+  transfer_request_policy : opt RequestPolicyRule;
 };
 
 type AddAccountOperation = record {
@@ -902,7 +902,7 @@ type GetNextApprovableRequestInput = record {
 };
 
 // Result type for retrieving a request.
-type GetNexttApprovableRequestResult = variant {
+type GetNextApprovableRequestResult = variant {
   // The result data for a successful execution.
   Ok : opt GetRequestResultData;
   // The error that occurred (e.g. the user does not have the necessary permissions).
@@ -913,8 +913,8 @@ type GetNexttApprovableRequestResult = variant {
 type SubmitRequestApprovalInput = record {
   // The request id to interact with.
   request_id : UUID;
-  // True if the user approves the request, false otherwise.
-  approve : bool;
+  // The decision to submit.
+  decision : RequestApprovalStatus;
   // The reason for the approval or rejection.
   reason : opt text;
 };
@@ -1196,11 +1196,11 @@ type Account = record {
   // The transfer approval policy for the account.
   //
   // The transfer approval policy defines the rule that must be met for a transfer to be approved.
-  transfer_approval_policy : opt RequestPolicyRule;
+  transfer_request_policy : opt RequestPolicyRule;
   // The configs approval policy for the account.
   //
   // The configs approval policy defines the rule that must be met for the account to have its configs updated.
-  configs_approval_policy : opt RequestPolicyRule;
+  configs_request_policy : opt RequestPolicyRule;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };

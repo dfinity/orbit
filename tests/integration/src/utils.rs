@@ -8,9 +8,10 @@ use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
-    GetRequestResponse, HealthStatus, MeResponse, RequestDTO, RequestExecutionScheduleDTO,
-    RequestOperationDTO, RequestOperationInput, RequestStatusDTO, SubmitRequestApprovalInput,
-    SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO,
+    GetRequestResponse, HealthStatus, MeResponse, RequestApprovalStatusDTO, RequestDTO,
+    RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput, RequestStatusDTO,
+    SubmitRequestApprovalInput, SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse,
+    UserDTO, UserStatusDTO,
 };
 use std::time::Duration;
 
@@ -122,7 +123,7 @@ pub fn wait_for_request_with_extra_ticks(
     request: RequestDTO,
     extra_ticks: u64,
 ) -> Result<RequestDTO, Option<RequestStatusDTO>> {
-    // wait for the request to be adopted (timer's period is 5 seconds)
+    // wait for the request to be approved (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
     // wait for the request to be processing (timer's period is 5 seconds)
@@ -175,11 +176,11 @@ pub fn submit_request_approval(
     user_id: Principal,
     station_canister_id: CanisterId,
     request: RequestDTO,
-    approve: bool,
+    decision: RequestApprovalStatusDTO,
 ) {
     let submit_request_approval_input = SubmitRequestApprovalInput {
         request_id: request.id,
-        approve,
+        decision,
         reason: None,
     };
     let res: (Result<SubmitRequestApprovalResponse, ApiErrorDTO>,) = update_candid_as(

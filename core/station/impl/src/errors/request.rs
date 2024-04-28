@@ -26,9 +26,6 @@ pub enum RequestError {
     /// Request execution failed due to {reason}.
     #[error(r#"Request execution failed due to `{reason}`."#)]
     ExecutionError { reason: String },
-    /// Request can't be executed because it was not adopted.
-    #[error(r#"Request can't be executed because it was not adopted."#)]
-    ExecutionFailedNotAdopted,
     #[error(r#"You don't have permission to create the requested request."#)]
     Unauthorized,
     /// Request policy not found for id `{id}`.

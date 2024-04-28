@@ -16,7 +16,7 @@ thread_local! {
   })
 }
 
-/// A repository that enables finding requests based on the voter in stable memory.
+/// A repository that enables sorting requests in a more efficient way.
 #[derive(Default, Debug)]
 pub struct RequestSortIndexRepository {}
 
