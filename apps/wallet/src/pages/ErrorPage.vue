@@ -32,7 +32,7 @@
             <VTextField
               :model-value="session.principal"
               variant="solo-filled"
-              :label="$t('terms.principal')"
+              :label="$t('terms.identity')"
               readonly
               hide-details
               :append-inner-icon="mdiContentCopy"

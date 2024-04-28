@@ -13,7 +13,7 @@
       <VTextField
         :model-value="session.principal"
         variant="plain"
-        :label="$t('terms.principal')"
+        :label="$t('terms.identity')"
         readonly
         :append-inner-icon="mdiContentCopy"
         @click:append-inner="

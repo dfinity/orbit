@@ -4,7 +4,7 @@
 
     <VTextField
       v-model="modelValue"
-      :label="$t('terms.principal')"
+      :label="$t('terms.identity')"
       variant="filled"
       :rules="[requiredRule, validPrincipalRule]"
     />

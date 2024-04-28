@@ -9,7 +9,7 @@
           <VCardText>
             <VTextField
               v-model="session.principal"
-              :label="$t('app.user_id')"
+              :label="$t('terms.identity')"
               variant="plain"
               readonly
               hide-details

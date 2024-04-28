@@ -5,7 +5,7 @@
     </template>
     <VList density="compact">
       <VListSubheader v-if="session.isAuthenticated">
-        {{ $t('terms.user_id') }}<br />
+        {{ $t('terms.identity') }}<br />
         <p>
           <TextOverflow :text="session.principal" :max-length="32" />
           <VBtn

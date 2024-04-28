@@ -8,7 +8,6 @@ export default {
       main: 'ATENÇÃO: Ambiente de teste.',
       info: 'Funcionalidades e dados instáveis.',
     },
-    user_id: 'ID do usuário',
     stations: 'Carteiras',
     confirm: 'Confirmar',
     copied_to_clipboard: 'Texto copiado para a área de transferência.',
@@ -31,10 +30,10 @@ export default {
     request_rejected_message: 'Este pedido foi rejeitado.',
     user_status_active: 'Ativo',
     user_status_inactive: 'Inativo',
-    add_new_principal: 'Adicionar novo principal',
+    add_new_identity: 'Adicionar nova identidade',
     principal_already_added: 'Principal já adicionado.',
-    user_associate_principal_warning:
-      'Utilize com cuidado. O principal poderá aceder à sua conta e executar ações em seu nome.',
+    user_associate_identity_warning:
+      'Utilize com cuidado. A identidade poderá aceder à sua conta e executar ações em seu nome.',
     export_csv: 'Exportar CSV',
     params_parse_error: 'Erro ao analisar os parâmetros, por favor, tente novamente.',
     submit_upgrade: 'Submeter atualização',
@@ -330,6 +329,7 @@ export default {
     requests: 'Propostas',
     withdraw_requests: 'Pedidos de retirada',
     approve: 'Aprovar',
+    identity: 'Identidade',
     id: 'ID',
     any: 'Qualquer',
     comment_optional: 'Comentário (opcional)',
@@ -545,7 +545,7 @@ export default {
       option_deploy_new_station: 'Crie a sua própria carteira',
       join_station_title: 'Junte-se a uma carteira existente',
       join_station_body:
-        'Contacte o proprietário para obter o ID da carteira. Envie-lhes o seguinte ID principal para que um usuário possa ser criado para si na carteira.',
+        'Entre em contato com o proprietário para obter o ID da Carteira e envie a eles sua identidade para que um usuário possa ser criado para você.',
       join_station_canister_id: 'ID da carteira',
       join_station_name: 'Nome da carteira (opcional)',
       join_station: 'Junte-se a carteira',

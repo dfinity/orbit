@@ -56,7 +56,7 @@
       <template v-if="!isViewMode" #append>
         <ActionBtn
           v-model="addNewPrincipalModel"
-          :title="$t('app.add_new_principal')"
+          :title="$t('app.add_new_identity')"
           :icon="mdiPlus"
           variant="tonal"
           :submit="
@@ -88,7 +88,7 @@
             >
               <template #prepend>
                 <VAlert type="warning" variant="tonal" density="compact" class="mb-4">
-                  {{ $t('app.user_associate_principal_warning') }}
+                  {{ $t('app.user_associate_identity_warning') }}
                 </VAlert>
               </template>
             </AddPrincipalForm>

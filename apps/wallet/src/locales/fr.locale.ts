@@ -8,7 +8,6 @@ export default {
       main: 'ATTENTION: Environnement de test.',
       info: 'Fonctionnalités et données instables.',
     },
-    user_id: 'Identifiant',
     stations: 'Portefeuilles',
     confirm: 'Confirmez',
     copied_to_clipboard: 'Valeur placée dans le presse-papiers',
@@ -32,10 +31,10 @@ export default {
     request_completed_message: 'Cette requête à été completée.',
     user_status_active: 'Actif',
     user_status_inactive: 'Inactif',
-    add_new_principal: 'Ajouter un nouveau principal',
+    add_new_identity: 'Ajouter un nouveau identité',
     principal_already_added: 'Le principal a deja été ajouté.',
-    user_associate_principal_warning:
-      "Attention. Ce principal pourra acceder avec les permissions de l'utilisateur et prendre des actions en son nom.",
+    user_associate_identity_warning:
+      "Attention. Ce identité pourra acceder avec les permissions de l'utilisateur et prendre des actions en son nom.",
     export_csv: 'Exporter en CSV',
     params_parse_error: "Échec d'interpretation des paramètres, veuillez essayer de nouveau.",
     submit_upgrade: 'Soumettre une mise à jour',
@@ -329,6 +328,7 @@ export default {
     approve: 'Aprouver',
     station_id: 'ID du Portefeuille',
     details: 'Détails',
+    identity: 'Identité',
     create: 'Créer',
     review: 'Revoir',
     type: 'Type',
@@ -567,7 +567,7 @@ export default {
 
       join_station_title: 'Rejoindre un portefeuille existant',
       join_station_body:
-        'Contactez le propriétaire pour obtenir l ID du portefeuille. Envoyez-leur l ID principal suivant pour qu un usager puisse être créé pour vous dans le portefeuille.',
+        "Contactez le propriétaire pour obtenir l'ID du portefeuille et envoyez-lui votre identité afin qu'un utilisateur puisse être créé pour vous.",
       join_station_canister_id: 'ID du Portefeuille',
       join_station_name: 'Nom du Portefeuille (optionnel)',
       join_station: 'Rejoindre le portefeuille',

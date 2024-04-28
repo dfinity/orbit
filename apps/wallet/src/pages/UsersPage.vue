@@ -129,7 +129,7 @@ const headerProps: { class: string } = { class: 'font-weight-bold' };
 const headers = ref<TableHeader[]>([
   { title: i18n.t('terms.name'), key: 'name', headerProps },
   { title: i18n.t('terms.status'), key: 'status', headerProps },
-  { title: i18n.t('terms.principal'), key: 'principals', headerProps },
+  { title: i18n.t('terms.identity'), key: 'principals', headerProps },
   { title: '', key: 'actions', headerProps },
 ]);
 

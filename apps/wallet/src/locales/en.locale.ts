@@ -8,7 +8,6 @@ export default {
       main: 'WARNING: Test environment.',
       info: 'Unstable features and data.',
     },
-    user_id: 'User ID',
     stations: 'Wallets',
     confirm: 'Confirm',
     copied_to_clipboard: 'Value copied to clipboard.',
@@ -31,10 +30,10 @@ export default {
     request_completed_message: 'This request has been completed.',
     user_status_active: 'Active',
     user_status_inactive: 'Inactive',
-    add_new_principal: 'Add new principal',
+    add_new_identity: 'Add new identity',
     principal_already_added: 'Principal already added.',
-    user_associate_principal_warning:
-      'Use with caution. The principal will be able to login as the user and perform actions on their behalf.',
+    user_associate_identity_warning:
+      'Use with caution. The identity will be able to login as the user and perform actions on their behalf.',
     export_csv: 'Export CSV',
     params_parse_error: 'Failed to parse parameters, please try again.',
     submit_upgrade: 'Submit upgrade',
@@ -328,6 +327,7 @@ export default {
     approve: 'Approve',
     create: 'Create',
     review: 'Review',
+    identity: 'Identity',
     type: 'Type',
     summary: 'Summary',
     metadata: 'Metadata',
@@ -543,7 +543,7 @@ export default {
       option_deploy_new_station: 'Create your own wallet',
       join_station_title: 'Join existing wallet',
       join_station_body:
-        'Contact the owner to get the ID of the wallet. Send them the following principal ID so that a user can be created for you in the wallet.',
+        'Contact the owner to get the Wallet ID and send them your identity so that a user can be created for you.',
       join_station_canister_id: 'Wallet ID',
       join_station_name: 'Wallet Name (optional)',
       join_station: 'Join wallet',
