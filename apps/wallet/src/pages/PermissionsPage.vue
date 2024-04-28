@@ -9,10 +9,10 @@
         <VContainer fluid class="px-0">
           <VRow>
             <VCol cols="12">
-              <RecentProposals
+              <RecentRequests
                 :see-all-link="{
-                  name: Routes.Proposals,
-                  query: { group_by: ProposalDomains.System },
+                  name: Routes.Requests,
+                  query: { group_by: RequestDomains.System },
                 }"
                 :types="[{ EditPermission: null }]"
                 hide-not-found
@@ -80,7 +80,7 @@ import IndividualAccountPermissions from '~/components/permissions/IndividualAcc
 import IndividualUserGroupPermissions from '~/components/permissions/IndividualUserGroupPermissions.vue';
 import IndividualUserPermissions from '~/components/permissions/IndividualUserPermissions.vue';
 import PermissionList from '~/components/permissions/PermissionList.vue';
-import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import RecentRequests from '~/components/requests/RecentRequests.vue';
 import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
 import { globalPermissions } from '~/configs/permissions.config';
 import { Routes } from '~/configs/routes.config';
@@ -94,7 +94,7 @@ import {
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
 import { ResourceTypeEnum } from '~/types/permissions.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,

@@ -14,10 +14,10 @@ export enum Routes {
   Initialization = 'Initialization',
   AddStation = 'AddStation',
   Permissions = 'Permissions',
-  // Proposal Pages
-  Proposals = 'Proposals',
-  TransferProposals = 'TransferProposals',
-  ProposalPolicies = 'ProposalPolicies',
+  // Request Pages
+  Requests = 'Requests',
+  TransferRequests = 'TransferRequests',
+  RequestPolicies = 'RequestPolicies',
 }
 
 export enum RouteStatusCode {

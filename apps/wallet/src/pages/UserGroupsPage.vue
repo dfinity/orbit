@@ -21,12 +21,12 @@
     </template>
     <template #main-body>
       <PageBody>
-        <AuthCheck :privileges="[Privilege.ListProposals]">
-          <RecentProposals
+        <AuthCheck :privileges="[Privilege.ListRequests]">
+          <RecentRequests
             class="mb-4"
             :see-all-link="{
-              name: Routes.Proposals,
-              query: { group_by: ProposalDomains.System },
+              name: Routes.Requests,
+              query: { group_by: RequestDomains.System },
             }"
             :types="[{ AddUserGroup: null }, { EditUserGroup: null }, { RemoveUserGroup: null }]"
             hide-not-found
@@ -103,7 +103,7 @@ import PageLayout from '~/components/PageLayout.vue';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
-import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import RecentRequests from '~/components/requests/RecentRequests.vue';
 import OpenUserGroupBtn from '~/components/users/OpenUserGroupBtn.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
@@ -115,7 +115,7 @@ import { UUID, UserGroup, UserGroupCallerPrivileges } from '~/generated/station/
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });

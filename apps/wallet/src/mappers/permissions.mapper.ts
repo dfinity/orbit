@@ -19,8 +19,8 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.Permission;
   }
 
-  if (variantIs(resource, 'ProposalPolicy')) {
-    return ResourceTypeEnum.ProposalPolicy;
+  if (variantIs(resource, 'RequestPolicy')) {
+    return ResourceTypeEnum.RequestPolicy;
   }
 
   if (variantIs(resource, 'ChangeCanister')) {
@@ -31,8 +31,8 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.System;
   }
 
-  if (variantIs(resource, 'Proposal')) {
-    return ResourceTypeEnum.Proposal;
+  if (variantIs(resource, 'Request')) {
+    return ResourceTypeEnum.Request;
   }
 
   if (variantIs(resource, 'AddressBook')) {

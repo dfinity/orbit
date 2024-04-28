@@ -1,4 +1,4 @@
-import { Proposal } from '~/generated/station/station.did';
+import { Request } from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 
@@ -11,10 +11,10 @@ export const useOnFailedOperation = (): void => {
   });
 };
 
-export const useOnSuccessfulOperation = (proposal?: Proposal): void => {
+export const useOnSuccessfulOperation = (request?: Request): void => {
   const app = useAppStore();
 
-  if (proposal && 'Rejected' in proposal.status) {
+  if (request && 'Rejected' in request.status) {
     app.sendNotification({
       type: 'error',
       message: i18n.global.t('app.request_rejected_message'),
@@ -23,10 +23,10 @@ export const useOnSuccessfulOperation = (proposal?: Proposal): void => {
     return;
   }
 
-  if (proposal && 'Adopted' in proposal.status) {
+  if (request && 'Approved' in request.status) {
     app.sendNotification({
       type: 'success',
-      message: i18n.global.t('app.request_adopted_message'),
+      message: i18n.global.t('app.request_approved_message'),
     });
 
     return;

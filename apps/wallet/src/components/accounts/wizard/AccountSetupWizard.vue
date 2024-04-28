@@ -39,7 +39,7 @@
                 <AccountAccessSettings v-model="model.permission" :mode="props.mode" />
               </VStepperWindowItem>
               <VStepperWindowItem :value="AccountSetupStep.ApprovalPolicy">
-                <AccountApprovalPolicySettings v-model="model.approval_policy" :mode="props.mode" />
+                <AccountRequestPolicySettings v-model="model.request_policy" :mode="props.mode" />
               </VStepperWindowItem>
             </VStepperWindow>
           </VStepper>
@@ -87,9 +87,9 @@ import {
 import AccountAccessSettings, {
   AccountPermissionModel,
 } from '~/components/accounts/wizard/AccountAccessSettings.vue';
-import AccountApprovalPolicySettings, {
-  AccountApprovalPolicyModel,
-} from '~/components/accounts/wizard/AccountApprovalPolicySettings.vue';
+import AccountRequestPolicySettings, {
+  AccountRequestPolicyModel,
+} from '~/components/accounts/wizard/AccountRequestPolicySettings.vue';
 import AccountConfigurationSettings, {
   AccountConfigurationModel,
 } from '~/components/accounts/wizard/AccountConfigurationSettings.vue';
@@ -99,7 +99,7 @@ import { VFormValidation } from '~/types/helper.types';
 export interface AccountSetupWizardModel {
   configuration: Partial<AccountConfigurationModel>;
   permission: AccountPermissionModel;
-  approval_policy: AccountApprovalPolicyModel;
+  request_policy: AccountRequestPolicyModel;
 }
 
 const props = withDefaults(

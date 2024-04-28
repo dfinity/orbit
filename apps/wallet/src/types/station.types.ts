@@ -1,13 +1,13 @@
 import {
   DisplayUser,
-  ListProposalsOperationType,
-  ProposalStatusCode,
+  ListRequestsOperationType,
+  RequestStatusCode,
   UUID,
 } from '~/generated/station/station.did';
 
 export enum PolicyType {
-  VariableApprovalThreshold = 'VariableApprovalThreshold',
-  FixedApprovalThreshold = 'FixedApprovalThreshold',
+  VariableQuorumPercentage = 'VariableQuorumPercentage',
+  FixedQuorumPercentage = 'FixedQuorumPercentage',
 }
 
 export enum AccountTransferStatus {
@@ -18,9 +18,9 @@ export enum AccountTransferStatus {
   Unknown = 'unknown',
 }
 
-export enum ProposalStatusEnum {
+export enum RequestStatusEnum {
   Created = 'Created',
-  Adopted = 'Adopted',
+  Approved = 'Approved',
   Rejected = 'Rejected',
   Completed = 'Completed',
   Failed = 'Failed',
@@ -41,15 +41,15 @@ export interface DateRange {
 
 export type SortDirection = 'asc' | 'desc';
 
-export interface ListProposalsArgs {
+export interface ListRequestsArgs {
   limit?: number;
   offset?: number;
-  statuses?: ProposalStatusCode[];
-  types?: ListProposalsOperationType[];
+  statuses?: RequestStatusCode[];
+  types?: ListRequestsOperationType[];
   created_dt?: DateRange;
   expiration_dt?: DateRange;
-  voterIds?: UUID[];
-  proposerIds?: UUID[];
+  approverIds?: UUID[];
+  requesterIds?: UUID[];
   sortBy?:
     | {
         createdAt: SortDirection;
@@ -60,15 +60,15 @@ export interface ListProposalsArgs {
     | {
         lastModified: SortDirection;
       };
-  onlyVotable?: boolean;
+  onlyApprovable?: boolean;
 }
 
-export interface GetNextVotableProposalArgs {
-  types?: ListProposalsOperationType[];
-  excludedProposalIds?: UUID[];
+export interface GetNextApprovableRequestArgs {
+  types?: ListRequestsOperationType[];
+  excludedRequestIds?: UUID[];
 }
 
-export enum ProposalDomains {
+export enum RequestDomains {
   All = 'all',
   Accounts = 'accounts',
   AddressBook = 'address_book',
@@ -88,17 +88,17 @@ export enum ChangeCanisterTargetType {
   UpgradeUpgrader = 'UpgradeUpgrader',
 }
 
-export enum ProposalSpecifierEnum {
+export enum RequestSpecifierEnum {
   EditPermission = 'EditPermission',
   AddUserGroup = 'AddUserGroup',
-  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  RemoveRequestPolicy = 'RemoveRequestPolicy',
   AddUser = 'AddUser',
   EditUserGroup = 'EditUserGroup',
   RemoveAddressBookEntry = 'RemoveAddressBookEntry',
   EditAddressBookEntry = 'EditAddressBookEntry',
-  AddProposalPolicy = 'AddProposalPolicy',
+  AddRequestPolicy = 'AddRequestPolicy',
   ChangeCanister = 'ChangeCanister',
-  EditProposalPolicy = 'EditProposalPolicy',
+  EditRequestPolicy = 'EditRequestPolicy',
   EditUser = 'EditUser',
   Transfer = 'Transfer',
   EditAccount = 'EditAccount',
@@ -107,20 +107,20 @@ export enum ProposalSpecifierEnum {
   AddAccount = 'AddAccount',
 }
 
-export enum ProposalCriteriaEnum {
-  AutoAdopted = 'AutoAdopted',
-  HasAddressBookMetadata = 'HasAddressBookMetadata',
-  HasAddressInAddressBook = 'HasAddressInAddressBook',
-  MinimumVotes = 'MinimumVotes',
-  ApprovalThreshold = 'ApprovalThreshold',
-  And = 'And',
-  Or = 'Or',
+export enum RequestPolicyRuleEnum {
+  AutoApproved = 'AutoApproved',
+  AllowListedByMetadata = 'AllowListedByMetadata',
+  AllowListed = 'AllowListed',
+  Quorum = 'Quorum',
+  QuorumPercentage = 'QuorumPercentage',
+  AllOf = 'AllOf',
+  AnyOf = 'AnyOf',
   Not = 'Not',
 }
 
-export enum ProposalCriteriaUserSpecifierEnum {
+export enum RequestPolicyRuleUserSpecifierEnum {
   Owner = 'Owner',
-  Proposer = 'Proposer',
+  Requester = 'Requester',
   Any = 'Any',
   Group = 'Group',
   Id = 'Id',
@@ -137,13 +137,13 @@ export interface ListAddressBookEntriesArgs {
 
 export type MetadataItem = { key: string; value: string };
 
-export interface ProposalDetails {
-  can_vote: boolean;
-  proposer_name?: string;
-  voters: DisplayUser[];
+export interface RequestDetails {
+  can_approve: boolean;
+  requester_name?: string;
+  approvers: DisplayUser[];
 }
 
-export enum ProposalOperationEnum {
+export enum RequestOperationEnum {
   AddUser = 'AddUser',
   EditUser = 'EditUser',
   AddUserGroup = 'AddUserGroup',
@@ -154,9 +154,9 @@ export enum ProposalOperationEnum {
   AddAddressBookEntry = 'AddAddressBookEntry',
   EditAddressBookEntry = 'EditAddressBookEntry',
   RemoveAddressBookEntry = 'RemoveAddressBookEntry',
-  AddProposalPolicy = 'AddProposalPolicy',
-  EditProposalPolicy = 'EditProposalPolicy',
-  RemoveProposalPolicy = 'RemoveProposalPolicy',
+  AddRequestPolicy = 'AddRequestPolicy',
+  EditRequestPolicy = 'EditRequestPolicy',
+  RemoveRequestPolicy = 'RemoveRequestPolicy',
   EditPermission = 'EditPermission',
   ChangeCanister = 'ChangeCanister',
   Transfer = 'Transfer',

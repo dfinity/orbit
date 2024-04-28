@@ -6,10 +6,10 @@ export enum ResourceTypeEnum {
   Account = 'Account',
   Transfer = 'Transfer',
   Permission = 'Permission',
-  ProposalPolicy = 'ProposalPolicy',
+  RequestPolicy = 'RequestPolicy',
   ChangeCanister = 'ChangeCanister',
   System = 'System',
-  Proposal = 'Proposal',
+  Request = 'Request',
   AddressBook = 'AddressBook',
 }
 

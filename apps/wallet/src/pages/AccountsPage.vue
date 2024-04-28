@@ -11,12 +11,12 @@
     </template>
     <template #main-body>
       <PageBody>
-        <AuthCheck :privileges="[Privilege.ListProposals]">
-          <RecentProposals
+        <AuthCheck :privileges="[Privilege.ListRequests]">
+          <RecentRequests
             class="mb-4"
             :see-all-link="{
-              name: Routes.Proposals,
-              query: { group_by: ProposalDomains.Accounts },
+              name: Routes.Requests,
+              query: { group_by: RequestDomains.Accounts },
             }"
             :types="[{ AddAccount: null }, { EditAccount: null }]"
             hide-not-found
@@ -115,7 +115,7 @@ import TextOverflow from '~/components/TextOverflow.vue';
 import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
-import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import RecentRequests from '~/components/requests/RecentRequests.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import { Routes } from '~/configs/routes.config';
 import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
@@ -123,7 +123,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
 

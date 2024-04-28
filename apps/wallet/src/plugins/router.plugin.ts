@@ -13,7 +13,7 @@ import LoginPage from '~/pages/LoginPage.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { Privilege, RequiredSessionState } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
@@ -134,15 +134,15 @@ const router = createRouter({
         },
         {
           path: 'transfer-requests',
-          name: Routes.TransferProposals,
-          component: () => import('~/pages/ProposalsPage.vue'),
+          name: Routes.TransferRequests,
+          component: () => import('~/pages/RequestsPage.vue'),
           props: () => {
             return {
-              title: i18n.global.t('pages.proposals.transfer_title'),
-              domains: [ProposalDomains.Transfers],
+              title: i18n.global.t('pages.requests.transfer_title'),
+              domains: [RequestDomains.Transfers],
               breadcrumbs: [
                 { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
-                { title: i18n.global.t('navigation.transfer_proposals') },
+                { title: i18n.global.t('navigation.transfer_requests') },
               ],
             };
           },
@@ -293,15 +293,15 @@ const router = createRouter({
             },
             {
               path: 'requests',
-              name: Routes.Proposals,
-              component: () => import('~/pages/ProposalsPage.vue'),
+              name: Routes.Requests,
+              component: () => import('~/pages/RequestsPage.vue'),
               props: () => {
                 return {
-                  title: i18n.global.t('pages.proposals.title'),
+                  title: i18n.global.t('pages.requests.title'),
                   breadcrumbs: [
                     { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
                     { title: i18n.global.t('navigation.settings') },
-                    { title: i18n.global.t('navigation.proposals') },
+                    { title: i18n.global.t('navigation.requests') },
                   ],
                 };
               },
@@ -309,22 +309,22 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToStation,
-                    privileges: [Privilege.ListProposals],
+                    privileges: [Privilege.ListRequests],
                   },
                 },
               },
             },
             {
               path: 'policies',
-              name: Routes.ProposalPolicies,
-              component: () => import('~/pages/ProposalPoliciesPage.vue'),
+              name: Routes.RequestPolicies,
+              component: () => import('~/pages/RequestPoliciesPage.vue'),
               props: () => {
                 return {
-                  title: i18n.global.t('pages.proposal_policies.title'),
+                  title: i18n.global.t('pages.request_policies.title'),
                   breadcrumbs: [
                     { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
                     { title: i18n.global.t('navigation.settings') },
-                    { title: i18n.global.t('navigation.proposal_policies') },
+                    { title: i18n.global.t('navigation.request_policies') },
                   ],
                 };
               },
@@ -332,7 +332,7 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToStation,
-                    privileges: [Privilege.ListProposalPolicies],
+                    privileges: [Privilege.ListRequestPolicies],
                   },
                 },
               },

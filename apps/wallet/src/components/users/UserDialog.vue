@@ -137,7 +137,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (user.value.id) {
-      const proposal = await station.service.editUser({
+      const request = await station.service.editUser({
         id: user.value.id,
         groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
         identities: [assertAndReturn(user.value.identities, 'identities')],
@@ -145,20 +145,20 @@ const save = async (): Promise<void> => {
         status: [assertAndReturn(user.value.status, 'status')],
       });
 
-      useOnSuccessfulOperation(proposal);
+      useOnSuccessfulOperation(request);
 
       openModel.value = false;
       return;
     }
 
-    const proposal = await station.service.addUser({
+    const request = await station.service.addUser({
       groups: assertAndReturn(user.value.groups, 'groups').map(g => g.id),
       identities: assertAndReturn(user.value.identities, 'identities'),
       name: user.value.name !== undefined ? user.value.name : [],
       status: assertAndReturn(user.value.status, 'status'),
     });
 
-    useOnSuccessfulOperation(proposal);
+    useOnSuccessfulOperation(request);
 
     openModel.value = false;
   } catch (error) {

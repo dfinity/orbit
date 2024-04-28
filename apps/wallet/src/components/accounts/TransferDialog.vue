@@ -12,7 +12,7 @@
       @loading="loading = $event"
       @loaded="
         transfer = $event.transfer;
-        proposal = $event.proposal;
+        request = $event.request;
       "
     >
       <VCard :loading="loading" data-test-id="transfer-dialog-form">
@@ -42,7 +42,7 @@
                 :disabled="props.readonly.value"
                 type="text"
                 :prepend-icon="mdiComment"
-                data-test-id="transfer-dialog-proposal-summary"
+                data-test-id="transfer-dialog-request-summary"
               />
             </VCol>
           </VRow>
@@ -89,7 +89,7 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { Account, Proposal, Transfer, UUID } from '~/generated/station/station.did';
+import { Account, Request, Transfer, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { assertAndReturn } from '~/utils/helper.utils';
 import TransferForm from './TransferForm.vue';
@@ -119,16 +119,16 @@ const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
 const transfer = ref<Partial<Transfer>>({});
-const proposal = ref<Partial<Proposal>>({});
+const request = ref<Partial<Request>>({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
 });
 
 const summary = computed({
-  get: () => proposal.value.summary?.[0],
+  get: () => request.value.summary?.[0],
   set: value => {
-    proposal.value.summary = !value ? [] : [value];
+    request.value.summary = !value ? [] : [value];
   },
 });
 
@@ -136,23 +136,23 @@ const stationService = services().station;
 
 const loadTransfer = async (): Promise<{
   transfer: Partial<Transfer>;
-  proposal: Partial<Proposal>;
+  request: Partial<Request>;
 }> => {
   if (props.transferId.value === undefined) {
     const createModel: Partial<Transfer> = {
       from_account_id: props.account.value.id,
     };
 
-    return { transfer: createModel, proposal: {} };
+    return { transfer: createModel, request: {} };
   }
 
   const transfer = await stationService.getTransfer(props.transferId.value);
 
-  const { proposal } = await stationService.getProposal({
-    proposal_id: transfer.proposal_id,
+  const { request } = await stationService.getRequest({
+    request_id: transfer.request_id,
   });
 
-  return { transfer, proposal };
+  return { transfer, request };
 };
 
 const canSave = computed(() => {
@@ -169,7 +169,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
 
-    const newProposal = await stationService.transfer(
+    const newRequest = await stationService.transfer(
       {
         from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
         amount: assertAndReturn(transfer.value.amount, 'amount'),
@@ -181,7 +181,7 @@ const save = async (): Promise<void> => {
       summary.value,
     );
 
-    useOnSuccessfulOperation(newProposal);
+    useOnSuccessfulOperation(newRequest);
 
     openModel.value = false;
   } catch (error) {

@@ -46,7 +46,7 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { Proposal } from '~/generated/station/station.did';
+import { Request } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import { hexStringToArrayBuffer } from '~/utils/crypto.utils';
 import { readFileAsArrayBuffer } from '~/utils/file.utils';
@@ -63,7 +63,7 @@ const upgradeModel = ref<ChangeCanisterFormProps>({
   valid: false,
 });
 
-const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Proposal> => {
+const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Request> => {
   const wasmModule = assertAndReturn(model.wasmModule?.[0], 'model.wasmModule is required');
   const fileBuffer = await readFileAsArrayBuffer(wasmModule);
 

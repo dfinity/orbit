@@ -5,14 +5,14 @@ export enum Privilege {
   ListUserGroups = 'ListUserGroups',
   AddUser = 'AddUser',
   ListUsers = 'ListUsers',
-  AddProposalPolicy = 'AddProposalPolicy',
-  ListProposalPolicies = 'ListProposalPolicies',
+  AddRequestPolicy = 'AddRequestPolicy',
+  ListRequestPolicies = 'ListRequestPolicies',
   ListAccounts = 'ListAccounts',
   ListPermissions = 'ListPermissions',
   AddAccount = 'AddAccount',
   ListAddressBookEntries = 'ListAddressBookEntries',
   AddAddressBookEntry = 'AddAddressBookEntry',
-  ListProposals = 'ListProposals',
+  ListRequests = 'ListRequests',
   ChangeCanister = 'ChangeCanister',
 }
 
@@ -25,13 +25,13 @@ export enum RequiredSessionState {
   Any = 'any',
 }
 
-export interface AccessCriteria {
+export interface PermissionRequirements {
   session: RequiredSessionState;
   privileges?: Privilege[];
 }
 
 export interface AuthRouteMeta {
-  check: AccessCriteria;
+  check: PermissionRequirements;
 }
 
 declare module 'vue-router' {

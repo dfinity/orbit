@@ -68,18 +68,18 @@ const isRead = computed(() => variantIs(notification.value.status, 'Read'));
 const router = useRouter();
 
 const onRowClick = () => {
-  if (!variantIs(notification.value.notification_type, 'ProposalCreated')) {
+  if (!variantIs(notification.value.notification_type, 'RequestCreated')) {
     return;
   }
 
-  openProposal(notification.value.notification_type.ProposalCreated.proposal_id);
+  openRequest(notification.value.notification_type.RequestCreated.request_id);
 };
 
-const openProposal = (proposalId: UUID): void => {
+const openRequest = (requestId: UUID): void => {
   emit('read', true);
 
   router.push({
-    query: { [PROPOSAL_DIALOG_QUERY_PARAM]: proposalId },
+    query: { [PROPOSAL_DIALOG_QUERY_PARAM]: requestId },
   });
 };
 

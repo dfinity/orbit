@@ -159,7 +159,7 @@ type NotificationStatus = variant {
   Read;
 };
 
-// Representsd the different types of notifications within the system.
+// Represents the different types of notifications within the system.
 type NotificationType = variant {
   // Notification for system-wide messages.
   // This can be used for announcements, scheduled maintenance reminders, or other important system messages.

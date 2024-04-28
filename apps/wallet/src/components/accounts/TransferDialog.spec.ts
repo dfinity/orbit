@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import TransferDialog from './TransferDialog.vue';
-import { Account, GetProposalResult, Proposal, Transfer } from '~/generated/station/station.did';
+import { Account, GetRequestResult, Request, Transfer } from '~/generated/station/station.did';
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
@@ -10,7 +10,7 @@ vi.mock('~/services/station.service', () => ({
   StationService: vi.fn().mockImplementation(() => {
     return {
       transfer: vi.fn(() => {
-        return Promise.resolve({} as Proposal);
+        return Promise.resolve({} as Request);
       }),
     };
   }),
@@ -50,7 +50,7 @@ describe('TransferDialog', () => {
     const transferId = form.find(`[data-test-id="transfer-form-transfer-id"]`);
     const amount = form.find(`[data-test-id="transfer-form-amount"]`);
     const destination = form.find(`[data-test-id="transfer-form-destination-address"]`);
-    const summary = form.find(`[data-test-id="transfer-dialog-proposal-summary"]`);
+    const summary = form.find(`[data-test-id="transfer-dialog-request-summary"]`);
 
     // transferId should not be visible when not specified as a prop
     expect(transferId.exists()).toBe(false);
@@ -69,7 +69,7 @@ describe('TransferDialog', () => {
     expect(summary.find('input').element.value).toBe('');
   });
 
-  it('creates transfer proposal with summary', async () => {
+  it('creates transfer request with summary', async () => {
     const wrapper = mount(TransferDialog, {
       props: {
         account: {
@@ -88,7 +88,7 @@ describe('TransferDialog', () => {
 
     const amount = form.find(`[data-test-id="transfer-form-amount"]`);
     const destination = form.find(`[data-test-id="transfer-form-destination-address"]`);
-    const summary = form.find(`[data-test-id="transfer-dialog-proposal-summary"]`);
+    const summary = form.find(`[data-test-id="transfer-dialog-request-summary"]`);
 
     const submitButton = form.find(`[data-test-id="transfer-dialog-save-button"]`);
 
@@ -113,19 +113,19 @@ describe('TransferDialog', () => {
   });
 
   it('loads the corresponding objects to display the transfer and summary if transferId is specified', async () => {
-    services().station.getProposal = vi.fn(() =>
+    services().station.getRequest = vi.fn(() =>
       Promise.resolve({
-        proposal: {
+        request: {
           summary: ['test summary'], // it's an opt
-        } as unknown as Proposal,
-      } as ExtractOk<GetProposalResult>),
+        } as unknown as Request,
+      } as ExtractOk<GetRequestResult>),
     );
     services().station.getTransfer = vi.fn(() =>
       Promise.resolve({
         id: 'transfer-id',
         to: 'destination address',
         amount: 123n,
-        proposal_id: 'proposal-id',
+        request_id: 'request-id',
       } as Transfer),
     );
 
@@ -144,8 +144,8 @@ describe('TransferDialog', () => {
     await wrapper.vm.$nextTick();
 
     expect(services().station.getTransfer).toHaveBeenCalledWith('transfer-id');
-    expect(services().station.getProposal).toHaveBeenCalledWith({
-      proposal_id: 'proposal-id',
+    expect(services().station.getRequest).toHaveBeenCalledWith({
+      request_id: 'request-id',
     });
 
     const dataLoader = wrapper.findComponent({ name: 'DataLoader' });
@@ -154,7 +154,7 @@ describe('TransferDialog', () => {
     const transferId = form.find(`[data-test-id="transfer-form-transfer-id"]`);
     const amount = form.find(`[data-test-id="transfer-form-amount"]`);
     const destination = form.find(`[data-test-id="transfer-form-destination-address"]`);
-    const summary = form.find(`[data-test-id="transfer-dialog-proposal-summary"]`);
+    const summary = form.find(`[data-test-id="transfer-dialog-request-summary"]`);
 
     expect(transferId.exists()).toBe(true);
     expect(transferId.find('input').element.value).toBe('transfer-id');

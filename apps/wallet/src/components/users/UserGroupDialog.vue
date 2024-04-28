@@ -137,22 +137,22 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (userGroup.value.id) {
-      const proposal = await station.service.editUserGroup({
+      const request = await station.service.editUserGroup({
         user_group_id: userGroup.value.id,
         name: assertAndReturn(userGroup.value.name, 'name'),
       });
 
-      useOnSuccessfulOperation(proposal);
+      useOnSuccessfulOperation(request);
 
       openModel.value = false;
       return;
     }
 
-    const proposal = await station.service.addUserGroup({
+    const request = await station.service.addUserGroup({
       name: assertAndReturn(userGroup.value.name, 'name'),
     });
 
-    useOnSuccessfulOperation(proposal);
+    useOnSuccessfulOperation(request);
 
     openModel.value = false;
   } catch (error) {

@@ -1,6 +1,6 @@
 import { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
 import { Routes } from '~/configs/routes.config';
-import { AccessCriteria } from './auth.types';
+import { PermissionRequirements } from './auth.types';
 
 export enum NavigationActionType {
   None = 'none',
@@ -42,7 +42,7 @@ export interface NavigationAuthRouteCheck {
 
 export interface NavigationAuthCustomCheck {
   type: NavigastionAuthType.Custom;
-  criteria: AccessCriteria;
+  required: PermissionRequirements;
 }
 
 export type NavigastionAuth = NavigationAuthRouteCheck | NavigationAuthCustomCheck;

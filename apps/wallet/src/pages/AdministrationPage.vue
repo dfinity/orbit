@@ -7,13 +7,13 @@
       <PageBody>
         <VContainer class="pa-0" fluid>
           <VRow>
-            <AuthCheck :privileges="[Privilege.ListProposals]">
+            <AuthCheck :privileges="[Privilege.ListRequests]">
               <template #default>
                 <VCol cols="12" md="4">
                   <StationInfoCard />
                 </VCol>
                 <VCol cols="12" md="8">
-                  <RecentProposals
+                  <RecentRequests
                     :title="$t(`app.station_upgrades_card_title`)"
                     :types="[{ ChangeCanister: null }]"
                   >
@@ -26,14 +26,14 @@
                         color="secondary"
                         size="small"
                         :to="{
-                          name: Routes.Proposals,
-                          query: { group_by: ProposalDomains.System },
+                          name: Routes.Requests,
+                          query: { group_by: RequestDomains.System },
                         }"
                       >
                         {{ $t('terms.see_all') }}
                       </VBtn>
                     </template>
-                  </RecentProposals>
+                  </RecentRequests>
                 </VCol>
               </template>
               <template #unauthorized>
@@ -58,12 +58,12 @@ import PageLayout from '~/components/PageLayout.vue';
 import ChangeCanisterActionBtn from '~/components/change-canister/ChangeCanisterActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
-import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import RecentRequests from '~/components/requests/RecentRequests.vue';
 import StationInfoCard from '~/components/settings/StationInfoCard.vue';
 import { Routes } from '~/configs/routes.config';
 import { PageProps } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();

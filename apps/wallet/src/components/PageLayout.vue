@@ -72,7 +72,7 @@
       </template>
     </VSnackbar>
     <SessionExpiredOverlay />
-    <OpenProposalOverlay v-if="session.isAuthenticated && session.data.selected.hasAccess" />
+    <OpenRequestOverlay v-if="session.isAuthenticated && session.data.selected.hasAccess" />
   </VLayout>
 </template>
 
@@ -82,7 +82,7 @@ import { useDisplay } from 'vuetify';
 import { VBtn, VLayout, VMain, VSnackbar } from 'vuetify/components';
 import AppSidebar from '~/components/layouts/AppSidebar.vue';
 import AppToolbar from '~/components/layouts/AppToolbar.vue';
-import OpenProposalOverlay from '~/components/proposals/OpenProposalOverlay.vue';
+import OpenRequestOverlay from '~/components/requests/OpenRequestOverlay.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';

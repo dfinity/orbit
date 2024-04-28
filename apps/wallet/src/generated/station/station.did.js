@@ -1,6 +1,6 @@
 export const idlFactory = ({ IDL }) => {
-  const CriteriaResult = IDL.Rec();
-  const ProposalPolicyCriteria = IDL.Rec();
+  const RequestPolicyRule = IDL.Rec();
+  const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({});
   const SystemInit = IDL.Record({
     'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
@@ -33,27 +33,24 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const TimestampRFC3339 = IDL.Text;
-  const ProposalExecutionSchedule = IDL.Variant({
+  const RequestExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
+  const UUID = IDL.Text;
+  const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
+  const RequestResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+  });
   const SystemResourceAction = IDL.Variant({
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,
   });
-  const UUID = IDL.Text;
-  const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const UserResourceAction = IDL.Variant({
     'List' : IDL.Null,
     'Read' : ResourceId,
-    'Create' : IDL.Null,
-    'Update' : ResourceId,
-  });
-  const ResourceAction = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : ResourceId,
-    'Delete' : ResourceId,
     'Create' : IDL.Null,
     'Update' : ResourceId,
   });
@@ -64,9 +61,12 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : ResourceId,
     'Update' : ResourceId,
   });
-  const ProposalResourceAction = IDL.Variant({
+  const ResourceAction = IDL.Variant({
     'List' : IDL.Null,
     'Read' : ResourceId,
+    'Delete' : ResourceId,
+    'Create' : IDL.Null,
+    'Update' : ResourceId,
   });
   const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
   const PermissionResourceAction = IDL.Variant({
@@ -74,15 +74,15 @@ export const idlFactory = ({ IDL }) => {
     'Update' : IDL.Null,
   });
   const Resource = IDL.Variant({
+    'Request' : RequestResourceAction,
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
-    'ProposalPolicy' : ResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
-    'Proposal' : ProposalResourceAction,
     'ChangeCanister' : ChangeCanisterResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
+    'RequestPolicy' : ResourceAction,
   });
   const AuthScope = IDL.Variant({
     'Authenticated' : IDL.Null,
@@ -95,7 +95,6 @@ export const idlFactory = ({ IDL }) => {
     'auth_scope' : IDL.Opt(AuthScope),
     'users' : IDL.Opt(IDL.Vec(UUID)),
   });
-  const RemoveProposalPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
   const UserStatus = IDL.Variant({
     'Inactive' : IDL.Null,
     'Active' : IDL.Null,
@@ -110,12 +109,68 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'user_group_id' : UUID,
   });
-  const RemoveAddressBookEntryOperationInput = IDL.Record({
-    'address_book_entry_id' : UUID,
+  const UserSpecifier = IDL.Variant({
+    'Id' : IDL.Vec(UUID),
+    'Any' : IDL.Null,
+    'Group' : IDL.Vec(UUID),
+    'Requester' : IDL.Null,
+    'Owner' : IDL.Null,
+  });
+  const Quorum = IDL.Record({
+    'min_approved' : IDL.Nat16,
+    'approvers' : UserSpecifier,
+  });
+  const QuorumPercentage = IDL.Record({
+    'min_approved' : IDL.Nat16,
+    'approvers' : UserSpecifier,
   });
   const AddressBookMetadata = IDL.Record({
     'key' : IDL.Text,
     'value' : IDL.Text,
+  });
+  RequestPolicyRule.fill(
+    IDL.Variant({
+      'Not' : RequestPolicyRule,
+      'Quorum' : Quorum,
+      'AllowListed' : IDL.Null,
+      'QuorumPercentage' : QuorumPercentage,
+      'AutoApproved' : IDL.Null,
+      'AllOf' : IDL.Vec(RequestPolicyRule),
+      'AnyOf' : IDL.Vec(RequestPolicyRule),
+      'AllowListedByMetadata' : AddressBookMetadata,
+    })
+  );
+  const ResourceSpecifier = IDL.Variant({
+    'Any' : IDL.Null,
+    'Resource' : Resource,
+  });
+  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
+  const RequestSpecifier = IDL.Variant({
+    'AddUserGroup' : IDL.Null,
+    'EditPermission' : ResourceSpecifier,
+    'AddUser' : IDL.Null,
+    'EditUserGroup' : ResourceIds,
+    'EditRequestPolicy' : ResourceIds,
+    'RemoveRequestPolicy' : ResourceIds,
+    'RemoveAddressBookEntry' : ResourceIds,
+    'EditAddressBookEntry' : ResourceIds,
+    'ChangeCanister' : IDL.Null,
+    'EditUser' : ResourceIds,
+    'Transfer' : ResourceIds,
+    'EditAccount' : ResourceIds,
+    'AddAddressBookEntry' : IDL.Null,
+    'AddRequestPolicy' : IDL.Null,
+    'RemoveUserGroup' : ResourceIds,
+    'AddAccount' : IDL.Null,
+  });
+  const EditRequestPolicyOperationInput = IDL.Record({
+    'rule' : IDL.Opt(RequestPolicyRule),
+    'specifier' : IDL.Opt(RequestSpecifier),
+    'policy_id' : UUID,
+  });
+  const RemoveRequestPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
+  const RemoveAddressBookEntryOperationInput = IDL.Record({
+    'address_book_entry_id' : UUID,
   });
   const ChangeAddressBookMetadata = IDL.Variant({
     'OverrideSpecifiedBy' : IDL.Vec(AddressBookMetadata),
@@ -127,60 +182,6 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
   });
-  const ResourceSpecifier = IDL.Variant({
-    'Any' : IDL.Null,
-    'Resource' : Resource,
-  });
-  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
-  const ProposalSpecifier = IDL.Variant({
-    'AddUserGroup' : IDL.Null,
-    'EditPermission' : ResourceSpecifier,
-    'RemoveProposalPolicy' : ResourceIds,
-    'AddUser' : IDL.Null,
-    'EditUserGroup' : ResourceIds,
-    'RemoveAddressBookEntry' : ResourceIds,
-    'EditAddressBookEntry' : ResourceIds,
-    'AddProposalPolicy' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
-    'EditProposalPolicy' : ResourceIds,
-    'EditUser' : ResourceIds,
-    'Transfer' : ResourceIds,
-    'EditAccount' : ResourceIds,
-    'AddAddressBookEntry' : IDL.Null,
-    'RemoveUserGroup' : ResourceIds,
-    'AddAccount' : IDL.Null,
-  });
-  const UserSpecifier = IDL.Variant({
-    'Id' : IDL.Vec(UUID),
-    'Any' : IDL.Null,
-    'Group' : IDL.Vec(UUID),
-    'Proposer' : IDL.Null,
-    'Owner' : IDL.Null,
-  });
-  const MinimumVotes = IDL.Record({
-    'minimum' : IDL.Nat16,
-    'voters' : UserSpecifier,
-  });
-  const ApprovalThreshold = IDL.Record({
-    'threshold' : IDL.Nat16,
-    'voters' : UserSpecifier,
-  });
-  ProposalPolicyCriteria.fill(
-    IDL.Variant({
-      'Or' : IDL.Vec(ProposalPolicyCriteria),
-      'And' : IDL.Vec(ProposalPolicyCriteria),
-      'Not' : ProposalPolicyCriteria,
-      'HasAddressInAddressBook' : IDL.Null,
-      'HasAddressBookMetadata' : AddressBookMetadata,
-      'MinimumVotes' : MinimumVotes,
-      'ApprovalThreshold' : ApprovalThreshold,
-      'AutoAdopted' : IDL.Null,
-    })
-  );
-  const AddProposalPolicyOperationInput = IDL.Record({
-    'specifier' : ProposalSpecifier,
-    'criteria' : ProposalPolicyCriteria,
-  });
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
     'UpgradeCanister' : IDL.Principal,
@@ -190,11 +191,6 @@ export const idlFactory = ({ IDL }) => {
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'target' : ChangeCanisterTarget,
     'module' : IDL.Vec(IDL.Nat8),
-  });
-  const EditProposalPolicyOperationInput = IDL.Record({
-    'specifier' : IDL.Opt(ProposalSpecifier),
-    'criteria' : IDL.Opt(ProposalPolicyCriteria),
-    'policy_id' : UUID,
   });
   const EditUserOperationInput = IDL.Record({
     'id' : UUID,
@@ -214,22 +210,22 @@ export const idlFactory = ({ IDL }) => {
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
   });
+  const RequestPolicyRuleInput = IDL.Variant({
+    'Set' : RequestPolicyRule,
+    'Remove' : IDL.Null,
+  });
   const Allow = IDL.Record({
     'user_groups' : IDL.Vec(UUID),
     'auth_scope' : AuthScope,
     'users' : IDL.Vec(UUID),
   });
-  const ApprovalPolicyCriteriaInput = IDL.Variant({
-    'Set' : ProposalPolicyCriteria,
-    'Remove' : IDL.Null,
-  });
   const EditAccountOperationInput = IDL.Record({
     'account_id' : UUID,
+    'configs_request_policy' : IDL.Opt(RequestPolicyRuleInput),
     'read_permission' : IDL.Opt(Allow),
-    'update_approval_policy' : IDL.Opt(ApprovalPolicyCriteriaInput),
-    'transfer_approval_policy' : IDL.Opt(ApprovalPolicyCriteriaInput),
+    'configs_permission' : IDL.Opt(Allow),
     'name' : IDL.Opt(IDL.Text),
-    'update_permission' : IDL.Opt(Allow),
+    'transfer_request_policy' : IDL.Opt(RequestPolicyRuleInput),
     'transfer_permission' : IDL.Opt(Allow),
   });
   const AddAddressBookEntryOperationInput = IDL.Record({
@@ -239,66 +235,60 @@ export const idlFactory = ({ IDL }) => {
     'address_owner' : IDL.Text,
     'standard' : IDL.Text,
   });
+  const AddRequestPolicyOperationInput = IDL.Record({
+    'rule' : RequestPolicyRule,
+    'specifier' : RequestSpecifier,
+  });
   const RemoveUserGroupOperationInput = IDL.Record({ 'user_group_id' : UUID });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AddAccountOperationInput = IDL.Record({
+    'configs_request_policy' : IDL.Opt(RequestPolicyRule),
     'read_permission' : Allow,
-    'update_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
-    'transfer_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
+    'configs_permission' : Allow,
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'update_permission' : Allow,
     'blockchain' : IDL.Text,
+    'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
     'transfer_permission' : Allow,
     'standard' : IDL.Text,
   });
-  const ProposalOperationInput = IDL.Variant({
+  const RequestOperationInput = IDL.Variant({
     'AddUserGroup' : AddUserGroupOperationInput,
     'EditPermission' : EditPermissionOperationInput,
-    'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput,
     'AddUser' : AddUserOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
+    'EditRequestPolicy' : EditRequestPolicyOperationInput,
+    'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
-    'AddProposalPolicy' : AddProposalPolicyOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
-    'EditProposalPolicy' : EditProposalPolicyOperationInput,
     'EditUser' : EditUserOperationInput,
     'Transfer' : TransferOperationInput,
     'EditAccount' : EditAccountOperationInput,
     'AddAddressBookEntry' : AddAddressBookEntryOperationInput,
+    'AddRequestPolicy' : AddRequestPolicyOperationInput,
     'RemoveUserGroup' : RemoveUserGroupOperationInput,
     'AddAccount' : AddAccountOperationInput,
   });
-  const CreateProposalInput = IDL.Record({
+  const CreateRequestInput = IDL.Record({
     'title' : IDL.Opt(IDL.Text),
-    'execution_plan' : IDL.Opt(ProposalExecutionSchedule),
+    'execution_plan' : IDL.Opt(RequestExecutionSchedule),
     'summary' : IDL.Opt(IDL.Text),
-    'operation' : ProposalOperationInput,
+    'operation' : RequestOperationInput,
   });
-  const ProposalCallerPrivileges = IDL.Record({
+  const RequestCallerPrivileges = IDL.Record({
     'id' : UUID,
-    'can_vote' : IDL.Bool,
+    'can_approve' : IDL.Bool,
   });
-  const ProposalStatus = IDL.Variant({
+  const RequestStatus = IDL.Variant({
     'Failed' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
+    'Approved' : IDL.Null,
     'Rejected' : IDL.Null,
     'Scheduled' : IDL.Record({ 'scheduled_at' : TimestampRFC3339 }),
-    'Adopted' : IDL.Null,
     'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
     'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
     'Created' : IDL.Null,
     'Completed' : IDL.Record({ 'completed_at' : TimestampRFC3339 }),
-  });
-  const ProposalVoteStatus = IDL.Variant({
-    'Rejected' : IDL.Null,
-    'Accepted' : IDL.Null,
-  });
-  const ProposalVote = IDL.Record({
-    'status' : ProposalVoteStatus,
-    'user_id' : UUID,
-    'status_reason' : IDL.Opt(IDL.Text),
-    'decided_at' : TimestampRFC3339,
   });
   const UserGroup = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
   const AddUserGroupOperation = IDL.Record({
@@ -307,9 +297,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditPermissionOperation = IDL.Record({
     'input' : EditPermissionOperationInput,
-  });
-  const RemoveProposalPolicyOperation = IDL.Record({
-    'input' : RemoveProposalPolicyOperationInput,
   });
   const User = IDL.Record({
     'id' : UUID,
@@ -326,24 +313,23 @@ export const idlFactory = ({ IDL }) => {
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
   });
+  const EditRequestPolicyOperation = IDL.Record({
+    'input' : EditRequestPolicyOperationInput,
+  });
+  const RemoveRequestPolicyOperation = IDL.Record({
+    'input' : RemoveRequestPolicyOperationInput,
+  });
   const RemoveAddressBookEntryOperation = IDL.Record({
     'input' : RemoveAddressBookEntryOperationInput,
   });
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
   });
-  const AddProposalPolicyOperation = IDL.Record({
-    'input' : AddProposalPolicyOperationInput,
-    'policy_id' : IDL.Opt(UUID),
-  });
   const Sha256Hash = IDL.Text;
   const ChangeCanisterOperation = IDL.Record({
     'module_checksum' : Sha256Hash,
     'target' : ChangeCanisterTarget,
     'arg_checksum' : IDL.Opt(Sha256Hash),
-  });
-  const EditProposalPolicyOperation = IDL.Record({
-    'input' : EditProposalPolicyOperationInput,
   });
   const EditUserOperation = IDL.Record({ 'input' : EditUserOperationInput });
   const AccountBalanceInfo = IDL.Record({
@@ -353,14 +339,14 @@ export const idlFactory = ({ IDL }) => {
   });
   const Account = IDL.Record({
     'id' : UUID,
+    'configs_request_policy' : IDL.Opt(RequestPolicyRule),
     'decimals' : IDL.Nat32,
     'balance' : IDL.Opt(AccountBalanceInfo),
-    'update_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
-    'transfer_approval_policy' : IDL.Opt(ProposalPolicyCriteria),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
+    'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
     'last_modification_timestamp' : TimestampRFC3339,
     'standard' : IDL.Text,
     'symbol' : AssetSymbol,
@@ -387,6 +373,10 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry' : IDL.Opt(AddressBookEntry),
     'input' : AddAddressBookEntryOperationInput,
   });
+  const AddRequestPolicyOperation = IDL.Record({
+    'input' : AddRequestPolicyOperationInput,
+    'policy_id' : IDL.Opt(UUID),
+  });
   const RemoveUserGroupOperation = IDL.Record({
     'input' : RemoveUserGroupOperationInput,
   });
@@ -394,82 +384,92 @@ export const idlFactory = ({ IDL }) => {
     'account' : IDL.Opt(Account),
     'input' : AddAccountOperationInput,
   });
-  const ProposalOperation = IDL.Variant({
+  const RequestOperation = IDL.Variant({
     'AddUserGroup' : AddUserGroupOperation,
     'EditPermission' : EditPermissionOperation,
-    'RemoveProposalPolicy' : RemoveProposalPolicyOperation,
     'AddUser' : AddUserOperation,
     'EditUserGroup' : EditUserGroupOperation,
+    'EditRequestPolicy' : EditRequestPolicyOperation,
+    'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
-    'AddProposalPolicy' : AddProposalPolicyOperation,
     'ChangeCanister' : ChangeCanisterOperation,
-    'EditProposalPolicy' : EditProposalPolicyOperation,
     'EditUser' : EditUserOperation,
     'Transfer' : TransferOperation,
     'EditAccount' : EditAccountOperation,
     'AddAddressBookEntry' : AddAddressBookEntryOperation,
+    'AddRequestPolicy' : AddRequestPolicyOperation,
     'RemoveUserGroup' : RemoveUserGroupOperation,
     'AddAccount' : AddAccountOperation,
   });
-  const Proposal = IDL.Record({
-    'id' : UUID,
-    'status' : ProposalStatus,
-    'title' : IDL.Text,
-    'execution_plan' : ProposalExecutionSchedule,
-    'expiration_dt' : TimestampRFC3339,
-    'votes' : IDL.Vec(ProposalVote),
-    'created_at' : TimestampRFC3339,
-    'summary' : IDL.Opt(IDL.Text),
-    'operation' : ProposalOperation,
-    'proposed_by' : UUID,
-  });
-  const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Opt(IDL.Text) });
-  const EvaluationStatus = IDL.Variant({
+  const RequestApprovalStatus = IDL.Variant({
+    'Approved' : IDL.Null,
     'Rejected' : IDL.Null,
-    'Adopted' : IDL.Null,
+  });
+  const RequestApproval = IDL.Record({
+    'status' : RequestApprovalStatus,
+    'approver_id' : UUID,
+    'status_reason' : IDL.Opt(IDL.Text),
+    'decided_at' : TimestampRFC3339,
+  });
+  const Request = IDL.Record({
+    'id' : UUID,
+    'status' : RequestStatus,
+    'title' : IDL.Text,
+    'execution_plan' : RequestExecutionSchedule,
+    'expiration_dt' : TimestampRFC3339,
+    'created_at' : TimestampRFC3339,
+    'requested_by' : UUID,
+    'summary' : IDL.Opt(IDL.Text),
+    'operation' : RequestOperation,
+    'approvals' : IDL.Vec(RequestApproval),
+  });
+  const EvaluationStatus = IDL.Variant({
+    'Approved' : IDL.Null,
+    'Rejected' : IDL.Null,
     'Pending' : IDL.Null,
   });
-  const EvaluatedCriteria = IDL.Variant({
-    'Or' : IDL.Vec(CriteriaResult),
-    'And' : IDL.Vec(CriteriaResult),
-    'Not' : CriteriaResult,
-    'HasAddressInAddressBook' : IDL.Null,
-    'HasAddressBookMetadata' : IDL.Record({ 'metadata' : AddressBookMetadata }),
-    'MinimumVotes' : IDL.Record({
-      'total_possible_votes' : IDL.Nat64,
-      'votes' : IDL.Vec(UUID),
-      'min_required_votes' : IDL.Nat64,
+  const EvaluatedRequestPolicyRule = IDL.Variant({
+    'Not' : RequestPolicyRuleResult,
+    'Quorum' : IDL.Record({
+      'total_possible_approvers' : IDL.Nat64,
+      'min_approved' : IDL.Nat64,
+      'approvers' : IDL.Vec(UUID),
     }),
-    'ApprovalThreshold' : IDL.Record({
-      'total_possible_votes' : IDL.Nat64,
-      'votes' : IDL.Vec(UUID),
-      'min_required_votes' : IDL.Nat64,
+    'AllowListed' : IDL.Null,
+    'QuorumPercentage' : IDL.Record({
+      'total_possible_approvers' : IDL.Nat64,
+      'min_approved' : IDL.Nat64,
+      'approvers' : IDL.Vec(UUID),
     }),
-    'AutoAdopted' : IDL.Null,
+    'AutoApproved' : IDL.Null,
+    'AllOf' : IDL.Vec(RequestPolicyRuleResult),
+    'AnyOf' : IDL.Vec(RequestPolicyRuleResult),
+    'AllowListedByMetadata' : IDL.Record({ 'metadata' : AddressBookMetadata }),
   });
-  CriteriaResult.fill(
+  RequestPolicyRuleResult.fill(
     IDL.Record({
       'status' : EvaluationStatus,
-      'evaluated_criteria' : EvaluatedCriteria,
+      'evaluated_rule' : EvaluatedRequestPolicyRule,
     })
   );
-  const ProposalEvaluationResult = IDL.Record({
+  const RequestEvaluationResult = IDL.Record({
+    'request_id' : UUID,
     'status' : EvaluationStatus,
-    'proposal_id' : UUID,
-    'policy_results' : IDL.Vec(CriteriaResult),
+    'policy_results' : IDL.Vec(RequestPolicyRuleResult),
   });
-  const ProposalAdditionalInfo = IDL.Record({
+  const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Opt(IDL.Text) });
+  const RequestAdditionalInfo = IDL.Record({
     'id' : UUID,
-    'voters' : IDL.Vec(DisplayUser),
-    'evaluation_result' : IDL.Opt(ProposalEvaluationResult),
-    'proposer_name' : IDL.Opt(IDL.Text),
+    'evaluation_result' : IDL.Opt(RequestEvaluationResult),
+    'requester_name' : IDL.Opt(IDL.Text),
+    'approvers' : IDL.Vec(DisplayUser),
   });
-  const CreateProposalResult = IDL.Variant({
+  const CreateRequestResult = IDL.Variant({
     'Ok' : IDL.Record({
-      'privileges' : ProposalCallerPrivileges,
-      'proposal' : Proposal,
-      'additional_info' : ProposalAdditionalInfo,
+      'privileges' : RequestCallerPrivileges,
+      'request' : Request,
+      'additional_info' : RequestAdditionalInfo,
     }),
     'Err' : Error,
   });
@@ -514,35 +514,35 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const ListProposalsOperationType = IDL.Variant({
+  const ListRequestsOperationType = IDL.Variant({
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
-    'RemoveProposalPolicy' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'EditRequestPolicy' : IDL.Null,
+    'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
-    'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
-    'EditProposalPolicy' : IDL.Null,
     'EditUser' : IDL.Null,
     'Transfer' : IDL.Opt(UUID),
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
+    'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
-  const GetNextVotableProposalInput = IDL.Record({
-    'excluded_proposal_ids' : IDL.Vec(UUID),
-    'operation_types' : IDL.Opt(IDL.Vec(ListProposalsOperationType)),
+  const GetNextApprovableRequestInput = IDL.Record({
+    'excluded_request_ids' : IDL.Vec(UUID),
+    'operation_types' : IDL.Opt(IDL.Vec(ListRequestsOperationType)),
   });
-  const GetProposalResultData = IDL.Record({
-    'privileges' : ProposalCallerPrivileges,
-    'proposal' : Proposal,
-    'additional_info' : ProposalAdditionalInfo,
+  const GetRequestResultData = IDL.Record({
+    'privileges' : RequestCallerPrivileges,
+    'request' : Request,
+    'additional_info' : RequestAdditionalInfo,
   });
-  const GetNextVotableProposalResponse = IDL.Variant({
-    'Ok' : IDL.Opt(GetProposalResultData),
+  const GetNextApprovableRequestResult = IDL.Variant({
+    'Ok' : IDL.Opt(GetRequestResultData),
     'Err' : Error,
   });
   const GetPermissionInput = IDL.Record({ 'resource' : Resource });
@@ -558,26 +558,26 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const GetProposalInput = IDL.Record({ 'proposal_id' : UUID });
-  const GetProposalResult = IDL.Variant({
-    'Ok' : GetProposalResultData,
+  const GetRequestInput = IDL.Record({ 'request_id' : UUID });
+  const GetRequestResult = IDL.Variant({
+    'Ok' : GetRequestResultData,
     'Err' : Error,
   });
-  const GetProposalPolicyInput = IDL.Record({ 'id' : UUID });
-  const ProposalPolicyCallerPrivileges = IDL.Record({
+  const GetRequestPolicyInput = IDL.Record({ 'id' : UUID });
+  const RequestPolicyCallerPrivileges = IDL.Record({
     'id' : UUID,
     'can_delete' : IDL.Bool,
     'can_edit' : IDL.Bool,
   });
-  const ProposalPolicy = IDL.Record({
+  const RequestPolicy = IDL.Record({
     'id' : UUID,
-    'specifier' : ProposalSpecifier,
-    'criteria' : ProposalPolicyCriteria,
+    'rule' : RequestPolicyRule,
+    'specifier' : RequestSpecifier,
   });
-  const GetProposalPolicyResult = IDL.Variant({
+  const GetRequestPolicyResult = IDL.Variant({
     'Ok' : IDL.Record({
-      'privileges' : ProposalPolicyCallerPrivileges,
-      'policy' : ProposalPolicy,
+      'privileges' : RequestPolicyCallerPrivileges,
+      'policy' : RequestPolicy,
     }),
     'Err' : Error,
   });
@@ -596,11 +596,11 @@ export const idlFactory = ({ IDL }) => {
     'id' : UUID,
     'to' : IDL.Text,
     'fee' : IDL.Nat,
+    'request_id' : UUID,
     'status' : TransferStatus,
     'from_account_id' : UUID,
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : Network,
-    'proposal_id' : UUID,
     'amount' : IDL.Nat,
   });
   const GetTransfersResult = IDL.Variant({
@@ -659,10 +659,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransferListItem = IDL.Record({
     'to' : IDL.Text,
+    'request_id' : UUID,
     'status' : TransferStatus,
     'created_at' : TimestampRFC3339,
     'transfer_id' : UUID,
-    'proposal_id' : UUID,
     'amount' : IDL.Nat,
   });
   const ListAccountTransfersResult = IDL.Variant({
@@ -708,7 +708,7 @@ export const idlFactory = ({ IDL }) => {
     'Sent' : IDL.Null,
   });
   const NotificationTypeInput = IDL.Variant({
-    'ProposalCreated' : IDL.Null,
+    'RequestCreated' : IDL.Null,
     'SystemMessage' : IDL.Null,
   });
   const ListNotificationsInput = IDL.Record({
@@ -717,30 +717,30 @@ export const idlFactory = ({ IDL }) => {
     'from_dt' : IDL.Opt(TimestampRFC3339),
     'notification_type' : IDL.Opt(NotificationTypeInput),
   });
-  const ProposalOperationType = IDL.Variant({
+  const RequestOperationType = IDL.Variant({
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
-    'RemoveProposalPolicy' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'EditRequestPolicy' : IDL.Null,
+    'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
-    'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
-    'EditProposalPolicy' : IDL.Null,
     'EditUser' : IDL.Null,
     'Transfer' : IDL.Null,
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
+    'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const NotificationType = IDL.Variant({
-    'ProposalCreated' : IDL.Record({
+    'RequestCreated' : IDL.Record({
       'account_id' : IDL.Opt(UUID),
-      'operation_type' : ProposalOperationType,
+      'request_id' : UUID,
+      'operation_type' : RequestOperationType,
       'user_id' : IDL.Opt(UUID),
-      'proposal_id' : UUID,
     }),
     'SystemMessage' : IDL.Null,
   });
@@ -777,53 +777,53 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const ListProposalPoliciesInput = PaginationInput;
-  const ListProposalPoliciesResult = IDL.Variant({
+  const ListRequestPoliciesInput = PaginationInput;
+  const ListRequestPoliciesResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
-      'privileges' : IDL.Vec(ProposalPolicyCallerPrivileges),
+      'privileges' : IDL.Vec(RequestPolicyCallerPrivileges),
       'next_offset' : IDL.Opt(IDL.Nat64),
-      'policies' : IDL.Vec(ProposalPolicy),
+      'policies' : IDL.Vec(RequestPolicy),
     }),
     'Err' : Error,
   });
   const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
-  const ListProposalsSortBy = IDL.Variant({
+  const ListRequestsSortBy = IDL.Variant({
     'ExpirationDt' : SortByDirection,
     'LastModificationDt' : SortByDirection,
     'CreatedAt' : SortByDirection,
   });
-  const ProposalStatusCode = IDL.Variant({
+  const RequestStatusCode = IDL.Variant({
     'Failed' : IDL.Null,
+    'Approved' : IDL.Null,
     'Rejected' : IDL.Null,
     'Scheduled' : IDL.Null,
-    'Adopted' : IDL.Null,
     'Cancelled' : IDL.Null,
     'Processing' : IDL.Null,
     'Created' : IDL.Null,
     'Completed' : IDL.Null,
   });
-  const ListProposalsInput = IDL.Record({
-    'sort_by' : IDL.Opt(ListProposalsSortBy),
-    'voter_ids' : IDL.Opt(IDL.Vec(UUID)),
+  const ListRequestsInput = IDL.Record({
+    'sort_by' : IDL.Opt(ListRequestsSortBy),
     'with_evaluation_results' : IDL.Bool,
     'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
     'created_to_dt' : IDL.Opt(TimestampRFC3339),
-    'statuses' : IDL.Opt(IDL.Vec(ProposalStatusCode)),
-    'only_votable' : IDL.Bool,
-    'proposer_ids' : IDL.Opt(IDL.Vec(UUID)),
+    'statuses' : IDL.Opt(IDL.Vec(RequestStatusCode)),
+    'approver_ids' : IDL.Opt(IDL.Vec(UUID)),
     'expiration_to_dt' : IDL.Opt(TimestampRFC3339),
     'paginate' : IDL.Opt(PaginationInput),
-    'operation_types' : IDL.Opt(IDL.Vec(ListProposalsOperationType)),
+    'requester_ids' : IDL.Opt(IDL.Vec(UUID)),
+    'operation_types' : IDL.Opt(IDL.Vec(ListRequestsOperationType)),
+    'only_approvable' : IDL.Bool,
     'created_from_dt' : IDL.Opt(TimestampRFC3339),
   });
-  const ListProposalsResult = IDL.Variant({
+  const ListRequestsResult = IDL.Variant({
     'Ok' : IDL.Record({
       'total' : IDL.Nat64,
-      'privileges' : IDL.Vec(ProposalCallerPrivileges),
-      'proposals' : IDL.Vec(Proposal),
+      'privileges' : IDL.Vec(RequestCallerPrivileges),
+      'requests' : IDL.Vec(Request),
       'next_offset' : IDL.Opt(IDL.Nat64),
-      'additional_info' : IDL.Vec(ProposalAdditionalInfo),
+      'additional_info' : IDL.Vec(RequestAdditionalInfo),
     }),
     'Err' : Error,
   });
@@ -864,23 +864,36 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserPrivilege = IDL.Variant({
     'AddUserGroup' : IDL.Null,
-    'ListProposals' : IDL.Null,
+    'ListRequestPolicies' : IDL.Null,
     'ListPermissions' : IDL.Null,
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
-    'AddProposalPolicy' : IDL.Null,
     'ChangeCanister' : IDL.Null,
-    'ListProposalPolicies' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
+    'AddRequestPolicy' : IDL.Null,
     'ListAddressBookEntries' : IDL.Null,
+    'ListRequests' : IDL.Null,
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const MeResult = IDL.Variant({
     'Ok' : IDL.Record({ 'me' : User, 'privileges' : IDL.Vec(UserPrivilege) }),
+    'Err' : Error,
+  });
+  const SubmitRequestApprovalInput = IDL.Record({
+    'request_id' : UUID,
+    'decision' : RequestApprovalStatus,
+    'reason' : IDL.Opt(IDL.Text),
+  });
+  const SubmitRequestApprovalResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'privileges' : RequestCallerPrivileges,
+      'request' : Request,
+      'additional_info' : RequestAdditionalInfo,
+    }),
     'Err' : Error,
   });
   const SystemInfo = IDL.Record({
@@ -894,24 +907,11 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'system' : SystemInfo }),
     'Err' : Error,
   });
-  const VoteOnProposalInput = IDL.Record({
-    'approve' : IDL.Bool,
-    'proposal_id' : UUID,
-    'reason' : IDL.Opt(IDL.Text),
-  });
-  const VoteOnProposalResult = IDL.Variant({
-    'Ok' : IDL.Record({
-      'privileges' : ProposalCallerPrivileges,
-      'proposal' : Proposal,
-      'additional_info' : ProposalAdditionalInfo,
-    }),
-    'Err' : Error,
-  });
   return IDL.Service({
     'capabilities' : IDL.Func([], [CapabilitiesResult], ['query']),
-    'create_proposal' : IDL.Func(
-        [CreateProposalInput],
-        [CreateProposalResult],
+    'create_request' : IDL.Func(
+        [CreateRequestInput],
+        [CreateRequestResult],
         [],
       ),
     'fetch_account_balances' : IDL.Func(
@@ -925,9 +925,9 @@ export const idlFactory = ({ IDL }) => {
         [GetAddressBookEntryResult],
         ['query'],
       ),
-    'get_next_votable_proposal' : IDL.Func(
-        [GetNextVotableProposalInput],
-        [GetNextVotableProposalResponse],
+    'get_next_approvable_request' : IDL.Func(
+        [GetNextApprovableRequestInput],
+        [GetNextApprovableRequestResult],
         ['query'],
       ),
     'get_permission' : IDL.Func(
@@ -935,14 +935,10 @@ export const idlFactory = ({ IDL }) => {
         [GetPermissionResult],
         ['query'],
       ),
-    'get_proposal' : IDL.Func(
-        [GetProposalInput],
-        [GetProposalResult],
-        ['query'],
-      ),
-    'get_proposal_policy' : IDL.Func(
-        [GetProposalPolicyInput],
-        [GetProposalPolicyResult],
+    'get_request' : IDL.Func([GetRequestInput], [GetRequestResult], ['query']),
+    'get_request_policy' : IDL.Func(
+        [GetRequestPolicyInput],
+        [GetRequestPolicyResult],
         ['query'],
       ),
     'get_transfers' : IDL.Func(
@@ -983,14 +979,14 @@ export const idlFactory = ({ IDL }) => {
         [ListPermissionsResult],
         ['query'],
       ),
-    'list_proposal_policies' : IDL.Func(
-        [ListProposalPoliciesInput],
-        [ListProposalPoliciesResult],
+    'list_request_policies' : IDL.Func(
+        [ListRequestPoliciesInput],
+        [ListRequestPoliciesResult],
         ['query'],
       ),
-    'list_proposals' : IDL.Func(
-        [ListProposalsInput],
-        [ListProposalsResult],
+    'list_requests' : IDL.Func(
+        [ListRequestsInput],
+        [ListRequestsResult],
         ['query'],
       ),
     'list_user_groups' : IDL.Func(
@@ -1005,12 +1001,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'me' : IDL.Func([], [MeResult], ['query']),
-    'system_info' : IDL.Func([], [SystemInfoResult], ['query']),
-    'vote_on_proposal' : IDL.Func(
-        [VoteOnProposalInput],
-        [VoteOnProposalResult],
+    'submit_request_approval' : IDL.Func(
+        [SubmitRequestApprovalInput],
+        [SubmitRequestApprovalResult],
         [],
       ),
+    'system_info' : IDL.Func([], [SystemInfoResult], ['query']),
   });
 };
 export const init = ({ IDL }) => {

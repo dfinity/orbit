@@ -45,14 +45,14 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { Proposal } from '~/generated/station/station.did';
+import { Request } from '~/generated/station/station.did';
 import { ResourcePermissionSpecifier } from '~/types/permissions.types';
 import MembersOfGroupForm, { MembersOfGroupFormProps } from './MembersOfGroupForm.vue';
 
 const props = defineProps<{
   specifier: ResourcePermissionSpecifier;
   modelValue: MembersOfGroupFormProps;
-  submitCb: (form: MembersOfGroupFormProps) => Promise<Proposal>;
+  submitCb: (form: MembersOfGroupFormProps) => Promise<Request>;
 }>();
 
 const { specifier, submitCb } = toRefs(props);

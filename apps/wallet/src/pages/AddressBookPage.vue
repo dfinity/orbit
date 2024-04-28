@@ -11,12 +11,12 @@
     </template>
     <template #main-body>
       <PageBody>
-        <AuthCheck :privileges="[Privilege.ListProposals]">
-          <RecentProposals
+        <AuthCheck :privileges="[Privilege.ListRequests]">
+          <RecentRequests
             class="mb-4"
             :see-all-link="{
-              name: Routes.Proposals,
-              query: { group_by: ProposalDomains.AddressBook },
+              name: Routes.Requests,
+              query: { group_by: RequestDomains.AddressBook },
             }"
             :types="[
               { AddAddressBookEntry: null },
@@ -125,7 +125,7 @@ import AddressBookEntryBtn from '~/components/address-book/AddressBookEntryBtn.v
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
-import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import RecentRequests from '~/components/requests/RecentRequests.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
   useOnFailedOperation,
@@ -141,7 +141,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { throttle } from '~/utils/helper.utils';
 

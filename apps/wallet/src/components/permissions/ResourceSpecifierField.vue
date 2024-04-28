@@ -50,9 +50,9 @@
       disabled
     />
   </template>
-  <template v-else-if="variantIs(model, 'ProposalPolicy')">
+  <template v-else-if="variantIs(model, 'RequestPolicy')">
     <VTextField
-      :model-value="$t('permissions.resources.proposalpolicy')"
+      :model-value="$t('permissions.resources.requestpolicy')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -60,7 +60,7 @@
     />
 
     <VTextField
-      :model-value="toResourceActionText(model.ProposalPolicy)"
+      :model-value="toResourceActionText(model.RequestPolicy)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"
@@ -101,9 +101,9 @@
       disabled
     />
   </template>
-  <template v-else-if="variantIs(model, 'Proposal')">
+  <template v-else-if="variantIs(model, 'Request')">
     <VTextField
-      :model-value="$t('permissions.resources.proposal')"
+      :model-value="$t('permissions.resources.request')"
       :label="$t('terms.resource')"
       variant="plain"
       density="compact"
@@ -111,7 +111,7 @@
     />
 
     <VTextField
-      :model-value="toResourceActionText(model.Proposal)"
+      :model-value="toResourceActionText(model.Request)"
       :label="$t('terms.action')"
       variant="plain"
       density="compact"

@@ -41,14 +41,14 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { Proposal } from '~/generated/station/station.did';
+import { Request } from '~/generated/station/station.did';
 import { ResourcePermissionSpecifier } from '~/types/permissions.types';
 import SpecificUsersForm, { SpecificUsersFormProps } from './SpecificUsersForm.vue';
 
 const props = defineProps<{
   specifier: ResourcePermissionSpecifier;
   modelValue: SpecificUsersFormProps;
-  submitCb: (form: SpecificUsersFormProps) => Promise<Proposal>;
+  submitCb: (form: SpecificUsersFormProps) => Promise<Request>;
 }>();
 
 const { specifier, submitCb, modelValue: reactivePropModel } = toRefs(props);

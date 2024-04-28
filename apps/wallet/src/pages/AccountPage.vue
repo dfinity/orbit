@@ -68,11 +68,11 @@
       <template v-if="!loading" #main-body>
         <PageBody v-if="!account">{{ $t('pages.account.not_found_description') }}</PageBody>
         <PageBody v-else>
-          <RecentProposals
+          <RecentRequests
             class="mb-4"
             :see-all-link="{
-              name: Routes.Proposals,
-              query: { group_by: ProposalDomains.Transfers },
+              name: Routes.Requests,
+              query: { group_by: RequestDomains.Transfers },
             }"
             :types="[{ Transfer: [account.id] }]"
             hide-not-found
@@ -210,7 +210,7 @@ import TransferBtn from '~/components/accounts/TransferBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
-import RecentProposals from '~/components/proposals/RecentProposals.vue';
+import RecentRequests from '~/components/requests/RecentRequests.vue';
 import FiltersCard from '~/components/ui/FiltersCard.vue';
 import { useFilterUtils, useSavedFilters } from '~/composables/account.composable';
 import { Routes } from '~/configs/routes.config';
@@ -220,7 +220,7 @@ import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
 import type { AccountIncomingTransfer } from '~/types/chain.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
-import { ProposalDomains } from '~/types/station.types';
+import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { convertDate } from '~/utils/date.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';

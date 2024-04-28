@@ -6,7 +6,6 @@ import { logger } from '~/core/logger.core';
 import {
   Capabilities,
   Notification,
-  Proposal,
   UUID,
   User,
   UserPrivilege,
@@ -59,7 +58,7 @@ export const createUserInitialAccount = async (
   userId: UUID,
   station = useStationStore(),
 ): Promise<void> => {
-  await station.service.createProposal({
+  await station.service.createRequest({
     title: [],
     summary: [],
     execution_plan: [{ Immediate: null }],
@@ -75,17 +74,13 @@ export const createUserInitialAccount = async (
           user_groups: [],
           users: [userId],
         },
-        update_permission: {
+        configs_permission: {
           auth_scope: { Restricted: null },
           user_groups: [],
           users: [userId],
         },
-        update_approval_policy: [
-          { ApprovalThreshold: { threshold: 100, voters: { Owner: null } } },
-        ],
-        transfer_approval_policy: [
-          { ApprovalThreshold: { threshold: 100, voters: { Owner: null } } },
-        ],
+        configs_request_policy: [{ Quorum: { min_approved: 100, approvers: { Owner: null } } }],
+        transfer_request_policy: [{ Quorum: { min_approved: 100, approvers: { Owner: null } } }],
       },
     },
   });
@@ -306,29 +301,6 @@ export const useStationStore = defineStore('station', {
       } finally {
         notification.loading = false;
       }
-    },
-    async voteOnProposal(
-      proposalId: UUID,
-      decision: { approve: boolean; reason?: string },
-    ): Promise<Proposal | null> {
-      const app = useAppStore();
-
-      try {
-        return await this.service.voteOnProposal({
-          proposal_id: proposalId,
-          approve: decision.approve,
-          reason: decision.reason !== undefined ? [decision.reason] : [],
-        });
-      } catch (err) {
-        logger.error(`Failed to save proposal`, { err });
-
-        app.sendNotification({
-          type: 'error',
-          message: i18n.global.t('stations.proposal_failed_to_save'),
-        });
-      }
-
-      return null;
     },
     trackAccountsBalance(accountIds: UUID[]): void {
       accountsWorker?.postMessage({

@@ -105,7 +105,7 @@ export const useDefaultAccountSetupWizardModel = ({
         users: prefilledUserIds ? prefilledUserIds : [],
       },
     },
-    approval_policy: {},
+    request_policy: {},
   };
 };
 
@@ -157,9 +157,9 @@ export const useLoadAccountSetupWizardModel = async (
       configuration,
       transfer,
     },
-    approval_policy: {
-      configurationCriteria: account.update_approval_policy?.[0],
-      transferCriteria: account.transfer_approval_policy?.[0],
+    request_policy: {
+      configurationRule: account.configs_request_policy?.[0],
+      transferRule: account.transfer_request_policy?.[0],
     },
   };
 };

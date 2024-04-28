@@ -143,7 +143,7 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (addressBookEntry.value.id) {
-      const proposal = await station.service.editAddressBookEntry({
+      const request = await station.service.editAddressBookEntry({
         address_book_entry_id: addressBookEntry.value.id,
         address_owner: [assertAndReturn(addressBookEntry.value.address_owner)],
         change_metadata: [
@@ -153,13 +153,13 @@ const save = async (): Promise<void> => {
         ],
       });
 
-      useOnSuccessfulOperation(proposal);
+      useOnSuccessfulOperation(request);
 
       openModel.value = false;
       return;
     }
 
-    const proposal = await station.service.addAddressBookEntry({
+    const request = await station.service.addAddressBookEntry({
       blockchain: assertAndReturn(addressBookEntry.value.blockchain, 'blockchain'),
       standard: assertAndReturn(addressBookEntry.value.standard, 'standard'),
       address_owner: assertAndReturn(addressBookEntry.value.address_owner, 'address_owner'),
@@ -167,7 +167,7 @@ const save = async (): Promise<void> => {
       metadata: addressBookEntry.value.metadata ?? [],
     });
 
-    useOnSuccessfulOperation(proposal);
+    useOnSuccessfulOperation(request);
 
     openModel.value = false;
   } catch (error) {

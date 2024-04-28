@@ -31,7 +31,7 @@ const sections = (): NavigationSections => ({
       },
       auth: {
         type: NavigastionAuthType.Custom,
-        criteria: {
+        required: {
           session: RequiredSessionState.AuthenticatedNoStation,
         },
       },
@@ -51,8 +51,8 @@ const sections = (): NavigationSections => ({
       icon: mdiWalletBifold,
     },
     {
-      name: 'transfer_proposals',
-      localeKey: 'navigation.transfer_proposals',
+      name: 'transfer_requests',
+      localeKey: 'navigation.transfer_requests',
       action: {
         type: NavigationActionType.To,
         handle: route =>
@@ -60,7 +60,7 @@ const sections = (): NavigationSections => ({
       },
       auth: {
         type: NavigastionAuthType.Route,
-        route: Routes.TransferProposals,
+        route: Routes.TransferRequests,
       },
       icon: mdiFormatListText,
     },
@@ -87,7 +87,7 @@ const sections = (): NavigationSections => ({
       icon: mdiCogs,
       auth: {
         type: NavigastionAuthType.Custom,
-        criteria: {
+        required: {
           session: RequiredSessionState.AuthenticatedHasStations,
         },
       },
@@ -134,8 +134,8 @@ const sections = (): NavigationSections => ({
           },
         },
         {
-          name: 'proposal_policies',
-          localeKey: 'navigation.proposal_policies',
+          name: 'request_policies',
+          localeKey: 'navigation.request_policies',
           action: {
             type: NavigationActionType.To,
             handle: route =>
@@ -145,12 +145,12 @@ const sections = (): NavigationSections => ({
           },
           auth: {
             type: NavigastionAuthType.Route,
-            route: Routes.ProposalPolicies,
+            route: Routes.RequestPolicies,
           },
         },
         {
-          name: 'proposals',
-          localeKey: 'navigation.proposals',
+          name: 'requests',
+          localeKey: 'navigation.requests',
           action: {
             type: NavigationActionType.To,
             handle: route =>
@@ -160,7 +160,7 @@ const sections = (): NavigationSections => ({
           },
           auth: {
             type: NavigastionAuthType.Route,
-            route: Routes.Proposals,
+            route: Routes.Requests,
           },
         },
       ],
@@ -240,9 +240,9 @@ class Navigation {
       }
 
       if (item.auth.type === NavigastionAuthType.Custom) {
-        const matchesRequiredSession = hasRequiredSession(item.auth.criteria.session);
+        const matchesRequiredSession = hasRequiredSession(item.auth.required.session);
         const matchesRequiredPrivilege = hasRequiredPrivilege({
-          anyOf: item.auth.criteria.privileges,
+          anyOf: item.auth.required.privileges,
         });
 
         return matchesRequiredSession && matchesRequiredPrivilege;

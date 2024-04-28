@@ -72,7 +72,7 @@ import logger from '~/core/logger.core';
 import {
   AddAccountOperationInput,
   EditAccountOperationInput,
-  Proposal,
+  Request,
   UUID,
 } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
@@ -121,11 +121,11 @@ const save = async (): Promise<void> => {
   try {
     submitting.value = true;
 
-    const proposal = props.accountId
+    const request = props.accountId
       ? await saveChangesToExistingAccount(props.accountId)
       : await createNewAccount();
 
-    useOnSuccessfulOperation(proposal);
+    useOnSuccessfulOperation(request);
 
     open.value = false;
   } catch (error) {
@@ -137,44 +137,44 @@ const save = async (): Promise<void> => {
   }
 };
 
-const saveChangesToExistingAccount = async (accountId: UUID): Promise<Proposal> => {
+const saveChangesToExistingAccount = async (accountId: UUID): Promise<Request> => {
   const changes: Partial<EditAccountOperationInput> = {};
   changes.account_id = accountId;
   changes.name = [assertAndReturn(wizard.value.configuration.name, 'name')];
-  changes.update_approval_policy = !wizard.value.approval_policy.configurationCriteria
+  changes.configs_request_policy = !wizard.value.request_policy.configurationRule
     ? [{ Remove: null }]
-    : [{ Set: assertAndReturn(wizard.value.approval_policy.configurationCriteria) }];
-  changes.transfer_approval_policy = !wizard.value.approval_policy.transferCriteria
+    : [{ Set: assertAndReturn(wizard.value.request_policy.configurationRule) }];
+  changes.transfer_request_policy = !wizard.value.request_policy.transferRule
     ? [{ Remove: null }]
-    : [{ Set: assertAndReturn(wizard.value.approval_policy.transferCriteria) }];
+    : [{ Set: assertAndReturn(wizard.value.request_policy.transferRule) }];
   changes.read_permission = [assertAndReturn(wizard.value.permission.read, 'read_access')];
   changes.transfer_permission = [
     assertAndReturn(wizard.value.permission.transfer, 'transfer_access'),
   ];
-  changes.update_permission = [
+  changes.configs_permission = [
     assertAndReturn(wizard.value.permission.configuration, 'update_access'),
   ];
 
   return station.service.editAccount(changes as EditAccountOperationInput);
 };
 
-const createNewAccount = async (): Promise<Proposal> => {
+const createNewAccount = async (): Promise<Request> => {
   const changes: Partial<AddAccountOperationInput> = {};
   changes.name = assertAndReturn(wizard.value.configuration.name, 'name');
   changes.blockchain = assertAndReturn(wizard.value.configuration.blockchain, 'blockchain');
   changes.standard = assertAndReturn(wizard.value.configuration.standard, 'standard');
-  changes.update_approval_policy = wizard.value.approval_policy.configurationCriteria
-    ? [wizard.value.approval_policy.configurationCriteria]
+  changes.configs_request_policy = wizard.value.request_policy.configurationRule
+    ? [wizard.value.request_policy.configurationRule]
     : [];
-  changes.transfer_approval_policy = wizard.value.approval_policy.transferCriteria
-    ? [wizard.value.approval_policy.transferCriteria]
+  changes.transfer_request_policy = wizard.value.request_policy.transferRule
+    ? [wizard.value.request_policy.transferRule]
     : [];
   changes.read_permission = assertAndReturn(wizard.value.permission.read, 'read_access');
   changes.transfer_permission = assertAndReturn(
     wizard.value.permission.transfer,
     'transfer_access',
   );
-  changes.update_permission = assertAndReturn(
+  changes.configs_permission = assertAndReturn(
     wizard.value.permission.configuration,
     'update_access',
   );

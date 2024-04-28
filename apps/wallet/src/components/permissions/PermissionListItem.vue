@@ -87,7 +87,7 @@
 
 <script lang="ts" setup>
 import { ref, toRefs, watch } from 'vue';
-import { Proposal, Resource } from '~/generated/station/station.did';
+import { Request, Resource } from '~/generated/station/station.did';
 import {
   AggregatedResoucePermissions,
   ResourcePermissionSpecifier,
@@ -150,7 +150,7 @@ const getMembersOfGroupForm = (
 const onMembersOfGroupFormSubmit = (
   resource: Resource,
   form: MembersOfGroupFormProps,
-): Promise<Proposal> => {
+): Promise<Request> => {
   return station.service.editPermission({
     auth_scope: [],
     user_groups: [form.modelValue.groupIds],
@@ -185,7 +185,7 @@ const getSpecificUsersForm = (
 const onSpecificUsersFormSubmit = (
   resource: Resource,
   form: SpecificUsersFormProps,
-): Promise<Proposal> => {
+): Promise<Request> => {
   return station.service.editPermission({
     auth_scope: [],
     user_groups: [],

@@ -2,7 +2,7 @@ import {
   PermissionResourceAction,
   AccountResourceAction,
   ChangeCanisterResourceAction,
-  ProposalResourceAction,
+  RequestResourceAction,
   ResourceAction,
   ResourceId,
   SystemResourceAction,
@@ -82,9 +82,9 @@ export const isChangeCanisterResourceActionContained = (
   return false;
 };
 
-export const isProposalResourceActionContained = (
-  a: ProposalResourceAction,
-  b: ProposalResourceAction,
+export const isRequestResourceActionContained = (
+  a: RequestResourceAction,
+  b: RequestResourceAction,
 ) => {
   if (variantIs(a, 'List') && variantIs(b, 'List')) {
     return true;

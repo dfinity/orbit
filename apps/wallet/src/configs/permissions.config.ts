@@ -10,7 +10,7 @@ import {
   isPermissionResourceActionContained,
   isAccountResourceActionContained,
   isChangeCanisterResourceActionContained,
-  isProposalResourceActionContained,
+  isRequestResourceActionContained,
   isResourceActionContained,
   isSystemResourceActionContained,
   isUserResourceActionContained,
@@ -211,42 +211,42 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
     },
   },
   {
-    resourceType: ResourceTypeEnum.ProposalPolicy,
+    resourceType: ResourceTypeEnum.RequestPolicy,
     resources: [
       {
         action: ResourceActionEnum.List,
-        resource: { ProposalPolicy: { List: null } },
+        resource: { RequestPolicy: { List: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Create,
-        resource: { ProposalPolicy: { Create: null } },
+        resource: { RequestPolicy: { Create: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        resource: { ProposalPolicy: { Read: { Any: null } } },
+        resource: { RequestPolicy: { Read: { Any: null } } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Update,
-        resource: { ProposalPolicy: { Update: { Any: null } } },
+        resource: { RequestPolicy: { Update: { Any: null } } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Delete,
-        resource: { ProposalPolicy: { Delete: { Any: null } } },
+        resource: { RequestPolicy: { Delete: { Any: null } } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
     ],
     match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'ProposalPolicy') && variantIs(resource, 'ProposalPolicy')) {
-        return isResourceActionContained(specifier.ProposalPolicy, resource.ProposalPolicy);
+      if (variantIs(specifier, 'RequestPolicy') && variantIs(resource, 'RequestPolicy')) {
+        return isResourceActionContained(specifier.RequestPolicy, resource.RequestPolicy);
       }
 
       return false;
@@ -298,24 +298,24 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
     },
   },
   {
-    resourceType: ResourceTypeEnum.Proposal,
+    resourceType: ResourceTypeEnum.Request,
     resources: [
       {
         action: ResourceActionEnum.List,
-        resource: { Proposal: { List: null } },
+        resource: { Request: { List: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
       {
         action: ResourceActionEnum.Read,
-        resource: { Proposal: { Read: { Any: null } } },
+        resource: { Request: { Read: { Any: null } } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
     ],
     match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'Proposal') && variantIs(resource, 'Proposal')) {
-        return isProposalResourceActionContained(specifier.Proposal, resource.Proposal);
+      if (variantIs(specifier, 'Request') && variantIs(resource, 'Request')) {
+        return isRequestResourceActionContained(specifier.Request, resource.Request);
       }
 
       return false;

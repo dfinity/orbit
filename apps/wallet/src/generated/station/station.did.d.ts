@@ -2,17 +2,16 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export type AccessControlUserSpecifier = CommonSpecifier;
 export interface Account {
   'id' : UUID,
+  'configs_request_policy' : [] | [RequestPolicyRule],
   'decimals' : number,
   'balance' : [] | [AccountBalanceInfo],
-  'update_approval_policy' : [] | [ProposalPolicyCriteria],
-  'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
   'blockchain' : string,
   'address' : string,
+  'transfer_request_policy' : [] | [RequestPolicyRule],
   'last_modification_timestamp' : TimestampRFC3339,
   'standard' : string,
   'symbol' : AssetSymbol,
@@ -45,13 +44,13 @@ export interface AddAccountOperation {
   'input' : AddAccountOperationInput,
 }
 export interface AddAccountOperationInput {
+  'configs_request_policy' : [] | [RequestPolicyRule],
   'read_permission' : Allow,
-  'update_approval_policy' : [] | [ProposalPolicyCriteria],
-  'transfer_approval_policy' : [] | [ProposalPolicyCriteria],
+  'configs_permission' : Allow,
   'metadata' : Array<AccountMetadata>,
   'name' : string,
-  'update_permission' : Allow,
   'blockchain' : string,
+  'transfer_request_policy' : [] | [RequestPolicyRule],
   'transfer_permission' : Allow,
   'standard' : string,
 }
@@ -66,13 +65,13 @@ export interface AddAddressBookEntryOperationInput {
   'address_owner' : string,
   'standard' : string,
 }
-export interface AddProposalPolicyOperation {
-  'input' : AddProposalPolicyOperationInput,
+export interface AddRequestPolicyOperation {
+  'input' : AddRequestPolicyOperationInput,
   'policy_id' : [] | [UUID],
 }
-export interface AddProposalPolicyOperationInput {
-  'specifier' : ProposalSpecifier,
-  'criteria' : ProposalPolicyCriteria,
+export interface AddRequestPolicyOperationInput {
+  'rule' : RequestPolicyRule,
+  'specifier' : RequestSpecifier,
 }
 export interface AddUserGroupOperation {
   'user_group' : [] | [UserGroup],
@@ -108,12 +107,6 @@ export interface Allow {
   'user_groups' : Array<UUID>,
   'auth_scope' : AuthScope,
   'users' : Array<UUID>,
-}
-export type ApprovalPolicyCriteriaInput = { 'Set' : ProposalPolicyCriteria } |
-  { 'Remove' : null };
-export interface ApprovalThreshold {
-  'threshold' : number,
-  'voters' : UserSpecifier,
 }
 export interface Asset {
   'metadata' : Array<AssetMetadata>,
@@ -160,33 +153,29 @@ export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
 export type CommonSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> };
-export interface CreateProposalInput {
+export interface CreateRequestInput {
   'title' : [] | [string],
-  'execution_plan' : [] | [ProposalExecutionSchedule],
+  'execution_plan' : [] | [RequestExecutionSchedule],
   'summary' : [] | [string],
-  'operation' : ProposalOperationInput,
+  'operation' : RequestOperationInput,
 }
-export type CreateProposalResult = {
+export type CreateRequestResult = {
     'Ok' : {
-      'privileges' : ProposalCallerPrivileges,
-      'proposal' : Proposal,
-      'additional_info' : ProposalAdditionalInfo,
+      'privileges' : RequestCallerPrivileges,
+      'request' : Request,
+      'additional_info' : RequestAdditionalInfo,
     }
   } |
   { 'Err' : Error };
-export interface CriteriaResult {
-  'status' : EvaluationStatus,
-  'evaluated_criteria' : EvaluatedCriteria,
-}
 export interface DisplayUser { 'id' : UUID, 'name' : [] | [string] }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
   'account_id' : UUID,
+  'configs_request_policy' : [] | [RequestPolicyRuleInput],
   'read_permission' : [] | [Allow],
-  'update_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
-  'transfer_approval_policy' : [] | [ApprovalPolicyCriteriaInput],
+  'configs_permission' : [] | [Allow],
   'name' : [] | [string],
-  'update_permission' : [] | [Allow],
+  'transfer_request_policy' : [] | [RequestPolicyRuleInput],
   'transfer_permission' : [] | [Allow],
 }
 export interface EditAddressBookEntryOperation {
@@ -206,12 +195,12 @@ export interface EditPermissionOperationInput {
   'auth_scope' : [] | [AuthScope],
   'users' : [] | [Array<UUID>],
 }
-export interface EditProposalPolicyOperation {
-  'input' : EditProposalPolicyOperationInput,
+export interface EditRequestPolicyOperation {
+  'input' : EditRequestPolicyOperationInput,
 }
-export interface EditProposalPolicyOperationInput {
-  'specifier' : [] | [ProposalSpecifier],
-  'criteria' : [] | [ProposalPolicyCriteria],
+export interface EditRequestPolicyOperationInput {
+  'rule' : [] | [RequestPolicyRule],
+  'specifier' : [] | [RequestSpecifier],
   'policy_id' : UUID,
 }
 export interface EditUserGroupOperation {
@@ -234,28 +223,28 @@ export interface Error {
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
-export type EvaluatedCriteria = { 'Or' : Array<CriteriaResult> } |
-  { 'And' : Array<CriteriaResult> } |
-  { 'Not' : CriteriaResult } |
-  { 'HasAddressInAddressBook' : null } |
-  { 'HasAddressBookMetadata' : { 'metadata' : AddressBookMetadata } } |
+export type EvaluatedRequestPolicyRule = { 'Not' : RequestPolicyRuleResult } |
   {
-    'MinimumVotes' : {
-      'total_possible_votes' : bigint,
-      'votes' : Array<UUID>,
-      'min_required_votes' : bigint,
+    'Quorum' : {
+      'total_possible_approvers' : bigint,
+      'min_approved' : bigint,
+      'approvers' : Array<UUID>,
     }
   } |
+  { 'AllowListed' : null } |
   {
-    'ApprovalThreshold' : {
-      'total_possible_votes' : bigint,
-      'votes' : Array<UUID>,
-      'min_required_votes' : bigint,
+    'QuorumPercentage' : {
+      'total_possible_approvers' : bigint,
+      'min_approved' : bigint,
+      'approvers' : Array<UUID>,
     }
   } |
-  { 'AutoAdopted' : null };
-export type EvaluationStatus = { 'Rejected' : null } |
-  { 'Adopted' : null } |
+  { 'AutoApproved' : null } |
+  { 'AllOf' : Array<RequestPolicyRuleResult> } |
+  { 'AnyOf' : Array<RequestPolicyRuleResult> } |
+  { 'AllowListedByMetadata' : { 'metadata' : AddressBookMetadata } };
+export type EvaluationStatus = { 'Approved' : null } |
+  { 'Rejected' : null } |
   { 'Pending' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
@@ -275,12 +264,12 @@ export type GetAddressBookEntryResult = {
     }
   } |
   { 'Err' : Error };
-export interface GetNextVotableProposalInput {
-  'excluded_proposal_ids' : Array<UUID>,
-  'operation_types' : [] | [Array<ListProposalsOperationType>],
+export interface GetNextApprovableRequestInput {
+  'excluded_request_ids' : Array<UUID>,
+  'operation_types' : [] | [Array<ListRequestsOperationType>],
 }
-export type GetNextVotableProposalResponse = {
-    'Ok' : [] | [GetProposalResultData]
+export type GetNextApprovableRequestResult = {
+    'Ok' : [] | [GetRequestResultData]
   } |
   { 'Err' : Error };
 export interface GetPermissionInput { 'resource' : Resource }
@@ -291,21 +280,21 @@ export type GetPermissionResult = {
     }
   } |
   { 'Err' : Error };
-export interface GetProposalInput { 'proposal_id' : UUID }
-export interface GetProposalPolicyInput { 'id' : UUID }
-export type GetProposalPolicyResult = {
+export interface GetRequestInput { 'request_id' : UUID }
+export interface GetRequestPolicyInput { 'id' : UUID }
+export type GetRequestPolicyResult = {
     'Ok' : {
-      'privileges' : ProposalPolicyCallerPrivileges,
-      'policy' : ProposalPolicy,
+      'privileges' : RequestPolicyCallerPrivileges,
+      'policy' : RequestPolicy,
     }
   } |
   { 'Err' : Error };
-export type GetProposalResult = { 'Ok' : GetProposalResultData } |
+export type GetRequestResult = { 'Ok' : GetRequestResultData } |
   { 'Err' : Error };
-export interface GetProposalResultData {
-  'privileges' : ProposalCallerPrivileges,
-  'proposal' : Proposal,
-  'additional_info' : ProposalAdditionalInfo,
+export interface GetRequestResultData {
+  'privileges' : RequestCallerPrivileges,
+  'request' : Request,
+  'additional_info' : RequestAdditionalInfo,
 }
 export interface GetTransfersInput { 'transfer_ids' : Array<UUID> }
 export type GetTransfersResult = { 'Ok' : { 'transfers' : Array<Transfer> } } |
@@ -400,57 +389,57 @@ export type ListPermissionsResult = {
     }
   } |
   { 'Err' : Error };
-export type ListProposalPoliciesInput = PaginationInput;
-export type ListProposalPoliciesResult = {
+export type ListRequestPoliciesInput = PaginationInput;
+export type ListRequestPoliciesResult = {
     'Ok' : {
       'total' : bigint,
-      'privileges' : Array<ProposalPolicyCallerPrivileges>,
+      'privileges' : Array<RequestPolicyCallerPrivileges>,
       'next_offset' : [] | [bigint],
-      'policies' : Array<ProposalPolicy>,
+      'policies' : Array<RequestPolicy>,
     }
   } |
   { 'Err' : Error };
-export interface ListProposalsInput {
-  'sort_by' : [] | [ListProposalsSortBy],
-  'voter_ids' : [] | [Array<UUID>],
+export interface ListRequestsInput {
+  'sort_by' : [] | [ListRequestsSortBy],
   'with_evaluation_results' : boolean,
   'expiration_from_dt' : [] | [TimestampRFC3339],
   'created_to_dt' : [] | [TimestampRFC3339],
-  'statuses' : [] | [Array<ProposalStatusCode>],
-  'only_votable' : boolean,
-  'proposer_ids' : [] | [Array<UUID>],
+  'statuses' : [] | [Array<RequestStatusCode>],
+  'approver_ids' : [] | [Array<UUID>],
   'expiration_to_dt' : [] | [TimestampRFC3339],
   'paginate' : [] | [PaginationInput],
-  'operation_types' : [] | [Array<ListProposalsOperationType>],
+  'requester_ids' : [] | [Array<UUID>],
+  'operation_types' : [] | [Array<ListRequestsOperationType>],
+  'only_approvable' : boolean,
   'created_from_dt' : [] | [TimestampRFC3339],
 }
-export type ListProposalsOperationType = { 'AddUserGroup' : null } |
+export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
-  { 'RemoveProposalPolicy' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'EditRequestPolicy' : null } |
+  { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'EditAddressBookEntry' : null } |
-  { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
-  { 'EditProposalPolicy' : null } |
   { 'EditUser' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
+  { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
-export type ListProposalsResult = {
+export type ListRequestsResult = {
     'Ok' : {
       'total' : bigint,
-      'privileges' : Array<ProposalCallerPrivileges>,
-      'proposals' : Array<Proposal>,
+      'privileges' : Array<RequestCallerPrivileges>,
+      'requests' : Array<Request>,
       'next_offset' : [] | [bigint],
-      'additional_info' : Array<ProposalAdditionalInfo>,
+      'additional_info' : Array<RequestAdditionalInfo>,
     }
   } |
   { 'Err' : Error };
-export type ListProposalsSortBy = { 'ExpirationDt' : SortByDirection } |
+export type ListRequestsSortBy = { 'ExpirationDt' : SortByDirection } |
   { 'LastModificationDt' : SortByDirection } |
   { 'CreatedAt' : SortByDirection };
 export interface ListUserGroupsInput {
@@ -490,7 +479,6 @@ export type MeResult = {
     'Ok' : { 'me' : User, 'privileges' : Array<UserPrivilege> }
   } |
   { 'Err' : Error };
-export interface MinimumVotes { 'minimum' : number, 'voters' : UserSpecifier }
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;
 export interface Notification {
@@ -505,15 +493,15 @@ export interface Notification {
 export type NotificationStatus = { 'Read' : null } |
   { 'Sent' : null };
 export type NotificationType = {
-    'ProposalCreated' : {
+    'RequestCreated' : {
       'account_id' : [] | [UUID],
-      'operation_type' : ProposalOperationType,
+      'request_id' : UUID,
+      'operation_type' : RequestOperationType,
       'user_id' : [] | [UUID],
-      'proposal_id' : UUID,
     }
   } |
   { 'SystemMessage' : null };
-export type NotificationTypeInput = { 'ProposalCreated' : null } |
+export type NotificationTypeInput = { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
 export interface PaginationInput {
   'offset' : [] | [bigint],
@@ -526,165 +514,179 @@ export interface PermissionCallerPrivileges {
 }
 export type PermissionResourceAction = { 'Read' : null } |
   { 'Update' : null };
-export interface Proposal {
-  'id' : UUID,
-  'status' : ProposalStatus,
-  'title' : string,
-  'execution_plan' : ProposalExecutionSchedule,
-  'expiration_dt' : TimestampRFC3339,
-  'votes' : Array<ProposalVote>,
-  'created_at' : TimestampRFC3339,
-  'summary' : [] | [string],
-  'operation' : ProposalOperation,
-  'proposed_by' : UUID,
+export interface Quorum { 'min_approved' : number, 'approvers' : UserSpecifier }
+export interface QuorumPercentage {
+  'min_approved' : number,
+  'approvers' : UserSpecifier,
 }
-export interface ProposalAdditionalInfo {
-  'id' : UUID,
-  'voters' : Array<DisplayUser>,
-  'evaluation_result' : [] | [ProposalEvaluationResult],
-  'proposer_name' : [] | [string],
-}
-export interface ProposalCallerPrivileges { 'id' : UUID, 'can_vote' : boolean }
-export interface ProposalEvaluationResult {
-  'status' : EvaluationStatus,
-  'proposal_id' : UUID,
-  'policy_results' : Array<CriteriaResult>,
-}
-export type ProposalExecutionSchedule = { 'Immediate' : null } |
-  { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
-export type ProposalOperation = { 'AddUserGroup' : AddUserGroupOperation } |
-  { 'EditPermission' : EditPermissionOperation } |
-  { 'RemoveProposalPolicy' : RemoveProposalPolicyOperation } |
-  { 'AddUser' : AddUserOperation } |
-  { 'EditUserGroup' : EditUserGroupOperation } |
-  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
-  { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
-  { 'AddProposalPolicy' : AddProposalPolicyOperation } |
-  { 'ChangeCanister' : ChangeCanisterOperation } |
-  { 'EditProposalPolicy' : EditProposalPolicyOperation } |
-  { 'EditUser' : EditUserOperation } |
-  { 'Transfer' : TransferOperation } |
-  { 'EditAccount' : EditAccountOperation } |
-  { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
-  { 'RemoveUserGroup' : RemoveUserGroupOperation } |
-  { 'AddAccount' : AddAccountOperation };
-export type ProposalOperationInput = {
-    'AddUserGroup' : AddUserGroupOperationInput
-  } |
-  { 'EditPermission' : EditPermissionOperationInput } |
-  { 'RemoveProposalPolicy' : RemoveProposalPolicyOperationInput } |
-  { 'AddUser' : AddUserOperationInput } |
-  { 'EditUserGroup' : EditUserGroupOperationInput } |
-  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
-  { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
-  { 'AddProposalPolicy' : AddProposalPolicyOperationInput } |
-  { 'ChangeCanister' : ChangeCanisterOperationInput } |
-  { 'EditProposalPolicy' : EditProposalPolicyOperationInput } |
-  { 'EditUser' : EditUserOperationInput } |
-  { 'Transfer' : TransferOperationInput } |
-  { 'EditAccount' : EditAccountOperationInput } |
-  { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
-  { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
-  { 'AddAccount' : AddAccountOperationInput };
-export type ProposalOperationType = { 'AddUserGroup' : null } |
-  { 'EditPermission' : null } |
-  { 'RemoveProposalPolicy' : null } |
-  { 'AddUser' : null } |
-  { 'EditUserGroup' : null } |
-  { 'RemoveAddressBookEntry' : null } |
-  { 'EditAddressBookEntry' : null } |
-  { 'AddProposalPolicy' : null } |
-  { 'ChangeCanister' : null } |
-  { 'EditProposalPolicy' : null } |
-  { 'EditUser' : null } |
-  { 'Transfer' : null } |
-  { 'EditAccount' : null } |
-  { 'AddAddressBookEntry' : null } |
-  { 'RemoveUserGroup' : null } |
-  { 'AddAccount' : null };
-export interface ProposalPolicy {
-  'id' : UUID,
-  'specifier' : ProposalSpecifier,
-  'criteria' : ProposalPolicyCriteria,
-}
-export interface ProposalPolicyCallerPrivileges {
-  'id' : UUID,
-  'can_delete' : boolean,
-  'can_edit' : boolean,
-}
-export type ProposalPolicyCriteria = { 'Or' : Array<ProposalPolicyCriteria> } |
-  { 'And' : Array<ProposalPolicyCriteria> } |
-  { 'Not' : ProposalPolicyCriteria } |
-  { 'HasAddressInAddressBook' : null } |
-  { 'HasAddressBookMetadata' : AddressBookMetadata } |
-  { 'MinimumVotes' : MinimumVotes } |
-  { 'ApprovalThreshold' : ApprovalThreshold } |
-  { 'AutoAdopted' : null };
-export type ProposalResourceAction = { 'List' : null } |
-  { 'Read' : ResourceId };
-export type ProposalSpecifier = { 'AddUserGroup' : null } |
-  { 'EditPermission' : ResourceSpecifier } |
-  { 'RemoveProposalPolicy' : ResourceIds } |
-  { 'AddUser' : null } |
-  { 'EditUserGroup' : ResourceIds } |
-  { 'RemoveAddressBookEntry' : ResourceIds } |
-  { 'EditAddressBookEntry' : ResourceIds } |
-  { 'AddProposalPolicy' : null } |
-  { 'ChangeCanister' : null } |
-  { 'EditProposalPolicy' : ResourceIds } |
-  { 'EditUser' : ResourceIds } |
-  { 'Transfer' : ResourceIds } |
-  { 'EditAccount' : ResourceIds } |
-  { 'AddAddressBookEntry' : null } |
-  { 'RemoveUserGroup' : ResourceIds } |
-  { 'AddAccount' : null };
-export type ProposalStatus = { 'Failed' : { 'reason' : [] | [string] } } |
-  { 'Rejected' : null } |
-  { 'Scheduled' : { 'scheduled_at' : TimestampRFC3339 } } |
-  { 'Adopted' : null } |
-  { 'Cancelled' : { 'reason' : [] | [string] } } |
-  { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
-  { 'Created' : null } |
-  { 'Completed' : { 'completed_at' : TimestampRFC3339 } };
-export type ProposalStatusCode = { 'Failed' : null } |
-  { 'Rejected' : null } |
-  { 'Scheduled' : null } |
-  { 'Adopted' : null } |
-  { 'Cancelled' : null } |
-  { 'Processing' : null } |
-  { 'Created' : null } |
-  { 'Completed' : null };
-export interface ProposalVote {
-  'status' : ProposalVoteStatus,
-  'user_id' : UUID,
-  'status_reason' : [] | [string],
-  'decided_at' : TimestampRFC3339,
-}
-export type ProposalVoteStatus = { 'Rejected' : null } |
-  { 'Accepted' : null };
 export interface RemoveAddressBookEntryOperation {
   'input' : RemoveAddressBookEntryOperationInput,
 }
 export interface RemoveAddressBookEntryOperationInput {
   'address_book_entry_id' : UUID,
 }
-export interface RemoveProposalPolicyOperation {
-  'input' : RemoveProposalPolicyOperationInput,
+export interface RemoveRequestPolicyOperation {
+  'input' : RemoveRequestPolicyOperationInput,
 }
-export interface RemoveProposalPolicyOperationInput { 'policy_id' : UUID }
+export interface RemoveRequestPolicyOperationInput { 'policy_id' : UUID }
 export interface RemoveUserGroupOperation {
   'input' : RemoveUserGroupOperationInput,
 }
 export interface RemoveUserGroupOperationInput { 'user_group_id' : UUID }
-export type Resource = { 'System' : SystemResourceAction } |
+export interface Request {
+  'id' : UUID,
+  'status' : RequestStatus,
+  'title' : string,
+  'execution_plan' : RequestExecutionSchedule,
+  'expiration_dt' : TimestampRFC3339,
+  'created_at' : TimestampRFC3339,
+  'requested_by' : UUID,
+  'summary' : [] | [string],
+  'operation' : RequestOperation,
+  'approvals' : Array<RequestApproval>,
+}
+export interface RequestAdditionalInfo {
+  'id' : UUID,
+  'evaluation_result' : [] | [RequestEvaluationResult],
+  'requester_name' : [] | [string],
+  'approvers' : Array<DisplayUser>,
+}
+export interface RequestApproval {
+  'status' : RequestApprovalStatus,
+  'approver_id' : UUID,
+  'status_reason' : [] | [string],
+  'decided_at' : TimestampRFC3339,
+}
+export type RequestApprovalStatus = { 'Approved' : null } |
+  { 'Rejected' : null };
+export interface RequestCallerPrivileges {
+  'id' : UUID,
+  'can_approve' : boolean,
+}
+export interface RequestEvaluationResult {
+  'request_id' : UUID,
+  'status' : EvaluationStatus,
+  'policy_results' : Array<RequestPolicyRuleResult>,
+}
+export type RequestExecutionSchedule = { 'Immediate' : null } |
+  { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
+export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
+  { 'EditPermission' : EditPermissionOperation } |
+  { 'AddUser' : AddUserOperation } |
+  { 'EditUserGroup' : EditUserGroupOperation } |
+  { 'EditRequestPolicy' : EditRequestPolicyOperation } |
+  { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
+  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
+  { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
+  { 'ChangeCanister' : ChangeCanisterOperation } |
+  { 'EditUser' : EditUserOperation } |
+  { 'Transfer' : TransferOperation } |
+  { 'EditAccount' : EditAccountOperation } |
+  { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
+  { 'AddRequestPolicy' : AddRequestPolicyOperation } |
+  { 'RemoveUserGroup' : RemoveUserGroupOperation } |
+  { 'AddAccount' : AddAccountOperation };
+export type RequestOperationInput = {
+    'AddUserGroup' : AddUserGroupOperationInput
+  } |
+  { 'EditPermission' : EditPermissionOperationInput } |
+  { 'AddUser' : AddUserOperationInput } |
+  { 'EditUserGroup' : EditUserGroupOperationInput } |
+  { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
+  { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
+  { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
+  { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
+  { 'ChangeCanister' : ChangeCanisterOperationInput } |
+  { 'EditUser' : EditUserOperationInput } |
+  { 'Transfer' : TransferOperationInput } |
+  { 'EditAccount' : EditAccountOperationInput } |
+  { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
+  { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
+  { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
+  { 'AddAccount' : AddAccountOperationInput };
+export type RequestOperationType = { 'AddUserGroup' : null } |
+  { 'EditPermission' : null } |
+  { 'AddUser' : null } |
+  { 'EditUserGroup' : null } |
+  { 'EditRequestPolicy' : null } |
+  { 'RemoveRequestPolicy' : null } |
+  { 'RemoveAddressBookEntry' : null } |
+  { 'EditAddressBookEntry' : null } |
+  { 'ChangeCanister' : null } |
+  { 'EditUser' : null } |
+  { 'Transfer' : null } |
+  { 'EditAccount' : null } |
+  { 'AddAddressBookEntry' : null } |
+  { 'AddRequestPolicy' : null } |
+  { 'RemoveUserGroup' : null } |
+  { 'AddAccount' : null };
+export interface RequestPolicy {
+  'id' : UUID,
+  'rule' : RequestPolicyRule,
+  'specifier' : RequestSpecifier,
+}
+export interface RequestPolicyCallerPrivileges {
+  'id' : UUID,
+  'can_delete' : boolean,
+  'can_edit' : boolean,
+}
+export type RequestPolicyRule = { 'Not' : RequestPolicyRule } |
+  { 'Quorum' : Quorum } |
+  { 'AllowListed' : null } |
+  { 'QuorumPercentage' : QuorumPercentage } |
+  { 'AutoApproved' : null } |
+  { 'AllOf' : Array<RequestPolicyRule> } |
+  { 'AnyOf' : Array<RequestPolicyRule> } |
+  { 'AllowListedByMetadata' : AddressBookMetadata };
+export type RequestPolicyRuleInput = { 'Set' : RequestPolicyRule } |
+  { 'Remove' : null };
+export interface RequestPolicyRuleResult {
+  'status' : EvaluationStatus,
+  'evaluated_rule' : EvaluatedRequestPolicyRule,
+}
+export type RequestResourceAction = { 'List' : null } |
+  { 'Read' : ResourceId };
+export type RequestSpecifier = { 'AddUserGroup' : null } |
+  { 'EditPermission' : ResourceSpecifier } |
+  { 'AddUser' : null } |
+  { 'EditUserGroup' : ResourceIds } |
+  { 'EditRequestPolicy' : ResourceIds } |
+  { 'RemoveRequestPolicy' : ResourceIds } |
+  { 'RemoveAddressBookEntry' : ResourceIds } |
+  { 'EditAddressBookEntry' : ResourceIds } |
+  { 'ChangeCanister' : null } |
+  { 'EditUser' : ResourceIds } |
+  { 'Transfer' : ResourceIds } |
+  { 'EditAccount' : ResourceIds } |
+  { 'AddAddressBookEntry' : null } |
+  { 'AddRequestPolicy' : null } |
+  { 'RemoveUserGroup' : ResourceIds } |
+  { 'AddAccount' : null };
+export type RequestStatus = { 'Failed' : { 'reason' : [] | [string] } } |
+  { 'Approved' : null } |
+  { 'Rejected' : null } |
+  { 'Scheduled' : { 'scheduled_at' : TimestampRFC3339 } } |
+  { 'Cancelled' : { 'reason' : [] | [string] } } |
+  { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
+  { 'Created' : null } |
+  { 'Completed' : { 'completed_at' : TimestampRFC3339 } };
+export type RequestStatusCode = { 'Failed' : null } |
+  { 'Approved' : null } |
+  { 'Rejected' : null } |
+  { 'Scheduled' : null } |
+  { 'Cancelled' : null } |
+  { 'Processing' : null } |
+  { 'Created' : null } |
+  { 'Completed' : null };
+export type Resource = { 'Request' : RequestResourceAction } |
+  { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
-  { 'ProposalPolicy' : ResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
-  { 'Proposal' : ProposalResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
-  { 'Permission' : PermissionResourceAction };
+  { 'Permission' : PermissionResourceAction } |
+  { 'RequestPolicy' : ResourceAction };
 export type ResourceAction = { 'List' : null } |
   { 'Read' : ResourceId } |
   { 'Delete' : ResourceId } |
@@ -699,6 +701,19 @@ export type ResourceSpecifier = { 'Any' : null } |
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
+export interface SubmitRequestApprovalInput {
+  'request_id' : UUID,
+  'decision' : RequestApprovalStatus,
+  'reason' : [] | [string],
+}
+export type SubmitRequestApprovalResult = {
+    'Ok' : {
+      'privileges' : RequestCallerPrivileges,
+      'request' : Request,
+      'additional_info' : RequestAdditionalInfo,
+    }
+  } |
+  { 'Err' : Error };
 export interface SystemInfo {
   'last_upgrade_timestamp' : TimestampRFC3339,
   'raw_rand_successful' : boolean,
@@ -722,19 +737,19 @@ export interface Transfer {
   'id' : UUID,
   'to' : string,
   'fee' : bigint,
+  'request_id' : UUID,
   'status' : TransferStatus,
   'from_account_id' : UUID,
   'metadata' : Array<TransferMetadata>,
   'network' : Network,
-  'proposal_id' : UUID,
   'amount' : bigint,
 }
 export interface TransferListItem {
   'to' : string,
+  'request_id' : UUID,
   'status' : TransferStatus,
   'created_at' : TimestampRFC3339,
   'transfer_id' : UUID,
-  'proposal_id' : UUID,
   'amount' : bigint,
 }
 export interface TransferMetadata { 'key' : string, 'value' : string }
@@ -784,17 +799,17 @@ export interface UserGroupCallerPrivileges {
   'can_edit' : boolean,
 }
 export type UserPrivilege = { 'AddUserGroup' : null } |
-  { 'ListProposals' : null } |
+  { 'ListRequestPolicies' : null } |
   { 'ListPermissions' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
-  { 'AddProposalPolicy' : null } |
   { 'ChangeCanister' : null } |
-  { 'ListProposalPolicies' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
+  { 'AddRequestPolicy' : null } |
   { 'ListAddressBookEntries' : null } |
+  { 'ListRequests' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null } |
   { 'AddAccount' : null };
@@ -805,26 +820,13 @@ export type UserResourceAction = { 'List' : null } |
 export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
   { 'Group' : Array<UUID> } |
-  { 'Proposer' : null } |
+  { 'Requester' : null } |
   { 'Owner' : null };
 export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
-export interface VoteOnProposalInput {
-  'approve' : boolean,
-  'proposal_id' : UUID,
-  'reason' : [] | [string],
-}
-export type VoteOnProposalResult = {
-    'Ok' : {
-      'privileges' : ProposalCallerPrivileges,
-      'proposal' : Proposal,
-      'additional_info' : ProposalAdditionalInfo,
-    }
-  } |
-  { 'Err' : Error };
 export interface _SERVICE {
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
-  'create_proposal' : ActorMethod<[CreateProposalInput], CreateProposalResult>,
+  'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
   'fetch_account_balances' : ActorMethod<
     [FetchAccountBalancesInput],
     FetchAccountBalancesResult
@@ -834,15 +836,15 @@ export interface _SERVICE {
     [GetAddressBookEntryInput],
     GetAddressBookEntryResult
   >,
-  'get_next_votable_proposal' : ActorMethod<
-    [GetNextVotableProposalInput],
-    GetNextVotableProposalResponse
+  'get_next_approvable_request' : ActorMethod<
+    [GetNextApprovableRequestInput],
+    GetNextApprovableRequestResult
   >,
   'get_permission' : ActorMethod<[GetPermissionInput], GetPermissionResult>,
-  'get_proposal' : ActorMethod<[GetProposalInput], GetProposalResult>,
-  'get_proposal_policy' : ActorMethod<
-    [GetProposalPolicyInput],
-    GetProposalPolicyResult
+  'get_request' : ActorMethod<[GetRequestInput], GetRequestResult>,
+  'get_request_policy' : ActorMethod<
+    [GetRequestPolicyInput],
+    GetRequestPolicyResult
   >,
   'get_transfers' : ActorMethod<[GetTransfersInput], GetTransfersResult>,
   'get_user' : ActorMethod<[GetUserInput], GetUserResult>,
@@ -866,11 +868,11 @@ export interface _SERVICE {
     [ListPermissionsInput],
     ListPermissionsResult
   >,
-  'list_proposal_policies' : ActorMethod<
-    [ListProposalPoliciesInput],
-    ListProposalPoliciesResult
+  'list_request_policies' : ActorMethod<
+    [ListRequestPoliciesInput],
+    ListRequestPoliciesResult
   >,
-  'list_proposals' : ActorMethod<[ListProposalsInput], ListProposalsResult>,
+  'list_requests' : ActorMethod<[ListRequestsInput], ListRequestsResult>,
   'list_user_groups' : ActorMethod<[ListUserGroupsInput], ListUserGroupsResult>,
   'list_users' : ActorMethod<[ListUsersInput], ListUsersResult>,
   'mark_notifications_read' : ActorMethod<
@@ -878,8 +880,11 @@ export interface _SERVICE {
     MarkNotificationReadResult
   >,
   'me' : ActorMethod<[], MeResult>,
+  'submit_request_approval' : ActorMethod<
+    [SubmitRequestApprovalInput],
+    SubmitRequestApprovalResult
+  >,
   'system_info' : ActorMethod<[], SystemInfoResult>,
-  'vote_on_proposal' : ActorMethod<[VoteOnProposalInput], VoteOnProposalResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

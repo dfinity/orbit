@@ -5,16 +5,16 @@ import {
   AccountBalance,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
-  AddProposalPolicyOperationInput,
+  AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
   Capabilities,
   ChangeCanisterOperationInput,
-  CreateProposalInput,
+  CreateRequestInput,
   EditPermissionOperationInput,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
-  EditProposalPolicyOperationInput,
+  EditRequestPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
@@ -24,10 +24,10 @@ import {
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
-  GetNextVotableProposalResponse,
-  GetProposalInput,
-  GetProposalPolicyResult,
-  GetProposalResult,
+  GetNextApprovableRequestResult,
+  GetRequestInput,
+  GetRequestPolicyResult,
+  GetRequestResult,
   GetTransfersInput,
   GetUserGroupInput,
   GetUserGroupResult,
@@ -39,15 +39,15 @@ import {
   ListAccountsResult,
   ListAddressBookEntriesResult,
   ListNotificationsInput,
-  ListProposalPoliciesResult,
-  ListProposalsInput,
-  ListProposalsResult,
+  ListRequestPoliciesResult,
+  ListRequestsInput,
+  ListRequestsResult,
   ListUserGroupsResult,
   ListUsersResult,
   MarkNotificationsReadInput,
   Notification,
   PaginationInput,
-  Proposal,
+  Request,
   RemoveUserGroupOperationInput,
   Transfer,
   TransferListItem,
@@ -56,15 +56,15 @@ import {
   User,
   UserPrivilege,
   UserStatus,
-  VoteOnProposalInput,
+  SubmitRequestApprovalInput,
   _SERVICE,
 } from '~/generated/station/station.did';
 import { ExtractOk } from '~/types/helper.types';
 import {
-  GetNextVotableProposalArgs,
+  GetNextApprovableRequestArgs,
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
-  ListProposalsArgs,
+  ListRequestsArgs,
 } from '~/types/station.types';
 import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
 
@@ -230,8 +230,8 @@ export class StationService {
     return result.Ok;
   }
 
-  async removeUserGroup(input: RemoveUserGroupOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async removeUserGroup(input: RemoveUserGroupOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -242,11 +242,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async addUserGroup(input: AddUserGroupOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async addUserGroup(input: AddUserGroupOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -257,11 +257,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async editUserGroup(input: EditUserGroupOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async editUserGroup(input: EditUserGroupOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -272,11 +272,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async addUser(input: AddUserOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async addUser(input: AddUserOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -287,11 +287,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async editUser(input: EditUserOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async editUser(input: EditUserOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -302,7 +302,7 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
   async listUsers(
@@ -366,28 +366,28 @@ export class StationService {
     return result.Ok.notifications;
   }
 
-  async listProposals(
+  async listRequests(
     {
       created_dt,
       expiration_dt,
       limit,
       offset,
-      proposerIds,
+      requesterIds,
       statuses,
       types,
-      voterIds,
+      approverIds,
       sortBy,
-      onlyVotable,
-    }: ListProposalsArgs = {},
+      onlyApprovable,
+    }: ListRequestsArgs = {},
     verifiedCall = false,
-  ): Promise<ExtractOk<ListProposalsResult>> {
+  ): Promise<ExtractOk<ListRequestsResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
     const paginate: PaginationInput = {
       limit: limit ? [limit] : [],
       offset: offset ? [BigInt(offset)] : [],
     };
 
-    let sortingCriteria: ListProposalsInput['sort_by'] | [] = [];
+    let sortingCriteria: ListRequestsInput['sort_by'] | [] = [];
     if (sortBy && variantIs(sortBy, 'createdAt')) {
       sortingCriteria = [
         { CreatedAt: sortBy.createdAt === 'asc' ? { Asc: null } : { Desc: null } },
@@ -402,18 +402,18 @@ export class StationService {
       ];
     }
 
-    const result = await actor.list_proposals({
+    const result = await actor.list_requests({
       statuses: statuses ? [statuses] : [],
       created_from_dt: created_dt?.fromDt ? [created_dt.fromDt.toISOString()] : [],
       created_to_dt: created_dt?.toDt ? [created_dt.toDt.toISOString()] : [],
       expiration_from_dt: expiration_dt?.fromDt ? [expiration_dt.fromDt.toISOString()] : [],
       expiration_to_dt: expiration_dt?.toDt ? [expiration_dt.toDt.toISOString()] : [],
       operation_types: types ? [types] : [],
-      proposer_ids: proposerIds ? [proposerIds] : [],
-      voter_ids: voterIds ? [voterIds] : [],
+      requester_ids: requesterIds ? [requesterIds] : [],
+      approver_ids: approverIds ? [approverIds] : [],
       paginate: [paginate],
       sort_by: sortingCriteria,
-      only_votable: !!onlyVotable,
+      only_approvable: !!onlyApprovable,
       with_evaluation_results: false,
     });
 
@@ -424,14 +424,14 @@ export class StationService {
     return result.Ok;
   }
 
-  async getNextVotableProposal(
-    { types, excludedProposalIds }: GetNextVotableProposalArgs = {},
+  async getNextApprovableRequest(
+    { types, excludedRequestIds }: GetNextApprovableRequestArgs = {},
     verifiedCall = false,
-  ): Promise<ExtractOk<GetNextVotableProposalResponse>> {
+  ): Promise<ExtractOk<GetNextApprovableRequestResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.get_next_votable_proposal({
+    const result = await actor.get_next_approvable_request({
       operation_types: types ? [types] : [],
-      excluded_proposal_ids: excludedProposalIds ?? [],
+      excluded_request_ids: excludedRequestIds ?? [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -463,22 +463,22 @@ export class StationService {
     await this.actor.mark_notifications_read(input);
   }
 
-  async voteOnProposal(input: VoteOnProposalInput): Promise<Proposal> {
-    const result = await this.actor.vote_on_proposal(input);
+  async submitRequestApproval(input: SubmitRequestApprovalInput): Promise<Request> {
+    const result = await this.actor.submit_request_approval(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async getProposal(
-    input: GetProposalInput,
+  async getRequest(
+    input: GetRequestInput,
     verifiedCall = false,
-  ): Promise<ExtractOk<GetProposalResult>> {
+  ): Promise<ExtractOk<GetRequestResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.get_proposal(input);
+    const result = await actor.get_request(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -569,8 +569,8 @@ export class StationService {
     return result.Ok;
   }
 
-  async addAddressBookEntry(input: AddAddressBookEntryOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async addAddressBookEntry(input: AddAddressBookEntryOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -581,11 +581,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async editAddressBookEntry(input: EditAddressBookEntryOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async editAddressBookEntry(input: EditAddressBookEntryOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -596,7 +596,7 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
   async isHealthy(verifiedCall = false): Promise<boolean> {
@@ -656,14 +656,14 @@ export class StationService {
     return result.Ok.transfers[0];
   }
 
-  async createProposal(input: CreateProposalInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal(input);
+  async createRequest(input: CreateRequestInput): Promise<Request> {
+    const result = await this.actor.create_request(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
   async listPermissions(
@@ -680,8 +680,8 @@ export class StationService {
     return result.Ok;
   }
 
-  async editPermission(input: EditPermissionOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async editPermission(input: EditPermissionOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -692,41 +692,41 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async editProposalPolicy(input: EditProposalPolicyOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async editRequestPolicy(input: EditRequestPolicyOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: { EditProposalPolicy: input },
+      operation: { EditRequestPolicy: input },
     });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async addProposalPolicy(input: AddProposalPolicyOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async addRequestPolicy(input: AddRequestPolicyOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: { AddProposalPolicy: input },
+      operation: { AddRequestPolicy: input },
     });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async editAccount(input: EditAccountOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async editAccount(input: EditAccountOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -737,11 +737,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async addAccount(input: AddAccountOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async addAccount(input: AddAccountOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -752,11 +752,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async transfer(input: TransferOperationInput, summary?: string): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async transfer(input: TransferOperationInput, summary?: string): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: summary ? [summary] : [],
@@ -767,11 +767,11 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async changeCanister(input: ChangeCanisterOperationInput): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async changeCanister(input: ChangeCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -782,15 +782,15 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async listProposalPolicies(
+  async listRequestPolicies(
     { limit, offset }: { limit?: number; offset?: number } = {},
     verifiedCall = false,
-  ): Promise<ExtractOk<ListProposalPoliciesResult>> {
+  ): Promise<ExtractOk<ListRequestPoliciesResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.list_proposal_policies({
+    const result = await actor.list_request_policies({
       limit: limit ? [limit] : [],
       offset: offset ? [BigInt(offset)] : [],
     });
@@ -802,12 +802,12 @@ export class StationService {
     return result.Ok;
   }
 
-  async getProposalPolicy(
+  async getRequestPolicy(
     id: UUID,
     verifiedCall = false,
-  ): Promise<ExtractOk<GetProposalPolicyResult>> {
+  ): Promise<ExtractOk<GetRequestPolicyResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.get_proposal_policy({ id });
+    const result = await actor.get_request_policy({ id });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -816,23 +816,23 @@ export class StationService {
     return result.Ok;
   }
 
-  async removeProposalPolicy(id: UUID): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async removeRequestPolicy(id: UUID): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
-      operation: { RemoveProposalPolicy: { policy_id: id } },
+      operation: { RemoveRequestPolicy: { policy_id: id } },
     });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 
-  async removeAddressBookEntry(id: UUID): Promise<Proposal> {
-    const result = await this.actor.create_proposal({
+  async removeAddressBookEntry(id: UUID): Promise<Request> {
+    const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
@@ -843,6 +843,6 @@ export class StationService {
       throw result.Err;
     }
 
-    return result.Ok.proposal;
+    return result.Ok.request;
   }
 }
