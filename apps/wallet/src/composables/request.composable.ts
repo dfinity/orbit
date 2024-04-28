@@ -2,7 +2,7 @@ import { ComputedRef, Ref, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
-import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
+import { REQUEST_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { logger } from '~/core/logger.core';
 import { ListRequestsOperationType, UUID } from '~/generated/station/station.did';
 import { mapListRequestsOperationTypeToGroups } from '~/mappers/requests.mapper';
@@ -214,15 +214,15 @@ export const useRequestOverlay = (): {
   const router = useRouter();
 
   const open = (requestId: UUID): void => {
-    router.push({ query: { [PROPOSAL_DIALOG_QUERY_PARAM]: requestId } });
+    router.push({ query: { [REQUEST_DIALOG_QUERY_PARAM]: requestId } });
   };
 
   const replaceQueryId = (id: UUID | undefined): void => {
     const query = Object.assign({}, router.currentRoute.value.query);
     if (id) {
-      query[PROPOSAL_DIALOG_QUERY_PARAM] = id;
+      query[REQUEST_DIALOG_QUERY_PARAM] = id;
     } else {
-      delete query[PROPOSAL_DIALOG_QUERY_PARAM];
+      delete query[REQUEST_DIALOG_QUERY_PARAM];
     }
 
     router.replace({ query });

@@ -5,11 +5,6 @@ import {
   UUID,
 } from '~/generated/station/station.did';
 
-export enum PolicyType {
-  VariableQuorumPercentage = 'VariableQuorumPercentage',
-  FixedQuorumPercentage = 'FixedQuorumPercentage',
-}
-
 export enum AccountTransferStatus {
   Created = 'created',
   Failed = 'failed',

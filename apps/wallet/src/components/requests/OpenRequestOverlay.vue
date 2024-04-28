@@ -12,7 +12,7 @@ import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import RequestDialog from '~/components/requests/RequestDialog.vue';
 import { useRequestOverlay } from '~/composables/request.composable';
-import { PROPOSAL_DIALOG_QUERY_PARAM } from '~/core/constants.core';
+import { REQUEST_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { UUID } from '~/generated/control-panel/control_panel.did';
 import { isValidUUID } from '~/utils/helper.utils';
 
@@ -28,7 +28,7 @@ function updateRequestId(requestId: UUID) {
 watch(
   () => router.currentRoute.value,
   route => {
-    const queryParam = route.query?.[PROPOSAL_DIALOG_QUERY_PARAM];
+    const queryParam = route.query?.[REQUEST_DIALOG_QUERY_PARAM];
     if (!queryParam) {
       requestId.value = null;
     }
