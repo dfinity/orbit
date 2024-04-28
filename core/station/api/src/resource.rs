@@ -7,8 +7,8 @@ pub enum ResourceDTO {
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
     ChangeCanister(ChangeCanisterResourceActionDTO),
-    Proposal(ProposalResourceActionDTO),
-    ProposalPolicy(ResourceActionDTO),
+    Request(RequestResourceActionDTO),
+    RequestPolicy(ResourceActionDTO),
     System(SystemResourceActionDTO),
     User(UserResourceActionDTO),
     UserGroup(ResourceActionDTO),
@@ -70,7 +70,7 @@ pub enum ChangeCanisterResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalResourceActionDTO {
+pub enum RequestResourceActionDTO {
     List,
     Read(ResourceIdDTO),
 }

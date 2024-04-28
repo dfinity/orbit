@@ -18,9 +18,9 @@ type PaginationInput = record {
   limit : opt nat16;
 };
 
-// A record type that can be used to represent the caller privileges for a given proposal policy.
-type ProposalPolicyCallerPrivileges = record {
-  // The proposal policy id.
+// A record type that can be used to represent the caller privileges for a given request policy.
+type RequestPolicyCallerPrivileges = record {
+  // The request policy id.
   id : UUID;
   // Wether or not the caller can edit the resource.
   can_edit : bool;
@@ -28,15 +28,15 @@ type ProposalPolicyCallerPrivileges = record {
   can_delete : bool;
 };
 
-// Represents a proposal policy with the associated criteria.
-type ProposalPolicy = record {
+// Represents a request policy with the associated rule.
+type RequestPolicy = record {
   id : UUID;
-  specifier : ProposalSpecifier;
-  criteria : ProposalPolicyCriteria;
+  specifier : RequestSpecifier;
+  rule : RequestPolicyRule;
 };
 
-// Defines the various types of proposals that can be created.
-type ProposalSpecifier = variant {
+// Defines the various types of requests that can be created.
+type RequestSpecifier = variant {
   AddAccount;
   AddUser;
   EditAccount : ResourceIds;
@@ -47,101 +47,101 @@ type ProposalSpecifier = variant {
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
   EditPermission : ResourceSpecifier;
-  AddProposalPolicy;
-  EditProposalPolicy : ResourceIds;
-  RemoveProposalPolicy : ResourceIds;
+  AddRequestPolicy;
+  EditRequestPolicy : ResourceIds;
+  RemoveRequestPolicy : ResourceIds;
   AddUserGroup;
   EditUserGroup : ResourceIds;
   RemoveUserGroup : ResourceIds;
 };
 
-// A record type that can be used to represent an approval threshold.
-type ApprovalThreshold = record {
-  // The voters that are required to vote on the proposal.
-  voters : UserSpecifier;
-  // The required vote threshold for the criteria to be adopted.
-  threshold : nat16;
+// A record type that can be used to represent a percentage of users that are required to approve a rule.
+type QuorumPercentage = record {
+  // The users that are required to approve the request.
+  approvers : UserSpecifier;
+  // The required user approvals for the rule to be approved.
+  min_accepted : nat16;
 };
 
-// A record type that can be used to represent the minimum votes.
-type MinimumVotes = record {
-  // The voters that are required to vote on the proposal.
-  voters : UserSpecifier;
-  // The minimum number of votes required for the criteria to be adopted.
-  minimum : nat16;
+// A record type that can be used to represent the minimum quorum of users that are required to approve a rule.
+type Quorum = record {
+  // The users that can approve the request.
+  approvers : UserSpecifier;
+  // The minimum number of user approvals required for the rule to be approved.
+  min_accepted : nat16;
 };
 
-type ApprovalPolicyCriteriaInput = variant {
+type RequestPolicyRuleInput = variant {
   Remove;
-  Set : ProposalPolicyCriteria;
+  Set : RequestPolicyRule;
 };
 
-// Defines the various types criterias that can be used in a proposal evaluation.
-type ProposalPolicyCriteria = variant {
-  AutoAdopted;
-  ApprovalThreshold : ApprovalThreshold;
-  MinimumVotes : MinimumVotes;
-  HasAddressBookMetadata : AddressBookMetadata;
-  HasAddressInAddressBook;
-  Or : vec ProposalPolicyCriteria;
-  And : vec ProposalPolicyCriteria;
-  Not : ProposalPolicyCriteria;
+// Defines the various types rules that can be used in a request evaluation.
+type RequestPolicyRule = variant {
+  AutoApproved;
+  QuorumPercentage : QuorumPercentage;
+  Quorum : Quorum;
+  AllowListedByMetadata : AllowListedByMetadata;
+  AllowListed;
+  AnyOf : vec RequestPolicyRule;
+  AllOf : vec RequestPolicyRule;
+  Not : RequestPolicyRule;
 };
 
-// Defines the high level result of evaluating a proposal policy criteria.
+// Defines the high level result of evaluating a request policy rule.
 type EvaluationStatus = variant {
-  Adopted;
+  Approved;
   Rejected;
   Pending;
 };
 
-// Defines the evaluation data of a proposal policy criteria.
-type EvaluatedCriteria = variant {
-  AutoAdopted;
-  ApprovalThreshold : record {
-    min_required_votes : nat64;
-    total_possible_votes : nat64;
-    votes : vec UUID;
+// Defines the evaluation data of a request policy rule.
+type EvaluatedRequestPolicyRule = variant {
+  AutoApproved;
+  QuorumPercentage : record {
+    min_accepted : nat64;
+    total_possible_approvers : nat64;
+    approvers : vec UUID;
   };
-  MinimumVotes : record {
-    min_required_votes : nat64;
-    votes : vec UUID;
-    total_possible_votes : nat64;
+  Quorum : record {
+    min_accepted : nat64;
+    total_possible_approvers : nat64;
+    approvers : vec UUID;
   };
-  HasAddressBookMetadata : record {
+  AllowListedByMetadata : record {
     metadata : AddressBookMetadata;
   };
-  HasAddressInAddressBook;
-  Or : vec CriteriaResult;
-  And : vec CriteriaResult;
-  Not : CriteriaResult;
+  AllowListed;
+  AnyOf : vec RequestPolicyRuleResult;
+  AllOf : vec RequestPolicyRuleResult;
+  Not : RequestPolicyRuleResult;
 };
 
-// A record type representing the full evaluation result of a proposal policy criteria.
-type CriteriaResult = record {
-  // The final evaluation status of the criteria.
+// A record type representing the full evaluation result of a request policy rule.
+type RequestPolicyRuleResult = record {
+  // The final evaluation status of the rule.
   status : EvaluationStatus;
-  // The result of the evaluation of the criteria and all its sub-criteria.
-  evaluated_criteria : EvaluatedCriteria;
+  // The result of the evaluation of the rule and all its sub-rules.
+  evaluated_rule : EvaluatedRequestPolicyRule;
 };
 
-// A record type representing the full evaluation result of all matching policies for a proposal.
-type ProposalEvaluationResult = record {
-  // The proposal id that was evaluated.
-  proposal_id : UUID;
-  // The final evaluation status of the proposal.
+// A record type representing the full evaluation result of all matching policies for a request.
+type RequestEvaluationResult = record {
+  // The request id that was evaluated.
+  request_id : UUID;
+  // The final evaluation status of the request.
   status : EvaluationStatus;
   // The evaluation results of all matching policies.
-  policy_results : vec CriteriaResult;
+  policy_results : vec RequestPolicyRuleResult;
 };
 
-// Defines a user in the context of a proposal.
+// Defines a user in the context of a request.
 type UserSpecifier = variant {
   Any;
   Id : vec UUID;
   Group : vec UUID;
   Owner;
-  Proposer;
+  Requester;
 };
 
 type AccountSpecifier = CommonSpecifier;
@@ -164,23 +164,23 @@ type NotificationType = variant {
   // Notification for system-wide messages.
   // This can be used for announcements, scheduled maintenance reminders, or other important system messages.
   SystemMessage;
-  // Notification for the creation of a new proposal.
-  // This should be used to alert users when a new proposal that requires their attention has been created.
-  ProposalCreated : record {
-    // The proposal id that was created.
-    proposal_id : UUID;
-    // The type of the proposal (e.g. "transfer").
-    operation_type : ProposalOperationType;
-    // Account id is available for relevant proposal types.
+  // Notification for the creation of a new request.
+  // This should be used to alert users when a new request that requires their attention has been created.
+  RequestCreated : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // Account id is available for relevant request types.
     account_id : opt UUID;
-    // User id is available for relevant proposal types.
+    // User id is available for relevant request types.
     user_id : opt UUID;
   };
 };
 
 type NotificationTypeInput = variant {
   SystemMessage;
-  ProposalCreated;
+  RequestCreated;
 };
 
 // A record type that can be used to represent a notification.
@@ -236,10 +236,10 @@ type MarkNotificationReadResult = variant {
   Err : Error;
 };
 
-// The status of a proposal.
-type ProposalStatus = variant {
+// The status of a request.
+type RequestStatus = variant {
   Created;
-  Adopted;
+  Approved;
   Rejected;
   Cancelled : record {
     reason : opt text;
@@ -258,10 +258,10 @@ type ProposalStatus = variant {
   };
 };
 
-// The status code of a proposal.
-type ProposalStatusCode = variant {
+// The status code of a request.
+type RequestStatusCode = variant {
   Created;
-  Adopted;
+  Approved;
   Rejected;
   Cancelled;
   Scheduled;
@@ -270,18 +270,18 @@ type ProposalStatusCode = variant {
   Failed;
 };
 
-// The status of a proposal.
-type ProposalVoteStatus = variant { Accepted; Rejected };
+// The status of a request.
+type RequestApprovalStatus = variant { Accepted; Rejected };
 
-// A record type that can be used to represent a vote on a proposal.
-type ProposalVote = record {
+// A record type that is used to represent a user approval decision on a request.
+type RequestApproval = record {
   // The user that has taken the decision.
   user_id : UUID;
-  // The user has added to the proposal, once provided it cannot be changed.
-  status : ProposalVoteStatus;
-  // Optional reason for the vote status.
+  // The user has added to the request, once provided it cannot be changed.
+  status : RequestApprovalStatus;
+  // Optional reason for the decision.
   status_reason : opt text;
-  // The time at which the vote was added.
+  // The time at which the decision was made.
   decided_at : TimestampRFC3339;
 };
 
@@ -311,13 +311,13 @@ type TransferOperation = record {
   from_account : opt Account;
   // The network to use for the transaction.
   network : Network;
-  // The input to the proposal to transfer funds.
+  // The input to the request to transfer funds.
   input : TransferOperationInput;
   // The id of the executed transfer.
   transfer_id : opt UUID;
 };
 
-// Input type for editing an account through a proposal.
+// Input type for editing an account through a request.
 type EditAccountOperationInput = record {
   // The account id that will be edited.
   account_id : UUID;
@@ -325,22 +325,22 @@ type EditAccountOperationInput = record {
   name : opt text;
   // Who can read the account information.
   read_permission : opt Allow;
-  // Who can request updates to the account.
-  update_permission : opt Allow;
+  // Who can request configuration changes to the account.
+  configs_permission : opt Allow;
   // Who can request transfers from the account.
   transfer_permission : opt Allow;
-  // The approval policy for updates to the account.
-  update_approval_policy : opt ApprovalPolicyCriteriaInput;
-  // The approval policy for transfers from the account.
-  transfer_approval_policy : opt ApprovalPolicyCriteriaInput;
+  // The request policy for what it takes to execute a configuration change.
+  configs_request_policy : opt RequestPolicyRuleInput;
+  // The request policy for what it takes to execute a transfer.
+  transfer_request_policy : opt RequestPolicyRuleInput;
 };
 
 type EditAccountOperation = record {
-  // The input to the proposal to edit the account.
+  // The input to the request to edit the account.
   input : EditAccountOperationInput;
 };
 
-// Input type for adding an account through a proposal.
+// Input type for adding an account through a request.
 type AddAccountOperationInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : text;
@@ -357,26 +357,26 @@ type AddAccountOperationInput = record {
   // Who can request transfers from the account.
   transfer_permission : Allow;
   // The approval policy for updates to the account.
-  update_approval_policy : opt ProposalPolicyCriteria;
+  update_approval_policy : opt RequestPolicyRule;
   // The approval policy for transfers from the account.
-  transfer_approval_policy : opt ProposalPolicyCriteria;
+  transfer_approval_policy : opt RequestPolicyRule;
 };
 
 type AddAccountOperation = record {
-  // The account, only available after the proposal is executed.
+  // The account, only available after the request is executed.
   account : opt Account;
-  // The input to the proposal to add the account.
+  // The input to the request to add the account.
   input : AddAccountOperationInput;
 };
 
 type AddAddressBookEntryOperation = record {
-  // The address book entry, only available after the proposal is executed.
+  // The address book entry, only available after the request is executed.
   address_book_entry : opt AddressBookEntry;
-  // The input to the proposal to add the address book entry.
+  // The input to the request to add the address book entry.
   input : AddAddressBookEntryOperationInput;
 };
 
-// Input type for creating a new address book entry through a proposal.
+// Input type for creating a new address book entry through a request.
 type AddAddressBookEntryOperationInput = record {
   // The owner of the address.
   address_owner : text;
@@ -391,7 +391,7 @@ type AddAddressBookEntryOperationInput = record {
 };
 
 type EditAddressBookEntryOperation = record {
-  // The input to the proposal to edit the address book entry.
+  // The input to the request to edit the address book entry.
   input : EditAddressBookEntryOperationInput;
 };
 
@@ -406,7 +406,7 @@ type ChangeAddressBookMetadata = variant {
   RemoveKeys : vec text;
 };
 
-// Input type for updating an address book entry through a proposal.
+// Input type for updating an address book entry through a request.
 type EditAddressBookEntryOperationInput = record {
   // The id of the address book entry.
   address_book_entry_id : UUID;
@@ -417,11 +417,11 @@ type EditAddressBookEntryOperationInput = record {
 };
 
 type RemoveAddressBookEntryOperation = record {
-  // The input to the proposal to remove the address book entry.
+  // The input to the request to remove the address book entry.
   input : RemoveAddressBookEntryOperationInput;
 };
 
-// Input type for removing an address book entry through a proposal.
+// Input type for removing an address book entry through a request.
 type RemoveAddressBookEntryOperationInput = record {
   // The id of the address book entry.
   address_book_entry_id : UUID;
@@ -444,9 +444,9 @@ type AddUserOperationInput = record {
 };
 
 type AddUserOperation = record {
-  // The user that was added, only available after the proposal is executed.
+  // The user that was added, only available after the request is executed.
   user : opt User;
-  // The input to the proposal to add the user.
+  // The input to the request to add the user.
   input : AddUserOperationInput;
 };
 
@@ -467,7 +467,7 @@ type EditUserOperationInput = record {
 };
 
 type EditUserOperation = record {
-  // The input to the proposal to edit the user.
+  // The input to the request to edit the user.
   input : EditUserOperationInput;
 };
 
@@ -477,9 +477,9 @@ type AddUserGroupOperationInput = record {
 };
 
 type AddUserGroupOperation = record {
-  // The user group that was added, only available after the proposal is executed.
+  // The user group that was added, only available after the request is executed.
   user_group : opt UserGroup;
-  // The input to the proposal to add the user group.
+  // The input to the request to add the user group.
   input : AddUserGroupOperationInput;
 };
 
@@ -491,7 +491,7 @@ type EditUserGroupOperationInput = record {
 };
 
 type EditUserGroupOperation = record {
-  // The input to the proposal to edit the user group.
+  // The input to the request to edit the user group.
   input : EditUserGroupOperationInput;
 };
 
@@ -501,7 +501,7 @@ type RemoveUserGroupOperationInput = record {
 };
 
 type RemoveUserGroupOperation = record {
-  // The input to the proposal to remove the user group.
+  // The input to the request to remove the user group.
   input : RemoveUserGroupOperationInput;
 };
 
@@ -541,49 +541,49 @@ type EditPermissionOperationInput = record {
 };
 
 type EditPermissionOperation = record {
-  // The input to the proposal to edit an permission.
+  // The input to the request to edit an permission.
   input : EditPermissionOperationInput;
 };
 
-type AddProposalPolicyOperationInput = record {
-  // The proposal specifier that identifies the proposal to add a policy for.
-  specifier : ProposalSpecifier;
-  // The criteria to use for the proposal evaluation.
-  criteria : ProposalPolicyCriteria;
+type AddRequestPolicyOperationInput = record {
+  // The request specifier that identifies the request to add a policy for.
+  specifier : RequestSpecifier;
+  // The rule to use for the request evaluation.
+  rule : RequestPolicyRule;
 };
 
-type AddProposalPolicyOperation = record {
-  // The proposal policy that was created by the proposal (only available after the proposal is executed).
+type AddRequestPolicyOperation = record {
+  // The request policy that was created by the request (only available after the request is executed).
   policy_id : opt UUID;
-  // The input to the proposal to add a proposal policy.
-  input : AddProposalPolicyOperationInput;
+  // The input to the request to add a request policy.
+  input : AddRequestPolicyOperationInput;
 };
 
-type EditProposalPolicyOperationInput = record {
-  // The proposal policy id that will be edited.
+type EditRequestPolicyOperationInput = record {
+  // The request policy id that will be edited.
   policy_id : UUID;
-  // The updated proposal specifier that identifies the proposal to add a policy for.
-  specifier : opt ProposalSpecifier;
-  // The updated criteria to use for the proposal evaluation.
-  criteria : opt ProposalPolicyCriteria;
+  // The updated request specifier that identifies the request to add a policy for.
+  specifier : opt RequestSpecifier;
+  // The updated rule to use for the request evaluation.
+  rule : opt RequestPolicyRule;
 };
 
-type EditProposalPolicyOperation = record {
-  // The input to the proposal to edit a proposal policy.
-  input : EditProposalPolicyOperationInput;
+type EditRequestPolicyOperation = record {
+  // The input to the request to edit a request policy.
+  input : EditRequestPolicyOperationInput;
 };
 
-type RemoveProposalPolicyOperationInput = record {
-  // The proposal policy id that will be removed.
+type RemoveRequestPolicyOperationInput = record {
+  // The request policy id that will be removed.
   policy_id : UUID;
 };
 
-type RemoveProposalPolicyOperation = record {
-  // The input to the proposal to remove a proposal policy.
-  input : RemoveProposalPolicyOperationInput;
+type RemoveRequestPolicyOperation = record {
+  // The input to the request to remove a request policy.
+  input : RemoveRequestPolicyOperationInput;
 };
 
-type ProposalOperation = variant {
+type RequestOperation = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperation;
   // An operation for updating information of an account.
@@ -610,15 +610,15 @@ type ProposalOperation = variant {
   ChangeCanister : ChangeCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
-  // An operation for adding a proposal policy.
-  AddProposalPolicy : AddProposalPolicyOperation;
-  // An operation for editing a proposal policy.
-  EditProposalPolicy : EditProposalPolicyOperation;
-  // An operation for removing a proposal policy.
-  RemoveProposalPolicy : RemoveProposalPolicyOperation;
+  // An operation for adding a request policy.
+  AddRequestPolicy : AddRequestPolicyOperation;
+  // An operation for editing a request policy.
+  EditRequestPolicy : EditRequestPolicyOperation;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy : RemoveRequestPolicyOperation;
 };
 
-type ProposalOperationInput = variant {
+type RequestOperationInput = variant {
   // A new transfer of funds from a given account.
   Transfer : TransferOperationInput;
   // An operation for updating information of an account.
@@ -645,15 +645,15 @@ type ProposalOperationInput = variant {
   ChangeCanister : ChangeCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
-  // An operation for adding a proposal policy.
-  AddProposalPolicy : AddProposalPolicyOperationInput;
-  // An operation for editing a proposal policy.
-  EditProposalPolicy : EditProposalPolicyOperationInput;
-  // An operation for removing a proposal policy.
-  RemoveProposalPolicy : RemoveProposalPolicyOperationInput;
+  // An operation for adding a request policy.
+  AddRequestPolicy : AddRequestPolicyOperationInput;
+  // An operation for editing a request policy.
+  EditRequestPolicy : EditRequestPolicyOperationInput;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy : RemoveRequestPolicyOperationInput;
 };
 
-type ProposalOperationType = variant {
+type RequestOperationType = variant {
   // A new transfer of funds from a given account.
   Transfer;
   // An operation for updating information of an account.
@@ -680,16 +680,16 @@ type ProposalOperationType = variant {
   ChangeCanister;
   // An operation for editing an permission.
   EditPermission;
-  // An operation for adding a proposal policy.
-  AddProposalPolicy;
-  // An operation for editing a proposal policy.
-  EditProposalPolicy;
-  // An operation for removing a proposal policy.
-  RemoveProposalPolicy;
+  // An operation for adding a request policy.
+  AddRequestPolicy;
+  // An operation for editing a request policy.
+  EditRequestPolicy;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy;
 };
 
 // The schedule for executing a transaction of a given transfer.
-type ProposalExecutionSchedule = variant {
+type RequestExecutionSchedule = variant {
   // The transaction will be executed immediately.
   Immediate;
   // The transaction will be executed at a given time.
@@ -700,77 +700,77 @@ type ProposalExecutionSchedule = variant {
   };
 };
 
-// A record type that can be used to represent the caller privileges for a given proposal.
-type ProposalCallerPrivileges = record {
-  // The proposal id.
+// A record type that can be used to represent the caller privileges for a given request.
+type RequestCallerPrivileges = record {
+  // The request id.
   id : UUID;
-  // Wether or not the caller can vote on the proposal.
-  can_vote : bool;
+  // Wether or not the caller can submit an approval decision.
+  can_approve : bool;
 };
 
-// A record type that can be used to represent additional information about a proposal.
-type ProposalAdditionalInfo = record {
-  // The proposal id.
+// A record type that can be used to represent additional information about a request.
+type RequestAdditionalInfo = record {
+  // The request id.
   id : UUID;
-  // The proposer name (e.g. "John Doe").
-  proposer_name : opt text;
-  // Display information for the voters.
-  voters : vec DisplayUser;
-  // The evaluation result of all matching policies for the proposal.
-  evaluation_result : opt ProposalEvaluationResult;
+  // The requester name (e.g. "John Doe").
+  requester_name : opt text;
+  // Display information for the approvers.
+  approvers : vec DisplayUser;
+  // The evaluation result of all matching policies for the request.
+  evaluation_result : opt RequestEvaluationResult;
 };
 
-// A record type that can be used to represent a proposed operation in the station.
-type Proposal = record {
-  // The proposal id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
+// A record type that can be used to represent a requested operation in the station.
+type Request = record {
+  // The request id which is a UUID (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
-  // The proposal title.
+  // The request title.
   title : text;
-  // The proposal summary (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
+  // The request summary (e.g. "This request will transfer 100 ICP to the account 0x1234").
   summary : opt text;
-  // The operation that was proposed.
-  operation : ProposalOperation;
-  // The user that created the proposal.
-  proposed_by : UUID;
-  // The list of user votes on the proposal.
-  votes : vec ProposalVote;
-  // The time at which the proposal was created.
+  // The operation that was requested.
+  operation : RequestOperation;
+  // The user that created the request.
+  requested_by : UUID;
+  // The list of user approvals on the request.
+  approvals : vec RequestApproval;
+  // The time at which the request was created.
   created_at : TimestampRFC3339;
-  // The proposal approval status.
-  status : ProposalStatus;
-  // The time at which the proposal will expire.
+  // The request approval status.
+  status : RequestStatus;
+  // The time at which the request will expire.
   expiration_dt : TimestampRFC3339;
-  // The time at which the proposal should be executed if adopted.
-  execution_plan : ProposalExecutionSchedule;
+  // The time at which the request should be executed if approved.
+  execution_plan : RequestExecutionSchedule;
 };
 
-// The input type for creating a proposal.
-type CreateProposalInput = record {
-  // The operation that was proposed.
-  operation : ProposalOperationInput;
-  // The proposal title (e.g. "Payment to John").
+// The input type for creating a request.
+type CreateRequestInput = record {
+  // The operation that was requested.
+  operation : RequestOperationInput;
+  // The request title (e.g. "Payment to John").
   title : opt text;
-  // The proposal summary (e.g. "This proposal will transfer 100 ICP to the account 0x1234").
+  // The request summary (e.g. "This request will transfer 100 ICP to the account 0x1234").
   summary : opt text;
-  // The time at which the proposal will execute if adopted.
-  execution_plan : opt ProposalExecutionSchedule;
+  // The time at which the request will execute if approved.
+  execution_plan : opt RequestExecutionSchedule;
 };
 
-// The result type for creating a proposal.
-type CreateProposalResult = variant {
+// The result type for creating a request.
+type CreateRequestResult = variant {
   Ok : record {
-    // The proposal that was created.
-    proposal : Proposal;
+    // The request that was created.
+    request : Request;
     // The privileges of the caller.
-    privileges : ProposalCallerPrivileges;
-    // The additional info about the proposal.
-    additional_info : ProposalAdditionalInfo;
+    privileges : RequestCallerPrivileges;
+    // The additional info about the request.
+    additional_info : RequestAdditionalInfo;
   };
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
-type ListProposalsOperationType = variant {
+type ListRequestsOperationType = variant {
   // A new transfer of funds from a given account.
   Transfer : opt UUID;
   // An operation for updating information of an account.
@@ -797,12 +797,12 @@ type ListProposalsOperationType = variant {
   ChangeCanister;
   // An operation for editing an permission.
   EditPermission;
-  // An operation for adding a proposal policy.
-  AddProposalPolicy;
-  // An operation for editing a proposal policy.
-  EditProposalPolicy;
-  // An operation for removing a proposal policy.
-  RemoveProposalPolicy;
+  // An operation for adding a request policy.
+  AddRequestPolicy;
+  // An operation for editing a request policy.
+  EditRequestPolicy;
+  // An operation for removing a request policy.
+  RemoveRequestPolicy;
 };
 
 // The direction to use for sorting.
@@ -813,121 +813,121 @@ type SortByDirection = variant {
   Desc;
 };
 
-// The input type that can be used to sort the list of proposals by a given field.
-type ListProposalsSortBy = variant {
-  // Sort by the proposal creation time.
+// The input type that can be used to sort the list of requests by a given field.
+type ListRequestsSortBy = variant {
+  // Sort by the request creation time.
   CreatedAt : SortByDirection;
-  // Sort by the proposal expiration time.
+  // Sort by the request expiration time.
   ExpirationDt : SortByDirection;
-  // Sort by the proposal last modification time.
+  // Sort by the request last modification time.
   LastModificationDt : SortByDirection;
 };
 
-// The input type for getting the list of proposals based on the given filters.
-type ListProposalsInput = record {
-  // Show only proposals proposed by the given users.
-  proposer_ids : opt vec UUID;
-  // Show only proposals that are voted on by the given users.
-  voter_ids : opt vec UUID;
-  // Show only proposals with the given status.
-  statuses : opt vec ProposalStatusCode;
-  // The type of the proposal (e.g. "transfer").
-  operation_types : opt vec ListProposalsOperationType;
-  // From which expiration time to retrieve the proposals.
+// The input type for getting the list of requests based on the given filters.
+type ListRequestsInput = record {
+  // Show only requests made by the given users.
+  requester_ids : opt vec UUID;
+  // Show only requests that the specified users have submitted an approval decision for.
+  approver_ids : opt vec UUID;
+  // Show only requests with the given status.
+  statuses : opt vec RequestStatusCode;
+  // The type of the request (e.g. "transfer").
+  operation_types : opt vec ListRequestsOperationType;
+  // From which expiration time to retrieve the requests.
   expiration_from_dt : opt TimestampRFC3339;
-  // Until which expiration time to retrieve the proposals.
+  // Until which expiration time to retrieve the requests.
   expiration_to_dt : opt TimestampRFC3339;
-  // From which created time to retrieve the proposals.
+  // From which created time to retrieve the requests.
   created_from_dt : opt TimestampRFC3339;
-  // Until which created time to retrieve the proposals.
+  // Until which created time to retrieve the requests.
   created_to_dt : opt TimestampRFC3339;
   // The pagination parameters.
   paginate : opt PaginationInput;
   // The sorting parameters.
-  sort_by : opt ListProposalsSortBy;
-  // Return only proposals the the user can vote on.
-  only_votable : bool;
-  // Return the full evaluation results for the proposals.
+  sort_by : opt ListRequestsSortBy;
+  // Return only requests the the user can submit an approval decision for.
+  only_approvable : bool;
+  // Return the full evaluation results for the requests.
   with_evaluation_results : bool;
 };
 
-// The result type for getting the list of proposals.
-type ListProposalsResult = variant {
+// The result type for getting the list of requests.
+type ListRequestsResult = variant {
   // The result data for a successful execution.
   Ok : record {
-    // The list of proposals.
-    proposals : vec Proposal;
-    // The total number of proposals.
+    // The list of requests.
+    requests : vec Request;
+    // The total number of requests.
     total : nat64;
     // The next offset to use for pagination.
     next_offset : opt nat64;
     // The privileges of the caller.
-    privileges : vec ProposalCallerPrivileges;
-    // The additional info about the proposals.
-    additional_info : vec ProposalAdditionalInfo;
+    privileges : vec RequestCallerPrivileges;
+    // The additional info about the requests.
+    additional_info : vec RequestAdditionalInfo;
   };
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
-// Input type for getting a proposal.
-type GetProposalInput = record {
-  // The proposal id to retrieve.
-  proposal_id : UUID;
+// Input type for getting a request.
+type GetRequestInput = record {
+  // The request id to retrieve.
+  request_id : UUID;
 };
 
-type GetProposalResultData = record {
-  // The proposal that was requested.
-  proposal : Proposal;
+type GetRequestResultData = record {
+  // The request that was requested.
+  request : Request;
   // The privileges of the caller.
-  privileges : ProposalCallerPrivileges;
-  // The additional info about the proposal.
-  additional_info : ProposalAdditionalInfo;
+  privileges : RequestCallerPrivileges;
+  // The additional info about the request.
+  additional_info : RequestAdditionalInfo;
 };
 
-// Result type for retrieving a proposal.
-type GetProposalResult = variant {
+// Result type for retrieving a request.
+type GetRequestResult = variant {
   // The result data for a successful execution.
-  Ok : GetProposalResultData;
+  Ok : GetRequestResultData;
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
-// The input type for getting the list of proposals based on the given filters.
-type GetNextVotableProposalInput = record {
-  // The type of the proposal (e.g. "transfer").
-  operation_types : opt vec ListProposalsOperationType;
-  // Exclude proposals the user indicated to skip.
-  excluded_proposal_ids : vec UUID;
+// The input type for getting the list of requests based on the given filters.
+type GetNextApprovableRequestInput = record {
+  // The type of the request (e.g. "transfer").
+  operation_types : opt vec ListRequestsOperationType;
+  // Exclude requests the user indicated to skip.
+  excluded_request_ids : vec UUID;
 };
 
-// Result type for retrieving a proposal.
-type GetNextVotableProposalResponse = variant {
+// Result type for retrieving a request.
+type GetNexttApprovableRequestResult = variant {
   // The result data for a successful execution.
-  Ok : opt GetProposalResultData;
+  Ok : opt GetRequestResultData;
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
-// Input type for voting on a proposal.
-type VoteOnProposalInput = record {
-  // The proposal id to interact with.
-  proposal_id : UUID;
-  // True if the user approves the proposal, false otherwise.
+// Input type for submitting an approval decision on a request.
+type SubmitRequestApprovalInput = record {
+  // The request id to interact with.
+  request_id : UUID;
+  // True if the user approves the request, false otherwise.
   approve : bool;
   // The reason for the approval or rejection.
   reason : opt text;
 };
 
-// Result type for voting on a proposal.
-type VoteOnProposalResult = variant {
+// Result type for submitting an approval decision on a request.
+type SubmitRequestApprovalResult = variant {
   Ok : record {
-    // The proposal that was voted on.
-    proposal : Proposal;
+    // The request that the decision was submitted for.
+    request : Request;
     // The privileges of the caller.
-    privileges : ProposalCallerPrivileges;
-    // The additional info about the proposal.
-    additional_info : ProposalAdditionalInfo;
+    privileges : RequestCallerPrivileges;
+    // The additional info about the request.
+    additional_info : RequestAdditionalInfo;
   };
   Err : Error;
 };
@@ -979,8 +979,8 @@ type ListAccountTransfersInput = record {
 type TransferListItem = record {
   // The transfer id.
   transfer_id : UUID;
-  // The id of the proposal that created the transfer.
-  proposal_id : UUID;
+  // The id of the request that created the transfer.
+  request_id : UUID;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
   to : text;
   // The amount to transfer.
@@ -1110,8 +1110,8 @@ type TransferStatusType = variant {
 type Transfer = record {
   // The internal transfer id, this a unique identifier for the transfer.
   id : UUID;
-  // The id of the proposal that created the transfer.
-  proposal_id : UUID;
+  // The id of the request that created the transfer.
+  request_id : UUID;
   // The account id to use for the transfer.
   from_account_id : UUID;
   // The destination address of the transaction (e.g. "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2").
@@ -1195,12 +1195,12 @@ type Account = record {
   metadata : vec AccountMetadata;
   // The transfer approval policy for the account.
   //
-  // The transfer approval policy defines the criteria that must be met for a transfer to be approved.
-  transfer_approval_policy : opt ProposalPolicyCriteria;
+  // The transfer approval policy defines the rule that must be met for a transfer to be approved.
+  transfer_approval_policy : opt RequestPolicyRule;
   // The update approval policy for the account.
   //
-  // The update approval policy defines the criteria that must be met for the account to be updated.
-  update_approval_policy : opt ProposalPolicyCriteria;
+  // The update approval policy defines the rule that must be met for the account to be updated.
+  update_approval_policy : opt RequestPolicyRule;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
 };
@@ -1469,9 +1469,6 @@ type CommonSpecifier = variant {
   Id : vec UUID;
 };
 
-// The access control user specifier, used to specify the user that has access to a resource.
-type AccessControlUserSpecifier = CommonSpecifier;
-
 // The record id of a resource, used to specify the resource that is being accessed.
 type ResourceId = variant {
   Any;
@@ -1527,8 +1524,8 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The actions that are available for proposals.
-type ProposalResourceAction = variant {
+// The actions that are available for requests.
+type RequestResourceAction = variant {
   List;
   Read : ResourceId;
 };
@@ -1565,8 +1562,8 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  Proposal : ProposalResourceAction;
-  ProposalPolicy : ResourceAction;
+  Request : RequestResourceAction;
+  RequestPolicy : ResourceAction;
   System : SystemResourceAction;
   User : UserResourceAction;
   UserGroup : ResourceAction;
@@ -1590,7 +1587,7 @@ type Permission = record {
 
 // Input type for listing permissions with the given pagination parameters.
 type ListPermissionsInput = record {
-  // The resources to retrieve policies for.
+  // The resources to retrieve the permissions for.
   resources : opt vec Resource;
   // The pagination parameters.
   paginate : opt PaginationInput;
@@ -1636,7 +1633,7 @@ type ListPermissionsResult = variant {
 };
 
 type GetPermissionInput = record {
-  // The resource to retrive policies for.
+  // The resource to retrive the permission for.
   resource : Resource;
 };
 
@@ -1693,38 +1690,38 @@ type GetUserGroupResult = variant {
   Err : Error;
 };
 
-type GetProposalPolicyInput = record {
-  // The id of the proposal policy to retrieve.
+type GetRequestPolicyInput = record {
+  // The id of the request policy to retrieve.
   id : UUID;
 };
 
-type GetProposalPolicyResult = variant {
+type GetRequestPolicyResult = variant {
   // The result data for a successful execution.
   Ok : record {
-    // The proposal policy that was retrieved.
-    policy : ProposalPolicy;
-    // The privileges of the caller for the proposal policy.
-    privileges : ProposalPolicyCallerPrivileges;
+    // The request policy that was retrieved.
+    policy : RequestPolicy;
+    // The privileges of the caller for the request policy.
+    privileges : RequestPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
 };
 
-// Input type for listing proposal policies with the given pagination parameters.
-type ListProposalPoliciesInput = PaginationInput;
+// Input type for listing request policies with the given pagination parameters.
+type ListRequestPoliciesInput = PaginationInput;
 
-// Result type for listing proposal policies.
-type ListProposalPoliciesResult = variant {
+// Result type for listing request policies.
+type ListRequestPoliciesResult = variant {
   // The result data for a successful execution.
   Ok : record {
-    // The list of proposal policies.
-    policies : vec ProposalPolicy;
+    // The list of request policies.
+    policies : vec RequestPolicy;
     // The offset to use for the next page.
     next_offset : opt nat64;
-    // The total number of proposal policies.
+    // The total number of request policies.
     total : nat64;
-    // The caller privileges for the proposal policies.
-    privileges : vec ProposalPolicyCallerPrivileges;
+    // The caller privileges for the request policies.
+    privileges : vec RequestPolicyCallerPrivileges;
   };
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;
@@ -1741,12 +1738,12 @@ type UserPrivilege = variant {
   ListUserGroups;
   AddUserGroup;
   ListPermissions;
-  ListProposalPolicies;
-  AddProposalPolicy;
+  ListRequestPolicies;
+  AddRequestPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
   ChangeCanister;
-  ListProposals;
+  ListRequests;
 };
 
 type MeResult = variant {
@@ -1841,20 +1838,20 @@ service : (opt SystemInstall) -> {
   get_address_book_entry : (input : GetAddressBookEntryInput) -> (GetAddressBookEntryResult) query;
   // List all address book entries for a given blockchain standard.
   list_address_book_entries : (input : ListAddressBookEntriesInput) -> (ListAddressBookEntriesResult) query;
-  // Create a new proposal.
+  // Create a new request.
   //
-  // The proposal will be created and the caller will be added as the proposer.
-  create_proposal : (input : CreateProposalInput) -> (CreateProposalResult);
-  // Get the list of proposals.
+  // The request will be created and the caller will be added as the requester.
+  create_request : (input : CreateRequestInput) -> (CreateRequestResult);
+  // Get the list of requests.
   //
-  // Only proposals that the caller has access to will be returned.
-  list_proposals : (input : ListProposalsInput) -> (ListProposalsResult) query;
-  // Get the proposal by id.
-  get_proposal : (input : GetProposalInput) -> (GetProposalResult) query;
-  // Record the vote of the user on the proposal.
-  get_next_votable_proposal : (input : GetNextVotableProposalInput) -> (GetNextVotableProposalResponse) query;
-  // Record the vote of the user on the proposal.
-  vote_on_proposal : (input : VoteOnProposalInput) -> (VoteOnProposalResult);
+  // Only requests that the caller has access to will be returned.
+  list_requests : (input : ListRequestsInput) -> (ListRequestsResult) query;
+  // Get the request by id.
+  get_request : (input : GetRequestInput) -> (GetRequestResult) query;
+  // Finds the next aprovable request for the caller.
+  get_next_approvable_request : (input : GetNextApprovableRequestInput) -> (GetNextApprovableRequestResult) query;
+  // Submits the user approval decision for a request.
+  submit_request_approval : (input : SubmitRequestApprovalInput) -> (SubmitRequestApprovalResult);
   // Get the user associated with the user id provided.
   get_user : (input : GetUserInput) -> (GetUserResult) query;
   // List all users of the station.
@@ -1863,10 +1860,10 @@ service : (opt SystemInstall) -> {
   list_permissions : (input : ListPermissionsInput) -> (ListPermissionsResult) query;
   // Get the permission for the resource provided.
   get_permission : (input : GetPermissionInput) -> (GetPermissionResult) query;
-  // List add proposal policies.
-  list_proposal_policies : (input : ListProposalPoliciesInput) -> (ListProposalPoliciesResult) query;
-  // Get proposal policy by id.
-  get_proposal_policy : (input : GetProposalPolicyInput) -> (GetProposalPolicyResult) query;
+  // List add request policies.
+  list_request_policies : (input : ListRequestPoliciesInput) -> (ListRequestPoliciesResult) query;
+  // Get request policy by id.
+  get_request_policy : (input : GetRequestPolicyInput) -> (GetRequestPolicyResult) query;
   // Get a user group by id.
   //
   // If the caller does not have access to the user group, an error will be returned.

@@ -2,7 +2,7 @@ use crate::{resource::ResourceDTO, MetadataDTO, PaginationInput, ResourceIdsDTO,
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalSpecifierDTO {
+pub enum RequestSpecifierDTO {
     AddAccount,
     AddUser,
     EditAccount(ResourceIdsDTO),
@@ -13,9 +13,9 @@ pub enum ProposalSpecifierDTO {
     Transfer(ResourceIdsDTO),
     ChangeCanister,
     EditPermission(ResourceSpecifierDTO),
-    AddProposalPolicy,
-    EditProposalPolicy(ResourceIdsDTO),
-    RemoveProposalPolicy(ResourceIdsDTO),
+    AddRequestPolicy,
+    EditRequestPolicy(ResourceIdsDTO),
+    RemoveRequestPolicy(ResourceIdsDTO),
     AddUserGroup,
     EditUserGroup(ResourceIdsDTO),
     RemoveUserGroup(ResourceIdsDTO),
@@ -42,75 +42,75 @@ pub struct TransferSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ApprovalThresholdDTO {
-    pub voters: UserSpecifierDTO,
-    pub threshold: u16,
+pub struct QuorumPercentageDTO {
+    pub approvers: UserSpecifierDTO,
+    pub min_accepted: u16,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct MinimumVotesDTO {
-    pub voters: UserSpecifierDTO,
-    pub minimum: u16,
+pub struct QuorumDTO {
+    pub approvers: UserSpecifierDTO,
+    pub min_accepted: u16,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ApprovalCriteriaInput {
+pub enum RequestPolicyRuleInput {
     Remove,
-    Set(CriteriaDTO),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum CriteriaDTO {
-    AutoAdopted,
-    ApprovalThreshold(ApprovalThresholdDTO),
-    MinimumVotes(MinimumVotesDTO),
-    HasAddressBookMetadata(MetadataDTO),
-    HasAddressInAddressBook,
-    Or(Vec<CriteriaDTO>),
-    And(Vec<CriteriaDTO>),
-    Not(Box<CriteriaDTO>),
+    Set(RequestPolicyRuleDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum EvaluationStatusDTO {
-    Adopted,
+    Approved,
     Rejected,
     Pending,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum EvaluatedCriteriaDTO {
-    AutoAdopted,
-    ApprovalThreshold {
-        min_required_votes: usize,
-        total_possible_votes: usize,
-        votes: Vec<UuidDTO>,
+pub enum RequestPolicyRuleDTO {
+    AutoApproved,
+    QuorumPercentage(QuorumPercentageDTO),
+    Quorum(QuorumDTO),
+    AllowListedByMetadata(MetadataDTO),
+    AllowListed,
+    AnyOf(Vec<RequestPolicyRuleDTO>),
+    AllOf(Vec<RequestPolicyRuleDTO>),
+    Not(Box<RequestPolicyRuleDTO>),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum EvaluatedRequestPolicyRuleDTO {
+    AutoApproved,
+    QuorumPercentage {
+        total_possible_approvers: usize,
+        min_accepted: usize,
+        approvers: Vec<UuidDTO>,
     },
-    MinimumVotes {
-        min_required_votes: usize,
-        votes: Vec<UuidDTO>,
-        total_possible_votes: usize,
+    Quorum {
+        total_possible_approvers: usize,
+        min_accepted: usize,
+        approvers: Vec<UuidDTO>,
     },
-    HasAddressBookMetadata {
+    AllowListedByMetadata {
         metadata: MetadataDTO,
     },
-    HasAddressInAddressBook,
-    Or(Vec<CriteriaResultDTO>),
-    And(Vec<CriteriaResultDTO>),
-    Not(Box<CriteriaResultDTO>),
+    AllowListed,
+    AnyOf(Vec<RequestPolicyRuleResultDTO>),
+    AllOf(Vec<RequestPolicyRuleResultDTO>),
+    Not(Box<RequestPolicyRuleResultDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CriteriaResultDTO {
+pub struct RequestPolicyRuleResultDTO {
     pub status: EvaluationStatusDTO,
-    pub evaluated_criteria: EvaluatedCriteriaDTO,
+    pub evaluated_rule: EvaluatedRequestPolicyRuleDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalEvaluationResultDTO {
-    pub proposal_id: UuidDTO,
+pub struct RequestEvaluationResultDTO {
+    pub request_id: UuidDTO,
     pub status: EvaluationStatusDTO,
-    pub policy_results: Vec<CriteriaResultDTO>,
+    pub policy_results: Vec<RequestPolicyRuleDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -124,36 +124,36 @@ pub type AccessControlUserSpecifierDTO = CommonSpecifierDTO;
 pub type AccountSpecifierDTO = CommonSpecifierDTO;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalPolicyCallerPrivilegesDTO {
+pub struct RequestPolicyCallerPrivilegesDTO {
     pub id: UuidDTO,
     pub can_edit: bool,
     pub can_delete: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalPolicyDTO {
+pub struct RequestPolicyDTO {
     pub id: UuidDTO,
-    pub specifier: ProposalSpecifierDTO,
-    pub criteria: CriteriaDTO,
+    pub specifier: RequestSpecifierDTO,
+    pub rule: RequestPolicyRuleDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetProposalPolicyInput {
+pub struct GetRequestPolicyInput {
     pub id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetProposalPolicyResponse {
-    pub policy: ProposalPolicyDTO,
-    pub privileges: ProposalPolicyCallerPrivilegesDTO,
+pub struct GetRequestPolicyResponse {
+    pub policy: RequestPolicyDTO,
+    pub privileges: RequestPolicyCallerPrivilegesDTO,
 }
 
-pub type ListProposalPoliciesInput = PaginationInput;
+pub type ListRequestPoliciesInput = PaginationInput;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListProposalPoliciesResponse {
-    pub policies: Vec<ProposalPolicyDTO>,
+pub struct ListRequestPoliciesResponse {
+    pub policies: Vec<RequestPolicyDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
-    pub privileges: Vec<ProposalPolicyCallerPrivilegesDTO>,
+    pub privileges: Vec<RequestPolicyCallerPrivilegesDTO>,
 }

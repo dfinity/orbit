@@ -5,18 +5,18 @@ use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
     AddAddressBookEntryOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
     AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
-    ChangeCanisterOperationInput, CriteriaDTO, DisplayUserDTO, EditAccountOperationDTO,
+    ChangeCanisterOperationInput, DisplayUserDTO, EditAccountOperationDTO,
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInput,
-    ProposalEvaluationResultDTO, ProposalSpecifierDTO, RemoveAddressBookEntryOperationDTO,
-    RemoveAddressBookEntryOperationInput, RemoveUserGroupOperationDTO,
-    RemoveUserGroupOperationInput, SortDirection, UuidDTO,
+    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalStatusDTO {
+pub enum RequestStatusDTO {
     Created,
     Adopted,
     Rejected,
@@ -28,7 +28,7 @@ pub enum ProposalStatusDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ProposalStatusCodeDTO {
+pub enum RequestStatusCodeDTO {
     Created = 0,
     Adopted = 1,
     Rejected = 2,
@@ -40,19 +40,19 @@ pub enum ProposalStatusCodeDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalVoteStatusDTO {
+pub enum RequestApprovalStatusDTO {
     Accepted,
     Rejected,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalExecutionScheduleDTO {
+pub enum RequestExecutionScheduleDTO {
     Immediate,
     Scheduled { execution_time: TimestampRfc3339 },
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalOperationDTO {
+pub enum RequestOperationDTO {
     Transfer(Box<TransferOperationDTO>),
     AddAccount(Box<AddAccountOperationDTO>),
     EditAccount(Box<EditAccountOperationDTO>),
@@ -66,13 +66,13 @@ pub enum ProposalOperationDTO {
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
     ChangeCanister(Box<ChangeCanisterOperationDTO>),
     EditPermission(Box<EditPermissionOperationDTO>),
-    AddProposalPolicy(Box<AddProposalPolicyOperationDTO>),
-    EditProposalPolicy(Box<EditProposalPolicyOperationDTO>),
-    RemoveProposalPolicy(Box<RemoveProposalPolicyOperationDTO>),
+    AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
+    EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
+    RemoveRequestPolicy(Box<RemoveRequestPolicyOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalOperationInput {
+pub enum RequestOperationInput {
     Transfer(TransferOperationInput),
     AddAccount(AddAccountOperationInput),
     EditAccount(EditAccountOperationInput),
@@ -86,13 +86,13 @@ pub enum ProposalOperationInput {
     RemoveUserGroup(RemoveUserGroupOperationInput),
     ChangeCanister(ChangeCanisterOperationInput),
     EditPermission(EditPermissionOperationInput),
-    AddProposalPolicy(AddProposalPolicyOperationInput),
-    EditProposalPolicy(EditProposalPolicyOperationInput),
-    RemoveProposalPolicy(RemoveProposalPolicyOperationInput),
+    AddRequestPolicy(AddRequestPolicyOperationInput),
+    EditRequestPolicy(EditRequestPolicyOperationInput),
+    RemoveRequestPolicy(RemoveRequestPolicyOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ProposalOperationTypeDTO {
+pub enum RequestOperationTypeDTO {
     Transfer,
     AddAccount,
     EditAccount,
@@ -106,83 +106,83 @@ pub enum ProposalOperationTypeDTO {
     RemoveUserGroup,
     ChangeCanister,
     EditPermission,
-    AddProposalPolicy,
-    EditProposalPolicy,
-    RemoveProposalPolicy,
+    AddRequestPolicy,
+    EditRequestPolicy,
+    RemoveRequestPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalVoteDTO {
+pub struct RequestApprovalDTO {
     pub user_id: UuidDTO,
-    pub status: ProposalVoteStatusDTO,
+    pub status: RequestApprovalStatusDTO,
     pub status_reason: Option<String>,
     pub decided_at: TimestampRfc3339,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalDTO {
+pub struct RequestDTO {
     pub id: UuidDTO,
     pub title: String,
     pub summary: Option<String>,
-    pub operation: ProposalOperationDTO,
-    pub proposed_by: UuidDTO,
-    pub votes: Vec<ProposalVoteDTO>,
+    pub operation: RequestOperationDTO,
+    pub requested_by: UuidDTO,
+    pub approvals: Vec<RequestApprovalDTO>,
     pub created_at: TimestampRfc3339,
-    pub status: ProposalStatusDTO,
+    pub status: RequestStatusDTO,
     pub expiration_dt: TimestampRfc3339,
-    pub execution_plan: ProposalExecutionScheduleDTO,
+    pub execution_plan: RequestExecutionScheduleDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalCallerPrivilegesDTO {
+pub struct RequestCallerPrivilegesDTO {
     pub id: UuidDTO,
-    pub can_vote: bool,
+    pub can_approve: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalAdditionalInfoDTO {
+pub struct RequestAdditionalInfoDTO {
     pub id: UuidDTO,
-    pub proposer_name: Option<String>,
-    pub voters: Vec<DisplayUserDTO>,
-    pub evaluation_result: Option<ProposalEvaluationResultDTO>,
+    pub requester_name: Option<String>,
+    pub approvers: Vec<DisplayUserDTO>,
+    pub evaluation_result: Option<RequestEvaluationResultDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateProposalInput {
-    pub operation: ProposalOperationInput,
+pub struct CreateRequestInput {
+    pub operation: RequestOperationInput,
     pub title: Option<String>,
     pub summary: Option<String>,
-    pub execution_plan: Option<ProposalExecutionScheduleDTO>,
+    pub execution_plan: Option<RequestExecutionScheduleDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct VoteOnProposalInput {
+pub struct SubmitRequestApprovalInput {
     pub approve: bool,
-    pub proposal_id: UuidDTO,
+    pub request_id: UuidDTO,
     pub reason: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct VoteOnProposalResponse {
-    pub proposal: ProposalDTO,
-    pub privileges: ProposalCallerPrivilegesDTO,
-    pub additional_info: ProposalAdditionalInfoDTO,
+pub struct SubmitRequestApprovalResponse {
+    pub request: RequestDTO,
+    pub privileges: RequestCallerPrivilegesDTO,
+    pub additional_info: RequestAdditionalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetProposalInput {
-    pub proposal_id: UuidDTO,
+pub struct GetRequestInput {
+    pub request_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetProposalResponse {
-    pub proposal: ProposalDTO,
-    pub privileges: ProposalCallerPrivilegesDTO,
-    pub additional_info: ProposalAdditionalInfoDTO,
+pub struct GetRequestResponse {
+    pub request: RequestDTO,
+    pub privileges: RequestCallerPrivilegesDTO,
+    pub additional_info: RequestAdditionalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ListProposalsOperationTypeDTO {
+pub enum ListRequestsOperationTypeDTO {
     Transfer(Option<UuidDTO>),
     AddAccount,
     EditAccount,
@@ -196,88 +196,88 @@ pub enum ListProposalsOperationTypeDTO {
     RemoveUserGroup,
     ChangeCanister,
     EditPermission,
-    AddProposalPolicy,
-    EditProposalPolicy,
-    RemoveProposalPolicy,
+    AddRequestPolicy,
+    EditRequestPolicy,
+    RemoveRequestPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ListProposalsSortBy {
+pub enum ListRequestsSortBy {
     CreatedAt(SortDirection),
     ExpirationDt(SortDirection),
     LastModificationDt(SortDirection),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListProposalsInput {
-    pub voter_ids: Option<Vec<UuidDTO>>,
-    pub proposer_ids: Option<Vec<UuidDTO>>,
-    pub statuses: Option<Vec<ProposalStatusCodeDTO>>,
-    pub operation_types: Option<Vec<ListProposalsOperationTypeDTO>>,
+pub struct ListRequestsInput {
+    pub requester_ids: Option<Vec<UuidDTO>>,
+    pub approver_ids: Option<Vec<UuidDTO>>,
+    pub statuses: Option<Vec<RequestStatusCodeDTO>>,
+    pub operation_types: Option<Vec<ListRequestsOperationTypeDTO>>,
     pub expiration_from_dt: Option<TimestampRfc3339>,
     pub expiration_to_dt: Option<TimestampRfc3339>,
     pub created_from_dt: Option<TimestampRfc3339>,
     pub created_to_dt: Option<TimestampRfc3339>,
     pub paginate: Option<PaginationInput>,
-    pub sort_by: Option<ListProposalsSortBy>,
-    pub only_votable: bool,
+    pub sort_by: Option<ListRequestsSortBy>,
+    pub only_approvable: bool,
     pub with_evaluation_results: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ListProposalsResponse {
-    pub proposals: Vec<ProposalDTO>,
+pub struct ListRequestsResponse {
+    pub requests: Vec<RequestDTO>,
     pub next_offset: Option<u64>,
     pub total: u64,
-    pub privileges: Vec<ProposalCallerPrivilegesDTO>,
-    pub additional_info: Vec<ProposalAdditionalInfoDTO>,
+    pub privileges: Vec<RequestCallerPrivilegesDTO>,
+    pub additional_info: Vec<RequestAdditionalInfoDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct GetNextVotableProposalInput {
-    pub excluded_proposal_ids: Vec<UuidDTO>,
-    pub operation_types: Option<Vec<ListProposalsOperationTypeDTO>>,
+pub struct GetNextApprovableRequestInput {
+    pub excluded_request_ids: Vec<UuidDTO>,
+    pub operation_types: Option<Vec<ListRequestsOperationTypeDTO>>,
 }
 
-pub type GetNextVotableProposalResponse = Option<GetProposalResponse>;
+pub type GetNextApprovableRequestResponse = Option<GetRequestResponse>;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateProposalResponse {
-    pub proposal: ProposalDTO,
-    pub privileges: ProposalCallerPrivilegesDTO,
-    pub additional_info: ProposalAdditionalInfoDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AddProposalPolicyOperationInput {
-    pub specifier: ProposalSpecifierDTO,
-    pub criteria: CriteriaDTO,
+pub struct CreateRequestResponse {
+    pub request: RequestDTO,
+    pub privileges: RequestCallerPrivilegesDTO,
+    pub additional_info: RequestAdditionalInfoDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AddProposalPolicyOperationDTO {
+pub struct AddRequestPolicyOperationInput {
+    pub specifier: RequestSpecifierDTO,
+    pub rule: RequestPolicyRuleDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct AddRequestPolicyOperationDTO {
     pub policy_id: Option<UuidDTO>,
-    pub input: AddProposalPolicyOperationInput,
+    pub input: AddRequestPolicyOperationInput,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditProposalPolicyOperationInput {
+pub struct EditRequestPolicyOperationInput {
     pub policy_id: UuidDTO,
-    pub specifier: Option<ProposalSpecifierDTO>,
-    pub criteria: Option<CriteriaDTO>,
+    pub specifier: Option<RequestSpecifierDTO>,
+    pub rule: Option<RequestPolicyRuleDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct EditProposalPolicyOperationDTO {
-    pub input: EditProposalPolicyOperationInput,
+pub struct EditRequestPolicyOperationDTO {
+    pub input: EditRequestPolicyOperationInput,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct RemoveProposalPolicyOperationInput {
+pub struct RemoveRequestPolicyOperationInput {
     pub policy_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct RemoveProposalPolicyOperationDTO {
-    pub input: RemoveProposalPolicyOperationInput,
+pub struct RemoveRequestPolicyOperationDTO {
+    pub input: RemoveRequestPolicyOperationInput,
 }

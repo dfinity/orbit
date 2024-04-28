@@ -25,8 +25,8 @@ pub use account::*;
 mod transfer;
 pub use transfer::*;
 
-mod proposal;
-pub use proposal::*;
+mod request;
+pub use request::*;
 
 mod user;
 pub use user::*;
@@ -37,8 +37,8 @@ pub use user_group::*;
 mod change_canister;
 pub use change_canister::*;
 
-mod proposal_policy;
-pub use proposal_policy::*;
+mod request_policy;
+pub use request_policy::*;
 
 mod permission;
 pub use permission::*;

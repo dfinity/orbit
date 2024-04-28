@@ -102,12 +102,12 @@ pub enum UserPrivilege {
     ListUserGroups,
     AddUserGroup,
     ListPermissions,
-    ListProposalPolicies,
-    AddProposalPolicy,
+    ListRequestPolicies,
+    AddRequestPolicy,
     ListAddressBookEntries,
     AddAddressBookEntry,
     ChangeCanister,
-    ListProposals,
+    ListRequests,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

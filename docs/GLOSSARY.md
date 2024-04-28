@@ -109,11 +109,11 @@ These rules can be of the following types:
 
 - **Quorum:** A quotum rule requires a minimum number of signatures to approve a request. Quorum rules can be used to enforce multi-signature requirements for executing requests.
 
-- **Percentage:** A percentage rule requires a minimum percentage of users to approve a request. Percentage rules can be used to enforce multi-signature requirements based on the percentage of users in the station.
+- **Quorum-Percentage:** A percentage rule requires a minimum percentage of users to approve a request. Percentage rules can be used to enforce multi-signature requirements based on the percentage of users in the station.
 
 - **Allow listed:** Allow-listed rules can be used to restrict transfers to specific addresses that are in the address book.
 
-- **Allow listed by label:** Allow-listed by label rules can be used to restrict transfers to specific addresses that are in the address book and have a specific label.
+- **Allow listed by metadata:** Allow-listed by metadata rules can be used to restrict transfers to specific addresses that are in the address book and have a specific metadata field.
 
 There are also the following composite rules that can be used to combine multiple rules:
 
@@ -122,6 +122,10 @@ There are also the following composite rules that can be used to combine multipl
 - **Any of:** A rule that requires any of the sub-rules to be approved. This rule can be used to enforce flexible approval requirements that allow for multiple conditions.
 
 - **Not:** A rule that requires the sub-rule to be rejected. This rule can be used to enforce negative approval requirements that prevent specific conditions from being met. An example of this rule is to prevent a specific user from approving a request.
+
+#### Request Policy Approval
+
+Request Policy Approval is the process of approving a request. Users can add their approval decision to a request based on the rules defined in the Request Policy.
 
 ### Permission
 

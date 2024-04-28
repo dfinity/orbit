@@ -1,4 +1,6 @@
-use crate::{AllowDTO, ApprovalCriteriaInput, CriteriaDTO, MetadataDTO, PaginationInput, UuidDTO};
+use crate::{
+    AllowDTO, MetadataDTO, PaginationInput, RequestPolicyRuleDTO, RequestPolicyRuleInput, UuidDTO,
+};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -19,8 +21,8 @@ pub struct AccountDTO {
     pub decimals: u32,
     pub balance: Option<AccountBalanceInfoDTO>,
     pub metadata: Vec<MetadataDTO>,
-    pub transfer_approval_policy: Option<CriteriaDTO>,
-    pub update_approval_policy: Option<CriteriaDTO>,
+    pub transfer_approval_policy: Option<RequestPolicyRuleDTO>,
+    pub update_approval_policy: Option<RequestPolicyRuleDTO>,
     pub last_modification_timestamp: String,
 }
 
@@ -31,8 +33,8 @@ pub struct EditAccountOperationInput {
     pub read_permission: Option<AllowDTO>,
     pub update_permission: Option<AllowDTO>,
     pub transfer_permission: Option<AllowDTO>,
-    pub update_approval_policy: Option<ApprovalCriteriaInput>,
-    pub transfer_approval_policy: Option<ApprovalCriteriaInput>,
+    pub update_approval_policy: Option<RequestPolicyRuleInput>,
+    pub transfer_approval_policy: Option<RequestPolicyRuleInput>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -49,8 +51,8 @@ pub struct AddAccountOperationInput {
     pub read_permission: AllowDTO,
     pub update_permission: AllowDTO,
     pub transfer_permission: AllowDTO,
-    pub update_approval_policy: Option<CriteriaDTO>,
-    pub transfer_approval_policy: Option<CriteriaDTO>,
+    pub update_approval_policy: Option<RequestPolicyRuleDTO>,
+    pub transfer_approval_policy: Option<RequestPolicyRuleDTO>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

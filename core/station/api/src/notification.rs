@@ -1,10 +1,10 @@
 use super::TimestampRfc3339;
-use crate::{ProposalOperationTypeDTO, UuidDTO};
+use crate::{RequestOperationTypeDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 use std::fmt::{Display, Formatter};
 
 pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
-pub const PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "proposal-created";
+pub const PROPOSAL_CREATED_NOTIFICATION_TYPE: &str = "request-created";
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationStatusDTO {
@@ -15,13 +15,13 @@ pub enum NotificationStatusDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationTypeDTO {
     SystemMessage,
-    ProposalCreated(ProposalCreatedNotificationDTO),
+    RequestCreated(RequestCreatedNotificationDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ProposalCreatedNotificationDTO {
-    pub proposal_id: UuidDTO,
-    pub operation_type: ProposalOperationTypeDTO,
+pub struct RequestCreatedNotificationDTO {
+    pub request_id: UuidDTO,
+    pub operation_type: RequestOperationTypeDTO,
     pub account_id: Option<UuidDTO>,
     pub user_id: Option<UuidDTO>,
 }
@@ -29,7 +29,7 @@ pub struct ProposalCreatedNotificationDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationTypeInput {
     SystemMessage,
-    ProposalCreated,
+    RequestCreated,
 }
 
 impl Display for NotificationTypeInput {
@@ -38,7 +38,7 @@ impl Display for NotificationTypeInput {
             NotificationTypeInput::SystemMessage => {
                 write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE)
             }
-            NotificationTypeInput::ProposalCreated => {
+            NotificationTypeInput::RequestCreated => {
                 write!(f, "{}", PROPOSAL_CREATED_NOTIFICATION_TYPE)
             }
         }
