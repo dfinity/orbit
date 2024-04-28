@@ -309,10 +309,6 @@ export default {
     policy_fixed_approval_threshold_desc: 'Exact number approvals required to operate the account',
     policy_variable_approval_threshold_desc:
       'Percentage of approvals required to operate the account',
-    policies: {
-      VariableApprovalThreshold: 'Percentage based approval',
-      FixedApprovalThreshold: 'Exact number of approvals',
-    },
     requests: {
       transfer: {
         title: 'Approve transfer',

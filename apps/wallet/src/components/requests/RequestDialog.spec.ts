@@ -53,7 +53,7 @@ const approvableRequestResponse = {
   //...
 } as ExtractOk<GetRequestResult>;
 
-const nextVotableRequestResponse = {
+const nextApprovableRequestResponse = {
   privileges: { can_approve: true },
   request: {
     id: 'next-id',
@@ -182,7 +182,7 @@ describe('RequestDialog', () => {
       completedRequestResponse.request,
     );
     vi.spyOn(services().station, 'getNextApprovableRequest').mockResolvedValueOnce([
-      nextVotableRequestResponse,
+      nextApprovableRequestResponse,
     ]);
 
     const wrapper = mount(RequestDialog, {

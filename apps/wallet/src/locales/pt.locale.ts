@@ -309,10 +309,6 @@ export default {
     policy_config_unavailable: 'Configuração da regra indisponível.',
     policy_fixed_approval_threshold_desc: 'Número fixo de aprovações para operaraçōes',
     policy_variable_approval_threshold_desc: 'Percentual de aprovações para operaraçōes',
-    policies: {
-      VariableApprovalThreshold: 'Aprovação por porcentagem',
-      FixedApprovalThreshold: 'Aprovação por votos fixos',
-    },
     requests: {
       transfer: {
         title: 'Approvar transferência',

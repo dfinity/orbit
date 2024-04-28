@@ -312,10 +312,6 @@ export default {
       "Un nombre exact d'aprobations est requis pour executer des opérations sur le compte",
     policy_variable_approval_threshold_desc:
       "Un pourcentage d'aprobations est requis pour executer des opérations sur le compte",
-    policies: {
-      VariableApprovalThreshold: "Pourcentage d'aprobations",
-      FixedApprovalThreshold: "Nombre exact d'aprobations",
-    },
     requests: {
       transfer: {
         title: 'Aprobation de transfert',
