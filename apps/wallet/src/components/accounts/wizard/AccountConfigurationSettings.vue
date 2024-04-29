@@ -9,7 +9,7 @@
         variant="plain"
         density="comfortable"
         hide-details
-        :disabled="isViewMode"
+        disabled
       />
     </VCol>
     <VCol cols="12" class="pt-4 pb-0">
@@ -22,7 +22,7 @@
         :rules="[requiredRule]"
         variant="filled"
         density="comfortable"
-        :disabled="isViewMode"
+        :disabled="isViewMode || !!model.id"
         @selected-asset="onSelectedAsset"
       />
     </VCol>
