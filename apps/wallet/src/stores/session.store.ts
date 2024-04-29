@@ -366,7 +366,7 @@ export const useSessionStore = defineStore('session', {
       if (!isRegistered) {
         await controlPanelService.register({
           // a new user is created with an empty list of stations, they can add them later
-          station_id: [],
+          station: [],
         });
       }
 
