@@ -96,9 +96,7 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const RegisterUserInput = IDL.Record({
-    'station_id' : IDL.Opt(IDL.Principal),
-  });
+  const RegisterUserInput = IDL.Record({ 'station' : IDL.Opt(UserStation) });
   const RegisterUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,

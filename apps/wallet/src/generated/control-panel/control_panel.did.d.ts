@@ -60,7 +60,7 @@ export interface ManageUserInput {
 }
 export type ManageUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export interface RegisterUserInput { 'station_id' : [] | [Principal] }
+export interface RegisterUserInput { 'station' : [] | [UserStation] }
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |

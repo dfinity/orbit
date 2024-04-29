@@ -149,7 +149,7 @@ type GetUserResult = variant {
 // The input for registering an user.
 type RegisterUserInput = record {
   // A station canister to use for this user.
-  station_id : opt principal;
+  station : opt UserStation;
 };
 
 // The result of registering an user.
