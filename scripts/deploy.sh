@@ -110,9 +110,9 @@ function get_subnet_type() {
 #############################################
 
 function build_wasms() {
-  echo "Building the WASMs for the wallet and upgrader canisters."
+  echo "Building the WASMs for the station and upgrader canisters."
 
-  ./scripts/generate-wasm.sh wallet
+  ./scripts/generate-wasm.sh station
   ./scripts/generate-wasm.sh upgrader
 }
 
@@ -169,11 +169,11 @@ function deploy_control_panel() {
 
   echo "Building the control_panel wasm..."
 
-  ./scripts/generate-wasm.sh control_panel
+  ./scripts/generate-wasm.sh control-panel
 
   # Read the WASM files and convert them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-  wallet_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/wallet.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/station.wasm.gz | sed 's/../\\&/g')
 
   set +e # Disable 'exit on error'
   canister_id_output=$(dfx canister id control_panel --network $network 2>&1)
@@ -184,7 +184,7 @@ function deploy_control_panel() {
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
     dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; } })")
   else
     echo "Canister 'control_panel' already exists with ID: $canister_id_output"
 
@@ -192,21 +192,21 @@ function deploy_control_panel() {
 
     if [ "$module_hash" == "None" ]; then
       echo "Installing the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; } })")
     else
       echo "Upgrading the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = opt blob \"$wallet_wasm_module_bytes\"; } })")
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; } })")
     fi
   fi
 }
 
-function deploy_ui() {
+function deploy_app_wallet() {
   local network=$(get_network)
   local subnet_type=$(get_subnet_type)
 
-  echo "Deploying the UI canister to the '$network' network."
+  echo "Deploying the Orbit Wallet to the '$network' network."
 
-  BUILD_MODE=$network dfx deploy --network $network ui --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  BUILD_MODE=$network dfx deploy --network $network app_wallet --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
 }
 
 #############################################
@@ -233,7 +233,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_enviroment
     identity_warning_confirmation
     exec_function deploy_control_panel
-    exec_function deploy_ui
+    exec_function deploy_app_wallet
     echo
     ;;
   --staging)
@@ -242,7 +242,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_enviroment
     identity_warning_confirmation
     exec_function deploy_control_panel
-    exec_function deploy_ui
+    exec_function deploy_app_wallet
     echo
     ;;
   --testing)
@@ -251,7 +251,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_enviroment
     identity_warning_confirmation
     exec_function deploy_control_panel
-    exec_function deploy_ui
+    exec_function deploy_app_wallet
     echo
     ;;
   --playground)
@@ -264,7 +264,7 @@ while [[ $# -gt 0 ]]; do
       exec_function reset_control_panel
     fi
     exec_function deploy_control_panel
-    exec_function deploy_ui
+    exec_function deploy_app_wallet
     echo
     ;;
   *)

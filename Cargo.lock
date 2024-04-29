@@ -304,33 +304,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "control_panel"
+name = "control-panel"
 version = "0.1.0"
 dependencies = [
  "candid",
  "candid_parser",
  "canfund",
- "control_panel_api",
+ "control-panel-api",
  "email_address",
- "ic-canister-core",
- "ic-canister-macros",
  "ic-cdk 0.13.1",
  "ic-cdk-macros 0.9.0",
  "ic-cdk-timers",
  "ic-stable-structures",
  "lazy_static",
+ "orbit-essentials",
  "rstest",
  "serde",
  "serde_cbor",
  "serde_json",
+ "station-api",
  "thiserror",
  "tokio",
  "uuid",
- "wallet_api",
 ]
 
 [[package]]
-name = "control_panel_api"
+name = "control-panel-api"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -792,40 +791,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-canister-core"
-version = "0.1.0"
-dependencies = [
- "candid",
- "convert_case",
- "getrandom",
- "ic-canister-macros",
- "ic-cdk 0.13.1",
- "ic-stable-structures",
- "prometheus",
- "rand_chacha",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "serde_json",
- "thiserror",
- "time",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "ic-canister-macros"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ic-stable-structures",
- "proc-macro2",
- "quote",
- "serde",
- "syn 2.0.39",
-]
-
-[[package]]
 name = "ic-cdk"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -960,18 +925,18 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_parser",
- "control_panel_api",
+ "control-panel-api",
  "hex",
- "ic-canister-core",
  "ic-cdk 0.13.1",
  "ic-ledger-types",
  "lazy_static",
  "num-bigint",
+ "orbit-essentials",
  "pocket-ic",
  "serde",
  "sha2",
- "upgrader_api",
- "wallet_api",
+ "station-api",
+ "upgrader-api",
 ]
 
 [[package]]
@@ -1273,6 +1238,48 @@ name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
+
+[[package]]
+name = "orbit-essentials"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "convert_case",
+ "getrandom",
+ "ic-cdk 0.13.1",
+ "ic-stable-structures",
+ "orbit-essentials-macros",
+ "prometheus",
+ "rand_chacha",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "serde_json",
+ "thiserror",
+ "time",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "orbit-essentials-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+]
+
+[[package]]
+name = "orbit-essentials-macros-tests"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "orbit-essentials",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+]
 
 [[package]]
 name = "overload"
@@ -1932,6 +1939,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "station"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "byteorder",
+ "canbench-rs",
+ "candid",
+ "candid_parser",
+ "canfund",
+ "deunicode",
+ "futures",
+ "hex",
+ "ic-cdk 0.13.1",
+ "ic-cdk-macros 0.9.0",
+ "ic-cdk-timers",
+ "ic-ledger-types",
+ "ic-stable-structures",
+ "lazy_static",
+ "num-bigint",
+ "orbit-essentials",
+ "rstest",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "sha2",
+ "station-api",
+ "thiserror",
+ "tokio",
+ "upgrader-api",
+ "uuid",
+]
+
+[[package]]
+name = "station-api"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "string_cache"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2329,22 +2379,22 @@ dependencies = [
  "candid",
  "candid_parser",
  "hex",
- "ic-canister-macros",
  "ic-cdk 0.13.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "lazy_static",
  "mockall",
+ "orbit-essentials",
  "serde",
  "serde_cbor",
  "sha2",
  "thiserror",
  "tokio",
- "upgrader_api",
+ "upgrader-api",
 ]
 
 [[package]]
-name = "upgrader_api"
+name = "upgrader-api"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -2383,50 +2433,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "wallet"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "byteorder",
- "canbench-rs",
- "candid",
- "candid_parser",
- "canfund",
- "deunicode",
- "futures",
- "hex",
- "ic-canister-core",
- "ic-canister-macros",
- "ic-cdk 0.13.1",
- "ic-cdk-macros 0.9.0",
- "ic-cdk-timers",
- "ic-ledger-types",
- "ic-stable-structures",
- "lazy_static",
- "num-bigint",
- "rstest",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "sha2",
- "thiserror",
- "tokio",
- "upgrader_api",
- "uuid",
- "wallet_api",
-]
-
-[[package]]
-name = "wallet_api"
-version = "0.1.0"
-dependencies = [
- "candid",
- "serde",
- "serde_bytes",
-]
 
 [[package]]
 name = "want"

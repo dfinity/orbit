@@ -67,7 +67,7 @@ jobs:
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel
-          dfx generate wallet
+          dfx generate station
       - name: 'Check that no file changed'
         run: git diff --exit-code
   validate-rust:
