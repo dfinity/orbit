@@ -3,6 +3,7 @@ import { Principal } from '@dfinity/principal';
 import { appInitConfig } from '~/configs/init.config';
 import { idlFactory } from '~/generated/control-panel';
 import {
+  CanDeployStationResponse,
   ManageUserInput,
   RegisterUserInput,
   User,
@@ -116,5 +117,16 @@ export class ControlPanelService {
     }
 
     return result.Ok.canister_id;
+  }
+
+  async canDeployStation(verifiedCall = false): Promise<CanDeployStationResponse> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.can_deploy_station();
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 }
