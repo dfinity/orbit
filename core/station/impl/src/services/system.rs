@@ -16,8 +16,8 @@ use crate::{
 };
 use candid::Principal;
 use lazy_static::lazy_static;
+use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
-use orbit_essentials::{api::ServiceResult, model::ModelValidator};
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -200,8 +200,6 @@ impl SystemService {
         // sets the name of the canister
         system_info.set_name(input.name.clone());
 
-        system_info.validate()?;
-
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the station upgrader and makes sure
         // there are no unintended controllers of the canister.
@@ -254,7 +252,6 @@ impl SystemService {
 
         if let Some(name) = &input.name {
             system_info.set_name(name.clone());
-            system_info.validate()?;
 
             write_system_info(system_info.clone());
         }

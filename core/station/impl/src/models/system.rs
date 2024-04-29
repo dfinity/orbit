@@ -1,14 +1,11 @@
-use crate::{
-    core::{
-        ic_cdk::api::{time, trap},
-        WASM_PAGE_SIZE,
-    },
-    errors::SystemError,
+use crate::core::{
+    ic_cdk::api::{time, trap},
+    WASM_PAGE_SIZE,
 };
 use candid::Principal;
 use ic_stable_structures::{storable::Bound, Storable};
+use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
-use orbit_essentials::{model::ModelValidator, storable};
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -64,6 +61,15 @@ impl SystemInfo {
     }
 
     pub fn set_name(&mut self, name: String) {
+        let mut name = name.trim().to_string();
+        if name.is_empty() {
+            name = "Station".to_string();
+        }
+
+        if name.len() > Self::MAX_NAME_LENGTH {
+            name = name.chars().take(Self::MAX_NAME_LENGTH).collect();
+        }
+
         self.name = name;
     }
 
@@ -105,30 +111,6 @@ impl SystemInfo {
 
     pub fn clear_change_canister_request(&mut self) {
         self.change_canister_request = None;
-    }
-}
-
-fn validate_name(name: &str) -> Result<(), SystemError> {
-    if name.trim().is_empty() {
-        return Err(SystemError::ValidationError {
-            reason: "name is empty".to_string(),
-        });
-    }
-
-    if name.len() > SystemInfo::MAX_NAME_LENGTH {
-        return Err(SystemError::ValidationError {
-            reason: "name is too long".to_string(),
-        });
-    }
-
-    Ok(())
-}
-
-impl ModelValidator<SystemError> for SystemInfo {
-    fn validate(&self) -> Result<(), SystemError> {
-        validate_name(&self.name)?;
-
-        Ok(())
     }
 }
 
@@ -174,15 +156,24 @@ mod tests {
     #[test]
     fn test_system_info_name_validation() {
         let mut info = SystemInfo::default();
-        assert!(info.validate().is_ok());
+        assert_eq!(info.name, "Station");
 
         info.set_name("test".to_string());
-        assert!(info.validate().is_ok());
+        assert_eq!(info.name, "test");
 
         info.set_name("".to_string());
-        assert!(info.validate().is_err());
+        assert_eq!(info.name, "Station");
 
         info.set_name("a".repeat(SystemInfo::MAX_NAME_LENGTH + 1));
-        assert!(info.validate().is_err());
+        assert_eq!(info.name, "a".repeat(SystemInfo::MAX_NAME_LENGTH));
+
+        info.set_name("  test  ".to_string());
+        assert_eq!(info.name, "test");
+
+        info.set_name("test  ".to_string());
+        assert_eq!(info.name, "test");
+
+        info.set_name("  test".to_string());
+        assert_eq!(info.name, "test");
     }
 }

@@ -10,8 +10,6 @@ pub enum SystemError {
     InitFailed { reason: String },
     #[error(r#"The canister needs at least one admin"#)]
     NoAdminsSpecified,
-    #[error(r#"The system has invalid information: {reason}"#)]
-    ValidationError { reason: String },
 }
 
 impl DetailableError for SystemError {
