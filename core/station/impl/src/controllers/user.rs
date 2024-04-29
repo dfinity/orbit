@@ -134,10 +134,9 @@ mod tests {
             .add_user(AddUserOperationInput {
                 groups: vec![],
                 identities: vec![identity],
-                name: None,
+                name: "user-1".to_string(),
                 status: UserStatus::Active,
             })
-            .await
             .expect("Failed to add user");
 
         set_mock_caller(identity);
@@ -156,10 +155,9 @@ mod tests {
             .add_user(AddUserOperationInput {
                 groups: vec![[0; 16]],
                 identities: vec![identity],
-                name: None,
+                name: "user-1".to_string(),
                 status: UserStatus::Active,
             })
-            .await
             .expect("Failed to add user");
 
         set_mock_caller(identity);

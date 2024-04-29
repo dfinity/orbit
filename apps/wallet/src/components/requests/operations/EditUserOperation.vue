@@ -46,7 +46,7 @@ const formValue: Ref<Partial<User>> = ref({});
 onBeforeMount(() => {
   const user: Partial<User> = {};
   user.id = props.operation.input.id;
-  user.name = props.operation.input.name;
+  user.name = props.operation.input.name?.[0];
   if (props.operation.input.status?.[0]) {
     user.status = props.operation.input.status?.[0];
   }

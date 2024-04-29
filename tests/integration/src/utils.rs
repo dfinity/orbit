@@ -211,7 +211,7 @@ pub fn add_user(
     station_canister_id: Principal,
 ) -> UserDTO {
     let add_user = RequestOperationInput::AddUser(AddUserOperationInput {
-        name: None,
+        name: user_id.to_text().to_string(),
         identities: vec![user_id],
         groups: group_ids,
         status: UserStatusDTO::Active,

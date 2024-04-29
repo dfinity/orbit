@@ -2,9 +2,13 @@ export const idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const AdminInitInput = IDL.Record({
+    'name' : IDL.Text,
+    'identity' : IDL.Principal,
+  });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
-    'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
+    'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });
   const SystemInstall = IDL.Variant({
@@ -104,7 +108,7 @@ export const idlFactory = ({ IDL }) => {
   const AddUserOperationInput = IDL.Record({
     'status' : UserStatus,
     'groups' : IDL.Vec(UUID),
-    'name' : IDL.Opt(IDL.Text),
+    'name' : IDL.Text,
     'identities' : IDL.Vec(IDL.Principal),
   });
   const EditUserGroupOperationInput = IDL.Record({
@@ -304,7 +308,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : UUID,
     'status' : UserStatus,
     'groups' : IDL.Vec(UserGroup),
-    'name' : IDL.Opt(IDL.Text),
+    'name' : IDL.Text,
     'last_modification_timestamp' : TimestampRFC3339,
     'identities' : IDL.Vec(IDL.Principal),
   });
@@ -460,11 +464,11 @@ export const idlFactory = ({ IDL }) => {
     'status' : EvaluationStatus,
     'policy_results' : IDL.Vec(RequestPolicyRuleResult),
   });
-  const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Opt(IDL.Text) });
+  const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
   const RequestAdditionalInfo = IDL.Record({
     'id' : UUID,
     'evaluation_result' : IDL.Opt(RequestEvaluationResult),
-    'requester_name' : IDL.Opt(IDL.Text),
+    'requester_name' : IDL.Text,
     'approvers' : IDL.Vec(DisplayUser),
   });
   const CreateRequestResult = IDL.Variant({
@@ -1014,9 +1018,13 @@ export const idlFactory = ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const AdminInitInput = IDL.Record({
+    'name' : IDL.Text,
+    'identity' : IDL.Principal,
+  });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
-    'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
+    'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });
   const SystemInstall = IDL.Variant({

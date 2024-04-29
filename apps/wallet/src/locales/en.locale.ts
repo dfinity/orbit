@@ -553,6 +553,7 @@ export default {
       station_body:
         'Create your own wallet and manage your digital assets. You can add users, set permissions and manage request approval policies.',
       station_name_field: 'Wallet Name',
+      admin_name_field: 'Admin Name',
 
       check_permissions_title: 'Checking waiting list status...',
       join_waitlist_title: 'Join waiting list',

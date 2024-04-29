@@ -10,16 +10,12 @@
           data-test-id="requested_by"
         >
           <span class="text-no-wrap text-truncate" style="max-width: 80px">
-            {{
-              props.details.requester_name
-                ? props.details.requester_name
-                : props.request.requested_by
-            }}
+            {{ props.details.requester_name }}
           </span>
         </VChip>
       </template>
       <span>
-        {{ $t('requests.requested_by', { name: props.details.requester_name ?? '-' }) }}
+        {{ $t('requests.requested_by', { name: props.details.requester_name }) }}
         <br />
         {{ $t('requests.requester_id', { id: props.request.requested_by }) }}
       </span>

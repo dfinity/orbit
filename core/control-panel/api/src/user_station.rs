@@ -3,7 +3,8 @@ use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DeployStationInput {
-    pub name: String,
+    pub station_name: String,
+    pub admin_name: String,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

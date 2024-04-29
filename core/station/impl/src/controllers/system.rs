@@ -71,9 +71,8 @@ impl SystemController {
 
     #[cfg(any(not(feature = "canbench"), test))]
     async fn initialize(&self, input: station_api::SystemInit) {
-        let ctx = &call_context();
         self.system_service
-            .init_canister(input, ctx)
+            .init_canister(input)
             .await
             .unwrap_or_else(|err| {
                 trap(&format!("Error: initializing canister failed {err}"));

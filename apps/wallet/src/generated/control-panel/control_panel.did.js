@@ -48,7 +48,10 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const DeployStationInput = IDL.Record({ 'name' : IDL.Text });
+  const DeployStationInput = IDL.Record({
+    'admin_name' : IDL.Text,
+    'station_name' : IDL.Text,
+  });
   const DeployStationResult = IDL.Variant({
     'Ok' : IDL.Record({ 'canister_id' : StationID }),
     'Err' : ApiError,

@@ -5,7 +5,7 @@ use crate::{
             next_time,
         },
         metrics::recompute_metrics,
-        read_system_info, read_system_state, write_system_info, CallContext,
+        read_system_info, read_system_state, write_system_info,
     },
     errors::SystemError,
     models::{
@@ -130,7 +130,6 @@ impl SystemService {
             // registers the default canister configurations such as policies and user groups.
             print("Adding initial canister configurations");
             install_canister_handlers::init_post_process().await?;
-            install_canister_handlers::set_admins(init.admins.unwrap_or_default()).await?;
 
             print("Deploying upgrader canister");
             let canister_id = self_canister_id();
@@ -185,18 +184,22 @@ impl SystemService {
     /// Initializes the canister with the given owners and settings.
     ///
     /// Must only be called within a canister init call.
-    pub async fn init_canister(&self, input: SystemInit, ctx: &CallContext) -> ServiceResult<()> {
+    pub async fn init_canister(&self, input: SystemInit) -> ServiceResult<()> {
         let mut system_info = SystemInfo::default();
-        let admins = match &input.admins {
-            Some(admins) => admins.to_owned(),
-            None => vec![ctx.caller()],
-        };
 
-        if admins.is_empty() {
+        if input.admins.is_empty() {
             return Err(SystemError::NoAdminsSpecified)?;
         }
 
+        // adds the default admin group
+        init_canister_sync_handlers::add_admin_group();
+
+        // registers the admins of the canister
+        init_canister_sync_handlers::set_admins(input.admins.clone())?;
+
+        // sets the name of the canister
         system_info.set_name(input.name.clone());
+
         system_info.validate()?;
 
         // Handles the post init process in a one-off timer to allow for inter canister calls,
@@ -264,6 +267,52 @@ impl SystemService {
     }
 }
 
+mod init_canister_sync_handlers {
+    use crate::core::ic_cdk::{api::print, next_time};
+    use crate::models::{AddUserOperationInput, UserStatus};
+    use crate::services::USER_SERVICE;
+    use crate::{
+        models::{UserGroup, ADMIN_GROUP_ID},
+        repositories::USER_GROUP_REPOSITORY,
+    };
+    use orbit_essentials::api::ApiError;
+    use orbit_essentials::repository::Repository;
+    use station_api::AdminInitInput;
+    use uuid::Uuid;
+
+    pub fn add_admin_group() {
+        // adds the admin group which is used as the default group for admins during the canister instantiation
+        USER_GROUP_REPOSITORY.insert(
+            ADMIN_GROUP_ID.to_owned(),
+            UserGroup {
+                id: ADMIN_GROUP_ID.to_owned(),
+                name: "Admin".to_owned(),
+                last_modification_timestamp: next_time(),
+            },
+        );
+    }
+
+    /// Registers the newly added admins of the canister.
+    pub fn set_admins(admins: Vec<AdminInitInput>) -> Result<(), ApiError> {
+        print(format!("Registering {} admin users", admins.len()));
+        for admin in admins {
+            let user = USER_SERVICE.add_user(AddUserOperationInput {
+                identities: vec![admin.identity.to_owned()],
+                groups: vec![ADMIN_GROUP_ID.to_owned()],
+                name: admin.name.to_owned(),
+                status: UserStatus::Active,
+            })?;
+
+            print(&format!(
+                "Added admin user with principal {} and user id {}",
+                admin.identity.to_text(),
+                Uuid::from_bytes(user.id).hyphenated()
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
@@ -296,16 +345,6 @@ mod install_canister_handlers {
 
     /// Registers the default configurations for the canister.
     pub async fn init_post_process() -> Result<(), String> {
-        // adds the admin group which is used as the default group for admins during the canister instantiation
-        USER_GROUP_REPOSITORY.insert(
-            ADMIN_GROUP_ID.to_owned(),
-            UserGroup {
-                id: ADMIN_GROUP_ID.to_owned(),
-                name: "Admin".to_owned(),
-                last_modification_timestamp: next_time(),
-            },
-        );
-
         // adds the default request policies which sets safe defaults for the canister
         for policy in DEFAULT_REQUEST_POLICIES.iter() {
             REQUEST_POLICY_SERVICE
@@ -379,29 +418,6 @@ mod install_canister_handlers {
         .map_err(|e| format!("Failed to set station controller: {:?}", e))
     }
 
-    /// Registers the newly added admins of the canister.
-    pub async fn set_admins(admins: Vec<Principal>) -> Result<(), String> {
-        print(&format!("Registering {:?} admin users", admins.len()));
-        for admin in admins {
-            let user = USER_SERVICE
-                .add_user(AddUserOperationInput {
-                    identities: vec![admin.to_owned()],
-                    groups: vec![ADMIN_GROUP_ID.to_owned()],
-                    name: None,
-                    status: UserStatus::Active,
-                })
-                .await
-                .map_err(|e| format!("Failed to register admin user: {:?}", e))?;
-
-            print(&format!(
-                "Added admin user with principal {:?} and user id {:?}",
-                admin.to_text(),
-                Uuid::from_bytes(user.id).hyphenated().to_string()
-            ));
-        }
-        Ok(())
-    }
-
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
     pub fn monitor_upgrader_cycles(upgrader_id: Principal) {
         print(format!(
@@ -437,21 +453,19 @@ mod tests {
     use super::*;
     use crate::models::request_test_utils::mock_request;
     use candid::Principal;
+    use station_api::AdminInitInput;
 
     #[tokio::test]
     async fn canister_init() {
-        let caller = Principal::from_slice(&[1; 29]);
-        let ctx = CallContext::new(caller);
-
         let result = SYSTEM_SERVICE
-            .init_canister(
-                SystemInit {
-                    name: "Station".to_string(),
-                    admins: Some(vec![Principal::from_slice(&[1; 29])]),
-                    upgrader_wasm_module: vec![],
-                },
-                &ctx,
-            )
+            .init_canister(SystemInit {
+                name: "Station".to_string(),
+                admins: vec![AdminInitInput {
+                    name: "Admin".to_string(),
+                    identity: Principal::from_slice(&[1; 29]),
+                }],
+                upgrader_wasm_module: vec![],
+            })
             .await;
 
         assert!(result.is_ok());

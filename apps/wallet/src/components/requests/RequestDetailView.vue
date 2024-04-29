@@ -74,7 +74,7 @@
       <tbody>
         <tr v-for="approval in approvals" :key="approval.approver?.id">
           <td>
-            {{ approval.approver.name?.[0] || approval.approver.id }}
+            {{ approval.approver.name || approval.approver.id }}
           </td>
           <td>
             <RequestApprovalStatusChip
@@ -275,7 +275,7 @@ const approvals = computed(() =>
     return {
       approver: approver || {
         id: approval.approver_id,
-        name: [],
+        name: '',
       },
       approval,
     };

@@ -5,8 +5,8 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use control_panel_api::{
-    DeployStationResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
-    UserSubscriptionStatusDTO,
+    DeployStationInput, DeployStationResponse, RegisterUserInput, RegisterUserResponse,
+    UpdateWaitingListInput, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
@@ -101,13 +101,18 @@ fn successful_monitors_stations_and_tops_up() {
     .unwrap();
     res.0.unwrap();
 
+    let deploy_station_args = DeployStationInput {
+        station_name: "test_station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+
     // deploy user station
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
         "deploy_station",
-        (),
+        (deploy_station_args,),
     )
     .unwrap();
     let newly_created_user_station = res.0.unwrap().canister_id;

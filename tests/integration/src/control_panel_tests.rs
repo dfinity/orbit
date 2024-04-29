@@ -2,9 +2,9 @@ use crate::setup::setup_new_env;
 use crate::utils::{controller_test_id, user_test_id};
 use crate::TestEnv;
 use control_panel_api::{
-    DeployStationResponse, GetMainStationResponse, ManageUserInput, ManageUserResponse,
-    RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserStationDTO,
-    UserSubscriptionStatusDTO,
+    DeployStationInput, DeployStationResponse, GetMainStationResponse, ManageUserInput,
+    ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
+    UserStationDTO, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
@@ -82,13 +82,18 @@ fn deploy_user_station() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
 
+    let deploy_station_args = DeployStationInput {
+        station_name: "station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+
     // user can't deploy station before being approved
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
         "deploy_station",
-        (),
+        (deploy_station_args,),
     )
     .unwrap();
     res.0.unwrap_err();
@@ -104,13 +109,18 @@ fn deploy_user_station() {
     .unwrap();
     res.0.unwrap();
 
+    let deploy_station_args = DeployStationInput {
+        station_name: "station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+
     // user can't deploy station before being approved
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
         "deploy_station",
-        (),
+        (deploy_station_args,),
     )
     .unwrap();
     res.0.unwrap_err();
@@ -141,13 +151,18 @@ fn deploy_user_station() {
     .unwrap();
     res.0.unwrap();
 
+    let deploy_station_args = DeployStationInput {
+        station_name: "station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+
     // deploy user station
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
         "deploy_station",
-        (),
+        (deploy_station_args,),
     )
     .unwrap();
     let newly_created_user_station = res.0.unwrap().canister_id;
@@ -232,13 +247,18 @@ fn deploy_too_many_stations() {
 
     // deploy the maximum amount of user stations
     let mut stations = vec![];
-    for _ in 0..3 {
+    for i in 0..3 {
+        let deploy_station_args = DeployStationInput {
+            station_name: format!("station_{}", i),
+            admin_name: "admin".to_string(),
+        };
+
         let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
             &env,
             canister_ids.control_panel,
             user_id,
             "deploy_station",
-            (),
+            (deploy_station_args,),
         )
         .unwrap();
         stations.push(res.0.unwrap().canister_id);
@@ -270,13 +290,18 @@ fn deploy_too_many_stations() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.stations.len(), 1);
 
+    let deploy_station_args = DeployStationInput {
+        station_name: "last_station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+
     // deploying an additional station should fail nonetheless
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
         "deploy_station",
-        (),
+        (deploy_station_args,),
     )
     .unwrap();
     assert_eq!(res.0.unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");

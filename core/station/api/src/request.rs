@@ -142,7 +142,7 @@ pub struct RequestCallerPrivilegesDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct RequestAdditionalInfoDTO {
     pub id: UuidDTO,
-    pub requester_name: Option<String>,
+    pub requester_name: String,
     pub approvers: Vec<DisplayUserDTO>,
     pub evaluation_result: Option<RequestEvaluationResultDTO>,
 }

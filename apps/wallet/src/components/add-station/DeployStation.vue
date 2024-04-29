@@ -74,6 +74,19 @@
         :disabled="working"
         data-test-id="deploy-station-form-name-field"
       />
+
+      <VTextField
+        v-model.trim="adminName"
+        type="text"
+        name="admin_name"
+        :rules="[requiredRule, maxLengthRule(50, $t('pages.add_station.admin_name_field'))]"
+        :label="$t('pages.add_station.admin_name_field')"
+        :variant="'outlined'"
+        hide-details="auto"
+        :disabled="working"
+        data-test-id="deploy-station-form-admin-name-field"
+      />
+
       <div class="d-flex align-center ga-4 mt-6">
         <VBtn
           color="primary"
@@ -209,6 +222,7 @@ const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 const stationName = ref('');
+const adminName = ref('');
 const stationForm = ref<VFormValidation | null>(null);
 const isStationFormValid = computed(() => (stationForm.value ? stationForm.value.isValid : false));
 
@@ -245,7 +259,8 @@ const deployInitialStation = async (): Promise<void> => {
   try {
     deploymentStatus.value = DeployStationStatus.Deploying;
     const stationId = await controlPanelService.deployStation({
-      name: stationName.value,
+      station_name: stationName.value,
+      admin_name: adminName.value,
     });
     const controlPanelUser = await controlPanelService.getCurrentUser();
 

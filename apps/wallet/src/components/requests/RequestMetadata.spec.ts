@@ -7,7 +7,7 @@ describe('RequestMetadata', () => {
   it('renders properly', () => {
     const wrapper = mount(RequestMetadata, {
       props: {
-        details: { can_approve: false, requester_name: undefined, approvers: [] },
+        details: { can_approve: false, requester_name: 'requester', approvers: [] },
         request: {
           status: { Approved: null },
         } as Request,
@@ -20,7 +20,7 @@ describe('RequestMetadata', () => {
   it('shows the expiration_dt when still pending', () => {
     const wrapper = mount(RequestMetadata, {
       props: {
-        details: { can_approve: false, requester_name: undefined, approvers: [] },
+        details: { can_approve: false, requester_name: 'requester', approvers: [] },
         request: {
           expiration_dt: new Date().toISOString(),
           status: { Created: null },
@@ -35,7 +35,7 @@ describe('RequestMetadata', () => {
   it('hides the expiration_dt when not pending', () => {
     const wrapper = mount(RequestMetadata, {
       props: {
-        details: { can_approve: false, requester_name: undefined, approvers: [] },
+        details: { can_approve: false, requester_name: 'requester', approvers: [] },
         request: {
           expiration_dt: new Date().toISOString(),
           status: { Approved: null },

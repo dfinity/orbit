@@ -64,14 +64,14 @@ const model = computed({
 
 const userList = computed(() => {
   const users = usersAutocomplete.results.value.map(user => ({
-    title: user.name?.[0] ? user.name[0] : user.id,
+    title: user.name,
     value: user.id,
   }));
 
   (model.value.prefilledUsers ?? []).forEach(user => {
     if (!users.find(g => g.value === user.id)) {
       users.push({
-        title: user.name?.[0] ? user.name[0] : user.id,
+        title: user.name,
         value: user.id,
       });
     }

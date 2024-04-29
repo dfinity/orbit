@@ -22,7 +22,7 @@ pub struct User {
     /// The user id, which is a UUID.
     pub id: UserId,
     /// The name of the user (if any).
-    pub name: Option<String>,
+    pub name: String,
     /// The user status within the system (e.g. active, inactive, etc.)
     pub status: UserStatus,
     /// The identities associated with the user.
@@ -48,7 +48,7 @@ pub struct UserCallerPrivileges {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct DisplayUser {
     pub id: UUID,
-    pub name: Option<String>,
+    pub name: String,
 }
 
 impl User {
@@ -108,13 +108,11 @@ fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
     Ok(())
 }
 
-fn validate_name(name: &Option<String>) -> ModelValidatorResult<UserError> {
-    if let Some(name) = name {
-        if name.len() > User::MAX_NAME_LENGTH as usize {
-            return Err(UserError::NameTooLong {
-                max_length: User::MAX_NAME_LENGTH as usize,
-            });
-        }
+fn validate_name(name: &str) -> ModelValidatorResult<UserError> {
+    if name.len() > User::MAX_NAME_LENGTH as usize {
+        return Err(UserError::NameTooLong {
+            max_length: User::MAX_NAME_LENGTH as usize,
+        });
     }
 
     Ok(())
@@ -259,7 +257,7 @@ mod tests {
     #[test]
     fn fail_user_name_too_long() {
         let mut user = mock_user();
-        user.name = Some("a".repeat(User::MAX_NAME_LENGTH as usize + 1));
+        user.name = "a".repeat(User::MAX_NAME_LENGTH as usize + 1);
 
         let result = validate_name(&user.name);
 
@@ -275,7 +273,7 @@ mod tests {
     #[test]
     fn test_user_name_validation() {
         let mut user = mock_user();
-        user.name = Some("a".repeat(User::MAX_NAME_LENGTH as usize));
+        user.name = "a".repeat(User::MAX_NAME_LENGTH as usize);
 
         let result = validate_name(&user.name);
 
@@ -295,7 +293,7 @@ pub mod user_test_utils {
             id: *Uuid::new_v4().as_bytes(),
             identities: vec![Principal::from_slice(&[24; 29])],
             groups: vec![],
-            name: None,
+            name: "test".to_string(),
             status: UserStatus::Active,
             last_modification_timestamp: 0,
         }

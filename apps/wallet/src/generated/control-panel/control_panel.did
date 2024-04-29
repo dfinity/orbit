@@ -198,7 +198,9 @@ type CanDeployStationResponse = variant {
 /// The input for deploying a station canister.
 type DeployStationInput = record {
   // The station name.
-  name : text;
+  station_name : text;
+  // The station admin user name.
+  admin_name : text;
 };
 
 // The result of checking if the caller can deploy a station canister.

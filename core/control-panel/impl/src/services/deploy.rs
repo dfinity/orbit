@@ -79,8 +79,11 @@ impl DeployService {
             canister_id: station_canister.canister_id,
             wasm_module: config.station_wasm_module,
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
-                name: input.name.clone(),
-                admins: Some(vec![user.identity]),
+                name: input.station_name.clone(),
+                admins: vec![station_api::AdminInitInput {
+                    identity: user.identity,
+                    name: input.admin_name.clone(),
+                }],
                 upgrader_wasm_module: config.upgrader_wasm_module,
             }))
             .map_err(|err| DeployError::Failed {
@@ -93,7 +96,12 @@ impl DeployService {
         })?;
 
         self.user_service
-            .add_deployed_station(&user.id, station_canister.canister_id, input.name, ctx)
+            .add_deployed_station(
+                &user.id,
+                station_canister.canister_id,
+                input.station_name,
+                ctx,
+            )
             .await?;
 
         if user.main_station.is_none() {

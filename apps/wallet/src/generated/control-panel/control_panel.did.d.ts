@@ -24,7 +24,10 @@ export interface CanisterUpgrade {
   'station_wasm_module' : [] | [Uint8Array | number[]],
   'upgrader_wasm_module' : [] | [Uint8Array | number[]],
 }
-export interface DeployStationInput { 'name' : string }
+export interface DeployStationInput {
+  'admin_name' : string,
+  'station_name' : string,
+}
 export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
   { 'Err' : ApiError };
 export type GetMainStationResult = {

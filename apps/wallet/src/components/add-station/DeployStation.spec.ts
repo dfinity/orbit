@@ -127,6 +127,7 @@ describe('DeployStation', () => {
     const form = wrapper.find('[data-test-id="deploy-station-form"]');
 
     form.find('input[name="station_name"]').setValue('test');
+    form.find('input[name="admin_name"]').setValue('admin');
 
     await flushPromises();
 

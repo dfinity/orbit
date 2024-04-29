@@ -77,8 +77,8 @@ impl Repository<UserKey, User> for UserRepository {
                 });
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().and_then(|prev| prev.to_index_by_name()),
-                    current: value.to_index_by_name(),
+                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
+                    current: Some(value.to_index_by_name()),
                 });
 
             prev
@@ -112,7 +112,7 @@ impl Repository<UserKey, User> for UserRepository {
                 });
             self.name_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().and_then(|prev| prev.to_index_by_name()),
+                    current: prev.clone().map(|prev| prev.to_index_by_name()),
                 });
 
             prev
@@ -179,9 +179,9 @@ impl UserRepository {
 
         if let Some(search_term) = filters.search_term {
             users.retain(|user| {
-                user.name.as_ref().map_or(false, |name| {
-                    name.to_lowercase().starts_with(&search_term.to_lowercase())
-                })
+                user.name
+                    .to_lowercase()
+                    .starts_with(&search_term.to_lowercase())
             });
         }
 

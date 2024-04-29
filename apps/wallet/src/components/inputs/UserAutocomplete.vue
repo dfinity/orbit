@@ -91,7 +91,7 @@ watch(
   results => {
     const updatedItems = results.map(result => ({
       value: result.id,
-      text: result.name?.[0] ?? result.id,
+      text: result.name,
     }));
 
     updateAvailableItemsList(updatedItems);

@@ -555,6 +555,7 @@ export default {
       station_body:
         'Crie a sua própria carteira e adicione usuários para gerenciar as suas contas e ativos digitais.',
       station_name_field: 'Nome da carteira',
+      admin_name_field: 'Nome do administrador',
 
       check_permissions_title: 'Verificando o estado da lista de espera ...',
       join_waitlist_title: 'Junte-se à lista de espera',

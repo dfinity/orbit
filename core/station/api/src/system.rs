@@ -17,9 +17,15 @@ pub struct SystemInfoResponse {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct AdminInitInput {
+    pub name: String,
+    pub identity: Principal,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct SystemInit {
     pub name: String,
-    pub admins: Option<Vec<Principal>>,
+    pub admins: Vec<AdminInitInput>,
     pub upgrader_wasm_module: Vec<u8>,
 }
 

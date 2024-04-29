@@ -84,7 +84,7 @@ export interface AddUserOperation {
 export interface AddUserOperationInput {
   'status' : UserStatus,
   'groups' : Array<UUID>,
-  'name' : [] | [string],
+  'name' : string,
   'identities' : Array<Principal>,
 }
 export interface AddressBookEntry {
@@ -102,6 +102,7 @@ export interface AddressBookEntryCallerPrivileges {
   'can_edit' : boolean,
 }
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
+export interface AdminInitInput { 'name' : string, 'identity' : Principal }
 export interface Allow {
   'user_groups' : Array<UUID>,
   'auth_scope' : AuthScope,
@@ -164,7 +165,7 @@ export type CreateRequestResult = {
     }
   } |
   { 'Err' : Error };
-export interface DisplayUser { 'id' : UUID, 'name' : [] | [string] }
+export interface DisplayUser { 'id' : UUID, 'name' : string }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
   'account_id' : UUID,
@@ -545,7 +546,7 @@ export interface Request {
 export interface RequestAdditionalInfo {
   'id' : UUID,
   'evaluation_result' : [] | [RequestEvaluationResult],
-  'requester_name' : [] | [string],
+  'requester_name' : string,
   'approvers' : Array<DisplayUser>,
 }
 export interface RequestApproval {
@@ -723,7 +724,7 @@ export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
 export interface SystemInit {
   'name' : string,
-  'admins' : [] | [Array<Principal>],
+  'admins' : Array<AdminInitInput>,
   'upgrader_wasm_module' : Uint8Array | number[],
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
@@ -785,7 +786,7 @@ export interface User {
   'id' : UUID,
   'status' : UserStatus,
   'groups' : Array<UserGroup>,
-  'name' : [] | [string],
+  'name' : string,
   'last_modification_timestamp' : TimestampRFC3339,
   'identities' : Array<Principal>,
 }

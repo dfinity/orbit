@@ -72,7 +72,7 @@ const getDetails = (request: Request): RequestDetails => {
 
   return {
     can_approve: !!privileges?.can_approve,
-    requester_name: info?.requester_name?.[0] ?? '',
+    requester_name: info?.requester_name ?? '',
     approvers: info?.approvers ?? [],
   };
 };
