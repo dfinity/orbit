@@ -4,19 +4,21 @@ use thiserror::Error;
 
 /// Container for canister install errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
-pub enum InstallError {
+pub enum SystemError {
     /// The initialization of the canister failed.
     #[error(r#"The initialization of the canister failed due to {reason}"#)]
     InitFailed { reason: String },
     #[error(r#"The canister needs at least one admin"#)]
     NoAdminsSpecified,
+    #[error(r#"The system has invalid information."#)]
+    ValidationError { reason: String },
 }
 
-impl DetailableError for InstallError {
+impl DetailableError for SystemError {
     fn details(&self) -> Option<HashMap<String, String>> {
         let mut details = HashMap::new();
         match self {
-            InstallError::InitFailed { reason } => {
+            SystemError::InitFailed { reason } => {
                 details.insert("reason".to_string(), reason.to_string());
 
                 Some(details)

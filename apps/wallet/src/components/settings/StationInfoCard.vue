@@ -182,13 +182,13 @@ const save = async ({ model }: { valid: boolean; model: StationInfoModel }): Pro
     session.data.stations.map(entry => {
       if (entry.canisterId === station.canisterId) {
         return {
-          name: model.name ? [model.name] : [],
+          name: model.name,
           canister_id: Principal.fromText(entry.canisterId),
         };
       }
 
       return {
-        name: entry.name ? [entry.name] : [],
+        name: entry.name,
         canister_id: Principal.fromText(entry.canisterId),
       };
     }) ?? [];

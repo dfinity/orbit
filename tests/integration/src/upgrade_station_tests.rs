@@ -29,7 +29,7 @@ fn successful_station_upgrade() {
     assert_eq!(health_status, HealthStatus::Healthy);
 
     // submit station upgrade request
-    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade {});
+    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
     let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
     let station_upgrade_operation =
         RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {

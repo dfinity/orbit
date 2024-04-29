@@ -267,7 +267,7 @@ mod tests {
         let mut user = mock_user();
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
-            name: None,
+            name: "Main Station".to_string(),
         }];
         user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
@@ -301,7 +301,7 @@ mod tests {
         let mut user = mock_user();
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
-            name: None,
+            name: "Main Station".to_string(),
         }];
         user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
@@ -315,7 +315,7 @@ mod tests {
         let mut user2 = mock_user();
         user2.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
-            name: None,
+            name: "Main Station".to_string(),
         }];
         user2.deployed_stations = vec![Principal::from_slice(&[1; 29])];
         user2.subscription_status = UserSubscriptionStatus::Pending("email".to_string());
@@ -354,7 +354,7 @@ mod tests {
         let mut user = mock_user();
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
-            name: None,
+            name: "Main Station".to_string(),
         }];
         user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
@@ -375,11 +375,11 @@ mod tests {
         user.stations = vec![
             UserStation {
                 canister_id: Principal::from_slice(&[1; 29]),
-                name: None,
+                name: "Main Station".to_string(),
             },
             UserStation {
                 canister_id: Principal::from_slice(&[2; 29]),
-                name: None,
+                name: "Second Station".to_string(),
             },
         ];
         user.deployed_stations = vec![

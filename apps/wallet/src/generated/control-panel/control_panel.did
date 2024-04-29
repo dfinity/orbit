@@ -110,7 +110,7 @@ type UserStation = record {
   // The id associated with the station.
   canister_id : StationID;
   // The name of the station.
-  name : opt text;
+  name : text;
 };
 
 // The result of listing stations.
@@ -195,6 +195,12 @@ type CanDeployStationResponse = variant {
   QuotaExceeded;
 };
 
+/// The input for deploying a station canister.
+type DeployStationInput = record {
+  // The station name.
+  name : text;
+};
+
 // The result of checking if the caller can deploy a station canister.
 type CanDeployStationResult = variant {
   // Successfull operation result.
@@ -264,7 +270,7 @@ service : (opt CanisterInstall) -> {
   // Get main station for the caller user.
   get_main_station : () -> (GetMainStationResult) query;
   // Deploys a new station canister for the caller.
-  deploy_station : () -> (DeployStationResult);
+  deploy_station : (input : DeployStationInput) -> (DeployStationResult);
   // Checks if the caller can deploy a new station canister.
   can_deploy_station : () -> (CanDeployStationResult) query;
   // HTTP Protocol interface.

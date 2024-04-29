@@ -28,7 +28,7 @@ mod tests {
     fn correct_dto_to_model_mapping() {
         let dto = UserStationDTO {
             canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
-            name: Some("Station".to_string()),
+            name: "Station".to_string(),
         };
 
         let model = UserStation::from(dto.clone());
@@ -41,7 +41,7 @@ mod tests {
     fn correct_model_to_dto_mapping() {
         let model = UserStation {
             canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
-            name: Some("Station".to_string()),
+            name: "Station".to_string(),
         };
 
         let dto = UserStationDTO::from(model.clone());

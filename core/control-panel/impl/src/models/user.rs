@@ -216,13 +216,13 @@ mod tests {
 
         user_with_one_station.stations.push(UserStation {
             canister_id: Principal::anonymous(),
-            name: None,
+            name: "main".to_string(),
         });
 
         for _ in 0..=User::MAX_STATIONS {
             user_with_too_many_stations.stations.push(UserStation {
                 canister_id: Principal::anonymous(),
-                name: None,
+                name: "main".to_string(),
             });
         }
 
@@ -238,7 +238,7 @@ mod tests {
         user.main_station = Some(Principal::from_slice(&[10; 29]));
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[10; 29]),
-            name: None,
+            name: "main".to_string(),
         }];
 
         assert!(validate_main_station(&user.main_station, &user.stations).is_ok());
@@ -251,7 +251,7 @@ mod tests {
         user.main_station = Some(Principal::from_slice(&[10; 29]));
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[12; 29]),
-            name: None,
+            name: "main".to_string(),
         }];
 
         assert!(validate_main_station(&user.main_station, &user.stations).is_err());

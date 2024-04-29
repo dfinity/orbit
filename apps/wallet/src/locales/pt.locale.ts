@@ -548,8 +548,13 @@ export default {
       join_station_body:
         'Entre em contato com o proprietário para obter o ID da Carteira e envie a eles sua identidade para que um usuário possa ser criado para você.',
       join_station_canister_id: 'ID da carteira',
-      join_station_name: 'Nome da carteira (opcional)',
+      join_station_name: 'Nome da carteira',
       join_station: 'Junte-se a carteira',
+
+      station_title: 'Crie a sua própria carteira',
+      station_body:
+        'Crie a sua própria carteira e adicione usuários para gerenciar as suas contas e ativos digitais.',
+      station_name_field: 'Nome da carteira',
 
       check_permissions_title: 'Verificando o estado da lista de espera ...',
       join_waitlist_title: 'Junte-se à lista de espera',

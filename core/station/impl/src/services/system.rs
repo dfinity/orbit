@@ -7,7 +7,7 @@ use crate::{
         metrics::recompute_metrics,
         read_system_info, read_system_state, write_system_info, CallContext,
     },
-    errors::InstallError,
+    errors::SystemError,
     models::{
         system::{SystemInfo, SystemState},
         RequestId, RequestKey, RequestStatus,
@@ -16,8 +16,8 @@ use crate::{
 };
 use candid::Principal;
 use lazy_static::lazy_static;
-use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
+use orbit_essentials::{api::ServiceResult, model::ModelValidator};
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -186,15 +186,18 @@ impl SystemService {
     ///
     /// Must only be called within a canister init call.
     pub async fn init_canister(&self, input: SystemInit, ctx: &CallContext) -> ServiceResult<()> {
-        let system_info = SystemInfo::default();
+        let mut system_info = SystemInfo::default();
         let admins = match &input.admins {
             Some(admins) => admins.to_owned(),
             None => vec![ctx.caller()],
         };
 
         if admins.is_empty() {
-            return Err(InstallError::NoAdminsSpecified)?;
+            return Err(SystemError::NoAdminsSpecified)?;
         }
+
+        system_info.set_name(input.name.clone());
+        system_info.validate()?;
 
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the station upgrader and makes sure
@@ -215,7 +218,7 @@ impl SystemService {
         let mut system_info = read_system_info();
         let input = match input {
             Some(input) => input,
-            None => SystemUpgrade {},
+            None => SystemUpgrade { name: None },
         };
 
         // verifies that the upgrade request exists and marks it as completed
@@ -242,6 +245,13 @@ impl SystemService {
 
             // clears the change canister request from the config to avoid it being used again
             system_info.clear_change_canister_request();
+
+            write_system_info(system_info.clone());
+        }
+
+        if let Some(name) = &input.name {
+            system_info.set_name(name.clone());
+            system_info.validate()?;
 
             write_system_info(system_info.clone());
         }
@@ -436,6 +446,7 @@ mod tests {
         let result = SYSTEM_SERVICE
             .init_canister(
                 SystemInit {
+                    name: "Station".to_string(),
                     admins: Some(vec![Principal::from_slice(&[1; 29])]),
                     upgrader_wasm_module: vec![],
                 },

@@ -49,6 +49,43 @@
       </div>
     </VForm>
 
+    <VForm
+      v-else-if="canDeployStatus === CanDeployStatus.PickName"
+      ref="stationForm"
+      class="mt-12"
+      data-test-id="deploy-station-form"
+      @submit.prevent="pickName"
+    >
+      <h2 class="mb-6 text-h4">
+        {{ $t('pages.add_station.station_title') }}
+      </h2>
+      <p class="text-body-1 mb-6">
+        {{ $t('pages.add_station.station_body') }}
+      </p>
+
+      <VTextField
+        v-model="stationName"
+        type="text"
+        name="station_name"
+        :rules="[requiredRule, maxLengthRule(40, $t('pages.add_station.station_name_field'))]"
+        :label="$t('pages.add_station.station_name_field')"
+        :variant="'outlined'"
+        hide-details="auto"
+        :disabled="working"
+        data-test-id="deploy-station-form-name-field"
+      />
+      <div class="d-flex align-center ga-4 mt-6">
+        <VBtn
+          color="primary"
+          type="submit"
+          :loading="working"
+          :disabled="working || !isStationFormValid"
+        >
+          {{ $t('terms.create') }}
+        </VBtn>
+      </div>
+    </VForm>
+
     <div
       v-else-if="canDeployStatus === CanDeployStatus.InWaitingList"
       class="mt-12"
@@ -129,6 +166,7 @@ import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { createUserInitialAccount, useStationStore } from '~/stores/station.store';
 import { VFormValidation } from '~/types/helper.types';
+import { maxLengthRule } from '~/utils/form.utils';
 import { requiredRule, validEmail } from '~/utils/form.utils';
 import { unreachable, variantIs, wait } from '~/utils/helper.utils';
 
@@ -140,6 +178,7 @@ enum CanDeployStatus {
   NotAllowed = 'not_allowed',
   Approved = 'approved',
   QuotaExceeded = 'quota_exceeded',
+  PickName = 'pick_name',
 }
 const canDeployStatus = ref<CanDeployStatus>(CanDeployStatus.CheckPermissions);
 
@@ -168,6 +207,10 @@ const email = ref('');
 const working = ref(false);
 const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+
+const stationName = ref('');
+const stationForm = ref<VFormValidation | null>(null);
+const isStationFormValid = computed(() => (stationForm.value ? stationForm.value.isValid : false));
 
 const waitUntilStationIsInitialized = async (
   stationId: Principal,
@@ -201,7 +244,9 @@ const waitUntilStationIsInitialized = async (
 const deployInitialStation = async (): Promise<void> => {
   try {
     deploymentStatus.value = DeployStationStatus.Deploying;
-    const stationId = await controlPanelService.deployStation();
+    const stationId = await controlPanelService.deployStation({
+      name: stationName.value,
+    });
     const controlPanelUser = await controlPanelService.getCurrentUser();
 
     // wait for the station to be initialized, this requires one round of consensus
@@ -242,14 +287,18 @@ async function joinWaitlist() {
   }
 }
 
+async function pickName() {
+  deploymentStatus.value = DeployStationStatus.Starting;
+  canDeployStatus.value = CanDeployStatus.Approved;
+}
+
 onMounted(async () => {
   try {
     const canDeploy = await controlPanelService.canDeployStation();
 
     if (variantIs(canDeploy, 'NotAllowed')) {
       if (variantIs(canDeploy.NotAllowed, 'Approved')) {
-        deploymentStatus.value = DeployStationStatus.Starting;
-        canDeployStatus.value = CanDeployStatus.Approved;
+        canDeployStatus.value = CanDeployStatus.PickName;
         await deployInitialStation();
       } else if (variantIs(canDeploy.NotAllowed, 'Denylisted')) {
         canDeployStatus.value = CanDeployStatus.NotAllowed;
@@ -265,8 +314,7 @@ onMounted(async () => {
     }
 
     if (variantIs(canDeploy, 'Allowed')) {
-      deploymentStatus.value = DeployStationStatus.Starting;
-      canDeployStatus.value = CanDeployStatus.Approved;
+      canDeployStatus.value = CanDeployStatus.PickName;
       await deployInitialStation();
 
       return;

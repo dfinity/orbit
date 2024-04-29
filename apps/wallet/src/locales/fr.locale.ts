@@ -555,6 +555,11 @@ export default {
       join_waitlist_email_field: 'Entrez votre adresse e-mail',
       join_waitlist: "S'inscrire maintenant",
 
+      station_title: 'Créer un portefeuille',
+      station_body:
+        'Créez un portefeuille pour gérer vos actifs numériques. Entrez un nom pour votre portefeuille et cliquez sur "Créer".',
+      station_name_field: 'Nom du Portefeuille',
+
       waitlist_pending_title: 'Vous êtes sur la liste d attente!',
       waitlist_pending_body:
         'Veuillez attendre l approbation. Vous recevrez un email une fois votre demande approuvée.',
@@ -573,7 +578,7 @@ export default {
       join_station_body:
         "Contactez le propriétaire pour obtenir l'ID du portefeuille et envoyez-lui votre identité afin qu'un utilisateur puisse être créé pour vous.",
       join_station_canister_id: 'ID du Portefeuille',
-      join_station_name: 'Nom du Portefeuille (optionnel)',
+      join_station_name: 'Nom du Portefeuille',
       join_station: 'Rejoindre le portefeuille',
 
       status_starting: 'Initialization, veuillez patienter...',

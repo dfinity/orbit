@@ -144,6 +144,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     );
 
     let station_init_args = SystemInstallArg::Init(SystemInitArg {
+        name: "Station".to_string(),
         admins: Some(vec![WALLET_ADMIN_USER]),
         upgrader_wasm_module: upgrader_wasm,
     });

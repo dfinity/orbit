@@ -5,8 +5,8 @@ use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
 use candid::Principal;
 use control_panel_api::{
-    CanDeployStationResponse, DeployStationResponse, GetMainStationResponse, ListStationsResponse,
-    UserStationDTO,
+    CanDeployStationResponse, DeployStationInput, DeployStationResponse, GetMainStationResponse,
+    ListStationsResponse, UserStationDTO,
 };
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -33,8 +33,8 @@ async fn get_main_station() -> ApiResult<GetMainStationResponse> {
 }
 
 #[update(name = "deploy_station")]
-async fn deploy_station() -> ApiResult<DeployStationResponse> {
-    CONTROLLER.deploy_station().await
+async fn deploy_station(input: DeployStationInput) -> ApiResult<DeployStationResponse> {
+    CONTROLLER.deploy_station(input).await
 }
 
 #[query(name = "can_deploy_station")]
@@ -94,13 +94,13 @@ impl StationController {
         context = &call_context()
     )]
     #[with_middleware(tail = use_status_metric("call_deploy_station", &result))]
-    async fn deploy_station(&self) -> ApiResult<DeployStationResponse> {
+    async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
         let _lock = STATE
             .with(|state| CallerGuard::new(state.clone(), ctx.caller()))
             .ok_or(UserError::ConcurrentStationDeployment)?;
 
-        let deployed_station_id = self.deploy_service.deploy_station(&ctx).await?;
+        let deployed_station_id = self.deploy_service.deploy_station(input, &ctx).await?;
 
         Ok(DeployStationResponse {
             canister_id: deployed_station_id,

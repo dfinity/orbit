@@ -74,7 +74,7 @@ fn successful_monitors_stations_and_tops_up() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput { station_id: None };
+    let register_args = RegisterUserInput { station: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,

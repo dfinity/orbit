@@ -125,6 +125,7 @@ export interface BasicUser {
   'name' : string,
 }
 export interface Capabilities {
+  'name' : string,
   'version' : string,
   'supported_assets' : Array<Asset>,
 }
@@ -711,6 +712,7 @@ export type SubmitRequestApprovalResult = {
   } |
   { 'Err' : Error };
 export interface SystemInfo {
+  'name' : string,
   'last_upgrade_timestamp' : TimestampRFC3339,
   'raw_rand_successful' : boolean,
   'version' : string,
@@ -720,6 +722,7 @@ export interface SystemInfo {
 export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
 export interface SystemInit {
+  'name' : string,
   'admins' : [] | [Array<Principal>],
   'upgrader_wasm_module' : Uint8Array | number[],
 }
@@ -727,7 +730,7 @@ export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };
 export type SystemResourceAction = { 'SystemInfo' : null } |
   { 'Capabilities' : null };
-export type SystemUpgrade = {};
+export interface SystemUpgrade { 'name' : [] | [string] }
 export type TimestampRFC3339 = string;
 export interface Transfer {
   'id' : UUID,

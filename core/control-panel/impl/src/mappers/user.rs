@@ -24,15 +24,15 @@ impl UserMapper {
         input: RegisterUserInput,
         user_identity: Principal,
     ) -> User {
-        let stations = match input.station_id {
-            Some(station_id) => vec![station_id],
+        let stations = match input.station {
+            Some(station) => vec![station],
             None => vec![],
         };
         // The order of the stations is important, the first station is the main station for the user at this stage
         // so that it can be used to the `main_station` field of the user entity.
         let main_station = match stations.is_empty() {
             true => None,
-            false => Some(stations[0]),
+            false => Some(stations[0].canister_id),
         };
 
         let registration_time = next_time();
@@ -41,13 +41,7 @@ impl UserMapper {
             id: new_user_id,
             identity: user_identity,
             subscription_status: UserSubscriptionStatus::Unsubscribed,
-            stations: stations
-                .into_iter()
-                .map(|canister_id| UserStation {
-                    canister_id,
-                    name: None,
-                })
-                .collect(),
+            stations: stations.into_iter().map(|station| station.into()).collect(),
             deployed_stations: vec![],
             main_station,
             last_active: registration_time,
@@ -138,7 +132,7 @@ mod tests {
     fn mapped_user_registration_with_no_station() {
         let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
-        let input = RegisterUserInput { station_id: None };
+        let input = RegisterUserInput { station: None };
 
         let user = UserMapper::from_register_input(user_id, input, user_identity);
 
@@ -153,8 +147,11 @@ mod tests {
         let user_id = [u8::MAX; 16];
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let main_station = Principal::from_slice(&[2; 29]);
-        let input = RegisterUserInput {
-            station_id: Some(main_station),
+        let input: RegisterUserInput = RegisterUserInput {
+            station: Some(UserStationDTO {
+                canister_id: main_station,
+                name: "Main Station".to_string(),
+            }),
         };
 
         let user = UserMapper::from_register_input(user_id, input, user_identity);
@@ -164,6 +161,6 @@ mod tests {
         assert_eq!(user.main_station, Some(main_station));
         assert_eq!(user.stations.len(), 1);
         assert_eq!(user.stations[0].canister_id, main_station);
-        assert_eq!(user.stations[0].name, None);
+        assert_eq!(user.stations[0].name, "Main Station".to_string());
     }
 }

@@ -7,7 +7,7 @@ use orbit_essentials::storable;
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct UserStation {
     pub canister_id: Principal,
-    pub name: Option<String>,
+    pub name: String,
 }
 
 pub struct UserStationValidator<'model> {
@@ -15,31 +15,31 @@ pub struct UserStationValidator<'model> {
 }
 
 impl<'model> UserStationValidator<'model> {
-    pub const NAME_LEN_RANGE: (u8, u8) = (1, 150);
+    pub const NAME_LEN_RANGE: (u8, u8) = (1, 48);
 
     pub fn new(model: &'model UserStation) -> Self {
         Self { model }
     }
 
     pub fn validate_name(&self) -> ModelValidatorResult<UserError> {
-        if let Some(name) = &self.model.name {
-            if (name.trim().len() < Self::NAME_LEN_RANGE.0 as usize)
-                || (name.trim().len() > Self::NAME_LEN_RANGE.1 as usize)
-            {
-                return Err(UserError::ValidationError {
-                    info: format!(
-                        "Station name length must be between {} and {}",
-                        Self::NAME_LEN_RANGE.0,
-                        Self::NAME_LEN_RANGE.1
-                    ),
-                });
-            }
+        let name = self.model.name.clone();
 
-            if name.starts_with(' ') || name.ends_with(' ') {
-                return Err(UserError::ValidationError {
-                    info: "Station name cannot start or end with a space".to_string(),
-                });
-            }
+        if (name.trim().len() < Self::NAME_LEN_RANGE.0 as usize)
+            || (name.trim().len() > Self::NAME_LEN_RANGE.1 as usize)
+        {
+            return Err(UserError::ValidationError {
+                info: format!(
+                    "Station name length must be between {} and {}",
+                    Self::NAME_LEN_RANGE.0,
+                    Self::NAME_LEN_RANGE.1
+                ),
+            });
+        }
+
+        if name.starts_with(' ') || name.ends_with(' ') {
+            return Err(UserError::ValidationError {
+                info: "Station name cannot start or end with a space".to_string(),
+            });
         }
 
         Ok(())
@@ -68,7 +68,7 @@ mod tests {
     fn valid_model_serialization() {
         let user_station = UserStation {
             canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
-            name: Some("Station 1".to_string()),
+            name: "Station 1".to_string(),
         };
 
         let serialized_model = user_station.to_bytes();
@@ -83,11 +83,11 @@ mod tests {
     #[case::empty_name_with_space(&" ")]
     #[case::starts_with_space(&" Treasury")]
     #[case::ends_with_space(&"Treasury ")]
-    #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMKufYuimeCebnHWgQXeSzkeqcFLqSVxpdNeSGADkpvvjZHCYXLmM")]
+    #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJE1")]
     fn invalid_user_station_name(#[case] name: &str) {
         let user_station = UserStation {
             canister_id: Principal::anonymous(),
-            name: Some(String::from(name)),
+            name: String::from(name),
         };
         let validator = UserStationValidator::new(&user_station);
 
@@ -95,15 +95,14 @@ mod tests {
     }
 
     #[rstest]
-    #[case::no_name(None)]
-    #[case::short_name(Some(String::from("A")))]
-    #[case::short_number_name(Some(String::from("1")))]
-    #[case::common_name(Some(String::from("Treasury")))]
-    #[case::long_name(Some(String::from("amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJEcxxSxAMqLzZWSzaYpdfKCnKDTjfrkfYvRhhmCrTrVmqUUkbgdMKufYuimeCebnHWgQXeSzkeqcFLqSVxpdNeSGADkpvvjZHCYXLm")))]
-    fn valid_user_station_name(#[case] name: Option<String>) {
+    #[case::short_name("A")]
+    #[case::short_number_name("1")]
+    #[case::common_name("Treasury")]
+    #[case::long_name("amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJE")]
+    fn valid_user_station_name(#[case] name: &str) {
         let user_station = UserStation {
             canister_id: Principal::anonymous(),
-            name,
+            name: String::from(name),
         };
         let validator = UserStationValidator::new(&user_station);
 

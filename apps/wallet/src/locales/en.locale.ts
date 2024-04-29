@@ -546,8 +546,13 @@ export default {
       join_station_body:
         'Contact the owner to get the Wallet ID and send them your identity so that a user can be created for you.',
       join_station_canister_id: 'Wallet ID',
-      join_station_name: 'Wallet Name (optional)',
+      join_station_name: 'Wallet Name',
       join_station: 'Join wallet',
+
+      station_title: 'Create your own wallet',
+      station_body:
+        'Create your own wallet and manage your digital assets. You can add users, set permissions and manage request approval policies.',
+      station_name_field: 'Wallet Name',
 
       check_permissions_title: 'Checking waiting list status...',
       join_waitlist_title: 'Join waiting list',

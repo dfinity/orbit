@@ -32,7 +32,10 @@ fn register_user_successful() {
 
     // register user
     let register_args = RegisterUserInput {
-        station_id: Some(canister_ids.station),
+        station: Some(UserStationDTO {
+            canister_id: canister_ids.station,
+            name: "main".to_string(),
+        }),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
@@ -67,7 +70,7 @@ fn deploy_user_station() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput { station_id: None };
+    let register_args = RegisterUserInput { station: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -200,7 +203,7 @@ fn deploy_too_many_stations() {
     let user_id = user_test_id(0);
 
     // register user
-    let register_args = RegisterUserInput { station_id: None };
+    let register_args = RegisterUserInput { station: None };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -253,7 +256,7 @@ fn deploy_too_many_stations() {
         main_station: Some(stations[0]),
         stations: Some(vec![UserStationDTO {
             canister_id: stations[0],
-            name: None,
+            name: "main".to_string(),
         }]),
     };
     let res: (ApiResult<ManageUserResponse>,) = update_candid_as(

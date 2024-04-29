@@ -53,8 +53,8 @@ pub use authorization::*;
 mod pagination;
 pub use pagination::*;
 
-mod install;
-pub use install::*;
+mod system;
+pub use system::*;
 
 mod change_canister;
 pub use change_canister::*;

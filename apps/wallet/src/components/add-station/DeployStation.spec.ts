@@ -5,6 +5,7 @@ import { services } from '~/plugins/services.plugin';
 import { flushPromises } from '@vue/test-utils';
 import { CanDeployStationResponse, User } from '~/generated/control-panel/control_panel.did';
 import { Principal } from '@dfinity/principal';
+import { StationService } from '~/services/station.service';
 
 vi.mock('~/utils/helper.utils', async importOriginal => {
   const mod = (await importOriginal()) as object;
@@ -19,6 +20,18 @@ vi.mock('~/stores/station.store', async importOriginal => {
   return {
     ...mod,
     createUserInitialAccount: () => Promise.resolve(),
+  };
+});
+
+vi.mock('~/services/station.service', () => {
+  const mock: Partial<StationService> = {
+    withStationId: vi.fn().mockReturnThis(),
+    capabilities: vi.fn().mockImplementation(() => Promise.resolve({})),
+    isHealthy: vi.fn().mockResolvedValue(true),
+  };
+
+  return {
+    StationService: vi.fn(() => mock),
   };
 });
 
@@ -95,7 +108,7 @@ describe('DeployStation', () => {
     expect(wrapper.find('[data-test-id="deploy-quota-exceeded-error"]').exists()).toBe(true);
   });
 
-  it('will show the deploy screen if the is approved to create a new wallet', async () => {
+  it('will show the deploy screen if the user is approved to create a new wallet', async () => {
     vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValue({
       Allowed: BigInt(10),
     } as CanDeployStationResponse);
@@ -109,6 +122,17 @@ describe('DeployStation', () => {
 
     const wrapper = mount(DeployStation);
 
+    await flushPromises();
+
+    const form = wrapper.find('[data-test-id="deploy-station-form"]');
+
+    form.find('input[name="station_name"]').setValue('test');
+
+    await flushPromises();
+
+    form.trigger('submit');
+
+    await wrapper.vm.$nextTick();
     await flushPromises();
 
     expect(wrapper.find('[data-test-id="deploying-station"]').exists()).toBe(true);

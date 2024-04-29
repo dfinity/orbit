@@ -24,6 +24,7 @@ export interface CanisterUpgrade {
   'station_wasm_module' : [] | [Uint8Array | number[]],
   'upgrader_wasm_module' : [] | [Uint8Array | number[]],
 }
+export interface DeployStationInput { 'name' : string }
 export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
   { 'Err' : ApiError };
 export type GetMainStationResult = {
@@ -90,10 +91,7 @@ export interface User {
 }
 export type UserId = UUID;
 export type UserIdentityID = Principal;
-export interface UserStation {
-  'name' : [] | [string],
-  'canister_id' : StationID,
-}
+export interface UserStation { 'name' : string, 'canister_id' : StationID }
 export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
@@ -101,7 +99,7 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
 export interface _SERVICE {
   'can_deploy_station' : ActorMethod<[], CanDeployStationResult>,
   'delete_user' : ActorMethod<[], RemoveUserResult>,
-  'deploy_station' : ActorMethod<[], DeployStationResult>,
+  'deploy_station' : ActorMethod<[DeployStationInput], DeployStationResult>,
   'get_main_station' : ActorMethod<[], GetMainStationResult>,
   'get_user' : ActorMethod<[], GetUserResult>,
   'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,

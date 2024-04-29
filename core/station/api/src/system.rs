@@ -3,6 +3,7 @@ use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct SystemInfoDTO {
+    pub name: String,
     pub version: String,
     pub upgrader_id: Principal,
     pub cycles: u64,
@@ -17,12 +18,15 @@ pub struct SystemInfoResponse {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct SystemInit {
+    pub name: String,
     pub admins: Option<Vec<Principal>>,
     pub upgrader_wasm_module: Vec<u8>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct SystemUpgrade {}
+pub struct SystemUpgrade {
+    pub name: Option<String>,
+}
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum SystemInstall {

@@ -105,6 +105,7 @@ const initialStoreState = (): StationStoreState => {
     configuration: {
       loading: false,
       details: {
+        name: '',
         version: '',
         supported_assets: [],
       },

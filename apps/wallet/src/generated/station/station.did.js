@@ -1,8 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
-  const SystemUpgrade = IDL.Record({});
+  const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
   const SystemInit = IDL.Record({
+    'name' : IDL.Text,
     'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });
@@ -20,6 +21,7 @@ export const idlFactory = ({ IDL }) => {
     'symbol' : AssetSymbol,
   });
   const Capabilities = IDL.Record({
+    'name' : IDL.Text,
     'version' : IDL.Text,
     'supported_assets' : IDL.Vec(Asset),
   });
@@ -897,6 +899,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const SystemInfo = IDL.Record({
+    'name' : IDL.Text,
     'last_upgrade_timestamp' : TimestampRFC3339,
     'raw_rand_successful' : IDL.Bool,
     'version' : IDL.Text,
@@ -1010,8 +1013,9 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
-  const SystemUpgrade = IDL.Record({});
+  const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
   const SystemInit = IDL.Record({
+    'name' : IDL.Text,
     'admins' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });

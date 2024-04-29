@@ -17,7 +17,7 @@ import { disableWorkers, enableWorkers } from '~/workers';
 
 export interface Station {
   main: boolean;
-  name: string | null;
+  name: string;
   canisterId: string;
 }
 

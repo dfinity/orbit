@@ -33,7 +33,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const StationID = IDL.Principal;
   const UserStation = IDL.Record({
-    'name' : IDL.Opt(IDL.Text),
+    'name' : IDL.Text,
     'canister_id' : StationID,
   });
   const TimestampRFC3339 = IDL.Text;
@@ -48,6 +48,7 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
+  const DeployStationInput = IDL.Record({ 'name' : IDL.Text });
   const DeployStationResult = IDL.Variant({
     'Ok' : IDL.Record({ 'canister_id' : StationID }),
     'Err' : ApiError,
@@ -121,7 +122,11 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'can_deploy_station' : IDL.Func([], [CanDeployStationResult], ['query']),
     'delete_user' : IDL.Func([], [RemoveUserResult], []),
-    'deploy_station' : IDL.Func([], [DeployStationResult], []),
+    'deploy_station' : IDL.Func(
+        [DeployStationInput],
+        [DeployStationResult],
+        [],
+      ),
     'get_main_station' : IDL.Func([], [GetMainStationResult], ['query']),
     'get_user' : IDL.Func([], [GetUserResult], ['query']),
     'get_waiting_list' : IDL.Func([], [GetWaitingListResult], []),

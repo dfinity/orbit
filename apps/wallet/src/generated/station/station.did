@@ -1368,9 +1368,11 @@ type Asset = record {
   metadata : vec AssetMetadata;
 };
 
-// A record type that is used to show the current capabilities of the canister and it's version.
+// A record type that is used to show the current capabilities of the station.
 type Capabilities = record {
-  // Version of the canister.
+  // The name of the station.
+  name : text;
+  // Version of the station.
   version : text;
   // The list of supported assets.
   supported_assets : vec Asset;
@@ -1387,9 +1389,11 @@ type CapabilitiesResult = variant {
   Err : Error;
 };
 
-// The canister system information.
+// The system information.
 type SystemInfo = record {
-  // The canister version.
+  // The name of the station.
+  name : text;
+  // The station version.
   version : text;
   // The upgrader principal id.
   upgrader_id : principal;
@@ -1743,6 +1747,8 @@ type MeResult = variant {
 //
 // Only used when installing the canister for the first time.
 type SystemInit = record {
+  // The name of the station.
+  name : text;
   // The list of admin principals to be associated with the station.
   //
   // When not specified, the caller will be added as the admin.
@@ -1752,7 +1758,10 @@ type SystemInit = record {
 };
 
 // The upgrade configuration for the canister.
-type SystemUpgrade = record {};
+type SystemUpgrade = record {
+  // The updated name of the station.
+  name : opt text;
+};
 
 // The input type for the canister install method (e.g. init or upgrade).
 type SystemInstall = variant {
