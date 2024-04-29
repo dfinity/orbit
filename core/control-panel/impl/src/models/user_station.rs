@@ -83,7 +83,7 @@ mod tests {
     #[case::empty_name_with_space(&" ")]
     #[case::starts_with_space(&" Treasury")]
     #[case::ends_with_space(&"Treasury ")]
-    #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJE1")]
+    #[case::name_too_big(&"amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwX1")]
     fn invalid_user_station_name(#[case] name: &str) {
         let user_station = UserStation {
             canister_id: Principal::anonymous(),
@@ -98,7 +98,7 @@ mod tests {
     #[case::short_name("A")]
     #[case::short_number_name("1")]
     #[case::common_name("Treasury")]
-    #[case::long_name("amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwXJE")]
+    #[case::long_name("amkyMJuUzYRXmxJuyUFeetxXbkMKmfCBwQnSazukXXGuxmwX")]
     fn valid_user_station_name(#[case] name: &str) {
         let user_station = UserStation {
             canister_id: Principal::anonymous(),
