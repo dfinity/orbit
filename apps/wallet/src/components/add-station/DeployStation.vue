@@ -54,7 +54,7 @@
       ref="stationForm"
       class="mt-12"
       data-test-id="deploy-station-form"
-      @submit.prevent="pickName"
+      @submit.prevent="stationFormSubmit"
     >
       <h2 class="mb-6 text-h4">
         {{ $t('pages.add_station.station_title') }}
@@ -287,9 +287,16 @@ async function joinWaitlist() {
   }
 }
 
-async function pickName() {
+async function stationFormSubmit() {
   deploymentStatus.value = DeployStationStatus.Starting;
   canDeployStatus.value = CanDeployStatus.Approved;
+
+  try {
+    await deployInitialStation();
+  } catch (e: unknown) {
+    app.sendErrorNotification(e);
+    deploymentStatus.value = DeployStationStatus.Failed;
+  }
 }
 
 onMounted(async () => {
@@ -315,7 +322,6 @@ onMounted(async () => {
 
     if (variantIs(canDeploy, 'Allowed')) {
       canDeployStatus.value = CanDeployStatus.PickName;
-      await deployInitialStation();
 
       return;
     }

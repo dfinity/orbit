@@ -9,7 +9,11 @@ import { StationService } from '~/services/station.service';
 vi.mock('~/services/station.service', () => {
   const mock: Partial<StationService> = {
     withStationId: vi.fn().mockReturnThis(),
-    capabilities: vi.fn().mockImplementation(() => Promise.resolve({})),
+    capabilities: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        name: 'test',
+      }),
+    ),
   };
 
   return {

@@ -264,7 +264,7 @@ export const useSessionStore = defineStore('session', {
       this.principal = user.identity.toText();
       this.data.stations = user.stations.map(station => ({
         main: station.canister_id.toText() === user.main_station?.[0]?.toText(),
-        name: station.name?.[0] ?? null,
+        name: station.name,
         canisterId: station.canister_id.toText(),
       }));
 

@@ -87,20 +87,22 @@ const emit = defineEmits<{
   (event: 'back', payload: void): void;
 }>();
 
-const onChangeCanisterIdMaybeFetchName = async () => {
-  if (!isFormValid.value) {
-    return;
+const maybeParseCanisterId = (canisterId: string): Principal | undefined => {
+  try {
+    return Principal.fromText(canisterId);
+  } catch {
+    return undefined;
   }
+};
 
-  let stationId = canisterId.value;
+const onChangeCanisterIdMaybeFetchName = async () => {
+  let stationId = maybeParseCanisterId(canisterId.value);
   if (!stationId) {
     return;
   }
 
   try {
-    const station = await stationService
-      .withStationId(Principal.fromText(stationId))
-      .capabilities();
+    const station = await stationService.withStationId(stationId).capabilities();
 
     name.value = station.name;
   } catch (e: unknown) {
