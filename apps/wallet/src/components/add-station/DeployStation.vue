@@ -64,7 +64,7 @@
       </p>
 
       <VTextField
-        v-model="stationName"
+        v-model.trim="stationName"
         type="text"
         name="station_name"
         :rules="[requiredRule, maxLengthRule(40, $t('pages.add_station.station_name_field'))]"
