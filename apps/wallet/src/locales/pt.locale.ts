@@ -469,6 +469,7 @@ export default {
       validTokenAmount: 'Este campo deve conter um valor de token válido.',
       requiredIntNumber: 'Este campo deve conter um número inteiro.',
       intNumberRange: '{field} deve estar entre {min} e {max}.',
+      validEmail: 'Este campo deve conter um email válido.',
     },
   },
   navigation: {
@@ -566,6 +567,9 @@ export default {
       waitlist_check_error_title: 'Falha ao verificar o estado da lista de espera',
       waitlist_check_error_body:
         'Falha ao verificar o estado da lista de espera, por favor, tente novamente.',
+
+      quota_exceed_error_title: 'Limite de carteiras excedido',
+      quota_exceed_error_body: 'Você atingiu o limite de carteiras que pode criar.',
 
       status_starting: 'Inicializando, por favor, aguarde ...',
       status_deploying: 'Instalando a sua carteira no Internet Computer ...',

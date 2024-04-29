@@ -472,6 +472,7 @@ export default {
       validTokenAmount: "Ce champ doit contenir un montant valide pour l'actif sélectionné.",
       requiredIntNumber: 'Ce champ doit contenir un nombre entier valide.',
       intNumberRange: 'Le champ {field} doit contenir une valeur valide entre {min} et {max}.',
+      validEmail: 'Ce champ doit contenir une adresse email valide.',
     },
   },
   navigation: {
@@ -564,6 +565,9 @@ export default {
       waitlist_check_error_title: 'Échec de vérification du statut de la liste d attente',
       waitlist_check_error_body:
         "Échec de la vérification du statut de la liste d'attente, veuillez réessayer.",
+
+      quota_exceed_error_title: 'Quota dépassé',
+      quota_exceed_error_body: 'Le nombre maximum de portefeuilles a été atteint.',
 
       join_station_title: 'Rejoindre un portefeuille existant',
       join_station_body:

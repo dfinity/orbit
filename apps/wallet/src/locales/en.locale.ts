@@ -470,6 +470,7 @@ export default {
       validTokenAmount: 'This field must contain a valid amount for the selected asset.',
       requiredIntNumber: 'This field must be a valid integer number.',
       intNumberRange: '{field} must be between {min} and {max}.',
+      validEmail: 'This field must be a valid email address.',
     },
   },
   navigation: {
@@ -561,6 +562,9 @@ export default {
 
       waitlist_check_error_title: 'Failed to check waiting list status',
       waitlist_check_error_body: 'Failed to check waiting list status, please try again.',
+
+      quota_exceed_error_title: 'Quota exceeded',
+      quota_exceed_error_body: 'You have reached the maximum number of wallets you can create.',
 
       waitlist_denied_title: "You've been denied access.",
       waitlist_denied_body: 'Unfortunately, you are not eligible to join the waiting list.',

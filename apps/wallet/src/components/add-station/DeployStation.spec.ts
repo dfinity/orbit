@@ -3,7 +3,7 @@ import { mockRouter, mount } from '~/test.utils';
 import DeployStation from './DeployStation.vue';
 import { services } from '~/plugins/services.plugin';
 import { flushPromises } from '@vue/test-utils';
-import { User } from '~/generated/control-panel/control_panel.did';
+import { CanDeployStationResponse, User } from '~/generated/control-panel/control_panel.did';
 import { Principal } from '@dfinity/principal';
 
 vi.mock('~/utils/helper.utils', async importOriginal => {
@@ -24,32 +24,36 @@ vi.mock('~/stores/station.store', async importOriginal => {
 
 describe('DeployStation', () => {
   it('renders correctly', () => {
-    vi.spyOn(services().controlPanel, 'getCurrentUser').mockResolvedValueOnce({} as User);
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce(
+      {} as CanDeployStationResponse,
+    );
     const wrapper = mount(DeployStation);
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('checks waitlist status on mount', async () => {
-    vi.spyOn(services().controlPanel, 'getCurrentUser').mockResolvedValueOnce({} as User);
+  it('checks can deploy status on mount', async () => {
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce(
+      {} as CanDeployStationResponse,
+    );
     const controlPanelSerivce = services().controlPanel;
     mount(DeployStation);
 
-    expect(controlPanelSerivce.getCurrentUser).toHaveBeenCalled();
+    expect(controlPanelSerivce.canDeployStation).toHaveBeenCalled();
   });
 
   it('shows error if check fails', async () => {
-    vi.spyOn(services().controlPanel, 'getCurrentUser').mockRejectedValueOnce({});
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockRejectedValueOnce({});
     const wrapper = mount(DeployStation);
 
     await flushPromises();
 
-    expect(wrapper.find('[data-test-id="join-waitlist-check-error"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="deploy-check-error"]').exists()).toBe(true);
   });
 
   it('will show the waitlist screen if the user is not on the waitlist', async () => {
-    vi.spyOn(services().controlPanel, 'getCurrentUser').mockResolvedValueOnce({
-      subscription_status: { Unsubscribed: null },
-    } as User);
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
+      NotAllowed: { Unsubscribed: null },
+    } as CanDeployStationResponse);
     const wrapper = mount(DeployStation);
 
     await flushPromises();
@@ -58,29 +62,43 @@ describe('DeployStation', () => {
     expect(wrapper.find('[data-test-id="join-waitlist-form-email"]').exists()).toBe(true);
   });
 
-  it("will show the waitlist pending screen if the user's waitlist status is still pending", async () => {
-    vi.spyOn(services().controlPanel, 'getCurrentUser').mockResolvedValueOnce({
-      subscription_status: { Pending: null },
-    } as User);
+  it("will show the pending screen if the user's waitlist status is still pending", async () => {
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
+      NotAllowed: { Pending: null },
+    } as CanDeployStationResponse);
     const wrapper = mount(DeployStation);
 
     await flushPromises();
 
-    expect(wrapper.find('[data-test-id="join-waitlist-pending"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="deploy-in-waiting-list"]').exists()).toBe(true);
   });
 
-  it("will show the waitlist denied screen if the user's waitlist status is denied", async () => {
-    vi.spyOn(services().controlPanel, 'getCurrentUser').mockResolvedValueOnce({
-      subscription_status: { Denylisted: null },
-    } as User);
+  it("will show the denied screen if the user's waitlist status is denied", async () => {
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
+      NotAllowed: { Denylisted: null },
+    } as CanDeployStationResponse);
     const wrapper = mount(DeployStation);
 
     await flushPromises();
 
-    expect(wrapper.find('[data-test-id="join-waitlist-denied"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="deploy-not-allowed"]').exists()).toBe(true);
   });
 
-  it("will show the deploy screen if the user's waitlist status is approved", async () => {
+  it('will show the quota exceedeed screen if the has already deployed too many wallets', async () => {
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
+      QuotaExceeded: null,
+    } as CanDeployStationResponse);
+    const wrapper = mount(DeployStation);
+
+    await flushPromises();
+
+    expect(wrapper.find('[data-test-id="deploy-quota-exceeded-error"]').exists()).toBe(true);
+  });
+
+  it('will show the deploy screen if the is approved to create a new wallet', async () => {
+    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValue({
+      Allowed: BigInt(10),
+    } as CanDeployStationResponse);
     vi.spyOn(services().controlPanel, 'getCurrentUser').mockResolvedValue({
       subscription_status: { Approved: null },
     } as User);

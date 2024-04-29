@@ -172,3 +172,21 @@ export const validTokenAmount = (value: unknown, decimals: number): string | boo
     return i18n.global.t('forms.rules.validTokenAmount');
   }
 };
+
+export const validEmail = (value: unknown): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('requiredEmail only applies to strings');
+  }
+
+  if (!/^(?!.*\.\.)[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    return i18n.global.t('forms.rules.validEmail');
+  }
+
+  return true;
+};
