@@ -13,7 +13,7 @@ use std::str::FromStr;
 pub type UserId = UUID;
 
 /// The subscription status of an user.
-#[storable(serializer = "candid")]
+#[storable]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum UserSubscriptionStatus {
     Unsubscribed,
@@ -41,7 +41,7 @@ impl std::fmt::Display for UserSubscriptionStatus {
 }
 
 /// The identity of an user.
-#[storable(serializer = "candid")]
+#[storable]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct User {
     /// The UUID that identifies the user.
@@ -65,7 +65,7 @@ pub struct User {
     pub last_update_timestamp: Timestamp,
 }
 
-#[storable(serializer = "candid")]
+#[storable]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct UserKey(pub UUID);
 

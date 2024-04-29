@@ -5,7 +5,7 @@ use orbit_essentials::storable;
 use orbit_essentials::types::Timestamp;
 use std::borrow::Cow;
 
-#[storable(serializer = "candid")]
+#[storable]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
     /// The upgrader canister wasm module that will be used to upgrade the station canister.

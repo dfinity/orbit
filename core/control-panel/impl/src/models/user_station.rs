@@ -3,7 +3,7 @@ use candid::Principal;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
 
-#[storable(serializer = "candid")]
+#[storable]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 pub struct UserStation {
     pub canister_id: Principal,
