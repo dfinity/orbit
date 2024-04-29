@@ -86,32 +86,33 @@
         </VRow>
       </VContainer>
     </VCardText>
+    <VContainer>
+      <table v-if="votes.length > 0" class="voters text-body-1" data-test-id="proposal-votes">
+        <thead>
+          <tr>
+            <th class="pl-0">{{ $t('proposals.votes') }}</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="vote in votes" :key="vote.voter?.id">
+            <td class="pl-0">
+              {{ vote.voter.name?.[0] || vote.voter.id }}
+            </td>
 
-    <table v-if="votes.length > 0" class="voters mx-4 text-body-1" data-test-id="proposal-votes">
-      <thead>
-        <tr>
-          <th class="pl-0">{{ $t('proposals.votes') }}</th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="vote in votes" :key="vote.voter?.id">
-          <td class="pl-0">
-            {{ vote.voter.name?.[0] || vote.voter.id }}
-          </td>
-          <td>
-            <VoteChip :status="vote.vote.status" size="small" class="ml-2" />
-          </td>
-          <td>
-            <p v-if="vote.vote.status_reason[0]" class="text-medium-emphasis text-body-2">
-              {{ vote.vote.status_reason[0] }}
-            </p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
+            <td>
+              <p v-if="vote.vote.status_reason[0]" class="text-medium-emphasis text-body-2">
+                {{ vote.vote.status_reason[0] }}
+              </p>
+            </td>
+            <td class="text-right">
+              <VoteChip :status="vote.vote.status" size="small" class="ml-2" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </VContainer>
     <template v-if="showAcceptanceRules">
       <VContainer>
         <VRow>
@@ -120,12 +121,13 @@
           }}</VCol>
         </VRow>
       </VContainer>
-
-      <CriteriaResultView
-        :evaluated-criteria="props.details.evaluationResult!.policy_results[0].evaluated_criteria"
-        :status="props.details.evaluationResult!.policy_results[0].status"
-        :proposal-votes="props.proposal.votes"
-      ></CriteriaResultView>
+      <VList :density="'compact'">
+        <CriteriaResultView
+          :evaluated-criteria="props.details.evaluationResult!.policy_results[0].evaluated_criteria"
+          :status="props.details.evaluationResult!.policy_results[0].status"
+          :proposal-votes="props.proposal.votes"
+        ></CriteriaResultView>
+      </VList>
     </template>
 
     <VContainer v-if="!!proposalFailed" class="">

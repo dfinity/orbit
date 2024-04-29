@@ -1,24 +1,139 @@
 <template>
-  <VTreeview
-    class="text-caption"
-    :items="[items]"
-    :open-all="true"
-    :item-props="itemProps"
-    :density="'compact'"
-  >
-    <template #append="{ item }">
-      <template v-if="item.append">{{ item.append }}</template>
+  <VListGroup v-if="variantIs(props.evaluatedCriteria, 'And')">
+    <template v-slot:activator="{ props: activatorProps }">
+      <VListItem v-bind="activatorProps">
+        <template #title>
+          <div class="d-flex justify-space-between align-center">
+            <div>{{ $t('proposals.evaluation.and_rule') }}</div>
+            <div class="text-caption" :class="statusToColor(props.status)">
+              {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+            </div>
+          </div>
+        </template>
+      </VListItem>
     </template>
-  </VTreeview>
+    <CriteriaResultView
+      v-for="(item, idx) in props.evaluatedCriteria.And"
+      :key="idx"
+      :evaluated-criteria="item.evaluated_criteria"
+      :status="item.status"
+      :proposal-votes="props.proposalVotes"
+    ></CriteriaResultView>
+  </VListGroup>
+  <VListGroup v-else-if="variantIs(props.evaluatedCriteria, 'Or')">
+    <template v-slot:activator="{ props: activatorProps }">
+      <VListItem v-bind="activatorProps">
+        <template #title>
+          <div class="d-flex justify-space-between align-center">
+            <div>{{ $t('proposals.evaluation.or_rule') }}</div>
+            <div class="text-caption" :class="statusToColor(props.status)">
+              {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+            </div>
+          </div>
+        </template>
+      </VListItem>
+    </template>
+    <CriteriaResultView
+      v-for="(item, idx) in props.evaluatedCriteria.Or"
+      :key="idx"
+      :evaluated-criteria="item.evaluated_criteria"
+      :status="item.status"
+      :proposal-votes="props.proposalVotes"
+    ></CriteriaResultView>
+  </VListGroup>
+  <VListGroup v-else-if="variantIs(props.evaluatedCriteria, 'Not')">
+    <template v-slot:activator="{ props: activatorProps }">
+      <VListItem v-bind="activatorProps">
+        <template #title>
+          <div class="d-flex justify-space-between align-center">
+            <div>{{ $t('proposals.evaluation.not_rule') }}</div>
+            <div class="text-caption" :class="statusToColor(props.status)">
+              {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+            </div>
+          </div>
+        </template>
+      </VListItem>
+    </template>
+    <CriteriaResultView
+      :evaluated-criteria="props.evaluatedCriteria.Not.evaluated_criteria"
+      :status="props.evaluatedCriteria.Not.status"
+      :proposal-votes="props.proposalVotes"
+    ></CriteriaResultView>
+  </VListGroup>
+
+  <VListItem
+    v-else-if="variantIs(props.evaluatedCriteria, 'HasAddressInAddressBook')"
+    :title="$t('proposals.evaluation.has_address_in_address_book')"
+  >
+    <template #subtitle>
+      <span :class="statusToColor(props.status)">
+        {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+      </span>
+    </template>
+  </VListItem>
+
+  <VListItem
+    v-else-if="variantIs(props.evaluatedCriteria, 'HasAddressBookMetadata')"
+    :title="$t('proposals.evaluation.has_address_book_metadata')"
+    :subtitle="criteriaToLabel(props.evaluatedCriteria, props.status)"
+  >
+    <template #subtitle>
+      <span :class="statusToColor(props.status)">
+        {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+      </span>
+    </template>
+  </VListItem>
+
+  <VListItem
+    v-else-if="variantIs(props.evaluatedCriteria, 'MinimumVotes')"
+    :title="
+      $t('proposals.evaluation.minimum_votes', {
+        min: props.evaluatedCriteria.MinimumVotes.min_required_votes,
+      })
+    "
+    :subtitle="criteriaToLabel(props.evaluatedCriteria, props.status)"
+    ><template #subtitle>
+      <span :class="statusToColor(props.status)">
+        {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+      </span>
+    </template>
+  </VListItem>
+
+  <VListItem
+    v-else-if="variantIs(props.evaluatedCriteria, 'ApprovalThreshold')"
+    :title="
+      $t('proposals.evaluation.approval_threshold', {
+        min: props.evaluatedCriteria.ApprovalThreshold.min_required_votes,
+      })
+    "
+    :subtitle="criteriaToLabel(props.evaluatedCriteria, props.status)"
+    ><template #subtitle>
+      <span :class="statusToColor(props.status)">
+        {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+      </span>
+    </template>
+  </VListItem>
+
+  <VListItem
+    v-else-if="variantIs(props.evaluatedCriteria, 'AutoAdopted')"
+    :title="$t('proposals.evaluation.auto_adopted')"
+    :subtitle="criteriaToLabel(props.evaluatedCriteria, props.status)"
+    ><template #subtitle>
+      <span :class="statusToColor(props.status)">
+        {{ criteriaToLabel(props.evaluatedCriteria, props.status) }}
+      </span>
+    </template>
+  </VListItem>
+
+  <VListItem v-else>{{ unreachable(props.evaluatedCriteria) }}</VListItem>
 </template>
 
 <script lang="ts" setup>
 import { EvaluatedCriteria, EvaluationStatus, ProposalVote } from '~/generated/wallet/wallet.did';
 import { unreachable, variantIs } from '~/utils/helper.utils';
-import { computed } from 'vue';
-import { VTreeview } from 'vuetify/labs/components';
 import { useI18n } from 'vue-i18n';
 import { useDisplay } from 'vuetify';
+import { VListGroup, VListItem } from 'vuetify/components';
 
 const i18n = useI18n();
 const { mobile } = useDisplay();
@@ -62,6 +177,16 @@ type TreeViewItem = {
   children?: TreeViewItem[];
 };
 
+function statusToColor(status: EvaluationStatus): string {
+  if (variantIs(status, 'Adopted')) {
+    return 'text-success';
+  } else if (variantIs(status, 'Rejected')) {
+    return 'text-error';
+  } else {
+    return '';
+  }
+}
+
 function getVotingSummary(voterIds: string[], status: EvaluationStatus): string {
   const votes = voterIds.map(userId => props.proposalVotes.find(vote => vote.user_id === userId));
 
@@ -102,106 +227,59 @@ function statusToSimpleLabel(status: EvaluationStatus): string {
   }
 }
 
-function criteriaToTreeViewItem(
-  criteria: EvaluatedCriteria,
-  status: EvaluationStatus,
-): TreeViewItem {
+function criteriaToLabel(criteria: EvaluatedCriteria, status: EvaluationStatus): string {
   if (variantIs(criteria, 'And')) {
     if (criteria.And.length === 1) {
-      return criteriaToTreeViewItem(criteria.And[0].evaluated_criteria, criteria.And[0].status);
+      return criteriaToLabel(criteria.And[0].evaluated_criteria, criteria.And[0].status);
     }
 
-    return {
-      title: i18n.t('proposals.evaluation.and_rule', { n: criteria.And.length }),
-      status,
-      append: statusToSimpleLabel(status),
-      children: criteria.And.map(item =>
-        criteriaToTreeViewItem(item.evaluated_criteria, item.status),
-      ),
-    };
+    return statusToSimpleLabel(status);
   } else if (variantIs(criteria, 'Or')) {
     if (criteria.Or.length === 1) {
-      return criteriaToTreeViewItem(criteria.Or[0].evaluated_criteria, criteria.Or[0].status);
+      return criteriaToLabel(criteria.Or[0].evaluated_criteria, criteria.Or[0].status);
     }
-    return {
-      title: i18n.t('proposals.evaluation.or_rule', { n: criteria.Or.length }),
-      status,
-      append: statusToSimpleLabel(status),
-
-      children: criteria.Or.map(item =>
-        criteriaToTreeViewItem(item.evaluated_criteria, item.status),
-      ),
-    };
+    return statusToSimpleLabel(status);
   } else if (variantIs(criteria, 'Not')) {
-    return {
-      title: i18n.t('proposals.evaluation.not_rule'),
-      status,
-      children: [criteriaToTreeViewItem(criteria.Not.evaluated_criteria, criteria.Not.status)],
-    };
-  } else if (variantIs(criteria, 'HasAddressInAddressBook')) {
-    let append: string | undefined = undefined;
-
     if (variantIs(status, 'Adopted')) {
-      append = i18n.t('proposals.evaluation.found_in_address_book');
+      return i18n.t('proposals.evaluation.approved');
     } else if (variantIs(status, 'Rejected')) {
-      append = i18n.t('proposals.evaluation.not_found_in_address_book');
+      return i18n.t('proposals.evaluation.rejected');
+    } else {
+      return i18n.t('proposals.evaluation.pending');
     }
-
-    return {
-      title: i18n.t('proposals.evaluation.has_address_in_address_book'),
-      status,
-      append,
-    };
+  } else if (variantIs(criteria, 'HasAddressInAddressBook')) {
+    if (variantIs(status, 'Adopted')) {
+      return i18n.t('proposals.evaluation.found_in_address_book');
+    } else if (variantIs(status, 'Rejected')) {
+      return i18n.t('proposals.evaluation.not_found_in_address_book');
+    } else {
+      return '';
+    }
   } else if (variantIs(criteria, 'HasAddressBookMetadata')) {
-    let append: string | undefined;
     const metadata =
       criteria.HasAddressBookMetadata.metadata.key +
       '=' +
       criteria.HasAddressBookMetadata.metadata.value;
 
     if (variantIs(status, 'Adopted')) {
-      append = i18n.t('proposals.evaluation.address_book_metadata_found', {
+      return i18n.t('proposals.evaluation.address_book_metadata_found', {
         metadata,
       });
     } else if (variantIs(status, 'Rejected')) {
-      append = i18n.t('proposals.evaluation.address_book_metadata_not_found', {
+      return i18n.t('proposals.evaluation.address_book_metadata_not_found', {
         metadata,
       });
+    } else {
+      return '';
     }
-
-    return {
-      title: i18n.t('proposals.evaluation.has_address_book_metadata'),
-      status,
-      append,
-    };
   } else if (variantIs(criteria, 'MinimumVotes')) {
-    const append = getVotingSummary(criteria.MinimumVotes.votes, status);
-
-    return {
-      title: i18n.t('proposals.evaluation.minimum_votes', {
-        n: criteria.MinimumVotes.min_required_votes,
-      }),
-      status,
-      append,
-    };
+    return getVotingSummary(criteria.MinimumVotes.votes, status);
   } else if (variantIs(criteria, 'ApprovalThreshold')) {
-    const append = getVotingSummary(criteria.ApprovalThreshold.votes, status);
-    return {
-      title: i18n.t('proposals.evaluation.approval_threshold', {
-        n: criteria.ApprovalThreshold.min_required_votes,
-      }),
-      status,
-      append,
-    };
+    return getVotingSummary(criteria.ApprovalThreshold.votes, status);
   } else if (variantIs(criteria, 'AutoAdopted')) {
-    return {
-      title: i18n.t('proposals.evaluation.auto_adopted'),
-      status,
-    };
+    return '';
   } else {
     return unreachable(criteria);
   }
 }
-
-const items = computed(() => criteriaToTreeViewItem(props.evaluatedCriteria, props.status));
 </script>
