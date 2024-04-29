@@ -9,7 +9,7 @@
     <RequestOperationListRow v-if="formValue.name">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
-        {{ formValue.name?.[0] ?? '-' }}
+        {{ formValue.name }}
       </template>
     </RequestOperationListRow>
     <RequestOperationListRow v-if="formValue.status">
