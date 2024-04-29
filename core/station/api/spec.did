@@ -144,8 +144,6 @@ type UserSpecifier = variant {
   Requester;
 };
 
-type AccountSpecifier = CommonSpecifier;
-
 type ResourceSpecifier = variant {
   Any;
   Resource : Resource;
@@ -1460,15 +1458,6 @@ type ListUsersResult = variant {
   Err : Error;
 };
 
-// The common specifier, used commonly by resources.
-//
-// Mostly let specify resources by their id or by their group (if applicable).
-type CommonSpecifier = variant {
-  Any;
-  Group : vec UUID;
-  Id : vec UUID;
-};
-
 // The record id of a resource, used to specify the resource that is being accessed.
 type ResourceId = variant {
   Any;
@@ -1548,12 +1537,6 @@ type UserResourceAction = variant {
 type PermissionResourceAction = variant {
   Read;
   Update;
-};
-
-// The specifier for transfers, used to specify the transfer in the context of an account.
-type TransferSpecifier = record {
-  // The account that will be used for the transfer.
-  account : CommonSpecifier;
 };
 
 // The Resource is used to specify what is being accessed.

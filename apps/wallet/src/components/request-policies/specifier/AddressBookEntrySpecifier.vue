@@ -11,17 +11,17 @@
         {{ $t('terms.all') }}
       </VBtn>
       <VBtn
-        :active="isId"
+        :active="isIds"
         :disabled="props.disabled.value"
         variant="outlined"
         size="small"
-        @click="setSelectionMode('Id')"
+        @click="setSelectionMode('Ids')"
       >
         {{ $t('terms.subset') }}
       </VBtn>
     </div>
     <AddressBookAutocomplete
-      v-if="isId"
+      v-if="isIds"
       v-model="idsModel"
       :label="$t('terms.addresses')"
       variant="underlined"
@@ -34,12 +34,12 @@
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
 import AddressBookAutocomplete from '~/components/inputs/AddressBookAutocomplete.vue';
-import { CommonSpecifier } from '~/generated/station/station.did';
+import { ResourceIds } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
-    modelValue?: CommonSpecifier;
+    modelValue?: ResourceIds;
     disabled?: boolean;
     readonly?: boolean;
   }>(),
@@ -53,7 +53,7 @@ const input = withDefaults(
 const props = toRefs(input);
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: CommonSpecifier): void;
+  (event: 'update:modelValue', payload: ResourceIds): void;
 }>();
 
 const model = computed({
@@ -62,18 +62,18 @@ const model = computed({
 });
 
 const isAny = computed(() => variantIs(model.value, 'Any'));
-const isId = computed(() => variantIs(model.value, 'Id'));
+const isIds = computed(() => variantIs(model.value, 'Ids'));
 
 const idsModel = computed({
-  get: () => (variantIs(model.value, 'Id') ? model.value.Id : []),
+  get: () => (variantIs(model.value, 'Ids') ? model.value.Ids : []),
   set: value => {
-    if (variantIs(model.value, 'Id')) {
-      model.value.Id = value;
+    if (variantIs(model.value, 'Ids')) {
+      model.value.Ids = value;
     }
   },
 });
 
-const setSelectionMode = (variant: 'Any' | 'Id'): void => {
+const setSelectionMode = (variant: 'Any' | 'Ids'): void => {
   if (variantIs(model.value, variant)) {
     return;
   }
@@ -83,8 +83,8 @@ const setSelectionMode = (variant: 'Any' | 'Id'): void => {
     return;
   }
 
-  if (variant === 'Id') {
-    model.value = { Id: [] };
+  if (variant === 'Ids') {
+    model.value = { Ids: [] };
     return;
   }
 };

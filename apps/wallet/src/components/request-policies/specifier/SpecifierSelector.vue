@@ -75,9 +75,6 @@ const componentsMap: {
   AddAddressBookEntry: null,
   ChangeCanister: null,
   // below variants require more specific specifier model
-  EditPermission: UnsupportedSpecifier,
-  EditRequestPolicy: UnsupportedSpecifier,
-  RemoveRequestPolicy: UnsupportedSpecifier,
   Transfer: TransferSpecifier,
   EditAccount: AccountSpecifier,
   EditUserGroup: UserGroupSpecifier,
@@ -85,6 +82,10 @@ const componentsMap: {
   EditUser: UserSpecifier,
   EditAddressBookEntry: AddressBookEntrySpecifier,
   RemoveAddressBookEntry: AddressBookEntrySpecifier,
+  // below variants are not supported yet
+  EditPermission: UnsupportedSpecifier,
+  EditRequestPolicy: UnsupportedSpecifier,
+  RemoveRequestPolicy: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {

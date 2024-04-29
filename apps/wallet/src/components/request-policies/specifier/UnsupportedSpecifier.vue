@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isId || isGroup" class="d-flex ga-4 flex-column">
+  <div v-if="isIds" class="d-flex ga-4 flex-column">
     <VAlert type="warning" density="compact" variant="tonal">
       {{ $t('request_policies.unsupported_specifier') }}
     </VAlert>
@@ -7,12 +7,12 @@
 </template>
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import { CommonSpecifier } from '~/generated/station/station.did';
+import { ResourceIds } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
-    modelValue?: CommonSpecifier;
+    modelValue?: ResourceIds;
     disabled?: boolean;
     readonly?: boolean;
   }>(),
@@ -25,6 +25,5 @@ const input = withDefaults(
 
 const props = toRefs(input);
 
-const isId = computed(() => variantIs(props.modelValue.value, 'Id'));
-const isGroup = computed(() => variantIs(props.modelValue.value, 'Group'));
+const isIds = computed(() => variantIs(props.modelValue.value, 'Ids'));
 </script>

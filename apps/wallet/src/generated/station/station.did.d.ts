@@ -38,7 +38,6 @@ export type AccountResourceAction = { 'List' : null } |
   { 'Create' : null } |
   { 'Transfer' : ResourceId } |
   { 'Update' : ResourceId };
-export type AccountSpecifier = CommonSpecifier;
 export interface AddAccountOperation {
   'account' : [] | [Account],
   'input' : AddAccountOperationInput,
@@ -150,9 +149,6 @@ export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeCanister' : Principal } |
   { 'UpgradeStation' : null };
-export type CommonSpecifier = { 'Id' : Array<UUID> } |
-  { 'Any' : null } |
-  { 'Group' : Array<UUID> };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -767,7 +763,6 @@ export interface TransferOperationInput {
   'network' : [] | [Network],
   'amount' : bigint,
 }
-export interface TransferSpecifier { 'account' : CommonSpecifier }
 export type TransferStatus = { 'Failed' : { 'reason' : string } } |
   { 'Processing' : { 'started_at' : TimestampRFC3339 } } |
   { 'Created' : null } |

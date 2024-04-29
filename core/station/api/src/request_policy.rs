@@ -37,11 +37,6 @@ pub enum ResourceSpecifierDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct TransferSpecifierDTO {
-    pub account: CommonSpecifierDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct QuorumPercentageDTO {
     pub approvers: UserSpecifierDTO,
     pub min_approved: u16,
@@ -112,16 +107,6 @@ pub struct RequestEvaluationResultDTO {
     pub status: EvaluationStatusDTO,
     pub policy_results: Vec<RequestPolicyRuleResultDTO>,
 }
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum CommonSpecifierDTO {
-    Any,
-    Id(Vec<UuidDTO>),
-    Group(Vec<UuidDTO>),
-}
-
-pub type AccessControlUserSpecifierDTO = CommonSpecifierDTO;
-pub type AccountSpecifierDTO = CommonSpecifierDTO;
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct RequestPolicyCallerPrivilegesDTO {

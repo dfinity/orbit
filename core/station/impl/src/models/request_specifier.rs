@@ -19,16 +19,6 @@ use std::sync::Arc;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum CommonSpecifier {
-    Any,
-    Group(Vec<UUID>),
-    Id(Vec<UUID>),
-}
-
-pub type AccountSpecifier = CommonSpecifier;
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum UserSpecifier {
     Any,
     Group(Vec<UUID>),

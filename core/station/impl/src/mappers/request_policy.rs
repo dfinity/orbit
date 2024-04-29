@@ -1,7 +1,7 @@
 use super::HelperMapper;
 use crate::models::{
     request_policy_rule::RequestPolicyRule,
-    request_specifier::{CommonSpecifier, RequestSpecifier, ResourceSpecifier, UserSpecifier},
+    request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction, Resource,
         ResourceAction, ResourceId, ResourceIds, UserResourceAction,
@@ -188,50 +188,6 @@ impl From<UserSpecifier> for UserSpecifierDTO {
             ),
             UserSpecifier::Owner => UserSpecifierDTO::Owner,
             UserSpecifier::Requester => UserSpecifierDTO::Requester,
-        }
-    }
-}
-
-impl From<CommonSpecifier> for station_api::CommonSpecifierDTO {
-    fn from(specifier: CommonSpecifier) -> Self {
-        match specifier {
-            CommonSpecifier::Any => station_api::CommonSpecifierDTO::Any,
-            CommonSpecifier::Group(ids) => station_api::CommonSpecifierDTO::Group(
-                ids.into_iter()
-                    .map(|id| Uuid::from_bytes(id).hyphenated().to_string())
-                    .collect::<Vec<_>>(),
-            ),
-            CommonSpecifier::Id(ids) => station_api::CommonSpecifierDTO::Id(
-                ids.into_iter()
-                    .map(|id| Uuid::from_bytes(id).hyphenated().to_string())
-                    .collect::<Vec<_>>(),
-            ),
-        }
-    }
-}
-
-impl From<station_api::CommonSpecifierDTO> for CommonSpecifier {
-    fn from(dto: station_api::CommonSpecifierDTO) -> Self {
-        match dto {
-            station_api::CommonSpecifierDTO::Any => CommonSpecifier::Any,
-            station_api::CommonSpecifierDTO::Group(ids) => CommonSpecifier::Group(
-                ids.into_iter()
-                    .map(|id| {
-                        *HelperMapper::to_uuid(id)
-                            .expect("invalid uuid for group")
-                            .as_bytes()
-                    })
-                    .collect(),
-            ),
-            station_api::CommonSpecifierDTO::Id(ids) => CommonSpecifier::Id(
-                ids.into_iter()
-                    .map(|id| {
-                        *HelperMapper::to_uuid(id)
-                            .expect("invalid uuid for id")
-                            .as_bytes()
-                    })
-                    .collect(),
-            ),
         }
     }
 }
