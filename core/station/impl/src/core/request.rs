@@ -9,8 +9,7 @@ use crate::{
         request_specifier::{
             Match, RequestSpecifier, UserInvolvedInPolicyRuleForRequestResource, UserSpecifier,
         },
-        EvaluationStatus, Request, RequestId, RequestOperation, RequestStatusCode, User, UserId,
-        UserStatus,
+        EvaluationStatus, Request, RequestId, RequestStatusCode, User, UserId, UserStatus,
     },
     repositories::{
         request_policy::REQUEST_POLICY_REPOSITORY, REQUEST_REPOSITORY, USER_REPOSITORY,
@@ -239,39 +238,6 @@ impl
 
                     Ok(possible_approvers)
                 }
-                UserSpecifier::Requester => {
-                    possible_approvers
-                        .users
-                        .insert(request.requested_by.to_owned());
-
-                    Ok(possible_approvers)
-                }
-                UserSpecifier::Owner => {
-                    match &request.operation {
-                        RequestOperation::EditUser(operation) => {
-                            possible_approvers
-                                .users
-                                .insert(operation.input.user_id.to_owned());
-                        }
-                        RequestOperation::EditAccount(_)
-                        | RequestOperation::Transfer(_)
-                        | RequestOperation::AddAccount(_)
-                        | RequestOperation::AddAddressBookEntry(_)
-                        | RequestOperation::AddRequestPolicy(_)
-                        | RequestOperation::AddUser(_)
-                        | RequestOperation::AddUserGroup(_)
-                        | RequestOperation::EditAddressBookEntry(_)
-                        | RequestOperation::RemoveAddressBookEntry(_)
-                        | RequestOperation::EditPermission(_)
-                        | RequestOperation::EditRequestPolicy(_)
-                        | RequestOperation::EditUserGroup(_)
-                        | RequestOperation::RemoveRequestPolicy(_)
-                        | RequestOperation::RemoveUserGroup(_)
-                        | RequestOperation::ChangeCanister(_) => {}
-                    };
-
-                    Ok(possible_approvers)
-                }
             },
             RequestPolicyRule::AllowListed | RequestPolicyRule::AllowListedByMetadata(_) => {
                 Ok(possible_approvers)
@@ -460,7 +426,7 @@ mod tests {
             user_test_utils::{self, mock_user},
             Account, AccountKey, AddUserGroupOperation, AddUserGroupOperationInput, Blockchain,
             BlockchainStandard, EvaluatedRequestPolicyRule, Metadata, MetadataItem, Percentage,
-            RequestPolicy, RequestStatus, ADMIN_GROUP_ID,
+            RequestOperation, RequestPolicy, RequestStatus, ADMIN_GROUP_ID,
         },
         repositories::{
             request_policy::REQUEST_POLICY_REPOSITORY, ACCOUNT_REPOSITORY,
@@ -508,8 +474,7 @@ mod tests {
         REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
         policy.specifier = RequestSpecifier::AddUserGroup;
-        policy.rule =
-            RequestPolicyRule::QuorumPercentage(UserSpecifier::Requester, Percentage(100));
+        policy.rule = RequestPolicyRule::QuorumPercentage(UserSpecifier::Any, Percentage(100));
 
         REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.clone());
 

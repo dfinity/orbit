@@ -1,16 +1,14 @@
-use super::resource::{Resource, ResourceId, ResourceIds, UserResourceAction};
-use super::{MetadataItem, Request, RequestId, RequestKey, RequestOperation, RequestOperationType};
-use crate::errors::RecordValidationError;
-use crate::models::user::User;
-use crate::repositories::{ADDRESS_BOOK_REPOSITORY, REQUEST_REPOSITORY};
-
+use super::resource::{Resource, ResourceIds};
+use super::{MetadataItem, Request, RequestId, RequestOperation, RequestOperationType};
 use crate::core::validation::{
     EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureRequestPolicy,
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
+use crate::errors::RecordValidationError;
+use crate::models::user::User;
+use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
-use anyhow::anyhow;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
@@ -23,14 +21,12 @@ pub enum UserSpecifier {
     Any,
     Group(Vec<UUID>),
     Id(Vec<UUID>),
-    Owner,
-    Requester,
 }
 
 impl ModelValidator<RecordValidationError> for UserSpecifier {
     fn validate(&self) -> Result<(), RecordValidationError> {
         match self {
-            UserSpecifier::Any | UserSpecifier::Owner | UserSpecifier::Requester => Ok(()),
+            UserSpecifier::Any => Ok(()),
             UserSpecifier::Group(group_ids) => {
                 for group_id in group_ids {
                     EnsureUserGroup::id_exists(group_id)?;
@@ -195,34 +191,6 @@ impl Match<UserInvolvedInPolicyRuleForRequestResource> for UserMatcher {
                 Ok(false)
             }
             UserSpecifier::Id(ids) => Ok(ids.contains(&input.user_id)),
-            UserSpecifier::Owner => {
-                for resource in input.request_operation_resources {
-                    let is_match = match resource {
-                        Resource::User(UserResourceAction::Update(user_resource)) => {
-                            match user_resource {
-                                ResourceId::Any => false, // not a real match
-                                ResourceId::Id(edit_user_id) => edit_user_id == input.user_id,
-                            }
-                        }
-                        _ => false,
-                    };
-
-                    if is_match {
-                        return Ok(true);
-                    }
-                }
-
-                Ok(false)
-            }
-            UserSpecifier::Requester => {
-                if let Some(request) = REQUEST_REPOSITORY.get(&RequestKey {
-                    id: input.request_id,
-                }) {
-                    Ok(request.requested_by == input.user_id)
-                } else {
-                    Err(MatchError::UnexpectedError(anyhow!("Request not found")))
-                }
-            }
         }
     }
 }
@@ -497,11 +465,6 @@ mod tests {
                 [1; 16],                          // approver
                 UserSpecifier::Id(vec![[1; 16]]), // specifier
             ),
-            (
-                [0; 16],                  // requester
-                [0; 16],                  // approver
-                UserSpecifier::Requester, // specifier
-            ),
         ];
 
         for tc in tcs {
@@ -528,12 +491,6 @@ mod tests {
         disable_mock_resource_validation();
 
         UserSpecifier::Any.validate().expect("Any should be valid");
-        UserSpecifier::Owner
-            .validate()
-            .expect("Owner should be valid");
-        UserSpecifier::Requester
-            .validate()
-            .expect("Requester should be valid");
     }
 
     #[test]

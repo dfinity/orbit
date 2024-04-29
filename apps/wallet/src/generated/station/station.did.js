@@ -119,8 +119,6 @@ export const idlFactory = ({ IDL }) => {
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
     'Group' : IDL.Vec(UUID),
-    'Requester' : IDL.Null,
-    'Owner' : IDL.Null,
   });
   const Quorum = IDL.Record({
     'min_approved' : IDL.Nat16,

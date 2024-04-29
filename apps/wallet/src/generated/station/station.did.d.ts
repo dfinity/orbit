@@ -818,9 +818,7 @@ export type UserResourceAction = { 'List' : null } |
   { 'Update' : ResourceId };
 export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Any' : null } |
-  { 'Group' : Array<UUID> } |
-  { 'Requester' : null } |
-  { 'Owner' : null };
+  { 'Group' : Array<UUID> };
 export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
 export interface _SERVICE {

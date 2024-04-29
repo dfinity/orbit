@@ -166,8 +166,6 @@ impl From<UserSpecifierDTO> for UserSpecifier {
                     .map(|id| *HelperMapper::to_uuid(id).expect("invalid uuid").as_bytes())
                     .collect(),
             ),
-            UserSpecifierDTO::Owner => UserSpecifier::Owner,
-            UserSpecifierDTO::Requester => UserSpecifier::Requester,
         }
     }
 }
@@ -186,8 +184,6 @@ impl From<UserSpecifier> for UserSpecifierDTO {
                     .map(|id| Uuid::from_bytes(id).hyphenated().to_string())
                     .collect::<Vec<_>>(),
             ),
-            UserSpecifier::Owner => UserSpecifierDTO::Owner,
-            UserSpecifier::Requester => UserSpecifierDTO::Requester,
         }
     }
 }

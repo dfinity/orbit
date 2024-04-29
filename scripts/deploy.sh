@@ -229,7 +229,7 @@ while [[ $# -gt 0 ]]; do
     ;;
   --production)
     shift
-    set_network prod
+    set_network production
     exec_function setup_enviroment
     identity_warning_confirmation
     exec_function deploy_control_panel

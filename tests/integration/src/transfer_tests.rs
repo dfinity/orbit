@@ -54,13 +54,13 @@ fn make_transfer_successful() {
         },
         transfer_request_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
             QuorumPercentageDTO {
-                approvers: UserSpecifierDTO::Owner,
+                approvers: UserSpecifierDTO::Id(vec![user_dto.id.clone()]),
                 min_approved: 100,
             },
         )),
         configs_request_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
             QuorumPercentageDTO {
-                approvers: UserSpecifierDTO::Owner,
+                approvers: UserSpecifierDTO::Id(vec![user_dto.id.clone()]),
                 min_approved: 100,
             },
         )),

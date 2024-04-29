@@ -114,8 +114,6 @@ export enum RequestPolicyRuleEnum {
 }
 
 export enum RequestPolicyRuleUserSpecifierEnum {
-  Owner = 'Owner',
-  Requester = 'Requester',
   Any = 'Any',
   Group = 'Group',
   Id = 'Id',
