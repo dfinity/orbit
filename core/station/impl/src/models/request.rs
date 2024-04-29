@@ -7,7 +7,8 @@ use crate::core::evaluation::{
     Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_MATCHER,
     REQUEST_POLICY_RULE_EVALUATOR, REQUEST_POSSIBLE_APPROVERS_REQUEST_POLICY_RULE_EVALUATOR,
 };
-use crate::core::ic_cdk::api::{print, time};
+use crate::core::ic_cdk::api::print;
+use crate::core::ic_cdk::next_time;
 use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
@@ -275,11 +276,11 @@ impl Request {
         approvers
     }
 
-    /// Gives the default expiration date for a request which is 7 days from the current time.
+    /// Gives the default expiration date for a request which is 30 days from the current time.
     pub fn default_expiration_dt_ns() -> Timestamp {
-        let time_in_ns: u64 = 7 * 24 * 60 * 60 * 1_000_000_000;
+        let time_in_ns: u64 = 30 * 24 * 60 * 60 * 1_000_000_000;
 
-        time() + time_in_ns
+        next_time() + time_in_ns
     }
 
     pub async fn can_approve(&self, user_id: &UUID) -> bool {
@@ -318,12 +319,13 @@ impl Request {
             return Err(RequestError::ApprovalNotAllowed);
         }
 
+        let now = next_time();
         let approval = RequestApproval {
             approver_id: user_id,
             status: decision,
             status_reason: reason,
-            decided_dt: time(),
-            last_modification_timestamp: time(),
+            decided_dt: now,
+            last_modification_timestamp: now,
         };
 
         approval.validate()?;

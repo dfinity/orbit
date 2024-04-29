@@ -1,6 +1,6 @@
 use super::ScheduledJob;
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::next_time,
     models::{RequestExecutionPlan, RequestStatus, RequestStatusCode},
     repositories::RequestRepository,
 };
@@ -31,7 +31,7 @@ impl Job {
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` requests at once.
     async fn process_approved_requests(&self) {
-        let current_time = time();
+        let current_time = next_time();
         let mut requests = self.request_repository.find_by_status(
             RequestStatusCode::Approved,
             None,
@@ -43,13 +43,14 @@ impl Job {
 
         // schedule the requests to be executed.
         for request in requests.iter_mut() {
+            let request_processing_time = next_time();
             let scheduled_at = match &request.execution_plan {
-                RequestExecutionPlan::Immediate => time(),
+                RequestExecutionPlan::Immediate => request_processing_time,
                 RequestExecutionPlan::Scheduled { execution_time } => *execution_time,
             };
 
             request.status = RequestStatus::Scheduled { scheduled_at };
-            request.last_modification_timestamp = time();
+            request.last_modification_timestamp = request_processing_time;
             self.request_repository
                 .insert(request.to_key(), request.to_owned());
         }

@@ -1,6 +1,6 @@
 use super::HelperMapper;
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::next_time,
     errors::UserError,
     models::{
         AddUserOperationInput, DisplayUser, EditUserOperationInput, User, UserCallerPrivileges,
@@ -26,7 +26,7 @@ impl UserMapper {
             groups: input.groups,
             name: input.name,
             status: input.status,
-            last_modification_timestamp: time(),
+            last_modification_timestamp: next_time(),
         }
     }
 }

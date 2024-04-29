@@ -1,5 +1,5 @@
 use super::{AccountId, UserId};
-use crate::core::ic_cdk::api::time;
+use crate::core::ic_cdk::next_time;
 use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureRequest, EnsureUser};
 use crate::errors::{RecordValidationError, TransferError};
 use crate::models::Metadata;
@@ -113,6 +113,8 @@ impl Transfer {
         fee: candid::Nat,
         blockchain_network: String,
     ) -> Self {
+        let now = next_time();
+
         Self {
             id: transfer_id,
             initiator_user,
@@ -124,8 +126,8 @@ impl Transfer {
             fee,
             blockchain_network,
             metadata,
-            last_modification_timestamp: time(),
-            created_timestamp: time(),
+            last_modification_timestamp: now,
+            created_timestamp: now,
         }
     }
 }
@@ -303,6 +305,8 @@ pub mod transfer_test_utils {
     use uuid::Uuid;
 
     pub fn mock_transfer() -> Transfer {
+        let now = next_time();
+
         Transfer {
             id: *Uuid::new_v4().as_bytes(),
             initiator_user: [0; 16],
@@ -314,8 +318,8 @@ pub mod transfer_test_utils {
             fee: candid::Nat::from(0_u64),
             blockchain_network: "a".repeat(50),
             metadata: Metadata::default(),
-            last_modification_timestamp: time(),
-            created_timestamp: time(),
+            last_modification_timestamp: now,
+            created_timestamp: now,
         }
     }
 }

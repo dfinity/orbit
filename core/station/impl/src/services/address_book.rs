@@ -210,6 +210,7 @@ mod tests {
         let new_entry = result.unwrap();
 
         address_book_entry.id = new_entry.id;
+        address_book_entry.last_modification_timestamp = new_entry.last_modification_timestamp;
 
         assert_eq!(new_entry, address_book_entry);
 
