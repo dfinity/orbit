@@ -18,7 +18,7 @@ vi.mock('~/services/control-panel.service', () => {
 });
 
 describe('StationInfoCard', () => {
-  function initStation(principal: Principal, isMain: boolean, name: string | null) {
+  function initStation(principal: Principal, isMain: boolean, name: string) {
     const stationStore = useStationStore();
     const sessionStore = useSessionStore();
 
@@ -31,7 +31,7 @@ describe('StationInfoCard', () => {
     stationStore.$patch({ canisterId: principal.toText() });
   }
 
-  function addStation(principal: Principal, isMain: boolean, name: string | null) {
+  function addStation(principal: Principal, isMain: boolean, name: string) {
     const sessionStore = useSessionStore();
     const stationStore = useStationStore();
 
@@ -128,7 +128,7 @@ describe('StationInfoCard', () => {
           [
             {
               canister_id: stationCanisterId1,
-              name: ['TEST WALLET'],
+              name: 'TEST WALLET',
             },
           ],
         ],

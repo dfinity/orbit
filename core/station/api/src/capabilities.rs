@@ -21,6 +21,8 @@ pub struct AssetDTO {
 /// The capabilities of the canister.
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct CapabilitiesDTO {
+    /// The name of the canister.
+    pub name: String,
     /// The current version of the canister.
     pub version: String,
     /// The list of assets that are supported by the canister (e.g. `ICP`, `BTC`, `ETH`, etc.)

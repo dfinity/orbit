@@ -27,7 +27,7 @@ pub struct RegisterUserStationSharedInput {
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegisterUserInput {
-    pub station_id: Option<Principal>,
+    pub station: Option<UserStationDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

@@ -66,7 +66,7 @@ mod tests {
             input: AddUserOperationInput {
                 groups: vec![],
                 identities: vec![],
-                name: None,
+                name: "user-1".to_string(),
                 status: UserStatus::Active,
             },
             user_id: None,

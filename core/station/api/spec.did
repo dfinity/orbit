@@ -427,7 +427,7 @@ type RemoveAddressBookEntryOperationInput = record {
 
 type AddUserOperationInput = record {
   // The user name (e.g. "John Doe").
-  name : opt text;
+  name : text;
   // The principals associated with the user.
   identities : vec principal;
   // The list of groups the user belongs to.
@@ -711,7 +711,7 @@ type RequestAdditionalInfo = record {
   // The request id.
   id : UUID;
   // The requester name (e.g. "John Doe").
-  requester_name : opt text;
+  requester_name : text;
   // Display information for the approvers.
   approvers : vec DisplayUser;
   // The evaluation result of all matching policies for the request.
@@ -1037,7 +1037,7 @@ type User = record {
   // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
   // The user name (e.g. "John Doe").
-  name : opt text;
+  name : text;
   // The status of the user (e.g. `Active`).
   status : UserStatus;
   // The list of groups the user belongs to.
@@ -1368,9 +1368,11 @@ type Asset = record {
   metadata : vec AssetMetadata;
 };
 
-// A record type that is used to show the current capabilities of the canister and it's version.
+// A record type that is used to show the current capabilities of the station.
 type Capabilities = record {
-  // Version of the canister.
+  // The name of the station.
+  name : text;
+  // Version of the station.
   version : text;
   // The list of supported assets.
   supported_assets : vec Asset;
@@ -1387,9 +1389,11 @@ type CapabilitiesResult = variant {
   Err : Error;
 };
 
-// The canister system information.
+// The system information.
 type SystemInfo = record {
-  // The canister version.
+  // The name of the station.
+  name : text;
+  // The station version.
   version : text;
   // The upgrader principal id.
   upgrader_id : principal;
@@ -1591,7 +1595,7 @@ type DisplayUser = record {
   // The UUID of the user (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
   id : UUID;
   // The user name (e.g. "John Doe").
-  name : opt text;
+  name : text;
 };
 
 // Result type for listing permissions.
@@ -1739,20 +1743,31 @@ type MeResult = variant {
   Err : Error;
 };
 
+// The admin that is created in the station during the init process.
+type AdminInitInput = record {
+  // The name of the user.
+  name : text;
+  // The identity of the admin.
+  identity : principal;
+};
+
 // The init configuration for the canister.
 //
 // Only used when installing the canister for the first time.
 type SystemInit = record {
+  // The name of the station.
+  name : text;
   // The list of admin principals to be associated with the station.
-  //
-  // When not specified, the caller will be added as the admin.
-  admins : opt vec principal;
+  admins : vec AdminInitInput;
   // The wasm module of the station upgrader canister.
   upgrader_wasm_module : blob;
 };
 
 // The upgrade configuration for the canister.
-type SystemUpgrade = record {};
+type SystemUpgrade = record {
+  // The updated name of the station.
+  name : opt text;
+};
 
 // The input type for the canister install method (e.g. init or upgrade).
 type SystemInstall = variant {

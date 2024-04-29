@@ -218,13 +218,14 @@ impl UserService {
         &self,
         user_id: &UserId,
         station_canister_id: Principal,
+        station_name: String,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
 
         user.stations.push(UserStation {
             canister_id: station_canister_id,
-            name: None,
+            name: station_name,
         });
         user.deployed_stations.push(station_canister_id);
 
@@ -308,7 +309,7 @@ impl UserService {
 mod tests {
     use super::*;
     use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus};
-    use control_panel_api::UserSubscriptionStatusDTO;
+    use control_panel_api::{UserStationDTO, UserSubscriptionStatusDTO};
     use orbit_essentials::cdk::mocks::TEST_CONTROLLER_ID;
 
     #[test]
@@ -365,7 +366,10 @@ mod tests {
         let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
         let input = RegisterUserInput {
-            station_id: Some(Principal::from_slice(&[2; 29])),
+            station: Some(UserStationDTO {
+                canister_id: Principal::from_slice(&[2; 29]),
+                name: "Station".to_string(),
+            }),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -380,7 +384,10 @@ mod tests {
         let ctx = CallContext::new(Principal::anonymous());
         let service = UserService::default();
         let input = RegisterUserInput {
-            station_id: Some(Principal::from_slice(&[2; 29])),
+            station: Some(UserStationDTO {
+                canister_id: Principal::from_slice(&[2; 29]),
+                name: "Station".to_string(),
+            }),
         };
 
         let result = service.register_user(input.clone(), &ctx).await;
@@ -402,8 +409,8 @@ mod tests {
 
         let ctx = CallContext::new(Principal::from_slice(&[1; 29]));
         let service = UserService::default();
-        let input = RegisterUserInput { station_id: None };
-        let duplicated_user_input = RegisterUserInput { station_id: None };
+        let input = RegisterUserInput { station: None };
+        let duplicated_user_input = RegisterUserInput { station: None };
 
         let result = service.register_user(input.clone(), &ctx).await;
         let duplicated_user_result = service

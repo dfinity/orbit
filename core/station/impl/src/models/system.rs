@@ -21,6 +21,8 @@ pub const SYSTEM_STATE_MEMORY_SIZE: u32 = WASM_PAGE_SIZE * SYSTEM_STATE_WASM_PAG
 #[storable(size = SYSTEM_STATE_MEMORY_SIZE)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemInfo {
+    /// The system name.
+    name: String,
     /// Last time the canister was upgraded or initialized.
     last_upgrade_timestamp: Timestamp,
     /// An optionally pending change canister request.
@@ -34,6 +36,7 @@ pub struct SystemInfo {
 impl Default for SystemInfo {
     fn default() -> Self {
         Self {
+            name: "Station".to_string(),
             last_upgrade_timestamp: time(),
             change_canister_request: None,
             upgrader_canister_id: None,
@@ -43,12 +46,31 @@ impl Default for SystemInfo {
 }
 
 impl SystemInfo {
+    pub const MAX_NAME_LENGTH: usize = 48;
+
     pub fn new(upgrader_canister_id: Principal, upgrader_wasm_module: Vec<u8>) -> Self {
         Self {
             upgrader_canister_id: Some(upgrader_canister_id),
             upgrader_wasm_module: Some(upgrader_wasm_module),
             ..Default::default()
         }
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        let mut name = name.trim().to_string();
+        if name.is_empty() {
+            name = "Station".to_string();
+        }
+
+        if name.len() > Self::MAX_NAME_LENGTH {
+            name = name.chars().take(Self::MAX_NAME_LENGTH).collect();
+        }
+
+        self.name = name;
     }
 
     pub fn get_last_upgrade_timestamp(&self) -> Timestamp {
@@ -125,4 +147,33 @@ impl Storable for SystemState {
         max_size: SYSTEM_STATE_MEMORY_SIZE,
         is_fixed_size: false,
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_system_info_name_validation() {
+        let mut info = SystemInfo::default();
+        assert_eq!(info.name, "Station");
+
+        info.set_name("test".to_string());
+        assert_eq!(info.name, "test");
+
+        info.set_name("".to_string());
+        assert_eq!(info.name, "Station");
+
+        info.set_name("a".repeat(SystemInfo::MAX_NAME_LENGTH + 1));
+        assert_eq!(info.name, "a".repeat(SystemInfo::MAX_NAME_LENGTH));
+
+        info.set_name("  test  ".to_string());
+        assert_eq!(info.name, "test");
+
+        info.set_name("test  ".to_string());
+        assert_eq!(info.name, "test");
+
+        info.set_name("  test".to_string());
+        assert_eq!(info.name, "test");
+    }
 }

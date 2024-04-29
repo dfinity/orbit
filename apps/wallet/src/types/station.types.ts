@@ -134,7 +134,7 @@ export type MetadataItem = { key: string; value: string };
 
 export interface RequestDetails {
   can_approve: boolean;
-  requester_name?: string;
+  requester_name: string;
   approvers: DisplayUser[];
 }
 

@@ -17,7 +17,7 @@ import { disableWorkers, enableWorkers } from '~/workers';
 
 export interface Station {
   main: boolean;
-  name: string | null;
+  name: string;
   canisterId: string;
 }
 
@@ -264,7 +264,7 @@ export const useSessionStore = defineStore('session', {
       this.principal = user.identity.toText();
       this.data.stations = user.stations.map(station => ({
         main: station.canister_id.toText() === user.main_station?.[0]?.toText(),
-        name: station.name?.[0] ?? null,
+        name: station.name,
         canisterId: station.canister_id.toText(),
       }));
 
@@ -366,7 +366,7 @@ export const useSessionStore = defineStore('session', {
       if (!isRegistered) {
         await controlPanelService.register({
           // a new user is created with an empty list of stations, they can add them later
-          station_id: [],
+          station: [],
         });
       }
 

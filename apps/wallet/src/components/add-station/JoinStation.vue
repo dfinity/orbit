@@ -34,6 +34,7 @@
         v-model.trim="name"
         :label="$t('pages.add_station.join_station_name')"
         data-test-id="join-station-form-canister-name"
+        :rules="[requiredRule, maxLengthRule(40, $t('pages.add_station.join_station_name'))]"
         variant="outlined"
         :disabled="working"
       />
@@ -59,11 +60,16 @@ import { VFormValidation } from '~/types/helper.types';
 import { useSessionStore } from '~/stores/session.store';
 import { ref } from 'vue';
 import { computed } from 'vue';
-import { requiredRule, validCanisterId } from '~/utils/form.utils';
+import { maxLengthRule, requiredRule, validCanisterId } from '~/utils/form.utils';
 import { useRouter } from 'vue-router';
 import { defaultHomeRoute } from '~/configs/routes.config';
 import { useAppStore } from '~/stores/app.store';
 import { copyToClipboard } from '~/utils/app.utils';
+import { StationService } from '~/services/station.service';
+import { icAgent } from '~/core/ic-agent.core';
+import { Principal } from '@dfinity/principal';
+import logger from '~/core/logger.core';
+import { watch } from 'vue';
 
 const session = useSessionStore();
 const router = useRouter();
@@ -75,10 +81,39 @@ const name = ref('');
 
 const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
+const stationService = new StationService(icAgent.get());
 
 const emit = defineEmits<{
   (event: 'back', payload: void): void;
 }>();
+
+const maybeParseCanisterId = (canisterId: string): Principal | undefined => {
+  try {
+    return Principal.fromText(canisterId);
+  } catch {
+    return undefined;
+  }
+};
+
+const onChangeCanisterIdMaybeFetchName = async () => {
+  let stationId = maybeParseCanisterId(canisterId.value);
+  if (!stationId) {
+    return;
+  }
+
+  try {
+    const station = await stationService.withStationId(stationId).capabilities();
+
+    name.value = station.name;
+  } catch (e: unknown) {
+    logger.warn('Failed to fetch station name', e);
+  }
+};
+
+watch(
+  () => canisterId.value,
+  () => onChangeCanisterIdMaybeFetchName(),
+);
 
 async function addNewStation() {
   if (working.value) {

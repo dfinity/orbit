@@ -1,7 +1,6 @@
 use crate::{
     core::{
         authorization::Authorization,
-        generate_uuid_v4,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
@@ -98,17 +97,14 @@ impl UserService {
     /// Creates a new user with the given user details and returns the created user.
     ///
     /// This method should only be called by a system call (self canister call or controller).
-    pub async fn add_user(&self, input: AddUserOperationInput) -> ServiceResult<User> {
+    pub fn add_user(&self, input: AddUserOperationInput) -> ServiceResult<User> {
         for identity in input.identities.iter() {
             self.assert_identity_has_no_associated_user(identity, None)?;
         }
 
-        if let Some(name) = &input.name {
-            self.assert_name_has_no_associated_user(name, None)?;
-        }
+        self.assert_name_has_no_associated_user(&input.name, None)?;
 
-        let user_id = generate_uuid_v4().await;
-        let user = UserMapper::from_create_input(*user_id.as_bytes(), input);
+        let user = UserMapper::from_create_input(*Uuid::new_v4().as_bytes(), input);
 
         user.validate()?;
 
@@ -339,17 +335,17 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[tokio::test]
-    async fn add_user_happy_path() {
+    #[test]
+    fn add_user_happy_path() {
         let ctx: TestContext = setup();
         let input = AddUserOperationInput {
             identities: vec![Principal::from_slice(&[2; 29])],
             groups: vec![*ADMIN_GROUP_ID],
             status: UserStatus::Active,
-            name: None,
+            name: "user-1".to_string(),
         };
 
-        let result = ctx.service.add_user(input).await;
+        let result = ctx.service.add_user(input);
         assert!(result.is_ok());
 
         let user = ctx.repository.get(&result.unwrap().to_key()).unwrap();
@@ -357,8 +353,8 @@ mod tests {
         assert_eq!(user.groups, vec![*ADMIN_GROUP_ID]);
     }
 
-    #[tokio::test]
-    async fn add_user_non_existent_group_should_fail() {
+    #[test]
+    fn add_user_non_existent_group_should_fail() {
         let ctx: TestContext = setup();
 
         disable_mock_resource_validation();
@@ -367,10 +363,10 @@ mod tests {
             identities: vec![Principal::from_slice(&[2; 29])],
             groups: vec![[0; 16]],
             status: UserStatus::Active,
-            name: None,
+            name: "user-1".to_string(),
         };
 
-        let result = ctx.service.add_user(input).await;
+        let result = ctx.service.add_user(input);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -378,27 +374,27 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn add_user_with_identity_of_existing_user_should_fail() {
+    #[test]
+    fn add_user_with_identity_of_existing_user_should_fail() {
         let ctx: TestContext = setup();
         let input = AddUserOperationInput {
             identities: vec![Principal::from_slice(&[2; 29])],
             groups: vec![*ADMIN_GROUP_ID],
             status: UserStatus::Active,
-            name: Some("Jane Doe".to_string()),
+            name: "Jane Doe".to_string(),
         };
 
-        let result = ctx.service.add_user(input).await;
+        let result = ctx.service.add_user(input);
         assert!(result.is_ok());
 
         let input = AddUserOperationInput {
             identities: vec![Principal::from_slice(&[2; 29])],
             groups: vec![*ADMIN_GROUP_ID],
             status: UserStatus::Active,
-            name: Some("John Doe".to_string()),
+            name: "John Doe".to_string(),
         };
 
-        let result = ctx.service.add_user(input).await;
+        let result = ctx.service.add_user(input);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -406,10 +402,10 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn add_user_with_existing_name_should_fail() {
+    #[test]
+    fn add_user_with_existing_name_should_fail() {
         let mut user = mock_user();
-        user.name = Some("Jane Doe".to_string());
+        user.name = "Jane Doe".to_string();
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
@@ -417,10 +413,10 @@ mod tests {
             identities: vec![Principal::from_slice(&[3; 29])],
             groups: vec![*ADMIN_GROUP_ID],
             status: UserStatus::Active,
-            name: Some("Jane Doe".to_string()),
+            name: "Jane Doe".to_string(),
         };
 
-        let result = USER_SERVICE.add_user(input).await;
+        let result = USER_SERVICE.add_user(input);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -431,16 +427,16 @@ mod tests {
     #[tokio::test]
     async fn edit_user_with_existing_name_should_fail() {
         let mut user = mock_user();
-        user.name = Some("Jane Doe".to_string());
+        user.name = "Jane Doe".to_string();
         let mut another_user = mock_user();
-        another_user.name = Some("John Doe".to_string());
+        another_user.name = "John Doe".to_string();
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
         USER_REPOSITORY.insert(another_user.to_key(), another_user.clone());
 
         let input = EditUserOperationInput {
             user_id: user.id,
-            name: another_user.name,
+            name: Some(another_user.name),
             identities: None,
             groups: None,
             status: None,

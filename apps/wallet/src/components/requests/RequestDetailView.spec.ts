@@ -7,8 +7,8 @@ type RequestDetailViewProps = InstanceType<typeof RequestDetailView>['$props'];
 const pendingProps: RequestDetailViewProps = {
   details: {
     can_approve: true,
-    requester_name: undefined,
-    approvers: [{ id: 'requester-id', name: [] }],
+    requester_name: 'requester',
+    approvers: [{ id: 'requester-id', name: '' }],
   },
   request: {
     status: { Created: null },
@@ -26,7 +26,7 @@ const pendingProps: RequestDetailViewProps = {
         input: {
           groups: [],
           identities: [],
-          name: ['test'],
+          name: 'test',
           status: { Active: null },
         },
       },
@@ -44,10 +44,10 @@ const pendingProps: RequestDetailViewProps = {
 const approvedProps: RequestDetailViewProps = {
   details: {
     can_approve: false,
-    requester_name: undefined,
+    requester_name: 'requester',
     approvers: [
-      { id: 'approver-1-id', name: [] },
-      { id: 'approver-2-id', name: [] },
+      { id: 'approver-1-id', name: '' },
+      { id: 'approver-2-id', name: '' },
     ],
   },
   request: {
@@ -72,7 +72,7 @@ const approvedProps: RequestDetailViewProps = {
         input: {
           groups: [],
           identities: [],
-          name: ['test'],
+          name: 'test',
           status: { Active: null },
         },
       },
@@ -90,10 +90,10 @@ const approvedProps: RequestDetailViewProps = {
 const rejectedProps: RequestDetailViewProps = {
   details: {
     can_approve: false,
-    requester_name: undefined,
+    requester_name: 'requester',
     approvers: [
-      { id: 'approver-1-id', name: [] },
-      { id: 'approver-2-id', name: [] },
+      { id: 'approver-1-id', name: '' },
+      { id: 'approver-2-id', name: '' },
     ],
   },
   request: {
@@ -118,7 +118,7 @@ const rejectedProps: RequestDetailViewProps = {
         input: {
           groups: [],
           identities: [],
-          name: ['test'],
+          name: 'test',
           status: { Active: null },
         },
       },

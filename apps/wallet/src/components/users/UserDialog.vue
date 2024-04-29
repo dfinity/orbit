@@ -141,7 +141,7 @@ const save = async (): Promise<void> => {
         id: user.value.id,
         groups: [assertAndReturn(user.value.groups, 'groups').map(g => g.id)],
         identities: [assertAndReturn(user.value.identities, 'identities')],
-        name: user.value.name !== undefined ? user.value.name : [],
+        name: [assertAndReturn(user.value.name, 'name')],
         status: [assertAndReturn(user.value.status, 'status')],
       });
 
@@ -154,7 +154,7 @@ const save = async (): Promise<void> => {
     const request = await station.service.addUser({
       groups: assertAndReturn(user.value.groups, 'groups').map(g => g.id),
       identities: assertAndReturn(user.value.identities, 'identities'),
-      name: user.value.name !== undefined ? user.value.name : [],
+      name: assertAndReturn(user.value.name, 'name'),
       status: assertAndReturn(user.value.status, 'status'),
     });
 

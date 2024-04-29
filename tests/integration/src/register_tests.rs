@@ -19,7 +19,7 @@ fn register_user_successful() {
 
     // add a user through a request
     let add_user = AddUserOperationInput {
-        name: Some("test".to_string()),
+        name: "test".to_string(),
         identities: vec![user_id],
         groups: vec![],
         status: station_api::UserStatusDTO::Active,
@@ -72,7 +72,7 @@ fn register_user_successful() {
     };
 
     if let RequestOperationDTO::AddUser(add_user) = new_request_dto.operation {
-        assert_eq!(add_user.user.unwrap().name, Some("test".to_string()));
+        assert_eq!(add_user.user.unwrap().name, "test".to_string());
     } else {
         panic!("request operation must be AddUser");
     }

@@ -1,7 +1,7 @@
 use crate::{
     core::{
         middlewares::{authorize, call_context},
-        ASSETS,
+        read_system_info, ASSETS,
     },
     models::resource::{Resource, SystemResourceAction},
     SYSTEM_VERSION,
@@ -33,9 +33,11 @@ impl CapabilitiesController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::System(SystemResourceAction::Capabilities)]))]
     async fn capabilities(&self) -> ApiResult<CapabilitiesResponse> {
         let assets = ASSETS.with(|asset| asset.borrow().clone());
+        let system = read_system_info();
 
         Ok(CapabilitiesResponse {
             capabilities: CapabilitiesDTO {
+                name: system.get_name().to_string(),
                 version: SYSTEM_VERSION.to_string(),
                 supported_assets: assets.into_iter().map(|asset| asset.into()).collect(),
             },

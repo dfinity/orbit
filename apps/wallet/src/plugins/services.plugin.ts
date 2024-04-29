@@ -17,7 +17,7 @@ export interface Services {
   sessionExpiration: SessionExpirationService;
 }
 
-const getDefauultServices = (): Services => ({
+const getDefaultServices = (): Services => ({
   locales: new LocalesService(),
   auth: new AuthService(),
   theme: new ThemeService(),
@@ -29,7 +29,7 @@ const getDefauultServices = (): Services => ({
 });
 
 class ServiceManager {
-  constructor(public services: Services = getDefauultServices()) {}
+  constructor(public services: Services = getDefaultServices()) {}
 
   withAgent(icAgent: HttpAgent): ServiceManager {
     this.services.controlPanel = new ControlPanelService(icAgent);

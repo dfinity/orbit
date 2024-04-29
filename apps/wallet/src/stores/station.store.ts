@@ -95,7 +95,7 @@ const initialStoreState = (): StationStoreState => {
     loading: false,
     user: {
       id: '',
-      name: [],
+      name: '',
       status: { Inactive: null },
       groups: [],
       last_modification_timestamp: '',
@@ -105,6 +105,7 @@ const initialStoreState = (): StationStoreState => {
     configuration: {
       loading: false,
       details: {
+        name: '',
         version: '',
         supported_assets: [],
       },

@@ -75,7 +75,7 @@ const { fetchPolicies } = toRefs(props);
 
 const userList = computed(() => {
   const users = autocomplete.results.value.map(user => ({
-    title: user.name?.[0] ? user.name[0] : user.id,
+    title: user.name,
     value: user.id,
   }));
 

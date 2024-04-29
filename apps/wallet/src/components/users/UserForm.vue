@@ -14,7 +14,7 @@
       name="name"
       :label="$t('terms.name')"
       density="comfortable"
-      :rules="[maxLengthRule(100, $t('terms.name'))]"
+      :rules="[maxLengthRule(50, $t('terms.name'))]"
       :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
@@ -170,9 +170,9 @@ const status = computed({
 });
 
 const name = computed({
-  get: () => model.value.name?.[0],
+  get: () => model.value.name,
   set: value => {
-    model.value.name = !value ? [] : [value];
+    model.value.name = !value ? '' : value;
   },
 });
 

@@ -28,7 +28,7 @@
         :request="data.request"
         :details="{
           can_approve: data.privileges.can_approve,
-          requester_name: data.additionalInfo.requester_name[0],
+          requester_name: data.additionalInfo.requester_name,
           approvers: data.additionalInfo.approvers,
         }"
         :loading="approving || loading"

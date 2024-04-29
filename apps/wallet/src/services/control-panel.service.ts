@@ -4,6 +4,7 @@ import { appInitConfig } from '~/configs/init.config';
 import { idlFactory } from '~/generated/control-panel';
 import {
   CanDeployStationResponse,
+  DeployStationInput,
   ManageUserInput,
   RegisterUserInput,
   User,
@@ -109,8 +110,8 @@ export class ControlPanelService {
     return result.Ok.stations;
   }
 
-  async deployStation(): Promise<Principal> {
-    const result = await this.actor.deploy_station();
+  async deployStation(input: DeployStationInput): Promise<Principal> {
+    const result = await this.actor.deploy_station(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

@@ -35,7 +35,7 @@
             <VCol :cols="12">
               <VTextField
                 v-model="summary"
-                :label="$t('terms.summary')"
+                :label="$t('terms.comment_optional')"
                 density="comfortable"
                 class="mb-2"
                 name="to"

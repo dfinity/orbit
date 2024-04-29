@@ -6,6 +6,7 @@ use crate::{
     services::USER_SERVICE,
 };
 use candid::{Encode, Principal};
+use control_panel_api::DeployStationInput;
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use lazy_static::lazy_static;
@@ -28,7 +29,11 @@ impl DeployService {
     }
 
     /// Deploys a station canister for the user.
-    pub async fn deploy_station(&self, ctx: &CallContext) -> ServiceResult<Principal> {
+    pub async fn deploy_station(
+        &self,
+        input: DeployStationInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<Principal> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
         let can_deploy_station_response = user.can_deploy_station();
@@ -74,7 +79,11 @@ impl DeployService {
             canister_id: station_canister.canister_id,
             wasm_module: config.station_wasm_module,
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
-                admins: Some(vec![user.identity]),
+                name: input.station_name.clone(),
+                admins: vec![station_api::AdminInitInput {
+                    identity: user.identity,
+                    name: input.admin_name.clone(),
+                }],
                 upgrader_wasm_module: config.upgrader_wasm_module,
             }))
             .map_err(|err| DeployError::Failed {
@@ -87,7 +96,12 @@ impl DeployService {
         })?;
 
         self.user_service
-            .add_deployed_station(&user.id, station_canister.canister_id, ctx)
+            .add_deployed_station(
+                &user.id,
+                station_canister.canister_id,
+                input.station_name,
+                ctx,
+            )
             .await?;
 
         if user.main_station.is_none() {

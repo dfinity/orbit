@@ -24,6 +24,10 @@ export interface CanisterUpgrade {
   'station_wasm_module' : [] | [Uint8Array | number[]],
   'upgrader_wasm_module' : [] | [Uint8Array | number[]],
 }
+export interface DeployStationInput {
+  'admin_name' : string,
+  'station_name' : string,
+}
 export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
   { 'Err' : ApiError };
 export type GetMainStationResult = {
@@ -59,7 +63,7 @@ export interface ManageUserInput {
 }
 export type ManageUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export interface RegisterUserInput { 'station_id' : [] | [Principal] }
+export interface RegisterUserInput { 'station' : [] | [UserStation] }
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
@@ -90,10 +94,7 @@ export interface User {
 }
 export type UserId = UUID;
 export type UserIdentityID = Principal;
-export interface UserStation {
-  'name' : [] | [string],
-  'canister_id' : StationID,
-}
+export interface UserStation { 'name' : string, 'canister_id' : StationID }
 export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
@@ -101,7 +102,7 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
 export interface _SERVICE {
   'can_deploy_station' : ActorMethod<[], CanDeployStationResult>,
   'delete_user' : ActorMethod<[], RemoveUserResult>,
-  'deploy_station' : ActorMethod<[], DeployStationResult>,
+  'deploy_station' : ActorMethod<[DeployStationInput], DeployStationResult>,
   'get_main_station' : ActorMethod<[], GetMainStationResult>,
   'get_user' : ActorMethod<[], GetUserResult>,
   'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,

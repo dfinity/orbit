@@ -418,7 +418,7 @@ mod tests {
                 RequestOperation::AddUser(AddUserOperation {
                     user_id: None,
                     input: AddUserOperationInput {
-                        name: None,
+                        name: "user-1".to_string(),
                         identities: vec![],
                         groups: vec![],
                         status: UserStatus::Active,

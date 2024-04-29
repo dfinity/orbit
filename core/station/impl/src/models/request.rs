@@ -81,7 +81,7 @@ pub struct RequestCallerPrivileges {
 #[derive(Deserialize, Debug, Clone)]
 pub struct RequestAdditionalInfo {
     pub id: UUID,
-    pub requester_name: Option<String>,
+    pub requester_name: String,
     pub approvers: Vec<DisplayUser>,
     pub evaluation_result: Option<RequestEvaluationResult>,
 }
@@ -479,7 +479,7 @@ mod tests {
         validate_request_operation_foreign_keys(&RequestOperation::AddUser(AddUserOperation {
             user_id: None,
             input: AddUserOperationInput {
-                name: None,
+                name: "user-1".to_string(),
                 identities: vec![],
                 groups: vec![[1; 16]],
                 status: crate::models::UserStatus::Active,

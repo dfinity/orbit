@@ -20,7 +20,7 @@ pub struct UserDTO {
     pub identities: Vec<Principal>,
     pub groups: Vec<UserGroupDTO>,
     pub status: UserStatusDTO,
-    pub name: Option<String>,
+    pub name: String,
     pub last_modification_timestamp: TimestampRfc3339,
 }
 
@@ -34,7 +34,7 @@ pub struct BasicUserDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct DisplayUserDTO {
     pub id: UuidDTO,
-    pub name: Option<String>,
+    pub name: String,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -50,7 +50,7 @@ pub struct GetUserResponse {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AddUserOperationInput {
-    pub name: Option<String>,
+    pub name: String,
     pub identities: Vec<Principal>,
     pub groups: Vec<String>,
     pub status: UserStatusDTO,

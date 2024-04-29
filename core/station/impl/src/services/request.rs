@@ -102,27 +102,27 @@ impl RequestService {
         request: &Request,
         with_evaluation_results: bool,
     ) -> ServiceResult<RequestAdditionalInfo> {
-        let requester = self
-            .user_service
-            .get_user(&request.requested_by)
-            .map(|user| user.name)
-            .unwrap_or(None);
+        let requester = self.user_service.get_user(&request.requested_by);
         let approvers = request
             .approvals
             .iter()
-            .map(|approval| {
-                self.user_service
-                    .get_user(&approval.approver_id)
-                    .map(|user| DisplayUser {
+            .filter_map(
+                |approval| match self.user_service.get_user(&approval.approver_id) {
+                    Ok(user) => Some(DisplayUser {
                         name: user.name,
                         id: user.id,
-                    })
-                    .unwrap_or(DisplayUser {
-                        id: approval.approver_id,
-                        name: None,
-                    })
-            })
-            .collect();
+                    }),
+                    Err(_) => {
+                        print(format!(
+                            "Failed to get user with id {}",
+                            Uuid::from_bytes(approval.approver_id.to_owned()).hyphenated()
+                        ));
+
+                        None
+                    }
+                },
+            )
+            .collect::<Vec<DisplayUser>>();
 
         let evaluation_result = with_evaluation_results
             .then(|| {
@@ -134,7 +134,7 @@ impl RequestService {
 
         Ok(RequestAdditionalInfo {
             id: request.id,
-            requester_name: requester,
+            requester_name: requester.map_or("Unknown".to_string(), |user| user.name),
             approvers,
             evaluation_result,
         })
@@ -770,7 +770,7 @@ mod tests {
             input: AddUserOperationInput {
                 groups: vec![],
                 identities: vec![Principal::from_slice(&[3; 29])],
-                name: None,
+                name: "user-1".to_string(),
                 status: UserStatus::Active,
             },
         });

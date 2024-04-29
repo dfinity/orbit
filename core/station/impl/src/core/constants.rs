@@ -7,8 +7,8 @@ pub const MAX_BYTE_SIZE_UUID: u32 = std::mem::size_of::<Uuid>() as u32;
 /// Represents one gigabyte.
 pub const GIB: u64 = 1 << 30;
 
-/// The maximum memory size the canister can use for stable memory, currently set to 32GiB.
-pub const MAX_STABLE_MEMORY_SIZE: u64 = 32 * GIB;
+/// The maximum memory size the canister can use for stable memory, currently set to 64GiB.
+pub const MAX_STABLE_MEMORY_SIZE: u64 = 64 * GIB;
 
 /// Canisters use 64KiB pages for Wasm memory, more details in the PR that introduced this constant:
 /// - https://github.com/WebAssembly/design/pull/442#issuecomment-153203031

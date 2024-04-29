@@ -48,7 +48,7 @@
             </template>
             <template #item.name="{ item: user }">
               <div class="d-flex align-center">
-                {{ user.name?.[0] ?? '-' }}
+                {{ user.name }}
               </div>
             </template>
             <template #item.status="{ item: user }">

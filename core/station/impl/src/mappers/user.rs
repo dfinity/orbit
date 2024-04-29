@@ -53,7 +53,7 @@ impl From<User> for BasicUserDTO {
     fn from(user: User) -> Self {
         BasicUserDTO {
             id: Uuid::from_bytes(user.id).hyphenated().to_string(),
-            name: user.name.unwrap_or("".to_string()),
+            name: user.name,
             status: user.status.into(),
         }
     }
@@ -102,7 +102,7 @@ impl User {
         }
 
         if let Some(new_name) = input.name {
-            self.name = Some(new_name);
+            self.name = new_name;
         }
 
         if let Some(new_status) = input.status {

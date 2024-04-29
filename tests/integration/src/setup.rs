@@ -10,7 +10,7 @@ use control_panel_api::{
 use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
-use station_api::{SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
+use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
@@ -144,7 +144,11 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
     );
 
     let station_init_args = SystemInstallArg::Init(SystemInitArg {
-        admins: Some(vec![WALLET_ADMIN_USER]),
+        name: "Station".to_string(),
+        admins: vec![AdminInitInput {
+            identity: WALLET_ADMIN_USER,
+            name: "station-admin".to_string(),
+        }],
         upgrader_wasm_module: upgrader_wasm,
     });
     env.install_canister(

@@ -4,6 +4,22 @@ import JoinStation from './JoinStation.vue';
 import { useSessionStore } from '~/stores/session.store';
 import { flushPromises } from '@vue/test-utils';
 import { useAppStore } from '~/stores/app.store';
+import { StationService } from '~/services/station.service';
+
+vi.mock('~/services/station.service', () => {
+  const mock: Partial<StationService> = {
+    withStationId: vi.fn().mockReturnThis(),
+    capabilities: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        name: 'test',
+      }),
+    ),
+  };
+
+  return {
+    StationService: vi.fn(() => mock),
+  };
+});
 
 describe('JoinStation', () => {
   it('renders correctly', () => {
@@ -45,13 +61,13 @@ describe('JoinStation', () => {
 
     const canisterId = wrapper.find('[data-test-id="join-station-form-canister-id"] input');
 
-    // name is optional
-    expect(
-      wrapper.find('[data-test-id="join-station-form-canister-name"]').classes(),
-    ).not.toContain('v-input--error');
-
     // canister id is required
     expect(wrapper.find('[data-test-id="join-station-form-canister-id"]').classes()).toContain(
+      'v-input--error',
+    );
+
+    // name is required
+    expect(wrapper.find('[data-test-id="join-station-form-canister-name"]').classes()).toContain(
       'v-input--error',
     );
 

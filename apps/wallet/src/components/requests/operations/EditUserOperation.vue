@@ -9,7 +9,7 @@
     <RequestOperationListRow v-if="formValue.name">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
-        {{ formValue.name?.[0] ?? '-' }}
+        {{ formValue.name }}
       </template>
     </RequestOperationListRow>
     <RequestOperationListRow v-if="formValue.status">
@@ -46,7 +46,7 @@ const formValue: Ref<Partial<User>> = ref({});
 onBeforeMount(() => {
   const user: Partial<User> = {};
   user.id = props.operation.input.id;
-  user.name = props.operation.input.name;
+  user.name = props.operation.input.name?.[0];
   if (props.operation.input.status?.[0]) {
     user.status = props.operation.input.status?.[0];
   }

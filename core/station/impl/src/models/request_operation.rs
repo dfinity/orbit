@@ -167,7 +167,7 @@ pub struct AddUserOperation {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddUserOperationInput {
-    pub name: Option<String>,
+    pub name: String,
     pub identities: Vec<Principal>,
     pub groups: Vec<UUID>,
     pub status: UserStatus,

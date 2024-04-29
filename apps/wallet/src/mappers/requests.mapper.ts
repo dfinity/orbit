@@ -338,7 +338,7 @@ const mapRequestToUserCsvRow = (request: Request): CsvRow => {
   if (variantIs(request.operation, 'AddUser')) {
     return {
       user_id: request.operation.AddUser.user?.[0]?.id ?? '',
-      user_name: request.operation.AddUser.input.name?.[0] ?? '',
+      user_name: request.operation.AddUser.input.name,
       details: stringify({
         identities: request.operation.AddUser.input.identities?.map(i => i.toText()),
         status: request.operation.AddUser.input.status,
@@ -560,7 +560,7 @@ export const mapRequestsToCsvTable = (
   const rows = requests.map(entry => {
     const row: CsvRow = {
       id: entry.request.id,
-      requester: entry.additionalInfo?.requester_name[0] ?? entry.request.requested_by,
+      requester: entry.additionalInfo?.requester_name ?? entry.request.requested_by,
       status: mapRequestStatusToText(entry.request.status),
       status_reason: mapRequestStatusToReason(entry.request.status),
       created: entry.request.created_at,

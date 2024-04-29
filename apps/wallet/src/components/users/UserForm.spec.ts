@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
 import UserForm from './UserForm.vue';
 
-describe('AddPrincipalForm', () => {
+describe('UserForm', () => {
   it('renders properly', () => {
     const wrapper = mount(UserForm, {
       props: {
@@ -30,7 +30,7 @@ describe('AddPrincipalForm', () => {
     await nameInput.setValue('Test');
 
     expect(wrapper.emitted('update:modelValue')).toBeTruthy();
-    expect(wrapper.emitted('update:modelValue')).toEqual([[{ name: ['Test'] }]]);
+    expect(wrapper.emitted('update:modelValue')).toEqual([[{ name: 'Test' }]]);
   });
 
   it('submits the form and emits it', async () => {
@@ -58,7 +58,7 @@ describe('AddPrincipalForm', () => {
     expect(wrapper.emitted('submit')).toEqual([
       [
         {
-          name: ['Test'],
+          name: 'Test',
           groups: [{ id: '1', name: 'test' }],
           identities: [Principal.anonymous()],
           status: { Active: null },
