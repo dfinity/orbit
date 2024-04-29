@@ -1,10 +1,12 @@
 {
   "app_wallet": {
     "playground": "bxkhk-6yaaa-aaaal-ai6va-cai",
+    "production": "5fu67-giaaa-aaaal-ajbla-cai",
     "testing": "l3uq6-ryaaa-aaaal-adu2a-cai"
   },
   "control_panel": {
     "playground": "b6jmw-iqaaa-aaaal-ai6uq-cai",
+    "production": "5mxvd-qaaaa-aaaal-ajbkq-cai",
     "testing": "lotbt-qqaaa-aaaal-aduzq-cai"
   }
 }
