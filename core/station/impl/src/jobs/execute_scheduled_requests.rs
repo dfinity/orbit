@@ -1,6 +1,6 @@
 use super::ScheduledJob;
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::next_time,
     errors::RequestExecuteError,
     factories::requests::{RequestExecuteStage, RequestFactory},
     models::{Request, RequestStatus},
@@ -34,7 +34,7 @@ impl Job {
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` requests at once.
     async fn execute_scheduled_requests(&self) {
-        let current_time = time();
+        let current_time = next_time();
         let mut requests = self
             .request_repository
             .find_scheduled(None, Some(current_time));
@@ -44,8 +44,11 @@ impl Job {
 
         // update the status of the requests to avoid processing them again
         for request in requests.iter_mut() {
-            request.status = RequestStatus::Processing { started_at: time() };
-            request.last_modification_timestamp = time();
+            let request_processing_time = next_time();
+            request.status = RequestStatus::Processing {
+                started_at: request_processing_time,
+            };
+            request.last_modification_timestamp = request_processing_time;
             self.request_repository
                 .insert(request.to_key(), request.to_owned());
         }
@@ -70,11 +73,12 @@ impl Job {
                         .insert(request.to_key(), request.to_owned());
                 }
                 Err(e) => {
+                    let request_failed_time = next_time();
                     let mut request = requests[pos].clone();
                     request.status = RequestStatus::Failed {
                         reason: Some(e.to_string()),
                     };
-                    request.last_modification_timestamp = time();
+                    request.last_modification_timestamp = request_failed_time;
                     self.request_repository
                         .insert(request.to_key(), request.to_owned());
                 }
@@ -91,11 +95,15 @@ impl Job {
 
         drop(executor);
 
+        let request_execution_time = next_time();
+
         request.status = match execute_state {
             RequestExecuteStage::Completed(_) => RequestStatus::Completed {
-                completed_at: time(),
+                completed_at: request_execution_time,
             },
-            RequestExecuteStage::Processing(_) => RequestStatus::Processing { started_at: time() },
+            RequestExecuteStage::Processing(_) => RequestStatus::Processing {
+                started_at: request_execution_time,
+            },
         };
 
         request.operation = match execute_state {
@@ -103,7 +111,7 @@ impl Job {
             RequestExecuteStage::Processing(operation) => operation,
         };
 
-        request.last_modification_timestamp = time();
+        request.last_modification_timestamp = request_execution_time;
 
         Ok(request)
     }

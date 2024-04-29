@@ -1,5 +1,5 @@
 use crate::core::authorization::Authorization;
-use crate::core::ic_cdk::api::time;
+use crate::core::ic_cdk::next_time;
 use crate::core::utils::{
     paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs,
 };
@@ -94,7 +94,7 @@ impl UserGroupService {
         let user_group = UserGroup {
             id: *user_group_id.as_bytes(),
             name: input.name.to_string(),
-            last_modification_timestamp: time(),
+            last_modification_timestamp: next_time(),
         };
 
         user_group.validate()?;
@@ -109,7 +109,7 @@ impl UserGroupService {
         let mut user_group = self.get(&input.user_group_id)?;
 
         user_group.name = input.name.to_string();
-        user_group.last_modification_timestamp = time();
+        user_group.last_modification_timestamp = next_time();
 
         user_group.validate()?;
 

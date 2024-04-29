@@ -1,6 +1,6 @@
 use super::ScheduledJob;
 use crate::{
-    core::ic_cdk::api::{print, time},
+    core::ic_cdk::{api::print, next_time},
     errors::TransferError,
     factories::blockchains::{
         BlockchainApiFactory, BlockchainTransactionSubmitted,
@@ -42,7 +42,7 @@ impl Job {
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` transfers at once.
     async fn execute_created_transfers(&self) {
-        let current_time = time();
+        let current_time = next_time();
         let mut transfers = self.transfer_repository.find_by_status(
             TransferStatus::Created.to_string(),
             None,
@@ -54,8 +54,11 @@ impl Job {
 
         // update the status of the requests to avoid processing them again
         for transfer in transfers.iter_mut() {
-            transfer.status = TransferStatus::Processing { started_at: time() };
-            transfer.last_modification_timestamp = time();
+            let transfer_processing_time = next_time();
+            transfer.status = TransferStatus::Processing {
+                started_at: transfer_processing_time,
+            };
+            transfer.last_modification_timestamp = transfer_processing_time;
             self.transfer_repository
                 .insert(transfer.to_key(), transfer.to_owned());
         }
@@ -81,7 +84,7 @@ impl Job {
                     transfer.status = TransferStatus::Failed {
                         reason: "Request not found".to_string(),
                     };
-                    transfer.last_modification_timestamp = time();
+                    transfer.last_modification_timestamp = next_time();
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
                 }
@@ -106,7 +109,7 @@ impl Job {
             .for_each(|(pos, result)| match result {
                 Ok((transfer, details)) => {
                     let mut transfer = transfer.clone();
-
+                    let transfer_completed_time = next_time();
                     let maybe_transaction_hash = details
                         .details
                         .iter()
@@ -114,11 +117,11 @@ impl Job {
                         .map(|(_, value)| value.to_owned());
 
                     transfer.status = TransferStatus::Completed {
-                        completed_at: time(),
+                        completed_at: transfer_completed_time,
                         hash: maybe_transaction_hash,
                         signature: None,
                     };
-                    transfer.last_modification_timestamp = time();
+                    transfer.last_modification_timestamp = transfer_completed_time;
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
 
@@ -132,9 +135,9 @@ impl Job {
                         }
 
                         request.status = RequestStatus::Completed {
-                            completed_at: time(),
+                            completed_at: transfer_completed_time,
                         };
-                        request.last_modification_timestamp = time();
+                        request.last_modification_timestamp = transfer_completed_time;
                         self.request_repository
                             .insert(request.to_key(), request.to_owned());
                     } else {
@@ -149,7 +152,8 @@ impl Job {
                     transfer.status = TransferStatus::Failed {
                         reason: e.to_string(),
                     };
-                    transfer.last_modification_timestamp = time();
+                    let transfer_failed_time = next_time();
+                    transfer.last_modification_timestamp = transfer_failed_time;
                     self.transfer_repository
                         .insert(transfer.to_key(), transfer.to_owned());
 
@@ -158,7 +162,7 @@ impl Job {
                         request.status = RequestStatus::Failed {
                             reason: Some(e.to_string()),
                         };
-                        request.last_modification_timestamp = time();
+                        request.last_modification_timestamp = transfer_failed_time;
                         self.request_repository
                             .insert(request.to_key(), request.to_owned());
                     } else {

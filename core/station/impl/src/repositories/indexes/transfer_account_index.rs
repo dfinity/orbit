@@ -1,11 +1,13 @@
 use crate::{
-    core::{ic_cdk::api::time, with_memory_manager, Memory, TRANSFER_ACCOUNT_INDEX_MEMORY_ID},
+    core::{
+        ic_cdk::api::print, ic_cdk::next_time, with_memory_manager, Memory,
+        TRANSFER_ACCOUNT_INDEX_MEMORY_ID,
+    },
     models::{
         indexes::transfer_account_index::{TransferAccountIndex, TransferAccountIndexCriteria},
         TransferId,
     },
 };
-use ic_cdk::print;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use orbit_essentials::repository::IndexRepository;
 use std::{cell::RefCell, collections::HashSet};
@@ -38,18 +40,21 @@ impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexR
 
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<TransferId> {
         DB.with(|db| {
+            let now = next_time();
+
             let (from_dt, to_dt) = match (criteria.from_dt, criteria.to_dt) {
                 (Some(start), Some(end)) => (start, end),
-                (Some(start), None) => (start, time()),
+                (Some(start), None) => (start, now),
                 (None, Some(end)) => (
                     end.saturating_sub(TransferAccountIndex::DEFAULT_CRITERIA_INTERVAL_NS),
                     end,
                 ),
                 _ => (
-                    time().saturating_sub(TransferAccountIndex::DEFAULT_CRITERIA_INTERVAL_NS),
-                    time(),
+                    now.saturating_sub(TransferAccountIndex::DEFAULT_CRITERIA_INTERVAL_NS),
+                    now,
                 ),
             };
+
             if from_dt > to_dt {
                 print(format!("Invalid TransferAccountIndexRepository::FindByCriteria: from_dt {} is greater than to_dt {}", from_dt, to_dt));
                 return HashSet::new();
@@ -83,7 +88,7 @@ mod tests {
         let repository = TransferAccountIndexRepository::default();
         let index = TransferAccountIndex {
             transfer_id: [1; 16],
-            created_timestamp: time(),
+            created_timestamp: next_time(),
             account_id: [2; 16],
         };
 
@@ -99,7 +104,7 @@ mod tests {
     #[test]
     fn test_find_by_criteria() {
         let repository = TransferAccountIndexRepository::default();
-        let now = time();
+        let now = next_time();
         let index = TransferAccountIndex {
             transfer_id: [1; 16],
             created_timestamp: now,

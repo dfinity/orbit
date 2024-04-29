@@ -1,6 +1,9 @@
 use crate::{
     core::{
-        ic_cdk::api::{print, time, trap},
+        ic_cdk::{
+            api::{print, trap},
+            next_time,
+        },
         metrics::recompute_metrics,
         read_system_info, read_system_state, write_system_info, CallContext,
     },
@@ -219,9 +222,11 @@ impl SystemService {
         if let Some(request_id) = system_info.get_change_canister_request() {
             match self.request_repository.get(&RequestKey { id: *request_id }) {
                 Some(mut request) => {
+                    let completed_time = next_time();
                     request.status = RequestStatus::Completed {
-                        completed_at: time(),
+                        completed_at: completed_time,
                     };
+                    request.last_modification_timestamp = completed_time;
 
                     self.request_repository.insert(request.to_key(), request);
                 }
@@ -251,7 +256,8 @@ impl SystemService {
 
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
-    use crate::core::ic_cdk::api::{id as self_canister_id, print, time};
+    use crate::core::ic_cdk::api::{id as self_canister_id, print};
+    use crate::core::ic_cdk::next_time;
     use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_REQUEST_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{
@@ -286,7 +292,7 @@ mod install_canister_handlers {
             UserGroup {
                 id: ADMIN_GROUP_ID.to_owned(),
                 name: "Admin".to_owned(),
-                last_modification_timestamp: time(),
+                last_modification_timestamp: next_time(),
             },
         );
 
@@ -443,7 +449,9 @@ mod tests {
     #[tokio::test]
     async fn canister_upgrade_marks_request_completed_and_clears_it() {
         let mut request = mock_request();
-        request.status = RequestStatus::Processing { started_at: time() };
+        request.status = RequestStatus::Processing {
+            started_at: next_time(),
+        };
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 

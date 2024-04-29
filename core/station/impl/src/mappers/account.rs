@@ -1,5 +1,5 @@
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::next_time,
     errors::MapperError,
     models::{
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
@@ -111,7 +111,7 @@ impl AccountMapper {
             configs_request_policy_id: None,
             balance: None,
             metadata: input.metadata,
-            last_modification_timestamp: time(),
+            last_modification_timestamp: next_time(),
         };
 
         Ok(new_account)

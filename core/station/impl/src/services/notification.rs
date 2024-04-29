@@ -1,5 +1,5 @@
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::api::time, utils::SortDirection, CallContext},
+    core::{generate_uuid_v4, ic_cdk::next_time, utils::SortDirection, CallContext},
     errors::NotificationError,
     mappers::HelperMapper,
     models::{Notification, NotificationId, NotificationStatus, NotificationType, UserId},
@@ -98,7 +98,7 @@ impl NotificationService {
                 true => NotificationStatus::Read,
                 false => NotificationStatus::Sent,
             };
-            notification.last_modification_timestamp = time();
+            notification.last_modification_timestamp = next_time();
 
             notification.validate()?;
             self.notification_repository
@@ -115,6 +115,7 @@ impl NotificationService {
         title: String,
         message: Option<String>,
     ) {
+        let now = next_time();
         let notification_id = generate_uuid_v4().await;
         let notification = Notification {
             id: *notification_id.as_bytes(),
@@ -130,8 +131,8 @@ impl NotificationService {
                     .collect()
             }),
             notification_type,
-            created_timestamp: time(),
-            last_modification_timestamp: time(),
+            created_timestamp: now,
+            last_modification_timestamp: now,
         };
 
         self.notification_repository

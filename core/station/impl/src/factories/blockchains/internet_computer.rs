@@ -152,7 +152,7 @@ impl InternetComputer {
         station_account: Account,
         station_transfer: Transfer,
     ) -> Result<SubmitTransferResponse, ApiError> {
-        let current_time = cdk::api::time();
+        let current_time = cdk::next_time();
         let amount: u64 = HelperMapper::nat_to_u64(station_transfer.amount.clone())?;
         let transaction_fee: u64 = HelperMapper::nat_to_u64(station_transfer.fee.clone())?;
         let memo = match station_transfer.metadata_map().get(METADATA_MEMO_KEY) {

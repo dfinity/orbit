@@ -1,5 +1,5 @@
 use super::HelperMapper;
-use crate::core::ic_cdk::api::time;
+use crate::core::ic_cdk::next_time;
 use crate::errors::MapperError;
 use crate::mappers::blockchain::BlockchainMapper;
 use crate::models::{
@@ -60,7 +60,7 @@ impl AddressBookMapper {
             blockchain: input.blockchain,
             standard: input.standard,
             metadata: input.metadata.into(),
-            last_modification_timestamp: time(),
+            last_modification_timestamp: next_time(),
         };
 
         Ok(new_entry)

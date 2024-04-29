@@ -1,5 +1,5 @@
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::next_time,
     models::{RequestStatus, RequestStatusCode},
     repositories::RequestRepository,
 };
@@ -27,7 +27,7 @@ impl ScheduledJob for Job {
 impl Job {
     /// Cancel the requests that have expired while still pending.
     async fn cancel_requests(&self) {
-        let current_time = time();
+        let current_time = next_time();
         let mut requests = self.request_repository.find_by_expiration_dt_and_status(
             None,
             Some(current_time),
@@ -38,7 +38,7 @@ impl Job {
             request.status = RequestStatus::Cancelled {
                 reason: Some("The request has expired".to_string()),
             };
-            request.last_modification_timestamp = time();
+            request.last_modification_timestamp = next_time();
             self.request_repository
                 .insert(request.to_key(), request.to_owned());
         }

@@ -1,5 +1,5 @@
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::next_time,
     models::{
         Request, RequestAdditionalInfo, RequestCallerPrivileges, RequestExecutionPlan,
         RequestOperation, RequestStatus, UserId,
@@ -22,6 +22,8 @@ impl Request {
         title: String,
         summary: Option<String>,
     ) -> Request {
+        let now = next_time();
+
         Request {
             id: request_id,
             title,
@@ -32,8 +34,8 @@ impl Request {
             expiration_dt,
             execution_plan,
             approvals: vec![],
-            created_timestamp: time(),
-            last_modification_timestamp: time(),
+            created_timestamp: now,
+            last_modification_timestamp: now,
         }
     }
 
