@@ -316,28 +316,18 @@ mod init_canister_sync_handlers {
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
-    use crate::core::ic_cdk::next_time;
     use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_REQUEST_POLICIES};
     use crate::core::INITIAL_UPGRADER_CYCLES;
-    use crate::models::{
-        AddRequestPolicyOperationInput, AddUserOperationInput, EditPermissionOperationInput,
-        UserStatus,
-    };
+    use crate::models::{AddRequestPolicyOperationInput, EditPermissionOperationInput};
+    use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::REQUEST_POLICY_SERVICE;
-    use crate::services::{permission::PERMISSION_SERVICE, USER_SERVICE};
-    use crate::{
-        models::{UserGroup, ADMIN_GROUP_ID},
-        repositories::USER_GROUP_REPOSITORY,
-    };
     use candid::{Encode, Principal};
     use canfund::fetch::cycles::FetchCyclesBalanceFromCanisterStatus;
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
-    use orbit_essentials::repository::Repository;
     use std::cell::RefCell;
     use std::sync::Arc;
-    use uuid::Uuid;
 
     thread_local! {
         pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
