@@ -67,7 +67,6 @@ import {
   mapRequestPolicyRuleUserSpecifierEnumToVariant,
   mapRequestPolicyRuleUserSpecifierToEnum,
 } from '~/mappers/request-specifiers.mapper';
-import { RequestPolicyRuleUserSpecifierEnum } from '~/types/station.types';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -104,16 +103,8 @@ const disabledSlider = ref(false);
 
 watch(
   () => userTypeModel.value,
-  userType => {
-    switch (userType) {
-      case RequestPolicyRuleUserSpecifierEnum.Requester:
-        model.value.min_approved = 100;
-        disabledSlider.value = true;
-        break;
-      default:
-        disabledSlider.value = false;
-        break;
-    }
+  _ => {
+    disabledSlider.value = false;
   },
   { immediate: true },
 );

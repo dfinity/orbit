@@ -69,7 +69,6 @@ import {
   mapRequestPolicyRuleUserSpecifierToEnum,
 } from '~/mappers/request-specifiers.mapper';
 import { FormValidationRules } from '~/types/helper.types';
-import { RequestPolicyRuleUserSpecifierEnum } from '~/types/station.types';
 import { intNumberRangeRule, requiredRule } from '~/utils/form.utils';
 import { variantIs } from '~/utils/helper.utils';
 
@@ -130,16 +129,8 @@ const disabledInput = ref(false);
 
 watch(
   () => userTypeModel.value,
-  userType => {
-    switch (userType) {
-      case RequestPolicyRuleUserSpecifierEnum.Requester:
-        model.value.min_approved = 1;
-        disabledInput.value = true;
-        break;
-      default:
-        disabledInput.value = false;
-        break;
-    }
+  _ => {
+    disabledInput.value = false;
   },
   { immediate: true },
 );

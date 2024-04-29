@@ -79,8 +79,8 @@ export const createUserInitialAccount = async (
           user_groups: [],
           users: [userId],
         },
-        configs_request_policy: [{ Quorum: { min_approved: 100, approvers: { Owner: null } } }],
-        transfer_request_policy: [{ Quorum: { min_approved: 100, approvers: { Owner: null } } }],
+        configs_request_policy: [{ Quorum: { min_approved: 1, approvers: { Id: [userId] } } }],
+        transfer_request_policy: [{ Quorum: { min_approved: 1, approvers: { Id: [userId] } } }],
       },
     },
   });

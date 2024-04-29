@@ -140,8 +140,6 @@ type UserSpecifier = variant {
   Any;
   Id : vec UUID;
   Group : vec UUID;
-  Owner;
-  Requester;
 };
 
 type ResourceSpecifier = variant {

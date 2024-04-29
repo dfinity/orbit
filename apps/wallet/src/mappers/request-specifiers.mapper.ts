@@ -73,14 +73,6 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
 export const mapRequestPolicyRuleUserSpecifierToEnum = (
   specifier: UserSpecifier,
 ): RequestPolicyRuleUserSpecifierEnum => {
-  if (variantIs(specifier, 'Owner')) {
-    return RequestPolicyRuleUserSpecifierEnum.Owner;
-  }
-
-  if (variantIs(specifier, 'Requester')) {
-    return RequestPolicyRuleUserSpecifierEnum.Requester;
-  }
-
   if (variantIs(specifier, 'Any')) {
     return RequestPolicyRuleUserSpecifierEnum.Any;
   }
@@ -100,10 +92,6 @@ export const mapRequestPolicyRuleUserSpecifierEnumToVariant = (
   specifier: RequestPolicyRuleUserSpecifierEnum,
 ): UserSpecifier => {
   switch (specifier) {
-    case RequestPolicyRuleUserSpecifierEnum.Owner:
-      return { Owner: null };
-    case RequestPolicyRuleUserSpecifierEnum.Requester:
-      return { Requester: null };
     case RequestPolicyRuleUserSpecifierEnum.Any:
       return { Any: null };
     case RequestPolicyRuleUserSpecifierEnum.Group:
