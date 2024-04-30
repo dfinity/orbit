@@ -9,12 +9,8 @@ export class AuthService {
 
   constructor(private authClient?: AuthClient) {}
 
-  invalidateAuthClient(): void {
-    this.authClient = undefined;
-  }
-
-  async client(): Promise<AuthClient> {
-    if (!this.authClient) {
+  async client(args: { reset?: boolean } = { reset: false }): Promise<AuthClient> {
+    if (!this.authClient || args.reset) {
       this.authClient = await AuthClient.create({
         idleOptions: {
           disableIdle: true,
@@ -53,7 +49,7 @@ export class AuthService {
 
     await client.logout();
 
-    this.invalidateAuthClient();
+    await this.client({ reset: true });
   }
 
   async getRemainingSessionTimeMs(): Promise<number | null> {
