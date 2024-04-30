@@ -60,7 +60,7 @@
       </VContainer>
     </VCardText>
     <VContainer class="pt-0">
-      <VExpansionPanels>
+      <VExpansionPanels data-test-id="request-approvals-and-evaluation">
         <VExpansionPanel :title="$t('requests.approvals_and_evaluation')">
           <VExpansionPanelText>
             <table
@@ -104,14 +104,14 @@
                 </tr>
               </tbody>
             </table>
-            <template v-if="canShowAcceptanceRules">
+            <template v-if="props.details.evaluationResult">
               <div class="text-body-1 font-weight-bold mt-4">
                 {{ $t('requests.evaluation.acceptance_rules') }}
               </div>
-              <VList :density="'compact'">
+              <VList :density="'compact'" data-test-id="request-acceptance-rules">
                 <PolicyRuleResultView
-                  :evaluatedRule="props.details.evaluationResult!.policy_results[0].evaluated_rule"
-                  :status="props.details.evaluationResult!.policy_results[0].status"
+                  :evaluatedRule="props.details.evaluationResult.policy_results[0].evaluated_rule"
+                  :status="props.details.evaluationResult.policy_results[0].status"
                   :requestApprovals="props.request.approvals"
                 ></PolicyRuleResultView>
               </VList>
@@ -121,7 +121,7 @@
       </VExpansionPanels>
     </VContainer>
 
-    <VContainer v-if="!!requestFailed" class="">
+    <VContainer v-if="!!requestFailed" class="" data-test-id="request-details-failure">
       <VRow>
         <VCol class="text-body-1 font-weight-bold pb-0">
           {{ $t('requests.failure_title') }}
@@ -313,7 +313,6 @@ const requestFailed = computed(() => {
 const reason = ref('');
 const reasonOrUndefined = computed(() => (reason.value.length ? reason.value : undefined));
 
-const canShowAcceptanceRules = computed(() => !!props.details.evaluationResult);
 const approvals = computed(() =>
   props.request.approvals.map(approval => {
     const approver = props.details.approvers.find(approver => approver.id === approval.approver_id);
