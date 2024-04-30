@@ -59,7 +59,21 @@
         </VRow>
       </VContainer>
     </VCardText>
-    <VContainer class="pt-0">
+
+    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-0">
+      <VTextarea
+        v-model.trim="reason"
+        data-test-id="request-details-comment"
+        :label="$t('requests.comment_optional')"
+        :variant="props.details.can_approve ? 'underlined' : 'plain'"
+        hide-details
+        rows="1"
+        auto-grow
+        :readonly="props.loading || !props.details.can_approve"
+      />
+    </VCardText>
+
+    <VContainer class="pb-0">
       <VExpansionPanels data-test-id="request-approvals-and-evaluation">
         <VExpansionPanel :title="$t('requests.approvals_and_evaluation')">
           <VExpansionPanelText>
@@ -134,18 +148,6 @@
       </VRow>
     </VContainer>
 
-    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-0">
-      <VTextarea
-        v-model.trim="reason"
-        data-test-id="request-details-comment"
-        :label="$t('requests.comment_optional')"
-        :variant="props.details.can_approve ? 'underlined' : 'plain'"
-        hide-details
-        rows="1"
-        auto-grow
-        :readonly="props.loading || !props.details.can_approve"
-      />
-    </VCardText>
     <VDivider class="mt-6" />
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
       <RequestMetadata
