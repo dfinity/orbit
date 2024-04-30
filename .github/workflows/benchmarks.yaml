@@ -27,13 +27,13 @@ env:
   RUSTC_WRAPPER: 'sccache'
 
 jobs:
-  bench-wallet:
-    name: 'bench-wallet:required'
+  bench-station:
+    name: 'bench-station:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
-      - name: 'Run Wallet Benchmarks'
-        run: ./scripts/benchmark-canister.sh ./canisters/wallet/impl
+      - name: 'Run Station Benchmarks'
+        run: ./scripts/benchmark-canister.sh ./core/station/impl
