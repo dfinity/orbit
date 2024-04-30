@@ -184,8 +184,6 @@ const loadRequest = async (): Promise<DataType> => {
       true,
     );
 
-    console.log(result);
-
     return {
       request: result.request,
       privileges: result.privileges,

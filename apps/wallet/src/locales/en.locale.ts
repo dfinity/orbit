@@ -124,6 +124,7 @@ export default {
       unknown: 'Unknown',
     },
     approvals: 'Approvals',
+    approvals_and_evaluation: 'Approvals & rules',
     requester_auto_approval: 'Request automatically approved by the requester',
     failure_title: 'Request execution failed',
     failure_reason_unknown: 'Request failed for an unspecified reason.',

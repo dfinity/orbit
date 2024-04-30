@@ -12,13 +12,13 @@
         </template>
       </VListItem>
     </template>
-    <CriteriaResultView
+    <PolicyRuleResultView
       v-for="(item, idx) in props.evaluatedRule.AllOf"
       :key="idx"
       :evaluatedRule="item.evaluated_rule"
       :status="item.status"
       :requestApprovals="props.requestApprovals"
-    ></CriteriaResultView>
+    ></PolicyRuleResultView>
   </VListGroup>
   <VListGroup v-else-if="variantIs(props.evaluatedRule, 'AnyOf')">
     <template v-slot:activator="{ props: activatorProps }">
@@ -33,13 +33,13 @@
         </template>
       </VListItem>
     </template>
-    <CriteriaResultView
+    <PolicyRuleResultView
       v-for="(item, idx) in props.evaluatedRule.AnyOf"
       :key="idx"
       :evaluatedRule="item.evaluated_rule"
       :status="item.status"
       :requestApprovals="props.requestApprovals"
-    ></CriteriaResultView>
+    ></PolicyRuleResultView>
   </VListGroup>
   <VListGroup v-else-if="variantIs(props.evaluatedRule, 'Not')">
     <template v-slot:activator="{ props: activatorProps }">
@@ -54,11 +54,11 @@
         </template>
       </VListItem>
     </template>
-    <CriteriaResultView
+    <PolicyRuleResultView
       :evaluatedRule="props.evaluatedRule.Not.evaluated_rule"
       :status="props.evaluatedRule.Not.status"
       :requestApprovals="props.requestApprovals"
-    ></CriteriaResultView>
+    ></PolicyRuleResultView>
   </VListGroup>
 
   <VListItem
@@ -88,7 +88,7 @@
     v-else-if="variantIs(props.evaluatedRule, 'Quorum')"
     :title="
       $t('requests.evaluation.quorum_rule', {
-        min: props.evaluatedRule.Quorum.min_approved,
+        n: Number(props.evaluatedRule.Quorum.min_approved),
       })
     "
     :subtitle="ruleToLabel(props.evaluatedRule, props.status)"
@@ -103,7 +103,7 @@
     v-else-if="variantIs(props.evaluatedRule, 'QuorumPercentage')"
     :title="
       $t('requests.evaluation.quorum_percentage_rule', {
-        min: props.evaluatedRule.QuorumPercentage.min_approved,
+        n: Number(props.evaluatedRule.QuorumPercentage.min_approved),
       })
     "
     :subtitle="ruleToLabel(props.evaluatedRule, props.status)"

@@ -25,7 +25,7 @@
             :icon="mdiContentCopy"
             @click="
               copyToClipboard({
-                textToCopy: formValue.to,
+                textToCopy: formValue.to!,
                 sendNotification: true,
               })
             "

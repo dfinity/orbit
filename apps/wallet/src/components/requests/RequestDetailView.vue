@@ -25,8 +25,8 @@
 
       <slot name="top-actions"></slot>
     </VToolbar>
-    <VCardText class="px-4 pt-2">
-      <VContainer class="px-0">
+    <VCardText class="px-4 pt-2 pb-0">
+      <VContainer class="px-0 pb-0">
         <VRow v-if="props.request.summary?.[0]">
           <VCol cols="12" class="text-h6 font-weight-bold">
             <VTextarea
@@ -59,57 +59,67 @@
         </VRow>
       </VContainer>
     </VCardText>
-    <VContainer>
-      <table
-        v-if="approvals.length > 0"
-        class="approvers text-body-1"
-        data-test-id="request-approvals"
-      >
-        <thead>
-          <tr>
-            <th class="pl-0">{{ $t('requests.approvals') }}</th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="approval in approvals" :key="approval.approver.id">
-            <td class="pl-0">
-              {{ approval.approver.name }}
-            </td>
+    <VContainer class="pt-0">
+      <VExpansionPanels>
+        <VExpansionPanel :title="$t('requests.approvals_and_evaluation')">
+          <VExpansionPanelText>
+            <table
+              v-if="approvals.length > 0"
+              class="approvers text-body-1"
+              data-test-id="request-approvals"
+            >
+              <thead>
+                <tr>
+                  <th class="pl-0">{{ $t('requests.approvals') }}</th>
+                  <th></th>
+                  <th class="d-none d-sm-table-cell"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="approval in approvals" :key="approval.approver.id">
+                  <td class="pl-0">
+                    {{ approval.approver.name }}
+                  </td>
 
-            <td>
-              <p v-if="approval.approval.status_reason[0]" class="text-medium-emphasis text-body-2">
-                {{ approval.approval.status_reason[0] }}
-              </p>
-            </td>
-            <td class="text-right">
-              <RequestApprovalStatusChip
-                :status="approval.approval.status"
-                size="small"
-                class="ml-2"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  <td>
+                    <RequestApprovalStatusChip
+                      :status="approval.approval.status"
+                      size="small"
+                      class="d-sm-none"
+                    />
+                    <p
+                      v-if="approval.approval.status_reason[0]"
+                      class="text-medium-emphasis text-body-2"
+                    >
+                      {{ approval.approval.status_reason[0] }}
+                    </p>
+                  </td>
+                  <td class="text-right d-none d-sm-table-cell">
+                    <RequestApprovalStatusChip
+                      :status="approval.approval.status"
+                      size="small"
+                      class="ml-2"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <template v-if="canShowAcceptanceRules">
+              <div class="text-body-1 font-weight-bold mt-4">
+                {{ $t('requests.evaluation.acceptance_rules') }}
+              </div>
+              <VList :density="'compact'">
+                <PolicyRuleResultView
+                  :evaluatedRule="props.details.evaluationResult!.policy_results[0].evaluated_rule"
+                  :status="props.details.evaluationResult!.policy_results[0].status"
+                  :requestApprovals="props.request.approvals"
+                ></PolicyRuleResultView>
+              </VList>
+            </template>
+          </VExpansionPanelText>
+        </VExpansionPanel>
+      </VExpansionPanels>
     </VContainer>
-    <template v-if="showAcceptanceRules && canShowAcceptanceRules">
-      <VContainer>
-        <VRow>
-          <VCol class="text-body-1 font-weight-bold pb-0">{{
-            $t('requests.evaluation.acceptance_rules')
-          }}</VCol>
-        </VRow>
-      </VContainer>
-      <VList :density="'compact'">
-        <PolicyRuleResultView
-          :evaluatedRule="props.details.evaluationResult!.policy_results[0].evaluated_rule"
-          :status="props.details.evaluationResult!.policy_results[0].status"
-          :requestApprovals="props.request.approvals"
-        ></PolicyRuleResultView>
-      </VList>
-    </template>
 
     <VContainer v-if="!!requestFailed" class="">
       <VRow>
@@ -124,23 +134,17 @@
       </VRow>
     </VContainer>
 
-    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-2">
-      <VContainer class="px-0">
-        <VRow>
-          <VCol cols="12">
-            <VTextarea
-              v-model.trim="reason"
-              data-test-id="request-details-comment"
-              :label="$t('requests.comment_optional')"
-              :variant="props.details.can_approve ? 'underlined' : 'plain'"
-              hide-details
-              rows="1"
-              auto-grow
-              :readonly="props.loading || !props.details.can_approve"
-            />
-          </VCol>
-        </VRow>
-      </VContainer>
+    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-0">
+      <VTextarea
+        v-model.trim="reason"
+        data-test-id="request-details-comment"
+        :label="$t('requests.comment_optional')"
+        :variant="props.details.can_approve ? 'underlined' : 'plain'"
+        hide-details
+        rows="1"
+        auto-grow
+        :readonly="props.loading || !props.details.can_approve"
+      />
     </VCardText>
     <VDivider class="mt-6" />
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
@@ -195,6 +199,9 @@ import {
   VCol,
   VContainer,
   VDivider,
+  VExpansionPanel,
+  VExpansionPanelText,
+  VExpansionPanels,
   VList,
   VRow,
   VTextarea,
@@ -307,7 +314,6 @@ const reason = ref('');
 const reasonOrUndefined = computed(() => (reason.value.length ? reason.value : undefined));
 
 const canShowAcceptanceRules = computed(() => !!props.details.evaluationResult);
-const showAcceptanceRules = ref(true);
 const approvals = computed(() =>
   props.request.approvals.map(approval => {
     const approver = props.details.approvers.find(approver => approver.id === approval.approver_id);
