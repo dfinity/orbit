@@ -114,7 +114,7 @@
     <VContainer v-if="!!requestFailed" class="">
       <VRow>
         <VCol class="text-body-1 font-weight-bold pb-0">
-          {{ $t('request.failure_title') }}
+          {{ $t('requests.failure_title') }}
         </VCol>
       </VRow>
       <VRow class="">
