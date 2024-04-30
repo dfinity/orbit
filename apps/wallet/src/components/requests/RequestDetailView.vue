@@ -104,14 +104,14 @@
                 </tr>
               </tbody>
             </table>
-            <template v-if="props.details.evaluationResult">
+            <template v-if="props.details.evaluationResult && policyResults">
               <div class="text-body-1 font-weight-bold mt-4">
                 {{ $t('requests.evaluation.acceptance_rules') }}
               </div>
               <VList :density="'compact'" data-test-id="request-acceptance-rules">
                 <PolicyRuleResultView
-                  :evaluatedRule="props.details.evaluationResult.policy_results[0].evaluated_rule"
-                  :status="props.details.evaluationResult.policy_results[0].status"
+                  :evaluatedRule="policyResults.evaluated_rule"
+                  :status="policyResults.status"
                   :requestApprovals="props.request.approvals"
                 ></PolicyRuleResultView>
               </VList>
@@ -209,7 +209,11 @@ import {
   VToolbarTitle,
   VTooltip,
 } from 'vuetify/components';
-import { Request, RequestOperation } from '~/generated/station/station.did';
+import {
+  Request,
+  RequestOperation,
+  RequestPolicyRuleResult,
+} from '~/generated/station/station.did';
 import { RequestDetails } from '~/types/station.types';
 import { KeysOfUnion, variantIs } from '~/utils/helper.utils';
 import PolicyRuleResultView from './PolicyRuleResultView.vue';
@@ -330,6 +334,24 @@ const approvals = computed(() =>
     };
   }),
 );
+
+// if there are multiple policy results for the request, wrap them in an AnyOf rule for semantic consistency
+const policyResults = computed((): RequestPolicyRuleResult | null => {
+  if (props.details.evaluationResult) {
+    if (props.details.evaluationResult.policy_results.length > 1) {
+      return {
+        evaluated_rule: {
+          AnyOf: props.details.evaluationResult.policy_results,
+        },
+        status: props.details.evaluationResult.status,
+      };
+    } else {
+      return props.details.evaluationResult.policy_results[0];
+    }
+  }
+
+  return null;
+});
 </script>
 
 <style scoped lang="scss">

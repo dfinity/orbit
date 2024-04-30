@@ -4,7 +4,7 @@
       <VListItem v-bind="activatorProps">
         <template #title>
           <div class="d-flex justify-space-between align-center">
-            <div>{{ $t('requests.evaluation.and_rule') }}</div>
+            <div>{{ $t('requests.evaluation.allof_rule') }}</div>
             <div class="text-caption" :class="statusToColor(props.status)">
               {{ ruleToLabel(props.evaluatedRule, props.status) }}
             </div>
@@ -25,7 +25,7 @@
       <VListItem v-bind="activatorProps">
         <template #title>
           <div class="d-flex justify-space-between align-center">
-            <div>{{ $t('requests.evaluation.or_rule') }}</div>
+            <div>{{ $t('requests.evaluation.anyof_rule') }}</div>
             <div class="text-caption" :class="statusToColor(props.status)">
               {{ ruleToLabel(props.evaluatedRule, props.status) }}
             </div>
