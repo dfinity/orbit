@@ -184,7 +184,6 @@ export const useSessionStore = defineStore('session', {
       const sessionExpirationService = services().sessionExpiration;
 
       try {
-        authService.invalidateAuthClient();
         const identity = await authService.login();
 
         sessionExpirationService.notifySignedIn();
@@ -328,7 +327,7 @@ export const useSessionStore = defineStore('session', {
 
     async setReauthenticated() {
       const authService = services().auth;
-      authService.invalidateAuthClient();
+      await authService.client({ reset: true });
       const maybeIdentity = await authService.identity();
       if (!maybeIdentity) {
         logger.error(`Reauthentication failed, no identity found`);

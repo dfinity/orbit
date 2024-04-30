@@ -69,10 +69,10 @@ const i18n = useI18n();
 
 const isAuthenticating = ref(false);
 
-const performLogin = async (): Promise<void> => {
+const performLogin = (): void => {
   isAuthenticating.value = true;
 
-  await session
+  session
     .signIn()
     .then(() => afterLoginRedirect())
     .catch((e: Error) => {
