@@ -333,6 +333,7 @@ name = "control-panel-api"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "orbit-essentials",
  "serde",
  "serde_bytes",
 ]
@@ -1980,6 +1981,7 @@ name = "station-api"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "orbit-essentials",
  "serde",
  "serde_bytes",
 ]
@@ -2402,6 +2404,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "serde",
+ "serde_bytes",
 ]
 
 [[package]]

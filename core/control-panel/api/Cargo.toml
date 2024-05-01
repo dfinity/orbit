@@ -11,5 +11,6 @@ repository = "https://github.com/dfinity/orbit"
 
 [dependencies]
 candid = { workspace = true }
+orbit-essentials = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

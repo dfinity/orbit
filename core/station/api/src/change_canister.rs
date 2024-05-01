@@ -12,7 +12,9 @@ pub enum ChangeCanisterTargetDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ChangeCanisterOperationInput {
     pub target: ChangeCanisterTargetDTO,
+    #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
 }
 
