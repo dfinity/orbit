@@ -279,19 +279,19 @@ export default {
         'Request rejected for the following reason: | Request rejected for the following reasons:',
       summary_pending:
         'Request pending for the following reason: | Request pending for the following reasons:',
-      approved_reason_approval_threshold: 'user approval threshold met',
-      approved_reason_address_book: 'destination address was found in the address book',
-      approved_reason_address_book_metadata: 'destination address had metadata in the address book',
+      approved_reason_approval_quorum: 'user approval threshold met',
+      approved_reason_allowlist: 'destination address was found in the address book',
+      approved_reason_allowlist_metadata: 'destination address had metadata in the address book',
       reason_auto_approved: 'request was auto-approved',
 
-      rejected_reason_approval_threshold: 'user approval threshold not met',
-      rejected_reason_address_book: 'destination address was not found in the address book',
-      rejected_reason_address_book_metadata:
+      rejected_reason_approval_quorum: 'user approval threshold not met',
+      rejected_reason_allowlist: 'destination address was not found in the address book',
+      rejected_reason_allowlist_metadata:
         'destination address did not have metadata in the address book',
 
-      pending_reason_approval_threshold: 'user approval pending',
-      pending_reason_address_book: 'destination address in the address book',
-      pending_reason_address_book_metadata: 'destination address in the address book with metadata',
+      pending_reason_approval_quorum: 'user approval pending',
+      pending_reason_allowlist: 'destination address in the address book',
+      pending_reason_allowlist_metadata: 'destination address in the address book with metadata',
     },
   },
   sidebar: {

@@ -17,12 +17,12 @@ export function statusToI18nKeyPrefix(status: EvaluationStatus): string {
 export function statusReasonToI18nKey(reason: StatusReason, status: EvaluationStatus): string {
   const prefix = statusToI18nKeyPrefix(status);
 
-  if (variantIs(reason, 'ApprovalThreshold')) {
-    return `requests.evaluation.${prefix}_reason_approval_threshold`;
-  } else if (variantIs(reason, 'AddressBook')) {
-    return `requests.evaluation.${prefix}_reason_address_book`;
-  } else if (variantIs(reason, 'AddressBookMetadata')) {
-    return `requests.evaluation.${prefix}_reason_address_book_metadata`;
+  if (variantIs(reason, 'ApprovalQuorum')) {
+    return `requests.evaluation.${prefix}_reason_approval_quorum`;
+  } else if (variantIs(reason, 'AllowList')) {
+    return `requests.evaluation.${prefix}_reason_allowlist`;
+  } else if (variantIs(reason, 'AllowListMetadata')) {
+    return `requests.evaluation.${prefix}_reason_allowlist_metadata`;
   } else if (variantIs(reason, 'AutoApproved')) {
     return `requests.evaluation.reason_auto_approved`;
   } else {

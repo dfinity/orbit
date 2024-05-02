@@ -13,7 +13,7 @@ use crate::{
 };
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
-use station_api::StatusReasonDTO;
+use station_api::EvaluationSummaryReasonDTO;
 use std::{cmp, hash::Hash};
 use std::{collections::HashSet, sync::Arc};
 
@@ -83,32 +83,35 @@ pub struct RequestPolicyRuleResult {
     pub evaluated_rule: EvaluatedRequestPolicyRule,
 }
 
-type StatusReason = StatusReasonDTO;
+type EvaluationSummaryReason = EvaluationSummaryReasonDTO;
 
 impl RequestPolicyRuleResult {
-    pub fn get_status_reason(&self, final_status: EvaluationStatus) -> Vec<StatusReason> {
+    pub fn get_status_reason(
+        &self,
+        final_status: EvaluationStatus,
+    ) -> Vec<EvaluationSummaryReason> {
         let mut reasons = vec![];
 
         match &self.evaluated_rule {
             EvaluatedRequestPolicyRule::AutoApproved => {
                 if final_status == EvaluationStatus::Approved {
-                    reasons.push(StatusReason::AutoApproved)
+                    reasons.push(EvaluationSummaryReason::AutoApproved)
                 }
             }
             EvaluatedRequestPolicyRule::QuorumPercentage { .. }
             | EvaluatedRequestPolicyRule::Quorum { .. } => {
                 if final_status == self.status {
-                    reasons.push(StatusReason::ApprovalThreshold);
+                    reasons.push(EvaluationSummaryReason::ApprovalQuorum);
                 }
             }
             EvaluatedRequestPolicyRule::AllowListedByMetadata { .. } => {
                 if final_status == self.status {
-                    reasons.push(StatusReason::AddressBookMetadata);
+                    reasons.push(EvaluationSummaryReason::AllowListMetadata);
                 }
             }
             EvaluatedRequestPolicyRule::AllowListed => {
                 if final_status == self.status {
-                    reasons.push(StatusReason::AddressBook);
+                    reasons.push(EvaluationSummaryReason::AllowList);
                 }
             }
             EvaluatedRequestPolicyRule::Or(rule_results)
@@ -151,7 +154,7 @@ pub struct RequestEvaluationResult {
 }
 
 impl RequestEvaluationResult {
-    pub fn get_status_reason(&self) -> Vec<StatusReason> {
+    pub fn get_status_reason(&self) -> Vec<EvaluationSummaryReason> {
         let mut reasons = HashSet::new();
 
         for policy_result in &self.policy_results {
@@ -623,7 +626,7 @@ mod test {
 
         assert_eq!(
             request_result.get_status_reason(),
-            vec![StatusReason::AddressBookMetadata]
+            vec![EvaluationSummaryReason::AllowListMetadata]
         );
     }
 }

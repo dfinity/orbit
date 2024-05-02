@@ -126,10 +126,10 @@ type RequestPolicyRuleResult = record {
 };
 
 // List of reasons why a request can be approved or rejected.
-type StatusReason = variant {
-  ApprovalThreshold;
-  AddressBook;
-  AddressBookMetadata;
+type EvaluationSummaryReason = variant {
+  ApprovalQuorum;
+  AllowList;
+  AllowListMetadata;
   AutoApproved;
 };
 
@@ -142,7 +142,7 @@ type RequestEvaluationResult = record {
   // The evaluation results of all matching policies.
   policy_results : vec RequestPolicyRuleResult;
   // The reasons why the request was approved or rejected.
-  result_reasons : vec StatusReason;
+  result_reasons : vec EvaluationSummaryReason;
 };
 
 // Defines a user in the context of a request.
