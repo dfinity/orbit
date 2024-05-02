@@ -371,10 +371,10 @@ const policyResults = computed((): RequestPolicyRuleResult | null => {
 });
 
 const evaulationSummary = computed(() => {
-  if (props.details.evaluationResult) {
+  if (props.details.evaluationResult && props.details.evaluationResult.result_reasons[0]) {
     return statusReasonsToTextSummary(
       props.details.evaluationResult.status,
-      props.details.evaluationResult.result_reasons,
+      props.details.evaluationResult.result_reasons[0],
     );
   }
   return false;

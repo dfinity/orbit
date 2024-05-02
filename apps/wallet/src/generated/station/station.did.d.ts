@@ -568,7 +568,7 @@ export interface RequestCallerPrivileges {
 export interface RequestEvaluationResult {
   'request_id' : UUID,
   'status' : EvaluationStatus,
-  'result_reasons' : Array<EvaluationSummaryReason>,
+  'result_reasons' : [] | [Array<EvaluationSummaryReason>],
   'policy_results' : Array<RequestPolicyRuleResult>,
 }
 export type RequestExecutionSchedule = { 'Immediate' : null } |

@@ -112,7 +112,7 @@ pub struct RequestEvaluationResultDTO {
     pub request_id: UuidDTO,
     pub status: EvaluationStatusDTO,
     pub policy_results: Vec<RequestPolicyRuleResultDTO>,
-    pub result_reasons: Vec<EvaluationSummaryReasonDTO>,
+    pub result_reasons: Option<Vec<EvaluationSummaryReasonDTO>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

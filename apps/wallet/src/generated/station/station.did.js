@@ -466,7 +466,7 @@ export const idlFactory = ({ IDL }) => {
   const RequestEvaluationResult = IDL.Record({
     'request_id' : UUID,
     'status' : EvaluationStatus,
-    'result_reasons' : IDL.Vec(EvaluationSummaryReason),
+    'result_reasons' : IDL.Opt(IDL.Vec(EvaluationSummaryReason)),
     'policy_results' : IDL.Vec(RequestPolicyRuleResult),
   });
   const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });

@@ -142,7 +142,7 @@ type RequestEvaluationResult = record {
   // The evaluation results of all matching policies.
   policy_results : vec RequestPolicyRuleResult;
   // The reasons why the request was approved or rejected.
-  result_reasons : vec EvaluationSummaryReason;
+  result_reasons : opt vec EvaluationSummaryReason;
 };
 
 // Defines a user in the context of a request.
