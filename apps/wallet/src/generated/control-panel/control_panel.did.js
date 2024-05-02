@@ -1,16 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const CanisterUpgrade = IDL.Record({
-    'station_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
-  const CanisterInit = IDL.Record({
-    'station_wasm_module' : IDL.Vec(IDL.Nat8),
-    'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-  });
-  const CanisterInstall = IDL.Variant({
-    'Upgrade' : CanisterUpgrade,
-    'Init' : CanisterInit,
-  });
   const UserSubscriptionStatus = IDL.Variant({
     'Unsubscribed' : IDL.Null,
     'Approved' : IDL.Null,
@@ -120,6 +108,14 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
+  const CanisterModules = IDL.Record({
+    'station_wasm_module' : IDL.Vec(IDL.Nat8),
+    'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
+  });
+  const UploadCanisterModulesResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : ApiError,
+  });
   return IDL.Service({
     'can_deploy_station' : IDL.Func([], [CanDeployStationResult], ['query']),
     'delete_user' : IDL.Func([], [RemoveUserResult], []),
@@ -146,20 +142,11 @@ export const idlFactory = ({ IDL }) => {
         [UpdateWaitingListResult],
         [],
       ),
+    'upload_canister_modules' : IDL.Func(
+        [CanisterModules],
+        [UploadCanisterModulesResult],
+        [],
+      ),
   });
 };
-export const init = ({ IDL }) => {
-  const CanisterUpgrade = IDL.Record({
-    'station_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
-  const CanisterInit = IDL.Record({
-    'station_wasm_module' : IDL.Vec(IDL.Nat8),
-    'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-  });
-  const CanisterInstall = IDL.Variant({
-    'Upgrade' : CanisterUpgrade,
-    'Init' : CanisterInit,
-  });
-  return [IDL.Opt(CanisterInstall)];
-};
+export const init = ({ IDL }) => { return []; };
