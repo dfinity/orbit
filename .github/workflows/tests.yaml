@@ -158,7 +158,7 @@ jobs:
       - name: 'Start local replica'
         run: dfx start --clean --host 127.0.0.1:4943 --background
       - name: 'Update /etc/hosts'
-        run: sudo echo '127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost werw6-ayaaa-aaaaa-774aa-cai.localhost' >> /etc/hosts
+        run: echo '127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost werw6-ayaaa-aaaaa-774aa-cai.localhost' | sudo tee -a /etc/hosts
       - name: 'Perform local deployment'
         run: ./orbit --init
       - name: 'Test local deployment'
