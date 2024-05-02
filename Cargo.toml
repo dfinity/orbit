@@ -37,7 +37,7 @@ getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 orbit-essentials = { path = "./libs/orbit-essentials" }
 orbit-essentials-macros = { path = "./libs/orbit-essentials-macros" }
-ic-cdk = "0.13.1"
+ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"
 ic-ledger-types = "0.10.0"
@@ -48,7 +48,7 @@ num-bigint = "0.4"
 num-traits = "0.2"
 # This is a temporary workaround for pocket-ic to use the latest version of ic-cdk that is 
 # already in master but not yet published to crates.io
-pocket-ic = { git = "https://github.com/dfinity/ic.git", rev = "6397368" }
+pocket-ic = "3.0.0"
 proc-macro2 = "1.0"
 prometheus = "0.13.3"
 quote = "1.0"

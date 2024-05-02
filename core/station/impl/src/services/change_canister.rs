@@ -62,7 +62,7 @@ impl ChangeCanisterService {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
         self.install_canister(
             upgrader_canister_id,
-            CanisterInstallMode::Upgrade,
+            CanisterInstallMode::Upgrade(None),
             module,
             arg,
         )

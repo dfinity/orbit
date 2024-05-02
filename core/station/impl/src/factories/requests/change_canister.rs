@@ -121,7 +121,7 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                 CHANGE_CANISTER_SERVICE
                     .install_canister(
                         canister_id,
-                        CanisterInstallMode::Upgrade,
+                        CanisterInstallMode::Upgrade(None),
                         &self.operation.input.module,
                         self.operation.input.arg.clone(),
                     )
