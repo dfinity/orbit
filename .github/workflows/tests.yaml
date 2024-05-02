@@ -132,3 +132,35 @@ jobs:
           ./scripts/run-integration-tests.sh 2> logs.txt
           grep "rng succesfully initialized" logs.txt
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
+  deployment-test:
+    name: 'deployment-test:required'
+    needs: [build-wasms, download-canisters]
+    runs-on: ubuntu-latest
+    env:
+      BUILD_WASMS: 'false'
+      DOWNLOAD_NNS_CANISTERS: 'false'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Setup node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@main
+      - name: 'Run sccache-cache'
+        uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Download Artifacts'
+        uses: actions/download-artifact@v3
+        with:
+          name: integration-tests
+          path: tests/integration/wasms
+      - name: 'Start local replica'
+        run: dfx start --clean --host 127.0.0.1:4943 --background
+      - name: 'Update /etc/hosts'
+        run: echo '127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost werw6-ayaaa-aaaaa-774aa-cai.localhost' >> /etc/hosts
+      - name: 'Perform local deployment'
+        run: ./orbit --init
+      - name: 'Test local deployment'
+        run: |
+          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost
