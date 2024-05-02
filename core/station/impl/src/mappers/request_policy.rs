@@ -89,6 +89,7 @@ impl From<RequestEvaluationResult> for RequestEvaluationResultDTO {
     fn from(value: RequestEvaluationResult) -> Self {
         RequestEvaluationResultDTO {
             request_id: Uuid::from_bytes(value.request_id).hyphenated().to_string(),
+            result_reasons: Some(value.get_status_reason()),
             status: value.status.into(),
             policy_results: value.policy_results.into_iter().map(Into::into).collect(),
         }

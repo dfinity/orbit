@@ -125,6 +125,14 @@ type RequestPolicyRuleResult = record {
   evaluated_rule : EvaluatedRequestPolicyRule;
 };
 
+// List of reasons why a request can be approved or rejected.
+type EvaluationSummaryReason = variant {
+  ApprovalQuorum;
+  AllowList;
+  AllowListMetadata;
+  AutoApproved;
+};
+
 // A record type representing the full evaluation result of all matching policies for a request.
 type RequestEvaluationResult = record {
   // The request id that was evaluated.
@@ -133,6 +141,8 @@ type RequestEvaluationResult = record {
   status : EvaluationStatus;
   // The evaluation results of all matching policies.
   policy_results : vec RequestPolicyRuleResult;
+  // The reasons why the request was approved or rejected.
+  result_reasons : opt vec EvaluationSummaryReason;
 };
 
 // Defines a user in the context of a request.

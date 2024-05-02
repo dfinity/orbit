@@ -1,5 +1,6 @@
 import {
   DisplayUser,
+  RequestEvaluationResult,
   ListRequestsOperationType,
   RequestStatusCode,
   UUID,
@@ -134,6 +135,7 @@ export interface RequestDetails {
   can_approve: boolean;
   requester_name: string;
   approvers: DisplayUser[];
+  evaluationResult?: RequestEvaluationResult;
 }
 
 export enum RequestOperationEnum {

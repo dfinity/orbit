@@ -30,6 +30,7 @@
           can_approve: data.privileges.can_approve,
           requester_name: data.additionalInfo.requester_name,
           approvers: data.additionalInfo.approvers,
+          evaluationResult: data.additionalInfo.evaluation_result[0],
         }"
         :loading="approving || loading"
         @closed="openModel = false"
@@ -182,6 +183,7 @@ const loadRequest = async (): Promise<DataType> => {
       { request_id: currentRequestId.value! },
       true,
     );
+
     return {
       request: result.request,
       privileges: result.privileges,
