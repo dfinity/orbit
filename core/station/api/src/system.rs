@@ -26,6 +26,7 @@ pub struct AdminInitInput {
 pub struct SystemInit {
     pub name: String,
     pub admins: Vec<AdminInitInput>,
+    #[serde(with = "serde_bytes")]
     pub upgrader_wasm_module: Vec<u8>,
 }
 

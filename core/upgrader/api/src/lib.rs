@@ -2,7 +2,9 @@ use candid::{CandidType, Deserialize, Principal};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
 pub struct UpgradeParams {
+    #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
 }
 
