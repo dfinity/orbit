@@ -4,7 +4,7 @@ use crate::interfaces::{
 use crate::utils::{controller_test_id, minter_test_id, update_canister_settings};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
-use control_panel_api::CanisterModules;
+use control_panel_api::UploadCanisterModulesInput;
 use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
@@ -159,7 +159,7 @@ fn install_canisters(
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_wasm = get_canister_wasm("station").to_vec();
     if config.upload_canister_modules {
-        let upload_canister_modules_args = CanisterModules {
+        let upload_canister_modules_args = UploadCanisterModulesInput {
             station_wasm_module: station_wasm.to_owned(),
             upgrader_wasm_module: upgrader_wasm.to_owned(),
         };

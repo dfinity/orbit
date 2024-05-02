@@ -14,10 +14,6 @@ export type CanDeployStationResponse = {
   { 'QuotaExceeded' : null };
 export type CanDeployStationResult = { 'Ok' : CanDeployStationResponse } |
   { 'Err' : ApiError };
-export interface CanisterModules {
-  'station_wasm_module' : Uint8Array | number[],
-  'upgrader_wasm_module' : Uint8Array | number[],
-}
 export interface DeployStationInput {
   'admin_name' : string,
   'station_name' : string,
@@ -79,7 +75,11 @@ export interface UpdateWaitingListInput {
 }
 export type UpdateWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
-export type UploadCanisterModulesResult = { 'Ok' : null } |
+export interface UploadCanisterModulesInput {
+  'station_wasm_module' : Uint8Array | number[],
+  'upgrader_wasm_module' : Uint8Array | number[],
+}
+export type UploadUploadCanisterModulesInputResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface User {
   'stations' : Array<UserStation>,
@@ -116,8 +116,8 @@ export interface _SERVICE {
     UpdateWaitingListResult
   >,
   'upload_canister_modules' : ActorMethod<
-    [CanisterModules],
-    UploadCanisterModulesResult
+    [UploadCanisterModulesInput],
+    UploadUploadCanisterModulesInputResult
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

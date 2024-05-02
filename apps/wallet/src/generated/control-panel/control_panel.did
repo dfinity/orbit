@@ -212,7 +212,7 @@ type CanDeployStationResult = variant {
 };
 
 // The canister modules required for the control panel.
-type CanisterModules = record {
+type UploadCanisterModulesInput = record {
   // The upgrader wasm module to use for the station canister.
   upgrader_wasm_module : blob;
   // The station wasm module to use.
@@ -220,7 +220,7 @@ type CanisterModules = record {
 };
 
 // The result of uploading canister modules.
-type UploadCanisterModulesResult = variant {
+type UploadUploadCanisterModulesInputResult = variant {
   // Successfull operation result.
   Ok;
   // The error that occurred during the operation.
@@ -245,7 +245,7 @@ type HttpResponse = record {
 // The control panel service definition.
 service : () -> {
   // Uploads the canister modules for the station and upgrader canisters.
-  upload_canister_modules : (CanisterModules) -> (UploadCanisterModulesResult);
+  upload_canister_modules : (UploadCanisterModulesInput) -> (UploadUploadCanisterModulesInputResult);
   // Set the last active time for the user associated with the caller.
   set_user_active : () -> (SetUserActiveResult);
   // Get the user information for the caller.

@@ -5,7 +5,7 @@ use crate::repositories::{UserRepository, USER_REPOSITORY};
 use canfund::fetch::cycles::FetchCyclesBalanceFromPrometheusMetrics;
 use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
 use canfund::FundManager;
-use control_panel_api::CanisterModules;
+use control_panel_api::UploadCanisterModulesInput;
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
@@ -42,7 +42,7 @@ impl CanisterService {
         Ok(())
     }
 
-    pub async fn upload_canister_modules(&self, modules: CanisterModules) -> ServiceResult<()> {
+    pub async fn upload_canister_modules(&self, modules: UploadCanisterModulesInput) -> ServiceResult<()> {
         self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
         let mut config = canister_config().unwrap_or_default();

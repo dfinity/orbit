@@ -2,7 +2,7 @@ use crate::setup::{get_canister_wasm, setup_new_env, setup_new_env_with_config, 
 use crate::utils::{controller_test_id, user_test_id};
 use crate::TestEnv;
 use candid::Principal;
-use control_panel_api::CanisterModules;
+use control_panel_api::UploadCanisterModulesInput;
 use control_panel_api::{
     DeployStationInput, DeployStationResponse, GetMainStationResponse, ManageUserInput,
     ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
@@ -373,7 +373,7 @@ fn no_upload_canister_modules() {
     // upload canister modules
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_wasm = get_canister_wasm("station").to_vec();
-    let upload_canister_modules_args = CanisterModules {
+    let upload_canister_modules_args = UploadCanisterModulesInput {
         station_wasm_module: station_wasm.to_owned(),
         upgrader_wasm_module: upgrader_wasm.to_owned(),
     };
@@ -414,7 +414,7 @@ fn upload_canister_modules_authorization() {
 
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_wasm = get_canister_wasm("station").to_vec();
-    let upload_canister_modules_args = CanisterModules {
+    let upload_canister_modules_args = UploadCanisterModulesInput {
         station_wasm_module: station_wasm.to_owned(),
         upgrader_wasm_module: upgrader_wasm.to_owned(),
     };
