@@ -9,7 +9,7 @@ use control_panel_api::{
     UserStationDTO, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
-use pocket_ic::{update_candid_as, CallError};
+use pocket_ic::update_candid_as;
 use station_api::HealthStatus;
 
 #[test]
@@ -355,20 +355,20 @@ fn no_upload_canister_modules() {
         station_name: "station".to_string(),
         admin_name: "admin".to_string(),
     };
-    let res: Result<(ApiResult<DeployStationResponse>,), CallError> = update_candid_as(
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
         "deploy_station",
         (deploy_station_args,),
-    );
-    let err = res.unwrap_err();
-    match err {
-        CallError::UserError(user_error) => assert!(user_error
-            .description
-            .contains("canister config not initialized")),
-        _ => panic!("unexpected CallError"),
-    };
+    )
+    .unwrap();
+    assert!(res
+        .0
+        .unwrap_err()
+        .message
+        .unwrap()
+        .contains("Canister config not initialized"));
 
     // upload canister modules
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();

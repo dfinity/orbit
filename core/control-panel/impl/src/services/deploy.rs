@@ -36,8 +36,9 @@ impl DeployService {
     ) -> ServiceResult<Principal> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
-        // This would trap if the canister is not initialized and thus it must happen before any async call!
-        let config = canister_config();
+        let config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
         let station_wasm_module = config.station_wasm_module;
         let upgrader_wasm_module = config.upgrader_wasm_module;
 

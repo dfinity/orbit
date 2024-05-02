@@ -1,6 +1,5 @@
 use crate::core::ic_cdk::api::time;
-use crate::core::CallContext;
-use crate::core::{write_canister_config, CanisterConfig};
+use crate::core::{canister_config, write_canister_config, CallContext};
 use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
 use canfund::fetch::cycles::FetchCyclesBalanceFromPrometheusMetrics;
@@ -46,11 +45,9 @@ impl CanisterService {
     pub async fn upload_canister_modules(&self, modules: CanisterModules) -> ServiceResult<()> {
         self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
-        let mut config =
-            CanisterConfig::new(modules.upgrader_wasm_module, modules.station_wasm_module);
-
-        config.last_upgrade_timestamp = time();
-
+        let mut config = canister_config().unwrap_or_default();
+        config.upgrader_wasm_module = modules.upgrader_wasm_module;
+        config.station_wasm_module = modules.station_wasm_module;
         write_canister_config(config);
 
         Ok(())
@@ -58,6 +55,11 @@ impl CanisterService {
 
     pub async fn init_canister(&self) -> ServiceResult<()> {
         self.start_canister_cycles_monitoring();
+
+        if let Some(mut config) = canister_config() {
+            config.last_upgrade_timestamp = time();
+            write_canister_config(config);
+        }
 
         Ok(())
     }
