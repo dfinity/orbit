@@ -13,7 +13,7 @@ use crate::{
 };
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
-use station_api::StatusReason as StatusReasonDTO;
+use station_api::StatusReasonDTO;
 use std::{cmp, hash::Hash};
 use std::{collections::HashSet, sync::Arc};
 
