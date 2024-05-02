@@ -75,7 +75,12 @@
 
     <VContainer class="pb-0">
       <VExpansionPanels data-test-id="request-approvals-and-evaluation">
-        <VExpansionPanel :title="$t('requests.approvals_and_evaluation')">
+        <VExpansionPanel :elevation="0">
+          <template #title>
+            <span class="text-body-1 font-weight-bold">{{
+              $t('requests.approvals_and_evaluation')
+            }}</span>
+          </template>
           <VExpansionPanelText>
             <template v-if="evaulationSummary">
               <div class="text-body-1 font-weight-bold">
