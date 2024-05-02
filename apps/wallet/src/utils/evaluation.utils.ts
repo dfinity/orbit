@@ -1,4 +1,4 @@
-import { EvaluationStatus, StatusReason } from '~/generated/station/station.did';
+import { EvaluationStatus, EvaluationSummaryReason } from '~/generated/station/station.did';
 import { unreachable, variantIs } from './helper.utils';
 import { i18n } from '~/plugins/i18n.plugin';
 
@@ -14,7 +14,10 @@ export function statusToI18nKeyPrefix(status: EvaluationStatus): string {
   }
 }
 
-export function statusReasonToI18nKey(reason: StatusReason, status: EvaluationStatus): string {
+export function summaryReasonToI18nKey(
+  reason: EvaluationSummaryReason,
+  status: EvaluationStatus,
+): string {
   const prefix = statusToI18nKeyPrefix(status);
 
   if (variantIs(reason, 'ApprovalQuorum')) {
@@ -44,11 +47,11 @@ export function statusToI18nKey(status: EvaluationStatus): string {
 
 export function statusReasonsToTextSummary(
   finalStatus: EvaluationStatus,
-  reasons: StatusReason[],
+  reasons: EvaluationSummaryReason[],
 ): string {
   const summaryKey = statusToI18nKey(finalStatus);
   const reasonList = reasons
-    .map(reason => i18n.global.t(statusReasonToI18nKey(reason, finalStatus)))
+    .map(reason => i18n.global.t(summaryReasonToI18nKey(reason, finalStatus)))
     .join(', ');
 
   return `${i18n.global.t(summaryKey, {
