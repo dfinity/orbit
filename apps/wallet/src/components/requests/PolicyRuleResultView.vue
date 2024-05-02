@@ -1,6 +1,6 @@
 <template>
   <VListGroup v-if="variantIs(props.evaluatedRule, 'AllOf')">
-    <template v-slot:activator="{ props: activatorProps }">
+    <template #activator="{ props: activatorProps }">
       <VListItem v-bind="activatorProps">
         <template #title>
           <div class="d-flex justify-space-between align-center">
@@ -15,13 +15,13 @@
     <PolicyRuleResultView
       v-for="(item, idx) in props.evaluatedRule.AllOf"
       :key="idx"
-      :evaluatedRule="item.evaluated_rule"
+      :evaluated-rule="item.evaluated_rule"
       :status="item.status"
-      :requestApprovals="props.requestApprovals"
+      :request-approvals="props.requestApprovals"
     ></PolicyRuleResultView>
   </VListGroup>
   <VListGroup v-else-if="variantIs(props.evaluatedRule, 'AnyOf')">
-    <template v-slot:activator="{ props: activatorProps }">
+    <template #activator="{ props: activatorProps }">
       <VListItem v-bind="activatorProps">
         <template #title>
           <div class="d-flex justify-space-between align-center">
@@ -36,13 +36,13 @@
     <PolicyRuleResultView
       v-for="(item, idx) in props.evaluatedRule.AnyOf"
       :key="idx"
-      :evaluatedRule="item.evaluated_rule"
+      :evaluated-rule="item.evaluated_rule"
       :status="item.status"
-      :requestApprovals="props.requestApprovals"
+      :request-approvals="props.requestApprovals"
     ></PolicyRuleResultView>
   </VListGroup>
   <VListGroup v-else-if="variantIs(props.evaluatedRule, 'Not')">
-    <template v-slot:activator="{ props: activatorProps }">
+    <template #activator="{ props: activatorProps }">
       <VListItem v-bind="activatorProps">
         <template #title>
           <div class="d-flex justify-space-between align-center">
@@ -55,9 +55,9 @@
       </VListItem>
     </template>
     <PolicyRuleResultView
-      :evaluatedRule="props.evaluatedRule.Not.evaluated_rule"
+      :evaluated-rule="props.evaluatedRule.Not.evaluated_rule"
       :status="props.evaluatedRule.Not.status"
-      :requestApprovals="props.requestApprovals"
+      :request-approvals="props.requestApprovals"
     ></PolicyRuleResultView>
   </VListGroup>
 

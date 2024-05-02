@@ -133,9 +133,9 @@
               </div>
               <VList :density="'compact'" data-test-id="request-acceptance-rules">
                 <PolicyRuleResultView
-                  :evaluatedRule="policyResults.evaluated_rule"
+                  :evaluated-rule="policyResults.evaluated_rule"
                   :status="policyResults.status"
-                  :requestApprovals="props.request.approvals"
+                  :request-approvals="props.request.approvals"
                 ></PolicyRuleResultView>
               </VList>
             </template>
@@ -372,6 +372,7 @@ const evaulationSummary = computed(() => {
       props.details.evaluationResult.result_reasons,
     );
   }
+  return false;
 });
 </script>
 
