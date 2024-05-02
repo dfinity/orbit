@@ -60,6 +60,11 @@ impl NotificationController {
                                 Uuid::from_bytes(request_id).hyphenated()
                             ));
                         }
+                        NotificationMapperError::InvalidRequestStatus {
+                            expected, found
+                        } => {
+                            print(format!("Invalid request status when mapping to NotificationDTO: expected \"{}\", found \"{}\"", expected, found));
+                        }
                     },
                 }
 

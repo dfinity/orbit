@@ -1,10 +1,16 @@
-use crate::models::Notification;
+use crate::models::{Notification, RequestStatusCode};
 use orbit_essentials::{types::UUID, utils::timestamp_to_rfc3339};
 use station_api::NotificationDTO;
 use uuid::Uuid;
 
 pub enum NotificationMapperError {
-    RequestNotFound { request_id: UUID },
+    RequestNotFound {
+        request_id: UUID,
+    },
+    InvalidRequestStatus {
+        expected: RequestStatusCode,
+        found: RequestStatusCode,
+    },
 }
 
 impl TryFrom<Notification> for NotificationDTO {

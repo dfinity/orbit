@@ -10,6 +10,7 @@ use crate::{
         Account, Request, RequestOperation, RequestStatus, Transfer, TransferId, TransferStatus,
     },
     repositories::{AccountRepository, RequestRepository, TransferRepository},
+    services::RequestService,
 };
 use async_trait::async_trait;
 use futures::future;
@@ -22,6 +23,7 @@ pub struct Job {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
     request_repository: RequestRepository,
+    request_service: RequestService,
 }
 
 #[async_trait]
@@ -102,11 +104,8 @@ impl Job {
         let results = future::join_all(calls).await;
         let transfers = transfers.clone();
 
-        // update the status of the transfers
-        results
-            .iter()
-            .enumerate()
-            .for_each(|(pos, result)| match result {
+        for (pos, result) in results.iter().enumerate() {
+            match result {
                 Ok((transfer, details)) => {
                     let mut transfer = transfer.clone();
                     let transfer_completed_time = next_time();
@@ -165,6 +164,8 @@ impl Job {
                         request.last_modification_timestamp = transfer_failed_time;
                         self.request_repository
                             .insert(request.to_key(), request.to_owned());
+
+                        self.request_service.failed_request_hook(&request).await;
                     } else {
                         print(format!(
                             "Error: request not found for transfer {}",
@@ -172,7 +173,8 @@ impl Job {
                         ));
                     }
                 }
-            });
+            }
+        }
     }
 
     /// Executes a single transfer.

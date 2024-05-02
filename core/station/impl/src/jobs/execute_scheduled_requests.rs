@@ -5,6 +5,7 @@ use crate::{
     factories::requests::{RequestExecuteStage, RequestFactory},
     models::{Request, RequestStatus},
     repositories::RequestRepository,
+    services::RequestService,
 };
 use async_trait::async_trait;
 use futures::future;
@@ -13,6 +14,7 @@ use orbit_essentials::repository::Repository;
 #[derive(Debug, Default)]
 pub struct Job {
     request_repository: RequestRepository,
+    request_service: RequestService,
 }
 
 #[async_trait]
@@ -64,10 +66,8 @@ impl Job {
         let requests = requests.clone();
 
         // update the status of the requests
-        results
-            .iter()
-            .enumerate()
-            .for_each(|(pos, result)| match result {
+        for (pos, result) in results.iter().enumerate() {
+            match result {
                 Ok(request) => {
                     self.request_repository
                         .insert(request.to_key(), request.to_owned());
@@ -81,8 +81,11 @@ impl Job {
                     request.last_modification_timestamp = request_failed_time;
                     self.request_repository
                         .insert(request.to_key(), request.to_owned());
+
+                    self.request_service.failed_request_hook(&request).await;
                 }
-            });
+            }
+        }
     }
 
     /// Executes a single request.

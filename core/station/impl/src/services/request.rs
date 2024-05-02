@@ -10,7 +10,8 @@ use crate::{
     models::{
         resource::{RequestResourceAction, Resource, ResourceId},
         DisplayUser, NotificationType, Request, RequestAdditionalInfo, RequestApprovalStatus,
-        RequestCallerPrivileges, RequestCreatedNotification, RequestStatus, RequestStatusCode,
+        RequestCallerPrivileges, RequestCreatedNotification, RequestRejectedNotification,
+        RequestStatus, RequestStatusCode,
     },
     repositories::{
         EvaluationResultRepository, RequestRepository, RequestWhereClause,
@@ -341,18 +342,43 @@ impl RequestService {
                 .insert(request.id, evaluation);
         }
 
-        self.created_request_hook(&request).await;
+        if request.status == RequestStatus::Created {
+            self.created_request_hook(&request).await;
+        } else if request.status == RequestStatus::Rejected {
+            self.rejected_request_hook(&request).await;
+        }
 
         Ok(request)
     }
 
+    async fn rejected_request_hook(&self, request: &Request) {
+        self.notification_service
+            .send_notification(
+                request.requested_by,
+                NotificationType::RequestRejected(RequestRejectedNotification {
+                    request_id: request.id,
+                }),
+                request.title.to_owned(),
+                request.summary.to_owned(),
+            )
+            .await;
+    }
+
+    pub async fn failed_request_hook(&self, request: &Request) {
+        self.notification_service
+            .send_notification(
+                request.requested_by,
+                NotificationType::RequestFailed(RequestRejectedNotification {
+                    request_id: request.id,
+                }),
+                request.title.to_owned(),
+                request.summary.to_owned(),
+            )
+            .await;
+    }
+
     /// Handles post processing logic like sending notifications.
     async fn created_request_hook(&self, request: &Request) {
-        if let RequestStatus::Rejected = &request.status {
-            // No need to send notifications for requests that are rejected upon creation.
-            return;
-        }
-
         let mut possible_approvers = match request.find_all_possible_approvers().await {
             Ok(approvers) => approvers,
             Err(_) => {
@@ -406,6 +432,10 @@ impl RequestService {
         if let Some(evaluation) = maybe_evaluation {
             self.evaluation_result_repository
                 .insert(request.id, evaluation);
+        }
+
+        if request.status == RequestStatus::Rejected {
+            self.rejected_request_hook(&request).await;
         }
 
         Ok(request)
